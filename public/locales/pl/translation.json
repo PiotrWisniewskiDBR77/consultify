@@ -14111,14 +14111,14 @@
         "reportingDate": "Data raportowania",
         "updatedAt": "Aktualizacja {{date}}",
         "detailsLabel": "Kontekst realizacji",
-        "factLabel": "Fakt realizacji",
-        "valueLabel": "Zgłoszona wartość",
-        "whatsNext": "Co dalej",
+        "openUnavailable": "Rekord inicjatywy powiązany z tą realizacją jest niedostępny.",
         "fact": {
           "case": "Realizacja",
           "caseMissing": "Jeszcze niepodłączona",
           "owner": "Właściciel",
           "phase": "Faza realizacji",
+          "progress": "Postęp",
+          "health": "Zdrowie",
           "baselineFinish": "Koniec wg bazy odniesienia",
           "currentPlanFinish": "Koniec wg bieżącego planu",
           "forecastFinish": "Koniec wg prognozy",
@@ -14126,7 +14126,7 @@
           "variance": "Wariancja"
         },
         "next": {
-          "noExecutionCase": "Nie ma jeszcze realizacji. Zaczyna się ona w chwili przekazania inicjatywy z jej karty — harmonogram, prognoza i postęp są raportowane dopiero potem.",
+          "noExecutionCase": "Realizacja zaczyna się w chwili przekazania inicjatywy z jej karty — harmonogram, prognoza i postęp są raportowane dopiero potem.",
           "setBaseline": "Ustaw bazę odniesienia harmonogramu na realizacji. Bez niej wariancja nie ma się do czego odnieść.",
           "reportForecast": "Zgłoś prognozowaną datę zakończenia. Baza odniesienia jest ustawiona, ale nie ma prognozy do porównania.",
           "reportProgress": "Zgłoś postęp realizacji. Harmonogram jest kompletny, ale nikt nie zgłosił postępu.",

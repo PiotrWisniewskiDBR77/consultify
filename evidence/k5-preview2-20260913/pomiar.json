@@ -1,0 +1,182 @@
+[
+  {
+    "scrollHeight": 900,
+    "clientHeight": 900,
+    "stronaPrzewija": false,
+    "aside": 1,
+    "asideRect": {
+      "top": 117,
+      "h": 767,
+      "bottom": 884
+    },
+    "asideWOknie": true,
+    "stopka": {
+      "top": 794,
+      "bottom": 871,
+      "tekst": "Copy link",
+      "widocznaBezPrzewijania": true
+    },
+    "cialoOverflowY": "auto",
+    "blokCoDalej": false,
+    "przyciskOpen": 1,
+    "rzedyChipowMeta": 1,
+    "naglowkiTabeliFaktow": [
+      "INITIATIVE / CASE",
+      "LIFECYCLE",
+      "EXECUTION PHASE",
+      "OWNER",
+      "DELIVERY PROFILE",
+      "PROGRESS / CONFIDENCE",
+      "BASELINE FINISH",
+      "FORECAST FINISH",
+      "VARIANCE",
+      "HEALTH",
+      "BLOCKERS",
+      "PENDING DECISIONS",
+      "CONSTRAINT",
+      "NEXT ACTION",
+      "UPDATED / ACTIONS",
+      "",
+      "Property",
+      "Value"
+    ],
+    "bledyKonsoli": 0,
+    "bledy": [],
+    "wariant": "1440x900-jasny"
+  },
+  {
+    "scrollHeight": 900,
+    "clientHeight": 900,
+    "stronaPrzewija": false,
+    "aside": 1,
+    "asideRect": {
+      "top": 117,
+      "h": 767,
+      "bottom": 884
+    },
+    "asideWOknie": true,
+    "stopka": {
+      "top": 794,
+      "bottom": 871,
+      "tekst": "Copy link",
+      "widocznaBezPrzewijania": true
+    },
+    "cialoOverflowY": "auto",
+    "blokCoDalej": false,
+    "przyciskOpen": 1,
+    "rzedyChipowMeta": 1,
+    "naglowkiTabeliFaktow": [
+      "INITIATIVE / CASE",
+      "LIFECYCLE",
+      "EXECUTION PHASE",
+      "OWNER",
+      "DELIVERY PROFILE",
+      "PROGRESS / CONFIDENCE",
+      "BASELINE FINISH",
+      "FORECAST FINISH",
+      "VARIANCE",
+      "HEALTH",
+      "BLOCKERS",
+      "PENDING DECISIONS",
+      "CONSTRAINT",
+      "NEXT ACTION",
+      "UPDATED / ACTIONS",
+      "",
+      "Property",
+      "Value"
+    ],
+    "bledyKonsoli": 0,
+    "bledy": [],
+    "wariant": "1440x900-ciemny"
+  },
+  {
+    "scrollHeight": 800,
+    "clientHeight": 800,
+    "stronaPrzewija": false,
+    "aside": 1,
+    "asideRect": {
+      "top": 117,
+      "h": 667,
+      "bottom": 784
+    },
+    "asideWOknie": true,
+    "stopka": {
+      "top": 694,
+      "bottom": 771,
+      "tekst": "Copy link",
+      "widocznaBezPrzewijania": true
+    },
+    "cialoOverflowY": "auto",
+    "blokCoDalej": false,
+    "przyciskOpen": 1,
+    "rzedyChipowMeta": 1,
+    "naglowkiTabeliFaktow": [
+      "INITIATIVE / CASE",
+      "LIFECYCLE",
+      "EXECUTION PHASE",
+      "OWNER",
+      "DELIVERY PROFILE",
+      "PROGRESS / CONFIDENCE",
+      "BASELINE FINISH",
+      "FORECAST FINISH",
+      "VARIANCE",
+      "HEALTH",
+      "BLOCKERS",
+      "PENDING DECISIONS",
+      "CONSTRAINT",
+      "NEXT ACTION",
+      "UPDATED / ACTIONS",
+      "",
+      "Property",
+      "Value"
+    ],
+    "bledyKonsoli": 0,
+    "bledy": [],
+    "wariant": "1280x800-jasny"
+  },
+  {
+    "scrollHeight": 1080,
+    "clientHeight": 1080,
+    "stronaPrzewija": false,
+    "aside": 1,
+    "asideRect": {
+      "top": 117,
+      "h": 947,
+      "bottom": 1064
+    },
+    "asideWOknie": true,
+    "stopka": {
+      "top": 974,
+      "bottom": 1051,
+      "tekst": "Copy link",
+      "widocznaBezPrzewijania": true
+    },
+    "cialoOverflowY": "auto",
+    "blokCoDalej": false,
+    "przyciskOpen": 1,
+    "rzedyChipowMeta": 1,
+    "naglowkiTabeliFaktow": [
+      "INITIATIVE / CASE",
+      "LIFECYCLE",
+      "EXECUTION PHASE",
+      "OWNER",
+      "DELIVERY PROFILE",
+      "PROGRESS / CONFIDENCE",
+      "BASELINE FINISH",
+      "FORECAST FINISH",
+      "VARIANCE",
+      "HEALTH",
+      "BLOCKERS",
+      "PENDING DECISIONS",
+      "CONSTRAINT",
+      "NEXT ACTION",
+      "UPDATED / ACTIONS",
+      "",
+      "Property",
+      "Value"
+    ],
+    "bledyKonsoli": 0,
+    "bledy": [],
+    "wariant": "1920x1080-jasny"
+  }
+]

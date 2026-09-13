@@ -21,9 +21,18 @@
  *  · „Report progress" / „Create execution case" jako PRZYCISKI — front nie ma
  *    dla nich trasy (realizacja powstaje wyłącznie przez przekazanie z karty
  *    inicjatywy: `requestHandoffAcceptance` → `decideHandoffAcceptance`).
- *    Kroki te żyją jako ZDANIE w bloku „Co dalej", nie jako martwy przycisk.
+ *    Kroki te żyją jako OSTATNIE ZDANIE prozy bloku 3, nie jako martwy przycisk.
+ *  · blok „Co dalej" (create-strip) — USUNIĘTY w K5-4. §7.0–§7.3b dopuszcza go
+ *    WYŁĄCZNIE dla encji będącej źródłem cross-module (Insight → Raport/Deck/
+ *    Idea…). Wiersz banku nie tworzy niczego w innym module, więc blok był
+ *    niekanoniczny w tym miejscu — a razem z blokiem 6 rozpychał panel poniżej
+ *    krawędzi okna (odrzut właściciela, staging `cf3fded7e4`).
+ *  · blok 6 (akcje) — pill „Copy link" mieszka teraz w STOPCE powłoki
+ *    (`TableWithPreviewLayout.renderPreviewFooter` → `PreviewActionBar`),
+ *    dokładnie jak w zaakceptowanym podglądzie Inicjatyw
+ *    (`CanonicalInitiativeRegister.tsx`). Stopka powłoki jest `shrink-0`, więc
+ *    akcja jest widoczna BEZ przewijania; wewnątrz treści nie była.
  */
-import { Copy } from 'lucide-react';
 import React from 'react';
 
 import type { MetaPill, RelationItem, StandardPreviewProps } from '@/components/standard/StandardPreview';
@@ -56,13 +65,11 @@ export interface ExecutionBankPreviewDeps {
   progressLabel: string;
   resolveOwnerName?: MemberNameResolver;
   relations: RelationItem[];
-  /** Realny wołacz jedynej akcji stopki — odnośnik do tego wiersza. */
-  onCopyLink: () => void;
 }
 
 export type ExecutionBankPreviewDeclaration = Pick<
   StandardPreviewProps,
-  'meta' | 'details' | 'relations' | 'actions' | 'whatsNext'
+  'meta' | 'details' | 'relations'
 >;
 
 /**
@@ -84,6 +91,24 @@ export const executionBankPreviewDateLabel = (
   );
 };
 
+/**
+ * K5-4 — ta sama reguła co `executionBankPreviewDateLabel` (K5-R3): w TABELI
+ * FAKTÓW klucz już nazywa pole, więc wartość „Progress not reported" w wierszu
+ * „Progress" powtarzałaby to samo słowo dwa razy. Brak = myślnik, powód idzie
+ * w podpowiedź (`title`).
+ */
+export const executionBankPreviewProgressLabel = (
+  evidence: ExecutionBankEvidence<number>
+): React.ReactNode => {
+  if (evidence.status === 'KNOWN') return `${evidence.value}%`;
+  const reason = describeExecutionBankUnknown(evidence.reason);
+  return (
+    <span className="text-c-text-muted" title={reason} aria-label={reason}>
+      —
+    </span>
+  );
+};
+
 export function buildExecutionBankPreviewDeclaration({
   row,
   t,
@@ -92,7 +117,6 @@ export function buildExecutionBankPreviewDeclaration({
   progressLabel,
   resolveOwnerName,
   relations,
-  onCopyLink,
 }: ExecutionBankPreviewDeps): ExecutionBankPreviewDeclaration {
   const nextStep = resolveExecutionBankNextStep(row, t);
   const summary = buildExecutionBankSummary(row, t, {
@@ -101,7 +125,20 @@ export function buildExecutionBankPreviewDeclaration({
   });
 
   return {
-    /* Blok 2 — karta meta: STAN, nie treść. */
+    /* Blok 2 — karta meta: STAN, nie treść.
+     *
+     * K5-4 (odrzut właściciela na żywym stagingu): karta miała CZTERY chipy
+     * (lifecycle · stan realizacji · „Progress 45%" · zdrowie), które łamały
+     * się na DWA rzędy, a do tego długie `trailing` („Reporting date …") i
+     * trzecią linię („Updated …") — razem ~3 linie stanu nad treścią.
+     * Zaakceptowany podgląd Inicjatyw (`CanonicalInitiativeRegister.tsx`) ma
+     * DOKŁADNIE: dwa chipy w JEDNYM rzędzie + krótkie `trailing` + jedną linię
+     * małym drukiem. Odwzorowujemy to 1:1.
+     *
+     * Postęp i zdrowie nie znikają — schodzą do TABELI FAKTÓW bloku 3 (niżej),
+     * gdzie i tak mieszka reszta zgłoszonych wartości. Chip „Progress 45%" był
+     * przy tym potrójnie zdublowany: kolumna tabeli, proza bloku 3 i chip.
+     */
     meta: {
       pills: [
         ...(row.lifecycleStatus && row.lifecycleStatus !== 'UNKNOWN'
@@ -121,33 +158,20 @@ export function buildExecutionBankPreviewDeclaration({
               label: t('execution.bank.noExecutionCase', 'No execution case yet'),
               tone: 'neutral',
             },
-        {
-          /* K5-R3: pigułka meta niosła „Progress Progress not reported" —
-             etykieta doklejona do zdania, które już samo mówiło o postępie.
-             Chip pokazuje WARTOŚĆ. */
-          label: row.progress.status === 'KNOWN' ? `Progress ${row.progress.value}%` : 'Progress —',
-          tone: 'neutral',
-        },
-        /* K5-3: zdrowie realizacji to STAN, więc mieszka w karcie meta, a nie
-           w tabeli faktów. Chip pojawia się TYLKO gdy zdrowie jest zgłoszone —
-           „Health not reported" jako chip byłoby pustym boksem pod inną nazwą. */
-        ...(row.health.status === 'KNOWN'
-          ? [
-              {
-                label: executionBankHealthLabel(String(row.health.value)),
-                tone: statusChipTone(String(row.health.value)),
-              },
-            ]
-          : []),
       ],
+      /* Krótkie `trailing` jak „v—" w Inicjatywach: sama data, a jej znaczenie
+         w podpowiedzi — długa etykieta zjadała szerokość i wypychała chipy do
+         drugiego rzędu przy 1280 px. */
       trailing: (
-        <span className="text-[11px] font-semibold text-c-text-secondary">
-          {t('execution.bank.preview.reportingDate', 'Reporting date')}{' '}
+        <span
+          className="text-[11px] font-semibold text-c-text-secondary"
+          title={t('execution.bank.preview.reportingDate', 'Reporting date')}
+        >
           {formatExecutionBankDate(asOf)}
         </span>
       ),
-      /* Linia pod chipami = kiedy ten stan ostatnio zmierzono. Bez niej karta
-         meta mówi „co", nie mówiąc „kiedy". */
+      /* Linia pod chipami = kiedy ten stan ostatnio zmierzono (odpowiednik
+         linii rekomendacji w Inicjatywach). */
       recommendation:
         row.updatedAt.status === 'KNOWN'
           ? t('execution.bank.preview.updatedAt', 'Updated {{date}}', {
@@ -167,15 +191,20 @@ export function buildExecutionBankPreviewDeclaration({
        * Z DOWODÓW, którymi wiersz naprawdę dysponuje — nie wymyśla treści.
        */
       label: t('execution.bank.preview.detailsLabel', 'Execution context'),
-      text: summary,
       /*
-       * Bank realizacji jest w całości po angielsku (DEC-461). Nagłówki kolumn
-       * NAZYWAJĄ zawartość zamiast generycznego „Property/Value": każdy wiersz
-       * tej tabeli to zgłoszony fakt realizacji z pokwitowaniem, a nie dowolna
-       * właściwość obiektu.
+       * K5-4: następny krok („Set the schedule baseline…") był osobnym blokiem
+       * „Co dalej" pod akcjami — miejsce zarezerwowane kanonem dla create-stripa
+       * encji źródłowej cross-module. Bank nią nie jest, więc zdanie wraca tam,
+       * gdzie jest jego miejsce: jako OSTATNIE zdanie prozy bloku 3.
        */
-      propertyLabel: t('execution.bank.preview.factLabel', 'Execution fact'),
-      valueLabel: t('execution.bank.preview.valueLabel', 'Reported value'),
+      text: [summary, nextStep.note].filter(Boolean).join(' '),
+      /*
+       * K5-4: nagłówki tabeli faktów to „Property / Value" — ten sam komponent
+       * i te same nagłówki co w zaakceptowanym podglądzie Inicjatyw
+       * (`StandardPreview` bierze je z `standardPreview.property`/`.value`).
+       * Wcześniejsze „Execution fact / Reported value" było wariantem tylko
+       * tego jednego ekranu — czyli dokładnie tym, czego kanon zabrania.
+       */
       properties: [
         {
           id: 'execution-case',
@@ -193,6 +222,22 @@ export function buildExecutionBankPreviewDeclaration({
           id: 'execution-phase',
           label: t('execution.bank.preview.fact.phase', 'Execution phase'),
           value: row.executionPhase?.trim() || '—',
+        },
+        {
+          /* K5-4: zeszło z karty meta (chip „Progress 45%") — patrz nota przy
+             `meta` wyżej. Wartość ta sama, miejsce kanoniczne. */
+          id: 'progress',
+          label: t('execution.bank.preview.fact.progress', 'Progress'),
+          value: executionBankPreviewProgressLabel(row.progress),
+        },
+        {
+          /* K5-4: zdrowie realizacji też zeszło z karty meta. Wiersz z samym
+             „—" zostaje (tak robi tabela faktów w Inicjatywach) — panel się
+             przewija, nie rośnie. */
+          id: 'health',
+          label: t('execution.bank.preview.fact.health', 'Health'),
+          value:
+            row.health.status === 'KNOWN' ? executionBankHealthLabel(String(row.health.value)) : '—',
         },
         {
           id: 'baseline-finish',
@@ -228,38 +273,9 @@ export function buildExecutionBankPreviewDeclaration({
       onCopy: () => void navigator.clipboard?.writeText(`${row.name} — ${progressLabel}`),
     },
 
-    /* Blok 5 — Relations (źródło inicjatywy). */
+    /* Blok 5 — Relations (źródło inicjatywy). Renderowany ZAWSZE, także pusty
+       („No relations") — dokładnie jak w Inicjatywach, gdzie `relationForRow`
+       również zwraca pustą listę dla wiersza bez źródła. */
     relations,
-
-    /*
-     * Blok 6 — AKCJE. Anty-duplikacja z §7.3 pkt 4.3: „Open" NIE wchodzi (stoi
-     * w nagłówku), eksport/pobieranie NIE wchodzą (mieszkają w ⋮ bloku 3).
-     * Zostaje jedna akcja z realnym wołaczem — odnośnik do TEGO wiersza; adres
-     * niesie już `selection` i `scope`, bo zapisuje je `selectBankRow`, więc
-     * wklejony link otwiera ten sam podgląd.
-     */
-    actions: {
-      informational: [
-        {
-          id: 'copy-link',
-          variant: 'neutral',
-          label: t('common.copyLink', 'Copy link'),
-          icon: Copy,
-          onClick: onCopyLink,
-        },
-      ],
-    },
-
-    /*
-     * Blok „Co dalej" — NASTĘPNY KROK WYNIKAJĄCY ZE STANU, nie stała lista
-     * chipów. `items: []` jest ŚWIADOME: żaden z tych kroków nie ma dziś
-     * wołacza w aplikacji, więc blok mówi CO zrobić, nie udając przycisku,
-     * który tego nie robi (`nextStep.hasAction === false`).
-     */
-    whatsNext: {
-      label: t('execution.bank.preview.whatsNext', "What's next"),
-      note: nextStep.note,
-      items: [],
-    },
   };
 }

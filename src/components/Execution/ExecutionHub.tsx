@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  Copy,
   ExternalLink,
   FileText,
   GripVertical,
@@ -46,9 +47,11 @@ import type { ReportConfig } from '@/components/Reports/Wizard';
 import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 import { PreviewPaneAside } from '@/components/shared/PreviewPane/PreviewPaneAside';
 import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { LoadingState } from '@/components/shared/states';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -5708,16 +5711,117 @@ Please return:
             progressLabel,
             resolveOwnerName,
             relations: sourceRelations,
-            onCopyLink: () => void navigator.clipboard?.writeText(window.location.href),
           })
         : null;
+
+      /*
+       * ───────────────────────────────────────────────────────────────────
+       * K5-4 — POWŁOKA PODGLĄDU BANKU = DOKŁADNIE TA, KTÓRĄ WŁAŚCICIEL
+       * ZAAKCEPTOWAŁ W INICJATYWACH.
+       *
+       * ODRZUT (żywy staging `cf3fded7e4`, ciemny motyw): „Preview tutaj nie
+       * mieści się na ekranie i jest niezgodne ze standardem".
+       *
+       * PRZYCZYNA (zmierzona harnessem `k5-preview-bank`, 1440×900):
+       * bank renderował `JedenPrawyPanel`, który NIE MA stopki — całe bloki
+       * 5·6 i „Co dalej" jechały wewnątrz przewijanego ciała panelu, więc
+       * jedyna akcja („Copy link") stała ~200 px POD dolną krawędzią okna i
+       * nie dało się jej zobaczyć bez przewijania panelu. `TableWithPreviewLayout`
+       * (zaakceptowane Inicjatywy → `CanonicalInitiativeRegister.tsx`) podaje
+       * stopkę do `PreviewPaneShell` jako `footer`, a ta jest `shrink-0` —
+       * pasek akcji jest przyklejony do dołu panelu ZAWSZE.
+       *
+       * Dlatego to nie jest „poprawka wysokości" tylko zamiana powłoki na tę
+       * samą, co w Inicjatywach: ten sam `<aside data-right-panel>`, ten sam
+       * nagłówek (pinezka + „Open" + „×"), ta sama stopka, ta sama nawigacja
+       * J/K i Esc. Różnica vs Inicjatywy = ZERO.
+       * ───────────────────────────────────────────────────────────────────
+       */
+      const bankLayoutRows = executionBankRows.map((row) => ({
+        ...row,
+        title: row.name || t('execution.initiativeLabel', 'Initiative'),
+      }));
+      type BankLayoutRow = (typeof bankLayoutRows)[number];
+      const bankLayoutItem = (id: string): BankLayoutRow | null =>
+        bankLayoutRows.find((row) => row.id === id || row.executionCaseId === id) ?? null;
+      const selectedBankLayoutRow = selectedExecutionBankRowId
+        ? bankLayoutItem(selectedExecutionBankRowId)
+        : null;
+      const closeBankPreview = () => {
+        setSelectedExecutionBankRowId(null);
+        const next = new URLSearchParams(searchParams);
+        next.delete('selection');
+        if (next.toString() !== searchParams.toString()) {
+          updateExecutionSearch(next, 'user');
+        }
+      };
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
           {/* T32 R14: EVM/what-if analytics panels moved BELOW the canonical
               table (T32-TABLE-T13) — relocated, not deleted. */}
-          <div className="min-h-0 flex-1 flex overflow-hidden">
-            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <div className="min-h-0 flex-1 overflow-hidden pl-4 pr-1.5 pt-3 pb-4">
+            <TableWithPreviewLayout<BankLayoutRow>
+              selectedId={selectedExecutionBankRowId}
+              selectedItem={selectedBankLayoutRow}
+              onSelect={(id) => {
+                const row = id ? bankLayoutItem(id) : null;
+                if (row) selectBankRow(row);
+                else closeBankPreview();
+              }}
+              /* „Open" prowadzi donikąd dla wierszy, których rekordu inicjatywy
+                 nie ma w portfelu — wtedy przycisk WYŁĄCZONY z powodem, nigdy
+                 martwy (ten sam kontrakt co `StandardPreview.openDisabledReason`). */
+              {...(selectedBankInitiative
+                ? {
+                    onOpenFull: (id: string) => {
+                      const row = bankLayoutItem(id);
+                      if (row) openBankRow(row);
+                    },
+                  }
+                : {
+                    openDisabledReason: t(
+                      'execution.bank.preview.openUnavailable',
+                      'The initiative record linked to this execution case is not available.'
+                    ),
+                  })}
+              itemIds={bankLayoutRows.map((row) => row.id)}
+              getItemById={bankLayoutItem}
+              renderPreview={(row) => (
+                <StandardPreview
+                  title={row.name || t('execution.initiativeLabel', 'Initiative')}
+                  embedded
+                  {...(bankPreview ?? {})}
+                >
+                  <div
+                    data-testid="execution-bank-preview"
+                    data-initiative-id={row.initiativeId}
+                    data-execution-case-id={row.executionCaseId ?? undefined}
+                    className="sr-only"
+                  >
+                    <span data-testid="execution-bank-progress">{progressLabel}</span>
+                  </div>
+                </StandardPreview>
+              )}
+              renderPreviewFooter={() => (
+                <PreviewActionBar
+                  rows={[
+                    {
+                      columns: 2,
+                      buttons: [
+                        {
+                          label: t('common.copyLink', 'Copy link'),
+                          icon: Copy,
+                          colorScheme: 'neutral',
+                          onClick: () =>
+                            void navigator.clipboard?.writeText(window.location.href),
+                        },
+                      ],
+                    },
+                  ]}
+                />
+              )}
+            >
               {demoFallbackActive && (
                 <div className="mb-3" data-testid="demo-fallback-banner">
                   <Callout
@@ -5755,70 +5859,7 @@ Please return:
                 }}
                 onDrilldownMonth={setExecutionBankDrilldownMonth}
               />
-            </div>
-
-            <JedenPrawyPanel
-              /*
-               * K5-R4 — `rekord` musi być SAMYM `<StandardPreview>`, nie
-               * opakowanym w `<div>`.
-               *
-               * DEFEKT ZE ZRZUTU (staging 2026-09-13): nagłówek panelu brzmiał
-               * „Record" zamiast nazwy inicjatywy, a na ekranie były DWA „×"
-               * i przycisk „Open" wewnątrz karty. Przyczyna: `JedenPrawyPanel`
-               * czyta `rekord.props` (`title`/`onOpenFull`/`onTogglePin`) i
-               * robi `cloneElement(rekord, { embedded: true })`. Gdy `rekord`
-               * był `<div>`, wszystkie te propsy trafiały w próżnię —
-               * `title` spadał na domyślne „Record", a `embedded` na `<div>`
-               * (ostrzeżenie Reacta w konsoli), więc `StandardPreview` nadal
-               * rysował WŁASNY nagłówek pod nagłówkiem powłoki.
-               *
-               * Znaczniki `data-*` (używane przez testy i harness) jadą teraz
-               * w `children` podglądu — panel nadal je wystawia, a powłoka
-               * dostaje prawdziwe propsy.
-               */
-              rekord={
-                selectedBankRow ? (
-                  <StandardPreview
-                    title={selectedBankRow.name || t('execution.initiativeLabel', 'Initiative')}
-                    onClose={() => {
-                      setSelectedExecutionBankRowId(null);
-                      const next = new URLSearchParams(searchParams);
-                      next.delete('selection');
-                      if (next.toString() !== searchParams.toString()) {
-                        updateExecutionSearch(next, 'user');
-                      }
-                    }}
-                    /* K5-R4: „Open" prowadziło donikąd dla wierszy, których
-                       rekordu inicjatywy nie ma w portfelu (`openBankRow`
-                       kończyło się cichym `return`). Zamiast martwego
-                       przycisku — wyłączony z powodem. */
-                    {...(selectedBankInitiative
-                      ? { onOpenFull: () => openBankRow(selectedBankRow) }
-                      : {
-                          openDisabledReason:
-                            'The initiative record linked to this execution case is not available.',
-                        })}
-                    /*
-                     * K5-3 — bloki 2·3·5·6 + „Co dalej" przychodzą JEDNYM
-                     * obiektem z `buildExecutionBankPreviewDeclaration`. Hub
-                     * deklaruje tylko to, co zależy od nawigacji (tytuł,
-                     * zamknięcie, „Open"); resztę narzuca wspólna deklaracja,
-                     * którą test montuje na realnej powłoce kanonu.
-                     */
-                    {...(bankPreview ?? {})}
-                  >
-                    <div
-                      data-testid="execution-bank-preview"
-                      data-initiative-id={selectedBankRow.initiativeId}
-                      data-execution-case-id={selectedBankRow.executionCaseId ?? undefined}
-                      className="sr-only"
-                    >
-                      <span data-testid="execution-bank-progress">{progressLabel}</span>
-                    </div>
-                  </StandardPreview>
-                ) : null
-              }
-            />
+            </TableWithPreviewLayout>
           </div>
         </div>
       );
