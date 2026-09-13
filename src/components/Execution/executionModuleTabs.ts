@@ -1,65 +1,36 @@
-/**
- * Zakładki Menu 2 modułu Realizacja + lista wartości `?tab=` wpuszczanych
- * przez deep-link — W JEDNYM MIEJSCU.
- *
- * DLACZEGO OSOBNY PLIK (odbiór na żywo 05.09, `execution-tab-summary`):
- * „Kokpit menedżera" (`ExecutionSummaryOneLook`) był ZBUDOWANY, jego flaga w
- * tym środowisku WŁĄCZONA, a ekran mimo to całkowicie nieosiągalny — bo dwie
- * decyzje, które o tym rozstrzygają, żyły w dwóch odległych miejscach
- * 6100-liniowego `ExecutionHub.tsx` i rozjechały się:
- *   · lista `['list','work','resources','control','reports']` w efekcie
- *     deep-linku (bez `summary` → `?tab=summary` cicho lądował na `tab=list`),
- *   · tablica `tabs` w Menu 2 (bez pozycji „Kokpit" → zero wejścia klikiem).
- * Rozdzielone, żadna nie pilnowała drugiej. Tutaj obie liczą się z JEDNEJ
- * kolejności zakładek, więc rozjazd wymaga świadomej zmiany, nie przeoczenia.
- *
- * Bramka flagi zostaje: przy `summaryOneLook` OFF (domyślnie wszędzie,
- * CLAUDE.md reguła #7) obie funkcje zwracają dokładnie to, co przed 05.09 —
- * zero zmiany dla kogokolwiek bez włączonej flagi.
- */
+/** Cztery funkcje właścicielskie Menu 2 Realizacji, w wiążącej kolejności. */
+export const EXECUTION_FUNCTION_IDS = ['list', 'work', 'control', 'reports'] as const;
+export type ExecutionFunctionId = (typeof EXECUTION_FUNCTION_IDS)[number];
 
-/** Zakładki Menu 2 w kolejności wyświetlania (bez zakładek pełnoekranowych typu rollout). */
-export const EXECUTION_BASE_TAB_IDS = [
-  'list',
-  'work',
-  'resources',
-  'control',
-  'reports',
-] as const;
+const EXECUTION_FUNCTION_LABELS: Record<ExecutionFunctionId, { polish: string; english: string }> =
+  {
+    list: { polish: 'Bank realizacji', english: 'Execution bank' },
+    work: { polish: 'Praca', english: 'Work' },
+    control: { polish: 'Zarządzanie ryzykiem', english: 'Risk management' },
+    reports: { polish: 'Raporty', english: 'Reports' },
+  };
 
-export type ExecutionBaseTabId = (typeof EXECUTION_BASE_TAB_IDS)[number];
+/** Historyczne powierzchnie pozostają osiągalne jako podwidoki funkcji. */
+export const EXECUTION_SUBVIEW_DEEP_LINK_IDS = ['resources', 'summary', 'rollout'] as const;
 
 export interface ExecutionTabOptions {
-  /** Flaga `summaryOneLook` — kokpit menedżera. */
+  /** Bramka dotyczy renderu kokpitu, nie jego pozycji w Menu 2. */
   summaryOneLookEnabled: boolean;
 }
 
-/**
- * Kolejność pozycji Menu 2. Kokpit stoi PIERWSZY — to widok „jednego
- * spojrzenia" na cały moduł, więc czyta się go przed rejestrami.
- */
-export function executionModuleTabIds({ summaryOneLookEnabled }: ExecutionTabOptions): string[] {
-  return summaryOneLookEnabled
-    ? ['summary', ...EXECUTION_BASE_TAB_IDS]
-    : [...EXECUTION_BASE_TAB_IDS];
+export function executionModuleTabIds(_options: ExecutionTabOptions): ExecutionFunctionId[] {
+  return [...EXECUTION_FUNCTION_IDS];
 }
 
-/**
- * Wartości `?tab=` wpuszczane przez deep-link. `rollout` obsługiwany jest
- * osobno (konsolidacja `/rollout` → `?tab=rollout`) i celowo nie jest
- * pozycją Menu 2.
- */
-export function executionDeepLinkTabs(options: ExecutionTabOptions): string[] {
-  return executionModuleTabIds(options);
+export function executionFunctionLabel(id: ExecutionFunctionId, isPolish: boolean): string {
+  const labels = EXECUTION_FUNCTION_LABELS[id];
+  return isPolish ? labels.polish : labels.english;
 }
 
-/**
- * 1.12-R1 (C): stare adresy zakładki „Sterowanie" prowadzą do „Decyzji
- * i ryzyk". Identyfikator zakładki nie zmienił się (`control`), więc
- * `?tab=control` działa dalej bez tłumaczenia — a `?tab=sterowanie`
- * (polska nazwa z linków wklejanych ręcznie) i `?tab=decyzje-i-ryzyka`
- * mapują się na ten sam ekran zamiast cicho lądować na liście.
- */
+export function executionDeepLinkTabs(_options: ExecutionTabOptions): string[] {
+  return [...EXECUTION_FUNCTION_IDS, ...EXECUTION_SUBVIEW_DEEP_LINK_IDS];
+}
+
 const DEEP_LINK_TAB_ALIASES: Record<string, string> = {
   sterowanie: 'control',
   'decyzje-i-ryzyka': 'control',

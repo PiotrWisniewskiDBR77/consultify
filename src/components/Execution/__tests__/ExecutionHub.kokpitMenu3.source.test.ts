@@ -13,6 +13,11 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  parseExecutionNavigationState,
+  serializeExecutionNavigationState,
+} from '../executionNavigationState';
+
 const executionHubSource = readFileSync(new URL('../ExecutionHub.tsx', import.meta.url), 'utf8');
 
 describe('Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426', () => {
@@ -25,26 +30,43 @@ describe('Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426', () =
   });
 
   it('domyślnie aktywny chip to "ryzyka" (KROK 3, test a)', () => {
-    const start = executionHubSource.indexOf('const [canonicalMenu3Preset, setCanonicalMenu3Preset]');
+    const start = executionHubSource.indexOf(
+      'const [canonicalMenu3Preset, setCanonicalMenu3Preset]'
+    );
     const end = executionHubSource.indexOf('});', start);
     const block = executionHubSource.slice(start, end);
     expect(block).toContain("summary: 'ryzyka'");
   });
 
   it('deep-link czyta ?kokpit= i akceptuje TYLKO ryzyka|rozstrzygniecia', () => {
-    expect(executionHubSource).toContain("searchParams.get('kokpit')");
-    expect(executionHubSource).toContain(
-      "targetKokpit === 'ryzyka' || targetKokpit === 'rozstrzygniecia'"
-    );
-    expect(executionHubSource).toContain(
-      'setCanonicalMenu3Preset((current) => ({ ...current, summary: targetKokpit }))'
-    );
+    for (const preset of ['ryzyka', 'rozstrzygniecia']) {
+      expect(
+        parseExecutionNavigationState(`?tab=summary&kokpit=${preset}`, {
+          summaryOneLookEnabled: true,
+        }).preset
+      ).toBe(preset);
+    }
+    expect(
+      parseExecutionNavigationState('?tab=summary&kokpit=nieznany', {
+        summaryOneLookEnabled: true,
+      }).preset
+    ).toBeNull();
   });
 
   it('stan → URL: ?kokpit= odzwierciedla chip TYLKO na zakładce summary', () => {
-    expect(executionHubSource).toContain(
-      "activeTab === 'summary' ? canonicalMenu3Preset.summary || 'ryzyka' : ''"
-    );
+    const summary = parseExecutionNavigationState('?tab=summary&kokpit=rozstrzygniecia', {
+      summaryOneLookEnabled: true,
+    });
+    expect(serializeExecutionNavigationState(summary).get('kokpit')).toBe('rozstrzygniecia');
+    expect(
+      serializeExecutionNavigationState({
+        ...summary,
+        functionId: 'reports',
+        subview: 'reports',
+        surfaceTab: 'reports',
+      }).has('kokpit')
+    ).toBe(false);
+    expect(executionHubSource).toContain("activeTab === ('summary' as ModuleTab)");
   });
 
   it('ExecutionSummaryOneLook dostaje activeView pochodzący z tego samego stanu (nie osobny)', () => {
