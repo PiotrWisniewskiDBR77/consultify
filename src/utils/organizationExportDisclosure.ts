@@ -44,6 +44,7 @@ export function organizationExportDisclosure(
       'tenant-export-contract-v5-20260912',
       'tenant-export-contract-v7-20260912',
       'tenant-export-contract-v8-20260912',
+      'tenant-export-contract-v9-20260912',
     ].includes(String(manifest.policyVersion)) ||
     manifest.tableIdentityVersion !== 'schema-qualified-v1' ||
     manifest.complete !== true ||

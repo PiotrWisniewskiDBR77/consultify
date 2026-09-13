@@ -42,4 +42,14 @@ describe('v8 export disclosure compatibility', () => {
       'Completeness could not be verified'
     );
   });
+  it('recognizes the exact v9 contract but still rejects a future version', () => {
+    const data = fixture();
+    data.securityManifest.policyVersion = 'tenant-export-contract-v9-20260912';
+    expect(organizationExportDisclosure(data, 'org-a').complete).toBe(true);
+
+    data.securityManifest.policyVersion = 'tenant-export-contract-v10-unknown';
+    const future = organizationExportDisclosure(data, 'org-a');
+    expect(future.complete).toBe(false);
+    expect(future.message).toContain('Completeness could not be verified');
+  });
 });
