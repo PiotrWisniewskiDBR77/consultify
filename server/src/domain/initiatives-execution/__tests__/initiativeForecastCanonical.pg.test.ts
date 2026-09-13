@@ -22,6 +22,8 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
   const projectId = randomUUID();
   const initiativeId = `initiative-forecast-${run}`;
   const requestId = `initiative-forecast-request-${run}`;
+  const nativeInitiativeId = `initiative-forecast-native-${run}`;
+  const nativeRequestId = `initiative-forecast-native-request-${run}`;
   const originalPlannedStart = '2026-09-01';
   const originalPlannedEnd = '2026-12-31';
   const originalForecastStart = '2026-09-15';
@@ -31,6 +33,7 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
   let pool: Pool;
   let authorization: string;
   let foreignAuthorization: string;
+  const previousUnifiedRead = process.env.ENABLE_INITIATIVE_UNIFIED_READ;
 
   const cleanup = async () => {
     if (!pool) return;
@@ -92,6 +95,24 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
         [projectId, organizationId, actorId]
       );
       await pool.query(
+        `INSERT INTO ie_aggregate_state(
+           organization_id,aggregate_type,aggregate_id,version,payload_json
+         ) VALUES($1,'initiative',$2,1,$3)`,
+        [
+          organizationId,
+          nativeInitiativeId,
+          JSON.stringify({
+            initiativeId: nativeInitiativeId,
+            projectId,
+            initiativeOwnerId: actorId,
+            lifecycleState: 'IN_EXECUTION',
+            title: 'Native-only forecast Initiative',
+            plannedStartDate: '2026-09-01',
+            plannedEndDate: '2026-12-31',
+          }),
+        ]
+      );
+      await pool.query(
         `INSERT INTO initiatives(
            id,organization_id,project_id,name,status,progress,planned_start_date,planned_end_date,
            forecast_start_date,forecast_end_date,created_by
@@ -149,6 +170,7 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
         { algorithm: 'HS256', expiresIn: '10m' }
       )}`;
       const { ApiGateway } = await import('../../../Gateway.js');
+      process.env.ENABLE_INITIATIVE_UNIFIED_READ = 'true';
       app = express();
       app.use(express.json());
       ApiGateway.getInstance().initializeRoutes(app);
@@ -178,6 +200,8 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
       );
       expect(leftovers.rows[0].count).toBe(0);
     } finally {
+      if (previousUnifiedRead === undefined) delete process.env.ENABLE_INITIATIVE_UNIFIED_READ;
+      else process.env.ENABLE_INITIATIVE_UNIFIED_READ = previousUnifiedRead;
       await pool?.end();
     }
   }, 60_000);
@@ -257,9 +281,11 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
       initiativeId,
       lifecycleState: 'IN_EXECUTION',
       preservedMetadata: { ownerDecision: 'keep' },
-      forecastStartDate: originalForecastStart,
       forecastEndDate: changedForecastEnd,
     });
+    expect(
+      Object.prototype.hasOwnProperty.call(aggregate.rows[0].payload_json, 'forecastStartDate')
+    ).toBe(false);
     const history = await pool.query(
       `SELECT id,action,old_value,new_value,idempotency_key
          FROM initiative_history WHERE initiative_id=$1 ORDER BY changed_at`,
@@ -442,7 +468,178 @@ describe('canonical Initiative forecast through signed JWT, ApiGateway and real 
     expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
-  it('returns tenant-scoped 404 before replay lookup for the same Initiative identity', async () => {
+  it('advertises and writes a native canonical forecast without creating a module Initiative row', async () => {
+      const capability = await request(app)
+        .get(`/api/initiatives/runtime-v1/initiatives/${nativeInitiativeId}/capabilities`)
+        .set('Authorization', authorization)
+        .set('x-organization-id', organizationId);
+      expect(capability.status, JSON.stringify(capability.body)).toBe(200);
+      expect(capability.body.executionWrites.forecast).toMatchObject({
+        available: true,
+        denialAt: null,
+        denialCode: null,
+      });
+
+      const response = await request(app)
+        .post(`/api/initiatives/runtime-v1/initiatives/${nativeInitiativeId}/forecast`)
+        .set('Authorization', authorization)
+        .set('x-organization-id', organizationId)
+        .send({
+          expectedVersion: 1,
+          clientRequestId: nativeRequestId,
+          forecastEndDate: '2027-02-15',
+          reason: 'Native-only operational forecast',
+        });
+
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'APPLIED',
+        aggregateVersion: 2,
+        receiptId: nativeRequestId,
+        response: {
+          initiativeId: nativeInitiativeId,
+          receiptId: nativeRequestId,
+          observedAt: expect.any(String),
+          changedFields: ['forecastEndDate'],
+          before: { forecastStartDate: null, forecastEndDate: null },
+          after: { forecastStartDate: null, forecastEndDate: '2027-02-15' },
+        },
+      });
+
+      const state = await pool.query(
+        `SELECT version,payload_json,
+              (SELECT count(*)::int FROM initiatives WHERE organization_id=$1 AND id=$2) AS module_rows,
+              (SELECT count(*)::int FROM initiative_history WHERE initiative_id=$2) AS module_history
+         FROM ie_aggregate_state
+        WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+        [organizationId, nativeInitiativeId]
+      );
+      expect(state.rows[0]).toMatchObject({ version: 2, module_rows: 0, module_history: 0 });
+      expect(state.rows[0].payload_json).toMatchObject({
+        initiativeId: nativeInitiativeId,
+        lifecycleState: 'IN_EXECUTION',
+        plannedStartDate: '2026-09-01',
+        plannedEndDate: '2026-12-31',
+        forecastEndDate: '2027-02-15',
+      });
+      expect(
+        Object.prototype.hasOwnProperty.call(state.rows[0].payload_json, 'forecastStartDate')
+      ).toBe(false);
+
+      const receipt = await pool.query<{
+        client_request_id: string;
+        aggregate_version: number;
+        response_json: Record<string, unknown>;
+        created_at: Date;
+      }>(
+        `SELECT client_request_id,aggregate_version,response_json,created_at
+         FROM ie_command_receipts
+        WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+        [organizationId, nativeInitiativeId]
+      );
+      expect(receipt.rows).toHaveLength(1);
+      expect(receipt.rows[0]).toMatchObject({
+        client_request_id: nativeRequestId,
+        aggregate_version: 2,
+        response_json: expect.objectContaining({
+          changedFields: ['forecastEndDate'],
+          after: { forecastStartDate: null, forecastEndDate: '2027-02-15' },
+        }),
+      });
+      expect(response.body.response.observedAt).toBe(receipt.rows[0].created_at.toISOString());
+    });
+
+    it('reads the native canonical receipt back into the same Bank identity without inventing other fields', async () => {
+      const receipt = await pool.query<{ created_at: Date }>(
+        `SELECT created_at FROM ie_command_receipts
+        WHERE organization_id=$1 AND client_request_id=$2`,
+        [organizationId, nativeRequestId]
+      );
+      const clockLeadMs = receipt.rows[0].created_at.getTime() - Date.now();
+      expect(clockLeadMs).toBeLessThanOrEqual(1_000);
+      if (clockLeadMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, Math.ceil(clockLeadMs) + 5));
+      }
+
+      const response = await request(app)
+        .get('/api/initiatives')
+        .query({ includeExecutionEvidence: '1', asOf: new Date().toISOString() })
+        .set('Authorization', authorization)
+        .set('x-organization-id', organizationId);
+
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
+      const matches = response.body.filter((row: { id?: string }) => row.id === nativeInitiativeId);
+      expect(matches).toHaveLength(1);
+      expect(matches[0]).toMatchObject({
+        id: nativeInitiativeId,
+        recordSource: 'CANONICAL',
+        progress: null,
+        progressEvidence: { value: null, completeness: 'UNKNOWN' },
+        forecastStartEvidence: {
+          value: null,
+          observedAt: null,
+          completeness: 'UNKNOWN',
+          reason: 'VALUE_MISSING',
+        },
+        forecastEndEvidence: {
+          value: '2027-02-15',
+          observedAt: receipt.rows[0].created_at.toISOString(),
+          completeness: 'KNOWN',
+          source: { system: 'ie_command_receipts', recordId: nativeRequestId },
+        },
+      });
+      expect(matches[0]).not.toHaveProperty('baselineStartDate');
+      expect(matches[0]).not.toHaveProperty('baselineEndDate');
+    });
+
+    it('replays the native request without creating a module row or a second canonical receipt', async () => {
+      const replay = await request(app)
+        .post(`/api/initiatives/runtime-v1/initiatives/${nativeInitiativeId}/forecast`)
+        .set('Authorization', authorization)
+        .set('x-organization-id', organizationId)
+        .send({
+          expectedVersion: 1,
+          clientRequestId: nativeRequestId,
+          forecastEndDate: '2027-02-15',
+          reason: 'Native-only operational forecast',
+        });
+      expect(replay.status, JSON.stringify(replay.body)).toBe(200);
+      expect(replay.body).toMatchObject({ status: 'REPLAYED', aggregateVersion: 2 });
+
+      const counts = await pool.query(
+        `SELECT
+        (SELECT count(*)::int FROM initiatives WHERE organization_id=$1 AND id=$2) AS module_rows,
+        (SELECT count(*)::int FROM initiative_history WHERE initiative_id=$2) AS module_history,
+        (SELECT count(*)::int FROM ie_command_receipts WHERE organization_id=$1 AND aggregate_id=$2) AS receipts,
+        (SELECT count(*)::int FROM ie_audit_events WHERE organization_id=$1 AND aggregate_id=$2) AS audits,
+        (SELECT count(*)::int FROM ie_outbox_events WHERE organization_id=$1 AND aggregate_id=$2) AS outbox`,
+        [organizationId, nativeInitiativeId]
+      );
+      expect(counts.rows[0]).toEqual({
+        module_rows: 0,
+        module_history: 0,
+        receipts: 1,
+        audits: 1,
+        outbox: 1,
+      });
+    });
+
+    it('keeps a native canonical Initiative tenant-invisible before replay lookup', async () => {
+      const foreign = await request(app)
+        .post(`/api/initiatives/runtime-v1/initiatives/${nativeInitiativeId}/forecast`)
+        .set('Authorization', foreignAuthorization)
+        .set('x-organization-id', foreignOrganizationId)
+        .send({
+          expectedVersion: 1,
+          clientRequestId: nativeRequestId,
+          forecastEndDate: '2027-02-15',
+          reason: 'Foreign native replay probe',
+        });
+      expect(foreign.status).toBe(404);
+      expect(foreign.body).toMatchObject({ error: { code: 'NOT_FOUND' } });
+    });
+
+    it('returns tenant-scoped 404 before replay lookup for the same Initiative identity', async () => {
     const foreign = await request(app)
       .post(`/api/initiatives/runtime-v1/initiatives/${initiativeId}/forecast`)
       .set('Authorization', foreignAuthorization)

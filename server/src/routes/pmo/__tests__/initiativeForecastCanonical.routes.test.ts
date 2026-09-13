@@ -129,6 +129,8 @@ describe('canonical Initiative forecast HTTP command', () => {
       actorId,
       clientRequestId: 'forecast-request-a',
       reason: 'Supplier delivery moved',
+      canonicalBefore: { forecastStartDate: null, forecastEndDate: null },
+      canonicalFieldPresence: { forecastStartDate: false, forecastEndDate: false },
       forecastEndDate: '2026-10-15',
     });
     expect(transaction.persistAggregate).toHaveBeenCalledWith(
@@ -140,10 +142,15 @@ describe('canonical Initiative forecast HTTP command', () => {
       expect.objectContaining({
         lifecycleState: 'IN_EXECUTION',
         title: canonicalPayload.title,
-        forecastStartDate: '2026-09-01',
         forecastEndDate: '2026-10-15',
       })
     );
+    expect(
+      Object.prototype.hasOwnProperty.call(
+        transaction.persistAggregate.mock.calls[0][5],
+        'forecastStartDate'
+      )
+    ).toBe(false);
   });
 
   it('rejects an empty forecast command before opening the transaction', async () => {
@@ -279,7 +286,7 @@ describe('canonical Initiative forecast HTTP command', () => {
     });
   });
 
-  it('does not advertise forecast as available without the same-ID module projection', async () => {
+  it('advertises the native canonical forecast writer without a compatibility module projection', async () => {
     reader.findModuleInitiativeForPlanning.mockResolvedValueOnce(null);
 
     const response = await request(buildApp()).get(
@@ -288,9 +295,9 @@ describe('canonical Initiative forecast HTTP command', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.executionWrites.forecast).toMatchObject({
-      available: false,
-      denialAt: 'PROJEKCJA',
-      denialCode: 'INITIATIVE_FORECAST_PROJECTION_NOT_FOUND',
+      available: true,
+      denialAt: null,
+      denialCode: null,
     });
   });
 });

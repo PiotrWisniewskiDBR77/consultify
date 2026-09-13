@@ -2537,20 +2537,15 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      const [canUpdate, canReview, canUpdateForecast, moduleInitiative] = await Promise.all([
+      const [canUpdate, canReview, canUpdateForecast] = await Promise.all([
         deps.authorize(actor, found.initiative.projectId, 'initiative.update'),
         deps.authorize(actor, found.initiative.projectId, 'initiative.review'),
         autoryzujZapisInicjatywy(actor, found),
-        deps.reader.findModuleInitiativeForPlanning(
-          actor.organizationId,
-          firstParam(req.params.initiativeId)
-        ),
       ]);
       const forecastLifecycleEligible = ['SCHEDULED', 'IN_EXECUTION'].includes(
         String(found.initiative.lifecycleState).toUpperCase()
       );
-      const forecastAvailable =
-        canUpdateForecast && forecastLifecycleEligible && moduleInitiative !== null;
+      const forecastAvailable = canUpdateForecast && forecastLifecycleEligible;
       const forecastDenial = !canUpdateForecast
         ? { denialAt: 'ZDOLNOŚĆ', denialCode: 'CAPABILITY_REQUIRED' }
         : !forecastLifecycleEligible
@@ -2558,12 +2553,7 @@ export function createInitiativesExecutionRuntimeRouter(
               denialAt: 'CYKL_ŻYCIA',
               denialCode: 'INITIATIVE_FORECAST_LIFECYCLE_INVALID',
             }
-          : moduleInitiative === null
-            ? {
-                denialAt: 'PROJEKCJA',
-                denialCode: 'INITIATIVE_FORECAST_PROJECTION_NOT_FOUND',
-              }
-            : { denialAt: null, denialCode: null };
+          : { denialAt: null, denialCode: null };
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
