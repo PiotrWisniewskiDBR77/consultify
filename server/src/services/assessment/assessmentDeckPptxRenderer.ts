@@ -21,6 +21,7 @@ import {
   type DeckModel,
   type DeckSlide,
 } from './assessmentDeckModel.js';
+import { reportI18n } from './assessmentReportI18n.js';
 
 /**
  * pptxgenjs 4.0.1 jest paczką CJS. Pod `tsx`/ESM domyślny import bywa
@@ -277,7 +278,7 @@ export async function renderAssessmentDeckPptx(model: DeckModel): Promise<Buffer
   pptx.author = 'Consultify';
   pptx.company = model.organizationName;
   pptx.title = model.title;
-  pptx.subject = 'Raport z oceny dojrzałości cyfrowej DRD';
+  pptx.subject = reportI18n(model.language ?? 'pl').deckPdfSubject;
 
   model.slides.forEach((slide, index) =>
     renderSlide(pptx, model, slide, index, model.slides.length)

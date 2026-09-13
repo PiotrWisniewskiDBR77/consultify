@@ -22,6 +22,7 @@ import {
   type DeckModel,
   type DeckSlide,
 } from './assessmentDeckModel.js';
+import { reportI18n } from './assessmentReportI18n.js';
 
 const PT = 72;
 const hex = (value: string): string => `#${value}`;
@@ -265,7 +266,7 @@ export async function renderAssessmentDeckPdf(model: DeckModel): Promise<Buffer>
     info: {
       Title: model.title,
       Author: 'Consultify',
-      Subject: 'Raport z oceny dojrzałości cyfrowej DRD',
+      Subject: reportI18n(model.language ?? 'pl').deckPdfSubject,
     },
   });
   registerPdfFonts(doc);

@@ -4,6 +4,7 @@ import DRD_STRUCTURE, { type DRDAxis } from '../../data/drdStructure.js';
 import type { DocumentBlock, DocumentSchema } from '../documentStudio/documentStudioTypes.js';
 import { DRD_DOCX_STYLE_IDS, DRD_REPORT_PALETTE } from '../documentStudio/documentDocxStyles.js';
 import type { AssessmentReportContractService } from './assessmentReportContractService.js';
+import { reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
 
 export type AssessmentReportContract = Awaited<
   ReturnType<AssessmentReportContractService['build']>
@@ -70,10 +71,10 @@ type ContractArea = ContractChapter['matrix']['areas'][number];
  * treści dla klienta; parametry są nadal przyjmowane, żeby wywołania
  * pozostały jednoznaczne co do slotu.
  */
-function placeholder(minWords: number, maxWords: number): string {
+function placeholder(minWords: number, maxWords: number, language: ReportLanguage = 'pl'): string {
   void minWords;
   void maxWords;
-  return 'Brak treści w tej sekcji — ocena nie zawiera danych, z których dałoby się ją napisać.';
+  return reportI18n(language).sectionPlaceholder;
 }
 
 // FIX-3 (nadzorca 2026-08-28): the raw editorial instruction
@@ -93,7 +94,9 @@ function placeholder(minWords: number, maxWords: number): string {
 // (executive summary, chapter introduction/conclusion, matrix caption,
 // Kierunek/Priorytet/Warunek sukcesu) keeps the generic `placeholder()` —
 // they are not touched by this fix.
-const HORIZON_PLACEHOLDER = 'Nie określono — brak źródła w danych.';
+// S1.4b: the fixed sentence itself now lives in `assessmentReportI18n.ts`
+// (`horizonPlaceholder`, en+pl) so DOCX/PPTX read the same string; this file
+// no longer keeps its own PL-only copy.
 
 // DEDUP (nadzorca 2026-08-28): this used to also handle `not_assessed` with
 // its own copy of "Obszaru X nie oceniono — brak danych źródłowych." — the
@@ -104,8 +107,8 @@ const HORIZON_PLACEHOLDER = 'Nie określono — brak źródła w danych.';
 // The dedicated block owns that sentence now; this placeholder only covers
 // the genuinely different case — a scored area (evidenced/incomplete/
 // declared) whose narrative simply wasn't composed.
-function areaCommentPlaceholder(area: ContractArea): string {
-  return `Komentarz obszaru ${area.unitId} nie został przygotowany.`;
+function areaCommentPlaceholder(area: ContractArea, language: ReportLanguage = 'pl'): string {
+  return reportI18n(language).areaCommentPlaceholder(area.unitId);
 }
 
 // W2 (nadzorca 2026-08-28) + FIX-2 (nadzorca 2026-08-28, drugi obieg):
@@ -193,23 +196,40 @@ function buildSessionSignature(clientName: string, generatedAt: string, sessionI
   return `DRD-${year}-${month}${day}-${suffix}`;
 }
 
-function slotText(slot: { content: string | null; minWords: number; maxWords: number }): string {
-  return slot.content ?? placeholder(slot.minWords, slot.maxWords);
+function slotText(
+  slot: { content: string | null; minWords: number; maxWords: number },
+  language: ReportLanguage = 'pl'
+): string {
+  return slot.content ?? placeholder(slot.minWords, slot.maxWords, language);
 }
 
-export function priorityForGap(gap: number | null): string {
-  if (gap === null) return '—';
-  if (gap >= 3) return 'Krytyczny';
-  if (gap === 2) return 'Wysoki';
-  if (gap === 1) return 'Średni';
-  return 'Utrzymanie';
+// `language` domyślnie `'pl'` — WYŁĄCZNIE po to, żeby `assessmentNarrativeComposer.ts`
+// (poza zakresem S1.4b, pisze narrację ZAWSZE po polsku) mógł wołać te dwie
+// funkcje bez zmian i dalej dostawać dokładnie ten sam polski tekst co dziś.
+export function priorityForGap(gap: number | null, language: ReportLanguage = 'pl'): string {
+  const t = reportI18n(language);
+  if (gap === null) return t.priorityDash;
+  if (gap >= 3) return t.priorityCritical;
+  if (gap === 2) return t.priorityHigh;
+  if (gap === 1) return t.priorityMedium;
+  return t.priorityMaintain;
 }
 
-export function resolveDrdLevelLabelPL(axisId: number, level: number): string {
+export function resolveDrdLevelLabelPL(
+  axisId: number,
+  level: number,
+  language: ReportLanguage = 'pl'
+): string {
   const axis = DRD_STRUCTURE.find((candidate) => candidate.id === axisId) as
     | (DRDAxis & { levelLabelsPL?: string[] })
     | undefined;
   if (!axis) return String(level);
+  // Struktura DRD jest EN-first: `name`/`levels[].title` po angielsku,
+  // `namePL`/`levelLabelsPL` to nakładka polska tylko dla osi 1-2. Dla
+  // raportu angielskiego etykieta poziomu jest ZAWSZE angielskim tytułem
+  // ze struktury (nigdy nakładką PL), niezależnie od tego, czy ta oś ma
+  // `levelLabelsPL`.
+  if (language === 'en') return axis.areas[0]?.levels[level - 1]?.title ?? String(level);
   return (
     axis.levelLabelsPL?.[level - 1] ?? axis.areas[0]?.levels[level - 1]?.title ?? String(level)
   );
@@ -256,9 +276,9 @@ export function areaAverage(
   );
 }
 
-function matrixRows(chapter: ContractChapter): unknown[][] {
+function matrixRows(chapter: ContractChapter, language: ReportLanguage = 'pl'): unknown[][] {
   return chapter.matrix.areas.map((area) => {
-    const cells: unknown[] = [area.unitNamePL ?? area.unitName];
+    const cells: unknown[] = [areaLabel(area, language)];
     for (let level = 1; level <= chapter.maxLevel; level += 1) {
       let value = '';
       let fill: string | undefined;
@@ -280,16 +300,42 @@ function matrixRows(chapter: ContractChapter): unknown[][] {
     cells.push(
       area.gap ?? '—',
       area.gap !== null && area.gap >= 3
-        ? { value: priorityForGap(area.gap), style: { bgColor: DRD_REPORT_PALETTE.crimson } }
-        : priorityForGap(area.gap)
+        ? { value: priorityForGap(area.gap, language), style: { bgColor: DRD_REPORT_PALETTE.crimson } }
+        : priorityForGap(area.gap, language)
     );
     return cells;
   });
 }
 
-function skipNotice(area: ContractArea): string | null {
-  const label = (code: string) =>
-    ASSESSMENT_SKIP_REASON_PL[code as keyof typeof ASSESSMENT_SKIP_REASON_PL] ?? code;
+/** Nazwa osi/obszaru: EN-first ze struktury DRD dla `en`, nakładka PL dla `pl`
+ * (odwrotnie niż stary wzorzec `namePL ?? name` — TEN zawsze faworyzował
+ * polski, nawet dla `en`). */
+export function axisLabel(
+  chapter: Pick<ContractChapter, 'axisName' | 'axisNamePL'>,
+  language: ReportLanguage
+): string {
+  return language === 'pl' ? (chapter.axisNamePL ?? chapter.axisName) : chapter.axisName;
+}
+export function areaLabel(
+  area: Pick<ContractArea, 'unitName' | 'unitNamePL'>,
+  language: ReportLanguage
+): string {
+  return language === 'pl' ? (area.unitNamePL ?? area.unitName) : area.unitName;
+}
+
+const SKIP_REASON_KEY_BY_CODE = {
+  poza_modelem_operacyjnym: 'skipOutsideOperatingModel',
+  poza_zakresem_zlecenia: 'skipOutsideEngagementScope',
+  odroczone_do_kolejnej_rewizji: 'skipDeferredToNextRevision',
+  zastapione_innym_rozwiazaniem: 'skipReplacedByOtherSolution',
+} as const;
+
+function skipNotice(area: ContractArea, language: ReportLanguage = 'pl'): string | null {
+  const t = reportI18n(language);
+  const label = (code: string) => {
+    const key = SKIP_REASON_KEY_BY_CODE[code as keyof typeof SKIP_REASON_KEY_BY_CODE];
+    return key ? t[key] : code;
+  };
   if (area.skipped) {
     const labels = [
       ...new Set(
@@ -300,20 +346,22 @@ function skipNotice(area: ContractArea): string | null {
             : []
       ),
     ];
-    return `Obszar pominięty w ocenie — kod: ${labels.join(', ') || 'wiele kodów'}.`;
+    return t.skipNoticeWhole(labels.join(', ') || (language === 'pl' ? 'wiele kodów' : 'multiple codes'));
   }
   if (area.skips.length > 0) {
-    return `Pominięte pytania: ${area.skips
-      .map((skip) => `${skip.questionId} — ${label(skip.skipCode)}`)
-      .join('; ')}.`;
+    return t.skipNoticePartial(
+      area.skips.map((skip) => `${skip.questionId} — ${label(skip.skipCode)}`).join('; ')
+    );
   }
   return null;
 }
 
 function chapterBlocks(
   chapter: ContractChapter,
-  decisionLineLimit: { minWords: number; maxWords: number }
+  decisionLineLimit: { minWords: number; maxWords: number },
+  language: ReportLanguage = 'pl'
 ): DocumentBlock[] {
+  const t = reportI18n(language);
   const blocks: DocumentBlock[] = [];
   const assessed = chapter.matrix.areas.some(
     (area) => !area.skipped && area.currentLevel !== null && area.targetLevel !== null
@@ -323,47 +371,69 @@ function chapterBlocks(
       `${chapter.axisId}-intro`,
       assessed
         ? slotText(
-            chapter.introduction as { content: string | null; minWords: number; maxWords: number }
+            chapter.introduction as { content: string | null; minWords: number; maxWords: number },
+            language
           )
-        : `${DRD_REPORT_FIXED_TEXT.notAssessed} ${slotText(chapter.introduction as { content: string | null; minWords: number; maxWords: number })}`,
+        : `${t.notAssessed} ${slotText(chapter.introduction as { content: string | null; minWords: number; maxWords: number }, language)}`,
       assessed && chapter.introduction.content
         ? DRD_DOCX_STYLE_IDS.BODY
         : DRD_DOCX_STYLE_IDS.CAPTION
     ),
-    heading(`${chapter.axisId}-matrix-heading`, 'Matryca poziomów dojrzałości', 2),
+    heading(`${chapter.axisId}-matrix-heading`, t.matrixHeading, 2),
     table(
       `${chapter.axisId}-matrix`,
       [
-        'Obszar',
+        t.matrixAreaColumn,
         ...Array.from({ length: chapter.maxLevel }, (_, index) => String(index + 1)),
-        'Luka',
-        'Priorytet',
+        t.matrixGapColumn,
+        t.matrixPriorityColumn,
       ],
-      matrixRows(chapter),
+      matrixRows(chapter, language),
       slotText(
-        chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number }
+        chapter.matrix.caption as { content: string | null; minWords: number; maxWords: number },
+        language
       )
     ),
-    heading(`${chapter.axisId}-areas-heading`, 'Ocena obszarów', 2)
+    heading(`${chapter.axisId}-areas-heading`, t.areasHeading, 2)
   );
 
   chapter.matrix.areas.forEach((area) => {
     const comment = chapter.areaComments.find((candidate) => candidate.unitId === area.unitId);
     blocks.push(
-      heading(`${area.unitId}-heading`, `${area.unitId}  ${area.unitNamePL ?? area.unitName}`, 3),
+      heading(`${area.unitId}-heading`, `${area.unitId}  ${areaLabel(area, language)}`, 3),
       paragraph(
         `${area.unitId}-signature`,
-        `Poziom obecny: ${area.currentLevel ?? '—'} (${area.currentLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel) : '—'}) · Poziom docelowy: ${area.targetLevel ?? '—'} (${area.targetLevel ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel) : '—'}) · Luka: ${area.gap ?? '—'} · Priorytet: ${priorityForGap(area.gap)} · Dowody: ${EVIDENCE_STATE_PL[area.evidenceState as keyof typeof EVIDENCE_STATE_PL]}`,
+        t.signatureLine({
+          currentLevel: area.currentLevel,
+          currentLabel: area.currentLevel
+            ? resolveDrdLevelLabelPL(chapter.axisId, area.currentLevel, language)
+            : '—',
+          targetLevel: area.targetLevel,
+          targetLabel: area.targetLevel
+            ? resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel, language)
+            : '—',
+          gap: area.gap,
+          priority: priorityForGap(area.gap, language),
+          evidence:
+            language === 'pl'
+              ? EVIDENCE_STATE_PL[area.evidenceState as keyof typeof EVIDENCE_STATE_PL]
+              : ({
+                  evidenced: t.evidenceEvidenced,
+                  incomplete: t.evidenceIncomplete,
+                  declared: t.evidenceDeclared,
+                  not_assessed: t.evidenceNotAssessed,
+                }[area.evidenceState] ?? area.evidenceState),
+        }),
         DRD_DOCX_STYLE_IDS.SIGNATURE
       )
     );
-    const notice = skipNotice(area);
+    const notice = skipNotice(area, language);
     if (notice) blocks.push(paragraph(`${area.unitId}-skip`, notice, DRD_DOCX_STYLE_IDS.CAPTION));
     if (area.evidenceState === 'not_assessed' && !notice) {
       blocks.push(
         paragraph(
           `${area.unitId}-not-assessed`,
-          `Obszaru ${area.unitId} nie oceniono — brak danych źródłowych.`,
+          t.areaNotAssessedSentence(area.unitId),
           DRD_DOCX_STYLE_IDS.CAPTION
         )
       );
@@ -383,7 +453,7 @@ function chapterBlocks(
         ? comment.content
         : notice || area.evidenceState === 'not_assessed'
           ? null
-          : areaCommentPlaceholder(area);
+          : areaCommentPlaceholder(area, language);
       if (commentText) {
         blocks.push(
           paragraph(
@@ -397,7 +467,8 @@ function chapterBlocks(
   });
 
   const conclusionPlaceholder = slotText(
-    chapter.conclusion as { content: string | null; minWords: number; maxWords: number }
+    chapter.conclusion as { content: string | null; minWords: number; maxWords: number },
+    language
   );
   // W4 (nadzorca 2026-08-28): the four decision-line cells are short fields
   // — CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField, i.e. 10–30 words —
@@ -409,28 +480,28 @@ function chapterBlocks(
   // FIX-6: this comment used to say "15–40 words per the wzorzec
   // measurement", contradicting both the constant (10–30) and the header
   // comment (12–21). The single authority is the constant.
-  const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
+  const decisionPlaceholder = placeholder(
+    decisionLineLimit.minWords,
+    decisionLineLimit.maxWords,
+    language
+  );
   blocks.push(
-    heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
+    heading(`${chapter.axisId}-conclusion-heading`, t.chapterConclusionHeading, 2),
     paragraph(
       `${chapter.axisId}-conclusion`,
       conclusionPlaceholder,
       chapter.conclusion.content ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
     ),
-    paragraph(
-      `${chapter.axisId}-decision-label`,
-      DRD_REPORT_FIXED_TEXT.decisionLine,
-      DRD_DOCX_STYLE_IDS.KICKER
-    ),
+    paragraph(`${chapter.axisId}-decision-label`, t.decisionLineLabel, DRD_DOCX_STYLE_IDS.KICKER),
     table(
       `${chapter.axisId}-decision`,
-      ['Pole', 'Treść'],
+      [t.decisionFieldColumn, t.decisionContentColumn],
       [
-        ['Kierunek', chapter.conclusion.decisionLine.direction ?? decisionPlaceholder],
-        ['Priorytet', chapter.conclusion.decisionLine.priority ?? decisionPlaceholder],
-        ['Horyzont', chapter.conclusion.decisionLine.horizon ?? HORIZON_PLACEHOLDER],
+        [t.decisionDirection, chapter.conclusion.decisionLine.direction ?? decisionPlaceholder],
+        [t.decisionPriority, chapter.conclusion.decisionLine.priority ?? decisionPlaceholder],
+        [t.decisionHorizon, chapter.conclusion.decisionLine.horizon ?? t.horizonPlaceholder],
         [
-          'Warunek sukcesu',
+          t.decisionSuccessCondition,
           chapter.conclusion.decisionLine.successCondition ?? decisionPlaceholder,
         ],
       ]
@@ -439,8 +510,20 @@ function chapterBlocks(
   return blocks;
 }
 
-export function buildAssessmentDrdReportSchema(contract: AssessmentReportContract): DocumentSchema {
-  const clientName = contract.sessionLabel.displayName ?? DRD_REPORT_FIXED_TEXT.clientMissing;
+export function buildAssessmentDrdReportSchema(
+  contract: AssessmentReportContract,
+  organizationName?: string | null
+): DocumentSchema {
+  const language: ReportLanguage = contract.language ?? 'pl';
+  const t = reportI18n(language);
+  const sessionDisplayName = contract.sessionLabel.displayName ?? null;
+  // S1.4b fix #1: TYTUŁ dokumentu = nazwa organizacji (klient płacący za
+  // ocenę), a nie nazwa sesji ("DRD Assessment - Jul 12, 2026"). Sesja
+  // schodzi do podtytułu. Gdy organizacja jest nieznana (np. legacy dane bez
+  // wiersza `organizations`), spadamy na nazwę sesji, a dopiero potem na
+  // jawny placeholder — nigdy odwrotnie.
+  const clientName = organizationName?.trim() || sessionDisplayName || t.clientMissing;
+  const localeForSort = language === 'pl' ? 'pl' : 'en';
   const executiveLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.executiveSummary;
   const finalLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.finalConclusions;
   const decisionLineLimit = CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
@@ -449,7 +532,7 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     const target = areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel);
     const critical = chapter.matrix.areas.filter((area) => (area.gap ?? 0) >= 3).length;
     return [
-      chapter.axisNamePL ?? chapter.axisName,
+      axisLabel(chapter, language),
       current === null ? '—' : `${current}%`,
       target === null ? '—' : `${target}%`,
       critical,
@@ -460,31 +543,31 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     type: 'chart',
     content: {
       kind: 'radar',
-      title: 'Profil dojrzałości DRD',
+      title: t.radarTitle,
       categories: contract.chapters.map((chapter) => {
         const current = areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel);
         const target = areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel);
         return current === null || target === null
-          ? `${chapter.axisNamePL ?? chapter.axisName} · ${DRD_REPORT_FIXED_TEXT.notAssessed}`
-          : `${chapter.axisNamePL ?? chapter.axisName} · ${current}% → ${target}%`;
+          ? `${axisLabel(chapter, language)} · ${t.notAssessed}`
+          : `${axisLabel(chapter, language)} · ${current}% → ${target}%`;
       }),
       series: [
         {
-          label: 'Poziom obecny · stan oceny',
+          label: t.radarSeriesCurrent,
           values: contract.chapters.map((chapter) =>
             areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel)
           ),
           color: `#${DRD_REPORT_PALETTE.navy}`,
         },
         {
-          label: 'Poziom docelowy · horyzont docelowy',
+          label: t.radarSeriesTarget,
           values: contract.chapters.map((chapter) =>
             areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel)
           ),
           color: `#${DRD_REPORT_PALETTE.teal}`,
         },
       ],
-      caption: 'Profil dojrzałości cyfrowej według siedmiu osi DRD.',
+      caption: t.radarCaption,
     },
   };
 
@@ -493,27 +576,23 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       sectionId: 'executive-summary',
       orderIndex: 0,
       level: 1,
-      title: DRD_REPORT_FIXED_TEXT.executiveSummary,
-      purpose: 'STRESZCZENIE',
+      title: t.executiveSummary,
+      purpose: t.purposeSummary,
       sourceRefs: [],
       blocks: [
         paragraph(
           'executive-placeholder',
           contract.executiveSummary ??
-            placeholder(executiveLimit.minWords, executiveLimit.maxWords),
+            placeholder(executiveLimit.minWords, executiveLimit.maxWords, language),
           contract.executiveSummary ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
         radar,
-        table(
-          'axis-summary',
-          ['Oś', 'Obecny', 'Docelowy', 'Luki krytyczne'],
-          axisRows,
-          'Zestawienie siedmiu osi DRD.'
-        ),
-        heading('critical-gaps-heading', DRD_REPORT_FIXED_TEXT.criticalGaps, 2),
+        table('axis-summary', [...t.axisSummaryHeaders], axisRows, t.axisSummaryCaption),
+        heading('critical-gaps-heading', t.criticalGaps, 2),
         paragraph(
           'critical-gaps-placeholder',
-          contract.criticalGaps ?? placeholder(executiveLimit.minWords, executiveLimit.maxWords),
+          contract.criticalGaps ??
+            placeholder(executiveLimit.minWords, executiveLimit.maxWords, language),
           contract.criticalGaps ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
       ],
@@ -522,44 +601,44 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       sectionId: `axis-${chapter.axisId}`,
       orderIndex: index + 1,
       level: 1 as const,
-      title: `${chapter.axisId}. ${chapter.axisNamePL ?? chapter.axisName}`,
-      purpose: `Rozdział ${index + 1} z 7 · oś ${chapter.axisId} struktury DRD`,
+      title: `${chapter.axisId}. ${axisLabel(chapter, language)}`,
+      purpose: t.purposeChapter(index + 1, contract.chapters.length, chapter.axisId),
       sourceRefs: [],
-      blocks: chapterBlocks(chapter, decisionLineLimit),
+      blocks: chapterBlocks(chapter, decisionLineLimit, language),
     })),
     {
       sectionId: 'final-conclusions',
       orderIndex: 8,
       level: 1,
-      title: `8. ${DRD_REPORT_FIXED_TEXT.finalConclusions}`,
-      purpose: 'SYNTEZA',
+      title: `8. ${t.finalConclusions}`,
+      purpose: t.purposeSynthesis,
       sourceRefs: [],
       blocks: [
         paragraph(
           'final-placeholder',
-          contract.finalConclusions ?? placeholder(finalLimit.minWords, finalLimit.maxWords),
+          contract.finalConclusions ?? placeholder(finalLimit.minWords, finalLimit.maxWords, language),
           contract.finalConclusions ? DRD_DOCX_STYLE_IDS.BODY : DRD_DOCX_STYLE_IDS.CAPTION
         ),
-        heading('program-decision-heading', 'Linia decyzyjna programu', 2),
+        heading('program-decision-heading', t.programDecisionHeading, 2),
         table(
           'program-decision',
-          ['Pole', 'Treść'],
+          [t.decisionFieldColumn, t.decisionContentColumn],
           [
             [
-              'Kierunek',
+              t.decisionDirection,
               contract.programDecisionLine?.direction ??
-                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords, language),
             ],
             [
-              'Priorytet',
+              t.decisionPriority,
               contract.programDecisionLine?.priority ??
-                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords, language),
             ],
-            ['Horyzont', contract.programDecisionLine?.horizon ?? HORIZON_PLACEHOLDER],
+            [t.decisionHorizon, contract.programDecisionLine?.horizon ?? t.horizonPlaceholder],
             [
-              'Warunek sukcesu',
+              t.decisionSuccessCondition,
               contract.programDecisionLine?.successCondition ??
-                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords, language),
             ],
           ]
         ),
@@ -569,14 +648,14 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       sectionId: 'gap-register',
       orderIndex: 9,
       level: 1,
-      title: DRD_REPORT_FIXED_TEXT.appendix,
-      purpose: 'ZAŁĄCZNIK',
+      title: t.appendix,
+      purpose: t.purposeAppendix,
       kind: 'appendix',
       sourceRefs: [],
       blocks: [
         table(
           'gap-register-table',
-          ['Obszar', 'Oś', 'Priorytet', 'Luka', 'Poziom docelowy'],
+          [...t.gapRegisterHeaders],
           contract.chapters
             .flatMap((chapter) =>
               chapter.matrix.areas
@@ -587,21 +666,21 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
               (left, right) =>
                 (right.area.gap ?? 0) - (left.area.gap ?? 0) ||
                 left.chapter.axisId - right.chapter.axisId ||
-                (left.area.unitNamePL ?? left.area.unitName).localeCompare(
-                  right.area.unitNamePL ?? right.area.unitName,
-                  'pl'
+                areaLabel(left.area, language).localeCompare(
+                  areaLabel(right.area, language),
+                  localeForSort
                 )
             )
             .map(({ chapter, area }) => [
-              `${area.unitId} ${area.unitNamePL ?? area.unitName}`,
-              chapter.axisNamePL ?? chapter.axisName,
-              priorityForGap(area.gap),
+              `${area.unitId} ${areaLabel(area, language)}`,
+              axisLabel(chapter, language),
+              priorityForGap(area.gap, language),
               area.gap,
               area.targetLevel === null
                 ? '—'
-                : `${area.targetLevel} — ${resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel)}`,
+                : `${area.targetLevel} — ${resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel, language)}`,
             ]),
-          'Rejestr luk posortowany malejąco według wielkości luki.'
+          t.gapRegisterCaption
         ),
       ],
     },
@@ -612,37 +691,37 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       sectionId: 'methodology-appendix',
       orderIndex: 10,
       level: 1,
-      title: DRD_REPORT_FIXED_TEXT.methodologyAppendix,
-      purpose: 'ZAŁĄCZNIK',
+      title: t.methodologyAppendix,
+      purpose: t.purposeAppendix,
       kind: 'appendix',
       sourceRefs: [],
       blocks: [
         paragraph(
           'methodology-scope',
-          `Ocena została przeprowadzona według struktury DRD: ${DRD_STRUCTURE.length} osi i ${DRD_STRUCTURE.reduce((sum, axis) => sum + axis.areas.length, 0)} obszarów. Każdy obszar ma zapisany poziom obecny i poziom docelowy na skali własnej dla swojej osi. Luka jest różnicą poziomu docelowego i obecnego; priorytet wynika wyłącznie z wielkości luki i nie jest oceną ekspercką. Kolumna „Obecny" i „Docelowy" w zestawieniu osi to średnia poziomów obszarów tej osi wyrażona jako procent maksymalnego poziomu osi.`
+          t.methodologyScope(
+            DRD_STRUCTURE.length,
+            DRD_STRUCTURE.reduce((sum, axis) => sum + axis.areas.length, 0)
+          )
         ),
         table(
           'methodology-axes',
-          ['Oś', 'Nazwa', 'Liczba obszarów', 'Skala poziomów'],
+          [...t.methodologyAxesHeaders],
           DRD_STRUCTURE.map((axis) => [
             axis.id,
-            axis.namePL ?? axis.name,
+            language === 'pl' ? (axis.namePL ?? axis.name) : axis.name,
             axis.areas.length,
             `1–${axis.levelCount}`,
           ]),
-          'Struktura metodyki DRD użyta w tej ocenie.'
+          t.methodologyAxesCaption
         ),
-        heading('methodology-source-heading', 'Źródło danych i ograniczenia', 2),
+        heading('methodology-source-heading', t.methodologySourceHeading, 2),
         paragraph(
           'methodology-source',
           contract.sourceKind === 'legacy'
-            ? `Źródłem wyniku jest ocena prowadzona w warsztacie DRD (magazyn zastany), nie zamrożony Output jądra metodycznego. Oznacza to, że poziomy zostały zadeklarowane przez oceniającego i nie mają załączonych dowodów; kolumna stanu dowodowego w całym raporcie przyjmuje wartość „zadeklarowane". Wersja metodyki zapisana przy tej ocenie: ${contract.methodVersion}. Sygnatura oceny: ${contract.sessionId}.`
-            : `Źródłem wyniku jest zamrożony Output jądra metodycznego, rewizja ${contract.revision}. Stan dowodowy każdego obszaru wynika z liczby dowodów zapisanych przy findingu. Wersja paczki metodycznej: ${contract.methodVersion}. Sygnatura sesji: ${contract.sessionId}.`
+            ? t.methodologySourceLegacy(contract.methodVersion, contract.sessionId)
+            : t.methodologySourceCore(contract.revision, contract.methodVersion, contract.sessionId)
         ),
-        paragraph(
-          'methodology-honesty',
-          'Raport nie zawiera porównania z rynkiem, prognozy ani horyzontu czasowego — te dane nie istnieją w ocenie i nie zostały dopisane. Obszar bez zapisanego poziomu jest oznaczony jako nieoceniony, a nie jako poziom zerowy.'
-        ),
+        paragraph('methodology-honesty', t.methodologyHonesty),
       ],
     },
   ];
@@ -650,9 +729,12 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
   return {
     documentId: `assessment-drd-${contract.sessionId}-${contract.outputId ?? 'current'}`,
     artifactId: contract.outputId ?? contract.sessionId,
-    title: DRD_REPORT_FIXED_TEXT.title,
+    // S1.4b fix #1: tytuł okładki = nazwa organizacji (`clientName`), nie
+    // generyczny opis dokumentu — tamten opis żyje teraz w kickerze
+    // (`coverKicker2`, np. "OCENA DOJRZAŁOŚCI CYFROWEJ · DIGITAL PATHFINDER").
+    title: clientName,
     documentType: 'client_final_report',
-    language: 'pl',
+    language,
     audience: [clientName],
     goal: 'inform',
     communicationRegister: 'executive',
@@ -670,8 +752,8 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
         enabled: true,
         pageNumbering: true,
         confidentialityLabel: true,
-        content: `Poufne — ${clientName}`,
-        pageNumberingFormat: 'Strona {N} z {M}',
+        content: t.deckConfidentiality(clientName),
+        pageNumberingFormat: language === 'pl' ? 'Strona {N} z {M}' : 'Page {N} of {M}',
       },
       toc: true,
       tocConfig: { enabled: true, maxDepth: 2, nativeField: true },
@@ -687,6 +769,11 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
     updatedAt: contract.generatedAt,
     drdReportMetadata: {
       clientName,
+      // Podtytuł okładki (S1.4b fix #1) — nazwa sesji/oceny, tylko gdy różni
+      // się od nazwy organizacji (np. legacy dane bez `organizations.name`,
+      // gdzie `clientName` sam już JEST nazwą sesji — powtórzenie w
+      // podtytule byłoby echem, nie informacją).
+      sessionLabel: sessionDisplayName && sessionDisplayName !== clientName ? sessionDisplayName : null,
       // W1 (nadzorca 2026-08-28): these five fields used to be hardcoded to
       // null. They now read from `AssessmentReportContractService.build()`,
       // which pulls them from organization_profiles.industry (legacy
@@ -703,9 +790,16 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
       assessmentPeriod: contract.assessmentPeriod ?? null,
       assessor: contract.assessor ?? null,
       clientSponsor: contract.clientSponsor ?? null,
-      methodology: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
+      methodology: t.methodologyName,
       sessionSignature: buildSessionSignature(clientName, contract.generatedAt, contract.sessionId),
+      // S1.4b fix #3: "Data wydania" = MOMENT WYGENEROWANIA TEGO PLIKU
+      // (`contract.generatedAt`, ustawiane na `new Date()` w
+      // `assessmentLegacyReportContractService.ts`), NIE data ostatniej
+      // modyfikacji wiersza oceny. Ta druga jedzie osobno w
+      // `assessmentUpdatedAt`, żeby okładka mogła pokazać obie, kiedy się
+      // różnią (patrz `documentDocxRenderer.ts#renderDrdCoverBlock`).
       issuedAt: contract.generatedAt,
+      assessmentUpdatedAt: contract.assessmentUpdatedAt ?? null,
     },
   };
 }

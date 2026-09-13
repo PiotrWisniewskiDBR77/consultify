@@ -33,13 +33,12 @@ import {
   formatEmployeeCount,
   normalizeIndustry,
 } from './assessmentReportContractService.js';
+import { formatReportDate, reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
 import { AssessmentSkipReasonError } from './assessmentSkipReasonService.js';
 
-const PL_DATE = new Intl.DateTimeFormat('pl-PL', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
+function formatAssessmentPeriod(date: Date, language: ReportLanguage): string {
+  return formatReportDate(date, language);
+}
 
 interface LegacyAssessmentRow {
   id: string;
@@ -168,7 +167,7 @@ export function zbudujFindingiZastane(
 
 export class AssessmentLegacyReportContractService {
   /** Buduje `assessment-report-contract-v1` z oceny w magazynie zastanym. */
-  async build(organizationId: string, assessmentId: string) {
+  async build(organizationId: string, assessmentId: string, language: ReportLanguage = 'en') {
     const assessment = await DbPromise.get<LegacyAssessmentRow>(
       `SELECT id, name, project_id, created_at, updated_at, answers_json, created_by
        FROM assessments WHERE id = ? AND organization_id = ?`,
@@ -210,27 +209,36 @@ export class AssessmentLegacyReportContractService {
       .trim();
 
     const { poziomy, notatki } = odczytajObszaryZastane(assessment.answers_json);
-    // Data wydania = PÓŹNIEJSZA z dwóch dat wiersza. Seed potrafi mieć
-    // `updated_at` wcześniejsze niż `created_at`, a wtedy okładka drukowała
-    // „wydano 2 września" nad „okres oceny 5 września" — sprzeczność widoczna
-    // dla czytelnika na pierwszej stronie.
+    // ★ FIX S1.4b (2026-09-13): "Data wydania" na okładce pokazywała datę
+    // ostatniej modyfikacji WIERSZA oceny (np. „5 września"), nie datę, w
+    // której klient rzeczywiście dostał TEN plik — dwa eksporty tej samej
+    // niezmienionej oceny, dzień po dniu, drukowały tę samą "datę wydania"
+    // wczorajszą. `generatedAt` (kontrakt) jest teraz ZAWSZE momentem
+    // wygenerowania pliku ("teraz"); `assessmentUpdatedAt` niesie osobno,
+    // kiedy dane SAMEJ oceny były ostatnio zmienione — okładka drukuje obie,
+    // żeby czytelnik nie mylił "dostałem plik dzisiaj" z "dane są sprzed
+    // tygodni" (patrz `documentDocxRenderer.ts#renderDrdCoverBlock`).
+    //
+    // `assessmentUpdatedAt` samo bierze PÓŹNIEJSZĄ z dwóch dat wiersza (seed
+    // potrafi mieć `updated_at` wcześniejsze niż `created_at`).
     // UWAGA: sterownik Postgresa zwraca `timestamptz` jako obiekt `Date`, nie
     // jako napis ISO. Pierwsza wersja tej poprawki sortowała tablicę wprost
     // (`[...].sort()`), czyli PO NAPISIE `Date.toString()` — „Sat Sep 05" <
-    // „Wed Sep 02" alfabetycznie, więc wybierała datę WCZEŚNIEJSZĄ i okładka
-    // dalej pokazywała sprzeczność. Porównujemy znacznik czasu, nie napis.
-    const generatedAt =
+    // „Wed Sep 02" alfabetycznie, więc wybierała datę WCZEŚNIEJSZĄ. Porównujemy
+    // znacznik czasu, nie napis.
+    const generatedAt = new Date().toISOString();
+    const assessmentUpdatedAt =
       [assessment.updated_at, assessment.created_at]
         .filter((value): value is string => Boolean(value))
         .map((value) => new Date(value))
         .filter((value) => !Number.isNaN(value.getTime()))
         .sort((left, right) => left.getTime() - right.getTime())
         .at(-1)
-        ?.toISOString() ?? new Date().toISOString();
+        ?.toISOString() ?? generatedAt;
     const findings = zbudujFindingiZastane(
       assessment.id,
       poziomy,
-      assessment.created_at ?? generatedAt
+      assessment.created_at ?? assessmentUpdatedAt
     );
 
     // Ograniczenie NIE jest ozdobnikiem — to jedyne miejsce, w którym dokument
@@ -245,8 +253,10 @@ export class AssessmentLegacyReportContractService {
       outputId: null,
       revision: 0,
       generatedAt,
-      methodVersion: 'DRD 7 osi / 39 obszarów (ocena zastana — bez przypiętej wersji paczki)',
+      assessmentUpdatedAt,
+      methodVersion: reportI18n(language).legacyMethodVersionLabel,
       sourceKind: 'legacy',
+      language,
       sessionLabel: {
         displayName: project?.name ?? tekst(assessment.name) ?? null,
         source: project ? 'project' : tekst(assessment.name) ? 'assessment' : null,
@@ -258,7 +268,7 @@ export class AssessmentLegacyReportContractService {
         null,
       employment: formatEmployeeCount(organizationProfile?.employee_count),
       assessmentPeriod: assessment.created_at
-        ? PL_DATE.format(new Date(assessment.created_at))
+        ? formatAssessmentPeriod(new Date(assessment.created_at), language)
         : null,
       assessor: assessorName || null,
       clientSponsor: null,
