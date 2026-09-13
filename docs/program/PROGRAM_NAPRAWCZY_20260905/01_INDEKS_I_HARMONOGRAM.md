@@ -921,3 +921,8 @@ Current source HEAD:27da10f07d15c78f0eabea8754da4d7d69e9d0bd. C6 receipt packet 
 
 
 C6integrated103/103 and E1b44/44PASS, fullservertsc0 aftertimestampfix, frontend194→192 restoredexistingbaseline(added0/removed0). BuildV2exit0/index1a21270ca74dfa8735483e69f7bfe6d56a89527863c52499f52121beb63ecddb. ActualBankfivecheckpoints/twonative no-case rows PASS includingselection/reload and physicallyalignedGantt; retained403/telemetry and limiteddark/no-casefixture. ActualGateway/JWT/PGwriter→handoff→JSON/CSVALLOW→editrestoreDENY passes bothUTC/Chicago withcleanupzero. Fullreport C6_E1B_RC2_INTEGRATED_VERIFICATION.md separates remaininggates. Forecast/progressfeed implementation dispatchednewisolatedWT; independentadversarialreviewactive. WholeMVP and deployment open.
+
+
+### Gantt labels — local browser verification 2026-09-13
+
+Physical label RED6.2px → GREEN11px, same5view/reload checkpoints and aligned geometry. Build exit0; existing403 and limited local fixtures retained. See INTEGRATOR_MVP_20260912/E1B_GANTT_LABEL_READABILITY_ACCEPTANCE.md. Forecast/progress packet remains under independent review; no deployment or full MVP acceptance.

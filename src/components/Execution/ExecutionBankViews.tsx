@@ -376,11 +376,7 @@ const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | '
 const rowBucket = (row: ExecutionBankRow, buckets: readonly ExecutionCalendarBucket[]) => {
   if (row.displayFinish.status !== 'KNOWN') return null;
   const finish = row.displayFinish.value;
-  return (
-    buckets.find(
-      (bucket) => finish >= bucket.start && finish < bucket.endExclusive
-    ) ?? null
-  );
+  return buckets.find((bucket) => finish >= bucket.start && finish < bucket.endExclusive) ?? null;
 };
 
 const HorizonControls = ({
@@ -595,13 +591,13 @@ const GanttTrack = ({
           ? 'outside'
           : 'unknown';
   const unknownText =
-    startEvidence.status === 'UNKNOWN' && finishEvidence.status === 'UNKNOWN'
-      ? `${unknownLabel(startEvidence.reason)}; ${unknownLabel(finishEvidence.reason)}`
-      : startEvidence.status === 'UNKNOWN'
-        ? unknownLabel(startEvidence.reason)
-        : finishEvidence.status === 'UNKNOWN'
-          ? unknownLabel(finishEvidence.reason)
-          : null;
+    [
+      ...new Set(
+        [startEvidence, finishEvidence].flatMap((evidence) =>
+          evidence.status === 'UNKNOWN' ? [unknownLabel(evidence.reason)] : []
+        )
+      ),
+    ].join('; ') || null;
 
   return (
     <div
@@ -614,47 +610,48 @@ const GanttTrack = ({
         title={unknownText ?? ''}
       >
         {label}
-        {unknownText ? ` · ${unknownText}` : ''}
       </span>
-      <svg
-        viewBox={`0 0 ${GANTT_WIDTH} 20`}
-        className="h-5 w-full overflow-visible"
-        aria-label={`${label} timeline for ${row.name}`}
-      >
-        <line x1="0" y1="10" x2={GANTT_WIDTH} y2="10" className="stroke-c-border-subtle" />
-        {geometry === 'interval' ? (
-          <rect
-            data-testid={`execution-bank-gantt-bar-${kind}-${row.id}`}
-            data-start={startValue ?? undefined}
-            data-end={finishValue ?? undefined}
-            x={intervalStartX}
-            y="5"
-            width={Math.max(3, intervalFinishX - intervalStartX)}
-            height="10"
-            rx="5"
-            className={tone}
-          />
-        ) : null}
-        {geometry === 'marker' && markerX !== null ? (
-          <circle
-            data-testid={`execution-bank-gantt-marker-${kind}-${row.id}`}
-            data-date={startValue ?? finishValue ?? undefined}
-            cx={markerX}
-            cy="10"
-            r="6"
-            className={tone}
-          />
-        ) : null}
+      <div className="relative min-w-0">
+        <svg
+          viewBox={`0 0 ${GANTT_WIDTH} 20`}
+          className="h-5 w-full overflow-visible"
+          aria-label={`${label} timeline for ${row.name}`}
+        >
+          <line x1="0" y1="10" x2={GANTT_WIDTH} y2="10" className="stroke-c-border-subtle" />
+          {geometry === 'interval' ? (
+            <rect
+              data-testid={`execution-bank-gantt-bar-${kind}-${row.id}`}
+              data-start={startValue ?? undefined}
+              data-end={finishValue ?? undefined}
+              x={intervalStartX}
+              y="5"
+              width={Math.max(3, intervalFinishX - intervalStartX)}
+              height="10"
+              rx="5"
+              className={tone}
+            />
+          ) : null}
+          {geometry === 'marker' && markerX !== null ? (
+            <circle
+              data-testid={`execution-bank-gantt-marker-${kind}-${row.id}`}
+              data-date={startValue ?? finishValue ?? undefined}
+              cx={markerX}
+              cy="10"
+              r="6"
+              className={tone}
+            />
+          ) : null}
+        </svg>
         {geometry === 'unknown' || geometry === 'outside' || geometry === 'invalid' ? (
-          <text x="8" y="14" className="fill-c-text-muted text-[10px]">
+          <span className="absolute inset-y-0 left-1 flex items-center bg-c-surface px-1 text-[11px] text-c-text-muted">
             {geometry === 'outside'
               ? 'Outside visible range'
               : geometry === 'invalid'
                 ? 'Invalid date range'
-                : 'No dated geometry'}
-          </text>
+                : unknownText}
+          </span>
         ) : null}
-      </svg>
+      </div>
     </div>
   );
 };
@@ -672,32 +669,50 @@ const BankGantt = ({
         <span className="text-[11px] font-semibold uppercase text-c-text-muted">
           Initiative schedule
         </span>
-        <span
+        <div
           className="grid grid-cols-[110px_minmax(620px,1fr)] items-center gap-2"
           data-testid="execution-bank-gantt-axis-layout"
         >
           <span className="text-[10px] font-medium text-c-text-secondary">Track</span>
-          <svg
-            viewBox={`0 0 ${GANTT_WIDTH} 36`}
-            className="h-9 w-full overflow-visible"
-            data-testid="execution-bank-gantt-axis"
-            data-window-start={calendarWindow.start}
-            data-window-end={calendarWindow.endExclusive}
-            aria-label={`Timeline from ${readableDate(calendarWindow.start)} to ${readableDate(calendarWindow.endExclusive)}`}
-          >
+          <div className="relative min-w-0">
+            <svg
+              viewBox={`0 0 ${GANTT_WIDTH} 36`}
+              className="h-9 w-full overflow-visible"
+              data-testid="execution-bank-gantt-axis"
+              data-window-start={calendarWindow.start}
+              data-window-end={calendarWindow.endExclusive}
+              aria-label={`Timeline from ${readableDate(calendarWindow.start)} to ${readableDate(calendarWindow.endExclusive)}`}
+            >
+              {calendarWindow.buckets.map((bucket) => {
+                const x = ganttPosition(bucket.start, calendarWindow) ?? 0;
+                return (
+                  <g key={bucket.id} data-testid={`execution-bank-gantt-tick-${bucket.id}`}>
+                    <line x1={x} y1="18" x2={x} y2="36" className="stroke-c-border-subtle" />
+                  </g>
+                );
+              })}
+            </svg>
             {calendarWindow.buckets.map((bucket) => {
               const x = ganttPosition(bucket.start, calendarWindow) ?? 0;
+              const label = new Intl.DateTimeFormat('en', {
+                month: 'short',
+                ...(calendarWindow.resolution === 'WEEK' ? { day: 'numeric' as const } : {}),
+                timeZone: 'UTC',
+              }).format(new Date(`${bucket.start}T00:00:00.000Z`));
               return (
-                <g key={bucket.id} data-testid={`execution-bank-gantt-tick-${bucket.id}`}>
-                  <line x1={x} y1="18" x2={x} y2="36" className="stroke-c-border-subtle" />
-                  <text x={x + 5} y="13" className="fill-c-text-secondary text-[10px]">
-                    {bucket.label}
-                  </text>
-                </g>
+                <span
+                  key={bucket.id}
+                  className="absolute top-0 ml-1 whitespace-nowrap text-[11px] leading-4 text-c-text-secondary"
+                  style={{ left: `${(x / GANTT_WIDTH) * 100}%` }}
+                  title={readableDate(bucket.start)}
+                  aria-hidden="true"
+                >
+                  {label}
+                </span>
               );
             })}
-          </svg>
-        </span>
+          </div>
+        </div>
       </div>
       {rows.map((row) => (
         <button
