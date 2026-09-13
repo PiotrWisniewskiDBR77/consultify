@@ -35,6 +35,7 @@ import {
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { ExecutionReportDocument } from './ExecutionReportDocument';
+import { buildExecutionPreviewHead } from './executionPreviewHead';
 import {
   buildExecutionReportSnapshot,
   fetchExecutionReportInputs,
@@ -1262,37 +1263,43 @@ export const ExecutionReportsSurface = ({
             renderPreview={(row) => {
               if (row.kind === 'CATALOG' && row.catalog) {
                 const item = row.catalog;
+                /*
+                 * K5-5 — bloki 1–2 przez `buildExecutionPreviewHead`. Zdanie
+                 * „Ready — generates a snapshot from real data." / „Visible in
+                 * the catalog, generation in Wave 2." mówi CO ZROBIĆ z pozycją
+                 * katalogu, a nie jaki jest jej stan — kanon §7.3 pkt 2 trzyma
+                 * w bloku 2 sam stan, więc zdanie stoi teraz w „Co dalej".
+                 * Kadencja (jak często ten raport ma powstawać) jest tym, co w
+                 * pozycji katalogu odpowiada terminowi z kanonu.
+                 * `onOpenFull`/`openLabel` na `embedded` były martwe — nagłówek
+                 * rysuje `TableWithPreviewLayout`, ze swoim `common.open`.
+                 */
+                const glowa = buildExecutionPreviewHead({
+                  pills: [
+                    {
+                      label: row.state,
+                      tone: item.mvp ? 'success' : 'neutral',
+                    },
+                    { label: row.level ?? '—', tone: 'neutral' },
+                  ],
+                  term: row.cadence
+                    ? { label: t('executionReports.col.cadence', 'Cadence'), value: row.cadence }
+                    : null,
+                  nextStep: item.mvp
+                    ? t('executionReports.recommendation.active', 'Ready — generates a snapshot from real data.'
+                      )
+                    : t(
+                        'executionReports.recommendation.wave2',
+                        'Visible in the catalog, generation in Wave 2.'
+                      ),
+                });
                 return (
                   <StandardPreview
                     embedded
                     title={row.title}
                     onClose={() => setSelectedDefinitionId(null)}
-                    onOpenFull={
-                      item.mvp
-                        ? () => {
-                            setWizardKey(item.key);
-                            setRegisterMode('RUNS');
-                            setWizardOpen(true);
-                          }
-                        : undefined
-                    }
-                    openLabel={t('executionReports.action.generate', 'Generate report')}
-                    meta={{
-                      pills: [
-                        {
-                          label: row.state,
-                          tone: item.mvp ? 'success' : 'neutral',
-                        },
-                        { label: row.level ?? '—', tone: 'neutral' },
-                      ],
-                      recommendation: item.mvp
-                        ? t('executionReports.recommendation.active', 'Ready — generates a snapshot from real data.'
-                          )
-                        : t(
-                            'executionReports.recommendation.wave2',
-                            'Visible in the catalog, generation in Wave 2.'
-                          ),
-                    }}
+                    meta={glowa.meta}
+                    whatsNext={glowa.whatsNext}
                     details={{
                       label: t('executionReports.preview.contract', 'Report contents'),
                       text: t(
@@ -1334,31 +1341,44 @@ export const ExecutionReportsSurface = ({
               const version = row.definition.versions?.find(
                 (item: any) => item.definitionVersion === row.currentVersion
               );
+              /*
+               * K5-5 — wersja definicji to STAN, więc jest chipem obok statusu,
+               * a nie samotnym „v3" w strefie terminu (kanon §7.3 pkt 2: tam
+               * stoi termin/SLA/data). Terminem definicji jest jej kadencja.
+               * „Finish validation and approval" to instrukcja → „Co dalej";
+               * „Ready to use" jest krótkie i stanowe, więc zostaje linią stanu
+               * pod chipami (sanitizer `czyProza` przepuszcza je świadomie).
+               */
+              const glowa = buildExecutionPreviewHead({
+                pills: [
+                  {
+                    label: row.state,
+                    tone: row.rawState === 'PUBLISHED' ? 'success' : 'neutral',
+                  },
+                  { label: `v${row.currentVersion}`, tone: 'neutral' },
+                ],
+                term: version?.cadence
+                  ? {
+                      label: t('executionReports.columns.cadence', 'Cadence'),
+                      value: String(version.cadence),
+                    }
+                  : null,
+                stateLine:
+                  row.rawState === 'PUBLISHED'
+                    ? t('executionReports.definitionReady', 'Ready to use')
+                    : null,
+                nextStep:
+                  row.rawState === 'PUBLISHED'
+                    ? null
+                    : t('executionReports.definitionUnfinished', 'Finish validation and approval'),
+              });
               return (
                 <StandardPreview
                   embedded
                   title={row.title}
                   onClose={() => setSelectedDefinitionId(null)}
-                  onOpenFull={() => setShowDefinitionEditor(true)}
-                  openLabel={t('executionReports.openDefinition', 'Open definition')}
-                  meta={{
-                    pills: [
-                      {
-                        label: row.state,
-                        tone: row.rawState === 'PUBLISHED' ? 'success' : 'neutral',
-                      },
-                    ],
-                    trailing: (
-                      <span className="text-xs text-c-text-muted">v{row.currentVersion}</span>
-                    ),
-                    recommendation:
-                      row.rawState === 'PUBLISHED'
-                        ? t('executionReports.definitionReady', 'Ready to use')
-                        : t(
-                            'executionReports.definitionUnfinished',
-                            'Finish validation and approval'
-                          ),
-                  }}
+                  meta={glowa.meta}
+                  whatsNext={glowa.whatsNext}
                   details={{
                     label: t('executionReports.contract', 'Report contract'),
                     text: version?.purpose || '—',
@@ -1660,25 +1680,50 @@ export const ExecutionReportsSurface = ({
           itemIds={rows.map((r) => r.id)}
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
           previewOpen={!showRunEditor && Boolean(selectedId)}
-          renderPreview={(r) =>
-            r.snapshot ? (
-              <StandardPreview
-                embedded
-                title={r.title}
-                onClose={() => setSelectedId(null)}
-                onOpenFull={() => void openSnapshot(r.snapshot!.id)}
-                openLabel={t('executionReports.action.openReport', 'Open report')}
-                meta={{
-                  pills: [
+          renderPreview={(r) => {
+            /*
+             * K5-5 — bloki 1–2 obu wariantów wiersza raportu (zamrożona migawka
+             * i przygotowywany raport) idą przez jednego budowniczego, więc
+             * góra podglądu jest ta sama niezależnie od wariantu. Wcześniej
+             * różniły się wszystkim: migawka miała 2 chipy i zdanie bez
+             * terminu, wersja robocza 1 chip, „v3" w strefie terminu i inne
+             * zdanie. Data odcięcia danych (`asOf`) to termin tego wiersza —
+             * dokładnie ten sam zabieg co „Reporting date" w podglądzie banku.
+             */
+            const glowa = buildExecutionPreviewHead({
+              pills: r.snapshot
+                ? [
                     {
                       label: r.status,
                       tone: r.rawStatus === 'PUBLISHED' ? 'success' : 'neutral',
                     },
                     { label: r.level ?? '—', tone: 'neutral' },
+                  ]
+                : [
+                    {
+                      label: reportStatusLabel(r.status, t),
+                      tone: r.source.status === 'PUBLISHED' ? 'success' : 'neutral',
+                    },
+                    { label: r.level ?? '—', tone: 'neutral' },
+                    { label: `v${r.version}`, tone: 'neutral' },
                   ],
-                  recommendation: t('executionReports.recommendation.snapshot', 'Frozen snapshot — open the document, download DOCX or PDF.'
-                  ),
-                }}
+              term: r.asOf
+                ? { label: t('executionReports.columns.asOf', 'Data as of'), value: r.asOf }
+                : null,
+              nextStep: r.snapshot
+                ? t('executionReports.recommendation.snapshot', 'Frozen snapshot — open the document, download DOCX or PDF.'
+                  )
+                : r.source.status === 'PUBLISHED'
+                  ? t('executionReports.reviewOrRefresh', 'Review or refresh the report')
+                  : t('executionReports.finishPreparation', 'Finish preparing the report'),
+            });
+            return r.snapshot ? (
+              <StandardPreview
+                embedded
+                title={r.title}
+                onClose={() => setSelectedId(null)}
+                meta={glowa.meta}
+                whatsNext={glowa.whatsNext}
                 details={{
                   label: t('executionReports.preview.scope', 'Report scope'),
                   text: `${r.period} · ${r.asOf}`,
@@ -1711,21 +1756,8 @@ export const ExecutionReportsSurface = ({
               embedded
               title={r.title}
               onClose={() => setSelectedId(null)}
-              onOpenFull={() => setShowRunEditor(true)}
-              openLabel={t('executionReports.action.openReport', 'Open report')}
-              meta={{
-                pills: [
-                  {
-                    label: reportStatusLabel(r.status, t),
-                    tone: r.source.status === 'PUBLISHED' ? 'success' : 'neutral',
-                  },
-                ],
-                trailing: <span className="text-xs text-c-text-muted">v{r.version}</span>,
-                recommendation:
-                  r.source.status === 'PUBLISHED'
-                    ? t('executionReports.reviewOrRefresh', 'Review or refresh the report')
-                    : t('executionReports.finishPreparation', 'Finish preparing the report'),
-              }}
+              meta={glowa.meta}
+              whatsNext={glowa.whatsNext}
               details={{
                 label: t('executionReports.reportScope', 'Report scope'),
                 text: t('executionReports.periodAsOf', '{{period}} · data as of {{asOf}}', {
@@ -1781,8 +1813,8 @@ export const ExecutionReportsSurface = ({
               }))}
               relationsEmptyLabel={t('executionReports.noSources', 'No sources')}
             />
-            )
-          }
+            );
+          }}
         >
           <StandardTable
             columns={kolumnyRaportow(t)}

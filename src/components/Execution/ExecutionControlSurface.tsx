@@ -76,6 +76,7 @@ import {
   executionReviewRoleLabel,
   executionReviewSignals,
 } from './executionLocalReviewData';
+import { buildExecutionPreviewHead } from './executionPreviewHead';
 import {
   decisionDaysOverdue,
   filterInFlightInitiatives,
@@ -2605,64 +2606,99 @@ export const ExecutionControlSurface = ({
           itemIds={visibleGovernanceRows.map((row) => row.id)}
           getItemById={(id) => governanceRows.find((row) => row.id === id) ?? null}
           previewOpen={Boolean(selectedGovernanceId)}
-          renderPreview={(row) => (
+          /*
+           * K5-5, blok 1: ten podgląd był JEDYNYM w Realizacji BEZ przycisku
+           * „Open" w nagłówku — layout nie dostawał `onOpenFull`, więc nagłówek
+           * milczał o tym, że decyzji/pozycji RAID nie da się otworzyć w pełnej
+           * karcie (takiej karty w produkcie nie ma). Kanon §7.3 pkt 1 zamyka
+           * zestaw nagłówka na Pin · Open · ×; wariant uczciwy (FIX-1,
+           * `openDisabledReason`) pokazuje przycisk WYŁĄCZONY z powodem, zamiast
+           * pomijać go w milczeniu.
+           */
+          openDisabledReason={t(
+            'execution.governance.preview.noFullCard',
+            'This entry lives only in the register — there is no full card to open.'
+          )}
+          renderPreview={(row) => {
+            /*
+             * K5-5 — bloki 1–2 przez `buildExecutionPreviewHead`. Zdania z tego
+             * bloku (w całości zachowane) przeniosły się do dopisku „Co dalej":
+             * „…days — resolve or escalate.", „Item closed — stays in the
+             * register." itd. mówią CO ZROBIĆ, a kanon §7.3 pkt 2 trzyma w
+             * bloku 2 sam stan. Termin (`row.dueAt`) wchodzi do strefy, która
+             * wg kanonu do niego należy; liczba dni po terminie zostaje pod
+             * chipami jako KRÓTKA linia stanu.
+             *
+             * P16/R4 (zachowane): zdanie dla POZYCJI RAID mówi o RAID, nie o
+             * decyzji — pozycja RAID nie ma kroków eskalacji, więc nie dostaje
+             * czasowników rejestru decyzji.
+             */
+            const glowa = buildExecutionPreviewHead({
+              pills: [
+                { label: row.kindLabel, tone: 'neutral' },
+                /*
+                  P16/R4: druga pigułka POZYCJI RAID to jej STATUS i pasmo
+                  ekspozycji, nie „Eskalacja: Czerwona". Przed R4 pigułka
+                  pokazywała dotkliwość przemalowaną na słowo z rejestru
+                  decyzji — pozycja RAID nie ma kroków eskalacji, więc ta
+                  etykieta obiecywała mechanizm, którego nie ma.
+                */
+                row.kind === 'RAID'
+                  ? {
+                      label: row.raidStatusLabel ?? '',
+                      tone:
+                        pasmoEkspozycji(row.exposure ?? null) === 'wysokie'
+                          ? 'danger'
+                          : pasmoEkspozycji(row.exposure ?? null) === 'srednie'
+                            ? 'warning'
+                            : 'neutral',
+                    }
+                  : {
+                      label: row.escalation,
+                      tone:
+                        Number(row.escalationStep ?? 0) >= ESCALATION_STEP_MAX
+                          ? 'danger'
+                          : Number(row.escalationStep ?? 0) > 0
+                            ? 'warning'
+                            : 'neutral',
+                    },
+              ],
+              term: {
+                label:
+                  row.kind === 'DECISION'
+                    ? t('execution.decisions.columns.due', 'Needed by')
+                    : t('execution.governance.columns.due', 'Due'),
+                value:
+                  row.dueAt ||
+                  t('execution.governance.preview.noDueShort', 'No due date'),
+              },
+              stateLine:
+                row.daysOverdue != null
+                  ? `${t('execution.governance.columns.daysOverdue', 'Days overdue')} ${row.daysOverdue}`
+                  : null,
+              nextStep:
+                row.kind === 'RAID'
+                  ? !czyRaidOtwarty(row.rawRaidStatus)
+                    ? t('execution.raid.preview.closed', 'Item closed — stays in the register.')
+                    : row.daysOverdue != null
+                      ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'days — change the due date or close the item.')}`
+                      : row.rawDueAt
+                        ? t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.')
+                        : t('execution.raid.preview.noDue', 'Item has no due date — set one so it can be tracked.')
+                  : row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
+                    ? t('execution.decisions.preview.resolved', 'The decision has been resolved — this entry cannot be deleted.'
+                      )
+                    : row.daysOverdue != null
+                      ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'days — resolve or escalate.')}`
+                      : t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.'),
+            });
+            return (
             <StandardPreview
               embedded
               title={row.title}
               onClose={() => setSelectedGovernanceId(null)}
-              meta={{
-                pills: [
-                  { label: row.kindLabel, tone: 'neutral' },
-                  /*
-                    P16/R4: druga pigułka POZYCJI RAID to jej STATUS i pasmo
-                    ekspozycji, nie „Eskalacja: Czerwona". Przed R4 pigułka
-                    pokazywała dotkliwość przemalowaną na słowo z rejestru
-                    decyzji — pozycja RAID nie ma kroków eskalacji, więc ta
-                    etykieta obiecywała mechanizm, którego nie ma.
-                  */
-                  row.kind === 'RAID'
-                    ? {
-                        label: row.raidStatusLabel ?? '',
-                        tone:
-                          pasmoEkspozycji(row.exposure ?? null) === 'wysokie'
-                            ? 'danger'
-                            : pasmoEkspozycji(row.exposure ?? null) === 'srednie'
-                              ? 'warning'
-                              : 'neutral',
-                      }
-                    : {
-                        label: row.escalation,
-                        tone:
-                          Number(row.escalationStep ?? 0) >= ESCALATION_STEP_MAX
-                            ? 'danger'
-                            : Number(row.escalationStep ?? 0) > 0
-                              ? 'warning'
-                              : 'neutral',
-                      },
-                ],
-                /*
-                  P16/R4: ZDANIE DLA POZYCJI RAID MÓWI O RAID, nie o decyzji.
-                  Bez tej gałęzi podgląd ryzyka po terminie radził
-                  „rozstrzygnij albo eskaluj" — czasowniki rejestru DECYZJI,
-                  których na pozycji RAID nie ma (są: zmień termin, zmień
-                  właściciela, zamknij, eskaluj do problemu).
-                */
-                recommendation:
-                  row.kind === 'RAID'
-                    ? !czyRaidOtwarty(row.rawRaidStatus)
-                      ? t('execution.raid.preview.closed', 'Item closed — stays in the register.')
-                      : row.daysOverdue != null
-                        ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'days — change the due date or close the item.')}`
-                        : row.rawDueAt
-                          ? t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.')
-                          : t('execution.raid.preview.noDue', 'Item has no due date — set one so it can be tracked.')
-                    : row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
-                      ? t('execution.decisions.preview.resolved', 'The decision has been resolved — this entry cannot be deleted.'
-                        )
-                      : row.daysOverdue != null
-                        ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'days — resolve or escalate.')}`
-                        : t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.'),
-              }}
+              meta={glowa.meta}
+              whatsNext={glowa.whatsNext}
               details={{
                 label:
                   row.kind === 'DECISION'
@@ -2897,7 +2933,8 @@ export const ExecutionControlSurface = ({
               }
               relationsEmptyLabel={t('execution.governance.preview.noRelations', 'No relations')}
             />
-          )}
+            );
+          }}
         >
           <StandardTable
             columns={activeGovernancePreset === 'ryzyka' ? raidColumns : decisionColumns}
@@ -2951,34 +2988,60 @@ export const ExecutionControlSurface = ({
             itemIds={visibleDelayRows.map((row) => row.id)}
             getItemById={(id) => delayRows.find((row) => row.id === id) ?? null}
             previewOpen={Boolean(selectedDelayId)}
-            renderPreview={(row) => (
+            /*
+             * K5-5, blok 1 — jak w rejestrze decyzji/RAID wyżej: sygnał
+             * opóźnienia nie ma pełnej karty, więc nagłówek pokazuje „Open"
+             * WYŁĄCZONY z powodem (kanon §7.3 pkt 1 + FIX-1), zamiast milczeć.
+             */
+            openDisabledReason={t(
+              'execution.signals.preview.noFullCard',
+              'The signal is computed from dates — it has no full card of its own.'
+            )}
+            renderPreview={(row) => {
+              /*
+               * K5-5 — bloki 1–2 przez wspólnego budowniczego. Zdanie o
+               * następnym kroku („prepare a delay request…") schodzi do „Co
+               * dalej"; terminem sygnału opóźnienia jest data planowana, a
+               * odchylenie w dniach zostaje krótką linią stanu.
+               */
+              const glowa = buildExecutionPreviewHead({
+                pills: [
+                  { label: row.kindLabel, tone: 'neutral' },
+                  {
+                    label: row.stateLabel,
+                    tone:
+                      row.state === 'INTERWENCJA'
+                        ? 'warning'
+                        : row.state === 'ZAMKNIETY'
+                          ? 'neutral'
+                          : 'danger',
+                  },
+                ],
+                term: {
+                  label: t('execution.signals.preview.planned', 'Planned date'),
+                  value: formatDay(row.signal.plannedDate),
+                },
+                stateLine:
+                  row.deviationDays > 0
+                    ? `${t('execution.signals.columns.deviation', 'Deviation (days)')} +${row.deviationDays}`
+                    : null,
+                nextStep:
+                  row.state === 'NOWY'
+                    ? t('execution.signals.preview.new', 'Signal without a response — prepare a delay request or make up the delay.'
+                      )
+                    : row.state === 'INTERWENCJA'
+                      ? t('execution.signals.preview.intervention', 'The delay request is awaiting resolution in the Decisions view.'
+                        )
+                      : t('execution.signals.preview.closed', 'The delay request has already been resolved.'
+                        ),
+              });
+              return (
               <StandardPreview
                 embedded
                 title={row.entityName}
                 onClose={() => setSelectedDelayId(null)}
-                meta={{
-                  pills: [
-                    { label: row.kindLabel, tone: 'neutral' },
-                    {
-                      label: row.stateLabel,
-                      tone:
-                        row.state === 'INTERWENCJA'
-                          ? 'warning'
-                          : row.state === 'ZAMKNIETY'
-                            ? 'neutral'
-                            : 'danger',
-                    },
-                  ],
-                  recommendation:
-                    row.state === 'NOWY'
-                      ? t('execution.signals.preview.new', 'Signal without a response — prepare a delay request or make up the delay.'
-                        )
-                      : row.state === 'INTERWENCJA'
-                        ? t('execution.signals.preview.intervention', 'The delay request is awaiting resolution in the Decisions view.'
-                          )
-                        : t('execution.signals.preview.closed', 'The delay request has already been resolved.'
-                          ),
-                }}
+                meta={glowa.meta}
+                whatsNext={glowa.whatsNext}
                 details={{
                   label: t('execution.signals.preview.label', 'Delay signal'),
                   text:
@@ -3068,7 +3131,8 @@ export const ExecutionControlSurface = ({
                 }
                 relationsEmptyLabel={t('execution.governance.preview.noRelations', 'No relations')}
               />
-            )}
+              );
+            }}
           >
             <StandardTable
               columns={delayColumns}
@@ -3234,31 +3298,34 @@ export const ExecutionControlSurface = ({
               itemIds={signalRows.map((row) => row.id)}
               getItemById={(id) => signalRows.find((row) => row.id === id) ?? null}
               previewOpen={!interventionComposerOpen && Boolean(selectedSignalId)}
-              renderPreview={(row) => (
+              renderPreview={(row) => {
+                /*
+                 * K5-5 — bloki 1–2 przez wspólnego budowniczego. Linia „Project
+                 * X · Detection rule: Y" to był OPIS pól (dokładnie ten sam
+                 * kształt, co zrzut pól w bloku treści, który kanon §7.3 pkt 3
+                 * wytyka) — oba te fakty stoją już w tabeli właściwości niżej,
+                 * więc blok 2 zostaje przy chipie dotkliwości i dacie
+                 * aktualizacji. `onOpenFull`/`openLabel` na `embedded` były
+                 * martwe: nagłówek rysuje layout, który ma własny `onOpenFull`.
+                 */
+                const glowa = buildExecutionPreviewHead({
+                  pills: [
+                    {
+                      label: row.severity,
+                      tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
+                    },
+                  ],
+                  term: row.updatedAt
+                    ? { label: t('common.updated', 'Updated'), value: row.updatedAt }
+                    : null,
+                });
+                return (
                 <StandardPreview
                   embedded
                   title={row.title}
                   onClose={() => setSelectedSignalId(null)}
-                  onOpenFull={() => {
-                    setShowInterventionForm(true);
-                    setInterventionComposerOpen(true);
-                    setDraftSignalIds((current) =>
-                      current.includes(row.id) ? current : [...current, row.id]
-                    );
-                    setSelectedSignalId(null);
-                  }}
-                  openLabel={t('execution.signals.openPrep', 'Open preparation')}
-                  meta={{
-                    pills: [
-                      {
-                        label: row.severity,
-                        tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
-                      },
-                    ],
-                    recommendation: `${t('execution.signals.project', 'Project')} ${
-                      row.signal.projectId ?? 'UNKNOWN'
-                    } · ${t('execution.signals.field.ruleId', 'Detection rule')}: ${row.rule}`,
-                  }}
+                  meta={glowa.meta}
+                  whatsNext={glowa.whatsNext}
                   details={{
                     label: t('execution.signals.singleTitle', 'Management signal'),
                     text: `${row.signal.sourceType}:${row.signal.sourceId}`,
@@ -3304,7 +3371,8 @@ export const ExecutionControlSurface = ({
                     ],
                   }}
                 />
-              )}
+                );
+              }}
             >
               <StandardTable
                 columns={signalColumns}
@@ -3369,24 +3437,41 @@ export const ExecutionControlSurface = ({
           itemIds={rows.map((r) => r.id)}
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
           previewOpen={!interventionComposerOpen && Boolean(selectedId)}
-          renderPreview={(r) => (
+          renderPreview={(r) => {
+            /*
+             * K5-5 — bloki 1–2 przez wspólnego budowniczego. Blok 2 był tu
+             * jedynym w Realizacji z treścią WPISANĄ PO POLSKU na sztywno
+             * („Wybrana opcja: …", „Wymaga wyboru ograniczonej interwencji"),
+             * mimo że oprogramowanie jest po angielsku (DEC-461) — teraz obie
+             * linie idą przez `t()`. Terminem interwencji jest jej termin
+             * decyzji (`slaAt`); wymóg wyboru opcji to instrukcja, więc stoi w
+             * „Co dalej". `onOpenFull`/`openLabel` na `embedded` były martwe.
+             */
+            const glowa = buildExecutionPreviewHead({
+              pills: [
+                { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
+              ],
+              term: {
+                label: t('execution.intervention.field.sla', 'Decision deadline'),
+                value: r.slaAt || t('execution.intervention.noSla', 'Not set'),
+              },
+              stateLine: selectedOptionLabel(r.source)
+                ? `${t('execution.intervention.selectedOption', 'Selected option')}: ${selectedOptionLabel(r.source)}`
+                : null,
+              nextStep: selectedOptionLabel(r.source)
+                ? null
+                : t(
+                    'execution.intervention.needsOption',
+                    'Requires choosing a bounded intervention option.'
+                  ),
+            });
+            return (
             <StandardPreview
               embedded
               title={r.title}
               onClose={() => setSelectedId(null)}
-              onOpenFull={() => {
-                setShowInterventionForm(true);
-                setInterventionComposerOpen(true);
-              }}
-              openLabel={t('execution.intervention.open', 'Open intervention')}
-              meta={{
-                pills: [
-                  { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
-                ],
-                recommendation: selectedOptionLabel(r.source)
-                  ? `Wybrana opcja: ${selectedOptionLabel(r.source)}`
-                  : 'Wymaga wyboru ograniczonej interwencji',
-              }}
+              meta={glowa.meta}
+              whatsNext={glowa.whatsNext}
               details={{
                 label: 'Uzasadnienie i skutek',
                 text: r.source.hypotheses?.join(', ') || 'UNKNOWN',
@@ -3435,7 +3520,8 @@ export const ExecutionControlSurface = ({
                 'No linked signals'
               )}
             />
-          )}
+            );
+          }}
         >
           <StandardTable
             columns={columns}

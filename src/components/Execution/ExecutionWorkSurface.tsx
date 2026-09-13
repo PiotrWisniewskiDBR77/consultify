@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CalendarClock,
   CheckCircle2,
-  Eye,
   ListChecks,
   UserCog,
 } from 'lucide-react';
@@ -75,6 +74,7 @@ import {
   getExecutionReviewMilestones,
   getExecutionReviewWork,
 } from './executionLocalReviewData';
+import { buildExecutionPreviewHead } from './executionPreviewHead';
 import { isTaskBlocked, isTaskOverdue, taskSlipDays } from './executionRealData';
 type WorkKind = 'TASK' | 'DECISION';
 interface Row extends TableRow {
@@ -1811,26 +1811,50 @@ export const ExecutionWorkSurface = ({
             itemIds={rows.map((r) => r.id)}
             getItemById={(id) => rows.find((r) => r.id === id) ?? null}
             previewOpen={!showWorkspace && Boolean(selectedId)}
-            renderPreview={(r) => (
+            renderPreview={(r) => {
+              /*
+               * K5-5 — GÓRA podglądu (bloki 1–2) przez wspólnego budowniczego
+               * `buildExecutionPreviewHead`. Co się zmieniło względem stanu,
+               * który właściciel odrzucił na stagingu:
+               *  · trailing niósł `v{r.version}`, a `version` dla wiersza z
+               *    `tasks` jest zaszyte na 0 (patrz mapowanie wyżej w tym
+               *    pliku) — właściciel widział „v0" jako jedyną informację po
+               *    prawej stronie karty meta. Strefa trailing należy wg kanonu
+               *    §7.3 pkt 2 do TERMINU, więc stoi w niej termin zadania.
+               *  · `recommendation` miał domyślne zdanie „Check completeness
+               *    and the next step." — identyczne w KAŻDYM wierszu, więc nie
+               *    niosło stanu, tylko wypełniało blok prozą. Następny krok
+               *    (realny `nextAction`, a gdy go nie ma — powód, dla którego
+               *    zadania nie da się zamknąć) idzie do bloku „Co dalej".
+               *  · `onOpenFull`/`openLabel` na TYM komponencie były martwe:
+               *    `embedded` oddaje nagłówek `TableWithPreviewLayout`, który
+               *    rysuje własne „Open" z `common.open` (i dostaje
+               *    `onOpenFull` od layoutu wyżej). Deklarowały przycisk,
+               *    którego nikt nie renderował.
+               */
+              const powodZamkniecia = mozliwoscZamkniecia(r);
+              const glowa = buildExecutionPreviewHead({
+                pills: [
+                  { label: etykietaRodzaju(r.kind, t), tone: 'neutral' },
+                  {
+                    label: etykietaStatusu(r.status, t),
+                    tone: r.status === 'COMPLETED' ? 'success' : 'info',
+                  },
+                ],
+                term: {
+                  label: t('execution.work.field.due', 'Due date'),
+                  value: r.dueAt || t('execution.work.noDue', 'No due date'),
+                },
+                nextStep:
+                  r.source.nextAction ?? (powodZamkniecia.mozna ? null : powodZamkniecia.powod),
+              });
+              return (
               <StandardPreview
                 embedded
                 title={r.title}
                 onClose={() => setSelectedId(null)}
-                onOpenFull={() => void openWorkspace(r)}
-                openLabel={t('execution.work.preview.open', 'Open work item')}
-                meta={{
-                  pills: [
-                    { label: etykietaRodzaju(r.kind, t), tone: 'neutral' },
-                    {
-                      label: etykietaStatusu(r.status, t),
-                      tone: r.status === 'COMPLETED' ? 'success' : 'info',
-                    },
-                  ],
-                  trailing: <span className="text-xs">v{r.version}</span>,
-                  recommendation:
-                    r.source.nextAction ??
-                    t('execution.work.preview.nextStep', 'Check completeness and the next step.'),
-                }}
+                meta={glowa.meta}
+                whatsNext={glowa.whatsNext}
                 details={{
                   label: t('execution.work.preview.details', 'Work details'),
                   text:
@@ -1961,23 +1985,23 @@ export const ExecutionWorkSurface = ({
                             label: t('execution.work.edit.close', 'Close task'),
                             variant: 'positive',
                             icon: CheckCircle2,
-                            disabled: !mozliwoscZamkniecia(r).mozna,
+                            disabled: !powodZamkniecia.mozna,
                             onClick: () => void zapiszPoleZadania(r, 'status', 'done'),
                           },
                         ],
                       }
-                    : {
-                        informational: [
-                          {
-                            id: 'open',
-                            label: t('execution.work.preview.open', 'Open work item'),
-                            variant: 'positive',
-                            icon: Eye,
-                            shortcut: 'O',
-                            onClick: () => void openWorkspace(r),
-                          },
-                        ],
-                      }
+                    : /*
+                       * K5-5 — wiersz dostawy nie dostaje własnego „Open work
+                       * item" w bloku akcji. Kanon §7.3 pkt 4.3 (anty-
+                       * duplikacja): „NIE dubluj »Open« — jest w nagłówku".
+                       * Nagłówek podglądu (rysowany przez
+                       * `TableWithPreviewLayout`) ma ten przycisk i prowadzi
+                       * dokładnie tam samo (`onOpenFull` → `openWorkspace`),
+                       * więc zostawał drugi, zielony przycisk robiący to samo.
+                       * Po odjęciu duplikatu nie zostaje żadna akcja, więc
+                       * cały pasek jest pomijany — tak jak każe kanon.
+                       */
+                      undefined
                 }
               >
                 {r.origin === 'tasks' && (
@@ -2056,11 +2080,14 @@ export const ExecutionWorkSurface = ({
                         </select>
                       </label>
                     )}
-                    {!mozliwoscZamkniecia(r).mozna && (
-                      <p role="note" className="text-xs text-c-text-muted">
-                        {mozliwoscZamkniecia(r).powod}
-                      </p>
-                    )}
+                    {/*
+                      K5-5: powód „nie da się zamknąć" był tu ZDANIEM LUZEM pod
+                      tabelą właściwości („The task is already closed."), czyli
+                      prozą w bloku 3, gdzie kanon chce treści encji. To samo
+                      zdanie stoi teraz w dopisku bloku „Co dalej"
+                      (`buildExecutionPreviewHead`), razem z następnym krokiem —
+                      jedno miejsce na „co dalej z tym zadaniem", nie dwa.
+                    */}
                     {bladWiersza?.rowId === r.id && (
                       <p role="alert" className="text-xs text-c-danger">
                         {bladWiersza.message}
@@ -2069,7 +2096,8 @@ export const ExecutionWorkSurface = ({
                   </div>
                 )}
               </StandardPreview>
-            )}
+              );
+            }}
           >
             <StandardTable
               columns={cols}

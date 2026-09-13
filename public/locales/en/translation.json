@@ -16544,7 +16544,9 @@
       "preview": {
         "raidLabel": "RAID item",
         "noDescription": "No further description.",
-        "noRelations": "No relations"
+        "noRelations": "No relations",
+        "noFullCard": "This entry lives only in the register — there is no full card to open.",
+        "noDueShort": "No due date"
       },
       "filters": {
         "dueLabel": "Due"
@@ -16667,7 +16669,8 @@
         "decision": "Re-baseline request",
         "new": "No response yet — raise a re-baseline request or catch the delay up.",
         "intervention": "The re-baseline request is awaiting a decision in the Decisions view.",
-        "closed": "The re-baseline request has been decided."
+        "closed": "The re-baseline request has been decided.",
+        "noFullCard": "The signal is computed from dates — it has no full card of its own."
       },
       "empty": {
         "title": "No delay signals",
@@ -16786,7 +16789,10 @@
         "irreversible": "Irreversible",
         "unknown": "Reversibility unknown"
       },
-      "draftJson": "Intervention draft JSON"
+      "draftJson": "Intervention draft JSON",
+      "noSla": "Not set",
+      "selectedOption": "Selected option",
+      "needsOption": "Requires choosing a bounded intervention option."
     },
     "plan": {
       "closeChange": "Close plan change",

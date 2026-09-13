@@ -15738,7 +15738,9 @@
       "preview": {
         "raidLabel": "Pozycja RAID",
         "noDescription": "Brak dodatkowego opisu.",
-        "noRelations": "Brak powiązań"
+        "noRelations": "Brak powiązań",
+        "noFullCard": "Ta pozycja żyje wyłącznie w rejestrze — nie ma pełnej karty do otwarcia.",
+        "noDueShort": "Bez terminu"
       },
       "filters": {
         "dueLabel": "Termin"
@@ -15861,7 +15863,8 @@
         "decision": "Wniosek o przesunięcie",
         "new": "Sygnał bez odpowiedzi — przygotuj wniosek o przesunięcie albo nadrób opóźnienie.",
         "intervention": "Wniosek o przesunięcie czeka na rozstrzygnięcie w widoku Decyzje.",
-        "closed": "Wniosek o przesunięcie już zapadł."
+        "closed": "Wniosek o przesunięcie już zapadł.",
+        "noFullCard": "Sygnał jest wyliczany z dat — nie ma własnej pełnej karty."
       },
       "empty": {
         "title": "Brak sygnałów opóźnień",
@@ -15980,7 +15983,10 @@
         "irreversible": "Nieodwracalna",
         "unknown": "Odwracalność nieznana"
       },
-      "draftJson": "Kontrakt JSON projektu interwencji"
+      "draftJson": "Kontrakt JSON projektu interwencji",
+      "noSla": "Nie ustawiono",
+      "selectedOption": "Wybrana opcja",
+      "needsOption": "Wymaga wyboru ograniczonej opcji interwencji."
     },
     "plan": {
       "closeChange": "Zamknij zmianę planu",
