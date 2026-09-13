@@ -146,4 +146,33 @@ describe('legacy my-work notebook routes', () => {
       expect.anything()
     );
   });
+
+  it('returns the optional parent notebook identity from the legacy single-page read', async () => {
+    mockGetTableColumns.mockResolvedValue(new Set(['id', 'notebook_id']));
+    let selectedSql = '';
+    mockQueryOne.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM notebook_pages')) {
+        selectedSql = sql;
+        return {
+          id: 'note-1',
+          ownerUserId: 'user-1',
+          organizationId: 'org-1',
+          notebookId: 'notebook-1',
+          visibility: 'private',
+          title: 'Fresh note',
+          contentJson: JSON.stringify({ type: 'doc', content: [] }),
+          tags: '[]',
+          createdAt: '2026-03-27T00:00:00.000Z',
+          updatedAt: '2026-03-27T00:00:00.000Z',
+        };
+      }
+      return null;
+    });
+
+    const res = await request(createApp()).get('/api/my-work/notebook/pages/note-1');
+
+    expect(res.status).toBe(200);
+    expect(selectedSql).toContain('notebook_id as "notebookId"');
+    expect(res.body).toMatchObject({ id: 'note-1', notebookId: 'notebook-1' });
+  });
 });

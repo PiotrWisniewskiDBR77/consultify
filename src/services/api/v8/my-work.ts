@@ -137,6 +137,7 @@ export interface V8NotebookPage {
   id: string;
   ownerUserId?: string;
   organizationId?: string;
+  notebookId?: string | null;
   projectId?: string | null;
   visibility?: string | null;
   title: string;
