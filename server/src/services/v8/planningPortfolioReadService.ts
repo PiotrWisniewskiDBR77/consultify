@@ -367,6 +367,8 @@ export async function getInitiativeDetailRead(
 ): Promise<Record<string, unknown> | null> {
   const sql = `
         SELECT i.*,
+            i.forecast_start_date::text AS forecast_start_date_day,
+            i.forecast_end_date::text AS forecast_end_date_day,
             ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
             oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
         FROM initiatives i
@@ -422,6 +424,10 @@ export async function getInitiativeDetailRead(
     sponsorId: (row as any).sponsor_id ?? null,
     plannedStartDate: (row as any).planned_start_date ?? (row as any).start_date ?? null,
     plannedEndDate: (row as any).planned_end_date ?? (row as any).end_date ?? null,
+    // Operational forecast is a calendar day, not an instant. The SELECT casts
+    // pg DATE to text before node-pg can apply the process timezone and shift it.
+    forecastStartDate: (row as any).forecast_start_date_day ?? null,
+    forecastEndDate: (row as any).forecast_end_date_day ?? null,
     baselineVersion: (row as any).baseline_version ? Number((row as any).baseline_version) : null,
     scheduleBaselineId: (row as any).schedule_baseline_id ?? null,
     // R3 (plan 1.12 §C4) — plan ZAMROŻONY. Ten sam zestaw pól, co w liście
