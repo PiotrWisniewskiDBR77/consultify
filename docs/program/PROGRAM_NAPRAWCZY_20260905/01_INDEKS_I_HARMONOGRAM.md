@@ -852,3 +852,13 @@ Self-service organization export WIP on fbe8d8feb3: existing AdminAuditLogPanel 
 
 
 Write permission restored: root verified current RC2 WIP on fbe8, actual tasks1/1 and Decision3/3 Gateway PASS, final servertsc0/front192vs192 no added diagnostics, buildindex334e66f9d99c90c1898ad6ebb42de93ae9d8a03eab61b039392bede319d1827c. No deploy; normal commit next, built UI remains open. Previous readonly pause did not discard WIP.
+
+
+### RC2 built export accepted within scope; API error repair
+Independent bounded ACCEPT on691982300372a9bdb9e506a4414e92ebbcd3e968/index7cca541d61229a73b683e7316979df04c5a8566649eff8c051d379780847df1e:7actual built downloads (OWNER/ADMIN light/dark, SUPERADMIN light/dark, after hold cleared) byte-equal to response; MEMBER403, legalhold423/noFile, actual JSON/CSV privacy/content readback,7business SQL hashes unchanged. Full packet INTEGRATOR_MVP_20260912/E4_BUILT_INDEPENDENT_ACCEPTANCE.md. Fixtures and initial instrument failures qualified; same-mounted retry is not claimed. Partial export/full E4/deletion/pilot/deployment remain OPEN.
+
+Built audit failure surfaced nested ApiError [object Object]. Source freeze released after final acceptance. Root constructor now reuses existing normalizeApiErrorMessage, preserves envelope metadata; actual API regression RED2FAIL2PASS→GREEN4PASS, compatibility10PASS. Independent review and newbuild44378 pending; old acceptedbuild does not prove updated source.
+
+IE01 author reports Gateway8PASS covering named reviewer/foreign/revoked/stale, servertsc0 and guard mutation RED; final frozenpacket/review/current UI remains pending. Realizacja E1 current gap review assigned; full E1-E6 closure remains required. Source-aware Decision export WIP23unit is not privacycomplete: root identified filters.customPrompt/topic_focus source provenance checks still needed. Full MVP ACTIVE; no live/push/deploy.
+
+ApiError final follow-up: source/readable built2PASS then DATABASE_ERROR language RED1/4→client11PASS, independent reali18next ENPL2PASS and actualbuilt OWNEREN1PASS. New servedindex7a6c8fa7497be7d2294976428088bbde0c85f58a31022b7d53fa031d4ed333e5,225asset hashes match. All three reports in INTEGRATOR_MVP_20260912. Underlyingaudit500/full E4 remain OPEN. Normal commit next. Piotr requests Sol: execution_sol agent started read-only E1 fullcanonpreflight in clean codex-execution-bank-20260912 from691982; coding waits IE01 checkpoint freeze.

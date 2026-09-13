@@ -71,6 +71,7 @@
     }
   },
   "errors": {
+    "DATABASE_ERROR": "Data could not be loaded. Please try again.",
     "VERSION_CONFLICT": "This item changed. Refresh it and try again.",
     "NOT_FOUND": "This item is unavailable in your organization. Refresh and choose an available item.",
     "VALIDATION_FAILED": "Check the entered values and try again.",

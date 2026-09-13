@@ -149,8 +149,7 @@ export class ApiError extends Error {
   constructor(payload: unknown, fallbackMessage: string, status?: number) {
     const envelope =
       payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
-    const serverMessage = String(envelope.message ?? envelope.error ?? '').trim();
-    super(serverMessage || fallbackMessage);
+    super(normalizeApiErrorMessage(payload, fallbackMessage));
     this.name = 'ApiError';
     // P16/R3 (DEC-453): kontrolery domenowe (np. DecisionController) odsyłają
     // maszynową przyczynę w polu `code` (`REASON_REQUIRED`, `ESCALATION_AT_MAX`,
