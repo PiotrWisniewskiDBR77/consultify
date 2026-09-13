@@ -21,6 +21,22 @@ HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1, DEC-474 → fala 2). Codex
 skrzynki Z-1..Z-3 (jego baza była 11 commitów za linią) — dowodu parytetu flag OFF nie ma; robi go
 agent nadzorcy. **Dysk: 1,3 GB wolne** (pomiar 13.09), nie 35 GB jak w poprzednim wpisie rejestru.
 
+**DEC-482 (właściciel, 13.09, rozmowa pytanie po pytaniu, P1):** pierwszy kupujący fali 2 = **partner Big3 kupujący dla swoich zespołów** (A; wbrew rekomendacji CTO „C”). Konsekwencja: pakiet zaufania enterprise jest warunkiem pierwszej rozmowy.
+
+**DEC-483 (właściciel, P2):** pakiet enterprise **teraz**, jako trzeci równoległy tor Codexa (obok F2-1 i PMO): SSO (zostaje w planie po dwóch zmianach zdania), pełny eksport organizacji, audyt każdej decyzji AI, SOC 2 jako proces. Języki w fali 2: **tylko niemiecki** obok PL/EN. Agent z klockami i Spotkania przesuwają się o kilka tygodni.
+
+**DEC-484 (właściciel, P3):** pierwszy artefakt sprzedażowy = **bezbłędna 30-minutowa pętla pokazu** na danych jednego klienta (wywiad → ocena → wnioski → inicjatywa → realizacja → KPI); uwaga CTO: dane DBR77 w dzisiejszym stanie nie nadają się (puste oceny), potrzebna organizacja pokazowa lub DBR77 po pilotażu.
+
+**DEC-485 (właściciel, P4, fala 2):** granica „codzienna praca” vs „zarządzanie ryzykiem” = **macierz trzech poziomów decyzji** (1 zadanie/członek · 2 inicjatywa/PM · 3 baza odniesienia/komitet sterujący); zmiana naruszająca bazę odniesienia (termin końcowy, zakres, budżet, zasoby spoza inicjatywy, priorytet między inicjatywami, właściciel) nie wykonuje się od ręki, tylko tworzy N-kartę ryzyka do decyzji komitetu; **ryzyko zgłasza każdy**, macierz dotyczy wyłącznie prawa do decyzji; komitet = owner+admin dopóki PMO nie zdefiniuje ról; delegacje w dół jako parametr projektu. Zakres: F2-2/F2-3 (nie MVP).
+
+**DEC-486 (właściciel, P5):** w Realizacji **wolno zmieniać przydziały** ludzi; kto i ile — wg macierzy poziomów decyzji (role z PMO). Zakaz z notatki o Obciążeniu dotyczy tylko ekranu Obciążenia (planowanie).
+
+**DEC-487 (właściciel, P6):** sygnalizacja ryzyka w Realizacji = **trzy osie × cztery poziomy** (termin, zakres/postęp, zasoby), zawsze kolor+tekst+ikona, szary „brak danych”; projekt i prototyp po stronie CTO do akceptu przed kodem („licząc na ciebie, że zaproponujesz prawidłowy system zarządzania projektami”).
+
+**DEC-488 (właściciel, P7):** metodyka PMO = **szkielet PMI/PMBOK-lite z bramkami etapów + tygodniowy rytm przeglądów** (właściciel: „wariant C, zgodnie z rekomendacją”); role projektu: sponsor · kierownik projektu · komitet sterujący · właściciel strumienia · członek zespołu; macierz DEC-485 mapuje się na nie 1:1.
+
+**Odbiór K5 (13.09):** Inicjatywy = TAK (DEC-481). Realizacja: obraz po naprawach (`14b9bb5efd`, bank bez UUID, 12 wierszy jawnie, podgląd klucz-wartość) wysłany właścicielowi 11:45 — **czeka na Tak/Nie**. Wdrożenia stagingu 13.09: `bc40d5327c` 08:17 → `14b9bb5efd` 11:10 (naprawy K5 + raport oceny S1.4/S1.4b) → `0f0107b93c` 12:26 (naprawy narzędzi Idea/Notes/Docs: konwersja pomysłu, komunikaty triala EN, snapshoty notatek, Team Chat, szukanie po treści, /materials). Tagi cofnięcia: `staging-safe-20260913-pre-kandydat`, `-0945`, `-1130`. Poczta ŻYWA od 09:25 (`noreply@consultinity.ai`, DEC-471 domknięte po stronie stagingu). Przejście trzech narzędzi (S1.14): 41 defektów / 5 blokerów zmierzonych na org QA, blokery naprawione tego samego dnia; raport w scratchpadzie CTO (do przeniesienia do evidence).
+
 **DEC-481 (właściciel, 13.09, odbiór K5 część 1):** obraz listy Inicjatyw na kandydacie bc40d5327c (staging, dane DBR77) = **TAK**, z uwagą: „mamy tam za dużo filtrów w Menu 2”. Decyzja wykonawcza CTO: Menu 2 = przełącznik widoku (lista/kanban/kalendarz/Gantt) + Aktywne/Wszystkie + „Nowa inicjatywa”; usunąć rozwijane „Wszystkie priorytety” i „Status” (statusy są w pigułkach Menu 3); „Lista/Analiza” z rozwijanej listy → dwa przyciski Menu 3 (zgodnie z notatką właściciela); filtr projektami dojdzie w F2-1. Realizacja: odbiór po naprawach K5 (UUID właściciela, mapowanie statusu, podgląd klucz-wartość).
 
 **DEC-479 (właściciel, 13.09, „A”):** odrzucona/wstrzymana inicjatywa dostaje osobne pole „rozstrzygnięcie” (wchodzi / parking / archiwum) z powodem i warunkiem powrotu — system nie proponuje jej ponownie, chyba że przeszkoda zniknie; lista statusów NIE rośnie (bez „Parking”/„No Done” jako statusów).
