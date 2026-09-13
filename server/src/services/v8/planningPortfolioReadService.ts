@@ -396,8 +396,19 @@ export async function getInitiativeDetailRead(
     unknown
   >;
 
+  // `forecast_*_day` are SELECT aliases of this query (a day-precision cast),
+  // not columns of `initiatives`. They exist only to feed `forecastStartDate`/
+  // `forecastEndDate` below; spreading the raw row leaked the alias names into
+  // the API response, adding two fields the base build never returned and that
+  // no consumer reads. Removed from the payload, kept for the mapping.
+  const {
+    forecast_start_date_day: forecastStartDay,
+    forecast_end_date_day: forecastEndDay,
+    ...initiativeRow
+  } = initiative as Record<string, unknown>;
+
   return {
-    ...initiative,
+    ...initiativeRow,
     name: getMultilingualText((row.name as string) || (row.title as string), userLang),
     summary: getMultilingualText(row.summary as string, userLang),
     description: getMultilingualText((row.hypothesis as string) || '', userLang),
@@ -426,8 +437,8 @@ export async function getInitiativeDetailRead(
     plannedEndDate: (row as any).planned_end_date ?? (row as any).end_date ?? null,
     // Operational forecast is a calendar day, not an instant. The SELECT casts
     // pg DATE to text before node-pg can apply the process timezone and shift it.
-    forecastStartDate: (row as any).forecast_start_date_day ?? null,
-    forecastEndDate: (row as any).forecast_end_date_day ?? null,
+    forecastStartDate: forecastStartDay ?? null,
+    forecastEndDate: forecastEndDay ?? null,
     baselineVersion: (row as any).baseline_version ? Number((row as any).baseline_version) : null,
     scheduleBaselineId: (row as any).schedule_baseline_id ?? null,
     // R3 (plan 1.12 §C4) — plan ZAMROŻONY. Ten sam zestaw pól, co w liście
