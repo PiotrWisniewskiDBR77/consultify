@@ -89,7 +89,7 @@ version; it must never overwrite or downgrade it to version `1`.
   per-answer writer and projection prove every answer's frozen policy; it must
   never infer approval from `stages_complete` in this pure helper.
 
-## Minimal additive schema contract requiring CTO approval
+## Authorized minimal additive schema contract
 
 The authorized migration must add a parent command receipt and append-only
 answer decisions; it must not alter `interview_questions`.
@@ -97,13 +97,14 @@ answer decisions; it must not alter `interview_questions`.
 `interview_answer_decision_commands` is the idempotency boundary for one
 multi-answer submission/decision command:
 
-| Column                                                    | Contract                                                                                                        |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `id`, `organization_id`, `assignment_id`, `submission_id` | immutable command and tenant-scoped Interview identity                                                          |
-| `client_request_id`, `request_fingerprint`                | unique replay key per organization and exact whole-command fingerprint                                          |
-| `expected_answer_count`, `answer_manifest_digest`         | proves the command's complete question/revision denominator                                                     |
-| `status`, `response_json`                                 | one atomic terminal response replayed for the whole command; never reconstruct a partial replay from event rows |
-| `created_at`, `completed_at`                              | server/DB observation time                                                                                      |
+| Column                                                                  | Contract                                                                                                        |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `id`, `organization_id`, `assignment_id`, `session_id`, `submission_id` | immutable command and tenant-scoped Interview identity                                                          |
+| `assignment_sequence`                                                   | lock-allocated monotonic ordering of commands and submission supersession within one assignment                 |
+| `client_request_id`, `request_fingerprint`                              | unique replay key per organization and exact whole-command fingerprint                                          |
+| `expected_answer_count`, `answer_manifest_digest`                       | proves the command's complete question/revision denominator                                                     |
+| `status`, `response_json`                                               | one atomic terminal response replayed for the whole command; never reconstruct a partial replay from event rows |
+| `created_at`, `completed_at`                                            | server/DB observation time                                                                                      |
 
 `interview_answer_decisions` holds the immutable per-answer receipts:
 
@@ -116,7 +117,7 @@ multi-answer submission/decision command:
 | `answer_updated_at`                                     | existing question CAS token captured at submit                                                    |
 | `answer_digest`                                         | digest of the complete canonical answer snapshot                                                  |
 | `answer_snapshot_json`                                  | immutable answer value/context/evidence/voice/AI contribution and question/template version       |
-| `command_id`, `ordinal`                                 | parent command plus a positive, command-local monotonic receipt order                             |
+| `command_id`, `ordinal`                                 | parent command plus a positive, submission-wide monotonic receipt order                           |
 | `event_type`                                            | `submitted`, `ai_approved`, `ai_sent_back`, `manager_approved`, `manager_sent_back`, `superseded` |
 | `stage`                                                 | nullable `ai` or `manager`                                                                        |
 | `decision`                                              | nullable `approved` or `sent_back`                                                                |
@@ -131,21 +132,35 @@ Required constraints/indexes:
 - command unique `(organization_id, client_request_id)` and changed-fingerprint
   conflict before any answer receipt is appended;
 - decision unique `(organization_id, command_id, question_id, event_type)` and
-  `(organization_id, command_id, ordinal)`;
+  `(organization_id, submission_id, ordinal)`;
 - tenant-first lookup by `(organization_id, assignment_id, submission_id)` and
   `(organization_id, question_id, ordinal, id)`;
-- foreign keys to assignment/session/question with cascade matching current
-  Interview lifecycle;
+- foreign keys to organization/assignment/session/question and parent command
+  use `ON DELETE CASCADE`, matching tenant deletion and the existing permanent
+  Interview delete paths. This prevents retained answer snapshots from becoming
+  orphaned PII. The legacy parent tables expose only single-column primary keys,
+  so this additive migration cannot add composite tenant foreign keys without a
+  forbidden `ALTER`; every service read/write therefore remains explicitly
+  organization-scoped and verifies assignment/session identity under lock;
 - stage/decision/event checks;
 - no UPDATE/DELETE in normal workflow.
 
 The exact answer snapshot/digest means an edit or resubmission cannot inherit a
 decision from an older answer. The existing `updated_at` CAS is retained; no
-second mutable answer-version column is necessary. Projection order is always
-`ordinal ASC, id ASC`; array or query return order is never authority. The
-parent receipt commits the full response only after the complete expected
-answer count is present, so exact replays return the whole command result and a
-changed fingerprint conflicts atomically.
+second mutable answer-version column is necessary. Each command locks the
+tenant-scoped assignment and allocates the next contiguous ordinals within the
+submission. Projection order is always `ordinal ASC, id ASC`; array or query
+return order is never authority. The parent receipt commits the full response
+only after the complete expected answer count is present, so exact replays
+return the whole command result and a changed fingerprint conflicts atomically.
+Snapshots are internal approval evidence. They are omitted from the normal and
+anonymous read projection; the projection exposes only stage/status, receipt
+identity, actor, reason and timestamps after existing Interview review-access
+and anonymity checks. Organization or permanent Interview deletion cascades the
+command and snapshot rows. The organization export/retention catalog must list
+both new tables before any release. A report-only rollback is `DROP TABLE
+interview_answer_decisions; DROP TABLE interview_answer_decision_commands;` in
+that dependency order; no rollback migration is added.
 
 ## Implementation after schema approval
 
