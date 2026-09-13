@@ -957,3 +957,8 @@ C6 actual built UI and exact fixture cleanup are complete: org/users/memberships
 ### Forecast user-flow gap — 2026-09-13
 
 Root verified the new canonical forecast API has no component caller. Follow-on implementation brief: INTEGRATOR_MVP_20260912/E1B_OPERATIONAL_FORECAST_UI_NEXT_PACKET.md. Writer acceptance stays API-scoped; native same-Initiative creation-to-execution and visible correction remain open. Current independent review also requires truthful lifecycle/projection capability denial before writer freeze.
+
+
+### Canonical forecast API integrated — 2026-09-13
+
+Root da5cb31a85 integrates independently accepted API writer53a8eae767; exact9/9 blobs and root17/17PASS. Actual Gateway/PG7/7; full user flow remains open. See INTEGRATOR_MVP_20260912/E1B_CANONICAL_FORECAST_INTEGRATED_ACCEPTANCE.md. Next card/editor implementation assigned in isolated worktree at da5cb31a85; reviewer traces native same-ID path.
