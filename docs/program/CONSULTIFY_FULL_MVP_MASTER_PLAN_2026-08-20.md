@@ -1,3 +1,9 @@
+> **⛔ DOKUMENT HISTORYCZNY (oznaczone 12.09.2026).** Plan z 20.08. Historyczny.
+> Obowiązujące są dwa dokumenty i tylko one: **co zostało do zrobienia** —
+> `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` (sekcja „Stan na 12.09.2026"), oraz
+> **co się wydarzyło** — `docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+> Zakres fali 2: `docs/program/FALA2/SPEC_FALA2_20260912.md`. Nie planuj z tego pliku.
+
 # Consultify — master plan dojścia do pełnego MVP
 
 Data: 2026-08-20  

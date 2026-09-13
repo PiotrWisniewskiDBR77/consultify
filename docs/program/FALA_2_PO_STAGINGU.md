@@ -3,6 +3,13 @@ doc_id: program-fala-2-po-stagingu
 status: rejestr-aktywny
 data: 2026-09-03 (wieczór)
 ---
+> **⛔ DOKUMENT HISTORYCZNY (oznaczone 12.09.2026).** Wczesna lista fali 2. Zastąpiona przez specyfikację właściciela z 12.09.
+> Obowiązujące są dwa dokumenty i tylko one: **co zostało do zrobienia** —
+> `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` (sekcja „Stan na 12.09.2026"), oraz
+> **co się wydarzyło** — `docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+> Zakres fali 2: `docs/program/FALA2/SPEC_FALA2_20260912.md`. Nie planuj z tego pliku.
+
+
 
 # Fala 2 — po przelocie właściciela po stagingu
 
