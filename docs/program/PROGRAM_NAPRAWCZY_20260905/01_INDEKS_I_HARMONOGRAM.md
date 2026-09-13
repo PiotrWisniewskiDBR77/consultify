@@ -912,3 +912,12 @@ C6 writer V2 independently ACCEPT within assigned transaction scope: root8/8 act
 Source C6b66b474da4ed3af521a7bf5a34fcd0ca557204fc normal hooks PASS; exact final commit integrated as f07849ec5a93c6e14dfaf27c981a27ba9cdc8e5a. All17accepted source/test SHA256 values match. Whole-branch merge was safely aborted after conflicts from older divergent history; exact commit cherry-pick imports only accepted17-file delta. Root integrated8-file regression103/103 PASS (C6_RC2_INTEGRATED_GREEN.json/log). Both writer and reader independently accepted within scope, actualPG8+2PASS; final servertsc V3exit0 on C6WT. Root combined candidate typecheck/build/HTTP seam verification remains next. No deploy; auditownership UNKNOWN, full export/deletion gates open.
 
 E1bV7 independent44/44 PASS across9requestedfiles (Vitest18suites), all9source/testblobsmatch; native missing-case row now visible/selectable/highlighted and restored acrossview/reload. Scoped ACCEPT receipt copied; normal-hook authorcommit pending. Forecast source/DTO remains required open work; independent canonical source/projection packet dispatched. Full MVP unchanged and active.
+
+### Integrated C6 and E1b verified — 2026-09-13
+
+# C6 and E1b integrated verification — 2026-09-13
+
+Current source HEAD:27da10f07d15c78f0eabea8754da4d7d69e9d0bd. C6 receipt packet integratedf07849ec5a; actual Gateway timestamp repair31084b34d1be3b12bb174e623155bca45511572b. E1b integratedfee4f8eaec73156fdec1b9945d435265613b6883, calendar type repaira743a96c6302b6e81d030168e0c3cc687eaa1fee, final physical axis repair27da10f07d15c78f0eabea8754da4d7d69e9d0bd. All source commits used normal hooks; final root tree clean before this report.
+
+
+C6integrated103/103 and E1b44/44PASS, fullservertsc0 aftertimestampfix, frontend194→192 restoredexistingbaseline(added0/removed0). BuildV2exit0/index1a21270ca74dfa8735483e69f7bfe6d56a89527863c52499f52121beb63ecddb. ActualBankfivecheckpoints/twonative no-case rows PASS includingselection/reload and physicallyalignedGantt; retained403/telemetry and limiteddark/no-casefixture. ActualGateway/JWT/PGwriter→handoff→JSON/CSVALLOW→editrestoreDENY passes bothUTC/Chicago withcleanupzero. Fullreport C6_E1B_RC2_INTEGRATED_VERIFICATION.md separates remaininggates. Forecast/progressfeed implementation dispatchednewisolatedWT; independentadversarialreviewactive. WholeMVP and deployment open.
