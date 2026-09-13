@@ -4,6 +4,10 @@ import { ResourceNotFoundError } from './resources.js';
 import { MilestoneNotFoundError } from './milestones.js';
 import { evaluateScheduleShift, isSameScheduledDay } from './scheduleBaseline.js';
 import { BudgetItemNotFoundError } from './budgetItems.js';
+import {
+  InitiativeForecastProjectionNotFoundError,
+  type InitiativeForecastProjectionWrite,
+} from './initiativeForecast.js';
 import type { Pool, PoolClient } from 'pg';
 
 import type {
@@ -53,6 +57,103 @@ function relationDuplicateRule(relationType: string): string {
 
 class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
   constructor(private readonly client: PoolClient) {}
+
+  async writeInitiativeForecastProjection(input: {
+    organizationId: string;
+    initiativeId: string;
+    actorId: string;
+    clientRequestId: string;
+    reason: string;
+    forecastStartDate?: string | null;
+    forecastEndDate?: string | null;
+  }): Promise<InitiativeForecastProjectionWrite> {
+    const hasStart = Object.prototype.hasOwnProperty.call(input, 'forecastStartDate');
+    const hasEnd = Object.prototype.hasOwnProperty.call(input, 'forecastEndDate');
+    const current = await this.client.query<{
+      forecast_start_date: string | null;
+      forecast_end_date: string | null;
+    }>(
+      `SELECT forecast_start_date, forecast_end_date
+         FROM (
+           SELECT forecast_start_date::text AS forecast_start_date,
+                  forecast_end_date::text AS forecast_end_date
+             FROM initiatives
+            WHERE organization_id=$1 AND id=$2
+            FOR UPDATE
+         ) AS initiative_forecast_date_text`,
+      [input.organizationId, input.initiativeId]
+    );
+    if (current.rowCount !== 1) throw new InitiativeForecastProjectionNotFoundError();
+
+    const asDate = (value: string | Date | null): string | null => {
+      if (value === null) return null;
+      if (value instanceof Date) {
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        const day = String(value.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      return String(value).slice(0, 10);
+    };
+    const before = {
+      forecastStartDate: asDate(current.rows[0].forecast_start_date),
+      forecastEndDate: asDate(current.rows[0].forecast_end_date),
+    };
+    const updated = await this.client.query<{
+      forecast_start_date: string | null;
+      forecast_end_date: string | null;
+    }>(
+      `UPDATE initiatives
+          SET forecast_start_date=CASE WHEN $3::boolean THEN $4 ELSE forecast_start_date END,
+              forecast_end_date=CASE WHEN $5::boolean THEN $6 ELSE forecast_end_date END,
+              updated_at=CURRENT_TIMESTAMP
+        WHERE organization_id=$1 AND id=$2
+        RETURNING forecast_start_date::text AS forecast_start_date,
+                  forecast_end_date::text AS forecast_end_date`,
+      [
+        input.organizationId,
+        input.initiativeId,
+        hasStart,
+        hasStart ? input.forecastStartDate : null,
+        hasEnd,
+        hasEnd ? input.forecastEndDate : null,
+      ]
+    );
+    requireSingleRow(updated, 'Initiative forecast projection update');
+    const after = {
+      forecastStartDate: asDate(updated.rows[0].forecast_start_date),
+      forecastEndDate: asDate(updated.rows[0].forecast_end_date),
+    };
+    const oldValue = {
+      ...(hasStart ? { forecastStartDate: before.forecastStartDate } : {}),
+      ...(hasEnd ? { forecastEndDate: before.forecastEndDate } : {}),
+    };
+    const newValue = {
+      ...(hasStart ? { forecastStartDate: after.forecastStartDate } : {}),
+      ...(hasEnd ? { forecastEndDate: after.forecastEndDate } : {}),
+    };
+    const history = await this.client.query<{ id: string; observed_at: number }>(
+      `INSERT INTO initiative_history
+        (id,initiative_id,action,old_value,new_value,changed_by,notes,idempotency_key)
+       VALUES(gen_random_uuid()::text,$1,'reforecast',$2,$3,$4,$5,$6)
+       RETURNING id, EXTRACT(EPOCH FROM changed_at)::double precision AS observed_at`,
+      [
+        input.initiativeId,
+        JSON.stringify(oldValue),
+        JSON.stringify(newValue),
+        input.actorId,
+        input.reason,
+        input.clientRequestId,
+      ]
+    );
+    requireSingleRow(history, 'Initiative forecast history append');
+    return {
+      before,
+      after,
+      receiptId: history.rows[0].id,
+      observedAt: new Date(Number(history.rows[0].observed_at) * 1000).toISOString(),
+    };
+  }
 
   async writeInitiativeBudgetItem(input: import('./budgetItems.js').BudgetItemMutation & {
     organizationId: string;

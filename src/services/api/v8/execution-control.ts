@@ -1,5 +1,6 @@
 import { v8Get, v8Patch, v8Post } from './client';
 import { dedupeInFlight } from '../inFlightDedupe';
+import { updateInitiativeForecast } from '../../initiatives-execution/runtimeApi';
 
 export interface V8ExecutionManagementSectionProvenance {
   source: string;
@@ -579,8 +580,18 @@ export const V8ExecutionControlApi = {
   interveneSmooth: (payload: { entityId: string; strategy: string }) =>
     v8Post<{ success: boolean }>('/execution-control/interventions/smooth', payload),
 
-  interveneReplan: (payload: { entityId: string; newDeadline: string; reason: string }) =>
-    v8Post<{ success: boolean }>('/execution-control/interventions/replan', payload),
+  interveneReplan: (payload: {
+    entityType: 'INITIATIVE';
+    entityId: string;
+    expectedVersion: number;
+    clientRequestId: string;
+    forecastStartDate?: string | null;
+    forecastEndDate?: string | null;
+    reason: string;
+  }) => {
+    const { entityId, entityType: _entityType, ...command } = payload;
+    return updateInitiativeForecast(entityId, command);
+  },
 
   interveneEscalate: (payload: { entityId: string; severity: string; message: string }) =>
     v8Post<{ success: boolean }>('/execution-control/interventions/escalate', payload),

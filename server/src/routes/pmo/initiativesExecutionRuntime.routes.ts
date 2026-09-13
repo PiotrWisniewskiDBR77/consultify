@@ -84,6 +84,7 @@ import {
   reviewManagerSuggestion,
   voidExecutionBudgetEntry,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
+import { updateInitiativeForecast } from '../../domain/initiatives-execution/initiativeForecast.js';
 import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
 import {
   assignGoalPerspective,
@@ -991,6 +992,23 @@ const ExecutionRealizationSchema = z.object({
   realizedSavings: z.number().finite().nullable().default(null),
   varianceNotes: z.string().nullable().default(null),
 });
+const InitiativeForecastCommandSchema = z
+  .object({
+    expectedVersion: z.number().int().min(1),
+    clientRequestId: z.string().min(1).max(255),
+    forecastStartDate: z.string().date().nullable().optional(),
+    forecastEndDate: z.string().date().nullable().optional(),
+    reason: z.string().trim().min(1).max(4000),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.forecastStartDate === undefined && value.forecastEndDate === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'At least one forecast field is required',
+      });
+    }
+  });
 const RaidMitigationSchema = z.object({
   expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
@@ -2519,10 +2537,33 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      const [canUpdate, canReview] = await Promise.all([
+      const [canUpdate, canReview, canUpdateForecast, moduleInitiative] = await Promise.all([
         deps.authorize(actor, found.initiative.projectId, 'initiative.update'),
         deps.authorize(actor, found.initiative.projectId, 'initiative.review'),
+        autoryzujZapisInicjatywy(actor, found),
+        deps.reader.findModuleInitiativeForPlanning(
+          actor.organizationId,
+          firstParam(req.params.initiativeId)
+        ),
       ]);
+      const forecastLifecycleEligible = ['SCHEDULED', 'IN_EXECUTION'].includes(
+        String(found.initiative.lifecycleState).toUpperCase()
+      );
+      const forecastAvailable =
+        canUpdateForecast && forecastLifecycleEligible && moduleInitiative !== null;
+      const forecastDenial = !canUpdateForecast
+        ? { denialAt: 'ZDOLNOŚĆ', denialCode: 'CAPABILITY_REQUIRED' }
+        : !forecastLifecycleEligible
+          ? {
+              denialAt: 'CYKL_ŻYCIA',
+              denialCode: 'INITIATIVE_FORECAST_LIFECYCLE_INVALID',
+            }
+          : moduleInitiative === null
+            ? {
+                denialAt: 'PROJEKCJA',
+                denialCode: 'INITIATIVE_FORECAST_PROJECTION_NOT_FOUND',
+              }
+            : { denialAt: null, denialCode: null };
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
@@ -2535,6 +2576,14 @@ export function createInitiativesExecutionRuntimeRouter(
         canReview,
         canSelfApprove: Boolean(policy.config.selfApproval),
         executionWrites: {
+          forecast: {
+            available: forecastAvailable,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/forecast',
+            ...forecastDenial,
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
           budgetEntry: {
             available: canUpdate,
             canonicalCommand:
@@ -5807,6 +5856,48 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: { perspective },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/forecast',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = InitiativeForecastCommandSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success) {
+        return void res
+          .status(400)
+          .json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+      }
+      const initiativeId = firstParam(req.params.initiativeId);
+      // Resolve the tenant-owned canonical Initiative before entering the command bus. A foreign
+      // clientRequestId can therefore never turn replay lookup into an Initiative existence oracle.
+      const found = await deps.reader.findById(actor.organizationId, initiativeId);
+      if (!found) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await autoryzujZapisInicjatywy(actor, found))) {
+        return void res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
+      }
+      const policy = await deps.resolvePolicy(
+        actor.organizationId,
+        found.initiative.projectId,
+        initiativeId
+      );
+      const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const result = await updateInitiativeForecast(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'initiative',
+        aggregateId: initiativeId,
+        expectedVersion,
+        clientRequestId,
+        correlationId:
+          req.header('X-Correlation-ID') || `initiative-forecast-${clientRequestId}`,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        commandType: 'initiative.forecast.update',
+        payload,
+      });
+      res.status(200).json(result);
     })
   );
   router.post(
