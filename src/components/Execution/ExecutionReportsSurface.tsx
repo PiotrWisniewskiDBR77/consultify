@@ -157,7 +157,7 @@ const kolumnyRaportow = (t: (key: string, fallback: string) => string): TableCol
 const kolumnyDefinicji = (t: (key: string, fallback: string) => string): TableColumn[] => [
   {
     id: 'title',
-    label: t('executionReports.columns.definition', 'Report definition'),
+    label: t('executionReports.columns.definition', 'Report template'),
     sortable: true,
     width: '280px',
   },
@@ -1030,7 +1030,7 @@ export const ExecutionReportsSurface = ({
             className={`rounded-full px-3 py-1 text-xs ${registerMode === 'DEFINITIONS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
             onClick={() => setRegisterMode('DEFINITIONS')}
           >
-            {t('executionReports.tab.definitions', 'Definitions')}
+            {t('executionReports.tab.definitions', 'Templates')}
           </button>
         </div>
       </div>
@@ -1059,11 +1059,11 @@ export const ExecutionReportsSurface = ({
       return;
     }
     onRegisterPrimaryCta({
-      label: t('executionReports.menu2.addReport', 'Add report'),
+      label: t('executionReports.menu2.addReport', 'New report'),
       testId: 'execution-reports-add-report-menu',
       onClick: () => undefined,
       menu: {
-        ariaLabel: t('executionReports.menu2.addReport', 'Add report'),
+        ariaLabel: t('executionReports.menu2.addReport', 'New report'),
         items: addReportMenuItems,
         customLabel: t('executionReports.menu2.addReportCustom', 'Custom report…'),
         onCustom: openGenericWizard,
@@ -1222,10 +1222,10 @@ export const ExecutionReportsSurface = ({
       {registerMode === 'DEFINITIONS' && (
         <section aria-label="Report Definitions" className="mt-4 flex min-h-0 flex-1 flex-col">
           <h3 className="font-semibold">
-            {t('executionReports.definitionsHeading', 'Report definitions')}
+            {t('executionReports.definitionsHeading', 'Report templates')}
           </h3>
           <p className="mb-2 text-sm text-c-text-muted">
-            {t('executionReports.definitionsHelp', 'Four definitions — one per reporting level — generate a snapshot. The others are visible in the catalog and are coming in Wave 2.'
+            {t('executionReports.definitionsHelp', 'Four templates — one per reporting level — generate a report. Use the row menu (Generate report) to build a snapshot; the rest stay visible and arrive in Wave 2.'
             )}
           </p>
           {/*
@@ -1735,7 +1735,7 @@ export const ExecutionReportsSurface = ({
                 properties: [
                   {
                     id: 'definition',
-                    label: t('executionReports.columns.definition', 'Report definition'),
+                    label: t('executionReports.columns.definition', 'Report template'),
                     value: r.definition,
                   },
                   {
@@ -1817,15 +1817,25 @@ export const ExecutionReportsSurface = ({
             persistKey="execution.report-runs.v2"
             empty={{
               // Uwaga właściciela 08.09: tabela ZAWSZE, bez planszy/kafli —
-              // jedno zdanie w standardowym pustym stanie `StandardTable`;
-              // generowanie raportu startowego idzie przez primary CTA
-              // „Dodaj raport" (`onRegisterPrimaryCta`, wariant `menu`), nie
-              // przez akcje w pustym stanie (`empty.actions` — kanon
-              // dopuszcza, ale ten ekran świadomie z nich nie korzysta, żeby
-              // nie duplikować CTA).
+              // jedno zdanie w standardowym pustym stanie `StandardTable`.
+              //
+              // K5-6 (odbiór 13.09, staging cf3fded7e4 — „tu nie widzę"):
+              // wcześniej ten pusty stan NIE MIAŁ ŻADNEJ akcji, bo jedyne
+              // wejście do generatora żyło w primary CTA Menu 2. Kanon P5
+              // (`docs/ui-standards/TRIADA_KANON.md`) mówi: pusty stan =
+              // jedno zdanie + JEDNA akcja. Dokładamy więc JEDNĄ akcję
+              // (`actionLabel`/`onAction` — pojedynczy przycisk `EmptyState`,
+              // NIE kafle `empty.actions`, które właściciel odrzucił 08.09) i
+              // woła ona DOKŁADNIE ten sam handler co „Nowy raport" w Menu 2
+              // (`openGenericWizard`) — jedno działanie, jeden kreator, dwa
+              // wejścia w DWÓCH RÓŻNYCH miejscach ekranu (pasek vs pustka),
+              // więc doktryna gęstości („jedna akcja = jeden DOM" dotyczy
+              // pary toolbar+kebab) nie jest naruszona.
               title: t('executionReports.empty.runs.title', 'No reports'),
-              description: t('executionReports.empty.runs.body', 'No reports. Add a report to see a snapshot from real execution data.'
+              description: t('executionReports.empty.runs.body', 'Every report is a snapshot generated from one of the report templates, built from your live delivery data.'
               ),
+              actionLabel: t('executionReports.empty.runs.action', 'New report'),
+              onAction: openGenericWizard,
             }}
           />
         </TableWithPreviewLayout>

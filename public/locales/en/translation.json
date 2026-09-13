@@ -15843,7 +15843,7 @@
         "published": "Published",
         "failed": "Failed",
         "recent": "Recent runs",
-        "definitions": "Definitions"
+        "definitions": "Report templates"
       },
       "governance": {
         "decisions": "Decisions",
@@ -51258,8 +51258,8 @@
     }
   },
   "executionReports": {
-    "definitionsHeading": "Report definitions",
-    "definitionsHelp": "Four definitions — one per reporting level — produce a snapshot. The rest stay visible in the catalog and arrive in Wave 2.",
+    "definitionsHeading": "Report templates",
+    "definitionsHelp": "Four templates — one per reporting level — generate a report. Use the row menu (Generate report) to build a snapshot; the rest stay visible and arrive in Wave 2.",
     "subtitle": "Frozen snapshot of delivery data",
     "back": "Back to the report register",
     "level": {
@@ -51299,7 +51299,7 @@
       "body": "This definition is visible in the catalog but does not generate a snapshot yet."
     },
     "menu2": {
-      "addReport": "Add report",
+      "addReport": "New report",
       "addReportCustom": "Custom report…"
     },
     "action": {
@@ -51390,12 +51390,13 @@
       "unavailable": "No data — the source did not respond.",
       "milestones": "No data — milestones do not exist as a separate object yet (package R3); initiative end dates are shown instead.",
       "definitions": {
-        "title": "No report definitions",
+        "title": "No report templates",
         "body": "The catalog did not respond. Refresh the screen or create a versioned contract definition."
       },
       "runs": {
         "title": "No reports",
-        "body": "No reports yet. Add a report to see a snapshot built from real delivery data."
+        "body": "Every report is a snapshot generated from one of the report templates, built from your live delivery data.",
+        "action": "New report"
       }
     },
     "narrative": {
@@ -51658,7 +51659,7 @@
     "registerToggle": "Report register view",
     "tab": {
       "runs": "Reports",
-      "definitions": "Definitions"
+      "definitions": "Templates"
     },
     "advancedContract": "Advanced definition contract",
     "advancedJson": "Advanced JSON contract",
@@ -51670,7 +51671,7 @@
       "audience": "Audience",
       "author": "Author",
       "cadence": "Cadence",
-      "definition": "Report definition",
+      "definition": "Report template",
       "level": "Level",
       "period": "Period",
       "status": "Status",

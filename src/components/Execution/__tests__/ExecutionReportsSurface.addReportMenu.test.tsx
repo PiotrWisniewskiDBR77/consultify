@@ -6,7 +6,9 @@
  * `tbody` pustego stanu tabeli) złamała kanon — „tabela ZAWSZE" (patrz
  * `ExecutionReportsSurface.emptyTiles.test.tsx`, test (k) po tej naprawie).
  * Ta sama treść (cztery raporty startowe + „Własny raport…") żyje teraz jako
- * pozycje `menu` primary CTA „Dodaj raport", rejestrowane przez
+ * pozycje `menu` primary CTA „Nowy raport" (do 13.09 „Dodaj raport" — K5-6
+ * zmieniło WYŁĄCZNIE etykietę i18n, zgodnie ze słowem właściciela z odbioru
+ * i z parytetem „Nowa decyzja"/„Nowa pozycja RAID"), rejestrowane przez
  * `onRegisterPrimaryCta` — ten sam kanał, którym Praca/Zasoby/Decyzje i
  * ryzyka dają swoje jedyne CTA widoku.
  *
@@ -161,7 +163,7 @@ import { PrimaryCtaMenuButton } from '@/components/standard/StandardModuleBar';
 
 import { ExecutionReportsSurface } from '../ExecutionReportsSurface';
 
-describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08.09)', () => {
+describe('ExecutionReportsSurface — CTA „Nowy raport" w Menu 2 (DEC-453, 08.09; nazwa K5-6 13.09)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     listExecutionReportDefinitions.mockResolvedValue({ definitions: TEST_CATALOG });
@@ -225,11 +227,14 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     render(<PrimaryCtaMenuButton cta={cta} />);
   };
 
-  it('(m1) CTA „Dodaj raport" pokazuje jedną pozycję PER definicja MVP z katalogu + „Własny raport…"', async () => {
+  it('(m1) CTA „Nowy raport" pokazuje jedną pozycję PER definicja MVP z katalogu + „Własny raport…"', async () => {
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Dodaj raport'));
+    // Po K5-6 tekst „Nowy raport" jest na ekranie w trzech miejscach
+    // (CTA Menu 2, akcja pustego stanu, tytuł kreatora) — celujemy w CTA po
+    // `data-testid`, nie po tekście.
+    fireEvent.click(screen.getByTestId('execution-reports-add-report-menu'));
 
     // Katalog testowy ma DWA mvp (mvp-owner-test, weekly-exec) — nie cztery
     // realne klucze produkcyjne, i ZERO dla 'wave2-test' (mvp: false).
@@ -252,7 +257,10 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Dodaj raport'));
+    // Po K5-6 tekst „Nowy raport" jest na ekranie w trzech miejscach
+    // (CTA Menu 2, akcja pustego stanu, tytuł kreatora) — celujemy w CTA po
+    // `data-testid`, nie po tekście.
+    fireEvent.click(screen.getByTestId('execution-reports-add-report-menu'));
     const item = await screen.findByText('Tygodniowy pakiet realizacji');
     fireEvent.click(item);
 
@@ -268,7 +276,10 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Dodaj raport'));
+    // Po K5-6 tekst „Nowy raport" jest na ekranie w trzech miejscach
+    // (CTA Menu 2, akcja pustego stanu, tytuł kreatora) — celujemy w CTA po
+    // `data-testid`, nie po tekście.
+    fireEvent.click(screen.getByTestId('execution-reports-add-report-menu'));
     const custom = await screen.findByText('Własny raport…');
     fireEvent.click(custom);
 
@@ -277,7 +288,7 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     });
   });
 
-  it('(m4) CTA „Dodaj raport" znika w widoku „Definicje" (jedno CTA właściwe widokowi, nie duplikat)', async () => {
+  it('(m4) CTA „Nowy raport" znika w widoku „Szablony" (jedno CTA właściwe widokowi, nie duplikat)', async () => {
     // Ten test przełącza widok Raporty|Definicje — segment toggle żyje dalej
     // w `onRegisterFilterControl` (Poziom + Raporty|Definicje), CTA w
     // OSOBNYM kanale `onRegisterPrimaryCta`. Trzeba spiąć oba na JEDNEJ
@@ -298,7 +309,9 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
 
     // Widok domyślny to „Raporty" — CTA jest widoczne.
     render(<PrimaryCtaMenuButton cta={latestCta(onRegisterPrimaryCta)} />);
-    expect(screen.getByText('Dodaj raport')).toBeInTheDocument();
+    expect(screen.getByTestId('execution-reports-add-report-menu')).toHaveTextContent(
+      'Nowy raport'
+    );
 
     // Węzeł Menu 2 (segment „Raporty | Definicje") — najnowsze wywołanie.
     const filterCalls = onRegisterFilterControl.mock.calls;
@@ -310,7 +323,7 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     // (mutacja: brak warunku `registerMode === 'RUNS'` zostawiłby CTA
     // widoczne też w „Definicje" — RED).
     const callsBeforeClick = onRegisterPrimaryCta.mock.calls.length;
-    fireEvent.click(screen.getByText('Definicje'));
+    fireEvent.click(screen.getByText('Szablony'));
 
     await waitFor(() => {
       expect(onRegisterPrimaryCta.mock.calls.length).toBeGreaterThan(callsBeforeClick);
