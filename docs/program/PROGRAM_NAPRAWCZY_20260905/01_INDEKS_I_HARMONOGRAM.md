@@ -989,3 +989,8 @@ Native reader root candidate V2 independently PASS8/8 exit0, raw E1B_NATIVE_FORE
 
 
 Root independently compared E1B_OPERATIONAL_FORECAST_UI_FRONTEND_TSC_20260913T102500Z.log against integratedbaseline:192/192 normalized(path,TS-code),added[],removed[]. E1B_OPERATIONAL_FORECAST_UI_ROOT_TSC_DELTA.json saved. Author confirmed terminal44254 exit2, notglobalPASS; serveralias tsc next. Native source now usesCURRENT_TIMESTAMP and preservesonly suppliedfields; actualnativewriterreadback stillpending.
+
+
+### Native forecast + editor integrated — 2026-09-13
+
+Candidate2ff754d84b: reviewed17/17 source hashes exact, root combined24/24PASS and combinedbuild0. LocalAPI5293 refreshed with explicit unified-read testcohort; defaultflags/liveunchanged. Actual governed native flow and visible editor acceptance remain OPEN. See INTEGRATOR_MVP_20260912/E1B_NATIVE_EDITOR_INTEGRATED_ACCEPTANCE.md.
