@@ -17,7 +17,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
@@ -32,6 +32,7 @@ import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { organizationExportDisclosure } from '../../utils/organizationExportDisclosure';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 interface AccessRequest {
@@ -131,6 +132,8 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     requests: string | null;
     codes: string | null;
   }>({ organizations: null, requests: null, codes: null });
+  const exportInFlight = useRef(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Modal States
@@ -294,10 +297,14 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   // (backend juz gotowy i przetestowany przez P5, evidence/p5-eksport-20260910/) pod
   // jeden nowy przycisk kebaba — zero zmian ukladu tabeli, zero zmian innych akcji.
   const handleExportOrg = async (id: string, name: string) => {
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
     setProcessingId(id);
     try {
       setActionError(null);
+      setExportNotice(null);
       const blob = await Api.exportOrganizationData(id, 'json');
+      const disclosure = organizationExportDisclosure(JSON.parse(await blob.text()), id);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       const safeName = name.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || id;
@@ -307,12 +314,14 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      toast.success('Organization data exported');
+      setExportNotice(disclosure.message);
+      if (disclosure.complete) toast.success(disclosure.message);
     } catch (err) {
       const message = normalizeApiErrorMessage(err, 'Failed to export organization data');
       setActionError(message);
       toast.error(message);
     } finally {
+      exportInFlight.current = false;
       setProcessingId(null);
     }
   };
@@ -1122,6 +1131,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           className="mb-6 rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
           {actionError}
+        </div>
+      )}
+
+      {exportNotice && (
+        <div
+          role="status"
+          className="mb-6 rounded-lg border border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-800 dark:text-slate-200"
+        >
+          {exportNotice}
         </div>
       )}
 

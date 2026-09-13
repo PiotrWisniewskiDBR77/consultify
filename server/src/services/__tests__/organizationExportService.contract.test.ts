@@ -1,7 +1,10 @@
 import type { PoolClient } from 'pg';
 import { describe, expect, it } from 'vitest';
 import { exportOrganizationData } from '../organizationExportService.js';
-import { organizationExportToCsv } from '../organizationLifecycleService.js';
+import {
+  ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE,
+  organizationExportToCsv,
+} from '../organizationLifecycleService.js';
 import type { OrganizationExportTableContract } from '../organizationExportContract.js';
 
 const root: OrganizationExportTableContract = {
@@ -252,5 +255,45 @@ describe('schema qualified export policy behavior', () => {
       reason: 'indirect_owner_edge_unresolved',
     });
     expect(queries.filter((sql) => sql.includes('FROM "public"."members"'))).toHaveLength(0);
+  });
+});
+
+describe('CSV durable export scope', () => {
+  it('retains the exact manifest, omitted scope and business counts without changing business records', async () => {
+    const policies = [root, policy('public', 'business')];
+    const result = await exportOrganizationData(
+      fixture(policies, { unknown: true }).client,
+      'org-a',
+      policies
+    );
+    result.securityManifest.scope = 'Scope with comma, newline\nand "quotes"';
+    const before = JSON.stringify(result);
+    const csv = organizationExportToCsv(result);
+    // Decode using Python standard-library CSV, independently of the producer's escaping.
+    const { spawnSync } = await import('node:child_process');
+    const parsed = spawnSync(
+      'python3',
+      ['-c', 'import csv,sys,json; print(json.dumps(list(csv.DictReader(sys.stdin))))'],
+      { input: csv, encoding: 'utf8' }
+    );
+    expect(parsed.status).toBe(0);
+    const rows = JSON.parse(parsed.stdout);
+    expect(rows[0].table).toBe(ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE);
+    const metadata = JSON.parse(rows[0].data_json);
+    expect(metadata.securityManifest).toEqual(result.securityManifest);
+    expect(metadata.securityManifest.complete).toBe(false);
+    expect(metadata.skipped).toEqual(result.skipped);
+    expect(metadata.totalRows).toBe(result.totalRows);
+    expect(metadata.rowCounts).toEqual(result.rowCounts);
+    expect(JSON.parse(rows.find((row: any) => row.table === 'business').data_json)).toEqual(
+      result.tables.business[0]
+    );
+    expect(rows.filter((row: any) => row.table === 'business')).toHaveLength(1);
+    expect(JSON.stringify(result)).toBe(before);
+  });
+  it('rejects reserved metadata identity collisions', async () => {
+    const result = await exportOrganizationData(fixture([root]).client, 'org-a', [root]);
+    result.tables[ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE] = [];
+    expect(() => organizationExportToCsv(result)).toThrow('reserved CSV manifest identity');
   });
 });

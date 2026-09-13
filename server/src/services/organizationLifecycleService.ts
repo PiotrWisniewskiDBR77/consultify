@@ -128,13 +128,30 @@ export { exportOrganizationData } from './organizationExportService.js';
  *  JSON per wiersz jest jedynym reprezentowalnym w CSV kształtem bez utraty
  *  danych. Klient może dociąć/rozpakować kolumnę `data_json` narzędziem wg
  *  wyboru (jq, pandas, Excel Power Query). */
+export const ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE = '__consultify_export_manifest_v1';
+
+// Additive metadata record: consumers must exclude this reserved identity from business rows.
+// It preserves the security scope in the downloaded file without inflating totalRows.
 export function organizationExportToCsv(result: OrganizationExportResult): string {
+  if (Object.prototype.hasOwnProperty.call(result.tables, ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE)) {
+    throw new Error('Organization export table collides with reserved CSV manifest identity');
+  }
   const lines = ['table,row_index,data_json'];
   const escapeCsv = (v: string): string => `"${v.replace(/"/g, '""')}"`;
+  lines.push(
+    `${escapeCsv(ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE)},0,${escapeCsv(
+      JSON.stringify({
+        formatVersion: 1,
+        securityManifest: result.securityManifest ?? null,
+        skipped: result.skipped,
+        exportedAt: result.exportedAt,
+        totalRows: result.totalRows,
+        rowCounts: result.rowCounts,
+      })
+    )}`
+  );
   if (result.organization) {
-    lines.push(
-      `${escapeCsv('organizations')},0,${escapeCsv(JSON.stringify(result.organization))}`
-    );
+    lines.push(`${escapeCsv('organizations')},0,${escapeCsv(JSON.stringify(result.organization))}`);
   }
   for (const [table, rows] of Object.entries(result.tables)) {
     rows.forEach((row, idx) => {

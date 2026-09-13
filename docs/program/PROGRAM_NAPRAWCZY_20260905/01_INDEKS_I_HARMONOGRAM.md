@@ -833,3 +833,16 @@ Root CLOSED WIP source review requested topbar-only save preserving unpersisted 
 ### Integrator RC2 — CLOSED autosave, 12.09.2026
 
 Bounded repair integrated e0fb12491f4b2547228008dee276202950b95aed: independent real UI/API/PG ACCEPT, root10/10, frontend192 baseline parity, normalhooks0. RC1 immutable; no deployment. Evidence: INTEGRATOR_MVP_20260912/RC2_CLOSED_INTEGRATION_CHECKPOINT.md. IE01 issued on exact integrated base; full Initiatives/Execution/MVP remain open. C6 export prerequisites/privacy/authorization and combined acceptance remain open.
+
+
+### RC2 C6 integration and export disclosure follow-up — 12.09.2026
+Integrated checkpoint 6038c2ae78db0b2acde777ed749eab94a8ad6323, normal hooks PASS, clean at checkpoint. RC1 unchanged. Bounded snapshot/Interview privacy export:26 unit and25 real tests PASS, server tsc0, build0 (index355b3eae3757fe96606b303feafb9857a48e4eedfe402f4ee479315b35b33c3e). See RC2_EXPORT_INTEGRATION_ACCEPTANCE.md. No deployment/full E4/full MVP claim.
+Current follow-up WIP: existing Superadmin JSON download now displays complete/partial/unknown; malformed response denies download; original Blob unchanged. CSV adds reserved __consultify_export_manifest_v1 record without changing table,row_index,data_json header or business counts. Collision rejected. Root mounted14/14 and CSVcontract11/11 PASS (CSV independently parsed by Python standard-library); mutation and independent review pending. No self-service org UI added; that product requirement remains OPEN, personal GDPR unchanged. Source/build acceptance6038 predates this follow-up: new WIP is not independently accepted or built yet.
+Galileo checkpoint459069bf0e93d1b4a485e33d5e42856d8e2dab85 current MANUAL_HUB content under independent Turing review. No integration yet. Nietzsche IE01 actual Hub UI creation in progress on owned5292/5293/PG6459, no completed journey claim. Full program goal ACTIVE.
+
+
+RC2 combined canonical current-content evidence: reconciled exactly7 files from cf0848→459069 after byte-checking root prerequisites; existing root policy rollback-discard and CSV changes preserved. Configured realGateway RC2_MANUAL_COMBINED_GATEWAY_CONFIGURED exit0,1PASS/0fail/skip with declared test-only flags; initial RC2_MANUAL_COMBINED_GATEWAY omitted flags and failed guard before product scenario, retained as configuration error, not product regression. Galileo now owns6457/4216 again.
+Disclosure independent review caught malformed-envelope COMPLETE bug; min envelope/date/rowcount/expectedorg checks added. Mounted22PASS (8previous +14export), not built/browser proof; final independent review pending. Source manifest RC2_MANUAL_DISCLOSURE_SOURCE_MANIFEST.json records current WIP. Root servertsc95300 active; no commit/deploy yet. Full self-service UI/canonical history/other families/full E4 remain OPEN.
+
+
+RC2 canonical/disclosure final pre-commit: independent bounded ACCEPT (reports in INTEGRATOR_MVP_20260912), root22mounted+30backend+1configuredGateway PASS, servertsc0, frontend192 baseline parity. Build134 default4GiB heap then configured8GiB exit0, index9e7d7735cb704d1a82910012cf8df3578e1d5557ba752ebbae25b21c6f6e4d07. Source manifest updated after format. Normalcommit next; no deployment, full E4/MVP OPEN. Heavy slot released Galileo for tasks tsc.
