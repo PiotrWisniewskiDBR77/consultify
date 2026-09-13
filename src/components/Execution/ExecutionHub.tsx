@@ -89,11 +89,11 @@ import { listExecutionCases } from '@/services/initiatives-execution/runtimeApi'
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
+import { formatListDate } from '@/utils/listDateFormat';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
 import { useAppStore } from '../../store/useAppStore';
-import { formatListDate } from '@/utils/listDateFormat';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
@@ -127,22 +127,35 @@ import {
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { type ExecutionSurfacePrimaryCta } from './canonicalMenu3';
 import { ExecutionActionCards } from './ExecutionActionCards';
+import {
+  buildExecutionBankRows,
+  buildExecutionCalendarWindow,
+  type ExecutionBankCaseSource,
+  type ExecutionBankHorizonMonths,
+  type ExecutionBankRow,
+  filterExecutionBankRows,
+} from './executionBankModel';
+import {
+  describeExecutionBankUnknown,
+  ExecutionBankViews,
+  formatExecutionBankDate,
+} from './ExecutionBankViews';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { executionFunctionLabel, executionModuleTabIds } from './executionModuleTabs';
 import {
+  type ExecutionBankView,
+  type ExecutionDocumentIdentity,
   executionFunctionIdForSurface,
   executionInitiativeIdFromDocument,
   executionNavigationCommit,
+  type ExecutionNavigationIssue,
+  type ExecutionNavigationState,
   executionSubviewForSurface,
   parseExecutionNavigationState,
   serializeExecutionNavigationState,
   shouldPreserveExecutionNavigationInput,
-  type ExecutionBankView,
-  type ExecutionDocumentIdentity,
-  type ExecutionNavigationIssue,
-  type ExecutionNavigationState,
 } from './executionNavigationState';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 // 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
@@ -718,6 +731,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // czytają ją SYNCHRONICZNIE w renderze, więc deklaracja niżej = ReferenceError
   // (TDZ). Stała stoi więc na samej górze stanu, nad wszystkimi czytelnikami.
   const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+  const [executionBankAsOf, setExecutionBankAsOf] = useState(() => {
+    const requested = searchParams.get('asOf');
+    return requested && Number.isFinite(Date.parse(requested))
+      ? new Date(requested).toISOString()
+      : new Date().toISOString();
+  });
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -792,8 +811,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
    * Ten sam kanał co `*FilterControl` powyżej — jeden stan per zakładka.
    */
   const [workPrimaryCta, setWorkPrimaryCta] = useState<ExecutionSurfacePrimaryCta | null>(null);
-  const [resourcesPrimaryCta, setResourcesPrimaryCta] =
-    useState<ExecutionSurfacePrimaryCta | null>(null);
+  const [resourcesPrimaryCta, setResourcesPrimaryCta] = useState<ExecutionSurfacePrimaryCta | null>(
+    null
+  );
   const [controlPrimaryCta, setControlPrimaryCta] = useState<ExecutionSurfacePrimaryCta | null>(
     null
   );
@@ -825,6 +845,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
+  const [selectedExecutionBankRowId, setSelectedExecutionBankRowId] = useState<string | null>(null);
+  const [executionBankHorizon, setExecutionBankHorizon] = useState<ExecutionBankHorizonMonths>(3);
+  const [executionBankDrilldownMonth, setExecutionBankDrilldownMonth] = useState<string | null>(
+    null
+  );
   // #12 — bulk selection for the Execution Summary table (left checkbox column).
   const [summarySelectedIds, setSummarySelectedIds] = useState<Set<string>>(new Set());
   // #19 — active Rollout sub-view, so the Menu-2 CTA can vary per sub-view.
@@ -850,6 +875,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Data state
   const initRetryRef = React.useRef(0);
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
+  const [executionCases, setExecutionCases] = useState<ExecutionBankCaseSource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
   const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
@@ -1014,9 +1040,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (!hasNavigationInput) return;
     applyingNavigationRef.current = true;
     const navigation = parseExecutionNavigationState(searchParams, { summaryOneLookEnabled });
+    const requestedAsOf = searchParams.get('asOf');
+    if (requestedAsOf && Number.isFinite(Date.parse(requestedAsOf))) {
+      setExecutionBankAsOf(new Date(requestedAsOf).toISOString());
+    }
+    const requestedScope = searchParams.get('scope');
+    if (requestedScope === 'active' || requestedScope === 'all') setScope(requestedScope);
     setActiveTab(navigation.surfaceTab as ModuleTab);
     setViewMode(toHubView(navigation.view));
     setActiveDocumentId(navigation.documentIdentity?.id ?? null);
+    setSelectedExecutionBankRowId(
+      searchParams.get('selection') ||
+        (navigation.documentIdentity?.kind === 'initiative' ? navigation.executionCaseId : null)
+    );
     setIsSidePanelOpen(false);
     setNavigationIssue(navigation.issue);
     if (navigation.preset && navigation.surfaceTab === 'summary') {
@@ -1249,7 +1285,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   useEffect(() => {
     if (activeTab === 'list') {
-      const allowed: ViewMode[] = ['table', 'kanban', 'timeline'];
+      const allowed: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar'];
       if (!allowed.includes(viewMode)) setViewMode('table');
       return;
     }
@@ -1311,28 +1347,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         // na żądanie — nie zależą od tego, czy `initiative.status` jest już
         // znormalizowany, więc zdjęcie nadpisania nic im nie psuje.
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
+        const normalizedExecutionCases = normalizeExecutionArrayEnvelope<ExecutionBankCaseSource>(
+          executionCasesResponse,
+          ['cases']
+        );
+        setExecutionCases(normalizedExecutionCases);
         const activeExecutionInitiativeIds = new Set(
-          normalizeExecutionArrayEnvelope<{ initiativeId?: string; state?: string }>(
-            executionCasesResponse,
-            ['cases']
-          )
+          normalizedExecutionCases
             .filter((executionCase) => String(executionCase.state || '').toUpperCase() === 'ACTIVE')
             .map((executionCase) => String(executionCase.initiativeId || ''))
             .filter(Boolean)
         );
 
-        const canonicalExecutionInitiatives = data
-          .filter(
-            (initiative: FullInitiative) =>
-              EXECUTION_STATUSES.includes(initiative.status) ||
-              activeExecutionInitiativeIds.has(String(initiative.id))
-          )
-          .map((initiative: FullInitiative) =>
-            activeExecutionInitiativeIds.has(String(initiative.id)) &&
-            !EXECUTION_STATUSES.includes(initiative.status)
-              ? { ...initiative, status: InitiativeStatus.IN_EXECUTION }
-              : initiative
-          );
+        const canonicalExecutionInitiatives = data.filter(
+          (initiative: FullInitiative) =>
+            EXECUTION_STATUSES.includes(initiative.status) ||
+            activeExecutionInitiativeIds.has(String(initiative.id))
+        );
         const canonicalIds = new Set(
           canonicalExecutionInitiatives.map((initiative) => String(initiative.id))
         );
@@ -1388,10 +1419,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               isDemoSample: true,
             })) as unknown as FullInitiative[];
           setInitiatives(fallbackInitiatives);
+          setExecutionCases([]);
           setDemoFallbackActive(true);
           return;
         }
         setInitiatives([]);
+        setExecutionCases([]);
         const { message, code } = mapHubLoadFailureToPresentation(
           err,
           t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
@@ -2038,6 +2071,89 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     );
   }, [dashboardBaseInitiatives, activeStatusFilter, canonicalMenu3Preset.list, matchesListPreset]);
 
+  const executionBankRowsAll = useMemo(
+    () =>
+      buildExecutionBankRows(
+        initiatives.map((initiative) => {
+          const ownerExecution = (initiative as any).ownerExecution;
+          const ownerBusiness = (initiative as any).ownerBusiness;
+          const owner = ownerExecution ?? ownerBusiness;
+          return {
+            id: String(initiative.id),
+            name: initiative.name,
+            description: initiative.description,
+            lifecycleStatus: String(initiative.status),
+            ownerId:
+              owner?.id ??
+              (initiative as any).ownerExecutionId ??
+              (initiative as any).ownerBusinessId ??
+              null,
+            ownerName: owner
+              ? `${owner.firstName ?? ''} ${owner.lastName ?? ''}`.trim() || null
+              : null,
+            progress: (initiative as any).progress ?? null,
+            confidence: (initiative as any).confidenceLevel ?? null,
+            baselineStartDate: (initiative as any).baselineStartDate ?? null,
+            baselineEndDate: (initiative as any).baselineEndDate ?? null,
+            currentPlanStartDate: initiative.plannedStartDate ?? null,
+            currentPlanEndDate: initiative.plannedEndDate ?? null,
+            actualStartDate: (initiative as any).actualStartDate ?? null,
+            actualEndDate: (initiative as any).actualEndDate ?? null,
+            updatedAt: (initiative as any).updatedAt ?? null,
+          };
+        }),
+        executionCases,
+        { asOf: executionBankAsOf }
+      ),
+    [executionBankAsOf, executionCases, initiatives]
+  );
+
+  const executionBankRowsBeforePreset = useMemo(() => {
+    const statusFilters = activeStatusFilter ? [activeStatusFilter] : undefined;
+    const activeStates = scope === 'active' ? ['ACTIVE', 'PAUSED', 'CLOSING'] : undefined;
+    const dataIssues = summaryFilters.flatMap((filter) => {
+      if (filter.column !== 'data') return [];
+      if (filter.value === 'missing_baseline') return ['MISSING_BASELINE' as const];
+      if (filter.value === 'missing_forecast') return ['MISSING_FORECAST' as const];
+      if (filter.value === 'unknown_progress') return ['UNKNOWN_PROGRESS' as const];
+      return [];
+    });
+    return filterExecutionBankRows(executionBankRowsAll, {
+      search: searchQuery,
+      lifecycleStatuses: statusFilters,
+      executionStates: activeStates,
+      dataIssues: dataIssues.length ? dataIssues : undefined,
+    });
+  }, [activeStatusFilter, executionBankRowsAll, scope, searchQuery, summaryFilters]);
+
+  const executionBankRows = useMemo(() => {
+    const preset =
+      canonicalMenu3Preset.list === 'zagrozone'
+        ? 'AT_RISK'
+        : canonicalMenu3Preset.list === 'po-terminie'
+          ? 'CRITICAL'
+          : 'ALL';
+    return filterExecutionBankRows(executionBankRowsBeforePreset, { preset });
+  }, [canonicalMenu3Preset.list, executionBankRowsBeforePreset]);
+
+  const executionBankCalendarWindow = useMemo(
+    () =>
+      buildExecutionCalendarWindow(
+        executionBankAsOf,
+        executionBankHorizon,
+        executionBankDrilldownMonth
+      ),
+    [executionBankAsOf, executionBankDrilldownMonth, executionBankHorizon]
+  );
+
+  const selectedExecutionBankRow = selectedExecutionBankRowId
+    ? (executionBankRows.find(
+        (row) =>
+          row.id === selectedExecutionBankRowId ||
+          row.executionCaseId === selectedExecutionBankRowId
+      ) ?? null)
+    : null;
+
   // Liczniki chipów Menu 3 „Realizacji" — z tej samej listy, którą widzi
   // użytkownik po kliknięciu chipa (bez zawężenia presetem, żeby licznik
   // pokazywał ile BĘDZIE, a nie ile jest teraz widoczne).
@@ -2045,13 +2161,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setCanonicalMenu3Counts((current) => ({
       ...current,
       list: {
-        wszystkie: dashboardBaseInitiatives.length,
-        zagrozone: dashboardBaseInitiatives.filter((i) => matchesListPreset(i, 'zagrozone')).length,
-        'po-terminie': dashboardBaseInitiatives.filter((i) => matchesListPreset(i, 'po-terminie'))
+        wszystkie: executionBankRowsBeforePreset.length,
+        zagrozone: filterExecutionBankRows(executionBankRowsBeforePreset, { preset: 'AT_RISK' })
           .length,
+        'po-terminie': filterExecutionBankRows(executionBankRowsBeforePreset, {
+          preset: 'CRITICAL',
+        }).length,
       },
     }));
-  }, [dashboardBaseInitiatives, matchesListPreset]);
+  }, [executionBankRowsBeforePreset]);
 
   // #12 — bulk selection helpers for the Execution Summary table.
   const summaryVisibleIds = useMemo(
@@ -2454,9 +2572,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.table.plan', 'Planned start / end'),
         width: '190px',
         render: (row) => {
-          const start = row.plannedStartDate
-            ? formatListDate(row.plannedStartDate)
-            : null;
+          const start = row.plannedStartDate ? formatListDate(row.plannedStartDate) : null;
           const end = row.plannedEndDate ? formatListDate(row.plannedEndDate) : null;
           if (!start && !end)
             return (
@@ -2498,7 +2614,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span
                 className="text-c-text-muted"
-                title={t('execution.table.deviationNoBaseline', 'No baseline plan — nothing to calculate the deviation from'
+                title={t(
+                  'execution.table.deviationNoBaseline',
+                  'No baseline plan — nothing to calculate the deviation from'
                 )}
               >
                 —
@@ -2583,7 +2701,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // ten sam pstryczek miał w Inicjatywach i w Realizacji dwa różne wyglądy
   // (h-8/h-9, inne tła aktywnego, inne obwódki) — właściciel nazwał to chaosem.
   const scopeToggle = (
-    <div className={MENU_2_SEGMENT_GROUP} role="radiogroup" aria-label={t('execution.scope.aria', 'Scope')}>
+    <div
+      className={MENU_2_SEGMENT_GROUP}
+      role="radiogroup"
+      aria-label={t('execution.scope.aria', 'Scope')}
+    >
       {(
         [
           { id: 'active' as const, label: t('execution.scope.active', 'Active') },
@@ -2599,9 +2721,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={
-            scope === opt.id ? MENU_2_SEGMENT_ITEM_ACTIVE : MENU_2_SEGMENT_ITEM_INACTIVE
-          }
+          className={scope === opt.id ? MENU_2_SEGMENT_ITEM_ACTIVE : MENU_2_SEGMENT_ITEM_INACTIVE}
           title={
             opt.id === 'active'
               ? t('execution.scope.activeHint', 'Scheduled → Executing → Blocked')
@@ -2787,7 +2907,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // (`font-mono text-xs`, patrz `subTypeLabel`) — surowy kod ('EXE'/'PRC'/…)
   // wyciekał więc RÓWNIEŻ tam, nie tylko w kolumnie TYP tabeli.
   const handleOpenDocument = useCallback(
-    (row: FullInitiative) => {
+    (row: FullInitiative, executionCaseId?: string | null) => {
       const doc: OpenDocument = {
         id: row.id,
         type: 'initiative',
@@ -2809,6 +2929,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setIsSidePanelOpen(false);
       pushExecutionNavigation({
         initiativeId: row.id,
+        executionCaseId: executionCaseId ?? undefined,
         documentIdentity: { kind: 'initiative', id: row.id },
       });
     },
@@ -5426,15 +5547,48 @@ Please return:
       // Assessment 'list' / Meeting 'list' / Results KPI catalog adopters.
       // Module declares TYLKO data + kebab contract (buildInitiativeRowMenu);
       // all chrome comes from the Standard* facades.
-      const selectedRow = selectedSummaryInitiative;
-      const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
+      const selectedBankRow = selectedExecutionBankRow;
+      const selectedBankInitiative = selectedBankRow
+        ? (initiatives.find(
+            (initiative) => String(initiative.id) === selectedBankRow.initiativeId
+          ) ?? null)
+        : null;
       const sourceRelations = buildExecutionSourceRelations(
         {
-          sourceType: previewModel?.sourceType,
-          sourceFramework: (selectedRow as any)?.sourceFramework,
+          sourceType: (selectedBankInitiative as any)?.sourceType,
+          sourceFramework: (selectedBankInitiative as any)?.sourceFramework,
         },
         t('common.source', 'Source')
       );
+      const selectBankRow = (row: ExecutionBankRow) => {
+        jedenPanel.otworz();
+        setSelectedExecutionBankRowId(row.id);
+        const next = new URLSearchParams(searchParams);
+        next.set('selection', row.id);
+        next.set('scope', scope);
+        if (next.toString() !== searchParams.toString()) updateExecutionSearch(next, 'user');
+      };
+      const openBankRow = (row: ExecutionBankRow) => {
+        const initiative = initiatives.find((item) => String(item.id) === row.initiativeId);
+        if (initiative) handleOpenDocument(initiative, row.executionCaseId);
+      };
+      const bankView =
+        viewMode === 'timeline'
+          ? 'gantt'
+          : viewMode === 'calendar'
+            ? 'calendar'
+            : viewMode === 'kanban' || viewMode === 'grid'
+              ? 'kanban'
+              : 'table';
+      const progressLabel = selectedBankRow
+        ? selectedBankRow.progress.status === 'KNOWN'
+          ? `${selectedBankRow.progress.value}%`
+          : describeExecutionBankUnknown(selectedBankRow.progress.reason)
+        : '';
+      const bankDateLabel = (evidence: ExecutionBankRow['baselineFinish']) =>
+        evidence.status === 'KNOWN'
+          ? formatExecutionBankDate(evidence.value)
+          : describeExecutionBankUnknown(evidence.reason);
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5458,134 +5612,92 @@ Please return:
                   </Callout>
                 </div>
               )}
-              <StandardTable
-                columns={columns}
-                data={
-                  summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
+              <ExecutionBankViews
+                rows={executionBankRows}
+                view={bankView}
+                selected={
+                  selectedBankRow
+                    ? {
+                        initiativeId: selectedBankRow.initiativeId,
+                        executionCaseId: selectedBankRow.executionCaseId,
+                      }
+                    : null
                 }
-                selectedRowId={summaryPreviewInitiativeId}
-                onRowClick={(row) => {
-                  jedenPanel.otworz();
-                  setSummaryPreviewInitiativeId(String((row as any).id));
+                calendarWindow={executionBankCalendarWindow}
+                onSelect={selectBankRow}
+                onOpen={openBankRow}
+                onHorizonChange={(months) => {
+                  setExecutionBankHorizon(months);
+                  if (months <= 3) setExecutionBankDrilldownMonth(null);
                 }}
-                onRowDoubleClick={(row) => {
-                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
-                  if (init) handleOpenDocument(init);
-                }}
-                rowDescription={() => null}
-                persistKey="execution-summary"
-                density="compact"
-                selection={{ selectedIds: summarySelectedIds, onChange: setSummarySelectedIds }}
-                empty={{
-                  icon: LayoutDashboard,
-                  title: t('execution.empty.noInExecution', 'No initiatives in execution'),
-                  description: t(
-                    'execution.empty.noInExecutionDesc',
-                    'Initiatives promoted to execution will appear here.'
-                  ),
-                }}
-                rowMenu={(row) => {
-                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
-                  return init
-                    ? buildInitiativeRowMenu(init)
-                    : ({ primary: [], universalHandlers: {}, destructive: {} } as StandardRowMenu);
-                }}
-                activeFilters={summaryFilters}
-                onFilterChange={setSummaryFilters}
+                onDrilldownMonth={setExecutionBankDrilldownMonth}
               />
             </div>
 
             <JedenPrawyPanel
               rekord={
-                selectedRow && previewModel ? (
-                  <StandardPreview
-                    title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
-                    onClose={() => setSummaryPreviewInitiativeId(null)}
-                    onOpenFull={() => handleOpenDocument(selectedRow)}
-                    meta={{
-                      pills: [
-                        {
-                          // ★ Ten sam znalezisko 203-polski co kolumna statusu
-                          // wyżej: `STATUS_METADATA[...].label` jest zawsze
-                          // angielski — pill podglądu pokazywał np. "Blocked"
-                          // podczas gdy tabela obok mówiła po polsku.
-                          label: getLocalizedStatusLabel(selectedRow.status as InitiativeStatus, t),
-                          tone: statusChipTone(String(selectedRow.status)),
-                        },
-                        // DEC-424: wstrzymanie jest FLAGĄ na „W realizacji", nie statusem —
-                        // bez tej pigułki jedynym śladem wstrzymania był przycisk „Wznów".
-                        ...((selectedRow as { onHold?: boolean }).onHold
-                          ? [
-                              {
-                                label: t('initiatives.status.ON_HOLD', 'On hold'),
-                                tone: 'warning' as const,
-                              },
-                            ]
-                          : []),
-                        {
-                          label: `${previewModel.progress ?? 0}%`,
-                          tone: 'neutral',
-                        },
-                      ],
-                      trailing: (
-                        <span className="text-[11px] font-semibold text-c-text-secondary">
-                          {selectedRow.plannedEndDate
-                            ? formatListDate(selectedRow.plannedEndDate)
-                            : '—'}
-                        </span>
-                      ),
-                    }}
-                    details={{
-                      text: [
-                        `${t('execution.table.assignee', 'Owner')}: ${
-                          previewModel.ownerBusiness
-                            ? `${previewModel.ownerBusiness.firstName ?? ''} ${previewModel.ownerBusiness.lastName ?? ''}`.trim()
-                            : t('execution.table.unassigned', 'Unassigned')
-                        }`,
-                        `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
-                        `${t('execution.table.deadline', 'Due')}: ${
-                          selectedRow.plannedEndDate
-                            ? formatListDate(selectedRow.plannedEndDate)
-                            : '—'
-                        }`,
-                        `${t('execution.table.tasks', 'Tasks')}: ${
-                          tasksByInitiative[selectedRow.id]?.length ?? 0
-                        }`,
-                        '',
-                        previewModel.summary?.trim() ||
-                          previewModel.description?.trim() ||
-                          t('common.noDescription', 'No description'),
-                      ].join('\n'),
-                      onCopy: () => {
-                        void navigator.clipboard?.writeText(
-                          `${selectedRow.name} — ${selectedRow.status} (${previewModel.progress ?? 0}%)`
-                        );
-                      },
-                    }}
-                    ai={{
-                      hints: [
-                        t(
-                          'execution.summary.summarizePrompt',
-                          'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                        ),
-                      ],
-                      onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
-                    }}
-                    relations={sourceRelations}
-                    actions={listPreviewActions}
+                selectedBankRow ? (
+                  <div
+                    data-testid="execution-bank-preview"
+                    data-initiative-id={selectedBankRow.initiativeId}
+                    data-execution-case-id={selectedBankRow.executionCaseId ?? undefined}
                   >
-                    {/*
-                    Łańcuch zarządzania w Realizacji (DEC-424: Zatwierdzona → W realizacji,
-                    W realizacji → Zamknięta, flaga wstrzymania). Ta sama powierzchnia co w
-                    rejestrze Inicjatyw; kebab wiersza jej nie dubluje.
-                  */}
-                    <InitiativeLifecycleActions
-                      initiativeId={selectedRow.id}
-                      density="full"
-                      heading={t('initiatives.lifecycle.heading', 'Initiative stage')}
-                      className="mt-4"
+                    <StandardPreview
+                      title={selectedBankRow.name || t('execution.initiativeLabel', 'Initiative')}
+                      onClose={() => {
+                        setSelectedExecutionBankRowId(null);
+                        const next = new URLSearchParams(searchParams);
+                        next.delete('selection');
+                        if (next.toString() !== searchParams.toString()) {
+                          updateExecutionSearch(next, 'user');
+                        }
+                      }}
+                      onOpenFull={() => openBankRow(selectedBankRow)}
+                      meta={{
+                        pills: [
+                          {
+                            label: selectedBankRow.lifecycleStatus,
+                            tone: statusChipTone(selectedBankRow.lifecycleStatus),
+                          },
+                          {
+                            label: selectedBankRow.executionState,
+                            tone: statusChipTone(selectedBankRow.executionState),
+                          },
+                          { label: progressLabel, tone: 'neutral' },
+                        ],
+                        trailing: (
+                          <span className="text-[11px] font-semibold text-c-text-secondary">
+                            Reporting date{' '}
+                            {formatExecutionBankDate(executionBankCalendarWindow.asOf)}
+                          </span>
+                        ),
+                      }}
+                      details={{
+                        text: [
+                          selectedBankRow.executionCaseId
+                            ? `Execution Case linked · Version ${selectedBankRow.executionCaseVersion ?? 'not reported'}`
+                            : 'No Execution Case linked',
+                          `Lifecycle: ${selectedBankRow.lifecycleStatus}`,
+                          `Execution state: ${selectedBankRow.executionState}`,
+                          `Baseline: ${bankDateLabel(selectedBankRow.baselineFinish)}`,
+                          `Current plan: ${bankDateLabel(selectedBankRow.currentPlanFinish)}`,
+                          `Forecast: ${bankDateLabel(selectedBankRow.forecastFinish)}`,
+                          `Actual: ${bankDateLabel(selectedBankRow.actualFinish)}`,
+                          '',
+                          selectedBankRow.description?.trim() ||
+                            t('common.noDescription', 'No description'),
+                        ].join('\n'),
+                        onCopy: () =>
+                          void navigator.clipboard?.writeText(
+                            `${selectedBankRow.name} — ${progressLabel}`
+                          ),
+                      }}
+                      relations={sourceRelations}
                     />
-                  </StandardPreview>
+                    <div data-testid="execution-bank-progress" className="sr-only">
+                      {progressLabel}
+                    </div>
+                  </div>
                 ) : null
               }
             />
@@ -5855,7 +5967,7 @@ Please return:
   const availableViewModes = useMemo(
     () =>
       activeTab === 'list'
-        ? (['table'] as ViewMode[])
+        ? (['table', 'kanban', 'timeline', 'calendar'] as ViewMode[])
         : activeTab === 'reports'
           ? (['table'] as ViewMode[])
           : ([] as ViewMode[]),
