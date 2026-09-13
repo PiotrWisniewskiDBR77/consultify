@@ -2,7 +2,7 @@ import type { OrganizationExportTableContract } from './organizationExportContra
 
 // Explicit source contracts, never catalog-inferred authorization.
 // Relations migration20262107 drops PK in favor of identity unique indexes.
-// Catalog mismatch must fail closed until runtime measurement is available.
+// Catalog shape measured against cx6_swieza on20260912; any later mismatch fails closed.
 export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTableContract[] = [
   {
     schema: 'public',
@@ -30,7 +30,7 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: [],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
     canonicalLineageColumns: ['payload_json'],
   },
   {
@@ -66,7 +66,7 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: ['request_fingerprint'],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
     canonicalLineageColumns: ['response_json'],
   },
   {
@@ -109,7 +109,7 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: [],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
     canonicalLineageColumns: ['payload_json'],
   },
   {
@@ -161,7 +161,7 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: ['last_error'],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
     canonicalLineageColumns: ['payload_json'],
   },
   {
@@ -196,7 +196,7 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: [],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
     canonicalLineageColumns: ['payload_json'],
   },
   {
@@ -256,7 +256,7 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: ['review_rationale'],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
     canonicalLineageColumns: ['content_json', 'evidence_refs_json'],
   },
   {
@@ -297,6 +297,6 @@ export const ORGANIZATION_EXPORT_CANONICAL_TABLES: readonly OrganizationExportTa
     ],
     excludedColumns: [],
     source:
-      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Source-derived schema only, catalog/runtime NOT_PROVEN. Payload lineage-only, explicit content unresolved.',
+      'postgresMaterialCommandUnitOfWork persistAggregate/appendAudit/appendOutbox/saveReceipt/claimRelation/publishInitiativeCardVersion; postgresInitiativeReader; migrations932/933 +20260930 outbox +20262107 relations. Catalog matched cx6_swieza public on20260912; MANUAL_HUB current-state Gateway export proven separately. Other payload content remains unresolved.',
   },
 ];

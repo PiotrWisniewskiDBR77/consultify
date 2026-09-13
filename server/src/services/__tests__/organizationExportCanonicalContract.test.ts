@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import { describe, expect, it } from 'vitest';
+import { ORGANIZATION_EXPORT_MVP_TABLES } from '../organizationExportMvpContract.js';
 import { ORGANIZATION_EXPORT_CANONICAL_TABLES } from '../organizationExportCanonicalContract.js';
 import { exportOrganizationData } from '../organizationExportService.js';
 import { organizationExportToCsv } from '../organizationLifecycleService.js';
@@ -17,7 +18,11 @@ const root: OrganizationExportTableContract = {
   excludedColumns: [],
   source: 'unit root',
 };
-const contracts = [root, ...ORGANIZATION_EXPORT_CANONICAL_TABLES];
+const contracts = [
+  root,
+  ...ORGANIZATION_EXPORT_MVP_TABLES,
+  ...ORGANIZATION_EXPORT_CANONICAL_TABLES,
+];
 const secret = 'PRIVATE_SOURCE_BODY_DO_NOT_EXPORT';
 function mockClient(data: Record<string, Record<string, unknown>[]>, drift?: string) {
   const calls: string[] = [];
@@ -98,6 +103,76 @@ function state(type: string, version: number) {
       accessToken: secret,
     },
     updated_at: '2026-09-12T00:00:00Z',
+  };
+}
+function manualFixture() {
+  const proposal = {
+    organization_id: 'org-a',
+    aggregate_type: 'source_proposal',
+    aggregate_id: 'proposal-1',
+    version: 1,
+    payload_json: {
+      proposalId: 'proposal-1',
+      proposalVersion: 1,
+      sourceType: 'MANUAL_HUB',
+      sourceId: 'manual-source-1',
+      sourceVersion: 1,
+      title: 'VISIBLE_MANUAL_CONTENT',
+      problem: 'VISIBLE_MANUAL_CONTENT',
+      projectId: 'project-1',
+      initiativeOwnerId: 'owner-1',
+      visibility: 'PROJECT',
+      provenance: {
+        system: 'consultify.initiatives-hub',
+        recordType: 'manual-initiative-proposal',
+        capturedAt: '2026-09-12T00:00:00Z',
+        evidenceRefs: ['consultify://initiatives/source-proposals/proposal-1'],
+      },
+    },
+  };
+  const initiative = {
+    organization_id: 'org-a',
+    aggregate_type: 'initiative',
+    aggregate_id: 'initiative-1',
+    version: 23,
+    payload_json: {
+      initiativeId: 'initiative-1',
+      title: 'VISIBLE_MANUAL_CONTENT',
+      problem: 'VISIBLE_MANUAL_CONTENT',
+      projectId: 'project-1',
+      visibility: 'PROJECT',
+      source: {
+        proposalId: 'proposal-1',
+        proposalVersion: 2,
+        sourceType: 'MANUAL_HUB',
+        sourceId: 'manual-source-1',
+        sourceVersion: 1,
+        freshness: 'CURRENT',
+      },
+      apiToken: secret,
+    },
+  };
+  const relation = {
+    organization_id: 'org-a',
+    relation_type: 'SOURCE_REGISTRATION',
+    source_type: 'MANUAL_HUB',
+    source_id: 'manual-source-1',
+    source_version: 1,
+    target_type: 'initiative',
+    target_id: 'initiative-1',
+    payload_json: { proposalId: 'proposal-1', proposalVersion: 1, disposition: 'REGISTER' },
+  };
+  const project = { id: 'project-1', organization_id: 'org-a', name: 'Project' };
+  return {
+    proposal,
+    initiative,
+    relation,
+    project,
+    data: {
+      ie_aggregate_state: [proposal, initiative],
+      ie_aggregate_relations: [relation],
+      projects: [project],
+    },
   };
 }
 describe('canonical export source contracts, mock client only', () => {
@@ -250,5 +325,108 @@ describe('canonical export source contracts, mock client only', () => {
       table: 'ie_aggregate_state',
       reason: 'schema_projection_or_primary_key_drift',
     });
+  });
+  it('verified manual Hub provenance plus registration preserves current content and two distinct proposal version meanings', async () => {
+    const f = manualFixture();
+    const before = JSON.stringify(f.data);
+    const { client } = mockClient(f.data);
+    const result = await exportOrganizationData(client, 'org-a', contracts);
+    expect(result.tables.ie_aggregate_state.map((r) => r.export_payload_scope)).toEqual([
+      'verified_manual_hub_content',
+      'verified_manual_hub_content',
+    ]);
+    expect(result.tables.ie_aggregate_state[1]).toMatchObject({
+      version: 23,
+      payload_json: {
+        title: 'VISIBLE_MANUAL_CONTENT',
+        source: { proposalVersion: 2, sourceVersion: 1 },
+      },
+    });
+    expect(result.tables.ie_aggregate_state[0]).toMatchObject({
+      version: 1,
+      payload_json: { proposalVersion: 1 },
+    });
+    for (const output of [JSON.stringify(result), organizationExportToCsv(result)]) {
+      expect(output).toContain('VISIBLE_MANUAL_CONTENT');
+      expect(output).not.toContain(secret);
+    }
+    expect(
+      result.securityManifest.unresolvedTables.some((e) => e.table === 'ie_aggregate_state')
+    ).toBe(false);
+    expect(result.securityManifest.complete).toBe(false); // relation content still pending
+    expect(JSON.stringify(f.data)).toBe(before);
+  });
+  it.each([
+    'source-backed',
+    'private-reference',
+    'missing-registration',
+    'foreign-registration',
+    'wrong-source-version',
+    'wrong-proposal-version',
+    'foreign-project',
+  ])('manual source label alone does not authorize content: %s', async (reason) => {
+    const f = manualFixture();
+    if (reason === 'source-backed')
+      f.proposal.payload_json.provenance.recordType = 'source-backed-initiative-proposal';
+    if (reason === 'private-reference')
+      f.proposal.payload_json.provenance.evidenceRefs.push(
+        'consultify://interview/private-session'
+      );
+    if (reason === 'missing-registration') f.data.ie_aggregate_relations = [];
+    if (reason === 'foreign-registration') f.relation.organization_id = 'org-b';
+    if (reason === 'wrong-source-version') f.initiative.payload_json.source.sourceVersion = 2;
+    if (reason === 'wrong-proposal-version') f.initiative.payload_json.source.proposalVersion = 1;
+    if (reason === 'foreign-project') f.project.organization_id = 'org-b';
+    const { client } = mockClient(f.data);
+    const result = await exportOrganizationData(client, 'org-a', contracts);
+    const initiative = result.tables.ie_aggregate_state.find(
+      (r) => r.aggregate_type === 'initiative'
+    )!;
+    expect(initiative.export_payload_scope).toBe('lineage_only_content_unresolved');
+    expect(initiative.payload_json).not.toHaveProperty('title');
+    expect(result.securityManifest.unresolvedTables).toContainEqual({
+      table: 'ie_aggregate_state',
+      reason: 'canonical_content_privacy_unresolved_lineage_only',
+    });
+  });
+  it('current manual parent cannot grant historical or typed child payload authority', async () => {
+    const f = manualFixture();
+    const { client } = mockClient({
+      ...f.data,
+      ie_audit_events: [
+        {
+          organization_id: 'org-a',
+          id: 1,
+          aggregate_type: 'initiative',
+          aggregate_id: 'initiative-1',
+          aggregate_version: 2,
+          payload_json: { after: { source: { sourceType: 'interview' }, problem: secret } },
+        },
+      ],
+      ie_initiative_card_versions: [
+        {
+          organization_id: 'org-a',
+          initiative_id: 'initiative-1',
+          card_key: 'problem',
+          card_version: 1,
+          aggregate_version: 2,
+          content_json: { problem: secret },
+        },
+      ],
+      ie_aggregate_state: [
+        ...f.data.ie_aggregate_state,
+        {
+          ...state('execution_task', 3),
+          payload_json: { taskId: 't1', initiativeId: 'initiative-1', description: secret },
+        },
+      ],
+    });
+    const result = await exportOrganizationData(client, 'org-a', contracts);
+    expect(JSON.stringify(result)).not.toContain(secret);
+    expect(
+      result.tables.ie_aggregate_state.find((r) => r.aggregate_type === 'execution_task')!
+        .export_payload_scope
+    ).toBe('lineage_only_content_unresolved');
+    expect(result.securityManifest.complete).toBe(false);
   });
 });

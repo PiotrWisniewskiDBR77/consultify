@@ -31,7 +31,7 @@ export interface OrganizationExportTableContract {
   excludedColumns: string[];
   source: string;
 }
-export const ORGANIZATION_EXPORT_POLICY_VERSION = 'tenant-export-contract-v6-20260912';
+export const ORGANIZATION_EXPORT_POLICY_VERSION = 'tenant-export-contract-v7-20260912';
 // Original inventory: 1802 public +121 v8; 1 EXPORT /4 EXCLUDE_SECURITY /1918 UNRESOLVED.
 // Unlisted relations remain UNRESOLVED; a new migration cannot silently authorize export.
 export const ORGANIZATION_EXPORT_TABLES: readonly OrganizationExportTableContract[] = [

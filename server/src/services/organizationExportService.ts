@@ -1,4 +1,5 @@
 import type { PoolClient } from 'pg';
+import { verifiedManualInitiativeContent } from './organizationExportManualInitiativeContent.js';
 import { projectCanonicalExportLineage } from './organizationExportCanonicalLineage.js';
 import { projectInterviewExportRow } from './organizationExportInterviewPrivacy.js';
 
@@ -155,6 +156,7 @@ export async function exportOrganizationData(
   const unresolved = (table: string, reason: string) =>
     result.securityManifest.unresolvedTables.push({ table, reason });
   const interviewRows = new Map<string, Record<string, unknown>[]>();
+  const canonicalRows = new Map<string, Record<string, unknown>[]>();
   for (const [key, table] of tables) {
     const name = publicKey(table.schema, table.table);
     const policy = policies.get(key);
@@ -293,6 +295,7 @@ export async function exportOrganizationData(
       [organizationId]
     );
     if (policy.interviewPrivacy) interviewRows.set(key, rows.rows);
+    if (policy.canonicalLineageColumns) canonicalRows.set(key, rows.rows);
     const safeRows = rows.rows.map(
       (row) =>
         sanitize(
@@ -313,6 +316,36 @@ export async function exportOrganizationData(
       result.tables[name] = safeRows;
       result.rowCounts[name] = safeRows.length;
       result.totalRows += safeRows.length;
+    }
+  }
+  const stateRows = canonicalRows.get(identity('public', 'ie_aggregate_state')) || [];
+  const verifiedManual = verifiedManualInitiativeContent(
+    organizationId,
+    stateRows,
+    canonicalRows.get(identity('public', 'ie_aggregate_relations')) || [],
+    result.tables.projects || []
+  );
+  if (stateRows.length) {
+    const safeRows = stateRows.map((row) =>
+      verifiedManual.has(`${row.aggregate_type}\0${row.aggregate_id}`)
+        ? (sanitize({ ...row, export_payload_scope: 'verified_manual_hub_content' }) as Record<
+            string,
+            unknown
+          >)
+        : (sanitize(projectCanonicalExportLineage(row, ['payload_json'])) as Record<
+            string,
+            unknown
+          >)
+    );
+    result.tables.ie_aggregate_state = safeRows;
+    if (safeRows.every((row) => row.export_payload_scope === 'verified_manual_hub_content')) {
+      result.securityManifest.unresolvedTables = result.securityManifest.unresolvedTables.filter(
+        (entry) =>
+          !(
+            entry.table === 'ie_aggregate_state' &&
+            entry.reason === 'canonical_content_privacy_unresolved_lineage_only'
+          )
+      );
     }
   }
   // Use only a session whose full contract and tenant-scoped read succeeded in
