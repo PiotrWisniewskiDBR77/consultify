@@ -1015,3 +1015,6 @@ Feedback/copy fix integrated as `bcd6dd90d8` with normal hooks, independent16/16
 
 ### Integrator — forecast acceptance complete locally, W17 resumed
 Forecast correction/clear UI and Bank semantics passed final visible browser+PostgreSQL acceptance; settled success toast and reload confirmed, exact fixture cleanup COMMIT with10categories0. Receipt: INTEGRATOR_MVP_20260912/E1B_FORECAST_FEEDBACK_REVIEW.md. Native optional baseline projection integrated9853018b32 with19/19 combined tests; shared build refresh in progress. W17 authors proceed with8card Deck conflict/history/restore and Notebook duplicate-title containers/pages; independent reviewer assigned. Full S1/S2 and deployment/pilot gates stay open.
+
+### Integrator — W17 fixes integrated, runtime acceptance pending
+Restore-title fix integrated `f8a728694a`; EN Deck toolbar/structure fix integrated `942bb40775`, following independent source review and normal author hooks. Root combined route/translation tests passed 13/13. Close-button accessibility fix `771e7970e6` is also present. Notebook verified-parent routing is under final type checks before integration. Actual shared frontend/API still predate these fixes; Deck fixture remains version6 pending qualified restore/edit/reload. These are source acceptances, not deployment or full Materials acceptance.
