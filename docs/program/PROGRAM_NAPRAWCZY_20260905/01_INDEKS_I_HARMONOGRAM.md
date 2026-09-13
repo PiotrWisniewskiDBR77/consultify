@@ -947,3 +947,8 @@ Root9d003646 includes E1b75f322858 (all14 blobs matched) and C6 approved-out del
 Real StandardTable conversion and the built screenshot exposed a disabled Delete entry missed by the previous mock. Root removed the row-menu destructive property and strengthened the test: behavioral RED → 3/3 focused GREEN, build PASS. Actual browser GREEN/cleanup pending; see INTEGRATOR_MVP_20260912/C6_REAL_MENU_CORRECTION_ACCEPTANCE.md. No deployment or full E4 acceptance.
 
 C6 menu follow-up: actual built GREEN confirmed no Delete controls/dialogs, policy text visible, real export GET200/download13052bytes with exact target and truthful partial manifest (unresolved90). Root inspected screenshot. Fixture cleanup pending; unrelated system-health404 retained.
+
+
+### C6 menu bounded acceptance complete; next packet — 2026-09-13
+
+C6 actual built UI and exact fixture cleanup are complete: org/users/memberships/policy all zero, private token removed, owned4216/5216 stopped. Root verified no listeners and read final checkpoint. This closes menu correctness/export availability only; full E4 remains open (partial manifest). Next isolated packet codex-execution-unavailable-counts-20260913 at c65f430a60 fixes false zero after denied/failed manager reads and stale member-name cache across identity/tenant changes; backend permissions remain unchanged. Forecast writer author/reviewer continue actual Gateway/PG acceptance. Sparse test setup corrected to include shared/services/dev-render/__mocks__/packages before frontend-baseline comparison; missing-checkout diagnostics are not accepted as baseline.
