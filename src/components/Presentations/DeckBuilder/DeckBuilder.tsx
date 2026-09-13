@@ -1753,7 +1753,7 @@ const DeckBuilderForDeck: React.FC = () => {
                 <ArtifactMenu3
                   registry={presentationArtifactCommands}
                   context={presentationArtifactCommandContext}
-                  resolveLabel={(label) => label}
+                  resolveLabel={(label) => t(label)}
                   maxVisible={9}
                   ariaLabel={t('presentations.builder.contextTools', 'Presentation tools')}
                 />
@@ -1831,7 +1831,7 @@ const DeckBuilderForDeck: React.FC = () => {
             <ArtifactContextCommandSurface
               registry={presentationArtifactCommands}
               context={presentationArtifactCommandContext}
-              resolveLabel={(label) => label}
+              resolveLabel={(label) => t(label)}
               ariaLabel={t('presentations.builder.contextMenu', 'Presentation context menu')}
               surfaceAriaLabel={t(
                 'presentations.builder.contextSurface',

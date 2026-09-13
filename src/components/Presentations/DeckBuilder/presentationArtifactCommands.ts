@@ -56,7 +56,7 @@ export function createPresentationArtifactCommandRegistry(
   return new ArtifactCommandRegistry().registerMany([
     command({
       commandId: 'ppt.edit.undo',
-      labelKey: 'Cofnij',
+      labelKey: 'presentations.builder.artifactCommands.undo',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection) && availability.canUndo,
@@ -64,7 +64,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.edit.redo',
-      labelKey: 'Ponów',
+      labelKey: 'presentations.builder.artifactCommands.redo',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection) && availability.canRedo,
@@ -72,7 +72,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.slide.addAfter',
-      labelKey: 'Nowy slajd',
+      labelKey: 'presentations.builder.artifactCommands.newSlide',
       category: 'structure',
       priority: 'P0',
       // Wstawia slajd ZA AKTYWNYM (`handleAddBlankCard(activeCardIndex + 1)`),
@@ -99,7 +99,7 @@ export function createPresentationArtifactCommandRegistry(
      */
     command({
       commandId: 'ppt.insert.text',
-      labelKey: 'Pole tekstowe',
+      labelKey: 'presentations.builder.artifactCommands.textBox',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
@@ -107,7 +107,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.insert.image',
-      labelKey: 'Obraz',
+      labelKey: 'presentations.builder.artifactCommands.image',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
@@ -115,7 +115,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.design.theme.open',
-      labelKey: 'Motyw',
+      labelKey: 'presentations.builder.artifactCommands.theme',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection),
@@ -131,7 +131,7 @@ export function createPresentationArtifactCommandRegistry(
      */
     command({
       commandId: 'ppt.slide.duplicate',
-      labelKey: 'Duplikuj slajd',
+      labelKey: 'presentations.builder.artifactCommands.duplicateSlide',
       category: 'structure',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
@@ -139,7 +139,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.slide.lock.toggle',
-      labelKey: 'Zablokuj / odblokuj',
+      labelKey: 'presentations.builder.artifactCommands.toggleSlideLock',
       category: 'structure',
       priority: 'P0',
       selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
@@ -147,7 +147,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.slide.delete',
-      labelKey: 'Usuń slajd',
+      labelKey: 'presentations.builder.artifactCommands.deleteSlide',
       category: 'structure',
       priority: 'P0',
       selectionPredicate: (selection) =>
@@ -156,7 +156,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.block.duplicate',
-      labelKey: 'Duplikuj obiekt',
+      labelKey: 'presentations.builder.artifactCommands.duplicateObject',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) =>
@@ -165,7 +165,7 @@ export function createPresentationArtifactCommandRegistry(
     }),
     command({
       commandId: 'ppt.block.delete',
-      labelKey: 'Usuń obiekt',
+      labelKey: 'presentations.builder.artifactCommands.deleteObject',
       category: 'editing',
       priority: 'P0',
       selectionPredicate: (selection) =>

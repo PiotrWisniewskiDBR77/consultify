@@ -26818,6 +26818,19 @@
       },
       "autosaveOffline": "No connection to the server — changes are visible on screen but are NOT saved.",
       "contextTools": "Presentation tools",
+      "artifactCommands": {
+        "undo": "Undo",
+        "redo": "Redo",
+        "newSlide": "New slide",
+        "textBox": "Text box",
+        "image": "Image",
+        "theme": "Theme",
+        "duplicateSlide": "Duplicate slide",
+        "toggleSlideLock": "Lock / unlock",
+        "deleteSlide": "Delete slide",
+        "duplicateObject": "Duplicate object",
+        "deleteObject": "Delete object"
+      },
       "blocks": {
         "headingDefaultText": "Heading",
         "heading": "Heading",
