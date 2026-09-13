@@ -49,10 +49,20 @@ function fixture(
     catalogFailure?: boolean;
     changedType?: boolean;
     removedExcluded?: boolean;
+    /** K3b: per-table catalog surgery, so column drift can be aimed at the tenant root. */
+    dropColumns?: Record<string, string[]>;
+    addColumns?: Record<string, string[]>;
+    retypeColumns?: Record<string, Record<string, string>>;
   } = {}
 ) {
   const queries: string[] = [];
   const catalog = policies.map((p) => ({ p, columns: [...p.projection, ...p.excludedColumns] }));
+  for (const entry of catalog) {
+    const dropped = options.dropColumns?.[entry.p.table];
+    if (dropped) entry.columns = entry.columns.filter((column) => !dropped.includes(column));
+    const added = options.addColumns?.[entry.p.table];
+    if (added) entry.columns = [...entry.columns, ...added];
+  }
   if (options.extraColumn) catalog[1].columns.push('new_private_column');
   if (options.removedExcluded)
     catalog[1].columns = catalog[1].columns.filter((column) => column !== 'access_token');
@@ -73,9 +83,10 @@ function fixture(
               table_name: p.table,
               column_name,
               data_type:
-                options.changedType && p.table !== 'organizations' && column_name === 'payload'
+                options.retypeColumns?.[p.table]?.[column_name] ??
+                (options.changedType && p.table !== 'organizations' && column_name === 'payload'
                   ? 'jsonb'
-                  : 'text',
+                  : 'text'),
             }))
           ),
         };
@@ -173,16 +184,27 @@ describe('schema qualified export policy behavior', () => {
     });
     expect(queries.filter((sql) => sql.includes('FROM "v8"."unclassified"'))).toHaveLength(0);
   });
-  it('new schema column invalidates approval instead of silently exporting or omitting it', async () => {
+  // K3b: an undeclared column stays unexportable, but it no longer deletes the
+  // whole tenant table from the file. The approval it invalidates is the
+  // COLUMN's, recorded in `skipped`, and completeness still drops to false.
+  it('new schema column is never exported and degrades only that column', async () => {
     const policies = [root, policy('v8', 'business')];
     const { client, queries } = fixture(policies, { extraColumn: true });
     const result = await exportOrganizationData(client, 'org-a', policies);
     expect(result.securityManifest.complete).toBe(false);
     expect(result.securityManifest.unresolvedTables).toContainEqual({
       table: 'v8.business',
-      reason: 'schema_projection_or_primary_key_drift',
+      reason: 'schema_column_drift_partial_export',
     });
-    expect(queries.filter((sql) => sql.includes('FROM "v8"."business"'))).toHaveLength(0);
+    expect(result.skipped).toContainEqual({
+      tabela: 'v8.business',
+      kolumna: 'new_private_column',
+      reason: 'undeclared_column_not_exported',
+    });
+    const businessQueries = queries.filter((sql) => sql.includes('FROM "v8"."business"'));
+    expect(businessQueries).toHaveLength(1);
+    expect(businessQueries[0]).not.toContain('new_private_column');
+    expect(JSON.stringify(result.tables['v8.business'])).not.toContain('new_private_column');
   });
   it('security exclusions are never queried and do not imply truncation', async () => {
     const excluded = { ...policy('v8', 'secrets'), category: 'EXCLUDE_SECURITY' as const };
@@ -197,16 +219,27 @@ describe('schema qualified export policy behavior', () => {
     const { client } = fixture([root], { catalogFailure: true });
     await expect(exportOrganizationData(client, 'org-a', [root])).rejects.toThrow('catalog failed');
   });
-  it('changed column type invalidates approval before serializing any row', async () => {
+  // K3b: the retyped column is no longer the column the policy classified, so
+  // it is dropped from the projection and never serialized; its siblings stay.
+  it('changed column type drops that column from the projection, not the table', async () => {
     const policies = [root, policy('v8', 'business')];
     const { client, queries } = fixture(policies, { changedType: true });
     const result = await exportOrganizationData(client, 'org-a', policies);
     expect(result.securityManifest.complete).toBe(false);
     expect(result.securityManifest.unresolvedTables).toContainEqual({
       table: 'v8.business',
-      reason: 'schema_projection_or_primary_key_drift',
+      reason: 'schema_column_drift_partial_export',
     });
-    expect(queries.filter((sql) => sql.includes('FROM "v8"."business"'))).toHaveLength(0);
+    expect(result.skipped).toContainEqual({
+      tabela: 'v8.business',
+      kolumna: 'payload',
+      reason: 'declared_column_type_drift',
+    });
+    const businessQueries = queries.filter((sql) => sql.includes('FROM "v8"."business"'));
+    expect(businessQueries).toHaveLength(1);
+    // Dowód jest na WYSŁANYM SQL: atrapa zwraca stały wiersz niezależnie od
+    // projekcji, więc tylko treść zapytania mówi, czego naprawdę nie czytamy.
+    expect(businessQueries[0]).not.toContain('payload');
   });
 
   it('removed excluded column is schema drift, not a silently changed complete contract', async () => {
@@ -216,7 +249,12 @@ describe('schema qualified export policy behavior', () => {
     expect(result.securityManifest.complete).toBe(false);
     expect(result.securityManifest.unresolvedTables).toContainEqual({
       table: 'v8.business',
-      reason: 'schema_projection_or_primary_key_drift',
+      reason: 'schema_column_drift_partial_export',
+    });
+    expect(result.skipped).toContainEqual({
+      tabela: 'v8.business',
+      kolumna: 'access_token',
+      reason: 'declared_column_missing_in_schema',
     });
   });
   it('indirect child cannot use a parent whose approved schema drifted', async () => {
@@ -248,13 +286,104 @@ describe('schema qualified export policy behavior', () => {
       },
     };
     const policies = [root, parent, child];
-    const { client, queries } = fixture(policies, { extraColumn: true });
-    const result = await exportOrganizationData(client, 'org-a', policies);
-    expect(result.securityManifest.unresolvedTables).toContainEqual({
+    // K3b: drift in a parent column the predicate never reads (here: an
+    // undeclared column on `projects`) is recorded on the parent and must not
+    // delete the child table from the tenant's file.
+    const tolerated = fixture(policies, { extraColumn: true });
+    const partial = await exportOrganizationData(tolerated.client, 'org-a', policies);
+    expect(partial.securityManifest.unresolvedTables).not.toContainEqual({
       table: 'members',
       reason: 'indirect_owner_edge_unresolved',
     });
-    expect(queries.filter((sql) => sql.includes('FROM "public"."members"'))).toHaveLength(0);
+    expect(partial.skipped).toContainEqual({
+      tabela: 'projects',
+      kolumna: 'new_private_column',
+      reason: 'undeclared_column_not_exported',
+    });
+    expect(
+      tolerated.queries.filter((sql) => sql.includes('FROM "public"."members"'))
+    ).toHaveLength(1);
+
+    // The ownership proof itself still fails closed: a parent primary key that
+    // no longer matches the contract leaves the child unexported.
+    const broken = fixture(policies, { dropColumns: { projects: ['id'] } });
+    const closed = await exportOrganizationData(broken.client, 'org-a', policies);
+    expect(closed.securityManifest.unresolvedTables).toContainEqual({
+      table: 'members',
+      reason: 'indirect_owner_edge_unresolved',
+    });
+    expect(broken.queries.filter((sql) => sql.includes('FROM "public"."members"'))).toHaveLength(0);
+  });
+});
+
+/**
+ * K3b — REGRESJA PARYTETU: eksport organizacji 200 -> 500 `ORG_EXPORT_FAILED`.
+ *
+ * Zmierzone na żywym stanowisku (dwa API, jedna baza ze ścisłego migratora):
+ * kontrakt deklaruje 59 kolumn `organizations`, baza ma 56 — brakuje
+ * `trial_extension_count`, `trial_warning_sent_at`,
+ * `onboarding_accept_idempotency_key` (żyją tylko w nigdy niewykonywanym
+ * `000_initdb_core_tables.sql`). Stary, całotabelowy test rozjazdu pomijał
+ * KORZEŃ dzierżawcy, `result.organization` zostawał `null`, a trasa zwracała
+ * 500 zamiast pliku. Poniższe przypadki mierzą OBA układy bazy: z tymi
+ * kolumnami (żywe staging/demo, gdzie dokłada je runtime DDL) i bez nich.
+ */
+describe('K3b: rozjazd kolumn korzenia daje eksport częściowy, nie 500', () => {
+  const TRIAL_COLUMNS = [
+    'trial_extension_count',
+    'trial_warning_sent_at',
+    'onboarding_accept_idempotency_key',
+  ];
+  const wideRoot: OrganizationExportTableContract = {
+    ...root,
+    columnTypes: {
+      id: 'text',
+      name: 'text',
+      ...Object.fromEntries(TRIAL_COLUMNS.map((column) => [column, 'text'])),
+    },
+    projection: ['id', 'name', ...TRIAL_COLUMNS],
+  };
+
+  it('układ A — kolumny SĄ w bazie: pełny eksport, kontrakt kompletny', async () => {
+    const { client, queries } = fixture([wideRoot]);
+    const result = await exportOrganizationData(client, 'org-a', [wideRoot]);
+    expect(result.organization).not.toBeNull();
+    expect(result.skipped).toEqual([]);
+    expect(result.securityManifest.complete).toBe(true);
+    const rootQuery = queries.find((sql) => sql.includes('FROM "public"."organizations"'))!;
+    for (const column of TRIAL_COLUMNS) expect(rootQuery).toContain(column);
+  });
+
+  it('układ B — kolumn NIE MA w bazie: eksport częściowy z jawnym wpisem, bez wyjątku', async () => {
+    const { client, queries } = fixture([wideRoot], {
+      dropColumns: { organizations: TRIAL_COLUMNS },
+    });
+    const result = await exportOrganizationData(client, 'org-a', [wideRoot]);
+    // Sedno regresji: korzeń MUSI się wyeksportować, inaczej trasa daje 500.
+    expect(result.organization).not.toBeNull();
+    expect(result.organization).toMatchObject({ name: 'Organization A' });
+    for (const column of TRIAL_COLUMNS) {
+      expect(result.skipped).toContainEqual({
+        tabela: 'organizations',
+        kolumna: column,
+        reason: 'declared_column_missing_in_schema',
+      });
+    }
+    expect(result.securityManifest.unresolvedTables).toContainEqual({
+      table: 'organizations',
+      reason: 'schema_column_drift_partial_export',
+    });
+    // Częściowy = jawnie NIEkompletny; nikt nie ogłasza pełnego eksportu.
+    expect(result.securityManifest.complete).toBe(false);
+    const rootQuery = queries.find((sql) => sql.includes('FROM "public"."organizations"'))!;
+    for (const column of TRIAL_COLUMNS) expect(rootQuery).not.toContain(column);
+  });
+
+  it('korzeń bez kolumny właściciela nadal zawodzi zamknięciem (fail-closed)', async () => {
+    const { client } = fixture([wideRoot], { dropColumns: { organizations: ['id'] } });
+    await expect(exportOrganizationData(client, 'org-a', [wideRoot])).rejects.toThrow(
+      /root contract could not be verified/i
+    );
   });
 });
 
