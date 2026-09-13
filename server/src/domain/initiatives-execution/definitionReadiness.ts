@@ -1,3 +1,4 @@
+import type { ConfiguredCardProfile } from './configureInitiativeCards.js';
 import type { InitiativeCardVersionReadModel } from './postgresInitiativeReader.js';
 
 export interface DefinitionReadinessFinding {
@@ -26,6 +27,8 @@ const REQUIREMENTS = {
   stakeholders: ['ownerId', 'sponsorId'],
 } as const;
 
+export const DEFINITION_REQUIRED_CARD_KEYS: readonly string[] = Object.keys(REQUIREMENTS);
+
 function hasValue(value: unknown): boolean {
   if (typeof value === 'string') return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
@@ -35,7 +38,8 @@ function hasValue(value: unknown): boolean {
 export function evaluateDefinitionReadiness(
   cards: readonly InitiativeCardVersionReadModel[],
   sourceLineageValid: boolean,
-  sourceFreshness: 'CURRENT' | 'STALE' | 'SOURCE_UNAVAILABLE' = 'CURRENT'
+  sourceFreshness: 'CURRENT' | 'STALE' | 'SOURCE_UNAVAILABLE' = 'CURRENT',
+  profile?: ConfiguredCardProfile
 ): DefinitionReadinessResult {
   const byKey = new Map(cards.map((card) => [card.cardKey, card]));
   const findings: DefinitionReadinessFinding[] = [];
@@ -69,7 +73,12 @@ export function evaluateDefinitionReadiness(
   } else if (sourceFreshness === 'SOURCE_UNAVAILABLE') {
     add('summary-scope', 'BLOCKER', 'SOURCE_UNAVAILABLE', [], 'The source object is unavailable.');
   }
-  for (const [cardKey, requiredFields] of Object.entries(REQUIREMENTS)) {
+  const requirements: Record<string, string[]> = Object.fromEntries(Object.entries(REQUIREMENTS).map(([key, fields]) => [key, [...fields]]));
+  for (const item of profile?.cards || []) {
+    if (item.requiredness !== 'REQUIRED') continue;
+    requirements[item.cardKey] = [...new Set([...(requirements[item.cardKey] || []), ...item.requiredFields])];
+  }
+  for (const [cardKey, requiredFields] of Object.entries(requirements)) {
     const card = byKey.get(cardKey);
     if (!card) {
       add(cardKey, 'BLOCKER', 'PUBLISHED_CARD_MISSING', [], 'Published card version is missing.');
@@ -106,7 +115,9 @@ export function evaluateDefinitionReadiness(
         );
       }
     }
-    if (card.reviewState !== 'ACCEPTED') {
+    const configuredRequirement = profile?.cards.find(item => item.cardKey === cardKey);
+    const reviewRequired = cardKey in REQUIREMENTS || configuredRequirement?.reviewRequired !== false;
+    if (reviewRequired && card.reviewState !== 'ACCEPTED') {
       add(
         cardKey,
         'BLOCKER',
@@ -114,6 +125,10 @@ export function evaluateDefinitionReadiness(
         card.evidenceRefs,
         'Independent card review is not accepted.'
       );
+    }
+    if (reviewRequired && card.reviewState === 'ACCEPTED' && configuredRequirement?.reviewRequired &&
+      !configuredRequirement.reviewerIds?.includes(card.reviewedBy || '')) {
+      add(cardKey, 'BLOCKER', 'REVIEWER_NOT_AUTHORIZED', card.evidenceRefs, 'The accepted review does not belong to a configured reviewer.');
     }
     if (card.evidenceRefs.length === 0) {
       add(

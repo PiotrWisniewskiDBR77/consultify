@@ -80,6 +80,18 @@ const definitions = [
   ],
 ] as const;
 
+export interface DefinitionCardDraft {
+  content: Record<string, unknown>;
+  evidence: string;
+  quality: string;
+  completion: string;
+  cardVersion: number;
+}
+export type DefinitionCardDraftStore = React.MutableRefObject<
+  Record<string, Record<string, DefinitionCardDraft>>
+>;
+export const DEFINITION_CONTENT_CARD_KEYS: readonly string[] = definitions.map((item) => item[0]);
+
 /** Existing canonical card publication/review; no acceptance is inferred from a save. */
 function DefinitionCardContentForInitiative({
   initiativeId,
@@ -88,6 +100,10 @@ function DefinitionCardContentForInitiative({
   canEdit,
   canReview,
   onChanged,
+  findingTarget,
+  selectedCardKey,
+  draftStore,
+  onDraftStateChange,
 }: {
   initiativeId: string;
   actorId: string;
@@ -95,6 +111,10 @@ function DefinitionCardContentForInitiative({
   canEdit: boolean;
   canReview: boolean;
   onChanged: () => Promise<void>;
+  findingTarget?: { cardKey: string; field?: string; requestId: number };
+  selectedCardKey?: string;
+  draftStore?: DefinitionCardDraftStore;
+  onDraftStateChange?: () => void;
 }) {
   const active = useRef(true);
   useEffect(() => {
@@ -106,8 +126,13 @@ function DefinitionCardContentForInitiative({
   const { i18n } = useTranslation();
   const pl = i18n.language.startsWith('pl');
   const [cards, setCards] = useState<InitiativeCardVersionReadModel[]>([]);
+  const [cardsLoaded, setCardsLoaded] = useState(false);
   const [version, setVersion] = useState(0);
-  const [key, setKey] = useState('summary-scope');
+  const [key, setKey] = useState(() =>
+    DEFINITION_CONTENT_CARD_KEYS.includes(selectedCardKey || '')
+      ? selectedCardKey!
+      : 'summary-scope'
+  );
   const [content, setContent] = useState<Record<string, unknown>>({});
   const [evidence, setEvidence] = useState('');
   const [quality, setQuality] = useState('UNKNOWN');
@@ -115,6 +140,22 @@ function DefinitionCardContentForInitiative({
   const [rationale, setRationale] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const editorRef = useRef<HTMLDetailsElement>(null);
+  const ownDraftStore = useRef<Record<string, Record<string, DefinitionCardDraft>>>({});
+  const store = draftStore ?? ownDraftStore;
+  const draftScope = JSON.stringify([initiativeId, actorId]);
+  store.current[draftScope] ??= {};
+  const drafts = { current: store.current[draftScope] };
+  const retainDraft = (patch: Partial<DefinitionCardDraft>) => {
+    drafts.current[key] = {
+      content,
+      evidence,
+      quality,
+      completion,
+      cardVersion: drafts.current[key]?.cardVersion ?? current?.cardVersion ?? 0,
+      ...patch,
+    };
+  };
   const current = cards.find((c) => c.cardKey === key);
   const definition = definitions.find((d) => d[0] === key)!;
   const base = `/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}`;
@@ -122,27 +163,52 @@ function DefinitionCardContentForInitiative({
     const next = await Api.get(`${base}/cards`);
     if (!active.current) return;
     setCards(next.cards);
+    setCardsLoaded(true);
     setVersion(next.initiativeVersion);
   };
   useEffect(() => {
     void reload().catch((e) => active.current && setError(e.message));
   }, [initiativeId]);
   useEffect(() => {
-    setContent(current?.content || {});
-    setEvidence((current?.evidenceRefs || []).join('\n'));
-    setQuality(current?.quality || 'UNKNOWN');
-    setCompletion(current?.completion || 'IN_PROGRESS');
+    const draft = drafts.current[key];
+    setContent(draft?.content ?? current?.content ?? {});
+    setEvidence(draft?.evidence ?? (current?.evidenceRefs || []).join('\n'));
+    setQuality(draft?.quality ?? current?.quality ?? 'UNKNOWN');
+    setCompletion(draft?.completion ?? current?.completion ?? 'IN_PROGRESS');
     setRationale('');
   }, [key, cards]);
+  useEffect(() => {
+    if (selectedCardKey && DEFINITION_CONTENT_CARD_KEYS.includes(selectedCardKey)) {
+      setKey(selectedCardKey);
+      if (editorRef.current) editorRef.current.open = true;
+    }
+  }, [selectedCardKey]);
+  useEffect(() => {
+    if (!findingTarget || !definitions.some((item) => item[0] === findingTarget.cardKey)) return;
+    setKey(findingTarget.cardKey);
+    if (editorRef.current) editorRef.current.open = true;
+  }, [findingTarget]);
+  useEffect(() => {
+    if (!findingTarget || findingTarget.cardKey !== key) return;
+    const field = findingTarget.field;
+    const target = field
+      ? Array.from(
+          editorRef.current?.querySelectorAll<HTMLElement>('[data-definition-field]') || []
+        ).find((element) => element.dataset.definitionField === field)
+      : editorRef.current?.querySelector<HTMLElement>('textarea, select');
+    target?.focus();
+  }, [findingTarget, key, cards]);
+  const dirty = Boolean(drafts.current[key]);
+  useEffect(() => { onDraftStateChange?.(); }, [dirty, key, onDraftStateChange]);
   const act = async (kind: 'publish' | 'review') => {
-    if (!active.current) return;
+    if (!active.current || busy || (kind === 'review' && dirty)) return;
     setBusy(true);
     setError('');
     try {
       if (kind === 'publish')
         await Api.post(`${base}/cards/${key}/publications`, {
           expectedVersion: version,
-          expectedCardVersion: current?.cardVersion || 0,
+          expectedCardVersion: drafts.current[key]?.cardVersion ?? current?.cardVersion ?? 0,
           clientRequestId: crypto.randomUUID(),
           applicability: current?.applicability || 'REQUIRED',
           completion,
@@ -165,6 +231,7 @@ function DefinitionCardContentForInitiative({
           rationale: rationale.trim(),
         });
       if (!active.current) return;
+      if (kind === 'publish') delete drafts.current[key];
       await reload();
       if (active.current) await onChanged();
     } catch (e) {
@@ -174,33 +241,57 @@ function DefinitionCardContentForInitiative({
     }
   };
   return (
-    <details className="space-y-3 border border-c-border rounded p-3">
+    <details ref={editorRef} className="space-y-3 border border-c-border rounded p-3">
       <summary>
         {pl ? 'Treść i przegląd kart definicji' : 'Definition card content and review'}
       </summary>
+      {!cardsLoaded && <p role="status">{pl ? 'Wczytywanie opublikowanych kart…' : 'Loading published cards…'}</p>}
       {error && (
         <p role="alert" className="text-red-600">
           {error}
         </p>
       )}
-      <label>
-        {pl ? 'Karta' : 'Card'}
-        <select
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-          className="block bg-c-bg border border-c-border p-2"
-        >
-          {definitions.map((d) => (
-            <option key={d[0]} value={d[0]}>
-              {d[pl ? 1 : 2]}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!selectedCardKey && (
+        <label>
+          {pl ? 'Karta' : 'Card'}
+          <select
+            value={key}
+            disabled={busy || !cardsLoaded}
+            onChange={(e) => setKey(e.target.value)}
+            className="block bg-c-bg border border-c-border p-2"
+          >
+            {definitions.map((d) => (
+              <option key={d[0]} value={d[0]}>
+                {d[pl ? 1 : 2]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <p>
         {pl ? 'Przegląd' : 'Review'}: {current?.reviewState || 'NOT_REQUESTED'} ·{' '}
         {pl ? 'Wersja' : 'Version'}: {current?.cardVersion || 0}
       </p>
+      <p role="status" aria-label={pl ? 'Stan zapisu karty' : 'Card save state'}>
+        {dirty
+          ? pl
+            ? 'Niezapisany szkic'
+            : 'Unsaved draft'
+          : current
+            ? pl
+              ? 'Wczytana opublikowana wersja'
+              : 'Published version loaded'
+            : pl
+              ? 'Karta nie została jeszcze opublikowana'
+              : 'Card has not been published yet'}
+      </p>
+      {dirty && canReview && (
+        <p>
+          {pl
+            ? 'Przegląd dotyczy opublikowanej wersji. Zapisz zmiany i przekaż je innej osobie do przeglądu.'
+            : 'Review applies to the published version. Save your changes and request review by another person.'}
+        </p>
+      )}
       {definition[3].map((field) => {
         const [name, labelPl, labelEn] = field;
         const array = field.length > 3 && field[3];
@@ -214,9 +305,15 @@ function DefinitionCardContentForInitiative({
             {pl ? labelPl : labelEn}
             {name.endsWith('Id') ? (
               <select
-                disabled={!canEdit || busy}
+                aria-label={pl ? labelPl : labelEn}
+                disabled={!canEdit || busy || !cardsLoaded}
                 value={String(value || '')}
-                onChange={(e) => setContent((prev) => ({ ...prev, [name]: e.target.value }))}
+                data-definition-field={name}
+                onChange={(e) => {
+                  const next = { ...content, [name]: e.target.value };
+                  retainDraft({ content: next });
+                  setContent(next);
+                }}
               >
                 <option value="">{pl ? 'Wybierz osobę' : 'Select a person'}</option>
                 {participants.map((p) => (
@@ -233,14 +330,17 @@ function DefinitionCardContentForInitiative({
               </p>
             ) : (
               <textarea
-                disabled={!canEdit || busy}
+                disabled={!canEdit || busy || !cardsLoaded}
                 value={Array.isArray(value) ? value.join('\n') : String(value || '')}
-                onChange={(e) =>
-                  setContent((prev) => ({
-                    ...prev,
+                data-definition-field={name}
+                onChange={(e) => {
+                  const next = {
+                    ...content,
                     [name]: array ? e.target.value.split('\n').filter(Boolean) : e.target.value,
-                  }))
-                }
+                  };
+                  retainDraft({ content: next });
+                  setContent(next);
+                }}
                 className="block w-full bg-c-bg border border-c-border p-2"
               />
             )}
@@ -250,9 +350,12 @@ function DefinitionCardContentForInitiative({
       <label className="block">
         {pl ? 'Odnośniki do dowodów (po jednym w wierszu)' : 'Evidence references (one per line)'}
         <textarea
-          disabled={!canEdit || busy}
+          disabled={!canEdit || busy || !cardsLoaded}
           value={evidence}
-          onChange={(e) => setEvidence(e.target.value)}
+          onChange={(e) => {
+            retainDraft({ evidence: e.target.value });
+            setEvidence(e.target.value);
+          }}
           className="block w-full bg-c-bg border border-c-border p-2"
         />
       </label>
@@ -260,7 +363,15 @@ function DefinitionCardContentForInitiative({
         <>
           <label>
             {pl ? 'Kompletność' : 'Completion'}
-            <select value={completion} onChange={(e) => setCompletion(e.target.value)}>
+            <select
+              aria-label={pl ? 'Kompletność' : 'Completion'}
+              disabled={busy || !cardsLoaded}
+              value={completion}
+              onChange={(e) => {
+                retainDraft({ completion: e.target.value });
+                setCompletion(e.target.value);
+              }}
+            >
               <option value="IN_PROGRESS">{pl ? 'W opracowaniu' : 'In progress'}</option>
               <option value="COMPLETE">{pl ? 'Kompletna' : 'Complete'}</option>
               <option value="EMPTY">{pl ? 'Pusta' : 'Empty'}</option>
@@ -268,7 +379,15 @@ function DefinitionCardContentForInitiative({
           </label>
           <label>
             {pl ? 'Ocena jakości' : 'Quality assessment'}
-            <select value={quality} onChange={(e) => setQuality(e.target.value)}>
+            <select
+              aria-label={pl ? 'Ocena jakości' : 'Quality assessment'}
+              disabled={busy || !cardsLoaded}
+              value={quality}
+              onChange={(e) => {
+                retainDraft({ quality: e.target.value });
+                setQuality(e.target.value);
+              }}
+            >
               {['UNKNOWN', 'SUFFICIENT', 'WARNING', 'BLOCKER'].map((v) => (
                 <option key={v} value={v}>
                   {v}
@@ -293,7 +412,10 @@ function DefinitionCardContentForInitiative({
                 className="block w-full bg-c-bg border border-c-border p-2"
               />
             </label>
-            <button disabled={busy || !rationale.trim()} onClick={() => void act('review')}>
+            <button
+              disabled={busy || dirty || !rationale.trim()}
+              onClick={() => void act('review')}
+            >
               {pl ? 'Zaakceptuj treść karty' : 'Accept card content'}
             </button>
           </>
@@ -306,5 +428,10 @@ function DefinitionCardContentForInitiative({
 export function DefinitionCardContent(
   props: Parameters<typeof DefinitionCardContentForInitiative>[0]
 ) {
-  return <DefinitionCardContentForInitiative key={props.initiativeId} {...props} />;
+  return (
+    <DefinitionCardContentForInitiative
+      key={JSON.stringify([props.initiativeId, props.actorId])}
+      {...props}
+    />
+  );
 }

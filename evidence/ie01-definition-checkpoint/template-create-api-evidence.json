@@ -1,0 +1,630 @@
+{
+  "status": 201,
+  "payload": {
+    "name": "IE01 explicit policy and named reviewer profile",
+    "category": "local-review",
+    "sectionConfig": {
+      "initiativeCardProfile": {
+        "profileKey": "quick-improvement",
+        "version": 1,
+        "cards": [
+          {
+            "cardKey": "attachments-materials",
+            "included": true,
+            "position": 0,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "capabilities-training",
+            "included": true,
+            "position": 1,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "change-adoption",
+            "included": true,
+            "position": 2,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "comments-activity-history",
+            "included": true,
+            "position": 3,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "communication-engagement",
+            "included": true,
+            "position": 4,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "decisions",
+            "included": true,
+            "position": 5,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "dependencies",
+            "included": true,
+            "position": 6,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "feasibility-completeness",
+            "included": true,
+            "position": 7,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "financial-analysis",
+            "included": true,
+            "position": 8,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "financial-impact",
+            "included": true,
+            "position": 9,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "gates-approvals",
+            "included": true,
+            "position": 10,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "kpi",
+            "included": true,
+            "position": 11,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "milestones",
+            "included": true,
+            "position": 12,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "options",
+            "included": true,
+            "position": 13,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "doNothing",
+              "alternatives"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "outcomes-benefits",
+            "included": true,
+            "position": 14,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "outcomes",
+              "benefits"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "people-team",
+            "included": true,
+            "position": 15,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "team",
+              "capacityAssumptions"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "resources-capacity",
+            "included": true,
+            "position": 16,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "risk-raid",
+            "included": true,
+            "position": 17,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "roles-raci",
+            "included": true,
+            "position": 18,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "accountableOwnerId",
+              "roles"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "stakeholders",
+            "included": true,
+            "position": 19,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "ownerId",
+              "sponsorId"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "strategic-fit",
+            "included": true,
+            "position": 20,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "objectives",
+              "rationale"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "success-criteria",
+            "included": true,
+            "position": 21,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "successCriteria",
+              "measurementPlan"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "summary-scope",
+            "included": true,
+            "position": 22,
+            "requiredness": "REQUIRED",
+            "requiredFields": [
+              "problem",
+              "outcome",
+              "inScope",
+              "outOfScope"
+            ],
+            "reviewRequired": true,
+            "reviewerIds": [
+              "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+            ]
+          },
+          {
+            "cardKey": "tasks",
+            "included": true,
+            "position": 23,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "technical-specification",
+            "included": true,
+            "position": 24,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          },
+          {
+            "cardKey": "timeline",
+            "included": true,
+            "position": 25,
+            "requiredness": "OPTIONAL",
+            "requiredFields": [],
+            "reviewRequired": false,
+            "reviewerIds": []
+          }
+        ],
+        "policy": {
+          "policyId": "ie01-policy-af8bcd13-1f95-4e73-b8ab-2c3f239e920f",
+          "policyVersion": 1
+        }
+      }
+    },
+    "isPublic": false
+  },
+  "body": {
+    "template": {
+      "id": "869e851d-0704-4ec3-a103-db1bcedd5c7a",
+      "name": "IE01 explicit policy and named reviewer profile",
+      "category": "local-review",
+      "description": null,
+      "applicableAxes": [],
+      "problemStructured": null,
+      "targetState": null,
+      "killCriteria": [],
+      "suggestedTasks": [],
+      "suggestedRoles": [],
+      "typicalTimeline": null,
+      "typicalBudgetRange": null,
+      "isPublic": false,
+      "organizationId": "f5eef749-9b5e-42a0-9be7-f93246cc9675",
+      "createdBy": "86f18e03-9180-4646-8203-5e90813cdd7a",
+      "createdAt": "2026-09-13T02:17:25.274Z",
+      "updatedAt": "2026-09-13T02:17:25.274Z",
+      "level": "standard",
+      "isSystem": false,
+      "sourceTypes": [
+        "assessment",
+        "tool",
+        "manual"
+      ],
+      "visibleSections": {},
+      "requiredFields": [],
+      "workflowConfig": {},
+      "notificationConfig": {},
+      "suggestedDecisions": [],
+      "suggestedMilestones": [],
+      "suggestedKpis": [],
+      "sectionsCount": 0,
+      "sectionOrder": {},
+      "sectionConfig": {
+        "initiativeCardProfile": {
+          "profileKey": "quick-improvement",
+          "version": 1,
+          "cards": [
+            {
+              "cardKey": "attachments-materials",
+              "included": true,
+              "position": 0,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "capabilities-training",
+              "included": true,
+              "position": 1,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "change-adoption",
+              "included": true,
+              "position": 2,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "comments-activity-history",
+              "included": true,
+              "position": 3,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "communication-engagement",
+              "included": true,
+              "position": 4,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "decisions",
+              "included": true,
+              "position": 5,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "dependencies",
+              "included": true,
+              "position": 6,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "feasibility-completeness",
+              "included": true,
+              "position": 7,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "financial-analysis",
+              "included": true,
+              "position": 8,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "financial-impact",
+              "included": true,
+              "position": 9,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "gates-approvals",
+              "included": true,
+              "position": 10,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "kpi",
+              "included": true,
+              "position": 11,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "milestones",
+              "included": true,
+              "position": 12,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "options",
+              "included": true,
+              "position": 13,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "doNothing",
+                "alternatives"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "outcomes-benefits",
+              "included": true,
+              "position": 14,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "outcomes",
+                "benefits"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "people-team",
+              "included": true,
+              "position": 15,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "team",
+                "capacityAssumptions"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "resources-capacity",
+              "included": true,
+              "position": 16,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "risk-raid",
+              "included": true,
+              "position": 17,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "roles-raci",
+              "included": true,
+              "position": 18,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "accountableOwnerId",
+                "roles"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "stakeholders",
+              "included": true,
+              "position": 19,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "ownerId",
+                "sponsorId"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "strategic-fit",
+              "included": true,
+              "position": 20,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "objectives",
+                "rationale"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "success-criteria",
+              "included": true,
+              "position": 21,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "successCriteria",
+                "measurementPlan"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "summary-scope",
+              "included": true,
+              "position": 22,
+              "requiredness": "REQUIRED",
+              "requiredFields": [
+                "problem",
+                "outcome",
+                "inScope",
+                "outOfScope"
+              ],
+              "reviewRequired": true,
+              "reviewerIds": [
+                "5da4df49-92b1-4738-8948-c794ffd4ca2a"
+              ]
+            },
+            {
+              "cardKey": "tasks",
+              "included": true,
+              "position": 23,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "technical-specification",
+              "included": true,
+              "position": 24,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            },
+            {
+              "cardKey": "timeline",
+              "included": true,
+              "position": 25,
+              "requiredness": "OPTIONAL",
+              "requiredFields": [],
+              "reviewRequired": false,
+              "reviewerIds": []
+            }
+          ],
+          "policy": {
+            "policyId": "ie01-policy-af8bcd13-1f95-4e73-b8ab-2c3f239e920f",
+            "policyVersion": 1
+          }
+        }
+      },
+      "suggestedTaskItems": [],
+      "teamConfig": {},
+      "escalationConfig": {},
+      "gateConfig": {},
+      "raidTemplates": [],
+      "financialConfig": {},
+      "benefitsConfig": {},
+      "statusReportConfig": {},
+      "validationRules": {}
+    }
+  }
+}

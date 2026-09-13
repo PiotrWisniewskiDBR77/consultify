@@ -1,3 +1,6 @@
+import { canonicalInitiativeSections } from './canonicalInitiativeSections';
+import type { DefinitionCardDraft } from './DefinitionCardContent';
+import { readInitiativeCardDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { enumLabel } from '@/utils/enumLabel';
 import { readDefinitionApproval } from '@/services/initiatives-execution/definitionApprovalApi';
 import { DefinitionApprovalContent } from './DefinitionApprovalContent';
@@ -794,7 +797,27 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [densityMode, setDensityMode]);
 
-  const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
+  const [activeNSection, setActiveNSection] = useState<string>(() => readInitiativeDeepLinkId() === initiativeId ? readInitiativeCardDeepLink(window.location.search).cardKey || 'initiative-definition' : 'initiative-definition');
+  const canonicalDraftStore = useRef<Record<string, Record<string, DefinitionCardDraft>>>({});
+  const [canonicalDraftDirty, setCanonicalDraftDirty] = useState(false);
+  const updateCanonicalDraftState = useCallback(() => setCanonicalDraftDirty(Object.keys(canonicalDraftStore.current[JSON.stringify([initiativeId, currentUser?.id])] || {}).length > 0), [initiativeId, currentUser?.id]);
+  const [canonicalFinding, setCanonicalFinding] = useState<{ cardKey: string; field?: string; requestId: number }>();
+  const [navigationInitiativeId, setNavigationInitiativeId] = useState(initiativeId);
+  // Reset record-local navigation before effects can serialize the previous card into the new URL.
+  // Keep the actor/initiative-keyed draft store intact when switching between open records.
+  if (navigationInitiativeId !== initiativeId) {
+    setNavigationInitiativeId(initiativeId);
+    setActiveNSection(readInitiativeDeepLinkId() === initiativeId
+      ? readInitiativeCardDeepLink(window.location.search).cardKey || 'initiative-definition'
+      : 'initiative-definition');
+    setCanonicalFinding(undefined);
+    setCanonicalDraftDirty(Object.keys(canonicalDraftStore.current[JSON.stringify([initiativeId, currentUser?.id])] || {}).length > 0);
+  }
+
+  const navigateCanonicalFinding = useCallback((target: { cardKey: string; field?: string; requestId: number }) => {
+    setCanonicalFinding(target);
+    setActiveNSection(target.cardKey);
+  }, []);
   const [wholeCardAiBusy, setWholeCardAiBusy] = useState(false);
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
@@ -8165,7 +8188,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {/* Full lifecycle gate workflow table (13 stages) */}
-              {isRuntimeOnlyRecord && <DefinitionApprovalContent initiativeId={initiativeId} readOnly={readMode} onChanged={() => void refreshDefinitionDocument()} />}
+              {isRuntimeOnlyRecord && <DefinitionApprovalContent initiativeId={initiativeId} draftStore={canonicalDraftStore} onDraftStateChange={updateCanonicalDraftState} onFindingNavigate={navigateCanonicalFinding} readOnly={readMode} onChanged={() => void refreshDefinitionDocument()} />}
               {!definitionApprovalV2 && <InitiativeGatesWorkflowTable />}
             </div>
           );
@@ -9464,12 +9487,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     true,
   ]);
 
+  const navigationNModeSections = useMemo(() => isRuntimeOnlyRecord
+    ? canonicalInitiativeSections(orderedNModeSectionsWithContent, cardKey => <DefinitionApprovalContent
+        initiativeId={initiativeId} selectedCardKey={cardKey} draftStore={canonicalDraftStore} onDraftStateChange={updateCanonicalDraftState}
+        initialFinding={canonicalFinding} readOnly={readMode} onChanged={() => void refreshDefinitionDocument()}
+      />, (key, fallback) => String(t(key, fallback)))
+    : orderedNModeSectionsWithContent, [isRuntimeOnlyRecord, orderedNModeSectionsWithContent, initiativeId, canonicalFinding, readMode, t]);
+
   useEffect(() => {
-    if (orderedNModeSectionsWithContent.length === 0) return;
-    if (!orderedNModeSectionsWithContent.some((section) => section.id === activeNSection)) {
-      setActiveNSection(orderedNModeSectionsWithContent[0].id);
+    if (isLoading || !initiative || navigationNModeSections.length === 0) return;
+    if (!navigationNModeSections.some((section) => section.id === activeNSection)) {
+      setActiveNSection(navigationNModeSections[0].id);
     }
-  }, [orderedNModeSectionsWithContent, activeNSection]);
+  }, [navigationNModeSections, activeNSection, isLoading, initiative]);
+
+  useEffect(() => {
+    if (!isRuntimeOnlyRecord || readInitiativeDeepLinkId() !== initiativeId) return;
+    const url = new URL(window.location.href);
+    if (navigationNModeSections.some(section => section.id === activeNSection)) {
+      url.searchParams.set('card', activeNSection);
+      if (canonicalFinding?.cardKey === activeNSection && canonicalFinding.field) url.searchParams.set('finding', `FIELD_REQUIRED:${canonicalFinding.field}`);
+      else url.searchParams.delete('finding');
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+  }, [isRuntimeOnlyRecord, initiativeId, activeNSection, canonicalFinding, navigationNModeSections]);
 
   // ── Smart Export / Present (Phase A3 + E) ──────────────────────────────────
   // Canonical, presentable sections in nav order, EXCLUDING Comments + Activity
@@ -10470,7 +10511,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 życia), więc zgodnie z §6.4 akcja ląduje w „Akcjach" panelu.
                 Dotyczy AKTYWNEJ sekcji, więc etykieta ją nazywa.
                 W Podglądzie ukryta — to sygnał redakcyjny, nie treść. */}
-            {!readMode && activeNSection !== 'activity-log' && activeNSection !== 'comments' ? (
+            {!readMode && !isRuntimeOnlyRecord && activeNSection !== 'activity-log' && activeNSection !== 'comments' ? (
               <button
                 type="button"
                 onClick={() => handleToggleSectionComplete(activeNSection)}
@@ -11202,7 +11243,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 artifactType="initiative"
                 onSave={() => handleSave(false)}
                 saving={isMutating}
-                isDirty={hasUnsavedChanges}
+                isDirty={hasUnsavedChanges || (isRuntimeOnlyRecord && canonicalDraftDirty)}
                 saveState={runtimeOnlyEditBlockedMessage ? 'error' : undefined}
                 saveErrorLabel={runtimeOnlyEditBlockedMessage || undefined}
                 saveErrorTitle={runtimeOnlyEditBlockedMessage || undefined}
@@ -11749,7 +11790,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   artifactType="initiative"
                   onSave={() => handleSave(false)}
                   saving={isMutating}
-                  isDirty={hasUnsavedChanges}
+                  isDirty={hasUnsavedChanges || (isRuntimeOnlyRecord && canonicalDraftDirty)}
                   saveState={runtimeOnlyEditBlockedMessage ? 'error' : undefined}
                   saveErrorLabel={runtimeOnlyEditBlockedMessage || undefined}
                   saveErrorTitle={runtimeOnlyEditBlockedMessage || undefined}
@@ -12133,7 +12174,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <div className="flex min-h-[60vh] items-start">
                         <div className="flex-1 min-w-0 flex gap-0">
                           <NModeLeftNav
-                            sections={orderedNModeSectionsWithContent}
+                            sections={navigationNModeSections}
                             activeSection={activeNSection}
                             onSectionChange={setActiveNSection}
                             onSectionReorder={handleNModeSectionReorder}
@@ -12146,7 +12187,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
                           >
                             <NModeCanvas
-                              sections={orderedNModeSectionsWithContent}
+                              sections={navigationNModeSections}
                               activeSection={activeNSection}
                             />
                           </div>

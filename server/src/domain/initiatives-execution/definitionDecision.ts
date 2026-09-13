@@ -1,3 +1,4 @@
+import type { ConfiguredCardProfile } from './configureInitiativeCards.js';
 import { evaluateDefinitionReadiness } from './definitionReadiness.js';
 import { assertGateQuorumReceipt } from './gateSignoff.js';
 import {
@@ -8,6 +9,7 @@ import {
   type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
+  MaterialCommandRuleError,
 } from './materialCommand.js';
 import type { InitiativeCardVersionReadModel } from './postgresInitiativeReader.js';
 import type { InitiativeWithCardRefs } from './publishInitiativeCard.js';
@@ -78,7 +80,9 @@ async function currentReadiness(
   initiative: DefinitionInitiative
 ) {
   const cards: InitiativeCardVersionReadModel[] = [];
-  for (const cardKey of DEFINITION_CARDS) {
+  const profile = (initiative.cardSelection as { profile?: ConfiguredCardProfile } | undefined)?.profile;
+  const requiredKeys = [...new Set([...DEFINITION_CARDS, ...(profile?.cards || []).filter(card => card.requiredness === 'REQUIRED').map(card => card.cardKey)])];
+  for (const cardKey of requiredKeys) {
     const card = await transaction.getLatestInitiativeCardForUpdate(
       organizationId,
       initiativeId,
@@ -108,13 +112,15 @@ async function currentReadiness(
   return evaluateDefinitionReadiness(
     cards,
     Boolean(source?.sourceType && source.sourceId && Number(source.sourceVersion) > 0),
-    sourceFreshness
+    sourceFreshness,
+    profile
   );
 }
 
 export async function requestDefinitionDecision(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<RequestDefinitionDecisionPayload>
+  envelope: MaterialCommandEnvelope<RequestDefinitionDecisionPayload>,
+  assertCurrentProfileAuthority?: (initiative: InitiativeWithCardRefs, profile: ConfiguredCardProfile) => Promise<void>
 ): Promise<MaterialCommandResult<DefinitionDecisionCase>> {
   if (
     envelope.commandType !== 'initiative.definition.request' ||
@@ -130,7 +136,15 @@ export async function requestDefinitionDecision(
   if (!Number.isFinite(Date.parse(envelope.payload.dueAt))) {
     throw new MaterialCommandValidationError('dueAt must be a valid timestamp');
   }
-  return executeMaterialCommand(unitOfWork, envelope, async (transaction) => {
+  return unitOfWork.transaction(async transaction => {
+    const parent=await transaction.getRelatedAggregateForUpdate<DefinitionInitiative>(envelope.organizationId,'initiative',envelope.aggregateId);
+    if(!parent)throw new MaterialCommandRuleError('NOT_FOUND',404);
+    const profile=(parent.payload.cardSelection as {profile?:ConfiguredCardProfile}|undefined)?.profile;
+    if(profile){
+      if(!assertCurrentProfileAuthority)throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_AUTHORITY_REQUIRED',403);
+      await assertCurrentProfileAuthority(parent.payload,profile);
+    }
+    return executeMaterialCommand({transaction:async work=>work(transaction)}, envelope, async (transaction) => {
     const initiative = await transaction.getAggregatePayload<DefinitionInitiative>(
       envelope.organizationId,
       'initiative',
@@ -216,12 +230,14 @@ export async function requestDefinitionDecision(
       eventPayload: decision,
       auditPayload: decision,
     };
+    });
   });
 }
 
 export async function decideDefinition(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<DecideDefinitionPayload>
+  envelope: MaterialCommandEnvelope<DecideDefinitionPayload>,
+  assertCurrentProfileAuthority?: (initiative: InitiativeWithCardRefs, profile: ConfiguredCardProfile) => Promise<void>
 ): Promise<MaterialCommandResult<DefinitionDecisionCase>> {
   if (
     envelope.commandType !== 'initiative.definition.decide' ||
@@ -231,7 +247,15 @@ export async function decideDefinition(
   }
   const rationale = envelope.payload.rationale.trim();
   if (!rationale) throw new MaterialCommandValidationError('Decision rationale is required');
-  return executeMaterialCommand(unitOfWork, envelope, async (transaction) => {
+  return unitOfWork.transaction(async transaction => {
+    const parent=await transaction.getRelatedAggregateForUpdate<DefinitionInitiative>(envelope.organizationId,'initiative',envelope.aggregateId);
+    if(!parent)throw new MaterialCommandRuleError('NOT_FOUND',404);
+    const profile=(parent.payload.cardSelection as {profile?:ConfiguredCardProfile}|undefined)?.profile;
+    if(profile){
+      if(!assertCurrentProfileAuthority)throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_AUTHORITY_REQUIRED',403);
+      await assertCurrentProfileAuthority(parent.payload,profile);
+    }
+    return executeMaterialCommand({transaction:async work=>work(transaction)}, envelope, async (transaction) => {
     await assertGateQuorumReceipt(transaction, envelope.organizationId, {
       required: envelope.payload.governanceQuorumRequired,
       gate: 'DEFINITION',
@@ -328,5 +352,6 @@ export async function decideDefinition(
       eventPayload: decided,
       auditPayload: decided,
     };
+    });
   });
 }

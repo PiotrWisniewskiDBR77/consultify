@@ -1,3 +1,8 @@
+import {
+  INITIATIVE_CARD_KEYS,
+  type InitiativeCardKey,
+} from '@/contracts/initiatives-execution/cardRegistry';
+
 /**
  * Uspójnienie F4.6 — jeden kanoniczny wzorzec deep-linkowania do inicjatywy.
  *
@@ -33,6 +38,9 @@ export function buildInitiativeDeepLink(
      * hardkodowały `&mode=doc` ręcznie.
      */
     mode?: string;
+    cardKey?: InitiativeCardKey;
+    findingId?: string;
+    returnContext?: string;
   }
 ): string {
   const base = MODULE_BASE[opts?.module ?? 'initiatives'];
@@ -40,6 +48,9 @@ export function buildInitiativeDeepLink(
   if (opts?.tab) params.set('tab', opts.tab);
   if (opts?.mode) params.set('mode', opts.mode);
   params.set(INITIATIVE_DEEP_LINK_PARAM, String(initiativeId));
+  if (opts?.cardKey) params.set('card', opts.cardKey);
+  if (opts?.findingId) params.set('finding', opts.findingId);
+  if (opts?.returnContext) params.set('returnContext', opts.returnContext);
   return `${base}?${params.toString()}`;
 }
 
@@ -52,4 +63,20 @@ export function readInitiativeDeepLinkId(search?: string): string | null {
   } catch {
     return null;
   }
+}
+
+/** Additional navigation context is data, never a redirect or write instruction. */
+export function readInitiativeCardDeepLink(search: string): {
+  cardKey: InitiativeCardKey | null;
+  findingId: string | null;
+  returnContext: string | null;
+} {
+  const params = new URLSearchParams(search);
+  const requested = params.get('card');
+  const cardKey = INITIATIVE_CARD_KEYS.find((key) => key === requested) ?? null;
+  return {
+    cardKey,
+    findingId: cardKey ? params.get('finding') : null,
+    returnContext: params.get('returnContext'),
+  };
 }

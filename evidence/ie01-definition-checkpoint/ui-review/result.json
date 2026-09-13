@@ -1,0 +1,240 @@
+{
+  "id": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+  "steps": [
+    {
+      "label": "Summary / Scope",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 11,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "summary-scope",
+          "cardVersion": 2,
+          "aggregateVersion": 11,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:summary-scope:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "8199abb3-be47-4d30-aaa0-b406a8a15b35",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/8199abb3-be47-4d30-aaa0-b406a8a15b35/read-back"
+      }
+    },
+    {
+      "label": "Strategic Fit",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 12,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "strategic-fit",
+          "cardVersion": 2,
+          "aggregateVersion": 12,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:strategic-fit:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "b2617573-e0d0-4852-85df-67b767c4543f",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/b2617573-e0d0-4852-85df-67b767c4543f/read-back"
+      }
+    },
+    {
+      "label": "Success Criteria",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 13,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "success-criteria",
+          "cardVersion": 2,
+          "aggregateVersion": 13,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:success-criteria:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "ceb3730c-7add-4910-b041-05d853f22899",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/ceb3730c-7add-4910-b041-05d853f22899/read-back"
+      }
+    },
+    {
+      "label": "Outcomes & Benefits",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 14,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "outcomes-benefits",
+          "cardVersion": 2,
+          "aggregateVersion": 14,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:outcomes-benefits:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "ad2af158-0b06-4bed-8f52-eff758ebda5e",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/ad2af158-0b06-4bed-8f52-eff758ebda5e/read-back"
+      }
+    },
+    {
+      "label": "Options",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 15,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "options",
+          "cardVersion": 2,
+          "aggregateVersion": 15,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:options:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "fa102290-21af-4928-ac09-0588804720c7",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/fa102290-21af-4928-ac09-0588804720c7/read-back"
+      }
+    },
+    {
+      "label": "People / Team",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 16,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "people-team",
+          "cardVersion": 2,
+          "aggregateVersion": 16,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:people-team:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "0d5ace6c-f395-4c4c-98b6-e46f8b9f3140",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/0d5ace6c-f395-4c4c-98b6-e46f8b9f3140/read-back"
+      }
+    },
+    {
+      "label": "Roles & RACI",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 17,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "roles-raci",
+          "cardVersion": 2,
+          "aggregateVersion": 17,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:roles-raci:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "cd4ed5ac-a6bf-4046-a897-a1b93a26f851",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/cd4ed5ac-a6bf-4046-a897-a1b93a26f851/read-back"
+      }
+    },
+    {
+      "label": "Stakeholders",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 18,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "stakeholders",
+          "cardVersion": 2,
+          "aggregateVersion": 18,
+          "outcome": "ACCEPTED",
+          "decisionId": "card-review:initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb:stakeholders:2"
+        },
+        "correlationId": "cs814l5wmnqfzc0eivznwb",
+        "receiptId": "56f7992a-def9-4187-a9ef-c3bf65af4801",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/56f7992a-def9-4187-a9ef-c3bf65af4801/read-back"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    }
+  ],
+  "pageErrors": [],
+  "url": "http://127.0.0.1:5292/initiatives?open=initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb&mode=doc&card=stakeholders",
+  "body": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInitiatives\nData\nModel\nLocal Member\nLM\nInitiatives\nPlan\nLoad\nWork report\nList\nAnalysis\nPriority\nAll priorities\nCritical\nHigh\nMedium\nLow\nStatus\nActive\nAll\nNew initiative\nList\ninitiative\nIE01 final named reviewer journey\ninitiative\nIE01 final named reviewer journey\nIE01 final named reviewer journey\nDraft registered\nSaved\nSections\nEdit\nPreview\nWork with AI\nDEFINITION AND VALUE\nSummary / Scope\nStrategic Fit\nSuccess Criteria\nOutcomes & Benefits\nKPI\nOptions\nFinancial Analysis\nFinancial Impact\nORGANIZATION AND FEASIBILITY\nPeople / Team\nRoles & RACI\nStakeholders\nResources & Capacity\nDependencies\nRisk & RAID\nFeasibility & Completeness\nTechnical Specification\nPLAN AND GOVERNANCE\nMilestones\nTimeline\nTasks\nDecisions\nGates & Approvals\nADOPTION, EVIDENCE AND LEARNING\nChange & Adoption\nCommunication & Engagement\nCapabilities & Training\nAttachments & Materials\nComments, Activity & History\nWORKSPACE TOOLS\nDeliverables & Milestones\nSuggested Changes\nOKR\nHypothesis\nLessons Learned\nDefinition card content and review\n\nReview: ACCEPTED · Version: 2\n\nPublished version loaded\n\nOwner\nSelect a person\nLocal Member\nLocal Reviewer\nSponsor\nSelect a person\nLocal Member\nLocal Reviewer\nEvidence references (one per line)\nACTIONS\nCreate variant\nPROPERTIES\nProperty\tValue\nStatus\t\nDraft registered\n\nPhase\t\nPreparation\n\nNext Gate\t\nDefinition\n\nPriority\t\nMedium\nCritical\nHigh\nMedium\nLow\n\nOwner\t\nLocal Reviewer\n— Select —\nLocal Member\nLocal Reviewer\n\nTarget\t\n—\nRELATIONS\nSOURCES AND ASSUMPTIONS\nRESULTS\nCOMMENTS\nHISTORY"
+}

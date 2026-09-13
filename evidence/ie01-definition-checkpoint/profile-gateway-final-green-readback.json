@@ -1,0 +1,1216 @@
+[
+  {
+    "initiativeId": "ie01-gateway-e6d88907-fb23-457c-9ff8-c240e45cff64",
+    "templateId": "63f3bd50-4211-4c20-a2fa-e8934677c1a2",
+    "state": [
+      {
+        "version": 2,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-e6d88907-fb23-457c-9ff8-c240e45cff64",
+          "cardSelection": {
+            "cards": [
+              {
+                "cardKey": "attachments-materials",
+                "included": true,
+                "position": 0
+              },
+              {
+                "cardKey": "capabilities-training",
+                "included": true,
+                "position": 1
+              },
+              {
+                "cardKey": "change-adoption",
+                "included": true,
+                "position": 2
+              },
+              {
+                "cardKey": "comments-activity-history",
+                "included": true,
+                "position": 3
+              },
+              {
+                "cardKey": "communication-engagement",
+                "included": true,
+                "position": 4
+              },
+              {
+                "cardKey": "decisions",
+                "included": true,
+                "position": 5
+              },
+              {
+                "cardKey": "dependencies",
+                "included": true,
+                "position": 6
+              },
+              {
+                "cardKey": "feasibility-completeness",
+                "included": true,
+                "position": 7
+              },
+              {
+                "cardKey": "financial-analysis",
+                "included": true,
+                "position": 8
+              },
+              {
+                "cardKey": "financial-impact",
+                "included": true,
+                "position": 9
+              },
+              {
+                "cardKey": "gates-approvals",
+                "included": true,
+                "position": 10
+              },
+              {
+                "cardKey": "kpi",
+                "included": true,
+                "position": 11
+              },
+              {
+                "cardKey": "milestones",
+                "included": true,
+                "position": 12
+              },
+              {
+                "cardKey": "options",
+                "included": true,
+                "position": 13
+              },
+              {
+                "cardKey": "outcomes-benefits",
+                "included": true,
+                "position": 14
+              },
+              {
+                "cardKey": "people-team",
+                "included": true,
+                "position": 15
+              },
+              {
+                "cardKey": "resources-capacity",
+                "included": true,
+                "position": 16
+              },
+              {
+                "cardKey": "risk-raid",
+                "included": true,
+                "position": 17
+              },
+              {
+                "cardKey": "roles-raci",
+                "included": true,
+                "position": 18
+              },
+              {
+                "cardKey": "stakeholders",
+                "included": true,
+                "position": 19
+              },
+              {
+                "cardKey": "strategic-fit",
+                "included": true,
+                "position": 20
+              },
+              {
+                "cardKey": "success-criteria",
+                "included": true,
+                "position": 21
+              },
+              {
+                "cardKey": "summary-scope",
+                "included": true,
+                "position": 22
+              },
+              {
+                "cardKey": "tasks",
+                "included": true,
+                "position": 23
+              },
+              {
+                "cardKey": "technical-specification",
+                "included": true,
+                "position": 24
+              },
+              {
+                "cardKey": "timeline",
+                "included": true,
+                "position": 25
+              }
+            ],
+            "profile": {
+              "cards": [
+                {
+                  "cardKey": "attachments-materials",
+                  "included": true,
+                  "position": 0,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "capabilities-training",
+                  "included": true,
+                  "position": 1,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "change-adoption",
+                  "included": true,
+                  "position": 2,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "comments-activity-history",
+                  "included": true,
+                  "position": 3,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "communication-engagement",
+                  "included": true,
+                  "position": 4,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "decisions",
+                  "included": true,
+                  "position": 5,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "dependencies",
+                  "included": true,
+                  "position": 6,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "feasibility-completeness",
+                  "included": true,
+                  "position": 7,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "financial-analysis",
+                  "included": true,
+                  "position": 8,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "financial-impact",
+                  "included": true,
+                  "position": 9,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "gates-approvals",
+                  "included": true,
+                  "position": 10,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "kpi",
+                  "included": true,
+                  "position": 11,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "milestones",
+                  "included": true,
+                  "position": 12,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "options",
+                  "included": true,
+                  "position": 13,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "outcomes-benefits",
+                  "included": true,
+                  "position": 14,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "people-team",
+                  "included": true,
+                  "position": 15,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "resources-capacity",
+                  "included": true,
+                  "position": 16,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "risk-raid",
+                  "included": true,
+                  "position": 17,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "roles-raci",
+                  "included": true,
+                  "position": 18,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "stakeholders",
+                  "included": true,
+                  "position": 19,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "strategic-fit",
+                  "included": true,
+                  "position": 20,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "success-criteria",
+                  "included": true,
+                  "position": 21,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "summary-scope",
+                  "included": true,
+                  "position": 22,
+                  "reviewerIds": [
+                    "12ff8a2a-90aa-4163-a738-c58e60f68a3a"
+                  ],
+                  "requiredness": "REQUIRED",
+                  "requiredFields": [
+                    "problem"
+                  ],
+                  "reviewRequired": true
+                },
+                {
+                  "cardKey": "tasks",
+                  "included": true,
+                  "position": 23,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "technical-specification",
+                  "included": true,
+                  "position": 24,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "timeline",
+                  "included": true,
+                  "position": 25,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                }
+              ],
+              "policy": {
+                "policyId": "64271dea-c1ec-436f-9afe-62d1f303fbf5",
+                "policyVersion": 1
+              },
+              "version": 1,
+              "profileKey": "technology",
+              "templateId": "63f3bd50-4211-4c20-a2fa-e8934677c1a2",
+              "contentHash": "f2fa3ead2a2d86c9925f250a81da73416313f1b2cbba02eed6343b25adda7f51"
+            },
+            "registryVersion": 1,
+            "aggregateVersion": 2
+          },
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [
+      {
+        "card_key": "attachments-materials",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "capabilities-training",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "change-adoption",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "comments-activity-history",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "communication-engagement",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "decisions",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "dependencies",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "feasibility-completeness",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "financial-analysis",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "financial-impact",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "gates-approvals",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "kpi",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "milestones",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "options",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "outcomes-benefits",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "people-team",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "resources-capacity",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "risk-raid",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "roles-raci",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "stakeholders",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "strategic-fit",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "success-criteria",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "summary-scope",
+        "requiredness": "REQUIRED",
+        "included": true
+      },
+      {
+        "card_key": "tasks",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "technical-specification",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "timeline",
+        "requiredness": "OPTIONAL",
+        "included": true
+      }
+    ],
+    "receipts": [
+      {
+        "client_request_id": "bee29a25-86c3-43f3-8588-62ba6a6a8266",
+        "command_type": "initiative.cards.configure",
+        "aggregate_version": 2
+      }
+    ]
+  },
+  {
+    "initiativeId": "ie01-gateway-5b134a99-af20-4484-aa97-cbec89f16208",
+    "templateId": "7fd3f434-39fb-4446-9bfc-190869448774",
+    "state": [
+      {
+        "version": 1,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-5b134a99-af20-4484-aa97-cbec89f16208",
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [],
+    "receipts": []
+  },
+  {
+    "initiativeId": "ie01-gateway-bac08d60-b411-4af3-9a7d-0d2addcd27fa",
+    "templateId": "bc474f42-09a2-47c6-9a52-b53aa9736c01",
+    "state": [
+      {
+        "version": 1,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-bac08d60-b411-4af3-9a7d-0d2addcd27fa",
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [],
+    "receipts": []
+  },
+  {
+    "initiativeId": "ie01-gateway-19e9c578-78c5-4d37-b033-2fe5985fbfa3",
+    "templateId": "824aaa74-4d42-4987-b090-6ce33b71e002",
+    "state": [
+      {
+        "version": 1,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-19e9c578-78c5-4d37-b033-2fe5985fbfa3",
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [],
+    "receipts": []
+  },
+  {
+    "initiativeId": "ie01-gateway-a53c0a7b-9507-44fa-b36e-052aeb8639c4",
+    "templateId": "1addb0b4-dab3-4dec-80fe-820868dd9c5c",
+    "state": [
+      {
+        "version": 1,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-a53c0a7b-9507-44fa-b36e-052aeb8639c4",
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [],
+    "receipts": []
+  },
+  {
+    "initiativeId": "ie01-gateway-31d00996-f881-4185-8542-817ea7e66da7",
+    "templateId": "4ada72c4-567e-4244-a8e1-f3f5a40f0fa3",
+    "state": [
+      {
+        "version": 1,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-31d00996-f881-4185-8542-817ea7e66da7",
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [],
+    "receipts": []
+  },
+  {
+    "initiativeId": "ie01-gateway-642fc9de-6a71-4ed0-b22e-7cca118f497d",
+    "templateId": "24e3e772-3310-4df7-8a29-e0a768656928",
+    "state": [
+      {
+        "version": 4,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "cardRefs": {
+            "summary-scope": {
+              "cardVersion": 2,
+              "aggregateVersion": 4
+            }
+          },
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-642fc9de-6a71-4ed0-b22e-7cca118f497d",
+          "cardSelection": {
+            "cards": [
+              {
+                "cardKey": "attachments-materials",
+                "included": true,
+                "position": 0
+              },
+              {
+                "cardKey": "capabilities-training",
+                "included": true,
+                "position": 1
+              },
+              {
+                "cardKey": "change-adoption",
+                "included": true,
+                "position": 2
+              },
+              {
+                "cardKey": "comments-activity-history",
+                "included": true,
+                "position": 3
+              },
+              {
+                "cardKey": "communication-engagement",
+                "included": true,
+                "position": 4
+              },
+              {
+                "cardKey": "decisions",
+                "included": true,
+                "position": 5
+              },
+              {
+                "cardKey": "dependencies",
+                "included": true,
+                "position": 6
+              },
+              {
+                "cardKey": "feasibility-completeness",
+                "included": true,
+                "position": 7
+              },
+              {
+                "cardKey": "financial-analysis",
+                "included": true,
+                "position": 8
+              },
+              {
+                "cardKey": "financial-impact",
+                "included": true,
+                "position": 9
+              },
+              {
+                "cardKey": "gates-approvals",
+                "included": true,
+                "position": 10
+              },
+              {
+                "cardKey": "kpi",
+                "included": true,
+                "position": 11
+              },
+              {
+                "cardKey": "milestones",
+                "included": true,
+                "position": 12
+              },
+              {
+                "cardKey": "options",
+                "included": true,
+                "position": 13
+              },
+              {
+                "cardKey": "outcomes-benefits",
+                "included": true,
+                "position": 14
+              },
+              {
+                "cardKey": "people-team",
+                "included": true,
+                "position": 15
+              },
+              {
+                "cardKey": "resources-capacity",
+                "included": true,
+                "position": 16
+              },
+              {
+                "cardKey": "risk-raid",
+                "included": true,
+                "position": 17
+              },
+              {
+                "cardKey": "roles-raci",
+                "included": true,
+                "position": 18
+              },
+              {
+                "cardKey": "stakeholders",
+                "included": true,
+                "position": 19
+              },
+              {
+                "cardKey": "strategic-fit",
+                "included": true,
+                "position": 20
+              },
+              {
+                "cardKey": "success-criteria",
+                "included": true,
+                "position": 21
+              },
+              {
+                "cardKey": "summary-scope",
+                "included": true,
+                "position": 22
+              },
+              {
+                "cardKey": "tasks",
+                "included": true,
+                "position": 23
+              },
+              {
+                "cardKey": "technical-specification",
+                "included": true,
+                "position": 24
+              },
+              {
+                "cardKey": "timeline",
+                "included": true,
+                "position": 25
+              }
+            ],
+            "profile": {
+              "cards": [
+                {
+                  "cardKey": "attachments-materials",
+                  "included": true,
+                  "position": 0,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "capabilities-training",
+                  "included": true,
+                  "position": 1,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "change-adoption",
+                  "included": true,
+                  "position": 2,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "comments-activity-history",
+                  "included": true,
+                  "position": 3,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "communication-engagement",
+                  "included": true,
+                  "position": 4,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "decisions",
+                  "included": true,
+                  "position": 5,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "dependencies",
+                  "included": true,
+                  "position": 6,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "feasibility-completeness",
+                  "included": true,
+                  "position": 7,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "financial-analysis",
+                  "included": true,
+                  "position": 8,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "financial-impact",
+                  "included": true,
+                  "position": 9,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "gates-approvals",
+                  "included": true,
+                  "position": 10,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "kpi",
+                  "included": true,
+                  "position": 11,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "milestones",
+                  "included": true,
+                  "position": 12,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "options",
+                  "included": true,
+                  "position": 13,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "outcomes-benefits",
+                  "included": true,
+                  "position": 14,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "people-team",
+                  "included": true,
+                  "position": 15,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "resources-capacity",
+                  "included": true,
+                  "position": 16,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "risk-raid",
+                  "included": true,
+                  "position": 17,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "roles-raci",
+                  "included": true,
+                  "position": 18,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "stakeholders",
+                  "included": true,
+                  "position": 19,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "strategic-fit",
+                  "included": true,
+                  "position": 20,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "success-criteria",
+                  "included": true,
+                  "position": 21,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "summary-scope",
+                  "included": true,
+                  "position": 22,
+                  "reviewerIds": [
+                    "12ff8a2a-90aa-4163-a738-c58e60f68a3a"
+                  ],
+                  "requiredness": "REQUIRED",
+                  "requiredFields": [
+                    "problem"
+                  ],
+                  "reviewRequired": true
+                },
+                {
+                  "cardKey": "tasks",
+                  "included": true,
+                  "position": 23,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "technical-specification",
+                  "included": true,
+                  "position": 24,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                },
+                {
+                  "cardKey": "timeline",
+                  "included": true,
+                  "position": 25,
+                  "reviewerIds": [],
+                  "requiredness": "OPTIONAL",
+                  "requiredFields": [],
+                  "reviewRequired": false
+                }
+              ],
+              "policy": {
+                "policyId": "64271dea-c1ec-436f-9afe-62d1f303fbf5",
+                "policyVersion": 1
+              },
+              "version": 1,
+              "profileKey": "technology",
+              "templateId": "24e3e772-3310-4df7-8a29-e0a768656928",
+              "contentHash": "92a24051f8a2f16253e18513f7da28faeef920681f1de3cd9e773bf645a5640c"
+            },
+            "registryVersion": 1,
+            "aggregateVersion": 2
+          },
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [
+      {
+        "card_key": "attachments-materials",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "capabilities-training",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "change-adoption",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "comments-activity-history",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "communication-engagement",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "decisions",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "dependencies",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "feasibility-completeness",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "financial-analysis",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "financial-impact",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "gates-approvals",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "kpi",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "milestones",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "options",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "outcomes-benefits",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "people-team",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "resources-capacity",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "risk-raid",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "roles-raci",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "stakeholders",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "strategic-fit",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "success-criteria",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "summary-scope",
+        "requiredness": "REQUIRED",
+        "included": true
+      },
+      {
+        "card_key": "tasks",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "technical-specification",
+        "requiredness": "OPTIONAL",
+        "included": true
+      },
+      {
+        "card_key": "timeline",
+        "requiredness": "OPTIONAL",
+        "included": true
+      }
+    ],
+    "receipts": [
+      {
+        "client_request_id": "0d89bc1a-9372-48b8-8226-16c4b4046e48",
+        "command_type": "initiative.cards.configure",
+        "aggregate_version": 2
+      },
+      {
+        "client_request_id": "a273f399-6606-4241-bf66-51f5081407a1",
+        "command_type": "initiative.card.publish",
+        "aggregate_version": 3
+      },
+      {
+        "client_request_id": "8c625da6-7a84-4d80-9a9d-d4a589de8c72",
+        "command_type": "initiative.card.review",
+        "aggregate_version": 4
+      }
+    ]
+  },
+  {
+    "initiativeId": "ie01-gateway-91a1a484-de2e-4aab-8f58-d90a380d76cf",
+    "templateId": "66749dc6-592f-4fd6-a5e9-44716eae3e64",
+    "state": [
+      {
+        "version": 1,
+        "payload_json": {
+          "title": "Gateway own fixture",
+          "projectId": "7f026254-d6d9-45cc-9276-74cb3c21dc90",
+          "visibility": "PROJECT",
+          "initiativeId": "ie01-gateway-91a1a484-de2e-4aab-8f58-d90a380d76cf",
+          "lifecycleState": "REGISTERED_DRAFT",
+          "initiativeOwnerId": "70831584-b665-477d-bd1f-e64112aa5e91"
+        }
+      }
+    ],
+    "selection": [],
+    "receipts": []
+  }
+]

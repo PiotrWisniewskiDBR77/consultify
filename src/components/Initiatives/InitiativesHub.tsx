@@ -50,6 +50,7 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
+import { InitiativePreparationReadView } from './InitiativePreparationReadView';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
@@ -181,9 +182,7 @@ export const readV8InitiativeId = (response: unknown): string => {
 
 // D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
-  MODULE_STATUSES.length > 0
-    ? MODULE_STATUSES
-    : Object.values(InitiativeStatus);
+  MODULE_STATUSES.length > 0 ? MODULE_STATUSES : Object.values(InitiativeStatus);
 
 // ODMROZENIE 05_INITIATIVES: statusy odcinane przez zakres „Aktywne" — ten sam
 // zbiór, którym `fetchData` przycina wyrenderowaną listę, użyty ponownie przez
@@ -268,12 +267,16 @@ interface InitiativesHubProps {
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
-  'list',
-  'plan',
-  'capacity',
-  ...(PORTFOLIO_HEALTH_ENABLED ? (['portfolioHealth'] as ModuleTab[]) : []),
-]);
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'plan', 'capacity', 'workReport']);
+const resolvePreparationLens = (params: URLSearchParams) => {
+  const requested = params.get('lens') || params.get('tab');
+  return requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
+    ? 'portfolioHealth'
+    : ['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')
+      ? 'analysis'
+      : 'list';
+};
+
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -291,6 +294,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const requestedTab = searchParams.get('tab') as ModuleTab | null;
     return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
+  const [preparationLens, setPreparationLens] = useState(() => resolvePreparationLens(searchParams));
+  useEffect(() => {
+    setPreparationLens(resolvePreparationLens(searchParams));
+  }, [searchParams]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdoptingClassic, setIsAdoptingClassic] = useState(false);
   // DEC-420: "Adopt classic initiative" przeniesiony z rzędu Menu 3 do kebaba
@@ -558,7 +566,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               console.warn('[InitiativesHub] Legacy initiatives fetch failed:', legacyError);
               return [];
             }),
-            listDefinitionApprovals().catch(() => ({enabled:false,items:[]})),
+            listDefinitionApprovals().catch(() => ({ enabled: false, items: [] })),
           ]);
           // PUSTA LISTA INICJATYW (07.09.2026) — bezpiecznik konstrukcyjny.
           // Przyczyna zgloszenia „w inicjatywach jest pusto" byla w adapterze
@@ -609,9 +617,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               skippedRows
             );
           }
-          canonicalRows = mergeLegacyInitiativesIntoRegister(registeredRows, legacyCanonicalRows).map(row => ({
+          canonicalRows = mergeLegacyInitiativesIntoRegister(
+            registeredRows,
+            legacyCanonicalRows
+          ).map((row) => ({
             ...row,
-            canonicalLifecyclePresentation: approvalAdapter.enabled && !legacyRows.some(legacy => legacy.id === row.id),
+            canonicalLifecyclePresentation:
+              approvalAdapter.enabled && !legacyRows.some((legacy) => legacy.id === row.id),
           }));
         }
         const sourceRows = selectInitiativeRegisterSource(
@@ -808,7 +820,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =
-    activeTab === 'plan' || activeTab === 'capacity' || activeTab === 'portfolioHealth'
+    activeTab !== 'list' || preparationLens !== 'list'
       ? []
       : ['table', 'kanban', 'timeline', 'grid'];
 
@@ -832,15 +844,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
-      ...(PORTFOLIO_HEALTH_ENABLED
-        ? [
-            {
-              id: 'portfolioHealth' as ModuleTab,
-              label: t('initiatives.tabs.portfolioHealth', 'Portfolio health'),
-              icon: <Activity size={16} />,
-            },
-          ]
-        : []),
+      {
+        id: 'workReport' as ModuleTab,
+        label: t('initiatives.tabs.workReport', 'Work report'),
+        icon: <Activity size={16} />,
+      },
     ],
     [t]
   );
@@ -850,9 +858,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (!requestedTab || CANONICAL_INITIATIVES_TABS.has(requestedTab)) return;
     const next = new URLSearchParams(searchParams);
     next.delete('tab');
-    next.delete('candidateInbox');
-    next.delete('candidateId');
-    next.delete('sourceProposalId');
+    if (['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requestedTab)) {
+      const lens =
+        requestedTab === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
+          ? 'portfolioHealth'
+          : 'analysis';
+      setPreparationLens(lens);
+      next.set('lens', lens);
+    }
     setActiveTab('list');
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
@@ -1122,13 +1135,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     resolveOwnerMemberName
                   );
                 } catch {
-                  const interviewResponse = await Api.get(
-                    '/initiatives?source=interview_insight'
-                  );
+                  const interviewResponse = await Api.get('/initiatives?source=interview_insight');
                   const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
-                  response = interviewInitiatives.find(
-                    (item: any) => String(item?.id) === openId
-                  );
+                  response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
                   if (!response) throw v8Error;
                 }
               }
@@ -1317,9 +1326,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         // E3/P1: odmowa reguły (`rule` w ciele 400, np. GATE_DECISION_REQUIRED)
         // przechodzi przez wspólny lejek i dociera po polsku; kod nieznany
         // słownikowi zostaje bez zmian, żeby przyczyny nie zgubić.
-        const odmowa = opiszOdmoweZmianyStatusu(error, (klucz, zapas) =>
-          String(t(klucz, zapas))
-        );
+        const odmowa = opiszOdmoweZmianyStatusu(error, (klucz, zapas) => String(t(klucz, zapas)));
         toast.error(
           odmowa?.message || t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
@@ -1537,23 +1544,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const projectId = String(currentProjectId || '').trim();
     const ownerId = String((currentUser as any)?.id || '').trim();
     if (!projectId || !ownerId) {
-      toast.error(t('initiatives.bridge.contextMissing', 'Project and initiative owner are required.'));
+      toast.error(
+        t('initiatives.bridge.contextMissing', 'Project and initiative owner are required.')
+      );
       return;
     }
-    const initiativeId = window.prompt(
-      t('initiatives.bridge.initiativeId', 'Classic initiative ID to adopt')
-    )?.trim();
+    const initiativeId = window
+      .prompt(t('initiatives.bridge.initiativeId', 'Classic initiative ID to adopt'))
+      ?.trim();
     if (!initiativeId) return;
-    const candidateId = window.prompt(
-      t('initiatives.bridge.candidateId', 'Accepted candidate ID linked to this initiative')
-    )?.trim();
+    const candidateId = window
+      .prompt(
+        t('initiatives.bridge.candidateId', 'Accepted candidate ID linked to this initiative')
+      )
+      ?.trim();
     if (!candidateId) return;
-    if (!window.confirm(
-      t('initiatives.bridge.confirm', {
-        defaultValue: 'Adopt classic initiative "{{initiativeId}}" into the canonical register?',
-        initiativeId,
-      })
-    )) return;
+    if (
+      !window.confirm(
+        t('initiatives.bridge.confirm', {
+          defaultValue: 'Adopt classic initiative "{{initiativeId}}" into the canonical register?',
+          initiativeId,
+        })
+      )
+    )
+      return;
 
     setIsAdoptingClassic(true);
     try {
@@ -1858,7 +1872,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           onOpenPlan={() => setActiveTab('plan')}
         />
       );
-    if (activeTab === 'portfolioHealth') {
+    if (activeTab === 'list' && preparationLens === 'portfolioHealth' && !activeDocumentId) {
       return (
         <PortfolioHealthView
           onOpenInitiative={(id, title) => {
@@ -1955,6 +1969,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
     }
 
+    // Filter by status if active
+    const filteredInitiatives = activeStatusFilter
+      ? initiatives.filter((i) => i.status === activeStatusFilter)
+      : initiatives;
+
+    // Filter by search
+    const searchedInitiatives = searchQuery
+      ? filteredInitiatives.filter(
+          (i) =>
+            i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : filteredInitiatives;
+
+    if ((activeTab === 'list' && preparationLens === 'analysis') || activeTab === 'workReport') {
+      return (
+        <InitiativePreparationReadView
+          initiatives={searchedInitiatives}
+          report={activeTab === 'workReport'}
+          onOpen={handleOpenInitiativeDocument}
+        />
+      );
+    }
+
     if (initiatives.length === 0) {
       return (
         <SharedEmptyState
@@ -1975,20 +2013,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         />
       );
     }
-
-    // Filter by status if active
-    const filteredInitiatives = activeStatusFilter
-      ? initiatives.filter((i) => i.status === activeStatusFilter)
-      : initiatives;
-
-    // Filter by search
-    const searchedInitiatives = searchQuery
-      ? filteredInitiatives.filter(
-          (i) =>
-            i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : filteredInitiatives;
 
     type PreviewItem = PortfolioInitiative & { title: string };
 
@@ -2275,9 +2299,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={
-            scope === opt.id ? MENU_2_SEGMENT_ITEM_ACTIVE : MENU_2_SEGMENT_ITEM_INACTIVE
-          }
+          className={scope === opt.id ? MENU_2_SEGMENT_ITEM_ACTIVE : MENU_2_SEGMENT_ITEM_INACTIVE}
           title={
             opt.id === 'active'
               ? t(
@@ -2538,50 +2560,50 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
    */
   const commandRowRightContent =
     isInitiativeBridgeEnabled() && !isPilotParticipant ? (
-        <div className={MENU_3_RIGHT_CLASS} ref={menu3KebabRef}>
-          {/* DEC-420: "Adopt classic initiative" — migracja klasycznego
+      <div className={MENU_3_RIGHT_CLASS} ref={menu3KebabRef}>
+        {/* DEC-420: "Adopt classic initiative" — migracja klasycznego
               rejestru do runtime-v1 (prawdziwa funkcja, `window.prompt` x2 +
               wywołanie `/api/initiatives/runtime-v1/adoptions/accepted-classic`,
               patrz `handleAdoptClassicInitiative`), domyślnie ukryta za flagą
               `VITE_INITIATIVE_BRIDGE` (OFF). Zbyt rzadka, by zajmować stały
               chip Menu 3 — przeniesiona do kebaba "Więcej", etykieta po
               polsku (była twardo po angielsku). */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsMenu3KebabOpen((prev) => !prev)}
-              aria-haspopup="menu"
-              aria-expanded={isMenu3KebabOpen}
-              aria-label={t('initiatives.menu3.more', 'More')}
-              className={MENU_3_ACTION_NEUTRAL}
-              data-testid="initiatives-menu3-kebab"
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsMenu3KebabOpen((prev) => !prev)}
+            aria-haspopup="menu"
+            aria-expanded={isMenu3KebabOpen}
+            aria-label={t('initiatives.menu3.more', 'More')}
+            className={MENU_3_ACTION_NEUTRAL}
+            data-testid="initiatives-menu3-kebab"
+          >
+            <MoreVertical className="h-3.5 w-3.5" />
+          </button>
+          {isMenu3KebabOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full z-overlay mt-1 min-w-[240px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
             >
-              <MoreVertical className="h-3.5 w-3.5" />
-            </button>
-            {isMenu3KebabOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-full z-overlay mt-1 min-w-[240px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
+              <button
+                type="button"
+                role="menuitem"
+                disabled={isAdoptingClassic}
+                onClick={() => {
+                  setIsMenu3KebabOpen(false);
+                  void handleAdoptClassicInitiative();
+                }}
+                className="flex w-full items-center px-3 py-2 text-left text-xs text-c-text-secondary transition-colors duration-150 hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="initiatives-menu3-adopt-classic"
               >
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={isAdoptingClassic}
-                  onClick={() => {
-                    setIsMenu3KebabOpen(false);
-                    void handleAdoptClassicInitiative();
-                  }}
-                  className="flex w-full items-center px-3 py-2 text-left text-xs text-c-text-secondary transition-colors duration-150 hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="initiatives-menu3-adopt-classic"
-                >
-                  {isAdoptingClassic
-                    ? t('initiatives.bridge.adopting', 'Taking over…')
-                    : t('initiatives.bridge.action', 'Adopt classic initiative')}
-                </button>
-              </div>
-            )}
-          </div>
+                {isAdoptingClassic
+                  ? t('initiatives.bridge.adopting', 'Taking over…')
+                  : t('initiatives.bridge.action', 'Adopt classic initiative')}
+              </button>
+            </div>
+          )}
         </div>
+      </div>
     ) : null;
 
   // DEC-420: pełne listy (9 pozycji) zasilają WYŁĄCZNIE dropdown Menu 2
@@ -2644,6 +2666,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     <div className={MENU_2_FILTERS_ROW}>
       {activeTab === 'list' && (
         <>
+          <select
+            aria-label={t('initiatives.workspace.label', 'Initiative workspace')}
+            value={preparationLens}
+            className={MENU_2_FILTER_SELECT}
+            onChange={(event) => {
+              setPreparationLens(event.target.value);
+              const next = new URLSearchParams(searchParams);
+              next.set('lens', event.target.value);
+              setSearchParams(next, { replace: true });
+            }}
+          >
+            <option value="list">{t('initiatives.workspace.list', 'List')}</option>
+            <option value="analysis">{t('initiatives.workspace.analysis', 'Analysis')}</option>
+            {PORTFOLIO_HEALTH_ENABLED && (
+              <option value="portfolioHealth">
+                {t('initiatives.tabs.portfolioHealth', 'Portfolio health')}
+              </option>
+            )}
+          </select>
           {priorityFilter}
           <select
             id="initiative-priority-filter"
@@ -2735,18 +2776,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 }
               : activeTab !== 'list'
                 ? undefined
-            : isPilotParticipant
-              ? {
-                  label: t('initiatives.form.newInitiative'),
-                  onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
-                  locked: true,
-                  lockedReason: t(
-                    'initiatives.pilot.createLocked',
-                    'Available in the next project phase'
-                  ),
-                }
-              : {
-                  /* TEST-DANE D-15 (09.09.2026): jedyne wejscie „New initiative"
+                : isPilotParticipant
+                  ? {
+                      label: t('initiatives.form.newInitiative'),
+                      onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
+                      locked: true,
+                      lockedReason: t(
+                        'initiatives.pilot.createLocked',
+                        'Available in the next project phase'
+                      ),
+                    }
+                  : {
+                      /* TEST-DANE D-15 (09.09.2026): jedyne wejscie „New initiative"
                      otwieralo kreator AI, ktorego krok 3 to `Generate AI draft`
                      — bez dzialajacego LLM nie dalo sie utworzyc inicjatywy
                      z interfejsu, choc API dziala. Recznego formularza NIE
@@ -2758,35 +2799,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                      „zbudowane, ale niepodlaczone". Tu jest ten brakujacy
                      przewod: kanoniczny wariant CTA z menu (TRIADA §A2/§C4,
                      ten sam co „Dodaj raport" w Realizacji), dwie pozycje. */
-                  label: t('initiatives.form.newInitiative'),
-                  onClick: () => undefined,
-                  menu: {
-                    ariaLabel: t('initiatives.form.newInitiative'),
-                    items: [
-                      {
-                        id: 'manual',
-                        label: t('initiatives.form.newInitiativeManual', 'Fill in the form'),
-                        description: t(
-                          'initiatives.form.newInitiativeManualDesc',
-                          'Title, axis, level and a short summary — no AI needed.'
-                        ),
-                        onSelect: () => {
-                          setNewProjectId(currentProjectId || '');
-                          setShowNewModal(true);
-                        },
+                      label: t('initiatives.form.newInitiative'),
+                      onClick: () => undefined,
+                      menu: {
+                        ariaLabel: t('initiatives.form.newInitiative'),
+                        items: [
+                          {
+                            id: 'manual',
+                            label: t('initiatives.form.newInitiativeManual', 'Fill in the form'),
+                            description: t(
+                              'initiatives.form.newInitiativeManualDesc',
+                              'Title, project and a short summary — no AI needed.'
+                            ),
+                            onSelect: () => {
+                              setNewProjectId(currentProjectId || '');
+                              setShowNewModal(true);
+                            },
+                          },
+                          {
+                            id: 'ai',
+                            label: t('initiatives.form.newInitiativeAi', 'AI initiative wizard'),
+                            description: t(
+                              'initiatives.form.newInitiativeAiDesc',
+                              'Build a draft from a source insight, then review it.'
+                            ),
+                            onSelect: () => setShowInitiativeWizard(true),
+                          },
+                        ],
                       },
-                      {
-                        id: 'ai',
-                        label: t('initiatives.form.newInitiativeAi', 'AI initiative wizard'),
-                        description: t(
-                          'initiatives.form.newInitiativeAiDesc',
-                          'Build a draft from a source insight, then review it.'
-                        ),
-                        onSelect: () => setShowInitiativeWizard(true),
-                      },
-                    ],
-                  },
-                }
+                    }
         }
         filterControls={rightControls}
         commandRowContent={
@@ -2922,39 +2963,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 />
               </div>
 
-              {/* D1.1: Initiative Type/Level selector */}
-              <div>
-                <label className="block text-xs text-c-text-muted mb-2">
-                  {t('initiatives.form.levelTypeLabel', 'Initiative Type / Level *')}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {getInitiativeLevels(t).map((level) => (
-                    <button
-                      key={level.id}
-                      type="button"
-                      onClick={() => setNewLevel(level.id)}
-                      className={`
-                        relative p-3 rounded-lg border text-left transition-[background-color,border-color,box-shadow] duration-200
-                        ${
-                          newLevel === level.id
-                            ? `${level.color} border-current ring-1 ring-current/30`
-                            : 'bg-c-bg border-c-border-subtle text-c-text-muted hover:border-c-border-strong'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-base">{level.icon}</span>
-                        <span className="text-xs font-semibold">{level.label}</span>
-                      </div>
-                      <p className="text-[10px] leading-tight opacity-70">{level.description}</p>
-                      {newLevel === level.id && (
-                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-current" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* D-15: projekt jest wymagany przez kanoniczna sciezke zapisu —
                   ten sam wspolny komponent, ktorego uzywa kreator AI. */}
               <RequiredProjectPicker
@@ -2962,23 +2970,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 onChange={setNewProjectId}
                 language={i18n.language === 'pl' ? 'pl' : 'en'}
               />
-
-              {/* Axis */}
-              <div>
-                <label className="block text-xs text-c-text-muted mb-1">
-                  {t('initiatives.form.axis')}
-                </label>
-                <select
-                  value={newAxis}
-                  onChange={(e) => setNewAxis(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
-                >
-                  <option value="operational">{t('initiatives.axis.operational')}</option>
-                  <option value="strategic">{t('initiatives.axis.strategic')}</option>
-                  <option value="transformational">{t('initiatives.axis.transformational')}</option>
-                  <option value="compliance">{t('initiatives.axis.compliance')}</option>
-                </select>
-              </div>
 
               {/* Summary */}
               <div>
@@ -2994,45 +2985,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 />
               </div>
 
-              {/* D1.1: Level info callout */}
-              {newLevel && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle">
-                  <Shield size={14} className="text-c-text-muted mt-0.5 flex-shrink-0" />
-                  <div className="text-xs text-c-text-muted">
-                    <span className="font-medium text-c-text-secondary">
-                      {getInitiativeLevels(t).find((l) => l.id === newLevel)?.label}
-                    </span>
-                    {' — '}
-                    {newLevel === 'quick_win' &&
-                      t(
-                        'initiatives.form.levelDescQuickWin',
-                        'Minimal governance. Can be self-approved.'
-                      )}
-                    {newLevel === 'standard' &&
-                      t(
-                        'initiatives.form.levelDescStandard',
-                        'Standard approval flow. Requires owner + deadline + tasks.'
-                      )}
-                    {newLevel === 'strategic' &&
-                      t(
-                        'initiatives.form.levelDescStrategic',
-                        'Executive approval required. Full charter + RAID analysis.'
-                      )}
-                    {newLevel === 'transformation' &&
-                      t(
-                        'initiatives.form.levelDescTransformation',
-                        'Board-level governance. Full charter, steering committee, gate reviews.'
-                      )}
-                    <br />
-                    <span className="text-c-text-muted italic">
-                      {t(
-                        'initiatives.form.levelUpgradeOnlyNote',
-                        'Level can be upgraded later but not downgraded.'
-                      )}
-                    </span>
-                  </div>
-                </div>
-              )}
+              <p className="text-xs text-c-text-muted">
+                {t(
+                  'initiatives.form.governanceEffectiveNote',
+                  'Approval rights and required evidence follow the effective project policy. Inspect the card profile before applying it in the initiative workspace.'
+                )}
+              </p>
             </div>
             <button
               disabled={isCreating}

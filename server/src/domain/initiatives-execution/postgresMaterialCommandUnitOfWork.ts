@@ -1179,6 +1179,32 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     return result.rows.map((row) => row.card_key);
   }
 
+  async listInitiativeCardSelectionForUpdate(organizationId: string, initiativeId: string) {
+    const result = await this.client.query<{ card_key: string; included: boolean; position: number; requiredness: 'REQUIRED' | 'OPTIONAL'; waiver_decision_id: string | null }>(
+      `SELECT s.card_key, s.included, s.position, s.requiredness, s.waiver_decision_id
+       FROM ie_initiative_card_selection s
+       JOIN ie_aggregate_state i ON i.organization_id=s.organization_id AND i.aggregate_type='initiative' AND i.aggregate_id=s.initiative_id
+       WHERE s.organization_id=$1 AND s.initiative_id=$2
+       ORDER BY s.card_key FOR UPDATE OF s`, [organizationId, initiativeId]);
+    return result.rows.map((row) => ({ cardKey: row.card_key, included: row.included, position: row.position, requiredness: row.requiredness, waiverDecisionId: row.waiver_decision_id }));
+  }
+
+  async getInitiativeTemplateForShare(input: { organizationId: string; templateId: string }) {
+    const result = await this.client.query<{ id: string; updated_at: string | Date; section_config: string | Record<string, unknown> | null }>(
+      `SELECT id, updated_at, section_config FROM initiative_templates
+       WHERE id = $1 AND (organization_id = $2 OR is_public::text IN ('1', 'true'))
+       FOR SHARE`, [input.templateId, input.organizationId]
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    let sectionConfig: Record<string, unknown> = {};
+    try {
+      const value = typeof row.section_config === 'string' ? JSON.parse(row.section_config) : row.section_config;
+      if (value && typeof value === 'object' && !Array.isArray(value)) sectionConfig = value;
+    } catch { /* Missing/malformed profile remains unavailable, never an implicit policy. */ }
+    return { id: row.id, updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at), sectionConfig };
+  }
+
   async replaceInitiativeCardSelection(input: {
     organizationId: string;
     initiativeId: string;
@@ -1248,10 +1274,11 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       content_json: Record<string, unknown>;
       evidence_refs_json: string[];
       waiver_decision_id: string | null;
+      reviewed_by: string | null;
       published_by: string;
     }>(
       `SELECT card_key, card_version, applicability, completion, quality, freshness,
-              review_state, content_json, evidence_refs_json, waiver_decision_id, published_by
+              review_state, content_json, evidence_refs_json, waiver_decision_id, reviewed_by, published_by
          FROM ie_initiative_card_versions
         WHERE organization_id = $1 AND initiative_id = $2 AND card_key = $3
         ORDER BY card_version DESC
@@ -1272,6 +1299,7 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       content: row.content_json,
       evidenceRefs: row.evidence_refs_json,
       waiverDecisionId: row.waiver_decision_id,
+      reviewedBy: row.reviewed_by,
       publishedBy: row.published_by,
     };
   }

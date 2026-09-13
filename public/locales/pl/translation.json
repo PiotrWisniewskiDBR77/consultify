@@ -10821,12 +10821,13 @@
       "levelTransformationLabel": "Transformacja",
       "levelTransformationCardDesc": "Zmiana obejmująca całą organizację. 6-24 miesiące, pełny nadzór, nadzór zarządu.",
       "newInitiativeManual": "Wypełnij formularz",
-      "newInitiativeManualDesc": "Tytuł, oś, poziom i krótkie podsumowanie — bez AI.",
+      "newInitiativeManualDesc": "Tytuł, projekt i krótkie podsumowanie — bez AI.",
       "newInitiativeAi": "Kreator inicjatywy AI",
       "newInitiativeAiDesc": "Zbuduj szkic z wniosku źródłowego, potem go przejrzyj.",
       "errorOwnerIneligible": "Wskazana osoba nie może być właścicielem inicjatywy w tym projekcie. Dodaj ją do zespołu projektu albo wybierz osobę, która już w nim jest.",
       "errorCapabilityRequired": "Nie masz uprawnień, żeby utworzyć inicjatywę w tym projekcie. Poproś właściciela lub administratora organizacji o dostęp do tego projektu.",
-      "errorOwnershipRequired": "Możesz edytować tylko inicjatywy, których jesteś właścicielem lub twórcą."
+      "errorOwnershipRequired": "Możesz edytować tylko inicjatywy, których jesteś właścicielem lub twórcą.",
+      "governanceEffectiveNote": "Uprawnienia do zatwierdzania i wymagane dowody wynikają z obowiązującej polityki projektu. Profil kart sprawdzisz przed zastosowaniem w karcie inicjatywy."
     },
     "axis": {
       "operational": "Operacyjna",
@@ -10898,7 +10899,8 @@
       "portfolioHealth": "Zdrowie portfela",
       "list": "Inicjatywy",
       "plan": "Plan",
-      "capacity": "Obciążenie"
+      "capacity": "Obciążenie",
+      "workReport": "Raport pracy"
     },
     "capacityAdvisor": {
       "propose": "Zaproponuj opcje",
@@ -14040,6 +14042,47 @@
     },
     "portfolioGrid": {
       "criticalPath": "Ścieżka krytyczna"
+    },
+    "workspace": {
+      "label": "Widok inicjatyw",
+      "list": "Lista",
+      "analysis": "Analiza"
+    },
+    "cards": {
+      "noContent": "Brak opublikowanej treści tej karty. Wymagalność i gotowość wynikają z obowiązującego profilu.",
+      "summary-scope": "Zakres i cel",
+      "strategic-fit": "Dopasowanie strategiczne",
+      "success-criteria": "Kryteria sukcesu",
+      "outcomes-benefits": "Rezultaty i korzyści",
+      "kpi": "KPI",
+      "options": "Warianty",
+      "financial-analysis": "Analiza finansowa",
+      "financial-impact": "Wpływ finansowy",
+      "people-team": "Zespół",
+      "roles-raci": "Role i odpowiedzialność",
+      "stakeholders": "Interesariusze",
+      "resources-capacity": "Zasoby i dostępność",
+      "dependencies": "Zależności",
+      "risk-raid": "Ryzyko i RAID",
+      "milestones": "Kamienie milowe",
+      "timeline": "Harmonogram",
+      "tasks": "Zadania",
+      "decisions": "Decyzje",
+      "gates-approvals": "Bramki i zatwierdzenia",
+      "feasibility-completeness": "Wykonalność i kompletność",
+      "change-adoption": "Zmiana i adopcja",
+      "communication-engagement": "Komunikacja i zaangażowanie",
+      "capabilities-training": "Kompetencje i szkolenia",
+      "technical-specification": "Specyfikacja techniczna",
+      "attachments-materials": "Załączniki i materiały",
+      "comments-activity-history": "Komentarze i historia"
+    },
+    "cardGroups": {
+      "definition-value": "Definicja i wartość",
+      "organization-feasibility": "Organizacja i wykonalność",
+      "plan-governance": "Plan i zatwierdzenia",
+      "adoption-evidence-learning": "Adopcja, dowody i wiedza",
+      "workspace": "Narzędzia karty"
     }
   },
   "execution": {
@@ -27794,7 +27837,10 @@
     }
   },
   "finance": {
-    "wave2Placeholder": {"title": "Finanse — Wkrótce", "message": "Analizy finansowe, planowanie i wyceny pojawią się w Fali 2."},
+    "wave2Placeholder": {
+      "title": "Finanse — Wkrótce",
+      "message": "Analizy finansowe, planowanie i wyceny pojawią się w Fali 2."
+    },
     "comments": {
       "added": "Komentarz dodany.",
       "resolved": "Komentarz oznaczony jako rozwiązany.",
