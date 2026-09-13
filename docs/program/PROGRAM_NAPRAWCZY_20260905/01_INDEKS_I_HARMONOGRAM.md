@@ -935,3 +935,8 @@ Gantt readability source committed427d0d6280 with normal hooks and independent b
 C6-DEL-OFF assigned to export Sol in clean isolated codex-c6-delete-off-20260913, base427d0d6280, after root read binding SET-MVP-DELETE-001: DESTRUCTIVE_EXECUTION_OFF. Author must preserve auth, refuse410 before deletion machinery and remove misleading purge UI, with independent acceptance before integration. Full export/deletion gates remain HOLD; see copied remaining-gates audit.
 
 Fourteen captured Execution403 responses are intentional server denials for ordinary users, not authority to widen access. UI currently performs eager privileged reads and substitutes zero manager counts after failures; next bounded UI packet is documented in EXECUTION_403_CLASSIFICATION_20260913.md and waits for current shared-file ownership to finish. No live/schema/default-flag changes or deployment.
+
+
+### Reader and approved-out deletion integrated — 2026-09-13
+
+Root9d003646 includes E1b75f322858 (all14 blobs matched) and C6 approved-out deletion9d003646. Build PASS and actual Bank5checkpoints; signedJWT Gateway reader/guard3/3PASS, C6 actualGateway2/2 plus rootfocused3/3PASS. Original whole legacywriter Gateway test8/12 reveals retiredreplan409 and missing canonical forecast command; replacement assigned separate worktree, no guard bypass. Full details, reset incident, evidence limitations and runtime identities: INTEGRATOR_MVP_20260912/E1B_C6_INTEGRATED_READER_AND_DELETE_CHECKPOINT.md. Full MVP/deployment remains open.
