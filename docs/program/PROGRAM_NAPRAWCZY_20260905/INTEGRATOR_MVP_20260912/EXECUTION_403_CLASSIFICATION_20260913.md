@@ -1,0 +1,9 @@
+# Execution 403 classification and next packet — 2026-09-13
+
+Current root427d0d6280f45173f8261036941e11e3d0031516, actual built local member capture ui-e1b-labels-green/result.json. Fourteen403 responses are seven repeated on reload: organization members and six manager lanes. Source proves both endpoints intentionally deny ordinary users: organizations.routes.ts GET/:orgId/members permits ADMIN/OWNER/SUPERADMIN; v8/execution-control.routes.ts managerRouter requires manage_workstreams to protect organization-wide assignments and staff PII. These403s are not evidence that backend permissions should be weakened.
+
+Actual UI mismatch: ExecutionHub unconditionally fetches all six manager lanes even while Bank is active. Every fetch exception returns total/critical/warning0; only404/501 sets degraded. ExecutionManagementView further substitutes zero for absent data. Thus403/unavailable can be represented as factual zero. Shared useOrganizationMemberNames likewise fetches the restricted directory for every user, but correctly resolves unavailable names to null/Unknown user.
+
+Next bounded packet after the active evidence-feed changes freeze (same ExecutionHub file): preserve server auth; capability-aware/lazy UI reads using authoritative existing permission state, explicit unavailable counts instead of zero, no role inference that grants access, mounted denied/failed/success tests and local member/admin browser request/readback. For owner labels, preserve privacy and honest unknown fallback; do not broaden directory access or invent names. Current observation is source plus actual response evidence, not yet a repair or manager-view render acceptance.
+
+Current author/reviewer evidence-feed packet retains ownership of ExecutionHub. Do not edit it concurrently. C6-DEL-OFF author separately works in codex-c6-delete-off-20260913 at base427d0d6280, no overlapping source. Full MVP and deployment remain open.

@@ -926,3 +926,12 @@ C6integrated103/103 and E1b44/44PASS, fullservertsc0 aftertimestampfix, frontend
 ### Gantt labels — local browser verification 2026-09-13
 
 Physical label RED6.2px → GREEN11px, same5view/reload checkpoints and aligned geometry. Build exit0; existing403 and limited local fixtures retained. See INTEGRATOR_MVP_20260912/E1B_GANTT_LABEL_READABILITY_ACCEPTANCE.md. Forecast/progress packet remains under independent review; no deployment or full MVP acceptance.
+
+
+### Active bounded packets — 2026-09-13
+
+Gantt readability source committed427d0d6280 with normal hooks and independent bounded ACCEPT. E1b evidence author and independent reviewer remain active in codex-execution-bank-evidence-20260913: historical asOf navigation and malformed evidence are under repair. New actual malformed receipt RED12tests/9PASS/3FAIL preserved in E1B_EVIDENCE_ADVERSARIAL_MALFORMED_RED_20260913T0805Z.json (SHA823e364305b080cfe1606e6e09501c1b16733122270c82946c0e1921cced3059). Current database timestamp semantics and final integrated feed remain NOT_PROVEN.
+
+C6-DEL-OFF assigned to export Sol in clean isolated codex-c6-delete-off-20260913, base427d0d6280, after root read binding SET-MVP-DELETE-001: DESTRUCTIVE_EXECUTION_OFF. Author must preserve auth, refuse410 before deletion machinery and remove misleading purge UI, with independent acceptance before integration. Full export/deletion gates remain HOLD; see copied remaining-gates audit.
+
+Fourteen captured Execution403 responses are intentional server denials for ordinary users, not authority to widen access. UI currently performs eager privileged reads and substitutes zero manager counts after failures; next bounded UI packet is documented in EXECUTION_403_CLASSIFICATION_20260913.md and waits for current shared-file ownership to finish. No live/schema/default-flag changes or deployment.
