@@ -481,6 +481,40 @@ export interface InitiativeCapabilitiesReadModel {
   canUpdate: boolean;
   canReview: boolean;
   canSelfApprove: boolean;
+  executionWrites?: {
+    forecast?: {
+      available: boolean;
+      canonicalCommand: string;
+      denialAt: string | null;
+      denialCode: string | null;
+      legacyDenialAt: 'BRAMKA_LEGACY';
+      legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED';
+    };
+  };
+}
+
+export interface InitiativeForecastCommand {
+  expectedVersion: number;
+  clientRequestId: string;
+  forecastStartDate?: string | null;
+  forecastEndDate?: string | null;
+  reason: string;
+}
+
+export interface InitiativeForecastCommandResult {
+  status: 'APPLIED' | 'REPLAYED';
+  aggregateVersion: number;
+  response: {
+    initiativeId: string;
+    before: { forecastStartDate: string | null; forecastEndDate: string | null };
+    after: { forecastStartDate: string | null; forecastEndDate: string | null };
+    receiptId: string;
+    observedAt: string;
+  };
+  correlationId: string;
+  receiptId: string;
+  readBackState: 'PENDING';
+  readBackUrl: string;
 }
 
 export interface SourceProposalReadModel {
@@ -1447,6 +1481,26 @@ export async function readInitiativeCapabilities(
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as InitiativeCapabilitiesReadModel;
+}
+
+export async function updateInitiativeForecast(
+  initiativeId: string,
+  command: InitiativeForecastCommand,
+  signal?: AbortSignal
+): Promise<InitiativeForecastCommandResult> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/forecast`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+      signal,
+    }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as InitiativeForecastCommandResult;
 }
 
 export async function reviewInitiativeCard(
