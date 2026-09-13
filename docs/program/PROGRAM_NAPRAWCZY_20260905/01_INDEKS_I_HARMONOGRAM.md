@@ -1,3 +1,30 @@
+<!-- SKRZYNKA: aktualne zlecenia. Nadzorca dopisuje tu; wykonawca czyta to PIERWSZE. -->
+# ★ AKTUALNE ZLECENIA (stan 12.09.2026, 19:10)
+
+Ta sekcja jest na górze rejestru celowo: to jedyne miejsce, w którym stoją **obowiązujące** zlecenia.
+Historia jest niżej, w tabeli. Plany w innych plikach są historyczne i nie obowiązują.
+
+| # | Zlecenie | Instrukcja | Stan |
+|---|---|---|---|
+| Z-1 | **Zamknięcie kandydata MVP** — zamrożenie SHA, bramka sześciu kroków, dowód parytetu przy flagach OFF, raport z werdyktem w pierwszym zdaniu | `PROGRAM_NAPRAWCZY_20260905/CODEX9_ZAMKNIECIE_KANDYDATA/01_INSTRUKCJA.md` | wydane 12.09 18:26 |
+| Z-2 | **Rdzeń: Inicjatywy i Realizacja** — najpierw audyt luki wobec specyfikacji właściciela, potem nawigacja cztery plus cztery i lista inicjatyw | `PROGRAM_NAPRAWCZY_20260905/CODEX10_RDZEN_INICJATYWY_REALIZACJA/01_INSTRUKCJA.md` | wydane 12.09 19:05 |
+| Z-3 | **Naprawa dwóch błędów krytycznych** z własnych przeglądów: eksport sięgający poza organizację oraz obejście ochrony prawnej przy usuwaniu (wyścig migawki i błąd odczytu) | `INTEGRATOR_MVP_20260912/C6_INDEPENDENT_REVIEW.md`, `C4_E4_INDEPENDENT_REVIEW.md` | warunek startu pilotażu |
+
+**Trzy zasady obowiązujące wszystkie zlecenia (decyzje właściciela z 12.09):**
+
+1. **DEC-476 — rdzeń.** Dokańczamy Inicjatywy i Realizację. Wszystko inne idzie do fali 2, nawet jeśli
+   wygląda na drobiazg. Zakres docelowy obu modułów: `docs/program/FALA2/SPEC_FALA2_20260912.md`.
+2. **Do kandydata nie dokładamy nowego zakresu.** Nowa robota idzie na osobne gałęzie i czeka.
+   Do kandydata wolno dopisać wyłącznie naprawę czerwonego wyniku bramki, z powodem w raporcie.
+3. **Dwa żywe dokumenty.** `TRZY_POJEMNIKI_PRACY_20260906.md` mówi, co zostało; ten rejestr mówi,
+   co się wydarzyło. Nie powstają nowe pliki planów.
+
+**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-476**. Następna wolna: DEC-477.
+Znaczniki odmrożenia muszą wskazywać moduł z `docs/program/MVP_FINAL_ZAMROZONE.json` — Finanse nie są
+tam wymienione, więc dla nich wystarcza `WSPOLNE`.
+
+---
+
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
 
 Źródło znalezisk: `docs/program/AUDYT_AWARD_20260905/` (125 ekranów, A 2,25 / B 2,00). Każda paczka niżej ma §1–§9 (co, gdzie, jak, testy, odbiór, ryzyko, nakład) oraz **§10 „Cel osiągnięty” = mechaniczna samokontrola Codexa** i **§11 gotową wklejkę**. Zasada pracy: Codex pracuje do celu z §10, nadzorca odbiera zrzuty własnymi oczami i scala; właściciel widzi tylko efekt („moduł X gotowy do obejrzenia”).
