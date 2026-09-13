@@ -4,8 +4,8 @@ import type { CapacityScenario } from './capacityScenario.js';
 import type { InitiativeCardSelectionItem } from './configureInitiativeCards.js';
 import { gateRule, type GovernanceGate } from './organizationGovernance.js';
 import type { PlanScenario } from './planScenario.js';
-import type { PortfolioScenario } from './portfolioScenario.js';
 import type { PortfolioDecision } from './portfolioDecision.js';
+import type { PortfolioScenario } from './portfolioScenario.js';
 import type { EffectiveGovernancePolicy } from './postgresGovernancePolicyResolver.js';
 import type { RegisteredInitiative } from './registerInitiative.js';
 import type { ModuleInitiativeForPlanning } from './registerModuleInitiativeForPlanning.js';
@@ -464,6 +464,18 @@ export class PostgresInitiativeReader {
       state: String(r.payload_json.state),
       executionManagerId: String(r.payload_json.executionManagerId),
       handoffPackageId: String(r.payload_json.handoffPackageId),
+      handoffPackageVersion:
+        Number.isInteger(r.payload_json.handoffPackageVersion) &&
+        Number(r.payload_json.handoffPackageVersion) > 0
+          ? Number(r.payload_json.handoffPackageVersion)
+          : null,
+      acceptedBaseline:
+        r.payload_json.acceptedBaseline &&
+        typeof r.payload_json.acceptedBaseline === 'object' &&
+        !Array.isArray(r.payload_json.acceptedBaseline)
+          ? (r.payload_json.acceptedBaseline as Record<string, unknown>)
+          : null,
+      acceptedAt: typeof r.payload_json.acceptedAt === 'string' ? r.payload_json.acceptedAt : null,
       updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
     }));
   }
