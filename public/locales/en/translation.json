@@ -14894,6 +14894,65 @@
       "list": "Initiative list",
       "analysis": "Initiative analysis"
     },
+    "analysis": {
+      "title": "Initiative analysis",
+      "scenario": "Published portfolio scenario",
+      "context": "Organization context snapshot",
+      "claims": "claims",
+      "run": "Run portfolio analysis",
+      "inputsUnavailable": "Publish a portfolio scenario and an organization context snapshot before running analysis.",
+      "modelUnavailable": "Portfolio analysis is unavailable because no approved model is configured.",
+      "empty": "No persisted analysis items",
+      "emptyDescription": "Run a governed analysis to create a review queue.",
+      "evidence": "Evidence",
+      "alternatives": "Alternatives",
+      "missingData": "Missing data",
+      "initiatives": "Initiatives",
+      "provenance": "Model provenance",
+      "disposition": "Disposition",
+      "in": "In",
+      "parking": "Parking",
+      "archive": "Archive",
+      "reason": "Decision reason",
+      "returnCondition": "Return condition",
+      "dueDate": "Decision due date",
+      "decideItem": "Decide item",
+      "decideSelected": "Decide selected items",
+      "selectedDecisions": "Selected decisions",
+      "decisionSaved": "The selected decisions were saved.",
+      "decisionFailed": "The decision was not saved.",
+      "authorityChecking": "Checking decision authority…",
+      "authorityRequired": "Approval authority configuration is required before this decision can be saved.",
+      "conflict": "The Initiative changed. Reload the analysis before deciding.",
+      "openPlan": "Open Plan",
+      "openCapacity": "Open Capacity",
+      "unnamedInitiative": "Unnamed Initiative",
+      "kinds": {
+        "OBSERVATION": "Observation",
+        "RECOMMENDATION": "Recommendation",
+        "DECISION": "Decision"
+      },
+      "criteria": {
+        "COVERAGE_GAP": "Coverage gap",
+        "OVERLAP": "Overlap",
+        "PRIORITY": "Priority",
+        "NEW_VS_EXTENSION": "New or extension",
+        "DECISION_HISTORY": "Decision history"
+      },
+      "confidence": {
+        "HIGH": "High",
+        "MEDIUM": "Medium",
+        "LOW": "Low",
+        "UNKNOWN": "Unknown"
+      },
+      "columns": {
+        "kindLabel": "Type",
+        "criterionLabel": "Criterion",
+        "title": "Analysis item",
+        "confidenceLabel": "Confidence",
+        "source": "Source / provenance"
+      }
+    },
     "archiveScope": {
       "label": "Register scope",
       "current": "Current",

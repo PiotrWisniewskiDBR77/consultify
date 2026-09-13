@@ -14067,6 +14067,65 @@
       "list": "Lista inicjatyw",
       "analysis": "Analiza inicjatyw"
     },
+    "analysis": {
+      "title": "Analiza inicjatyw",
+      "scenario": "Opublikowany scenariusz portfela",
+      "context": "Migawka kontekstu organizacji",
+      "claims": "twierdzeń",
+      "run": "Uruchom analizę portfela",
+      "inputsUnavailable": "Opublikuj scenariusz portfela i migawkę kontekstu organizacji przed uruchomieniem analizy.",
+      "modelUnavailable": "Analiza portfela jest niedostępna, ponieważ nie skonfigurowano zatwierdzonego modelu.",
+      "empty": "Brak utrwalonych pozycji analizy",
+      "emptyDescription": "Uruchom zarządzaną analizę, aby utworzyć kolejkę przeglądu.",
+      "evidence": "Dowody",
+      "alternatives": "Alternatywy",
+      "missingData": "Brakujące dane",
+      "initiatives": "Inicjatywy",
+      "provenance": "Pochodzenie modelu",
+      "disposition": "Rozstrzygnięcie",
+      "in": "Wchodzi",
+      "parking": "Odłożenie",
+      "archive": "Archiwum",
+      "reason": "Powód decyzji",
+      "returnCondition": "Warunek powrotu",
+      "dueDate": "Termin decyzji",
+      "decideItem": "Rozstrzygnij pozycję",
+      "decideSelected": "Rozstrzygnij wybrane pozycje",
+      "selectedDecisions": "Wybrane decyzje",
+      "decisionSaved": "Wybrane decyzje zostały zapisane.",
+      "decisionFailed": "Decyzja nie została zapisana.",
+      "authorityChecking": "Sprawdzanie autorytetu decyzyjnego…",
+      "authorityRequired": "Przed zapisem tej decyzji trzeba skonfigurować autorytet zatwierdzający.",
+      "conflict": "Inicjatywa zmieniła się. Odśwież analizę przed podjęciem decyzji.",
+      "openPlan": "Otwórz Plan",
+      "openCapacity": "Otwórz Obciążenie",
+      "unnamedInitiative": "Inicjatywa bez nazwy",
+      "kinds": {
+        "OBSERVATION": "Obserwacja",
+        "RECOMMENDATION": "Rekomendacja",
+        "DECISION": "Decyzja"
+      },
+      "criteria": {
+        "COVERAGE_GAP": "Luka pokrycia",
+        "OVERLAP": "Nakładanie się",
+        "PRIORITY": "Priorytet",
+        "NEW_VS_EXTENSION": "Nowa lub rozszerzenie",
+        "DECISION_HISTORY": "Historia decyzji"
+      },
+      "confidence": {
+        "HIGH": "Wysoka",
+        "MEDIUM": "Średnia",
+        "LOW": "Niska",
+        "UNKNOWN": "Nieznana"
+      },
+      "columns": {
+        "kindLabel": "Typ",
+        "criterionLabel": "Kryterium",
+        "title": "Pozycja analizy",
+        "confidenceLabel": "Pewność",
+        "source": "Źródło / pochodzenie"
+      }
+    },
     "archiveScope": {
       "label": "Zakres rejestru",
       "current": "Bieżące",

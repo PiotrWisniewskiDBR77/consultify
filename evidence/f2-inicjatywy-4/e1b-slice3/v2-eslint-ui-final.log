@@ -1,0 +1,10 @@
+
+/Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913/src/components/Initiatives/__tests__/InitiativeConsultingAnalysisView.behavior.test.tsx
+  355:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  372:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  416:7   warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  474:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  676:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+✖ 5 problems (0 errors, 5 warnings)
+

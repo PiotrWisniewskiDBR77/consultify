@@ -1,0 +1,36 @@
+{
+  "initiativesExecutionRuntime.routes.ts": {
+    "base": {
+      "problems": 294,
+      "errors": 246,
+      "warnings": 48
+    },
+    "candidate": {
+      "problems": 294,
+      "errors": 246,
+      "warnings": 48
+    },
+    "delta": {
+      "problems": 0,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "InitiativesHub.tsx": {
+    "base": {
+      "problems": 118,
+      "errors": 0,
+      "warnings": 118
+    },
+    "candidate": {
+      "problems": 118,
+      "errors": 0,
+      "warnings": 118
+    },
+    "delta": {
+      "problems": 0,
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+}

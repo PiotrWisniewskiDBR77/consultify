@@ -1,0 +1,13 @@
+UI flag references:
+src/utils/initiativesFourButtonsFlag.ts:3:  import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
+src/utils/__tests__/initiativesFourButtonsFlag.test.ts:5:describe('VITE_INITIATIVES_FOUR_BUTTONS', () => {
+src/utils/__tests__/initiativesFourButtonsFlag.test.ts:9:    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', '');
+src/utils/__tests__/initiativesFourButtonsFlag.test.ts:11:    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+src/utils/__tests__/initiativesFourButtonsFlag.test.ts:16:    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'true');
+src/utils/__tests__/initiativesFourButtonsFlag.test.ts:19:      vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', alias);
+Server flag references:
+3435:        throw new PortfolioAnalysisRuntimeError('PORTFOLIO_ANALYSIS_REQUEST_CONFLICT', 409);
+Flag default changes in Slice3 diff:
+Canonical server implementation:
+server/src/services/initiative/portfolioConsultingAnalysisRuntimeService.ts:368: return process.env.ENABLE_INITIATIVE_PORTFOLIO_ANALYSIS === 'true';
+Conclusion: both flags require exact true; Slice3 changes no default expression.

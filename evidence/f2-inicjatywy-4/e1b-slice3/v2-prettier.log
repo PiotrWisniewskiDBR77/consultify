@@ -1,0 +1,5 @@
+Checking formatting...
+[warn] public/locales/en/translation.json
+[warn] public/locales/pl/translation.json
+[warn] server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
+[warn] Code style issues found in 3 files. Run Prettier with --write to fix.

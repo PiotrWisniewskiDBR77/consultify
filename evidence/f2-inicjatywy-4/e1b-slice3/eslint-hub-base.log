@@ -1,0 +1,123 @@
+
+/Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913/src/components/Initiatives/InitiativesHub.tsx
+    10:3   warning  'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u                                                                    @typescript-eslint/no-unused-vars
+    13:3   warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u                                                                     @typescript-eslint/no-unused-vars
+    14:3   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                                                                            @typescript-eslint/no-unused-vars
+    15:3   warning  'Copy' is defined but never used. Allowed unused vars must match /^_/u                                                                             @typescript-eslint/no-unused-vars
+    17:3   warning  'Edit2' is defined but never used. Allowed unused vars must match /^_/u                                                                            @typescript-eslint/no-unused-vars
+    18:3   warning  'ExternalLink' is defined but never used. Allowed unused vars must match /^_/u                                                                     @typescript-eslint/no-unused-vars
+    19:3   warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                                                                           @typescript-eslint/no-unused-vars
+    20:3   warning  'GitBranch' is defined but never used. Allowed unused vars must match /^_/u                                                                        @typescript-eslint/no-unused-vars
+    25:3   warning  'Shield' is defined but never used. Allowed unused vars must match /^_/u                                                                           @typescript-eslint/no-unused-vars
+    27:3   warning  'Target' is defined but never used. Allowed unused vars must match /^_/u                                                                           @typescript-eslint/no-unused-vars
+    48:3   warning  'StandardPreview' is defined but never used. Allowed unused vars must match /^_/u                                                                  @typescript-eslint/no-unused-vars
+    49:8   warning  'StandardPreviewActions' is defined but never used. Allowed unused vars must match /^_/u                                                           @typescript-eslint/no-unused-vars
+    51:8   warning  'StandardRowMenu' is defined but never used. Allowed unused vars must match /^_/u                                                                  @typescript-eslint/no-unused-vars
+    52:3   warning  'StandardTable' is defined but never used. Allowed unused vars must match /^_/u                                                                    @typescript-eslint/no-unused-vars
+    53:23  warning  'StandardTableColumn' is defined but never used. Allowed unused vars must match /^_/u                                                              @typescript-eslint/no-unused-vars
+    79:10  warning  'ACTIVE_STATUSES' is defined but never used. Allowed unused vars must match /^_/u                                                                  @typescript-eslint/no-unused-vars
+    79:27  warning  'formatRelativeTime' is defined but never used. Allowed unused vars must match /^_/u                                                               @typescript-eslint/no-unused-vars
+    79:47  warning  'formatShortDate' is defined but never used. Allowed unused vars must match /^_/u                                                                  @typescript-eslint/no-unused-vars
+   146:3   warning  'projectCanonicalInitiativeRegisterRow' is defined but never used. Allowed unused vars must match /^_/u                                            @typescript-eslint/no-unused-vars
+   161:7   warning  'MIN_SHOWCASE_INITIATIVES' is assigned a value but never used. Allowed unused vars must match /^_/u                                                @typescript-eslint/no-unused-vars
+   163:62  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   176:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                     react-refresh/only-export-components
+   197:7   warning  'COMING_SOON_BADGE' is assigned a value but never used. Allowed unused vars must match /^_/u                                                       @typescript-eslint/no-unused-vars
+   213:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                     react-refresh/only-export-components
+   378:10  warning  'isRefreshing' is assigned a value but never used. Allowed unused vars must match /^_/u                                                            @typescript-eslint/no-unused-vars
+   393:10  warning  'isV8InitiativeSnapshotLoading' is assigned a value but never used. Allowed unused vars must match /^_/u                                           @typescript-eslint/no-unused-vars
+   410:38  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   415:10  warning  'newAxis' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                 @typescript-eslint/no-unused-vars
+   415:19  warning  'setNewAxis' is assigned a value but never used. Allowed unused vars must match /^_/u                                                              @typescript-eslint/no-unused-vars
+   418:10  warning  'newLevel' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                @typescript-eslint/no-unused-vars
+   478:43  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   493:41  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   495:21  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   496:22  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   496:55  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   599:15  warning  Unexpected console statement                                                                                                                       no-console
+   648:13  warning  Unexpected console statement                                                                                                                       no-console
+   700:41  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   725:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   727:9   warning  Unexpected console statement                                                                                                                       no-console
+   732:11  warning  Unexpected console statement                                                                                                                       no-console
+   799:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   800:9   warning  Unexpected console statement                                                                                                                       no-console
+  1021:68  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1040:5   warning  React Hook useCallback has an unnecessary dependency: 'setSearchParams'. Either exclude it or remove the dependency array                          react-hooks/exhaustive-deps
+  1069:61  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1096:71  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1102:19  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1110:5   warning  React Hook useCallback has missing dependencies: 'setActiveDocumentId' and 'setOpenDocuments'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  1129:64  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1135:19  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1143:5   warning  React Hook useCallback has missing dependencies: 'setActiveDocumentId' and 'setOpenDocuments'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  1189:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1225:63  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1233:77  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1259:19  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1269:6   warning  React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array                                               react-hooks/exhaustive-deps
+  1330:80  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1380:80  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1387:80  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1397:63  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1404:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1423:9   warning  'handleQuickUpdate' is assigned a value but never used. Allowed unused vars must match /^_/u                                                       @typescript-eslint/no-unused-vars
+  1432:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1440:54  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1441:50  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1455:80  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1460:80  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1479:66  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1486:66  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1496:69  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1501:16  warning  'error' is defined but never used. Allowed unused caught errors must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+  1501:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1505:5   warning  React Hook useCallback has a missing dependency: 'initiatives'. Either include it or remove the dependency array                                   react-hooks/exhaustive-deps
+  1545:6   warning  React Hook useCallback has a missing dependency: 'setActiveDocumentId'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+  1586:5   warning  React Hook useCallback has missing dependencies: 'setActiveDocumentId' and 'setOpenDocuments'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  1626:6   warning  React Hook useCallback has a missing dependency: 'initiatives'. Either include it or remove the dependency array                                   react-hooks/exhaustive-deps
+  1630:44  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1677:7   warning  Unexpected console statement                                                                                                                       no-console
+  1706:12  warning  'initiative' is defined but never used. Allowed unused args must match /^_/u                                                                       @typescript-eslint/no-unused-vars
+  1718:5   warning  React Hook useCallback has an unnecessary dependency: 'fetchData'. Either exclude it or remove the dependency array                                react-hooks/exhaustive-deps
+  1721:9   warning  'handleDeleteInitiative' is assigned a value but never used. Allowed unused vars must match /^_/u                                                  @typescript-eslint/no-unused-vars
+  1763:30  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1763:61  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1781:15  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1782:15  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1784:15  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1785:15  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  1822:9   warning  'handleMaterializePortfolio' is assigned a value but never used. Allowed unused vars must match /^_/u                                              @typescript-eslint/no-unused-vars
+  1858:19  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2121:19  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2122:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2123:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2124:24  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2125:24  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2126:22  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2127:26  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2128:31  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2129:29  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2130:28  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2131:29  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2132:25  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2132:50  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2133:23  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2133:46  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2149:14  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2195:44  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2195:67  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2298:80  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2430:9   warning  'totalPendingDecisionEntries' is assigned a value but never used. Allowed unused vars must match /^_/u                                             @typescript-eslint/no-unused-vars
+  2437:9   warning  'v8SnapshotPendingDecisionEntries' is assigned a value but never used. Allowed unused vars must match /^_/u                                        @typescript-eslint/no-unused-vars
+  2444:9   warning  'v8SnapshotGapCount' is assigned a value but never used. Allowed unused vars must match /^_/u                                                      @typescript-eslint/no-unused-vars
+  2457:54  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  2476:9   warning  'comingSoonPrep' is assigned a value but never used. Allowed unused vars must match /^_/u                                                          @typescript-eslint/no-unused-vars
+  3061:51  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  3197:63  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  3213:48  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  3250:29  warning  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+
+✖ 118 problems (0 errors, 118 warnings)
+

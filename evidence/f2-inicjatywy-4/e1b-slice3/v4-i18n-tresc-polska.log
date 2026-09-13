@@ -1,0 +1,10 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913
+
+···
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  18:34:16
+   Duration  2.21s (transform 345ms, setup 357ms, import 319ms, tests 156ms, environment 911ms)
+

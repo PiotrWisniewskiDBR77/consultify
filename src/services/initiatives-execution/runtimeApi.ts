@@ -811,6 +811,105 @@ export async function readPortfolioScenarioDiff(
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
+
+export type PortfolioAnalysisItemKind = 'OBSERVATION' | 'RECOMMENDATION' | 'DECISION';
+export interface PortfolioConsultingAnalysisItem {
+  itemId: string;
+  position: number;
+  kind: PortfolioAnalysisItemKind;
+  criterion: 'COVERAGE_GAP' | 'OVERLAP' | 'PRIORITY' | 'NEW_VS_EXTENSION' | 'DECISION_HISTORY';
+  initiativeIds: string[];
+  rationale: string;
+  evidence: Array<{
+    initiativeId: string;
+    field: string;
+    source: 'initiativeUnifiedReader';
+    sourceRef: string;
+  }>;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+  alternatives: string[];
+  missingData: string[];
+  proposedDisposition: null | {
+    kind: 'IN' | 'PARKING' | 'ARCHIVE';
+    reason: string;
+    returnCondition: string | null;
+  };
+}
+export interface PortfolioConsultingAnalysisReadModel {
+  analysisId: string;
+  aggregateVersion: 2;
+  status: 'PENDING_REVIEW';
+  rubricVersion: string;
+  requestDigest: string;
+  snapshot: {
+    snapshotVersion: number;
+    asOf: string;
+    source: { system: 'initiativeUnifiedReader'; version: string; capturedAt: string };
+    portfolio: {
+      scenarioId: string;
+      aggregateVersion: number;
+      scenarioVersion: number;
+      facts: Record<string, unknown>;
+    };
+    initiatives: Array<{
+      initiativeId: string;
+      initiativeVersion: number;
+      projectId: string | null;
+      source: 'CANONICAL';
+      facts: Record<string, unknown>;
+      evidenceRefs: [string];
+    }>;
+  };
+  model: {
+    runId: string;
+    provider: string;
+    modelId: string;
+    modelVersion: string;
+    promptVersion: string;
+    generatedAt: string;
+  };
+  items: PortfolioConsultingAnalysisItem[];
+  requestedBy: string;
+}
+
+export async function createPortfolioAnalysis(command: {
+  analysisId: string;
+  scenarioId: string;
+  contextSnapshotId: string;
+  contextVersion: number;
+  expectedVersion: 0;
+  clientRequestId: string;
+  rubricVersion: string;
+}): Promise<{
+  capture: { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
+  analysis: PortfolioConsultingAnalysisReadModel;
+}> {
+  const response = await fetch('/api/initiatives/runtime-v1/portfolio-analyses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(command),
+  });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as {
+    capture: { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
+    analysis: PortfolioConsultingAnalysisReadModel;
+  };
+}
+
+export async function readPortfolioAnalysis(
+  analysisId: string,
+  signal?: AbortSignal
+): Promise<{ version: number; analysis: PortfolioConsultingAnalysisReadModel }> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/portfolio-analyses/${encodeURIComponent(analysisId)}`,
+    { credentials: 'include', signal }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as { version: number; analysis: PortfolioConsultingAnalysisReadModel };
+}
 export async function requestPortfolioDecision(
   initiativeId: string,
   command: Record<string, unknown>
@@ -847,6 +946,15 @@ export interface PortfolioDecisionReadModel {
     authorityId: string;
     requestedAt: string;
     decidedAt: string | null;
+    disposition?: {
+      kind: 'IN' | 'PARKING' | 'ARCHIVE';
+      reason: string;
+      returnCondition: string | null;
+      actorId: string;
+      decidedAt: string;
+      inputSnapshot: { analysisId: string; analysisVersion: number; itemId: string; asOf: string };
+      frozenInput: Record<string, unknown>;
+    };
   };
 }
 export async function readPortfolioDecision(
@@ -1015,6 +1123,37 @@ export async function listPortfolioScenarioRegister(signal?: AbortSignal) {
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
+}
+
+export interface PortfolioScenarioRegisterItem {
+  id: string;
+  name: string;
+  state: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
+  version: number;
+  scope: { portfolioId: string; asOf: string };
+  updatedAt: string;
+}
+
+export interface OrganizationContextVersionOption {
+  snapshotId: string;
+  version: number;
+  schemaVersion: number;
+  contentHash: string;
+  claimCount: number;
+  createdAt: string;
+}
+
+export async function listGovernedOrganizationContextVersions(
+  signal?: AbortSignal
+): Promise<OrganizationContextVersionOption[]> {
+  const response = await fetch('/api/organization-context/governed/versions?limit=20', {
+    credentials: 'include',
+    signal,
+  });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  const versions = (body as { versions?: unknown })?.versions;
+  return Array.isArray(versions) ? (versions as OrganizationContextVersionOption[]) : [];
 }
 export async function writeCapacityScenario(id: string, command: Record<string, unknown>) {
   const response = await fetch(

@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-09-13T18:32:20Z",
+  "branch": "codex/inicjatywy-cztery-przyciski-20260913",
+  "baseHead": "5386af6ffc1bf5fc0dbef8cfa8a431068faa3185",
+  "verdictRequested": "SCOPED_REVIEW_FULL_E1_HOLD",
+  "strictMigration": "BLOCKED_INHERITED_919",
+  "realModel": "EVIDENCE_MISSING",
+  "files": [
+    {
+      "path": "public/locales/en/translation.json",
+      "bytes": 2221859,
+      "sha256": "f8e0e1dcecbda651a457f29cc1322bea8331853447355c9e7790f33103be298b",
+      "gitBlob": "31f335adb0b9cb5c0e63dd7f8bf54f9727435935"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "bytes": 2374931,
+      "sha256": "b4b7f521a8c701cc2d6eeca77130d390faa4a04d14c73ec92f67f5826faeb649",
+      "gitBlob": "738955a15d3b18933e66ca11b1e7cdb6843bd11d"
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.routes.test.ts",
+      "bytes": 9751,
+      "sha256": "89b6a767e5952f6a6bde74ba726626e50f13e6b2956736319950676b571d45b6",
+      "gitBlob": "b9bfc3dc7391079016a339f1e3462dc0003ab828"
+    },
+    {
+      "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
+      "bytes": 311900,
+      "sha256": "0e1c86a2ba1c3d8d54e0bae415407ccbc54a32cc10a54241198056a7cbbde326",
+      "gitBlob": "95a197cea51e826f8ff4f738bc7f423e8232cb23"
+    },
+    {
+      "path": "src/components/Initiatives/InitiativesHub.tsx",
+      "bytes": 135585,
+      "sha256": "47a891248ea8075fe8ecb5f5e77164b9d6e40ea0619492e88f63a6b502f99304",
+      "gitBlob": "181c140c93b9e080bf27b0623af733059898333d"
+    },
+    {
+      "path": "src/components/Initiatives/__tests__/InitiativesHub.fourButtonsE1.test.tsx",
+      "bytes": 12879,
+      "sha256": "bb39dd121add52c42c61ffecdb564cb9bded3ecb26fa85958af0059c08fd821e",
+      "gitBlob": "613f679d6bce86d09b226ba49a9a1bed5552c771"
+    },
+    {
+      "path": "src/services/initiatives-execution/runtimeApi.ts",
+      "bytes": 76442,
+      "sha256": "38d0740e43d946e502f205137364ad66c466365933c4a144098ce938d68c0174",
+      "gitBlob": "f39d2f636274487936a745ca9262b144fdaf0558"
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/portfolioDecisionDispositionRuntime.gateway.pg.test.ts",
+      "bytes": 16897,
+      "sha256": "dc53bcf77b76ca10817f7658f4bf4430a8e0029609337b4d478fe19cd62acbfc",
+      "gitBlob": "36b7011bfdac4cf05064eb4b4f8d166c86d3a7d0"
+    },
+    {
+      "path": "src/components/Initiatives/InitiativeConsultingAnalysisView.tsx",
+      "bytes": 24164,
+      "sha256": "99b584e0bcc453fdce3f07959afcd3a70e4f13c22a200b72ce0c7a7b4aed124a",
+      "gitBlob": "93f7bcf374bf7ad8fdbfc97b399149fa957ca4fb"
+    },
+    {
+      "path": "src/components/Initiatives/__tests__/InitiativeConsultingAnalysisView.behavior.test.tsx",
+      "bytes": 16808,
+      "sha256": "183fdfece9154c30e29a39e16074fb38c45ff6b572a604222c499d46930fb857",
+      "gitBlob": "f01bfd50734d894ad152800a98c998fd2622e076"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/E1B_SLICE3_FINAL_CHECKPOINT_20260913T183220Z.md",
+      "bytes": 7174,
+      "sha256": "e745a1afdace444dad2131e4ca285d17834d1f773b93e74ac34f2f7a2e3603e6",
+      "gitBlob": "806fb9ec0a8b59582463f99e5515d2d18e312225"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/artefakt-v1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/artefakt-v1.log",
+      "bytes": 471,
+      "sha256": "e9598b3f5fa1615d582b18d9739d876f72782a2df9af4d092d3c63affd436f6e",
+      "gitBlob": "501f6452050f175a322aaca64b18d47ce4de0dbb"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/e1b-slice3-cleanup-external-readback.json",
+      "bytes": 160,
+      "sha256": "743158c5c8458a91ae198cc96d59cde6ef9f2100e54c5004588b38872ea9dc89",
+      "gitBlob": "71a45622a9512acb4bc969bb2a3fb56a5a6fb98c"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/e1b-slice3-focused-green-v5.json",
+      "bytes": 8679,
+      "sha256": "a0ae30404d1d3cc09f2e76da50d134a41ca4df8cc1808119de8af1dbbdcfea07",
+      "gitBlob": "18eb62b9d2b9514a1975b5347e7756a02735cd4c"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/e1b-slice3-realpg-v2.json",
+      "bytes": 2821,
+      "sha256": "586faea87f0accee03cb465a4cbe948bd8af9af081a20b175262237dc12654ea",
+      "gitBlob": "7420c20bf22a5955b4e5142ecbb6f030318794c7"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-hub-base.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-hub-base.log",
+      "bytes": 23768,
+      "sha256": "c7c5891b6fa835e352228f560562f6e593d6f5128106e7cdf966828b88b3d6fb",
+      "gitBlob": "c78af562a9cfe99c91ebe847b2b3c38ecde1bee5"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-hub-candidate.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-hub-candidate.log",
+      "bytes": 23768,
+      "sha256": "de037c517fb449859aa45e21bbca76076fe022c747f0f452f8113a95f35f6a9f",
+      "gitBlob": "1a177e1c6c57684e89ae2a8bf0bc360a9bbdb5ce"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-inherited-delta-v1.json",
+      "bytes": 598,
+      "sha256": "b2017c053df268746a991af292748cd43d2465bf3e688a4c3b5988c115406e19",
+      "gitBlob": "eac31404b1824d8b42465cb98c8727635a73f7fa"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-route-base.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "gitBlob": "d00491fd7e5bb6fa28c517a0bb32b8b506539d4d"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-route-base.log",
+      "bytes": 348630,
+      "sha256": "180a6699104f48bbeb77558f72292606f7a55a2548ddf34c9697a06ab84e579e",
+      "gitBlob": "e975ed1750febe26a7c2bbcaf5214572b50a480d"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-route-candidate.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "gitBlob": "d00491fd7e5bb6fa28c517a0bb32b8b506539d4d"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-route-candidate.log",
+      "bytes": 348630,
+      "sha256": "e7bfed9714b84e88cc99e99ca87d0cd9b72fd6d38237bbf4ade713926b2e12e6",
+      "gitBlob": "5ab7de5fa4e4a8ed14d3893e9db8b19358adfc13"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-scoped-v4.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/eslint-scoped-v4.log",
+      "bytes": 1665,
+      "sha256": "12ae533ed6096b78574d7ff3445bc9674a6cb78a16bd79e71f8e2f7e829a8fda",
+      "gitBlob": "ef7ccb696af7753739c3556e43109ab49d293cce"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/frontend-typecheck-classification-v1.json",
+      "bytes": 433,
+      "sha256": "c1fddd7a3330250e9d15dcf14749494a416fa89c656706b15dcec1f97bfd6667",
+      "gitBlob": "a4a7dde4426c6dc39ede035f0ee0921317842f9a"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/frontend-typecheck-v1.exit",
+      "bytes": 2,
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "gitBlob": "0cfbf08886fca9a91cb753ec8734c84fcbe52c9f"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/frontend-typecheck-v1.log",
+      "bytes": 124350,
+      "sha256": "ddaf0d92177b1b5e85c76b8d109e2d77846d61b68d662978459ff501ea4af569",
+      "gitBlob": "135a34c4a5e6afd0a902ab63983035008ebc2948"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/list-canon-v1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/list-canon-v1.log",
+      "bytes": 406,
+      "sha256": "57e1fd6effbf18cf5aec00ed6d57c3a41d77e9aee87b2a5f0568b0ee0c0f25e5",
+      "gitBlob": "f75ec812eb95e0a7c373a7e2d6304af3edc4c756"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/migrate-strict-first-v2.log",
+      "bytes": 9302,
+      "sha256": "c296c16eb0201ff0d10b97a56480b658a610759708fce6ac86787c568046e556",
+      "gitBlob": "b01406ca01656bb0cd4f15728f447e4a6a45fa2e"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/pg-container-identity-final.txt",
+      "bytes": 345,
+      "sha256": "3ea1dac6523db7e89da6bc60ecf077378d0b7564eb48399f2dd4246f64ec7a88",
+      "gitBlob": "a9d882fa8bca039ea5726af0f8e1154a545c2dcb"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/pg-disposal-readback.txt",
+      "bytes": 14,
+      "sha256": "9e5eb9d91af8ff8dba904a55ce28f546ac96e307ce9663a64bf8f41f2d8c1805",
+      "gitBlob": "b994f7de3d3af5e574732b11378b7dfa0a10c00a"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/server-typecheck-v1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/server-typecheck-v1.log",
+      "bytes": 42,
+      "sha256": "07de6e4df02a4f20846f0111702647a9a07d268114e2b51c4366a15f36ef2816",
+      "gitBlob": "6b00d772ad1915dcd7e87c3f956da3fa947f7a1d"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/slice3-required-schema-columns.txt",
+      "bytes": 4075,
+      "sha256": "232d745271b63c5d512dd91e25d048942d9314ba2b451048ee3573ed16e0b9ab",
+      "gitBlob": "bd7b53220d715f17e24020640b13d1725b5faa69"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/staging-schema-restore-final.log",
+      "bytes": 136826,
+      "sha256": "948eaae7343a2e1bb6a2627ccb7e2f8fbd5fc0a1f7f11079632c8fd712215c63",
+      "gitBlob": "f40bbce161d83c9b884d9dd242f8244bf242f0cf"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/staging-schema-sha256.txt",
+      "bytes": 137,
+      "sha256": "2f211c062914e71a6a48eb09ee99298ddeb3438601ea29232d9cf3acc1895b1f",
+      "gitBlob": "1f7cb30fce44dbe56575f82b84a30aa48fe6e060"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/staging-schema-table-count-by-schema.txt",
+      "bytes": 53,
+      "sha256": "87ae9ff42d485b45bb89ea3da79ebb8c27e8b0d79ae95036c3bf4fa13accb57a",
+      "gitBlob": "bfcfdac53ee6f3a316f40a986ac99d8bd8c19ab8"
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b-slice3/staging-schema-table-count.txt",
+      "bytes": 5,
+      "sha256": "dd825ead2d5806c5724cfc2470b8a90af3f5bbff02becbbfa79bbabac0e3c37a",
+      "gitBlob": "4fa067314fb629ce4ac86fed8c6621f21b5fdedd"
+    }
+  ],
+  "commands": {
+    "focused": "npx vitest run server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.routes.test.ts src/components/Initiatives/__tests__/InitiativeConsultingAnalysisView.behavior.test.tsx src/components/Initiatives/__tests__/InitiativesHub.fourButtonsE1.test.tsx --reporter=json --outputFile=evidence/f2-inicjatywy-4/e1b-slice3/e1b-slice3-focused-green-v5.json",
+    "serverTypecheck": "npm run typecheck --prefix server",
+    "frontendTypecheck": "npm run type-check",
+    "listCanon": "npm run check:list-canon",
+    "artefakt": "npm run check:artefakt"
+  },
+  "results": {
+    "focused": {
+      "reportedSuitesPassed": 6,
+      "reportedSuitesTotal": 6,
+      "testsPassed": 19,
+      "testsTotal": 19,
+      "exitCode": 0
+    },
+    "realPg": {
+      "reportedSuitesPassed": 2,
+      "reportedSuitesTotal": 2,
+      "testsPassed": 5,
+      "testsTotal": 5,
+      "exitCode": 0,
+      "qualification": "Exact restored staging schema before full migration; PG test received formatting-only rewrite after run."
+    },
+    "serverTypecheck": {
+      "exitCode": 0
+    },
+    "frontendTypecheck": {
+      "exitCode": 2,
+      "diagnostics": 191,
+      "files": 56,
+      "newSlice3Diagnostics": 0
+    },
+    "scopedEslint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 11
+    },
+    "inheritedEslintDelta": {
+      "runtimeRouterProblems": 0,
+      "hubProblems": 0
+    },
+    "listCanon": {
+      "exitCode": 0,
+      "files": 158,
+      "currentViolations": 322,
+      "baselineViolations": 357
+    },
+    "artefakt": {
+      "exitCode": 0,
+      "crimsonCurrent": 8,
+      "crimsonBaseline": 8,
+      "r1Warnings": 2,
+      "r2r3Current": 0,
+      "r2r3Baseline": 0,
+      "dangerCurrent": 117,
+      "dangerBaseline": 117
+    },
+    "diffCheck": {
+      "exitCode": 0
+    }
+  }
+}
