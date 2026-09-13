@@ -2,25 +2,47 @@ export const INTERVIEW_ANSWER_APPROVAL_MODES = ['ai', 'manager', 'two_stage'] as
 
 export type InterviewAnswerApprovalMode = (typeof INTERVIEW_ANSWER_APPROVAL_MODES)[number];
 export type InterviewAnswerApprovalStage = 'ai' | 'manager';
-export type InterviewAnswerApprovalDecision = 'approved' | 'rejected';
+export type InterviewAnswerApprovalDecision = 'approved' | 'sent_back';
 
 export const DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE: InterviewAnswerApprovalMode = 'manager';
+export const INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION = 1;
+
+export type InterviewAnswerApprovalPolicyCompatibility =
+  | 'supported'
+  | 'default_missing'
+  | 'invalid_version'
+  | 'unsupported_future_version'
+  | 'invalid_mode';
 
 export interface ResolvedInterviewAnswerApprovalPolicy {
   mode: InterviewAnswerApprovalMode;
   stages: readonly InterviewAnswerApprovalStage[];
   source: 'organization_policy' | 'default';
+  compatibility: InterviewAnswerApprovalPolicyCompatibility;
+  configuredVersion: number | null;
 }
 
 export interface InterviewAnswerApprovalStageDecision {
+  receiptId: string;
+  ordinal: number;
   stage: InterviewAnswerApprovalStage;
   decision: InterviewAnswerApprovalDecision;
 }
 
 export interface InterviewAnswerApprovalProgress {
-  status: 'pending' | 'stages_complete' | 'rejected';
+  status: 'pending' | 'stages_complete' | 'sent_back';
   nextStage: InterviewAnswerApprovalStage | null;
 }
+
+export type InterviewAnswerApprovalPolicyUpdateResult =
+  | { ok: true; policy: JsonObject }
+  | {
+      ok: false;
+      code:
+        | 'INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION_INVALID'
+        | 'INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION_UNSUPPORTED';
+      configuredVersion: unknown;
+    };
 
 type JsonObject = Record<string, unknown>;
 
@@ -60,6 +82,36 @@ export function resolveInterviewAnswerApprovalPolicy(
   const policy = parseObject(input && 'policy' in input ? input.policy : input);
   const interview = objectOrNull(policy?.interview);
   const answerApproval = objectOrNull(interview?.answerApproval);
+  if (!answerApproval) {
+    return {
+      mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
+      stages: stagesFor(DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE),
+      source: 'default',
+      compatibility: 'default_missing',
+      configuredVersion: null,
+    };
+  }
+
+  const configuredVersion = answerApproval.version;
+  if (!Number.isInteger(configuredVersion) || (configuredVersion as number) < 1) {
+    return {
+      mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
+      stages: stagesFor(DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE),
+      source: 'default',
+      compatibility: 'invalid_version',
+      configuredVersion: null,
+    };
+  }
+  if ((configuredVersion as number) > INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION) {
+    return {
+      mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
+      stages: stagesFor(DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE),
+      source: 'default',
+      compatibility: 'unsupported_future_version',
+      configuredVersion: configuredVersion as number,
+    };
+  }
+
   const candidate = answerApproval?.mode;
   const mode = INTERVIEW_ANSWER_APPROVAL_MODES.includes(candidate as InterviewAnswerApprovalMode)
     ? (candidate as InterviewAnswerApprovalMode)
@@ -72,25 +124,51 @@ export function resolveInterviewAnswerApprovalPolicy(
       candidate === mode && INTERVIEW_ANSWER_APPROVAL_MODES.includes(mode)
         ? 'organization_policy'
         : 'default',
+    compatibility: candidate === mode ? 'supported' : 'invalid_mode',
+    configuredVersion: configuredVersion as number,
   };
 }
 
-/** Preserves every unrelated organization AI policy key. */
+/**
+ * Preserves every unrelated organization AI policy key. A present policy with
+ * an invalid or future version is never rewritten or downgraded by this v1
+ * helper; a future writer must return the refusal to its caller.
+ */
 export function withInterviewAnswerApprovalMode(
   rawPolicy: unknown,
   mode: InterviewAnswerApprovalMode
-): JsonObject {
+): InterviewAnswerApprovalPolicyUpdateResult {
   const policy = parseObject(rawPolicy) ?? {};
   const interview = objectOrNull(policy.interview) ?? {};
-  const answerApproval = objectOrNull(interview.answerApproval) ?? {};
+  const answerApproval = objectOrNull(interview.answerApproval);
+  if (answerApproval) {
+    const configuredVersion = answerApproval.version;
+    if (!Number.isInteger(configuredVersion) || (configuredVersion as number) < 1) {
+      return {
+        ok: false,
+        code: 'INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION_INVALID',
+        configuredVersion,
+      };
+    }
+    if ((configuredVersion as number) > INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION) {
+      return {
+        ok: false,
+        code: 'INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION_UNSUPPORTED',
+        configuredVersion,
+      };
+    }
+  }
   return {
-    ...policy,
-    interview: {
-      ...interview,
-      answerApproval: {
-        ...answerApproval,
-        version: 1,
-        mode,
+    ok: true,
+    policy: {
+      ...policy,
+      interview: {
+        ...interview,
+        answerApproval: {
+          ...(answerApproval ?? {}),
+          version: INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION,
+          mode,
+        },
       },
     },
   };
@@ -106,16 +184,27 @@ export function deriveInterviewAnswerApprovalProgress(
   policy: ResolvedInterviewAnswerApprovalPolicy,
   decisions: readonly InterviewAnswerApprovalStageDecision[]
 ): InterviewAnswerApprovalProgress {
+  const orderedDecisions = [...decisions]
+    .filter(
+      (decision) =>
+        Number.isInteger(decision.ordinal) && decision.ordinal > 0 && decision.receiptId.length > 0
+    )
+    .sort((left, right) => {
+      if (left.ordinal !== right.ordinal) return left.ordinal - right.ordinal;
+      if (left.receiptId < right.receiptId) return -1;
+      if (left.receiptId > right.receiptId) return 1;
+      return 0;
+    });
   let previousStageDecisionIndex = -1;
   for (const stage of policy.stages) {
     let latestIndex = -1;
     let latestDecision: InterviewAnswerApprovalDecision | null = null;
-    for (let index = previousStageDecisionIndex + 1; index < decisions.length; index += 1) {
-      if (decisions[index]?.stage !== stage) continue;
+    for (let index = previousStageDecisionIndex + 1; index < orderedDecisions.length; index += 1) {
+      if (orderedDecisions[index]?.stage !== stage) continue;
       latestIndex = index;
-      latestDecision = decisions[index]?.decision ?? null;
+      latestDecision = orderedDecisions[index]?.decision ?? null;
     }
-    if (latestDecision === 'rejected') return { status: 'rejected', nextStage: stage };
+    if (latestDecision === 'sent_back') return { status: 'sent_back', nextStage: stage };
     if (latestDecision !== 'approved') return { status: 'pending', nextStage: stage };
     previousStageDecisionIndex = latestIndex;
   }
