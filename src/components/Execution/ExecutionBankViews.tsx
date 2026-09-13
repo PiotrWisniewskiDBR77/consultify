@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  OverflowTooltip,
   StandardKanban,
   type StandardKanbanCard,
   type StandardKanbanColumn,
@@ -219,12 +220,55 @@ const BankTable = ({
 >) => {
   const { t: translate } = useTranslation();
   const t = translate as unknown as BankT;
+  /*
+    ── SZEROKOŚCI I TYPY KOLUMN: ZMIERZONE, NIE ZGADNIĘTE ────────────────────
+    (odbiór 13.09, ciemny motyw, słowa właściciela: „bez sensu jest to, że
+     wszystkie kolumny są tej samej szerokości, bo przez to ta pierwsza jest
+     beznadziejna")
+
+    CO BYŁO. Żadna z piętnastu kolumn nie deklarowała `dataType` ani `align`,
+    a kolumna nazwy miała `id: 'initiativeCase'`. Jądro (`FilterableTable`)
+    wyprowadza z tych dwóch pól CAŁĄ podłogę szerokości: bez `dataType` każda
+    kolumna dostaje podłogę typu `text` = 140 px, a kolumna nierozpoznana jako
+    główna zjeżdża do swojej podłogi razem z resztą, gdy tabela się nie mieści.
+    Zmierzone na zrzucie odbiorowym (1440): tytuł 125 px — NAJWĘŻSZY na
+    ekranie — przy kolumnach z samymi myślnikami 140–191 px; nazwy inicjatyw
+    łamały się na trzy i cztery linie, wiersz rósł do ~110 px.
+
+    CO JEST. Kolumna nazwy DEKLARUJE swoją rolę (`primary: true` — mechanizm
+    dorobiony w jądrze, bo naprawa przez zmianę `id` na `'title'` odrosłaby
+    w następnym module), więc trzyma 300 px i nie schodzi do podłogi. Każda
+    pozostała kolumna deklaruje `dataType`, czyli SWOJĄ podłogę:
+      · `number` (90 px) — chipy i liczby o krótkiej treści; to deklaracja
+        SZEROKOŚCI, nie twierdzenie, że treść jest liczbą (wzór: RAID
+        w `ExecutionControlSurface`, ta sama nota),
+      · `date` (110 px) — daty,
+      · `owner` (150 px) — „Katarzyna Wójcik" musi się zmieścić w jednej linii.
+    Liczby są `align: 'right'` (kanon §3.3: metryki do prawej).
+
+    PODŁOGA NAGŁÓWKA bywa wyższa niż podłoga typu (jądro mierzy napis) —
+    dlatego „Updated / actions" wraca do uczciwego „Updated": ta kolumna
+    renderuje WYŁĄCZNIE datę, akcje mieszkają w strukturalnej kolumnie kebaba,
+    a sam napis kosztował 160 px podłogi zamiast 110 px.
+
+    Suma podłóg (czyli to, co kolumny wtórne realnie dostają przy
+    przepełnieniu — zmierzone w przeglądarce 13.09, 1280/1440/1920):
+    300+130+147+150+146+188+136+141+110+130+97+157+140+140+110 = 2222 px
+    + 80 px kolumny akcji. Tabela nadal jest SZERSZA niż obszar przy
+    1440 (≈1270 px) i przewija się poziomo — z piętnastu kolumn nie da się
+    zrobić inaczej bez CHOWANIA części z nich, a które kolumny są zbędne, to
+    decyzja właściciela (pstryczek kolumn), nie tej poprawki. Zysk jest tam,
+    gdzie była skarga: tytuł 125 → 300 px, czyli ponad dwa razy więcej niż
+    kolumna liczbowa (90–95 px).
+  */
   const columns = useMemo<TableColumn[]>(
     () => [
       {
         id: 'initiativeCase',
         label: 'Initiative / Case',
-        width: '250px',
+        primary: true,
+        dataType: 'text',
+        width: '300px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           return (
@@ -232,8 +276,18 @@ const BankTable = ({
               data-testid={`execution-bank-table-item-${row.id}`}
               data-initiative-id={row.initiativeId}
               data-execution-case-id={row.executionCaseId ?? undefined}
+              className="min-w-0"
             >
-              <div className="text-sm font-semibold text-c-text">{row.name}</div>
+              {/*
+                Dwie linie MAKSIMUM + dymek dopiero przy przepełnieniu
+                (`OverflowTooltip` z jądra — komórka z własnym `render` nie
+                przechodzi przez gałąź, która zakłada go sama). Bez klamry
+                nazwa rozpychała wiersz ponad kanoniczne 56 px.
+              */}
+              <OverflowTooltip
+                content={row.name}
+                className="block text-sm font-semibold text-c-text line-clamp-2"
+              />
               {/* K5-R2: dla wiersza BEZ realizacji ten sam komunikat stoi już
                   w kolumnie „Execution phase" — nie powtarzamy go dwa razy
                   w jednym wierszu. */}
@@ -246,8 +300,13 @@ const BankTable = ({
       },
       {
         id: 'lifecycleStatus',
+        // `status` (130 px), nie `number` (90 px): przy 97 px chip „In
+        // execution" renderował się jako „In ex…" (zrzut 13.09, 1440 px).
+        // Przy przepełnieniu kolumna wtórna siada DOKŁADNIE na swojej
+        // podłodze, więc to podłoga — nie `width` — jest tu jedynym lewarem.
         label: 'Lifecycle',
-        width: '140px',
+        dataType: 'status',
+        width: '130px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           if (!row.lifecycleStatus || row.lifecycleStatus === 'UNKNOWN') {
@@ -273,6 +332,7 @@ const BankTable = ({
       {
         id: 'executionState',
         label: 'Execution phase',
+        dataType: 'number',
         width: '150px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
@@ -306,7 +366,8 @@ const BankTable = ({
       {
         id: 'ownerName',
         label: 'Owner',
-        width: '150px',
+        dataType: 'owner',
+        width: '160px',
         render: (source) => (
           <OwnerLabel
             row={source as unknown as ExecutionBankRow}
@@ -317,7 +378,10 @@ const BankTable = ({
       {
         id: 'deliveryProfile',
         label: 'Delivery profile',
-        width: '130px',
+        dataType: 'number',
+        // 155 px = zmierzona podłoga NAGŁÓWKA („DELIVERY PROFILE", 16 znaków);
+        // niżej i tak nie zejdzie, więc deklarujemy to, co realnie dostanie.
+        width: '155px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           return <span>{row.deliveryProfile ?? '—'}</span>;
@@ -326,12 +390,17 @@ const BankTable = ({
       {
         id: 'progress',
         label: 'Progress / confidence',
+        dataType: 'number',
+        align: 'right',
         width: '190px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           return (
             <div>
-              <div data-testid={`execution-bank-progress-${row.executionCaseId}`}>
+              <div
+                className="tabular-nums"
+                data-testid={`execution-bank-progress-${row.executionCaseId}`}
+              >
                 {row.progress.status === 'KNOWN' ? (
                   `${row.progress.value}%`
                 ) : (
@@ -348,7 +417,9 @@ const BankTable = ({
       {
         id: 'baselineFinish',
         label: 'Baseline finish',
-        width: '160px',
+        dataType: 'date',
+        align: 'right',
+        width: '145px',
         render: (source) => {
           const evidence = (source as unknown as ExecutionBankRow).baselineFinish;
           return evidence.status === 'KNOWN' ? (
@@ -361,7 +432,9 @@ const BankTable = ({
       {
         id: 'forecastFinish',
         label: 'Forecast finish',
-        width: '170px',
+        dataType: 'date',
+        align: 'right',
+        width: '145px',
         render: (source) => {
           const evidence = (source as unknown as ExecutionBankRow).forecastFinish;
           return evidence.status === 'KNOWN' ? (
@@ -374,13 +447,17 @@ const BankTable = ({
       {
         id: 'varianceDays',
         label: 'Variance',
-        width: '150px',
+        // `date` (110 px): treść to nie goła liczba, tylko „12 days · forecast"
+        // — przy podłodze `number` (90 px) łamała się na trzy linie.
+        dataType: 'date',
+        align: 'right',
+        width: '130px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           return (
             <span
               data-testid={`execution-bank-variance-${row.executionCaseId}`}
-              className={temporalClass}
+              className={`${temporalClass} tabular-nums`}
             >
               {row.varianceDays.status === 'KNOWN' ? (
                 `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`
@@ -394,7 +471,9 @@ const BankTable = ({
       {
         id: 'health',
         label: 'Health',
-        width: '160px',
+        // Chip „At risk"/„On track" — ta sama podłoga co Lifecycle.
+        dataType: 'status',
+        width: '130px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           return row.health.status === 'KNOWN' ? (
@@ -411,7 +490,9 @@ const BankTable = ({
       {
         id: 'blockerCount',
         label: 'Blockers',
-        width: '100px',
+        dataType: 'number',
+        align: 'right',
+        width: '95px',
         render: (source) => {
           const value = (source as unknown as ExecutionBankRow).blockerCount;
           return <span className="block text-right tabular-nums">{value ?? '—'}</span>;
@@ -420,7 +501,9 @@ const BankTable = ({
       {
         id: 'pendingDecisionCount',
         label: 'Pending decisions',
-        width: '140px',
+        dataType: 'number',
+        align: 'right',
+        width: '160px',
         render: (source) => {
           const value = (source as unknown as ExecutionBankRow).pendingDecisionCount;
           return <span className="block text-right tabular-nums">{value ?? '—'}</span>;
@@ -429,6 +512,7 @@ const BankTable = ({
       {
         id: 'resourceConstraint',
         label: 'Constraint',
+        dataType: 'text',
         width: '160px',
         render: (source) => (
           <span>{(source as unknown as ExecutionBankRow).resourceConstraint ?? '—'}</span>
@@ -437,15 +521,21 @@ const BankTable = ({
       {
         id: 'nextAction',
         label: 'Next action',
-        width: '180px',
+        dataType: 'text',
+        width: '160px',
         render: (source) => (
           <span>{(source as unknown as ExecutionBankRow).nextAction ?? '—'}</span>
         ),
       },
       {
         id: 'updatedAt',
-        label: 'Updated / actions',
-        width: '190px',
+        // Było „Updated / actions" — kolumna renderuje WYŁĄCZNIE datę, a akcje
+        // mieszkają w strukturalnej kolumnie kebaba. Napis kosztował 160 px
+        // podłogi (jądro mierzy nagłówek) zamiast 110 px podłogi typu `date`.
+        label: 'Updated',
+        dataType: 'date',
+        align: 'right',
+        width: '160px',
         render: (source) => {
           const evidence = (source as unknown as ExecutionBankRow).updatedAt;
           return evidence.status === 'KNOWN' ? (

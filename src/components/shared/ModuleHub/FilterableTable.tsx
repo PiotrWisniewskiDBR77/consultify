@@ -40,6 +40,39 @@ export interface TableColumn {
    * Existing tables that don't set this are completely unaffected.
    */
   type?: 'select';
+  /**
+   * ── KOLUMNA TYTUŁOWA (kolumna główna) — DEKLARACJA, NIE ZGADYWANIE PO `id` ──
+   *
+   * Do 2026-09-13 jądro rozpoznawało kolumnę główną WYŁĄCZNIE po magicznym
+   * identyfikatorze (`id === 'title' || id === 'name'`) — w SIEDMIU miejscach,
+   * każde przepisane z osobna. Kolumna główna dostaje z tego tytułu cztery
+   * rzeczy: wyższą podłogę czytelności (200 px zamiast 90/140), wyższy sufit
+   * ręcznego resize'u (520 px zamiast 320), `required` w pstryczku i — co tu
+   * najważniejsze — ZWOLNIENIE ze zjazdu do podłogi, gdy tabela się nie mieści
+   * (patrz `columnFit`, gałąź `budget < floorTotal`).
+   *
+   * MECHANIZM DEFEKTU (odbiór 13.09, Realizacja → Execution bank, ciemny
+   * motyw; słowa właściciela: „bez sensu jest to, że wszystkie kolumny są tej
+   * samej szerokości, bo przez to ta pierwsza jest beznadziejna"). Bank
+   * deklaruje kolumnę nazwy jako `id: 'initiativeCase'` — nazwa poprawna
+   * merytorycznie (wiersz to para inicjatywa+realizacja), tylko NIE JEST
+   * jednym z dwóch magicznych napisów. Skutek: kolumna nazwy dostawała
+   * podłogę `text` (140 px) — DOKŁADNIE tę samą co czternaście pozostałych —
+   * i przy przepełnieniu zjeżdżała do niej razem z nimi. Na zrzucie odbiorowym
+   * kolumna tytułu miała 125 px (najwęższa na ekranie!), a kolumny z samymi
+   * myślnikami 140–191 px; nazwy łamały się na trzy–cztery linie.
+   *
+   * DLACZEGO NAPRAWA JEST TUTAJ, A NIE W BANKU. Zmiana `id` na `'title'` w
+   * jednym ekranie to naprawa per-wywołanie: następny moduł z sensownym `id`
+   * (`caseName`, `documentTitle`, `kpiName`…) wpada w to samo, bo mechanizm
+   * dalej pyta o napis zamiast o rolę. Kolumna główna jest ROLĄ i moduł ma ją
+   * ZADEKLAROWAĆ. Stare `id` zostają rozpoznawane (94 ekrany listowe stoją na
+   * tej heurystyce — jej usunięcie byłoby regresją bez powodu), ale od teraz
+   * są tylko domyślką dla zgodności wstecznej, a nie jedynym wejściem.
+   *
+   * ADDYTYWNE: bez tego pola tabela zachowuje się co do piksela jak dotąd.
+   */
+  primary?: boolean;
   filterable?: boolean;
   filterOptions?: { value: string; label: string; color?: string }[];
   sortable?: boolean;
@@ -276,8 +309,23 @@ export const COLUMN_MIN_WIDTH_BY_DATA_TYPE: Record<
   number: 90,
 };
 
+/**
+ * JEDNO miejsce, w którym jądro rozstrzyga „to jest kolumna główna".
+ *
+ * Pierwszeństwo ma DEKLARACJA modułu (`primary: true`); magiczne `id`
+ * (`title` / `name`) zostaje wyłącznie jako domyślka dla zgodności wstecznej
+ * z ekranami, które powstały przed wprowadzeniem pola (patrz komentarz przy
+ * `TableColumn.primary`). Kolumna zaznaczenia NIGDY nie jest główna — ma
+ * własną, stałą szerokość i własną podłogę.
+ */
+export const isPrimaryColumn = (column: Pick<TableColumn, 'id' | 'primary' | 'type'>): boolean => {
+  if (column.type === 'select') return false;
+  if (typeof column.primary === 'boolean') return column.primary;
+  return column.id === 'title' || column.id === 'name';
+};
+
 const getColumnTypeFloor = (column: TableColumn): number => {
-  if (column.id === 'title' || column.id === 'name') return 200;
+  if (isPrimaryColumn(column)) return 200;
   if (column.type === 'select') return 90;
   return COLUMN_MIN_WIDTH_BY_DATA_TYPE[column.dataType ?? 'text'];
 };
@@ -307,9 +355,7 @@ export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 200;
 export const getColumnFitFloor = (column: TableColumn, configuredFloor?: number): number =>
   Math.max(
     getColumnTypeFloor(column),
-    column.id === 'title' || column.id === 'name'
-      ? FIT_MIN_PRIMARY_COLUMN_WIDTH
-      : FIT_MIN_COLUMN_WIDTH,
+    isPrimaryColumn(column) ? FIT_MIN_PRIMARY_COLUMN_WIDTH : FIT_MIN_COLUMN_WIDTH,
     configuredFloor ?? 0
   );
 
@@ -421,7 +467,17 @@ export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-el
  */
 export const CELL_ELEMENT_WRAP_CLASS = 'min-w-0 break-normal';
 
-const OverflowTooltip: React.FC<{
+/**
+ * Dymek POKAZYWANY WYŁĄCZNIE PRZY PRZEPEŁNIENIU (`scrollWidth > clientWidth`).
+ *
+ * Wyeksportowany od 2026-09-13: komórka z własnym `render` (a taka jest każda
+ * kolumna tytułowa, która obok nazwy rysuje podlinijkę) NIE przechodzi przez
+ * gałąź jądra, która ten dymek zakłada — moduł musi go założyć sam. Bez
+ * eksportu każdy taki ekran dorabiał własny `title={...}` (dymek ZAWSZE, nawet
+ * gdy tekst się mieści) albo nie dorabiał nic (skrócona nazwa bez sposobu na
+ * odczytanie pełnej). Jedna implementacja, jedno zachowanie.
+ */
+export const OverflowTooltip: React.FC<{
   content: string;
   className: string;
   children?: React.ReactNode;
@@ -1021,12 +1077,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         visible: c.defaultVisible !== false,
         order: idx,
         width: Math.max(
-          parsePx(c.width, c.id === 'title' || c.id === 'name' ? 260 : 140),
+          parsePx(c.width, isPrimaryColumn(c) ? 260 : 140),
           floor
         ),
         minWidth: floor,
-        maxWidth: c.id === 'title' || c.id === 'name' ? 520 : 320,
-        required: c.id === 'title' || c.id === 'name',
+        maxWidth: isPrimaryColumn(c) ? 520 : 320,
+        required: isPrimaryColumn(c),
       };
     });
   }, [columns, parsePx]);
@@ -1196,7 +1252,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   const columnFit = useMemo<{ widths: Record<string, number>; scale: number }>(() => {
     const declared = visibleColumns.map((c) => {
       const width = columnWidths[c.id] ?? parsePx(c.width, 140);
-      const isPrimary = c.id === 'title' || c.id === 'name';
+      const isPrimary = isPrimaryColumn(c);
       const configuredFloor = columnConfigs.find((config) => config.id === c.id)?.minWidth;
       return {
         id: c.id,
@@ -1702,9 +1758,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   const width =
                     columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
                   const declaredMinWidth =
-                    cfg?.minWidth ?? (column.id === 'title' || column.id === 'name' ? 200 : 90);
+                    cfg?.minWidth ?? (isPrimaryColumn(column) ? 200 : 90);
                   const declaredMaxWidth =
-                    cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
+                    cfg?.maxWidth ?? (isPrimaryColumn(column) ? 520 : 320);
                   // Przy dopasowaniu `min-width` MUSI zejść razem z `width` —
                   // inaczej to ono odtwarza nadmiar, który właśnie usunęliśmy
                   // (`min-width` przy `table-fixed` nie ratuje, tylko rozpycha).
@@ -2197,7 +2253,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                 // jedna linia + wielokropek (`truncate`). Reszta
                                 // kolumn zawija na spacji i skraca dopiero wyraz
                                 // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
-                                column.id === 'title' || column.id === 'name'
+                                isPrimaryColumn(column)
                                   ? 'block truncate'
                                   : CELL_TEXT_CLAMP_CLASS,
                               ].join(' ')}

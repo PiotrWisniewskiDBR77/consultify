@@ -86,6 +86,43 @@ const INITIATIVES = [
     ownerBusiness: { id: 'user-marta', firstName: 'Marta', lastName: 'Gomez' },
     ownerExecution: null,
   },
+  /*
+    SZEŚĆ DŁUGICH NAZW — dołożone 13.09 dla odbioru szerokości kolumn.
+    Dwa wiersze wyżej wystarczały do odbioru PODGLĄDU, ale nie pokazywały
+    defektu, na który właściciel patrzył w tabeli: przy wąskiej kolumnie
+    tytułu nazwa łamała się na trzy i cztery linie. Nazwy i właściciele
+    1:1 z `k5-naprawy-realizacja` (czyli ze stagingu) — żeby zrzut PRZED/PO
+    dało się porównać wiersz w wiersz.
+  */
+  ...[
+    ['seed:oee', 'Program poprawy OEE linii montażowej', 'Marek', 'Nowak'],
+    ['seed:traceability', 'Pełna identyfikowalność partii produkcyjnych', 'Marta', 'Gomez'],
+    ['seed:salesops', 'S&OP oparty na jednym źródle danych', 'Marek', 'Nowak'],
+    ['seed:spawanie', 'Robotyzacja gniazda spawalniczego', 'Marta', 'Gomez'],
+    ['seed:wizja', 'System wizyjny kontroli jakości odlewów', null, null],
+    ['seed:jakosc40', 'System zarządzania jakością 4.0', 'Marek', 'Nowak'],
+  ].map(([id, name, firstName, lastName]) => ({
+    id: id as string,
+    name: name as string,
+    description: null,
+    status: 'IN_EXECUTION',
+    priority: 'MEDIUM',
+    progress: null,
+    plannedStartDate: null,
+    plannedEndDate: null,
+    baselineStartDate: null,
+    baselineEndDate: null,
+    baselineSetAt: null,
+    scheduleBaselineId: null,
+    baselineVersion: null,
+    actualStartDate: null,
+    actualEndDate: null,
+    updatedAt: '2026-09-09T08:00:00.000Z',
+    ownerBusiness: firstName
+      ? { id: `user-${String(firstName).toLowerCase()}`, firstName, lastName }
+      : null,
+    ownerExecution: null,
+  })),
 ];
 
 const MEMBERS = [

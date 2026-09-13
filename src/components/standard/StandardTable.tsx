@@ -42,6 +42,11 @@ import type { RowAction, RowActionSection } from '../shared/RowActionsMenu';
 import { EmptyState, LoadingState } from '../shared/states';
 
 export type { TableColumn, TableRow } from '../shared/ModuleHub/FilterableTable';
+/**
+ * Dymek przy przepełnieniu dla kolumn z WŁASNYM `render` (kanon: jedna
+ * implementacja dymka na całą aplikację — patrz nota przy `OverflowTooltip`).
+ */
+export { OverflowTooltip } from '../shared/ModuleHub/FilterableTable';
 export type { RowAction, RowActionSection } from '../shared/RowActionsMenu';
 
 // ── Edycja komórki W WIERSZU (podwójny klik) ───────────────────────────────
