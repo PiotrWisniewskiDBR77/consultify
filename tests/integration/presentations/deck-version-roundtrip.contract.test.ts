@@ -120,6 +120,11 @@ function ddl(): Promise<void> {
          slide_count INTEGER DEFAULT 0,
          created_by TEXT,
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       );
+       CREATE TABLE IF NOT EXISTS organization_members (
+         user_id TEXT NOT NULL,
+         organization_id TEXT NOT NULL,
+         status TEXT NOT NULL
        );`,
       (err) => (err ? reject(err) : resolve())
     );
@@ -164,6 +169,11 @@ beforeEach(async () => {
   mockUser = { id: 'user-1', role: 'ADMIN', organizationId: ORG };
   await run('DELETE FROM presentation_deck_versions');
   await run('DELETE FROM presentation_decks');
+  await run('DELETE FROM organization_members');
+  await run(
+    'INSERT INTO organization_members (user_id, organization_id, status) VALUES (?, ?, ?)',
+    ['user-1', ORG, 'ACTIVE']
+  );
 });
 
 describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () => {
@@ -230,9 +240,185 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
     expect(liveDeck.version).toBe(3);
   });
 
+  it('restore synchronizes the persisted snapshot title with queryable deck metadata', async () => {
+    const v1Json = JSON.stringify({
+      title: 'Version One title',
+      meta: { title: 'Older metadata title must not override Deck.title' },
+      cards: [{ id: 'c1', title: 'Version One' }],
+    });
+    await seedDeck('deck-1', ORG, v1Json, 1);
+
+    await request(app)
+      .put('/api/presentations/decks/deck-1/autosave')
+      .set('x-deck-version', '1')
+      .send({
+        title: 'Version Two title',
+        cards: [{ id: 'c1', title: 'Version Two' }],
+      });
+
+    const versions = await request(app).get('/api/presentations/decks/deck-1/versions');
+    const snapshotId = versions.body.data[0].id as string;
+    const restore = await request(app)
+      .post(`/api/presentations/decks/deck-1/versions/${snapshotId}/restore`)
+      .send({ expectedVersion: 2 });
+    expect(restore.status).toBe(200);
+
+    const liveDeck: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT title, deck_json, version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(liveDeck.version).toBe(3);
+    expect(liveDeck.title).toBe('Version One title');
+    expect(JSON.parse(liveDeck.deck_json).title).toBe('Version One title');
+
+    const history = await request(app).get('/api/presentations/decks/deck-1/versions');
+    expect(history.body.data.map((entry: any) => entry.version)).toEqual([2, 1]);
+
+    const subsequentEdit = await request(app)
+      .put('/api/presentations/decks/deck-1/autosave')
+      .set('x-deck-version', '3')
+      .send({ title: 'Version Three title', cards: [{ id: 'c1', title: 'Version Three' }] });
+    expect(subsequentEdit.status).toBe(200);
+    expect(subsequentEdit.body.version).toBe(4);
+    const afterSubsequentEdit: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT title, deck_json, version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(afterSubsequentEdit.version).toBe(4);
+    expect(afterSubsequentEdit.title).toBe('Version Three title');
+    expect(JSON.parse(afterSubsequentEdit.deck_json).title).toBe('Version Three title');
+  });
+
+  it('restore reads the canonical meta title from an older structured snapshot', async () => {
+    await seedDeck(
+      'deck-1',
+      ORG,
+      JSON.stringify({ title: 'Current title', cards: [{ id: 'c1', title: 'Current' }] }),
+      2
+    );
+    await run(
+      `INSERT INTO presentation_deck_versions
+         (id, deck_id, version, deck_json_snapshot, slide_count, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        'meta-title-snapshot',
+        'deck-1',
+        1,
+        JSON.stringify({
+          schemaVersion: 1,
+          meta: { title: 'Structured metadata title' },
+          cards: [{ id: 'c1', title: 'Older structured content' }],
+        }),
+        1,
+        'user-1',
+      ]
+    );
+
+    const restore = await request(app)
+      .post('/api/presentations/decks/deck-1/versions/meta-title-snapshot/restore')
+      .send({ expectedVersion: 2 });
+    expect(restore.status).toBe(200);
+
+    const liveDeck: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT title, deck_json, version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(liveDeck.version).toBe(3);
+    expect(liveDeck.title).toBe('Structured metadata title');
+    expect(JSON.parse(liveDeck.deck_json).meta.title).toBe('Structured metadata title');
+  });
+
+  it('restore preserves the current metadata title when a legacy snapshot has no title', async () => {
+    await seedDeck(
+      'deck-1',
+      ORG,
+      JSON.stringify({ cards: [{ id: 'c1', title: 'Current content' }] }),
+      2
+    );
+    await run(
+      `INSERT INTO presentation_deck_versions
+         (id, deck_id, version, deck_json_snapshot, slide_count, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        'legacy-snapshot',
+        'deck-1',
+        1,
+        JSON.stringify({ cards: [{ id: 'c1', title: 'Legacy content' }] }),
+        1,
+        'user-1',
+      ]
+    );
+
+    const restore = await request(app)
+      .post('/api/presentations/decks/deck-1/versions/legacy-snapshot/restore')
+      .send({ expectedVersion: 2 });
+    expect(restore.status).toBe(200);
+
+    const liveDeck: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT title, deck_json, version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(liveDeck.version).toBe(3);
+    expect(liveDeck.title).toBe('Seed Deck');
+    expect(JSON.parse(liveDeck.deck_json).title).toBeUndefined();
+  });
+
+  it('restore rejects a malformed persisted snapshot without mutating deck or history', async () => {
+    const currentJson = JSON.stringify({
+      title: 'Current valid title',
+      cards: [{ id: 'c1', title: 'Current valid content' }],
+    });
+    await seedDeck('deck-1', ORG, currentJson, 2);
+    await run(
+      `INSERT INTO presentation_deck_versions
+         (id, deck_id, version, deck_json_snapshot, slide_count, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['malformed-snapshot', 'deck-1', 1, '{not-json', 1, 'user-1']
+    );
+
+    const restore = await request(app)
+      .post('/api/presentations/decks/deck-1/versions/malformed-snapshot/restore')
+      .send({ expectedVersion: 2 });
+    expect(restore.status).toBe(422);
+    expect(restore.body.code).toBe('DECK_VERSION_SNAPSHOT_INVALID');
+
+    const liveDeck: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT title, deck_json, version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(liveDeck).toEqual({ title: 'Seed Deck', deck_json: currentJson, version: 2 });
+    const historyCount: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT COUNT(*) AS n FROM presentation_deck_versions WHERE deck_id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(historyCount.n).toBe(1);
+  });
+
   it('autosave is org-scoped: another org cannot touch the deck (404, no snapshot leak)', async () => {
     await seedDeck('deck-1', ORG, JSON.stringify({ cards: [] }), 1);
     mockUser = { id: 'intruder', role: 'ADMIN', organizationId: OTHER_ORG };
+    await run(
+      'INSERT INTO organization_members (user_id, organization_id, status) VALUES (?, ?, ?)',
+      ['intruder', OTHER_ORG, 'ACTIVE']
+    );
 
     const res = await request(app)
       .put('/api/presentations/decks/deck-1/autosave')
@@ -261,6 +447,10 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
     const snapshotId = versions.body.data[0].id as string;
 
     mockUser = { id: 'intruder', role: 'ADMIN', organizationId: OTHER_ORG };
+    await run(
+      'INSERT INTO organization_members (user_id, organization_id, status) VALUES (?, ?, ?)',
+      ['intruder', OTHER_ORG, 'ACTIVE']
+    );
     const restore = await request(app).post(
       `/api/presentations/decks/deck-1/versions/${snapshotId}/restore`
     );
@@ -294,6 +484,14 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
     );
     expect(JSON.parse(liveDeck.deck_json).cards[0].title).toBe('Version Two');
     expect(liveDeck.version).toBe(2);
+    const historyCount: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT COUNT(*) AS n FROM presentation_deck_versions WHERE deck_id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    expect(historyCount.n).toBe(1);
   });
 
   it('version conflict: stale x-deck-version is rejected 409 and writes NO snapshot', async () => {
