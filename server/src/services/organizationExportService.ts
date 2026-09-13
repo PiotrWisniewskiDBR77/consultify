@@ -1,4 +1,5 @@
 import type { PoolClient } from 'pg';
+import { projectCanonicalExportLineage } from './organizationExportCanonicalLineage.js';
 import { projectInterviewExportRow } from './organizationExportInterviewPrivacy.js';
 
 import {
@@ -292,7 +293,16 @@ export async function exportOrganizationData(
       [organizationId]
     );
     if (policy.interviewPrivacy) interviewRows.set(key, rows.rows);
-    const safeRows = rows.rows.map((row) => sanitize(row) as Record<string, unknown>);
+    const safeRows = rows.rows.map(
+      (row) =>
+        sanitize(
+          policy.canonicalLineageColumns
+            ? projectCanonicalExportLineage(row, policy.canonicalLineageColumns)
+            : row
+        ) as Record<string, unknown>
+    );
+    if (policy.canonicalLineageColumns && rows.rows.length)
+      unresolved(name, 'canonical_content_privacy_unresolved_lineage_only');
     if (!result.securityManifest.includedSchemas.includes(table.schema))
       result.securityManifest.includedSchemas.push(table.schema);
     if (key === identity('public', 'organizations')) {
