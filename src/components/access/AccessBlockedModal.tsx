@@ -23,7 +23,10 @@ type AccessBlockedDetail = {
 const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   ORG_NOT_FOUND: { labelKey: 'access.cta.goToBilling', href: '/auth?mode=login' },
   ORG_INACTIVE: { labelKey: 'access.cta.goToBilling', href: '/auth?mode=login' },
-  TRIAL_PROFILE_INCOMPLETE: { labelKey: 'access.cta.completeSetup', href: ROUTES.ORG_SETUP },
+  // S1.14b/B2: the CTA has to name what the user is actually going to do —
+  // finish their own organization's profile (OrgSetupWizard now completes the
+  // org in session instead of creating a second one).
+  TRIAL_PROFILE_INCOMPLETE: { labelKey: 'access.cta.completeProfile', href: ROUTES.ORG_SETUP },
   DEMO_TIME_EXPIRED: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   DEMO_AI_SESSION_LIMIT_REACHED: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
@@ -60,18 +63,28 @@ export const AccessBlockedModal: React.FC = () => {
     const code = detail.code || 'ACCESS_BLOCKED';
     const messageKey = `access.blocked.${code}`;
     const translatedMessage = t(messageKey, { defaultValue: '' });
-    const message =
-      detail.message ||
-      (translatedMessage && translatedMessage !== messageKey
+    // S1.14b/W3: the backend message won over the i18n catalog, so a Polish
+    // sentence from the API ("Ta funkcja jest czasowo wyłączona dla triala.")
+    // rendered inside an English modal next to English buttons. Same rule the
+    // DEMO_READ_ONLY handler below already applies: the LOCALIZED string wins,
+    // and the backend text is only the fallback for a code the catalog has not
+    // learned yet.
+    const localized =
+      typeof translatedMessage === 'string' && translatedMessage && translatedMessage !== messageKey
         ? translatedMessage
-        : t('access.blocked.default'));
+        : '';
+    const message = localized || detail.message || t('access.blocked.default');
 
     const ctaConfig = ERROR_CODE_CTA_MAP[code];
-    const cta: AccessBlockedCTA | undefined =
-      detail.cta ||
-      (ctaConfig
-        ? { label: t(ctaConfig.labelKey), labelKey: ctaConfig.labelKey, href: ctaConfig.href }
-        : undefined);
+    // Same order for the button: a mapped, localized label beats the backend's
+    // own `cta.label` (which was Polish for every high-risk block).
+    const cta: AccessBlockedCTA | undefined = ctaConfig
+      ? {
+          label: t(ctaConfig.labelKey),
+          labelKey: ctaConfig.labelKey,
+          href: detail.cta?.href || ctaConfig.href,
+        }
+      : detail.cta;
 
     const isDemoBlock =
       code === 'DEMO_TIME_EXPIRED' ||

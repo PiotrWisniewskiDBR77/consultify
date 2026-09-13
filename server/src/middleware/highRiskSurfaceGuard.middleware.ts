@@ -191,22 +191,38 @@ function shouldBlock(category: HighRiskCategory, scope: AccessScope): boolean {
   return !isFlagEnabled(FLAG_BY_CATEGORY[category]);
 }
 
+/**
+ * S1.14b / W3 (pomiar 13.09, staging): the export block itself is DELIBERATE —
+ * `TRIAL_EXPORT_ENABLED` is a real env flag, off by default, and a TRIAL org is
+ * meant to get 403 TRIAL_EXPORT_DISABLED. What was wrong is what the user was
+ * shown: this body's `message` is Polish, the UI renders `message` (not
+ * `messageEn`), so an English interface showed "Ta funkcja jest czasowo wyłączona
+ * dla triala." next to English buttons, with a Polish crimson CTA
+ * "Skontaktuj się z zespołem". DEC-461: the software speaks English; the Polish
+ * rendering comes from the front-end i18n catalog (`access.blocked.<CODE>`),
+ * never from the API. The policy is untouched — only the sentence.
+ */
+const BLOCKED_SENTENCE: Record<HighRiskCategory, string> = {
+  invite: 'Inviting teammates is available on paid plans.',
+  upload: 'Uploading files is available on paid plans.',
+  export: 'Export is available on paid plans.',
+  public_share: 'Public sharing is available on paid plans.',
+  ai_memory: 'AI memory is available on paid plans.',
+  autopilot: 'AI autopilot is available on paid plans.',
+};
+
 function blockedResponse(category: HighRiskCategory, scope: AccessScope): Record<string, unknown> {
   const isCreateOrgCta = scope === 'TRIAL_ENTRY' || scope === 'UNKNOWN';
+  const sentence =
+    scope === 'DEMO' ? 'This feature is disabled in demo mode.' : BLOCKED_SENTENCE[category];
   return {
     error: ERROR_CODE_BY_CATEGORY[category],
     code: ERROR_CODE_BY_CATEGORY[category],
-    message:
-      scope === 'DEMO'
-        ? 'Ta funkcja jest wyłączona w trybie demo.'
-        : 'Ta funkcja jest czasowo wyłączona dla triala.',
-    messageEn:
-      scope === 'DEMO'
-        ? 'This feature is disabled in demo mode.'
-        : 'This feature is temporarily disabled for trial.',
+    message: sentence,
+    messageEn: sentence,
     cta: isCreateOrgCta
-      ? { label: 'Załóż organizację', path: '/trial/create-org' }
-      : { label: 'Skontaktuj się z zespołem', path: '/contact' },
+      ? { label: 'Create an organization', path: '/trial/create-org' }
+      : { label: 'Contact us', path: '/contact' },
   };
 }
 
