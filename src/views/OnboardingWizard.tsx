@@ -49,9 +49,11 @@ export const OnboardingWizard = () => {
     }
 
     setLoading(true);
+    let contextSaved = false;
     try {
       // Save context first
       await Api.saveOnboardingContext(context);
+      contextSaved = true;
 
       // Advance to "Thinking" UI immediately while waiting
       setStep(2);
@@ -71,8 +73,15 @@ export const OnboardingWizard = () => {
       console.error(error);
       if (error.message?.includes('Rate limit')) {
         toast.error('Too many requests. Please wait before regenerating.');
+      } else if (contextSaved) {
+        // S1.14b/B4: the context IS saved (and it is what unlocks the trial AI
+        // gate) even when plan generation is unavailable — say so instead of
+        // dropping the user back on step 1 as if nothing had happened.
+        toast.success(
+          'Your profile is saved and the AI assistant is unlocked. The suggested plan is not available yet.'
+        );
       } else {
-        toast.error('Failed to generate plan. Please try again.');
+        toast.error('Failed to save your profile. Please try again.');
       }
       setStep(1); // Go back to edit
     } finally {

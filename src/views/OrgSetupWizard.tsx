@@ -156,12 +156,79 @@ export const OrgSetupWizard: React.FC = () => {
 
   const canSubmit = state.orgName.trim().length >= 2 && state.memoryConsent;
 
+  /**
+   * S1.14b / B3 (pomiar 13.09, staging): this wizard is the ONLY exit the
+   * "Access required → Complete Setup" modal offers when Teresa is blocked with
+   * TRIAL_PROFILE_INCOMPLETE (AccessBlockedModal.tsx → ROUTES.ORG_SETUP). It
+   * unconditionally `POST /organizations`, so a user who already HAD an
+   * organization got a SECOND one with the same name, their current org stayed
+   * `onboarding_status != 'ORG_SETUP_COMPLETED'`, and Teresa stayed blocked —
+   * the unblock path was a loop. When an organization is already in session the
+   * wizard now COMPLETES that organization (profile + ORG_SETUP_COMPLETED)
+   * instead of creating another one.
+   */
+  const isCompletingExistingOrg = Boolean(currentOrganization?.id);
+
+  const handleCompleteExistingOrganization = async (orgId: string) => {
+    await Api.put(`/organizations/${orgId}`, {
+      name: state.orgName,
+      industry: state.industry || undefined,
+      domain: state.domain || undefined,
+      vatNumber: state.vatNumber || undefined,
+      attributionData: {
+        orgProfileType: state.orgType,
+        userRole: state.userRole,
+        companySize: state.companySize,
+        country: state.country,
+        memoryActivated: true,
+        memoryConsentAt: new Date().toISOString(),
+      },
+      // The one field the trial gate reads (accessPolicyService.ts: TRIAL +
+      // action 'ai_call' → organizations.onboarding_status).
+      onboardingStatus: 'ORG_SETUP_COMPLETED',
+    });
+
+    try {
+      if (currentUser?.id && (state.userTitle.trim() || state.phone.trim())) {
+        await Api.put(`/users/${currentUser.id}`, {
+          title: state.userTitle.trim() || undefined,
+          phone: state.phone.trim() || undefined,
+        });
+      }
+    } catch {
+      // Non-blocking: profile enrichment must not fail the unblock.
+    }
+
+    toast.success(
+      t('organization.setupWizard.completed', 'Profile completed. Teresa is unlocked.')
+    );
+    trackFunnelEvent('trial_org_setup_completed', {
+      organizationId: orgId,
+      industry: state.industry,
+      orgProfileType: state.orgType,
+      userRole: state.userRole,
+      companySize: state.companySize,
+      country: state.country,
+    });
+    // Straight back into the product — the Phase E "First Value plan" wizard
+    // this used to hand off to is a phantom (POST /api/onboarding/generate-plan
+    // has no server route), and the user came here to get unblocked, not to
+    // start another wizard.
+    setCurrentView(AppView.AI_CHAT);
+  };
+
   const handleCreateOrganization = async () => {
     if (!canSubmit) return;
 
     updateState({ isSubmitting: true });
 
     try {
+      const existingOrgId = currentOrganization?.id;
+      if (existingOrgId) {
+        await handleCompleteExistingOrganization(String(existingOrgId));
+        return;
+      }
+
       const org = await Api.post('/organizations', {
         name: state.orgName,
         industry: state.industry,
@@ -221,10 +288,14 @@ export const OrgSetupWizard: React.FC = () => {
           <div className="border-b border-c-border-subtle px-6 py-6 dark:border-navy-700 sm:px-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
               <Building2 size={14} />
-              {t('organization.setupWizard.badge', 'New organization')}
+              {isCompletingExistingOrg
+                ? t('organization.setupWizard.badgeComplete', 'Your organization')
+                : t('organization.setupWizard.badge', 'New organization')}
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 dark:text-white">
-              {t('organization.setupWizard.heading', 'Create a space for your team')}
+              {isCompletingExistingOrg
+                ? t('organization.setupWizard.headingComplete', 'Complete your organization profile')
+                : t('organization.setupWizard.heading', 'Create a space for your team')}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-c-text-secondary sm:text-base">
               {t('organization.setupWizard.subheading', 'Start with a name. You can refine the rest now or later in the organization settings.')}
@@ -235,7 +306,17 @@ export const OrgSetupWizard: React.FC = () => {
             <div className="grid gap-3 rounded-2xl border border-c-border-subtle bg-c-bg/80 p-4 text-sm text-c-text-secondary dark:border-navy-700 dark:bg-navy-950/60 dark:text-slate-300">
               <div className="flex items-start gap-3">
                 <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
-                <span>{t('organization.setupWizard.bullet1', 'You are creating a shared space for decisions, knowledge and the team\'s work.')}</span>
+                <span>
+                  {isCompletingExistingOrg
+                    ? t(
+                        'organization.setupWizard.bullet1Complete',
+                        'This is the shared space for your decisions, knowledge and the team\'s work.'
+                      )
+                    : t(
+                        'organization.setupWizard.bullet1',
+                        'You are creating a shared space for decisions, knowledge and the team\'s work.'
+                      )}
+                </span>
               </div>
               <div className="flex items-start gap-3">
                 <Globe2 size={16} className="mt-0.5 shrink-0 text-primary-500" />
@@ -443,7 +524,15 @@ export const OrgSetupWizard: React.FC = () => {
                 <div className="mt-3 flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400">
                   <AlertCircle size={16} className="mt-0.5 shrink-0" />
                   <span>
-                    {t('organization.setupWizard.memoryRequired', 'Confirming organization memory is required to create the workspace.')}
+                    {isCompletingExistingOrg
+                      ? t(
+                          'organization.setupWizard.memoryRequiredComplete',
+                          'Confirming organization memory is required to finish the profile.'
+                        )
+                      : t(
+                          'organization.setupWizard.memoryRequired',
+                          'Confirming organization memory is required to create the workspace.'
+                        )}
                   </span>
                 </div>
               )}
@@ -472,11 +561,19 @@ export const OrgSetupWizard: React.FC = () => {
                   {state.isSubmitting ? (
                     <>
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      <span>{t('organization.setupWizard.submitting', 'Creating…')}</span>
+                      <span>
+                        {isCompletingExistingOrg
+                          ? t('organization.setupWizard.submittingComplete', 'Saving…')
+                          : t('organization.setupWizard.submitting', 'Creating…')}
+                      </span>
                     </>
                   ) : (
                     <>
-                      <span>{t('organization.setupWizard.submit', 'Create organization')}</span>
+                      <span>
+                        {isCompletingExistingOrg
+                          ? t('organization.setupWizard.submitComplete', 'Save and continue')
+                          : t('organization.setupWizard.submit', 'Create organization')}
+                      </span>
                       <ArrowRight size={18} />
                     </>
                   )}

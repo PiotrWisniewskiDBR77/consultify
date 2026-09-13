@@ -706,7 +706,14 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
   () => import('./screens/day267-materialy-hub-zrzuty')
 );
 
+const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  's114b-narzedzia': {
+    label:
+      'S1.14b — naprawy Idea/Notes/Documents: &part=b1|b2|w3|b3|b6|w11 (realne ConvertToDialog, AccessBlockedModal, OrgSetupWizard, NotebookVersionHistory).',
+    render: () => <S114bNarzedziaScreen />,
+  },
   'f4c-linked-items-add-button': {
     label:
       'F4c — realny MyWork/shared/LinkedItemsSection: przycisk "Add Link"/"Add External Link" otwiera panel (znalezisko E1a N5, DEC-453).',

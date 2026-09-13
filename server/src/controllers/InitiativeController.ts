@@ -102,7 +102,10 @@ import {
   normalizeStatus,
   pushOptionalColumnUpdate,
 } from '../services/initiative/initiativeTransitionService.js';
-import { isRequireInitiativeProjectEnabled } from '../services/initiativeProjectPolicyService.js';
+import {
+  isRequireInitiativeProjectEnabled,
+  resolveInitiativeProjectId,
+} from '../services/initiativeProjectPolicyService.js';
 import notificationService from '../services/notificationService.js';
 import {
   evaluateEffectiveCapability,
@@ -661,9 +664,24 @@ export class InitiativeController {
       // going through the funnel below get the soft auto-anchor instead (see
       // createInitiativeService.ts). Runs BEFORE the funnel/raw-insert branch so
       // it applies regardless of INITIATIVE_FUNNEL_ENABLED.
+      //
+      // S1.14b/B1 (pomiar 13.09, staging): the hard block was firing for the
+      // DERIVED creations too — Idea/Notebook → Initiative (`conversionService`
+      // posts `sourceType:'tool_session'`), which has no project picker to show
+      // and therefore no way for the human to satisfy it. Result: the whole
+      // Idea→Initiative path was 400 for EVERY organization, even one with
+      // projects. A derived creation is exactly the §5.2.3 "caller that cannot
+      // show a UI picker" case, so it goes to the soft auto-anchor (system
+      // "Portfel" project) instead of the hard block. Interactive creation
+      // (no source, i.e. the wizard/quick-create) still MUST name a project.
+      const rawSourceType = String((req.body as { sourceType?: unknown })?.sourceType ?? '')
+        .trim()
+        .toLowerCase();
+      const isDerivedCreation = rawSourceType.length > 0 && rawSourceType !== 'manual';
       if (
         isRequireInitiativeProjectEnabled() &&
-        !(req.body as { projectId?: unknown })?.projectId
+        !(req.body as { projectId?: unknown })?.projectId &&
+        !isDerivedCreation
       ) {
         res.status(400).json({
           error: 'projectId is required — every initiative must belong to a project',
@@ -791,6 +809,15 @@ export class InitiativeController {
         return;
       }
 
+      // S1.14b/B1: this rollback branch (INITIATIVE_FUNNEL_ENABLED=false) used to
+      // rely on the hard block above to guarantee a project. Now that a derived
+      // creation is allowed through without one, anchor it here too — otherwise
+      // flipping the funnel off would start producing `project_id IS NULL`
+      // orphans again. Fail-soft wrapper (D1): never throws, never blocks.
+      const anchoredProjectId = await resolveInitiativeProjectId(orgId, projectId, {
+        createdBy: req.user?.id ?? null,
+      });
+
       const id = uuidv4();
       const now = new Date().toISOString();
 
@@ -812,7 +839,7 @@ export class InitiativeController {
         await queryHelpers.queryRun(sql, [
           id,
           orgId,
-          projectId ?? null,
+          anchoredProjectId ?? null,
           programId ?? null,
           decodedTitle,
           decodedTitle, // name mirrors title (legacy column, NOT NULL in older schemas)

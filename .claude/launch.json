@@ -660,6 +660,19 @@
         "--strictPort"
       ],
       "port": 3115
+    },
+    {
+      "name": "s114b-narzedzia-devrender",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "5310",
+        "--strictPort"
+      ],
+      "port": 5310
     }
   ]
 }

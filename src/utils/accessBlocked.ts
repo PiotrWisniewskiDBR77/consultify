@@ -1,3 +1,31 @@
+/**
+ * S1.14b/B2 — one sentence per access-block code, from the i18n catalog.
+ *
+ * Measured on staging 13.09: the AI chat bubble rendered the raw machine code
+ * ("⚠️ Access blocked (TRIAL_PROFILE_INCOMPLETE).") because the streaming branch
+ * built its text by string-interpolating `data.code`. Every surface that has to
+ * name an access block now reads the same `access.blocked.<CODE>` key (present in
+ * en AND pl), and falls back to `access.blocked.default` for an unknown code —
+ * never to the code itself.
+ *
+ * The translator is INJECTED (same shape as `getAiErrorLine` in
+ * aiProviderErrorCopy.ts) rather than imported here: this module is pulled in by
+ * leaf utilities, and a static `@/i18n` import would drag the i18next runtime
+ * into module graphs that deliberately mock react-i18next.
+ */
+type AccessBlockedT = (key: string, options?: { defaultValue?: string }) => unknown;
+
+export function accessBlockedSentence(t: AccessBlockedT, code: unknown): string {
+  const normalized = String(code || '').trim();
+  const raw = normalized ? t(`access.blocked.${normalized}`, { defaultValue: '' }) : '';
+  const fromCatalog = typeof raw === 'string' ? raw.trim() : '';
+  if (fromCatalog) return fromCatalog;
+  const fallback = t('access.blocked.default', { defaultValue: 'Access is blocked.' });
+  return typeof fallback === 'string' && fallback.trim()
+    ? fallback
+    : 'Access is blocked.';
+}
+
 export type AccessBlockedPayload = {
   code?: string;
   error?: string;

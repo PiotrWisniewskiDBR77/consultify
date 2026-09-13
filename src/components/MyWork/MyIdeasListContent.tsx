@@ -61,6 +61,7 @@ import {
   type IdeaStageV5,
   normalizeStageToV5,
 } from './ideaEntryTypes';
+import { describeIdeaConversion } from './ideaConversionOutcome';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { IdeaPreviewBody, IdeaPreviewFooter } from './IdeaPreview';
 import { IdeasTableContent } from './IdeasTableContent';
@@ -1112,11 +1113,22 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             sessionId: result.sourceSessionId,
           });
         }
-        toast.success(t('myWork.ideasList.toastSuccess4', 'Done'));
+        // S1.14b/W11 (pomiar 13.09, staging): "Team Chat" in the row kebab opened
+        // no chat. It POSTed …/convert, which really does create a conversation
+        // AND promotes the idea seed → promoted — and the UI said "Done", so the
+        // user saw an idea silently change stage and no chat anywhere. The action
+        // now does what its label says (opens the thread) and the message names
+        // the stage change instead of hiding it.
+        const outcome = describeIdeaConversion(target, result);
+        toast.success(t(outcome.toastKey, outcome.toastDefault));
         if (!ideaOverride) {
           setConvertIdea(null);
         }
         await fetchIdeas();
+        if (outcome.href) {
+          window.location.assign(outcome.href);
+          return;
+        }
       } catch (err: any) {
         toast.error(err?.message || t('myWork.ideasList.failed3', 'Failed'));
       } finally {

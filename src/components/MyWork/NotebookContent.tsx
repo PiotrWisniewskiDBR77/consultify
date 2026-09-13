@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/useDeviceType';
 import { Api } from '@/services/api';
 import * as apiModule from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { maybeSnapshotNotebookPage } from '@/services/notebookVersionSnapshot';
 import { useAppStore } from '@/store/useAppStore';
 import type {
   NotebookCounts,
@@ -115,6 +116,7 @@ import {
 import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { NotebookHeaderActions } from './NotebookHeaderActions';
+import { matchesNoteQuery, type NotebookSearchablePage } from './notebookSearchMatch';
 
 import { buildAskAIMessage } from './shared/askAiHelper';
 
@@ -1528,7 +1530,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const filteredPages = useMemo(() => {
     let result = scopedPages.filter((p) => matchesView(p, viewLens));
     const q = noteSearchQuery.trim().toLowerCase();
-    if (q) result = result.filter((p) => (p.title || '').toLowerCase().includes(q));
+    // S1.14b/W10 (pomiar 13.09, staging): this filter read the TITLE only, so
+    // "Warsaw" (in the title) found the note and "dunning"/"Peppol" (in its ~2000
+    // words of body, verified present via the API) found nothing — and the empty
+    // result rendered the first-run screen "No pages yet / Create your first
+    // page", i.e. the library looked empty rather than unmatched. The list rows
+    // already carry `contentText` and `summary` (buildNotebookSelectFields in
+    // server/src/routes/v8/my-work.routes.ts selects both), so matching the body
+    // costs one extra comparison and no request.
+    if (q) result = result.filter((p) => matchesNoteQuery(p as NotebookSearchablePage, q));
     result.sort((a, b) => {
       if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
       return (b.updatedAt || '').localeCompare(a.updatedAt || '');
@@ -1714,6 +1724,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           // only after the backend responds").
           setSaveState('saved');
           setConflictServerPage(null);
+
+          // S1.14b/B6: nothing in the app ever created a notebook version, so
+          // "Version history" was permanently empty and "Restore" unreachable.
+          // A successful save is the only honest moment to record one; the
+          // helper throttles (first save, then ≥10 min AND ≥200 chars of
+          // movement) and never throws — a failed snapshot must not turn a save
+          // the user already sees as "Saved" into an error.
+          void maybeSnapshotNotebookPage({
+            pageId: persistedDraft.id,
+            title: persistedDraft.title,
+            contentJson: persistedDraft.contentJson,
+            contentText: persistedDraft.contentText,
+          });
 
           const textLen = (persistedDraft.contentText || '').length;
           if (textLen > 200 && persistedDraft.id) {
