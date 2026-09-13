@@ -252,3 +252,125 @@ kontraktów kart N, Wywiad, Tools, SIRI i ADMA, Audyt, analiza „wielka trójka
 3. Wdrożenie na staging z punktem cofnięcia, potem promocja na demo — robi nadzorca.
 4. Przejście właściciela: Inicjatywy i Realizacja.
 5. Konta pilotażu na stagingu i hasła wydane ręcznie, potem start pilotażu.
+
+
+# STAN NA 13.09.2026 (rano) — trzy paczki: MVP właściciela · MVP klienta · fala 2
+
+Aktualizacja poprzedniej sekcji (12.09 wieczór, wyżej — **nietknięta**), nie nowy plan. Źródło stanu:
+skrzynka na górze `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md` (pomiar integratora Fable,
+13.09 ~07:00 CDT). **Pomiar CTO 13.09:** staging = demo = `60051310d7` (nic z 11–13.09 nie jest
+wdrożone). Kandydat Codexa zamrożony na `5de710ff46` = tag `kandydat-mvp-20260913` i scalony na linię
+jako `cfea70de8a` (147 commitów, 207 plików kodu, 0 migracji). Flagi `ENABLE_INITIATIVE_*` na stagingu
+i demo **nieustawione**. W17 (Materiały/prezentacje/notatnik) i C6-DEL-OFF (odmowa 410
+`SET_DELETE_APPROVED_OUT` bez klienta bazy) **są** w kandydacie — premisa nocnego przekazania
+„W17 poza kandydatem” była fałszywa (DEC-477: W17 zostaje, wycięcie = przebudowa 147 commitów).
+Poza kandydatem zostają tylko dwie gałęzie: `codex/c6-export-contract-20260912` (+19 patchy, pełny
+eksport organizacji, HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1 patch, DEC-474, wariant
+ceremonii zatwierdzania → fala 2). Bramka K2 (tsc/build/canon/testy) i dowód parytetu flag OFF K3
+są **w toku** (agenci Sonnet/Opus) — wdrożenie (K4) czeka na ich wynik. Codex ma STOP na kandydacie
+rc2 (zamrożony); dostaje teraz paczkę MVP „zatwierdzanie odpowiedzi Wywiadu” (gałąź
+`codex/interview-answer-approval-20260913` od `cfea70de8a`), potem duże prompty fali 2. Dysk:
+0,7 GB → 30 GB po sprzątaniu (pomiar CTO 13.09); kopie: `backup/kandydat-rc2-5de710ff46-20260913`,
+`backup/integracja-kandydat-cfea70de8a-20260913`, `backup/owner-wip-tracked-20260913`.
+
+**Liczby (policzone z tabel, nie z pamięci):**
+
+| Paczka | 12.09 wieczór | 13.09 rano | Zmiana |
+|---|---|---|---|
+| Paczka 1 — MVP właściciela | 6 zamkniętych / 13 (7 otwartych) | 6 zamkniętych / 16 (10 otwartych) | +3 kryteria (S1.14–S1.16), 0 zmian werdyktu na TAK |
+| Paczka 2 — MVP klienta | 1 zamknięte / 14 (13 otwartych) | 1 zamknięte / 14 (13 otwartych) | liczba zamkniętych bez zmian; **treść** S2.3 i S2.7 zmieniona (patrz niżej) |
+| Paczka 3 — fala 2 | — (nie liczona kryteriami TAK/NIE) | 188 z 196 myśli właściciela to fala 2 (8 to MVP, już w paczce 1 jako S1.14/S1.15) | bez zmian liczbowych 13.09; zero programów rozpoczętych budową poza dwiema gałęziami HOLD |
+
+## Paczka 1 — MVP właściciela (pojemnik 1)
+
+| # | Kryterium (skrót) | Werdykt 12.09 | Werdykt 13.09 | Co się zmieniło / co domyka |
+|---|---|---|---|---|
+| S1.1 | 16 modułów przeszedł właściciel na swoich danych | WARUNKOWE TAK (DEC-466) | **bez zmian** | czeka na K4 (wdrożenie) → K5 (przejście Inicjatywy/Realizacja) |
+| S1.2 | Zero otwartych BLOKER/WAŻNY z przejścia | CZĘŚCIOWO | **bez zmian** | naprawy nadal tylko w kandydacie (teraz zamrożonym i scalonym `cfea70de8a`), niewdrożone — domyka K4 |
+| S1.3 | Rezultat poza limitem → Skrzynka → karta → zadanie | CZĘŚCIOWO | **bez zmian** | ponowne otwarcie karty nadal tylko w kandydacie, niewdrożone — domyka K4 |
+| S1.4 | Dokument i prezentacja z szablonu na danych DBR77 | NIEZMIERZONE | **bez zmian** | brak nowych danych 13.09 w żadnym z przeczytanych źródeł — najstarszy otwarty punkt programu, do pomiaru CTO |
+| S1.5 | Jeden prawy panel na 8 listach | TAK | **TAK** | bez zmian |
+| S1.6 | Teresa odpowiada ze źródłami w każdym module | CZĘŚCIOWO / nieaktualne (DEC-461) | **bez zmian** | kryterium wymaga przepisania na angielski po DEC-461; nikt tego nie zrobił 13.09 |
+| S1.7 | Dane właściciela czyste | NIE | **bez zmian** | skrypt sprzątania nadal w kandydacie, nieuruchomiony na stagingu/demo — domyka K4 |
+| S1.8 | Strażniki zielone, dług nie rośnie, tsc serwera 0, zero migracji | TAK na wdrożonej wersji | **bez zmian na wdrożonej wersji** | na kandydacie bramka K2 **W TOKU** (agent Sonnet, „czeka na dysk” w momencie pomiaru) — to jest krok, nie zamknięcie |
+| S1.9 | Demo ma własną bazę i przećwiczoną promocję z cofnięciem | TAK | **TAK** | bez zmian |
+| S1.10 | Trzy decyzje zapisane | TAK, zaktualizowane | **TAK, zaktualizowane** | dochodzą DEC-477 (W17 zostaje) i DEC-474 (ceremonia zatwierdzania → fala 2) |
+| S1.11 | 16 modułów zamrożonych tagiem | TAK, wymaga re-tagu | **bez zmian** | re-tag nadal czeka na wdrożenie kandydata (K4) |
+| S1.12 | Przekazanie dla pojemnika 2 napisane | TAK | **TAK** | dochodzi `PRZEKAZANIE_20260913_NOC.md` i skrzynka K1–K9 |
+| S1.13 | Analiza kart N: ekran + kontrakt treści | CZĘŚCIOWO | **bez zmian** | kontrakty treści nadal fala 2 (SPEC §7); K8 (rozliczenie SPEC_FALA2 myśl po myśli) w toku 13.09, ale to dokumentacja, nie budowa |
+| **S1.14** *(nowe)* | Ręczne przejście Idea/Notatki/Dokumenty: każdy przycisk, ≥3 nielekkie zadania na narzędzie, weryfikacja połączeń z resztą aplikacji | — | **NIE ROZPOCZĘTE** | notatka właściciela 12.09 dosłownie: „(…) wciśnięcie literalnie każdego przycisku i przejście dla każdego z narzędzi conajmniej 3 różnych zadań (nie łatwych) — ale to jest MVP nie fala”; zlecone jako K7, po K4, przed zamknięciem MVP; wykonawca: agenci nadzorcy (Fable), nie Codex |
+| **S1.15** *(nowe)* | Zatwierdzanie odpowiedzi Wywiadu: AI / manager / dwa stopnie; manager w panelu sesji odsyła do poprawy albo zatwierdza | — | **ZLECONE Codexowi 13.09** | notatka właściciela dosłownie: „system zatwierdzenia czy odpowiedzi udzielone są wystarczające (…) albo przez AI albo przez managera albo dwa stopnie. Manager w panelu sesji powinien móc odsyłać do poprawy albo zatwierdzać. To jest MVP to zatwierdzenie”; gałąź `codex/interview-answer-approval-20260913` od `cfea70de8a`, dopiero wystartowana — brak jeszcze commitów w przeczytanych źródłach; ocena AI (`w05-ai-evaluation`) już scalona w kandydacie, ceremonia managera/dwustopniowa dopiero budowana |
+| **S1.16** *(nowe)* | Przejście właściciela przez Inicjatywy i Realizację po wdrożeniu kandydata | — | **NIE ROZPOCZĘTE** | warunkowe „tak” z 10.09 nadal niepotwierdzone (DEC-476: rdzeń = Inicjatywy + Realizacja, wszystko inne do fali 2); krok K5, po K4; zrzuty robi agent, sprawdza Fable, dopiero potem właściciel patrzy (jeden obraz, Tak/Nie) |
+
+**Werdykt paczki 1:** bez zmiany werdyktu 12.09 → 13.09 na żadnym z 13 pierwotnych kryteriów — postęp
+jest w krokach K1 (zamrożenie+scalenie, WYKONANE) i K2/K3 (bramka + dowód parytetu, W TOKU), nie w
+zamknięciu kryteriów. Dochodzą trzy nowe kryteria wprost z notatek właściciela (S1.14–S1.16), wszystkie
+otwarte. 6 zamkniętych z 16 (było 6 z 13).
+
+## Paczka 2 — MVP klienta (pojemnik 2)
+
+| # | Kryterium (skrót) | Werdykt 12.09 | Werdykt 13.09 | Co się zmieniło |
+|---|---|---|---|---|
+| S2.1 | Czworo ludzi samodzielnie od wywiadu do wyniku | NIE | **bez zmian** | Katarzyna i Irina nadal nie istnieją; poczta martwa (DEC-471) |
+| S2.2 | Przepływ „pusty stan → pierwsza wartość” w każdym module | W TOKU | **bez zmian** | paczka C6 nadal na HOLD |
+| S2.3 | Bezpieczeństwo: cross-org, CSRF, MFA, zero 5xx przez 7 dni | CZĘŚCIOWO + NOWE BLOKERY (2 krytyczne) | **CZĘŚCIOWO — jeden z dwóch krytycznych naprawiony** | C6-DEL-OFF (odmowa 410 `SET_DELETE_APPROVED_OUT`, bez klienta bazy, bez wejścia w łańcuch usuwania) już w kandydacie `cfea70de8a` — zamyka błąd „obejście ochrony prawnej przy usuwaniu”; błąd „eksport sięgający poza organizację” nadal otwarty na osobnej gałęzi `codex/c6-export-contract-20260912` (+19, HOLD, poza kandydatem) |
+| S2.4 | Ścieżka staging → demo → produkcja przećwiczona | NIE | **bez zmian** | — |
+| S2.5 | Alert na 5xx i padnięcie health do nazwanej osoby | NIEZMIERZONE | **bez zmian** | — |
+| S2.6 | Limiter AI z budżetem per organizacja | W TOKU | **bez zmian** | etap E3 paczki C6, nadal wstrzymany z całością C6 |
+| S2.7 | Eksport i usunięcie organizacji z interfejsu | W TOKU + BLOKER | **CZĘŚCIOWO** | usuwanie teraz bezpieczne przez odmowę (C6-DEL-OFF w kandydacie); pełny eksport nadal HOLD (`c6-export-contract`, kontrakt 1 EXPORT/4 EXCLUDE/1918 UNRESOLVED wg audytu C6 13.09) — **rekomendacja CTO: pilotaż startuje bez pełnego eksportu, pełny eksport = fala 2 (do potwierdzenia słowem właściciela)** |
+| S2.8 | Poczta żywa (zaproszenie, reset hasła) | NIE | **bez zmian** | DEC-471 nadal czeka na dostęp do panelu Hostingera |
+| S2.9 | Dwa magazyny spięte z testem „nowy rekord widać wszędzie” | W TOKU | **bez zmian** | sześciu pisarzy nadal za flagą wyłączoną, niewdrożonych |
+| S2.10 | Decyzja o Finansach | ZAMKNIĘTE | **ZAMKNIĘTE** | bez zmian (DEC-470) |
+| S2.11 | Przewodnik „jak zacząć” w aplikacji | NIE | **bez zmian** | — |
+| S2.12 | Playbook wdrożenia klienta z godzinami | NIE | **bez zmian** | — |
+| S2.13 | Dwa tygodnie pilotażu, zero blokerów na koniec | NIE ROZPOCZĘTY | **bez zmian** | start nadal zależy od S2.1, S2.3 i wdrożenia kandydata (K4→K6) |
+| S2.14 | Zamrożenie „MVP klienta” tagiem i przekazanie | NIE | **bez zmian** | — |
+
+**Werdykt paczki 2:** nadal niegotowa do startu, ale jeden z dwóch krytycznych błędów bezpieczeństwa
+z 12.09 (S2.3) jest już naprawiony i w kandydacie. Drugi (eksport poza organizację) zostaje otwarty
+na gałęzi HOLD poza kandydatem — to jest teraz twardy warunek wstępny razem z kontami pilotażu (S2.1).
+Kryteria zamknięte bez zmian: 1 z 14 (S2.10).
+
+## Paczka 3 — fala 2 (pojemnik 3)
+
+Wiążąca specyfikacja: `docs/program/FALA2/SPEC_FALA2_20260912.md`, rozliczona myśl po myśli w tabeli
+pokrycia na końcu tego dokumentu (196 wierszy, K8 — w toku 13.09). Policzone z tej tabeli: **188 z 196**
+myśli właściciela to fala 2 (109 „F2 docelowo” w Inicjatywach/Realizacji + 72 F2 wprost w pozostałych
+programach + 6 F3 konsolidacja finansowa + 1 wiersz rozgraniczenia F2/F3); **8 z 196** to MVP (już
+policzone w paczce 1 jako S1.14 i S1.15, nie tutaj). Żaden z 13 programów niżej nie ma jeszcze
+rozpoczętej budowy głównego zakresu — poza dwiema gałęziami, które **już są materiałem fali 2**:
+`codex/c6-export-contract-20260912` (+19 patchy, pełny eksport organizacji, dziedziczy z pilotażu
+paczki 2) i `codex/zatwierdzanie-inicjatyw-20260913` (+1 patch, DEC-474, wariant ceremonii
+zatwierdzania w Inicjatywach).
+
+| Program | Źródło (SPEC / notatka) | Myśli z tabeli pokrycia | Stan | Wykonawca |
+|---|---|---|---|---|
+| PMO + statusy + zatwierdzanie | SPEC §1 (N2-B1) | 5 | nierozpoczęty (materiał HOLD: `codex/zatwierdzanie-inicjatyw-20260913`, +1, DEC-474) | Codex, duży prompt |
+| Agent — rozmowa + przepływ klocków jak n8n | SPEC §2 (N2-B2) | 10 | nierozpoczęty | Codex, duży prompt |
+| Spotkania — 3 fazy, kreator 3 tryby, ekran z Teresą, nagranie lokalne/Teams | SPEC „MODUŁ SPOTKANIA” (N1-P11/P12) | 20 | nierozpoczęty | Codex, duży prompt |
+| Finanse — pojedyncze sprawozdanie | SPEC §3 (N2-B3) | 9 (F2) + 1 rozgraniczenie; **konsolidacja 300 spółek = 6 myśli, faza 3, poza zakresem fali 2** | nierozpoczęty (placeholder „wkrótce” C8 E0 już w MVP jako zaślepka menu, nie jako budowa) | Codex, duży prompt |
+| KPI/OKR/ROI — generator + zbieranie danych + eskalacje | SPEC §5 (N2-B5) | 10 | nierozpoczęty | Codex, duży prompt |
+| Kontrakty kanoniczne wszystkich narzędzi | SPEC §7 (N2-B7) | 3 | nierozpoczęty (K8 dopiero rozlicza spec, nie buduje kontraktów) | Codex, duży prompt |
+| Interview — rozmowa z Teresą, generator wniosków, onboarding z listy | SPEC §8 (N2-B8, część F2) | 5 (F2; 4 dalsze myśli tego samego paragrafu = MVP, patrz S1.15) | nierozpoczęty dla części F2; ocena AI (`w05-ai-evaluation`) już w kandydacie MVP, ceremonia zatwierdzania (S1.15) świeżo zlecona osobno | Codex, duży prompt |
+| Tools — pozostałe narzędzia konsultingowe | SPEC §9 (N2-B9) | 2 | nierozpoczęty | Codex, duży prompt |
+| Assessment — SIRI i ADMA | SPEC §10 (N2-B10) | 2 | nierozpoczęty | Codex, duży prompt |
+| Audit — zgodność z normą/instrukcją, generator, wysyłki | SPEC §11 (N2-B11) | 3 | nierozpoczęty | Codex, duży prompt |
+| Integracje z innymi środowiskami | SPEC §4 (N2-B4) | 1 | nierozpoczęty | Codex, duży prompt |
+| Analiza „CEO wielkiej trójki” | SPEC §12 (N2-B12) | 1 | nierozpoczęty | Codex, duży prompt |
+| Docelowy kształt Inicjatyw (4 przyciski: Inicjatywy/Plan/Obciążenie/Raport) i Realizacji (Bank/Praca/Ryzyko/Raporty) | SPEC „MODUŁ INICJATYWY” + „MODUŁ REALIZACJA” (N1-P1–P10), notatka 1 | 110 (109 „F2 docelowo” + 1 F2) | częściowo materiał: **rdzeń** (nie docelowy 4-przyciskowy układ) budowany w kandydacie MVP paczki 1 (IE01 ścieżka inicjatywy, Bank realizacji, rozbicie karty — DEC-476); docelowy układ menu i pełne Plan/Obciążenie/Raport **nierozpoczęte**; materiał HOLD: `codex/zatwierdzanie-inicjatyw-20260913` | Codex, duży prompt |
+
+## Definicja końca każdej paczki i kolejność
+
+**Paczka 1 kończy się**, gdy wszystkie 16 kryteriów S1.1–S1.16 mają werdykt TAK albo świadomie
+zaakceptowane przez właściciela odstępstwo — włącznie z wdrożeniem kandydata, przejściem właściciela
+przez Inicjatywy/Realizację, ręcznym przejściem Idea/Notatki/Dokumenty i zatwierdzaniem odpowiedzi
+Wywiadu. **Paczka 2 kończy się**, gdy pilotaż czterech osób (Tomasz, Justyna, Katarzyna, Irina)
+przejdzie dwa tygodnie na stagingu bez otwartego blokera bezpieczeństwa danych klienta, a granica
+eksportu/usunięcia organizacji jest jednoznacznie ustalona słowem właściciela (pełny eksport w MVP
+albo świadomie odłożony do fali 2). **Paczka 3 nie ma jednego zamknięcia** — kończy się per program:
+każdy z 13 programów wyżej ma własny duży prompt do Codexa, własny niezależny przegląd i własny
+odbiór wzrokowy nadzorcy przed pokazaniem właścicielowi (zakaz masowego włączania, jeden po drugim).
+
+**Kolejność:** paczka 1 (K2 → K3 → K4 → K5 → S1.14–S1.16) → paczka 2 (K6, pilotaż 2 tygodnie na
+stagingu) → paczka 3 równolegle u Codexa od dziś (K9, zaczynając od PMO i Agenta jako fundamentu pod
+pozostałe programy).
