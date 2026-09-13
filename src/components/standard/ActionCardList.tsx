@@ -10,6 +10,7 @@ export interface ActionCardListProps {
   onCreateTask?: (card: ActionCardModel) => void;
   /** P7K część B — „Zamknij kartę". Opcjonalne. */
   onCloseCard?: (card: ActionCardModel) => void;
+  onReopenCard?: (card: ActionCardModel) => void;
   /** Identyfikator karty, na której trwa zapis — jej przyciski są zablokowane. */
   busyId?: string | null;
   emptyLabel?: string;
@@ -20,6 +21,7 @@ export function ActionCardList({
   onOpen,
   onCreateTask,
   onCloseCard,
+  onReopenCard,
   busyId = null,
   emptyLabel = '—',
 }: ActionCardListProps) {
@@ -34,6 +36,7 @@ export function ActionCardList({
           onOpen={onOpen}
           onCreateTask={onCreateTask}
           onCloseCard={onCloseCard}
+          onReopenCard={onReopenCard}
           busy={busyId === card.id}
         />
       ))}

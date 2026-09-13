@@ -1,0 +1,284 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny
+
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER sees announcement without mounting finance 77ms
+   → Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mFINANCE_ENGINE[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER has visible unlocked announcement across menu gates 3ms
+   → expected undefined to match object { badge: 'soon' }
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN sees announcement without mounting finance 9ms
+   → Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mFINANCE_ENGINE[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN has visible unlocked announcement across menu gates 1ms
+   → expected undefined to match object { badge: 'soon' }
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER sees announcement without mounting finance 8ms
+   → Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER has visible unlocked announcement across menu gates 1ms
+   → expected undefined to match object { badge: 'soon' }
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER sees announcement without mounting finance 5ms
+   → Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER has visible unlocked announcement across menu gates 1ms
+   → expected undefined to match object { badge: 'soon' }
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > preserves backend beta closed and meeting default hiding 0ms
+ × src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > allows canonical and legacy finance deep links through pilot routing only 1ms
+   → expected false to be true // Object.is equality
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > unauthenticated caller mounts no finance or announcement 2ms
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx (11 tests | 9 failed) 109ms
+     × OWNER sees announcement without mounting finance 77ms
+     × OWNER has visible unlocked announcement across menu gates 3ms
+     × ADMIN sees announcement without mounting finance 9ms
+     × ADMIN has visible unlocked announcement across menu gates 1ms
+     × USER sees announcement without mounting finance 8ms
+     × USER has visible unlocked announcement across menu gates 1ms
+     × MEMBER sees announcement without mounting finance 5ms
+     × MEMBER has visible unlocked announcement across menu gates 1ms
+     ✓ preserves backend beta closed and meeting default hiding 0ms
+     × allows canonical and legacy finance deep links through pilot routing only 1ms
+     ✓ unauthenticated caller mounts no finance or announcement 2ms
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)
+   Start at  10:41:35
+   Duration  996ms (transform 303ms, setup 97ms, import 458ms, tests 109ms, environment 239ms)
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)
+   Start at  10:41:35
+   Duration  1.00s (transform 303ms, setup 97ms, import 458ms, tests 109ms, environment 239ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny/junit.xml
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER sees announcement without mounting finance
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN sees announcement without mounting finance
+TestingLibraryElementError: Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mFINANCE_ENGINE[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:26:21
+     24|         </MemoryRouter>
+     25|       );
+     26|       expect(screen.getByRole('heading', { name: 'Finance — Coming soo…
+       |                     ^
+     27|       expect(mount).not.toHaveBeenCalled();
+     28|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER has visible unlocked announcement across menu gates
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN has visible unlocked announcement across menu gates
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER has visible unlocked announcement across menu gates
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER has visible unlocked announcement across menu gates
+AssertionError: expected undefined to match object { badge: 'soon' }
+
+- Expected:
+{
+  "badge": "soon",
+}
+
++ Received:
+undefined
+
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:34:23
+     32|       const menu = declutterMenu(lockClosedBetaModules(publicMenu, rol…
+     33|       const finance = menu.find((i) => i.id === 'MODULE_ECONOMICS');
+     34|       expect(finance).toMatchObject({ badge: 'soon' });
+       |                       ^
+     35|       expect(finance?.isLocked).not.toBe(true);
+     36|       expect(isPilotAllowedMenuId('MODULE_ECONOMICS')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER sees announcement without mounting finance
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER sees announcement without mounting finance
+TestingLibraryElementError: Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:26:21
+     24|         </MemoryRouter>
+     25|       );
+     26|       expect(screen.getByRole('heading', { name: 'Finance — Coming soo…
+       |                     ^
+     27|       expect(mount).not.toHaveBeenCalled();
+     28|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > allows canonical and legacy finance deep links through pilot routing only
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:55:40
+     53|       '/economics/legacy',
+     54|     ])
+     55|       expect(isPilotAllowedPath(path)).toBe(true);
+       |                                        ^
+     56|     expect(isPilotAllowedPath('/finance-secrets')).toBe(false);
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER sees announcement without mounting finance
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN sees announcement without mounting finance
+TestingLibraryElementError: Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mFINANCE_ENGINE[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:26:21
+     24|         </MemoryRouter>
+     25|       );
+     26|       expect(screen.getByRole('heading', { name: 'Finance — Coming soo…
+       |                     ^
+     27|       expect(mount).not.toHaveBeenCalled();
+     28|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER has visible unlocked announcement across menu gates
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN has visible unlocked announcement across menu gates
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER has visible unlocked announcement across menu gates
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER has visible unlocked announcement across menu gates
+AssertionError: expected undefined to match object { badge: 'soon' }
+
+- Expected:
+{
+  "badge": "soon",
+}
+
++ Received:
+undefined
+
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:34:23
+     32|       const menu = declutterMenu(lockClosedBetaModules(publicMenu, rol…
+     33|       const finance = menu.find((i) => i.id === 'MODULE_ECONOMICS');
+     34|       expect(finance).toMatchObject({ badge: 'soon' });
+       |                       ^
+     35|       expect(finance?.isLocked).not.toBe(true);
+     36|       expect(isPilotAllowedMenuId('MODULE_ECONOMICS')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER sees announcement without mounting finance
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER sees announcement without mounting finance
+TestingLibraryElementError: Unable to find an accessible element with the role "heading" and name "Finance — Coming soon"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:26:21
+     24|         </MemoryRouter>
+     25|       );
+     26|       expect(screen.getByRole('heading', { name: 'Finance — Coming soo…
+       |                     ^
+     27|       expect(mount).not.toHaveBeenCalled();
+     28|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > allows canonical and legacy finance deep links through pilot routing only
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/Finance/__tests__/financeWave2Gate.test.tsx:55:40
+     53|       '/economics/legacy',
+     54|     ])
+     55|       expect(isPilotAllowedPath(path)).toBe(true);
+       |                                        ^
+     56|     expect(isPilotAllowedPath('/finance-secrets')).toBe(false);
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+

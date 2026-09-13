@@ -4,8 +4,8 @@ import type { CapacityScenario } from './capacityScenario.js';
 import type { InitiativeCardSelectionItem } from './configureInitiativeCards.js';
 import { gateRule, type GovernanceGate } from './organizationGovernance.js';
 import type { PlanScenario } from './planScenario.js';
-import type { PortfolioScenario } from './portfolioScenario.js';
 import type { PortfolioDecision } from './portfolioDecision.js';
+import type { PortfolioScenario } from './portfolioScenario.js';
 import type { EffectiveGovernancePolicy } from './postgresGovernancePolicyResolver.js';
 import type { RegisteredInitiative } from './registerInitiative.js';
 import type { ModuleInitiativeForPlanning } from './registerModuleInitiativeForPlanning.js';
@@ -60,6 +60,7 @@ export interface InitiativeCardVersionReadModel {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
+  reviewedBy?: string | null;
   publishedBy: string;
   publishedAt: string;
 }
@@ -301,7 +302,10 @@ export class PostgresInitiativeReader {
     initiativeIds: string[]
   ): Promise<Record<string, number>> {
     if (!initiativeIds.length) return {};
-    const result = await this.pool.query<{ id: string; required_capacity_fte: string | number | null }>(
+    const result = await this.pool.query<{
+      id: string;
+      required_capacity_fte: string | number | null;
+    }>(
       `SELECT id, required_capacity_fte FROM initiatives
         WHERE organization_id=$1 AND id = ANY($2::text[])`,
       [organizationId, initiativeIds]
@@ -460,6 +464,18 @@ export class PostgresInitiativeReader {
       state: String(r.payload_json.state),
       executionManagerId: String(r.payload_json.executionManagerId),
       handoffPackageId: String(r.payload_json.handoffPackageId),
+      handoffPackageVersion:
+        Number.isInteger(r.payload_json.handoffPackageVersion) &&
+        Number(r.payload_json.handoffPackageVersion) > 0
+          ? Number(r.payload_json.handoffPackageVersion)
+          : null,
+      acceptedBaseline:
+        r.payload_json.acceptedBaseline &&
+        typeof r.payload_json.acceptedBaseline === 'object' &&
+        !Array.isArray(r.payload_json.acceptedBaseline)
+          ? (r.payload_json.acceptedBaseline as Record<string, unknown>)
+          : null,
+      acceptedAt: typeof r.payload_json.acceptedAt === 'string' ? r.payload_json.acceptedAt : null,
       updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
     }));
   }
@@ -1864,13 +1880,14 @@ export class PostgresInitiativeReader {
       content_json: Record<string, unknown>;
       evidence_refs_json: string[];
       waiver_decision_id: string | null;
+      reviewed_by: string | null;
       published_by: string;
       published_at: Date | string;
     }>(
       `SELECT DISTINCT ON (card_key)
               card_key, card_version, aggregate_version, applicability, completion,
               quality, freshness, review_state, content_json, evidence_refs_json,
-              waiver_decision_id, published_by, published_at
+              waiver_decision_id, reviewed_by, published_by, published_at
          FROM ie_initiative_card_versions
         WHERE organization_id = $1 AND initiative_id = $2
         ORDER BY card_key, card_version DESC`,
@@ -1888,6 +1905,7 @@ export class PostgresInitiativeReader {
       content: row.content_json,
       evidenceRefs: row.evidence_refs_json,
       waiverDecisionId: row.waiver_decision_id,
+      reviewedBy: row.reviewed_by,
       publishedBy: row.published_by,
       publishedAt:
         row.published_at instanceof Date
@@ -1920,6 +1938,31 @@ export class PostgresInitiativeReader {
       requiredness: row.requiredness,
       waiverDecisionId: row.waiver_decision_id,
     }));
+  }
+
+  async listDefinitionApprovalDecisions(
+    organizationId: string,
+    initiativeId?: string
+  ): Promise<Array<Record<string, any> & { version: number }>> {
+    const rows = await this.pool.query<{ version: number; payload_json: Record<string, any> }>(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='decision' AND payload_json->>'gate'='DEFINITION'
+         AND ($2::text IS NULL OR payload_json->>'initiativeId'=$2) ORDER BY updated_at DESC`,
+      [organizationId, initiativeId ?? null]
+    );
+    return rows.rows.map((row) => ({ ...row.payload_json, version: row.version }));
+  }
+
+  async listDefinitionApprovalMembers(organizationId: string, projectId: string) {
+    const rows = await this.pool.query<{ id: string; name: string; role: string }>(
+      `SELECT DISTINCT u.id,trim(concat(u.first_name,' ',u.last_name)) AS name,om.role
+       FROM users u JOIN organization_members om ON om.user_id=u.id AND om.organization_id=$1
+       JOIN project_members pm ON pm.user_id=u.id AND pm.project_id=$2
+       JOIN projects p ON p.id=pm.project_id AND p.organization_id=om.organization_id
+       WHERE om.organization_id=$1 AND UPPER(om.status)='ACTIVE' AND LOWER(u.status)='active' ORDER BY u.id`,
+      [organizationId, projectId]
+    );
+    return rows.rows;
   }
 
   async listPendingDefinitionDecisions(

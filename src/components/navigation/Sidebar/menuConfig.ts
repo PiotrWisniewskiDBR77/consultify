@@ -153,7 +153,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       label: t('sidebar.economics', 'Finance'),
       icon: React.createElement(Calculator, { size: 20 }),
       viewId: AppView.ECONOMICS,
-      badge: 'beta',
+      badge: 'soon',
     },
     // 9. Materiały — ONE unified module: library (table) of all created materials
     // (decks, reports, tables, templates) + "Nowy" creation. Consolidates the former

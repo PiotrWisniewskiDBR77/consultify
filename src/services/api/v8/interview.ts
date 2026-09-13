@@ -609,6 +609,11 @@ export const V8InterviewApi = {
       payload ?? {}
     ),
 
+  getAssignmentReviewAccess: (id: string) =>
+    v8Get<{ canReview: boolean; projectId: string | null }>(
+      `/interview/assignments/${encodeURIComponent(id)}/review-access`
+    ),
+
   getMyAssignments: () =>
     v8Get<{ assignments: V8InterviewAssignment[] }>('/interview/assignments/my'),
 

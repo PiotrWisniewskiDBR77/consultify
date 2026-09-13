@@ -1982,6 +1982,8 @@ router.get(
       aggregatedNotifications.push(...Array.from(byKey.values()));
     }
 
+    // PostgreSQL returns timestamp columns as Date objects; the inbox contract
+    // and its newToday counter require ISO strings for every source below.
     const items: InboxItem[] = [];
 
     for (const t of overdueTasks) {
@@ -2028,7 +2030,7 @@ router.get(
       const triaged = triagedMap.get(key);
       const section: InboxSection = 'blocked_escalations';
       const urgency: InboxUrgency = urgencyFromPriority(t.priority);
-      const receivedAt = t.blockedAt || t.updatedAt || t.createdAt || nowIso;
+      const receivedAt = new Date(t.blockedAt || t.updatedAt || t.createdAt || nowIso).toISOString();
       const dueDate = t.dueDate ? new Date(t.dueDate).toISOString() : undefined;
       const descParts = [
         t.blockedReason ? `Blocked: ${String(t.blockedReason)}` : null,
@@ -2072,7 +2074,7 @@ router.get(
       const triaged = triagedMap.get(key);
       const section: InboxSection = 'assigned_tasks';
       const urgency: InboxUrgency = urgencyFromPriority(t.priority);
-      const receivedAt = t.updatedAt || t.createdAt || nowIso;
+      const receivedAt = new Date(t.updatedAt || t.createdAt || nowIso).toISOString();
       const dueDate = t.dueDate ? new Date(t.dueDate).toISOString() : undefined;
       items.push({
         id: `inbox-${uuidv4()}`,
@@ -2111,7 +2113,7 @@ router.get(
       const triaged = triagedMap.get(key);
       const urgency = urgencyFromPriority(d.priority);
       const section: InboxSection = 'decisions_required';
-      const receivedAt = d.createdAt || nowIso;
+      const receivedAt = new Date(d.createdAt || nowIso).toISOString();
       const dueDate = d.dueDate ? new Date(d.dueDate).toISOString() : undefined;
       items.push({
         id: `inbox-${uuidv4()}`,
@@ -2153,7 +2155,7 @@ router.get(
                 : inboxType === 'mention'
                   ? 'fyi_mentions'
                   : 'fyi_system';
-      const receivedAt = n.createdAt || nowIso;
+      const receivedAt = new Date(n.createdAt || nowIso).toISOString();
       const sourceType: 'user' | 'system' | 'ai' =
         inboxType === 'ai_suggestion'
           ? 'ai'

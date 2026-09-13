@@ -1,0 +1,141 @@
+{
+  "capturedAt": "2026-09-12T09:11:11.096Z",
+  "name": "Admin",
+  "phase": "before",
+  "url": "/admin/team/members",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1207
+  },
+  "readyFromTriggerMs": 1346,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3348,
+  "totalCaptureMs": 3423,
+  "scriptBytes": {
+    "requestCount": 8,
+    "decodedBodyBytes": 586012,
+    "encodedBodyBytes": 121412,
+    "transferBytes": 123812,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/AdminView-DzujEJoe.js",
+      "initiatorType": "script",
+      "startTime": 48121.40000000596,
+      "responseEnd": 48134.60000000149,
+      "duration": 13.199999995529652,
+      "decodedBodySize": 536849,
+      "encodedBodySize": 107589,
+      "transferSize": 107889,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/DesktopOnlyGuard-DiyTPTEl.js",
+      "initiatorType": "script",
+      "startTime": 48121.5,
+      "responseEnd": 48126.80000000447,
+      "duration": 5.300000004470348,
+      "decodedBodySize": 1368,
+      "encodedBodySize": 742,
+      "transferSize": 1042,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/AIMissionControl-DQUpb_FC.js",
+      "initiatorType": "script",
+      "startTime": 48121.60000000149,
+      "responseEnd": 48126.90000000596,
+      "duration": 5.300000004470348,
+      "decodedBodySize": 9845,
+      "encodedBodySize": 2967,
+      "transferSize": 3267,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/AdminState-C_-9zysk.js",
+      "initiatorType": "script",
+      "startTime": 48121.70000000298,
+      "responseEnd": 48126.60000000149,
+      "duration": 4.899999998509884,
+      "decodedBodySize": 2257,
+      "encodedBodySize": 911,
+      "transferSize": 1211,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/TabLayout-UP90C0KG.js",
+      "initiatorType": "script",
+      "startTime": 48121.80000000447,
+      "responseEnd": 48126.80000000447,
+      "duration": 5,
+      "decodedBodySize": 2100,
+      "encodedBodySize": 840,
+      "transferSize": 1140,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/InfoButton-DjGCirJl.js",
+      "initiatorType": "script",
+      "startTime": 48121.90000000596,
+      "responseEnd": 48127.10000000149,
+      "duration": 5.199999995529652,
+      "decodedBodySize": 6370,
+      "encodedBodySize": 2041,
+      "transferSize": 2341,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/scroll-area-BOv_StCs.js",
+      "initiatorType": "script",
+      "startTime": 48122,
+      "responseEnd": 48129,
+      "duration": 7,
+      "decodedBodySize": 594,
+      "encodedBodySize": 594,
+      "transferSize": 894,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/AdminTokenPackages-BzAEReOC.js",
+      "initiatorType": "script",
+      "startTime": 48122,
+      "responseEnd": 48129.20000000298,
+      "duration": 7.200000002980232,
+      "decodedBodySize": 26629,
+      "encodedBodySize": 5728,
+      "transferSize": 6028,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 2,
+  "apiRequests": [
+    "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+    "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/admin/invitations"
+  ],
+  "scriptRequests": [
+    "/assets/AdminState-C_-9zysk.js",
+    "/assets/TabLayout-UP90C0KG.js",
+    "/assets/DesktopOnlyGuard-DiyTPTEl.js",
+    "/assets/AIMissionControl-DQUpb_FC.js",
+    "/assets/InfoButton-DjGCirJl.js",
+    "/assets/scroll-area-BOv_StCs.js",
+    "/assets/AdminTokenPackages-BzAEReOC.js",
+    "/assets/AdminView-DzujEJoe.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nAdmin\nOverview\nData\nModel\n1\nLocal Reviewer\nLR\nBack\nADMIN PANEL\n\nAccess, organization policies, evidence, and safe operations\n\nTEAM & ACCESS\nMembers\nInvitations\nRoles & Permissions\nTeams\nGuests & External Access\nAccess Requests\nAccess Reviews\nOwnership\nBILLING & PLANS\nAI CONTROL\nSECURITY & IDENTITY\nAUDIT LOG\nADMIN COMMAND CENTER\nSYSTEM HEALTH\nAdmin panel\nTeam & Access\nMembers\nMembers\n\nMembership operations, role changes, ownership transfer, and team invite codes.\n\nOwner\n\nFull workspace control, ownership transfer, and owner-only safeguards.\n\nOnly an owner can assign or remove another owner.\n\nAdmin\n\nCan manage team members, member roles, and team invite codes.\n\nCannot change owner membership or bypass owner protections.\n\nMember\n\nStandard workspace access without team administration permissions.\n\nCannot open Team Admin or change membership.\n\nGuest\n\nRestricted collaborator role with no admin access.\n\nGuests cannot access admin tools.\n\nMembers & Roles\n\nCanonical P32 surface for membership, role changes, and ownership safeguards.\n\nInvitation role\nMember\nAdmin\nGuest\nAdd member\nMEMBER\n\t\nEMAIL\n\t\nROLE\n\t\nSTATUS\n\t\n\n\nJames Whitfield\n\t\njames.whitfield@northwind.example\n\t\nRole for James Whitfield\nOwner\nAdmin\nMember\nGuest\n\t\nActive\n\t\n\n\nMichael Grant\n\t\nmichael.grant@northwind.example\n\t\nRole for Michael Grant\nOwner\nAdmin\nMember\nGuest\n\t\nActive\n\t\n\n\nPriya Sharma\n\t\npriya.sharma@northwind.example\n\t\nRole for Priya Sharma\nOwner\nAdmin\nMember\nGuest\n\t\nActive\n\t\n\n\nEmily Carter\n\t\nemily.carter@northwind.example\n\t\nRole for Emily Carter\nOwner\nAdmin\nMem"
+}

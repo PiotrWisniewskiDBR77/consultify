@@ -311,6 +311,30 @@ export interface InsightSourceMaterialSummary {
   };
 }
 
+/** Server-recorded enrichment lookup for export source accounting, not a KB ACL. */
+export interface InsightEvidenceEnrichment {
+  version: 1;
+  lookupComplete: boolean;
+  questionIds: string[];
+  evidenceIds: string[];
+  knowledgeDocumentIds: string[];
+}
+
+export interface InsightGenerationRunStamp {
+  version: 1;
+  runId: string;
+  status: 'generating' | 'completed' | 'failed';
+  startedAt: string;
+  completedAt?: string;
+  failedAt?: string;
+}
+
+interface InsightGenerationAttempt {
+  runId: string;
+  startedAt: string;
+  expectedContextJson: string;
+}
+
 export interface InsightGenerationPreferences {
   outputTypes: string[];
   analysisModes: InsightAnalysisMode[];
@@ -1493,12 +1517,14 @@ class InterviewInsightService {
 
   private buildGenerationContext(params: {
     createdAt: string;
+    generationRun: InsightGenerationRunStamp;
     analysisScope: InsightAnalysisScope;
     generationPreferences?: InsightGenerationPreferences;
     approvedOrgKnowledgePack: ApprovedOrgKnowledgePack;
     contextDocumentPack: ContextDocumentPack;
     sourceMaterialSummary?: InsightSourceMaterialSummary;
     evidenceValidation?: InsightEvidenceValidationResult;
+    evidenceEnrichment?: InsightEvidenceEnrichment;
   }): Record<string, any> {
     const generationContract = buildInsightGenerationContract();
 
@@ -1508,11 +1534,13 @@ class InterviewInsightService {
       analysisMode: params.analysisScope.analysis_mode,
       topicFocus: params.analysisScope.topic_focus,
       createdAt: params.createdAt,
+      generationRun: params.generationRun,
       ...(params.generationPreferences
         ? { generationPreferences: params.generationPreferences }
         : {}),
       ...(params.sourceMaterialSummary ? { sourceMaterial: params.sourceMaterialSummary } : {}),
       ...(params.evidenceValidation ? { evidenceValidation: params.evidenceValidation } : {}),
+      ...(params.evidenceEnrichment ? { evidenceEnrichment: params.evidenceEnrichment } : {}),
       approvedOrgKnowledgePack: {
         requested: params.approvedOrgKnowledgePack.requested,
         available: params.approvedOrgKnowledgePack.available,
@@ -1871,13 +1899,26 @@ class InterviewInsightService {
       analysisScope,
       customPrompt: input.customPrompt,
     });
+    const generationRun: InsightGenerationRunStamp = {
+      version: 1,
+      runId: uuidv4(),
+      status: 'generating',
+      startedAt: now,
+    };
     const generationContext = this.buildGenerationContext({
       createdAt: now,
+      generationRun,
       analysisScope,
       generationPreferences,
       approvedOrgKnowledgePack,
       contextDocumentPack,
     });
+    const generationContextJson = JSON.stringify(generationContext);
+    const generationAttempt: InsightGenerationAttempt = {
+      runId: generationRun.runId,
+      startedAt: generationRun.startedAt,
+      expectedContextJson: generationContextJson,
+    };
 
     // Create insight record
     await db.run(
@@ -1901,7 +1942,7 @@ class InterviewInsightService {
         analysisScope.context_mode,
         analysisScope.analysis_mode,
         JSON.stringify(analysisScope.topic_focus),
-        JSON.stringify(generationContext),
+        generationContextJson,
         input.createdBy,
         now,
         now,
@@ -1933,10 +1974,12 @@ class InterviewInsightService {
         approvedOrgKnowledgePack,
         contextDocumentPack,
         input.createdBy,
-        generationPreferences
+        generationPreferences,
+        generationAttempt
       ),
       id,
-      input.organizationId
+      input.organizationId,
+      generationAttempt
     );
 
     return this.getById(id) as Promise<Insight>;
@@ -1991,10 +2034,35 @@ class InterviewInsightService {
     if (!insight) return null;
 
     const now = new Date().toISOString();
+    const generationRun: InsightGenerationRunStamp = {
+      version: 1,
+      runId: uuidv4(),
+      status: 'generating',
+      startedAt: now,
+    };
+    const generatingContext = {
+      ...(insight.generationContext || {}),
+      createdAt: now,
+      generationRun,
+      evidenceEnrichment: {
+        version: 1,
+        lookupComplete: false,
+        questionIds: [],
+        evidenceIds: [],
+        knowledgeDocumentIds: [],
+      } satisfies InsightEvidenceEnrichment,
+    };
+    const generationContextJson = JSON.stringify(generatingContext);
+    const generationAttempt: InsightGenerationAttempt = {
+      runId: generationRun.runId,
+      startedAt: generationRun.startedAt,
+      expectedContextJson: generationContextJson,
+    };
 
     await db.run(
       `UPDATE interview_insights
        SET status = 'generating',
+           generation_context_json = ?,
            content = NULL,
            executive_summary = NULL,
            themes_json = NULL,
@@ -2006,7 +2074,7 @@ class InterviewInsightService {
            error_message = NULL,
            updated_at = ?
        WHERE id = ?`,
-      [now, id]
+      [generationContextJson, now, id]
     );
 
     // Restart generation
@@ -2042,10 +2110,12 @@ class InterviewInsightService {
         undefined,
         undefined,
         insight.createdBy,
-        generationPreferences
+        generationPreferences,
+        generationAttempt
       ),
       id,
-      insight.organizationId
+      insight.organizationId,
+      generationAttempt
     );
 
     return this.getById(id);
@@ -2432,6 +2502,54 @@ Rules:
     return buildInsightMaterialQuality(sessionData, v6Data);
   }
 
+  private async markGenerationFailed(
+    db: IDatabase,
+    insightId: string,
+    generationAttempt: InsightGenerationAttempt,
+    message: string
+  ): Promise<boolean> {
+    const failedAt = new Date().toISOString();
+    const startContext = safeJsonObject<Record<string, unknown>>(
+      generationAttempt.expectedContextJson,
+      {}
+    );
+    const failedContextJson = JSON.stringify({
+      ...startContext,
+      generationRun: {
+        version: 1,
+        runId: generationAttempt.runId,
+        status: 'failed',
+        startedAt: generationAttempt.startedAt,
+        failedAt,
+      } satisfies InsightGenerationRunStamp,
+      evidenceEnrichment: {
+        version: 1,
+        lookupComplete: false,
+        questionIds: [],
+        evidenceIds: [],
+        knowledgeDocumentIds: [],
+      } satisfies InsightEvidenceEnrichment,
+    });
+    const result = await db.run(
+      `UPDATE interview_insights
+          SET status = 'failed',
+              error_message = ?,
+              generation_context_json = ?,
+              updated_at = ?
+        WHERE id = ?
+          AND status = 'generating'
+          AND generation_context_json = ?`,
+      [
+        message.slice(0, 500),
+        failedContextJson,
+        failedAt,
+        insightId,
+        generationAttempt.expectedContextJson,
+      ]
+    );
+    return result.changes === 1;
+  }
+
   /**
    * H5.5: Detach background insight generation with an error boundary.
    * generateInsight self-handles its own failures (status → 'failed'), but if
@@ -2443,7 +2561,8 @@ Rules:
   private detachGeneration(
     promise: Promise<void>,
     insightId: string,
-    organizationId: string
+    organizationId: string,
+    generationAttempt: InsightGenerationAttempt
   ): void {
     promise.catch(async (err: unknown) => {
       const message = err instanceof Error ? err.message : String(err);
@@ -2453,12 +2572,7 @@ Rules:
       );
       try {
         const db = await this.getDb();
-        await db.run(
-          `UPDATE interview_insights
-              SET status = 'failed', error_message = ?, updated_at = ?
-            WHERE id = ? AND status = 'generating'`,
-          [message.slice(0, 500), new Date().toISOString(), insightId]
-        );
+        await this.markGenerationFailed(db, insightId, generationAttempt, message);
       } catch (markErr) {
         logger.warn(
           `[InterviewInsightService] failed to mark insight=${insightId} failed after crash: ${
@@ -2482,10 +2596,15 @@ Rules:
     approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack,
     contextDocumentPack?: ContextDocumentPack,
     userId?: string,
-    generationPreferences?: InsightGenerationPreferences
+    generationPreferences?: InsightGenerationPreferences,
+    generationAttempt?: InsightGenerationAttempt
   ): Promise<void> {
     const db = await this.getDb();
     const startTime = Date.now();
+
+    if (!generationAttempt) {
+      throw new Error('Interview insight generation attempt is required');
+    }
 
     // The card title (§A2) lives on the insight row, not in the generated V6
     // payload. Load it so the CARD_CONTENT_FORMULA guardian scores the real
@@ -2503,7 +2622,19 @@ Rules:
 
     try {
       const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds, filters: {} });
-      const sessionData = await this.fetchSessionData(sessionIds, organizationId, scope);
+      const evidenceEnrichment: InsightEvidenceEnrichment = {
+        version: 1,
+        lookupComplete: false,
+        questionIds: [],
+        evidenceIds: [],
+        knowledgeDocumentIds: [],
+      };
+      const sessionData = await this.fetchSessionData(
+        sessionIds,
+        organizationId,
+        scope,
+        evidenceEnrichment
+      );
 
       if (sessionData.length === 0) {
         throw new Error('No scoped session data available for analysis');
@@ -2686,7 +2817,35 @@ Rules:
         }
       );
 
-      await db.run(
+      const completedAt = new Date().toISOString();
+      const completedContextJson = JSON.stringify(
+        this.buildGenerationContext({
+          createdAt: generationAttempt.startedAt,
+          generationRun: {
+            version: 1,
+            runId: generationAttempt.runId,
+            status: 'completed',
+            startedAt: generationAttempt.startedAt,
+            completedAt,
+          },
+          analysisScope: scope,
+          generationPreferences,
+          approvedOrgKnowledgePack: orgKnowledgePack,
+          contextDocumentPack:
+            contextDocumentPack ||
+            ({
+              requestedIds: [],
+              selectedIds: [],
+              degraded: false,
+              degradedReasons: [],
+              documents: [],
+            } as ContextDocumentPack),
+          sourceMaterialSummary,
+          evidenceValidation,
+          evidenceEnrichment,
+        })
+      );
+      const completion = await db.run(
         `UPDATE interview_insights
          SET status = 'completed',
              content = ?,
@@ -2702,7 +2861,9 @@ Rules:
              tokens_used = ?,
              generation_time_ms = ?,
              updated_at = ?
-         WHERE id = ?`,
+         WHERE id = ?
+           AND status = 'generating'
+           AND generation_context_json = ?`,
         [
           markdownContent,
           v6Data.executive_summary,
@@ -2713,31 +2874,20 @@ Rules:
           JSON.stringify(v6Data.evidence_map),
           JSON.stringify(v6Data.missing_data),
           JSON.stringify(materialQuality),
-          JSON.stringify(
-            this.buildGenerationContext({
-              createdAt: new Date(startTime).toISOString(),
-              analysisScope: scope,
-              generationPreferences,
-              approvedOrgKnowledgePack: orgKnowledgePack,
-              contextDocumentPack:
-                contextDocumentPack ||
-                ({
-                  requestedIds: [],
-                  selectedIds: [],
-                  degraded: false,
-                  degradedReasons: [],
-                  documents: [],
-                } as ContextDocumentPack),
-              sourceMaterialSummary,
-              evidenceValidation,
-            })
-          ),
+          completedContextJson,
           tokensUsed,
           generationTime,
-          new Date().toISOString(),
+          completedAt,
           insightId,
+          generationAttempt.expectedContextJson,
         ]
       );
+      if (completion.changes !== 1) {
+        logger.info(
+          `[InterviewInsightService] Ignored stale completion insight=${insightId} run=${generationAttempt.runId}`
+        );
+        return;
+      }
 
       await this.recordInsightContextLineage({
         insightId,
@@ -2792,12 +2942,7 @@ Rules:
       const err = error as Error;
       logger.error(`[InterviewInsightService] Failed to generate insight ${insightId}:`, err);
 
-      await db.run(
-        `UPDATE interview_insights
-         SET status = 'failed', error_message = ?, updated_at = ?
-         WHERE id = ?`,
-        [err.message, new Date().toISOString(), insightId]
-      );
+      await this.markGenerationFailed(db, insightId, generationAttempt, err.message);
     }
   }
 
@@ -2833,7 +2978,8 @@ Rules:
   private async fetchSessionData(
     sessionIds: string[],
     organizationId: string,
-    analysisScope?: InsightAnalysisScope
+    analysisScope?: InsightAnalysisScope,
+    evidenceEnrichment?: InsightEvidenceEnrichment
   ): Promise<any[]> {
     const db = await this.getDb();
     if (sessionIds.length === 0) return [];
@@ -2922,7 +3068,8 @@ Rules:
       );
       const evidenceByQuestionId = await this.fetchEvidenceForQuestionIds(
         allQuestionIds,
-        organizationId
+        organizationId,
+        evidenceEnrichment
       );
       if (evidenceByQuestionId.size > 0) {
         for (const session of sessionData) {
@@ -2953,14 +3100,19 @@ Rules:
    */
   private async fetchEvidenceForQuestionIds(
     questionIds: string[],
-    organizationId: string
+    organizationId: string,
+    provenance?: InsightEvidenceEnrichment
   ): Promise<Map<string, Array<{ title: string; url: string | null; snippet: string }>>> {
     const EVIDENCE_PER_QUESTION = 3;
     const SNIPPET_MAX_CHARS = 500;
     const result = new Map<string, Array<{ title: string; url: string | null; snippet: string }>>();
 
     const ids = Array.from(new Set(questionIds.filter(Boolean)));
-    if (ids.length === 0) return result;
+    if (provenance) provenance.questionIds = ids;
+    if (ids.length === 0) {
+      if (provenance) provenance.lookupComplete = true;
+      return result;
+    }
 
     try {
       const db = await this.getDb();
@@ -2974,6 +3126,20 @@ Rules:
           ORDER BY created_at ASC`,
         [organizationId, ...ids]
       );
+      // Capture every selected row, including rows beyond prompt display caps.
+      // A missing KB chunk is not evidence of authorization or of no KB input.
+      if (provenance) {
+        provenance.lookupComplete = Array.isArray(rows);
+        provenance.evidenceIds = (rows || []).map((row: any) => String(row.id));
+        provenance.knowledgeDocumentIds = Array.from(
+          new Set(
+            (rows || [])
+              .map((row: any) => row.knowledge_document_id)
+              .filter(Boolean)
+              .map(String)
+          )
+        );
+      }
       if (!rows || rows.length === 0) return result;
 
       // Batch-resolve a first-chunk KB excerpt per distinct knowledge_document_id

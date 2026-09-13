@@ -1,0 +1,407 @@
+{
+  "captures": [
+    {
+      "url": "http://127.0.0.1:5214/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "cardId": "274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "theme": "light",
+      "state": "closed",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "luma": 247.71400187253084,
+      "capturedAt": "2026-09-12T08:18:32.341Z",
+      "pageErrors": [],
+      "harnessHttpErrors": [
+        "http://127.0.0.1:5214/api/csrf-token",
+        "http://127.0.0.1:5214/api/health"
+      ],
+      "lifecycle": [
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+          "method": "POST",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:5214/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "cardId": "274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "theme": "light",
+      "state": "reopened-reload",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "luma": 247.79603135185187,
+      "capturedAt": "2026-09-12T08:18:34.141Z",
+      "pageErrors": [],
+      "harnessHttpErrors": [
+        "http://127.0.0.1:5214/api/csrf-token",
+        "http://127.0.0.1:5214/api/health"
+      ],
+      "lifecycle": [
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:5214/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "cardId": "274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "theme": "dark",
+      "state": "closed",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "luma": 24.916954348456787,
+      "capturedAt": "2026-09-12T08:18:38.006Z",
+      "pageErrors": [],
+      "harnessHttpErrors": [
+        "http://127.0.0.1:5214/api/csrf-token",
+        "http://127.0.0.1:5214/api/health"
+      ],
+      "lifecycle": [
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+          "method": "POST",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:5214/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "cardId": "274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "theme": "dark",
+      "state": "reopened-reload",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "luma": 24.845698366512348,
+      "capturedAt": "2026-09-12T08:18:39.823Z",
+      "pageErrors": [],
+      "harnessHttpErrors": [
+        "http://127.0.0.1:5214/api/csrf-token",
+        "http://127.0.0.1:5214/api/health"
+      ],
+      "lifecycle": [
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "http": [
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/health",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/health",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/health",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/health",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/csrf-token",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/health",
+      "status": 404
+    }
+  ],
+  "lifecycle": [
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errorClassification": {
+    "productPageErrors": 0,
+    "harness404": "Minimal ApiGateway harness does not mount index.ts /api/health or /api/csrf-token. All observed console errors correspond to these requests; no lifecycle request failed."
+  }
+}

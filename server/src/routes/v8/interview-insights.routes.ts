@@ -926,7 +926,7 @@ router.post(
     let initiativeRef: {
       id: string;
       type: 'linked' | 'created';
-      targetType?: 'initiative' | 'decision' | 'task';
+      targetType: 'initiative' | 'decision' | 'task';
       url?: string;
     };
     // #59 — dedup parity with the canonical AI Initiative Wizard (POST
@@ -1015,25 +1015,10 @@ router.post(
             type: 'APPROVAL',
             decisionMakerId: userId,
             createdBy: userId,
+            // Source identity and copied content must commit in the same INSERT.
+            sourceType: 'interview_insight',
+            sourceId: findingId,
           });
-
-          // V-A S3 — mirror the initiative branch: tag the decision with its
-          // interview-insight source so the Interview hub can surface it. The
-          // canonical createDecision INSERT doesn't write source_type/source_id,
-          // so set them in a column-aware follow-up UPDATE (the columns are
-          // optional — guard on their existence; failure must not break create).
-          try {
-            const { getTableColumns } = await import('../../utils/dbSchema.js');
-            const cols = await getTableColumns('decisions');
-            if (cols.has('source_type') && cols.has('source_id')) {
-              await queryHelpers.queryRun(
-                `UPDATE decisions SET source_type = ?, source_id = ? WHERE id = ?`,
-                ['interview_insight', findingId, decision.id]
-              );
-            }
-          } catch (tagErr) {
-            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
-          }
 
           initiativeRef = {
             id: decision.id,
@@ -1171,6 +1156,7 @@ router.post(
     await recordHandoff(insightId, findingId, payload, initiativeRef.id, {
       organizationId,
       actorUserId: userId,
+      targetKind: initiativeRef.targetType,
       targetRefType: 'linked',
       status: 'linked',
     });

@@ -15,6 +15,7 @@
  * NIE dopisuj tu polskiego. NIE usuwaj kodu bez usunięcia go z serwera.
  */
 export const API_ERROR_FALLBACKS_EN: Readonly<Record<string, string>> = Object.freeze({
+  DATABASE_ERROR: 'Data could not be loaded. Please try again.',
   ADMIN_ACCESS_REQUIRED: 'Organization administrator permissions are required.',
   AI_BUDGET_EXHAUSTED: 'The assistant response could not be generated.',
   AI_CLARIFY_TIMEOUT: 'Generating clarifying questions timed out.',

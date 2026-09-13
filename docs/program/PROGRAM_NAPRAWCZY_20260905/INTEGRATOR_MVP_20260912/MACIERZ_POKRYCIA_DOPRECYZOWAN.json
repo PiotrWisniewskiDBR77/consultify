@@ -1,0 +1,1365 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-12",
+  "purpose": "Śledzenie zakresu planu, nie dowód implementacji",
+  "requirements": [
+    {
+      "id": "O01-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Pełny przegląd PMO i przyjęcie spójnej metody pracy",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "W2",
+      "acceptance": "Mapa obecnego produktu i istniejących reguł metody → brakujące działania z odbiorem.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O01-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Projekty, role, odpowiedzialności, komunikacja i ryzyko",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "W2",
+      "acceptance": "Utworzenie projektu/zespołu i właściwe zadania/decisions u odbiorców.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O01-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Pełny lifecycle inicjatywy, Done i archiwizacja",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "W2",
+      "acceptance": "Wszystkie etapy kanonu docelowego, właściwe przejścia i odmowy, historia.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O01-04",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Zespół projektu wyznacza konfigurowalne zatwierdzenia",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "W2",
+      "acceptance": "Dziedziczenie/zmiana procedury i aktualność zgody po zmianie wersji.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Agent planuje i prowadzi klienta, proponuje i uruchamia narzędzia",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Cel → rzeczywisty wieloetapowy plan → artefakty modułów.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Spotkania, wnioski, inicjatywy, nadzór, mentoring według zadań i funkcji",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Przejście procesu, trafne porady oparte na źródłach, utrzymanie kontekstu.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Raportowanie na żądanie i automatyczne",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Rzeczywisty trigger/termin → raport z właściwych danych.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-04",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Uczy się firmy i użytkowników",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Wersjonowana pamięć, aktualność i odwołanie dostępu.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-05",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Rozmowa i graficzny proces sterują tą samą pracą",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Zmiana grafu widoczna w rozmowie i odwrotnie po reload.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-06",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Paleta kolorowych węzłów z regułami, czasem, osobami i linkami",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Klik otwiera prawdziwy obiekt; semantyka czytelna też bez koloru.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-07",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Przesuwanie, równoległość i natychmiastowy Gantt",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Walidacja zależności i cykli, spójność czasu graf/Gantt.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O02-08",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Intake → zatwierdzona notatka → projekt → wywiad pięć dni",
+      "packages": [
+        "W02",
+        "W15",
+        "W16",
+        "W18"
+      ],
+      "stage": "W2",
+      "acceptance": "Wykonany pełny scenariusz z zatwierdzeniem, terminem i przypomnieniem.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Pełna jakość analityka, kontrolera, CFO i business ownera",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Poprawny model oraz merytorycznie odebrana interpretacja dla ról.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Pozyskanie danych, analiza, prognoza, wycena, modele i budżety",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Pełny F-P1…F-P11 i realny zapis/reload/eksport.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Założenia modułu finansów i projektów PMO",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Pin wersji źródła i założeń, poprawny wpływ na wynik.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-04",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Wszystko opiera się na zatwierdzonym sprawozdaniu z pierwszego rejestru",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Nie można po cichu podmienić zatwierdzonej podstawy.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-05",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Niezgodności, wyjaśnienia, wnioski i inicjatywy",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Uzgodnienie błędów i rodowód przekazania do inicjatywy.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-06",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "300 spółek różnych rozmiarów, branż, lokalizacji i reżimów",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Reprezentatywne przypadki fachowe i test skali, nie deklaracja z demo.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-07",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Relacje kapitałowe, osobowe, handlowe i długu na mapie",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Źródło/okres każdego powiązania, właściwa legenda i wpływ.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-08",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Projekt Budżet2026v1, tagowane założenia różnych okresów",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Wersje, tagi, filtrowanie, kontrolowana propagacja.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-09",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Źródła założeń: dokumenty, deklaracje, sprawozdania, wyjaśnienia",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Ślad pochodzenia i brak cichego wyrównywania sprzeczności.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-10",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Praca jednostkowa w tabelach i kartach/kanban",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Wspólne ID i zasady w widokach.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O03-11",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Jednostkowe finanse W2, konsolidacja potencjalnie faza3",
+      "packages": [
+        "W14",
+        "W22"
+      ],
+      "stage": "W2 + proponowana faza3",
+      "acceptance": "Pełny zakres zachowany; etapowanie jawne, bez cichego odroczenia.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O04-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Wdrożyć wcześniej zaproponowane i uzgodnione integracje",
+      "packages": [
+        "W19"
+      ],
+      "stage": "MVP-poczta / W2-integracje",
+      "acceptance": "Imienny inwentarz z autorytetem i test każdej zleconej funkcji.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O04-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Sprawdzić nowe możliwości integracyjne",
+      "packages": [
+        "W19"
+      ],
+      "stage": "MVP-poczta / W2-integracje",
+      "acceptance": "Aktualne źródła dostawców i rekomendacja z konkretnym zadaniem klienta.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "BSC/MBO/KPI procesowe/OKR jako operacjonalizacja strategii",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Spójne powiązania celów, bez utraty różnic metod.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Wielopoziomowe cele i KPI/OKR ze strategii oraz inicjatyw",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Właściciele poziomów i jawne zasady agregacji.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Generator ręczny, AI i template z wyjaśnieniem",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Trzy drogi do poprawnej edytowalnej definicji miernika.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-04",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Formularze: kto zbiera, kto odpowiada, co i do kiedy",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Przydział → formularz → zapis właściwego okresu.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-05",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Email, link, powiadomienia i eskalacje spóźnień",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Rzeczywiste doręczenie oraz brak dubli po retry.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-06",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Alarmy i eskalacje odchyleń",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Odrębny brak danych i zły wynik; karta działania→task→pomiar.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O05-07",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Zbieranie danych dla KPI, OKR i ROI",
+      "packages": [
+        "W12",
+        "W13",
+        "W19"
+      ],
+      "stage": "MVP-pętla / W2-rozszerzenie",
+      "acceptance": "Wszystkie trzy payloady, wersje i źródła actuals.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O06-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Idee, Notatki, Dokumenty — literalnie każdy przycisk",
+      "packages": [
+        "W17"
+      ],
+      "stage": "MVP",
+      "acceptance": "N/N działań × stan × rola × reprezentacja, z faktycznym skutkiem.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O06-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Minimum trzy trudne zadania na każde narzędzie",
+      "packages": [
+        "W17"
+      ],
+      "stage": "MVP",
+      "acceptance": "Ręczne scenariusze z końcowym artefaktem, zapis/reload.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O06-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Spójność i połączenia funkcjonalne oraz kontekstowe",
+      "packages": [
+        "W17"
+      ],
+      "stage": "MVP",
+      "acceptance": "Wynik odnaleziony w module docelowym z rodowodem i kontekstem.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O07-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Zidentyfikować wszystkie miejsca inteligentnej pracy specjalisty",
+      "packages": [
+        "W01"
+      ],
+      "stage": "MVP + W2",
+      "acceptance": "Macierz surface/action/contract/caller/writer/evidence.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O07-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Kontrakty wszystkich N-kart i materiałów oraz analiz",
+      "packages": [
+        "W01"
+      ],
+      "stage": "MVP + W2",
+      "acceptance": "Treść, sekcje, limity, metoda, źródła, jakość, brak danych.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O07-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Opisać wymagania i wdrożyć kontrakty",
+      "packages": [
+        "W01"
+      ],
+      "stage": "MVP + W2",
+      "acceptance": "Realny wynik i niezależny odbiór, nie sam dokument/prompt.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O08-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Naturalna rozmowa z Teresą, zachować pisanie/nagranie",
+      "packages": [
+        "W05",
+        "W02",
+        "W04",
+        "W19"
+      ],
+      "stage": "MVP-review / W2-rozmowa",
+      "acceptance": "Pokrycie pytań bez mechanicznego odczytu, przerwanie/recovery.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O08-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Świetny generator wniosków i inicjatyw",
+      "packages": [
+        "W05",
+        "W02",
+        "W04",
+        "W19"
+      ],
+      "stage": "MVP-review / W2-rozmowa",
+      "acceptance": "Recenzja pierwszego efektu dla klienta i canonical handoff.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O08-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Pytania z całego dostępnego kontekstu organizacji",
+      "packages": [
+        "W05",
+        "W02",
+        "W04",
+        "W19"
+      ],
+      "stage": "MVP-review / W2-rozmowa",
+      "acceptance": "Różne firmy → uzasadnione różne pytania; prawa źródeł.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O08-04",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Lista zespołu, projekt, podstawowe role i onboarding przez zaproszenie",
+      "packages": [
+        "W05",
+        "W02",
+        "W04",
+        "W19"
+      ],
+      "stage": "MVP-review / W2-rozmowa",
+      "acceptance": "Nowy/istniejący użytkownik bez nadmiarowych uprawnień.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O08-05",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Manager zatwierdza lub odsyła odpowiedzi — MVP",
+      "packages": [
+        "W05",
+        "W02",
+        "W04",
+        "W19"
+      ],
+      "stage": "MVP-review / W2-rozmowa",
+      "acceptance": "Respondent→manager return→poprawa→approve i historia.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O08-06",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "AI/manager/dwa stopnie oceny wystarczalności",
+      "packages": [
+        "W05",
+        "W02",
+        "W04",
+        "W19"
+      ],
+      "stage": "MVP-review / W2-rozmowa",
+      "acceptance": "Parametryzowany kontrakt; rekomendacja AI oddzielona od finalnej zgody.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O09-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Pozostałe narzędzia konsultingowe w pełnym zakresie",
+      "packages": [
+        "W06"
+      ],
+      "stage": "W2",
+      "acceptance": "Imienny roster, każdy pełny pion od danych do rekomendacji.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O09-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Wizualizacje narzędzi wyrażające metodę",
+      "packages": [
+        "W06"
+      ],
+      "stage": "W2",
+      "acceptance": "Wykres/tabela zgodne, edycja i eksport z zachowaniem znaczenia.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O10-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "SIRI i ADMA — komplet grafiki i metodyki",
+      "packages": [
+        "W07"
+      ],
+      "stage": "W2",
+      "acceptance": "Dwa osobne odbiory rdzeni, scoringu i wyników.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O10-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Analogiczny do DRD przebieg, inna treść i wnioski",
+      "packages": [
+        "W07"
+      ],
+      "stage": "W2",
+      "acceptance": "Wspólna powłoka nie miesza odpowiedzi i skal metod.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O11-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Audyt ze wskazanej normy/instrukcji/pliku",
+      "packages": [
+        "W08",
+        "W19"
+      ],
+      "stage": "W2",
+      "acceptance": "Pokrycie wymagań i cytowania konkretnej wersji źródła.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O11-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Generator z pliku, AI lub template",
+      "packages": [
+        "W08",
+        "W19"
+      ],
+      "stage": "W2",
+      "acceptance": "Trzy drogi do edytowalnego programu i pytań.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O11-03",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Zaproszenia email do audytowanych",
+      "packages": [
+        "W08",
+        "W19"
+      ],
+      "stage": "W2",
+      "acceptance": "Tylko właściwy zakres badania, termin i realne doręczenie.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O12-01",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Analiza atrakcyjności zakupu przez największe firmy doradcze",
+      "packages": [
+        "W20"
+      ],
+      "stage": "analityka równoległa",
+      "acceptance": "Macierz dowód/luka/eksperyment i rozróżnione formy zakupu.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "O12-02",
+      "source_file": "OWNER_VISION_20260912_ORIGINAL.txt",
+      "requirement": "Możliwa pętla aktualizacji analizy",
+      "packages": [
+        "W20"
+      ],
+      "stage": "analityka równoległa",
+      "acceptance": "Aktualizacja po nowych dowodach; brak niezamówionej automatyzacji.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-01",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Menu2 cztery funkcje, Menu3 Lista/Analiza inicjatyw",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Nawigacja i rzeczywiste funkcje zgodne z nową notatką.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-02",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Wszystkie statusy, aktualne/archiwalne, projekty, tabela/kanban/Gantt",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Ten sam zbiór i filtry we wszystkich widokach.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-03",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Karty N obowiązkowe/opcjonalne, długość, jakość i spójność",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Iteracyjna ocena i poprawki; brak zielonej kompletności bez treści.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-04",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Analiza pokrycia, duplikatów, priorytetów, nowych/starych i historii",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Trafne rekomendacje na kontrolowanym trudnym portfelu.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-05",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Wybór do planu, parking/archiwum i warunek powrotu",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Powód zachowany, brak ponownego proponowania bez zmiany przeszkody.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-06",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Plan zależności merytorycznych i ścieżek krytycznych",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Sprawdzalne zależności i odmowa cyklu.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-07",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Komentarz, korekta, częściowa/zbiorcza akceptacja propozycji",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Plan zmienia się dopiero po akcepcie, konflikt wersji obsłużony.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-08",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Kalendarz 1/3/6/12 miesięcy, skale tygodniowe/miesięczne",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Skala domyślna i tygodniowy zoom, czytelna trwająca realizacja.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NINIT-09",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Raporty analizy na żądanie i automatycznie z założeniami",
+      "packages": [
+        "W09",
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Snapshot/wersja/trigger/odbiorca i rzeczywisty raport.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NCAP-01",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Godziny i deklarowana tygodniowa dostępność",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Poprawny mianownik; brak dostępności jawny, bez zgadywania40h.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NCAP-02",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Heatmapa >100%, projekt/organizacja/status",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Poprawne sumy bez dubli między projektami.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NCAP-03",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Osoby w wierszach, projekty/inicjatywy w stosach na osi",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Zgodny zakres tabeli, wykresu i filtrów.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NCAP-04",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Propozycje przyszłych przydziałów, alarm i akceptacja",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Zmiana dopiero po przyjęciu; trwająca obsada nietknięta.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NCAP-05",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Cykliczne raporty obciążenia i sugestii",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Źródła, data raportu i idempotentne wywołania.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NCAP-06",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Możliwość analizy finansowej planu",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Wkład z zatwierdzonego modelu W14; godziny nie czekają na finance.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NPREP-01",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Raport opracowania i zatwierdzeń, kto zalega z działaniem/decyzją",
+      "packages": [
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Prawidłowe osoby, stan i scope na wskazaną datę.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NPREP-02",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Kreator: tytuł, format/szablony, harmonogram i lista odbiorców",
+      "packages": [
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Edytowalna definicja i wykonany raport na żądanie/cykliczny.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NPREP-03",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "PDF i automatyczne wysyłki, projekt/organizacja",
+      "packages": [
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Czytelny plik i dowód dostarczenia uprawnionym osobom.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-01",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Ta sama inicjatywa i artefakt w realizacji",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "ID i historia zachowane, brak ręcznego dublowania.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-02",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Bank/Praca/Ryzyko/Raporty, widoki i kolorowe sygnały",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Zachowane operacje i filtry, czytelne opóźnienia/ryzyka.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-03",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Zeszły/następny tydzień i miesiąc, taski i decyzje wg priorytetów/projektów",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Rzeczywiste zaległości i następne kroki na właściwy okres.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-04",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Raport automatycznie na początek tygodnia lub na żądanie",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Poprawny trigger, strefa czasu i dane.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-05",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Eskalacje, delegacje, zmiany obsady przez przełożonego",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Uprawnienia, audit i zgodność z MyWork.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-06",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Ryzyka mierzone, zmiany strategiczne/operacyjne, granica zwykłej pracy",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Zatwierdzony zakres i skutki, brak automatycznego apply.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-07",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "N-karta sytuacja/zagrożenia/działania/skutki/powiadamiani",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Komplet pól i ról, zastosowanie decyzji do planu i powiadomień.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-08",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Raporty postępu i rezultatów na poziomach szczegółowości",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Spójne liczby, czytelna forma, ukończenie≠efekt.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NEXEC-09",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "KPI skutku proponowane i zatwierdzane przy tworzeniu inicjatywy",
+      "packages": [
+        "W11",
+        "W12",
+        "W13"
+      ],
+      "stage": "W2",
+      "acceptance": "Ten sam zatwierdzony KPI przechodzi do Results i zbierania actuals.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-01",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Przygotowanie/prowadzenie/podsumowanie-działania",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Cały przebieg z trwałym odtworzeniem.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-02",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Kreator ręczny/AI/template, cel, agenda, oczekiwane wyniki",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Trzy wejścia do tego samego typu spotkania.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-03",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Zespół, materiały przygotowawcze i zaproszenia nowych uczestników",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Prawidłowy dostęp i realny link do spotkania.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-04",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "N-karta i ekran prowadzenia z interaktywną Teresą",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Rzeczywista praca nad materiałami.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-05",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Przełączanie ekranów, tworzenie/omawianie inicjatyw bez utraty kontekstu",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Powrót zachowuje spotkanie, źródła i rozmowę.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-06",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Protokół, decyzje i relacje z narzędziami",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Zatwierdzone obiekty widoczne w modułach bez dubli.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "NMEET-07",
+      "source_file": "OWNER_INITIATIVES_EXECUTION_MEETINGS_20260912_ORIGINAL.txt",
+      "requirement": "Offline/online, nagranie i przyszła zdolność Teams",
+      "packages": [
+        "W18",
+        "W15",
+        "W19"
+      ],
+      "stage": "W2 + jawne etapowanie online",
+      "acceptance": "Osobne realne dowody lokalnie, capture i platformy; brak fikcyjnej integracji.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "PMO-01",
+      "source_file": "OWNER_PMO_DISCUSSION_20260912.md",
+      "requirement": "Diagnoza i wnioski mogą poprzedzać projekt",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "docelowy proces W2",
+      "acceptance": "Bezprojektowe źródło zachowuje pochodzenie przy handoff.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "PMO-02",
+      "source_file": "OWNER_PMO_DISCUSSION_20260912.md",
+      "requirement": "Projekt najpóźniej przy tworzeniu inicjatywy",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "docelowy proces W2",
+      "acceptance": "Wybór lub utworzenie wymagane, zachowane105starych rekordów.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "PMO-03",
+      "source_file": "OWNER_PMO_DISCUSSION_20260912.md",
+      "requirement": "Nie pytać ponownie o istniejące zasady",
+      "packages": [
+        "W03",
+        "W04"
+      ],
+      "stage": "docelowy proces W2",
+      "acceptance": "Źródła→wykonanie→luka→zadanie; wycofana lista nie jest gate.",
+      "status": "PLANNED_NOT_ACCEPTED"
+    },
+    {
+      "id": "L-354",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "panel Idei/Notatnika",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-354 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-357",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "preferencje Czatu",
+      "packages": [
+        "W21"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-357 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-377",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "historia prywatna/organizacyjna",
+      "packages": [
+        "W21"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-377 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-381",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "wspólny standard kart",
+      "packages": [
+        "W01"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-381 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-383",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "SWOT siedem etapów",
+      "packages": [
+        "W06"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-383 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-364",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "przebudowa sesji Oceny",
+      "packages": [
+        "W07"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-364 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-365",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "karty pytań i licznik",
+      "packages": [
+        "W07"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-365 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-368",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "Wnioski/Raporty/Inicjatywy pod Oceną",
+      "packages": [
+        "W07"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-368 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-369",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "uprawnienia/kredyty/komentarze/doradca Oceny",
+      "packages": [
+        "W07"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-369 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-355",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "raport zespołu",
+      "packages": [
+        "W10",
+        "W13"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-355 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-356",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "menu kanw",
+      "packages": [
+        "W21"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-356 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-359",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "semantyka crimson",
+      "packages": [
+        "W21"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-359 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-372a",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "licznik konwersji Idei",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-372a i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-372b",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "foldery Idei",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-372b i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-373a",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "Idea do Notatki/Notatnika",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-373a i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-373b",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "AI Advice Idei",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-373b i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-374a",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "historia i konflikty Notatnika",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-374a i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-374b",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "wyszukiwanie Notatnika",
+      "packages": [
+        "W17"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-374b i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-376",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "manager z realnych danych",
+      "packages": [
+        "W11",
+        "W21"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-376 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-378",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "inicjatywa z jednego zdania",
+      "packages": [
+        "W04",
+        "W09"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-378 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    },
+    {
+      "id": "L-382",
+      "source_file": "sources/docs/program/FALA_2_PO_STAGINGU.md",
+      "requirement": "wspólny kreator z Tools",
+      "packages": [
+        "W04",
+        "W06"
+      ],
+      "stage": "W2 / sprawdzić późniejsze wykonanie",
+      "acceptance": "Odtworzyć źródłowy zakres DEC-382 i aktualny dowód; wykonać tylko brakującą część.",
+      "status": "RECONCILE_EXISTING_TASK"
+    }
+  ]
+}

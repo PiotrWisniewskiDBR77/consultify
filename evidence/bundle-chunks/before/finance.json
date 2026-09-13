@@ -1,0 +1,80 @@
+{
+  "capturedAt": "2026-09-12T09:11:00.855Z",
+  "name": "Finance",
+  "phase": "before",
+  "url": "/finance?tab=statements",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1213
+  },
+  "readyFromTriggerMs": 1347,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3348,
+  "totalCaptureMs": 3407,
+  "scriptBytes": {
+    "requestCount": 3,
+    "decodedBodyBytes": 229576,
+    "encodedBodyBytes": 64451,
+    "transferBytes": 65351,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/EconomicsView-DP7uVJj3.js",
+      "initiatorType": "script",
+      "startTime": 37890.30000000447,
+      "responseEnd": 37899.60000000149,
+      "duration": 9.299999997019768,
+      "decodedBodySize": 225612,
+      "encodedBodySize": 62726,
+      "transferSize": 63026,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/alert-BhPjveiE.js",
+      "initiatorType": "script",
+      "startTime": 37890.40000000596,
+      "responseEnd": 37895.20000000298,
+      "duration": 4.799999997019768,
+      "decodedBodySize": 1066,
+      "encodedBodySize": 526,
+      "transferSize": 826,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/sheet-B9lrn455.js",
+      "initiatorType": "script",
+      "startTime": 37890.5,
+      "responseEnd": 37895.40000000596,
+      "duration": 4.9000000059604645,
+      "decodedBodySize": 2898,
+      "encodedBodySize": 1199,
+      "transferSize": 1499,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 6,
+  "apiRequests": [
+    "GET /api/feature-flags/runtime",
+    "GET /api/feature-flags/runtime",
+    "GET /api/feature-flags/runtime",
+    "GET /api/feature-flags/runtime",
+    "GET /api/feature-flags/runtime",
+    "GET /api/v8/finance/statement-packs"
+  ],
+  "scriptRequests": [
+    "/assets/alert-BhPjveiE.js",
+    "/assets/sheet-B9lrn455.js",
+    "/assets/EconomicsView-DP7uVJj3.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nFinance\nStatements\nData\nModel\n1\nLocal Reviewer\nLR\nStatements\nAnalysis\nModels\nPrediction\nEnterprise valuation\nImport statement\nAll\n1\nRejected Imports\n0\nRecovery Queue\n0\nReady Statements\n1\nAnalyze\nAI\n\t\nTYPE\n\t\nNAME\n\t\nCOMPLETENESS\n\t\nPERIOD\n\t\nCURRENCY\n\t\nDOCS\n\t\nSTATUS\n\t\nUPDATED\n\t\n\n\t\nSTM\n\t\nNorthwind Manufacturing Ltd.\n\t\nP&L / — BS / — CF\n\t\nQ3 FY2025 – Q2 FY2026\n\t\nGBP\n\t\n4\n\t\nApproved\n\t3 days ago\t\nFINANCE"
+}

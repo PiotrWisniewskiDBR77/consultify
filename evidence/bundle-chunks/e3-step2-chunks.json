@@ -1,0 +1,180 @@
+{
+  "method": "manifest transitive static closure, HTML roots plus unconditional normal-boot App import",
+  "dist": "/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/dist",
+  "htmlStaticBytes": 317267,
+  "bootBytes": 2182459,
+  "bootChunkCount": 3,
+  "boot": [
+    {
+      "file": "assets/AppProviders-By3T6O6d.js",
+      "bytes": 1240409
+    },
+    {
+      "file": "assets/App-BYzE2_Rc.js",
+      "bytes": 624783
+    },
+    {
+      "file": "assets/index-DnBhFikI.js",
+      "bytes": 317267
+    }
+  ],
+  "chunksOver200KB": [
+    {
+      "file": "assets/IdeaMapWorkspace-CoQnOvfx.js",
+      "bytes": 2320674
+    },
+    {
+      "file": "assets/DiscoveryToolsHub-BJMWRGaT.js",
+      "bytes": 1727412
+    },
+    {
+      "file": "assets/UnifiedChatPanel-CVl2IfJi.js",
+      "bytes": 1283022
+    },
+    {
+      "file": "assets/AppProviders-By3T6O6d.js",
+      "bytes": 1240409
+    },
+    {
+      "file": "assets/MyWorkView-D-qIGghE.js",
+      "bytes": 968011
+    },
+    {
+      "file": "assets/InitiativeDocumentView-B4dvj5Co.js",
+      "bytes": 905269
+    },
+    {
+      "file": "assets/InterviewHub-D5XNDO9j.js",
+      "bytes": 881906
+    },
+    {
+      "file": "assets/embed-BbWbLAnk.js",
+      "bytes": 750097
+    },
+    {
+      "file": "assets/cynefin-VYW2F7L2-DCtNNU6U.js",
+      "bytes": 688694
+    },
+    {
+      "file": "assets/lucide-react-C082S8HW.js",
+      "bytes": 681255
+    },
+    {
+      "file": "assets/DocsArticleView-9KaFAaOm.js",
+      "bytes": 641015
+    },
+    {
+      "file": "assets/App-BYzE2_Rc.js",
+      "bytes": 624783
+    },
+    {
+      "file": "assets/CustomersModule-Do5Gvmgq.js",
+      "bytes": 622439
+    },
+    {
+      "file": "assets/ExecutionHub-Di6OtHh8.js",
+      "bytes": 579431
+    },
+    {
+      "file": "assets/AIPlatformModule-EjAXZh9T.js",
+      "bytes": 563286
+    },
+    {
+      "file": "assets/mermaid.core-B9tHCD-n.js",
+      "bytes": 539016
+    },
+    {
+      "file": "assets/AdminView-BPq_R2na.js",
+      "bytes": 538904
+    },
+    {
+      "file": "assets/SettingsView-B7jShvps.js",
+      "bytes": 485274
+    },
+    {
+      "file": "assets/cytoscape.esm-OyMbaexL.js",
+      "bytes": 443688
+    },
+    {
+      "file": "assets/AssessmentSessionEditorView-CfR98z1n.js",
+      "bytes": 421021
+    },
+    {
+      "file": "assets/compileDrdPack-D81FbUd-.js",
+      "bytes": 407589
+    },
+    {
+      "file": "assets/SystemModule-BsXAZO0K.js",
+      "bytes": 405572
+    },
+    {
+      "file": "assets/index-YX0gPAOe.js",
+      "bytes": 395570
+    },
+    {
+      "file": "assets/jspdf.es.min-BMzxq5m6.js",
+      "bytes": 389988
+    },
+    {
+      "file": "assets/index-CPlFJi2C.js",
+      "bytes": 384382
+    },
+    {
+      "file": "assets/index-DnBhFikI.js",
+      "bytes": 317267
+    },
+    {
+      "file": "assets/OrganizationView-EY_tRdgE.js",
+      "bytes": 295540
+    },
+    {
+      "file": "assets/charts-CjTHD9e7.js",
+      "bytes": 288039
+    },
+    {
+      "file": "assets/InitiativesHub-qCR0Mui9.js",
+      "bytes": 284298
+    },
+    {
+      "file": "assets/index-CigdgfUv.js",
+      "bytes": 283149
+    },
+    {
+      "file": "assets/ReportTemplatePickerModal-Bl1-aZnA.js",
+      "bytes": 268557
+    },
+    {
+      "file": "assets/katex-HP8lGamR.js",
+      "bytes": 261313
+    },
+    {
+      "file": "assets/TaskDetailView-C1VXvrsU.js",
+      "bytes": 238045
+    },
+    {
+      "file": "assets/DeckBuilder-BfbHckO0.js",
+      "bytes": 236637
+    },
+    {
+      "file": "assets/EconomicsView-DYO2D3ZJ.js",
+      "bytes": 230264
+    },
+    {
+      "file": "assets/SecurityModule-BkK1hf35.js",
+      "bytes": 215077
+    },
+    {
+      "file": "assets/chart-45xamTTr.js",
+      "bytes": 208272
+    },
+    {
+      "file": "assets/RoiCaseToolPage-DgNNA9qS.js",
+      "bytes": 208203
+    },
+    {
+      "file": "assets/html2canvas.esm-B0tyYwQk.js",
+      "bytes": 202363
+    }
+  ],
+  "totalChunks": 788
+}

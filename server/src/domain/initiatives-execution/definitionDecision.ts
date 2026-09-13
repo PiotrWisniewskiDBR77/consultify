@@ -1,3 +1,4 @@
+import type { ConfiguredCardProfile } from './configureInitiativeCards.js';
 import { evaluateDefinitionReadiness } from './definitionReadiness.js';
 import { assertGateQuorumReceipt } from './gateSignoff.js';
 import {
@@ -8,6 +9,7 @@ import {
   type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
+  MaterialCommandRuleError,
 } from './materialCommand.js';
 import type { InitiativeCardVersionReadModel } from './postgresInitiativeReader.js';
 import type { InitiativeWithCardRefs } from './publishInitiativeCard.js';
@@ -35,6 +37,7 @@ interface DefinitionInitiative extends InitiativeWithCardRefs {
   gateState?: string;
   gateReadiness?: string;
   disposition?: string;
+  definitionDecisionId?: string;
 }
 
 export interface DefinitionDecisionCase {
@@ -57,6 +60,7 @@ export interface RequestDefinitionDecisionPayload {
   authorityId: string;
   dueAt: string;
   selfApprovalAllowed: boolean;
+  approvalV2?: boolean;
 }
 
 export interface DecideDefinitionPayload {
@@ -64,6 +68,7 @@ export interface DecideDefinitionPayload {
   outcome: 'APPROVED' | 'RETURNED';
   rationale: string;
   selfApprovalAllowed: boolean;
+  approvalV2?: boolean;
   governanceQuorumRequired?: boolean;
   governanceQuorumRef?: { quorumId: string; version: number; receiptId: string };
 }
@@ -75,7 +80,9 @@ async function currentReadiness(
   initiative: DefinitionInitiative
 ) {
   const cards: InitiativeCardVersionReadModel[] = [];
-  for (const cardKey of DEFINITION_CARDS) {
+  const profile = (initiative.cardSelection as { profile?: ConfiguredCardProfile } | undefined)?.profile;
+  const requiredKeys = [...new Set([...DEFINITION_CARDS, ...(profile?.cards || []).filter(card => card.requiredness === 'REQUIRED').map(card => card.cardKey)])];
+  for (const cardKey of requiredKeys) {
     const card = await transaction.getLatestInitiativeCardForUpdate(
       organizationId,
       initiativeId,
@@ -105,13 +112,15 @@ async function currentReadiness(
   return evaluateDefinitionReadiness(
     cards,
     Boolean(source?.sourceType && source.sourceId && Number(source.sourceVersion) > 0),
-    sourceFreshness
+    sourceFreshness,
+    profile
   );
 }
 
 export async function requestDefinitionDecision(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<RequestDefinitionDecisionPayload>
+  envelope: MaterialCommandEnvelope<RequestDefinitionDecisionPayload>,
+  assertCurrentProfileAuthority?: (initiative: InitiativeWithCardRefs, profile: ConfiguredCardProfile) => Promise<void>
 ): Promise<MaterialCommandResult<DefinitionDecisionCase>> {
   if (
     envelope.commandType !== 'initiative.definition.request' ||
@@ -127,7 +136,15 @@ export async function requestDefinitionDecision(
   if (!Number.isFinite(Date.parse(envelope.payload.dueAt))) {
     throw new MaterialCommandValidationError('dueAt must be a valid timestamp');
   }
-  return executeMaterialCommand(unitOfWork, envelope, async (transaction) => {
+  return unitOfWork.transaction(async transaction => {
+    const parent=await transaction.getRelatedAggregateForUpdate<DefinitionInitiative>(envelope.organizationId,'initiative',envelope.aggregateId);
+    if(!parent)throw new MaterialCommandRuleError('NOT_FOUND',404);
+    const profile=(parent.payload.cardSelection as {profile?:ConfiguredCardProfile}|undefined)?.profile;
+    if(profile){
+      if(!assertCurrentProfileAuthority)throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_AUTHORITY_REQUIRED',403);
+      await assertCurrentProfileAuthority(parent.payload,profile);
+    }
+    return executeMaterialCommand({transaction:async work=>work(transaction)}, envelope, async (transaction) => {
     const initiative = await transaction.getAggregatePayload<DefinitionInitiative>(
       envelope.organizationId,
       'initiative',
@@ -144,6 +161,29 @@ export async function requestDefinitionDecision(
     );
     if (readiness.readiness !== 'READY') {
       throw new MaterialCommandValidationError('Definition is not ready for Decision');
+    }
+    const previous = envelope.payload.approvalV2
+      ? await transaction.getRelatedAggregateForUpdate<DefinitionDecisionCase>(
+          envelope.organizationId,
+          'decision',
+          envelope.payload.decisionId
+        )
+      : null;
+    if (envelope.payload.approvalV2 && previous && !initiative.definitionDecisionId) {
+      throw new MaterialCommandValidationError('Decision ID is already assigned');
+    }
+    if (
+      envelope.payload.approvalV2 &&
+      initiative.definitionDecisionId &&
+      (initiative.definitionDecisionId !== envelope.payload.decisionId ||
+        !previous ||
+        previous.payload.initiativeId !== envelope.aggregateId ||
+        previous.payload.status !== 'RETURNED' ||
+        previous.payload.requesterId !== envelope.actorId)
+    ) {
+      throw new MaterialCommandValidationError(
+        'Returned Definition decision must be resubmitted by its requester'
+      );
     }
     const decision: DefinitionDecisionCase = {
       decisionId: envelope.payload.decisionId,
@@ -163,20 +203,21 @@ export async function requestDefinitionDecision(
       envelope.organizationId,
       'decision',
       decision.decisionId,
-      0,
-      1,
+      previous?.version ?? 0,
+      (previous?.version ?? 0) + 1,
       decision
     );
-    await transaction.claimRelation({
-      organizationId: envelope.organizationId,
-      relationType: 'INITIATIVE_DEFINITION_DECISION',
-      sourceType: 'initiative',
-      sourceId: envelope.aggregateId,
-      sourceVersion: envelope.expectedVersion,
-      targetType: 'decision',
-      targetId: decision.decisionId,
-      payload: { gate: 'DEFINITION', status: 'PENDING' },
-    });
+    if (!previous)
+      await transaction.claimRelation({
+        organizationId: envelope.organizationId,
+        relationType: 'INITIATIVE_DEFINITION_DECISION',
+        sourceType: 'initiative',
+        sourceId: envelope.aggregateId,
+        sourceVersion: envelope.expectedVersion,
+        targetType: 'decision',
+        targetId: decision.decisionId,
+        payload: { gate: 'DEFINITION', status: 'PENDING' },
+      });
     return {
       mutation: {
         ...initiative,
@@ -189,12 +230,14 @@ export async function requestDefinitionDecision(
       eventPayload: decision,
       auditPayload: decision,
     };
+    });
   });
 }
 
 export async function decideDefinition(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<DecideDefinitionPayload>
+  envelope: MaterialCommandEnvelope<DecideDefinitionPayload>,
+  assertCurrentProfileAuthority?: (initiative: InitiativeWithCardRefs, profile: ConfiguredCardProfile) => Promise<void>
 ): Promise<MaterialCommandResult<DefinitionDecisionCase>> {
   if (
     envelope.commandType !== 'initiative.definition.decide' ||
@@ -204,7 +247,15 @@ export async function decideDefinition(
   }
   const rationale = envelope.payload.rationale.trim();
   if (!rationale) throw new MaterialCommandValidationError('Decision rationale is required');
-  return executeMaterialCommand(unitOfWork, envelope, async (transaction) => {
+  return unitOfWork.transaction(async transaction => {
+    const parent=await transaction.getRelatedAggregateForUpdate<DefinitionInitiative>(envelope.organizationId,'initiative',envelope.aggregateId);
+    if(!parent)throw new MaterialCommandRuleError('NOT_FOUND',404);
+    const profile=(parent.payload.cardSelection as {profile?:ConfiguredCardProfile}|undefined)?.profile;
+    if(profile){
+      if(!assertCurrentProfileAuthority)throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_AUTHORITY_REQUIRED',403);
+      await assertCurrentProfileAuthority(parent.payload,profile);
+    }
+    return executeMaterialCommand({transaction:async work=>work(transaction)}, envelope, async (transaction) => {
     await assertGateQuorumReceipt(transaction, envelope.organizationId, {
       required: envelope.payload.governanceQuorumRequired,
       gate: 'DEFINITION',
@@ -229,7 +280,10 @@ export async function decideDefinition(
     if (!stored || stored.payload.initiativeId !== envelope.aggregateId) {
       throw new MaterialCommandValidationError('Definition Decision not found');
     }
-    if (stored.payload.status !== 'PENDING' || stored.version !== 1) {
+    if (
+      stored.payload.status !== 'PENDING' ||
+      (!envelope.payload.approvalV2 && stored.version !== 1)
+    ) {
       throw new MaterialCommandValidationError('Definition Decision is no longer pending');
     }
     if (stored.payload.authorityId !== envelope.actorId) {
@@ -237,6 +291,17 @@ export async function decideDefinition(
     }
     if (!envelope.payload.selfApprovalAllowed && stored.payload.requesterId === envelope.actorId) {
       throw new MaterialCommandValidationError('Self-approval is not permitted');
+    }
+    if (
+      envelope.payload.approvalV2 &&
+      (stored.payload.policy.policyId !== envelope.policyId ||
+        stored.payload.policy.policyVersion !== envelope.policyVersion)
+    ) {
+      throw new MaterialCommandConflictError(
+        'Definition policy snapshot is stale',
+        envelope.expectedVersion,
+        envelope.expectedVersion
+      );
     }
     const readiness = await currentReadiness(
       transaction,
@@ -267,8 +332,8 @@ export async function decideDefinition(
       envelope.organizationId,
       'decision',
       envelope.payload.decisionId,
-      1,
-      2,
+      stored.version,
+      stored.version + 1,
       decided
     );
     return {
@@ -287,5 +352,6 @@ export async function decideDefinition(
       eventPayload: decided,
       auditPayload: decided,
     };
+    });
   });
 }

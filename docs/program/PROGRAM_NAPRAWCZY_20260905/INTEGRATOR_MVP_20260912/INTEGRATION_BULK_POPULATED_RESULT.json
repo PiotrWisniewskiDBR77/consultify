@@ -1,0 +1,28 @@
+{
+  "source_commit": "1c4076bf17",
+  "test_file": "server/src/routes/pmo/__tests__/executionCasesBulk.populated.pg.test.ts",
+  "command": "cd server && vitest run src/routes/pmo/__tests__/executionCasesBulk.populated.pg.test.ts --config vitest.config.ts --maxWorkers=1 --retry=0",
+  "environment": {
+    "DB_TYPE": "postgres",
+    "MOCK_DB": "false",
+    "RUN_DB_TESTS": "1",
+    "ENABLE_TEST_AUTH_BYPASS": "false",
+    "ENABLE_V8_GLOBAL": "true",
+    "RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE": "enforce"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 6454,
+    "name": "codex2b_kopia_1009",
+    "container": "cx-codex2b-pg"
+  },
+  "tests_passed": 3,
+  "exit_code": 0,
+  "cleanup_readback": {
+    "organizations": 0,
+    "aggregate_state": 0
+  },
+  "proof_scope": "Real ApiGateway/JWT/PostgreSQL populated reader; SQL fixture, not creation/handoff/UI proof",
+  "independent_source_review": "delivery_audit ACCEPT; did not repeat PG",
+  "log_sha256": "9ddf09ce2fe2e703757d417f8cc900332795ecbc5b152efa5c853324cda5a4d2"
+}

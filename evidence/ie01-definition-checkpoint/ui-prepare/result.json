@@ -1,0 +1,417 @@
+{
+  "id": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+  "steps": [
+    {
+      "label": "profile apply",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 2,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "registryVersion": 1,
+          "cards": [
+            {
+              "cardKey": "attachments-materials",
+              "included": true,
+              "position": 0,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "capabilities-training",
+              "included": true,
+              "position": 1,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "change-adoption",
+              "included": true,
+              "position": 2,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "comments-activity-history",
+              "included": true,
+              "position": 3,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "communication-engagement",
+              "included": true,
+              "position": 4,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "decisions",
+              "included": true,
+              "position": 5,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "dependencies",
+              "included": true,
+              "position": 6,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "feasibility-completeness",
+              "included": true,
+              "position": 7,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "financial-analysis",
+              "included": true,
+              "position": 8,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "financial-impact",
+              "included": true,
+              "position": 9,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "gates-approvals",
+              "included": true,
+              "position": 10,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "kpi",
+              "included": true,
+              "position": 11,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "milestones",
+              "included": true,
+              "position": 12,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "options",
+              "included": true,
+              "position": 13,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "outcomes-benefits",
+              "included": true,
+              "position": 14,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "people-team",
+              "included": true,
+              "position": 15,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "resources-capacity",
+              "included": true,
+              "position": 16,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "risk-raid",
+              "included": true,
+              "position": 17,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "roles-raci",
+              "included": true,
+              "position": 18,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "stakeholders",
+              "included": true,
+              "position": 19,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "strategic-fit",
+              "included": true,
+              "position": 20,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "success-criteria",
+              "included": true,
+              "position": 21,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "summary-scope",
+              "included": true,
+              "position": 22,
+              "requiredness": "REQUIRED",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "tasks",
+              "included": true,
+              "position": 23,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "technical-specification",
+              "included": true,
+              "position": 24,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            },
+            {
+              "cardKey": "timeline",
+              "included": true,
+              "position": 25,
+              "requiredness": "OPTIONAL",
+              "waiverDecisionId": null
+            }
+          ]
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "3b323c23-b116-4975-addb-e035ee03ad9f",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/3b323c23-b116-4975-addb-e035ee03ad9f/read-back"
+      }
+    },
+    {
+      "label": "Summary / Scope",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/summary-scope/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 3,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "summary-scope",
+          "cardVersion": 1,
+          "aggregateVersion": 3
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "8e17403f-1da2-4745-938a-7d00dd1d7058",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/8e17403f-1da2-4745-938a-7d00dd1d7058/read-back"
+      }
+    },
+    {
+      "label": "Strategic Fit",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/strategic-fit/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 4,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "strategic-fit",
+          "cardVersion": 1,
+          "aggregateVersion": 4
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "1a8ac9e7-3115-4c4a-8f3b-4c897f4ea54f",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/1a8ac9e7-3115-4c4a-8f3b-4c897f4ea54f/read-back"
+      }
+    },
+    {
+      "label": "Success Criteria",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/success-criteria/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 5,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "success-criteria",
+          "cardVersion": 1,
+          "aggregateVersion": 5
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "d6c6bd7e-9f42-4783-a3ac-7ca7fcc2f20a",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/d6c6bd7e-9f42-4783-a3ac-7ca7fcc2f20a/read-back"
+      }
+    },
+    {
+      "label": "Outcomes & Benefits",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/outcomes-benefits/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 6,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "outcomes-benefits",
+          "cardVersion": 1,
+          "aggregateVersion": 6
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "85004741-e956-434c-9324-d23eb19d5225",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/85004741-e956-434c-9324-d23eb19d5225/read-back"
+      }
+    },
+    {
+      "label": "Options",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/options/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 7,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "options",
+          "cardVersion": 1,
+          "aggregateVersion": 7
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "7e99ff96-f22c-4b1d-b460-6684169f15f5",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/7e99ff96-f22c-4b1d-b460-6684169f15f5/read-back"
+      }
+    },
+    {
+      "label": "People / Team",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/people-team/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 8,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "people-team",
+          "cardVersion": 1,
+          "aggregateVersion": 8
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "bc4d7262-c185-4a97-bd59-cfc36f00fef7",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/bc4d7262-c185-4a97-bd59-cfc36f00fef7/read-back"
+      }
+    },
+    {
+      "label": "Roles & RACI",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/roles-raci/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 9,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "roles-raci",
+          "cardVersion": 1,
+          "aggregateVersion": 9
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "af4b0169-8782-4913-8cac-507967d0ef90",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/af4b0169-8782-4913-8cac-507967d0ef90/read-back"
+      }
+    },
+    {
+      "label": "Stakeholders",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/stakeholders/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 10,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "stakeholders",
+          "cardVersion": 1,
+          "aggregateVersion": 10
+        },
+        "correlationId": "212d6t5bc5dhukk3uq57d9r",
+        "receiptId": "631f89f6-8a7e-4415-96be-0fc477f25b9e",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/631f89f6-8a7e-4415-96be-0fc477f25b9e/read-back"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    }
+  ],
+  "pageErrors": [],
+  "url": "http://127.0.0.1:5292/initiatives?open=initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb&mode=doc&card=stakeholders",
+  "body": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInitiatives\nData\nModel\nLocal Reviewer\nLR\nInitiatives\nPlan\nLoad\nWork report\nList\nAnalysis\nPriority\nAll priorities\nCritical\nHigh\nMedium\nLow\nStatus\nActive\nAll\nNew initiative\nList\ninitiative\nIE01 final named reviewer journey\ninitiative\nIE01 final named reviewer journey\nIE01 final named reviewer journey\nDraft registered\nSaved\nSections\nEdit\nPreview\nWork with AI\nDEFINITION AND VALUE\nSummary / Scope\nStrategic Fit\nSuccess Criteria\nOutcomes & Benefits\nKPI\nOptions\nFinancial Analysis\nFinancial Impact\nORGANIZATION AND FEASIBILITY\nPeople / Team\nRoles & RACI\nStakeholders\nResources & Capacity\nDependencies\nRisk & RAID\nFeasibility & Completeness\nTechnical Specification\nPLAN AND GOVERNANCE\nMilestones\nTimeline\nTasks\nDecisions\nGates & Approvals\nADOPTION, EVIDENCE AND LEARNING\nChange & Adoption\nCommunication & Engagement\nCapabilities & Training\nAttachments & Materials\nComments, Activity & History\nWORKSPACE TOOLS\nDeliverables & Milestones\nSuggested Changes\nOKR\nHypothesis\nLessons Learned\nDefinition card content and review\n\nReview: REQUESTED · Version: 1\n\nPublished version loaded\n\nOwner\nSelect a person\nLocal Member\nLocal Reviewer\nSponsor\nSelect a person\nLocal Member\nLocal Reviewer\nEvidence references (one per line)\nCompletion\nIn progress\nComplete\nEmpty\nQuality assessment\nUNKNOWN\nSUFFICIENT\nWARNING\nBLOCKER\nSave card and request review\nACTIONS\nCreate variant\nPROPERTIES\nProperty\tValue\nStatus\t\nDraft registered\n\nPhase\t\nPreparation\n\nNext Gate\t\nDefinition\n\nPriority\t\nMedium\nCritical\nHigh\nMedium\nLow\n\nOwner\t\nLocal Reviewer\n— Select —\nLocal Member\nLocal Reviewer\n\nTarget\t\n—\nRELATIONS\nSOURCES AND ASSUMPTIONS\nRESULTS\nCOMMENTS\nHISTORY"
+}

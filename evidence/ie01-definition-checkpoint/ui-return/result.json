@@ -1,0 +1,118 @@
+{
+  "id": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+  "steps": [
+    {
+      "label": "Definition return",
+      "status": 201,
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 20,
+        "response": {
+          "gate": "DEFINITION",
+          "dueAt": "2026-09-20T17:00:00.000Z",
+          "policy": {
+            "policyId": "ie01-policy-af8bcd13-1f95-4e73-b8ab-2c3f239e920f",
+            "policyVersion": 1
+          },
+          "status": "RETURNED",
+          "decidedAt": "2026-09-13T02:24:05.321Z",
+          "rationale": "Please specify the setup observation window in the expected outcome before Definition approval.",
+          "decisionId": "a8a91cf3-15f8-4789-a579-f0ce731961ab",
+          "authorityId": "5da4df49-92b1-4738-8948-c794ffd4ca2a",
+          "requestedAt": "2026-09-13T02:23:44.989Z",
+          "requesterId": "86f18e03-9180-4646-8203-5e90813cdd7a",
+          "cardVersions": {
+            "options": 2,
+            "roles-raci": 2,
+            "people-team": 2,
+            "stakeholders": 2,
+            "strategic-fit": 2,
+            "summary-scope": 2,
+            "success-criteria": 2,
+            "outcomes-benefits": 2
+          },
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb"
+        },
+        "correlationId": "definition-decision-a23a2554-9f7a-4d0f-b4ef-c4c1663f732e",
+        "receiptId": "a23a2554-9f7a-4d0f-b4ef-c4c1663f732e",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/a23a2554-9f7a-4d0f-b4ef-c4c1663f732e/read-back"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/f5eef749-9b5e-42a0-9be7-f93246cc9675/members",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    }
+  ],
+  "pageErrors": [],
+  "url": "http://127.0.0.1:5292/initiatives?open=initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb&mode=doc&card=gates-approvals",
+  "body": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInitiatives\nData\nModel\nLocal Member\nLM\nInitiatives\nPlan\nLoad\nWork report\nList\nAnalysis\nPriority\nAll priorities\nCritical\nHigh\nMedium\nLow\nStatus\nActive\nAll\nNew initiative\nList\ninitiative\nIE01 final named reviewer journey\ninitiative\nIE01 final named reviewer journey\nIE01 final named reviewer journey\nDraft registered\nSaved\nSections\nEdit\nPreview\nWork with AI\nDEFINITION AND VALUE\nSummary / Scope\nStrategic Fit\nSuccess Criteria\nOutcomes & Benefits\nKPI\nOptions\nFinancial Analysis\nFinancial Impact\nORGANIZATION AND FEASIBILITY\nPeople / Team\nRoles & RACI\nStakeholders\nResources & Capacity\nDependencies\nRisk & RAID\nFeasibility & Completeness\nTechnical Specification\nPLAN AND GOVERNANCE\nMilestones\nTimeline\nTasks\nDecisions\nGates & Approvals\nADOPTION, EVIDENCE AND LEARNING\nChange & Adoption\nCommunication & Engagement\nCapabilities & Training\nAttachments & Materials\nComments, Activity & History\nWORKSPACE TOOLS\nDeliverables & Milestones\nSuggested Changes\nOKR\nHypothesis\nLessons Learned\nGates\nDefinition approval\n\nInitiative state: Draft registered\n\nEffective policy: ie01-policy-af8bcd13-1f95-4e73-b8ab-2c3f239e920f · version 1 · STANDARD · PROJECT\n\nCard profile and change impact\n\nDecision: Returned for changes\n\nPlease specify the setup observation window in the expected outcome before Definition approval.\n\nDefinition card content and review\nACTIONS\nCreate variant\nPROPERTIES\nProperty\tValue\nStatus\t\nDraft registered\n\nPhase\t\nPreparation\n\nNext Gate\t\nDefinition\n\nPriority\t\nMedium\nCritical\nHigh\nMedium\nLow\n\nOwner\t\nLocal Reviewer\n— Select —\nLocal Member\nLocal Reviewer\n\nTarget\t\n—\nRELATIONS\nSOURCES AND ASSUMPTIONS\nRESULTS\nCOMMENTS\nHISTORY"
+}

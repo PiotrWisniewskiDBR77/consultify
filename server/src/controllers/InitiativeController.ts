@@ -1,4 +1,7 @@
 // @ts-nocheck
+import { GateRolesSchema, GateRolesNotFoundError, replaceLegacyGateRoles } from '../domain/initiatives-execution/gateRoles.js';
+import { ResourceFieldsSchema, ResourceNotFoundError, writeLegacyResource } from '../domain/initiatives-execution/resources.js';
+import { MilestoneFieldsSchema, MilestoneNotFoundError, writeLegacyMilestone } from '../domain/initiatives-execution/milestones.js';
 /**
  * Initiative Controller
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -12,12 +15,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
+import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeLegacyBudgetItem } from '../domain/initiatives-execution/budgetItems.js';
 import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
 // FIX-3 (97_ODBIOR_W1_W2.md §8): MaterialCommandConflictError distinguishes
 // "same clientRequestId, different command" (receipt clash — our dedup path)
 // from "aggregate version conflict" (real concurrent edit) by message text;
 // only the former is caught below and turned into an idempotent replay.
-import { MaterialCommandConflictError } from '../domain/initiatives-execution/materialCommand.js';
+import { MaterialCommandConflictError, MaterialCommandRuleError, MaterialCommandValidationError } from '../domain/initiatives-execution/materialCommand.js';
 // FIX-3 (97_ODBIOR_W1_W2.md §8): reuse the existing deterministic content-hash
 // helper (already cross-domain: evidenceService, OrganizationContextService)
 // instead of writing a second stable-stringify implementation.
@@ -87,6 +91,10 @@ import {
 } from '../services/initiative/initiativeLinkedItemsService.js';
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
 import { getInitiativeTransitionPreflight } from '../services/initiative/initiativeTransitionPreflightService.js';
+import {
+  projectExecutionBankInitiativeEvidence,
+  readExecutionBankInitiativeEvidence,
+} from '../services/initiative/executionBankEvidenceReadService.js';
 import {
   executeInitiativeTransition,
   getColumnNameSet,
@@ -234,6 +242,20 @@ export class InitiativeController {
         res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
         return;
       }
+
+      const requestedAsOf = (req.query as any)?.asOf;
+      const wantsExecutionEvidence =
+        (req.query as any)?.includeExecutionEvidence === '1' || requestedAsOf != null;
+      const requestInstant = new Date();
+      const parsedAsOf = requestedAsOf == null ? requestInstant : new Date(String(requestedAsOf));
+      if (
+        wantsExecutionEvidence &&
+        (!Number.isFinite(parsedAsOf.getTime()) || parsedAsOf.getTime() > requestInstant.getTime())
+      ) {
+        res.status(400).json({ error: 'Invalid asOf', code: 'INITIATIVES_AS_OF_INVALID' });
+        return;
+      }
+      const evidenceAsOf = parsedAsOf.toISOString();
 
       // Get user language from Accept-Language header or default to English
       const headers = req.headers || {};
@@ -414,7 +436,9 @@ export class InitiativeController {
         reportName: i.report_name || null,
         report_name: i.report_name || null,
         initiativeTemplateId: (i as any).initiative_template_id ?? null,
-        progress: i.progress || 0,
+        progress: i.progress ?? null,
+        forecastStartDate: (i as any).forecast_start_date ?? null,
+        forecastEndDate: (i as any).forecast_end_date ?? null,
         currentStage: i.current_stage,
         sourceType: i.source_type,
         sourceId: i.source_id,
@@ -517,7 +541,22 @@ export class InitiativeController {
             name: header.title,
             status: header.lifecycleState,
             priority: 'medium',
-            progress: 0,
+            progress: null,
+            forecastStartDate: null,
+            forecastEndDate: null,
+            ...(wantsExecutionEvidence
+              ? projectExecutionBankInitiativeEvidence({
+                  current: {
+                    initiativeId: header.id,
+                    progress: null,
+                    forecastStartDate: null,
+                    forecastEndDate: null,
+                  },
+                  receipts: [],
+                  tasks: [],
+                  asOf: evidenceAsOf,
+                })
+              : {}),
             ownerBusiness: header.ownerId ? { id: header.ownerId } : null,
             // FIX-2: `sourceType` to plakietka ZRODLA BIZNESOWEGO
             // (manual/tool/teresa_chat/assessment, DEC 02.09 „Assessment =
@@ -529,6 +568,18 @@ export class InitiativeController {
             // renderuja plakietke zrodla z tego pola).
             recordSource: header.source,
           } as (typeof initiatives)[number]);
+        }
+      }
+
+      if (wantsExecutionEvidence) {
+        const evidenceByInitiativeId = await readExecutionBankInitiativeEvidence({
+          organizationId: orgId,
+          initiativeIds: initiatives.map((initiative) => String(initiative.id)),
+          asOf: evidenceAsOf,
+        });
+        for (const initiative of initiatives) {
+          const evidence = evidenceByInitiativeId[String(initiative.id)];
+          if (evidence) Object.assign(initiative, evidence);
         }
       }
 
@@ -3410,7 +3461,7 @@ export class InitiativeController {
         status: i.status,
         sourceId: i.source_id,
         sourceType: i.source_type,
-        progress: i.progress || 0,
+        progress: i.progress ?? null,
         projectId: i.project_id,
         projectName: i.project_name,
         organizationId: i.organization_id,
@@ -3795,6 +3846,28 @@ export class InitiativeController {
         }
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = MilestoneFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`milestone-create-${computeContentHash({orgId,initiativeId,targetId:null,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyMilestone(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'create',fields,
+            itemId:`milestone-${computeContentHash({orgId,initiativeId,clientRequestId})}`,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof MilestoneNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof MilestoneNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.status(result.status==='APPLIED'?201:200).json({success:true,milestone:result.response});
+        return;
+      }
       // Get next order index
       // H4.4 fix (SQLite-izm systemowy — MEMORY finding_unquoted_camelcase_aliases_systemic):
       // unquoted camelCase alias `maxOrder` gets folded to lowercase `maxorder` by
@@ -3927,6 +4000,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = MilestoneFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`milestone-update-${computeContentHash({orgId,initiativeId,targetId:milestoneId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyMilestone(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'update',fields,
+            itemId:milestoneId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof MilestoneNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof MilestoneNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true,message:'Milestone updated'});
+        return;
+      }
       const updates: string[] = [];
       const params: unknown[] = [];
 
@@ -4151,6 +4246,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = MilestoneFieldsSchema.safeParse({});
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`milestone-delete-${computeContentHash({orgId,initiativeId,targetId:milestoneId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyMilestone(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'delete',fields,
+            itemId:milestoneId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof MilestoneNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof MilestoneNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true});
+        return;
+      }
       await queryHelpers.queryRun('DELETE FROM initiative_milestones WHERE id = ?', [milestoneId]);
 
       try {
@@ -4435,6 +4552,28 @@ export class InitiativeController {
         }
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = ResourceFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`resource-create-${computeContentHash({orgId,initiativeId,targetId:null,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyResource(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'create',fields,
+            itemId:`resource-${computeContentHash({orgId,initiativeId,clientRequestId})}`,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'RESOURCE_VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof ResourceNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof ResourceNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.status(result.status==='APPLIED'?201:200).json({success:true,resource:result.response});
+        return;
+      }
       const resourceId = uuidv4();
       const now = new Date().toISOString();
 
@@ -4539,6 +4678,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = ResourceFieldsSchema.safeParse({});
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`resource-delete-${computeContentHash({orgId,initiativeId,targetId:resourceId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyResource(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'delete',fields,
+            itemId:resourceId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'RESOURCE_VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof ResourceNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof ResourceNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true});
+        return;
+      }
       await queryHelpers.queryRun(
         `DELETE FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [resourceId, initiativeId, orgId]
@@ -4590,6 +4751,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = ResourceFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`resource-update-${computeContentHash({orgId,initiativeId,targetId:resourceId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyResource(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'update',fields,
+            itemId:resourceId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'RESOURCE_VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof ResourceNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof ResourceNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true,version:result.response.version});
+        return;
+      }
       const now = new Date().toISOString();
       const hasExpectedVersion =
         expectedVersion !== undefined && expectedVersion !== null && expectedVersion !== '';
@@ -4718,6 +4901,44 @@ export class InitiativeController {
         return;
       }
 
+      // Tenant ownership is checked even with unified writes OFF. A caller
+      // must not attach a budget row to another organization's initiative.
+      const budgetParent = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+      if (!budgetParent) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = BudgetItemFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields = parsed.data;
+        const suppliedKey = req.get('Idempotency-Key');
+        const clientRequestId = `budget-create-${computeContentHash({
+          orgId, initiativeId, targetId: null, key: suppliedKey || null,
+          ...(suppliedKey ? {} : { fields }),
+        })}`;
+        let result;
+        try {
+          result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
+          organizationId: orgId, actorId: req.user.id, initiativeId,
+          operation: 'create', fields, itemId: `budget-${computeContentHash({orgId,initiativeId,clientRequestId})}`, clientRequestId,
+          expectedVersion: req.body?.expectedCanonicalVersion, hasIdempotencyKey: Boolean(suppliedKey),
+        });
+        } catch (error) {
+          if (error instanceof MaterialCommandConflictError) {
+            res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
+          }
+          if (error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          if (error instanceof MaterialCommandValidationError && !(error instanceof BudgetItemNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          throw error;
+        }
+        res.status(result.status === 'APPLIED' ? 201 : 200).json({success: true, budgetItem: result.response});
+        return;
+      }
       const itemId = uuidv4();
       const now = new Date().toISOString();
 
@@ -4770,6 +4991,44 @@ export class InitiativeController {
         return;
       }
 
+      // Tenant ownership is checked even with unified writes OFF. A caller
+      // must not attach a budget row to another organization's initiative.
+      const budgetParent = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+      if (!budgetParent) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = BudgetItemFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields = parsed.data;
+        const suppliedKey = req.get('Idempotency-Key');
+        const clientRequestId = `budget-update-${computeContentHash({
+          orgId, initiativeId, targetId: itemId, key: suppliedKey || null,
+          ...(suppliedKey ? {} : { fields }),
+        })}`;
+        let result;
+        try {
+          result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
+          organizationId: orgId, actorId: req.user.id, initiativeId,
+          operation: 'update', fields, itemId: itemId, clientRequestId,
+          expectedVersion: req.body?.expectedCanonicalVersion, hasIdempotencyKey: Boolean(suppliedKey),
+        });
+        } catch (error) {
+          if (error instanceof MaterialCommandConflictError) {
+            res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
+          }
+          if (error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          if (error instanceof MaterialCommandValidationError && !(error instanceof BudgetItemNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          throw error;
+        }
+        res.json({success: true});
+        return;
+      }
       const now = new Date().toISOString();
       await queryHelpers.queryRun(
         `UPDATE initiative_budget_items SET
@@ -4800,6 +5059,44 @@ export class InitiativeController {
         return;
       }
 
+      // Tenant ownership is checked even with unified writes OFF. A caller
+      // must not attach a budget row to another organization's initiative.
+      const budgetParent = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+      if (!budgetParent) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = BudgetItemFieldsSchema.safeParse({});
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields = parsed.data;
+        const suppliedKey = req.get('Idempotency-Key');
+        const clientRequestId = `budget-delete-${computeContentHash({
+          orgId, initiativeId, targetId: itemId, key: suppliedKey || null,
+          ...(suppliedKey ? {} : { fields }),
+        })}`;
+        let result;
+        try {
+          result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
+          organizationId: orgId, actorId: req.user.id, initiativeId,
+          operation: 'delete', fields, itemId: itemId, clientRequestId,
+          expectedVersion: req.body?.expectedCanonicalVersion, hasIdempotencyKey: Boolean(suppliedKey),
+        });
+        } catch (error) {
+          if (error instanceof MaterialCommandConflictError) {
+            res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
+          }
+          if (error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          if (error instanceof MaterialCommandValidationError && !(error instanceof BudgetItemNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          throw error;
+        }
+        res.json({success: true});
+        return;
+      }
       await queryHelpers.queryRun(
         `DELETE FROM initiative_budget_items WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [itemId, initiativeId, orgId]
@@ -5991,6 +6288,24 @@ export class InitiativeController {
         return;
       }
 
+      if(isInitiativeUnifiedWriteEnabled()) {
+        const parsed=GateRolesSchema.safeParse(roles);
+        if(!parsed.success){res.status(400).json({code:'VALIDATION_FAILED'});return;}
+        const normalizedRoles=parsed.data.sort((a,b)=>JSON.stringify([a.gateRole,a.userId]).localeCompare(JSON.stringify([b.gateRole,b.userId])));
+        const key=req.get('Idempotency-Key');
+        const clientRequestId=`gate-roles-${computeContentHash({orgId,initiativeId,key:key||null,...(key?{}:{roles:normalizedRoles})})}`;
+        try {
+          const result=await replaceLegacyGateRoles(canonicalInitiativeWriteUnitOfWork,{organizationId:orgId,actorId,initiativeId,roles:normalizedRoles,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key)});
+          res.json({success:true,roles:result.response.roles});
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError){res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion});return;}
+          if(error instanceof GateRolesNotFoundError){res.status(404).json({code:'NOT_FOUND'});return;}
+          if(error instanceof MaterialCommandRuleError){res.status(error.httpStatus).json({code:error.rule,error:error.message});return;}
+          if(error instanceof MaterialCommandValidationError){res.status(400).json({code:'VALIDATION_FAILED'});return;}
+          throw error;
+        }
+        return;
+      }
       // Previous profile — captured for the audit record (requirement: the audit
       // shows the actor, the profile CHANGE, and the resulting capability).
       let previousRoles: any[] = [];

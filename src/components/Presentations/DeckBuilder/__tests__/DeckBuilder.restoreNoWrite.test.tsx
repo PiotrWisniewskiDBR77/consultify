@@ -9,19 +9,20 @@
  *   - it appends a `presentation_deck_versions` snapshot recording no change;
  *   - it moves `updated_at`, reordering the Materials list.
  *
- * This suite renders the REAL `DeckBuilder` (real loader, real
- * `useDeckAutosave`, real `useVersionHistory`, real `handleRestoreVersion`) and
+ * This suite renders the REAL `DeckBuilder` (real loader, current autosave
+ * wiring, real `useVersionHistory`, real `handleRestoreVersion`) and
  * asserts on the network calls the browser would actually make. Only leaf UI
  * components and services are stubbed — none of the save/restore wiring is.
  *
  * @vitest-environment jsdom
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const DECK_ID = 'deck-mat006b';
+const routeState = vi.hoisted(() => ({ deckId: 'deck-mat006b' }));
 
 // ---------------------------------------------------------------------------
 // Environment stubs. Everything below is a leaf (routing, i18n, toasts, remote
@@ -30,13 +31,19 @@ const DECK_ID = 'deck-mat006b';
 // ---------------------------------------------------------------------------
 const apiGet = vi.fn();
 const apiPost = vi.fn();
+const chatBridge = vi.hoisted(() => ({
+  handler: null as null | ((prompt: string) => Promise<unknown>),
+  setIntent: vi.fn(),
+  clearIntent: vi.fn(),
+}));
 
 vi.mock('react-router-dom', () => ({
-  useParams: () => ({ deckId: DECK_ID }),
+  useParams: () => ({ deckId: routeState.deckId }),
   useNavigate: () => vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
     t: (key: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : key),
     i18n: { language: 'en', changeLanguage: vi.fn() },
@@ -85,8 +92,8 @@ vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (s: unknown) => unknown) =>
     selector({
       currentUser: null,
-      setChatModuleIntent: vi.fn(),
-      clearChatModuleIntent: vi.fn(),
+      setChatModuleIntent: chatBridge.setIntent,
+      clearChatModuleIntent: chatBridge.clearIntent,
     }),
 }));
 
@@ -99,22 +106,6 @@ const { stub } = vi.hoisted(() => ({
   stub: () => (props: { children?: unknown }) => (props?.children ?? null) as any,
 }));
 
-/**
- * Teresa's entry point, reduced to one button that fires the real
- * `handleTeresaDeckIntent` → `handleAiPrompt` chain (the only way to reach the
- * agent-edit accept banner).
- */
-vi.mock('@/components/AIChat/UnifiedChatPanel', () => ({
-  UnifiedChatPanel: (props: any) => (
-    <button
-      type="button"
-      data-testid="teresa-prompt"
-      onClick={() => props.onModuleIntent('rewrite')}
-    >
-      ask
-    </button>
-  ),
-}));
 vi.mock('@/components/Initiatives/InitiativeSourceLink', () => ({
   getSourceDisplayLabel: () => 'source',
 }));
@@ -144,7 +135,7 @@ vi.mock('../CommandPalette', () => ({
   CommandPalette: stub(),
   useCommandPaletteShortcut: () => undefined,
 }));
-vi.mock('../ConflictBanner', () => ({ ConflictBanner: stub() }));
+vi.mock('../ConflictBanner', () => ({ ConflictBanner: ({ onReload }: any) => <button data-testid="conflict-reload" onClick={onReload}>Reload latest</button> }));
 vi.mock('../DeckAuditLogModal', () => ({ DeckAuditLogModal: stub() }));
 vi.mock('../DeckBuilderBottomBar', () => ({ DeckBuilderBottomBar: stub() }));
 vi.mock('../DeckBuilderTopBar', () => ({ DeckBuilderTopBar: stub() }));
@@ -183,6 +174,7 @@ vi.mock('../useDataRefresh', () => ({
 vi.mock('../DeckBuilderMelsView', () => ({
   DeckBuilderMelsView: (props: any) => (
     <div>
+      <span data-testid="current-deck-title">{props.title}</span>
       <button
         type="button"
         data-testid="user-edit"
@@ -205,8 +197,9 @@ vi.mock('../DeckBuilderMelsView', () => ({
   ),
 }));
 vi.mock('../VersionHistoryPanel', () => ({
-  VersionHistoryPanel: ({ versions, onRestore }: any) => (
+  VersionHistoryPanel: ({ versions, onRestore, onSaveCheckpoint }: any) => (
     <div data-testid="version-history">
+      <button data-testid="local-checkpoint" onClick={() => onSaveCheckpoint('Local original')}>Checkpoint</button>
       {(versions || []).map((v: any) => (
         <button
           type="button"
@@ -297,6 +290,14 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
     );
 
   beforeEach(() => {
+    routeState.deckId = DECK_ID;
+    chatBridge.handler = null;
+    chatBridge.setIntent.mockImplementation(({ handler }) => {
+      chatBridge.handler = handler;
+    });
+    chatBridge.clearIntent.mockImplementation(() => {
+      chatBridge.handler = null;
+    });
     serverDeck = CURRENT_DECK;
     serverVersion = 7;
 
@@ -433,7 +434,9 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
     });
 
     const user = await renderBuilderAndLoad();
-    await user.click(screen.getByTestId('teresa-prompt'));
+    // The shared Teresa dock invokes the handler registered by the real builder.
+    expect(chatBridge.handler).toBeTypeOf('function');
+    await act(async () => { await chatBridge.handler!('rewrite'); });
     const acceptButton = await screen.findByText('presentations.accept');
     const versionBeforeAccept = serverVersion;
 
@@ -457,7 +460,7 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
   it('does not write when the deck is merely opened (read-only reopen stays fixed)', async () => {
     await renderBuilderAndLoad();
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    expect(autosavePuts()).toHaveLength(0);
+    expect(autosavePuts(), JSON.stringify(autosavePuts())).toHaveLength(0);
     expect(serverVersion).toBe(7);
   });
 
@@ -524,4 +527,67 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
     await new Promise((resolve) => setTimeout(resolve, 1500));
     expect(autosavePuts()).toHaveLength(2);
   });
+  it('persists a restored session checkpoint as a real local edit', async () => {
+    const user = await renderBuilderAndLoad();
+    await user.click(screen.getByTestId('local-checkpoint'));
+    await user.click(screen.getByTestId('user-edit'));
+    await waitFor(() => expect(autosavePuts()).toHaveLength(1), { timeout: 3000 });
+    await user.click(screen.getByText('Local original', { exact: true }));
+    await waitFor(() => expect(autosavePuts()).toHaveLength(2), { timeout: 3000 });
+    expect(JSON.parse(String(autosavePuts()[1][1].body)).title).toBe(CURRENT_DECK.title);
+    expect(autosavePuts()[1][1].headers['X-Deck-Version']).toBe('8');
+  });
+
+  it('reloads an observed conflict in the active shell without writing its canonical readback', async () => {
+    const originalFetch = fetchMock.getMockImplementation()! as (
+      url: string, init?: RequestInit
+    ) => Promise<Response>;
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).endsWith('/autosave') && init?.method === 'PUT') {
+        serverDeck = { ...CURRENT_DECK, title: 'Other session persisted' };
+        serverVersion = 12;
+        return jsonResponse({ serverVersion }, 409);
+      }
+      return originalFetch(url, init);
+    });
+    const user = await renderBuilderAndLoad();
+    await user.click(screen.getByTestId('user-edit'));
+    await user.click(await screen.findByTestId('conflict-reload', {}, { timeout: 3000 }));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    expect(autosavePuts()).toHaveLength(1); // rejected edit only; zero reload PUT
+    expect(serverVersion).toBe(12);
+    // A real edit after reload uses the conflict's current CAS token.
+    fetchMock.mockImplementation(originalFetch);
+    await user.click(screen.getByTestId('user-edit'));
+    await waitFor(() => expect(autosavePuts()).toHaveLength(2), { timeout: 3000 });
+    expect(autosavePuts()[1][1].headers['X-Deck-Version']).toBe('12');
+  });
+
+  it('does not carry an established A conflict into a different routed deck B', async () => {
+    const originalFetch = fetchMock.getMockImplementation()! as (
+      url: string, init?: RequestInit
+    ) => Promise<Response>;
+    fetchMock.mockImplementation(async (url:string, init?:RequestInit) => {
+      if(String(url).endsWith('/autosave') && init?.method==='PUT') return jsonResponse({serverVersion:12},409);
+      return originalFetch(url,init);
+    });
+    const user=userEvent.setup();const view=render(<DeckBuilder />);
+    await waitFor(()=>expect(screen.getByTestId('restore-ver-2')).toBeInTheDocument());
+    await user.click(screen.getByTestId('user-edit'));
+    await screen.findByTestId('conflict-reload',{}, {timeout:3000});
+    apiGet.mockImplementation(async(url:string)=>({data:{data:url.endsWith('/deck-B')
+      ? {...deckRow({...CURRENT_DECK,deck_id:'deck-B',title:'B canonical'},20),id:'deck-B'} : []}}));
+    routeState.deckId='deck-B';view.rerender(<DeckBuilder />);
+    await waitFor(()=>expect(screen.getByTestId('current-deck-title')).toHaveTextContent('B canonical'));
+    expect(screen.queryByTestId('conflict-reload')).not.toBeInTheDocument();
+    await new Promise(resolve=>setTimeout(resolve,1200));
+    expect(autosavePuts()).toHaveLength(1);
+    fetchMock.mockImplementation(originalFetch);
+    await user.click(screen.getByTestId('user-edit'));
+    await waitFor(()=>expect(autosavePuts()).toHaveLength(2),{timeout:3000});
+    expect(autosavePuts()[1][0]).toBe('/api/presentations/decks/deck-B/autosave');
+    expect(autosavePuts()[1][1].headers['X-Deck-Version']).toBe('20');
+    expect(JSON.parse(autosavePuts()[1][1].body).deck_id).toBe('deck-B');
+  });
+
 });

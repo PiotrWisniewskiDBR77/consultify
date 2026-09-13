@@ -221,30 +221,86 @@ export async function updateActionCard(
   return rows[0] ? rowToActionCard(rows[0]) : null;
 }
 
-export async function closeActionCard(scope: ActionCardScope, id: string): Promise<ActionCard | null> {
-  await queryHelpers.queryRun(
-    `UPDATE action_cards SET status = 'CLOSED', updated_by = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
-    [scope.actorUserId, new Date().toISOString(), id, scope.organizationId]
-  );
-  const rows = await queryHelpers.queryAll<any>(`${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ?`, [id, scope.organizationId]);
-  const card = rows[0] ? rowToActionCard(rows[0]) : null;
-  /* P7K część B: ZAMKNIĘCIE KARTY MUSI ZDJĄĆ WPIS ZE SKRZYNKI.
-     Materializacja (`inboxService`) tylko DOPISUJE otwarte karty — sam UPDATE
-     statusu zostawiłby w Skrzynce wiersz, który już nikogo nie dotyczy, a
-     właściciel zobaczyłby zadanie „zrobione, a dalej wisi". Ten sam wołacz,
-     którego używa zamykanie pozycji Skrzynki z Mojej Pracy; jest idempotentny
-     (`not_materialized`/`already_closed` to poprawne odpowiedzi, nie błędy),
-     więc nie wywraca zamknięcia karty. */
-  if (card) {
-    try {
-      const { closeInboxItemForSource } = await import('../inboxService.js');
-      await closeInboxItemForSource(card.ownerUserId, scope.organizationId, 'action_card', card.id, {
-        closedBy: 'action_card_close',
-      });
-    } catch {
-      /* Skrzynka nie może zablokować zamknięcia karty — wpis zostanie
-         posprzątany przy następnej materializacji zmiany statusu. */
+/** Serialize both lifecycle directions with their owned Inbox projection. */
+async function transitionActionCard(
+  scope: ActionCardScope,
+  id: string,
+  status: ActionCardStatus
+): Promise<ActionCard | null> {
+  return queryHelpers.withPgTransaction(async (tx) => {
+    const { rows } = await tx.query<any>(
+      `${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ? FOR UPDATE OF ac`,
+      [id, scope.organizationId]
+    );
+    if (!rows[0]) return null;
+    const card = rowToActionCard(rows[0]);
+    if (card.status === status && status === 'OPEN') return card;
+    const now = new Date().toISOString();
+    const { rows: inboxRows } = await tx.query<any>(
+      `SELECT * FROM canonical_inbox_items WHERE organization_id = ? AND user_id = ?
+       AND source_entity_type = 'action_card' AND source_entity_id = ? FOR UPDATE`,
+      [scope.organizationId, card.ownerUserId, id]
+    );
+    for (const item of inboxRows) {
+      // Never undo a human's resolved/dismissed state, including stale system metadata.
+      if (item.status === 'dismissed') continue;
+      let metadata: Record<string, unknown> = {};
+      try {
+        const parsed =
+          typeof item.metadata_json === 'string'
+            ? JSON.parse(item.metadata_json)
+            : item.metadata_json;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
+          metadata = { ...parsed };
+      } catch {
+        // Legacy close replaced malformed metadata too. Reopen must not infer
+        // system ownership from an unreadable value (the closedBy check below fails).
+      }
+      if (status === 'CLOSED') {
+        if (item.status === 'resolved') continue;
+        metadata.closedBy = 'action_card_close';
+      } else {
+        if (item.status !== 'resolved' || metadata.closedBy !== 'action_card_close') continue;
+        delete metadata.closedBy;
+      }
+      await tx.query(
+        `UPDATE canonical_inbox_items SET status = ?, source_status = ?, resolved_at = ?,
+         metadata_json = ?, updated_at = ? WHERE id = ? AND organization_id = ? AND user_id = ?`,
+        [
+          status === 'CLOSED' ? 'resolved' : 'pending',
+          status,
+          status === 'CLOSED' ? now : null,
+          JSON.stringify(metadata),
+          now,
+          item.id,
+          scope.organizationId,
+          card.ownerUserId,
+        ]
+      );
     }
-  }
-  return card;
+    if (card.status !== status)
+      await tx.query(
+        'UPDATE action_cards SET status = ?, updated_by = ?, updated_at = ? WHERE id = ? AND organization_id = ?',
+        [status, scope.actorUserId, now, id, scope.organizationId]
+      );
+    const updated = await tx.query<any>(
+      `${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ?`,
+      [id, scope.organizationId]
+    );
+    return rowToActionCard(updated.rows[0]);
+  });
+}
+
+export async function closeActionCard(
+  scope: ActionCardScope,
+  id: string
+): Promise<ActionCard | null> {
+  return transitionActionCard(scope, id, 'CLOSED');
+}
+
+export async function reopenActionCard(
+  scope: ActionCardScope,
+  id: string
+): Promise<ActionCard | null> {
+  return transitionActionCard(scope, id, 'OPEN');
 }

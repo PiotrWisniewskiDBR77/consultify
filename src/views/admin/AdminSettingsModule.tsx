@@ -305,9 +305,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   }, [navigate, setCurrentView]);
 
   const content = useMemo(() => {
-    const domainConfig = getAdminDomains(t).find(
-      (domain) => domain.id === resolvedLocation.domain
-    );
+    const domainConfig = getAdminDomains(t).find((domain) => domain.id === resolvedLocation.domain);
     const childConfig = domainConfig?.children.find(
       (screen) => screen.id === resolvedLocation.screen
     );
@@ -494,7 +492,14 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         if (resolvedLocation.screen === 'legal-hold') return <AdminLegalHoldPanel />;
         if (resolvedLocation.screen === 'export-history') return <AdminAuditExportHistoryPanel />;
         if (resolvedLocation.screen === 'integrity') return <AdminAuditIntegrityPanel />;
-        return <AdminAuditLogPanel />;
+        return (
+          <AdminAuditLogPanel
+            organizationId={currentUser.organizationId}
+            actorId={currentUser.id}
+            actorRole={currentUser.role}
+            showOrganizationExport={resolvedLocation.screen === 'retention-export'}
+          />
+        );
       case 'command':
         if (resolvedLocation.screen === 'organization-defaults')
           return <AdminOrganizationDefaultsPanel organizationId={currentUser.organizationId} />;
@@ -534,6 +539,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     resolvedLocation.domain,
     resolvedLocation.screen,
     currentUser.organizationId,
+    currentUser.id,
+    currentUser.role,
     handleLocationChange,
     i18n?.language,
     i18n?.resolvedLanguage,
@@ -614,9 +621,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
               Padding responsywny zostaje — to odstep od krawedzi, nie sufit
               szerokosci.
             */}
-            <div className="admin-domain-content w-full space-y-6 p-4 sm:p-5 lg:p-6">
-              {content}
-            </div>
+            <div className="admin-domain-content w-full space-y-6 p-4 sm:p-5 lg:p-6">{content}</div>
           </ScrollArea>
         </div>
       </div>

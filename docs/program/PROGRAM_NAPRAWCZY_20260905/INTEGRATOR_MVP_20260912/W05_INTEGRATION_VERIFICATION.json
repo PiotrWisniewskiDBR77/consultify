@@ -1,0 +1,21 @@
+{
+  "source_merge": "6a697629c49b101215e50e81d61a01b6581af8cf",
+  "candidate_checked": "32222a8edb109bef8582dde60cda218e63e55ccb",
+  "frontend_tests": {
+    "files": 3,
+    "passed": 15,
+    "exit": 0
+  },
+  "frontend_tsc": {
+    "exit": 2,
+    "baseline": 192,
+    "candidate": 192,
+    "added": 0,
+    "removed": 0
+  },
+  "server_tsc": {
+    "exit": 0
+  },
+  "built_candidate": "NOT_REBUILT_AFTER_W05",
+  "live": "NOT_DEPLOYED"
+}

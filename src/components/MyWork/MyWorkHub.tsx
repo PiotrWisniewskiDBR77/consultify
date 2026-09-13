@@ -572,7 +572,12 @@ function getInitialMyWorkTab(
 function parseMyWorkPathIntent(
   pathname: string,
   isPolish: boolean
-): { tab: ModuleTab; doc?: OpenDocument; notebookPageId?: string } | null {
+): {
+  tab: ModuleTab;
+  doc?: OpenDocument;
+  notebookId?: string;
+  notebookPageId?: string;
+} | null {
   const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
     switch (segment) {
       case 'mind-map':
@@ -642,6 +647,16 @@ function parseMyWorkPathIntent(
   // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — the
   // `/my-work/projects` deep link (Zwornik #78) is removed here; AppRoutes.tsx
   // now redirects that path to `/my-work` before this component ever mounts.
+  // Canonical notebook workspace/page route. The one-segment compatibility
+  // alias below is resolved to this parent context after an access-checked
+  // page read exposes its persisted notebookId.
+  if (segments[1] === 'notebook' && segments[2] && segments[3]) {
+    return {
+      tab: 'notebook',
+      notebookId: decodeURIComponent(segments[2]),
+      notebookPageId: decodeURIComponent(segments[3]),
+    };
+  }
   // Page-level deep link (/my-work/notebook/<pageId>) — used by canvas
   // save-as-note success links and provenance "Otwórz" entries. Previously the
   // pageId segment was DISCARDED, so a valid link landed on the notebooks
@@ -966,6 +981,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // L1 container (Notatnik) currently open. null => show the notebook library list.
   const [notebookOpenId, setNotebookOpenId] = useState<string | null>(null);
   const [notebookOpenTitle, setNotebookOpenTitle] = useState<string>('');
+  const [notebookPageParentResolution, setNotebookPageParentResolution] = useState<{
+    pageId: string;
+    userId: string | null;
+    organizationId: string | null;
+    status: 'resolving' | 'parented' | 'containerless' | 'denied';
+    notebookId: string | null;
+  } | null>(null);
+  const notebookPageParentResolutionRef = useRef<typeof notebookPageParentResolution>(null);
   // Menu 2 "New notebook" CTA → opens the create-notebook modal inside the library (L1).
   const [notebookCreateNotebookReqId, setNotebookCreateNotebookReqId] = useState(0);
   // Menu 3 (Command Row) page-status presets for the open notebook (L2).
@@ -1642,10 +1665,17 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Page-level open (notebookOpenPageId) stays owned by the legacy intent/action
   // flows and is intentionally not reconciled here.
   useEffect(() => {
+    const pathIntent = parseMyWorkPathIntent(location.pathname, isPolish);
+    // A page path owns its container context. Ignore stale query state until
+    // the access-checked page read below verifies the persisted parent.
+    if (pathIntent?.notebookPageId) return;
     const nbId = searchParams.get('notebook');
     if (!nbId) {
       setNotebookOpenId(null);
       setNotebookOpenTitle('');
+      setNotebookOpenPageId(null);
+      notebookPageParentResolutionRef.current = null;
+      setNotebookPageParentResolution(null);
       return;
     }
     if (nbId !== notebookOpenId) {
@@ -1653,14 +1683,27 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setNotebookOpenId(nbId);
       setNotebookOpenTitle('');
       setNotebookOpenPageId(null);
+      notebookPageParentResolutionRef.current = null;
+      setNotebookPageParentResolution(null);
       return;
     }
-    if (notebookOpenTitle) return;
+  }, [searchParams, location.pathname, isPolish]);
+
+  // A notebook id is tenant-local. Drop display and page-resolution state as
+  // soon as the active actor scope changes, before any new async read settles.
+  useEffect(() => {
+    setNotebookOpenTitle('');
+    notebookPageParentResolutionRef.current = null;
+    setNotebookPageParentResolution(null);
+  }, [myWorkDocumentsUserId, myWorkDocumentsOrgId]);
+
+  // Resolve the title for notebooks opened from either URL contract.
+  useEffect(() => {
+    if (!notebookOpenId || notebookOpenTitle) return;
     let cancelled = false;
     void (async () => {
       try {
-        const { Api } = await import('@/services/api');
-        const nb = await Api.getNotebook(nbId);
+        const nb = await Api.getNotebook(notebookOpenId);
         if (!cancelled && nb?.title) setNotebookOpenTitle(String(nb.title));
       } catch {
         /* title is best-effort; header falls back to the default label */
@@ -1669,17 +1712,30 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, notebookOpenId, notebookOpenTitle]);
+  }, [
+    notebookOpenId,
+    notebookOpenTitle,
+    myWorkDocumentsUserId,
+    myWorkDocumentsOrgId,
+  ]);
 
   useEffect(() => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
     if (!intent) return;
     setActiveTab(intent.tab);
-    // /my-work/notebook/<pageId> opens the page editor directly (bypasses the
-    // notebooks library, which knows nothing about container-less ingested
-    // pages such as canvas save-as-note materializations).
+    // A canonical path carries both identities. A one-segment page alias starts
+    // with no parent and is resolved by the access-checked page read below.
     if (intent.notebookPageId) {
+      setNotebookOpenId(intent.notebookId || null);
+      setNotebookOpenTitle('');
       setNotebookOpenPageId(intent.notebookPageId);
+      setNotebookPageParentResolution((current) =>
+        current?.pageId === intent.notebookPageId &&
+        current?.userId === (myWorkDocumentsUserId || null) &&
+        current?.organizationId === (myWorkDocumentsOrgId || null)
+          ? current
+          : null
+      );
     }
     const nextDoc = intent.doc;
     if (!nextDoc) return;
@@ -1716,7 +1772,109 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }
       return nextDoc;
     });
-  }, [activeTab, handleOpenDocument, location.pathname, isPolish]);
+  }, [
+    activeTab,
+    handleOpenDocument,
+    location.pathname,
+    isPolish,
+    myWorkDocumentsUserId,
+    myWorkDocumentsOrgId,
+  ]);
+
+  // Resolve and verify the parent for any page path. This preserves the legacy
+  // page-only alias for truly container-less rows while ensuring a contained
+  // page never mounts an all-pages workspace. The same read also prevents a
+  // mismatched canonical notebook/page pair from keeping the wrong container.
+  useEffect(() => {
+    if (!notebookOpenPageId) return;
+    const pageId = notebookOpenPageId;
+    const actorId = myWorkDocumentsUserId || null;
+    const organizationId = myWorkDocumentsOrgId || null;
+    const pathNotebookId =
+      parseMyWorkPathIntent(location.pathname, isPolish)?.notebookId || null;
+    let cancelled = false;
+
+    const priorResolution = notebookPageParentResolutionRef.current;
+    if (
+      priorResolution?.pageId === pageId &&
+      priorResolution.userId === actorId &&
+      priorResolution.organizationId === organizationId &&
+      ((priorResolution.status === 'parented' &&
+        priorResolution.notebookId === pathNotebookId) ||
+        (priorResolution.status === 'containerless' && !pathNotebookId))
+    ) {
+      return;
+    }
+
+    const resolvingState = {
+      pageId,
+      userId: actorId,
+      organizationId,
+      status: 'resolving' as const,
+      notebookId: null,
+    };
+    notebookPageParentResolutionRef.current = resolvingState;
+    setNotebookPageParentResolution(resolvingState);
+
+    void (async () => {
+      try {
+        const page = await Api.getNotebookPage(pageId);
+        if (cancelled) return;
+        const persistedParentId =
+          typeof page?.notebookId === 'string' ? page.notebookId.trim() : '';
+        const nextParentId = persistedParentId || null;
+        const resolvedState = {
+          pageId,
+          userId: actorId,
+          organizationId,
+          status: (nextParentId ? 'parented' : 'containerless') as
+            | 'parented'
+            | 'containerless',
+          notebookId: nextParentId,
+        };
+        notebookPageParentResolutionRef.current = resolvedState;
+        setNotebookPageParentResolution(resolvedState);
+        if (pathNotebookId !== nextParentId) {
+          setNotebookOpenId(nextParentId);
+          setNotebookOpenTitle('');
+        }
+        const nextPath = nextParentId
+          ? `/my-work/notebook/${encodeURIComponent(nextParentId)}/${encodeURIComponent(pageId)}`
+          : `/my-work/notebook/${encodeURIComponent(pageId)}`;
+        const nextSearch = new URLSearchParams(location.search);
+        nextSearch.delete('notebook');
+        nextSearch.delete('note');
+        const searchSuffix = nextSearch.toString() ? `?${nextSearch.toString()}` : '';
+        if (location.pathname !== nextPath || searchSuffix !== location.search) {
+          navigate(`${nextPath}${searchSuffix}${location.hash}`, { replace: true });
+        }
+      } catch {
+        if (cancelled) return;
+        const deniedState = {
+          pageId,
+          userId: actorId,
+          organizationId,
+          status: 'denied' as const,
+          notebookId: null,
+        };
+        notebookPageParentResolutionRef.current = deniedState;
+        setNotebookPageParentResolution(deniedState);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    notebookOpenPageId,
+    myWorkDocumentsUserId,
+    myWorkDocumentsOrgId,
+    location.pathname,
+    location.search,
+    location.hash,
+    navigate,
+    isPolish,
+  ]);
 
   // Tab configuration — new order: Home > Ideas > Notebook > Inbox > Calendar > Tasks > Decisions > Manager
   const tabs = useMemo(() => {
@@ -2348,6 +2506,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setNotebookOpenId(null);
     setNotebookOpenTitle('');
     setNotebookOpenPageId(null);
+    notebookPageParentResolutionRef.current = null;
+    setNotebookPageParentResolution(null);
     const next = new URLSearchParams(searchParams);
     next.delete('notebook');
     next.delete('note');
@@ -4195,6 +4355,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 setNotebookOpenId(nb.id);
                 setNotebookOpenTitle(nb.title);
                 setNotebookOpenPageId(null);
+                notebookPageParentResolutionRef.current = null;
+                setNotebookPageParentResolution(null);
                 const next = new URLSearchParams(searchParams);
                 next.set('notebook', nb.id);
                 next.delete('note');
@@ -4202,6 +4364,31 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               }}
             />
           );
+        }
+        if (notebookOpenPageId) {
+          const parentResolutionIsCurrent =
+            notebookPageParentResolution?.pageId === notebookOpenPageId &&
+            notebookPageParentResolution.userId === (myWorkDocumentsUserId || null) &&
+            notebookPageParentResolution.organizationId === (myWorkDocumentsOrgId || null);
+          if (
+            !parentResolutionIsCurrent ||
+            notebookPageParentResolution?.status === 'resolving' ||
+            (notebookPageParentResolution?.status === 'parented' &&
+              notebookPageParentResolution.notebookId !== notebookOpenId)
+          ) {
+            return lazyFallback;
+          }
+          if (notebookPageParentResolution?.status === 'denied') {
+            return (
+              <div
+                role="alert"
+                data-testid="notebook-page-parent-resolution-error"
+                className="p-6 text-sm text-slate-600 dark:text-slate-300"
+              >
+                {t('notebook.notebookContent.toastError')}
+              </div>
+            );
+          }
         }
         return (
           <React.Suspense fallback={lazyFallback}>

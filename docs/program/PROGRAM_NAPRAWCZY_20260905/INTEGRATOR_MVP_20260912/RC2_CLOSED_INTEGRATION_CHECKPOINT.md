@@ -1,0 +1,11 @@
+# RC2 CLOSED integration checkpoint
+
+Integrated commit e0fb12491f4b2547228008dee276202950b95aed on codex/integrator-mvp-20260912-rc2, reused released W17 worktree. Clean after normal pre-commit/commit-msg exit0. Frozen RC1 c4c67a677effb4c181c81cd8f1d28649f1073579 unchanged; no push/deploy/live verification.
+
+Accepted source4fe3e7d8ff8b43edb9a4b7f3b71d9c1554d94e04 preserved byte-for-byte in product and test. Only merge conflict was append-only CODEX4 report; both existing report and author addition retained. Independent CLOSED_AUTOSAVE_FINAL_INDEPENDENT_REVIEW.md is included. Root postmerge10/10 tests passed, zero skipped. Full frontend TypeScript exit2 retains exactly192 diagnostics with same file/code multiplicities and no additions/removals. This is baseline parity, not clean TypeScript. Default4GiB compiler OOM and initial sparse195 result retained; after missing dependencies hydrated, final RC2_CLOSED_FRONT_TSC_HYDRATED.log and _DELTA.json establish192vs192. No server product changed and no new full build/deployment claim.
+
+Independent real UI/Gateway/JWT/PG proves CLOSED0write, legal4writes/null clears, structural narrative exactly1write and clean reload, runtime-only canonical metadata1→2. Capability revocation/newer backup at mounted component level. This closes bounded autosave defect, not Initiatives or MVP.
+
+IE01 issued to delivery on exacte0fb12491f4b2547228008dee276202950b95aed. Reuse its own released CLOSED worktree under new codex/ie01-initiative-journey-20260912 branch; preserve prior branch/evidence. Required scope remains full IE01_DELTA_OWNERSHIP_PACKET.md / I01-I02 journey, menu4/ListAnalysis, canonical cards/findings/draft preservation and real Hubcreate→Definition→typedDecision. Source paths assigned explicitly; no shared UoW/migrations/global hub or live flag changes. C6 separate implementation slot continues privacy and new GET export authorization.
+
+C6 source47 checkpoint cannot be integrated by its diff alone: actual RC1 lacks prerequisite policy lock/reader/error/result contract and export endpoint. C6_RC1_EXPORT_PREREQUISITES.md records minimal dependency closure and excludes held deletion/AIbudget/global hasLegalHold semantics. Persisted empty membership role must not fall back to staleJWT ADMIN; author fixing with real endpoint negatives. Independent combined runtime acceptance remains pending.

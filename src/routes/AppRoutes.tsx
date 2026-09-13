@@ -26,7 +26,6 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
@@ -41,9 +40,6 @@ import { isMeetingsModuleEnabled } from '@/utils/meetingsModuleFlag';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
 import { isStudioEnabled } from '@/utils/studioFlag';
-import { AuthView } from '@/views/AuthView';
-import { ProductEntryPage } from '@/views/ProductEntryPage';
-import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
 import { DeferredRouteLoadingFallback } from './DeferredRouteLoadingFallback';
@@ -53,6 +49,25 @@ import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
+
+// Public routes do not need the signed-in navigation shell. Protected routes
+// load it under the shared route Suspense boundary below.
+const MainLayout = lazyWithRetry(() =>
+  import('@/layouts/MainLayout').then((m) => ({ default: m.MainLayout }))
+);
+
+// Keep the disabled Studio route out of the boot graph: its layout includes the editor.
+const StudioUnavailableView = lazyWithRetry(() =>
+  import('@/views/StudioUnavailableView').then((m) => ({ default: m.StudioUnavailableView }))
+);
+
+const AuthView = lazyWithRetry(() =>
+  import('@/views/AuthView').then((m) => ({ default: m.AuthView }))
+);
+
+const ProductEntryPage = lazyWithRetry(() =>
+  import('@/views/ProductEntryPage').then((m) => ({ default: m.ProductEntryPage }))
+);
 
 // Lazy load views for new routes
 const StudioView = lazyWithRetry(() =>
@@ -2472,8 +2487,8 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.FINANCE}
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2482,15 +2497,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/statements/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.statement')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.statement')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2499,15 +2514,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/models/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.model')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.model')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2516,15 +2531,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/analyses/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.analysis')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.analysis')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2533,15 +2548,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/predictions/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.prediction')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.prediction')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2550,15 +2565,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/valuations/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.valuation')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.valuation')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2567,10 +2582,13 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
+        {/* DEC-470: unknown and legacy deep links share the same announcement. */}
+        <Route path="/finance/*" element={<MainLayout><BetaGate moduleId="MODULE_ECONOMICS"><></></BetaGate></MainLayout>} />
+        <Route path="/economics/*" element={<MainLayout><BetaGate moduleId="MODULE_ECONOMICS"><></></BetaGate></MainLayout>} />
         <Route
           path={ROUTES.EXECUTION}
           element={

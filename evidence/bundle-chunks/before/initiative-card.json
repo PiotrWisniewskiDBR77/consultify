@@ -1,0 +1,89 @@
+{
+  "capturedAt": "2026-09-12T09:11:21.294Z",
+  "name": "Initiative card",
+  "phase": "before",
+  "url": "/initiatives?open=e33b0b36-f9c9-5cc9-b516-ae04f7311de2&mode=doc",
+  "timing": {
+    "firstChangedMs": 2,
+    "stableMs": 1209
+  },
+  "readyFromTriggerMs": 1312,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3312,
+  "totalCaptureMs": 3378,
+  "scriptBytes": {
+    "requestCount": 0,
+    "decodedBodyBytes": 0,
+    "encodedBodyBytes": 0,
+    "transferBytes": 0,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "httpErrors": [
+    {
+      "method": "PUT",
+      "status": 403,
+      "url": "/api/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2"
+    },
+    {
+      "method": "PUT",
+      "status": 403,
+      "url": "/api/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2"
+    }
+  ],
+  "apiRequestCount": 42,
+  "apiRequests": [
+    "GET /api/mfa/status",
+    "GET /api/llm/providers/health?timeoutMs=4000",
+    "GET /api/organizations/current",
+    "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+    "GET /api/v8/planning/pending-decisions",
+    "GET /api/initiatives/runtime-v1/initiatives",
+    "GET /api/initiatives",
+    "GET /api/users",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2",
+    "GET /api/initiatives/runtime-v1/initiatives",
+    "GET /api/initiatives",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/snapshot",
+    "GET /api/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/suggested-changes",
+    "GET /api/initiatives/section-types",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2",
+    "GET /api/my-work/link-graph/backlinks?type=initiative&id=e33b0b36-f9c9-5cc9-b516-ae04f7311de2&limit=50",
+    "GET /api/artifacts?sourceInitiativeId=e33b0b36-f9c9-5cc9-b516-ae04f7311de2&limit=20",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/snapshot",
+    "GET /api/initiatives/runtime-v1/initiatives",
+    "GET /api/initiatives",
+    "GET /api/my-work/object-attachments/initiative/e33b0b36-f9c9-5cc9-b516-ae04f7311de2",
+    "GET /api/decisions?relatedObjectId=e33b0b36-f9c9-5cc9-b516-ae04f7311de2&relatedObjectType=initiative",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/raid",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/watchers",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/kpis",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/history",
+    "GET /api/tasks?initiativeId=e33b0b36-f9c9-5cc9-b516-ae04f7311de2",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/task-dependencies",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/stakeholders",
+    "GET /api/users",
+    "GET /api/decisions?relatedObjectId=e33b0b36-f9c9-5cc9-b516-ae04f7311de2&relatedObjectType=initiative&type=GATE_APPROVAL",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/comments",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/gate-roles",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/gate-readiness-check",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/status-history",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/resources",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/budget-items",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/tools",
+    "GET /api/v8/planning/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/intangible-assets",
+    "PUT /api/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2",
+    "GET /api/notifications/unread-count",
+    "PUT /api/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2"
+  ],
+  "scriptRequests": [],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInitiatives\nData\nModel\n1\nLocal Reviewer\nLR\nInitiatives\nPlan\nLoad\nPriority\nAll priorities\nCritical\nHigh\nMedium\nLow\nStatus: Closed\n2\nActive\nAll\nNew initiative\nList\ninitiative\nSAP S/4 Migration Assessment\nSAP S/4 Migration Assessment\nClosed\nUnsaved\nSections\nEdit\nPreview\nWork with AI\nSCOPE & PLAN\nOverview\nTasks & Milestones\nDeliverables & Milestones\n3\nDECISIONS & RISK\nDecisions\nRAID\nGates\nSuggested Changes\nOUTCOMES\nTarget State\nKPIs & Benefits\nOKR\nHypothesis\nFinancial Analysis\nFinancial Impact\nRECORDS\nLessons Learned\nOverview\nPROBLEM\n\nWhat problem does this initiative solve\n\nPROPOSED SOLUTION\n\nProposed approach and implementation method\n\nCOST OF INACTION\n\nConsequences of not taking action\n\nMARKET CONTEXT\n\nMarket environment, competition and trends\n\nACTIONS\n0\n\nActions are unavailable in Preview. The 0 describes this view, not the initiative — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.\n\nPROPERTIES\nProperty\tValue\nStatus\t\nClosed\n\nPhase\t\nBenefits\n\nNext Gate\t\nNot defined\n\nPriority\t\nHigh\n\nOwner\t\nMichael Grant\n\nTarget\t\nJun 30, 2026\nRELATIONS\nSOURCES AND ASSUMPTIONS\nRESULTS\nCOMMENTS\nHISTORY"
+}

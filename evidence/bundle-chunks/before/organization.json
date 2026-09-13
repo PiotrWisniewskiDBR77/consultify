@@ -1,0 +1,111 @@
+{
+  "capturedAt": "2026-09-12T09:11:07.669Z",
+  "name": "Organization",
+  "phase": "before",
+  "url": "/organization/profile/identity-scale",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1207
+  },
+  "readyFromTriggerMs": 1340,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3342,
+  "totalCaptureMs": 3407,
+  "scriptBytes": {
+    "requestCount": 5,
+    "decodedBodyBytes": 362652,
+    "encodedBodyBytes": 93592,
+    "transferBytes": 95092,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/index-ivV3xR_j.js",
+      "initiatorType": "script",
+      "startTime": 44705,
+      "responseEnd": 44710.30000000447,
+      "duration": 5.300000004470348,
+      "decodedBodySize": 58921,
+      "encodedBodySize": 20863,
+      "transferSize": 21163,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/OrganizationView-DujjJt5D.js",
+      "initiatorType": "script",
+      "startTime": 44705,
+      "responseEnd": 44713.20000000298,
+      "duration": 8.200000002980232,
+      "decodedBodySize": 294273,
+      "encodedBodySize": 68566,
+      "transferSize": 68866,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/index-LrBX9Vb2.js",
+      "initiatorType": "script",
+      "startTime": 44705.10000000149,
+      "responseEnd": 44709.10000000149,
+      "duration": 4,
+      "decodedBodySize": 4464,
+      "encodedBodySize": 2068,
+      "transferSize": 2368,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/DomainScreenHeader-DqgI8miT.js",
+      "initiatorType": "script",
+      "startTime": 44705.20000000298,
+      "responseEnd": 44709.20000000298,
+      "duration": 4,
+      "decodedBodySize": 1839,
+      "encodedBodySize": 861,
+      "transferSize": 1161,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/DomainNavigation-v3_86Sx1.js",
+      "initiatorType": "script",
+      "startTime": 44705.20000000298,
+      "responseEnd": 44709.20000000298,
+      "duration": 4,
+      "decodedBodySize": 3155,
+      "encodedBodySize": 1234,
+      "transferSize": 1534,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 11,
+  "apiRequests": [
+    "GET /api/mfa/status",
+    "GET /api/llm/providers/health?timeoutMs=4000",
+    "GET /api/my-work/personal-tasks",
+    "GET /api/organizations/current",
+    "GET /api/organization-context",
+    "GET /api/organization-profiles/468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "GET /api/organization-context",
+    "GET /api/organization-context/governed/claims?limit=200",
+    "GET /api/organization-context-store",
+    "GET /api/notifications?limit=20",
+    "GET /api/notifications/unread-count"
+  ],
+  "scriptRequests": [
+    "/assets/index-LrBX9Vb2.js",
+    "/assets/DomainScreenHeader-DqgI8miT.js",
+    "/assets/DomainNavigation-v3_86Sx1.js",
+    "/assets/index-ivV3xR_j.js",
+    "/assets/OrganizationView-DujjJt5D.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nOrganization\nData\nModel\n1\nLocal Reviewer\nLR\nBack to Dashboard\nOrganization\n\nBusiness context, sources, and decision readiness\n\nORGANIZATION PROFILE\nIdentity & Operating Model\nDirection & Constraints\nGOALS & EXPECTATIONS\nGoals & Metrics\nScope & Ways of Working\nCHALLENGES\nChallenges & Evidence\nRoot Causes & Blockers\nSTRATEGIC SYNTHESIS\nRisks & Opportunities\nScenarios & Brief\nSOURCES & KNOWLEDGE\nSources & Claims\nKnowledge Graph\nREADINESS & GOVERNANCE\nOrganization Readiness\nOrganization\nOrganization Profile\nIdentity & Operating Model\n\nTeresa context: 17 claims · updated 2d ago\n\nTeresa is using this context to answer your questions\n\nView knowledge graph\nIdentity\nScale\nMarkets & systems\nAdd source\nAll\n13\nFilled in\n13\nTo fill in\n0\nConflicts\n0\nIdentity\n\nThe organization type decides what Teresa asks about next.\n\nORGANIZATION TYPE\n\nManufacturing\nProfessional Services\nTechnology\nPublic Sector\nNonprofit / NGO\nOther\nINDUSTRY\n—\nTechnology\nFinancial Services\nHealthcare\nManufacturing\nIndustrial\nConsumer\nEnergy\nTelecommunications\nReal Estate\nTransportation & Logistics\nEducation\nGovernment\nRetail & E-commerce\nMedia & Entertainment\nAgriculture\nConstruction\nHospitality\nProfessional Services\nOther\n\nOrganization profile · not approved 09/09/2026\n\nSUB-INDUSTRY\nINDUSTRY CODE\nORGANIZATION DESCRIPTION\n\nOrganization profile · not approved 09/09/2026\n\nTechnical details\nScale\nCOMPANY SIZE\n—\nStartup (< 50)\nSMB (50-250)\nMid-Market (250-1000)\nEnterprise (1000+)\n\nOrganization profile · not approved 09/09/2026\n\nEMPLOYEE COUNT\nANNUAL REVENUE\nHEADQUART"
+}

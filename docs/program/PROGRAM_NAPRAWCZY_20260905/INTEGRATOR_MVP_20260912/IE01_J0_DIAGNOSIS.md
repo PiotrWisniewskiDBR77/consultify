@@ -1,0 +1,1 @@
+J0 staged scan included the test-only HistoryControls label "Back in history" (line159), excluded by the full source scan. External diagnostic copy printed this exact match. Changed test-only history controls and matching role queries to direction arrows (even the single word Back is classified as English); no application text, scanner, baseline or hook changed.

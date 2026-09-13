@@ -1,0 +1,8 @@
+{
+  "baseline_count": 192,
+  "candidate_count": 192,
+  "added": [],
+  "removed": [],
+  "exit": 2,
+  "meaning": "No new diagnostics only if added empty; not tsc0"
+}

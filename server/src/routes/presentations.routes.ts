@@ -786,6 +786,36 @@ function parseDeckPayload(row: any): any {
   return normalizeDeckDocument(row) || {};
 }
 
+function parseDeckVersionSnapshot(raw: unknown): {
+  serialized: string;
+  title: string | null;
+} | null {
+  let snapshot: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      snapshot = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+
+  const candidate = snapshot as Record<string, unknown>;
+  const directTitle =
+    typeof candidate.title === 'string' && candidate.title.trim() ? candidate.title.trim() : null;
+  const meta =
+    candidate.meta && typeof candidate.meta === 'object' && !Array.isArray(candidate.meta)
+      ? (candidate.meta as Record<string, unknown>)
+      : null;
+  const metadataTitle =
+    typeof meta?.title === 'string' && meta.title.trim() ? meta.title.trim() : null;
+
+  return {
+    serialized: typeof raw === 'string' ? raw : JSON.stringify(snapshot),
+    title: directTitle ?? metadataTitle,
+  };
+}
+
 function getDeckCards(row: any): any[] {
   const parsed = parseDeckPayload(row);
   return Array.isArray(parsed.cards)
@@ -8270,7 +8300,7 @@ router.post(
     const userId = getUserId(req);
 
     const deck = (await dbGet(
-      'SELECT id, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      'SELECT id, title, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
       [deckId, orgId]
     )) as any;
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
@@ -8303,12 +8333,22 @@ router.post(
     }
     if (!versionRow) return res.status(404).json({ success: false, error: 'Version not found' });
 
+    const snapshot = parseDeckVersionSnapshot(versionRow.deck_json_snapshot);
+    if (!snapshot) {
+      return res.status(422).json({
+        success: false,
+        error: 'DECK_VERSION_SNAPSHOT_INVALID',
+        code: 'DECK_VERSION_SNAPSHOT_INVALID',
+      });
+    }
+
     const newVersion = (deck.version || 1) + 1;
+    const restoredTitle = snapshot.title ?? deck.title;
 
     const restored = await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP
+      `UPDATE presentation_decks SET title = ?, deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND organization_id = ? AND version = ?`,
-      [versionRow.deck_json_snapshot, newVersion, deckId, orgId, expectedVersion]
+      [restoredTitle, snapshot.serialized, newVersion, deckId, orgId, expectedVersion]
     );
     if ((restored?.changes ?? 0) === 0) {
       const latest = (await dbGet(

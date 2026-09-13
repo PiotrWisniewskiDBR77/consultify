@@ -135,10 +135,10 @@ describe('lockClosedBetaModules — decorates Case Workspace menu item with the 
     expect(caseWorkspace.lockedCode).toBe(BETA_LOCKED_CODE);
     expect(caseWorkspace.lockedMessage).toBe('Access restricted');
 
-    // Finance is also closed in the current SSOT.
+    // DEC-470: API stays closed; the announcement is reachable.
     const finance = locked.find((m: any) => m.id === 'MODULE_ECONOMICS');
-    expect(finance.isLocked).toBe(true);
-    expect(finance.lockedCode).toBe(BETA_LOCKED_CODE);
+    expect(finance.isLocked).toBeUndefined();
+    expect(finance.lockedCode).toBeUndefined();
     // Open modules remain accessible.
     const docs = locked.find((m: any) => m.id === 'MODULE_PRESENTATIONS');
     expect(docs.isLocked).toBeUndefined();

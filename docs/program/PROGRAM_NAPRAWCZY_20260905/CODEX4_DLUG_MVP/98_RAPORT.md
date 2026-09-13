@@ -1,0 +1,420 @@
+# CODEX4 — raport E1–E4 (12.09.2026)
+
+## 1. Stanowisko
+
+Pierwsze przekazanie obejmowało E1. Raport uzupełniono o E2, częściowy E3 i lokalne narzędzia E4; bez wdrożenia. Worktree
+`/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp`, gałąź
+`codex/dlug-mvp-20260912`, marker `d4ebea2c86` (przodek lokalnego
+`origin/integracja/20260911`, exit 0). Przeczytano całą instrukcję, `docs/SOURCE_OF_TRUTH.md`,
+kontrakty MW_TASKS/MW_INBOX i wskazany Tasks Complete Product Contract. Na markerze instrukcja
+zawiera jeszcze `<<MARKER_SHA>>`; konkretny marker podał integrator i został sprawdzony.
+Start: czysty checkout, 42 GiB wolnego. Bez zmian poza E1.
+
+Kontener własny `cx-codex4-pg`, obraz `pgvector/pgvector:pg18`, adres `127.0.0.1:6455`,
+baza `cx4_e1`. Kopia przez lokalny `pg_dump` z dopuszczonego `consultify-pg18`,
+baza źródłowa `consultify_staging_1009`; dump odtworzony we własnym kontenerze.
+Nie było połączeń do Railway/staging/demo/produkcji. Nie ładowano `server.env`.
+Nie uruchamiano aplikacyjnego index.ts, poczty, drainerów ani zewnętrznych modeli.
+Test montuje rzeczywisty ApiGateway i produkcyjny `errorHandlerMiddleware`, używa
+podpisanego JWT i aktywnego membership, bez mocków lub obejścia autoryzacji.
+
+## 2. E1 — wynik i dowody
+
+**E1: lokalne kryteria naprawy spełnione; niezależny odbiór integratora pozostaje osobną bramką.**
+
+### Inbox legacy
+
+PRZED: cztery warianty `status=open|done|saved|all` zwracały 500.
+Przyczyna: `TypeError: i.receivedAt.slice is not a function` w
+`server/src/routes/my-work.routes.ts:2254` na markerze. PostgreSQL zwraca timestamp jako
+`Date`, podczas gdy `InboxItem.receivedAt` i licznik `newToday` zakładają string ISO.
+Cztery źródła przypisywały obiekt Date bez normalizacji: blocked tasks, assigned tasks,
+pending decisions i notifications. Overdue tasks miały już `.toISOString()`.
+
+PO: normalizacja tych czterech projekcji do ISO, przed liczeniem summary i serializacją.
+Pozostaje identyczny kształt `{summary, items}` oczekiwany przez fallback w
+`src/components/MyWork/InboxContent.tsx:2453–2458`. Plik frontu i kanoniczna trasa v8
+nie zostały zmienione. Test używa jednocześnie czterech prawdziwych źródeł z timestampami PG,
+sprawdza 200 na czterech statusach, `summary.newToday=4`, dokładne tytuły i format ISO.
+
+### Przypisanie bez projektu
+
+PRZED: assign oraz reassign zadania z `project_id=NULL` kończą się 500:
+`Error: User is not a member of this project`,
+`server/src/services/taskAssignmentService.ts:171` na markerze; wywołanie
+`ProjectMemberService.getMember(null, assigneeId)` nie może znaleźć członkostwa projektu.
+
+PO: wspólny serwis, przed sprawdzeniem członkostwa i przed jakimkolwiek zapisem,
+odmawia **422** z kodem `TASK_ASSIGNMENT_PROJECT_REQUIRED` oraz komunikatem
+**“Add this task to a project before assigning it.”**.
+To jawnie dozwolony wariant E1. Zadania `personal/general` pozostają legalne; nie
+poszerzono jednak projektowej polityki przypisania, obejmującej role projektu, SLA i audyt,
+o niezdefiniowany odpowiednik organizacyjny. DEC-469 dla inicjatyw nie jest decyzją o
+uprawnieniach przypisań zadań. Nie twierdzimy, że użytkownik może teraz przypisywać
+projektowo zadanie osobiste; otrzymuje czytelny następny krok zamiast 500.
+
+Realny test: przypisanie osoby z tej samej i obcej organizacji → 422 i pełny wiersz zadania
+bez zmian; obcy wołający → nadal 404 i wiersz bez zmian. Reassign używa tej samej odmowy.
+Kontrola pozytywna: zadanie mające projekt i wykonawcę z rolą `TASK_ASSIGNEE` → 200,
+SQL readback wskazuje wykonawcę, SLA=24 i przyszły termin SLA.
+
+### RED → GREEN, stały mianownik
+
+Plik: `server/src/routes/__tests__/codex4LegacyInboxAndAssignment.pg.test.ts`.
+Końcowy mianownik: **9 testów**, `retry=0`.
+
+| Bieg | Wynik | Dowód poza repo |
+|---|---|---|
+| RED z oboma plikami produkcyjnymi odtworzonymi dokładnie z markera | 7 failed / 2 passed | `e1-red-expanded.log` |
+| GREEN po przywróceniu napraw | 9 passed / 0 failed | `e1-green-final.log` |
+| TypeScript serwera | exit 0, pusty log (0 B) | `e1-server-tsc-final.log` |
+
+RED obala cztery warianty inbox oraz assign same-org/foreign-assignee i reassign.
+Kontrole pozytywnego przypisania projektowego i odmowy obcemu wołającemu pozostają zielone.
+Odtworzenie markerowych plików było kontrolowaną mutacją przez `git show` i kopie w scratch,
+bez stash/reset, bez osłabiania testów. Najpierw powstał wariant 8-testowy, potem na prośbę
+integratora dodano cztery źródła i kontrolę projektową; ostateczna para RED/GREEN ma te same 9 nazw.
+Pierwszy dodatkowy bieg z korzenia repo zebrał zero testów (`e1-red-invalid-root.log`)
+i nie jest zaliczeniem. Poprawne biegi wykonano z `server/`, zgodnie z rzeczywistym root configu.
+
+Komenda z katalogu `server/` (dane wyłącznie lokalne):
+
+```sh
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:6455/cx4_e1 JWT_SECRET=codex4-local-only-secret-at-least-32-characters npx vitest run --config vitest.config.ts src/routes/__tests__/codex4LegacyInboxAndAssignment.pg.test.ts --retry=0
+npx tsc --noEmit
+```
+
+### Rodzina
+
+- Cztery projekcje receivedAt w jednym inboxie: naprawione i objęte wspólną fixture.
+- Overdue inbox już normalizował datę; brak zmiany.
+- `my-work/{stats,home,focus,manager,calendar}.routes.ts`: odczyt wzorców dat;
+  miejscowe `slice(0,10)` używają ISO/string lub mają kontrolę typu. Nie znaleziono
+  drugiego identycznego bezwarunkowego `receivedAt.slice` poza naprawianym inboxem.
+  Nie wykonano pełnego runtime wszystkich tych tras.
+- `reassign` deleguje do assignTask: ta sama przyczyna, poprawione wspólnym serwisem i zmierzone.
+- Wywołania serwisu z triage/delegate `my-work.routes.ts:272` oraz
+  `portfolioOptimization.routes.ts:632` dziedziczą jawną odmowę projektu;
+  nie zmieniano ich handlerów i nie wykonano ich oddzielnego odbioru.
+- Nie projektowano odmów dla innych zastanych błędów członkostwa/roli w zadaniach
+  z projektem; to odrębne warunki, nie defekt NULL projektu.
+
+## 3. E2 — ponowne otwarcie karty działania
+
+**E2: lokalne kryteria spełnione; niezależny odbiór integratora pozostaje osobną bramką.**
+Baza kodu E1: `5544f2f3fe36434a6c7fc6ca9a29b5272feea0c2`. Ten etap korzysta z tego samego
+izolowanego `cx4_e1`; realny ApiGateway na 4214, zbudowany Vite preview na 5214.
+
+### Premisa i kontrakt
+
+PRZED: brak trasy reopen w `server/src/routes/actionCards.routes.ts`; update serwisu
+przyjmuje wybrane pola treści, nie status. Realny POST reopen daje 404. Close ustawia
+`action_cards.status=CLOSED`, `updated_by`, `updated_at`; nie ma osobnych kolumn closed_at/by
+ani oddzielnego wpisu historii. Dodatkowo zamyka istniejący canonical Inbox właściciela
+jako resolved z `metadata.closedBy=action_card_close`. Dotychczas błąd tego drugiego zapisu
+był połykany, więc karta i Inbox mogły pozostać niespójne.
+
+PO: `POST /api/action-cards/:id/reopen` ustawia OPEN i aktualnego aktora/czas. Ta sama
+bramka co close: zalogowany członek organizacji, również peer niebędący właścicielem → 200;
+obca organizacja i brak karty → 404; bez JWT → 401. Nie rozszerzono uprawnień. Powtórny
+reopen otwartej karty → 200, bez żadnej zmiany jej wiersza ani Inbox. Przyjęto semantykę
+idempotentnego sukcesu; close również nie przepisuje już czasu zamkniętej karty.
+
+Obie strony wykonują się w jednej transakcji z blokadą wiersza karty (`FOR UPDATE OF ac`),
+a następnie istniejącej projekcji Inbox. Reopen przywraca wyłącznie resolved z dokładnym
+znacznikiem `action_card_close`: pending, source_status OPEN, resolved_at NULL, usunięty
+closedBy, pozostałe metadata zachowane. Manual resolved i dismissed pozostają nietknięte,
+nawet dismissed ze starym znacznikiem systemowym. Brak Inbox jest legalny, nic nie jest tworzone.
+Uszkodzona metadata nie powoduje500 i nie daje dowodu systemowej własności dla reopen.
+Retry close naprawia stary częściowy zapis CLOSED+pending bez zmiany zamkniętej karty.
+
+Zmiana close jest konieczna dla tej samej przyczyny: bez wspólnego row lock opóźniony zapis
+starego close mógł zamknąć Inbox już po reopen. Po zmianie błąd któregokolwiek zapisu daje
+500 i rollback całości, zamiast dotychczasowego sukcesu z połkniętym błędem Inbox.
+Nie zmieniono queryHelpers, schematu, innych kart ani mechanizmu historii.
+
+### Interfejs i rodzina
+
+ActionCardPage przełącza Close/Reopen w tym samym miejscu, stylu i z istniejącą ikoną Check.
+Przewód obejmuje też ActionCard → ActionCardList → KpiToolPage oraz klienta API.
+EN `Reopen card`, PL `Otwórz ponownie`; powiadomienia sukcesu/błędu mają klucze obu języków.
+Przycisk jest zablokowany podczas zapisu; błąd nie zmienia stanu karty lokalnie.
+Istniejąca akcja nawigacyjna `Open card` pozostaje odrębna od zmiany cyklu życia
+(i poprawiono jej mylący fallback tekstowy). KpiToolPage zachowuje zastany translator pl/en;
+nowe klucze używają osobnego aliasu `translate`.
+Rodzeństwo tej samej przyczyny: close, strona karty i lista kart KPI — objęte zmianą.
+Pozostałe typy kart N i ogólny Inbox nie zostały refaktoryzowane.
+
+### Stały mianownik RED → GREEN
+
+| Kontrola | RED | GREEN | Dowody poza repo |
+|---|---|---|---|
+| RealPG ApiGateway JWT, 8 testów, retry=0 | 7 failed / 1 passed | 8 passed | `e2-red8-final.log`, `e2-green8-final.log` |
+| Render/klik ActionCard, 4 testy, retry=0 | 3 failed / 1 passed | 4 passed | `e2-front-red.log`, `e2-front-green.log` |
+| TypeScript serwera po finalnym kodzie | — | exit 0 | `e2-server-tsc-final.log` |
+| esbuild per 5 zmienionych plików frontu | — | 5/5 | `e2-esbuild.log` |
+| Vite build z manifestem, heap 8GB | — | exit 0, 45.67s | `e2-build-final.log`, `dist/.vite/manifest.json` |
+
+RealPG: close→reopen+SQL readback; idempotencja; same-org peer; foreign/anon/missing;
+manual resolved; dismissed; brak Inbox; rollback obu kierunków przy kontrolowanej awarii
+**zarówno zapisu Inbox, jak i karty**; rzeczywiste czekanie obu requestów za row lock
+potwierdzone przez pg_stat_activity; naprawa legacy partial-close; błędna metadata.
+RED przywraca dwa pliki backendu z HEAD E1 (dla E2 identyczne z markerem), potem wracają
+kopie GREEN, bez stash/reset. W obu końcowych biegach identyczne 8 przypadków.
+Pierwszy build wykrył zdublowane `t` w KpiToolPage; alias poprawiono i ponowny build przeszedł.
+Nie zaliczamy wcześniejszego nieudanego buildu jako dowodu.
+
+### UI i granice pomiaru
+
+Konto lokalne `audyt@dbr77.local` powstało w osobnej organizacji kopii DB, bcrypt zgodny
+z aplikacją, onboarding zakończony. Realny POST /api/auth/login dostarczył sesję JWT;
+Playwright używa tej sesji. Karta `274e62e8-0e09-4267-beb8-cf159c46c5e4` powstała realnym API.
+Jeden kontekst 1440×900; motyw z zustand, stabilność treści 3×400ms; klik Close→200,
+klik Reopen→200, reload→OPEN/Close card w obu motywach. Bez mockowania endpointów.
+
+Zrzuty własne, obejrzane: `evidence/n1-reopen-card/closed-light.png`, `closed-dark.png`,
+`reopened-reload-light.png`, `reopened-reload-dark.png`; każdy ma JSON z URL, stanem,
+motywem, czasem, luma i odpowiedziami HTTP. `summary.json` zachowuje surowe błędy.
+Średnia luma i różnice znajdują się w tabeli poniżej (próg różnicy >40).
+
+| Stan | Light | Dark | Różnica |
+|---|---:|---:|---:|
+| closed | 247.71 | 24.92 | 222.80 |
+| reopened-reload | 247.80 | 24.85 | 222.95 |
+
+
+0 pageerror, 0 błędów lifecycle. W konsoli występują wyłącznie 404 `/api/health` i
+`/api/csrf-token`: są montowane w aplikacyjnym index.ts poza Gateway, którego minimalny
+przyrząd używa bez index.ts. Nie ukryto ich ani nie dodano sztucznych odpowiedzi200.
+To ograniczenie przyrządu, nie dowód poprawnego globalnego bootstrapu; E3 wymaga prawdziwych
+handlerów health/CSRF. Nie wykonano osobnego żywego kliknięcia listy KPI ani polskiej sesji;
+lista ma test render/klik i esbuild, polski klucz jest dostarczony. UI nie dowodzi całego produktu.
+
+
+## 4. E3 — PARTIAL
+
+Finalny odbiór i pełna tabela per moduł: `docs/program/PRZEKAZANIE_KODOWANIA_20260907/POMIAR_BUNDLE_20260912.md`, commit dowodów `3d79d82972a7cdcc18583d2107081b36e2a18dff`. Kod po krokach: `375660f7d1b8bd171bf52a9f271eefdd2b986c1e`. Wspólny boot 5615909→1911610B spełnia próg2MB; pełny cold zalogowanego My Work 7010816→5788473B decoded JS go nie spełnia. Transfer1874354→1782616B, liczba skryptów54→263; gotowość2455→2462ms nie dowodzi przyspieszenia.
+
+Obejrzano osobiście wszystkie19parPNG (15 prawdziwych modułów sidebar + cold +3karty), bez nowej regresji renderu w light1440. Znane2automatyczne PUT403 na CLOSED initiative występują w obu fazach, więc zero błędów produktu NIEosiągnięte. Root potwierdził Help first-open/state/deep-link oraz public auth bez prywatnego layoutu; artykuł Help i prawdziwy voice pozostają nieprzetestowane. Historyczne kroki1/2 poniżej opisują stan pośredni, nie zastępują tego wyniku.
+
+## 5. E4 — przygotowanie narzędzi i lokalny odbiór
+
+DEC-472 wyznacza **staging** jako cel pilotażu; historyczna nazwa pliku z „demo” nie zmienia celu. Dostawa przygotowuje narzędzia operatora. Wszystkie wykonania opisane niżej używały wyłącznie własnego PostgreSQL18 w cx-codex4-pg, loopback6455/cx4_*, realnego ApiGateway4214 i prywatnych plików poza repo. Bez poczty, schedulerów, dotenv, obejścia auth i bez połączeń z żywymi środowiskami. API montuje realne health/CSRF/sanitization/error handlers; health200. MOCK_DB=false/RUN_DB_TESTS=1; mock dotyczy Redis, nie PG lub HTTPlogin. Stanowisko rozpoczęte przy25GiB wolnego. Oryginalny prepare integratora nie był ponawiany.
+
+### E4.1 — CI
+
+Marker: staging nieobecny w push i pull_request. Dodany do obu oraz do istniejących warunków jobów/kroków, aby samo uruchomienie workflow nie kończyło się pominięciem testów. YAML safe_load PASS; deklaratywne RED marker → GREEN aktualne trigger branches. Żaden job tego workflow nie wdraża aplikacji, więc nie dodano fikcyjnego deployment if. Konfiguracja nie dowodzi, że CI przejdzie.
+
+Po push staging uruchamiają się lint/typecheck i readiness-paths, następnie zależne quality/skip/levels/unit/component/integration/colocated/security/initiatives/acceptance, E2E gates, coverage i summary; readiness-smoke zależy od readiness-paths. Non-PR obejmuje performance, security, l4-smoke, e2e-runtime-smoke i coverage. PR-only patch-coverage/pr-gate nie startują po push. Szczegółowe needs/if/timeouts: `codex4-artefakty/e4-ci-config-review.json`.
+
+Read-only `gh run list` zachowano w `e4-ci-history.json`: ostatni demo34331513097 zakończył się failure po8m58s od createdAt do updatedAt, trzy develop po11m04s/10m06s/9m56s, też failure. To czas obserwowany z kolejką, nie prognoza pełnego zielonego zestawu. Brak staging w ostatnich10wynikach nie dowodzi „nigdy”; czas nowego staging run UNKNOWN. Nie wywołano workflow ani push.
+
+### E4.2 — konta pilotażu
+
+`pilotaz-demo-konta-20260912.mjs`: dokładnie4 potwierdzone adresy w UUIDDBR77; bcrypt koszt10, losowe14znaków, nowe konto MEMBER + ACTIVE membership, email verified, onboarding_completed jak `/onboarding/skip`. Nie fabrykuje zgód prawnych ani stanu organizacyjnego onboardingu. Istniejące users.role i membership.role pozostają oddzielnie zachowane; login używa membership jako SSOT. Brak membership istniejącej osoby zatrzymuje całość (`EXISTING_MEMBERSHIP_REQUIRES_REVIEW`), nie przywraca odebranego dostępu. Obca organizacja, nieaktywne konto lub membership, duplikat email również STOP.
+
+Stan PRZED (w tym wrażliwe skróty/tokens) i nowe credentials trafiają do prywatnych0600wx plików poza checkoutem. File fsync + parent directory fsync przed COMMIT; błąd zapisu zatrzymuje transakcję. Credentials mają PRECOMMIT_VERIFY_BEFORE_DISTRIBUTION, dopiero ACK daje osobny receipt. Lost ACK oznacza COMMIT_OUTCOME_UNKNOWN, nigdy potwierdzony rollback; release/end nie maskują wyniku. Reset rows są usuwane, aktywne refreshe odwołane. Forced password change w produkcie NIEISTNIEJE; wcześniejsze accessJWT żyją do expiry. Reset route przechowuje losowy32B hex token z expires_at (authRuntime.ts:64, domyślnie60min, konfigurowalne), odrzuca brak/wygaśnięcie i użycie bieżącego hasła; aplikacja również hashuje nowe hasło bcrypt10.
+
+Lokalnie: dry-run bez zmian6tabel; apply + realne4HTTPloginy; odmowa starych haseł istniejących kont; zachowanie obu ról i efektywnej roli HTTP; drugi apply stałe UUID/brak duplikatów +4loginy; pełne pg_dump/pg_restore do osobnej cx4_pilot_rollback i zgodność readback PASS. Oba apply: committed:true, receiptWritten:true, cleanupWarnings:[] odczytane z logów. Powtórny pilot jest rotacją hasła, nie zerowym zapisem.
+
+### E4.3 — klony i ochrona danych
+
+Premisa20klonów NIEodtworzona w dostarczonej lokalnej kopii: SELECT prefiksu ateliertoys-demo-session-% zwrócił0 (`e4-cleanup-premise.json`), stan staging UNKNOWN. Utworzono jawne lokalne sentinele, zamiast twierdzić, że skasowano20żywych organizacji.
+
+Źródła istniejącego sprzątacza: index.ts:612 nie startuje schedulera w test lub DISABLE_SCHEDULER=true; Scheduler.ts:242 ma już godzinowy job, TrialCron.ts:154 woła demoService.cleanupExpiredDemos. demoService.ts:65 wymaga DEMO_CLEANUP_ENABLED; :70 używa osobnego DEMO_CLEANUP_TTL_HOURS(default24), podczas gdy demo/demoSessionService.ts:25 używa DEMO_SESSION_TTL_HOURS. demoService.ts:87 chroni też nazwę „atelier toys”, :181 filtruje whitelist po nazwie, więc klon z tą nazwą może zostać wyłączony mimo TTL. Nie znamy rzeczywistych env/logów20klonów; są to konkretne możliwe warunki, nie ustalona przyczyna produkcyjna.
+
+Propozycja nadzorcy: sprawdzić flagę/cadence i oba TTL; zastąpić ochronę po samej nazwie jawnie ustalonymi bazowymi ID + człowiekiem przez obie ścieżki/obie daty login + legalhold + aktywna sesja, z realną transakcją. Samego schedulera/demoSeedService nie zmieniono. Zastany demoService guard patrzy tylko na users.organization_id i domenę seed, więc nie należy go bez review utożsamiać z nowym, surowszym skryptem.
+
+`sprzatanie-klonow-demo-session-20260912.mjs` wymaga listy dokładnych ID, kwalifikacji DEMO/nonpaying/expired, bazowych/protected IDs i seed allowlist. Chroni primary i membership, last_login OR last_login_at, orphan membership, zewnętrzne membership seed, legalhold (nieznany/query failure = STOP), aktywne sesje, template i global/reserved IDs. Nie wybiera celu po nazwie. Blokuje tabele przed kwalifikacją/zapisem; reużywa `organizationLifecycleService.deleteOrganizationDataInTransaction` i jego kolejności FK, bez własnej listy DELETE.
+
+Apply wymaga pełnego custom PGDMP i SHA256, źródłowego host/port/database zgodnego z target, prywatnego niesymlinkowego pliku oraz ścieżki/hash dowodów rzeczywistego restore do review. Manifest/counts nie zastępują dumpu. Hash JSON nie jest dowodem odtwarzalności. Harness rzeczywiście wykonywał pg_restore i porównał wszystkie public-table hashes/counts, sekwencje i large objects. Nie narzucono arbitralnego max1h, opcjonalny maxAgeSeconds jest jawnie ustalaną polityką.
+
+Lokalnie9negatywnych partii valid+protected odrzuconych właściwymi kodami i cała baza bez zmian; dry-run bez zmian; poprawny apply usunął tylko valid i CASCADE child; protected/global sentinel rows identyczne. Drugi apply zero zmian. Pełny restore do cx4_cleanup_rollback odzyskał klon i dziecko bez organization_id. Wszystko PASS. Pierwsza próba kanonicznej inicjatywy była NOT_PROVEN przez błąd harness sourceType='manual'; poprawiono na kontrakt MANUAL_HUB/provenance i osobna próba po czystce przeszła POSTsource-proposals201→POSTregistrations201→GET200→SQLie_aggregate_state. Bez osłabiania bramek lub SQL zastępującego tworzenie inicjatywy.
+
+### Walidacja, komendy i ograniczenia
+
+Pure testy bezpieczeństwa43PASS; mutation usunięcia guard istniejącego membership: RED1FAIL/42PASS → GREEN43 (integrator, e4-safety-*.log). To nie zastępuje RealPG. Runtime/harness źródła w `scripts/dev/codex4-e4-local-acceptance.mjs`; prywatny katalog run: `codex4-scratch/e4-local-20260912`, state/credentials/manifestów nie wolno publikować. Końcowe dodatkowe próby opisano poniżej.
+
+Komendy operatora są szablonem do review, NIEautoryzacją ich uruchomienia zdalnie. Target JSONversion1: operation, intendedEnvironment=staging, executionEnvironment=staging, dokładne host/port/database/organizationIds, backup metadata i kwalifikacja cleanup. W local-copy używa się loopback6455 i cx4_*. Brak auto-discovery lub domyślnego zdalnego hosta. Staging wymaga jawnego absolutnego --tls-ca, poprawnego PEM i ssl.rejectUnauthorized:true.
+
+```sh
+DATABASE_URL='<reviewed PostgreSQL URL>' node scripts/dane/pilotaz-demo-konta-20260912.mjs --target=staging --expected-host='<reviewed host>' --expected-database='<reviewed database>' --tls-ca=/absolute/reviewed-ca.pem --target-manifest=/absolute/private/pilot-target.json --manifest=/absolute/private/pilot-dry.json
+DATABASE_URL='<reviewed PostgreSQL URL>' node scripts/dane/pilotaz-demo-konta-20260912.mjs --target=staging --expected-host='<reviewed host>' --expected-database='<reviewed database>' --tls-ca=/absolute/reviewed-ca.pem --target-manifest=/absolute/private/pilot-target.json --manifest=/absolute/private/pilot-before.json --apply --backup=/absolute/private/full.dump --out=/absolute/private/passwords.json
+DATABASE_URL='<reviewed PostgreSQL URL>' node scripts/dane/sprzatanie-klonow-demo-session-20260912.mjs --target=staging --expected-host='<reviewed host>' --expected-database='<reviewed database>' --tls-ca=/absolute/reviewed-ca.pem --target-manifest=/absolute/private/cleanup-target.json --manifest=/absolute/private/cleanup-dry.json
+# Apply cleanup: same reviewed target, distinct --manifest, plus --apply --backup=/absolute/private/full.dump.
+```
+
+Review E4 wykonał autor; NIEjest niezależnym odbiorem. Nadzorca musi przejrzeć pełne wyniki restore, listę celu i aktualny stan przed jakimkolwiek live apply.
+
+## 6. SHA
+
+E1: `5544f2f3fe36434a6c7fc6ca9a29b5272feea0c2`.
+E2: `934e08de86f23d8f48438a69e9dde1522136c04c`.
+E3: kod `8ff9565b7f`, `ff2caf56a5`, `375660f7d1`; evidence/report `3d79d82972a7cdcc18583d2107081b36e2a18dff`.
+E4: commit zawierający aktualizację tej sekcji; SHA w końcowym handoffie.
+Nie wykonano push ani scalenia.
+
+## 7. Przekazanie bazy i sprzątanie
+
+Artefakty: `/Users/piotrwisniewski/Developer/codex-wt/codex4-artefakty/`.
+Scratch/dump: `/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/staging-local.dump`.
+Test usuwa swoje zadania, decyzję, notyfikację, projekt, memberships, użytkowników i organizacje.
+Zdarzenia audytu z pozytywnych przypisań należą do izolowanej bazy testowej; nie osłabiano
+niezmienialności audytu, aby je skasować. Cały własny `cx4_e1` należy usunąć po zakończeniu bloku.
+Kontener i baza pozostawione integratorowi do E2/E3; nie są bazą oglądaną przez użytkowników.
+Nie kasowano ani nie zmieniano cudzych baz. Dla czystego E3 można odtworzyć dump do nowego
+własnego `cx4_bundle`:
+
+```sh
+docker exec cx-codex4-pg createdb -U postgres cx4_bundle
+docker exec -i cx-codex4-pg pg_restore -U postgres -d cx4_bundle --no-owner --no-acl < /Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/staging-local.dump
+```
+
+## 8. Czego nie sprawdzono
+
+Żadne żywe środowisko; UI E1 (backend-only); pełny front tsc,
+pełna regresja aplikacji, kanoniczny inbox runtime i oddzielne trasy delegate/portfolio.
+Nie zmierzono wszystkich istniejących zadań bez projektu ani liczby z pierwotnej premisy;
+reprodukcja używa izolowanych fixture w legalnej lokalnej kopii. Brak migracji i zmian
+uprawnień; nie ma dowodu wdrożenia, wyłącznie lokalnych E1/E2, częściowego E3 i narzędzi E4. E4: brak live TLS handshake, actual lost-COMMIT-ACK injection, dwusesyjnego race i testu crash/power-loss; pure mocks nie dowodzą tych scenariuszy. Nie sprawdzono aktywnego staging CI ani środowiskowych przyczyn20klonów. Nie uruchomiono pełnego fronttsc lub kolejnego builda dla E4 (pliki Node/CI).
+
+## E3 — krok 1, dostawa częściowa (kolejny krok wymagany)
+
+Premisa zmierzona na archiwum markera d4ebea2c86:5615909B JS wspólnego startu (App3781294B + AppProviders1517348B + index317267B),3chunki. To5.36MiB; raportowane dawniej7chunków nie odtworzyło się w tym lokalnym buildzie. Sam index317267B zaniża wynik: normalny boot bezwarunkowo importuje App. Pomiar scripts/dev/measure-boot-bundle.mjs liczy unikalne pliki w przechodnim statycznym domknięciu obu korzeni. JS pierwszej wybranej lazytrasy i czas rzeczywistego ekranu są osobnym pomiarem.
+
+Krok1: StudioUnavailableView, AuthView, ProductEntryPage przez istniejący lazyWithRetry/Suspense. HelpSidePanel dopiero przy pierwszym otwarciu, potem zachowuje stan po zamknięciu; listener deep-link pozostaje aktywny. Diagnoza: Studio→SplitLayout→UnifiedChatPanel→TipTap; Help/Landing importowały całą przestrzeń ikon. Bez zmiany UI i bez manualChunks.
+
+Wspólny boot po kroku1 na kodzie E2+zmiana: **2459398B**, 3chunki. Cel≤2000000B jeszcze NIEosiągnięty. Build0 (35.65s,heap8GB). Pierwszy baseline przy domyślnym heap4GB zakończył się OOM; powtórka przy8GB przeszła38.44s. Oba wyniki zachowane poza repo.
+
+Dowody poza repo: codex4-artefakty/e3-before-chunks.json, e3-marker-build-8gb.json/log, e3-step1-current-chunks.json, e3-step1-current-build.json/log, e3-step1-module-map.json. Niezależny source review: brak znalezionego blokera kroku1; odbiór przeglądarkowy i limit pakietu pozostają NIEUDOWODNIONE dla zakończeniaE3. Następny krok: odroczenie SDKgłosowego, zachowanie anulowania sesji, odbiór wspólnej wersji PRZED/PO. Nie przenosimy tej częściowej dostawy do statusuE3PASS.
+
+## E3 — krok 2, nadal PARTIAL
+
+SDK GoogleGenAI ładowany przy rozpoczęciu voice w Teresie i Annie. Unmount unieważnia token próby; opóźniony start nie otwiera mikrofonu/sesji po stop lub unmount. Niezależny review wykrył brak unieważnienia przy unmount; naprawiono przed commitem. Nowe testy rzeczywistego oczekiwania (teardown AudioContext i voice-context fetch, nie udawane opóźnienie importu): RED4FAIL/3PASS → GREEN7/7. Istniejące Teresa13/13 i capability/barge-in7/7 PASS. Brak dowodu rzeczywistej rozmowy z zewnętrznym dostawcą w tym lokalnym teście.
+
+Build PASS36.95s, wspólny boot **2182459B** (App624783, AppProviders1240409,index317267); cel2000000B nadal nieosiągnięty. Zmniejszenie od baseline około61.1%. Nie ogłaszamy E3PASS. Logi codex4-artefakty/e3-step2-build.json/log, e3-voice-*-red/green.log oraz e3-voice-existing-*.log.
+
+Przegląd baseline:15rzeczywistych modułów sidebar, dodatkowo coldMyWork i3karty =19PNG obejrzanych niezależnie, bez pustych ekranów. Oryginalna premisa16pozycji niepotwierdzona. Realny defekt: otwarcie CLOSED inicjatywy wykonuje automatyczny PUT403; GET renderuje kartę, widoczne Unsaved. Pozostaje osobnym problemem produktu; nie ukrywamy go zmianą fixture. Końcowy pomiar czasu i before/after jeszcze trwa; wspólny boot nie oznacza całego JS pierwszego zalogowanego ekranu.
+
+## E3 — krok 3, wspólny start poniżej progu; odbiór całości nadal PARTIAL
+
+MainLayout ładowany przez istniejący lazyWithRetry i wspólny Suspense tras. Publiczny login nie potrzebuje powłoki zalogowanego użytkownika. Dla /my-work powłoka nadal jest potrzebna i jej JS musi wejść do osobnego pomiaru pierwszego ekranu; nie utożsamiamy tych metryk. Bez zmian wyglądu, guardów lub manualChunks.
+
+Common boot **1911610B**,3chunki (App354014, AppProviders1240369,index317227), cel≤2000000 osiągnięty wyłącznie dla tej jawnej definicji. Build z --manifest PASS35.21s. Poprzedni build PASS35.63s nie wygenerował manifestu; pomiar poprawnie odmówił ENOENT i wykonano nowy build. Dowody e3-step3-build-manifest.log i e3-step3-chunks.json poza repo. Pełny before/after zbudowanych stron oraz Help regresja trwają; do czasu ich zakończenia E3 pozostaje PARTIAL. Znany odziedziczony autoPUT403 na CLOSED inicjatywie nadal otwarty, poza logiką optymalizacji.
+
+
+## E4 — końcowe dodatkowe dowody lokalne
+
+- Cztery rzeczywiste source mutants na osobnych cx4_cleanup_mut_*: usunięcie guard membership, legalhold, last_login i last_login_at umożliwiło skasowanie chronionego rekordu; każda odpowiadająca poprawna próba zatrzymała całą partię i zachowała bazę. **4/4 PASS**. Każda baza mutanta miała pełny backup i rzeczywisty restore/readback przed apply. Produkcyjne źródła nie były mutowane; kopie wyłącznie w prywatnym scratch.
+- `pilot-security`: rzeczywisty login wystawił refresh; /auth/refresh200 potwierdził jego działanie. Lokalny reset token utworzony według schematu aplikacji był odnaleziony przez /reset-password (odmowa ponownego użycia bieżącego hasła PASSWORD_REUSE_NOT_ALLOWED). Po ponownym CLI apply refresh401 i reset400/PASSWORD_RESET_INVALID, SQL0aktywnych refresh i0resetów. Nowe4hasła logują. **PASS**, bez wysyłania poczty.
+- `pilot-faults`: pełny nowy backup+restore/readback. Zastany prywatny plik --out powoduje EEXIST dopiero po SQLrotacji: CLI odmówił,6tabel identycznych, brak successreceipt — **realny rollback PASS**. W kopii safety modułu wstrzyknięto wyjątek klienta bezpośrednio po prawdziwym COMMIT. CLI zwrócił COMMIT_OUTCOME_UNKNOWN bez receipt; nowe połączenie PG sprawdziło skróty, a4loginy potwierdziły rzeczywisty zapis. **PASS klasyfikacji i rozpoznania skutku**, nie symulacja awarii sieci/utraty TCP. Nie ponawiano niejednoznacznej operacji. Ten bieg zmienił hasła tylko lokalnych kopii; jego plik pozostaje oznaczony PRECOMMIT i prywatny, nie służy dystrybucji.
+- Pierwotne NOT_PROVEN dla token replay i client fault w fazie pilot pozostają w surowych wynikach; późniejsze osobne fazy uzupełniają te dowody. NOT_PROVEN dwusesyjnego race, mutanta predykatu organizacji kanonicznego silnika, mutanta template i rzeczywistej awarii sieci pozostają otwarte. Nie ogłaszamy pełnego odbioru bezpieczeństwa operatora lub całej aplikacji.
+- Przyrząd uzupełniono o opcjonalne initiative-probe / pilot-security / pilot-faults / pilot-membership-guard, zawsze local6455/cx4_* i prywatne rozłączne ścieżki. Kontrole node --check dla4plików.mjs PASS. Jedna odrzucona próba syntax-check podczas pisania dodatkowego reset fixture została poprawiona przed wykonaniem; nic z błędną składnią nie wykonało SQL.
+
+Bazy i prywatne dowody pozostawiono integratorowi do niezależnego odbioru w izolowanym kontenerze; nie są bazami prezentowanymi użytkownikom. Do usunięcia po review wyłącznie własne cx4_* i własny proces API, bez kasowania cudzych zasobów. E4 nie potrzebuje nowego builda ani tsc serwera (Z9 wymagał ich po E1/E2, wykonane wcześniej). Brak powtórzenia prepare, no push/live.
+
+Dodatkowo realny preflight braku membership: osobny cx4_pilot_membership_guard sklonowany z ukończonego, niezmienionego restore; lokalna fixture usuwa membership. CLI dry-run kończy EXISTING_MEMBERSHIP_REQUIRES_REVIEW, sześć tabel/hasła bez zmian, dostęp nie został odtworzony. PASS tej negatywnej próby; nie jest to osobna realna próba apply przy brakującym membership. Bezpieczne zestawienie wszystkich faz (bez credentials): codex4-artefakty/E4_LOCAL_ACCEPTANCE.json.
+
+## E4 — poprawka wyścigu kwalifikacji po niezależnym HOLD (12.09)
+
+Niezależny odbiór `C4_E4_INDEPENDENT_REVIEW.md` wykazał P1: SERIALIZABLE zapamiętywał snapshot na discovery katalogu, zanim cleanup zdobył blokady tabel. Legal hold zatwierdzony na drugim połączeniu między discovery i LOCK był niewidoczny; organizacja została usunięta. Pierwotny RED zachowany bez zmian: `codex4-scratch/review-cleanup-race/result.json`.
+
+Poprawka dotyczy wyłącznie cleanup apply: przed pierwszym odczytem w transakcji ustawia READ COMMITTED; discovery znajduje tabele, istniejący SHARE ROW EXCLUSIVE blokuje wszystkie stałe guard tables i dynamiczne tabele org, a dopiero po zdobyciu blokad wykonywana jest **cała kwalifikacja**. Każdy guard widzi zapisy zatwierdzone przed LOCK; blokady uniemożliwiają zmianę danych podczas kwalifikacji/usuwania do końca transakcji. Posortowana lista tabel ogranicza różną kolejność locków. Pilot pozostaje SERIALIZABLE, dry-run REPEATABLE READ READ ONLY, kanoniczny silnik kasowania i pozostałe zabezpieczenia bez zmian. To nie jest nowe globalne ustawienie izolacji.
+
+Przyrząd `scripts/dev/codex4-e4-cleanup-race.mjs` używa wyłącznie przekazanej bazy `cx4_review_cleanup_race` na127.0.0.1:6455 i jawnego lokalnego Docker socket. Przed każdym scenariuszem wykonuje prawdziwy restore pełnego custom dump syntetycznej bazy do tej samej własnej bazy, zachowuje stdout/stderr procesu i readback. Nie jest to restore pełnego schematu staging ani jego odbiór. Dwa połączenia PG, rzeczywisty runCleanup i kanoniczny delete; wrapper steruje tylko momentem drugiej transakcji między discovery i LOCK. Nie dotknięto cx4_pilot/cx4_cleanup/API4214/live.
+
+Dowody:
+
+- Autor przed poprawką: `codex4-scratch/e4-race-red-20260912/result.json`, exit1,11/13 testów czerwonych. Dziewięć guardów INSERT (hold, primary human, membership human, last_login, last_login_at, orphan membership, external membership, active demo session, active tenant) przepuszczało usunięcie; template/paid UPDATE zachowały org przez PostgreSQL40001, lecz nie dawały prawidłowego rozpoznania guardu. Nie opisujemy tych dwóch jako udanego niebezpiecznego skasowania.
+- Po poprawce: `codex4-scratch/e4-race-green-20260912/result.json`, exit0,13/13 PASS; ten sam moment zatwierdzenia równoległego guardu. Legal hold jest widoczny jako1wiersz i daje typed LEGAL_HOLD.
+- Wzmocniony końcowy readback: `codex4-scratch/e4-race-green-readback-20260912/result.json`, exit0,13/13 PASS. Każdy z11guardów zachowuje wszystkie wiersze sześciu tabel kwalifikacji (porównanie deterministycznych hashy po zatwierdzeniu drugiej transakcji i po odmowie cleanup), bez commit receipt. Sześć prób zapisu po LOCK (organizations/users/membership/policies/demo_sessions/demo_session_tenants) kończy55P03 przy150ms lock_timeout. Niechroniony valid clone zostaje prawidłowo usunięty.
+- Dotychczasowe czyste testy safety:43/43 PASS, `codex4-artefakty/e4-race-safety-green.log`; node --check obu zmienionych .mjs i git diff --check PASS. Nie wykonywano ciężkiego build/tsc — zmiana operatora.mjs i lokalnego harnessu.
+
+Komenda odbioru (nowa, nieistniejąca prywatna ścieżka OUT; destructive tylko na wskazanej własnej bazie review):
+
+```sh
+node scripts/dev/codex4-e4-cleanup-race.mjs --out=/absolute/new/private/review-output --source=/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/review-cleanup-race/before.dump
+```
+
+Status autora: **FIX + LOCAL13/13 + PURE43/43; oczekuje niezależnego ponownego odbioru**, E4 HOLD nie jest automatycznie zniesiony. Dotychczasowe ograniczenia prawdziwego network ACK loss, pełnego schematu/concurrent DDL, canonical org-predicate mutation i live TLS pozostają. Ostatni scenariusz pozostawia syntetyczną bazę review po valid delete; każdy następny bieg przyrządu odtwarza wyłącznie tę bazę. Nie ma automatycznego push/deploy.
+
+## SECURITY W05 — scoped Interview review (2026-09-12, DEC-2026091201)
+
+Baza `865c61677762ce19a42e8f412b40d18e69a7fe76`, clean wejście; lokalne `cx-codex4-pg:6455/cx4_pilot`, Gateway API4214, Vite5214. Mandat 02_INTERVIEW + WSPOLNE. Brak push/live. Jest to zamknięcie wskazanej luki review, NIE odbiór całego Interview/MVP.
+
+**Premisa:** niezależny actor USER/MEMBER z INITIATIVE_OWNER wyłącznie w A miał effective scoped review, ale oba stosy × approve/send-back zwracały A403 zamiast200; B403 bez mutacji, ADMIN A200. Usunięta jest pomyłka create/MANAGE jako jedynej bramki review. Nowy wspólny helper korzysta z istniejącego effective resolvera, persisted assignment/session/project, aktualnej roli organizacyjnej i non-GRANT override (w schemacie `REVOKE`). Nie zmienia globalnego RBAC ani flag. Ponowny check pod write lock unieważnia tylko dokładny request memo key; brak projektu/foreign/conflict nie staje się org-grantem.
+
+Oba review POST oraz ograniczony review-access GET używają wspólnej polityki. Rodzeństwo konieczne do realnego UI: legalny review grant dla detail/history i odczytów identified session, bez zmiany ownership-write helpera ani anonymous wall; Hub otwiera jawny notification assignment przez protected detail, bez org-list grantu. Czeka na own-list, żeby nie produkować przejściowego403 respondenta. UI review jest osobne od create i korzysta z V8 client unwrap; nieaktualny record/user/org lub odrzucona akcja usuwa stare allow.
+
+**Dowody:** `/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/w05-scope/` (wyłącznie lokalne syntetyczne dane; private-state*.json zawierają sekret i nie są publikowane).
+- `green-final.log/json`: **43/43** real PG/Gateway/JWT (42 przypadki HTTP + jeden bezpośredni real-PG same-request/correlation/write-lock). A200, B/foreign odmowa bez skutków, revoke/demotion, create-only403/review-only200, projectless ADMIN200/scoped403, conflict409, brak org-list grantu, session parts A200/B403, anonymous403, reviewer answerPATCH403, terminal retry409. Test jest jawnie opt-in przez CX4_INTERVIEW_STATE; brak konfiguracji CI nie stanowi dowodu odbioru. W biegach kwalifikowanych 43 wykonane, 0 skipped/retry.
+- Ten sam końcowy mianownik43: przywrócone stare controller/routes865c → **24FAIL/19PASS**; mutation-project-unbound → **14FAIL/29PASS**; mutation-create → **12FAIL/31PASS**; mutation-cache → **1FAIL/42PASS**; restored → **43PASS**. Nowy helper pozostaje w repo podczas route-marker mutation; oryginalny exact865c pomiar jest w `original-red.json`. Pierwsza słabsza mutacja samego kontekstu projektu nie przebiła drugiego membership predicate (34PASS); zachowana jako `mutation-project.log`, nie przedstawiana jako wykryta mutacja.
+- Front per file: hook **5/5**, Workspace **7/7**, Hub **3/3**. Hub fallback mutation **2FAIL/1PASS** → restored **3PASS**. Asercje pierwotnego callbacku/Inbox bez refetch zachowane. Root osobno zachowuje swój typed-mock fix przy integracji.
+- `ui-final-pass/cycle-evidence.json`: pełny jeden świeży assignment/session, submit → scoped send-back → feedback/edit → resubmit → scoped approve → obie strony reload, **PASS_ONE_RECORD**, 3 immutable history rows, final approved/completed i v2 EUR4800. Cztery wcześniejsze próby UI wykryły rzeczywiste brakujące przewody (list-only deep link, session readers, restricted-tab reset, V8 unwrap); ich submitted rekordów nie resetowano.
+- PNG1440 + sidecars light/dark obejrzane; `luma.json`: 245.96 vs25.95, delta220.02 >40. `negative-evidence.json`: otwarta A → odebranie membership → approve403 i zniknięcie review controls; fresh B detail403 bez review UI. 0 pageerror w pełnym cyklu. Nie zero HTTP errors: insights403 pozostaje; pierwotny respondent detail403 sprzed synchronizacji list zachowany. Osobny końcowy reload w `respondent-fallback-final.json` mierzy tę korektę.
+- `server-tsc-final.log`: exit0 po finalnym backendzie. Front esbuild per zmieniony plik0; brak pełnego frontend tsc/build w tym bloku.
+
+**Istotne ograniczenie revoke:** w krótkim oknie odrzuconego approve pełny hash był równy, ale screenshot/efekt uruchomił kolejny evaluate (observation ma pending1). NIE jest to globalny dowód braku zapisów w tle. `revoke-diff-background-ai.json` zachowuje pełny wcześniejszy before/after; zmieniają się tylko assignment ai_review_snapshot_json/ai_reviewed_at/updated_at. `revoke-final-readback.json`, po zaobserwowanym evaluate200, potwierdza nadal submitted/submitted, history0, notifications0 i brak zatwierdzenia. Sam evaluate/persistSnapshot przy otwarciu oraz jego uprawnienia to oddzielna następna paczka wskazana przez root; nie naprawiano ich tutaj.
+
+Pozostałe granice: dane początkowe SQL nie dowodzą create/publication; SMTP/AI quality/provider/anon całego modułu ani pełna serializacja równoczesnych zmian wszystkich role templates nie są odebrane. Zastany polski default missingItems w EN i insights403 pozostają opisane, nie ukryte. Syntetyczny tenant/rekordy zachowano do niezależnego odbioru, bez resetowania terminalnych cykli i bez zmian cudzych danych.
+
+## W05 follow-up — object-scoped AI evaluation / read-only open (2026-09-12)
+
+Mandat: DEC-2026091201, 02_INTERVIEW + WSPOLNE. Osobny sparse worktree `codex4-w05-ai-evaluation`, branch `codex/w05-ai-evaluation-20260912`, baza `0dedb2345e0278475400e4d97ba3e6225ce51f9e`. Poprzedni C4 checkpoint został oddany do niezależnego odbioru i nie został zmieniony. Ten zapis nie oznacza pełnego odbioru Interview/MVP ani wdrożenia.
+
+**Zmiana:** obie rodziny evaluate-answers używają jednej kwalifikacji obiektu przed pobraniem odpowiedzi i przed kosztem ewaluatora. Uprawniony respondent/primary assignee/team albo jawny reviewer właściwego persisted projektu; samo create/read i projekt z body nie nadają prawa. Aktualne członkostwo organizacji, tenant/linkage oraz scoped review policy sprawdzane ponownie przed zapisem. Krótkie transakcje z kolejnością lock assignment→session→questions, bez blokady przez model call. Porównanie wersji obejmuje persisted session, assignment (także AI snapshot/timestamps) i pytania. Revoke403, drift409; błąd persist nie jest już połykany jako sukces. Timeout jawny,503 pozostaje błędem providera; spóźniony przegrany nie ma kontynuacji zapisującej. Zachowano ad hoc/team, anonimowe redaction oraz istniejącą możliwość jawnej oceny bez zmiany approved lifecycle/odpowiedzi.
+
+**Otwarcie:** submitted card przyjmuje zapisany snapshot i nie uruchamia silent evaluate. Istniejący callout AI/Refresh współdzielony z dedicated question workspace, gdyż przypisania zawsze trafiają do tego widoku, a akcja N-shell była tam nieosiągalna. Brak wyniku ma jawny komunikat EN/PL. Zachowano istniejące wywołania przy świadomym submit; nie dodano nowej procedury ani drugiego panelu czatu.
+
+**Realny mianownik58, Gateway/JWT/PG18 lokalny6455/cx4_pilot:** legacy + V8, legal respondent/reviewer/team/ad hoc, A/B, foreign, projectless outsider, create-only, explicit REVOKE, stale ADMIN, org revoke, cross-org session, anonymous self/derived redaction, empty,503,timeout i late loser. Deterministyczne revoke/team revoke/anonymous/capability/org/project/assignment/status/answer/AI revision drift oraz dwie rzeczywiste równoległe ewaluacje. Przy odmowie provider0 tam, gdzie odmowa jest przed provider; przy odmowie po modelu brak kontrolowanego sensitive sentinela w odpowiedzi i brak zapisu względem stanu po niezależnej zmianie. Nie udajemy, że cofnięcie uprawnienia nie zmieniło DB.
+
+- Exact bazowy Controller0dedb: **36FAIL/22PASS/58** — rzeczywisty RED. Kontrolowany lokalny provider; nie runtime zewnętrznego AI.
+- Mutacja pominięcia object authorization: **18FAIL/40PASS/58**.
+- Przywrócony produkt: **58/58PASS**,0skip, retry0; `final58-vitest.json` zachowuje pełne nazwy.
+- UI mounted behavior: **10/10PASS**; celowe przywrócenie auto-write on open **3FAIL/7PASS/10**, potem10PASS.
+- Zmienione pliki frontu: esbuild parse exit0. Końcowy server tsc po privacy fix: **exit0** (`server-tsc-privacy-final.log`).
+
+**Realny browser:** `ui-cycle2/cycle-evidence.json` PASS_ONE_RECORD, własny nowy assignment `b3ff16fb-b812-44b1-812e-c56af6c48662`, session `793fe8fe-d7c5-4460-9f00-47ac784de096`: answer→submit→send-back→edit→resubmit→approve→reload obu stron,3 immutable history rows. Submitted reload: **0evaluate POST**, identyczne snapshot/ai_reviewed_at/updated_at. Jawny Refresh200 zmienia persisted review time. Manager browser0evaluate POST podczas cyklu. Cztery respondent POST wynikają ze świadomych działań/submission flow, nie otwarcia. Light/dark1440×900 obejrzane, luma244.4355/27.5840, delta216.8515>40. PNG mają sidecary URL/theme/state. Początkowy niekwalifikowany UI pomiar zatrzymał się przed kartą przez brak `packages/shared` w sparse; uzupełniono checkout, zachowano dowód błędu i powtórzono niezmieniony początkowy rekord, bez resetu lifecycle.
+
+**Uczciwe granice:**18 istniejących GET insights403 (10respondent/8manager);0pageerror i0own-detail403. Nie raportujemy „zero HTTP errors”. Lokalna zależność rubric w scratch `api.mts` zastępuje llmService.call i odrzuca inne typy — żadnego realnego providera, żadnego dowodu jakości AI. Initial SQL fixture nie dowodzi creation/publication. Osobno zachowano odziedziczony SOURCE_RISK braku per-record identity guard dla późnego UI wyniku A→B, istniejące surowe etykiety review/PL missingItems oraz niejednakową semantykę timezone kolumn timestamp; ta paczka ich nie zamyka. Inne AI entrypoints, w tym osobna ścieżka server submission, nie są ogłoszone jako globalnie zaudytowane. Niezależny odbiór exact SHA i integracja pozostają po stronie integratora.
+
+Pełny handoff, komendy, surowe logi, bezpieczne PNG/JSON: `/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/w05-evaluation/HANDOFF.md`. `private-state*.json` i run-api.sh zawierają lokalne dane logowania i nie są publikowane ani commitowane. API4214/Vite5214 przekazane z wcześniejszego checkpointu po zwolnieniu przez recenzenta; nie używano innych baz ani live.
+
+**Dodatkowy kwalifikowany privacy RED:** po wzmocnieniu istniejących dwóch przypadków anonymous o sentinel także w recommendations, oba rzeczywiste endpointy zwróciły cytowaną treść reviewerowi:2/2FAIL (pozostałe56 celowo nieuruchomione). Poprzednie58GREEN dowodziło wyłącznie redakcji per-question feedback/rubric i nie było dowodem rekomendacji. Naprawiono istniejący wspólny redactor: recommendations=[] tylko w anonimowej odpowiedzi dla nie-respondenta. Pełny persisted snapshot i own response zachowują treść, numeric rubric pozostaje. Brak wywołań realnego dostawcy. Końcowy pełny mianownik58 po tej poprawce: `privacy58-green.log` / `privacy58-vitest.json`; ostateczny server tsc: `server-tsc-privacy-final.log`.
+
+Końcowe bramki autora: privacy58/58PASS, frontend10/10PASS, server tsc exit0, diff check0. Runtime finalny API4214 PID33896, Vite5214 PID91504; bez realAI. Niezależny odbiór exact SHA pozostaje wymagany.
+
+## CLOSED autosave — bounded correction (DEC-2026091202)
+
+Worktree `codex-closed-autosave-20260912`, branch `codex/closed-autosave-20260912`, base `c3499aa7972e7c693c96b17ff7e9539919b06c8a`. This is a separate delivery after W05 AI; the frozen RC1 candidate is untouched. No push/deployment/live, no backend lifecycle or existing105 initiative migration. Only `InitiativeDocumentView.tsx`, its behavioral test and this report change.
+
+### Premise and correction
+
+New synthetic CLOSED initiative `5594178a-9608-40c3-864f-d188e61c1d50` in project `de30c36c-00b0-4d0d-b735-f3f926b5ce85`, local `cx-codex8-pg` PostgreSQL18/6459/cx8_e0. Actual member login/JWT, real Gateway5293 from the issued source, frontend5292. Opening without editing and observing4000ms produced **two PUT403, visible Unsaved, unchanged full initiative SQL row**. Original C8API4218 reproduction retained separately; its older v8/IE00 read404s are not attributed to this fix. Current5293 RED retains only two unrelated organization-members403 plus the two offending PUT403;0pageerror.
+
+Hydration used name-before-title while dirty checking used title-before-name; summary/date aliases, structured problem and arrays also differed. The same display representations now initialize and compare the drafts. Autosave waits for hydration, checks independently permitted card/topbar fields, and uses current values/capabilities at callback execution. Ordinary payloads exclude card fields when only topbar editing is allowed; unchanged topbar fields are omitted, explicit legacy date/owner clears send null. Only actually submitted fields advance the local baseline.
+
+Runtime-only metadata keeps the existing canonical metadata writer and expectedVersion. Summary/description obey card editing rights; owner obeys its separate capability. An empty runtime owner has no legal canonical writer and remains explicitly blocked/unsaved without an invalid request or false success. No canonical command/schema or lifecycle policy changed.
+
+A related hydration race erased local backup before fetch restored it. Local backup persistence now starts after hydration. A completed earlier save clears a backup only if it still equals the submitted snapshot; a newer local card edit survives capability loss, a later topbar-only save and remount. This is tested with the actual narrative textarea, not an invented state setter.
+
+### Evidence and denominator
+
+All detailed evidence is outside source at `/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/closed-autosave/`.
+
+- Exact base marker on the final10 behavioral names: `marker-final10-red.json`,8FAIL/2PASS/10. `final10-green.json`:10PASS/10,0skip/retry. Separate JSON output avoids the inherited configuration writing both JSON/JUnit to junit.xml.
+- Earlier precise RED: `component-initial3.log` unexpected writer; `alias-family-red.log` false dirty structured/array aliases; `inflight-backup-red.log` newer backup becomes null after earlier in-flight save. Initial1/2 attempts were harness mistakes (unstable store mock, obsolete presentation hook shape), not productRED. Earlier topbar example was strengthened to a real pending draft; no acceptance is derived from the weaker sample.
+- Final tests cover: CLOSED hydration/no-save; latest editable title; readMode during debounce; topbar-only save preserving pending card backup; explicit null date; actual server-readback capability loss while a newer edit is pending followed by topbar save/remount; structured/array aliases; explicit null legacy owner; runtime-only canonical writer expectedVersion6→7→8; blocked runtime-only empty owner. ReadMode is distinct from a server capability change.
+- `browser-first-green/evidence.json`: same CLOSED/member,0initiativePUT/PATCH, no Unsaved, complete SQL row unchanged,0pageerror. Two inherited organization-members403 remain; voice telemetry202 is separate from initiative mutation.
+- `browser-legal-first/evidence.json`: actual UI title→date-set→date-clear→owner-clear, four PUT200, SQL after each and reload. Final name/title match the edited title, planned_end_date and owner_execution_id are null; UI Owner/Target display empty, no Unsaved,0HTTPerrors/0pageerror. Business-owner role remains a separate unchanged field.
+- `runtime-create/create-receipt.json`: new real source proposal→register→cold read through the existing application service, project/owner/source/policy retained; no aggregate SQL seed. `browser-runtime-first/evidence.json`: actual title edit PATCH metadata200 with expectedVersion1, PG aggregate1→2, reload same title,0legacyPUT/no Unsaved/0pageerror. Existing canonical fallback/detail/suggested-change/attachment404s remain visible in the evidence.
+
+### Limits and remaining acceptance
+
+Legacy initial fixtures were SQL-seeded in a new owned project solely to prove read/edit behavior; this is not a lifecycle/creation proof. Canonical fixture used the existing application creation service, not a complete Hub creation walkthrough. No realAI, finance behavior, full12-gate journey, global permission redesign or client-fallback authority certification is claimed. Runtime-only Overview business-card edits without a canonical metadata mapping remain outside this bounded title/metadata preservation proof; the next IE01 delivery addresses the broader card journey.
+
+The full module/MVP remains incomplete. Independent review must accept this exact delivery before any successor integration; RC1 remains frozen. Current runtime/processes, final visual sidecars/luma, mutation results and exact delivery SHA are recorded in external `HANDOFF.md` at final handoff.
+
+Final author gates: `mutation-card-scope10-red.json`4FAIL/6PASS/10, `mutation-newer-backup10-red.json`1FAIL/9PASS/10, restored byte-identical product `restored-final10-green.json`10PASS/10,0skip/retry. Product and test esbuild parsing both exit0. No backend source changed; no additional server or full frontend typecheck/build is claimed in this delivery. Full frontend type ratchet remains an integrator gate.
+
+Final visual evidence `browser-final/closed-{light,dark}.{png,json}`:1440×900, actual zustand theme, visually inspected; luma246.9511 vs23.8046, delta223.1465>40. CLOSED is Saved in both, no initiative writes and SQL unchanged. Legal legacy and canonical title/clear screenshots also visually inspected. Two document tabs are visible after rename/reload in the legal and runtime-only samples; navigation was not modified here and the cause was not independently reproduced on the marker, so this observation remains unclassified rather than hidden or claimed fixed. No new panel or lifecycle is introduced by the correction.

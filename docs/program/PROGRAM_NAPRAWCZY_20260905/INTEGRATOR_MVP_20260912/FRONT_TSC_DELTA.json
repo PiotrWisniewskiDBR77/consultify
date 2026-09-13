@@ -1,0 +1,10 @@
+{
+  "baseline_sha": "7c7dd88091f2a28ad73b55a6fc63d85261991b17",
+  "baseline_count": 192,
+  "candidate_count": 192,
+  "added": [],
+  "removed": [],
+  "baseline_exit": 2,
+  "candidate_exit": 2,
+  "meaning": "No new type diagnostics; existing debt remains; not tsc zero"
+}

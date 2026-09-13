@@ -8,6 +8,7 @@ import { v4 as uuid } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
 import DbPromise from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { normalizeProjectRole } from '../utils/roleNormalization.js';
 import notificationService from './notificationService.js';
@@ -166,6 +167,15 @@ export class TaskAssignmentService {
 
     // Validate assignee is a project member
     const projectId = task.project_id;
+    // This assignment operation uses project roles, SLA and project audit.
+    // Personal tasks are legal, but cannot satisfy that project policy.
+    if (!projectId) {
+      throw new AppError(
+        'Add this task to a project before assigning it.',
+        422,
+        'TASK_ASSIGNMENT_PROJECT_REQUIRED'
+      );
+    }
     const member = await ProjectMemberService.getMember(projectId, assigneeId);
     if (!member) {
       throw new Error('User is not a member of this project');

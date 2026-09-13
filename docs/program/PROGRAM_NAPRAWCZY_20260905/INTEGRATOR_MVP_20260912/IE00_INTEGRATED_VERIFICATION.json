@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "head": "30242b2badde1f2352958dda46e6dc261c52f79b",
+  "sourceMerge": "6bd8d59581",
+  "ie00Source": "e14526a711a12832a529e85d60b3b69858c432e9",
+  "testsTotal": 6,
+  "testsPassed": 6,
+  "testsFailed": 0,
+  "exitCode": 0,
+  "resultPath": "/Users/piotrwisniewski/Developer/codex-wt/codex7-artefakty/ie00-independent-final/integrated-pg.json",
+  "database": "127.0.0.1:6458/cx7_ie00",
+  "maxWorkers": 1,
+  "flags": {
+    "DB_TYPE": "postgres",
+    "RUN_DB_TESTS": "1",
+    "MOCK_DB": "false",
+    "ENABLE_V8_GLOBAL": "true",
+    "RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE": "enforce",
+    "ENABLE_TEST_AUTH_BYPASS": "false"
+  },
+  "fixtureBoundary": "Vertical resets org-ie00-contract only; member test uses its idempotent member-home/target fixture; no org-definition/UI record mutation.",
+  "scope": "same6 IE00 real Gateway/JWT/PG tests on integrated root code; no UI rerun/build/tsc/source edits"
+}

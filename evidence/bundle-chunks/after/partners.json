@@ -1,0 +1,89 @@
+{
+  "capturedAt": "2026-09-12T09:14:27.803Z",
+  "name": "Partners",
+  "phase": "after",
+  "url": "/partner?tab=partner-home",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1208
+  },
+  "readyFromTriggerMs": 1345,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3345,
+  "totalCaptureMs": 3389,
+  "scriptBytes": {
+    "timingMissingUrls": [],
+    "requestCount": 4,
+    "decodedBodyBytes": 116045,
+    "encodedBodyBytes": 26423,
+    "transferBytes": 27623,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/PartnerPortalView-B-w8y83-.js",
+      "initiatorType": "script",
+      "startTime": 54923.10000000149,
+      "responseEnd": 54928.60000000149,
+      "duration": 5.5,
+      "decodedBodySize": 112438,
+      "encodedBodySize": 24646,
+      "transferSize": 24946,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/partner-CR4irLSC.js",
+      "initiatorType": "script",
+      "startTime": 54923.20000000298,
+      "responseEnd": 54927.30000000447,
+      "duration": 4.100000001490116,
+      "decodedBodySize": 2148,
+      "encodedBodySize": 851,
+      "transferSize": 1151,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/banknote-Bwas_Lg4.js",
+      "initiatorType": "script",
+      "startTime": 54923.39999999851,
+      "responseEnd": 54927.20000000298,
+      "duration": 3.8000000044703484,
+      "decodedBodySize": 425,
+      "encodedBodySize": 425,
+      "transferSize": 725,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/mouse-pointer-click-CX9tDxm4.js",
+      "initiatorType": "script",
+      "startTime": 54923.39999999851,
+      "responseEnd": 54927.39999999851,
+      "duration": 4,
+      "decodedBodySize": 1034,
+      "encodedBodySize": 501,
+      "transferSize": 801,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 1,
+  "apiRequests": [
+    "GET /api/v8/partner/connection"
+  ],
+  "scriptRequests": [
+    "/assets/banknote-Bwas_Lg4.js",
+    "/assets/partner-CR4irLSC.js",
+    "/assets/mouse-pointer-click-CX9tDxm4.js",
+    "/assets/PartnerPortalView-B-w8y83-.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nPartner Portal\nData\nModel\n1\nLocal Reviewer\nLR\nPartner Portal\n\nDBR77 Consultify\n\nHOME\nHome\nDashboard\nMetrics\nREFERRALS\nMy Links & Codes\nClick Analytics\nReferred Customers\nEARNINGS\nCommission Earnings\nStatements\nPayout History\nPayout Settings\nCLIENT MANAGEMENT\nClient Access Manager\nOrganizations\nActive Projects\nTeam Members\nACADEMY\nLearning Path\nExams\nCertificates\nPROFILE\nCompany Info\nSpecializations\nRegions\nPublic Listing\nRESOURCES\nDocumentation\nMarketing Materials\nCase Studies\nPMO Templates\nBack to app\nPartner Portal\nThe Partner profile is not connected yet\n\nYour organization is not connected to the partner program yet. As an administrator you can connect it now — the portal will open with your organization data.\n\nConnect this organization as a partner"
+}

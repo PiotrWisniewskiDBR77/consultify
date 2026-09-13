@@ -149,8 +149,7 @@ export class ApiError extends Error {
   constructor(payload: unknown, fallbackMessage: string, status?: number) {
     const envelope =
       payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
-    const serverMessage = String(envelope.message ?? envelope.error ?? '').trim();
-    super(serverMessage || fallbackMessage);
+    super(normalizeApiErrorMessage(payload, fallbackMessage));
     this.name = 'ApiError';
     // P16/R3 (DEC-453): kontrolery domenowe (np. DecisionController) odsyłają
     // maszynową przyczynę w polu `code` (`REASON_REQUIRED`, `ESCALATION_AT_MAX`,
@@ -3192,6 +3191,22 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to export organization data');
+    return res.blob();
+  },
+
+  // [ODMROZENIE WSPOLNE DEC-468] Tenant-admin self-service export; server checks persisted membership.
+  exportOwnOrganizationData: async (orgId: string): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(orgId)}/export?format=json`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const message = res.status === 423
+        ? 'Organization export is unavailable while a legal hold is active.'
+        : res.status === 403 || res.status === 401
+          ? 'You do not have permission to export this organization.'
+          : 'Failed to export organization data. Please try again.';
+      throw Object.assign(new Error(message), { status: res.status });
+    }
     return res.blob();
   },
 
@@ -7041,9 +7056,16 @@ export const Api = {
   // PHASE 6: AI INTEGRATION
   // ==========================================
   // --- INITIATIVES (Phase 2) ---
-  getInitiatives: async (projectId?: string): Promise<any[]> => {
-    let url = `${API_URL}/initiatives`;
-    if (projectId) url += `?projectId=${encodeURIComponent(projectId)}`;
+  getInitiatives: async (
+    projectId?: string,
+    options?: { asOf?: string; includeExecutionEvidence?: boolean }
+  ): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (projectId) params.set('projectId', projectId);
+    if (options?.includeExecutionEvidence) params.set('includeExecutionEvidence', '1');
+    if (options?.asOf) params.set('asOf', options.asOf);
+    const query = params.toString();
+    const url = `${API_URL}/initiatives${query ? `?${query}` : ''}`;
     const res = await fetchWithRetry(url, { headers: getHeaders() });
     return normalizeInitiativeList(await handleResponse(res, 'Failed to fetch initiatives'));
   },

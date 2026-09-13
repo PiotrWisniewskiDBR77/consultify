@@ -2,6 +2,9 @@
   "actionCard": {
     "title": "Karta działania",
     "open": "Otwórz kartę",
+    "reopen": "Otwórz ponownie",
+    "reopened": "Karta otwarta ponownie.",
+    "reopenFailed": "Nie udało się ponownie otworzyć karty.",
     "fields": {
       "period": "Okres",
       "goalMet": "Cel osiągnięty?",
@@ -68,6 +71,11 @@
     }
   },
   "errors": {
+    "DATABASE_ERROR": "Nie udało się wczytać danych. Spróbuj ponownie.",
+    "VERSION_CONFLICT": "Ten element został zmieniony. Odśwież go i spróbuj ponownie.",
+    "NOT_FOUND": "Ten element jest niedostępny w Twojej organizacji. Odśwież i wybierz dostępny element.",
+    "VALIDATION_FAILED": "Sprawdź wprowadzone wartości i spróbuj ponownie.",
+    "INITIATIVE_ARCHIVED_READ_ONLY": "Ta inicjatywa jest zarchiwizowana i nie można jej zmieniać.",
     "app": {
       "reportId": "Identyfikator zgłoszenia",
       "notFound": {
@@ -2152,6 +2160,19 @@
         "untitledArtifact": "Artefakt bez nazwy"
       },
       "autosaveOffline": "Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane.",
+      "artifactCommands": {
+        "undo": "Cofnij",
+        "redo": "Ponów",
+        "newSlide": "Nowy slajd",
+        "textBox": "Pole tekstowe",
+        "image": "Obraz",
+        "theme": "Motyw",
+        "duplicateSlide": "Duplikuj slajd",
+        "toggleSlideLock": "Zablokuj / odblokuj",
+        "deleteSlide": "Usuń slajd",
+        "duplicateObject": "Duplikuj obiekt",
+        "deleteObject": "Usuń obiekt"
+      },
       "agentActivityPanel": {
         "aiActivity": "Aktywność AI",
         "theFullActivityHistoryCannot": "Nie można wyświetlić pełnej historii aktywności",
@@ -2500,6 +2521,7 @@
     "comingSoon": "Wkrótce"
   },
   "sidebar": {
+    "comingSoon": "Wkrótce",
     "module3_1": "Inicjatywy",
     "dashboard": "Panel",
     "settings": "Ustawienia",
@@ -7520,6 +7542,7 @@
       "reviewerMode": "Tryb recenzenta",
       "youAreReviewingAnswersFor": "Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków \"Zatwierdź\" lub \"Odeślij\" w pasku akcji.",
       "managerFeedback": "Feedback od managera",
+      "aiReviewMissing": "Brak zapisanej oceny AI. Wybierz Odśwież, aby uruchomić ocenę.",
       "aiQualityReview": "Kontrola jakości AI",
       "running": "Analiza...",
       "refresh": "Odśwież",
@@ -10811,12 +10834,13 @@
       "levelTransformationLabel": "Transformacja",
       "levelTransformationCardDesc": "Zmiana obejmująca całą organizację. 6-24 miesiące, pełny nadzór, nadzór zarządu.",
       "newInitiativeManual": "Wypełnij formularz",
-      "newInitiativeManualDesc": "Tytuł, oś, poziom i krótkie podsumowanie — bez AI.",
+      "newInitiativeManualDesc": "Tytuł, projekt i krótkie podsumowanie — bez AI.",
       "newInitiativeAi": "Kreator inicjatywy AI",
       "newInitiativeAiDesc": "Zbuduj szkic z wniosku źródłowego, potem go przejrzyj.",
       "errorOwnerIneligible": "Wskazana osoba nie może być właścicielem inicjatywy w tym projekcie. Dodaj ją do zespołu projektu albo wybierz osobę, która już w nim jest.",
       "errorCapabilityRequired": "Nie masz uprawnień, żeby utworzyć inicjatywę w tym projekcie. Poproś właściciela lub administratora organizacji o dostęp do tego projektu.",
-      "errorOwnershipRequired": "Możesz edytować tylko inicjatywy, których jesteś właścicielem lub twórcą."
+      "errorOwnershipRequired": "Możesz edytować tylko inicjatywy, których jesteś właścicielem lub twórcą.",
+      "governanceEffectiveNote": "Uprawnienia do zatwierdzania i wymagane dowody wynikają z obowiązującej polityki projektu. Profil kart sprawdzisz przed zastosowaniem w karcie inicjatywy."
     },
     "axis": {
       "operational": "Operacyjna",
@@ -10888,7 +10912,8 @@
       "portfolioHealth": "Zdrowie portfela",
       "list": "Inicjatywy",
       "plan": "Plan",
-      "capacity": "Obciążenie"
+      "capacity": "Obciążenie",
+      "workReport": "Raport pracy"
     },
     "capacityAdvisor": {
       "propose": "Zaproponuj opcje",
@@ -12196,7 +12221,7 @@
       "milestones": "Kamienie milowe",
       "scheduleReadiness": "Gotowość harmonogramu",
       "awaitingPmoApproval": "Harmonogram czeka na zatwierdzenie PMO (Schedule Lock). Po zatwierdzeniu daty zostaną zamrożone jako baseline.",
-      "timelineLockedBaseline": "Harmonogram zamrożony. Daty odzwierciedlają zatwierdzony baseline{{version}}.",
+      "timelineLockedBaseline": "Edycja harmonogramu jest zablokowana na tym etapie.",
       "baselineVsActual": "Baseline vs Rzeczywistość",
       "planned": "Planowane",
       "actual": "Rzeczywiste",
@@ -14030,6 +14055,47 @@
     },
     "portfolioGrid": {
       "criticalPath": "Ścieżka krytyczna"
+    },
+    "workspace": {
+      "label": "Widok inicjatyw",
+      "list": "Lista",
+      "analysis": "Analiza"
+    },
+    "cards": {
+      "noContent": "Brak opublikowanej treści tej karty. Wymagalność i gotowość wynikają z obowiązującego profilu.",
+      "summary-scope": "Zakres i cel",
+      "strategic-fit": "Dopasowanie strategiczne",
+      "success-criteria": "Kryteria sukcesu",
+      "outcomes-benefits": "Rezultaty i korzyści",
+      "kpi": "KPI",
+      "options": "Warianty",
+      "financial-analysis": "Analiza finansowa",
+      "financial-impact": "Wpływ finansowy",
+      "people-team": "Zespół",
+      "roles-raci": "Role i odpowiedzialność",
+      "stakeholders": "Interesariusze",
+      "resources-capacity": "Zasoby i dostępność",
+      "dependencies": "Zależności",
+      "risk-raid": "Ryzyko i RAID",
+      "milestones": "Kamienie milowe",
+      "timeline": "Harmonogram",
+      "tasks": "Zadania",
+      "decisions": "Decyzje",
+      "gates-approvals": "Bramki i zatwierdzenia",
+      "feasibility-completeness": "Wykonalność i kompletność",
+      "change-adoption": "Zmiana i adopcja",
+      "communication-engagement": "Komunikacja i zaangażowanie",
+      "capabilities-training": "Kompetencje i szkolenia",
+      "technical-specification": "Specyfikacja techniczna",
+      "attachments-materials": "Załączniki i materiały",
+      "comments-activity-history": "Komentarze i historia"
+    },
+    "cardGroups": {
+      "definition-value": "Definicja i wartość",
+      "organization-feasibility": "Organizacja i wykonalność",
+      "plan-governance": "Plan i zatwierdzenia",
+      "adoption-evidence-learning": "Adopcja, dowody i wiedza",
+      "workspace": "Narzędzia karty"
     }
   },
   "execution": {
@@ -24969,7 +25035,12 @@
         "description": "Zmiany dotyczące członkostwa, bezpieczeństwa, współpracy i integracji emitowane przez powierzchnie P32.",
         "searchPlaceholder": "Szukaj akcji, wykonawcy, metadanych...",
         "loading": "Ładowanie dzienników audytu...",
-        "emptyMessage": "Nie znaleziono zdarzeń audytu dla tej przestrzeni roboczej."
+        "emptyMessage": "Nie znaleziono zdarzeń audytu dla tej przestrzeni roboczej.",
+        "organizationExport": {
+          "preparing": "Przygotowywanie eksportu organizacji…",
+          "download": "Eksportuj dane organizacji (JSON)",
+          "scope": "Pobierz dane tej organizacji. Manifest pliku wskazuje dane wyłączone lub nierozstrzygnięte."
+        }
       },
       "collaborationControls": {
         "errors": {
@@ -27779,6 +27850,10 @@
     }
   },
   "finance": {
+    "wave2Placeholder": {
+      "title": "Finanse — Wkrótce",
+      "message": "Analizy finansowe, planowanie i wyceny pojawią się w Fali 2."
+    },
     "comments": {
       "added": "Komentarz dodany.",
       "resolved": "Komentarz oznaczony jako rozwiązany.",

@@ -1,0 +1,120 @@
+{
+  "capturedAt": "2026-09-12T09:13:56.724Z",
+  "name": "Audits",
+  "phase": "after",
+  "url": "/audit-programs?tab=library",
+  "timing": {
+    "firstChangedMs": 403,
+    "stableMs": 1608
+  },
+  "readyFromTriggerMs": 1749,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3750,
+  "totalCaptureMs": 3806,
+  "scriptBytes": {
+    "timingMissingUrls": [],
+    "requestCount": 6,
+    "decodedBodyBytes": 91761,
+    "encodedBodyBytes": 27943,
+    "transferBytes": 29743,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/AuditsMethodHub-BMNcpOq1.js",
+      "initiatorType": "script",
+      "startTime": 23425.80000000447,
+      "responseEnd": 23433,
+      "duration": 7.199999995529652,
+      "decodedBodySize": 74127,
+      "encodedBodySize": 21108,
+      "transferSize": 21408,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/auditsMethodApi-BPIKDXWD.js",
+      "initiatorType": "script",
+      "startTime": 23426,
+      "responseEnd": 23432.20000000298,
+      "duration": 6.200000002980232,
+      "decodedBodySize": 6832,
+      "encodedBodySize": 2090,
+      "transferSize": 2390,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/Menu2PresetDropdown-BgK_AuZQ.js",
+      "initiatorType": "script",
+      "startTime": 23426,
+      "responseEnd": 23432.30000000447,
+      "duration": 6.300000004470348,
+      "decodedBodySize": 2435,
+      "encodedBodySize": 1070,
+      "transferSize": 1370,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/auditsScaleAndPolishFlag-CXgaa4Dd.js",
+      "initiatorType": "script",
+      "startTime": 23426.10000000149,
+      "responseEnd": 23432.10000000149,
+      "duration": 6,
+      "decodedBodySize": 817,
+      "encodedBodySize": 817,
+      "transferSize": 1117,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/auditRoleLabels-COYn6xP2.js",
+      "initiatorType": "script",
+      "startTime": 23426.20000000298,
+      "responseEnd": 23432.39999999851,
+      "duration": 6.199999995529652,
+      "decodedBodySize": 7059,
+      "encodedBodySize": 2367,
+      "transferSize": 2667,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/file-exclamation-point-DzY5_4h9.js",
+      "initiatorType": "script",
+      "startTime": 23426.30000000447,
+      "responseEnd": 23432.20000000298,
+      "duration": 5.899999998509884,
+      "decodedBodySize": 491,
+      "encodedBodySize": 491,
+      "transferSize": 791,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 6,
+  "apiRequests": [
+    "GET /api/mfa/status",
+    "GET /api/llm/providers/health?timeoutMs=4000",
+    "GET /api/organizations/current",
+    "GET /api/audits/packs",
+    "GET /api/audits/programs",
+    "GET /api/users"
+  ],
+  "scriptRequests": [
+    "/assets/auditsScaleAndPolishFlag-CXgaa4Dd.js",
+    "/assets/file-exclamation-point-DzY5_4h9.js",
+    "/assets/auditsMethodApi-BPIKDXWD.js",
+    "/assets/Menu2PresetDropdown-BgK_AuZQ.js",
+    "/assets/auditRoleLabels-COYn6xP2.js",
+    "/assets/AuditsMethodHub-BMNcpOq1.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nAudits\nData\nModel\n1\nLocal Reviewer\nLR\nLibrary\nSessions\nConclusions\nReports\nInitiatives\nVerification: All\n1\nNew audit\nFrozen until wave 2: uploading audit assumptions and the question generator.\nAll\n1\nVerified\n0\nPending review\n0\nTITLE\n\t\nSOURCE\n\t\nVERSION\n\t\nSOURCE TYPE\n\t\nVERIFICATION\n\t\nPUBLICATION STATUS\n\t\nCRITERIA\n\t\nUPDATED\n\t\n\n\nOperational Excellence Audit 2026\n\t\nNorthwind Operational Excellence Programme — internal audit procedure\n\t\nv1\n\t\nInternal procedure\n\t\nUnverified\n\t\nPublished\n\t\n7\n\t\n08/09/2026\n\t\nAUDITS"
+}

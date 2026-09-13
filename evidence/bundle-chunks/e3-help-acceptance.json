@@ -1,0 +1,15 @@
+{
+  "idleHelpScripts": [],
+  "searchAfterReopen": "project",
+  "loadedHelpScripts": [
+    "/assets/HelpSidePanel-DHF2GMTV.js"
+  ],
+  "pageErrors": [],
+  "deepLinkFirstOpen": {
+    "opened": true,
+    "tab": "faq",
+    "paramsConsumed": true,
+    "articleRetrieval": "NOT_TESTED_FAQ_TAB_ONLY"
+  },
+  "status": "PASS"
+}

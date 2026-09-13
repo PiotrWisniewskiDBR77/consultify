@@ -69,11 +69,13 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { useInterviewReviewAccess } from '@/hooks/useInterviewPermissions';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
   V8InterviewApi,
+  type V8InterviewAssignment,
   type V8InterviewSessionEvaluation,
   type V8InterviewWeakAnswerItem,
 } from '@/services/api/v8/interview';
@@ -95,7 +97,11 @@ import { loadInterviewV8Capability } from './interviewBackendRouting';
 // MIGRACJA (D-8): kompozycja kart Interview wyprowadzona z WIĄŻĄCEGO kontraktu
 // karty (cardContract.types.ts) zamiast z luźnej tablicy NModeSection[] —
 // patrz interviewCardContract.ts. Za flagą (default OFF), zero regresji na demo.
-import { INTERVIEW_CARDS, INTERVIEW_CARD_RENDER_IDS, INTERVIEW_CARD_SPEC } from './interviewCardContract';
+import {
+  INTERVIEW_CARDS,
+  INTERVIEW_CARD_RENDER_IDS,
+  INTERVIEW_CARD_SPEC,
+} from './interviewCardContract';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { InterviewNote, NotesPanel } from './NotesPanel';
@@ -182,6 +188,9 @@ interface InterviewWorkspaceProps {
   projectId?: string;
   onComplete?: (sessionId: string) => void;
   onSessionChange?: (session: InterviewSession) => void;
+  onAssignmentChange?: (
+    assignment: Partial<V8InterviewAssignment> & Pick<V8InterviewAssignment, 'id' | 'status'>
+  ) => void;
   onClose?: () => void;
 }
 
@@ -199,6 +208,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   projectId,
   onComplete,
   onSessionChange,
+  onAssignmentChange,
   onClose,
 }) => {
   const { t, i18n } = useTranslation();
@@ -290,28 +300,27 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Expanded sections state - wszystkie sekcje domyślnie zamknięte dla czytelności
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
 
-  // Locking rules:
-  // - For assignments: approval is the final lock; submitted stays editable
-  // - For ad-hoc sessions: lock on session completion
+  // Submitted content is an immutable review snapshot. Review actions are
+  // authorized separately, so read-only content never hides a manager decision.
   const isLocked = useMemo(() => {
     const sessionStatus = (session?.status || '').toLowerCase();
     const asgStatus = (assignmentStatus || '').toLowerCase();
-    const assignmentLocked =
-      Boolean(session?.assignmentId) && ['approved', 'completed'].includes(asgStatus);
-    return assignmentLocked || sessionStatus === 'completed';
+    return (
+      ['submitted', 'completed'].includes(sessionStatus) ||
+      (Boolean(session?.assignmentId) &&
+        (!asgStatus || ['submitted', 'approved', 'completed'].includes(asgStatus)))
+    );
   }, [assignmentStatus, session?.assignmentId, session?.status]);
 
   const isAssignmentMode = Boolean(session?.assignmentId);
-
-  // V6-C04: Reviewer mode — activates when the session is submitted and the
-  // current user is NOT the assignee (i.e. they are the reviewer/manager).
-  const isReviewerMode = useMemo(() => {
-    if (!isAssignmentMode) return false;
-    const asgStatus = (assignmentStatus || '').toLowerCase();
-    if (asgStatus !== 'submitted') return false;
-    const sessionOwnerId = session?.ownerId;
-    return Boolean(sessionOwnerId) && sessionOwnerId !== currentUser?.id;
-  }, [assignmentStatus, currentUser?.id, isAssignmentMode, session?.ownerId]);
+  const {
+    canReview,
+    isLoading: permissionsLoading,
+    refresh: refreshReviewAccess,
+  } = useInterviewReviewAccess(session?.assignmentId);
+  // Review authority comes from the persisted assignment context, separately from creation.
+  const isReviewerMode =
+    isAssignmentMode && assignmentStatus === 'submitted' && !permissionsLoading && canReview;
 
   const [sendBackReason, setSendBackReason] = useState('');
   const [sendBackMissingItems, setSendBackMissingItems] = useState<SendBackChecklistItem[]>([]);
@@ -526,6 +535,24 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     // 2026-07-21; `isPolish` nie wystarcza, bo zmienia sie przy zmianie jezyka,
     // a nie w momencie doczytania zasobu.
   }, [aiEvaluation?.overallVerdict, isPolish, t]);
+  const managerFeedback = (
+    <>
+      {!isReviewerMode && reviewFeedback && (
+        <Callout variant="warning" title={t('interview.workspace.managerFeedback')} compact>
+          <div className="space-y-2">
+            {reviewFeedback.reason && <p>{reviewFeedback.reason}</p>}
+            {reviewFeedback.missingItems.length > 0 && (
+              <ul className="list-disc pl-4 space-y-1">
+                {reviewFeedback.missingItems.map((item) => (
+                  <li key={item.key}>{item.label}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Callout>
+      )}
+    </>
+  );
   const aiWeakAnswerMap = useMemo(() => aiEvaluation?.weakAnswerMap || [], [aiEvaluation]);
   const latestReviewDecision = useMemo(() => {
     const decisions = Array.isArray((assignmentInfo as any)?.reviewDecisionMemory)
@@ -905,22 +932,23 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             fetchOptional(Api.get('/interview/context'), null),
             fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/summary`), null),
             currentSession.assignmentId
-              ? V8InterviewApi.getManagedAssignments()
-                  .then(
-                    (res) =>
-                      (res.assignments || []).find(
-                        (item) => item.id === currentSession?.assignmentId
-                      ) || null
-                  )
-                  .catch(() =>
-                    fetchOptional(
-                      Api.get(`/interview/assignments/${currentSession.assignmentId}`),
-                      null
-                    )
-                  )
-                  .catch(() =>
-                    fetchOptional(Api.get(`/interview/assignments/my?includeCompleted=true`), null)
-                  )
+              ? (async () => {
+                  // A successful list without this id is not a successful read.
+                  // The respondent's own list carries return feedback; managers
+                  // can use the existing protected detail reader when not assigned.
+                  const own = await V8InterviewApi.getMyAssignments().catch(() => null);
+                  const found = (own?.assignments || []).find(
+                    (item) => item.id === currentSession?.assignmentId
+                  );
+                  if (found) return found;
+                  const detail = await Api.get(
+                    `/interview/assignments/${currentSession.assignmentId}`
+                  );
+                  if (!detail || detail.id !== currentSession.assignmentId) {
+                    throw new Error('Interview assignment readback unavailable');
+                  }
+                  return detail;
+                })()
               : Promise.resolve(null),
             fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/linked-items`), []),
           ]);
@@ -957,11 +985,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             setAssignmentInfo(found || null);
             setAiEvaluation((found as any)?.aiReview || null);
             setAiEvaluationUpdatedAt((found as any)?.aiReviewedAt || null);
-            if (String(found?.status || '').toLowerCase() === 'submitted') {
-              void runAiQualityReview({ silent: true });
-            } else {
-              setAiEvaluationError(null);
-            }
+            // Opening a record adopts its saved review; evaluation requires an explicit action.
+            setAiEvaluationError(null);
           }
 
           if (contextRes && typeof contextRes === 'object') {
@@ -1049,7 +1074,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Update question
   const handleUpdateQuestion = useCallback(
     async (questionId: string, updates: Partial<InterviewQuestion>) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1106,13 +1131,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, questions, isPolish, onSessionChange]
+    [session, isLocked, questions, isPolish, onSessionChange]
   );
 
   // Add question
   const handleAddQuestion = useCallback(
     async (category: InterviewCategory, questionText: string) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1128,13 +1153,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Create note
   const handleCreateNote = useCallback(
     async (title: string, content: string, category?: InterviewCategory) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1151,13 +1176,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Update note
   const handleUpdateNote = useCallback(
     async (noteId: string, updates: Partial<InterviewNote>) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1170,13 +1195,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Delete note
   const handleDeleteNote = useCallback(
     async (noteId: string) => {
-      if (!session) return;
+      if (!session || isLocked) return;
 
       try {
         await Api.delete(`/interview/notes/${noteId}`);
@@ -1186,13 +1211,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         toast.error(t('interview.workspace.failedToDeleteNote'));
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Upload file
   const handleUploadFile = useCallback(
     async (file: File, category?: InterviewCategory, questionId?: string) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1217,7 +1242,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Add link
@@ -1229,7 +1254,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       category?: InterviewCategory,
       questionId?: string
     ) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1252,12 +1277,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   const handleAddEvidenceComment = useCallback(
     async (text: string, category?: InterviewCategory, questionId?: string) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
@@ -1279,7 +1304,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   const handleAddVoiceEvidence = useCallback(
@@ -1289,7 +1314,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       category?: InterviewCategory,
       questionId?: string
     ) => {
-      if (!session) return;
+      if (!session || isLocked) return;
       setIsSaving(true);
 
       try {
@@ -1314,13 +1339,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Delete evidence
   const handleDeleteEvidence = useCallback(
     async (evidenceId: string) => {
-      if (!session) return;
+      if (!session || isLocked) return;
 
       try {
         await Api.delete(`/interview/evidence/${evidenceId}`);
@@ -1330,11 +1355,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         toast.error(t('interview.workspace.failedToDelete'));
       }
     },
-    [session, isPolish]
+    [session, isLocked, isPolish]
   );
 
   // Update company profile
   const handleUpdateProfile = useCallback(async () => {
+    if (isLocked) return;
     setIsSaving(true);
 
     try {
@@ -1355,11 +1381,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [editedProfile, isPolish]);
+  }, [editedProfile, isPolish, isLocked]);
 
   // Save session
   const handleSave = useCallback(async () => {
-    if (!session) return;
+    if (!session || isLocked) return;
     setIsSaving(true);
 
     try {
@@ -1373,7 +1399,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [session, sessionName, isPolish]);
+  }, [session, isLocked, sessionName, isPolish]);
 
   // Submit session — core action (no gate). Used directly when the quality
   // gate is bypassed or when there are no weak answers to flag.
@@ -1406,6 +1432,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         }
         if (updatedAssignment?.status) {
           setAssignmentStatus(String(updatedAssignment.status));
+          onAssignmentChange?.(updatedAssignment);
           setAssignmentInfo((prev: any) => ({
             ...(prev || {}),
             ...updatedAssignment,
@@ -1481,6 +1508,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     isLocked,
     isPolish,
     isSubmittingSession,
+    onAssignmentChange,
     onComplete,
     onSessionChange,
     questions,
@@ -1572,7 +1600,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // V6-C04: Reviewer actions
   const handleSendBack = useCallback(async () => {
-    if (!session?.assignmentId || !sendBackReason.trim()) return;
+    if (
+      !session?.assignmentId ||
+      !isReviewerMode ||
+      !sendBackReason.trim() ||
+      isSendingBack ||
+      isApproving
+    )
+      return;
     setIsSendingBack(true);
     try {
       const missingItems = sendBackMissingItems
@@ -1591,6 +1626,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       const updatedSession = result?.session;
       if (updatedAssignment?.status) {
         setAssignmentStatus(String(updatedAssignment.status));
+        onAssignmentChange?.(updatedAssignment);
         setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
       } else setAssignmentStatus('in_progress');
       if (updatedSession) {
@@ -1606,6 +1642,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to send back:', error);
       const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+      if (status === 403 || status === 404) refreshReviewAccess();
       toast.error(
         status === 409
           ? isPolish
@@ -1622,13 +1659,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     aiEvaluation,
     aiEvaluationUpdatedAt,
     isPolish,
+    onAssignmentChange,
+    onSessionChange,
+    isReviewerMode,
+    refreshReviewAccess,
+    isSendingBack,
+    isApproving,
     sendBackMissingItems,
     sendBackReason,
     session?.assignmentId,
   ]);
 
   const handleApprove = useCallback(async () => {
-    if (!session?.assignmentId) return;
+    if (!session?.assignmentId || !isReviewerMode || isApproving || isSendingBack || !canApprove)
+      return;
     setIsApproving(true);
     try {
       const result = (await V8InterviewApi.approveAssignment(session.assignmentId)) as any;
@@ -1636,6 +1680,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       const updatedSession = (result as any)?.session;
       if (updatedAssignment?.status) {
         setAssignmentStatus(String(updatedAssignment.status));
+        onAssignmentChange?.(updatedAssignment);
         setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
       } else setAssignmentStatus('approved');
       if (updatedSession) {
@@ -1646,6 +1691,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to approve:', error);
       const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+      if (status === 403 || status === 404) refreshReviewAccess();
       toast.error(
         status === 409
           ? isPolish
@@ -1658,7 +1704,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } finally {
       setIsApproving(false);
     }
-  }, [session?.assignmentId, isPolish]);
+  }, [
+    session?.assignmentId,
+    isPolish,
+    isReviewerMode,
+    refreshReviewAccess,
+    isApproving,
+    isSendingBack,
+    canApprove,
+    onAssignmentChange,
+    onSessionChange,
+  ]);
 
   // Open chat
   const handleOpenChat = useCallback(() => {
@@ -1680,7 +1736,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
-    if (!session) return;
+    if (!session || isLocked) return;
     const created = (await Api.post(`/interview/sessions/${session.id}/linked-items`, {
       id: item.id,
       type: item.type,
@@ -1689,7 +1745,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   };
 
   const handleRemoveLinkedItem = async (id: string) => {
-    if (!session) return;
+    if (!session || isLocked) return;
     const existing = linkedItems.find((item) => item.id === id || item.edgeId === id);
     if (!existing?.edgeId) {
       setLinkedItems((prev) => prev.filter((i) => i.id !== id));
@@ -2393,49 +2449,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
   ];
 
-  const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
-    const overview = (
-      <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
-        {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
-            sent_back / approved / completed) via the canonical EntityStatusChip. */}
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-c-text-muted">
-            {t('interview.workspace.status')}
-          </span>
-          <EntityStatusChip
-            status={lifecycleStatus}
-            label={t(
-              `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
-              lifecycleConfig.label.en
-            )}
-          />
-          <span className="text-xs text-c-text-muted tabular-nums">
-            {completionPercent}% {t('interview.workspace.complete')}
-          </span>
-        </div>
-        {isReviewerMode && (
-          <Callout variant="warning" title={t('interview.workspace.reviewerMode')} compact>
-            <div className="space-y-1">
-              <p>{t('interview.workspace.youAreReviewingAnswersFor')}</p>
-              {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
-            </div>
-          </Callout>
-        )}
-        {!isReviewerMode && reviewFeedback && (
-          <Callout variant="warning" title={t('interview.workspace.managerFeedback')} compact>
-            <div className="space-y-2">
-              {reviewFeedback.reason && <p>{reviewFeedback.reason}</p>}
-              {reviewFeedback.missingItems.length > 0 && (
-                <ul className="list-disc pl-4 space-y-1">
-                  {reviewFeedback.missingItems.map((item) => (
-                    <li key={item.key}>{item.label}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </Callout>
-        )}
-        {(aiEvaluation || isAiEvaluating || aiEvaluationError) && (
+  const aiReviewPanel = (aiEvaluation || isAiEvaluating || aiEvaluationError || assignmentStatus === 'submitted') && (
           <Callout
             variant={
               aiEvaluation?.overallVerdict === 'ready_for_approval'
@@ -2514,10 +2528,41 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 )}
               </div>
             ) : (
-              <p>{aiEvaluationError}</p>
+              <p>{aiEvaluationError || t('interview.workspace.aiReviewMissing')}</p>
             )}
           </Callout>
+        );
+
+  const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
+    const overview = (
+      <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
+        {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
+            sent_back / approved / completed) via the canonical EntityStatusChip. */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-c-text-muted">
+            {t('interview.workspace.status')}
+          </span>
+          <EntityStatusChip
+            status={lifecycleStatus}
+            label={t(
+              `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
+              lifecycleConfig.label.en
+            )}
+          />
+          <span className="text-xs text-c-text-muted tabular-nums">
+            {completionPercent}% {t('interview.workspace.complete')}
+          </span>
+        </div>
+        {isReviewerMode && (
+          <Callout variant="warning" title={t('interview.workspace.reviewerMode')} compact>
+            <div className="space-y-1">
+              <p>{t('interview.workspace.youAreReviewingAnswersFor')}</p>
+              {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
+            </div>
+          </Callout>
         )}
+        {managerFeedback}
+        {aiReviewPanel}
         {showSendBackForm && isReviewerMode && (
           <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
@@ -3509,6 +3554,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             </section>
           )}
 
+          {managerFeedback}
+          {aiReviewPanel}
           <main className="min-h-0 flex-1">
             {totalCount > 0 ? (
               <InterviewSingleQuestionRuntime

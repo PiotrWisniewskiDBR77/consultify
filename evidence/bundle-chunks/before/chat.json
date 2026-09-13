@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-09-12T09:10:28.413Z",
+  "name": "Chat",
+  "phase": "before",
+  "url": "/chat",
+  "timing": {
+    "firstChangedMs": 808,
+    "stableMs": 2014
+  },
+  "readyFromTriggerMs": 2191,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 4190,
+  "totalCaptureMs": 4257,
+  "scriptBytes": {
+    "requestCount": 0,
+    "decodedBodyBytes": 0,
+    "encodedBodyBytes": 0,
+    "transferBytes": 0,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 4,
+  "apiRequests": [
+    "GET /api/cloud/providers",
+    "GET /api/conversations?",
+    "GET /api/chat-projects",
+    "GET /api/ai/agent-audit/agents"
+  ],
+  "scriptRequests": [],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nAI Chat\nData\nModel\n1\nLocal Reviewer\nLR\nSkip to chat input\nHello, Local.\nOUTPUT\nAuto\nDocuments\nTables\nPresentations\nDaily brief\nQuick savings\nProduct idea\nPlan review\nMarket analysis\nFinancial analysis\nClassic consulting\nDigital transformation\n\nConsultify®\n\nDBR77 INDUSTRIAL INTELLIGENCE\n\nCHAT"
+}

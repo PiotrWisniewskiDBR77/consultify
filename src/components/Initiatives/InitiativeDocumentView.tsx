@@ -1,3 +1,9 @@
+import { canonicalInitiativeSections } from './canonicalInitiativeSections';
+import type { DefinitionCardDraft } from './DefinitionCardContent';
+import { readInitiativeCardDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
+import { enumLabel } from '@/utils/enumLabel';
+import { readDefinitionApproval } from '@/services/initiatives-execution/definitionApprovalApi';
+import { DefinitionApprovalContent } from './DefinitionApprovalContent';
 /**
  * InitiativeDocumentView - Dynamic Section Renderer
  *
@@ -213,6 +219,7 @@ import {
 import {
   resolveInitiativeDocumentRecord as resolveInitiativeDocumentSource,
   saveRuntimeOnlyInitiativeDocumentMetadata,
+  toInitiativeDocumentFromRegistration,
 } from './initiativeDocumentSource';
 import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import { runOriginAwareInitiativeSubresource } from './initiativeOriginSubresources';
@@ -253,18 +260,20 @@ import {
 } from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
-import type {
-  Decision,
-  GateReadinessCheck,
-  GateRoleAssignment,
-  HistoryEvent,
-  PendingApproval,
-  RaidItem,
-  SectionTypeInfo,
-  StatusHistoryEntry,
-  TaskItem,
-  UserInfo,
-  Watcher,
+import { TasksMilestonesSection } from './sections/TasksMilestonesSection';
+import {
+  type Decision,
+  type GateReadinessCheck,
+  type GateRoleAssignment,
+  type HistoryEvent,
+  isInitiativeTimelineLocked,
+  type PendingApproval,
+  type RaidItem,
+  type SectionTypeInfo,
+  type StatusHistoryEntry,
+  type TaskItem,
+  type UserInfo,
+  type Watcher,
 } from './sections/types';
 import { SuggestedChangesPanel } from './Wizard/SuggestedChangesPanel';
 
@@ -391,11 +400,33 @@ export function getInitiativePersistedSectionKey(
  */
 type SectionAiContract = { ai: true } | { none: true; reason: string };
 
+const NATIVE_MILESTONES_SECTION_TYPE: SectionTypeInfo = {
+  id: 'milestones',
+  key: 'milestones',
+  name: 'Milestones',
+  namePl: 'Kamienie milowe',
+  description: null,
+  descriptionPl: null,
+  category: 'content',
+  columnPosition: 'left',
+  defaultOrder: 0,
+  icon: null,
+  iconColor: null,
+  iconBg: null,
+  componentKey: 'TasksMilestonesSection',
+  isSystem: true,
+  isActive: true,
+};
+
 const SECTION_AI_CONTRACT: Record<string, SectionAiContract> = {
   // ── Kontrakt realny (13) — sekcje z generatorem w runSectionAi ─────────────
   'initiative-definition': { ai: true }, // Overview + Problem Definition (scope card)
   'target-state-scope': { ai: true }, // Target State & Success + Scope & Kill Criteria
   tasks: { ai: true }, // Tasks & Milestones
+  milestones: {
+    none: true,
+    reason: 'kamienie milowe pochodzą z rejestru milestone, bez generatora',
+  },
   decisions: { ai: true }, // Decisions
   'risk-raid': { ai: true }, // RAID Log
   gates: { ai: true }, // Gates (readiness)
@@ -573,6 +604,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Core state
   const [initiative, setInitiative] = useState<any | null>(null);
+  const [definitionApprovalV2, setDefinitionApprovalV2] = useState(false);
   // A20: status widziany przez lokalny fallback zdolnosci, gdy gate-readiness
   // zwraca 404 (patrz `gateReadinessFallback.ts`). Ref, nie zmienna z domkniecia
   // — pobranie startuje zanim rekord dojedzie.
@@ -789,7 +821,27 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [densityMode, setDensityMode]);
 
-  const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
+  const [activeNSection, setActiveNSection] = useState<string>(() => readInitiativeDeepLinkId() === initiativeId ? readInitiativeCardDeepLink(window.location.search).cardKey || 'initiative-definition' : 'initiative-definition');
+  const canonicalDraftStore = useRef<Record<string, Record<string, DefinitionCardDraft>>>({});
+  const [canonicalDraftDirty, setCanonicalDraftDirty] = useState(false);
+  const updateCanonicalDraftState = useCallback(() => setCanonicalDraftDirty(Object.keys(canonicalDraftStore.current[JSON.stringify([initiativeId, currentUser?.id])] || {}).length > 0), [initiativeId, currentUser?.id]);
+  const [canonicalFinding, setCanonicalFinding] = useState<{ cardKey: string; field?: string; requestId: number }>();
+  const [navigationInitiativeId, setNavigationInitiativeId] = useState(initiativeId);
+  // Reset record-local navigation before effects can serialize the previous card into the new URL.
+  // Keep the actor/initiative-keyed draft store intact when switching between open records.
+  if (navigationInitiativeId !== initiativeId) {
+    setNavigationInitiativeId(initiativeId);
+    setActiveNSection(readInitiativeDeepLinkId() === initiativeId
+      ? readInitiativeCardDeepLink(window.location.search).cardKey || 'initiative-definition'
+      : 'initiative-definition');
+    setCanonicalFinding(undefined);
+    setCanonicalDraftDirty(Object.keys(canonicalDraftStore.current[JSON.stringify([initiativeId, currentUser?.id])] || {}).length > 0);
+  }
+
+  const navigateCanonicalFinding = useCallback((target: { cardKey: string; field?: string; requestId: number }) => {
+    setCanonicalFinding(target);
+    setActiveNSection(target.cardKey);
+  }, []);
   const [wholeCardAiBusy, setWholeCardAiBusy] = useState(false);
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
@@ -1455,7 +1507,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   ) as InitiativeStatus;
   initiativeStatusRef.current = status;
   const statusMeta = getStatusMeta(status);
-  const statusPillLabel = getLocalizedStatusLabel(status, t);
+  const statusPillLabel = definitionApprovalV2 && initiative?.documentOrigin === 'initiatives-runtime-v1'
+    ? enumLabel('initiativeLifecycle', String(initiative.lifecycle || 'UNKNOWN'), t)
+    : getLocalizedStatusLabel(status, t);
   const statusPillTone = INITIATIVE_STATUS_TONE[status];
   // Status actions are driven by backend `gate-readiness-check` (source of truth).
   //
@@ -1500,6 +1554,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }, [gateReadiness]);
   const currentModule = getModuleFromStatus(status);
   const moduleConfig = MODULE_CONFIG[currentModule];
+  const phaseDisplayLabel = definitionApprovalV2 && ['REGISTERED_DRAFT', 'DEFINED', 'ANALYZING'].includes(initiative?.lifecycle)
+    ? (isPolish ? 'Przygotowanie' : 'Preparation')
+    : (isPolish ? moduleConfig.labelPl : moduleConfig.label);
+  const canonicalNextGate = definitionApprovalV2 ? initiative?.gateName : null;
 
   const topBarCaps = gateReadiness?.capabilities?.topBar;
   // §4.4 — tryb Podgląd zdejmuje edytowalność WŁAŚCIWOŚCI tak samo jak zdejmuje
@@ -2420,11 +2478,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               : [{ id: 'ts-0', text: tsDesc, done: false }]
           );
         }
-        const sc = td.successCriteria || [];
+        const sc = data.successCriteria || data.success_criteria || td.successCriteria || [];
         setSuccessCriteriaItems(
           sc.map((t: string, i: number) => ({ id: `sc-${i}`, text: t, done: false }))
         );
-        const dl = td.deliverables || data.deliverables || [];
+        const dl = data.deliverables || td.deliverables || [];
         // Done flags persist as an index-aligned boolean[] alongside the texts.
         const dlDone = Array.isArray(data.deliverablesDone)
           ? data.deliverablesDone
@@ -2443,8 +2501,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // Sync scope & boundaries fields
       const scopeObj = data.scope || {};
       if (typeof scopeObj === 'object' && scopeObj !== null) {
-        setInScopeItems(normalizeStringList((scopeObj as any).inScope));
-        setOutScopeItems(normalizeStringList((scopeObj as any).outScope));
+        setInScopeItems(normalizeStringList(data.scopeIn || data.scope_in || (scopeObj as any).inScope));
+        setOutScopeItems(normalizeStringList(data.scopeOut || data.scope_out || (scopeObj as any).outScope));
       } else {
         setInScopeItems([]);
         setOutScopeItems([]);
@@ -2480,9 +2538,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             const serverCost = String(pd.costOfInaction || '').trim();
             const serverMarket = String(data.marketContext || data.market_context || '').trim();
             const serverInScopeRaw =
-              typeof scopeObj === 'object' ? (scopeObj as any).inScope || [] : [];
+              data.scopeIn || data.scope_in || (typeof scopeObj === 'object' ? (scopeObj as any).inScope || [] : []);
             const serverOutScopeRaw =
-              typeof scopeObj === 'object' ? (scopeObj as any).outScope || [] : [];
+              data.scopeOut || data.scope_out || (typeof scopeObj === 'object' ? (scopeObj as any).outScope || [] : []);
             const serverKillRaw =
               data.killCriteria ||
               data.kill_criteria ||
@@ -3056,9 +3114,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     isPolish,
   ]);
 
-  // Persist local draft continuously so refresh won't lose edits (even before autosave).
+  // Persist only after hydration; initial empty state must not erase its own backup.
   useEffect(() => {
-    if (!initiativeId) return;
+    if (!initiativeId || isLoading) return;
     try {
       const hasAny =
         !!symptomDraft.trim() ||
@@ -3089,6 +3147,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // ignore localStorage errors (private mode / quota)
     }
   }, [
+    isLoading,
     initiativeId,
     initiativeDefinitionDraftStorageKey,
     symptomDraft,
@@ -3192,6 +3251,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   const handleStatusAction = async (action: StatusAction) => {
+    if (initiative?.documentOrigin === 'initiatives-runtime-v1' && definitionApprovalV2) {
+      setActiveNSection('gates');
+      return;
+    }
     // Warn if this transition moves the initiative to a different module
     const targetStatus = action.targetStatus as InitiativeStatus;
 
@@ -3326,6 +3389,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Commit a status transition (shared by the normal path and the gate-AI
   // override-confirm path). Pass overrideReason to bypass an AI soft-block.
   const commitStatusTransition = async (targetStatus: string, overrideReason?: string) => {
+    if (initiative?.documentOrigin === 'initiatives-runtime-v1' && definitionApprovalV2) {
+      setActiveNSection('gates');
+      return;
+    }
     const truth = await updateInitiativeStatusWriteTruth(
       initiativeId,
       targetStatus,
@@ -3396,12 +3463,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // (`runtimeOnlyEditBlockedMessage` → NModeHeader saveState="error").
   const handleSaveRuntimeOnlyMetadata = async (silent: boolean) => {
     const normalizedTitle = String(titleDraft || '').trim();
-    const savedTitle = String(initiative?.title || initiative?.name || '').trim();
+    const savedTitle = String(initiative?.name || initiative?.title || '').trim();
     const titleChanged = canEditCards && !!normalizedTitle && normalizedTitle !== savedTitle;
-    const summaryChanged = summary !== (initiative?.summary || '');
-    const descriptionChanged = description !== (initiative?.description || '');
+    const summaryChanged = canEditCards && summary !== (initiative?.summary || initiative?.description || '');
+    const descriptionChanged = canEditCards && description !== (initiative?.description || '');
     const ownerChanged =
-      canEditOwner && ownerId !== (initiative?.ownerId || initiative?.owner_id || '');
+      canEditOwner && !!ownerId.trim() && ownerId !== (initiative?.ownerId || initiative?.owner_id || '');
 
     if (!titleChanged && !summaryChanged && !descriptionChanged && !ownerChanged) {
       // Nic do zapisania kanonicznym pisarzem — jeśli coś innego jest
@@ -3455,10 +3522,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   };
 
   const handleSave = async (silent = false) => {
+    if (isLoading) return;
     if (isRuntimeOnlyRecord) {
       await handleSaveRuntimeOnlyMetadata(silent);
       return;
     }
+    if (!canEditCards && !canEditPriority && !canEditOwner && !canEditTargetDate) return;
     setIsMutating(true);
     try {
       // Build structured problem definition as JSON for the problemStatement field
@@ -3489,7 +3558,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         .toLowerCase();
       const normalizedTitle = String(titleDraft || '').trim();
 
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload: Record<string, unknown> = canEditCards ? {
         // Core narrative
         summary,
         description, // backend alias → hypothesis
@@ -3510,12 +3579,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         targetState: {
           description: targetDescriptionDraft || undefined,
         },
-      };
+      } : {};
 
       // Title is edited in the header and saved as `title` (DB column may be title or name).
       // Guarded by canEditCards to avoid editing in read-only contexts.
       if (canEditCards && normalizedTitle) {
-        const savedTitle = String(initiative?.title || initiative?.name || '').trim();
+        const savedTitle = String(initiative?.name || initiative?.title || '').trim();
         if (normalizedTitle !== savedTitle) {
           updatePayload.title = normalizedTitle;
         }
@@ -3523,57 +3592,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Top-bar fields are permissioned by backend capabilities (gateReadiness).
       // Do NOT send fields the current user cannot edit, otherwise backend rejects the save.
-      if (canEditPriority) {
-        updatePayload.priority = normalizedPriority || undefined;
+      if (canEditPriority && unsavedFieldFlags.priority) {
+        updatePayload.priority = normalizedPriority;
       }
       if (canEditOwner) {
-        updatePayload.ownerId = ownerId || undefined;
-        updatePayload.sponsorId = sponsorId || undefined;
+        if (unsavedFieldFlags.owner) updatePayload.ownerId = ownerId || null;
+        if (unsavedFieldFlags.sponsor) updatePayload.sponsorId = sponsorId || null;
       }
       if (canEditTargetDate) {
-        updatePayload.plannedStartDate = startDate || undefined;
-        updatePayload.plannedEndDate = targetDate || undefined;
+        if (unsavedFieldFlags.startDate) updatePayload.plannedStartDate = startDate || null;
+        if (unsavedFieldFlags.targetDate) updatePayload.plannedEndDate = targetDate || null;
       }
 
+      if (Object.keys(updatePayload).length === 0) return;
+      let submittedDefinitionBackup: string | null = null;
+      try { submittedDefinitionBackup = localStorage.getItem(initiativeDefinitionDraftStorageKey); } catch { /* storage unavailable */ }
       const truth = await saveInitiativeWriteTruth(initiativeId, updatePayload);
 
-      // Keep local baseline in sync so dirty-check resets immediately.
+      // Advance only fields actually sent. A top-bar-only save must not absorb
+      // unsent card edits after a capability change.
       setInitiative((prev: any) => ({
         ...prev,
         ...(truth.initiative || {}),
-        title: canEditCards && normalizedTitle ? normalizedTitle : prev?.title,
-        name: canEditCards && normalizedTitle ? normalizedTitle : prev?.name,
-        summary,
-        description,
-        priority,
-        ownerId,
-        owner_id: ownerId,
-        sponsorId,
-        sponsor_id: sponsorId,
-        plannedStartDate: startDate || null,
-        planned_start_date: startDate || null,
-        plannedEndDate: targetDate || null,
-        planned_end_date: targetDate || null,
-        targetDate: targetDate || null,
-        problemStatement: problemDefinitionPayload || null,
-        problem_statement: problemDefinitionPayload || null,
-        marketContext: marketContextDraft || null,
-        market_context: marketContextDraft || null,
-        estimatedBudget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : null,
-        estimated_budget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : null,
-        resourceTools,
-        resource_tools: resourceTools,
-        deliverables: normalizedDeliverables,
-        deliverablesDone: normalizedDeliverablesDone,
-        deliverables_done: normalizedDeliverablesDone,
-        successCriteria: normalizedSuccessCriteria,
-        scopeIn: normalizedScopeIn,
-        scopeOut: normalizedScopeOut,
-        killCriteria: normalizedKillCriteria,
-        kill_criteria: normalizedKillCriteria,
-        tags,
-        targetState: { description: targetDescriptionDraft || '' },
-        target_state: { description: targetDescriptionDraft || '' },
+        ...updatePayload,
+        ...(typeof updatePayload.title === 'string' ? { name: updatePayload.title } : {}),
+        ...(Object.hasOwn(updatePayload, 'ownerId') ? { owner_id: updatePayload.ownerId } : {}),
+        ...(Object.hasOwn(updatePayload, 'sponsorId') ? { sponsor_id: updatePayload.sponsorId } : {}),
+        ...(Object.hasOwn(updatePayload, 'plannedStartDate') ? { planned_start_date: updatePayload.plannedStartDate } : {}),
+        ...(Object.hasOwn(updatePayload, 'plannedEndDate') ? { planned_end_date: updatePayload.plannedEndDate, targetDate: updatePayload.plannedEndDate } : {}),
       }));
       setGateReadiness(truth.gateReadiness);
       setStatusHistory(truth.statusHistory as any);
@@ -3581,7 +3627,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Clear local draft backup after a successful save.
       try {
-        localStorage.removeItem(initiativeDefinitionDraftStorageKey);
+        if (canEditCards && localStorage.getItem(initiativeDefinitionDraftStorageKey) === submittedDefinitionBackup) {
+          localStorage.removeItem(initiativeDefinitionDraftStorageKey);
+        }
       } catch {
         // ignore
       }
@@ -3605,11 +3653,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // runtime-only NIE MA dziś żadnego pisarza. Suma flag = stare `hasUnsavedChanges`,
   // więc zachowanie dla zwykłych inicjatyw (tabela `initiatives`) jest identyczne.
   const unsavedFieldFlags = useMemo(() => {
-    const savedProblemRaw = initiative?.problemStatement || initiative?.problem_statement || '';
+    const savedProblemRaw = initiative?.problemDefinition || initiative?.problem_definition || initiative?.problemStatement || initiative?.problem_statement || '';
     let savedSymptom = '';
     let savedRootCause = '';
     let savedCost = '';
-    if (savedProblemRaw && typeof savedProblemRaw === 'string') {
+    if (savedProblemRaw && typeof savedProblemRaw === 'object') {
+      savedSymptom = savedProblemRaw.symptom || '';
+      savedRootCause = savedProblemRaw.rootCause || '';
+      savedCost = savedProblemRaw.costOfInaction || '';
+    } else if (savedProblemRaw && typeof savedProblemRaw === 'string') {
       try {
         const parsed = JSON.parse(savedProblemRaw);
         savedSymptom = parsed?.symptom || '';
@@ -3643,7 +3695,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ? initiative.resource_tools
         : Array.isArray(initiative?.tools)
           ? initiative.tools
-          : [];
+          : Array.isArray(initiative?.toolsNeeded) ? initiative.toolsNeeded : [];
 
     const savedDeliverables = Array.isArray(initiative?.deliverables)
       ? initiative.deliverables
@@ -3700,14 +3752,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // title/problem/proposedOutcome) — patrz saveRuntimeOnlyInitiativeDocumentMetadata.
       title:
         String(titleDraft || '').trim() !==
-        String(initiative?.title || initiative?.name || '').trim(),
-      summary: summary !== (initiative?.summary || ''),
+        String(initiative?.name || initiative?.title || '').trim(),
+      summary: summary !== (initiative?.summary || initiative?.description || ''),
       description: description !== (initiative?.description || ''),
       // Reszta — BEZ pisarza na rekordzie runtime-only.
       priority: priority !== (initiative?.priority || 'medium').toLowerCase(),
       owner: ownerId !== (initiative?.ownerId || initiative?.owner_id || ''),
       sponsor: sponsorId !== (initiative?.sponsorId || initiative?.sponsor_id || ''),
-      targetDate: targetDate !== (initiative?.plannedEndDate || initiative?.targetDate || ''),
+      targetDate: targetDate !== (initiative?.plannedEndDate || initiative?.planned_end_date || initiative?.targetDate || ''),
       startDate:
         (startDate || '') !==
         (initiative?.plannedStartDate || initiative?.planned_start_date || ''),
@@ -3717,14 +3769,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       marketContext:
         marketContextDraft !== (initiative?.marketContext || initiative?.market_context || ''),
       budget: budgetDraft !== savedBudget,
-      resourceTools: JSON.stringify(resourceTools) !== JSON.stringify(savedTools),
+      resourceTools: JSON.stringify(resourceTools) !== JSON.stringify(savedTools.map((value: unknown) => String(value))),
       tags: JSON.stringify(tags) !== JSON.stringify(initiative?.tags || []),
-      deliverables: JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables),
+      deliverables: JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables.map((value: unknown) => String(value || '').trim()).filter(Boolean)),
       successCriteria:
-        JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria),
-      scopeIn: JSON.stringify(inScopeItems) !== JSON.stringify(savedScopeIn),
-      scopeOut: JSON.stringify(outScopeItems) !== JSON.stringify(savedScopeOut),
-      killCriteria: JSON.stringify(killCriteriaItems) !== JSON.stringify(savedKillCriteria),
+        JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria.map((value: unknown) => String(value || '').trim()).filter(Boolean)),
+      scopeIn: JSON.stringify(inScopeItems) !== JSON.stringify(normalizeStringList(savedScopeIn)),
+      scopeOut: JSON.stringify(outScopeItems) !== JSON.stringify(normalizeStringList(savedScopeOut)),
+      killCriteria: JSON.stringify(killCriteriaItems) !== JSON.stringify(normalizeStringList(savedKillCriteria)),
       targetDescription: targetDescriptionDraft !== savedTargetDescription,
     };
   }, [
@@ -3763,10 +3815,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // (initiativeDocumentSource.ts) jako `documentOrigin`. Na takim rekordzie
   // `PUT /api/initiatives/:id` zawsze zwraca 404 — patrz handleSave niżej.
   const isRuntimeOnlyRecord = initiative?.documentOrigin === 'initiatives-runtime-v1';
+  useEffect(() => {
+    let active = true;
+    setDefinitionApprovalV2(false);
+    if (isRuntimeOnlyRecord) void readDefinitionApproval(initiativeId).then(read => {
+      if (active) setDefinitionApprovalV2(read.enabled);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [initiativeId, isRuntimeOnlyRecord]);
+  const refreshDefinitionDocument = async () => {
+    const record = await Api.get(`/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}`);
+    setInitiative((prev: any) => ({...prev, ...toInitiativeDocumentFromRegistration(record)}));
+    bumpInitiativeRefresh();
+  };
 
   // Pola, które MAJĄ dziś kanoniczny pisarz na rekordzie runtime-only.
   const hasRuntimeOnlySupportedChanges =
-    unsavedFieldFlags.title || unsavedFieldFlags.summary || unsavedFieldFlags.description;
+    (canEditCards && (unsavedFieldFlags.title || unsavedFieldFlags.summary || unsavedFieldFlags.description)) ||
+    (canEditOwner && !!ownerId.trim() && unsavedFieldFlags.owner);
 
   // Pola, które NIE MAJĄ dziś żadnego pisarza na rekordzie runtime-only —
   // użytkownik może je edytować w UI (zero nowych kontrolek/blokad wejścia),
@@ -3774,9 +3840,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // zamiast ciszy + pętli 404.
   const hasRuntimeOnlyUnsupportedChanges = useMemo(() => {
     if (!isRuntimeOnlyRecord) return false;
-    const { title, summary, description, ...rest } = unsavedFieldFlags;
-    return Object.values(rest).some(Boolean);
-  }, [isRuntimeOnlyRecord, unsavedFieldFlags]);
+    const { title, summary, description, owner, ...rest } = unsavedFieldFlags;
+    // Canonical metadata requires an eligible owner; clearing it has no legal writer.
+    return (owner && !ownerId.trim()) || Object.values(rest).some(Boolean);
+  }, [isRuntimeOnlyRecord, unsavedFieldFlags, ownerId]);
 
   const runtimeOnlyEditBlockedMessage =
     isRuntimeOnlyRecord && hasRuntimeOnlyUnsupportedChanges
@@ -3790,20 +3857,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // czego pętlić. To jest naprawa BLOKERA N1 (PUT 404 × 6 przy otwarciu + 9/15s).
   const hasSavableChanges = isRuntimeOnlyRecord
     ? hasRuntimeOnlySupportedChanges
-    : hasUnsavedChanges;
+    : ((canEditCards && Object.entries(unsavedFieldFlags).some(([key, dirty]) => !['priority', 'owner', 'sponsor', 'targetDate', 'startDate'].includes(key) && dirty)) ||
+      (canEditPriority && unsavedFieldFlags.priority) ||
+      (canEditOwner && (unsavedFieldFlags.owner || unsavedFieldFlags.sponsor)) ||
+      (canEditTargetDate && (unsavedFieldFlags.targetDate || unsavedFieldFlags.startDate)));
 
+  const latestSaveRef = useRef(handleSave);
+  latestSaveRef.current = handleSave;
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!hasSavableChanges || isMutating || !initiativeId) return;
+    if (isLoading || !hasSavableChanges || isMutating || !initiativeId) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
-      handleSave(true);
+      void latestSaveRef.current(true);
     }, 1500);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSavableChanges, isMutating, initiativeId]);
+  }, [isLoading, hasSavableChanges, isMutating, initiativeId, canEditCards, canEditPriority, canEditOwner, canEditTargetDate, unsavedFieldFlags]);
 
   const handleCreateTask = async () => {
     if (!canEditCards) {
@@ -5099,7 +5171,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       id: initiativeId,
       title: initiative?.name || '',
       status,
-      phase: isPolish ? moduleConfig.labelPl : moduleConfig.label,
+      phase: phaseDisplayLabel,
       summary,
       tasksCount: tasks.length,
       tasksDone,
@@ -5299,7 +5371,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setTimelineMilestones,
       timelinePhases,
       setTimelinePhases,
-      timelineLocked: ['SCHEDULED', 'IN_EXECUTION', 'IN_EXECUTION', 'DONE', 'CLOSED'].includes(status),
+      timelineLocked: isInitiativeTimelineLocked(
+        status,
+        initiative?.documentOrigin === 'initiatives-runtime-v1' ? initiative?.lifecycle : null
+      ),
       baselineVersion: initiative?.baselineVersion ?? null,
       estimatedDurationMonths,
       setEstimatedDurationMonths,
@@ -5670,6 +5745,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
+        id: 'milestones',
+        icon: Flag,
+        label: { en: 'Milestones', pl: 'Kamienie milowe' },
+        component: null,
+      },
+      {
         id: 'decisions',
         icon: Scale,
         label: { en: 'Decisions', pl: 'Decyzje' },
@@ -5866,6 +5947,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // 0 — Zakres i plan / Scope & Plan
       'initiative-definition': 0,
       tasks: 0,
+      milestones: 0,
       timeline: 0,
       'deliverables-milestones': 0,
       dependencies: 0,
@@ -5918,12 +6000,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       ),
     }));
 
+    const availableContractSections = wybierzDostepneSekcjeBoarduInicjatywy(
+      contractSections,
+      enabledNModeSectionIds,
+      initiativeSectionsCompleteEnabled
+    );
+    // The legacy Initiative board contract keeps right-column cards out of its
+    // left navigation. Runtime-v1 projects the canonical 26-card document,
+    // where Milestones and Timeline are native business cards. Reuse their
+    // existing renderers after the legacy filter instead of manufacturing
+    // placeholder cards in the canonical projection.
+    const runtimeNativeSections = sectionPresentation.filter(
+      (section) => section.id === 'milestones' || section.id === 'timeline'
+    );
     return withGroup(
-      wybierzDostepneSekcjeBoarduInicjatywy(
-        contractSections,
-        enabledNModeSectionIds,
-        initiativeSectionsCompleteEnabled
-      )
+      isRuntimeOnlyRecord
+        ? [
+            ...availableContractSections,
+            ...runtimeNativeSections.filter(
+              (section) =>
+                !availableContractSections.some((candidate) => candidate.id === section.id)
+            ),
+          ]
+        : availableContractSections
     );
   }, [
     isPolish,
@@ -5942,6 +6041,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     enabledNModeSectionIds,
     initiativeSectionsCompleteEnabled,
     pendingSuggestedChangesCount,
+    isRuntimeOnlyRecord,
   ]);
 
   // ==========================================
@@ -6022,7 +6122,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // stoją na neutralnej pigułce (kontrast AA), semantykę niesie kropka.
     const currentStatusMeta = getStatusMeta(status as InitiativeStatus);
     const currentStatusDot = currentStatusMeta?.dotColor || 'bg-c-border-strong';
-    const currentStatusLabel = getLocalizedStatusLabel(status as InitiativeStatus, t);
+    const currentStatusLabel = statusPillLabel;
 
     // Helper: get metadata for current priority
     const priorityMeta: Record<
@@ -6111,7 +6211,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => {
           // `readMode` wchodzi tu jako pełnoprawny warunek — w Podglądzie select
           // NIE JEST renderowany (nie „disabled", tylko go nie ma).
-          const canChangeStatus = stripStatusActions.length > 0 && !isMutating && !readMode;
+          const canChangeStatus = !definitionApprovalV2 && stripStatusActions.length > 0 && !isMutating && !readMode;
           // DEC-104 (corrected in duty 196, 2026-08-31; the original claim was
           // disproved by acceptance 172): `stripStatusActions` is empty when
           // `gateReadiness.availableTransitions` offers no executable transition
@@ -6169,7 +6269,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'phase',
         label: { en: 'Phase', pl: 'Faza' },
         type: 'custom' as const,
-        value: isPolish ? moduleConfig.labelPl : moduleConfig.label,
+        value: phaseDisplayLabel,
         onChange: () => {},
         readOnly: true,
         // `phaseOptions` zostaje policzone wyżej wyłącznie jako źródło etykiet;
@@ -6179,7 +6279,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <span className={propPill}>
             {propDot(moduleConfig.color)}
-            <span className="truncate">{isPolish ? moduleConfig.labelPl : moduleConfig.label}</span>
+            <span className="truncate">{phaseDisplayLabel}</span>
           </span>
         ),
       },
@@ -6187,7 +6287,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'gate',
         label: { en: 'Next Gate', pl: 'Następna brama' },
         type: 'custom' as const,
-        value: isPolish ? gateLabel.pl : gateLabel.en,
+        value: canonicalNextGate || (isPolish ? gateLabel.pl : gateLabel.en),
         onChange: () => {},
         readOnly: true,
         // Jak wyżej (faza): select był atrapą (`onChange: () => {}`) — pole jest
@@ -6195,7 +6295,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <span className={propPill}>
             {propDot(gateVisual.dot)}
-            <span className="truncate">{isPolish ? gateLabel.pl : gateLabel.en}</span>
+            <span className="truncate">{canonicalNextGate || (isPolish ? gateLabel.pl : gateLabel.en)}</span>
           </span>
         ),
       },
@@ -6395,6 +6495,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     moduleConfig,
     statusActions,
     stripStatusActions,
+    statusPillLabel,
+    definitionApprovalV2,
+    phaseDisplayLabel,
+    canonicalNextGate,
     isMutating,
     handleStatusAction,
     setPriority,
@@ -7787,13 +7891,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'tasks': {
-          const TasksComp = SECTION_REGISTRY['tasks'];
           const tasksST = [...leftSections, ...rightSections].find((s) => s.key === 'tasks');
           component = (
             <div className="space-y-6">
               {/* Tasks section */}
-              {tasksST && TasksComp && (
-                <TasksComp sectionType={tasksST} expanded={true} onToggle={() => {}} />
+              {tasksST && (
+                <TasksMilestonesSection
+                  sectionType={tasksST}
+                  expanded={true}
+                  onToggle={() => {}}
+                  presentation={isRuntimeOnlyRecord ? 'tasks' : 'combined'}
+                  readonly={!canEditCards}
+                />
               )}
               {/* Effort Profile */}
               {initiative?.effortProfile && (
@@ -7823,6 +7932,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               )}
             </div>
+          );
+          break;
+        }
+
+        case 'milestones': {
+          const tasksST = [...leftSections, ...rightSections].find((s) => s.key === 'tasks');
+          component = (
+            <TasksMilestonesSection
+              sectionType={tasksST || NATIVE_MILESTONES_SECTION_TYPE}
+              expanded={true}
+              onToggle={() => {}}
+              presentation="milestones"
+              readonly={!canEditCards}
+            />
           );
           break;
         }
@@ -8136,7 +8259,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {/* Full lifecycle gate workflow table (13 stages) */}
-              <InitiativeGatesWorkflowTable />
+              {isRuntimeOnlyRecord && <DefinitionApprovalContent initiativeId={initiativeId} draftStore={canonicalDraftStore} onDraftStateChange={updateCanonicalDraftState} onFindingNavigate={navigateCanonicalFinding} readOnly={readMode} onChanged={() => void refreshDefinitionDocument()} />}
+              {!definitionApprovalV2 && <InitiativeGatesWorkflowTable />}
             </div>
           );
           break;
@@ -9381,7 +9505,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // długiem kontraktu (renderuje się dalej, na końcu listy — nie znika).
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    const poza = sekcjeBoarduPozaKontraktem(nModeSectionsWithContent.map((s) => s.id));
+    const poza = sekcjeBoarduPozaKontraktem(
+      nModeSectionsWithContent.filter((section) => section.id !== 'milestones').map((s) => s.id)
+    );
     if (poza.length > 0) {
       // eslint-disable-next-line no-console
       console.warn(
@@ -9402,15 +9528,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // i w teście kompletności). Wyprowadzenie, nie ziarno stanu: ziarno
         // przegrywało wyścig z efektem czytającym localStorage.
         if (!true) return nModeSectionsWithContent;
-        const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(
-          nModeSectionsWithContent.map((s) => s.id)
+        // `milestones` is a native owner adapter for the canonical 26-card view,
+        // outside the legacy 24-section board ordering contract.
+        const legacyBoardSections = nModeSectionsWithContent.filter(
+          (section) => section.id !== 'milestones'
         );
+        const nativeMilestonesSection = nModeSectionsWithContent.find(
+          (section) => section.id === 'milestones'
+        );
+        const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(legacyBoardSections.map((s) => s.id));
         const wgId = new Map(nModeSectionsWithContent.map((s) => [s.id, s]));
         const wynik = kolejnosc
           .map((id) => wgId.get(id))
           .filter((s): s is NModeSection => Boolean(s));
-        return wynik.length === nModeSectionsWithContent.length
-          ? wynik
+        return wynik.length === legacyBoardSections.length
+          ? nativeMilestonesSection
+            ? [...wynik, nativeMilestonesSection]
+            : wynik
           : nModeSectionsWithContent;
       }
 
@@ -9434,12 +9568,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     true,
   ]);
 
+  const navigationNModeSections = useMemo(() => isRuntimeOnlyRecord
+    ? canonicalInitiativeSections(orderedNModeSectionsWithContent, cardKey => <DefinitionApprovalContent
+        initiativeId={initiativeId} selectedCardKey={cardKey} draftStore={canonicalDraftStore} onDraftStateChange={updateCanonicalDraftState}
+        initialFinding={canonicalFinding} readOnly={readMode} onChanged={() => void refreshDefinitionDocument()}
+      />, (key, fallback) => String(t(key, fallback)))
+    : orderedNModeSectionsWithContent, [isRuntimeOnlyRecord, orderedNModeSectionsWithContent, initiativeId, canonicalFinding, readMode, t]);
+
   useEffect(() => {
-    if (orderedNModeSectionsWithContent.length === 0) return;
-    if (!orderedNModeSectionsWithContent.some((section) => section.id === activeNSection)) {
-      setActiveNSection(orderedNModeSectionsWithContent[0].id);
+    if (isLoading || !initiative || navigationNModeSections.length === 0) return;
+    if (!navigationNModeSections.some((section) => section.id === activeNSection)) {
+      setActiveNSection(navigationNModeSections[0].id);
     }
-  }, [orderedNModeSectionsWithContent, activeNSection]);
+  }, [navigationNModeSections, activeNSection, isLoading, initiative]);
+
+  useEffect(() => {
+    if (!isRuntimeOnlyRecord || readInitiativeDeepLinkId() !== initiativeId) return;
+    const url = new URL(window.location.href);
+    if (navigationNModeSections.some(section => section.id === activeNSection)) {
+      url.searchParams.set('card', activeNSection);
+      if (canonicalFinding?.cardKey === activeNSection && canonicalFinding.field) url.searchParams.set('finding', `FIELD_REQUIRED:${canonicalFinding.field}`);
+      else url.searchParams.delete('finding');
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+  }, [isRuntimeOnlyRecord, initiativeId, activeNSection, canonicalFinding, navigationNModeSections]);
 
   // ── Smart Export / Present (Phase A3 + E) ──────────────────────────────────
   // Canonical, presentable sections in nav order, EXCLUDING Comments + Activity
@@ -10440,7 +10592,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 życia), więc zgodnie z §6.4 akcja ląduje w „Akcjach" panelu.
                 Dotyczy AKTYWNEJ sekcji, więc etykieta ją nazywa.
                 W Podglądzie ukryta — to sygnał redakcyjny, nie treść. */}
-            {!readMode && activeNSection !== 'activity-log' && activeNSection !== 'comments' ? (
+            {!readMode && !isRuntimeOnlyRecord && activeNSection !== 'activity-log' && activeNSection !== 'comments' ? (
               <button
                 type="button"
                 onClick={() => handleToggleSectionComplete(activeNSection)}
@@ -11172,7 +11324,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 artifactType="initiative"
                 onSave={() => handleSave(false)}
                 saving={isMutating}
-                isDirty={hasUnsavedChanges}
+                isDirty={hasUnsavedChanges || (isRuntimeOnlyRecord && canonicalDraftDirty)}
                 saveState={runtimeOnlyEditBlockedMessage ? 'error' : undefined}
                 saveErrorLabel={runtimeOnlyEditBlockedMessage || undefined}
                 saveErrorTitle={runtimeOnlyEditBlockedMessage || undefined}
@@ -11719,7 +11871,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   artifactType="initiative"
                   onSave={() => handleSave(false)}
                   saving={isMutating}
-                  isDirty={hasUnsavedChanges}
+                  isDirty={hasUnsavedChanges || (isRuntimeOnlyRecord && canonicalDraftDirty)}
                   saveState={runtimeOnlyEditBlockedMessage ? 'error' : undefined}
                   saveErrorLabel={runtimeOnlyEditBlockedMessage || undefined}
                   saveErrorTitle={runtimeOnlyEditBlockedMessage || undefined}
@@ -12103,7 +12255,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <div className="flex min-h-[60vh] items-start">
                         <div className="flex-1 min-w-0 flex gap-0">
                           <NModeLeftNav
-                            sections={orderedNModeSectionsWithContent}
+                            sections={navigationNModeSections}
                             activeSection={activeNSection}
                             onSectionChange={setActiveNSection}
                             onSectionReorder={handleNModeSectionReorder}
@@ -12116,7 +12268,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             style={{ maxWidth: 'var(--ntype-content-document-max-width)' }}
                           >
                             <NModeCanvas
-                              sections={orderedNModeSectionsWithContent}
+                              sections={navigationNModeSections}
                               activeSection={activeNSection}
                             />
                           </div>

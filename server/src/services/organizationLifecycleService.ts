@@ -107,79 +107,51 @@ export interface OrganizationExportResult {
   tables: Record<string, Record<string, unknown>[]>;
   rowCounts: Record<string, number>;
   skipped: Array<{ tabela: string; kolumna: string; reason: string }>;
+  securityManifest: {
+    policyVersion: string;
+    complete: boolean;
+    truncated: boolean;
+    scope: string;
+    tableIdentityVersion: string;
+    includedSchemas: string[];
+    unresolvedTables: Array<{ table: string; reason: string }>;
+    excludedTables: Array<{ table: string; reason: string }>;
+    excludedColumns: Array<{ table: string; classes: string[]; count: number; reason: string }>;
+  };
   totalRows: number;
 }
 
-/** Limit wierszy PER TABELA w jednym eksporcie — ochrona przed nieograniczonym
- *  rozmiarem pliku dla organizacji z bardzo długą historią (np. activity_logs). */
-const MAX_ROWS_PER_TABLE = 20_000;
-
-export async function exportOrganizationData(
-  client: PoolClient,
-  organizationId: string
-): Promise<OrganizationExportResult> {
-  assertNotReservedOrganizationId(organizationId);
-
-  const orgRow = await client.query('SELECT * FROM organizations WHERE id = $1', [
-    organizationId,
-  ]);
-  if (orgRow.rowCount === 0) {
-    throw Object.assign(new Error('Organization not found'), { code: 'ORG_NOT_FOUND' });
-  }
-
-  const kolumny = await discoverOrganizationScopedColumns(client);
-  const tables: Record<string, Record<string, unknown>[]> = {};
-  const rowCounts: Record<string, number> = {};
-  const skipped: Array<{ tabela: string; kolumna: string; reason: string }> = [];
-  let totalRows = 0;
-
-  for (const k of kolumny) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const res = await client.query(
-        `SELECT * FROM ${qi(k.tabela)} WHERE ${qi(k.kolumna)}::text = $1 LIMIT ${MAX_ROWS_PER_TABLE}`,
-        [organizationId]
-      );
-      if (res.rowCount && res.rowCount > 0) {
-        const key = kolumny.filter((x) => x.tabela === k.tabela).length > 1
-          ? `${k.tabela}.${k.kolumna}`
-          : k.tabela;
-        tables[key] = res.rows;
-        rowCounts[key] = res.rowCount;
-        totalRows += res.rowCount;
-      }
-    } catch (err: any) {
-      logger.warn('[OrgLifecycle] Export: skipping table due to read error', {
-        tabela: k.tabela,
-        kolumna: k.kolumna,
-        err: err?.message,
-      });
-      skipped.push({ tabela: k.tabela, kolumna: k.kolumna, reason: err?.message || 'unknown' });
-    }
-  }
-
-  return {
-    organization: orgRow.rows[0] || null,
-    exportedAt: new Date().toISOString(),
-    tables,
-    rowCounts,
-    skipped,
-    totalRows,
-  };
-}
+export { exportOrganizationData } from './organizationExportService.js';
 
 /** Zamienia wynik eksportu na jeden CSV: `table,row_index,data_json`. Format
  *  spłaszczony celowo — tabele mają różne, zmieniające się zestawy kolumn;
  *  JSON per wiersz jest jedynym reprezentowalnym w CSV kształtem bez utraty
  *  danych. Klient może dociąć/rozpakować kolumnę `data_json` narzędziem wg
  *  wyboru (jq, pandas, Excel Power Query). */
+export const ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE = '__consultify_export_manifest_v1';
+
+// Additive metadata record: consumers must exclude this reserved identity from business rows.
+// It preserves the security scope in the downloaded file without inflating totalRows.
 export function organizationExportToCsv(result: OrganizationExportResult): string {
+  if (Object.prototype.hasOwnProperty.call(result.tables, ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE)) {
+    throw new Error('Organization export table collides with reserved CSV manifest identity');
+  }
   const lines = ['table,row_index,data_json'];
   const escapeCsv = (v: string): string => `"${v.replace(/"/g, '""')}"`;
+  lines.push(
+    `${escapeCsv(ORGANIZATION_EXPORT_CSV_MANIFEST_TABLE)},0,${escapeCsv(
+      JSON.stringify({
+        formatVersion: 1,
+        securityManifest: result.securityManifest ?? null,
+        skipped: result.skipped,
+        exportedAt: result.exportedAt,
+        totalRows: result.totalRows,
+        rowCounts: result.rowCounts,
+      })
+    )}`
+  );
   if (result.organization) {
-    lines.push(
-      `${escapeCsv('organizations')},0,${escapeCsv(JSON.stringify(result.organization))}`
-    );
+    lines.push(`${escapeCsv('organizations')},0,${escapeCsv(JSON.stringify(result.organization))}`);
   }
   for (const [table, rows] of Object.entries(result.tables)) {
     rows.forEach((row, idx) => {

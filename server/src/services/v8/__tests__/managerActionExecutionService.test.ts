@@ -247,6 +247,38 @@ describe('managerActionExecutionService', () => {
     }
   );
 
+  it('scope_reduction writes exact old and new forecast end evidence in the same transaction audit', async () => {
+    mockGetManagerProblems.mockResolvedValue([
+      { ...initiativeProblem, actions: [{ id: 'scope_reduction' }] },
+    ]);
+    mockDbAll.mockImplementation((sql: string) => {
+      if (/SELECT forecast_end_date\s+FROM initiatives/i.test(sql)) {
+        return Promise.resolve([{ forecast_end_date: '2026-09-20' }]);
+      }
+      return routeDbAll(sql);
+    });
+
+    await executeManagerProblemAction({
+      organizationId: ORG,
+      userId: UID,
+      laneId: LANE_ID,
+      problemId: initiativeProblem.id,
+      actionId: 'scope_reduction',
+    });
+
+    const auditCall = mockDbRun.mock.calls.find(([sql]) =>
+      /INSERT INTO manager_action_audit_log/i.test(String(sql))
+    );
+    expect(auditCall).toBeTruthy();
+    expect(auditCall?.[1]).toEqual(
+      expect.arrayContaining([
+        'manager_scope_reduction',
+        JSON.stringify({ forecastEndDate: '2026-09-20' }),
+        JSON.stringify({ forecastEndDate: '2026-05-02' }),
+      ])
+    );
+  });
+
   it('executeManagerProblemAction succeeds for decision approve action', async () => {
     mockGetManagerProblems.mockResolvedValue([decisionProblem]);
     const result = await executeManagerProblemAction({

@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { Blob as NodeBlob } from 'node:buffer';
+import { toast } from 'react-hot-toast';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
@@ -21,6 +23,7 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('@/services/api', () => ({
   Api: {
+    exportOrganizationData: vi.fn(),
     getOrganizations: vi.fn(),
     getAccessRequests: vi.fn(),
     getAccessCodes: vi.fn(),
@@ -406,4 +409,187 @@ describe('OrganizationsView honest UI', () => {
     });
     expect(confirmBtn).not.toBeDisabled();
   });
+});
+
+describe('Organization export disclosure through the row action', () => {
+  const fixture = () => ({
+    organization: { id: 'org-1', name: 'Acme' },
+    tables: {},
+    rowCounts: {},
+    totalRows: 0,
+    exportedAt: '2026-09-12T00:00:00Z',
+    skipped: [],
+    securityManifest: {
+      policyVersion: 'tenant-export-contract-v5-20260912',
+      tableIdentityVersion: 'schema-qualified-v1',
+      scope: 'declared',
+      includedSchemas: ['public'],
+      complete: true,
+      truncated: false,
+      unresolvedTables: [],
+      excludedTables: [],
+      excludedColumns: [],
+    },
+  });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(Api.getOrganizations).mockResolvedValue([
+      {
+        id: 'org-1',
+        name: 'Acme',
+        plan: 'pro',
+        status: 'active',
+        user_count: 1,
+        created_at: '2026-01-01',
+      },
+    ]);
+    vi.mocked(Api.getAccessRequests).mockResolvedValue([]);
+    vi.mocked(Api.getAccessCodes).mockResolvedValue([]);
+    vi.stubGlobal(
+      'URL',
+      Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() })
+    );
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+  async function clickExport() {
+    await screen.findByText('Acme');
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+    fireEvent.click(await screen.findByText('Export Data'));
+  }
+  it.each(['complete', 'partial', 'unknown', 'contradictory'] as const)(
+    'downloads original bytes and discloses %s scope',
+    async (state) => {
+      const payload: any = fixture();
+      if (state === 'partial') payload.securityManifest.complete = false;
+      if (state === 'unknown') delete payload.securityManifest;
+      if (state === 'contradictory')
+        payload.securityManifest.unresolvedTables = [{ table: 'missing', reason: 'unknown' }];
+      const blob = new NodeBlob([JSON.stringify(payload, null, 2)]) as unknown as Blob;
+      vi.mocked(Api.exportOrganizationData).mockResolvedValue(blob);
+      render(<OrganizationsView />);
+      await clickExport();
+      const notice = await screen.findByRole('status');
+      expect(notice.textContent).toContain(
+        state === 'complete'
+          ? 'complete under its declared scope'
+          : state === 'unknown'
+            ? 'Completeness could not be verified'
+            : 'Partial export downloaded'
+      );
+      expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
+      expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
+      if (state !== 'complete') expect(toast.success).not.toHaveBeenCalled();
+    }
+  );
+  it.each([
+    'missing-id',
+    'invalid-date',
+    'broken-table',
+    'wrong-count',
+    'wrong-total',
+    'unknown-policy',
+  ] as const)('does not claim complete for %s', async (caseName) => {
+    const payload: any = fixture();
+    if (caseName === 'missing-id') delete payload.organization.id;
+    if (caseName === 'invalid-date') payload.exportedAt = 'not a date';
+    if (caseName === 'broken-table') {
+      payload.tables.projects = 'broken';
+      payload.rowCounts.projects = -1;
+    }
+    if (caseName === 'wrong-count') {
+      payload.tables.projects = [];
+      payload.rowCounts.projects = 2;
+    }
+    if (caseName === 'wrong-total') payload.totalRows = 99;
+    if (caseName === 'unknown-policy') payload.securityManifest.policyVersion = 'future';
+    vi.mocked(Api.exportOrganizationData).mockResolvedValue(
+      new NodeBlob([JSON.stringify(payload)]) as unknown as Blob
+    );
+    render(<OrganizationsView />);
+    await clickExport();
+    expect((await screen.findByRole('status')).textContent).toContain(
+      'Completeness could not be verified'
+    );
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+  it('does not download a response for a different organization', async () => {
+    const payload = fixture();
+    payload.organization.id = 'foreign';
+    vi.mocked(Api.exportOrganizationData).mockResolvedValue(
+      new NodeBlob([JSON.stringify(payload)]) as unknown as Blob
+    );
+    render(<OrganizationsView />);
+    await clickExport();
+    expect((await screen.findByRole('alert')).textContent).toContain('does not match');
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+  it('starts only one download while the row export request is pending', async () => {
+    let resolveExport!: (value: Blob) => void;
+    vi.mocked(Api.exportOrganizationData).mockReturnValue(
+      new Promise((resolve) => {
+        resolveExport = resolve;
+      })
+    );
+    vi.mocked(Api.getOrganizations).mockResolvedValue([
+      {
+        id: 'org-1',
+        name: 'Acme',
+        plan: 'pro',
+        status: 'active',
+        user_count: 1,
+        created_at: '2026-01-01',
+      },
+      {
+        id: 'org-2',
+        name: 'Beta',
+        plan: 'pro',
+        status: 'active',
+        user_count: 1,
+        created_at: '2026-01-01',
+      },
+    ]);
+    render(<OrganizationsView />);
+    await screen.findByText('Acme');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Row actions' })[0]);
+    fireEvent.click(await screen.findByText('Export Data'));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Row actions' })[1]);
+    const secondAction = await screen.findByText('Export Data');
+    expect(secondAction.isConnected).toBe(true);
+    fireEvent.click(secondAction);
+    expect(Api.exportOrganizationData).toHaveBeenCalledTimes(1);
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    await act(async () => {
+      resolveExport(new NodeBlob([JSON.stringify(fixture())]) as unknown as Blob);
+    });
+    await screen.findByRole('status');
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
+  });
+  it.each(['malformed', 'denied'] as const)(
+    'does not download a %s response and permits retry',
+    async (state) => {
+      if (state === 'denied')
+        vi.mocked(Api.exportOrganizationData).mockRejectedValue(new Error('Export denied'));
+      else
+        vi.mocked(Api.exportOrganizationData).mockResolvedValue(
+          new NodeBlob(['not JSON']) as unknown as Blob
+        );
+      render(<OrganizationsView />);
+      await clickExport();
+      await screen.findByRole('alert');
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+      expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+      expect(toast.success).not.toHaveBeenCalled();
+      vi.mocked(Api.exportOrganizationData).mockResolvedValue(
+        new NodeBlob([JSON.stringify(fixture())]) as unknown as Blob
+      );
+      await clickExport();
+      await screen.findByRole('status');
+      expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
+    }
+  );
 });

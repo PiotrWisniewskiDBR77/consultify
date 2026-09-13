@@ -645,7 +645,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       secondBar={artifactStudioMode ? menu3Slot : undefined}
       presenceSlot={presenceSlot}
       topBarTitleTrailingSlot={artifactStudioMode ? titleTrailingSlot : undefined}
-      leftRailTitle={artifactStudioMode ? 'Struktura prezentacji' : leftRailTitle}
+      leftRailTitle={leftRailTitle}
       leftRailContent={artifactLeftRail}
       // Stary pas ikon jest w trybie warsztatu wygaszany; prawa powierzchnia
       // prezentacji to `artifactRightPanelSlot` niżej (SPEC-A §11.2).

@@ -1,0 +1,1246 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:640:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:22:46
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:640:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:22:46
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:640:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:22:46
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:640:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:22:46
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:640:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:22:46
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:640:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:22:46
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer 107ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve 31ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback 35ms
+ × src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > managed list 200 without this assignment still loads respondent feedback and permits correction 1020ms
+   → Unable to find an element with the text: Add the observed evidence. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 flex-col bg-c-background"[39m
+      [33mdata-testid[39m=[32m"interview-dedicated-question-workspace"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-w-0 items-center gap-3"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.back[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+            [36m>[39m
+              [0mReview session[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0mQuestion workspace[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none transition-colors duration-150 align-middle max-w-full border-blue-200 bg-blue-50 text-blue-800 dark:border-transparent dark:bg-blue-500/15 dark:text-blue-300 h-6 px-2 text-[11px] gap-1.5"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"shrink-0 rounded-full h-1.5 w-1.5"[39m
+              [33mstyle[39m=[32m"background-color: var(--c-info);"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mIn Progress[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ml-auto hidden min-w-44 items-center gap-2 sm:flex"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m/[0m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full rounded-full bg-c-success transition-[width] duration-300"[39m
+                [33mstyle[39m=[32m"width: 100%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m100[0m
+              [0m%[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-save"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.save[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtitle[39m=[32m"interview.workspace.switchToListView"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hidden lg:inline"[39m
+            [36m>[39m
+              [0minterview.workspace.list[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<section>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"answer"[39m
+          [36m>[39m
+            [0mOriginal answer[0m
+          [36m</textarea>[39m
+          [36m<button>[39m
+            [0mexercise answer callback[0m
+          [36m</button>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 flex-col bg-c-background"[39m
+      [33mdata-testid[39m=[32m"interview-dedicated-question-workspace"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-w-0 items-center gap-3"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.back[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+            [36m>[39m
+              [0mReview session[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0mQuestion workspace[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none transition-colors duration-150 align-middle max-w-full border-blue-200 bg-blue-50 text-blue-800 dark:border-transparent dark:bg-blue-500/15 dark:text-blue-300 h-6 px-2 text-[11px] gap-1.5"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"shrink-0 rounded-full h-1.5 w-1.5"[39m
+              [33mstyle[39m=[32m"background-color: var(--c-info);"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mIn Progress[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ml-auto hidden min-w-44 items-center gap-2 sm:flex"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m/[0m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full rounded-full bg-c-success transition-[width] duration-300"[39m
+                [33mstyle[39m=[32m"width: 100%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m100[0m
+              [0m%[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-save"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.save[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtitle[39m=[32m"interview.workspace.switchToListView"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hidden lg:inline"[39m
+            [36m>[39m
+              [0minterview.workspace.list[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<section>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"answer"[39m
+          [36m>[39m
+            [0mOriginal answer[0m
+          [36m</textarea>[39m
+          [36m<button>[39m
+            [0mexercise answer callback[0m
+          [36m</button>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx (4 tests | 1 failed) 1194ms
+     ✓ submitted respondent cannot edit or invoke the answer writer 107ms
+     ✓ a non-manager viewing another owner cannot approve 31ms
+     ✓ a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback 35ms
+     × managed list 200 without this assignment still loads respondent feedback and permits correction 1020ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > managed list 200 without this assignment still loads respondent feedback and permits correction
+TestingLibraryElementError: Unable to find an element with the text: Add the observed evidence. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 flex-col bg-c-background"[39m
+      [33mdata-testid[39m=[32m"interview-dedicated-question-workspace"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-w-0 items-center gap-3"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.back[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+            [36m>[39m
+              [0mReview session[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0mQuestion workspace[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none transition-colors duration-150 align-middle max-w-full border-blue-200 bg-blue-50 text-blue-800 dark:border-transparent dark:bg-blue-500/15 dark:text-blue-300 h-6 px-2 text-[11px] gap-1.5"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"shrink-0 rounded-full h-1.5 w-1.5"[39m
+              [33mstyle[39m=[32m"background-color: var(--c-info);"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mIn Progress[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ml-auto hidden min-w-44 items-center gap-2 sm:flex"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m/[0m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full rounded-full bg-c-success transition-[width] duration-300"[39m
+                [33mstyle[39m=[32m"width: 100%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m100[0m
+              [0m%[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-save"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.save[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtitle[39m=[32m"interview.workspace.switchToListView"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hidden lg:inline"[39m
+            [36m>[39m
+              [0minterview.workspace.list[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<section>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"answer"[39m
+          [36m>[39m
+            [0mOriginal answer[0m
+          [36m</textarea>[39m
+          [36m<button>[39m
+            [0mexercise answer callback[0m
+          [36m</button>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 flex-col bg-c-background"[39m
+      [33mdata-testid[39m=[32m"interview-dedicated-question-workspace"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-w-0 items-center gap-3"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.back[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+            [36m>[39m
+              [0mReview session[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0mQuestion workspace[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none transition-colors duration-150 align-middle max-w-full border-blue-200 bg-blue-50 text-blue-800 dark:border-transparent dark:bg-blue-500/15 dark:text-blue-300 h-6 px-2 text-[11px] gap-1.5"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"shrink-0 rounded-full h-1.5 w-1.5"[39m
+              [33mstyle[39m=[32m"background-color: var(--c-info);"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mIn Progress[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ml-auto hidden min-w-44 items-center gap-2 sm:flex"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m/[0m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full rounded-full bg-c-success transition-[width] duration-300"[39m
+                [33mstyle[39m=[32m"width: 100%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m100[0m
+              [0m%[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-save"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.save[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtitle[39m=[32m"interview.workspace.switchToListView"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hidden lg:inline"[39m
+            [36m>[39m
+              [0minterview.workspace.list[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<section>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"answer"[39m
+          [36m>[39m
+            [0mOriginal answer[0m
+          [36m</textarea>[39m
+          [36m<button>[39m
+            [0mexercise answer callback[0m
+          [36m</button>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:46:23
+     44|   fixture.managedEmpty=true;fixture.sessionStatus='active';fixture.ass…
+     45|   render(<InterviewWorkspace sessionId="session"/>);await screen.findB…
+     46|   expect(await screen.findByText('Add the observed evidence')).toBeTru…
+       |                       ^
+     47|   expect(v8.getMyAssignments.mock.calls.length+api.get.mock.calls.filt…
+     48|   expect((screen.getByRole('textbox',{name:'answer'}) as HTMLTextAreaE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  15:41:58
+   Duration  2.62s (transform 698ms, setup 97ms, import 998ms, tests 1.19s, environment 245ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > managed list 200 without this assignment still loads respondent feedback and permits correction
+TestingLibraryElementError: Unable to find an element with the text: Add the observed evidence. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 flex-col bg-c-background"[39m
+      [33mdata-testid[39m=[32m"interview-dedicated-question-workspace"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-w-0 items-center gap-3"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.back[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+            [36m>[39m
+              [0mReview session[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0mQuestion workspace[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none transition-colors duration-150 align-middle max-w-full border-blue-200 bg-blue-50 text-blue-800 dark:border-transparent dark:bg-blue-500/15 dark:text-blue-300 h-6 px-2 text-[11px] gap-1.5"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"shrink-0 rounded-full h-1.5 w-1.5"[39m
+              [33mstyle[39m=[32m"background-color: var(--c-info);"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mIn Progress[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ml-auto hidden min-w-44 items-center gap-2 sm:flex"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m/[0m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full rounded-full bg-c-success transition-[width] duration-300"[39m
+                [33mstyle[39m=[32m"width: 100%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m100[0m
+              [0m%[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-save"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.save[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtitle[39m=[32m"interview.workspace.switchToListView"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hidden lg:inline"[39m
+            [36m>[39m
+              [0minterview.workspace.list[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<section>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"answer"[39m
+          [36m>[39m
+            [0mOriginal answer[0m
+          [36m</textarea>[39m
+          [36m<button>[39m
+            [0mexercise answer callback[0m
+          [36m</button>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full min-h-0 flex-col bg-c-background"[39m
+      [33mdata-testid[39m=[32m"interview-dedicated-question-workspace"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-w-0 items-center gap-3"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chevron-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m15 18-6-6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.back[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+            [36m>[39m
+              [0mReview session[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0mQuestion workspace[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center whitespace-nowrap rounded-full border font-medium leading-none transition-colors duration-150 align-middle max-w-full border-blue-200 bg-blue-50 text-blue-800 dark:border-transparent dark:bg-blue-500/15 dark:text-blue-300 h-6 px-2 text-[11px] gap-1.5"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"shrink-0 rounded-full h-1.5 w-1.5"[39m
+              [33mstyle[39m=[32m"background-color: var(--c-info);"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mIn Progress[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ml-auto hidden min-w-44 items-center gap-2 sm:flex"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m/[0m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"h-full rounded-full bg-c-success transition-[width] duration-300"[39m
+                [33mstyle[39m=[32m"width: 100%;"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs tabular-nums text-c-text-muted"[39m
+            [36m>[39m
+              [0m100[0m
+              [0m%[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-5 w-px shrink-0 bg-c-border"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-save"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0minterview.workspace.save[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+            [33mtitle[39m=[32m"interview.workspace.switchToListView"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"14"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"14"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hidden lg:inline"[39m
+            [36m>[39m
+              [0minterview.workspace.list[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<section>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"answer"[39m
+          [36m>[39m
+            [0mOriginal answer[0m
+          [36m</textarea>[39m
+          [36m<button>[39m
+            [0mexercise answer callback[0m
+          [36m</button>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:46:23
+     44|   fixture.managedEmpty=true;fixture.sessionStatus='active';fixture.ass…
+     45|   render(<InterviewWorkspace sessionId="session"/>);await screen.findB…
+     46|   expect(await screen.findByText('Add the observed evidence')).toBeTru…
+       |                       ^
+     47|   expect(v8.getMyAssignments.mock.calls.length+api.get.mock.calls.filt…
+     48|   expect((screen.getByRole('textbox',{name:'answer'}) as HTMLTextAreaE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  15:41:58
+   Duration  2.62s (transform 698ms, setup 97ms, import 998ms, tests 1.19s, environment 245ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml

@@ -5,11 +5,11 @@
 
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
 import { CardRenderer } from './CardRenderer';
-import { useTranslation } from 'react-i18next';
 
 interface PresentModeProps {
   cards: DeckCard[];
@@ -104,7 +104,9 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           {/* Next slide preview */}
           {nextCard && (
             <div className="p-4 border-b border-c-border-subtle">
-              <p className="text-[10px] text-c-text-secondary uppercase mb-2">{t('presentations.builder.presentMode.nextSlide', 'Next slide')}</p>
+              <p className="text-[10px] text-c-text-secondary uppercase mb-2">
+                {t('presentations.builder.presentMode.nextSlide', 'Next slide')}
+              </p>
               <div className="pointer-events-none opacity-80">
                 <CardRenderer card={nextCard} colorSetId={colorSetId} scale={0.3} />
               </div>
@@ -113,9 +115,12 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Speaker notes */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-[10px] text-c-text-secondary uppercase mb-2">{t('presentations.builder.presentMode.speakerNotes', 'Speaker notes')}</p>
+            <p className="text-[10px] text-c-text-secondary uppercase mb-2">
+              {t('presentations.builder.presentMode.speakerNotes', 'Speaker notes')}
+            </p>
             <p className="text-sm text-c-text-secondary whitespace-pre-wrap">
-              {currentCard.speaker_notes || t('presentations.builder.presentMode.noNotesForSlide', 'No notes for this slide.')}
+              {currentCard.speaker_notes ||
+                t('presentations.builder.presentMode.noNotesForSlide', 'No notes for this slide.')}
             </p>
           </div>
 
@@ -123,6 +128,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           <div className="flex items-center justify-between p-3 border-t border-c-border-subtle">
             <button
               onClick={goPrev}
+              aria-label={t('common.previous', 'Previous')}
               disabled={currentIndex === 0}
               className="p-2 rounded-lg text-c-text hover:bg-c-surface-raised disabled:opacity-30"
             >
@@ -130,12 +136,14 @@ export const PresentMode: React.FC<PresentModeProps> = ({
             </button>
             <button
               onClick={onExit}
+              aria-label={t('common.close', 'Close')}
               className="p-2 rounded-lg text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
             >
               <X size={20} />
             </button>
             <button
               onClick={goNext}
+              aria-label={t('common.next', 'Next')}
               disabled={currentIndex === cards.length - 1}
               className="p-2 rounded-lg text-c-text hover:bg-c-surface-raised disabled:opacity-30"
             >
@@ -180,12 +188,13 @@ export const PresentMode: React.FC<PresentModeProps> = ({
             e.stopPropagation();
             goPrev();
           }}
+          aria-label={t('common.previous', 'Previous')}
           disabled={currentIndex === 0}
           className="p-2 rounded-full bg-c-surface text-c-text hover:bg-c-surface disabled:opacity-30 backdrop-blur-sm"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-sm text-c-text font-mono">
+        <span className="text-sm text-white font-mono">
           {currentIndex + 1} / {cards.length}
         </span>
         <button
@@ -193,6 +202,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
             e.stopPropagation();
             goNext();
           }}
+          aria-label={t('common.next', 'Next')}
           disabled={currentIndex === cards.length - 1}
           className="p-2 rounded-full bg-c-surface text-c-text hover:bg-c-surface disabled:opacity-30 backdrop-blur-sm"
         >
@@ -206,6 +216,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           e.stopPropagation();
           onExit();
         }}
+        aria-label={t('common.close', 'Close')}
         className="absolute top-4 right-4 p-2 rounded-full bg-c-surface text-c-text hover:bg-c-surface backdrop-blur-sm"
       >
         <X size={20} />

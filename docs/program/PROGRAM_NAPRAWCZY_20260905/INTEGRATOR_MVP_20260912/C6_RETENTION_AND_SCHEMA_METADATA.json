@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-09-12",
+  "mode": "read-only schema metadata; no application rows read",
+  "databaseIdentity": {
+    "database": "cx6_swieza",
+    "user": "consultify",
+    "requestedEndpoint": "127.0.0.1:6457",
+    "serverReportedEndpoint": "172.17.0.7:5432",
+    "inRecovery": false
+  },
+  "schemaCoverage": {
+    "public": { "tables": 1802, "tenantScopedCandidates": 1282, "coveredByCurrentExport": true },
+    "v8": { "tables": 121, "tenantScopedCandidates": 111, "coveredByCurrentExport": false }
+  },
+  "directForeignKeys": {
+    "organizations": { "CASCADE": 187, "NO_ACTION": 97, "RESTRICT": 6, "SET_NULL": 14 },
+    "users": { "CASCADE": 96, "NO_ACTION": 74, "RESTRICT": 5, "SET_NULL": 95 },
+    "gdpr_requests": { "RESTRICT": 1 }
+  },
+  "immutableDeleteGuardedTenantTables": {
+    "public": 109,
+    "v8": 1,
+    "meaning": "table has a tenant/organization anchor column and an enabled non-internal DELETE guard whose function raises or declares immutable/append-only behavior"
+  },
+  "hardAnchorExamples": [
+    {
+      "table": "account_deletion_request_receipts",
+      "anchors": ["gdpr_requests.id", "organizations.id", "users.id"],
+      "deleteActions": ["RESTRICT", "RESTRICT", "RESTRICT"],
+      "guard": "BEFORE UPDATE OR DELETE; unconditional exception",
+      "identityFields": ["request_id", "organization_id", "user_id", "request_status", "occurred_at"]
+    },
+    {
+      "table": "execution_budget_delete_receipts",
+      "anchors": ["organizations.id", "execution_action_registry.action_id"],
+      "deleteActions": ["NO ACTION", "NO ACTION"],
+      "guard": "BEFORE UPDATE OR DELETE; unconditional exception",
+      "identityFields": ["organization_id", "actor_id", "initiative_id", "entry_id", "request_digest", "result_json"]
+    },
+    {
+      "table": "template_provenance_approval_receipts",
+      "anchors": ["organizations.id"],
+      "deleteActions": ["RESTRICT"],
+      "guard": "BEFORE UPDATE OR DELETE",
+      "identityFields": ["organization_id", "request_fingerprint", "provenance_json"]
+    },
+    {
+      "table": "organization_self_service_deletion_receipts",
+      "anchors": [],
+      "deleteActions": [],
+      "guard": "BEFORE UPDATE OR DELETE; unconditional exception",
+      "identityFields": ["target_organization_id", "target_organization_name", "actor_id", "actor_email", "reason", "request_digest", "deleted_counts"]
+    },
+    {
+      "table": "ai_agent_job_attempts",
+      "anchors": ["ai_agent_job_receipts.receipt_id"],
+      "deleteActions": ["NO ACTION"],
+      "guard": "BEFORE UPDATE OR DELETE; unconditional exception",
+      "identityFields": ["receipt_id", "worker_id", "error_code"]
+    }
+  ],
+  "receiptReaders": {
+    "accountDeletionLifecycle": ["server/src/routes/settings.routes.ts"],
+    "executionBudgetDelete": ["server/src/services/executionBudgetDeleteCommandService.ts"],
+    "organizationSelfServiceDeletion": ["server/src/routes/organization/ownership.routes.ts", "server/src/routes/__tests__/organization-self-service-lifecycle.http.pg.test.ts"],
+    "finding": "no product reader was found for organization_self_service_deletion_receipts; PostgreSQL and tests can read all retained PII fields"
+  },
+  "retainedReceiptPii": [
+    "organization_self_service_deletion_receipts.target_organization_name",
+    "organization_self_service_deletion_receipts.actor_email",
+    "organization_self_service_deletion_receipts.reason",
+    "organization_self_service_deletion_receipts.deleted_counts",
+    "execution_budget_delete_receipts.actor_id",
+    "execution_budget_delete_receipts.result_json",
+    "finance receipt response_json/snapshot_json/source_file_name/entity_name fields",
+    "immutable event payload/metadata JSON fields"
+  ],
+  "bindingDecision": {
+    "source": "docs/program/evidence/closure/codex/SET-MVP-DELETE-001/DECISION_PACKET.md",
+    "status": "APPROVED_RESTRICTED_SCOPE / DESTRUCTIVE_EXECUTION_OFF",
+    "allowed": ["authenticated request", "status", "cancellation"],
+    "notAuthorized": ["anonymization", "purge", "destructive worker", "production mutation"],
+    "matrixState": "all irreversible-action and retention cells UNKNOWN"
+  }
+}

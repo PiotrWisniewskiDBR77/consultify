@@ -1,3 +1,9 @@
+import { assertConfiguredProfileAuthority, definitionApprovalEnabled, definitionAuthorities, mountDefinitionApprovalReads } from './definitionApprovalAdapter.js';
+import { StaffingFieldsSchema, StaffingNotFoundError, staffingAggregateType, writeStaffing, type StaffingMutation } from '../../domain/initiatives-execution/staffingPlans.js';
+import { GateRolesSchema, GateRolesNotFoundError, replaceGateRoles } from '../../domain/initiatives-execution/gateRoles.js';
+import { ResourceFieldsSchema, ResourceNotFoundError, writeResource } from '../../domain/initiatives-execution/resources.js';
+import { MilestoneFieldsSchema, MilestoneNotFoundError, writeMilestone } from '../../domain/initiatives-execution/milestones.js';
+import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeBudgetItem } from '../../domain/initiatives-execution/budgetItems.js';
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { Pool, type PoolConfig } from 'pg';
 import { z } from 'zod';
@@ -32,7 +38,7 @@ import {
   decideClosureCase,
   requestClosureCase,
 } from '../../domain/initiatives-execution/closureDecision.js';
-import { configureInitiativeCards } from '../../domain/initiatives-execution/configureInitiativeCards.js';
+import { configureInitiativeCards, configuredCardProfile, type ConfiguredCardProfile } from '../../domain/initiatives-execution/configureInitiativeCards.js';
 import { createDefinitionRemediationWork } from '../../domain/initiatives-execution/createDefinitionRemediationWork.js';
 import { decideSourceProposal } from '../../domain/initiatives-execution/decideSourceProposal.js';
 import {
@@ -78,6 +84,7 @@ import {
   reviewManagerSuggestion,
   voidExecutionBudgetEntry,
 } from '../../domain/initiatives-execution/executionControlWrites.js';
+import { updateInitiativeForecast } from '../../domain/initiatives-execution/initiativeForecast.js';
 import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
 import {
   assignGoalPerspective,
@@ -221,7 +228,7 @@ export const DOMAIN_RULE_BY_MESSAGE: Record<string, { rule: string; status: 400 
   'Published Plan Scenario snapshot is stale': { rule: 'PLAN_VERSION_MISMATCH', status: 409 },
 };
 
-function respondWithRule(res: Response, status: 400 | 409, rule: string): void {
+function respondWithRule(res: Response, status: 400 | 403 | 404 | 409, rule: string): void {
   res.status(status).json({ error: { code: rule, rule }, code: rule, rule });
 }
 
@@ -355,6 +362,7 @@ const ReviewCardSchema = z.object({
 });
 
 const ConfigureCardsSchema = z.object({
+  profile: z.object({ templateId: z.string().min(1).max(255), version: z.number().int().positive(), contentHash: z.string().regex(/^[a-f0-9]{64}$/) }).optional(),
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1).max(255),
   registryVersion: z.literal(1),
@@ -984,6 +992,23 @@ const ExecutionRealizationSchema = z.object({
   realizedSavings: z.number().finite().nullable().default(null),
   varianceNotes: z.string().nullable().default(null),
 });
+const InitiativeForecastCommandSchema = z
+  .object({
+    expectedVersion: z.number().int().min(1),
+    clientRequestId: z.string().min(1).max(255),
+    forecastStartDate: z.string().date().nullable().optional(),
+    forecastEndDate: z.string().date().nullable().optional(),
+    reason: z.string().trim().min(1).max(4000),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.forecastStartDate === undefined && value.forecastEndDate === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'At least one forecast field is required',
+      });
+    }
+  });
 const RaidMitigationSchema = z.object({
   expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
@@ -1477,6 +1502,7 @@ export function createInitiativesExecutionRuntimeRouter(
   deps: InitiativesExecutionRuntimeDependencies
 ): Router {
   const router = Router();
+  mountDefinitionApprovalReads(router, deps, actorFromRequest);
 
   const authorizeProjects = async (
     actor: RuntimeActor,
@@ -2353,9 +2379,37 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         firstParam(req.params.initiativeId)
       );
-      res.json({ initiativeVersion: found.version, registryVersion: 1, cards });
+      res.json({ initiativeVersion: found.version, registryVersion: 1, cards, profile: ((found.initiative as typeof found.initiative & { cardSelection?: { profile?: ConfiguredCardProfile } }).cardSelection)?.profile ?? null });
     })
   );
+
+  router.get('/initiatives/:initiativeId/card-profile-preview', asyncHandler(async (req, res) => {
+    const actor = actorFromRequest(req);
+    if (!actor) { res.status(401).json({ error: { code: 'AUTH_REQUIRED' } }); return; }
+    const id = firstParam(req.params.initiativeId);
+    const found = await deps.reader.findById(actor.organizationId, id);
+    if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
+      res.status(404).json({ error: { code: 'NOT_FOUND' } }); return;
+    }
+    const templateId = String(req.query.templateId || '').trim();
+    if (!templateId) { res.status(400).json({ error: { code: 'TEMPLATE_ID_REQUIRED' } }); return; }
+    const template = await deps.unitOfWork.transaction(async tx => {
+      if (!tx.getInitiativeTemplateForShare) throw new MaterialCommandRuleError('CARD_PROFILE_ADAPTER_UNAVAILABLE', 409);
+      return tx.getInitiativeTemplateForShare({ organizationId: actor.organizationId, templateId });
+    });
+    if (!template) { res.status(404).json({ error: { code: 'NOT_FOUND' } }); return; }
+    const profile = configuredCardProfile(template);
+    const selection = await deps.reader.listInitiativeCardSelection(actor.organizationId, id);
+    const published = await deps.reader.listLatestInitiativeCards(actor.organizationId, id);
+    res.json({ initiativeId: id, initiativeVersion: found.version, profile, impact: {
+      newlyRequired: profile.cards.filter(card => card.requiredness === 'REQUIRED' && !selection.some(old => old.cardKey === card.cardKey && old.requiredness === 'REQUIRED')).map(card => card.cardKey),
+      omitted: profile.cards.filter(card => !card.included).map(card => card.cardKey),
+      preservedContent: published.map(card => ({ cardKey: card.cardKey, cardVersion: card.cardVersion })),
+      unresolvedReviews: published.filter(card => card.reviewState !== 'ACCEPTED').map(card => card.cardKey),
+      waiverRequired: selection.filter(old => old.requiredness === 'REQUIRED' && profile.cards.some(card => card.cardKey === old.cardKey && (!card.included || card.requiredness !== 'REQUIRED'))).map(card => card.cardKey),
+      readinessAfterChange: 'REQUIRES_REEVALUATION',
+    } });
+  }));
 
   router.post(
     '/initiatives/:initiativeId/card-selection',
@@ -2402,12 +2456,18 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'initiative.cards.configure',
         payload: {
           registryVersion: parsed.data.registryVersion,
+          ...(parsed.data.profile ? { profile: parsed.data.profile } : {}),
           cards: parsed.data.cards.map((card) => ({
             ...card,
             waiverDecisionId: card.waiverDecisionId ?? null,
           })),
         },
-      });
+      }, async (current) => {
+        const allowed = deps.authorizeInitiativeObject
+          ? await deps.authorizeInitiativeObject(actor, current.projectId, 'initiative.update', [String(current.initiativeOwnerId || '')])
+          : await deps.authorize(actor, current.projectId, 'initiative.update');
+        if (!allowed) throw new MaterialCommandRuleError('CARD_PROFILE_AUTHORITY_REQUIRED', 403);
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2477,10 +2537,23 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      const [canUpdate, canReview] = await Promise.all([
+      const [canUpdate, canReview, canUpdateForecast] = await Promise.all([
         deps.authorize(actor, found.initiative.projectId, 'initiative.update'),
         deps.authorize(actor, found.initiative.projectId, 'initiative.review'),
+        autoryzujZapisInicjatywy(actor, found),
       ]);
+      const forecastLifecycleEligible = ['SCHEDULED', 'IN_EXECUTION'].includes(
+        String(found.initiative.lifecycleState).toUpperCase()
+      );
+      const forecastAvailable = canUpdateForecast && forecastLifecycleEligible;
+      const forecastDenial = !canUpdateForecast
+        ? { denialAt: 'ZDOLNOŚĆ', denialCode: 'CAPABILITY_REQUIRED' }
+        : !forecastLifecycleEligible
+          ? {
+              denialAt: 'CYKL_ŻYCIA',
+              denialCode: 'INITIATIVE_FORECAST_LIFECYCLE_INVALID',
+            }
+          : { denialAt: null, denialCode: null };
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
@@ -2493,6 +2566,14 @@ export function createInitiativesExecutionRuntimeRouter(
         canReview,
         canSelfApprove: Boolean(policy.config.selfApproval),
         executionWrites: {
+          forecast: {
+            available: forecastAvailable,
+            canonicalCommand:
+              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/forecast',
+            ...forecastDenial,
+            legacyDenialAt: 'BRAMKA_LEGACY',
+            legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
           budgetEntry: {
             available: canUpdate,
             canonicalCommand:
@@ -2608,8 +2689,18 @@ export function createInitiativesExecutionRuntimeRouter(
       const readiness = evaluateDefinitionReadiness(
         cards,
         Boolean(source?.sourceType && source.sourceId && source.sourceVersion > 0),
-        sourceFreshness
+        sourceFreshness,
+        ((found.initiative as typeof found.initiative & { cardSelection?: { profile?: ConfiguredCardProfile } }).cardSelection)?.profile
       );
+      const configuredProfile=((found.initiative as typeof found.initiative & {cardSelection?: {profile?:ConfiguredCardProfile}}).cardSelection)?.profile;
+      if(configuredProfile){
+        try { await assertConfiguredProfileAuthority(deps,actor,found.initiative,configuredProfile); }
+        catch(error){
+          if(!(error instanceof MaterialCommandRuleError))throw error;
+          readiness.readiness='BLOCKED';
+          readiness.findings.push({findingId:'definition:gates-approvals:PROFILE_AUTHORITY_STALE',cardKey:'gates-approvals',severity:'BLOCKER',rule:'PROFILE_AUTHORITY_STALE',evidenceRefs:[],message:'The configured policy or reviewer authority is no longer current. Reconfigure and review the affected cards.'});
+        }
+      }
       res.json({
         initiativeId: req.params.initiativeId,
         initiativeVersion: found.version,
@@ -2790,7 +2881,7 @@ export function createInitiativesExecutionRuntimeRouter(
           rationale: parsed.data.rationale,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
         },
-      });
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2824,6 +2915,26 @@ export function createInitiativesExecutionRuntimeRouter(
         found.initiative.projectId,
         firstParam(req.params.initiativeId)
       );
+      if (definitionApprovalEnabled()) {
+        const canUpdate = deps.authorizeInitiativeObject
+          ? await deps.authorizeInitiativeObject(
+              actor,
+              found.initiative.projectId,
+              'initiative.update',
+              [found.initiative.initiativeOwnerId]
+            )
+          : await deps.authorize(actor, found.initiative.projectId, 'initiative.update');
+        const authorities = await definitionAuthorities(
+          deps,
+          actor.organizationId,
+          found.initiative.projectId,
+          policy
+        );
+        if (!canUpdate || !authorities.some((a) => a.id === parsed.data.authorityId)) {
+          res.status(403).json({ error: { code: 'DEFINITION_AUTHORITY_REQUIRED' } });
+          return;
+        }
+      }
       const result = await requestDefinitionDecision(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -2840,8 +2951,9 @@ export function createInitiativesExecutionRuntimeRouter(
           authorityId: parsed.data.authorityId,
           dueAt: parsed.data.dueAt,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
         },
-      });
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2864,6 +2976,15 @@ export function createInitiativesExecutionRuntimeRouter(
         firstParam(req.params.initiativeId)
       );
       if (
+        definitionApprovalEnabled() &&
+        found &&
+        (await deps.authorize(actor, found.initiative.projectId, 'initiative.view')) &&
+        !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
+      ) {
+        res.status(403).json({ error: { code: 'DEFINITION_AUTHORITY_REQUIRED' } });
+        return;
+      }
+      if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
       ) {
@@ -2875,6 +2996,18 @@ export function createInitiativesExecutionRuntimeRouter(
         found.initiative.projectId,
         firstParam(req.params.initiativeId)
       );
+      if (definitionApprovalEnabled()) {
+        const authorities = await definitionAuthorities(
+          deps,
+          actor.organizationId,
+          found.initiative.projectId,
+          policy
+        );
+        if (!authorities.some((a) => a.id === actor.userId)) {
+          res.status(403).json({ error: { code: 'DEFINITION_AUTHORITY_REQUIRED' } });
+          return;
+        }
+      }
       const result = await decideDefinition(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -2893,8 +3026,9 @@ export function createInitiativesExecutionRuntimeRouter(
           outcome: parsed.data.outcome,
           rationale: parsed.data.rationale,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
         },
-      });
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -5715,6 +5849,48 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
   router.post(
+    '/initiatives/:initiativeId/forecast',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = InitiativeForecastCommandSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success) {
+        return void res
+          .status(400)
+          .json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+      }
+      const initiativeId = firstParam(req.params.initiativeId);
+      // Resolve the tenant-owned canonical Initiative before entering the command bus. A foreign
+      // clientRequestId can therefore never turn replay lookup into an Initiative existence oracle.
+      const found = await deps.reader.findById(actor.organizationId, initiativeId);
+      if (!found) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await autoryzujZapisInicjatywy(actor, found))) {
+        return void res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
+      }
+      const policy = await deps.resolvePolicy(
+        actor.organizationId,
+        found.initiative.projectId,
+        initiativeId
+      );
+      const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const result = await updateInitiativeForecast(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'initiative',
+        aggregateId: initiativeId,
+        expectedVersion,
+        clientRequestId,
+        correlationId:
+          req.header('X-Correlation-ID') || `initiative-forecast-${clientRequestId}`,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        commandType: 'initiative.forecast.update',
+        payload,
+      });
+      res.status(200).json(result);
+    })
+  );
+  router.post(
     '/initiatives/:initiativeId/budget-entries/:entryId/void',
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
@@ -5838,6 +6014,164 @@ export function createInitiativesExecutionRuntimeRouter(
       });
     })
   );
+  for (const [method, operation] of [
+    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+  ] as const) {
+    router[method](
+      '/initiatives/:initiativeId/budget-items/:itemId',
+      asyncHandler(async (req, res) => {
+        const actor = actorFromRequest(req);
+        if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        const parsed = z.object({
+          expectedVersion: z.number().int().nonnegative(),
+          clientRequestId: z.string().min(1).max(240),
+          fields: BudgetItemFieldsSchema.default({}),
+        }).safeParse(req.body);
+        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const initiativeId = firstParam(req.params.initiativeId);
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
+        const allowed = projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+        if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        let result;
+        try {
+          result = await writeBudgetItem(deps.unitOfWork, {
+          organizationId: actor.organizationId, actorId: actor.userId,
+          aggregateType: 'initiative_budget_item', aggregateId: firstParam(req.params.itemId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
+          policyId: 'execution-control', policyVersion: 1,
+          commandType: `initiative-budget-item.${operation}`, createIfMissing: true,
+          payload: { initiativeId, operation, fields: parsed.data.fields },
+        });
+        } catch (error) {
+          if (error instanceof BudgetItemNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          throw error;
+        }
+        res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
+      })
+    );
+  }
+  for (const [method, operation] of [
+    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+  ] as const) {
+    router[method](
+      '/initiatives/:initiativeId/resources/:itemId',
+      asyncHandler(async (req, res) => {
+        const actor = actorFromRequest(req);
+        if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        const parsed = z.object({
+          expectedVersion: z.number().int().nonnegative(),
+          clientRequestId: z.string().min(1).max(240),
+          fields: ResourceFieldsSchema.default({}),
+        }).safeParse(req.body);
+        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const initiativeId = firstParam(req.params.initiativeId);
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
+        const allowed = projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+        if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        let result;
+        try {
+          result = await writeResource(deps.unitOfWork, {
+          organizationId: actor.organizationId, actorId: actor.userId,
+          aggregateType: 'initiative_resource', aggregateId: firstParam(req.params.itemId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
+          policyId: 'execution-control', policyVersion: 1,
+          commandType: `initiative-resource.${operation}`, createIfMissing: true,
+          payload: { initiativeId, operation, fields: parsed.data.fields },
+        });
+        } catch (error) {
+          if (error instanceof ResourceNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          throw error;
+        }
+        res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
+      })
+    );
+  }
+  for (const [method, operation] of [
+    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+  ] as const) {
+    router[method](
+      '/initiatives/:initiativeId/milestones/:itemId',
+      asyncHandler(async (req, res) => {
+        const actor = actorFromRequest(req);
+        if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        const parsed = z.object({
+          expectedVersion: z.number().int().nonnegative(),
+          clientRequestId: z.string().min(1).max(240),
+          fields: MilestoneFieldsSchema.default({}),
+        }).safeParse(req.body);
+        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const initiativeId = firstParam(req.params.initiativeId);
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
+        const allowed = projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+        if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        let result;
+        try {
+          result = await writeMilestone(deps.unitOfWork, {
+          organizationId: actor.organizationId, actorId: actor.userId,
+          aggregateType: 'initiative_milestone', aggregateId: firstParam(req.params.itemId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
+          policyId: 'execution-control', policyVersion: 1,
+          commandType: `initiative-milestone.${operation}`, createIfMissing: true,
+          payload: { initiativeId, operation, fields: parsed.data.fields },
+        });
+        } catch (error) {
+          if (error instanceof MilestoneNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          throw error;
+        }
+        res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
+      })
+    );
+  }
+  for(const [method,kind,operation,path] of [
+    ['post','plan','create','/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['patch','plan','update','/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['delete','plan','delete','/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['post','role','create','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['patch','role','update','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['delete','role','delete','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['post','capacity','sync','/initiatives/:initiativeId/staffing-plans/:planId/sync-capacity'],
+  ] as const){
+    router[method](path,asyncHandler(async(req,res)=>{
+      const actor=actorFromRequest(req);if(!actor)return void res.status(401).json({error:{code:'AUTH_REQUIRED'}});
+      const parsed=StaffingFieldsSchema.extend({expectedVersion:z.number().int().nonnegative(),clientRequestId:z.string().min(1).max(240)}).safeParse(req.body);
+      if(!parsed.success)return void res.status(400).json({error:{code:'VALIDATION_FAILED'}});
+      const initiativeId=firstParam(req.params.initiativeId),planId=firstParam(req.params.planId),itemId=kind==='capacity'?initiativeId:kind==='plan'?planId:firstParam(req.params.roleId);
+      const projects=await deps.reader.resolveProjectIdsForAggregate(actor.organizationId,'initiative',initiativeId);
+      const allowed=projects.length>0?await authorizeProjects(actor,projects,'initiative.update'):await deps.authorize(actor,'','initiative.update');
+      if(!allowed)return void res.status(404).json({error:{code:'NOT_FOUND'}});
+      const {expectedVersion,clientRequestId,...fields}=parsed.data;
+      try{
+        const result=await writeStaffing(deps.unitOfWork,{organizationId:actor.organizationId,actorId:actor.userId,aggregateType:staffingAggregateType(kind),aggregateId:itemId,expectedVersion,clientRequestId,correlationId:clientRequestId,policyId:'execution-control',policyVersion:1,commandType:`staffing-${kind}.${operation}`,createIfMissing:true,payload:{initiativeId,planId,kind,operation,fields}});
+        res.status(operation==='create'&&result.status==='APPLIED'?201:200).json(result);
+      }catch(error){if(error instanceof StaffingNotFoundError)return void res.status(404).json({error:{code:'NOT_FOUND'}});throw error;}
+    }));
+  }
+  router.put('/initiatives/:initiativeId/gate-roles',asyncHandler(async(req,res)=>{
+    const actor=actorFromRequest(req);
+    if(!actor)return void res.status(401).json({error:{code:'AUTH_REQUIRED'}});
+    const parsed=z.object({expectedVersion:z.number().int().nonnegative(),clientRequestId:z.string().min(1).max(240),roles:GateRolesSchema}).safeParse(req.body);
+    if(!parsed.success)return void res.status(400).json({error:{code:'VALIDATION_FAILED'}});
+    const initiativeId=firstParam(req.params.initiativeId);
+    const projects=await deps.reader.resolveProjectIdsForAggregate(actor.organizationId,'initiative',initiativeId);
+    const allowed=projects.length>0?await authorizeProjects(actor,projects,'initiative.update'):await deps.authorize(actor,'','initiative.update');
+    if(!allowed)return void res.status(404).json({error:{code:'NOT_FOUND'}});
+    try {
+      const result=await replaceGateRoles(deps.unitOfWork,{organizationId:actor.organizationId,actorId:actor.userId,aggregateType:'initiative_gate_role_profile',aggregateId:initiativeId,expectedVersion:parsed.data.expectedVersion,clientRequestId:parsed.data.clientRequestId,correlationId:parsed.data.clientRequestId,policyId:'execution-control',policyVersion:1,commandType:'initiative-gate-roles.replace',createIfMissing:true,payload:{initiativeId,roles:parsed.data.roles}});
+      res.json(result);
+    }catch(error){
+      if(error instanceof GateRolesNotFoundError)return void res.status(404).json({error:{code:'NOT_FOUND'}});
+      throw error;
+    }
+  }));
   router.post(
     '/initiatives/:initiativeId/raid-items/:raidItemId',
     asyncHandler(async (req, res) => {

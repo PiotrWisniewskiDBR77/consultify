@@ -1,0 +1,22 @@
+{
+  "candidate": "df75f05c201a26eb614c588a54b251bf9cce8ed7",
+  "level": "mounted component; mocked remote services",
+  "baseline": {
+    "exit": 1,
+    "executed": 0,
+    "reason": "missing i18n mock export"
+  },
+  "current_bridge": {
+    "exit": 1,
+    "executed": 5,
+    "failed": 5
+  },
+  "isolated_reopen": {
+    "exit": 1,
+    "executed": 1,
+    "failed": 1,
+    "unexpected_puts": 1
+  },
+  "product_changes": false,
+  "runtime_acceptance": false
+}

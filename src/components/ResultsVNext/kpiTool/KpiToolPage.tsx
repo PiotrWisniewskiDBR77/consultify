@@ -97,7 +97,7 @@ import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrga
 import { ROUTES } from '@/routes/routeConfig';
 import { ActionCardList } from '@/components/standard/ActionCardList';
 import type { ActionCardModel } from '@/components/standard/ActionCard.types';
-import { closeActionCard, createTaskFromActionCard, listActionCards } from '@/services/actionCards';
+import { closeActionCard, reopenActionCard, createTaskFromActionCard, listActionCards } from '@/services/actionCards';
 import { EmptyState } from '@/components/shared/states';
 
 import { HonestValueCell } from '../HonestValue';
@@ -294,7 +294,7 @@ const GapNotice: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 export const KpiToolPage: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t: translate, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
   const navigate = useNavigate();
@@ -501,6 +501,19 @@ export const KpiToolPage: React.FC = () => {
     },
     [isPolish, loadActionCards]
   );
+
+  const handleActionCardReopen = useCallback(async (card: ActionCardModel) => {
+    setActionCardBusyId(card.id);
+    try {
+      await reopenActionCard(card.id);
+      toast.success(translate('actionCard.reopened', 'Action card reopened.'));
+      loadActionCards();
+    } catch {
+      toast.error(translate('actionCard.reopenFailed', 'Could not reopen the card.'));
+    } finally {
+      setActionCardBusyId(null);
+    }
+  }, [translate, loadActionCards]);
 
   const loadInitiativeImpacts = useCallback(() => {
     if (!kpiId) return;
@@ -1628,6 +1641,7 @@ export const KpiToolPage: React.FC = () => {
             cards={actionCards}
             onCreateTask={handleActionCardTask}
             onCloseCard={handleActionCardClose}
+            onReopenCard={handleActionCardReopen}
             busyId={actionCardBusyId}
             emptyLabel={t(
               'Brak kart działania — żaden rezultat tego miernika nie wyszedł poza limit.',

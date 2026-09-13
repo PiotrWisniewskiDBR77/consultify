@@ -1,0 +1,844 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer 104ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve 31ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback 34ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > managed list 200 without this assignment still loads respondent feedback and permits correction 25ms
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > manager absent from the own list loads the protected assignment detail
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > manager absent from the own list loads the protected assignment detail
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > send-back publishes the canonical response and unlocks the returned answer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > send-back publishes the canonical response and unlocks the returned answer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:664:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+[InterviewWorkspace] Failed to load session: Error: Forbidden own list
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:196:57
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 403
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+[InterviewWorkspace] Failed to load session: Error: Forbidden own list
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:196:57
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 403
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+[InterviewWorkspace] Failed to load session: Error: Forbidden own list
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:196:57
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 403
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+[InterviewWorkspace] Failed to load session: Error: Forbidden own list
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:196:57
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 403
+}
+
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > manager absent from the own list loads the protected assignment detail 27ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > send-back publishes the canonical response and unlocks the returned answer 73ms
+ × src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader 1004ms
+   → Unable to find role="button" and name "interview.workspace.approve"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen items-center justify-center bg-c-surface-raised p-8"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"flex flex-col items-center justify-center text-center px-8 py-16"[39m
+        [33mrole[39m=[32m"alert"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center rounded-token-lg bg-c-danger/12 text-[var(--c-danger)] mb-5 h-16 w-16"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"30"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"30"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"font-semibold text-[var(--c-text)] mb-2 text-lg"[39m
+        [36m>[39m
+          [0minterview.workspace.dataLoadingError[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"max-w-sm text-[var(--c-text-muted)] text-[15px]"[39m
+        [36m>[39m
+          [0mForbidden own list[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-center gap-3 mt-6"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)] bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rotate-cw"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mcommon.retry[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen items-center justify-center bg-c-surface-raised p-8"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"flex flex-col items-center justify-center text-center px-8 py-16"[39m
+        [33mrole[39m=[32m"alert"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center rounded-token-lg bg-c-danger/12 text-[var(--c-danger)] mb-5 h-16 w-16"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"30"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"30"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"font-semibold text-[var(--c-text)] mb-2 text-lg"[39m
+        [36m>[39m
+          [0minterview.workspace.dataLoadingError[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"max-w-sm text-[var(--c-text-muted)] text-[15px]"[39m
+        [36m>[39m
+          [0mForbidden own list[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-center gap-3 mt-6"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)] bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rotate-cw"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mcommon.retry[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx (7 tests | 1 failed) 1300ms
+     ✓ submitted respondent cannot edit or invoke the answer writer 104ms
+     ✓ a non-manager viewing another owner cannot approve 31ms
+     ✓ a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback 34ms
+     ✓ managed list 200 without this assignment still loads respondent feedback and permits correction 25ms
+     ✓ manager absent from the own list loads the protected assignment detail 27ms
+     ✓ send-back publishes the canonical response and unlocks the returned answer 73ms
+     × own-list unavailable still lets a permitted manager use the protected detail reader 1004ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+TestingLibraryElementError: Unable to find role="button" and name "interview.workspace.approve"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen items-center justify-center bg-c-surface-raised p-8"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"flex flex-col items-center justify-center text-center px-8 py-16"[39m
+        [33mrole[39m=[32m"alert"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center rounded-token-lg bg-c-danger/12 text-[var(--c-danger)] mb-5 h-16 w-16"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"30"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"30"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"font-semibold text-[var(--c-text)] mb-2 text-lg"[39m
+        [36m>[39m
+          [0minterview.workspace.dataLoadingError[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"max-w-sm text-[var(--c-text-muted)] text-[15px]"[39m
+        [36m>[39m
+          [0mForbidden own list[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-center gap-3 mt-6"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)] bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rotate-cw"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mcommon.retry[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen items-center justify-center bg-c-surface-raised p-8"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"flex flex-col items-center justify-center text-center px-8 py-16"[39m
+        [33mrole[39m=[32m"alert"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center rounded-token-lg bg-c-danger/12 text-[var(--c-danger)] mb-5 h-16 w-16"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"30"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"30"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"font-semibold text-[var(--c-text)] mb-2 text-lg"[39m
+        [36m>[39m
+          [0minterview.workspace.dataLoadingError[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"max-w-sm text-[var(--c-text-muted)] text-[15px]"[39m
+        [36m>[39m
+          [0mForbidden own list[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-center gap-3 mt-6"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)] bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rotate-cw"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mcommon.retry[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:198:25
+    196|     v8.getMyAssignments.mockRejectedValue(Object.assign(new Error('For…
+    197|     render(<InterviewWorkspace sessionId="session"/>);
+    198|     expect(await screen.findByRole('button',{name:'interview.workspace…
+       |                         ^
+    199|     expect(api.get).toHaveBeenCalledWith('/interview/assignments/assig…
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  15:53:28
+   Duration  2.70s (transform 681ms, setup 100ms, import 978ms, tests 1.30s, environment 239ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+TestingLibraryElementError: Unable to find role="button" and name "interview.workspace.approve"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen items-center justify-center bg-c-surface-raised p-8"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"flex flex-col items-center justify-center text-center px-8 py-16"[39m
+        [33mrole[39m=[32m"alert"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center rounded-token-lg bg-c-danger/12 text-[var(--c-danger)] mb-5 h-16 w-16"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"30"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"30"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"font-semibold text-[var(--c-text)] mb-2 text-lg"[39m
+        [36m>[39m
+          [0minterview.workspace.dataLoadingError[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"max-w-sm text-[var(--c-text-muted)] text-[15px]"[39m
+        [36m>[39m
+          [0mForbidden own list[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-center gap-3 mt-6"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)] bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rotate-cw"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mcommon.retry[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen items-center justify-center bg-c-surface-raised p-8"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"flex flex-col items-center justify-center text-center px-8 py-16"[39m
+        [33mrole[39m=[32m"alert"[39m
+        [33mstyle[39m=[32m"opacity: 1; transform: none;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center rounded-token-lg bg-c-danger/12 text-[var(--c-danger)] mb-5 h-16 w-16"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"30"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"30"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"font-semibold text-[var(--c-text)] mb-2 text-lg"[39m
+        [36m>[39m
+          [0minterview.workspace.dataLoadingError[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"max-w-sm text-[var(--c-text-muted)] text-[15px]"[39m
+        [36m>[39m
+          [0mForbidden own list[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-center gap-3 mt-6"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2 rounded-token-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--c-surface)] bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rotate-cw"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 3v5h-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mcommon.retry[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:198:25
+    196|     v8.getMyAssignments.mockRejectedValue(Object.assign(new Error('For…
+    197|     render(<InterviewWorkspace sessionId="session"/>);
+    198|     expect(await screen.findByRole('button',{name:'interview.workspace…
+       |                         ^
+    199|     expect(api.get).toHaveBeenCalledWith('/interview/assignments/assig…
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  15:53:28
+   Duration  2.71s (transform 681ms, setup 100ms, import 978ms, tests 1.30s, environment 239ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml

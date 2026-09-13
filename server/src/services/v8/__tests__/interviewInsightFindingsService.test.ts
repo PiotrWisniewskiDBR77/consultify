@@ -19,6 +19,7 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+  withPgTransaction: (fn: () => Promise<unknown>) => fn(),
 }));
 
 vi.mock('../../InterviewInsightService.js', () => ({
@@ -26,6 +27,7 @@ vi.mock('../../InterviewInsightService.js', () => ({
 }));
 
 import {
+  addEvidencePointer,
   addFinding,
   buildHandoffPayload,
   getFinding,
@@ -108,7 +110,9 @@ beforeEach(() => {
           (row) =>
             row.insight_id === params[0] &&
             row.finding_id === params[1] &&
-            row.target_id === params[2]
+            row.target_kind === params[2] &&
+            row.target_id === params[3] &&
+            row.organization_id === params[4]
         ) || null
       );
     }
@@ -214,11 +218,12 @@ beforeEach(() => {
         organization_id: params[1],
         insight_id: params[2],
         finding_id: params[3],
-        target_id: params[4],
-        target_ref_type: params[5],
-        status: params[6],
-        payload_json: params[7],
-        created_at: params[10],
+        target_kind: params[4],
+        target_id: params[5],
+        target_ref_type: params[6],
+        status: params[7],
+        payload_json: params[8],
+        created_at: params[11],
       });
       return;
     }
@@ -236,6 +241,77 @@ beforeEach(() => {
 });
 
 describe('interviewInsightFindingsService', () => {
+  it('round-trips UTC-projected Date pointer timestamps with milliseconds and preserves string values', async () => {
+    findingsTable.push({
+      id: 'finding-time',
+      organization_id: 'org-1',
+      insight_id: 'ins-1',
+      source_section_type: 'manual',
+      source_section_index: null,
+      source_key: null,
+      finding_statement: 'Timestamp finding',
+      confidence_level: 'high',
+      limits_text: 'Timestamp scope',
+      next_action_text: 'Timestamp review',
+      review_status: 'draft',
+      readback_status: 'draft_interpretation',
+      created_at: '2026-09-13T07:22:46.410Z',
+      updated_at: '2026-09-13T07:22:46.410Z',
+    });
+    pointersTable.push({
+      id: 'pointer-date',
+      organization_id: 'org-1',
+      insight_id: 'ins-1',
+      finding_id: 'finding-time',
+      pointer_type: 'question_answer',
+      source_ref: 'answer:date',
+      source_fingerprint: 'answer:date',
+      captured_excerpt: 'Date pointer',
+      captured_at: new Date('2026-09-13T07:22:46.410Z'),
+      pointer_state: 'active',
+      removal_reason: null,
+    });
+    pointersTable.push({
+      id: 'pointer-string',
+      organization_id: 'org-1',
+      insight_id: 'ins-1',
+      finding_id: 'finding-time',
+      pointer_type: 'question_answer',
+      source_ref: 'answer:string',
+      source_fingerprint: 'answer:string',
+      captured_excerpt: 'String pointer',
+      captured_at: 'stored-timestamp-string',
+      pointer_state: 'active',
+      removal_reason: null,
+    });
+
+    const findings = await listFindings('ins-1');
+    expect(findings[0].evidence_pointers.map((pointer) => pointer.capturedAt)).toEqual([
+      '2026-09-13T07:22:46.410Z',
+      'stored-timestamp-string',
+    ]);
+    const pointerRead = mockQueryAll.mock.calls.find(([sql]) =>
+      String(sql).includes('FROM interview_insight_evidence_pointers')
+    );
+    expect(pointerRead?.[0]).toContain("captured_at AT TIME ZONE 'UTC' AS captured_at");
+
+    const existing = await addEvidencePointer(
+      'ins-1',
+      'finding-time',
+      {
+        type: 'question_answer',
+        sourceRef: 'answer:date',
+        sourceFingerprint: 'answer:date',
+      },
+      'user-1'
+    );
+    expect(existing.pointer?.capturedAt).toBe('2026-09-13T07:22:46.410Z');
+    const existingRead = mockQueryOne.mock.calls.find(([sql]) =>
+      String(sql).includes('source_fingerprint')
+    );
+    expect(existingRead?.[0]).toContain("captured_at AT TIME ZONE 'UTC' AS captured_at");
+  });
+
   it('backfills persisted findings from generated themes', async () => {
     const findings = await listFindings('ins-1');
 
@@ -402,5 +478,55 @@ describe('interviewInsightFindingsService', () => {
     });
 
     await expect(getHandoffLog('ins-1')).resolves.toHaveLength(1);
+  });
+
+  it('binds Decision handoff kind in dedupe and persisted receipt', async () => {
+    const created = await addFinding(
+      'ins-1',
+      {
+        finding_statement: 'Ready for a Decision',
+        confidence_level: 'high',
+        limits: 'Scoped to reviewed interviews',
+        next_action: 'Create a decision',
+        evidence_pointers: [
+          {
+            type: 'question_answer',
+            sourceRef: 'answer:decision',
+            sourceFingerprint: 'answer:decision',
+          },
+        ],
+      },
+      { organizationId: 'org-1', actorUserId: 'user-1' }
+    );
+    const payload = (await buildHandoffPayload('ins-1', created.finding!.id)).payload!;
+
+    await recordHandoff('ins-1', created.finding!.id, payload, 'shared-target-id', {
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      targetKind: 'decision',
+      targetRefType: 'linked',
+      status: 'linked',
+    });
+
+    const lookup = mockQueryOne.mock.calls.find(([sql]) =>
+      String(sql).includes('FROM interview_insight_handoffs')
+    );
+    expect(lookup?.[0]).toMatch(/organization_id\s*=\s*\?/);
+    expect(lookup?.[0]).toMatch(/target_kind\s*=\s*\?/);
+    expect(lookup?.[1]).toEqual(
+      expect.arrayContaining([
+        'ins-1',
+        created.finding!.id,
+        'org-1',
+        'decision',
+        'shared-target-id',
+      ])
+    );
+
+    const insert = mockQueryRun.mock.calls.find(([sql]) =>
+      String(sql).includes('INSERT INTO interview_insight_handoffs')
+    );
+    expect(insert?.[0]).not.toMatch(/VALUES\s*\([^)]*'initiative'/s);
+    expect(insert?.[1]).toEqual(expect.arrayContaining(['decision', 'shared-target-id']));
   });
 });

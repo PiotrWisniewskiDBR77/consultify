@@ -1,0 +1,18 @@
+{
+  "candidate_sha": "ad7618df32266a73c29c449854eb89a0b53a37de",
+  "build_exit": 0,
+  "build_seconds": 39.08,
+  "node_heap_mib": 8192,
+  "build_log_sha256": "80f79c0a7c42aace9ec6d96a8b7faab4d472bfb6b4760f92f5a9e88ffc500fa9",
+  "behavior_tests": {
+    "files": 2,
+    "passed": 8,
+    "exit": 0
+  },
+  "limitations": [
+    "Not full MVP acceptance",
+    "No built UI smoke yet",
+    "SECURITY-W05-SCOPE remains red",
+    "No live deployment"
+  ]
+}

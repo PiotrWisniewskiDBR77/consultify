@@ -68,3 +68,8 @@ export async function closeActionCard(id: string): Promise<ActionCardModel> {
   const response = await fetch(`/api/action-cards/${encodeURIComponent(id)}/close`, { method: 'POST', credentials: 'include', headers: headers() });
   return (await read<{ card: ActionCardModel }>(response)).card;
 }
+
+export async function reopenActionCard(id: string): Promise<ActionCardModel> {
+  const response = await fetch(`/api/action-cards/${encodeURIComponent(id)}/reopen`, { method: 'POST', credentials: 'include', headers: headers() });
+  return (await read<{ card: ActionCardModel }>(response)).card;
+}

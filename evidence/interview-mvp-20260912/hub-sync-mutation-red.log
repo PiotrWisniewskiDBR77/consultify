@@ -1,0 +1,440 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ × src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub assignment lifecycle readback > updates the Inbox row from the card response without refetch or a session status inference 1244ms
+   → expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"h-full"[39m
+        [33mdata-testid[39m=[32m"interview-hub"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col h-full bg-c-bg text-c-text"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center px-4 py-3 gap-3 justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-disabled[39m=[32m"false"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Search"[39m
+                  [33mclass[39m=[32m"h-9 w-9 inline-flex items-center justify-center rounded-full transition-colors duration-150 border text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]"[39m
+                  [33mtitle[39m=[32m"Search"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-search"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"11"[39m
+                      [33mcy[39m=[32m"11"[39m
+                      [33mr[39m=[32m"8"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Module sections"[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5"[39m
+                  [33mrole[39m=[32m"tablist"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-300 bg-state-selected text-slate-900 dark:border-white/25 dark:text-slate-100"[39m
+                    [33mrole[39m=[32m"tab"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-inbox"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"16"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"16"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<polyline[39m
+                        [33mpoints[39m=[32m"22 12 16 12 14 15 10 15 8 12 2 12"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mInbox[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200/70 bg-white/70 text-slate-700 hover:bg-state-hover dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300"[39m
+                    [33mrole[39m=[32m"tab"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"16"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"16"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mSessions[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration...
+ ❯ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx (1 test | 1 failed) 1246ms
+     × updates the Inbox row from the card response without refetch or a session status inference 1244ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub assignment lifecycle readback > updates the Inbox row from the card response without refetch or a session status inference
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"h-full"[39m
+        [33mdata-testid[39m=[32m"interview-hub"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col h-full bg-c-bg text-c-text"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center px-4 py-3 gap-3 justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-disabled[39m=[32m"false"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Search"[39m
+                  [33mclass[39m=[32m"h-9 w-9 inline-flex items-center justify-center rounded-full transition-colors duration-150 border text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]"[39m
+                  [33mtitle[39m=[32m"Search"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-search"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"11"[39m
+                      [33mcy[39m=[32m"11"[39m
+                      [33mr[39m=[32m"8"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Module sections"[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5"[39m
+                  [33mrole[39m=[32m"tablist"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-300 bg-state-selected text-slate-900 dark:border-white/25 dark:text-slate-100"[39m
+                    [33mrole[39m=[32m"tab"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-inbox"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"16"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"16"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<polyline[39m
+                        [33mpoints[39m=[32m"22 12 16 12 14 15 10 15 8 12 2 12"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mInbox[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200/70 bg-white/70 text-slate-700 hover:bg-state-hover dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300"[39m
+                    [33mrole[39m=[32m"tab"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"16"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"16"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mSessions[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx:200:152
+    198|   const action=await screen.findByRole('button',{name:'accept canonica…
+    199|   fireEvent.click(action);
+    200|   await waitFor(()=>expect(screen.getAllByText('Approved',{exact:true}…
+       |                                                                                                                                                        ^
+    201|   expect(getMyAssignments.mock.calls.length).toBe(before);
+    202|  });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../Consultify/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:56:44
+   Duration  4.12s (transform 1.80s, setup 96ms, import 2.46s, tests 1.25s, environment 239ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub assignment lifecycle readback > updates the Inbox row from the card response without refetch or a session status inference
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"h-full"[39m
+        [33mdata-testid[39m=[32m"interview-hub"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col h-full bg-c-bg text-c-text"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center px-4 py-3 gap-3 justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-disabled[39m=[32m"false"[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-label[39m=[32m"Search"[39m
+                  [33mclass[39m=[32m"h-9 w-9 inline-flex items-center justify-center rounded-full transition-colors duration-150 border text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]"[39m
+                  [33mtitle[39m=[32m"Search"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-search"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"11"[39m
+                      [33mcy[39m=[32m"11"[39m
+                      [33mr[39m=[32m"8"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Module sections"[39m
+                  [33mclass[39m=[32m"flex items-center gap-1.5"[39m
+                  [33mrole[39m=[32m"tablist"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-300 bg-state-selected text-slate-900 dark:border-white/25 dark:text-slate-100"[39m
+                    [33mrole[39m=[32m"tab"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-inbox"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"16"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"16"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<polyline[39m
+                        [33mpoints[39m=[32m"22 12 16 12 14 15 10 15 8 12 2 12"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mInbox[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200/70 bg-white/70 text-slate-700 hover:bg-state-hover dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300"[39m
+                    [33mrole[39m=[32m"tab"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"16"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"16"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [36m<span>[39m
+                      [0mSessions[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-selected[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx:200:152
+    198|   const action=await screen.findByRole('button',{name:'accept canonica…
+    199|   fireEvent.click(action);
+    200|   await waitFor(()=>expect(screen.getAllByText('Approved',{exact:true}…
+       |                                                                                                                                                        ^
+    201|   expect(getMyAssignments.mock.calls.length).toBe(before);
+    202|  });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../Consultify/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:56:44
+   Duration  4.13s (transform 1.80s, setup 96ms, import 2.46s, tests 1.25s, environment 239ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml

@@ -52,12 +52,9 @@ export const toInitiativeDocumentFromRegistration = (
     description: problem || row.description || '',
     problemDefinition: problem ? { symptom: problem } : undefined,
     expectedOutcome: record.initiative.proposedOutcome || undefined,
-    // `toCanonicalInitiativeRegisterItem` zostawia `displayStatus` w słowniku
-    // CYKLU ŻYCIA rejestru ('IN_EXECUTION'), a karta czyta `displayStatus`
-    // PRZED `status` (`getWorkflowStatusForInitiative`) i nieznaną wartość
-    // ścina do DRAFT — realny rekord „W realizacji" pokazywał się jako „Szkic".
-    // Karta dostaje więc ten sam słownik, którego sama używa; `lifecycle`
-    // (nietknięty wyżej) dalej niesie stan rejestru.
+    // Wspólny kontrakt statusów mapuje cykl rejestru na słownik karty
+    // (`IN_EXECUTION` pozostaje `IN_EXECUTION`). `lifecycle` zachowuje surowy
+    // stan rejestru dla reguł zależnych od kanonicznego cyklu życia.
     displayStatus: row.status,
     canonicalVersion: record.version,
     documentOrigin: 'initiatives-runtime-v1' as InitiativeDocumentOrigin,
@@ -139,7 +136,23 @@ export async function resolveInitiativeDocumentRecord(
   }
 
   try {
-    return await readers.readLegacyInitiative(initiativeId);
+    const legacy = await readers.readLegacyInitiative(initiativeId);
+    // Unified read can project a canonical-only aggregate through the legacy
+    // detail URL. That header intentionally carries `source: 'CANONICAL'`, but
+    // it does not carry the aggregate version or the runtime document origin.
+    // Returning it here would shadow the richer registration read below and
+    // make the same Initiative use the legacy card/write path. A physical
+    // module row still wins unchanged; only the explicit canonical projection
+    // marker continues to the authoritative runtime registration.
+    const projectedSource = String(legacy?.recordSource ?? legacy?.source ?? '')
+      .trim()
+      .toUpperCase();
+    const isCanonicalHeaderProjection =
+      projectedSource === 'CANONICAL' &&
+      typeof legacy?.lifecycleState === 'string' &&
+      legacy?.documentOrigin == null &&
+      legacy?.canonicalVersion == null;
+    if (!isCanonicalHeaderProjection) return legacy;
   } catch {
     /* trasa legacy nie zna rekordu — pytamy dalej */
   }

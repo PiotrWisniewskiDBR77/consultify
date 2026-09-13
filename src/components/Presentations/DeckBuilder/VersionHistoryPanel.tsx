@@ -66,7 +66,12 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             {t('presentations.builder.versionHistory.title', 'Version History')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('common.close', 'Close')}
+          className="text-c-text-secondary hover:text-c-text-secondary"
+        >
           <X size={14} />
         </button>
       </div>

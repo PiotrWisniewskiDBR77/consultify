@@ -672,3 +672,391 @@ zmian właściciel jeszcze nie widział. Do wykonania po jego przeglądzie, nie 
 | **DEC-476 — RDZEŃ: INICJATYWY I REALIZACJA DOKOŃCZONE, RESZTA DO FALI 2** + blok Codex 10 wydany | `CODEX10_RDZEN_INICJATYWY_REALIZACJA/` (instrukcja + wklejka), baza = kandydat `codex/integrator-mvp-20260912` | **ZAPISANE / WYDANE** | 12.09 19:0x | (słowa właściciela: „musimy na pewno dokończyć moduł inicjatywy i realizacja bo to serce aplikacji. resztę możemy przerzucać do fali 2") | Twarda granica zakresu: wszystko poza tymi dwoma modułami = fala 2. Blok 10: **E0 audyt luki** każdego elementu układu docelowego ze `SPEC_FALA2_20260912.md` (ISTNIEJE/CZĘŚCIOWO/BRAK + `plik:linia` + koszt S/M/L; komponent bez montowania = BRAK; osobno nadmiar — dziś 8 zakładek Inicjatyw wobec 4 w specyfikacji), potem nawigacja 4+4 z przeniesieniem istniejących ekranów, lista inicjatyw (Archiwum/Aktualne, filtr projektami, kanban, Gantt 1/3/6/12), Bank realizacji z sygnalizacją ryzyka; generatory analiz i raporty jako kolejne bloki po wycenie. Minimum bloku: E0 + nawigacja + lista | **PORZĄDEK DOKUMENTÓW:** 4 konkurencyjne plany oznaczone jako HISTORYCZNE (`PLAN_CTO_20260910`, `PLAN_CODEX_2DNI_20260912` — mój z tego ranka, `FALA_2_PO_STAGINGU`, `CONSULTIFY_FULL_MVP_MASTER_PLAN_2026-08-20`). Właściciel: „tych planów nie wiem ile już było". Zmierzone: **52 dokumenty planów/statusów** w `docs/program` na pierwszym poziomie, z czego 6 dołożyłem 12.09. Od teraz żyją **dwa**: `TRZY_POJEMNIKI_PRACY_20260906.md` (co zostało) i ten rejestr (co było); zakres fali 2 = `FALA2/SPEC_FALA2_20260912.md`; nowe dokumenty tylko jako wklejki dla Codexa, żyjące jeden dzień |
 | **ZAMKNIĘCIE SESJI 12.09 — trwałe zabezpieczenie pracy + przekazanie** | `PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_NOC.md`; kopie `origin/backup/*-2026091[23]` | **WYKONANE** | 13.09 01:0x | **17 gałęzi Codexa zabezpieczonych kopiami na serwerze** (11 nowych wypchniętych tej nocy: rc2 `d7e713fd5f`, rc1 `c4c67a677e`, execution-bank `6919823003`, ie01-initiative-journey `ea59dd1fba`, initiative-card-split `69dbb5b746`, closed-autosave `4fe3e7d8ff`, w05-ai-evaluation, w17-deck-autosave, c6-export-contract, odbior-paczek, zatwierdzanie-inicjatyw `590915fc89`; 6 miało kopie z 12.09 i były aktualne). Pomiar zamykający: staging = demo = `60051310d7` (bez zmian od 12.09 00:20), linia = `76a57ebab8` drzewo czyste, 37 tagów cofnięcia, dysk 35 GB. **Czterech robotników nadzorcy zatrzymanych rano NIE zostawiło pracy** — katalogi i gałęzie nie istnieją (sprawdzone, nie założone) | **Codex pracuje sam, bez przeklejania** — nowe gałęzie rdzenia powstały po DEC-476 (IE01 ścieżka inicjatywy, rozbicie karty, Bank realizacji, zapis automatyczny). NIE używa nazw plików z moich instrukcji: brak `98_KANDYDAT.md` i `98_AUDYT_LUKI.md`; jego raporty są w `INTEGRATOR_MVP_20260912/` (30+ dokumentów) i `IE01_*`. Blokery wdrożenia z jego własnych raportów: C6 HOLD z 6 znaleziskami (2 krytyczne: eksport poza organizację, obejście ochrony prawnej), Wywiad 4 luki UI, front type-check bez zamknięcia, budowa frontu wymaga 8 GiB. **Dwa moje skrypty skłamały tej nocy** (tablica asocjacyjna zsh → 5 fałszywych „marker nie jest przodkiem"; dwukropek po zmiennej w cudzysłowie jako modyfikator zsh → 11 fałszywych „BŁĄD kopii") — oba obalone ręcznym powtórzeniem jednego przypadku |
 | **NOC 13.09 — praca Codexa zmierzona i zabezpieczona** | kandydat `codex/integrator-mvp-20260912-rc2` = `5de710ff46`; 42 kopie na `origin/backup/*` | **ZMIERZONE / ZABEZPIECZONE** | 13.09 06:5x | 00:45→06:45 bez przerwy: **14 nowych gałęzi**, rc2 `d7e713fd5f`→`5de710ff46` (+68 commitów); bilans wobec linii: **147 commitów, 118 plików kodu, zero migracji**. Trzy tory: **(1) rdzeń Realizacji** — prognoza i punkt odniesienia, 7 gałęzi (`execution-forecast-editor`, `native-forecast`, `cleared-forecast` z rozróżnieniem „wyczyszczone" od „brak", `canonical-forecast`, `native-baseline`, `unavailable-counts`, `bank-evidence`+`bank-views`); **(2) tor W17 Materiały/prezentacje**, 6 gałęzi (etykiety EN, przywracanie tytułu ze zrzutu, przesuwanie slajdów, czytelność trybu prezentacji, odnośnik notatnika, nazwa przycisku historii) — **POZA RDZENIEM wg DEC-476**, do rozstrzygnięcia przed scaleniem; **(3) C6** — gałąź `c6-delete-approved-out` + 13 dokumentów przeglądu | **C6 nadal HOLD**: wg własnego audytu Codexa przyjęty fragment eksportu to jedna uprawniona część częściowego eksportu, nie kompletny eksport ani dowód uprawnień; następne zadanie nazwane **C6-DEL-OFF** (punkt fizycznego usuwania superadmina ma zwracać deterministyczną odmowę BEZ pobierania klienta bazy). **S2.7 pojemnika 2 otwarte → pilotaż nie startuje.** Dobra praktyka do wykorzystania przy odbiorze: `E1B_EVIDENCE_FINAL_FREEZE_20260913T090000Z.md` — 14 plików z sumami SHA256, zamrożone do niezależnego przeglądu. Staging i demo przez całą noc `60051310d7` |
+
+
+## Integrator MVP — aktualizacja 12.09.2026
+
+Właściciel ustanowił aktywny cel pełnego MVP w pętli wykonanie → niezależny odbiór → poprawki → integracja. [Bieżący stan integracji](INTEGRATOR_MVP_20260912/00_STAN_INTEGRACJI.md), [pełny plan doprecyzowań](INTEGRATOR_MVP_20260912/PLAN_WDROZENIA_DOPRECYZOWAN_20260912.md) i [macierz zakresu](INTEGRATOR_MVP_20260912/MACIERZ_POKRYCIA_DOPRECYZOWAN.json) zachowują S1/S2 i dalszą Falę2. C2b+C4E1–E3+C8E0 scalone wyłącznie lokalnie; C4E4 i C6 HOLD po niezależnych ustaleniach. To aktualizacja stanu tych dostaw, nie odbiór MVP ani zgoda na live. Plan niezależnie ACCEPT.
+
+### Decyzje właściciela zapisane przez integratora — 12.09.2026
+
+Identyfikatory datowane poniżej zapisują faktyczne polecenia tej rozmowy i unikają kolizji z numeracją innych stanowisk; nie są nowym zatwierdzeniem produktu.
+
+- **DEC-2026091201 — pełny MVP i doprecyzowania W05.** Właściciel: „zrób teraz kompletny plan wdrożenia wszystkiego co wrzuciłem”, następnie „ustaw jako cel pracy w loopie dowiezienia pełnego wdrożenia MVP — pełnego zakresu”. Obowiązujący plan W05 obejmuje istniejący manager approve/send-back w Interview. Mandat obejmuje naprawę submitted/readOnly, statusu w Hub, widoczności feedback i sprawdzania rzeczywistego permission oraz pełny cykl jednego rekordu. Odmrożenie 02_INTERVIEW w tym zakresie, bez nowej koncepcji UI, bez live. Przyjęcie produktu dopiero po niezależnym odbiorze.
+- **DEC-2026091202 — domknięcie dwóch warunkowo przyjętych modułów teraz.** Właściciel: „MVP miało warunkowe 2 zaliczone moduły — czas je dokończyć także. Przejrzyj to co daję i przygotuj do pisania zespoły”. Źródło: załącznik da1658c4-427c-427b-9b48-c52b82665a15. Inicjatywy: Inicjatywy(Lista/Analiza), Plan, Obciążenie, Raport z pracy. Realizacja: Bank, Praca, Zarządzanie ryzykiem, Raporty. Przygotowanie i realizacja kolejnych paczek 05_INITIATIVES/06_EXECUTION w pełnym opisanym zakresie; zachowane shared SSOT,105zastanych rekordów, role i materialne zatwierdzenia. Obecne paczki Interview/C6 nie są porzucane. Szczegóły i kolejność w INTEGRATOR_MVP_20260912/TWO_MODULES_CLOSURE_DISPATCH.md; Spotkania pozostają osobnym W18, pełna Fala2 nie znika. Bez samoczynnego push/live i bez nadania finalnej akceptacji.
+
+
+## Odbiór Interview i dalsze prace — 12.09.2026, 16:09 Chicago
+
+Interview 865c61677762ce19a42e8f412b40d18e69a7fe76 ma niezależny BOUNDED ACCEPT pełnego same-record browser submit/return/edit/resubmit/approve/reload + SQL. Root scalił jako 4df001999a; na połączonym drzewie 8/8 testów w 2 plikach PASS, hooki bez obejścia. Nie jest to pełny odbiór modułu. SECURITY-W05-SCOPE pozostaje P1 w MVP; delivery wykonuje teraz rzeczywisty A/B pomiar na wyłącznie swoim cx4_pilot/API4214/UI5214, bez zmian produktu. Built frontend nie został jeszcze ponownie zbudowany po Interview.
+
+C6 pozostaje HOLD. Niezależny C6_REVIEW_FOLLOWUP.md przekazany wykonawcy: encrypted_value, serializowany JSON, istniejąca polityka legal hold na nowym eksporcie i lazy test concurrency wymagają RED/GREEN; są findings źródłowe, nie ogłoszony exploit. Autor pracuje we własnym C6/6457; żadnego merge C6.
+
+IE00 aktywnie kodowany przez Galileo. Pierwszy ApiGateway/JWT/PG pomiar: brak typed Definition read endpoint daje404 wobec oczekiwanego200; istniejący request500 jest dopiero klasyfikowany. Własny cx-codex7-pg PG18 na127.0.0.1:6458/cx7_ie00, limit384MB/1CPU, tylko12 tabel schematu auth/identity i istniejące932/933/934; bez pełnej kopii danych. Preflight zachowany, nagłówek sprzed START jest historyczny.
+
+Scope przygotowuje read-only built-candidate smoke preflight. Istniejące C8 procesy4218 PID55218 i5218 PID15855 mają cwd codex8-finanse-pelny; nie zatrzymano ich i nie przedstawiono jako root candidate. Owner checkout/live nietknięte. Cel i heartbeat5min pozostają ACTIVE, pełny MVP nie jest ukończony.
+
+
+## Następna paczka i odbiór C6 — 12.09.2026
+
+Root frontend build ad7618df32 PASS39.08s. Typecheck po Interview ujawnił193vs192 (mock getMyAssignments inferred never[]). Root poprawił wyłącznie typ API mocka i brakujące wymagane pola syntetycznej fixture; asercje bez zmian, niezależny sourceACCEPT delivery,1/1 testPASS. Końcowy tsc8GiB exit2,192diagnostics identyczne zbaseline192, added0/removed0. To ratchetPASS, nie tsc0. Domyślny tsc134heapOOM zachowany jakoFAIL.
+
+C6 oddał clean0025c1c448 do niezależnego odbioru źródeł/logów. C6_EXACT_0025_REVIEW.md: HOLD pełnejpaczk/integracji. R4populateddelete wciąż rollback500; exportfirst-policy concurrency nieodebrane, kompletność public/v8/multi-org nieudowodniona, realcostprovider/concurrentlimit oraz E1/E2/E5 nadal otwarte. Autor dostał read-only C6_NEXT_FIX_DESIGN, bez trzeciego implementationblock.
+
+Delivery rozpoczął SECURITY_W05_SCOPE_FIX.md w C4 po zwolnieniu C6: jawny mandatDEC2026091201, API4214/UI5214/cx4_pilot przydzielone; legalneA200+Bdeny, obie rodzinytras, persistedproject i wspólne review-access dlaUI. Max2implementacje: IE00+W05. Galileo real2/2GREEN dlaDefinitionrequest/return/edit/review/concurrentresubmit[201,409]/approve, sameDecision; UI jeszczeNOT_PROVEN. Ciężki slot root zwolnił do servertscIE00.
+
+Scope wykonuje built rootfrontend+C8backend smoke na jawnie przydzielonym5290; nie przestawia4218/5218. Pierwsza próba wykazała pobranieMainLayoutchunk na anonimowymdeep link przed poprawnym redirect; brakHelpchunk iHTTP/pageerror. Pełny test trwa, niePASS. Rootdist ma sourcead7618df32, późniejsza poprawka wyłącznie testowa go nie zmienia.
+
+
+## Review następnego projektu C6 — 12.09.2026
+
+C6_NEXT_FIX_DESIGN_REVIEW.md ma REVISE: SELECT advisorylock w REPEATABLE READ sam może ustalić za wczesny snapshot; rebindFK narusza bezwarunkowy immutableUPDATE trigger w20261030/20261034. Root przeczytał obie migracje i zweryfikował semantykę snapshot w oficjalnej dokumentacjiPG. Autor dostał korekty i konkretną macierz do read-only przygotowania, bez zezwolenia na zmianę retencji/triggerów. IE00 i W05 nadal aktywnie implementowane, scope wykonuje built smoke5290. Root sourceHEAD e1f9d2f188 przed tym doccommitem, clean na początku tury.
+
+
+## Uzupełnienie odbioru built UI i projektu C6 — 12.09.2026
+
+Scope zakończył run-c na rootdistad7618df32 +C8backend4218:36Finance wejśćPASS,12istniejącychMeetingsPASS,Help4PASS, realUIlogin4/4, 0HTTP4xx/5xx/pageerror. Root sam odczytał4role-theme JSON oraz obejrzałOWNER-lightFinance/MEMBER-darkHelpPNG. Nieistniejący meetings/unknown jest poprawnymNotFound, nie produktemBLOKER. AnonymousFinance pobieraMainLayoutprzed poprawnymredirect, direct/login bezMainLayout/HelpPASS; ograniczenieperformance, nie authbypass. Odkryte3realneroutes minutes/decisions/notes są teraz dopełniane w12dodatkowychwejściach, bez ponawiania poprzedniej macierzy. Pełny report pending.
+
+C6 poprawił projekt po review; root przeczytał całość. SessionlockPRZEDBEGIN kandydatem do realtestu, nie dowodem. Tombstone-rebind odrzucone; retainedidentity nadal wymaga macierzy zgodnej zeźródłami. C6 przydzielono read-only katalog własnego6457 poidentitycheck i istniejąceSSOTretencji: C6_RETENTION_AND_SCHEMA_MATRIX.md/JSONmetadata, zero source/schema/data mutation. Nie czekamy z samym odczytem na slot kodowania.
+
+IE00 według autora4/4realPASS plus servertsc0, UI i mutacje trwają. W05 według autoraA200/Bdeny działa,22/24pierwszepróby (2fixtureGRANT/REVOKE do korekty), brak finalnego odbioru. Dwa bloki nadal aktywne. Cel pełnegoMVP pozostajeACTIVE, bez live/promocji.
+
+
+## Zakończony smoke i katalog C6 — 12.09.2026
+
+BUILT_CANDIDATE_SMOKE_RESULT.md przeczytany przez root łącznie z addendum: Finance36/36, istniejąceMeetings24/24,Help4/4 iUIlogin4/4PASS;28PNG obejrzanychprzezwykonawcę, root2PNG osobno. Frontad7618df32 + istniejącyC8backend; nie pełnybackendkandydata aniMVP. NieistniejącywildcardNotFound poprawny; anonymousFinance ładujeMainLayout przed prawidłowymredirect (obserwacjaperformance). Zewnętrznefonts/analytics blokowane i policzone, bezudawania zerazasobowychbłędów. Preview5290/session44223 przekazanyroot; scope już nie używa4218. Scope rozpoczął read-only pre-review stabilnychfragmentówW05 za uzgodnieniemzdelivery, bez końcowegoACCEPTWIP.
+
+C6_RETENTION_AND_SCHEMA_MATRIX.md orazJSON przeczytane i zachowane. Kopia6457/cx6_swieza:public1802tabele,1282broadtenantcandidates;v8 121/111 pozaeksportem. 109public+1v8candidate immutableDELETEguards; counts są katalogowe/heurystyczne, nie wykonaniem każdejpolityki. complete:true eksportu nie ma podstaw pełnego zakresu. RetentionSSOT źródłowySET-MVP-DELETE-001 z23.08 ma ograniczonyrequest/status/cancel i nie ustanawia treatment immutablePII. Nowsze polecenie pełnegoMVP autoryzuje przygotowanie rozwiązania; nie jest dowodem zatwierdzonej retencji każdejklasy ani zgodąna live. Nie podmieniamy celu pełnegoE4 na trwałyREFUSE. Zostaje przygotowanie konkretnego wersjonowanego rozwiązania/odbioru; niezależneexporthold/completeness/budget/UIfixy nie zależą od tejdecyzji.
+
+W05 autor poszerza legalny recordread dla detail+answerhistory tym samym scopedguard (bez otwarcialistorg), konieczny do rzeczywistegoUI. FinalSHA i niezależnyruntimeodbiór jeszcze przednami. IE00 kontynuuje rzeczywistąkartę/listęwprzeglądarce. CelACTIVE, 2implementationblocks, braklive.
+
+
+## W17 — jawny RED zapisu prezentacji, 12.09.2026
+
+Root uruchomił istniejący testDeckBuilder.restoreNoWrite. Najpierw0tests importfailstaregmocki18n; adapterroot odtworzył import i aktualny sharedTeresa handler zamiast emerytowanegopanelu. Następnie5/5wykonane i5FAIL; izolowanyreadonlyreopen1FAILz1niezamówionymPUT. Produktnietknięty. Scope niezależnieprzeczytałdiff/source/logi i zakwalifikował rzeczywistą regresjękomponentu: wbudowanywriter bezbaseline/inflightguard, nieużywanyuseDeckAutosave, restore/accept nieuzgadniająstanupisarza. Nieudowodniony efektPG, brakbrowserproof. Asercjezachowane; jawnyREDutrwalony, nieGREEN.
+
+W17_DECK_BASELINE_REVIEW.md ma konkretny następnyfix i odbiórUI/API/PG. Kolejka zachowujeC6export/budget orazW17, nie zamyka3trudnychscenariuszy anipełnegomianownikaakcji. W05scopereview wykryłmemoizacjęuprawnień i staleJWTrole; autorpoprawiłźródła i meldował39realPASS, dalejrealUI/deeplinkdetail+history oraz finalmutacje. Scope teraz dostępny dofinalnegoodbioru poSHA. IE00 kontynuujeUI. Dwa blokiimplementacyjne pozostająIE00+W05.
+
+C6 dostał dalszyread-only pełnytablecontractJSON (per-tablepublic/v8,nie sameagregaty) i dokładnyexportfixpacket. Braknowejimplementacji/DBmutacji. WszystkieotwartebramkiMVP zachowane, celACTIVE, ownercheckout/live nietknięte.
+
+
+## Kolejne odbiory — 12.09.2026
+
+Root HEAD7b7a1c5175clean na początku tury. C6_EXPORT_FIX_PACKET przeczytany wcałości, C6_EXPORT_PACKET_REVIEW.md wymaga dwóch korekt: writer-first absent/existing race zmutantBEGIN-before-lock oraz niepewne acquireACK wymagające cleanup/discard zamiast powrotudo pool. C6 dostał poprawęread-only, całyeksportpozostajecelem, boundedv8nie zastępujeE4.
+
+Scope dostał rzeczywistyW17readonlyreopen pomiar rootbuilt5290+C8backend4218/PG6459 poidentitycheck, tylko własny syntetycznydeck przezwriter; odczytversion/time/history iPUTbezuseredits. Bez productchanges/restart/live/flagbypass, to weryfikacja a nie trzeciaimplementacja. Wynikpending.
+
+W05 realUI ujawnił sessionreadguard odcinającyquestions/notes/evidence/summary/links dla scopedreviewera. Autor dodaje tylko readgrant zpersistedassignment, bez rozszerzeniaownershipmutations i bezruszaniaanonymouswall. DwaimplementationblocksIE00+W05 nadal aktywne. CelpełnegoMVP zachowanyACTIVE.
+
+
+## W17 — realny odczyt zmienia dane, odbiór 12.09.2026
+
+Root zweryfikował W17_DECK_RUNTIME_REOPEN.md oraz surowe readback.json/content-delta.json. Lokalny built frontend ad7618df32 (5290), istniejący backend C8 (4218), PostgreSQL cx8_e0 (6459): własny deck utworzony prawdziwym POST 201; samo otwarcie i reload, bez edycji, wykonały dwa PUT autosave. SQL i API potwierdzają wersję 1→2→3, historię 0→1→2 oraz zmiany updated_at. Hash każdego payloadu odpowiada odczytowi API po zapisie. Drugi reload zmienia w deck_json wyłącznie updated_at. Wynik REPRODUCED / RED, nie PASS produktu. Brak page errors i HTTP 4xx/5xx; sześć prób zewnętrznych fontów/analytics zablokował lokalny przyrząd.
+
+To rozszerza poprzedni dowód komponentowy na rzeczywisty lokalny browser/API/PG. Nie jest dowodem staging ani całego backendu kandydata. W17_DECK_BASELINE_REVIEW.md pozostaje pakietem naprawy jednego writera, persisted baseline, CAS/conflict, restore/AI i kolejki in-flight; pełne W17 nie zamyka się wraz z tym błędem. Scope otrzymał read-only audyt pełnego mianownika akcji DeckBuilder, z pierwszeństwem niezależnego odbioru finalnego W05.
+
+IE00 autor zgłosił utworzenie inicjatywy przez rzeczywisty InitiativesHub, request i RETURN; dalszy UI edit/review/approve trwa, bez finalnego ACCEPT. W05 kończy scoped session-read oraz pełny UI. Dwa bloki implementacyjne pozostają IE00 i W05; C6 export i naprawa W17 czekają na zwolnienie slotu. Cel pełnego MVP ACTIVE, bez promocji ani działań live.
+
+
+## Root — weryfikacja zapisów UI IE00 i W05, 12.09.2026
+
+Root odczytał IE00 ui-vertical.json i ui-final-sql.jsonl: sześć komend UI request/RETURN/edit/review/resubmit/approve ma HTTP201, wersje agregatu18–23, niezmieniony Decision ID oraz poprawioną kartę summary-scope v4. Utworzenie przez Hub jest odrębnym dowodem; osiem kart przed request przygotowano przez API. Liczne poboczne404/503 pozostają w logu; nie ma pełnego fresh-org ani całego IE00 PASS. Autor aktualizuje checkpoint i domyka mutacje/OFF/legacy/finalSHA.
+
+Root odczytał W05 ui-final-pass/cycle-evidence.json i obejrzał cycle-10-manager-reload.png: ten sam assignment/session przechodzi submit/send-back/edit/resubmit/approve, SQL approved/completed, poprawiona odpowiedź EUR4800, trzy wpisy historii (submission/send_back/submission). Ekran po reload pokazuje Approved i poprawioną odpowiedź. To dowód pierwszego cyklu W05, nie końcowy niezależny ACCEPT ani świeża organizacja.
+
+Do autora W05 przekazano konkretne obserwacje do klasyfikacji: wielokrotne403 własnego assignment detail respondenta i insights oraz polski missingItems label w danych EN. Nie upoważnia to do poszerzania insights. B/revoke przy otwartej karcie, końcowe mutacje i finalSHA nadal trwają. Root przygotował integrację zmian testów z zachowaniem wcześniejszego typedmock14cd86a504. Kandydat f7bc8677cc pozostaje bez nowej implementacji IE00/W05. Cel pełnegoMVP ACTIVE.
+
+
+## W17 — mapa akcji i uruchomiony manual baseline, 12.09.2026
+
+Root przeczytał W17_DECK_ACTION_COVERAGE.md; osobne aliasy i dynamiczne podmenu nie mogą być zamknięte jednym PASS. Niepodłączone quickactions nie są mandatem przywrócenia UI. Root uruchomił cztery istniejące test files na e4184a1786:21/21 PASS,4.08s, exit0. W tym jeden source-text test, reszta helper/registry/render-boundary; brak dowodu persistence i plików. W17_DECK_MANUAL_BASELINE_RESULT.md rozdziela poziomy. Real autosave i component restore/accept/in-flight nadal RED.
+
+W05 autor ustalił różnicę revoke-hash jako równoległy evaluate-answers aktualizujący ai_review_snapshot_json/ai_reviewed_at/updated_at; pełny diff zachowany i test odmowy powtarzany po zakończeniu aktywnego wywołania. Root zobaczył org-only predicate w evaluateSessionAnswers i zlecił scope niezależną kontrolę nadrzędnych guardów/bazy bez wywołania providera. To osobne potencjalne znalezienie security, nie udowodniony exploit ani rozszerzenie WIP przed finalSHA. IE00 i W05 kończą swoje paczki; ciężki slot przekazują bezpośrednio. Cel pełnegoMVP ACTIVE.
+
+
+## Następna paczka C4 — AI evaluation, 12.09.2026
+
+Root przeczytał niezależny W05_AI_EVALUATION_ACCESS_FINDING.md: org-only authorization przed odczytem/ewaluacją/persist, handler identyczny z865c, source finding potencjalneP1 bez runtime exploita. W05_AI_EVALUATION_EXECUTION_PACKET.md gotowy dla C4 dopiero po finalnym SHA obecnej paczki i oddaniu do review. Naprawa obu endpointów, ponowna kwalifikacja przed persist i readonly open submitted; sześć grup dowodów, zachowana anonimowość/timeout/istniejący lifecycle. Ten sam slot implementacyjny, nie trzeci blok.
+
+Root wychwycił w negative-evidence.json evaluationPending1 oraz evaluate200 po hash-readback. Autor uznał korektę: approve403 i niezmienność w oknie komendy, nie brak wszystkich aktywnych zapisów. Dopisuje final readback po zakończeniu evaluate bez kasowania dowodów. Scope zna ograniczenie. Cel pełnegoMVP ACTIVE; brak integracji WIP/live.
+
+
+## W05 exact-SHA przekazany do niezależnego odbioru — 12.09.2026
+
+Autor ukończył0dedb2345e0278475400e4d97ba3e6225ce51f9e; root zweryfikował commit13files i czysty WT C4. Autor: servertsc0, backend43/43 po mutacjach, front5/7/3, realny UI jeden rekord. Scope dostał priorytet finalnego source/runtime odbioru tego SHA. Resources C4 API4214/Vite5214/PG6455 pozostają przy tym odbiorze; następny autorowy branch AI evaluation nie może zmienić serwowanego source bez uzgodnienia z recenzentem.
+
+Root wykonał git merge-tree --write-tree HEAD8b90eff015 +0dedb2345e: exit0, tree a6d5a98d28f5802225360413b6cb0a35eb7f34f0, brak konfliktów. To wyłącznie preflight obiektów Git; index/working tree produktu i branch nie zostały scalone. Integracja dopiero po niezależnym odbiorze; dotychczasowy typedmock pozostaje do ratchet po merge.
+
+IE00 scope pre-review zgłosił wybór członkostwa multi-org i opóźniony response A→B; autor naprawia te konkretne przypadki wraz z typed guard bulk/doubleclick. Nie rozszerza pierwszego pionu o pozostałe bramki przed checkpointem. Cel pełnegoMVP ACTIVE, brak live/deploy i brak fałszywego końcowego ACCEPT.
+
+
+## W05 odebrany i zintegrowany — 12.09.2026
+
+Root przeczytał W05_FINAL_INDEPENDENT_REVIEW.md w całości: scope bounded ACCEPT0dedb2345e, niezależny43API/PG PASS, świeży jeden rekordUI submit/return/edit/resubmit/approve/reload PASS, negatywy A/B/revoke z pending0/finished1 i równym hashem. Pierwsze kolidujące/selector próby zachowane jako niekwalifikowane. Istniejący evaluate debt i async opener SOURCE_RISK nie zamknięte.
+
+Root scalił0dedb do kandydata: merge6a697629c49b101215e50e81d61a01b6581af8cf, normalny freeze hook zaakceptował obowiązujące znaczniki. Bez konfliktów; wcześniejszy typedmock zachowany. Na scalonym kandydacie trzy zmienione pliki testów front (review hook/Hub/Workspace)15/15 PASS,11.14s,exit0; W05_INTEGRATION_FRONT.log. Nie jest to nowy built/backend/live smoke kandydata. Kolejny wspólny tsc/build jeszcze do wykonania po zwolnieniu heavy slotu IE00.
+
+C4 next AI evaluation implementuje w osobnym sparse worktree i przejmuje zwolnione zasoby scope do swoich lokalnych testów. Scope wolny po W05, IE00 kończy dwie wykazane poprawki. W17/C6 i pozostały pełnyMVP nadal w kolejce; celACTIVE, brak push/deploy/live.
+
+
+## Post-merge ratchet W05 i finalny IE00 — 12.09.2026
+Frontend tsc8GiB na root32222a8edb zakończony exit2. Normalized diagnostics:192baseline=192candidate, added0/removed0 (W05_INTEGRATION_FRONT_TSC_DELTA.json). To ratchetPASS, nie tsc0. Root server tsc teraz ACTIVE session76190, W05_INTEGRATION_SERVER_TSC.log; ciężki slot pozostaje root do końca.
+IE00 source commit e14526a711a12832a529e85d60b3b69858c432e9 zweryfikowany przez root:23files, normalne hookiPASS wg autora; source/runtime przekazane scope. Niezależny odbiór rozpoczęty. Root merge-tree --write-tree na32222+e145 exit0, tree e7727c55c434be5c444d33a13fd1bbcaf0bf075b, bez konfliktów; nie wykonano integracji źródeł IE00. Pierwszy pionDefinition, nie całeIE00. W17 autor rusza w odrębnym checkout z jużwydanym zakresem po swoim trwałym checkpoint.
+
+
+## IE00 pierwszy pion przyjęty i scalony — 12.09.2026
+
+Root przeczytał IE00_FINAL_INDEPENDENT_REVIEW.md w całości. Niezależny ACCEPT sourcee14526a711, docs-only d74abe43: PG6/6, identity2/2, nowa inicjatywa z Hub201, jawne8HTTPcardprep+8review,6UIcommands201, SQLv23DEFINED/Decisionv4APPROVED z zachowanymID poRETURN/resubmit. Typedconsumer i ONreadbackPASS. To presenter/Gateway/JWT/PG, nie pełnyAppRoutes/login;20pobocznych404/503 i wizualne/i18n luki zachowane. Pozostałe12gate/kworum/legacy adapter/policyrace niezamknięte.
+
+Root merge d74abe43 →6bd8d59581a4a88f9a5d4b4fdf6a167ad92a7cbc, normalny freezehookPASS, bez konfliktów. Połączony kandydat ma Interview W05 oraz pierwszy Definitionvertical. Kontrola build/tsc poIE00 jeszcze przednami. Feature defaultOFF zachowane, bez live.
+
+### Rozwinięcie wykonawcze istniejącego mandatu DEC-2026091201 — W17
+Polecenie właściciela pełnegoMVP oraz obowiązujący plan W17 obejmują działające narzędzia i profesjonalną prezentację. Integrator kieruje udowodnioną regresję unsolicited Deck autosave do naprawy w11_MATERIALS: jeden writer/persistedbaseline, canonicalload/serverrestore/AIaccept/conflictReload bez zbędnegoPUT, realedit/localrestore zapisują, CAS/inflightundo i historia zachowane. Odbiór5componentRED→GREEN oraz realbrowser/API/PG z W17_DECK_BASELINE_REVIEW.md i W17_DECK_RUNTIME_REOPEN.md. To naprawa istniejącego kontraktu w pełnymMVP, bez nowego zakresu biznesowego ani live; świadomy marker [ODMROZENIE 11_MATERIALS DEC-2026091201], WSPOLNE tylko jeśli faktycznie dotknięte. DEC-2026091202 pozostaje wyłącznie05/06 i ich wspólne integracje. W17 autor dostał tę korektę; nowy sparseWT od32222 chroni C7 podczas odbioru.
+
+
+## Wspólny build i API poIE00 — 12.09.2026
+Root przeczytał IE00_INTEGRATED_VERIFICATION.json: niezależne6/6 real Gateway/JWT/PG na30242b2bad (source6bd8d59581)PASS, rekordyUI nietknięte. Root build8GiB session66101 zakończonyexit0,2m18s; ostrzeżenie dużychchunków nadal istnieje. Servertsc session53379 exit0. Root dist jest już nowym kandydatem (hash w external IE00_W05_CANDIDATE_CHECKPOINT.json), nie starymad7618; preview5290 wskazuje ten nowydist. Nie wykonano nowegobrowserodbioru tego buildu/live.
+Frontend tsc poIE00 ACTIVE session58064, log IE00_W05_INTEGRATION_FRONT_TSC.log. Tym razem jawny incremental cache root-front.tsbuildinfo poza repo, bez wyłączenia kontroli i ze standardową walidacją zależności TypeScript; celem reużycie pracy przy kolejnych scalaniach, nie nowy próg. Po zakończeniu porównać normalized diagnostics do192baseline, niezakładaćPASS. Heavyroot do końca. Scope przechodzi read-onlypre-review AIEvaluation, autorW17 naprawia dodatkowy potwierdzonycomponentRED niewidocznegoConflictBanner wMELS. PełnyMVP ACTIVE.
+
+
+## Current checkpoint: typefix and final review dispatch
+Root c149baf2a1 is clean; normal typefix commit hooks completed. Frontend tsc session44333 completed exit2, 192 diagnostics versus baseline192. Four integration additions are removed. Exact normalized messages differ25/25;22 pairs normalize by quoted union ordering, remaining3 use truncated type displays/union order. File+TS-code multiplicities are identical. This is not a clean TypeScript check or an exact-message ratchet PASS. Raw evidence: IE00_W05_FRONT_TSC_FIXED.log and IE00_W05_FRONT_TSC_FIXED_DELTA.json. Do not restart completed sessions58064/44333. Build remains source6bd8d59581, not c149.
+W17 author reports final37/37 and real restore/edit, AI Accept/edit, held PUT/queued revert, conflict Reload with0PUT, local restore and final reopen without extra write. Exact SHA still pending normal hooks; scope was reactivated for independent final review after frozen SHA. Author evidence is not final independent acceptance.
+AI evaluation author confirmed2/2 anonymous recommendation sentinel leaks through real Gateway/JWT endpoints with controlled local evaluator. Minimal existing redaction fix is in progress; repeat58 and final tsc before SHA. Earlier58 PASS did not include nonempty sensitive recommendations. No real provider quality claim. Full MVP remains ACTIVE, no live changes.
+
+
+## Sequential implementation blocks after W17 / AI checkpoints
+W17 exact0005b14011de1ef447b6842ecff1d3569ba202e0 packet read fully by root. Merge-tree from rootc3499aa797 exits0, treecf17e4c9bec4574ffc0ca117663d428f707b2c65; no integration before independent verdict. Scope reports own37PASS and real reopen0PUT/SQL unchanged, restore/edit to v4; AI Accept instrument timeout preserved, continuing same record, verdict pending.
+C6 preflight approved: isolated codex-c6-export-20260912 branchcodex/c6-export-contract-20260912 from exact0025c1c4484254ca29435ca0cc30638ba2bd889d, own disposable cx6_export_contract, API4216 after freshfreecheck. Author verified6457 local Colima mux to cx-codex6-pg and SQLcx6_swieza/consultify. Corrected packet premise: current ownership export has no advisory lock, not merely wrong order; superadmin export is a sibling requiring the same read-only export protection and proof. True v8 writer namespace must be verified. Contract1EXPORT/4EXCLUDE/1918UNRESOLVED remains explicit.
+AI source12bd6a32936c952b56328345b0a4b405821895ce clean, author58PASS/tsc0, but sparse setup omitted .husky and original commit did not execute hooks. Author disclosed this, materializing hooks and checking identical staged diff via isolated temporary index/HEAD; do not call original commit hookPASS. Final packet pending.
+Root reread CLOSED_AUTOSAVE_EXECUTION_PACKET.md fully and assigned delivery the next block after AI handoff: isolated checkout from rootc3499aa797, reproduce CLOSED no-edit autoPUT403 and false UNSAVED; fix hydration and capability checks while preserving legal topbar/card/runtime-only writers. Runtime allocation follows read-only preflight; AI review resources stay frozen. No changes to105 legacy initiatives or live. Two implementation blocks C6 + CLOSED after current handoffs. Full MVP remains ACTIVE.
+
+
+## W17 bounded autosave accepted and integrated
+Root read W17_AUTOSAVE_FINAL_INDEPENDENT_REVIEW.md fully. Independent ACCEPT exact0005b14011:37/37 plus new real deck1bb7a33536884dd393af5e7615e99a7c v1 throughv11, canonical reopen/restore/AIaccept/conflictReload no extra PUT, actual edits/localrestore and queuedrevert persist with expected CAS; final SQL unchanged on reload. Source races tested via component/hooks, runtime same-deck serialization tested through real API/JWT/PG. Harness interruptions retained, no full typedchat/visual/export/W17 acceptance.
+Integrated into root8289bc7ab0f115b62bc54cc78c3c661b97f1a261 via normal merge, freezehookPASS, no conflicts. Root postmerge37 tests ACTIVE session34154, W17_INTEGRATED_TESTS.json/log; do not restart or assume PASS. Shared build/typecheck after next accepted AI integration still required. Existing dist remains source6bd8d59581.
+C6 actual lookup found119/121 v8 table names also public; createSession bareSQL writes public with currentsearch_path, not v8. Author will not fake namespace proof or change business routing just to pass export. Qualified business writer lookup and legalhold lock implementation proceed independently. Full MVP ACTIVE.
+
+Root W17 postmerge session34154 finished exit0: 37/37 tests, failures0, pending0. This verifies integrated test scope, not shared build/live.
+
+
+## AI evaluation independently accepted and integrated with W17
+Root read full W05_AI_EVALUATION_FINAL_INDEPENDENT_REVIEW.md: bounded ACCEPT12bd6a32936c952b56328345b0a4b405821895ce. Own reviewer58PG/10front PASS, new one-record complete manager loop, readonly reload0evaluate/identical snapshot, explicitRefresh200 persisted. Controlled local evaluator, not real provider quality.18 inherited insights403 and separate UIidentity source risk retained. Hook procedure qualified retrospectively; root proved exact staged diff50490bytes.
+W17 typefix31319 ended exit2:192vs192, identical file/TS-code multiplicities, no new Presentations diagnostics. Independent two-test sourcePASS, root37PASS. Normal typefix commit4c9e51d394 hooks0. Root mergedAI without conflict into ac98ccaaf3b92a76daa84e75478def8cd87b417c, normal freezehookPASS.
+Combined build active15524 (npm run build,8GiB; W17_AI_COMBINED_BUILD.log), root AI front10 rerun active70763 (AI_EVALUATION_INTEGRATED_FRONT.json/log). Do not restart. Full server/front typechecks after AI still pending. Dist is being rebuilt; do not assert old or new browser result without completion/identity. Scope moved to read-only C6 pre-review; C6 and CLOSED authors continue. Full MVP ACTIVE, no live operations.
+
+Root integrated AI frontend70763 exit0,10/10PASS,0fail/skip JSON verified. Combined build15524 remains active.
+
+
+## Combined candidate gates and built-runtime dispatch
+Servertsc84281 completed exit0. Combined frontend incremental tsc ACTIVE9266, W17_AI_COMBINED_FRONT_TSC.log, sourceac98ccaaf3b92a76daa84e75478def8cd87b417c/docsdc41189ccf. Preserve current source during check; do not restart. Build15524 exit0 and front10PASS already recorded.
+Scope assigned independent built candidate Interview full-cycle/no-op-reload/Refresh: new API5294 and preview5295 (root lsof both free), rootdist+rootGateway source, local6455cx4_pilot, unique synthetic fixture. External launcher copies allowed, no root source/config edits, old4214/5214 unchanged. Must verify actual proxy/requestchain and dist hash, preserve controlled evaluator and local DBguard. No staging/realAI/fullMVP claim.
+CLOSED author confirmed real browser RED two unsolicitedPUT403 after opening own synthetic CLOSED initiative, full SQL row unchanged,0pageerror. Existing C8 API has inherited404; new API5293 allocated after freecheck to same6459 and ownfrontend5292, source withIE00, no restart4218/migrations/legacy-record edits.
+Root read C6_EXPORT_PRE_REVIEW.md fully: no new snapshot lock/ACK sourceblocker; columnTypes drift gap accepted by author. Contract export still WIP/incomplete, realPG proof pending. Full MVP ACTIVE.
+
+
+## Built Interview accepted; full Materials action census next
+Root read complete W05_BUILT_INTEGRATION_INDEPENDENT_REVIEW.md. Bounded ACCEPT sourceac98ccaaf3b92a76daa84e75478def8cd87b417c: full fresh owned Interview cycle toapproved/completed/3history, reload0evaluation and unchangedAIfields, Refresh200persist. All260 observed assets byte-match rootdist, indexhash matches;0devimports. Root API5294/preview5295 realGateway/JWT/PG6455, controlled evaluator. Login used API-installedsession and initialfixtureSQL; not loginform/creationflow/realAI/fullMVP.9insights403 and0pageerror recorded. Runtime sessions71305/18684 active, browser finished; no restart needed.
+Combined frontend9266 completed exit2,192vs192 and equal file/TS-code multiplicities; raw message union ordering differs. Server84281 exit0/build15524 exit0/front10PASS. Root heavy processes all complete.
+Scope now assigned actual built DeckBuilder action census against W17_EXECUTION_PACKET and W17_DECK_ACTION_COVERAGE: inspect observed MELS menus/toolbars/conditions, map full observed denominator to proof/gap, then concrete next behavior packet. Only own legalfixture if needed, no outbound/share/publish/delete/realAI, no third implementationblock. Full W17/export/visual remain OPEN.
+Root CLOSED WIP source review requested topbar-only save preserving unpersisted card edits after capability revoke, and explicit owner/date clearing (undefined omission cannot mean successful persistence). Author adding these cases, no finalSHA yet. Full MVP ACTIVE.
+
+
+### Integrator RC2 — CLOSED autosave, 12.09.2026
+
+Bounded repair integrated e0fb12491f4b2547228008dee276202950b95aed: independent real UI/API/PG ACCEPT, root10/10, frontend192 baseline parity, normalhooks0. RC1 immutable; no deployment. Evidence: INTEGRATOR_MVP_20260912/RC2_CLOSED_INTEGRATION_CHECKPOINT.md. IE01 issued on exact integrated base; full Initiatives/Execution/MVP remain open. C6 export prerequisites/privacy/authorization and combined acceptance remain open.
+
+
+### RC2 C6 integration and export disclosure follow-up — 12.09.2026
+Integrated checkpoint 6038c2ae78db0b2acde777ed749eab94a8ad6323, normal hooks PASS, clean at checkpoint. RC1 unchanged. Bounded snapshot/Interview privacy export:26 unit and25 real tests PASS, server tsc0, build0 (index355b3eae3757fe96606b303feafb9857a48e4eedfe402f4ee479315b35b33c3e). See RC2_EXPORT_INTEGRATION_ACCEPTANCE.md. No deployment/full E4/full MVP claim.
+Current follow-up WIP: existing Superadmin JSON download now displays complete/partial/unknown; malformed response denies download; original Blob unchanged. CSV adds reserved __consultify_export_manifest_v1 record without changing table,row_index,data_json header or business counts. Collision rejected. Root mounted14/14 and CSVcontract11/11 PASS (CSV independently parsed by Python standard-library); mutation and independent review pending. No self-service org UI added; that product requirement remains OPEN, personal GDPR unchanged. Source/build acceptance6038 predates this follow-up: new WIP is not independently accepted or built yet.
+Galileo checkpoint459069bf0e93d1b4a485e33d5e42856d8e2dab85 current MANUAL_HUB content under independent Turing review. No integration yet. Nietzsche IE01 actual Hub UI creation in progress on owned5292/5293/PG6459, no completed journey claim. Full program goal ACTIVE.
+
+
+RC2 combined canonical current-content evidence: reconciled exactly7 files from cf0848→459069 after byte-checking root prerequisites; existing root policy rollback-discard and CSV changes preserved. Configured realGateway RC2_MANUAL_COMBINED_GATEWAY_CONFIGURED exit0,1PASS/0fail/skip with declared test-only flags; initial RC2_MANUAL_COMBINED_GATEWAY omitted flags and failed guard before product scenario, retained as configuration error, not product regression. Galileo now owns6457/4216 again.
+Disclosure independent review caught malformed-envelope COMPLETE bug; min envelope/date/rowcount/expectedorg checks added. Mounted22PASS (8previous +14export), not built/browser proof; final independent review pending. Source manifest RC2_MANUAL_DISCLOSURE_SOURCE_MANIFEST.json records current WIP. Root servertsc95300 active; no commit/deploy yet. Full self-service UI/canonical history/other families/full E4 remain OPEN.
+
+
+RC2 canonical/disclosure final pre-commit: independent bounded ACCEPT (reports in INTEGRATOR_MVP_20260912), root22mounted+30backend+1configuredGateway PASS, servertsc0, frontend192 baseline parity. Build134 default4GiB heap then configured8GiB exit0, index9e7d7735cb704d1a82910012cf8df3578e1d5557ba752ebbae25b21c6f6e4d07. Source manifest updated after format. Normalcommit next; no deployment, full E4/MVP OPEN. Heavy slot released Galileo for tasks tsc.
+
+
+Self-service organization export WIP on fbe8d8feb3: existing AdminAuditLogPanel route retention-export, separate own-org authenticated helper; role/currentorg/actor guards, epoch suppresses stale success/failure after org/actor/role/route/unmount, original Blob and shared partial disclosure, audit CSV/GDPR preserved. Actual tests81PASS =17panel(2old+15new)+59parentrouting+5client. Parent missingmemo dependencies initially masked by global fresh useNavigate mock (initial59PASS is NOT RED); unmock actual MemoryRouter/hooks gives1FAIL58PASS, restored59PASS. Epoch bypass6FAIL11PASS→restored17PASS. Final source hashes RC2_SELFSERVICE_SOURCE_MANIFEST.json; independent review pending; no built-browser/commit/deploy. Tasks65fb independentlyACCEPT not integrated; Decision atomic source stamp author runtime in progress. Full MVP ACTIVE.
+
+
+Write permission restored: root verified current RC2 WIP on fbe8, actual tasks1/1 and Decision3/3 Gateway PASS, final servertsc0/front192vs192 no added diagnostics, buildindex334e66f9d99c90c1898ad6ebb42de93ae9d8a03eab61b039392bede319d1827c. No deploy; normal commit next, built UI remains open. Previous readonly pause did not discard WIP.
+
+
+### RC2 built export accepted within scope; API error repair
+Independent bounded ACCEPT on691982300372a9bdb9e506a4414e92ebbcd3e968/index7cca541d61229a73b683e7316979df04c5a8566649eff8c051d379780847df1e:7actual built downloads (OWNER/ADMIN light/dark, SUPERADMIN light/dark, after hold cleared) byte-equal to response; MEMBER403, legalhold423/noFile, actual JSON/CSV privacy/content readback,7business SQL hashes unchanged. Full packet INTEGRATOR_MVP_20260912/E4_BUILT_INDEPENDENT_ACCEPTANCE.md. Fixtures and initial instrument failures qualified; same-mounted retry is not claimed. Partial export/full E4/deletion/pilot/deployment remain OPEN.
+
+Built audit failure surfaced nested ApiError [object Object]. Source freeze released after final acceptance. Root constructor now reuses existing normalizeApiErrorMessage, preserves envelope metadata; actual API regression RED2FAIL2PASS→GREEN4PASS, compatibility10PASS. Independent review and newbuild44378 pending; old acceptedbuild does not prove updated source.
+
+IE01 author reports Gateway8PASS covering named reviewer/foreign/revoked/stale, servertsc0 and guard mutation RED; final frozenpacket/review/current UI remains pending. Realizacja E1 current gap review assigned; full E1-E6 closure remains required. Source-aware Decision export WIP23unit is not privacycomplete: root identified filters.customPrompt/topic_focus source provenance checks still needed. Full MVP ACTIVE; no live/push/deploy.
+
+ApiError final follow-up: source/readable built2PASS then DATABASE_ERROR language RED1/4→client11PASS, independent reali18next ENPL2PASS and actualbuilt OWNEREN1PASS. New servedindex7a6c8fa7497be7d2294976428088bbde0c85f58a31022b7d53fa031d4ed333e5,225asset hashes match. All three reports in INTEGRATOR_MVP_20260912. Underlyingaudit500/full E4 remain OPEN. Normal commit next. Piotr requests Sol: execution_sol agent started read-only E1 fullcanonpreflight in clean codex-execution-bank-20260912 from691982; coding waits IE01 checkpoint freeze.
+
+
+### IE01 reviewed repairs integrated — 2026-09-13
+
+RC2 merge 55823322b391cb8bc471b74a1a74f01ecd698a20 integrates initiative journey and repair commit ea59dd1fbab2ff7fa42e7285839318d148496970. All three introduced review findings closed: mandatory named baseline review, same-mounted A→B card navigation, preparation lens browser history. Independent baseline evidence domain19/Gateway16 and navigation/CLOSED/drafts20 PASS; integrated navigation/profile/readiness13 PASS and server tsc exit0. All11 repair git blob hashes match accepted commit. Build running; no deploy or full IE01 acceptance. Original retained gaps, including full26 semantics and lifecycle/operational acceptance, remain OPEN. Receipts saved in INTEGRATOR_MVP_20260912.
+
+Integrated verification complete: servertsc0, bounded13/13, existing ApiError 5/5 PASS. Build initial4GB OOM134, unchanged source rebuild8GB exit0; index SHA256 efb97bf8ef167c8e656588998842367d6ddb12a89f435ee20bb8e2d72922c8ab. Runtime/browser acceptance on this merged build remains OPEN; no deploy.
+
+
+### E1a Execution navigation integrated — 2026-09-13
+
+Commit 8991ceb703dc0d466eb3a96e096f053a5eeb14f1 integrates four Menu2 functions, legacy subviews, typed document/cold initiative identity and history preservation. Independent source24 plus15distinct regressions and actual mountedHub/MemoryRouter6PASS; integrated30/30PASS. All8accepted source/testhashes match. Normal integration commit hooks passed on fullstageddelta (author sparse lacked.husky, so authorcommit hook result is not relied upon; sparse corrected). Initialmounted5/1 was globalnooprouter harness error, not productRED. Historical37/34counts discarded; authoritative reviews E1A_SOL_INDEPENDENT_REVIEW.md/E1A_MOUNTED_NAVIGATION_REVIEW.md. Frontend tsc remains 192 existing diagnostics with unchanged file/code counts. Build PASS (8 GiB Node heap). Actual built navigation four checkpoints PASS, no page errors; seven HTTP403 retained and two telemetry POSTs, no business mutation tested. Served/local index SHA256 2d17b133a2d11819aa690eb3d22dbfff11cc29f3c48bf4e1bfef696ed28c1427. See E1A_RC2_BUILT_NAVIGATION_REVIEW.md. E1b-d/lifecycle/full MVP/deploy remain OPEN.
+
+### Native Tasks/Milestones integrated — 2026-09-13
+
+# IE01 native card split — integrated verification
+
+Source commit `60bd526b92caa51c4de145ddb2c38f645787dd5e`, integration `c98da8bc7c3d0b59283db25c56d18db1ba9b405a`. Source normal hooks passed. Independent and integrated seven-file tests each 30/30 PASS. Full build exit0. Frontend typecheck initial default-heap OOM134 retained; unchanged-source 8GB retry exit2, 192 vs192 existing file/code diagnostics. This is not a clean typecheck.
+
+Actual built preview5292 + API5293: open Milestones, explicitly switch Preview and verify Add milestone disappears, Tasks → Milestones → reload retains native card URL. Four navigation checkpoints PASS, no page errors. Screenshot inspected. Existing organization-members403 and planning/legacy/suggested-changes/attachments404 remain; not accepted by this check. Existing local DEFINED fixture has no milestones; this does not prove milestone persistence or a fresh full journey.
+
+Build and served index SHA256 `0f11413090329945b83286b07283407eb187ca44caea9b19bb6af70595fff1dc`. Raw runtime: `codex4-scratch/ie01-rc2-runtime-20260913/ui-native-card-split-v3/result.json`, `milestones-preview.png`, `milestones-reload.png`. Earlier v1 incorrectly assumed DEFINED opened Preview; v2 used button locator for actual radio. Both instrument failures retained; no product change between attempts.
+
+Native runtime-v1 Tasks and Milestones now separate; legacy keeps combined. Independent initial gate fixture was unreachable and is corrected explicitly in follow-up acceptance. Full milestone owner/evidence/dependency work, full IE01, full MVP and deployment remain OPEN.
+
+### C6 reviewed target-kind and v9 compatibility repairs — 2026-09-13
+
+Root frontend commit04932b0094f28254e64a6fdbeca590af02969560 recognizes exact v9 while preserving unknown-version/structure/count rejection. Normal hooks PASS. Root matched disclosure RED3/4→GREEN4/4, independent4/4. C6 uncommitted writer/route/resolver now persist actual targetKind, dedupe by kind and organization, and require Decision handoff kind for Decision content authorization. Independent resolver/writer49/49 and actual Express handler18/18 PASS (data/child services mocked), server tsc exit0. This is not real handoff SQL/ApiGateway/JWT acceptance. See C6_SOL_TARGET_KIND_DISCLOSURE_FOLLOWUP.md and preserved raw evidence.
+
+C6 integration remains HOLD for absent runtime immutable Finding↔generation receipt; helper and tests in progress do not close that gap. Manual/historical Finding creation must remain functional; missing receipt denies export content. Root served build remains native-split c98da8bc/index0f114130, preceding the one-line v9 disclosure source commit; no new UI build claim for disclosure. E1b author self-review moving to independent Sol review; complete MVP and live deployment remain OPEN.
+
+### C6 runtime receipt and E1b next gates — 2026-09-13
+
+Receipt helper independently12/12 PASS after root RED found own __proto__ field loss/hash collision; fixed null-prototype accumulator and locale-independent pointer ordering. Runtime writer now assigned atomic new generation-derived Finding+pointers+receipt, locked current-content identity, rollback, no retroactive sourceKey receipt, manual/history compatibility. Root explicit runtime resolver RED1 selected/42 skipped proves timestamp-compatible content still allowed without receipt; C6 remains HOLD pending wiring. Original cx6 catalog readback confirms audit10columns/PKid only, does not promote UNKNOWN ownership. Evidence in HANDOFF_CHICAGO and C6_ROOT_RECEIPT_HELPER_GREEN/C6_ROOT_RUNTIME_RECEIPT_REQUIRED_RED.
+
+Independent E1b author34/34 PASS does not close3 added mounted failures: missing-case Initiative hidden, selection lost on reload, asOf stale afterBack. Exact repairs plus nullable progress DTO released to Sol author; independent reviewer retains originalRED. Forecast feed remains UNKNOWN/PARTIAL. Full MVP and deployment remain OPEN.
+
+### C6 receipt-aware read-side verified; E1b final numeric correction — 2026-09-13
+
+Root read-side46/46 PASS. Actual PostgreSQL export integration2/2 PASS: existing generation CAS predicates, missing receipt denial, explicitly seeded matching receipt allowance, permanent invalidation denial in UTC and America/Chicago; source hashes stable and all scoped fixtures SQL readback zero. This is actual export-service SQL with bounded eight-table contract and explicit receipt fixture, not production writer or ApiGateway/JWT/full endpoint acceptance. See INTEGRATOR_MVP_20260912/C6_ROOT_RECEIPT_EXPORT_REALPG_REVIEW.md. Private audit remains owner UNKNOWN and excluded from export contract/payload. Writer V2 final proof/review remains open; earlier root tsc reported3 nullable-string errors, author reports narrowing fixed, fresh final tsc pending.
+
+E1b V4 author41/41 PASS, independent final review pending. Root corrected reviewer-authored global flattened Kanban order requirement against binding canon §4.2/10.3; semantic groups preserve dataset and within-group order. Actual Gantt header/track offset fixed with shared grid. Root then found Number(null) invents0 for blocker/pending-decision counts and execution version; exact null-vs-zero V5 correction assigned before commit. Forecast DTO remains OPEN/PARTIAL. Full MVP, operational gates and deployment remain open.
+
+C6 writer V2 independently ACCEPT within assigned transaction scope: root8/8 actual PostgreSQL PASS, actual two-connection locks, UTC/Chicago, PK rollback, permanent invalidation/foreign collision, unchanged catalog and cleanup zero. Full server tsc V3 exit0; previous3nullable errors resolved. Exact frozen source hashes and evidence in C6_ROOT_WRITER_V2_INDEPENDENT_ACCEPTANCE.md. Independent ROOT read-side review assigned to Sol who did not author those4files; combined C6 commit/integration still open. E1b no-case visible row could not select/preview; root finding reproduced independently4PASS/1FAIL and author fix underway, preserving old case URLs and native initiative fallback. No broader readiness claim.
+
+### C6 receipt packet integrated; E1b V7 accepted for integration — 2026-09-13
+
+Source C6b66b474da4ed3af521a7bf5a34fcd0ca557204fc normal hooks PASS; exact final commit integrated as f07849ec5a93c6e14dfaf27c981a27ba9cdc8e5a. All17accepted source/test SHA256 values match. Whole-branch merge was safely aborted after conflicts from older divergent history; exact commit cherry-pick imports only accepted17-file delta. Root integrated8-file regression103/103 PASS (C6_RC2_INTEGRATED_GREEN.json/log). Both writer and reader independently accepted within scope, actualPG8+2PASS; final servertsc V3exit0 on C6WT. Root combined candidate typecheck/build/HTTP seam verification remains next. No deploy; auditownership UNKNOWN, full export/deletion gates open.
+
+E1bV7 independent44/44 PASS across9requestedfiles (Vitest18suites), all9source/testblobsmatch; native missing-case row now visible/selectable/highlighted and restored acrossview/reload. Scoped ACCEPT receipt copied; normal-hook authorcommit pending. Forecast source/DTO remains required open work; independent canonical source/projection packet dispatched. Full MVP unchanged and active.
+
+### Integrated C6 and E1b verified — 2026-09-13
+
+# C6 and E1b integrated verification — 2026-09-13
+
+Current source HEAD:27da10f07d15c78f0eabea8754da4d7d69e9d0bd. C6 receipt packet integratedf07849ec5a; actual Gateway timestamp repair31084b34d1be3b12bb174e623155bca45511572b. E1b integratedfee4f8eaec73156fdec1b9945d435265613b6883, calendar type repaira743a96c6302b6e81d030168e0c3cc687eaa1fee, final physical axis repair27da10f07d15c78f0eabea8754da4d7d69e9d0bd. All source commits used normal hooks; final root tree clean before this report.
+
+
+C6integrated103/103 and E1b44/44PASS, fullservertsc0 aftertimestampfix, frontend194→192 restoredexistingbaseline(added0/removed0). BuildV2exit0/index1a21270ca74dfa8735483e69f7bfe6d56a89527863c52499f52121beb63ecddb. ActualBankfivecheckpoints/twonative no-case rows PASS includingselection/reload and physicallyalignedGantt; retained403/telemetry and limiteddark/no-casefixture. ActualGateway/JWT/PGwriter→handoff→JSON/CSVALLOW→editrestoreDENY passes bothUTC/Chicago withcleanupzero. Fullreport C6_E1B_RC2_INTEGRATED_VERIFICATION.md separates remaininggates. Forecast/progressfeed implementation dispatchednewisolatedWT; independentadversarialreviewactive. WholeMVP and deployment open.
+
+
+### Gantt labels — local browser verification 2026-09-13
+
+Physical label RED6.2px → GREEN11px, same5view/reload checkpoints and aligned geometry. Build exit0; existing403 and limited local fixtures retained. See INTEGRATOR_MVP_20260912/E1B_GANTT_LABEL_READABILITY_ACCEPTANCE.md. Forecast/progress packet remains under independent review; no deployment or full MVP acceptance.
+
+
+### Active bounded packets — 2026-09-13
+
+Gantt readability source committed427d0d6280 with normal hooks and independent bounded ACCEPT. E1b evidence author and independent reviewer remain active in codex-execution-bank-evidence-20260913: historical asOf navigation and malformed evidence are under repair. New actual malformed receipt RED12tests/9PASS/3FAIL preserved in E1B_EVIDENCE_ADVERSARIAL_MALFORMED_RED_20260913T0805Z.json (SHA823e364305b080cfe1606e6e09501c1b16733122270c82946c0e1921cced3059). Current database timestamp semantics and final integrated feed remain NOT_PROVEN.
+
+C6-DEL-OFF assigned to export Sol in clean isolated codex-c6-delete-off-20260913, base427d0d6280, after root read binding SET-MVP-DELETE-001: DESTRUCTIVE_EXECUTION_OFF. Author must preserve auth, refuse410 before deletion machinery and remove misleading purge UI, with independent acceptance before integration. Full export/deletion gates remain HOLD; see copied remaining-gates audit.
+
+Fourteen captured Execution403 responses are intentional server denials for ordinary users, not authority to widen access. UI currently performs eager privileged reads and substitutes zero manager counts after failures; next bounded UI packet is documented in EXECUTION_403_CLASSIFICATION_20260913.md and waits for current shared-file ownership to finish. No live/schema/default-flag changes or deployment.
+
+
+### Reader and approved-out deletion integrated — 2026-09-13
+
+Root9d003646 includes E1b75f322858 (all14 blobs matched) and C6 approved-out deletion9d003646. Build PASS and actual Bank5checkpoints; signedJWT Gateway reader/guard3/3PASS, C6 actualGateway2/2 plus rootfocused3/3PASS. Original whole legacywriter Gateway test8/12 reveals retiredreplan409 and missing canonical forecast command; replacement assigned separate worktree, no guard bypass. Full details, reset incident, evidence limitations and runtime identities: INTEGRATOR_MVP_20260912/E1B_C6_INTEGRATED_READER_AND_DELETE_CHECKPOINT.md. Full MVP/deployment remains open.
+
+
+### C6 real menu correction — 2026-09-13
+
+Real StandardTable conversion and the built screenshot exposed a disabled Delete entry missed by the previous mock. Root removed the row-menu destructive property and strengthened the test: behavioral RED → 3/3 focused GREEN, build PASS. Actual browser GREEN/cleanup pending; see INTEGRATOR_MVP_20260912/C6_REAL_MENU_CORRECTION_ACCEPTANCE.md. No deployment or full E4 acceptance.
+
+C6 menu follow-up: actual built GREEN confirmed no Delete controls/dialogs, policy text visible, real export GET200/download13052bytes with exact target and truthful partial manifest (unresolved90). Root inspected screenshot. Fixture cleanup pending; unrelated system-health404 retained.
+
+
+### C6 menu bounded acceptance complete; next packet — 2026-09-13
+
+C6 actual built UI and exact fixture cleanup are complete: org/users/memberships/policy all zero, private token removed, owned4216/5216 stopped. Root verified no listeners and read final checkpoint. This closes menu correctness/export availability only; full E4 remains open (partial manifest). Next isolated packet codex-execution-unavailable-counts-20260913 at c65f430a60 fixes false zero after denied/failed manager reads and stale member-name cache across identity/tenant changes; backend permissions remain unchanged. Forecast writer author/reviewer continue actual Gateway/PG acceptance. Sparse test setup corrected to include shared/services/dev-render/__mocks__/packages before frontend-baseline comparison; missing-checkout diagnostics are not accepted as baseline.
+
+
+### Forecast user-flow gap — 2026-09-13
+
+Root verified the new canonical forecast API has no component caller. Follow-on implementation brief: INTEGRATOR_MVP_20260912/E1B_OPERATIONAL_FORECAST_UI_NEXT_PACKET.md. Writer acceptance stays API-scoped; native same-Initiative creation-to-execution and visible correction remain open. Current independent review also requires truthful lifecycle/projection capability denial before writer freeze.
+
+
+### Canonical forecast API integrated — 2026-09-13
+
+Root da5cb31a85 integrates independently accepted API writer53a8eae767; exact9/9 blobs and root17/17PASS. Actual Gateway/PG7/7; full user flow remains open. See INTEGRATOR_MVP_20260912/E1B_CANONICAL_FORECAST_INTEGRATED_ACCEPTANCE.md. Next card/editor implementation assigned in isolated worktree at da5cb31a85; reviewer traces native same-ID path.
+
+
+### Execution unavailable data integrated — 2026-09-13
+
+Root42e7fc215b integrates accepted UI packet5c6cf66b5b: independent10/10PASS,8/8 hashes exact. Built-browser proof pending after combined build. See INTEGRATOR_MVP_20260912/EXECUTION_UNAVAILABLE_COUNTS_INTEGRATED_ACCEPTANCE.md. Forecast card implementation and native path review active in parallel.
+
+
+Combined forecast/unavailable-data build completed successfully on root source42e7fc215b; dist index11398cf01198f177425ca96068102b78fbc2042b31a23229130dfaec2f0a9b3f. Browser acceptance remains pending and is separately assigned; no deployment claim.
+
+
+### Built Bank access correction — 2026-09-13
+
+Actual normalBank0manager/0directory calls verified as MEMBER; see INTEGRATOR_MVP_20260912/EXECUTION_UNAVAILABLE_COUNTS_BUILT_BROWSER_CHECKPOINT_V1.md. HistoricalManager state was instrumented; do not count as menu reachability. Root localAPI5293 reloaded from integratedsource for upcomingeditorproof; no live deployment.
+
+
+### Native forecast completion assigned — 2026-09-13
+
+Binding SSOT review confirms forecast owned by Execution and one Initiative identity; existing canonical command receipts are an implementation adapter choice, no new owner decision. Native Slice A assigned in isolatedcodex-execution-native-forecast-20260913 atca39f08b6e: canonical forecast+receipt-backed Bank read, optional existing module projection without inserting copies, capability alignment. Slice B card editor remains separately owned; third Sol independently reviews UI, root independently reviews native server contract. No schema/flag-default/live changes. Source recommendation INTEGRATOR_MVP_20260912/E1B_OPERATIONAL_FORECAST_UI_SOL_READONLY_RECOMMENDATION_20260913.md; full native acceptance remains OPEN.
+
+
+Native forecast independent RED captured:6collected/0PASS, same missingprojection failure in everycase, not6separatebugs. See INTEGRATOR_MVP_20260912/E1B_NATIVE_FORECAST_ROOT_RED.md. Agent implements native read/write; root adversarial coverage preserves version/asOf/clear distinctions.
+
+
+Native reader root candidate V2 independently PASS8/8 exit0, raw E1B_NATIVE_FORECAST_ROOT_CANDIDATE_V2.json SHA2992a4ef9507d8f55627386ca8a8dd7c2b679f8ae5b6caaffd09f93e1523c412. This is injected-query readbehavior, not actualGateway/PG. Root source review requires two writer corrections before acceptance: native response clock_timestamp differs from persisted receipt DEFAULT CURRENT_TIMESTAMP; native end-only mutation mustnot silently turn absentstart into explicitnull. Author notified to preserve untouchedfields and assert exact timestamp+absence on actualnative path. UI author reports15/15+DATE alias1/1GREEN, frontendtsc session44254 active; independent finalfreeze stillpending.
+
+
+Root independently compared E1B_OPERATIONAL_FORECAST_UI_FRONTEND_TSC_20260913T102500Z.log against integratedbaseline:192/192 normalized(path,TS-code),added[],removed[]. E1B_OPERATIONAL_FORECAST_UI_ROOT_TSC_DELTA.json saved. Author confirmed terminal44254 exit2, notglobalPASS; serveralias tsc next. Native source now usesCURRENT_TIMESTAMP and preservesonly suppliedfields; actualnativewriterreadback stillpending.
+
+
+### Native forecast + editor integrated — 2026-09-13
+
+Candidate2ff754d84b: reviewed17/17 source hashes exact, root combined24/24PASS and combinedbuild0. LocalAPI5293 refreshed with explicit unified-read testcohort; defaultflags/liveunchanged. Actual governed native flow and visible editor acceptance remain OPEN. See INTEGRATOR_MVP_20260912/E1B_NATIVE_EDITOR_INTEGRATED_ACCEPTANCE.md.
+
+
+Native governed API chain reached same-ID IN_EXECUTION49, accepted handoff and ACTIVEExecutionCase; no legacy initiatives row in authorSQLreadback. See INTEGRATOR_MVP_20260912/E1B_NATIVE_GOVERNED_FLOW_API_CHECKPOINT.md. Visiblecard repair/acceptance and strictfixturecleanup pending; nofreshorg/deployment/fullgatePASS.
+
+
+Native card reachability integrated at96db009a37 after independent34/34 and exact6/6 hash verification. Combined build passed; visible same-ID forecast acceptance active. See INTEGRATOR_MVP_20260912/E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
+
+
+Built native Timeline remains RED after source96db009a37: canonical navigation renders but actual component is missing due to legacy right-column filtering. Runtime-only composition correction assigned; previous injected-renderer test is insufficient. See updated E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md. No forecast mutation or full acceptance.
+
+
+Native Timeline production composition correction integrated at7ef39217f6 after independent40/40; combined build passed with dist8c3d1816cb3bdcc17be3ae10dd6d92f6146628e82f1f23e1c2f1843127dc59fc. Built save/clear/readback remains active, not accepted yet. See updated E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
+
+
+First native visible forecast Save passed: same Initiative49→50, exact end2026-10-02 and persisted receipt; root inspected API response and screenshot. Reload/Bank/clear/cleanup pending; disappearing success feedback retained separately. See E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
+
+### Integrator 2026-09-13 — operational forecast confirmation
+Feedback/copy fix integrated as `bcd6dd90d8` with normal hooks, independent16/16 and frontend build exit0. See `INTEGRATOR_MVP_20260912/E1B_FORECAST_FEEDBACK_REVIEW.md`. Actual Save50/Clear51 + immutable receipt readback confirmed; final stabilized read-only Timeline correctly renders explicit clear. Bank VALUE_CLEARED label remains an open bounded defect; baseline projection review and built toast acceptance continue. No full S1/S2, deployment or pilot gate is promoted.
+
+### Integrator — forecast acceptance complete locally, W17 resumed
+Forecast correction/clear UI and Bank semantics passed final visible browser+PostgreSQL acceptance; settled success toast and reload confirmed, exact fixture cleanup COMMIT with10categories0. Receipt: INTEGRATOR_MVP_20260912/E1B_FORECAST_FEEDBACK_REVIEW.md. Native optional baseline projection integrated9853018b32 with19/19 combined tests; shared build refresh in progress. W17 authors proceed with8card Deck conflict/history/restore and Notebook duplicate-title containers/pages; independent reviewer assigned. Full S1/S2 and deployment/pilot gates stay open.
+
+### Integrator — W17 fixes integrated, runtime acceptance pending
+Restore-title fix integrated `f8a728694a`; EN Deck toolbar/structure fix integrated `942bb40775`, following independent source review and normal author hooks. Root combined route/translation tests passed 13/13. Close-button accessibility fix `771e7970e6` is also present. Notebook verified-parent routing is under final type checks before integration. Actual shared frontend/API still predate these fixes; Deck fixture remains version6 pending qualified restore/edit/reload. These are source acceptances, not deployment or full Materials acceptance.
+
+### Integrator — W17 three corrections accepted in actual local runtime
+Combined source `61e0500ce0`, served dist SHA256 `da17cb9e61615d1884ab6e8a0fd3882b1e44f1717eec26d3449144da25416f73`; build0 after documented4GB Node heap failure and8GB retry. Actual restore→edit→reload passed with matching UI/API/PostgreSQL title and8cards, EN toolbar/history Close passed, Notebook parent-context alias/reload/sidebar isolation passed27checks with cleanup absence readback. Root independently reviewed raw artifacts and screenshots; details in INTEGRATOR_MVP_20260912/W17_FIXES_INTEGRATION_REVIEW.md.
+Present navigation and audience-note separation passed a read-only slice, but root screenshots reveal near-white slide content on white and an unreadable audience counter. Present visual acceptance remains RED; bounded theme/render fix assigned. Next actual UIcreate/manual Deck and Notebook paths are active. No full W17,16module,MVP,deployment or pilot acceptance is claimed.
+
+### Present diagnosis refined and controls integrated
+Settled style measurement corrected the early screenshot interpretation: slide content has10.045:1 contrast after normal entrance animation; no palette/animation change is warranted. Persistent counter contrast1.176:1 and six unnamed icons corrected in0e2f5282ac, build0; actual browser retest pending. Notebook UIcreate/edit/reload accepted with V8PUT200 and cleanup readback; previous timeout was an incorrect legacy-only test expectation. Manual Deck actualUIcreate/title/add/duplicate reached heldversion5; remaining actions/scenarios stay open.
+
+### Integrator — W17 action batches and export quality gate
+SlideSorter Move fix integrated at `57cc0592f9`, built and accepted with normal keyboard/pointer interactions: three writes v5→v8 matched UI/API/PostgreSQL after hard reload and all controls were in bounds. Notebook added nine reload-persistent rich-format actions; twenty registry actions now have runtime proof. Presentation export fixture reached quality `canExport:true`, score70, P1=0 at version10 while approval/export remain open. A protected no-email, role-aware access-code registration path for a distinct ADMIN reviewer was identified and is being exercised locally. No deployment, full Materials/Notebook denominator, professional-file,16-module, S1/S2 or pilot gate is promoted.

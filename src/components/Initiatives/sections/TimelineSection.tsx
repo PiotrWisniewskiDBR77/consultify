@@ -39,10 +39,11 @@ import { buildScheduleItems, computeCriticalPath } from '@/services/initiativeSc
 import { InitiativeCalendar } from '../calendar';
 import { InitiativeGantt } from '../gantt';
 import { useInitiativeContext } from './InitiativeContext';
+import { OperationalForecastEditor } from './OperationalForecastEditor';
 import type { TimelinePlannerHandle } from './TimelinePlanner';
 import { TimelinePlanner } from './TimelinePlanner';
 import type { InitiativeSectionProps, TimelineMilestone, TimelinePhase } from './types';
-import { getTimelineMode, TIMELINE_MODE_META } from './types';
+import { getTimelineMode, isInitiativeTimelineLocked, TIMELINE_MODE_META } from './types';
 
 // ==========================================
 // HELPERS
@@ -515,7 +516,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     setTimelineMilestones,
     timelinePhases,
     setTimelinePhases,
-    timelineLocked,
+    timelineLocked: contextTimelineLocked,
     baselineVersion,
     estimatedDurationMonths,
     raidItems,
@@ -588,7 +589,11 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   const plannerRef = useRef<TimelinePlannerHandle | null>(null);
 
   // Derived values
-  const mode = getTimelineMode(status);
+  const canonicalLifecycle =
+    initiative?.documentOrigin === 'initiatives-runtime-v1' ? initiative?.lifecycle : null;
+  const timelineLocked =
+    contextTimelineLocked || isInitiativeTimelineLocked(status, canonicalLifecycle);
+  const mode = getTimelineMode(status, canonicalLifecycle);
   const modeMeta = TIMELINE_MODE_META[mode];
 
   const plannedStart = startDate || initiative?.plannedStartDate || initiative?.planned_start_date;
@@ -1871,7 +1876,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {daysRemaining !== null &&
-            (mode === 'BASELINED' || mode === "TRACKING" || mode === "PLANNING") && (
+            (mode === 'BASELINED' || mode === 'TRACKING' || mode === 'PLANNING') && (
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
                   isOverdue
@@ -1898,6 +1903,8 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         </div>
       </div>
 
+      {timelineLocked && <OperationalForecastEditor />}
+
       {/* ══════════════════════════════════════════════
           MODE: ESTIMATE (DRAFT → REVIEW)
           ══════════════════════════════════════════════ */}
@@ -1923,7 +1930,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       {/* ══════════════════════════════════════════════
           MODE: PLANNING (PROMOTED → PLANNING)
           ══════════════════════════════════════════════ */}
-      {mode === "PLANNING" && (
+      {mode === 'PLANNING' && (
         <>
           {/* Date summary strip */}
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4">
@@ -2118,10 +2125,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       {/* ══════════════════════════════════════════════
           MODE: BASELINED / TRACKING (SCHEDULED → EXECUTING)
           ══════════════════════════════════════════════ */}
-      {(mode === 'BASELINED' || mode === "TRACKING") && (
+      {(mode === 'BASELINED' || mode === 'TRACKING') && (
         <>
           {timelineLocked && (
-            <Callout variant="success">
+            <Callout variant="info">
               {t('initiatives.timelineSection.timelineLockedBaseline', {
                 version: baselineVersion ? ` v${baselineVersion}` : '',
               })}

@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:5292/initiatives?mode=doc&open=initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb&card=summary-scope",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "theme": "light",
+  "state": "see adjacent result.json",
+  "rgbMean": [
+    245.09789969135804,
+    245.7189475308642,
+    246.236875
+  ],
+  "weightedMeanLuma": 245.6243071234568,
+  "visualInspection": "Final approve light/dark inspected: decision readable; duplicate same-record tabs visible. No full26 visual acceptance.",
+  "themeLumaDelta": 219.95,
+  "themeLumaDeltaAbove40": true
+}

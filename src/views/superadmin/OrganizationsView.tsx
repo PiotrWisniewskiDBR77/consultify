@@ -12,12 +12,11 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Trash2,
   Users,
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
@@ -32,6 +31,7 @@ import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { organizationExportDisclosure } from '../../utils/organizationExportDisclosure';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 interface AccessRequest {
@@ -64,6 +64,9 @@ interface OrganizationsViewProps {
 type OrganizationRow = Organization & {
   organization_name?: string;
 };
+
+const DESTRUCTIVE_DELETION_DISABLED_COPY =
+  'Automated deletion is disabled until retention and legal-hold rules are approved.';
 
 type JsonRecord = Record<string, unknown> & {
   data?: JsonRecord | unknown[];
@@ -131,6 +134,8 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     requests: string | null;
     codes: string | null;
   }>({ organizations: null, requests: null, codes: null });
+  const exportInFlight = useRef(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Modal States
@@ -246,58 +251,18 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
   };
 
-  // Organization Actions
-  // [ODMROZENIE 14_ADMIN DEC-457] Podpiecie istniejacego handlera: backend
-  // (DELETE /api/superadmin/organizations/:id) juz wymagal confirmation+reason
-  // (requireConfirmation('delete_organization','critical')) — ten handler ich
-  // nigdy nie wysylal, wiec kazde kliknieccie Delete konczylo sie 428 i
-  // przycisk faktycznie nigdy nie dzialal. P5 (kryterium 12, S2.7) wymaga
-  // dodatkowo wpisania nazwy organizacji jako potwierdzenia nieodwracalnej
-  // operacji — window.prompt zamiast window.confirm, bez nowego ekranu.
-  const handleDeleteOrg = async (id: string, name: string) => {
-    const typedName = window.prompt(
-      `This will PERMANENTLY delete "${name}" and ALL of its data (users, projects, initiatives, tasks — everything). This cannot be undone.\n\nType the exact organization name to confirm:`
-    );
-    if (typedName === null) return;
-    if (typedName.trim() !== name) {
-      toast.error('Organization name did not match — deletion cancelled.');
-      return;
-    }
-    setProcessingId(id);
-    try {
-      setActionError(null);
-      await Api.deleteOrganization(id, {
-        organizationName: name,
-        reason: 'Superadmin console deletion, confirmed by typing the organization name',
-      });
-      const refreshedOrganizations = await Api.getOrganizations();
-      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
-        throw new Error('Organization deletion could not be confirmed by read-back');
-      }
-      const normalizedOrganizations = getOrganizationsPayload(refreshedOrganizations);
-      setOrganizations(normalizedOrganizations);
-      setLoadErrors((prev) => ({ ...prev, organizations: null }));
-      if (normalizedOrganizations.some((org) => org.id === id)) {
-        throw new Error('Organization deletion was not confirmed by the server');
-      }
-      toast.success('Organization deleted');
-    } catch (err) {
-      const message = normalizeApiErrorMessage(err, 'Failed to delete organization');
-      setActionError(message);
-      toast.error(message);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   // [ODMROZENIE 14_ADMIN DEC-460] Podpiecie gotowego klienta Api.exportOrganizationData
   // (backend juz gotowy i przetestowany przez P5, evidence/p5-eksport-20260910/) pod
   // jeden nowy przycisk kebaba — zero zmian ukladu tabeli, zero zmian innych akcji.
   const handleExportOrg = async (id: string, name: string) => {
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
     setProcessingId(id);
     try {
       setActionError(null);
+      setExportNotice(null);
       const blob = await Api.exportOrganizationData(id, 'json');
+      const disclosure = organizationExportDisclosure(JSON.parse(await blob.text()), id);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       const safeName = name.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || id;
@@ -307,12 +272,14 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      toast.success('Organization data exported');
+      setExportNotice(disclosure.message);
+      if (disclosure.complete) toast.success(disclosure.message);
     } catch (err) {
       const message = normalizeApiErrorMessage(err, 'Failed to export organization data');
       setActionError(message);
       toast.error(message);
     } finally {
+      exportInFlight.current = false;
       setProcessingId(null);
     }
   };
@@ -759,14 +726,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               >
                 <Edit2 size={16} />
               </button>
-              <button
-                onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
-                disabled={processingId === org.id}
-                className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
             </div>
           );
         },
@@ -806,11 +765,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       universalHandlers: {
         preview: () => setSelectedOrg(org),
         edit: () => startInlineEdit(org),
-      },
-      destructive: {
-        label: 'Delete',
-        icon: Trash2,
-        onClick: () => handleDeleteOrg(org.id, getOrgName(org)),
       },
     };
   };
@@ -1125,6 +1079,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         </div>
       )}
 
+      {exportNotice && (
+        <div
+          role="status"
+          className="mb-6 rounded-lg border border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-800 dark:text-slate-200"
+        >
+          {exportNotice}
+        </div>
+      )}
+
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
         <button
@@ -1189,6 +1152,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
+          </div>
+
+          <div
+            role="status"
+            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200"
+          >
+            {DESTRUCTIVE_DELETION_DISABLED_COPY}
           </div>
 
           {/* Organizations Table */}

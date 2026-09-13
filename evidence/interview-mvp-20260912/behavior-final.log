@@ -1,0 +1,303 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > submitted respondent cannot edit or invoke the answer writer 107ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a non-manager viewing another owner cannot approve 28ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > a permitted manager sees review even when session owner equals their identity, and publishes the assignment readback 31ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > managed list 200 without this assignment still loads respondent feedback and permits correction 26ms
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > manager absent from the own list loads the protected assignment detail
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > manager absent from the own list loads the protected assignment detail
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > send-back publishes the canonical response and unlocks the returned answer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > send-back publishes the canonical response and unlocks the returned answer
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+stderr | src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader
+[InterviewWorkspace] Failed to evaluate answers: InterviewCapabilityError: Interview evaluation capability failed (request_failed)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/InterviewWorkspace.tsx:667:25 {
+  capability: 'evaluation',
+  kind: 'request_failed',
+  status: undefined,
+  [cause]: Error: AI unavailable
+      at /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx:99:47
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+      at wrapper (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+      at new Promise (<anonymous>)
+      at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+      at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+      at run (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+      at limiterFn (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+      at runHook (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+}
+
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > manager absent from the own list loads the protected assignment detail 29ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > send-back publishes the canonical response and unlocks the returned answer 71ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx > manager review uses the real Workspace lifecycle controls > own-list unavailable still lets a permitted manager use the protected detail reader 23ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx (7 tests) 317ms
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub assignment lifecycle readback > updates the Inbox row from the card response without refetch or a session status inference 248ms
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx (1 test) 250ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > declares every Interview object type from the owner decision 1ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > keeps every supported business action discoverable in row and preview 2ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > has real, translated PL and EN labels for every action key 28ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > is consumed by the row-menu host and every dedicated preview action component 1ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > dispatches the matrix-backed action from every dedicated preview footer 150ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx (5 tests) 184ms
+ ✓ src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts > Interview approval lifecycle owner contract > persists submit lifecycle state and answer history in one fail-closed transaction 31ms
+ ✓ src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts > Interview approval lifecycle owner contract > makes send-back history mandatory and rolls all lifecycle writes into one transaction 0ms
+ ✓ src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts > Interview approval lifecycle owner contract > approves assignment, session and optional task through one conditional transaction 0ms
+ ✓ src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts > Interview approval lifecycle owner contract > does not replay a failed canonical mutation through a legacy endpoint 0ms
+ ✓ src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts > Interview approval lifecycle owner contract > renders the persisted lifecycle decision as an auditable receipt 0ms
+ ✓ src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts (5 tests) 34ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.progress.test.ts > calculateInterviewProgress > counts organization-defined question categories in the session total 29ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.progress.test.ts > calculateInterviewProgress > keeps an empty interview at an honest zero percent 0ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.progress.test.ts > getInterviewWorkspacePresentation > keeps the owner-approved single-question flow in its dedicated wide workspace 0ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.progress.test.ts > getInterviewWorkspacePresentation > keeps task_list inside the shared N-mode shell 0ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.progress.test.ts > getInterviewWorkspacePresentation > keeps conversational inside the shared N-mode shell 0ms
+ ✓ src/components/Interview/__tests__/InterviewWorkspace.progress.test.ts (5 tests) 31ms
+
+ Test Files  5 passed (5)
+      Tests  23 passed (23)
+   Start at  15:59:29
+   Duration  7.28s (transform 2.52s, setup 266ms, import 4.52s, tests 816ms, environment 1.27s)
+
+
+ Test Files  5 passed (5)
+      Tests  23 passed (23)
+   Start at  15:59:29
+   Duration  7.28s (transform 2.52s, setup 266ms, import 4.52s, tests 816ms, environment 1.27s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp/junit.xml

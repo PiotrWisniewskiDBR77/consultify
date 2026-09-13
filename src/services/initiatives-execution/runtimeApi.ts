@@ -178,14 +178,30 @@ export async function listMyHandoffAcceptances(signal?: AbortSignal) {
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
-export async function listExecutionCases(signal?: AbortSignal) {
+export interface RuntimeExecutionCaseSummary {
+  executionCaseId: string;
+  initiativeId?: string;
+  initiativeTitle?: string | null;
+  version?: number;
+  state?: string;
+  executionManagerId?: string;
+  handoffPackageId?: string;
+  handoffPackageVersion?: number | null;
+  acceptedBaseline?: Record<string, unknown> | null;
+  acceptedAt?: string | null;
+  updatedAt?: string;
+}
+
+export async function listExecutionCases(
+  signal?: AbortSignal
+): Promise<{ cases: RuntimeExecutionCaseSummary[] }> {
   const response = await fetch('/api/initiatives/runtime-v1/execution-cases', {
     credentials: 'include',
     signal,
   });
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
-  return body;
+  return body as { cases: RuntimeExecutionCaseSummary[] };
 }
 /** Ile realizacji wolno spakowac w jedno zbiorcze zapytanie (sufit trasy serwera). */
 export const EXECUTION_CASE_BULK_LIMIT = 100;
@@ -481,6 +497,40 @@ export interface InitiativeCapabilitiesReadModel {
   canUpdate: boolean;
   canReview: boolean;
   canSelfApprove: boolean;
+  executionWrites?: {
+    forecast?: {
+      available: boolean;
+      canonicalCommand: string;
+      denialAt: string | null;
+      denialCode: string | null;
+      legacyDenialAt: 'BRAMKA_LEGACY';
+      legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED';
+    };
+  };
+}
+
+export interface InitiativeForecastCommand {
+  expectedVersion: number;
+  clientRequestId: string;
+  forecastStartDate?: string | null;
+  forecastEndDate?: string | null;
+  reason: string;
+}
+
+export interface InitiativeForecastCommandResult {
+  status: 'APPLIED' | 'REPLAYED';
+  aggregateVersion: number;
+  response: {
+    initiativeId: string;
+    before: { forecastStartDate: string | null; forecastEndDate: string | null };
+    after: { forecastStartDate: string | null; forecastEndDate: string | null };
+    receiptId: string;
+    observedAt: string;
+  };
+  correlationId: string;
+  receiptId: string;
+  readBackState: 'PENDING';
+  readBackUrl: string;
 }
 
 export interface SourceProposalReadModel {
@@ -1326,7 +1376,9 @@ export interface LegacyInitiativeApiRow {
  * `mergeLegacyInitiativesIntoRegister` (initiativeRegisterProjection.ts),
  * żeby żaden rekord nie znikał tylko dlatego, że powstał inną ścieżką zapisu.
  */
-export async function listLegacyInitiatives(signal?: AbortSignal): Promise<LegacyInitiativeApiRow[]> {
+export async function listLegacyInitiatives(
+  signal?: AbortSignal
+): Promise<LegacyInitiativeApiRow[]> {
   const response = await fetch('/api/initiatives', { credentials: 'include', signal });
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
@@ -1447,6 +1499,26 @@ export async function readInitiativeCapabilities(
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as InitiativeCapabilitiesReadModel;
+}
+
+export async function updateInitiativeForecast(
+  initiativeId: string,
+  command: InitiativeForecastCommand,
+  signal?: AbortSignal
+): Promise<InitiativeForecastCommandResult> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/forecast`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+      signal,
+    }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as InitiativeForecastCommandResult;
 }
 
 export async function reviewInitiativeCard(
