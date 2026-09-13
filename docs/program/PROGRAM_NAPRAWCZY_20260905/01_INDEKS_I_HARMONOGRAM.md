@@ -1012,3 +1012,6 @@ First native visible forecast Save passed: same Initiative49→50, exact end2026
 
 ### Integrator 2026-09-13 — operational forecast confirmation
 Feedback/copy fix integrated as `bcd6dd90d8` with normal hooks, independent16/16 and frontend build exit0. See `INTEGRATOR_MVP_20260912/E1B_FORECAST_FEEDBACK_REVIEW.md`. Actual Save50/Clear51 + immutable receipt readback confirmed; final stabilized read-only Timeline correctly renders explicit clear. Bank VALUE_CLEARED label remains an open bounded defect; baseline projection review and built toast acceptance continue. No full S1/S2, deployment or pilot gate is promoted.
+
+### Integrator — forecast acceptance complete locally, W17 resumed
+Forecast correction/clear UI and Bank semantics passed final visible browser+PostgreSQL acceptance; settled success toast and reload confirmed, exact fixture cleanup COMMIT with10categories0. Receipt: INTEGRATOR_MVP_20260912/E1B_FORECAST_FEEDBACK_REVIEW.md. Native optional baseline projection integrated9853018b32 with19/19 combined tests; shared build refresh in progress. W17 authors proceed with8card Deck conflict/history/restore and Notebook duplicate-title containers/pages; independent reviewer assigned. Full S1/S2 and deployment/pilot gates stay open.
