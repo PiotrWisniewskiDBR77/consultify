@@ -27,6 +27,7 @@ vi.mock('../../InterviewInsightService.js', () => ({
 }));
 
 import {
+  addEvidencePointer,
   addFinding,
   buildHandoffPayload,
   getFinding,
@@ -240,6 +241,77 @@ beforeEach(() => {
 });
 
 describe('interviewInsightFindingsService', () => {
+  it('round-trips UTC-projected Date pointer timestamps with milliseconds and preserves string values', async () => {
+    findingsTable.push({
+      id: 'finding-time',
+      organization_id: 'org-1',
+      insight_id: 'ins-1',
+      source_section_type: 'manual',
+      source_section_index: null,
+      source_key: null,
+      finding_statement: 'Timestamp finding',
+      confidence_level: 'high',
+      limits_text: 'Timestamp scope',
+      next_action_text: 'Timestamp review',
+      review_status: 'draft',
+      readback_status: 'draft_interpretation',
+      created_at: '2026-09-13T07:22:46.410Z',
+      updated_at: '2026-09-13T07:22:46.410Z',
+    });
+    pointersTable.push({
+      id: 'pointer-date',
+      organization_id: 'org-1',
+      insight_id: 'ins-1',
+      finding_id: 'finding-time',
+      pointer_type: 'question_answer',
+      source_ref: 'answer:date',
+      source_fingerprint: 'answer:date',
+      captured_excerpt: 'Date pointer',
+      captured_at: new Date('2026-09-13T07:22:46.410Z'),
+      pointer_state: 'active',
+      removal_reason: null,
+    });
+    pointersTable.push({
+      id: 'pointer-string',
+      organization_id: 'org-1',
+      insight_id: 'ins-1',
+      finding_id: 'finding-time',
+      pointer_type: 'question_answer',
+      source_ref: 'answer:string',
+      source_fingerprint: 'answer:string',
+      captured_excerpt: 'String pointer',
+      captured_at: 'stored-timestamp-string',
+      pointer_state: 'active',
+      removal_reason: null,
+    });
+
+    const findings = await listFindings('ins-1');
+    expect(findings[0].evidence_pointers.map((pointer) => pointer.capturedAt)).toEqual([
+      '2026-09-13T07:22:46.410Z',
+      'stored-timestamp-string',
+    ]);
+    const pointerRead = mockQueryAll.mock.calls.find(([sql]) =>
+      String(sql).includes('FROM interview_insight_evidence_pointers')
+    );
+    expect(pointerRead?.[0]).toContain("captured_at AT TIME ZONE 'UTC' AS captured_at");
+
+    const existing = await addEvidencePointer(
+      'ins-1',
+      'finding-time',
+      {
+        type: 'question_answer',
+        sourceRef: 'answer:date',
+        sourceFingerprint: 'answer:date',
+      },
+      'user-1'
+    );
+    expect(existing.pointer?.capturedAt).toBe('2026-09-13T07:22:46.410Z');
+    const existingRead = mockQueryOne.mock.calls.find(([sql]) =>
+      String(sql).includes('source_fingerprint')
+    );
+    expect(existingRead?.[0]).toContain("captured_at AT TIME ZONE 'UTC' AS captured_at");
+  });
+
   it('backfills persisted findings from generated themes', async () => {
     const findings = await listFindings('ins-1');
 

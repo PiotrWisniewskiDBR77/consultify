@@ -564,12 +564,18 @@ async function loadFindingRows(insightId: string): Promise<FindingRow[]> {
   return Array.isArray(rows) ? rows : [];
 }
 
+function serializePersistedPointerTimestamp(value: unknown): string {
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+  return String(value);
+}
+
 async function loadPointersByFinding(
   insightId: string
 ): Promise<Record<string, P10EvidencePointer[]>> {
   await ensureTables();
   const rows = await queryHelpers.queryAll<any>(
-    `SELECT id, finding_id, pointer_type, source_ref, source_fingerprint, captured_excerpt, captured_at,
+    `SELECT id, finding_id, pointer_type, source_ref, source_fingerprint, captured_excerpt,
+            captured_at AT TIME ZONE 'UTC' AS captured_at,
             pointer_state, removal_reason
      FROM interview_insight_evidence_pointers
      WHERE insight_id = ?
@@ -584,7 +590,7 @@ async function loadPointersByFinding(
       pointerId: String(row.id),
       type: String(row.pointer_type) as P10EvidencePointerType,
       sourceRef: String(row.source_ref),
-      capturedAt: String(row.captured_at),
+      capturedAt: serializePersistedPointerTimestamp(row.captured_at),
       sourceFingerprint: String(row.source_fingerprint),
       capturedExcerpt: row.captured_excerpt ?? null,
       removalReason: row.removal_reason ?? null,
@@ -652,7 +658,8 @@ async function insertPointer(
   }
 
   const existing = await queryHelpers.queryOne<any>(
-    `SELECT id, pointer_state, source_ref, source_fingerprint, captured_excerpt, captured_at
+    `SELECT id, pointer_state, source_ref, source_fingerprint, captured_excerpt,
+            captured_at AT TIME ZONE 'UTC' AS captured_at
      FROM interview_insight_evidence_pointers
      WHERE finding_id = ? AND source_ref = ? AND source_fingerprint = ?
      LIMIT 1`,
@@ -676,7 +683,7 @@ async function insertPointer(
         pointerId: String(existing.id),
         type: input.type as P10EvidencePointerType,
         sourceRef: String(existing.source_ref),
-        capturedAt: String(existing.captured_at),
+        capturedAt: serializePersistedPointerTimestamp(existing.captured_at),
         sourceFingerprint: String(existing.source_fingerprint),
         capturedExcerpt: existing.captured_excerpt ?? null,
         isTombstone: false,
