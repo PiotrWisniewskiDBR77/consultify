@@ -21,6 +21,8 @@ HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1, DEC-474 → fala 2). Codex
 skrzynki Z-1..Z-3 (jego baza była 11 commitów za linią) — dowodu parytetu flag OFF nie ma; robi go
 agent nadzorcy. **Dysk: 1,3 GB wolne** (pomiar 13.09), nie 35 GB jak w poprzednim wpisie rejestru.
 
+**DEC-481 (właściciel, 13.09, odbiór K5 część 1):** obraz listy Inicjatyw na kandydacie bc40d5327c (staging, dane DBR77) = **TAK**, z uwagą: „mamy tam za dużo filtrów w Menu 2”. Decyzja wykonawcza CTO: Menu 2 = przełącznik widoku (lista/kanban/kalendarz/Gantt) + Aktywne/Wszystkie + „Nowa inicjatywa”; usunąć rozwijane „Wszystkie priorytety” i „Status” (statusy są w pigułkach Menu 3); „Lista/Analiza” z rozwijanej listy → dwa przyciski Menu 3 (zgodnie z notatką właściciela); filtr projektami dojdzie w F2-1. Realizacja: odbiór po naprawach K5 (UUID właściciela, mapowanie statusu, podgląd klucz-wartość).
+
 **DEC-479 (właściciel, 13.09, „A”):** odrzucona/wstrzymana inicjatywa dostaje osobne pole „rozstrzygnięcie” (wchodzi / parking / archiwum) z powodem i warunkiem powrotu — system nie proponuje jej ponownie, chyba że przeszkoda zniknie; lista statusów NIE rośnie (bez „Parking”/„No Done” jako statusów).
 
 **DEC-480 (właściciel, 13.09, „A”):** obciążenie zespołu liczone PER CZŁOWIEK: każdy członek deklaruje, jaka część czasu tygodniowo może iść na projekty; heat-mapa tygodniowa per osoba, >100% na czerwono; role tylko jako podsumowanie. Obowiązuje w paczce F2-1 (Inicjatywy: cztery przyciski).
