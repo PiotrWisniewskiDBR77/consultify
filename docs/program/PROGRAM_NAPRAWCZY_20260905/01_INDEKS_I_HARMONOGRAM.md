@@ -1006,3 +1006,6 @@ Built native Timeline remains RED after source96db009a37: canonical navigation r
 
 
 Native Timeline production composition correction integrated at7ef39217f6 after independent40/40; combined build passed with dist8c3d1816cb3bdcc17be3ae10dd6d92f6146628e82f1f23e1c2f1843127dc59fc. Built save/clear/readback remains active, not accepted yet. See updated E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
+
+
+First native visible forecast Save passed: same Initiative49→50, exact end2026-10-02 and persisted receipt; root inspected API response and screenshot. Reload/Bank/clear/cleanup pending; disappearing success feedback retained separately. See E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
