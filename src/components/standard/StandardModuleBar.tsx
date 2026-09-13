@@ -245,6 +245,7 @@ export interface StandardModuleBarProps {
   primaryCtaContent?: React.ReactNode;
   /** Segment przełącznika widoków (ikony); pojedynczy tryb ukrywa segment. */
   viewModes?: ViewMode[];
+  viewModeLabels?: Partial<Record<ViewMode, string>>;
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
   /** Ewentualne dodatkowe filtry — na lewo od przełącznika widoków. */
@@ -435,6 +436,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   primaryCta,
   primaryCtaContent,
   viewModes,
+  viewModeLabels,
   viewMode = 'table',
   onViewModeChange,
   filterControls,
@@ -706,6 +708,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
         viewMode={viewMode}
         onViewModeChange={onViewModeChange ?? noop}
         availableViewModes={viewModes ?? ['table']}
+        viewModeLabels={viewModeLabels}
         onSearch={onSearch ?? noop}
         searchValue={searchValue}
         rightControls={filterControls}

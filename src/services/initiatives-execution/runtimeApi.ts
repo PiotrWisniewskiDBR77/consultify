@@ -1322,6 +1322,7 @@ export interface LegacyInitiativeApiRow {
   projectId?: string | null;
   /** DEC-424 flaga wstrzymania (kontroler zwraca `onHold: Boolean(on_hold)`). */
   onHold?: boolean | null;
+  archived?: boolean | null;
   name?: string | null;
   title?: string | null;
   summary?: string | null;

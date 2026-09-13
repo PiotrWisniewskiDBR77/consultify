@@ -10749,6 +10749,8 @@
       "noInitiativesFoundDesc": "Żadna inicjatywa nie pasuje do bieżących filtrów. Spróbuj poszerzyć wyszukiwanie lub wyczyścić filtry."
     },
     "filters": {
+      "project": "Projekt",
+      "allProjects": "Wszystkie projekty",
       "priority": "Priorytet",
       "allPriorities": "Wszystkie priorytety",
       "lifecycle": "Cykl życia",
@@ -14064,6 +14066,27 @@
       "label": "Widok inicjatyw",
       "list": "Lista",
       "analysis": "Analiza"
+    },
+    "fourButtonsWorkspace": {
+      "list": "Lista inicjatyw",
+      "analysis": "Analiza inicjatyw"
+    },
+    "archiveScope": {
+      "label": "Zakres rejestru",
+      "current": "Bieżące",
+      "archive": "Archiwum"
+    },
+    "horizon": {
+      "label": "Horyzont",
+      "months": "{{count}} mies."
+    },
+    "schedule": {
+      "view": "Widok harmonogramu",
+      "calendar": "Kalendarz",
+      "gantt": "Gantt",
+      "weekOf": "Tydzień od {{date}}",
+      "unknown": "Harmonogram niedostępny",
+      "outsideHorizon": "Inicjatywy poza tym horyzontem: {{count}}."
     },
     "cards": {
       "noContent": "Brak opublikowanej treści tej karty. Wymagalność i gotowość wynikają z obowiązującego profilu.",

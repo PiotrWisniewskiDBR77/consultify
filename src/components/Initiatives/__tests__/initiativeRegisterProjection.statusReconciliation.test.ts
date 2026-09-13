@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { InitiativeStatus } from '@/types';
 import type {
   LegacyInitiativeApiRow,
   RegisteredInitiativeReadModel,
 } from '@/services/initiatives-execution/runtimeApi';
+import { InitiativeStatus } from '@/types';
 
 import {
   mergeLegacyInitiativesIntoRegister,
@@ -88,5 +88,33 @@ describe('mergeLegacyInitiativesIntoRegister — status reconciliation on id col
   it('is a no-op (same reference) when there are no legacy rows at all', () => {
     const canonicalRows = [toCanonicalInitiativeRegisterItem(runtimeRecord)];
     expect(mergeLegacyInitiativesIntoRegister(canonicalRows, [])).toBe(canonicalRows);
+  });
+
+  it('preserves archive provenance from either canonical lifecycle or the classic projection flag', () => {
+    const archivedCanonical = toCanonicalInitiativeRegisterItem({
+      ...runtimeRecord,
+      initiative: { ...runtimeRecord.initiative, lifecycleState: 'ARCHIVED' },
+    });
+    expect(archivedCanonical.archived).toBe(true);
+
+    const currentCanonical = toCanonicalInitiativeRegisterItem(runtimeRecord);
+    const archivedLegacy = toCanonicalInitiativeRegisterItemFromLegacyRow({
+      ...legacyRow,
+      status: 'APPROVED',
+      archived: true,
+    });
+    const [merged] = mergeLegacyInitiativesIntoRegister([currentCanonical], [archivedLegacy]);
+    expect(merged.archived).toBe(true);
+
+    const currentLegacy = toCanonicalInitiativeRegisterItemFromLegacyRow({
+      ...legacyRow,
+      status: 'APPROVED',
+      archived: false,
+    });
+    const [canonicalArchiveWins] = mergeLegacyInitiativesIntoRegister(
+      [archivedCanonical],
+      [currentLegacy]
+    );
+    expect(canonicalArchiveWins.archived).toBe(true);
   });
 });

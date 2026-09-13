@@ -11584,6 +11584,8 @@
       "noInitiativesFoundDesc": "No initiatives match the current filters. Try widening the search or clearing filters."
     },
     "filters": {
+      "project": "Project",
+      "allProjects": "All projects",
       "priority": "Priority",
       "allPriorities": "All priorities",
       "lifecycle": "Lifecycle",
@@ -14891,6 +14893,27 @@
       "label": "Initiative workspace",
       "list": "List",
       "analysis": "Analysis"
+    },
+    "fourButtonsWorkspace": {
+      "list": "Initiative list",
+      "analysis": "Initiative analysis"
+    },
+    "archiveScope": {
+      "label": "Register scope",
+      "current": "Current",
+      "archive": "Archive"
+    },
+    "horizon": {
+      "label": "Horizon",
+      "months": "{{count}} mo"
+    },
+    "schedule": {
+      "view": "Schedule view",
+      "calendar": "Calendar",
+      "gantt": "Gantt",
+      "weekOf": "Week of {{date}}",
+      "unknown": "Schedule unavailable",
+      "outsideHorizon": "{{count}} scheduled initiative(s) are outside this horizon."
     },
     "cards": {
       "noContent": "No published content is available for this card. Requiredness and readiness are determined by the active profile.",
