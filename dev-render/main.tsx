@@ -347,6 +347,7 @@ const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
 // K5 (2026-09-13) — zrzuty odbiorowe napraw banku realizacji na danych
 // odwzorowujących żywy staging (patrz nagłówek pliku ekranu).
 const K5NaprawyRealizacjaScreen = React.lazy(() => import('./screens/k5-naprawy-realizacja'));
+const K5PreviewBankScreen = React.lazy(() => import('./screens/k5-preview-bank'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
@@ -2029,6 +2030,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5 — Realizacja → bank (REALNY <ExecutionHub initialTab="list">) na danych 1:1 ze stagingu: 4 realizacje ACTIVE bez rekordu inicjatywy + 6 inicjatyw w toku bez handoffu. &lang=en&theme=light|dark',
     render: () => <K5NaprawyRealizacjaScreen />,
+  },
+  'k5-preview-bank': {
+    label:
+      'K5-3 — podgląd wiersza banku Realizacji na powłoce kanonu (REALNY <ExecutionHub initialTab="list">): jeden wiersz Z realizacją (baza odniesienia + prognoza + wariancja) i jeden BEZ realizacji. &lang=en&theme=light|dark',
+    render: () => <K5PreviewBankScreen />,
   },
   'k5-naprawy-inicjatywy': {
     label:
