@@ -828,3 +828,8 @@ Root read complete W05_BUILT_INTEGRATION_INDEPENDENT_REVIEW.md. Bounded ACCEPT s
 Combined frontend9266 completed exit2,192vs192 and equal file/TS-code multiplicities; raw message union ordering differs. Server84281 exit0/build15524 exit0/front10PASS. Root heavy processes all complete.
 Scope now assigned actual built DeckBuilder action census against W17_EXECUTION_PACKET and W17_DECK_ACTION_COVERAGE: inspect observed MELS menus/toolbars/conditions, map full observed denominator to proof/gap, then concrete next behavior packet. Only own legalfixture if needed, no outbound/share/publish/delete/realAI, no third implementationblock. Full W17/export/visual remain OPEN.
 Root CLOSED WIP source review requested topbar-only save preserving unpersisted card edits after capability revoke, and explicit owner/date clearing (undefined omission cannot mean successful persistence). Author adding these cases, no finalSHA yet. Full MVP ACTIVE.
+
+
+### Integrator RC2 — CLOSED autosave, 12.09.2026
+
+Bounded repair integrated e0fb12491f4b2547228008dee276202950b95aed: independent real UI/API/PG ACCEPT, root10/10, frontend192 baseline parity, normalhooks0. RC1 immutable; no deployment. Evidence: INTEGRATOR_MVP_20260912/RC2_CLOSED_INTEGRATION_CHECKPOINT.md. IE01 issued on exact integrated base; full Initiatives/Execution/MVP remain open. C6 export prerequisites/privacy/authorization and combined acceptance remain open.
