@@ -1,4 +1,5 @@
 import type { PoolClient } from 'pg';
+import { projectPersonalTaskExport } from './organizationExportTaskPrivacy.js';
 import { verifiedManualInitiativeContent } from './organizationExportManualInitiativeContent.js';
 import { projectCanonicalExportLineage } from './organizationExportCanonicalLineage.js';
 import { projectInterviewExportRow } from './organizationExportInterviewPrivacy.js';
@@ -301,11 +302,15 @@ export async function exportOrganizationData(
         sanitize(
           policy.canonicalLineageColumns
             ? projectCanonicalExportLineage(row, policy.canonicalLineageColumns)
-            : row
+            : policy.personalTaskPrivacy
+              ? projectPersonalTaskExport(row)
+              : row
         ) as Record<string, unknown>
     );
     if (policy.canonicalLineageColumns && rows.rows.length)
       unresolved(name, 'canonical_content_privacy_unresolved_lineage_only');
+    if (policy.personalTaskPrivacy && rows.rows.length)
+      unresolved(name, 'task_source_or_supplemental_content_privacy_unresolved');
     if (!result.securityManifest.includedSchemas.includes(table.schema))
       result.securityManifest.includedSchemas.push(table.schema);
     if (key === identity('public', 'organizations')) {
