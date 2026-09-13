@@ -703,16 +703,25 @@ describe('MEMBER — para negatywna', () => {
    * (`evidence/p16-r45/po-member/odmowy.log`): dług ZASTANY, spoza R4/R5,
    * i większy niż zakładka Realizacji — hook żyje w wielu modułach.
    * Test pilnuje FAKTU, nie mojej tezy, żeby naprawa hooka miała gdzie odbić.
+   *
+   * ODBICIE (BRAMKA K2, 13.09): naprawa hooka WESZŁA — `useOrganizationMemberNames`
+   * pyta o katalog tylko, gdy rola go uniesie (`isAdminOwnerOrSuperAdminRole`),
+   * a serwer i tak wpuszcza tam wyłącznie ADMIN/OWNER/SUPERADMIN
+   * (`server/src/routes/organization/organizations.routes.ts`: `requireRole`).
+   * Dla MEMBER-a liczba wołań spada 1 → 0. Widok użytkownika BEZ ZMIAN: mapa
+   * nazwisk i tak była pusta (403 → `catch` → `{}`), znika tylko sam strzał
+   * skazany na odmowę. Test przestawiony z `1` na `0` — pilnuje teraz, że
+   * odmowy nikt nie wywołuje ponownie.
    */
-  it('403 katalogu osób u MEMBER-a ma ZASTANE źródło: hook nazwisk, nie formularz', async () => {
+  it('katalog osób NIE jest u MEMBER-a pobierany (hook nazwisk pyta tylko ról, które go uniosą)', async () => {
     uzytkownik.role = 'MEMBER';
     getOrganizationMembers.mockRejectedValue(new TestowyApiError({}, 'Forbidden', 403));
     render(<Gospodarz preset="ryzyka" />);
     await waitFor(() => expect(screen.getByText('Awaria dostawcy chmury')).toBeInTheDocument());
-    // Wołany DOKŁADNIE RAZ — przez hook nazwisk, nie przez słowniki formularza
-    // (te R3 obwarował `canDecide`). Gdyby wołał też formularz, byłoby 2.
-    expect(getOrganizationMembers).toHaveBeenCalledTimes(1);
-    // Mimo odmowy 403 ekran NIE pada i pokazuje rejestr.
+    // Zero wołań: hook nazwisk pyta tylko ADMIN/OWNER/SUPERADMIN, a słowniki
+    // formularza R3 obwarował `canDecide`. Każda wartość > 0 = powrót 403.
+    expect(getOrganizationMembers).toHaveBeenCalledTimes(0);
+    // Bez katalogu ekran NIE pada i pokazuje rejestr.
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
