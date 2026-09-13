@@ -970,3 +970,8 @@ Root42e7fc215b integrates accepted UI packet5c6cf66b5b: independent10/10PASS,8/8
 
 
 Combined forecast/unavailable-data build completed successfully on root source42e7fc215b; dist index11398cf01198f177425ca96068102b78fbc2042b31a23229130dfaec2f0a9b3f. Browser acceptance remains pending and is separately assigned; no deployment claim.
+
+
+### Built Bank access correction — 2026-09-13
+
+Actual normalBank0manager/0directory calls verified as MEMBER; see INTEGRATOR_MVP_20260912/EXECUTION_UNAVAILABLE_COUNTS_BUILT_BROWSER_CHECKPOINT_V1.md. HistoricalManager state was instrumented; do not count as menu reachability. Root localAPI5293 reloaded from integratedsource for upcomingeditorproof; no live deployment.
