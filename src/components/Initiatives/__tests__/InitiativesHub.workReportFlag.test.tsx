@@ -1,0 +1,159 @@
+/** @vitest-environment jsdom
+ *
+ * K5-8 (odbiór na żywo, 2026-09-13): Piotr — „nie wiem, co to jest całkiem" —
+ * o surowej zakładce Menu 2 „Work report" (`InitiativePreparationReadView`).
+ * Docelowy kreator „Raport z pracy" buduje Codex w F2-1 E4. Do tego czasu
+ * zakładka i jej trasa mają być ukryte za flagą `VITE_INITIATIVES_FOUR_BUTTONS`
+ * (domyślnie OFF). Ten test broni obu stanów: OFF = 3 przyciski Menu 2
+ * (Initiatives/Plan/Load), ON = 4 (+ Work report).
+ *
+ * Mutacja: odwrócenie warunku w InitiativesHub.tsx
+ * (`=== 'true'` → `!== 'true'`) zamienia „toHaveLength(3)" na czerwone.
+ */
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (k: string, opts?: any) => {
+      if (typeof opts === 'string') return opts;
+      if (opts?.defaultValue) return opts.defaultValue;
+      return k;
+    },
+    i18n: { language: 'en' },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+vi.mock('react-hot-toast', () => {
+  const fn = vi.fn();
+  return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
+});
+
+const { getPortfolio, getInitiative, listRegisteredInitiatives, apiGet, portfolioStoreState, appStoreState, conversationStoreState } =
+  vi.hoisted(() => ({
+    getPortfolio: vi.fn(),
+    getInitiative: vi.fn(),
+    listRegisteredInitiatives: vi.fn(),
+    apiGet: vi.fn(),
+    portfolioStoreState: { refreshTrigger: 0 },
+    appStoreState: {
+      currentProjectId: 'proj-1',
+      currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
+      currentOrganization: { id: 'org-1' },
+    },
+    conversationStoreState: { addMessage: vi.fn() },
+  }));
+
+vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/initiatives-execution/runtimeApi')>()),
+  listRegisteredInitiatives,
+}));
+
+vi.mock('@/services/api/v8/planning', () => ({
+  V8PlanningApi: {
+    getPortfolio,
+    getPendingDecisions: vi.fn(async () => []),
+    getInitiativeSnapshot: vi.fn(async () => null),
+    getInitiative,
+  },
+}));
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    get: apiGet,
+    post: vi.fn(async () => ({})),
+    patch: vi.fn(async () => ({})),
+    delete: vi.fn(async () => ({})),
+    getUsers: vi.fn(async () => []),
+    generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
+  },
+  shouldAllowDemoData: () => false,
+}));
+
+vi.mock('@/hooks/useOpenChatWithContext', () => ({
+  useOpenChatWithContext: () => vi.fn(),
+}));
+
+vi.mock('../Wizard/InitiativeWizardModal', () => ({
+  InitiativeWizardModal: () => null,
+}));
+
+vi.mock('../InitiativeDocumentView', () => ({
+  InitiativeDocumentView: () => React.createElement('div', { 'data-testid': 'legacy-initiative' }),
+}));
+
+vi.mock('@/store/useConversationStore', () => ({
+  useConversationStore: (selector: (state: typeof conversationStoreState) => unknown) =>
+    selector(conversationStoreState),
+}));
+
+vi.mock('../../../store/portfolioSlice', () => ({
+  usePortfolioStore: (selector: (state: typeof portfolioStoreState) => unknown) =>
+    selector(portfolioStoreState),
+}));
+
+vi.mock('../../../store/useAppStore', () => ({
+  useAppStore: () => appStoreState,
+}));
+
+let Hub: typeof import('../InitiativesHub');
+async function mount(route = '/initiatives') {
+  vi.resetModules();
+  Hub = await import('../InitiativesHub');
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <Hub.InitiativesHub />
+    </MemoryRouter>
+  );
+}
+
+beforeEach(() => {
+  getPortfolio.mockReset();
+  getPortfolio.mockResolvedValue({ initiatives: [] });
+  getInitiative.mockReset();
+  getInitiative.mockResolvedValue(null);
+  listRegisteredInitiatives.mockReset();
+  listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
+  apiGet.mockReset();
+  apiGet.mockResolvedValue({});
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.clearAllMocks();
+});
+
+describe('K5-8: Menu 2 "Work report" tab gated by VITE_INITIATIVES_FOUR_BUTTONS', () => {
+  it('flag OFF (default): shows exactly 3 Menu 2 buttons, no Work report', async () => {
+    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+    await mount();
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    const tabs = screen.getAllByRole('tab').map((el) => el.textContent);
+    expect(tabs).toHaveLength(3);
+    expect(screen.getByRole('tab', { name: 'Initiatives' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Plan' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Load' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
+  });
+
+  it('flag OFF: visiting ?tab=workReport directly redirects to the Initiatives list, not the raw read-view', async () => {
+    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+    await mount('/initiatives?tab=workReport');
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/initiatives in the current scope/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
+  });
+
+  it('flag ON: shows 4 Menu 2 buttons including Work report, and the tab opens the read-view', async () => {
+    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'true');
+    await mount();
+    const workReportTab = await screen.findByRole('tab', { name: 'Work report' });
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
+    fireEvent.click(workReportTab);
+    expect(await screen.findByText(/initiatives in the current scope/i)).toBeInTheDocument();
+  });
+});

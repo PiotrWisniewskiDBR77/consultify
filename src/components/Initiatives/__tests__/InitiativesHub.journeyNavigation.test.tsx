@@ -138,10 +138,11 @@ afterEach(() => {
 });
 
 describe('IE01 preparation navigation', () => {
-  it('renders exactly four stable module destinations, with List and Analysis inside Initiatives', async () => {
+  it('renders exactly three stable module destinations by default (Work report gated behind VITE_INITIATIVES_FOUR_BUTTONS, K5-8), with List and Analysis inside Initiatives', async () => {
     renderHubAt('/initiatives');
-    expect(await screen.findByRole('tab', { name: 'Work report' })).toBeInTheDocument();
-    expect(screen.getAllByRole('tab')).toHaveLength(4);
+    await screen.findByRole('combobox', { name: 'Initiative workspace' });
+    expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
     expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
     fireEvent.change(screen.getByRole('combobox', { name: 'Initiative workspace' }), {
       target: { value: 'analysis' },
