@@ -14,6 +14,7 @@ import i18n from '@/i18n';
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import {
+  accessBlockedSentence,
   dispatchAccessBlocked,
   getAccessBlockedCode,
   isAccessBlockedCode,
@@ -2967,21 +2968,21 @@ export const Api = {
                 // UX: Always show *something* in the chat bubble when stream ends with access errors,
                 // otherwise the placeholder stays empty and the UI hides it (looks like "thinking then reset").
                 if (isAccessError) {
+                  // S1.14b/B2 (pomiar 13.09, staging): the chat bubble printed the
+                  // raw machine code — literally "⚠️ Access blocked
+                  // (TRIAL_PROFILE_INCOMPLETE)." — for every access block except
+                  // the two org codes hand-written below. The user got a symbol,
+                  // not a sentence, and no hint that the block is fixable. The
+                  // access-modal dispatch further down already opens "Access
+                  // required" with its CTA; the bubble now carries the SAME
+                  // localized sentence from the i18n catalog
+                  // (`access.blocked.<CODE>`, en+pl) instead of the code.
                   if (!accessErrorShownInline) {
                     accessErrorShownInline = true;
-                    const uiLang = getCachedUserLanguage();
-                    const friendly =
-                      data.code === 'ORG_NOT_FOUND'
-                        ? uiLang === 'pl'
-                          ? '⚠️ Brak organizacji w sesji. Wyloguj się i zaloguj ponownie.'
-                          : '⚠️ Organization not found in session. Please log out and log in again.'
-                        : data.code === 'ORG_INACTIVE'
-                          ? uiLang === 'pl'
-                            ? '⚠️ Organizacja jest nieaktywna. Zaloguj się ponownie lub skontaktuj się z administratorem.'
-                            : '⚠️ Organization is inactive. Please log in again or contact an admin.'
-                          : uiLang === 'pl'
-                            ? `⚠️ Brak dostępu (${data.code}).`
-                            : `⚠️ Access blocked (${data.code}).`;
+                    const friendly = `⚠️ ${accessBlockedSentence(
+                      i18n.t.bind(i18n) as (k: string, o?: { defaultValue?: string }) => unknown,
+                      dataCode
+                    )}`;
                     hasAnyVisibleOutput = true;
                     onChunk(friendly);
                   }
