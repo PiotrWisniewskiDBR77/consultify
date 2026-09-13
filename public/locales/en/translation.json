@@ -14933,7 +14933,49 @@
     "bank": {
       "noExecutionCase": "No execution case yet",
       "noExecutionCaseHint": "In execution, but not handed over yet — no execution case to report against.",
-      "lifecycleUnknownHint": "Linked initiative record is not available"
+      "lifecycleUnknownHint": "Linked initiative record is not available",
+      "preview": {
+        "reportingDate": "Reporting date",
+        "updatedAt": "Updated {{date}}",
+        "detailsLabel": "Execution context",
+        "factLabel": "Execution fact",
+        "valueLabel": "Reported value",
+        "whatsNext": "What's next",
+        "fact": {
+          "case": "Execution case",
+          "caseMissing": "Not linked yet",
+          "owner": "Owner",
+          "phase": "Execution phase",
+          "baselineFinish": "Baseline finish",
+          "currentPlanFinish": "Current plan finish",
+          "forecastFinish": "Forecast finish",
+          "actualFinish": "Actual finish",
+          "variance": "Variance"
+        },
+        "next": {
+          "noExecutionCase": "No execution case yet. Execution starts when this initiative is handed off from its initiative record — schedule, forecast and progress are reported only after that.",
+          "setBaseline": "Set the schedule baseline on the execution case. Without it variance has nothing to measure against.",
+          "reportForecast": "Report a forecast finish date. The baseline is set, but there is no forecast to compare it with.",
+          "reportProgress": "Report progress on the execution case. The schedule is complete, but no progress has been reported.",
+          "onTrack": "Schedule evidence is complete — baseline, forecast and progress are all reported."
+        },
+        "summary": {
+          "caseState": "Execution case {{state}}, version {{version}}.",
+          "phase": "Execution phase: {{phase}}.",
+          "deliveryProfile": "Delivery profile: {{profile}}.",
+          "noCase": "Initiative {{lifecycle}} on the portfolio record, with no execution case behind it yet.",
+          "progress": "Reported progress {{value}}%.",
+          "varianceOnPlan": "Finish date matches the baseline.",
+          "varianceLate": "Finish date is {{days}} days later than the baseline.",
+          "varianceEarly": "Finish date is {{days}} days earlier than the baseline.",
+          "blockers": "{{count}} open blockers."
+        },
+        "variance": {
+          "actual": "actual vs baseline",
+          "forecast": "forecast vs baseline",
+          "value": "{{signed}} d ({{reference}})"
+        }
+      }
     },
     "review": {
       "roles": {

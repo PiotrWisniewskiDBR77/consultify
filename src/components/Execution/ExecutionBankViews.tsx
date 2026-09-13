@@ -157,6 +157,22 @@ export const executionBankLifecycleLabel = (value: string) =>
   LIFECYCLE_LABELS[value] ?? humanizeCode(value);
 export const executionBankExecutionStateLabel = (value: string) =>
   EXECUTION_STATE_LABELS[value] ?? humanizeCode(value);
+/**
+ * K5-3: zdrowie realizacji ma WŁASNY słownik — `GREEN`/`AT_RISK`/`CRITICAL` to
+ * nie są stany realizacji i przepuszczanie ich przez
+ * `executionBankExecutionStateLabel` działało tylko przez przypadek (spadały na
+ * `humanizeCode`). Jeden enum, jedna funkcja — inaczej dołożenie stanu
+ * `CLOSING` do realizacji zmieniłoby etykietę zdrowia.
+ */
+const HEALTH_LABELS: Readonly<Record<string, string>> = {
+  GREEN: 'On track',
+  AMBER: 'At risk',
+  AT_RISK: 'At risk',
+  RED: 'Critical',
+  CRITICAL: 'Critical',
+};
+export const executionBankHealthLabel = (value: string) =>
+  HEALTH_LABELS[value] ?? humanizeCode(value);
 
 /**
  * Dwa napisy tego ekranu, które użytkownik REALNIE czyta jako ZDANIE (reszta
@@ -449,9 +465,7 @@ const BankTable = ({
          pozycje jednego bloku, dwa różne kształty. Ikona `ExternalLink` to ta
          sama, którą rejestr Inicjatyw daje swojemu „Open"
          (`initiativeRegisterColumns.shared.ts`). */
-      primary: [
-        { id: 'open', label: 'Open', icon: ExternalLink, onClick: () => onOpen(row) },
-      ],
+      primary: [{ id: 'open', label: 'Open', icon: ExternalLink, onClick: () => onOpen(row) }],
       universalHandlers: { preview: () => onSelect(row) },
     };
   };
@@ -508,60 +522,62 @@ const BankKanban = ({
         const ownerLabel = executionBankOwnerLabel(row, resolveOwnerName);
         const hasOwnerName = ownerLabel !== '—' && ownerLabel !== 'Unknown user';
         return {
-        id: row.id,
-        columnId,
-        title: row.name,
-        description: row.description ?? undefined,
-        chips: [
-          ...(row.lifecycleStatus && row.lifecycleStatus !== 'UNKNOWN'
-            ? [
-                {
-                  id: 'lifecycle',
-                  label: executionBankLifecycleLabel(row.lifecycleStatus),
-                  tone: 'neutral' as const,
-                },
-              ]
-            : []),
-          ...(row.health.status === 'KNOWN'
-            ? [
-                {
-                  id: 'health',
-                  label: humanizeCode(row.health.value),
-                  tone: (row.health.value === 'CRITICAL' ? 'danger' : 'neutral') as
-                    | 'danger'
-                    | 'neutral',
-                },
-              ]
-            : []),
-        ],
-        projectLabel: caseAvailabilityLabel(row),
-        dueLabel:
-          row.displayFinish.status === 'KNOWN' ? readableDate(row.displayFinish.value) : undefined,
-        ownerName: hasOwnerName ? ownerLabel : undefined,
-        ownerInitials: hasOwnerName
-          ? ownerLabel
-              .split(/\s+/)
-              .map((part) => part[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase()
-          : undefined,
-        urgency:
-          row.health.status === 'KNOWN' && row.health.value === 'CRITICAL'
-            ? 'critical'
-            : row.health.status === 'KNOWN' && row.health.value === 'AT_RISK'
-              ? 'pending'
-              : 'none',
-        footer: (
-          <span
-            data-testid={`execution-bank-kanban-item-${row.id}`}
-            data-initiative-id={row.initiativeId}
-            data-execution-case-id={row.executionCaseId ?? undefined}
-            className="text-[10px] text-c-text-muted"
-          >
-            {row.executionCaseId ? 'Native case identity retained' : 'Initiative awaiting a case'}
-          </span>
-        ),
+          id: row.id,
+          columnId,
+          title: row.name,
+          description: row.description ?? undefined,
+          chips: [
+            ...(row.lifecycleStatus && row.lifecycleStatus !== 'UNKNOWN'
+              ? [
+                  {
+                    id: 'lifecycle',
+                    label: executionBankLifecycleLabel(row.lifecycleStatus),
+                    tone: 'neutral' as const,
+                  },
+                ]
+              : []),
+            ...(row.health.status === 'KNOWN'
+              ? [
+                  {
+                    id: 'health',
+                    label: humanizeCode(row.health.value),
+                    tone: (row.health.value === 'CRITICAL' ? 'danger' : 'neutral') as
+                      | 'danger'
+                      | 'neutral',
+                  },
+                ]
+              : []),
+          ],
+          projectLabel: caseAvailabilityLabel(row),
+          dueLabel:
+            row.displayFinish.status === 'KNOWN'
+              ? readableDate(row.displayFinish.value)
+              : undefined,
+          ownerName: hasOwnerName ? ownerLabel : undefined,
+          ownerInitials: hasOwnerName
+            ? ownerLabel
+                .split(/\s+/)
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()
+            : undefined,
+          urgency:
+            row.health.status === 'KNOWN' && row.health.value === 'CRITICAL'
+              ? 'critical'
+              : row.health.status === 'KNOWN' && row.health.value === 'AT_RISK'
+                ? 'pending'
+                : 'none',
+          footer: (
+            <span
+              data-testid={`execution-bank-kanban-item-${row.id}`}
+              data-initiative-id={row.initiativeId}
+              data-execution-case-id={row.executionCaseId ?? undefined}
+              className="text-[10px] text-c-text-muted"
+            >
+              {row.executionCaseId ? 'Native case identity retained' : 'Initiative awaiting a case'}
+            </span>
+          ),
         };
       });
   return (

@@ -14106,7 +14106,49 @@
     "bank": {
       "noExecutionCase": "Brak realizacji",
       "noExecutionCaseHint": "W toku, ale bez przekazania do realizacji — nie ma z czego raportować.",
-      "lifecycleUnknownHint": "Powiązany rekord inicjatywy jest niedostępny"
+      "lifecycleUnknownHint": "Powiązany rekord inicjatywy jest niedostępny",
+      "preview": {
+        "reportingDate": "Data raportowania",
+        "updatedAt": "Aktualizacja {{date}}",
+        "detailsLabel": "Kontekst realizacji",
+        "factLabel": "Fakt realizacji",
+        "valueLabel": "Zgłoszona wartość",
+        "whatsNext": "Co dalej",
+        "fact": {
+          "case": "Realizacja",
+          "caseMissing": "Jeszcze niepodłączona",
+          "owner": "Właściciel",
+          "phase": "Faza realizacji",
+          "baselineFinish": "Koniec wg bazy odniesienia",
+          "currentPlanFinish": "Koniec wg bieżącego planu",
+          "forecastFinish": "Koniec wg prognozy",
+          "actualFinish": "Koniec rzeczywisty",
+          "variance": "Wariancja"
+        },
+        "next": {
+          "noExecutionCase": "Nie ma jeszcze realizacji. Zaczyna się ona w chwili przekazania inicjatywy z jej karty — harmonogram, prognoza i postęp są raportowane dopiero potem.",
+          "setBaseline": "Ustaw bazę odniesienia harmonogramu na realizacji. Bez niej wariancja nie ma się do czego odnieść.",
+          "reportForecast": "Zgłoś prognozowaną datę zakończenia. Baza odniesienia jest ustawiona, ale nie ma prognozy do porównania.",
+          "reportProgress": "Zgłoś postęp realizacji. Harmonogram jest kompletny, ale nikt nie zgłosił postępu.",
+          "onTrack": "Dowody harmonogramu są kompletne — baza odniesienia, prognoza i postęp są zgłoszone."
+        },
+        "summary": {
+          "caseState": "Realizacja {{state}}, wersja {{version}}.",
+          "phase": "Faza realizacji: {{phase}}.",
+          "deliveryProfile": "Profil dostawy: {{profile}}.",
+          "noCase": "Inicjatywa {{lifecycle}} w rejestrze portfela, bez podpiętej realizacji.",
+          "progress": "Zgłoszony postęp {{value}}%.",
+          "varianceOnPlan": "Data zakończenia zgodna z bazą odniesienia.",
+          "varianceLate": "Data zakończenia jest o {{days}} dni późniejsza niż baza odniesienia.",
+          "varianceEarly": "Data zakończenia jest o {{days}} dni wcześniejsza niż baza odniesienia.",
+          "blockers": "Otwarte blokady: {{count}}."
+        },
+        "variance": {
+          "actual": "rzeczywista vs baza odniesienia",
+          "forecast": "prognoza vs baza odniesienia",
+          "value": "{{signed}} d ({{reference}})"
+        }
+      }
     },
     "review": {
       "roles": {
