@@ -1,3 +1,4 @@
+import { withOrganizationExportSnapshot } from '../services/organizationExportSnapshot.js';
 /**
  * Super Admin Routes
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -25,6 +26,7 @@ import {
 import { superadminAuditMonitor } from '../middleware/superadminAuditMonitor.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
+  OrgPoliciesError,
   getAllOrgPolicies,
   getOrgPolicy,
   requireNoLegalHold,
@@ -754,7 +756,9 @@ router.get(
     const format = req.query.format === 'csv' ? 'csv' : 'json';
     const client = await acquirePgClient();
     try {
-      const result = await exportOrganizationData(client, id);
+      const result = await withOrganizationExportSnapshot(client, id, (snapshot) =>
+        exportOrganizationData(snapshot, id, undefined, { actorId: req.user?.id })
+      );
       await req.emitAuditEvent?.({
         actorType: 'USER',
         action: 'export',
@@ -779,6 +783,9 @@ router.get(
       );
       return res.send(JSON.stringify(result, null, 2));
     } catch (err: any) {
+      if (err instanceof OrgPoliciesError) {
+        return res.status(err.statusCode).json({ code: err.code });
+      }
       if (err?.code === 'ORG_NOT_FOUND') {
         return res.status(404).json({ code: 'ORG_NOT_FOUND' });
       }
@@ -786,8 +793,6 @@ router.get(
       return res
         .status(500)
         .json({ code: 'ORG_EXPORT_FAILED' });
-    } finally {
-      client.release();
     }
   })
 );

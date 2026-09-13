@@ -11,11 +11,60 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
+import { acquirePgClient } from '../../database/PostgresDatabase.js';
+import { exportOrganizationData, organizationExportToCsv } from '../../services/organizationLifecycleService.js';
+import { OrgPoliciesError } from '../../services/OrgPoliciesService.js';
+import { withOrganizationExportSnapshot } from '../../services/organizationExportSnapshot.js';
+
 const router = Router();
 
 // Apply rate limiting and auth
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+
+async function requireOrganizationAdministrator(req: AuthRequest, res: Response) {
+  const { orgId } = req.params;
+  const userId = req.user?.id;
+  if (!userId || req.user?.organizationId !== orgId) {
+    res.status(403).json({ error: 'ORG_TENANT_ACCESS_DENIED' });
+    return null;
+  }
+  const membership = await dbGet<{ role: string; status: string }>(
+    `SELECT role, status FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+    [orgId, userId],
+    { fallback: false }
+  );
+  const role = String(membership?.role || '').toUpperCase();
+  if (!membership || String(membership.status || '').toUpperCase() !== 'ACTIVE' || !['OWNER', 'ADMIN'].includes(role)) {
+    res.status(403).json({ error: 'ORG_ADMIN_REQUIRED' });
+    return null;
+  }
+  return { userId, role, email: String(req.user?.email || '') };
+}
+
+router.get(
+  '/:orgId/export',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await requireOrganizationAdministrator(req, res))) return;
+    const client = await acquirePgClient();
+    try {
+      const result = await withOrganizationExportSnapshot(client, req.params.orgId, (snapshot) =>
+        exportOrganizationData(snapshot, req.params.orgId, undefined, { actorId: req.user?.id })
+      );
+      const format = req.query.format === 'csv' ? 'csv' : 'json';
+      res.setHeader('Content-Disposition', `attachment; filename="organization-export-${req.params.orgId}.${format}"`);
+      if (format === 'csv') return res.type('text/csv').send(organizationExportToCsv(result));
+      return res.type('application/json').send(JSON.stringify(result, null, 2));
+    } catch (error) {
+      if (error instanceof OrgPoliciesError) {
+        return res.status(error.statusCode).json({ code: error.code });
+      }
+      throw error;
+    }
+  })
+);
+
+
 
 /**
  * GET /api/organizations/:orgId/ownership
