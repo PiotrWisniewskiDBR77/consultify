@@ -25,3 +25,7 @@ PLAN_WDROZENIA_DOPRECYZOWAN_20260912.md W10/W11 requires the same Initiative and
 - Actual built application + signed JWT + actual Gateway + allocated PostgreSQL: use the visible action, save, reload, and verify exact same Initiative ID, dates, receipt ID/time and unchanged baseline.
 - Native supported creation-to-execution proof separate from pre-seeded two-store compatibility proof. If unresolved, report it open.
 - Independent review and normal hooks before root integration. No schema/flag/default changes, live deployment, push, owner-checkout mutation or manual adoption to manufacture acceptance.
+
+## Existing UI entry points verified by root
+
+ExecutionHub mounts the existing InitiativeDocumentView with the exact activeDocumentId and sourceModule="execution". InitiativeDocumentView already resolves runtime-only records and refreshes them through the canonical GET; it deliberately blocks unsupported runtime-only fields from the legacy autosave. Preserve these safeguards. The existing timeline context locks planned schedule fields for SCHEDULED/IN_EXECUTION/DONE/CLOSED; operational forecast must not unlock that approved baseline. The card contract identifies Timeline as an existing addable section. Inspect its actual render/context before placing the forecast action; no new parallel drawer is needed.
