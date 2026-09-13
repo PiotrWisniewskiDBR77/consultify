@@ -1,3 +1,5 @@
+import { configuredCardProfile } from '../../../server/src/domain/initiatives-execution/configureInitiativeCards';
+import { INITIATIVE_CARD_KEYS } from '../../../src/contracts/initiatives-execution/cardRegistry';
 import { describe, expect, it } from 'vitest';
 
 import { evaluateDefinitionReadiness } from '../../../server/src/domain/initiatives-execution/definitionReadiness';
@@ -66,4 +68,17 @@ describe('server Definition readiness', () => {
       ])
     );
   });
+  it('respects explicit reviewRequired=false for an extra required card without weakening baseline reviews',()=>{
+    const profile=configuredCardProfile({id:'t',updatedAt:'2026-09-12',sectionConfig:{initiativeCardProfile:{profileKey:'technology',version:1,policy:{policyId:'p',policyVersion:1},cards:INITIATIVE_CARD_KEYS.map((cardKey,position)=>({cardKey,position,included:true,requiredness:cardKey==='technical-specification'?'REQUIRED':'OPTIONAL',requiredFields:cardKey==='technical-specification'?['requirements']:[],reviewRequired:false,reviewerIds:[]}))}}});
+    const extra={...card('technical-specification'),content:{requirements:'Tested interface'},reviewState:'NOT_REQUESTED' as const};
+    expect(evaluateDefinitionReadiness([...Object.keys(content).map(card),extra],true,'CURRENT',profile).readiness).toBe('READY');
+    expect(evaluateDefinitionReadiness([...Object.keys(content).map(key=>({...card(key),reviewState:'NOT_REQUESTED' as const})),extra],true,'CURRENT',profile).readiness).not.toBe('READY');
+  });
+  it('rejects accepted review by someone outside the explicitly configured reviewer set',()=>{
+    const profile=configuredCardProfile({id:'t',updatedAt:'2026-09-12',sectionConfig:{initiativeCardProfile:{profileKey:'technology',version:1,policy:{policyId:'p',policyVersion:1},cards:INITIATIVE_CARD_KEYS.map((cardKey,position)=>({cardKey,position,included:true,requiredness:'OPTIONAL',requiredFields:[],reviewRequired:true,reviewerIds:['named-reviewer']}))}}});
+    const cards=Object.keys(content).map(key=>({...card(key),reviewedBy:'other-reviewer'}));
+    expect(evaluateDefinitionReadiness(cards,true,'CURRENT',profile).findings.some(f=>f.rule==='REVIEWER_NOT_AUTHORIZED')).toBe(true);
+    expect(evaluateDefinitionReadiness(cards.map(c=>({...c,reviewedBy:'named-reviewer'})),true,'CURRENT',profile).readiness).toBe('READY');
+  });
+
 });

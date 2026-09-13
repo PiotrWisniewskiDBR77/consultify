@@ -1,0 +1,84 @@
+{
+  "id": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+  "steps": [
+    {
+      "label": "Summary / Scope",
+      "status": 201,
+      "path": "/api/initiatives/runtime-v1/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/cards/summary-scope/publications",
+      "body": {
+        "status": "APPLIED",
+        "aggregateVersion": 21,
+        "response": {
+          "initiativeId": "initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+          "cardKey": "summary-scope",
+          "cardVersion": 3,
+          "aggregateVersion": 21
+        },
+        "correlationId": "hp1x9n47m1ff7vdcxp7x3j",
+        "receiptId": "f06afdc7-bee1-4e9c-bcaa-4aa3838303bd",
+        "readBackState": "PENDING",
+        "readBackUrl": "/runtime-v1/command-receipts/f06afdc7-bee1-4e9c-bcaa-4aa3838303bd/read-back"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/planning/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb/suggested-changes",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/object-attachments/initiative/initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb",
+      "status": 404
+    }
+  ],
+  "pageErrors": [],
+  "url": "http://127.0.0.1:5292/initiatives?open=initiative-53431a2c-e3f1-4e5b-b63a-8799f016e2eb&mode=doc&card=summary-scope",
+  "body": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInitiatives\nData\nModel\nLocal Reviewer\nLR\nInitiatives\nPlan\nLoad\nWork report\nList\nAnalysis\nPriority\nAll priorities\nCritical\nHigh\nMedium\nLow\nStatus\nActive\nAll\nNew initiative\nList\ninitiative\nIE01 final named reviewer journey\ninitiative\nIE01 final named reviewer journey\nIE01 final named reviewer journey\nDraft registered\nSaved\nSections\nEdit\nPreview\nWork with AI\nDEFINITION AND VALUE\nSummary / Scope\nStrategic Fit\nSuccess Criteria\nOutcomes & Benefits\nKPI\nOptions\nFinancial Analysis\nFinancial Impact\nORGANIZATION AND FEASIBILITY\nPeople / Team\nRoles & RACI\nStakeholders\nResources & Capacity\nDependencies\nRisk & RAID\nFeasibility & Completeness\nTechnical Specification\nPLAN AND GOVERNANCE\nMilestones\nTimeline\nTasks\nDecisions\nGates & Approvals\nADOPTION, EVIDENCE AND LEARNING\nChange & Adoption\nCommunication & Engagement\nCapabilities & Training\nAttachments & Materials\nComments, Activity & History\nWORKSPACE TOOLS\nDeliverables & Milestones\nSuggested Changes\nOKR\nHypothesis\nLessons Learned\nDefinition card content and review\n\nReview: REQUESTED · Version: 3\n\nPublished version loaded\n\nProblem\nExpected outcome\nIn scope\nOut of scope\nEvidence references (one per line)\nCompletion\nIn progress\nComplete\nEmpty\nQuality assessment\nUNKNOWN\nSUFFICIENT\nWARNING\nBLOCKER\nSave card and request review\nACTIONS\nCreate variant\nPROPERTIES\nProperty\tValue\nStatus\t\nDraft registered\n\nPhase\t\nPreparation\n\nNext Gate\t\nDefinition\n\nPriority\t\nMedium\nCritical\nHigh\nMedium\nLow\n\nOwner\t\nLocal Reviewer\n— Select —\nLocal Member\nLocal Reviewer\n\nTarget\t\n—\nRELATIONS\nSOURCES AND ASSUMPTIONS\nRESULTS\nCOMMENTS\nHISTORY"
+}

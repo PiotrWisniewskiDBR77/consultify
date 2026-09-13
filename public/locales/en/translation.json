@@ -11668,12 +11668,13 @@
       "levelTransformationLabel": "Transformation",
       "levelTransformationCardDesc": "Organization-wide change. 6-24 months, full governance, board oversight.",
       "newInitiativeManual": "Fill in the form",
-      "newInitiativeManualDesc": "Title, axis, level and a short summary — no AI needed.",
+      "newInitiativeManualDesc": "Title, project and a short summary — no AI needed.",
       "newInitiativeAi": "AI initiative wizard",
       "newInitiativeAiDesc": "Build a draft from a source insight, then review it.",
       "errorOwnerIneligible": "That person cannot own an initiative in this project. Add them to the project team (Project > Team) or pick someone who already belongs to it.",
       "errorCapabilityRequired": "You do not have permission to create an initiative in this project. Ask the organization owner or an administrator for access to it.",
-      "errorOwnershipRequired": "You can only edit initiatives you own or created."
+      "errorOwnershipRequired": "You can only edit initiatives you own or created.",
+      "governanceEffectiveNote": "Approval rights and required evidence follow the effective project policy. Inspect the card profile before applying it in the initiative workspace."
     },
     "axis": {
       "operational": "Operational",
@@ -11745,7 +11746,8 @@
       "portfolioHealth": "Portfolio health",
       "list": "Initiatives",
       "plan": "Plan",
-      "capacity": "Load"
+      "capacity": "Load",
+      "workReport": "Work report"
     },
     "capacityAdvisor": {
       "propose": "Propose options",
@@ -14879,6 +14881,47 @@
     },
     "portfolioGrid": {
       "criticalPath": "Critical Path"
+    },
+    "workspace": {
+      "label": "Initiative workspace",
+      "list": "List",
+      "analysis": "Analysis"
+    },
+    "cards": {
+      "noContent": "No published content is available for this card. Requiredness and readiness are determined by the active profile.",
+      "summary-scope": "Summary / Scope",
+      "strategic-fit": "Strategic Fit",
+      "success-criteria": "Success Criteria",
+      "outcomes-benefits": "Outcomes & Benefits",
+      "kpi": "KPI",
+      "options": "Options",
+      "financial-analysis": "Financial Analysis",
+      "financial-impact": "Financial Impact",
+      "people-team": "People / Team",
+      "roles-raci": "Roles & RACI",
+      "stakeholders": "Stakeholders",
+      "resources-capacity": "Resources & Capacity",
+      "dependencies": "Dependencies",
+      "risk-raid": "Risk & RAID",
+      "milestones": "Milestones",
+      "timeline": "Timeline",
+      "tasks": "Tasks",
+      "decisions": "Decisions",
+      "gates-approvals": "Gates & Approvals",
+      "feasibility-completeness": "Feasibility & Completeness",
+      "change-adoption": "Change & Adoption",
+      "communication-engagement": "Communication & Engagement",
+      "capabilities-training": "Capabilities & Training",
+      "technical-specification": "Technical Specification",
+      "attachments-materials": "Attachments & Materials",
+      "comments-activity-history": "Comments, Activity & History"
+    },
+    "cardGroups": {
+      "definition-value": "Definition and value",
+      "organization-feasibility": "Organization and feasibility",
+      "plan-governance": "Plan and governance",
+      "adoption-evidence-learning": "Adoption, evidence and learning",
+      "workspace": "Workspace tools"
     }
   },
   "execution": {
@@ -27675,7 +27718,10 @@
     }
   },
   "finance": {
-    "wave2Placeholder": {"title": "Finance — Coming soon", "message": "Financial analysis, planning and valuation are planned for Wave 2."},
+    "wave2Placeholder": {
+      "title": "Finance — Coming soon",
+      "message": "Financial analysis, planning and valuation are planned for Wave 2."
+    },
     "comments": {
       "added": "Comment added.",
       "resolved": "Comment marked as resolved.",

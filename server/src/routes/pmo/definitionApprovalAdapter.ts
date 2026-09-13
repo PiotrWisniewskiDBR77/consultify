@@ -1,3 +1,6 @@
+import { getStore } from '../../utils/RequestStore.js';
+import { MaterialCommandRuleError } from '../../domain/initiatives-execution/materialCommand.js';
+import type { ConfiguredCardProfile } from '../../domain/initiatives-execution/configureInitiativeCards.js';
 import type { Request, Response, NextFunction, Router } from 'express';
 import { gateRule } from '../../domain/initiatives-execution/organizationGovernance.js';
 import type { EffectiveGovernancePolicy } from '../../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
@@ -97,7 +100,12 @@ export function mountDefinitionApprovalReads(
         initiativeVersion: found.version,
         title: found.initiative.title,
         lifecycleState: found.initiative.lifecycleState,
-        policy: { policyId: policy.policyId, policyVersion: policy.version },
+        policy: {
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+          baseline: policy.baseline,
+          source: policy.source,
+        },
         decision,
         authorities,
         actorId: actor.userId,
@@ -153,4 +161,24 @@ export function mountDefinitionApprovalReads(
       res.json({ enabled: true, items });
     })
   );
+}
+
+/** Re-evaluate explicit template reviewers against current persisted project membership and policy. */
+export async function assertConfiguredProfileAuthority(
+  deps: InitiativesExecutionRuntimeDependencies,
+  actor: RuntimeActor,
+  initiative: { projectId: string; initiativeId: string },
+  profile: ConfiguredCardProfile
+): Promise<void> {
+  const policy = await deps.resolvePolicy(actor.organizationId,initiative.projectId,initiative.initiativeId);
+  if (!profile.policy || profile.policy.policyId!==policy.policyId || profile.policy.policyVersion!==policy.version)
+    throw new MaterialCommandRuleError('CARD_PROFILE_POLICY_CONFLICT',409);
+  const members=await deps.reader.listDefinitionApprovalMembers(actor.organizationId,initiative.projectId);
+  for(const reviewerId of new Set(profile.cards.flatMap(card=>card.reviewerIds || []))){
+    const member=members.find(item=>item.id===reviewerId);
+    if(!member)throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_UNAVAILABLE',403);
+    getStore()?.memo.delete(JSON.stringify(['effectiveAccess',member.id,actor.organizationId,member.role??null,initiative.projectId,false]));
+    if(!await deps.authorize({userId:member.id,organizationId:actor.organizationId,applicationRole:member.role,isImpersonating:false},initiative.projectId,'initiative.review'))
+      throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_UNAVAILABLE',403);
+  }
 }

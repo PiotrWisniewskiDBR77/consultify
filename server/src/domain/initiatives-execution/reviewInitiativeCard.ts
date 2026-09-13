@@ -1,3 +1,4 @@
+import type { ConfiguredCardProfile } from './configureInitiativeCards.js';
 import {
   executeMaterialCommand,
   MaterialCommandConflictError,
@@ -5,6 +6,7 @@ import {
   type MaterialCommandResult,
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
+  MaterialCommandRuleError,
 } from './materialCommand.js';
 import type { InitiativeWithCardRefs } from './publishInitiativeCard.js';
 
@@ -27,7 +29,8 @@ export interface ReviewedInitiativeCard {
 
 export async function reviewInitiativeCard(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<ReviewInitiativeCardPayload>
+  envelope: MaterialCommandEnvelope<ReviewInitiativeCardPayload>,
+  assertCurrentProfileAuthority?: (initiative: InitiativeWithCardRefs, profile: ConfiguredCardProfile) => Promise<void>
 ): Promise<MaterialCommandResult<ReviewedInitiativeCard>> {
   if (
     envelope.commandType !== 'initiative.card.review' ||
@@ -43,7 +46,17 @@ export async function reviewInitiativeCard(
   ) {
     throw new MaterialCommandValidationError('expectedCardVersion must be positive');
   }
-  return executeMaterialCommand(unitOfWork, envelope, async (transaction) => {
+  return unitOfWork.transaction(async transaction => {
+    const parent=await transaction.getRelatedAggregateForUpdate<InitiativeWithCardRefs>(envelope.organizationId,'initiative',envelope.aggregateId);
+    if(!parent)throw new MaterialCommandRuleError('NOT_FOUND',404);
+    const profile=(parent.payload.cardSelection as {profile?:ConfiguredCardProfile}|undefined)?.profile;
+    if(profile){
+      if(!assertCurrentProfileAuthority)throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_AUTHORITY_REQUIRED',403);
+      await assertCurrentProfileAuthority(parent.payload,profile);
+      const requirement=profile.cards.find(card=>card.cardKey===envelope.payload.cardKey);
+      if(!requirement?.reviewerIds?.includes(envelope.actorId))throw new MaterialCommandRuleError('CARD_PROFILE_REVIEWER_NOT_NAMED',403);
+    }
+    return executeMaterialCommand({transaction:async work=>work(transaction)}, envelope, async (transaction) => {
     const initiative = await transaction.getAggregatePayload<InitiativeWithCardRefs>(
       envelope.organizationId,
       'initiative',
@@ -112,5 +125,6 @@ export async function reviewInitiativeCard(
         selfApprovalAllowed: envelope.payload.selfApprovalAllowed,
       },
     };
+    });
   });
 }

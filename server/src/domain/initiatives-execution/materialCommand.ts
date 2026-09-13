@@ -118,6 +118,7 @@ export interface InitiativeCardSnapshot {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
+  reviewedBy?: string | null;
   publishedBy: string;
 }
 
@@ -253,6 +254,16 @@ export interface MaterialCommandTransaction {
     sourceVersion: number;
     provenance: Record<string, unknown>;
   }): Promise<void>;
+  /** IE01: template snapshot and its policy fields cannot change during profile apply. */
+  getInitiativeTemplateForShare?(input: { organizationId: string; templateId: string }): Promise<{
+    id: string;
+    updatedAt: string;
+    sectionConfig: Record<string, unknown>;
+  } | null>;
+  listInitiativeCardSelectionForUpdate?(organizationId: string, initiativeId: string): Promise<Array<{
+    cardKey: string; included: boolean; position: number;
+    requiredness: 'REQUIRED' | 'OPTIONAL'; waiverDecisionId: string | null;
+  }>>;
   isCanonicalInitiativeCard(cardKey: string): Promise<boolean>;
   listCanonicalInitiativeCardKeys(): Promise<string[]>;
   replaceInitiativeCardSelection(input: {
@@ -333,7 +344,7 @@ export class MaterialCommandValidationError extends Error {}
 export class MaterialCommandRuleError extends Error {
   constructor(
     readonly rule: string,
-    readonly httpStatus: 400 | 409,
+    readonly httpStatus: 400 | 403 | 404 | 409,
     message?: string
   ) {
     super(message ?? rule);

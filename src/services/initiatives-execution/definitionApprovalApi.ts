@@ -21,6 +21,12 @@ export interface DefinitionApprovalRead {
   initiativeVersion: number;
   lifecycleState: string;
   title: string;
+  policy?: {
+    policyId: string;
+    policyVersion: number;
+    baseline?: 'BASELINE_SMALL' | 'STANDARD' | 'COMPLEX';
+    source?: 'PRODUCT' | 'ORGANIZATION' | 'PROJECT' | 'INITIATIVE';
+  };
   decision: DefinitionApprovalDecision | null;
   authorities: Array<{ id: string; name: string }>;
   actorId: string;

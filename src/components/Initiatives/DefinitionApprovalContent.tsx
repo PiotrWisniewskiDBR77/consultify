@@ -1,6 +1,8 @@
+import { INITIATIVE_CARD_REGISTRY, type InitiativeCardKey } from '@/contracts/initiatives-execution/cardRegistry';
+import { InitiativeCardProfilePicker } from './InitiativeCardProfilePicker';
 import { Api } from '@/services/api';
 import { enumLabel } from '@/utils/enumLabel';
-import { DefinitionCardContent } from './DefinitionCardContent';
+import { DefinitionCardContent, type DefinitionCardDraftStore } from './DefinitionCardContent';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -16,11 +18,21 @@ function DefinitionApprovalContentForInitiative({
   decisionId,
   onChanged,
   readOnly = false,
+  selectedCardKey,
+  draftStore,
+  initialFinding,
+  onFindingNavigate,
+  onDraftStateChange,
 }: {
   initiativeId: string;
   decisionId?: string;
   onChanged?: () => void;
   readOnly?: boolean;
+  selectedCardKey?: string;
+  draftStore?: DefinitionCardDraftStore;
+  onDraftStateChange?: () => void;
+  initialFinding?: { cardKey: string; field?: string; requestId: number };
+  onFindingNavigate?: (target: { cardKey: string; field?: string; requestId: number }) => void;
 }) {
   const active = useRef(true);
   useEffect(() => {
@@ -38,6 +50,11 @@ function DefinitionApprovalContentForInitiative({
     findings: Array<{ findingId: string; cardKey: string; message: string; rule: string }>;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [findingTarget, setFindingTarget] = useState<{
+    cardKey: string;
+    field?: string;
+    requestId: number;
+  }>();
   const [authority, setAuthority] = useState('');
   const [due, setDue] = useState('');
   const [rationale, setRationale] = useState('');
@@ -80,6 +97,12 @@ function DefinitionApprovalContentForInitiative({
     }
   };
   if (read && !read.enabled) return null;
+  if (selectedCardKey && read) return <DefinitionCardContent
+    onDraftStateChange={onDraftStateChange} findingTarget={initialFinding} selectedCardKey={selectedCardKey} draftStore={draftStore} initiativeId={initiativeId}
+    actorId={read.actorId} participants={read.participants}
+    canEdit={!readOnly && read.capabilities.edit} canReview={!readOnly && read.capabilities.review}
+    onChanged={reload}
+  />;
   return (
     <section
       aria-label={pl ? 'Zatwierdzenie definicji' : 'Definition approval'}
@@ -98,6 +121,15 @@ function DefinitionApprovalContentForInitiative({
             {pl ? 'Stan inicjatywy' : 'Initiative state'}:{' '}
             {enumLabel('initiativeLifecycle', read.lifecycleState, t)}
           </p>
+          {read.policy && (
+            <p>
+              {pl ? 'Obowiązująca polityka' : 'Effective policy'}: {read.policy.policyId} ·{' '}
+              {pl ? 'wersja' : 'version'} {read.policy.policyVersion}
+              {read.policy.baseline ? ` · ${read.policy.baseline}` : ''}
+              {read.policy.source ? ` · ${read.policy.source}` : ''}
+            </p>
+          )}
+          <InitiativeCardProfilePicker initiativeId={initiativeId} canEdit={!readOnly && read.capabilities.edit && read.lifecycleState === 'REGISTERED_DRAFT'} onChanged={reload} />
           {read.decision && (
             <>
               <p>
@@ -121,7 +153,32 @@ function DefinitionApprovalContentForInitiative({
                 : 'Definition requires completed cards and independent review. Open the card content below.'}
             </p>
           )}
+          {readiness && readiness.findings.length > 0 && (
+            <ul aria-label={pl ? 'Braki definicji' : 'Definition findings'} className="space-y-2">
+              {readiness.findings.map((finding) => (
+                <li key={finding.findingId}>
+                  <button
+                    className="text-left text-c-text underline decoration-c-border focus-visible:ring-2 focus-visible:ring-c-focus"
+                    onClick={() =>
+                      (onFindingNavigate || setFindingTarget)({
+                        cardKey: finding.cardKey,
+                        field: finding.rule.startsWith('FIELD_REQUIRED:')
+                          ? finding.rule.slice('FIELD_REQUIRED:'.length)
+                          : undefined,
+                        requestId: Date.now(),
+                      })
+                    }
+                  >
+                    {t(`initiatives.cards.${finding.cardKey}`, INITIATIVE_CARD_REGISTRY[finding.cardKey as InitiativeCardKey]?.label || finding.cardKey)}: {finding.message}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <DefinitionCardContent
+            onDraftStateChange={onDraftStateChange}
+            draftStore={draftStore}
+            findingTarget={findingTarget}
             initiativeId={initiativeId}
             actorId={read.actorId}
             participants={read.participants}

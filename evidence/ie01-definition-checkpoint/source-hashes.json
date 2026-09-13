@@ -1,0 +1,114 @@
+[
+  {
+    "path": "server/src/domain/initiatives-execution/__tests__/initiativeCardProfiles.pg.test.ts",
+    "sha256": "eb3b0c00c8ef0a36ba3fbc287293e12c4c3277f681c0ee0a58e443c0b088fedd"
+  },
+  {
+    "path": "server/src/routes/pmo/__tests__/initiativeProfileAuthority.test.ts",
+    "sha256": "0f1a23d662cc0c7d5ff42a9a79916859934ce024c7e9ecee85aadff338295153"
+  },
+  {
+    "path": "server/src/routes/pmo/__tests__/initiativeProfiles.gateway.pg.test.ts",
+    "sha256": "aec96645a930ccea8352bb23491707822755969ccd88ab85257b28088edd2d0f"
+  },
+  {
+    "path": "src/components/Initiatives/InitiativeCardProfilePicker.tsx",
+    "sha256": "568562b369faf1ab70040df30f0c2ebda19d936f7edc80411f14ccf66af7b618"
+  },
+  {
+    "path": "src/components/Initiatives/InitiativePreparationReadView.tsx",
+    "sha256": "5abc730f4ff9c1a0d2222437299b054d0eba122a0e693d5cab5ec6f4d3c4a3b8"
+  },
+  {
+    "path": "src/components/Initiatives/__tests__/DefinitionJourney.behavior.test.tsx",
+    "sha256": "5731825095772a45c70a37f035cbe95fcd06d769f840d09c7c98357b91c6d287"
+  },
+  {
+    "path": "src/components/Initiatives/__tests__/InitiativesHub.journeyNavigation.test.tsx",
+    "sha256": "f834c23eb021b583cb8e75ea859d4c77522abe407bb1a0225e15bfa06de732f7"
+  },
+  {
+    "path": "src/components/Initiatives/__tests__/initiativeProfileContract.test.ts",
+    "sha256": "5e7541cae09d490e4f84e33c26b71f3fc60b6e3a2731f356f10b2aedabc39025"
+  },
+  {
+    "path": "src/components/Initiatives/canonicalInitiativeSections.tsx",
+    "sha256": "224ac68662883e1f01f2457a0ac894bdc8b1a08bf33b8973b39cc3c3eaf0ea8d"
+  },
+  {
+    "path": "tests/components/Initiatives/InitiativeDocumentView.canonicalNavigation.behavior.test.tsx",
+    "sha256": "496ebcbb2552d1cf54e0778360c7b350a569c7a6c657ba872329494724507d4a"
+  },
+  {
+    "path": "public/locales/en/translation.json",
+    "sha256": "35f467f651d7ba539ff5f722572e1347d257e65f5efd1773b75bb21fd441f80f"
+  },
+  {
+    "path": "public/locales/pl/translation.json",
+    "sha256": "f537f731a84b112dd132f76a7c0b3ef2b4cfa4b66705b1110b33857c6e39c034"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/configureInitiativeCards.ts",
+    "sha256": "2bffc566ded656b4ed2181eb058621d4f070a90ad0ad6eade1a3bf07b4628761"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/definitionDecision.ts",
+    "sha256": "3d4cf12c93112a87af99afce3cb9b01979116fa72a4bf6d3d42f0dd308b00895"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/definitionReadiness.ts",
+    "sha256": "c25a2547c9e9e7207cc5e57353f807b18b1a4c7abe96139ac35ac01b5b0f8d40"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/materialCommand.ts",
+    "sha256": "1a2034b071d13ed76fe80eac5650e264cf1d62288f44df08abfdba691a77b945"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/postgresInitiativeReader.ts",
+    "sha256": "0bf6f6cb5580b5c24d57e02f454191eac697b4f4272d0593d04f1fb37a9c44da"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts",
+    "sha256": "4f4f89d0ccdb8e575c85f0c9d22928ab592bc7db858aef45bef9c2d865893ba8"
+  },
+  {
+    "path": "server/src/domain/initiatives-execution/reviewInitiativeCard.ts",
+    "sha256": "3d31c99843df13d2637063ed06f215f9a4c3e1f18c8df021eef87135808e9523"
+  },
+  {
+    "path": "server/src/routes/pmo/definitionApprovalAdapter.ts",
+    "sha256": "de79469df023cc9428b005c3a230d8d02989ba9f8953b565c6b7ab3918751d0d"
+  },
+  {
+    "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
+    "sha256": "e489b466d3be52a69e33604ea1ef97f8acf151a186ad131115b57ec41ddad63c"
+  },
+  {
+    "path": "src/components/Initiatives/DefinitionApprovalContent.tsx",
+    "sha256": "f67cba8825e14d56982014e3ec97e53a7689f8f14b5b4894a3b7dbfc1cb33dc5"
+  },
+  {
+    "path": "src/components/Initiatives/DefinitionCardContent.tsx",
+    "sha256": "594af59f694463f43beafd288025d7af07757ea901aed0e53daf87086401964c"
+  },
+  {
+    "path": "src/components/Initiatives/InitiativeDocumentView.tsx",
+    "sha256": "1ca5ac718ec2dfda8e4b10b40faf7dd441cefa551ba632a89462df2716214c2b"
+  },
+  {
+    "path": "src/components/Initiatives/InitiativesHub.tsx",
+    "sha256": "bac43845c8a9b075bc95356b4973146318b5676b6ea59cf4166653384b69c963"
+  },
+  {
+    "path": "src/services/initiatives-execution/definitionApprovalApi.ts",
+    "sha256": "660e67e7e38b71b4881fc4862f2c390c19698bf924dff950d7e98b29ba7237ba"
+  },
+  {
+    "path": "src/utils/initiativeDeepLink.ts",
+    "sha256": "4fe3e1304563df21c5a69e185187f000d2f695f0fa6b3de5eac8b5b9f888dc48"
+  },
+  {
+    "path": "tests/unit/initiatives-execution/definitionReadiness.test.ts",
+    "sha256": "4f10a290c6d91a51ffe5cbb3af977f3c815530774f2b5a5b6c43fdc7e0a9f7aa"
+  }
+]

@@ -1,4 +1,4 @@
-import { definitionApprovalEnabled, definitionAuthorities, mountDefinitionApprovalReads } from './definitionApprovalAdapter.js';
+import { assertConfiguredProfileAuthority, definitionApprovalEnabled, definitionAuthorities, mountDefinitionApprovalReads } from './definitionApprovalAdapter.js';
 import { StaffingFieldsSchema, StaffingNotFoundError, staffingAggregateType, writeStaffing, type StaffingMutation } from '../../domain/initiatives-execution/staffingPlans.js';
 import { GateRolesSchema, GateRolesNotFoundError, replaceGateRoles } from '../../domain/initiatives-execution/gateRoles.js';
 import { ResourceFieldsSchema, ResourceNotFoundError, writeResource } from '../../domain/initiatives-execution/resources.js';
@@ -38,7 +38,7 @@ import {
   decideClosureCase,
   requestClosureCase,
 } from '../../domain/initiatives-execution/closureDecision.js';
-import { configureInitiativeCards } from '../../domain/initiatives-execution/configureInitiativeCards.js';
+import { configureInitiativeCards, configuredCardProfile, type ConfiguredCardProfile } from '../../domain/initiatives-execution/configureInitiativeCards.js';
 import { createDefinitionRemediationWork } from '../../domain/initiatives-execution/createDefinitionRemediationWork.js';
 import { decideSourceProposal } from '../../domain/initiatives-execution/decideSourceProposal.js';
 import {
@@ -227,7 +227,7 @@ export const DOMAIN_RULE_BY_MESSAGE: Record<string, { rule: string; status: 400 
   'Published Plan Scenario snapshot is stale': { rule: 'PLAN_VERSION_MISMATCH', status: 409 },
 };
 
-function respondWithRule(res: Response, status: 400 | 409, rule: string): void {
+function respondWithRule(res: Response, status: 400 | 403 | 404 | 409, rule: string): void {
   res.status(status).json({ error: { code: rule, rule }, code: rule, rule });
 }
 
@@ -361,6 +361,7 @@ const ReviewCardSchema = z.object({
 });
 
 const ConfigureCardsSchema = z.object({
+  profile: z.object({ templateId: z.string().min(1).max(255), version: z.number().int().positive(), contentHash: z.string().regex(/^[a-f0-9]{64}$/) }).optional(),
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1).max(255),
   registryVersion: z.literal(1),
@@ -2360,9 +2361,37 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         firstParam(req.params.initiativeId)
       );
-      res.json({ initiativeVersion: found.version, registryVersion: 1, cards });
+      res.json({ initiativeVersion: found.version, registryVersion: 1, cards, profile: ((found.initiative as typeof found.initiative & { cardSelection?: { profile?: ConfiguredCardProfile } }).cardSelection)?.profile ?? null });
     })
   );
+
+  router.get('/initiatives/:initiativeId/card-profile-preview', asyncHandler(async (req, res) => {
+    const actor = actorFromRequest(req);
+    if (!actor) { res.status(401).json({ error: { code: 'AUTH_REQUIRED' } }); return; }
+    const id = firstParam(req.params.initiativeId);
+    const found = await deps.reader.findById(actor.organizationId, id);
+    if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
+      res.status(404).json({ error: { code: 'NOT_FOUND' } }); return;
+    }
+    const templateId = String(req.query.templateId || '').trim();
+    if (!templateId) { res.status(400).json({ error: { code: 'TEMPLATE_ID_REQUIRED' } }); return; }
+    const template = await deps.unitOfWork.transaction(async tx => {
+      if (!tx.getInitiativeTemplateForShare) throw new MaterialCommandRuleError('CARD_PROFILE_ADAPTER_UNAVAILABLE', 409);
+      return tx.getInitiativeTemplateForShare({ organizationId: actor.organizationId, templateId });
+    });
+    if (!template) { res.status(404).json({ error: { code: 'NOT_FOUND' } }); return; }
+    const profile = configuredCardProfile(template);
+    const selection = await deps.reader.listInitiativeCardSelection(actor.organizationId, id);
+    const published = await deps.reader.listLatestInitiativeCards(actor.organizationId, id);
+    res.json({ initiativeId: id, initiativeVersion: found.version, profile, impact: {
+      newlyRequired: profile.cards.filter(card => card.requiredness === 'REQUIRED' && !selection.some(old => old.cardKey === card.cardKey && old.requiredness === 'REQUIRED')).map(card => card.cardKey),
+      omitted: profile.cards.filter(card => !card.included).map(card => card.cardKey),
+      preservedContent: published.map(card => ({ cardKey: card.cardKey, cardVersion: card.cardVersion })),
+      unresolvedReviews: published.filter(card => card.reviewState !== 'ACCEPTED').map(card => card.cardKey),
+      waiverRequired: selection.filter(old => old.requiredness === 'REQUIRED' && profile.cards.some(card => card.cardKey === old.cardKey && (!card.included || card.requiredness !== 'REQUIRED'))).map(card => card.cardKey),
+      readinessAfterChange: 'REQUIRES_REEVALUATION',
+    } });
+  }));
 
   router.post(
     '/initiatives/:initiativeId/card-selection',
@@ -2409,12 +2438,18 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'initiative.cards.configure',
         payload: {
           registryVersion: parsed.data.registryVersion,
+          ...(parsed.data.profile ? { profile: parsed.data.profile } : {}),
           cards: parsed.data.cards.map((card) => ({
             ...card,
             waiverDecisionId: card.waiverDecisionId ?? null,
           })),
         },
-      });
+      }, async (current) => {
+        const allowed = deps.authorizeInitiativeObject
+          ? await deps.authorizeInitiativeObject(actor, current.projectId, 'initiative.update', [String(current.initiativeOwnerId || '')])
+          : await deps.authorize(actor, current.projectId, 'initiative.update');
+        if (!allowed) throw new MaterialCommandRuleError('CARD_PROFILE_AUTHORITY_REQUIRED', 403);
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2615,8 +2650,18 @@ export function createInitiativesExecutionRuntimeRouter(
       const readiness = evaluateDefinitionReadiness(
         cards,
         Boolean(source?.sourceType && source.sourceId && source.sourceVersion > 0),
-        sourceFreshness
+        sourceFreshness,
+        ((found.initiative as typeof found.initiative & { cardSelection?: { profile?: ConfiguredCardProfile } }).cardSelection)?.profile
       );
+      const configuredProfile=((found.initiative as typeof found.initiative & {cardSelection?: {profile?:ConfiguredCardProfile}}).cardSelection)?.profile;
+      if(configuredProfile){
+        try { await assertConfiguredProfileAuthority(deps,actor,found.initiative,configuredProfile); }
+        catch(error){
+          if(!(error instanceof MaterialCommandRuleError))throw error;
+          readiness.readiness='BLOCKED';
+          readiness.findings.push({findingId:'definition:gates-approvals:PROFILE_AUTHORITY_STALE',cardKey:'gates-approvals',severity:'BLOCKER',rule:'PROFILE_AUTHORITY_STALE',evidenceRefs:[],message:'The configured policy or reviewer authority is no longer current. Reconfigure and review the affected cards.'});
+        }
+      }
       res.json({
         initiativeId: req.params.initiativeId,
         initiativeVersion: found.version,
@@ -2797,7 +2842,7 @@ export function createInitiativesExecutionRuntimeRouter(
           rationale: parsed.data.rationale,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
         },
-      });
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2869,7 +2914,7 @@ export function createInitiativesExecutionRuntimeRouter(
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
           ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
         },
-      });
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2944,7 +2989,7 @@ export function createInitiativesExecutionRuntimeRouter(
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
           ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
         },
-      });
+      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );

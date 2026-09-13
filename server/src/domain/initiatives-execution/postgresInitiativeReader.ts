@@ -60,6 +60,7 @@ export interface InitiativeCardVersionReadModel {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
+  reviewedBy?: string | null;
   publishedBy: string;
   publishedAt: string;
 }
@@ -1867,13 +1868,14 @@ export class PostgresInitiativeReader {
       content_json: Record<string, unknown>;
       evidence_refs_json: string[];
       waiver_decision_id: string | null;
+      reviewed_by: string | null;
       published_by: string;
       published_at: Date | string;
     }>(
       `SELECT DISTINCT ON (card_key)
               card_key, card_version, aggregate_version, applicability, completion,
               quality, freshness, review_state, content_json, evidence_refs_json,
-              waiver_decision_id, published_by, published_at
+              waiver_decision_id, reviewed_by, published_by, published_at
          FROM ie_initiative_card_versions
         WHERE organization_id = $1 AND initiative_id = $2
         ORDER BY card_key, card_version DESC`,
@@ -1891,6 +1893,7 @@ export class PostgresInitiativeReader {
       content: row.content_json,
       evidenceRefs: row.evidence_refs_json,
       waiverDecisionId: row.waiver_decision_id,
+      reviewedBy: row.reviewed_by,
       publishedBy: row.published_by,
       publishedAt:
         row.published_at instanceof Date
