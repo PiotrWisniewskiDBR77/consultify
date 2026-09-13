@@ -46,6 +46,38 @@ w `PRZEKAZANIE_KODOWANIA_20260907/IE01_CHECKPOINT_20260912.md` i `IE01_REVIEW_RE
 Pracuje własnym procesem: dostawa → niezależny przegląd → scalenie do kandydata, i sam wystawia
 sobie HOLD-y. Jakość tych przeglądów jest wysoka — dwa błędy krytyczne bezpieczeństwa znalazł sam.
 
+## 2a. NOC 13.09 (00:45 → 06:45) — dopisane po pomiarze porannym
+
+Codex pracował bez przerwy. **Czternaście nowych gałęzi**, kandydat `rc2` przesunięty
+`d7e713fd5f` → **`5de710ff46`** (+68 commitów). Bilans kandydata wobec linii: **147 commitów,
+118 plików kodu, nadal zero migracji.**
+
+Trzy tory nocy:
+1. **Realizacja — prognoza i punkt odniesienia (siedem gałęzi).** `execution-forecast-editor`,
+   `execution-native-forecast`, `execution-cleared-forecast` (rozróżnienie „wyczyszczone" od „brak"),
+   `execution-canonical-forecast`, `execution-native-baseline`, `execution-unavailable-counts`,
+   `execution-bank-evidence` i `execution-bank-views`. To jest rdzeń wg DEC-476.
+2. **Materiały i prezentacje, tor W17 (sześć gałęzi).** Etykiety talii po angielsku, przywracanie
+   tytułu ze zrzutu, przesuwanie slajdów, czytelność trybu prezentacji, odnośnik do strony notatnika,
+   nazwa przycisku zamykania historii. **To jest poza rdzeniem** — zgodnie z DEC-476 należy do fali 2.
+   Prawdopodobnie kolejka sprzed decyzji; następca ma to rozstrzygnąć, zanim scali.
+3. **C6 — usuwanie i eksport.** Osobna gałąź `c6-delete-approved-out` plus trzynaście dokumentów
+   przeglądu.
+
+**Zamrożenie dowodów** `E1B_EVIDENCE_FINAL_FREEZE_20260913T090000Z.md`: czternaście plików z sumami
+SHA256 i wskazaniem gałęzi oraz punktu bazowego, nienaruszalne do niezależnego przeglądu. To jest
+dobra praktyka jego procesu — następca powinien ją wykorzystać jako gotowy materiał odbioru.
+
+**Werdykt C6 pozostaje HOLD.** Cytat z jego audytu: przyjęty fragment eksportu to jedna uprawniona
+część prawdziwego częściowego eksportu organizacji, a nie kompletny eksport ani dowód uprawnień.
+Następne konkretne zadanie ma nazwę **C6-DEL-OFF**: zamontowany punkt fizycznego usuwania dla
+superadmina ma zwracać deterministyczną odmowę **bez** pobierania klienta bazy i bez wchodzenia
+w łańcuch usuwania. Dopóki to nie jest zamknięte, **kryterium S2.7 pojemnika 2 jest otwarte,
+a pilotaż nie startuje.**
+
+Staging i demo przez całą noc bez zmian: `60051310d7`. Kopie zapasowe: **42 gałęzie**
+na `origin/backup/*` (32 gałęzie Codexa, w tym cała praca nocna).
+
 ## 3. Co blokuje wdrożenie (stan wg jego własnych raportów)
 
 1. **C6 na HOLD — sześć znalezisk, w tym dwa krytyczne:** eksport sięgający poza organizację
