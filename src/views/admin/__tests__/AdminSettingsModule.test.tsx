@@ -11,8 +11,11 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { User } from '../../../types';
+import { UserRole, type User } from '../../../types';
 import AdminSettingsModule from '../AdminSettingsModule';
+
+// Use actual router hooks: the global fresh useNavigate mock invalidates every memo.
+vi.unmock('react-router-dom');
 
 vi.mock('../../../components/Admin/AdminMembersRolesPanel', () => ({
   AdminMembersRolesPanel: () => <div data-testid="panel-people">people</div>,
@@ -109,7 +112,17 @@ vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
   ),
 }));
 vi.mock('../../../components/Admin/AdminAuditLogPanel', () => ({
-  AdminAuditLogPanel: () => <div data-testid="panel-audit">audit</div>,
+  AdminAuditLogPanel: (props: any) => (
+    <div
+      data-testid="panel-audit"
+      data-org={props.organizationId}
+      data-actor={props.actorId}
+      data-role={props.actorRole}
+      data-export={String(props.showOrganizationExport)}
+    >
+      audit
+    </div>
+  ),
 }));
 vi.mock('../../../components/Admin/AdminComplianceEvidencePanel', () => ({
   AdminComplianceEvidencePanel: () => <div data-testid="panel-compliance-evidence">evidence</div>,
@@ -149,7 +162,7 @@ vi.mock('../../../components/ui/scroll-area', () => ({
   ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const currentUser = { id: 'u1', role: 'ADMIN' } as unknown as User;
+const currentUser = { id: 'u1', organizationId: 'org-a', role: 'ADMIN' } as unknown as User;
 
 const renderAt = (path: string) =>
   render(
@@ -362,20 +375,15 @@ describe('AdminSettingsModule section routing', () => {
     // enterprise-compliance screens — a second, contradicting navigation
     // model layered inside the vertical AdminSettingsSidebar. Each screen
     // now has its own vertical nav slot instead.
-    it.each([
-      'agent-trace',
-      'audit',
-      'dlp',
-      'residency',
-      'retention',
-      'ai-policy',
-      'benchmark',
-    ])('unlocks the full experience and wires the %s screen directly', (commandScreen) => {
-      renderAt(`/admin/command/${commandScreen}`);
-      const panel = screen.getByTestId('panel-command');
-      expect(panel).toHaveAttribute('data-aggregation-only', 'false');
-      expect(panel).toHaveAttribute('data-screen', commandScreen);
-    });
+    it.each(['agent-trace', 'audit', 'dlp', 'residency', 'retention', 'ai-policy', 'benchmark'])(
+      'unlocks the full experience and wires the %s screen directly',
+      (commandScreen) => {
+        renderAt(`/admin/command/${commandScreen}`);
+        const panel = screen.getByTestId('panel-command');
+        expect(panel).toHaveAttribute('data-aggregation-only', 'false');
+        expect(panel).toHaveAttribute('data-screen', commandScreen);
+      }
+    );
 
     it('wires Attention Queue and Cost & Capacity', () => {
       const attention = renderAt('/admin/command/attention-queue');
@@ -402,7 +410,10 @@ describe('AdminSettingsModule section routing', () => {
 
     it('wires Retention & Export to the existing audit panel', () => {
       renderAt('/admin/audit/retention-export');
-      expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
+      expect(screen.getAllByTestId('panel-audit')).toHaveLength(1);
+      expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-org', 'org-a');
+      expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-actor', 'u1');
+      expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-export', 'true');
     });
 
     it('wires Diagnostics to the existing health panel', () => {
@@ -437,5 +448,28 @@ describe('AdminSettingsModule section routing', () => {
         expect(panel).toHaveAttribute('data-initial-ai-module-tab', aiModuleTabId);
       }
     );
+  });
+});
+
+describe('Admin audit export identity context', () => {
+  it('updates actor and role in the same organization instead of retaining memoized authority', () => {
+    const view = render(
+      <MemoryRouter initialEntries={['/admin/audit/retention-export']}>
+        <AdminSettingsModule currentUser={currentUser} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-actor', 'u1');
+    view.rerender(
+      <MemoryRouter initialEntries={['/admin/audit/retention-export']}>
+        <AdminSettingsModule currentUser={{ ...currentUser, id: 'u2' }} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-actor', 'u2');
+    view.rerender(
+      <MemoryRouter initialEntries={['/admin/audit/retention-export']}>
+        <AdminSettingsModule currentUser={{ ...currentUser, id: 'u2', role: UserRole.USER }} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-role', 'USER');
   });
 });

@@ -24978,7 +24978,12 @@
         "description": "Zmiany dotyczące członkostwa, bezpieczeństwa, współpracy i integracji emitowane przez powierzchnie P32.",
         "searchPlaceholder": "Szukaj akcji, wykonawcy, metadanych...",
         "loading": "Ładowanie dzienników audytu...",
-        "emptyMessage": "Nie znaleziono zdarzeń audytu dla tej przestrzeni roboczej."
+        "emptyMessage": "Nie znaleziono zdarzeń audytu dla tej przestrzeni roboczej.",
+        "organizationExport": {
+          "preparing": "Przygotowywanie eksportu organizacji…",
+          "download": "Eksportuj dane organizacji (JSON)",
+          "scope": "Pobierz dane tej organizacji. Manifest pliku wskazuje dane wyłączone lub nierozstrzygnięte."
+        }
       },
       "collaborationControls": {
         "errors": {

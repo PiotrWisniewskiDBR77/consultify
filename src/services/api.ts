@@ -3195,6 +3195,22 @@ export const Api = {
     return res.blob();
   },
 
+  // [ODMROZENIE WSPOLNE DEC-468] Tenant-admin self-service export; server checks persisted membership.
+  exportOwnOrganizationData: async (orgId: string): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(orgId)}/export?format=json`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const message = res.status === 423
+        ? 'Organization export is unavailable while a legal hold is active.'
+        : res.status === 403 || res.status === 401
+          ? 'You do not have permission to export this organization.'
+          : 'Failed to export organization data. Please try again.';
+      throw Object.assign(new Error(message), { status: res.status });
+    }
+    return res.blob();
+  },
+
   getOrganizationBillingDetails: async (orgId: string): Promise<any> => {
     const res = await fetch(`${API_URL}/superadmin/organizations/${orgId}/billing`, {
       headers: getHeaders(),

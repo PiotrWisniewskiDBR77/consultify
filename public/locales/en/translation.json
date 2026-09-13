@@ -23752,7 +23752,12 @@
         "description": "Membership, security, collaboration, and integration changes emitted by P32 surfaces.",
         "searchPlaceholder": "Search action, actor, metadata...",
         "loading": "Loading audit logs...",
-        "emptyMessage": "No audit events found for this workspace."
+        "emptyMessage": "No audit events found for this workspace.",
+        "organizationExport": {
+          "preparing": "Preparing organization export…",
+          "download": "Export organization data (JSON)",
+          "scope": "Download data for this organization. The file manifest identifies excluded or unresolved data."
+        }
       },
       "collaborationControls": {
         "errors": {

@@ -846,3 +846,9 @@ Disclosure independent review caught malformed-envelope COMPLETE bug; min envelo
 
 
 RC2 canonical/disclosure final pre-commit: independent bounded ACCEPT (reports in INTEGRATOR_MVP_20260912), root22mounted+30backend+1configuredGateway PASS, servertsc0, frontend192 baseline parity. Build134 default4GiB heap then configured8GiB exit0, index9e7d7735cb704d1a82910012cf8df3578e1d5557ba752ebbae25b21c6f6e4d07. Source manifest updated after format. Normalcommit next; no deployment, full E4/MVP OPEN. Heavy slot released Galileo for tasks tsc.
+
+
+Self-service organization export WIP on fbe8d8feb3: existing AdminAuditLogPanel route retention-export, separate own-org authenticated helper; role/currentorg/actor guards, epoch suppresses stale success/failure after org/actor/role/route/unmount, original Blob and shared partial disclosure, audit CSV/GDPR preserved. Actual tests81PASS =17panel(2old+15new)+59parentrouting+5client. Parent missingmemo dependencies initially masked by global fresh useNavigate mock (initial59PASS is NOT RED); unmock actual MemoryRouter/hooks gives1FAIL58PASS, restored59PASS. Epoch bypass6FAIL11PASS→restored17PASS. Final source hashes RC2_SELFSERVICE_SOURCE_MANIFEST.json; independent review pending; no built-browser/commit/deploy. Tasks65fb independentlyACCEPT not integrated; Decision atomic source stamp author runtime in progress. Full MVP ACTIVE.
+
+
+Write permission restored: root verified current RC2 WIP on fbe8, actual tasks1/1 and Decision3/3 Gateway PASS, final servertsc0/front192vs192 no added diagnostics, buildindex334e66f9d99c90c1898ad6ebb42de93ae9d8a03eab61b039392bede319d1827c. No deploy; normal commit next, built UI remains open. Previous readonly pause did not discard WIP.

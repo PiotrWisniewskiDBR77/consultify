@@ -1,16 +1,29 @@
 import { Download, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { organizationExportDisclosure } from '../../utils/organizationExportDisclosure';
 import { formatListDateTime } from '../../utils/listDateFormat';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
 import { EntityStatusChip } from '../ui/primitives/chips';
 
-export const AdminAuditLogPanel: React.FC = () => {
+// [ODMROZENIE 14_ADMIN DEC-460] Existing Retention & Export surface; personal GDPR remains separate.
+interface AdminAuditLogPanelProps {
+  organizationId?: string;
+  actorId?: string;
+  actorRole?: string;
+  showOrganizationExport?: boolean;
+}
+export const AdminAuditLogPanel: React.FC<AdminAuditLogPanelProps> = ({
+  organizationId,
+  actorId,
+  actorRole,
+  showOrganizationExport = false,
+}) => {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<any[]>([]);
   const [stats, setStats] = useState<{
@@ -31,6 +44,97 @@ export const AdminAuditLogPanel: React.FC = () => {
   const [complianceSummary, setComplianceSummary] = useState<any>(null);
   const [retentionDays, setRetentionDays] = useState(730);
   const [auditFilters, setAuditFilters] = useState<FilterChip[]>([]);
+
+  const [organizationExporting, setOrganizationExporting] = useState(false);
+  const [organizationExportNotice, setOrganizationExportNotice] = useState<string | null>(null);
+  const [organizationExportError, setOrganizationExportError] = useState<string | null>(null);
+  const exportEpoch = useRef(0);
+  const organizationExportInFlight = useRef(false);
+  const canExportOrganization = Boolean(
+    showOrganizationExport &&
+    organizationId &&
+    actorId &&
+    ['OWNER', 'ADMIN'].includes(actorRole || '')
+  );
+  useLayoutEffect(() => {
+    exportEpoch.current += 1;
+    organizationExportInFlight.current = false;
+    setOrganizationExporting(false);
+    setOrganizationExportNotice(null);
+    setOrganizationExportError(null);
+    return () => {
+      exportEpoch.current += 1;
+      organizationExportInFlight.current = false;
+    };
+  }, [organizationId, actorId, actorRole, showOrganizationExport]);
+  const handleOrganizationExport = async () => {
+    if (!canExportOrganization || !organizationId || organizationExportInFlight.current) return;
+    organizationExportInFlight.current = true;
+    const epoch = exportEpoch.current;
+    const capturedOrgId = organizationId;
+    setOrganizationExporting(true);
+    setOrganizationExportNotice(null);
+    setOrganizationExportError(null);
+    try {
+      const blob = await Api.exportOwnOrganizationData(capturedOrgId);
+      const payload = JSON.parse(await blob.text());
+      if (epoch !== exportEpoch.current) return;
+      const disclosure = organizationExportDisclosure(payload, capturedOrgId);
+      const url = URL.createObjectURL(blob);
+      try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `organization-export-${capturedOrgId.replace(/[^a-z0-9_-]/gi, '-')}.json`;
+        document.body.appendChild(link);
+        try {
+          link.click();
+        } finally {
+          link.remove();
+        }
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      setOrganizationExportNotice(disclosure.message);
+    } catch (error) {
+      if (epoch !== exportEpoch.current) return;
+      setOrganizationExportError(
+        error instanceof Error ? error.message : 'Failed to export organization data.'
+      );
+    } finally {
+      if (epoch === exportEpoch.current) {
+        organizationExportInFlight.current = false;
+        setOrganizationExporting(false);
+      }
+    }
+  };
+  const organizationExportControl = canExportOrganization ? (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => void handleOrganizationExport()}
+        disabled={organizationExporting}
+        className="inline-flex items-center gap-2 rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium disabled:opacity-50"
+      >
+        <Download className="h-4 w-4" />
+        {organizationExporting
+          ? t('admin.security.auditLog.organizationExport.preparing', 'Preparing organization export…')
+          : t('admin.security.auditLog.organizationExport.download', 'Export organization data (JSON)')}
+      </button>
+      <p className="text-sm text-slate-600 dark:text-slate-300">
+        {t('admin.security.auditLog.organizationExport.scope', 'Download data for this organization. The file manifest identifies excluded or unresolved data.')}
+      </p>
+      {organizationExportNotice && (
+        <p role="status" className="text-sm text-slate-700 dark:text-slate-200">
+          {organizationExportNotice}
+        </p>
+      )}
+      {organizationExportError && (
+        <p role="alert" className="text-sm text-danger-700 dark:text-danger-300">
+          {organizationExportError}
+        </p>
+      )}
+    </div>
+  ) : null;
 
   const load = useCallback(async () => {
     try {
@@ -184,20 +288,24 @@ export const AdminAuditLogPanel: React.FC = () => {
 
   if (!hasLoaded && loadError && !loading) {
     return (
-      <div
-        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
-        role="alert"
-      >
-        <p>{loadError}</p>
-        <button type="button" onClick={() => void load()} className="mt-3 font-medium underline">
-          {t('common.retry', 'Retry')}
-        </button>
-      </div>
+      <>
+        {organizationExportControl}
+        <div
+          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
+          role="alert"
+        >
+          <p>{loadError}</p>
+          <button type="button" onClick={() => void load()} className="mt-3 font-medium underline">
+            {t('common.retry', 'Retry')}
+          </button>
+        </div>
+      </>
     );
   }
 
   return (
     <div className="space-y-6">
+      {organizationExportControl}
       {loadError ? (
         <div
           className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"

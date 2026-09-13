@@ -1,0 +1,25 @@
+# C6 Decision atomic provenance checkpoint
+
+Exact clean source **55fcd46a7615677cee776926403aa6a3a37d2ead**, parent65fb1be3df9deaf6b8f6ad9156a14345486d3618. Normal hooks exit0 (`commit-decision-provenance.log`); final servertsc exit0 (`server-tsc-decision-provenance-final.log`). Independent review pending. Source change is only3added/18removed lines in Interview decision handoff; one real regression test file added. Scope was explicitly approved by root after reading C6_DECISION_ATOMIC_PROVENANCE_PREREQUISITE.md under existing export/privacy mandate, no new owner decision invented.
+
+## Problem and result
+Old Interview finding handoff wrote copied finding/evidence content first, then best-effort source-tag UPDATE. A real scoped UPDATE rejection produced HTTP200 and SQL source_type=NULL/source_id=NULL. Fixed route passes existing sourceType=interview_insight and sourceId=findingId to existing decisionService.createDecision, which writes both with content in the same INSERT. Removed only redundant decision UPDATE/catch. Gates, task and initiative branches, recordHandoff, flags, source history and global services unchanged.
+
+This establishes atomic content-to-origin persistence only. Entire Decision/history/notification/recordHandoff/context registration is not claimed transactional. No massbackfill, permission inferred from historical NULLsource, D18 source-content resolver, full Decisions export or E4 acceptance.
+
+## Evidence
+Final identical3fullName denominator: old baseline2PASS/1FAIL → fixed3PASS/0FAIL/0skip. RED message explicitly preserves {"source_type":null,"source_id":null} after HTTP200. Existing route regression17/17PASS. See decision-provenance-manifest.json for exact JSON filenames, fullNames and source hashes.
+
+Primary: SQL parent Insight fixture; real Finding POST201, real client-readback PATCH200, real handoff POST200 under actual ApiGateway/JWT/PG with scoped fault trigger rejecting later source UPDATE. Fixed SQL contains exact tenant/source/ID and copied finding+evidence body; real handoff receipt references created Decision; source finding row unchanged. Additional scoped BEFORE INSERT rejection produces500 P10_HANDOFF_CREATE_FAILED with no new Decision/fallback orphan. Finally removes own triggers/function and compares all original decision trigger definitions exactly; separate post-test catalog confirms0ownfaulttriggers/0ownfaultfunctions.
+
+Other scenarios: foreign Insight404 and foreign target project404 with no new Decision; unconfirmed readback422/P10_READBACK_REQUIRED and no Decision. Fresh UUIDs per test; source/lifecycle gates are exercised, not disabled. Parent Insight and operator-note evidence are explicit synthetic fixtures, not proof of LLM Insight generation, real external client confirmation or private Notebook creation. Finding and readback transitions are actual routes executed by authorized fixture actor.
+
+## Resources/schema
+Verified local Colima cx-codex6-pg on6457, disposable cx6_export_contract, actual ApiGateway4216. No live/cloud use. Added nine actual schema-only tables from read-only cx6_swieza: decisions, initiatives, initiative_templates, decision_history, interview_insights, interview_insight_findings, interview_insight_evidence_pointers, interview_insight_handoffs, interview_insight_audit_log. Preserved actual mw_decisions_inbox_lifecycle function and triggers, using prior real inbox helpers. Exact DDL in decision-prerequisites.sql/decision-schema-apply.log. Own failure trigger is transient, scoped to fresh organization, restored in finally; no schema drift/backfill or unrelated fixture deletion. decision-provenance-fault-cleanup.json confirms cleanup.
+
+All author API/test/tsc/commit processes terminal. Heavy slot returned root. Source remains frozen and DB6457/API4216 await root allocation to independent scope, followed by root combined UI fixtures.
+
+## Reproduction and reconciliation
+Actual file server/src/routes/__tests__/interview-decision-provenance.gateway.pg.test.ts. Use external run-test.py with fresh OUT prefix and explicit ENABLE_V8_GLOBAL=true RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce ENABLE_TEST_AUTH_BYPASS=false ENABLE_INITIATIVE_UNIFIED_READ=true. Runner supplies guarded local DATABASE_URL/C6_EXPORT_TEST_DATABASE, RUN_DB_TESTS=1 MOCK_DB=false DB_MANAGED_SCHEMA=false. Copy runner externally to change fixed WT/OUT; do not print private configuration or overwrite prior evidence. Coordinate exclusive6457/4216 first. Unit regression: existing src/routes/v8/__tests__/interview-insights.routes.test.ts with RUN_DB_TESTS=0 MOCK_DB=true, --root server --config <WT>/server/vitest.config.ts --retry=0 --maxWorkers=1.
+
+Integrate two paths only after exact review; do not merge held0025 base. Preserve root policy rollback-discard, export CSV manifest/disclosure and accepted Interview/privacy changes during reconciliation. Author source does not contain all independent RC2 prerequisites and is not combined RC2 proof. Existing untagged historical Decisions remain unresolved pending evidence; future source-aware export must use actual Interview privacy/actor rules.
