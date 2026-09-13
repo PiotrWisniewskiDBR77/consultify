@@ -50,7 +50,14 @@ describe('1.12-R1 (D) — zdjęty filtr po projekcie', () => {
 
   it('inicjatywy pobiera bez projectId (43 z 72 nie mają projektu)', () => {
     const fn = blok('const loadInitiatives = async () => {', '} catch (err: any) {');
-    expect(fn).toContain('Api.getInitiatives()');
+    // BRAMKA K2 (13.09): pilnujemy REGUŁY (brak zawężenia do projektu), nie
+    // literalnego kształtu wołania. `Api.getInitiatives(projectId?, options?)`
+    // dostał drugi argument (`asOf`/`includeExecutionEvidence` dla Banku
+    // realizacji), więc kanoniczne wołanie bez projektu brzmi dziś
+    // `Api.getInitiatives(undefined, { … })`. Pierwszy argument MUSI zostać
+    // pusty — `()` albo `undefined` — i nigdy nie może być identyfikatorem.
+    expect(fn).toMatch(/Api\.getInitiatives\(\s*(?:\)|undefined\s*[,)])/);
+    expect(fn).not.toMatch(/Api\.getInitiatives\(\s*(?!undefined\b|\))/);
     expect(fn).not.toContain('Api.getInitiatives(currentProjectId');
   });
 });
