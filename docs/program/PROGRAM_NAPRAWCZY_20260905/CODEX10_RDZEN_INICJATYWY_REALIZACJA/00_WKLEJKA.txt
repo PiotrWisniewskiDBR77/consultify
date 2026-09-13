@@ -1,0 +1,47 @@
+NOWY BLOK — CODEX 10 — „RDZEN: INICJATYWY I REALIZACJA" (decyzja wlasciciela DEC-476)
+
+★ PIERWSZA KOMENDA — instrukcja i specyfikacja z vaulta:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX10_RDZEN_INICJATYWY_REALIZACJA/01_INSTRUKCJA.md
+git -C "$V" show origin/integracja/20260911:docs/program/FALA2/SPEC_FALA2_20260912.md
+Przeczytaj OBA w calosci. WIAZACA jest specyfikacja wlasciciela, sekcje „MODUL INICJATYWY"
+i „MODUL REALIZACJA" — instrukcja jej nie streszcza.
+
+★ DECYZJA WLASCICIELA 12.09 (DEC-476): „musimy na pewno dokonczyc modul inicjatywy i realizacja,
+ bo to serce aplikacji. Reszte mozemy przerzucac do fali 2." Twarda granica: cokolwiek nie jest
+ Inicjatywami albo Realizacja — idzie do fali 2, nawet drobiazg.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM:
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex10-rdzen
+df -h /   # ponizej 5 GB wolnego = STOP
+git -C "$V" worktree add "$WT" -b codex/rdzen-inicjatywy-realizacja-20260912 codex/integrator-mvp-20260912
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex10-rdzen/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex10-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+Zasoby wylaczne: cx-codex10-pg (6461), bazy cx10_*, API 4220, preview 5220, migracje 20262220-20262239.
+
+★ ZADANIE:
+ E0 AUDYT LUKI (pierwsze, bez pomijania): dla KAZDEGO elementu ukladu docelowego z obu sekcji
+    specyfikacji wiersz tabeli: element → ISTNIEJE / CZESCIOWO / BRAK → dowod plik:linia → koszt S/M/L.
+    ISTNIEJE znaczy: renderuje sie i dziala, sprawdzone przez CIEBIE w przegladarce. Komponent bez
+    montowania to BRAK, nie ISTNIEJE. Osobno wypisz to, co JEST, a specyfikacja tego nie przewiduje
+    (dzis Inicjatywy maja 8 zakladek, wlasciciel chce 4). Zapis: 98_AUDYT_LUKI.md — potem STOP i dopiero §2.
+ §2 KOLEJNOSC: (1) nawigacja 4+4 przyciski (Inicjatywy: lista i analiza; Plan; Obciazenie; Raport
+    z pracy || Bank; Praca; Zarzadzanie ryzykiem; Raporty) z PRZENIESIENIEM istniejacych ekranow,
+    nadmiar chowasz za flaga · (2) lista inicjatyw: filtr Archiwum/Aktualne, filtr projektami, kanban
+    po statusie, kalendarz z Ganttem 1/3/6/12 mies. (1 i 3 w tygodniach, 6 i 12 w miesiacach) ·
+    (3) Bank realizacji: te same widoki + kolorowa sygnalizacja opoznien i ryzyk + pozycja na linii
+    czasu · (4) generatory analiz (portfel → plan i sciezki krytyczne → obciazenie z heat mapa →
+    analiza realizacji → ryzyko jako karta N) · (5) raporty: kreator, 5 szablonow, na zadanie i okresowo.
+ MINIMUM BLOKU: E0 + punkty 1 i 2. Reszta to kolejne bloki po Twoim audycie i wycenie.
+ Lepiej zamknac trzy rzeczy niz napoczac siedem.
+
+★ ZAKAZY: nie dotykasz modulow spoza Inicjatyw i Realizacji · nie projektujesz nowych kolorow poza
+ sygnalizacja ryzyka (istniejace tokeny; czerwien tylko stan krytyczny) · wszystko nowe ZA FLAGA OFF
+ z dowodem parytetu · nie pushujesz · ZERO polaczen do Railway/stagingu/demo/produkcji · ZAKAZ git
+ stash i --no-verify · testy PER PLIK · KAZDY zbudowany ekran fotografujesz SAM w obu motywach do
+ evidence/rdzen-<etap>/ (wlasciciel nigdy nie jest pierwszym testerem wizualnym) · znaczniki commita
+ [ODMROZENIE 05_INITIATIVES DEC-476] [ODMROZENIE 06_EXECUTION DEC-476] [ODMROZENIE WSPOLNE DEC-476].
+
+★ RAPORTY: 98_AUDYT_LUKI.md (po E0) i 98_RAPORT.md (na koniec, z sekcja „czego nie sprawdzilem").
