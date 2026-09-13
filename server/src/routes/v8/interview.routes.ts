@@ -17,6 +17,7 @@ import {
   loadInterviewSessionsForOrganization,
   loadManagedInterviewSessionsForManager,
 } from '../../controllers/InterviewController.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requireAnyPermission, requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -53,7 +54,6 @@ import { getTableColumns } from '../../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 const contextDocsUpload = multer({
@@ -396,6 +396,21 @@ router.post(
 router.get(
   '/assignments/:id/review-access',
   v8Wrap(InterviewController.getAssignmentReviewAccess, interviewMeta)
+);
+
+router.get(
+  '/assignments/:id/answer-approvals',
+  v8Wrap(InterviewController.getAnswerApprovals, interviewMeta)
+);
+
+router.post(
+  '/assignments/:id/answer-approvals/retry-ai',
+  v8Wrap(InterviewController.retryAiAnswerApprovals, interviewMeta)
+);
+
+router.post(
+  '/assignments/:id/answer-decisions',
+  v8Wrap(InterviewController.decideAnswerApprovals, interviewMeta)
 );
 
 router.post(

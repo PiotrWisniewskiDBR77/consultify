@@ -154,7 +154,12 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
       stage: 'ai',
       decision: 'approved',
       actor: { type: 'ai', id: `model-run-${tag}` },
-      metadata: { modelId: 'test-model', modelVersion: '1', promptVersion: 'p1', score: 0.8 },
+      metadata: {
+        modelId: 'test-model',
+        providerId: 'test-provider',
+        promptVersion: 'p1',
+        score: 0.8,
+      },
     });
     const projection = await readInterviewAnswerApprovalProjection({
       organizationId: orgId,
@@ -172,6 +177,148 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
     });
   });
 
+  it('rejects actor-stage mismatches without appending a parent command or receipt', async () => {
+    const before = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM interview_answer_decision_commands WHERE organization_id=$1) commands,
+         (SELECT count(*)::int FROM interview_answer_decisions WHERE organization_id=$1) decisions`,
+      [orgId]
+    );
+    const revisions = await pool.query(
+      `SELECT id, updated_at FROM interview_questions WHERE id IN ($1,$2) ORDER BY id`,
+      [questionA, questionB]
+    );
+    await expect(
+      applyInterviewAnswerDecisionCommand({
+        organizationId: orgId,
+        assignmentId,
+        sessionId,
+        submissionId,
+        clientRequestId: `iaa-manager-ai-actor-${tag}`,
+        commandType: 'decide',
+        answers: [
+          {
+            questionId: revisions.rows[0].id,
+            expectedAnswerUpdatedAt: revisions.rows[0].updated_at.toISOString(),
+          },
+        ],
+        stage: 'manager',
+        decision: 'approved',
+        actor: { type: 'ai', id: `model-run-${tag}` },
+      })
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+    await expect(
+      applyInterviewAnswerDecisionCommand({
+        organizationId: orgId,
+        assignmentId,
+        sessionId,
+        submissionId,
+        clientRequestId: `iaa-ai-no-provenance-${tag}`,
+        commandType: 'decide',
+        answers: [
+          {
+            questionId: revisions.rows[1].id,
+            expectedAnswerUpdatedAt: revisions.rows[1].updated_at.toISOString(),
+          },
+        ],
+        stage: 'ai',
+        decision: 'approved',
+        actor: { type: 'ai', id: `model-run-${tag}` },
+      })
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+    const after = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM interview_answer_decision_commands WHERE organization_id=$1) commands,
+         (SELECT count(*)::int FROM interview_answer_decisions WHERE organization_id=$1) decisions`,
+      [orgId]
+    );
+    expect(after.rows[0]).toEqual(before.rows[0]);
+  });
+
+  it('resubmits only the changed returned answer and preserves the completed sibling projection', async () => {
+    const revisions = await pool.query(
+      `SELECT id, updated_at FROM interview_questions WHERE id IN ($1,$2) ORDER BY id`,
+      [questionA, questionB]
+    );
+    await applyInterviewAnswerDecisionCommand({
+      organizationId: orgId,
+      assignmentId,
+      sessionId,
+      submissionId,
+      clientRequestId: `iaa-manager-approve-a-${tag}`,
+      commandType: 'decide',
+      answers: [
+        {
+          questionId: revisions.rows[0].id,
+          expectedAnswerUpdatedAt: revisions.rows[0].updated_at.toISOString(),
+        },
+      ],
+      stage: 'manager',
+      decision: 'approved',
+      actor: { type: 'human', id: userId },
+    });
+    await applyInterviewAnswerDecisionCommand({
+      organizationId: orgId,
+      assignmentId,
+      sessionId,
+      submissionId,
+      clientRequestId: `iaa-ai-return-b-${tag}`,
+      commandType: 'decide',
+      answers: [
+        {
+          questionId: revisions.rows[1].id,
+          expectedAnswerUpdatedAt: revisions.rows[1].updated_at.toISOString(),
+        },
+      ],
+      stage: 'ai',
+      decision: 'sent_back',
+      reason: 'Add evidence',
+      actor: { type: 'ai', id: `model-run-${tag}` },
+      metadata: {
+        modelId: 'test-model',
+        modelVersion: '1',
+        providerId: 'test-provider',
+        promptVersion: 'p1',
+      },
+    });
+    await pool.query(`UPDATE interview_assignments SET status='sent_back' WHERE id=$1`, [
+      assignmentId,
+    ]);
+    await pool.query(
+      `UPDATE interview_questions
+       SET answer_text='Beta revised with evidence', updated_at=CURRENT_TIMESTAMP
+       WHERE id=$1`,
+      [questionB]
+    );
+    const resubmissionId = `iaa-resubmission-${tag}`;
+    const resubmission = await applyInterviewAnswerDecisionCommand({
+      organizationId: orgId,
+      assignmentId,
+      sessionId,
+      submissionId: resubmissionId,
+      clientRequestId: `iaa-resubmit-request-${tag}`,
+      commandType: 'submit',
+      actor: { type: 'human', id: userId },
+    });
+    expect(resubmission.decisions.map(({ questionId }) => questionId)).toEqual([questionB]);
+    const projection = await readInterviewAnswerApprovalProjection({
+      organizationId: orgId,
+      assignmentId,
+    });
+    expect(projection.find((row) => row.questionId === questionA)).toMatchObject({
+      submissionId,
+      status: 'stages_complete',
+    });
+    expect(projection.find((row) => row.questionId === questionB)).toMatchObject({
+      submissionId: resubmissionId,
+      status: 'pending',
+      nextStage: 'manager',
+    });
+    await pool.query(`UPDATE interview_assignments SET status='submitted' WHERE id=$1`, [
+      assignmentId,
+    ]);
+  });
+
   it('rolls back a wrong-stage decision without appending a parent command or receipt', async () => {
     const before = await pool.query(
       `SELECT
@@ -180,7 +327,7 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
       [orgId]
     );
     const revision = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [
-      questionB,
+      questionA,
     ]);
     await expect(
       applyInterviewAnswerDecisionCommand({
@@ -192,7 +339,7 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
         commandType: 'decide',
         answers: [
           {
-            questionId: questionB,
+            questionId: questionA,
             expectedAnswerUpdatedAt: revision.rows[0].updated_at.toISOString(),
           },
         ],

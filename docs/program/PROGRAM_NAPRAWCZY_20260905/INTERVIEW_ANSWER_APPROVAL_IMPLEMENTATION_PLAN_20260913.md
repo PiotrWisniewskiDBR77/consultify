@@ -2,14 +2,22 @@
 
 ## Decision
 
-**MIGRATION_AUTHORIZED, NOT INCLUDED IN THIS REVIEW-FINDINGS COMMIT.** Wpis 2
-08:20 authorizes exactly one additive migration:
+**MIGRATION AUTHORIZED AND IMPLEMENTED IN THE BACKEND SLICE.** Wpis 2 08:20
+authorizes exactly one additive migration:
 `server/migrations/20262170_interview_answer_decisions.sql`. It may use only
 `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, and
 `CREATE INDEX IF NOT EXISTS`; it may not alter types, drop objects, edit old
-migrations, or backfill data. The next commit must prove an idempotent double
-run on both an empty database migrated from zero and the restored local
-schema-only staging dump. It must not run against staging or demo.
+migrations, or backfill data. Commit `5592994734f85cbfc3ddced317a55c0ad7741e73`
+contains that migration and its initial service. The backend follow-up closes
+the review findings around frozen policy, per-question progress, authority,
+AI provenance, resubmission isolation, mutation serialization and mounted V8
+routes. The second review follow-up also keeps AI result state transaction-local,
+requires exact unique provider question coverage, applies one assignment →
+session → question → evidence lock order, and fails closed when the canonical
+session/assignment relationship is null, reversed or ambiguous. The migration
+was run idempotently on both an empty database migrated from zero and a new local
+PostgreSQL 18 container restored from the exact schema-only artifact. Neither
+staging nor demo was contacted.
 
 The organization policy itself does not require a migration. It can use the
 existing versioned `organization_ai_policy.policy` JSONB document under:
@@ -84,10 +92,12 @@ version; it must never overwrite or downgrade it to version `1`.
   draft only for per-answer sufficiency: `ai` lets the AI quality stage decide
   whether an exact answer revision is sufficient, `manager` requires the
   manager, and `two_stage` records the AI proposal before the manager decides.
-  Completing an AI quality stage is not an automatic final assignment or
-  Interview approval. Assignment roll-up remains blocked until the durable
-  per-answer writer and projection prove every answer's frozen policy; it must
-  never infer approval from `stages_complete` in this pure helper.
+  Completing an AI quality stage is not an automatic final Interview approval.
+  Assignment roll-up reads the durable per-answer projection under the
+  assignment lock and proceeds only when every current answer revision has
+  completed the stages required by its frozen policy. A sent-back answer must
+  be edited and resubmitted; approvals from a changed sibling revision are never
+  inherited.
 
 ## Authorized minimal additive schema contract
 
