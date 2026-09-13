@@ -10430,6 +10430,9 @@
     }
   },
   "initiatives": {
+    "register": {
+      "archiveLocked": "Zmiany cyklu życia i archiwizacja są wykonywane w kontrolowanym procesie."
+    },
     "fullView": {
       "loading": "Ładowanie inicjatywy…",
       "untitled": "Inicjatywa bez tytułu",

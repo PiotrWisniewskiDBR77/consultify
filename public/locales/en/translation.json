@@ -11265,6 +11265,9 @@
     }
   },
   "initiatives": {
+    "register": {
+      "archiveLocked": "Lifecycle changes and archiving run through a controlled process."
+    },
     "fullView": {
       "loading": "Loading initiative…",
       "untitled": "Untitled initiative",
