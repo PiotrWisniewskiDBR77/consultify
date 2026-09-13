@@ -108,6 +108,15 @@ function columnContractDrift(
 const driftIsEmpty = (drift: ColumnContractDrift): boolean =>
   drift.missing.length === 0 && drift.typeMismatch.length === 0 && drift.undeclared.length === 0;
 
+/** Tables whose row content is filtered by a projector that READS columns. */
+const contentPrivacyProjected = (policy: OrganizationExportTableContract): boolean =>
+  Boolean(
+    policy.interviewPrivacy ||
+      policy.personalTaskPrivacy ||
+      policy.decisionPrivacyKind ||
+      policy.canonicalLineageColumns
+  );
+
 interface CatalogColumn {
   schema_name: string;
   table_name: string;
@@ -247,10 +256,18 @@ export async function exportOrganizationData(
     // Table-level drift still fails closed: without the ownership column the
     // tenant scope cannot be proved, and a drifted primary key changes row
     // identity and the deterministic order of the export.
+    //
+    // A privacy-projected table keeps the ORIGINAL all-or-nothing rule. Its
+    // projector decides what may leave the tenant by READING columns
+    // (`is_anonymous`, `session_id`, `owner_id`, …); silently dropping a
+    // drifted one of those would let the projector mis-classify a row and
+    // widen disclosure. Per-column degradation is therefore allowed only
+    // where no content-privacy decision depends on the columns.
     if (
       (policy.ownerColumn && !table.columns.includes(policy.ownerColumn)) ||
       projection.length === 0 ||
       policy.primaryKey.some((column) => untrusted.has(column)) ||
+      (!driftIsEmpty(drift) && contentPrivacyProjected(policy)) ||
       JSON.stringify(pks.get(key) || []) !== JSON.stringify(policy.primaryKey)
     ) {
       unresolved(name, 'schema_projection_or_primary_key_drift');
@@ -333,6 +350,8 @@ export async function exportOrganizationData(
         // and degraded where the parent itself is exported (see
         // columnContractDrift) and must not silently unresolve this child.
         columnContractDrift(parent, parentCatalog).typeMismatch.includes(parent.ownerColumn) ||
+        (contentPrivacyProjected(parent) &&
+          !driftIsEmpty(columnContractDrift(parent, parentCatalog))) ||
         parent.primaryKey.some((column) => !parentCatalog.columns.includes(column)) ||
         JSON.stringify(pks.get(identity(edge.parentSchema, edge.parentTable)) || []) !==
           JSON.stringify(parent.primaryKey) ||
