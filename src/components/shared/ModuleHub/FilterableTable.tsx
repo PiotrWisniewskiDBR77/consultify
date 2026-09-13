@@ -432,6 +432,30 @@ export const obliczScrollDoKolumny = (
 export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-ellipsis';
 
 /**
+ * ── SUFIT DWÓCH LINII DLA TEKSTU KOMÓRKI (K5-7, 2026-09-13) ────────────────
+ *
+ * `CELL_TEXT_CLAMP_CLASS` chroni przed rozdarciem wyrazu, ale NIE ogranicza
+ * liczby linii — tekst szerszy niż kolumna zawija się dowolnie długo. Zmierzone
+ * 13.09 na zakładce Plan (`k5-naprawy-inicjatywy`, 1440×900): kolumna HORYZONT
+ * („Aug 31, 2026 – Mar 31, 2027") łamała się na CZTERY linie i wiersz rósł
+ * z kanonicznych 56 px do 150 px — to jest „długie teksty łamane na 3–4 linie"
+ * ze zgłoszenia właściciela.
+ *
+ * Kanon §3.4: wiersz ma DWIE linie (tytuł + opis) i stałą wysokość. Dlatego
+ * treść komórki dostaje `line-clamp-2` — dwie linie i wielokropek. Nagłówki
+ * zostają na `CELL_TEXT_CLAMP_CLASS` (są jednolinijkowe i siedzą we flexie
+ * z ikoną sortowania, gdzie `-webkit-box` zmieniłby wyrównanie).
+ */
+/*
+ * BEZ `block`: `line-clamp-2` samo ustawia `display:-webkit-box`, a utility
+ * `.block` stoi w wygenerowanym arkuszu PÓŹNIEJ i o tej samej specyficzności,
+ * więc nadpisywało display na `block` i klamra NIE DZIAŁAŁA (zmierzone
+ * `getComputedStyle`: display=block przy -webkit-line-clamp=2). Klasa, która
+ * jest w kodzie, ale nie działa, jest gorsza od jej braku — wygląda na naprawę.
+ */
+export const CELL_TEXT_CLAMP_2_CLASS = 'break-normal line-clamp-2';
+
+/**
  * WARSTWA DLA TREŚCI RENDEROWANEJ PRZEZ MODUŁ JAKO ELEMENTY (2026-09-02).
  *
  * Dlaczego istnieje: `CELL_TEXT_CLAMP_CLASS` chroni tylko GOŁY tekst zwrócony
@@ -2354,8 +2378,19 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           />
                         ) : column.render ? (
                           renderedIsPlainText ? (
+                            /*
+                             * TYPOGRAFIA WIERSZA (K5-7, 2026-09-13): `render`
+                             * zwracajacy GOLY tekst nie dostawal zadnej klasy,
+                             * wiec dziedziczyl 16 px — a kolumna bez `render`
+                             * renderowala 14 px (`text-sm`). Ta sama tabela
+                             * miala wiec dwa rozmiary pisma w sasiednich
+                             * kolumnach (zmierzone na zakladce Plan: wysokosc
+                             * linii 24 px vs 20 px), co lamie kanon §3.4 i przy
+                             * okazji rozpychalo wiersz. Goly tekst dostaje
+                             * kanoniczna typografie wiersza.
+                             */
                             <OverflowTooltip
-                              className={CELL_TEXT_CLAMP_CLASS}
+                              className={`text-sm text-slate-700 dark:text-slate-200 ${CELL_TEXT_CLAMP_2_CLASS}`}
                               content={toTooltipSafeString(rendered)}
                             >
                               {rendered}
@@ -2389,11 +2424,11 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                 'text-sm text-slate-700 dark:text-slate-200',
                                 // `title`/`name` mają WŁASNY, ostrzejszy kanon:
                                 // jedna linia + wielokropek (`truncate`). Reszta
-                                // kolumn zawija na spacji i skraca dopiero wyraz
-                                // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
+                                // kolumn zawija na spacji, ale NIE DŁUŻEJ NIŻ
+                                // DWIE LINIE (K5-7 — patrz CELL_TEXT_CLAMP_2_CLASS).
                                 column.id === 'title' || column.id === 'name'
                                   ? 'block truncate'
-                                  : CELL_TEXT_CLAMP_CLASS,
+                                  : CELL_TEXT_CLAMP_2_CLASS,
                               ].join(' ')}
                               content={toTooltipSafeString(row[column.id])}
                             >
