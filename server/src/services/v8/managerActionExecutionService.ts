@@ -153,18 +153,20 @@ async function managerAuditLog(
   action: string,
   entityType: string,
   entityId: string,
-  detail: string
+  detail: string,
+  fieldEvidence?: { oldValue: unknown; newValue: unknown }
 ) {
   await dbRun(
     `INSERT INTO manager_action_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
-       VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, NOW())`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
     [
       `mgr-audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       organizationId,
       entityType,
       entityId,
       `manager_${action}`,
-      detail,
+      fieldEvidence ? JSON.stringify(fieldEvidence.oldValue) : null,
+      fieldEvidence ? JSON.stringify(fieldEvidence.newValue) : detail,
       `Manager cockpit action: ${action}`,
       userId,
     ]
@@ -367,18 +369,31 @@ async function executeProblemActionInternal(
         // never the approved baseline. Previously this wrote planned_end_date
         // (+21d), silently rebaselining the initiative. Write forecast_end_date
         // so variance vs baseline stays visible in the control tower.
+        const [before] = await dbAll<{ forecast_end_date: string | null }>(
+          `SELECT forecast_end_date
+             FROM initiatives
+            WHERE id = ? AND organization_id = ?`,
+          [row.sourceEntityId, organizationId]
+        );
+        const forecastEndDate = isoDay(21);
         await dbRun(
           `UPDATE initiatives
            SET forecast_end_date = ?,
                updated_at = NOW()
            WHERE id = ? AND organization_id = ?`,
-          [isoDay(21), row.sourceEntityId, organizationId]
+          [forecastEndDate, row.sourceEntityId, organizationId]
         );
         await resumeInitiative();
         addChange('INITIATIVE', row.sourceEntityId);
         return {
           message: 'Initiative scope was reduced and the work was moved back into execution.',
           changedEntities,
+          auditEvidence: {
+            [row.sourceEntityId]: {
+              oldValue: { forecastEndDate: before?.forecast_end_date ?? null },
+              newValue: { forecastEndDate },
+            },
+          },
         };
       }
       default:
@@ -670,13 +685,19 @@ export async function executeManagerProblemAction(args: {
       );
 
       for (const entity of result.changedEntities) {
+        const fieldEvidence = (
+          result as {
+            auditEvidence?: Record<string, { oldValue: unknown; newValue: unknown }>;
+          }
+        ).auditEvidence?.[entity.entityId];
         await managerAuditLog(
           args.organizationId,
           args.userId,
           args.actionId,
           entity.entityType,
           entity.entityId,
-          `Lane: ${args.laneId}, Problem: ${args.problemId}, Action: ${args.actionId}`
+          `Lane: ${args.laneId}, Problem: ${args.problemId}, Action: ${args.actionId}`,
+          fieldEvidence
         );
       }
 

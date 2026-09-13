@@ -92,6 +92,10 @@ import {
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
 import { getInitiativeTransitionPreflight } from '../services/initiative/initiativeTransitionPreflightService.js';
 import {
+  projectExecutionBankInitiativeEvidence,
+  readExecutionBankInitiativeEvidence,
+} from '../services/initiative/executionBankEvidenceReadService.js';
+import {
   executeInitiativeTransition,
   getColumnNameSet,
   getInitiativeNotificationRecipients,
@@ -238,6 +242,20 @@ export class InitiativeController {
         res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
         return;
       }
+
+      const requestedAsOf = (req.query as any)?.asOf;
+      const wantsExecutionEvidence =
+        (req.query as any)?.includeExecutionEvidence === '1' || requestedAsOf != null;
+      const requestInstant = new Date();
+      const parsedAsOf = requestedAsOf == null ? requestInstant : new Date(String(requestedAsOf));
+      if (
+        wantsExecutionEvidence &&
+        (!Number.isFinite(parsedAsOf.getTime()) || parsedAsOf.getTime() > requestInstant.getTime())
+      ) {
+        res.status(400).json({ error: 'Invalid asOf', code: 'INITIATIVES_AS_OF_INVALID' });
+        return;
+      }
+      const evidenceAsOf = parsedAsOf.toISOString();
 
       // Get user language from Accept-Language header or default to English
       const headers = req.headers || {};
@@ -419,6 +437,8 @@ export class InitiativeController {
         report_name: i.report_name || null,
         initiativeTemplateId: (i as any).initiative_template_id ?? null,
         progress: i.progress ?? null,
+        forecastStartDate: (i as any).forecast_start_date ?? null,
+        forecastEndDate: (i as any).forecast_end_date ?? null,
         currentStage: i.current_stage,
         sourceType: i.source_type,
         sourceId: i.source_id,
@@ -487,6 +507,18 @@ export class InitiativeController {
         archived: Boolean((i as any).archived),
       }));
 
+      if (wantsExecutionEvidence) {
+        const evidenceByInitiativeId = await readExecutionBankInitiativeEvidence({
+          organizationId: orgId,
+          initiativeIds: initiatives.map((initiative) => String(initiative.id)),
+          asOf: evidenceAsOf,
+        });
+        for (const initiative of initiatives) {
+          const evidence = evidenceByInitiativeId[String(initiative.id)];
+          if (evidence) Object.assign(initiative, evidence);
+        }
+      }
+
       // FIX-6 [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453]:
       // `listInitiativeHeaders` zna WYLACZNIE projectId/status/search. Ten blok
       // dokleja jego naglowki PO `ORDER BY`/`LIMIT`/`OFFSET` i po WSZYSTKICH
@@ -521,7 +553,22 @@ export class InitiativeController {
             name: header.title,
             status: header.lifecycleState,
             priority: 'medium',
-            progress: 0,
+            progress: null,
+            forecastStartDate: null,
+            forecastEndDate: null,
+            ...(wantsExecutionEvidence
+              ? projectExecutionBankInitiativeEvidence({
+                  current: {
+                    initiativeId: header.id,
+                    progress: null,
+                    forecastStartDate: null,
+                    forecastEndDate: null,
+                  },
+                  receipts: [],
+                  tasks: [],
+                  asOf: evidenceAsOf,
+                })
+              : {}),
             ownerBusiness: header.ownerId ? { id: header.ownerId } : null,
             // FIX-2: `sourceType` to plakietka ZRODLA BIZNESOWEGO
             // (manual/tool/teresa_chat/assessment, DEC 02.09 „Assessment =

@@ -1,4 +1,8 @@
 /**
+ * @vitest-environment jsdom
+ */
+
+/**
  * EXE-005/006 — Change + progress spine golden-flow, against a REAL
  * Postgres database (no mocks).
  *
@@ -61,8 +65,10 @@
 import { randomBytes } from 'node:crypto';
 
 import { Client, type ClientConfig } from 'pg';
+import React from 'react';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 
 import express from 'express';
 
@@ -87,6 +93,11 @@ import { attachV8Context, requireV8OrgContext } from '../../server/src/middlewar
 import { v8OrgGate } from '../../server/src/middleware/v8FeatureGate.middleware.js';
 import { v8MetricsMiddleware } from '../../server/src/middleware/v8Metrics.middleware.js';
 import executionControlRoutes from '../../server/src/routes/v8/execution-control.routes.js';
+import { ExecutionBankViews } from '../../src/components/Execution/ExecutionBankViews.js';
+import {
+  buildExecutionBankRows,
+  buildExecutionCalendarWindow,
+} from '../../src/components/Execution/executionBankModel.js';
 
 // ---------------------------------------------------------------------------
 // Connection probe (same contract as execution-spine.golden-flow.realdb.test.ts)
@@ -160,6 +171,8 @@ const REQUIRED_TABLES = [
   'initiatives',
   'initiative_history',
   'execution_audit_log',
+  'manager_action_audit_log',
+  'tasks',
   'decisions',
 ] as const;
 
@@ -294,12 +307,12 @@ async function setupHarness(): Promise<Harness | null> {
   );
 
   // Seeded directly by SQL (frozen: no transition/start/unblock endpoint call)
-  // in the status Execution actually operates on, same convention as
+  // in the current canonical status Execution operates on, same convention as
   // execution-spine.golden-flow.realdb.test.ts.
   const initiativeAId = `init_excp_a_${tag}`;
   await client.query(
     `INSERT INTO initiatives (id, organization_id, project_id, name, status, progress)
-     VALUES ($1, $2, $3, 'EXE Change/Progress RealDB Initiative (org A, EXECUTING)', 'EXECUTING', 0)`,
+     VALUES ($1, $2, $3, 'EXE Change/Progress RealDB Initiative (org A, IN_EXECUTION)', 'IN_EXECUTION', 0)`,
     [initiativeAId, orgAId, projectAId]
   );
 
@@ -473,6 +486,99 @@ describe('EXE-005-006 — change + progress spine golden flow against a real Pos
         [h.initiativeAId]
       );
       expect(auditRows.rows.length).toBeGreaterThanOrEqual(1);
+
+      // 1h. E1b evidence read: one fresh HTTP list request returns the exact
+      // receipts used above. This is opt-in so ordinary Initiative consumers
+      // retain their previous list dependency and response cost.
+      const evidenceAsOf = new Date().toISOString();
+      const evidenceGet = await request(buildApp())
+        .get('/api/initiatives')
+        .query({ includeExecutionEvidence: '1', asOf: evidenceAsOf })
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(evidenceGet.status).toBe(200);
+      const evidenceInitiative = (evidenceGet.body as any[]).find(
+        (initiative) => initiative.id === h.initiativeAId
+      );
+      expect(evidenceInitiative).toBeTruthy();
+      expect(evidenceInitiative.progressEvidence).toMatchObject({
+        value: 42,
+        asOf: evidenceAsOf,
+        completeness: 'KNOWN',
+        staleness: 'UNKNOWN',
+        reason: 'FRESHNESS_POLICY_MISSING',
+        source: { system: 'initiative_history' },
+      });
+      expect(evidenceInitiative.forecastStartEvidence).toMatchObject({
+        value: null,
+        completeness: 'UNKNOWN',
+      });
+      expect(evidenceInitiative.forecastEndEvidence).toMatchObject({
+        value: forecastEndDate,
+        asOf: evidenceAsOf,
+        completeness: 'KNOWN',
+        staleness: 'UNKNOWN',
+        reason: 'FRESHNESS_POLICY_MISSING',
+        source: { system: 'initiative_history' },
+      });
+
+      const exactHistory = await h.client.query<{
+        id: string;
+        action: string;
+        changed_at: Date;
+      }>(
+        `SELECT id, action, changed_at
+           FROM initiative_history
+          WHERE initiative_id = $1 AND action IN ('progress_updated', 'reforecast')`,
+        [h.initiativeAId]
+      );
+      const progressReceipt = exactHistory.rows.find((row) => row.action === 'progress_updated');
+      const forecastReceipt = exactHistory.rows.find((row) => row.action === 'reforecast');
+      expect(evidenceInitiative.progressEvidence.source.recordId).toBe(progressReceipt?.id);
+      expect(evidenceInitiative.progressEvidence.observedAt).toBe(
+        progressReceipt?.changed_at.toISOString()
+      );
+      expect(evidenceInitiative.forecastEndEvidence.source.recordId).toBe(forecastReceipt?.id);
+      expect(evidenceInitiative.forecastEndEvidence.observedAt).toBe(
+        forecastReceipt?.changed_at.toISOString()
+      );
+
+      // 1i. Feed the exact HTTP record and controlled asOf into the real Bank
+      // model and renderer. The mounted row must retain the same Initiative ID
+      // and measured progress, without requiring or inventing a Case identity.
+      const [bankRow] = buildExecutionBankRows(
+        [
+          {
+            id: evidenceInitiative.id,
+            name: evidenceInitiative.name,
+            lifecycleStatus: evidenceInitiative.status,
+            progress: evidenceInitiative.progress,
+            progressEvidence: evidenceInitiative.progressEvidence,
+            forecastStartDate: evidenceInitiative.forecastStartDate,
+            forecastEndDate: evidenceInitiative.forecastEndDate,
+            forecastStartEvidence: evidenceInitiative.forecastStartEvidence,
+            forecastEndEvidence: evidenceInitiative.forecastEndEvidence,
+          },
+        ],
+        [],
+        { asOf: evidenceAsOf }
+      );
+      render(
+        React.createElement(ExecutionBankViews, {
+          rows: [bankRow],
+          view: 'table',
+          selected: null,
+          calendarWindow: buildExecutionCalendarWindow(evidenceAsOf, 3),
+          onSelect: () => undefined,
+          onOpen: () => undefined,
+          onHorizonChange: () => undefined,
+          onDrilldownMonth: () => undefined,
+        })
+      );
+      expect(
+        screen.getByTestId(`execution-bank-table-item-initiative:${h.initiativeAId}`)
+      ).toHaveAttribute('data-initiative-id', h.initiativeAId);
+      expect(screen.getByTestId('execution-bank-progress-null')).toHaveTextContent('42%');
+      cleanup();
 
       const decisionRow = await h.client.query(
         `SELECT id, initiative_id, title, decision_maker_id FROM decisions WHERE id = $1`,
