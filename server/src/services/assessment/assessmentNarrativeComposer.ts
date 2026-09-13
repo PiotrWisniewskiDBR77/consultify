@@ -198,7 +198,18 @@ export function composeChapterAggregateNarrative(input: {
   readonly sourceKind?: NarrativeSourceKind;
 }): ChapterAggregateNarrative {
   const zrodlo = SOURCE_PHRASE[input.sourceKind ?? 'method-core'];
-  if (input.findings.length === 0) {
+  /**
+   * ★ POMIAR 2026-09-13 (S1.4): oś, która MA findingi, ale ŻADEN nie ma
+   * policzalnej luki (obszar z `achievedLevel` bez `targetLevel` — realny
+   * kształt 2 z 3 ocen DBR77 na stagingu), wywracała CAŁY eksport:
+   * `Math.max(...[])` = `-Infinity` → `leaders` puste → `leaders[0].unitId`
+   * rzucał TypeError, a trasa oddawała 500 zamiast pliku.
+   * Brak policzalnej luki = nie ma czego opowiedzieć, więc ta oś wpada
+   * dokładnie w tę samą, już istniejącą gałąź „brak treści" — nie w
+   * wymyśloną narrację.
+   */
+  const maPoliczalnaLuke = input.findings.some((finding) => finding.gap !== null);
+  if (input.findings.length === 0 || !maPoliczalnaLuke) {
     return {
       introduction: null,
       matrixCaption: `Tabela obejmuje ${input.totalAreas} obszarów osi ${input.axisId}. Kolumny poziomów pokazują skalę od 1 do ${input.maxLevel}; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem są dane ${zrodlo.dopelniacz} z dnia ${input.frozenDate}.`,
@@ -309,7 +320,22 @@ export function composeProgramAggregateNarrative(input: {
     };
   }
   const gaps = input.findings.flatMap((finding) => (finding.gap === null ? [] : [finding.gap]));
-  const maxGap = Math.max(...gaps);
+  /**
+   * ★ POMIAR 2026-09-13 (S1.4), rodzeństwo tego samego defektu co w
+   * `composeChapterAggregateNarrative`: ocena, w której ŻADEN obszar nie ma
+   * policzalnej luki (poziom obecny bez docelowego), drukowała klientowi w
+   * streszczeniu zarządczym „Luki mieszczą się od Infinity do -Infinity"
+   * oraz „z luką null" / „docelowe 1A: null". Zmierzone na ocenie DBR77
+   * `b901d4a3` — 6 wystąpień w jednym pliku DOCX.
+   * `maPoliczalnaLuke` decyduje, czy zdanie o zakresie luk w ogóle ma sens;
+   * wartości nieustalone nazywamy tak jak reszta silnika („nieustalony"),
+   * a nie surowym `null`.
+   */
+  const maPoliczalnaLuke = gaps.length > 0;
+  const maxGap = maPoliczalnaLuke ? Math.max(...gaps) : null;
+  const zdanieOZakresieLuk = maPoliczalnaLuke
+    ? `Luki mieszczą się od ${Math.min(...gaps)} do ${Math.max(...gaps)}`
+    : 'Żaden obszar nie ma policzalnej luki';
   const critical = input.findings.filter((finding) => (finding.gap ?? 0) >= 3);
   const leaders = [...input.findings]
     .sort(
@@ -338,7 +364,7 @@ export function composeProgramAggregateNarrative(input: {
     ]),
   ];
   const executiveSummary = withinValidated(
-    `Ocena obejmuje ${input.axisCount} osi i ${input.totalAreas} obszarów. Finding istnieje dla ${input.findings.length} obszarów. Stan udokumentowany dotyczy ${evidenced} obszarów, stan niepełny ${incomplete}, a stan zadeklarowany ${declared}. Luki mieszczą się od ${Math.min(...gaps)} do ${Math.max(...gaps)}, a liczba luk krytycznych wynosi ${critical.length}. Trzy pierwsze obszary po uporządkowaniu malejąco według luki to ${leaders.map((finding) => `${finding.unitId} ${finding.unitNamePL} z luką ${finding.gap}`).join(', ')}. Ich poziomy obecne to ${leaders.map((finding) => `${finding.unitId}: ${finding.currentLevel}`).join(', ')}, a docelowe ${leaders.map((finding) => `${finding.unitId}: ${finding.targetLevel}`).join(', ')}. Zestawienie opiera się na ${zrodlo.miejscownik}, poziomach, lukach i stanach dowodowych. Jest to obraz policzalny, ograniczony do danych obecnych w zaakceptowanym kontrakcie raportu. Nie korzysta z benchmarku branżowego i nie dodaje oceny jakościowej poza zamrożonymi etykietami priorytetu oraz wiarygodności.`,
+    `Ocena obejmuje ${input.axisCount} osi i ${input.totalAreas} obszarów. Finding istnieje dla ${input.findings.length} obszarów. Stan udokumentowany dotyczy ${evidenced} obszarów, stan niepełny ${incomplete}, a stan zadeklarowany ${declared}. ${zdanieOZakresieLuk}, a liczba luk krytycznych wynosi ${critical.length}. Trzy pierwsze obszary po uporządkowaniu malejąco według luki to ${leaders.map((finding) => `${finding.unitId} ${finding.unitNamePL} z luką ${finding.gap ?? 'nieustaloną'}`).join(', ')}. Ich poziomy obecne to ${leaders.map((finding) => `${finding.unitId}: ${finding.currentLevel ?? 'nieustalony'}`).join(', ')}, a docelowe ${leaders.map((finding) => `${finding.unitId}: ${finding.targetLevel ?? 'nieustalony'}`).join(', ')}. Zestawienie opiera się na ${zrodlo.miejscownik}, poziomach, lukach i stanach dowodowych. Jest to obraz policzalny, ograniczony do danych obecnych w zaakceptowanym kontrakcie raportu. Nie korzysta z benchmarku branżowego i nie dodaje oceny jakościowej poza zamrożonymi etykietami priorytetu oraz wiarygodności.`,
     120,
     150,
     allowedNumbers
@@ -387,7 +413,7 @@ export function composeProgramAggregateNarrative(input: {
   const oknoSyntezy = OKNA[input.sourceKind ?? 'method-core'].finalConclusions;
   const zbudujSyntze = (liczbaCytatow: number): string => {
     const selected = posortowaneWszystkie.slice(0, liczbaCytatow);
-    return `W całym programie oceniono ${input.findings.length} z ${input.totalAreas} obszarów w ${input.axisCount} osiach. Luki mieszczą się od ${Math.min(...gaps)} do ${Math.max(...gaps)}, a liczba luk krytycznych wynosi ${critical.length}. Stan udokumentowany dotyczy ${evidenced} obszarów, niepełny ${incomplete}, a zadeklarowany ${declared}. ${selected
+    return `W całym programie oceniono ${input.findings.length} z ${input.totalAreas} obszarów w ${input.axisCount} osiach. ${zdanieOZakresieLuk}, a liczba luk krytycznych wynosi ${critical.length}. Stan udokumentowany dotyczy ${evidenced} obszarów, niepełny ${incomplete}, a zadeklarowany ${declared}. ${selected
       .map(
         (finding) =>
           `${finding.unitId} ${finding.unitNamePL}: poziom obecny ${finding.currentLevel ?? 'nieustalony'}, docelowy ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}; ${cytatRekomendacji(finding.recommendation)}` +
@@ -415,8 +441,14 @@ export function composeProgramAggregateNarrative(input: {
     criticalGaps,
     finalConclusions,
     decisionLine: {
-      direction: `Skoncentrować program na obszarze ${primary.unitId} oraz pozostałych lukach o wartości ${maxGap}.`,
-      priority: `Priorytet ${priorityForGap(maxGap)} wynika z największej luki ${maxGap} w całym programie.`,
+      // Bez policzalnej luki nie ma z czego wyprowadzić kierunku ani priorytetu
+      // — honest `null` (schemat wydrukuje uczciwe „brak treści"), nie `-Infinity`.
+      direction: maxGap === null
+        ? null
+        : `Skoncentrować program na obszarze ${primary.unitId} oraz pozostałych lukach o wartości ${maxGap}.`,
+      priority: maxGap === null
+        ? null
+        : `Priorytet ${priorityForGap(maxGap)} wynika z największej luki ${maxGap} w całym programie.`,
       horizon: null,
       successCondition: primary.expectedOutcome
         ? `Warunek sukcesu dla ${primary.unitId}: ${withoutTerminalPeriod(primary.expectedOutcome)}.`
