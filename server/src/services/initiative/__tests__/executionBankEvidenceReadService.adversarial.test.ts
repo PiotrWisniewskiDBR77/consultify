@@ -347,7 +347,13 @@ describe('E1b execution Bank evidence projection adversarial boundary', () => {
     const receiptQueries = queryAll.mock.calls
       .map(([sql]) => String(sql))
       .filter((sql) => /\bAS\s+(?:progress_)?observed_at\b/i.test(sql));
-    expect(receiptQueries).toHaveLength(4);
+    // BRAMKA K2 (13.09): licznik jest TRIPWIRE na nowe źródło paragonu, które
+    // NIE projektuje instantu (taka kwerenda nie ma `AS observed_at`, więc nie
+    // wpada do pętli niżej). Napisany na 4 w `75f3228582`; `2ff754d84b` dodał
+    // PIĄTE, kanoniczne źródło (`ie_command_receipts`) i podniósł liczbę.
+    // Pięć źródeł: initiative_history · execution_audit_log ·
+    // manager_action_audit_log · task_history (LATERAL) · ie_command_receipts.
+    expect(receiptQueries).toHaveLength(5);
     for (const sql of receiptQueries) {
       expect(sql).toMatch(/EXTRACT\s*\(\s*EPOCH\s+FROM\s+[^)]+\)/i);
       expect(sql).toMatch(/::\s*double\s+precision\s+AS\s+(?:progress_)?observed_at/i);
