@@ -952,3 +952,8 @@ C6 menu follow-up: actual built GREEN confirmed no Delete controls/dialogs, poli
 ### C6 menu bounded acceptance complete; next packet — 2026-09-13
 
 C6 actual built UI and exact fixture cleanup are complete: org/users/memberships/policy all zero, private token removed, owned4216/5216 stopped. Root verified no listeners and read final checkpoint. This closes menu correctness/export availability only; full E4 remains open (partial manifest). Next isolated packet codex-execution-unavailable-counts-20260913 at c65f430a60 fixes false zero after denied/failed manager reads and stale member-name cache across identity/tenant changes; backend permissions remain unchanged. Forecast writer author/reviewer continue actual Gateway/PG acceptance. Sparse test setup corrected to include shared/services/dev-render/__mocks__/packages before frontend-baseline comparison; missing-checkout diagnostics are not accepted as baseline.
+
+
+### Forecast user-flow gap — 2026-09-13
+
+Root verified the new canonical forecast API has no component caller. Follow-on implementation brief: INTEGRATOR_MVP_20260912/E1B_OPERATIONAL_FORECAST_UI_NEXT_PACKET.md. Writer acceptance stays API-scoped; native same-Initiative creation-to-execution and visible correction remain open. Current independent review also requires truthful lifecycle/projection capability denial before writer freeze.
