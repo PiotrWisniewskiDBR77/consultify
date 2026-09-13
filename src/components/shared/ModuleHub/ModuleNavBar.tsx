@@ -102,6 +102,7 @@ interface ModuleNavBarProps {
   statusCounts?: Record<string, number>;
   // View modes to show (default: table, grid)
   availableViewModes?: ViewMode[];
+  viewModeLabels?: Partial<Record<ViewMode, string>>;
   // Extra controls rendered on the right, just before view mode buttons
   rightControls?: React.ReactNode;
   // Optional “Tool” control (3rd from the right in the right cluster)
@@ -177,6 +178,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   statusDropdownContext,
   statusCounts,
   availableViewModes = ['table', 'grid'],
+  viewModeLabels,
   rightControls,
   toolControl,
   aiControl,
@@ -220,12 +222,30 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   const VIEW_MODE_ORDER: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar', 'matrix', 'grid'];
 
   const viewModeConfig: Record<ViewMode, { icon: React.ReactNode; label: string }> = {
-    table: { icon: <List size={16} />, label: t('moduleHub.viewModes.table', 'Table') },
-    kanban: { icon: <Kanban size={16} />, label: t('moduleHub.viewModes.kanban', 'Kanban') },
-    timeline: { icon: <Calendar size={16} />, label: t('moduleHub.viewModes.timeline', 'Timeline') },
-    calendar: { icon: <CalendarDays size={16} />, label: t('moduleHub.viewModes.calendar', 'Calendar') },
-    matrix: { icon: <LayoutGrid size={16} />, label: t('moduleHub.viewModes.matrix', 'Matrix') },
-    grid: { icon: <Grid3X3 size={16} />, label: t('moduleHub.viewModes.grid', 'Grid') },
+    table: {
+      icon: <List size={16} />,
+      label: viewModeLabels?.table ?? t('moduleHub.viewModes.table', 'Table'),
+    },
+    kanban: {
+      icon: <Kanban size={16} />,
+      label: viewModeLabels?.kanban ?? t('moduleHub.viewModes.kanban', 'Kanban'),
+    },
+    timeline: {
+      icon: <Calendar size={16} />,
+      label: viewModeLabels?.timeline ?? t('moduleHub.viewModes.timeline', 'Timeline'),
+    },
+    calendar: {
+      icon: <CalendarDays size={16} />,
+      label: viewModeLabels?.calendar ?? t('moduleHub.viewModes.calendar', 'Calendar'),
+    },
+    matrix: {
+      icon: <LayoutGrid size={16} />,
+      label: viewModeLabels?.matrix ?? t('moduleHub.viewModes.matrix', 'Matrix'),
+    },
+    grid: {
+      icon: <Grid3X3 size={16} />,
+      label: viewModeLabels?.grid ?? t('moduleHub.viewModes.grid', 'Grid'),
+    },
   };
 
   const orderedViewModes = VIEW_MODE_ORDER.filter((m) => availableViewModes.includes(m));
