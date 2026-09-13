@@ -17,14 +17,19 @@ import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementTable, type ManagementLaneRow } from './ExecutionManagementTable';
 import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
-interface ManagerLaneCount {
+export interface ManagerLaneCount {
   total: number;
   critical: number;
   warning: number;
 }
 
+export type ManagerLaneState =
+  | { status: 'loading' }
+  | ({ status: 'available' } & ManagerLaneCount)
+  | { status: 'unavailable' };
+
 interface ExecutionManagementViewProps {
-  managerLaneCounts: Record<string, ManagerLaneCount>;
+  managerLaneStates: Record<string, ManagerLaneState>;
   v8Degraded?: boolean;
   projectId?: string;
   searchQuery: string;
@@ -37,7 +42,7 @@ interface ExecutionManagementViewProps {
 type ManagementSubview = 'all' | ManagerModuleId;
 
 export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = ({
-  managerLaneCounts,
+  managerLaneStates,
   v8Degraded,
   projectId,
   searchQuery,
@@ -60,7 +65,27 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
     }
   }, [subview]);
 
-  const laneCount = (id: string) => managerLaneCounts[id] || { total: 0, critical: 0, warning: 0 };
+  const laneState = useCallback(
+    (id: string): ManagerLaneState => managerLaneStates[id] ?? { status: 'loading' },
+    [managerLaneStates]
+  );
+  const metric = useCallback(
+    (id: string, field: keyof ManagerLaneCount) => {
+      const state = laneState(id);
+      const numericValue = state.status === 'available' ? state[field] : null;
+      return {
+        status: state.status,
+        numericValue,
+        value:
+          state.status === 'available'
+            ? numericValue
+            : state.status === 'loading'
+              ? t('execution.manager.countLoading', 'Loading')
+              : t('execution.manager.countUnavailable', 'Unavailable'),
+      };
+    },
+    [laneState, t]
+  );
 
   const presets = useMemo(
     () => [
@@ -73,41 +98,41 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       {
         id: 'action-queue' as const,
         label: 'Action Queue',
-        count: laneCount('action-queue').total,
+        count: metric('action-queue', 'total').value,
         icon: <ClipboardList size={14} className="text-blue-400" />,
       },
       {
         id: 'decisions' as const,
         label: 'Decisions',
-        count: laneCount('decisions').total,
+        count: metric('decisions', 'total').value,
         icon: <Scale size={14} className="text-amber-400" />,
       },
       {
         id: 'blockers' as const,
         label: 'Blockers',
-        count: laneCount('blockers').total,
+        count: metric('blockers', 'total').value,
         icon: <AlertTriangle size={14} className="text-danger-400" />,
       },
       {
         id: 'risk' as const,
         label: 'Risk',
-        count: laneCount('risk').total,
+        count: metric('risk', 'total').value,
         icon: <Shield size={14} className="text-danger-400" />,
       },
       {
         id: 'workload' as const,
         label: 'Workload',
-        count: laneCount('workload').total,
+        count: metric('workload', 'total').value,
         icon: <Users size={14} className="text-blue-400" />,
       },
       {
         id: 'people-change' as const,
         label: t('execution.manager.preset.peopleChange', 'People & Change'),
-        count: laneCount('people-change').total,
+        count: metric('people-change', 'total').value,
         icon: <Users size={14} className="text-emerald-400" />,
       },
     ],
-    [managerLaneCounts, t]
+    [metric, t]
   );
 
   const tiles = useMemo(
@@ -123,13 +148,16 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         metrics: [
           {
             label: 'Items',
-            value: laneCount('action-queue').total,
-            variant: laneCount('action-queue').total > 0 ? 'warn' : 'default',
+            id: 'total',
+            ...metric('action-queue', 'total'),
+            variant: (metric('action-queue', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
             label: 'Critical',
-            value: laneCount('action-queue').critical,
-            variant: laneCount('action-queue').critical > 0 ? 'critical' : 'default',
+            id: 'critical',
+            ...metric('action-queue', 'critical'),
+            variant:
+              (metric('action-queue', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
         ],
       },
@@ -144,13 +172,16 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         metrics: [
           {
             label: 'Critical',
-            value: laneCount('decisions').critical,
-            variant: laneCount('decisions').critical > 0 ? 'critical' : 'default',
+            id: 'critical',
+            ...metric('decisions', 'critical'),
+            variant:
+              (metric('decisions', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
           {
             label: 'Issues',
-            value: laneCount('decisions').total,
-            variant: laneCount('decisions').total > 0 ? 'warn' : 'default',
+            id: 'total',
+            ...metric('decisions', 'total'),
+            variant: (metric('decisions', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
         ],
       },
@@ -165,13 +196,16 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         metrics: [
           {
             label: 'Blocked',
-            value: laneCount('blockers').critical,
-            variant: laneCount('blockers').critical > 0 ? 'critical' : 'default',
+            id: 'critical',
+            ...metric('blockers', 'critical'),
+            variant:
+              (metric('blockers', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
           {
             label: 'Issues',
-            value: laneCount('blockers').total,
-            variant: laneCount('blockers').total > 0 ? 'warn' : 'default',
+            id: 'total',
+            ...metric('blockers', 'total'),
+            variant: (metric('blockers', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
         ],
       },
@@ -186,13 +220,16 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         metrics: [
           {
             label: 'Issues',
-            value: laneCount('workload').total,
-            variant: laneCount('workload').total > 0 ? 'warn' : 'default',
+            id: 'total',
+            ...metric('workload', 'total'),
+            variant: (metric('workload', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
             label: 'Critical',
-            value: laneCount('workload').critical,
-            variant: laneCount('workload').critical > 0 ? 'critical' : 'default',
+            id: 'critical',
+            ...metric('workload', 'critical'),
+            variant:
+              (metric('workload', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
         ],
       },
@@ -207,13 +244,15 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         metrics: [
           {
             label: 'Risks',
-            value: laneCount('risk').total,
-            variant: laneCount('risk').total > 0 ? 'warn' : 'default',
+            id: 'total',
+            ...metric('risk', 'total'),
+            variant: (metric('risk', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
             label: 'Critical',
-            value: laneCount('risk').critical,
-            variant: laneCount('risk').critical > 0 ? 'critical' : 'default',
+            id: 'critical',
+            ...metric('risk', 'critical'),
+            variant: (metric('risk', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
         ],
       },
@@ -228,18 +267,21 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         metrics: [
           {
             label: 'Gaps',
-            value: laneCount('people-change').total,
-            variant: laneCount('people-change').total > 0 ? 'warn' : 'default',
+            id: 'total',
+            ...metric('people-change', 'total'),
+            variant: (metric('people-change', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
             label: 'Critical',
-            value: laneCount('people-change').critical,
-            variant: laneCount('people-change').critical > 0 ? 'critical' : 'default',
+            id: 'critical',
+            ...metric('people-change', 'critical'),
+            variant:
+              (metric('people-change', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
         ],
       },
     ],
-    [managerLaneCounts, t]
+    [metric, t]
   );
 
   // T35 R12 — canonical table rows: same six lanes/counts as `tiles` above,
@@ -247,16 +289,21 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
   const laneRows: ManagementLaneRow[] = useMemo(
     () =>
       tiles.map((tile) => {
-        const counts = laneCount(tile.id);
+        const state = laneState(tile.id);
         return {
           id: tile.id,
           label: tile.title,
-          total: counts.total,
-          critical: counts.critical,
-          warning: counts.warning,
+          status: state.status,
+          total: state.status === 'available' ? state.total : null,
+          critical: state.status === 'available' ? state.critical : null,
+          warning: state.status === 'available' ? state.warning : null,
         };
       }),
-    [tiles, managerLaneCounts]
+    [laneState, tiles]
+  );
+
+  const hasUnavailableLanes = Object.values(managerLaneStates).some(
+    (state) => state.status === 'unavailable'
   );
 
   const filteredTiles = useMemo(() => {
@@ -323,6 +370,17 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                   )}
                 </Callout>
               )}
+              {hasUnavailableLanes && (
+                <Callout
+                  variant="warning"
+                  title={t('execution.manager.dataUnavailable', 'Manager data unavailable')}
+                >
+                  {t(
+                    'execution.manager.dataUnavailableDesc',
+                    'Some manager counts could not be loaded. Their values are marked unavailable.'
+                  )}
+                </Callout>
+              )}
               {!hasExecutingInitiatives && (
                 <Callout
                   variant="info"
@@ -370,6 +428,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                         {tile.metrics.map((metric) => (
                           <div key={metric.label} className="min-w-0">
                             <div
+                              data-testid={`manager-lane-${tile.id}-${metric.id}`}
                               className={`text-lg font-bold tabular-nums ${
                                 metric.variant === 'critical'
                                   ? 'text-danger-600 dark:text-danger-400'

@@ -2,9 +2,9 @@ import { ChevronRight } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
 import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
 import { useJedenPanel } from '../shared/PreviewPane/useJedenPanel';
+import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
 import {
   type StandardRowMenu,
   StandardTable,
@@ -44,9 +44,10 @@ import type { ManagerModuleId } from './ManagerModuleView';
 export interface ManagementLaneRow extends TableRow {
   id: ManagerModuleId;
   label: string;
-  total: number;
-  critical: number;
-  warning: number;
+  status: 'loading' | 'available' | 'unavailable';
+  total: number | null;
+  critical: number | null;
+  warning: number | null;
 }
 
 export interface ExecutionManagementTableProps {
@@ -64,6 +65,19 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const renderCount = useCallback(
+    (row: ManagementLaneRow, field: 'total' | 'critical' | 'warning') => {
+      if (row.status === 'loading') {
+        return t('execution.manager.countLoading', 'Loading');
+      }
+      if (row.status === 'unavailable') {
+        return t('execution.manager.countUnavailable', 'Unavailable');
+      }
+      return row[field] ?? 0;
+    },
+    [t]
+  );
 
   const selected = useMemo(
     () => rows.find((row) => row.id === selectedId) ?? null,
@@ -83,6 +97,8 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
         width: '100px',
         align: 'right',
         sortable: true,
+        sortAccessor: (row: ManagementLaneRow) => row.total,
+        render: (row: ManagementLaneRow) => renderCount(row, 'total'),
       },
       {
         id: 'critical',
@@ -90,6 +106,8 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
         width: '100px',
         align: 'right',
         sortable: true,
+        sortAccessor: (row: ManagementLaneRow) => row.critical,
+        render: (row: ManagementLaneRow) => renderCount(row, 'critical'),
       },
       {
         id: 'warning',
@@ -97,32 +115,51 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
         width: '100px',
         align: 'right',
         sortable: true,
+        sortAccessor: (row: ManagementLaneRow) => row.warning,
+        render: (row: ManagementLaneRow) => renderCount(row, 'warning'),
       },
     ],
-    [t]
+    [renderCount, t]
   );
 
   const metaPills: MetaPill[] = useMemo(() => {
     if (!selected) return [];
     const pills: MetaPill[] = [];
-    if (selected.critical > 0) {
+    if (selected.status !== 'available') {
+      pills.push({
+        label:
+          selected.status === 'loading'
+            ? t('execution.manager.countLoading', 'Loading')
+            : t('execution.manager.countUnavailable', 'Unavailable'),
+        tone: 'neutral',
+      });
+    } else if ((selected.critical ?? 0) > 0) {
       pills.push({ label: `${selected.critical} critical`, tone: 'danger' });
     }
-    if (selected.warning > 0) {
+    if (selected.status === 'available' && (selected.warning ?? 0) > 0) {
       pills.push({ label: `${selected.warning} warning`, tone: 'warning' });
     }
-    if (selected.critical === 0 && selected.warning === 0) {
+    if (selected.status === 'available' && selected.critical === 0 && selected.warning === 0) {
       pills.push({ label: isPolish ? 'Zdrowe' : 'Healthy', tone: 'success' });
     }
     return pills;
-  }, [selected, isPolish]);
+  }, [selected, isPolish, t]);
 
   const previewDetailsText = useMemo(() => {
     if (!selected) return '';
+    if (selected.status !== 'available') {
+      const availability =
+        selected.status === 'loading'
+          ? t('execution.manager.countLoading', 'Loading')
+          : t('execution.manager.countUnavailable', 'Unavailable');
+      return isPolish
+        ? `Tor: ${selected.label}. Stan danych: ${availability}.`
+        : `Lane: ${selected.label}. Data status: ${availability}.`;
+    }
     return isPolish
       ? `Lane: ${selected.label}. Elementy: ${selected.total}. Krytyczne: ${selected.critical}. Ostrzeżenia: ${selected.warning}.`
       : `Lane: ${selected.label}. Items: ${selected.total}. Critical: ${selected.critical}. Warning: ${selected.warning}.`;
-  }, [selected, isPolish]);
+  }, [selected, isPolish, t]);
 
   const rowMenu = useCallback(
     (row: TableRow): StandardRowMenu => {
@@ -171,21 +208,25 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
         />
       </div>
 
-      <JedenPrawyPanel rekord={selected ? (
-          <StandardPreview
-            title={selected.label}
-            onClose={() => setSelectedId(null)}
-            onOpenFull={onOpenLane ? () => onOpenLane(selected.id) : undefined}
-            meta={{ pills: metaPills }}
-            details={{
-              text: previewDetailsText,
-              onCopy: () => {
-                void navigator.clipboard?.writeText(previewDetailsText);
-              },
-            }}
-            relations={[]}
-          />
-      ) : null} />
+      <JedenPrawyPanel
+        rekord={
+          selected ? (
+            <StandardPreview
+              title={selected.label}
+              onClose={() => setSelectedId(null)}
+              onOpenFull={onOpenLane ? () => onOpenLane(selected.id) : undefined}
+              meta={{ pills: metaPills }}
+              details={{
+                text: previewDetailsText,
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(previewDetailsText);
+                },
+              }}
+              relations={[]}
+            />
+          ) : null
+        }
+      />
     </div>
   );
 };
