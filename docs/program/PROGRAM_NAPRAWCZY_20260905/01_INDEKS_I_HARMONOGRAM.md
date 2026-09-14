@@ -370,6 +370,22 @@ potwierdzone TAK (bez zmian wobec odpowiedzi CTO powyżej). **Q5** — **Oba** r
 P6 Agent z klockami i P5 kontrakty w dwóch slotach, nie sekwencyjnie. Skrzynka: **Z-8 zamknięte**
 (pytanie Q5 rozstrzygnięte przez właściciela — oba równolegle, nie kolejność).
 
+**DEC-501 (14.09) — Formuła ewidencji postępu (polecenie właściciela, dosłownie: „Wprowadz do tego
+raportu 'Plan wdrożeń: Inicjatywy · Realizacja' formułe ewidencjonowania postpów do tego nie wiem
+gdzie jestesmy w realizacji planu MVP samego i Fali 2").** SSOT: `docs/program/TRZY_POJEMNIKI_
+PRACY_20260906.md` §0.1 + sekcja „EWIDENCJA POSTĘPU"; artefakt HTML = widok, przepublikowywany po
+każdej aktualizacji, nigdy źródło prawdy. **Sześć stanów etapu:** ⬜ NIE ZACZĘTE · 🔧 W TOKU
+(gałąź/pakiet+SHA) · 🧪 NA STAGINGU (SHA+data) · 👁 CZEKA NA AKCEPT WŁAŚCICIELA (data zrzutu) ·
+✅ ZAAKCEPTOWANE (nr DEC) · 🚀 NA DEMO (SHA+data); dodatkowy ⛔ ZABLOKOWANE (czym). **Reguła
+aktualizacji:** po KAŻDYM wdrożeniu na staging/demo i po KAŻDYM akcepcie właściciela dokumentalista
+aktualizuje tabelę §5 w TRZY_POJEMNIKI i przepublikowuje artefakt; nagłówek artefaktu niesie datę
+„stan na". **Dwa liczniki:** MVP (pojemnik 1 = rdzeń Inicjatywy+Realizacja+pilotaż) i FALA 2
+(pakiety Codexa + fale B–F) — liczby na 14.09: MVP rdzeń 2/2 zaakceptowane, zgłoszenia pilotażu
+18/35 (51%) na stagingu / 0/35 na demo; Fala 2 etapy §5 8/36 w toku (22%) / 0 zaakceptowanych,
+pakiety Codexa 5/5 w toku i 0 scalonych, P1–P6 0/6 przyjęte (Codex milczy od 22:29 13.09).
+**Skrzynka Z-17:** „aktualizacja ewidencji po każdej fali" — obowiązek dokumentalisty przy KAŻDEJ
+kolejnej promocji staging/demo i przy KAŻDYM akcepcie właściciela, nie jednorazowe zdarzenie.
+
 **Uzupełnienie DEC-496 (CTO, 14.09) — zgłoszenia Pawła P-P06…P-P13 (widget feedback, staging).**
 Zgłaszający: `pawel.mroczkowski@dbr77.com` (OWNER, org DBR77). Kontynuacja tabeli P-P01…P-P05;
 razem z tym uzupełnieniem Paweł ma **13 zgłoszeń** (5 + 8), wszystkie z widgetu, każde ze zrzutem

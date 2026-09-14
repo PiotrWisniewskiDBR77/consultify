@@ -423,6 +423,81 @@ Każdy etap (a nie każdy pakiet, nie każdy moduł) przechodzi tę samą ście�
 (3) dane prawdziwe z żywej bazy, nie seed; (4) obie wersje motywu poprawne; (5) zero czerwieni
 `primary-*` poza semantyką krytyczną.
 
+### §0.1 Ewidencja postępu
+
+> Polecenie właściciela (14.09, dosłownie): *„Wprowadz do tego raportu 'Plan wdrożeń: Inicjatywy ·
+> Realizacja' formułe ewidencjonowania postpów do tego nie wiem gdzie jestesmy w realizacji planu
+> MVP samego i Fali 2."* Rejestr: **DEC-501**.
+
+**Sześć stanów etapu** (jeden na etap, najwyższy osiągnięty):
+
+| Symbol | Stan | Znaczenie |
+|---|---|---|
+| ⬜ | NIE ZACZĘTE | zero kodu/dokumentu dla tego etapu |
+| 🔧 | W TOKU | gałąź/pakiet w budowie — podaj gałąź/pakiet i SHA |
+| 🧪 | NA STAGINGU | scalone do linii integracyjnej, flaga może być OFF — podaj SHA i datę |
+| 👁 | CZEKA NA AKCEPT WŁAŚCICIELA | zrzut jasny+ciemny wysłany, czeka na Tak/Nie — podaj datę wysyłki |
+| ✅ | ZAAKCEPTOWANE | właściciel powiedział Tak na obrazie — podaj nr DEC |
+| 🚀 | NA DEMO | wypchnięte na `demo.consultify.ai` — podaj SHA i datę |
+| ⛔ | ZABLOKOWANE | dodatkowy stan, niezależny od powyższych — podaj czym |
+
+**Reguła aktualizacji.** Po KAŻDYM wdrożeniu na staging/demo i po KAŻDYM akcepcie właściciela
+dokumentalista aktualizuje tabelę §5 w tym pliku (SSOT) i przepublikowuje artefakt HTML
+(widok, nie źródło prawdy). Nagłówek artefaktu niesie datę „stan na". Dwa liczniki na górze:
+**MVP (pojemnik 1 = rdzeń Inicjatywy + Realizacja + pilotaż)** i **FALA 2 (pakiety Codexa + fale
+B–F)**. Skrzynka **Z-17**: „aktualizacja ewidencji po każdej fali" — obowiązek dokumentalisty,
+nie opcja.
+
+## EWIDENCJA POSTĘPU — stan na 14.09.2026
+
+**Zmierzone dziś:** staging `b7d27ccc304b` (tag `staging-deployed`), demo `90833bc94adb` — **falaA
+jeszcze nie na demo**, to jest dziura opisana niżej. Źródła pomiaru: `curl .../api/health` (oba
+środowiska), `git merge-base --is-ancestor <SHA> HEAD` na `~/Developer/wt/rejestr-0914` dla każdego
+SHA cytowanego w tym pliku i w `OD_CODEXA.md`, tabele P-T01…P-T22 / P-P01…P-P13 wyżej w rejestrze.
+
+**Licznik MVP (pojemnik 1).** Rdzeń: **2/2** filarów zaakceptowane (Inicjatywy DEC-481, Realizacja
+DEC-494). Pilotaż: **5** kont, aktywni dziś Paweł + Justyna, Tomek testował 10–11.09 (gmail).
+Zgłoszenia pilotażu: **18/35 (51%) naprawione na stagingu**, 2 naprawione czekają na retest/wdrożenie,
+4 nie są defektem (decyzja produktu/wiedza), 2 czekają na decyzję właściciela, 9 nadal otwarte.
+Na demo z tych napraw: **0/35** — luka, patrz „Co blokuje".
+
+```
+MVP rdzeń        [██████████████████████████████████████████████████] 2/2 zaakceptowane
+MVP zgłoszenia    [███████████████████████████░░░░░░░░░░░░░░░░░░░░░░░] 18/35 na stagingu (51%)
+```
+
+**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **36**.
+Z tego: 0 zaakceptowanych, 0 na stagingu, **8 w toku** (22%), **28 nie zaczętych**. Duże pakiety
+Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie
+scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6
+(DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5**
+zamknięte (żadna nie ma jeszcze partii akceptu właściciela).
+
+```
+Fala2 etapy §5    [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 8/36 w toku (22%)
+Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0/6 przyjęte
+```
+
+**Zgłoszenia pilotażu 35 — rozbicie (P-T01…22 Tomek + P-P01…13 Paweł):**
+
+| Kategoria | Liczba | Przykłady |
+|---|---|---|
+| ✅ naprawione, 🧪 na stagingu | 18 | P-T02/03/04/07/08/09/10/11/21, P-P01/03/04/05/06/07/10/12/13 |
+| 🔧 naprawione, czekają na retest/scalenie | 2 | P-T22 (retest po wdrożeniu), P-P02 DRD EN (`744394e45e`, gotowe do scalenia) |
+| ⚪ nie jest defektem / wiedza użytkownika | 4 | P-T19, P-T20 (duplikat), P-P08, P-P09 |
+| ⚪ czeka na decyzję właściciela | 2 | P-T01 (adres wsparcia, Z-5), P-T13 (kontekst Teresy, Z-13) |
+| 🔴 otwarte | 9 | P-T05, P-T06, P-T12, P-T14, P-T15, P-T16, P-T17, P-T18, P-P11 |
+
+**Co blokuje (14.09):**
+- **Codex milczy** w `OD_CODEXA.md` od 22:29 13.09 — Wpis 17 (DEC-497, pakiety P1–P6) czeka na
+  przyjęcie; bez tego fale B–F się nie zaczynają.
+- **Demo bez fali A** — nic z 18 napraw na stagingu jeszcze nie trafiło na `demo.consultify.ai`;
+  wymaga zrzutów jasny+ciemny fali A (cz.1–cz.3) i akceptu właściciela przed promocją (CLAUDE.md §9).
+- **Migracja F2-E** — pełne E1 eksportu HOLD/MIGRATION_REQUIRED, czeka na decyzję CTO o trwałym
+  snapshot/resume (pula `20262200–20262219`).
+- **Wolumen avatarów** (P-T05) — `STORAGE_DIR` na dysk kontenera Railway znika; decyzja przy
+  najbliższym wdrożeniu (Z-9).
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -695,50 +770,54 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 
 ---
 
-## §5 Tabela zbiorcza
+## §5 Tabela zbiorcza — z ewidencją postępu (stan na 14.09.2026, §0.1)
 
-| Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | Stan dziś |
-|---|---|---|---|---|---|---|---|
-| Inicjatywy | Lista | L1 rdzeń (lista/kanban/kalendarz/Gantt) | — | — | — | TAK 13.09 (DEC-481) | **JEST** |
-| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | agent CTO | — | A | lista z pstryczkiem ON/OFF | **GOTOWE 14.09** (`574eb6e20c`, `?archived=true\|false`+`includeArchived=true`, pstryczek Aktywne/Wszystkie/Archiwalne) |
-| Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | BRAK |
-| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | CZĘŚCIOWO (F2-1 HOLD) |
-| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | BRAK |
-| Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | BRAK |
-| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | **PRZYDZIELONE** (DEC-499 Q2 TAK — pakiet P4, fala B) |
-| Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ATRAPA (`PlanScenarioSurface`) |
-| Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ATRAPA |
-| Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ATRAPA |
-| Inicjatywy | Obciążenie | OB1 heat mapa per osoba/tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | ATRAPA (`CapacityScenarioSurface`) |
-| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | BRAK |
-| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | BRAK |
-| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | BRAK |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ATRAPA za flagą |
-| Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | BRAK |
-| Inicjatywy | Raport z pracy | RP3 usunięcie atrapy | Codex P1 | RP1-2 | C | — (higiena) | ATRAPA żyje |
-| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Codex F2-2 + prototyp CTO | DEC-487 | B | bank z pastylkami ryzyka | **LUKA** (serwis jest, bez UI) |
-| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt | B | bank w widoku Gantta | CZĘŚCIOWO (scoped ACCEPT) |
-| Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | BRAK |
-| Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | BRAK |
-| Realizacja | Praca | P-E2c eskalacja/delegacja/zmiana zasobów | Codex F2-2 | DEC-485/486 | D | akcja + wynik po zmianie | serwis jest, bez ekranu |
-| Realizacja | Ryzyko | R-E3a SSOT granicy praca/ryzyko | Sonnet | DEC-485 | A | — (dokument) | **PLIKU NIE MA** |
-| Realizacja | Ryzyko | R-E3b generator obserwacji i grubych zmian | Codex F2-2 | R-E3a, B-E0 | E | lista obserwacji | BRAK |
-| Realizacja | Ryzyko | R-E3c artefakt N, 4 karty | Codex F2-2 | ARTIFACT_ANATOMY | E | artefakt z 4 kartami | BRAK |
-| Realizacja | Ryzyko | R-E3d realne wdrożenie zmiany + powiadomienie | Codex F2-2 | powiadomienia | E | plan „przed/po" + skrzynka adresata | BRAK |
-| Realizacja | Raporty | RA-E4a kadencja i wzorce | Codex F2-2 | silnik P1 | C | kreator raportu | BRAK (migracja jest) |
-| Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | BRAK |
-| Realizacja | Raporty | RA-E4c rezultaty z KPI | Codex F2-2 | **A4** | C | sekcja rezultatów | BRAK |
-| Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | BRAK |
-| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | zbudowane, bez przewodu |
-| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | tabela bez wołaczy |
-| Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | deep-linki żyją |
-| Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | **DOMKNIĘTE** (Szampan D3 `6a6966b1bb`) |
-| Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | otwarte |
-| Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | części istnieją |
-| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | E1/E2 dostarczone |
-| Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | kandydat wskazany |
-| Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | w kolejce |
-| Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | prototyp CTO |
+| Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | STAN | SHA/DEC | DATA |
+|---|---|---|---|---|---|---|---|---|---|
+| Inicjatywy | Lista | L1 rdzeń (lista/kanban/kalendarz/Gantt) | — | — | — | TAK 13.09 (DEC-481) | ✅ ZAAKCEPTOWANE | DEC-481 | 13.09 |
+| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | agent CTO | — | A | lista z pstryczkiem ON/OFF | 🧪 NA STAGINGU | `574eb6e20c` | 14.09 |
+| Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | 🔧 W TOKU (F2-1, HOLD E1) | `cc1c23b139` | 13.09 |
+| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | 🔧 W TOKU (przydzielone) | DEC-499 | 14.09 |
+| Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ⬜ NIE ZACZĘTE (atrapa) | — | — |
+| Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
+| Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
+| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | ⬜ NIE ZACZĘTE (atrapa) | — | — |
+| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ⬜ NIE ZACZĘTE (atrapa za flagą OFF) | `VITE_INITIATIVES_WORK_REPORT` | — |
+| Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
+| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Codex F2-2 + prototyp CTO | DEC-487 | B | bank z pastylkami ryzyka | ⬜ NIE ZACZĘTE (serwis jest, bez UI) | `threeAxisReportService` | — |
+| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🔧 W TOKU (scoped ACCEPT, pełne HOLD) | `4d381f6811` | 13.09 |
+| Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Praca | P-E2c eskalacja/delegacja/zmiana zasobów | Codex F2-2 | DEC-485/486 | D | akcja + wynik po zmianie | ⬜ NIE ZACZĘTE (serwis jest, bez ekranu) | `managerActionExecutionService` | — |
+| Realizacja | Ryzyko | R-E3a SSOT granicy praca/ryzyko | Sonnet | DEC-485 | A | — (dokument) | ⬜ NIE ZACZĘTE (pliku nie ma) | — | — |
+| Realizacja | Ryzyko | R-E3b generator obserwacji i grubych zmian | Codex F2-2 | R-E3a, B-E0 | E | lista obserwacji | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Ryzyko | R-E3c artefakt N, 4 karty | Codex F2-2 | ARTIFACT_ANATOMY | E | artefakt z 4 kartami | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Ryzyko | R-E3d realne wdrożenie zmiany + powiadomienie | Codex F2-2 | powiadomienia | E | plan „przed/po" + skrzynka adresata | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Raporty | RA-E4a kadencja i wzorce | Codex F2-2 | silnik P1 | C | kreator raportu | ⬜ NIE ZACZĘTE (migracja jest) | `20262104_execution_report_snapshots.sql` | — |
+| Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Raporty | RA-E4c rezultaty z KPI | Codex F2-2 | A4 | C | sekcja rezultatów | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🔧 W TOKU (przydzielone) | — | — |
+| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🔧 W TOKU (przydzielone) | — | — |
+| Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
+| Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
+| Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
+| Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | 🔧 W TOKU (części istnieją) | `report-builder.routes.ts` | — |
+| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🔧 W TOKU (E1+E2 dostarczone, nie scalone) | `ba25e56459`+`7d20679630` | 13.09 |
+| Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | ⬜ NIE ZACZĘTE (kandydat wskazany) | `InitiativeGantt.tsx` | — |
+| Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
+| Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
+
+**Liczniki §5 (40 etapów):** ✅ 2 · 🧪 1 · 🔧 8 · ⬜ 29 · 👁 0 · 🚀 0 · ⛔ 0. Z tego do **MVP** (rdzeń +
+pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe **36 etapów to FALA 2** (0 ✅, 0 🧪,
+8 🔧, 28 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
