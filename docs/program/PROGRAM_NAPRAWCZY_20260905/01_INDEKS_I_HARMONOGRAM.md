@@ -740,6 +740,54 @@ kolejnościowa), zielony w izolacji; widok za flagą OFF; dług do dyżuru Codex
 aktualizacja)** — fala B (Inicjatywy E1 + Realizacja E1) WDROŻONA na staging za flagami OFF
 (`90059a1054` → `88f1a1994d`); H1b (skrzynka recenzenta) w toku.
 
+**DEC-506 (14.09, decyzja CTO na mandacie) — Etapy 12 vs kody 7: bez migracji, mapowanie w
+writerze.** Sprzeczność zastana: DEC-490 „12 etapów silnika jedyną prawdą" vs migracja P12
+`20262103_p12_initiative_status_slownik.sql` + CHECK `initiatives_status_check_p12` = 7 kodów
+(`PROPOSED`/`DRAFT`/`PENDING_APPROVAL`/`APPROVED`/`IN_EXECUTION`/`CLOSED`/`REJECTED`). Etap silnika
+żyje w `ie_aggregate_state.payload_json.lifecycleState` (NIE w `initiatives.current_stage` — to
+inny słownik, `KICKOFF`/`PILOT`/`SCALE`/`DESIGN` z migracji 064). Mapowanie 12→7 =
+`server/src/constants/initiativeLifecycleStages.ts` (parytet z
+`src/contracts/initiatives-execution/statusMapping.ts`, test w 3 kierunkach). Tabela:
+`REGISTERED_DRAFT`→`DRAFT`, `DEFINED`→`DRAFT`, `ANALYZING`→`PENDING_APPROVAL`,
+`READY_FOR_DECISION`→`PENDING_APPROVAL`, `APPROVED_BACKLOG`→`APPROVED`, `SCHEDULED`→`APPROVED`,
+`IN_EXECUTION`→`IN_EXECUTION`, `DELIVERED`→`CLOSED` ★, `BENEFITS_TRACKING`→`CLOSED` ★,
+`EFFECTIVENESS_REVIEWED`→`CLOSED` ★, `CLOSED`→`CLOSED`, `ARCHIVED`→`CLOSED`+flaga archived.
+★ Założenie: Delivered/Benefits/Effectiveness kolapsują na `CLOSED` w kolumnie (rozdzielenie =
+migracja, zakazana tą decyzją); rozróżnienie zachowane w etapie silnika. **DECYZJA właściciela
+otwarta:** rejestr Inicjatyw pokazuje kod (7) czy etap (12) — rekomendacja CTO: kolumna „Etap"
+(12) za flagą 4 przycisków, kod (7) jako filtr statusu. Skrzynka: **Z-23**.
+
+**Fala B — H1b + H1c gotowe (14.09, Opus, gałąź `integracja/kandydat-h1b-skrzynka-20260914`, HEAD
+`119ad9af3f`, kopia `backup/h1b-skrzynka-20260914`; baza `9e9a5f94e7` + lokalny merge fali B).**
+**H1b — sprostowanie:** ścieżka ludzka jest TRZYSTOPNIOWA (proposal → recenzja A05
+`POST /api/v8/agent-proposals/:id/scopes/:scopeKey/review` → execution); brak był tylko GET listy.
+Dodane: `GET /initiatives/lifecycle-transition-proposals?status=` (skrzynka organizacji,
+fail-closed autor/recenzent) + `GET /initiatives/:id/lifecycle-transition-proposals`
+(`a518894120`, 7 testów RealPG na produkcyjnym routerze). UI `TransitionInboxSurface` = zakładka
+„Do akceptacji" w Menu 1 Inicjatyw, za flagą `VITE_TRANSITION_INBOX` OFF (`d625e2cc88`;
+StandardTable+StandardPreview, akcje-pill Approve/Reject). **H1c:** rozjazd kod/etap w 4 miejscach
+(`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard
+`expectedCurrentStatus`) naprawiony; dowód RealPG: SELECT przed `{APPROVED/SCHEDULED}` → po
+`{IN_EXECUTION/IN_EXECUTION}` + wiersz `initiative_handoffs`; zrzuty 01–09 jasny+ciemny (skrzynka,
+podgląd, pusty, OFF, po akcepcie).
+
+**Znaleziska H1b/H1c (14.09).** (a) Ten sam człowiek musi być PROJECT_SPONSOR (recenzja) i PMO
+(wykonanie) — przejścia praktycznie niewykonalne bez podwójnej roli → do S5 PMO E3 Codexa
+(**Z-24**, decyzja produktu: rozdzielić role recenzenta i wykonawcy). (b) MARTWA bramka GO/NO-GO w
+`initiativeTransitionService` (porównania `'SCHEDULED'`/`'EXECUTING'`/`'DONE'` z kodami P12 →
+reguła H16/INI-005 „decyzja GO aktualna przy starcie" nie działa; `execution_started_at`/
+`review_requested_at` nieustawiane) → **H1d w toku** (Opus, ta sama gałąź). (c) 3 zastane czerwone
+w `services/initiative` (fikstura `'PLANNING'`, grep po skasowanym SQL, `ARCHIVED` poza macierzą).
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po H1b/H1c).** H1b: 🔧→**gotowe do scalenia `119ad9af3f`**.
+Dodane wiersze: H1c (gotowe), H1d (🔧). Skrzynka: Z-23, Z-24.
+
+**Codex 14.09, 02:40–02:46 (KANAL Wpisy 28–29).** S1 paczka 5 v2 **ACCEPT** (`e1a2c2c160`) →
+odbiór CTO w toku (integrator paczka5v2 → staging, flaga OFF). S2 **REQUEST_CHANGES** (P1: receipt
+UUID/`SENDING` bez lease/MEMBER w pickerze; SMTP lokalny do E1, doręczenie na skrzynkę stagingu
+przy odbiorze CTO — Wpis 29). S3 rebase. S4 freeze `a0c6770b35` na `88f1` — kolejka odbioru po S1.
+S5 migracja `20262190` PASS + zaakceptowana (Wpis 29), E3 trwa.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)

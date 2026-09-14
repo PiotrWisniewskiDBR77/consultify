@@ -535,18 +535,19 @@ MVP rdzeń        [████████████████████�
 MVP zgłoszenia    [█████████████████████████████████░░░░░░░░░░░░░░░░░] 23/37 na stagingu (62%)
 ```
 
-**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **37**
-(+1 = H1b, wydzielony z H1 14.09). Z tego: 0 zaakceptowanych, **5 na stagingu** (14%, A1+A2 fali
-B2 Inicjatywy `90059a1054` + H1/H2/B-E0 fali B1 Realizacja `88f1a1994d`, wszystkie za flagami
-OFF), **5 w toku** (A4 DEC-499, B-E1 F2-2, silnik raportów, PMO E3, P6), **27 nie zaczętych** (w
-tym H1b, nowy etap wydzielony z H1). Duże pakiety Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD,
-F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1
-HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w
-`OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B WDROŻONA na staging za
-flagami OFF — DEC-505; akcept wyglądu właściciela = warunek włączenia flag).
+**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **39**
+(+2 = H1c/H1d dołożone 14.09 obok H1b). Z tego: 0 zaakceptowanych, **5 na stagingu** (13%, A1+A2
+fali B2 Inicjatywy `90059a1054` + H1/H2/B-E0 fali B1 Realizacja `88f1a1994d`, wszystkie za flagami
+OFF), **8 w toku** (A4 DEC-499, B-E1 F2-2, silnik raportów, PMO E3, P6, H1b gotowe do scalenia
+`119ad9af3f`, H1c gotowe do scalenia `119ad9af3f`, H1d w toku), **26 nie zaczętych**. Duże pakiety
+Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
+dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v2 ACCEPT `e1a2c2c160`
+w odbiorze CTO). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
+13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B WDROŻONA na staging za flagami OFF —
+DEC-505; akcept wyglądu właściciela = warunek włączenia flag).
 
 ```
-Fala2 etapy §5    [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5/37 na stagingu (14%)
+Fala2 etapy §5    [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5/39 na stagingu (13%)
 Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0/6 przyjęte
 ```
 
@@ -588,6 +589,57 @@ bez zmian**.
 - **Decyzja właściciela w toku (DEC-505)** — Tak/Nie na wygląd fali B (Inicjatywy A1/A2 +
   Realizacja H1/H2/B-E0), oba pakiety WDROŻONE na staging za flagami OFF; akcept właściciela na
   zrzutach = warunek `railway variables --set ...=true` + redeploy.
+- **Z-23 (nowa, DEC-506)** — decyzja właściciela otwarta: rejestr Inicjatyw pokazuje kod (7) czy
+  etap (12)? Rekomendacja CTO: kolumna „Etap" (12) za flagą 4 przycisków, kod (7) jako filtr
+  statusu.
+- **Z-24 (nowa, z H1b/H1c)** — ten sam człowiek musi być PROJECT_SPONSOR (recenzja) i PMO
+  (wykonanie); przejścia praktycznie niewykonalne bez podwójnej roli; decyzja produktu do S5
+  PMO E3 Codexa: rozdzielić role recenzenta i wykonawcy.
+- **Kopie 32 GB (Z-19)** i **wolumen avatarów (Z-9)** nadal czekają na decyzję właściciela —
+  bez zmian od poprzedniego wpisu.
+
+**DEC-506 (14.09, decyzja CTO na mandacie) — Etapy 12 vs kody 7: bez migracji, mapowanie w
+writerze.** Sprzeczność zastana: DEC-490 „12 etapów silnika jedyną prawdą" vs migracja P12
+`20262103_p12_initiative_status_slownik.sql` + CHECK `initiatives_status_check_p12` = 7 kodów
+(`PROPOSED`/`DRAFT`/`PENDING_APPROVAL`/`APPROVED`/`IN_EXECUTION`/`CLOSED`/`REJECTED`). Etap silnika
+żyje w `ie_aggregate_state.payload_json.lifecycleState` (NIE `initiatives.current_stage` — inny
+słownik `KICKOFF`/`PILOT`/`SCALE`/`DESIGN` z migracji 064). Mapowanie 12→7 =
+`server/src/constants/initiativeLifecycleStages.ts` (parytet z
+`src/contracts/initiatives-execution/statusMapping.ts`, test w 3 kierunkach): `REGISTERED_DRAFT`→
+`DRAFT`, `DEFINED`→`DRAFT`, `ANALYZING`→`PENDING_APPROVAL`, `READY_FOR_DECISION`→
+`PENDING_APPROVAL`, `APPROVED_BACKLOG`→`APPROVED`, `SCHEDULED`→`APPROVED`, `IN_EXECUTION`→
+`IN_EXECUTION`, `DELIVERED`→`CLOSED` ★, `BENEFITS_TRACKING`→`CLOSED` ★,
+`EFFECTIVENESS_REVIEWED`→`CLOSED` ★, `CLOSED`→`CLOSED`, `ARCHIVED`→`CLOSED`+flaga archived.
+★ Delivered/Benefits/Effectiveness kolapsują na `CLOSED` w kolumnie (rozdzielenie = migracja,
+zakazana tą decyzją); rozróżnienie zachowane w etapie silnika. Decyzja właściciela otwarta →
+**Z-23**.
+
+**Fala B — H1b + H1c gotowe, H1d w toku (14.09, Opus, gałąź
+`integracja/kandydat-h1b-skrzynka-20260914`, HEAD `119ad9af3f`, kopia
+`backup/h1b-skrzynka-20260914`; baza `9e9a5f94e7` + lokalny merge fali B).** **H1b —
+sprostowanie:** ścieżka ludzka jest TRZYSTOPNIOWA (proposal → recenzja A05
+`POST /api/v8/agent-proposals/:id/scopes/:scopeKey/review` → execution); brak był tylko GET listy
+→ dodane `GET /initiatives/lifecycle-transition-proposals?status=` (skrzynka org, fail-closed
+autor/recenzent) + `GET /initiatives/:id/lifecycle-transition-proposals` (`a518894120`, 7 testów
+RealPG na produkcyjnym routerze); UI `TransitionInboxSurface` = zakładka „Do akceptacji" w Menu 1
+Inicjatyw za flagą `VITE_TRANSITION_INBOX` OFF (`d625e2cc88`; StandardTable+StandardPreview,
+akcje-pill Approve/Reject). **H1c:** rozjazd kod/etap w 4 miejscach (`coerceInitiativeStatusForWrite`,
+`EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) naprawiony; dowód RealPG:
+SELECT przed `{APPROVED/SCHEDULED}` → po `{IN_EXECUTION/IN_EXECUTION}` + wiersz
+`initiative_handoffs`; zrzuty 01–09 jasny+ciemny (skrzynka, podgląd, pusty, OFF, po akcepcie).
+**Znaleziska:** (a) ten sam człowiek musi być PROJECT_SPONSOR i PMO — przejścia praktycznie
+niewykonalne bez podwójnej roli → do S5 PMO E3 Codexa (**Z-24**); (b) MARTWA bramka GO/NO-GO w
+`initiativeTransitionService` (porównania `'SCHEDULED'`/`'EXECUTING'`/`'DONE'` z kodami P12 →
+reguła H16/INI-005 nie działa; `execution_started_at`/`review_requested_at` nieustawiane) →
+**H1d w toku** (Opus, ta sama gałąź); (c) 3 zastane czerwone w `services/initiative` (fikstura
+`'PLANNING'`, grep po skasowanym SQL, `ARCHIVED` poza macierzą). **EWIDENCJA:** H1b
+🔧→**gotowe do scalenia `119ad9af3f`**; dodane wiersze H1c (gotowe) i H1d (🔧).
+
+**Codex 14.09, 02:40–02:46 (KANAL Wpisy 28–29).** S1 paczka 5 v2 **ACCEPT** (`e1a2c2c160`) →
+odbiór CTO w toku (integrator paczka5v2 → staging, flaga OFF). S2 **REQUEST_CHANGES** (P1: receipt
+UUID/`SENDING` bez lease/MEMBER w pickerze; SMTP lokalny do E1, doręczenie na skrzynkę stagingu
+przy odbiorze CTO — Wpis 29). S3 rebase. S4 freeze `a0c6770b35` na `88f1` — kolejka odbioru po S1.
+S5 migracja `20262190` PASS + zaakceptowana (Wpis 29), E3 trwa.
 
 ---
 
@@ -725,6 +777,9 @@ awarii była połykana w ciszy (`.catch(() => {})`).
 |---|---|---|---|---|---|---|
 | **H1** bramka 409 | `POST /:id/lifecycle-gate-decisions` **zbudowany** (`server/src/routes/pmo/initiatives.routes.ts:3939`), ale `executionSpineLegacyReadOnly.middleware.ts:85` zwraca 409; **zero wołaczy we froncie** (grep `src/` = 0 trafień poza komentarzem w `ExecutionControlSurface.tsx:1676`) | albo trasa kanoniczna Runtime-v1 z realnym wołaczem, albo świadome usunięcie martwej trasy — **nie zostawiamy zbudowanego bez przewodu** | test: klik w UI → 2xx w sieci, nie 409; zero `.catch(() => {})` na ścieżce | **Opus** | 2 | „naprawa" przez zdjęcie middleware = otwarcie wycofanych zapisów |
 | **H2** `initiative_handoffs` | tabela tworzona migracją `server/migrations/20260626_initiative_handoffs.sql`, **zero wołaczy produkcyjnych** (trafienia tylko w fixture'ach testowych i evidence) | realny zapis przy przejściu Inicjatywa→Realizacja i realny odczyt historii w Realizacji — **ta sama tożsamość, nie drugi rekord** | test end-to-end: zatwierdzenie w Inicjatywach → ten sam artefakt widoczny w Banku z historią i kartami N | **Opus** | 3 | tworzenie kopii rekordu zamiast zmiany fazy życia = sprzeczne ze SPEC |
+| **H1b** ścieżka ludzka jest TRZYSTOPNIOWA (proposal → recenzja A05 `POST /agent-proposals/:id/scopes/:scopeKey/review` → execution); brakował tylko GET listy | **gotowe (14.09)**: `GET /initiatives/lifecycle-transition-proposals?status=` (skrzynka org, fail-closed autor/recenzent) + `GET /initiatives/:id/lifecycle-transition-proposals` (`a518894120`, 7 testów RealPG); UI `TransitionInboxSurface` — zakładka „Do akceptacji" w Menu 1 Inicjatyw za flagą `VITE_TRANSITION_INBOX` OFF (`d625e2cc88`, StandardTable+StandardPreview, akcje-pill Approve/Reject) | 7 testów RealPG + zrzuty 01–09 jasny/ciemny (skrzynka, podgląd, pusty, OFF, po akcepcie) | **Opus** | — | ten sam człowiek musi być PROJECT_SPONSOR i PMO — przejścia praktycznie niewykonalne bez podwójnej roli (**Z-24**, do S5 PMO E3) |
+| **H1c** rozjazd kod (7)/etap (12) w 4 miejscach zapisu: `coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus` | naprawione (14.09), parytet z `server/src/constants/initiativeLifecycleStages.ts` ↔ `src/contracts/initiatives-execution/statusMapping.ts` (DEC-506) | dowód RealPG: SELECT przed `{APPROVED/SCHEDULED}` → po `{IN_EXECUTION/IN_EXECUTION}` + wiersz `initiative_handoffs` | **Opus** | — | mapowanie 12→7 rozjechane w jednym z 4 miejsc = zapis cichnie na niewłaściwym statusie |
+| **H1d** bramka GO/NO-GO w `initiativeTransitionService` porównuje kody P12 z etykietami legacy `'SCHEDULED'`/`'EXECUTING'`/`'DONE'` — MARTWA; `execution_started_at`/`review_requested_at` nieustawiane | reguła H16/INI-005 „decyzja GO aktualna przy starcie" ma faktycznie blokować przejście z nieaktualnym GO | test: GO starszy niż próg + próba przejścia → blokada, nie przepuszczenie | **Opus** | 2 | **W TOKU** (gałąź `integracja/kandydat-h1b-skrzynka-20260914`) — dopóki martwa, bramka wygląda na istniejącą, ale niczego nie zatrzymuje |
 
 ### 2.6 Wygaszenie starych powierzchni
 
@@ -897,7 +952,9 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
-| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta | Opus | H1 | B | ekran recenzji z prowenencją, nie 409 | ⬜ NIE ZACZĘTE (nowy etap, wydzielony z H1 14.09) | — | 14.09 |
+| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B | ekran recenzji z prowenencją, nie 409 | 🔧 GOTOWE DO SCALENIA | `119ad9af3f` | 14.09 |
+| Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🔧 GOTOWE DO SCALENIA | `119ad9af3f` | 14.09 |
+| Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🔧 W TOKU | `integracja/kandydat-h1b-skrzynka-20260914` | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
@@ -907,9 +964,10 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (41 etapów, +1 = H1b dołożone 14.09):** ✅ 2 · 🧪 6 · 🔧 5 · ⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (43 etapy, +2 = H1c/H1d dołożone 14.09 obok H1b; H1b przechodzi ⬜→🔧
+„gotowe do scalenia" `119ad9af3f`):** ✅ 2 · 🧪 6 · 🔧 8 · ⬜ 27 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**37 etapów to FALA 2** (0 ✅, 5 🧪, 5 🔧, 27 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**39 etapów to FALA 2** (0 ✅, 5 🧪, 8 🔧, 26 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
