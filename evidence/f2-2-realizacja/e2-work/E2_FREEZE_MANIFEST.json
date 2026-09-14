@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
-  "baseSha": "3e1363d01a609c0dc9178ef7a5bdf96af22f9f30",
-  "candidateContentSha": "fac9ed4f12",
+  "baseSha": "94754c3b4d9ebb25e8b5197a0aaff2b2dc3adbd2",
+  "candidateContentSha": "625308405c53b6fe6d38f47ba620034faf9bd5ca",
   "branch": "codex/realizacja-cztery-przyciski-20260913",
   "manifestSelfExcluded": true,
   "fileCount": 57,
-  "evidenceBytes": 1323580,
+  "evidenceBytes": 1335083,
   "evidenceCapBytes": 2097152,
   "files": [
     {
@@ -31,8 +31,8 @@
     },
     {
       "path": "dev-render/main.tsx",
-      "bytes": 157332,
-      "sha256": "53f57a41d20a906ede1b713e841dfe91cd8b39fe0544a979b74d545cef5801cb"
+      "bytes": 157880,
+      "sha256": "2bafba125da9965edd1048f9da3b1b464999233c375145200281487cf050c803"
     },
     {
       "path": "dev-render/screens/execution-report-day11.tsx",
@@ -111,8 +111,8 @@
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/AUTHOR_REREVIEW_CLOSURE_20260914.md",
-      "bytes": 3288,
-      "sha256": "4c1a46d3c9dc801b2bda513284a35848d5fccc8c7784875ab1582b18c045aae4"
+      "bytes": 3530,
+      "sha256": "d2993df1fb7b37ef75387c1090f876fe2795554eee8df873a8e0add5541a1bad"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/BROWSER_RECEIPT.md",
@@ -146,13 +146,13 @@
     },
     {
       "path": "public/locales/en/translation.json",
-      "bytes": 2235331,
-      "sha256": "f79524cc68d58a6a4409b5572d2a4e1c855463aa5ba72db69393a2b56b44572c"
+      "bytes": 2237279,
+      "sha256": "e47e1b8d65fc65d64fff0a3bc9840856449419b75624c13c019a2b91d09ecc6a"
     },
     {
       "path": "public/locales/pl/translation.json",
-      "bytes": 2389674,
-      "sha256": "98c58e7abd711ee42a75e346f29119bbcb502a78344a5948148a30d6f44a2b78"
+      "bytes": 2391808,
+      "sha256": "094fd7b719449cd01d295f3283a3886722a296504b67ddd9249cfbd17b0b7a55"
     },
     {
       "path": "server/src/cron/Scheduler.ts",
@@ -251,8 +251,8 @@
     },
     {
       "path": "src/components/Execution/reports-intelligence/WorkIntelligenceReport.tsx",
-      "bytes": 42949,
-      "sha256": "cf85726ff00d9de52a819999b764227a398c9636e445525d14aa76c4f3dceb88"
+      "bytes": 42906,
+      "sha256": "e0d639ac40ced04dba1a5b8a1191b2d43899b9b35da95a3aa416472b3c411644"
     },
     {
       "path": "src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx",
