@@ -10,22 +10,44 @@ const api = vi.hoisted(() => ({
   readExecutionWork: vi.fn(),
   readExecutionMilestones: vi.fn(),
 }));
+const managerApi = vi.hoisted(() => ({
+  getManagerProblems: vi.fn(),
+  executeManagerProblemAction: vi.fn(),
+  generateExecutionWorkAnalysis: vi.fn(),
+}));
 
 vi.mock('@/services/initiatives-execution/runtimeApi', () => api);
+vi.mock('@/services/api/v8/execution-control', () => ({
+  V8ExecutionControlApi: {
+    getManagerProblems: managerApi.getManagerProblems,
+    executeManagerProblemAction: managerApi.executeManagerProblemAction,
+  },
+}));
+vi.mock('@/services/executionReports/executionReportsApi', () => ({
+  generateExecutionWorkAnalysis: managerApi.generateExecutionWorkAnalysis,
+}));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback: string, options?: { count?: number }) =>
-      fallback.replace('{{count}}', String(options?.count ?? '')),
+    t: (_key: string, fallback: string, options?: Record<string, unknown>) =>
+      Object.entries(options || {}).reduce(
+        (text, [key, value]) => text.replaceAll(`{{${key}}}`, String(value)),
+        fallback
+      ),
   }),
 }));
 vi.mock('@/components/standard/StandardTable', () => ({
-  StandardTable: ({ data, onRowDoubleClick }: any) => (
+  StandardTable: ({ columns = [], data, onRowDoubleClick }: any) => (
     <div data-testid="standard-table">
       {data.map((row: any) => (
-        <button key={row.id} type="button" onDoubleClick={() => onRowDoubleClick?.(row)}>
-          {row.title}
-        </button>
+        <div key={row.id}>
+          <button type="button" onDoubleClick={() => onRowDoubleClick?.(row)}>{row.title}</button>
+          {columns.map((column: any) => column.render
+            ? <span key={column.id}>{column.render(row)}</span>
+            : column.id !== 'title' && row[column.id] != null
+              ? <span key={column.id}>{String(row[column.id])}</span>
+              : null)}
+        </div>
       ))}
     </div>
   ),
@@ -54,6 +76,10 @@ describe('Work Intelligence report', () => {
     api.listExecutionCases.mockReset();
     api.readExecutionWork.mockReset();
     api.readExecutionMilestones.mockReset();
+    managerApi.getManagerProblems.mockReset();
+    managerApi.executeManagerProblemAction.mockReset();
+    managerApi.generateExecutionWorkAnalysis.mockReset();
+    managerApi.getManagerProblems.mockResolvedValue({ data: { problems: [] } });
   });
 
   it('reconciles overdue KPI numerator to its exact drill-down population', () => {
@@ -230,13 +256,44 @@ describe('Work Intelligence report', () => {
     expect(screen.getByRole('button', { name: /Previous week/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Next week/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Next month/ })).toBeInTheDocument();
-    expect(screen.getByTestId('standard-table')).toHaveTextContent('Prepare the weekly gate');
-    expect(screen.getByTestId('standard-table')).not.toHaveTextContent(
+    expect(screen.getAllByTestId('standard-table').at(-1)).toHaveTextContent('Prepare the weekly gate');
+    expect(screen.getAllByTestId('standard-table').at(-1)).not.toHaveTextContent(
       'Close the monthly dependency'
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Next month/ }));
-    expect(screen.getByTestId('standard-table')).toHaveTextContent('Close the monthly dependency');
+    expect(screen.getAllByTestId('standard-table').at(-1)).toHaveTextContent('Close the monthly dependency');
+  });
+
+  it('shows concrete attention reasons, persists on demand, and executes manager actions through the governed service client', async () => {
+    api.listExecutionCases.mockResolvedValue({ cases: [{ executionCaseId: 'case-1', initiativeId: 'initiative-1', projectId: 'project-1', projectTitle: 'North plant' }] });
+    api.readExecutionWork.mockResolvedValue({
+      tasks: [{ taskId: 'task-1', title: 'Blocked commissioning', status: 'BLOCKED', priority: 'HIGH', dueAt: '2026-08-20T12:00:00.000Z' }],
+      decisions: [],
+    });
+    api.readExecutionMilestones.mockResolvedValue({ items: [] });
+    managerApi.getManagerProblems.mockImplementation((laneId: string) => Promise.resolve({ data: { problems: laneId === 'action-queue' ? [{
+      id: 'aq-task-blocked-task-1', sourceEntityId: 'task-1', sourceEntityType: 'TASK', actions: [
+        { id: 'escalate', label: 'Escalate' }, { id: 'reassign', label: 'Reassign' }, { id: 'set_capacity', label: 'Set capacity' },
+      ],
+    }] : [] } }));
+    managerApi.executeManagerProblemAction.mockResolvedValue({ data: { success: true, message: 'Task reassigned.', changedCount: 1 } });
+    managerApi.generateExecutionWorkAnalysis.mockResolvedValue({ id: 'run-week-1', created: true, asOf: '2026-08-24T12:00:00.000Z' });
+
+    render(<WorkIntelligenceReport analysisEnabled />);
+    fireEvent.change(await screen.findByLabelText('Week of'), { target: { value: '2026-08-24' } });
+
+    expect(await screen.findByText(/Blocked, Overdue/)).toBeInTheDocument();
+    expect(screen.getAllByText('North plant').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Delegate' }));
+    await waitFor(() => expect(managerApi.executeManagerProblemAction).toHaveBeenCalledWith(
+      'action-queue',
+      { problemId: 'aq-task-blocked-task-1', actionId: 'reassign' },
+      'project-1'
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate for this week' }));
+    await waitFor(() => expect(managerApi.generateExecutionWorkAnalysis).toHaveBeenCalledWith('2026-08-24'));
+    expect(await screen.findByTestId('work-analysis-receipt')).toHaveTextContent('run-week-1');
   });
 
   it('renders an honest empty state when runtime returns no cases', async () => {

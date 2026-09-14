@@ -1,0 +1,219 @@
+import { createHash } from 'node:crypto';
+
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+
+const DAY = 86_400_000;
+const CLOSED = new Set(['COMPLETED', 'DONE', 'DECIDED', 'APPROVED', 'CANCELED', 'CANCELLED']);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type WorkRow = {
+  aggregate_type: 'execution_task' | 'execution_decision' | 'execution_milestone';
+  aggregate_id: string;
+  version: number;
+  payload_json: Record<string, unknown>;
+  initiative_id: string | null;
+  project_id: string | null;
+  project_title: string | null;
+};
+
+export interface ExecutionWorkAnalysisGeneration {
+  id: string;
+  created: boolean;
+  period: { start: string; end: string };
+  asOf: string;
+  payload: Record<string, unknown>;
+}
+
+function mondayUtc(input: Date): Date {
+  const date = new Date(input);
+  date.setUTCHours(0, 0, 0, 0);
+  const day = date.getUTCDay();
+  date.setUTCDate(date.getUTCDate() - (day === 0 ? 6 : day - 1));
+  return date;
+}
+
+function deterministicUuid(organizationId: string, weekStart: string): string {
+  const hex = createHash('sha256').update(`execution-work:${organizationId}:${weekStart}`).digest('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+function workItem(row: WorkRow) {
+  const value = row.payload_json;
+  const kind = row.aggregate_type === 'execution_task' ? 'TASK' : row.aggregate_type === 'execution_decision' ? 'DECISION' : 'MILESTONE';
+  return {
+    id: row.aggregate_id,
+    kind,
+    title: stringValue(value.title) ?? row.aggregate_id,
+    status: stringValue(value.status) ?? 'UNKNOWN',
+    ownerId: stringValue(value.assigneeId) ?? stringValue(value.authorityId) ?? stringValue(value.ownerId),
+    dueAt: stringValue(value.dueAt) ?? stringValue(value.targetAt),
+    completedAt: stringValue(value.completedAt) ?? stringValue(value.decidedAt),
+    priority: stringValue(value.priority) ?? 'UNKNOWN',
+    version: row.version,
+    initiativeId: row.initiative_id,
+    projectId: row.project_id,
+    projectTitle: row.project_title,
+  };
+}
+
+export async function generateExecutionWorkAnalysis(args: {
+  organizationId: string;
+  weekOf: Date;
+  actorId?: string | null;
+  actorName?: string | null;
+}): Promise<ExecutionWorkAnalysisGeneration> {
+  const start = mondayUtc(args.weekOf);
+  const end = new Date(start.getTime() + 7 * DAY);
+  const previousStart = new Date(start.getTime() - 7 * DAY);
+  const nextMonthEnd = new Date(start.getTime() + 30 * DAY);
+  const startIso = start.toISOString();
+  const endIso = end.toISOString();
+  const id = deterministicUuid(args.organizationId, startIso);
+
+  const existing = (await dbGet(
+    `SELECT id, period_start AS "periodStart", period_end AS "periodEnd", as_of AS "asOf", payload
+       FROM execution_report_snapshots
+      WHERE id = ? AND organization_id = ?`,
+    [id, args.organizationId]
+  )) as any;
+  if (existing) {
+    return {
+      id: String(existing.id),
+      created: false,
+      period: { start: new Date(existing.periodStart).toISOString(), end: new Date(existing.periodEnd).toISOString() },
+      asOf: new Date(existing.asOf).toISOString(),
+      payload: typeof existing.payload === 'string' ? JSON.parse(existing.payload) : existing.payload,
+    };
+  }
+
+  const rows = (await dbAll(
+    `SELECT work.aggregate_type, work.aggregate_id, work.version, work.payload_json,
+            ec.payload_json->>'initiativeId' AS initiative_id,
+            initiative.payload_json->>'projectId' AS project_id,
+            project.name AS project_title
+       FROM ie_aggregate_state work
+       JOIN ie_aggregate_state ec
+         ON ec.organization_id = work.organization_id
+        AND ec.aggregate_type = 'execution_case'
+        AND ec.aggregate_id = work.payload_json->>'executionCaseId'
+       LEFT JOIN ie_aggregate_state initiative
+         ON initiative.organization_id = work.organization_id
+        AND initiative.aggregate_type = 'initiative'
+        AND initiative.aggregate_id = ec.payload_json->>'initiativeId'
+       LEFT JOIN projects project
+         ON project.organization_id = work.organization_id
+        AND project.id = initiative.payload_json->>'projectId'
+      WHERE work.organization_id = ?
+        AND work.aggregate_type IN ('execution_task','execution_decision','execution_milestone')
+      ORDER BY work.aggregate_type, work.aggregate_id`,
+    [args.organizationId]
+  )) as WorkRow[];
+  const items = rows.map(workItem);
+  const inWindow = (value: string | null, from: Date, to: Date) => {
+    const timestamp = value ? Date.parse(value) : Number.NaN;
+    return Number.isFinite(timestamp) && timestamp >= from.getTime() && timestamp < to.getTime();
+  };
+  const isClosed = (status: string) => CLOSED.has(status.toUpperCase());
+  const previous = items.filter((item) => inWindow(isClosed(item.status) ? item.completedAt : item.dueAt, previousStart, start));
+  const next = items.filter((item) => inWindow(item.dueAt, start, end));
+  const month = items.filter((item) => inWindow(item.dueAt, start, nextMonthEnd));
+  const attention = items.flatMap((item) => {
+    if (isClosed(item.status)) return [];
+    const reasons: string[] = [];
+    if (item.status.toUpperCase() === 'BLOCKED') reasons.push('BLOCKED');
+    if (item.dueAt && Date.parse(item.dueAt) < start.getTime()) reasons.push('OVERDUE');
+    if (!item.ownerId) reasons.push('UNASSIGNED');
+    if (!item.dueAt) reasons.push('NO_DUE_DATE');
+    return reasons.length ? [{ ...item, reasons }] : [];
+  });
+  const rowShape = (item: (typeof items)[number]) => ({
+    record: item.title,
+    type: item.kind,
+    project: item.projectTitle ?? 'Project name unavailable',
+    priority: item.priority,
+    status: item.status,
+    due: item.dueAt ?? 'No due date',
+  });
+  const payload = {
+    definitionKey: 'weekly-exec',
+    title: `Weekly execution work analysis · ${startIso.slice(0, 10)}`,
+    subtitle: 'Automatically generated from the canonical execution registry.',
+    rag: attention.some((item) => item.reasons.includes('BLOCKED')) ? 'RED' : attention.length ? 'AMBER' : 'GREEN',
+    ragReason: `${attention.length} record(s) require management attention.`,
+    period: { start: startIso, end: endIso },
+    asOf: new Date().toISOString(),
+    metrics: [
+      { id: 'previousWeek', label: 'Previous week', value: String(previous.length) },
+      { id: 'nextWeek', label: 'Next week', value: String(next.length) },
+      { id: 'nextMonth', label: 'Next month', value: String(month.length) },
+      { id: 'attention', label: 'Requires attention', value: String(attention.length), tone: attention.length ? 'WARN' : 'OK' },
+    ],
+    sections: [
+      {
+        id: 'attention',
+        title: 'Management attention',
+        table: {
+          columns: [
+            { id: 'record', label: 'Record' }, { id: 'reasons', label: 'Reason' },
+            { id: 'project', label: 'Project' }, { id: 'priority', label: 'Priority' },
+          ],
+          rows: attention.map((item) => ({ ...rowShape(item), reasons: item.reasons.join(', ') })),
+        },
+        empty: 'No records require management attention.',
+      },
+      ...[
+        ['previous-week', 'Previous week', previous],
+        ['next-week', 'Next week', next],
+        ['next-month', 'Next month', month],
+      ].map(([sectionId, title, sectionItems]) => ({
+        id: sectionId as string,
+        title: title as string,
+        table: {
+          columns: [
+            { id: 'record', label: 'Record' }, { id: 'type', label: 'Type' },
+            { id: 'project', label: 'Project' }, { id: 'priority', label: 'Priority' },
+            { id: 'status', label: 'Status' }, { id: 'due', label: 'Due' },
+          ],
+          rows: (sectionItems as typeof items).map(rowShape),
+        },
+        empty: 'No records in this window.',
+      })),
+    ],
+  };
+
+  await dbRun(
+    `INSERT INTO execution_report_snapshots
+       (id, organization_id, definition_key, level, title, period_start, period_end, as_of,
+        status, rag, payload, created_by, created_by_name)
+     VALUES (?, ?, 'weekly-exec', 'PMO', ?, ?, ?, ?, 'DRAFT', ?, ?::jsonb, ?, ?)
+     ON CONFLICT (id) DO NOTHING`,
+    [id, args.organizationId, payload.title, startIso, endIso, payload.asOf, payload.rag, JSON.stringify(payload), args.actorId ?? null, args.actorName ?? 'Consultify scheduler']
+  );
+  // DbPromise retains compatibility with legacy call sites by logging some
+  // database failures. This generator must prove durability before reporting
+  // success, because its receipt is later used as the weekly cadence record.
+  const persisted = await dbGet(
+    `SELECT id FROM execution_report_snapshots WHERE id = ? AND organization_id = ?`,
+    [id, args.organizationId]
+  );
+  if (!persisted) throw new Error(`Execution work analysis ${id} was not persisted`);
+  return { id, created: true, period: payload.period, asOf: payload.asOf, payload };
+}
+
+export async function generateWeeklyExecutionWorkAnalyses(): Promise<{ organizations: number; created: number }> {
+  if (process.env.ENABLE_EXECUTION_WORK_ANALYSIS !== 'true') return { organizations: 0, created: 0 };
+  const organizationRows = (await dbAll(`SELECT id FROM organizations WHERE COALESCE(status, 'active') <> 'deleted'`)) as Array<{ id: string }>;
+  // Some development databases retain a non-tenant `system` sentinel. It is
+  // not a valid tenant foreign key for execution_report_snapshots.
+  const organizations = organizationRows.filter((organization) => UUID.test(organization.id));
+  let created = 0;
+  for (const organization of organizations) {
+    const result = await generateExecutionWorkAnalysis({ organizationId: organization.id, weekOf: new Date() });
+    if (result.created) created += 1;
+  }
+  return { organizations: organizations.length, created };
+}

@@ -24,6 +24,8 @@ import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { isExecutionReportE4Enabled } from '../config/executionReportE4Flag.js';
+import { requirePermission } from '../middleware/permission.middleware.js';
+import { generateExecutionWorkAnalysis } from '../services/execution/executionWorkAnalysisService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -31,6 +33,10 @@ import { parseMaybeJson } from '../utils/pgFlags.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+const WorkAnalysisGenerateSchema = z.object({
+  weekOf: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
 
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string; firstName?: string; lastName?: string };
@@ -386,6 +392,34 @@ router.get(
       [orgId]
     )) as any[];
     res.json({ items: rows.map((row) => decodeSnapshotEntities(rowToDto(row))) });
+  })
+);
+
+/** Server-owned on-demand generation; the client cannot submit fabricated report content. */
+router.post(
+  '/work-analysis/generate',
+  verifyToken,
+  isAuthenticated,
+  requirePermission('manage_workstreams'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (process.env.ENABLE_EXECUTION_WORK_ANALYSIS !== 'true') {
+      res.status(404).json({ error: 'NOT_FOUND' });
+      return;
+    }
+    const orgId = req.user?.organizationId;
+    const parsed = WorkAnalysisGenerateSchema.safeParse(req.body);
+    if (!orgId || !parsed.success) {
+      res.status(orgId ? 400 : 401).json({ error: orgId ? 'VALIDATION_FAILED' : 'AUTH_REQUIRED' });
+      return;
+    }
+    const authorName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || null;
+    const result = await generateExecutionWorkAnalysis({
+      organizationId: orgId,
+      weekOf: new Date(`${parsed.data.weekOf}T12:00:00.000Z`),
+      actorId: req.user?.id ?? null,
+      actorName: authorName,
+    });
+    res.status(result.created ? 201 : 200).json(result);
   })
 );
 

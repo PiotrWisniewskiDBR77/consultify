@@ -11,6 +11,11 @@ import {
   readExecutionMilestones,
   readExecutionWork,
 } from '@/services/initiatives-execution/runtimeApi';
+import {
+  V8ExecutionControlApi,
+  type V8ManagerProblemRow,
+} from '@/services/api/v8/execution-control';
+import { generateExecutionWorkAnalysis } from '@/services/executionReports/executionReportsApi';
 
 import { buildWorkReportModel, type WorkReportItem } from './workReportModel';
 import {
@@ -35,6 +40,8 @@ type State =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'ready'; items: WorkReportItem[]; failedCases: number; syncedAt: string };
+
+type ManagerProblemBinding = V8ManagerProblemRow & { laneId: string };
 
 const arrayAt = (payload: unknown, key: string): any[] => {
   if (!payload || typeof payload !== 'object') return [];
@@ -133,6 +140,12 @@ const KIND_LABEL_KEY: Record<string, [string, string]> = {
   DECISION: ['execution.reports.intelligence.kinds.decision', 'Decision'],
   MILESTONE: ['execution.reports.intelligence.kinds.milestone', 'Milestone'],
 };
+const ATTENTION_REASON_FALLBACK: Record<string, string> = {
+  BLOCKED: 'Blocked',
+  OVERDUE: 'Overdue',
+  UNASSIGNED: 'Unassigned',
+  NO_DUE_DATE: 'No due date',
+};
 
 export function WorkIntelligenceReport({
   analysisEnabled = false,
@@ -144,6 +157,10 @@ export function WorkIntelligenceReport({
   const [selectedWeek, setSelectedWeek] = useState(() => new Date().toISOString().slice(0, 10));
   const [selectedWindow, setSelectedWindow] =
     useState<keyof ExecutionWorkAnalysis['windows']>('nextWeek');
+  const [managerProblems, setManagerProblems] = useState<ManagerProblemBinding[]>([]);
+  const [generation, setGeneration] = useState<{ id: string; created: boolean; asOf: string } | null>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -232,6 +249,24 @@ export function WorkIntelligenceReport({
           failedCases: results.length - fulfilled.length,
           syncedAt: new Date().toISOString(),
         });
+        if (analysisEnabled) {
+          const lanes = ['action-queue', 'blockers', 'workload'];
+          const problemResults = await Promise.allSettled(
+            lanes.map(async (laneId) => {
+              const response = await V8ExecutionControlApi.getManagerProblems(laneId);
+              const data = (response as any)?.data || response;
+              return ((data?.problems || []) as V8ManagerProblemRow[]).map((problem) => ({
+                ...problem,
+                laneId,
+              }));
+            })
+          );
+          if (active) {
+            setManagerProblems(
+              problemResults.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
+            );
+          }
+        }
       } catch (error) {
         if (active)
           setState({
@@ -243,7 +278,7 @@ export function WorkIntelligenceReport({
     return () => {
       active = false;
     };
-  }, []);
+  }, [analysisEnabled]);
 
   const model = useMemo(
     () =>
@@ -354,6 +389,82 @@ export function WorkIntelligenceReport({
       ]
     : [];
   const selectedAnalysisWindow = analysis?.windows[selectedWindow] ?? null;
+  const attentionRows = (analysis?.attention ?? []).map(({ item, reasons }) => ({
+    ...item,
+    reasons,
+    managerBindings: managerProblems.filter((problem) => problem.sourceEntityId === item.id),
+  }));
+  const runManagerAction = async (
+    row: (typeof attentionRows)[number],
+    actionId: 'escalate' | 'reassign' | 'set_capacity'
+  ) => {
+    const binding = row.managerBindings.find((problem) =>
+      problem.actions.some((action) => action.id === actionId)
+    );
+    if (!binding) return;
+    const key = `${binding.id}:${actionId}`;
+    setBusyAction(key);
+    setActionMessage(null);
+    try {
+      const response = await V8ExecutionControlApi.executeManagerProblemAction(
+        binding.laneId,
+        { problemId: binding.id, actionId },
+        row.projectId ?? undefined
+      );
+      const result = (response as any)?.data || response;
+      setActionMessage(String(result?.message || t('execution.workAnalysis.actionDone', 'Management action completed.')));
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.actionFailed', 'Management action failed.'));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+  const attentionColumns: TableColumn[] = [
+    { id: 'title', label: t('execution.workAnalysis.columns.record', 'Attention record'), primary: true, dataType: 'text' },
+    {
+      id: 'reasons',
+      label: t('execution.workAnalysis.columns.reason', 'Reason'),
+      render: (row: TableRow) => ((row.reasons as string[]) || []).map((reason) =>
+        t(
+          `execution.workAnalysis.reasons.${String(reason).toLowerCase()}`,
+          ATTENTION_REASON_FALLBACK[reason] ?? reason
+        )
+      ).join(', '),
+    },
+    { id: 'projectTitle', label: t('execution.workAnalysis.columns.project', 'Project'), dataType: 'text' },
+    {
+      id: 'managerActions',
+      label: t('execution.workAnalysis.columns.actions', 'Manager actions'),
+      render: (tableRow: TableRow) => {
+        const row = tableRow as unknown as (typeof attentionRows)[number];
+        const actions = [
+          ['escalate', t('execution.workAnalysis.actions.escalate', 'Escalate')],
+          ['reassign', t('execution.workAnalysis.actions.delegate', 'Delegate')],
+          ['set_capacity', t('execution.workAnalysis.actions.resources', 'Change resources')],
+        ] as const;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {actions.map(([actionId, label]) => {
+              const binding = row.managerBindings.find((problem) => problem.actions.some((action) => action.id === actionId));
+              if (!binding) return null;
+              const key = `${binding.id}:${actionId}`;
+              return (
+                <button
+                  key={actionId}
+                  type="button"
+                  disabled={busyAction !== null}
+                  onClick={(event) => { event.stopPropagation(); void runManagerAction(row, actionId); }}
+                  className="rounded-lg border border-c-border px-2 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                >
+                  {busyAction === key ? t('execution.workAnalysis.actions.running', 'Working…') : label}
+                </button>
+              );
+            })}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <main
@@ -391,6 +502,21 @@ export function WorkIntelligenceReport({
                   onChange={(event) => setSelectedWeek(event.target.value)}
                 />
               </label>
+              <button
+                type="button"
+                onClick={() => void (async () => {
+                  setActionMessage(null);
+                  try {
+                    const result = await generateExecutionWorkAnalysis(selectedWeek);
+                    setGeneration({ id: result.id, created: result.created, asOf: result.asOf });
+                  } catch (error) {
+                    setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.generateFailed', 'The analysis could not be generated.'));
+                  }
+                })()}
+                className="rounded-lg border border-c-border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                {t('execution.workAnalysis.generate', 'Generate for this week')}
+              </button>
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               {windowEntries.map((entry) => (
@@ -414,6 +540,25 @@ export function WorkIntelligenceReport({
               {t('execution.workAnalysis.attention', 'Requires management attention')}:{' '}
               <strong>{analysis.attention.length}</strong>
             </p>
+            {generation ? (
+              <p className="mt-2 text-xs text-c-text-muted" data-testid="work-analysis-receipt">
+                {t('execution.workAnalysis.savedReceipt', 'Saved report {{id}} · {{state}}', {
+                  id: generation.id,
+                  state: generation.created
+                    ? t('execution.workAnalysis.savedNew', 'created')
+                    : t('execution.workAnalysis.savedExisting', 'already generated'),
+                })}
+              </p>
+            ) : null}
+            {actionMessage ? <p role="status" className="mt-2 text-sm text-c-text-secondary">{actionMessage}</p> : null}
+            <div className="mt-3">
+              <StandardTable
+                columns={attentionColumns}
+                data={attentionRows as any}
+                density="compact"
+                empty={{ title: t('execution.workAnalysis.noAttention', 'No records require management attention') }}
+              />
+            </div>
           </section>
         ) : null}
 
