@@ -107,8 +107,7 @@ export function InitiativeWorkReportView({
           : Promise.resolve([]),
       ]);
       const details = await Promise.all(
-        itemsAt(definitionList)
-          .map((item) => getReportDefinition(String(item.definitionId)))
+        itemsAt(definitionList).map((item) => getReportDefinition(String(item.definitionId)))
       );
       const published = details.flatMap((definition: any) =>
         (definition.versions || [])
@@ -200,11 +199,13 @@ export function InitiativeWorkReportView({
         formulas: [],
         units: [],
         currencies: [],
-        windows: [{
-          windowId: 'reporting-window',
-          duration: form.cadence === 'MONTHLY' ? 'P1M' : 'P7D',
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-        }],
+        windows: [
+          {
+            windowId: 'reporting-window',
+            duration: form.cadence === 'MONTHLY' ? 'P1M' : 'P7D',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+          },
+        ],
         access: { audienceRoles: ['OWNER', 'ADMIN'], classification: 'INTERNAL' },
         redaction: { rules: ['TENANT_BOUND'], defaultState: 'FULL' },
         freshnessThresholdMinutes: 60,
@@ -215,9 +216,16 @@ export function InitiativeWorkReportView({
         clientRequestId: crypto.randomUUID(),
       });
       await transitionReportDefinition(definitionId, {
-        action: 'VALIDATE', expectedVersion: 1, clientRequestId: crypto.randomUUID(),
+        action: 'VALIDATE',
+        expectedVersion: 1,
+        clientRequestId: crypto.randomUUID(),
       });
-      toast.success(t('initiatives.workReport.definitionValidated', 'Definition validated and sent for independent publication.'));
+      toast.success(
+        t(
+          'initiatives.workReport.definitionValidated',
+          'Definition validated and sent for independent publication.'
+        )
+      );
       await load();
     } catch (caught) {
       toast.error(caught instanceof Error ? caught.message : String(caught));
@@ -229,7 +237,10 @@ export function InitiativeWorkReportView({
   const publishDefinition = async (definition: any) => {
     await transitionReportDefinition(definition.id, {
       action: 'PUBLISH',
-      rationale: t('initiatives.workReport.definitionPublishRationale', 'Approved report definition'),
+      rationale: t(
+        'initiatives.workReport.definitionPublishRationale',
+        'Approved report definition'
+      ),
       expectedVersion: definition.aggregateVersion,
       clientRequestId: crypto.randomUUID(),
     });
@@ -314,9 +325,10 @@ export function InitiativeWorkReportView({
     URL.revokeObjectURL(url);
   };
   const deliver = async (run: any) => {
-    if (!recipients.length) return;
+    const frozenRecipients = Array.isArray(run.audience) ? run.audience.map(String) : [];
+    if (!frozenRecipients.length) return;
     await deliverInitiativeWorkReport(run.reportRunId, {
-      recipients,
+      recipients: frozenRecipients,
       expectedVersion: run.version,
       clientRequestId: crypto.randomUUID(),
     });
@@ -376,6 +388,7 @@ export function InitiativeWorkReportView({
           <div className="flex gap-2">
             <button
               className="rounded-full border border-c-border px-3 py-1 text-xs"
+              disabled={!['FROZEN', 'APPROVED', 'PUBLISHED'].includes(run.status)}
               onClick={(event) => {
                 event.stopPropagation();
                 void download(run);
@@ -531,7 +544,9 @@ export function InitiativeWorkReportView({
                 {t('initiatives.workReport.selectApprover', 'Select another organization member')}
               </option>
               {members.map((member) => (
-                <option key={member.id} value={member.id}>{member.label}</option>
+                <option key={member.id} value={member.id}>
+                  {member.label}
+                </option>
               ))}
             </select>
           </label>
