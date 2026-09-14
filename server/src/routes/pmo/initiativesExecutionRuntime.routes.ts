@@ -4737,17 +4737,18 @@ export function createInitiativesExecutionRuntimeRouter(
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
       const parsed = PlanAnalysisCreateSchema.safeParse(req.body);
+      const scenarioId = firstParam(req.params.scenarioId);
       if (!actor) {
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      if (!parsed.success || parsed.data.scenarioId !== req.params.scenarioId) {
+      if (!parsed.success || parsed.data.scenarioId !== scenarioId) {
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
       const found = await deps.reader.findPlanScenario(
         actor.organizationId,
-        firstParam(req.params.scenarioId)
+        scenarioId
       );
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
@@ -4763,44 +4764,21 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
+      if (parsed.data.inputAggregateVersion !== found.version) {
+        throw new MaterialCommandConflictError(
+          'Plan input aggregate version conflict',
+          parsed.data.inputAggregateVersion,
+          found.version
+        );
+      }
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         portfolio.scenario.scope.portfolioId
       );
-      let dependencyAnalysis: PlanDependencyAnalysisResult | undefined;
       if (parsed.data.analysisKind === 'AI_DEPENDENCY') {
         if (!deps.planDependencyAnalysisEnabled?.()) {
           res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
           return;
-        }
-        const periods = found.scenario.periods;
-        const initiatives = await deps.reader.listPlanDependencyAnalysisContext(
-          actor.organizationId,
-          found.scenario.windows.map((window) => window.initiativeId)
-        );
-        if (initiatives.length !== found.scenario.windows.length) {
-          res.status(409).json({ error: { code: 'PLAN_ANALYSIS_CONTEXT_INCOMPLETE' } });
-          return;
-        }
-        try {
-          dependencyAnalysis = await (deps.analyzePlanDependencies ?? analyzePlanDependencies)({
-            scenarioId: found.scenario.scenarioId,
-            scenarioVersion: found.scenario.scenarioVersion,
-            timezone: found.scenario.timezone,
-            horizon: {
-              start: periods[0].start,
-              end: periods[periods.length - 1].end,
-            },
-            initiatives,
-          });
-        } catch (error) {
-          if (error instanceof PlanDependencyAnalysisError) {
-            res.status(error.code === 'AI_UNAVAILABLE' ? 503 : 502).json({
-              error: { code: error.code },
-            });
-            return;
-          }
-          throw error;
         }
       }
       /**
@@ -4840,26 +4818,68 @@ export function createInitiativesExecutionRuntimeRouter(
         });
         return;
       }
-      const result = await createPlanAnalysisProposal(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'plan_analysis_proposal',
-        aggregateId: firstParam(req.params.proposalId),
-        expectedVersion: 0,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId: `plan-analysis-${parsed.data.clientRequestId}`,
-        policyId: policy.policyId,
-        policyVersion: policy.version,
-        commandType: 'plan-analysis.create',
-        createIfMissing: true,
-        payload: {
-          scenarioId: parsed.data.scenarioId,
-          inputAggregateVersion: parsed.data.inputAggregateVersion,
-          capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
-          hints: parsed.data.hints,
-          dependencyAnalysis,
-        },
-      });
+      let result;
+      try {
+        result = await createPlanAnalysisProposal(
+          deps.unitOfWork,
+          {
+            organizationId: actor.organizationId,
+            actorId: actor.userId,
+            aggregateType: 'plan_analysis_proposal',
+            aggregateId: firstParam(req.params.proposalId),
+            expectedVersion: 0,
+            clientRequestId: parsed.data.clientRequestId,
+            correlationId: `plan-analysis-${parsed.data.clientRequestId}`,
+            policyId: policy.policyId,
+            policyVersion: policy.version,
+            commandType: 'plan-analysis.create',
+            createIfMissing: true,
+            payload: {
+              scenarioId: parsed.data.scenarioId,
+              inputAggregateVersion: parsed.data.inputAggregateVersion,
+              capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
+              hints: parsed.data.hints,
+              analysisKind: parsed.data.analysisKind,
+            },
+          },
+          {
+            prepareDependencyAnalysis:
+              parsed.data.analysisKind === 'AI_DEPENDENCY'
+                ? async () => {
+                    const periods = found.scenario.periods;
+                    const initiatives = await deps.reader.listPlanDependencyAnalysisContext(
+                      actor.organizationId,
+                      found.scenario.windows.map((window) => window.initiativeId)
+                    );
+                    if (initiatives.length !== found.scenario.windows.length) {
+                      throw new MaterialCommandRuleError(
+                        'PLAN_ANALYSIS_CONTEXT_INCOMPLETE',
+                        409
+                      );
+                    }
+                    return (deps.analyzePlanDependencies ?? analyzePlanDependencies)({
+                      scenarioId: found.scenario.scenarioId,
+                      scenarioVersion: found.scenario.scenarioVersion,
+                      timezone: found.scenario.timezone,
+                      horizon: {
+                        start: periods[0].start,
+                        end: periods[periods.length - 1].end,
+                      },
+                      initiatives,
+                    });
+                  }
+                : undefined,
+          }
+        );
+      } catch (error) {
+        if (error instanceof PlanDependencyAnalysisError) {
+          res.status(error.code === 'AI_UNAVAILABLE' ? 503 : 502).json({
+            error: { code: error.code },
+          });
+          return;
+        }
+        throw error;
+      }
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
