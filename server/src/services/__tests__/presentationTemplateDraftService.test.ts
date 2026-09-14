@@ -92,6 +92,7 @@ describe('refinePresentationTemplateWithLlm — content hints (additive, 2026-07
     mockLlmContent(JSON.stringify(payload));
     const refined = await refinePresentationTemplateWithLlm(template, input);
     expect(refined).not.toBeNull();
+    expect(generateChatResponseMock.mock.calls[0][0].systemPrompt).toMatch(/Answer in en\.$/);
     expect(refined!.outlineJson.map((s) => s.intent)).toEqual(
       template.outlineJson.map((s) => s.intent)
     );

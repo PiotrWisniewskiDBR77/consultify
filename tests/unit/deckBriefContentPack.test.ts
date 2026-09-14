@@ -1,6 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { coercePack } from '../../server/src/services/deckBriefContentPack.js';
+vi.mock('../../server/src/services/aiService.js', () => ({
+  generateChatResponse: vi.fn(),
+}));
+
+import { generateChatResponse } from '../../server/src/services/aiService.js';
+import {
+  coercePack,
+  generateDeckBriefContentPack,
+} from '../../server/src/services/deckBriefContentPack.js';
+
+const generateChatResponseMock = vi.mocked(generateChatResponse);
 
 /**
  * Kontrakt kształtu JSON→artifactData dla generatora content-packu decka z czatu
@@ -9,6 +19,24 @@ import { coercePack } from '../../server/src/services/deckBriefContentPack.js';
  * śmieciach. Sam LLM-call weryfikowany live (treść).
  */
 describe('deckBriefContentPack.coercePack', () => {
+  beforeEach(() => generateChatResponseMock.mockReset());
+
+  it('places the resolved Polish locale instruction last without changing the user message', async () => {
+    generateChatResponseMock.mockResolvedValueOnce({
+      content: JSON.stringify({ key_findings: ['Ustalenie'] }),
+    } as any);
+    await generateDeckBriefContentPack({
+      brief: 'Plan wzrostu',
+      language: 'pl',
+      title: 'Plan',
+      audience: 'Zarząd',
+      goal: 'Decyzja',
+    });
+    const call = generateChatResponseMock.mock.calls[0][0];
+    expect(call.systemPrompt).toMatch(/Answer in pl\.$/);
+    expect(call.messages[0].content).toContain('Wygeneruj treść slajdów');
+  });
+
   it('mapuje pełny, dobrze uformowany JSON na pola artifactData', () => {
     const raw = JSON.stringify({
       key_findings: ['Pilot ograniczył błędy o 30% (założenie)', 'Cykl skrócony do 1,8 dnia'],
