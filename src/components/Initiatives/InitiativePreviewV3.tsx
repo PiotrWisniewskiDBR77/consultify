@@ -22,6 +22,7 @@ import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusi
 import { InitiativeApi, type InitiativeEconomicsLink } from '@/services/api/initiatives.api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
+import { humanizeKey, initiativeStatusLabel } from './initiativeStatusLabels';
 import { InitiativeSourceLink, initiativeSourceLabel } from './InitiativeSourceLink';
 
 export type InitiativePreviewV3Model = {
@@ -49,39 +50,6 @@ const formatDate = (value: unknown): string => {
   const d = value instanceof Date ? value : new Date(String(value));
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
-
-/** Humanize an unknown enum key (never surface a raw UPPER_SNAKE key). */
-const humanizeKey = (raw: string): string => {
-  const spaced = raw.trim().replace(/[_-]+/g, ' ').trim().toLowerCase();
-  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : '';
-};
-
-/**
- * Localized initiative status label — canon §7.3: no raw enum keys in preview.
- * Tone stays owned by statusChipTone(); this only supplies the text.
- */
-const initiativeStatusLabel = (t: TFunction, raw: string): string => {
-  const key = raw
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_');
-  const map: Record<string, string> = {
-    draft: t('preview.statuses.draft', 'Draft'),
-    pending_review: t('initiatives.status.pendingReview', 'Pending review'),
-    review: t('preview.statuses.review', 'In review'),
-    promoted: t('initiatives.status.promoted', 'Promoted'),
-    planning: t('initiatives.status.planning', 'Planning'),
-    approved: t('preview.statuses.approved', 'Approved'),
-    scheduled: t('initiatives.status.scheduled', 'Scheduled'),
-    executing: t('initiatives.status.executing', 'Executing'),
-    blocked: t('initiatives.status.blocked', 'Blocked'),
-    done: t('initiatives.status.done', 'Done'),
-    tracking: t('initiatives.status.tracking', 'Tracking'),
-    cancelled: t('initiatives.status.cancelled', 'Cancelled'),
-    archived: t('initiatives.status.archived', 'Archived'),
-  };
-  return map[key] ?? humanizeKey(raw);
 };
 
 /** Localized initiative priority label. */

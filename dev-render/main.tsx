@@ -703,8 +703,16 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
 const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
+const Z27InicjatywySkrzynkaScreen = React.lazy(
+  () => import('./screens/z27-inicjatywy-skrzynka')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'z27-inicjatywy-skrzynka': {
+    label:
+      'Z-27 (14.09) — REALNY <InitiativesHub> W CAŁOŚCI (Menu 1/2/3) z zakładką Menu 1 „Do akceptacji" aktywną — wymaga serwera uruchomionego z VITE_TRANSITION_INBOX=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/initiatives/lifecycle-transition-proposals zwraca 2 propozycje. &tab=transitionInbox &lang=pl|en &theme=light|dark',
+    render: () => <Z27InicjatywySkrzynkaScreen />,
+  },
   'h1b-skrzynka-przejsc': {
     label:
       'H1b — Inicjatywy → „Do akceptacji" (REALNY <TransitionInboxSurface>: StandardTable + StandardPreview): skrzynka recenzenta przejść cyklu życia. &case=empty|off &lang=pl|en &theme=light|dark',
