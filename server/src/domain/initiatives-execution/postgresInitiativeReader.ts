@@ -1511,6 +1511,77 @@ export class PostgresInitiativeReader {
     };
   }
 
+  /**
+   * Snapshot wejściowy dla analizy zależności P2 (DEC-497).
+   *
+   * Czytamy wyłącznie inicjatywy należące do badanego planu i istniejące
+   * krawędzie ich grafu. Ten snapshot trafia do LLM wprost; model nie dostaje
+   * dostępu do innego tenanta ani możliwości samodzielnego dociągania danych.
+   */
+  async listPlanDependencyAnalysisContext(organizationId: string, initiativeIds: string[]) {
+    const uniqueIds = [...new Set(initiativeIds.filter(Boolean))].sort();
+    if (!uniqueIds.length) return [];
+    const initiatives = await this.pool.query<{
+      id: string;
+      title: string;
+      status: string | null;
+      summary: string | null;
+      problem_statement: string | null;
+      hypothesis: string | null;
+      business_value: string | null;
+      scope_in: unknown;
+      scope_out: unknown;
+      deliverables: unknown;
+      planned_start_date: string | null;
+      planned_end_date: string | null;
+    }>(
+      `SELECT id, COALESCE(name, title, id) AS title, status, summary,
+              problem_statement, hypothesis, business_value, scope_in, scope_out,
+              deliverables, planned_start_date, planned_end_date
+         FROM initiatives
+        WHERE organization_id = $1 AND id = ANY($2::text[])
+        ORDER BY id`,
+      [organizationId, uniqueIds]
+    );
+    const dependencies = await this.pool.query<{
+      from_initiative_id: string;
+      to_initiative_id: string;
+      type: string | null;
+    }>(
+      `SELECT from_initiative_id, to_initiative_id, type
+         FROM initiative_dependencies
+        WHERE organization_id = $1
+          AND from_initiative_id = ANY($2::text[])
+          AND to_initiative_id = ANY($2::text[])
+        ORDER BY from_initiative_id, to_initiative_id`,
+      [organizationId, uniqueIds]
+    );
+    const bySuccessor = new Map<string, Array<{ predecessorId: string; relationType: string }>>();
+    for (const dependency of dependencies.rows) {
+      const current = bySuccessor.get(dependency.from_initiative_id) ?? [];
+      current.push({
+        predecessorId: dependency.to_initiative_id,
+        relationType: dependency.type?.trim() || 'FINISH_TO_START',
+      });
+      bySuccessor.set(dependency.from_initiative_id, current);
+    }
+    return initiatives.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      status: row.status ?? 'UNKNOWN',
+      summary: row.summary,
+      problemStatement: row.problem_statement,
+      hypothesis: row.hypothesis,
+      businessValue: row.business_value,
+      scopeIn: row.scope_in,
+      scopeOut: row.scope_out,
+      deliverables: row.deliverables,
+      plannedStartDate: row.planned_start_date,
+      plannedEndDate: row.planned_end_date,
+      existingDependencies: bySuccessor.get(row.id) ?? [],
+    }));
+  }
+
   async findPlanScenario(
     organizationId: string,
     scenarioId: string
