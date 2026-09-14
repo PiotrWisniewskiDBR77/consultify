@@ -35,6 +35,7 @@ import type { MethodOutputBridge } from '../MethodSessionService.js';
 import type { EvidenceLocatorInput, FreezeOutputInput, OutputFindingInput } from './MethodOutputService.js';
 import type { MethodOutputService } from './MethodOutputService.js';
 import type { MethodEvent } from '../contracts/index.js';
+import { unitNameResolverForPack, type UnitNameResolver } from './outputUnitNames.js';
 
 interface UnitAccumulator {
   unitId: string;
@@ -117,7 +118,14 @@ const TEKSTY_ZNALEZISK: Record<
 /** Pure — exported so a unit test can assert the derivation without a DB. */
 export function deriveFindingsFromEvents(
   events: readonly MethodEvent[],
-  jezyk: ResponseLanguage = 'en'
+  jezyk: ResponseLanguage = 'en',
+  /**
+   * Nazwa jednostki po jej identyfikatorze — WSTRZYKIWANA, żeby ta funkcja
+   * (i całe jądro) pozostała agnostyczna wobec metodyki. Brak resolvera =
+   * zachowanie sprzed 2026-09-14, czyli `unitName = unitId`.
+   * Rejestr: `outputUnitNames.ts`.
+   */
+  nazwaJednostki: UnitNameResolver | null = null
 ): {
   findings: OutputFindingInput[];
   current: Record<string, number | null>;
@@ -187,7 +195,7 @@ export function deriveFindingsFromEvents(
 
     findings.push({
       unitId: u.unitId,
-      unitName: u.unitId,
+      unitName: nazwaJednostki ? nazwaJednostki(u.unitId) : u.unitId,
       currentLevel: u.currentLevel,
       targetLevel: u.targetLevel,
       gap: gap[u.unitId],
@@ -304,7 +312,16 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
     const jezyk = resolveResponseLanguage({ requested: input.language ?? null, samples: [] });
     const teksty = TEKSTY_OUTPUTU[jezyk];
     const events = await this.events.listBySession(input.organizationId, input.sessionId);
-    const { findings, current, target, gap } = deriveFindingsFromEvents(events, jezyk);
+    const { findings, current, target, gap } = deriveFindingsFromEvents(
+      events,
+      jezyk,
+      // ★ 2026-09-14 (fala J3, D5): do dziś `unitName` był kopią `unitId`
+      // dla 39/39 jednostek, więc raport pisał „Area 1A" zamiast
+      // „Sales Processes" (zmierzone: staging a2b0a0fe32, output fa94f405).
+      // Wybór słownika zapada w rejestrze po `methodPackId`, nie tutaj —
+      // jądro nadal nie wie, czym jest DRD.
+      unitNameResolverForPack(input.methodPackId, jezyk)
+    );
 
     const totalUnits = Object.keys(current).length;
     const unitsWithAcceptedEvidence = findings.length;
