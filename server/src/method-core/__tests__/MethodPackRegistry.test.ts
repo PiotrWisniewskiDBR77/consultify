@@ -17,7 +17,7 @@ vi.mock('../../utils/DbPromise.js', async () => {
   return { ...testDb, default: testDb };
 });
 
-const { MethodPackRegistry } = await import('../MethodPackRegistry.js');
+const { DRD_METHOD_PACK_LICENCE_NOTICES, MethodPackRegistry, ensureDrdPackRegistered } = await import('../MethodPackRegistry.js');
 
 const organizationId = 'org-1';
 
@@ -66,5 +66,16 @@ describe('MethodPackRegistry', () => {
   it('getReadiness returns null for an unregistered pack', async () => {
     const readiness = await registry.getReadiness(organizationId, 'ghost', '1.0.0');
     expect(readiness).toBeNull();
+  });
+
+  it('keeps both localized DRD licence notices in the server identity mirror', async () => {
+    const record = await ensureDrdPackRegistered(organizationId);
+
+    expect(DRD_METHOD_PACK_LICENCE_NOTICES.en).toMatch(/^DRD\/Digital Pathfinder is a licensed methodology\./);
+    expect(DRD_METHOD_PACK_LICENCE_NOTICES.pl).toMatch(/^DRD\/Digital Pathfinder jest metodyką licencjonowaną\./);
+    expect(record.licence).toMatchObject({
+      notice: DRD_METHOD_PACK_LICENCE_NOTICES.en,
+      notices: DRD_METHOD_PACK_LICENCE_NOTICES,
+    });
   });
 });

@@ -196,11 +196,19 @@ export const methodPackRegistry = new MethodPackRegistry();
 export const DRD_METHOD_PACK_ID = 'drd';
 export const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.1';
 const DRD_METHOD_PACK_NAME = 'DRD — Digital Readiness Diagnosis (Digital Pathfinder)';
+export const DRD_METHOD_PACK_LICENCE_NOTICES = {
+  en:
+    'DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner\'s permission.',
+  pl:
+    'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
+} as const;
 const DRD_METHOD_PACK_LICENCE = {
   holder: 'DBR77 / Digital Pathfinder (Dr. Piotr Wiśniewski)',
   usageRestriction: 'internal_only',
-  notice:
-    'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
+  // Server registration is locale-neutral. `notice` uses the DEC-461 default
+  // and `notices` preserves the PL mirror for locale-aware readers.
+  notice: DRD_METHOD_PACK_LICENCE_NOTICES.en,
+  notices: DRD_METHOD_PACK_LICENCE_NOTICES,
 } as const;
 
 /**

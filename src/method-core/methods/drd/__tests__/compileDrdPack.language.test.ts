@@ -80,6 +80,15 @@ describe('compileDrdPack — language is wired, not hardcoded', () => {
     expect(compileDrdPack('pl').pack.manifest.compiledLanguage).toBe('pl');
   });
 
+  it('localizes the licensed-method notice in the compiled manifest', () => {
+    expect(compileDrdPack('en').pack.manifest.licence.notice).toBe(
+      'DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner\'s permission.'
+    );
+    expect(compileDrdPack('pl').pack.manifest.licence.notice).toBe(
+      'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.'
+    );
+  });
+
   it('EN is the default (DEC-461) — a bare call is not Polish', () => {
     expect(compileDrdPack().pack.manifest.compiledLanguage).toBe('en');
     expect(compileDrdPack().pack.units[0].name).toBe(compileDrdPack('en').pack.units[0].name);
