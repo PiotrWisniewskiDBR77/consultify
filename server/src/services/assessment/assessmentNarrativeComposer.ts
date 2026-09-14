@@ -4,6 +4,7 @@ import {
   priorityForGap,
   resolveDrdLevelLabelPL,
 } from './assessmentDrdReportSchemaService.js';
+import { reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
 
 export const CONFIDENCE_PL = Object.freeze({
   low: 'niska',
@@ -196,8 +197,23 @@ export function composeChapterAggregateNarrative(input: {
   readonly findings: readonly AggregateFinding[];
   readonly frozenDate: string;
   readonly sourceKind?: NarrativeSourceKind;
+  /**
+   * [ODMROZENIE 04_ASSESSMENT DEC-510] G1 / S1.4 — dotyczy WYŁĄCZNIE
+   * `matrixCaption`. Reszta prozy tej funkcji pozostaje polska niezależnie od
+   * tej wartości (świadomie: tłumaczenie całej narracji silnika to osobna
+   * decyzja produktowa — patrz meldunek G1). Domyślnie `'pl'`, żeby żaden
+   * istniejący wołacz nie zmienił zachowania ani o znak.
+   */
+  readonly language?: ReportLanguage;
 }): ChapterAggregateNarrative {
   const zrodlo = SOURCE_PHRASE[input.sourceKind ?? 'method-core'];
+  const matrixCaption = reportI18n(input.language ?? 'pl').matrixCaptionSentence({
+    totalAreas: input.totalAreas,
+    axisId: input.axisId,
+    maxLevel: input.maxLevel,
+    sourceKind: input.sourceKind ?? 'method-core',
+    frozenDate: input.frozenDate,
+  });
   /**
    * ★ POMIAR 2026-09-13 (S1.4): oś, która MA findingi, ale ŻADEN nie ma
    * policzalnej luki (obszar z `achievedLevel` bez `targetLevel` — realny
@@ -212,7 +228,7 @@ export function composeChapterAggregateNarrative(input: {
   if (input.findings.length === 0 || !maPoliczalnaLuke) {
     return {
       introduction: null,
-      matrixCaption: `Tabela obejmuje ${input.totalAreas} obszarów osi ${input.axisId}. Kolumny poziomów pokazują skalę od 1 do ${input.maxLevel}; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem są dane ${zrodlo.dopelniacz} z dnia ${input.frozenDate}.`,
+      matrixCaption,
       conclusion: null,
       decisionLine: { direction: null, priority: null, horizon: null, successCondition: null },
     };
@@ -259,7 +275,6 @@ export function composeChapterAggregateNarrative(input: {
     180,
     allowedNumbers
   );
-  const matrixCaption = `Tabela obejmuje ${input.totalAreas} obszarów osi ${input.axisId}. Kolumny poziomów pokazują skalę od 1 do ${input.maxLevel}; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem są dane ${zrodlo.dopelniacz} z dnia ${input.frozenDate}.`;
   const posortowane = [...input.findings].sort(
     (left, right) =>
       (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)

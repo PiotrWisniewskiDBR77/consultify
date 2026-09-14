@@ -1718,3 +1718,35 @@ suity nie znoszą `MOCK_DB=false`.
 (47 etapów) → **✅ 3 · 🧪 19 · 🔧 6 · ⬜ 19** (47 etapów). Pilotaż: bez zmian (32/37). Skrzynka:
 **Z-24 zamknięte (S5 E3b)**, **Z-40 zamknięte (S5 E3b)**, **Z-65 nowa (P1, regresja kolumn
 `ProjectStageGatesPanel`)**.
+
+**EWIDENCJA (uzupełnienie 15.09 noc, po fali E2f Z-66, triażu Pawła Z-67, podziale E2b Z-68).**
+Linia bez zmian `34888b0445` (E2a-bis) — tory tej nocy dotyczą bramki i18n i triażu, nie kodu
+produktu. **Z-66 nowa**: fala **E2f** (CTO, DEC-510 pkt E2f) — `scripts/i18n/pomiar-jezyka.mjs`
+rozszerzona o warstwy serwer/prompty/DRD z baseline (`_meta.sha=59a8c44c04`) i ratchetem per
+suma/moduł w `check:jezyk:ci`; `--report`/`check:jezyk:raport`/`check:jezyk:baseline`; mapa
+`docs/ui-standards/MAPA_JEZYKA.md`; testy 22/22. Nowy dług: K8spl 91, K8sen 825 (do przesiania),
+K9pPL 33, K9pMIX 0, **K9pBRAK 77** (pliki systemowego promptu bez `withResolvedLocaleInstruction`
+— przyczyna klasy N9/P-P24), K10dPL 0 (DRD EN czyste, ratchet), K10dROZ 2; bez zmian K3a 0, K4en
+869, K4pl 22, K7 271. Naprawa przyrządu: testy `scripts/i18n/__tests__` dostawały jsdom →
+`@vitest-environment node` (test J0 był czerwony przez przyrząd).
+
+**Z-67 nowa**: triaż 24 zgłoszeń Pawła (13–14.09, widget „Opinie", `feedback_items`) — 15
+rozliczone jako P-P01…P-P15, **9 nowych P-P16…P-P24** (patrz rejestr, sekcja „Uzupełnienie
+DEC-512/Z-67"): N3 SWOT „AI Draft" 0% (P-P18), N8 Teresa deklaruje akcję bez skutku (P-P23), N9
+EN→DE odpowiedź (P-P24; decyzja CTO: `users.language` przed językiem wątku, tylko `{en,pl}`) —
+wszystkie trzy **blokują** → fala **F1 CTO w toku**; N5 „pytanie 1/7" PL przy EN (P-P20), N6
+licznik kroków (P-P21) → retest CTO w toku; N1 Materials 43≠8+34 (P-P16), N2 Audits 9 vs 3
+(P-P17), N4 Claims 727 vs 200 (P-P19) → Codex D-3 „liczniki" (wpis 67); N7 żart (P-P22) zamknięte
+bez akcji. Plik `cto-codex/feedback-triaz-20260914/TRIAZ.md`.
+
+**Z-68 nowa**: podział E2b (wpis 66) — CTO: Execution (E2b-Exec, w toku), Settings/Admin/MyWork
+(E2b-Settings, w toku), scripts. Codex: Interview/Initiatives/Chat (E2b-2) + D-3 (Z-65 P1
+`ProjectStageGatesPanel`, liczniki N1/N2/N4 z Z-67, `contractMirrorDrift`, Z-64, asercje PL) +
+E2d-bis (77 plików promptów K9pBRAK z Z-66, wpis 68). Pomiar 16 kryteriów v2 w toku (CTO).
+
+**Liczniki §5/pilotaż — po Z-66/Z-67/Z-68 (15.09 noc).** §5 bez zmian stanu żadnego etapu: **✅
+3 · 🧪 19 · 🔧 6 · ⬜ 19** (47 etapów) — tory tej nocy poza tabelą etapów (bramka i18n + triaż).
+Pilotaż: mianownik przeliczony **37 → 46** zgłoszeń (37 + 9 nowych P-P16…P-P24); wdrożone/🧪 bez
+zmian tą nocą — **32/46**, **+1 zamknięte bez akcji** (P-P22/N7). Skrzynka: **Z-66 nowa** (dług
+i18n E2f: K8spl 91, K8sen 825, K9pPL 33, K9pBRAK 77, K10dROZ 2), **Z-67 nowa** (triaż Pawła,
+P-P16…P-P24, fala F1 blokująca N3/N8/N9), **Z-68 nowa** (podział E2b CTO/Codex).

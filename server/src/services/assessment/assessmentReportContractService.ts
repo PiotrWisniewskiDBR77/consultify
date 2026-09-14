@@ -1,6 +1,7 @@
 import { methodOutputService } from '../../method-core/outputs/index.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { composeReportContract } from './assessmentReportContractComposer.js';
+import { reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
 import { computeAssessmentReportCoverage } from './assessmentReportCoverage.js';
 import {
   AssessmentSkipReasonError,
@@ -28,12 +29,20 @@ const EMPLOYMENT_PATTERN = /zatrudnien\w*\s*:?\s*(?:ok\.?\s*)?(\d[\d\s]*\d|\d)/i
 // The teens (12–14) take the genitive even though they end in 2–4, hence
 // the `mod100` guard.
 export function formatHeadcountPL(count: number): string {
-  const abs = Math.abs(Math.trunc(count));
-  if (abs === 1) return '1 osoba';
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-  const plural = mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14) ? 'osoby' : 'osób';
-  return `${abs} ${plural}`;
+  return reportI18n('pl').coverEmploymentValue(count);
+}
+
+/**
+ * [ODMROZENIE 04_ASSESSMENT DEC-510] G1 / S1.4 — okładkowe „340 osób”
+ * w ANGIELSKIM raporcie. Pomiar na żywym raporcie Northwind: 1 z 92 polskich
+ * diakrytyk w DOCX (i jedyny polski znak w PPTX 1/4015 oraz PDF 1/4442)
+ * pochodził stąd — wartość pola „Employment” była składana wyłącznie po
+ * polsku, mimo że cała reszta okładki szła już przez słownik.
+ * Odmiana liczebnika mieszka teraz w `assessmentReportI18n.ts`, razem
+ * z resztą napisów okładki, żeby DOCX i deck nie mogły się rozjechać.
+ */
+export function formatHeadcount(count: number, language: ReportLanguage): string {
+  return reportI18n(language).coverEmploymentValue(count);
 }
 
 // FIX-3 (nadzorca 2026-08-28): `employment` used to be scraped out of
@@ -46,7 +55,10 @@ export function formatHeadcountPL(count: number): string {
 // server/migrations/727_beta_missing_tables.sql), written by
 // OrganizationContextService. Read that first; the regex stays only as a
 // second-shot fallback so the day-36 demo seed keeps working.
-function extractEmploymentFromDescription(description: string | null): string | null {
+function extractEmploymentFromDescription(
+  description: string | null,
+  language: ReportLanguage = 'pl'
+): string | null {
   if (!description) return null;
   const match = EMPLOYMENT_PATTERN.exec(description);
   if (!match) return null;
@@ -54,13 +66,16 @@ function extractEmploymentFromDescription(description: string | null): string | 
   if (!/^\d+$/.test(count)) return null;
   const parsed = Number.parseInt(count, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return formatHeadcountPL(parsed);
+  return formatHeadcount(parsed, language);
 }
 
-export function formatEmployeeCount(value: unknown): string | null {
+/** `language` domyślnie `'pl'` — kontrakt jądra metodycznego nie podaje dziś
+ * języka (`contract.language ?? 'pl'`), więc domyślna wartość zachowuje jego
+ * dotychczasowe renderowanie co do znaku. Magazyn zastany podaje język jawnie. */
+export function formatEmployeeCount(value: unknown, language: ReportLanguage = 'pl'): string | null {
   const parsed = typeof value === 'number' ? value : Number.parseInt(String(value ?? ''), 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return formatHeadcountPL(parsed);
+  return formatHeadcount(parsed, language);
 }
 
 // FIX-3: `businessProfile` used to read the legacy `organizations.industry`

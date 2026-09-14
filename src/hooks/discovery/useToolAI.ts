@@ -148,6 +148,14 @@ interface UseToolAIReturn {
 
 // ==================== HOOK ====================
 
+/**
+ * Ile czekamy po KOŃCU strumienia, zanim uznamy brak wyniku za błąd (N3).
+ * Efekt stosujący wynik jest synchroniczny względem ostatniego chunku, więc to
+ * jest margines bezpieczeństwa, a nie realny czas oczekiwania użytkownika.
+ * Twarda górna granica (`fullSessionTimeoutRef`, 90 s) zostaje jako siatka.
+ */
+const FULL_SESSION_SETTLE_MS = 1_500;
+
 // Operational/digital tools that share OperationalToolData and are deepened with
 // a single generic AI handler (sections + summary).
 const OPERATIONAL_AI_TOOLS: ReadonlySet<ToolType> = new Set<ToolType>([
@@ -222,6 +230,9 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   } | null>(null);
   const fullSessionAttemptIdRef = useRef(0);
   const fullSessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // N3: czy poprzedni render zastał trwający strumień — bez tego nie wykryjemy
+  // przejścia „strumień się skończył", jedynego pewnego momentu rozstrzygnięcia.
+  const fullSessionWasStreamingRef = useRef(false);
 
   // Get the appropriate system prompt
   const getSystemPrompt = useCallback(() => {
@@ -817,6 +828,43 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     },
     [toolType, currentSession, markRethinking, sendMessage]
   );
+
+  // ---------------------------------------------------------------------------
+  // N3 (zgłoszenie testera `6c07439e`) — CISZA PO STRUMIENIU.
+  //
+  // PRZYCZYNA (zmierzona): efekt stosujący wynik poniżej wychodzi bez śladu przy
+  // `!streamedContent` (odpowiedź w całości w `<thinking>` nie daje widocznego
+  // tekstu — `useAIStream.ts:782-796`) oraz przy nieaktualnym `streamStartedAt`.
+  // Oba wyjścia zostawiają `sessionGenerationStatus === 'generating'` i `error === null`,
+  // więc jedyną drogą wyjścia był licznik 90 s. Tester widział „0% i tylko Cancel".
+  //
+  // Strumień, który się SKOŃCZYŁ, jest zdarzeniem rozstrzygającym: albo wynik
+  // został zastosowany (próba znika z `fullSessionAttemptRef`), albo generowanie
+  // padło. Ten strażnik zamienia ciszę na błąd z przyciskiem ponowienia.
+  useEffect(() => {
+    const wasStreaming = fullSessionWasStreamingRef.current;
+    fullSessionWasStreamingRef.current = isStreaming;
+    if (!wasStreaming || isStreaming) return;
+
+    const attempt = fullSessionAttemptRef.current;
+    if (!attempt || attempt.cancelled) return;
+
+    // Jeden oddech na efekt stosujący wynik — dopiero potem orzekamy ciszę.
+    const settle = setTimeout(() => {
+      const live = fullSessionAttemptRef.current;
+      if (!live || live.id !== attempt.id || live.cancelled) return;
+      if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+      fullSessionTimeoutRef.current = null;
+      setSessionGenerationStatus('error');
+      setPendingAction(null);
+      setActiveAiActionId(null);
+      setError('Generation finished without a usable draft. Your work is safe — retry when ready.');
+      fullSessionAttemptRef.current = null;
+      live.resolve();
+    }, FULL_SESSION_SETTLE_MS);
+
+    return () => clearTimeout(settle);
+  }, [isStreaming, setSessionGenerationStatus]);
 
   useEffect(() => {
     if (

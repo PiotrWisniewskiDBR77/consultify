@@ -64,6 +64,9 @@ export interface ReportContractInput {
    * domyślnie `en`, `pl` tylko na jawne żądanie. Treść narracyjna
    * (`executiveSummary`, komentarze obszarów…) NIE jest tym objęta — pisze ją
    * zawsze po polsku `assessmentNarrativeComposer.ts` (poza zakresem S1.4b).
+   * WYJĄTEK od G1 (DEC-510): podpis pod matrycą (`matrix.caption`) jest
+   * tłumaczony, bo jako jedyne zdanie narracji drukuje się w KAŻDYM raporcie,
+   * także takim, który nie ma policzalnych luk.
    * Opcjonalne, żeby trasa jądra metodycznego (poza zakresem tej naprawy)
    * mogła nie podawać nic i zachować dotychczasowe polskie renderowanie. */
   readonly language?: 'pl' | 'en';
@@ -185,6 +188,10 @@ export function composeReportContract(input: ReportContractInput) {
         findings: axisFindings,
         frozenDate: new Date(input.generatedAt).toISOString().slice(0, 10),
         sourceKind: input.sourceKind,
+        // [ODMROZENIE 04_ASSESSMENT DEC-510] G1 — podpis pod matrycą jest
+        // jedyną prozą kompozytora, która trafia do dokumentu ZAWSZE, więc
+        // jako jedyna idzie za `language`. Reszta narracji zostaje polska.
+        language: input.language ?? 'pl',
       });
       return {
         axisId: axis.id,
