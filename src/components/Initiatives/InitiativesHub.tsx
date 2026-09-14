@@ -51,6 +51,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { InitiativePreparationReadView } from './InitiativePreparationReadView';
+import { InitiativeWorkReportView } from './InitiativeWorkReportView';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
@@ -270,9 +271,9 @@ const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLI
 // K5-8: "Work report" (4th Menu 2 tab) stays hidden until Codex ships the real
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
-const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
+const WORK_REPORT_ENABLED = import.meta.env.VITE_INITIATIVES_WORK_REPORT === 'true';
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
-  FOUR_BUTTONS_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
+  WORK_REPORT_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
 );
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
@@ -282,7 +283,6 @@ const resolvePreparationLens = (params: URLSearchParams) => {
       ? 'analysis'
       : 'list';
 };
-
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -300,7 +300,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const requestedTab = searchParams.get('tab') as ModuleTab | null;
     return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
-  const [preparationLens, setPreparationLens] = useState(() => resolvePreparationLens(searchParams));
+  const [preparationLens, setPreparationLens] = useState(() =>
+    resolvePreparationLens(searchParams)
+  );
   useEffect(() => {
     setPreparationLens(resolvePreparationLens(searchParams));
   }, [searchParams]);
@@ -849,7 +851,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
-      ...(FOUR_BUTTONS_ENABLED
+      ...(WORK_REPORT_ENABLED
         ? [
             {
               id: 'workReport' as ModuleTab,
@@ -1533,8 +1535,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       Object.keys(quickUpdatePayload).length > 0
         ? ids.map((id) => {
             const row = initiatives.find((item) => item.id === id) as
-              | (PortfolioInitiative & { canonicalVersion?: number })
-              | undefined;
+              (PortfolioInitiative & { canonicalVersion?: number }) | undefined;
             return quickUpdateInitiativeWriteTruth(id, quickUpdatePayload, row?.canonicalVersion);
           })
         : [];
@@ -1997,14 +1998,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
-    if (
-      (activeTab === 'list' && preparationLens === 'analysis') ||
-      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
-    ) {
+    if (activeTab === 'workReport' && WORK_REPORT_ENABLED) {
+      return (
+        <InitiativeWorkReportView
+          currentProjectId={currentProjectId}
+          currentUserId={String((currentUser as any)?.id || '')}
+          currentOrganizationId={String(currentOrganization?.id || '')}
+        />
+      );
+    }
+    if (activeTab === 'list' && preparationLens === 'analysis') {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}
-          report={activeTab === 'workReport'}
           onOpen={handleOpenInitiativeDocument}
         />
       );
