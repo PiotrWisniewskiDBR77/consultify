@@ -1,0 +1,17 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/f2-3-pmo-20260913
+
+ ✓ src/components/MyWork/__tests__/MyProjects.pmoE2.contract.test.ts > F2-3 E2 MyProjects contract > uses the standard list shell for both projects and members 57ms
+ ✓ src/components/MyWork/__tests__/MyProjects.pmoE2.contract.test.ts > F2-3 E2 MyProjects contract > exposes project creation, role descriptions, responsibility matrix and communication configuration 0ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > uses the five PMBOK-lite roles selected by DEC-488 with explicit permissions 32ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > keeps capacity per person and derives responsibility, communication and acceptance inputs from project roles 1ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > produces different approval inputs for different team compositions 0ms
+ ✓ src/routes/__tests__/pmoProjectsFeatureRoute.test.ts > F2-3 E2 Projects route feature flag > reads VITE_PMO_PROJECTS in one Vite expression and defaults to OFF 32ms
+ ✓ src/routes/__tests__/pmoProjectsFeatureRoute.test.ts > F2-3 E2 Projects route feature flag > keeps /projects redirecting to /my-work when OFF and mounts MyProjects when ON 0ms
+ ✓ src/routes/__tests__/pmoProjectsFeatureRoute.test.ts > F2-3 E2 Projects route feature flag > does not create a new main-menu entry for PMO 0ms
+
+ Test Files  3 passed (3)
+      Tests  8 passed (8)
+   Start at  19:44:14
+   Duration  610ms (transform 251ms, setup 336ms, import 92ms, tests 128ms, environment 1.01s)
+

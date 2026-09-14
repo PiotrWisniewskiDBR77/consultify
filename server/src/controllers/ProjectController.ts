@@ -9,12 +9,18 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { deriveProjectOperatingModel } from '../domain/pmo/projectOperatingModel.js';
+import {
+  hasEffectiveCapability,
+  resolveEffectiveAccess,
+} from '../services/effectiveAccessService.js';
 import { ensureProjectOwnerMembership } from '../services/projectOwnerMembershipService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { normalizeProjectRole } from '../utils/roleNormalization.js';
 import type {
   CreateProjectRequest,
   ProjectNotificationSettingsRequest,
@@ -247,7 +253,19 @@ export class ProjectController {
         return;
       }
 
-      const { name: rawName, description: rawDescription } = req.body;
+      const {
+        name: rawName,
+        description: rawDescription,
+        ownerId,
+        goal: rawGoal,
+        status = 'active',
+        pmo_standard = 'pmbok',
+        location_id,
+        start_date,
+        target_end_date,
+        budget_amount,
+        budget_currency = 'EUR',
+      } = req.body;
 
       if (!rawName) {
         res.status(400).json({ error: 'Project name is required' });
@@ -258,13 +276,41 @@ export class ProjectController {
       const name = decodeHtmlEntities(String(rawName));
       const description =
         typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
+      const goal = typeof rawGoal === 'string' ? decodeHtmlEntities(rawGoal) : rawGoal;
       const id = uuidv4();
-      const owner = userId;
+      const owner = ownerId || userId;
 
-      const sql = `INSERT INTO projects (id, organization_id, name, description, status, owner_id) VALUES (?, ?, ?, ?, ?, ?)`;
+      const ownerMembership = await queryHelpers.queryOne<{ user_id: string }>(
+        `SELECT user_id FROM organization_members
+         WHERE organization_id = ? AND user_id = ? AND UPPER(COALESCE(status, 'ACTIVE')) = 'ACTIVE'`,
+        [orgId, owner]
+      );
+      if (!ownerMembership) {
+        res.status(400).json({ error: 'Project owner must be an active organization member' });
+        return;
+      }
+
+      const sql = `INSERT INTO projects
+        (id, organization_id, name, description, goal, status, owner_id, pmo_standard,
+         location_id, start_date, target_end_date, budget_amount, budget_currency)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       logger.error(`[ProjectController] Executing INSERT for project ${id}`);
-      await queryHelpers.queryRun(sql, [id, orgId, name, description || null, 'active', owner]);
+      await queryHelpers.queryRun(sql, [
+        id,
+        orgId,
+        name,
+        description || null,
+        goal || null,
+        status,
+        owner,
+        pmo_standard,
+        location_id || null,
+        start_date || null,
+        target_end_date || null,
+        budget_amount ?? null,
+        budget_currency,
+      ]);
 
       // BLOKADA PILOTAZU (pomiar 10.09, zywy staging): sam `INSERT INTO projects`
       // zostawial projekt z ZEREM czlonkow, wiec zalozyciel nie mogl w nim
@@ -274,7 +320,9 @@ export class ProjectController {
 
       // Return only server-confirmed persisted truth from the current schema.
       const created = await queryHelpers.queryOne<any>(
-        'SELECT id, name, description, status, owner_id FROM projects WHERE id = ? AND organization_id = ?',
+        `SELECT id, name, description, goal, status, owner_id, pmo_standard, location_id,
+                start_date, target_end_date, budget_amount, budget_currency
+         FROM projects WHERE id = ? AND organization_id = ?`,
         [id, orgId]
       );
       if (!created) throw new Error('Created project could not be read back');
@@ -285,6 +333,13 @@ export class ProjectController {
         description: created.description,
         status: created.status,
         ownerId: created.owner_id,
+        goal: created.goal,
+        pmoStandard: created.pmo_standard,
+        locationId: created.location_id,
+        startDate: created.start_date,
+        targetEndDate: created.target_end_date,
+        budgetAmount: created.budget_amount == null ? null : Number(created.budget_amount),
+        budgetCurrency: created.budget_currency,
       });
     }
   );
@@ -519,14 +574,17 @@ export class ProjectController {
         res.json({
           project_id: id,
           task_overdue_enabled: true,
-          task_due_today_enabled: true,
-          blocker_detected_enabled: true,
-          gate_ready_enabled: true,
-          decision_required_enabled: true,
-          escalation_enabled: true,
+          task_due_soon_enabled: true,
+          task_blocked_enabled: true,
+          decision_pending_enabled: true,
+          decision_escalation_enabled: true,
+          phase_transition_enabled: true,
+          gate_blocked_enabled: true,
+          initiative_at_risk_enabled: true,
           escalation_days: 3,
-          email_notifications: false,
-          in_app_notifications: true,
+          escalation_email_enabled: false,
+          email_daily_digest: false,
+          email_weekly_summary: false,
         });
         return;
       }
@@ -546,46 +604,130 @@ export class ProjectController {
       const { id: projectId } = req.params;
       const {
         task_overdue_enabled = true,
-        task_due_today_enabled = true,
-        blocker_detected_enabled = true,
-        gate_ready_enabled = true,
-        decision_required_enabled = true,
-        escalation_enabled = true,
+        task_due_soon_enabled = req.body.task_due_today_enabled ?? true,
+        task_blocked_enabled = req.body.blocker_detected_enabled ?? true,
+        decision_pending_enabled = req.body.decision_required_enabled ?? true,
+        decision_escalation_enabled = req.body.escalation_enabled ?? true,
+        phase_transition_enabled = true,
+        gate_blocked_enabled = true,
+        initiative_at_risk_enabled = true,
         escalation_days = 3,
-        email_notifications = false,
-        in_app_notifications = true,
+        escalation_email_enabled = req.body.email_notifications ?? false,
+        email_daily_digest = false,
+        email_weekly_summary = false,
       } = req.body;
+
+      if (!(await ProjectController.assertProjectInCallerOrg(req, res, projectId))) return;
 
       const settingsId = uuidv4();
 
-      // Upsert using REPLACE
       const sql = `
-            INSERT OR REPLACE INTO project_notification_settings 
-            (id, project_id, task_overdue_enabled, task_due_today_enabled, blocker_detected_enabled,
-             gate_ready_enabled, decision_required_enabled, escalation_enabled, escalation_days,
-             email_notifications, in_app_notifications, updated_at)
-            VALUES (
-                COALESCE((SELECT id FROM project_notification_settings WHERE project_id = ?), ?),
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
-            )
+            INSERT INTO project_notification_settings
+            (id, project_id, task_overdue_enabled, task_due_soon_enabled, task_blocked_enabled,
+             decision_pending_enabled, decision_escalation_enabled, phase_transition_enabled,
+             gate_blocked_enabled, initiative_at_risk_enabled, escalation_days,
+             escalation_email_enabled, email_daily_digest, email_weekly_summary, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (project_id) DO UPDATE SET
+              task_overdue_enabled = EXCLUDED.task_overdue_enabled,
+              task_due_soon_enabled = EXCLUDED.task_due_soon_enabled,
+              task_blocked_enabled = EXCLUDED.task_blocked_enabled,
+              decision_pending_enabled = EXCLUDED.decision_pending_enabled,
+              decision_escalation_enabled = EXCLUDED.decision_escalation_enabled,
+              phase_transition_enabled = EXCLUDED.phase_transition_enabled,
+              gate_blocked_enabled = EXCLUDED.gate_blocked_enabled,
+              initiative_at_risk_enabled = EXCLUDED.initiative_at_risk_enabled,
+              escalation_days = EXCLUDED.escalation_days,
+              escalation_email_enabled = EXCLUDED.escalation_email_enabled,
+              email_daily_digest = EXCLUDED.email_daily_digest,
+              email_weekly_summary = EXCLUDED.email_weekly_summary,
+              updated_at = CURRENT_TIMESTAMP
         `;
 
       await queryHelpers.queryRun(sql, [
-        projectId,
         settingsId,
         projectId,
         task_overdue_enabled ? 1 : 0,
-        task_due_today_enabled ? 1 : 0,
-        blocker_detected_enabled ? 1 : 0,
-        gate_ready_enabled ? 1 : 0,
-        decision_required_enabled ? 1 : 0,
-        escalation_enabled ? 1 : 0,
+        task_due_soon_enabled ? 1 : 0,
+        task_blocked_enabled ? 1 : 0,
+        decision_pending_enabled ? 1 : 0,
+        decision_escalation_enabled ? 1 : 0,
+        phase_transition_enabled ? 1 : 0,
+        gate_blocked_enabled ? 1 : 0,
+        initiative_at_risk_enabled ? 1 : 0,
         escalation_days,
-        email_notifications ? 1 : 0,
-        in_app_notifications ? 1 : 0,
+        escalation_email_enabled ? 1 : 0,
+        email_daily_digest ? 1 : 0,
+        email_weekly_summary ? 1 : 0,
       ]);
 
       res.json({ success: true, message: 'Notification settings saved' });
+    }
+  );
+
+  /**
+   * E2 read model: roles, responsibilities, DEC-480 per-person capacity,
+   * communication recipients and role-derived inputs for the existing approval engine.
+   * It deliberately does not persist approval policy; that belongs to E4.
+   */
+  static getProjectOperatingModel = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id: projectId } = req.params;
+      if (!(await ProjectController.assertProjectInCallerOrg(req, res, projectId))) return;
+
+      const userId = String(req.user?.id || '');
+      const organizationId = String(req.user?.organizationId || '');
+      const [members, notificationSettings, effectiveAccess] = await Promise.all([
+        queryHelpers.queryAll<any>(
+          `SELECT pm.user_id, pm.project_role, pm.allocation_percent,
+                  u.first_name, u.last_name, u.email
+           FROM project_members pm
+           JOIN users u ON u.id = pm.user_id
+           WHERE pm.project_id = ?`,
+          [projectId]
+        ),
+        queryHelpers.queryOne<any>(
+          `SELECT task_overdue_enabled, decision_pending_enabled, email_weekly_summary
+           FROM project_notification_settings WHERE project_id = ?`,
+          [projectId]
+        ),
+        resolveEffectiveAccess({
+          userId,
+          organizationId,
+          applicationRole: req.user?.role,
+          projectId,
+        }),
+      ]);
+
+      res.json({
+        ...deriveProjectOperatingModel({
+          members: (members || []).map((member: any) => ({
+            userId: String(member.user_id),
+            name:
+              [member.first_name, member.last_name].filter(Boolean).join(' ') ||
+              String(member.email || ''),
+            role: String(member.project_role || ''),
+            allocationPercent: Number(member.allocation_percent ?? 0),
+          })),
+          notifications: {
+            taskOverdue: notificationSettings ? !!notificationSettings.task_overdue_enabled : true,
+            decisionPending: notificationSettings
+              ? !!notificationSettings.decision_pending_enabled
+              : true,
+            weeklySummary: notificationSettings
+              ? !!notificationSettings.email_weekly_summary
+              : false,
+          },
+        }),
+        permissions: {
+          canManageTeam:
+            hasEffectiveCapability(effectiveAccess, 'project.team.manage') ||
+            hasEffectiveCapability(effectiveAccess, 'project.team.update'),
+          canManageCommunication:
+            hasEffectiveCapability(effectiveAccess, 'project.settings.manage') ||
+            hasEffectiveCapability(effectiveAccess, 'project.settings.update'),
+        },
+      });
     }
   );
 
@@ -1108,6 +1250,25 @@ export class ProjectController {
         return;
       }
 
+      const organizationMember = await queryHelpers.queryOne<{ user_id: string }>(
+        `SELECT user_id FROM organization_members
+         WHERE organization_id = ? AND user_id = ? AND UPPER(COALESCE(status, 'ACTIVE')) = 'ACTIVE'`,
+        [orgId, String(userId)]
+      );
+      if (!organizationMember) {
+        res.status(400).json({
+          code: 'PROJECT_ORGANIZATION_MEMBERSHIP_REQUIRED',
+          error: 'PROJECT_ORGANIZATION_MEMBERSHIP_REQUIRED',
+        });
+        return;
+      }
+
+      const normalizedProjectRole = normalizeProjectRole(projectRole);
+      if (!normalizedProjectRole) {
+        res.status(400).json({ error: 'Invalid project role' });
+        return;
+      }
+
       const existing = await queryHelpers.queryOne<{ id: string }>(
         `SELECT id FROM project_members WHERE project_id = ? AND user_id = ?`,
         [projectId, userId]
@@ -1119,13 +1280,18 @@ export class ProjectController {
 
       const id = uuidv4();
       await queryHelpers.queryRun(
-        `INSERT INTO project_members (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO project_members
+          (id, project_id, user_id, project_role, normalized_project_role, legacy_project_role,
+           role_template_id, allocation_percent, permissions, added_by_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           projectId,
           userId,
+          normalizedProjectRole,
+          normalizedProjectRole,
           String(projectRole),
+          `factory_global_${normalizedProjectRole}`.toLowerCase(),
           allocationPercent !== undefined ? Number(allocationPercent) : 100,
           JSON.stringify({}),
           actorId,
@@ -1149,7 +1315,7 @@ export class ProjectController {
           params.push(String(engagementType));
         }
         if (updates.length > 0) {
-          updates.push("updated_at = datetime('now')");
+          updates.push('updated_at = CURRENT_TIMESTAMP');
           params.push(projectId, userId);
           await queryHelpers.queryRun(
             `UPDATE project_members SET ${updates.join(', ')} WHERE project_id = ? AND user_id = ?`,
@@ -1199,8 +1365,23 @@ export class ProjectController {
       const params: any[] = [];
 
       if (projectRole !== undefined) {
-        updates.push('project_role = ?');
-        params.push(String(projectRole));
+        const normalizedProjectRole = normalizeProjectRole(projectRole);
+        if (!normalizedProjectRole) {
+          res.status(400).json({ error: 'Invalid project role' });
+          return;
+        }
+        updates.push(
+          'project_role = ?',
+          'normalized_project_role = ?',
+          'legacy_project_role = ?',
+          'role_template_id = ?'
+        );
+        params.push(
+          normalizedProjectRole,
+          normalizedProjectRole,
+          String(projectRole),
+          `factory_global_${normalizedProjectRole}`.toLowerCase()
+        );
       }
       if (allocationPercent !== undefined) {
         const n = Number(allocationPercent);
@@ -1229,7 +1410,7 @@ export class ProjectController {
         return;
       }
 
-      updates.push("updated_at = datetime('now')");
+      updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(projectId, userId);
       await queryHelpers.queryRun(
         `UPDATE project_members SET ${updates.join(', ')} WHERE project_id = ? AND user_id = ?`,

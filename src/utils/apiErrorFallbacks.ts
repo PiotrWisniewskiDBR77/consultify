@@ -227,6 +227,8 @@ export const API_ERROR_FALLBACKS_EN: Readonly<Record<string, string>> = Object.f
   INITIATIVE_MATERIALIZE_FAILED: 'The material could not be generated (no initiative, or not enough data).',
   ORGANIZATION_CONTEXT_MISSING: 'No organization context.',
   PROJECT_ACCESS_FORBIDDEN: 'You do not have access to this project.',
+  PROJECT_ORGANIZATION_MEMBERSHIP_REQUIRED:
+    'The selected person must be an active member of the project organization.',
   RESULTS_ACTUAL_SOURCE_REQUIRED: 'The actual value is unchanged. Publish an Actual snapshot in Results and open the reconciliation with its exact identifier.',
   ROI_RECONCILIATION_STORAGE_UNAVAILABLE: 'The linked ROI Case could not be checked — nothing was saved and the recorded actual value is unchanged.',
   TRIAL_ENTRY_ORGANIZATION_REQUIRED: 'This feature requires an organization. You are in the Trial Entry phase.',
