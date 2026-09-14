@@ -2,10 +2,15 @@ import { createHash } from 'node:crypto';
 
 import { executeInitiativeTransition } from '../initiative/initiativeTransitionService.js';
 import {
+  INITIATIVE_STAGE_TO_STATUS,
+  resolveInitiativeLifecycleStage,
+} from '../../constants/initiativeLifecycleStages.js';
+import { resolveInitiativeStageForRow } from '../initiative/initiativeLifecycleCanon.js';
+import {
   recordInitiativeLifecycleGateDecision,
   type InitiativeLifecycleGateDomain,
 } from '../initiative/initiativeLifecycleGateDecisionService.js';
-import { withPgTransaction } from '../../utils/queryHelpers.js';
+import { queryAll, withPgTransaction } from '../../utils/queryHelpers.js';
 import {
   registerGovernedProposal,
   reviewProposalScope,
@@ -43,6 +48,30 @@ const EXPECTED_BY_TARGET: Record<LifecycleTarget, string> = {
   EXECUTING: 'SCHEDULED',
   DONE: 'EXECUTING',
 };
+
+/**
+ * H1c / DEC-506 — porównanie „czy inicjatywa stoi tam, gdzie propozycja zakłada".
+ *
+ * DLACZEGO NIE `String(row.status) !== expectedStatus`: `APPROVED_EXPECTED_BY_TARGET`
+ * i `EXPECTED_BY_TARGET` mówią słownikiem ETAPÓW (REVIEW · PROMOTED · APPROVED ·
+ * SCHEDULED · EXECUTING), a kolumna `initiatives.status` niesie SIEDEM kodów P12.
+ * Surowe porównanie było prawdziwe wyłącznie dla jednego celu (SCHEDULED, bo
+ * oczekiwał literalnego `APPROVED`); cztery pozostałe odbijały się o
+ * `initiative_lifecycle_expected_status_drift` ZANIM ktokolwiek doszedł do
+ * writera. Teraz obie strony sprowadzamy do etapu silnika i porównujemy etapy.
+ */
+function matchesExpectedStage(
+  row: { status?: unknown; lifecycle_state?: unknown },
+  expected: string
+): boolean {
+  const expectedStage = resolveInitiativeLifecycleStage(expected);
+  if (!expectedStage) return false;
+  const actualStage = resolveInitiativeStageForRow({
+    aggregateLifecycleState: row.lifecycle_state == null ? null : String(row.lifecycle_state),
+    dbStatus: row.status,
+  });
+  return actualStage === expectedStage;
+}
 
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
@@ -83,13 +112,16 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
     const current = (
       await client.query<any>(
         `SELECT c.version case_version,p.version plan_version,c.context_snapshot_id,i.status,
-                i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,i.baseline_version
+                i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,i.baseline_version,
+                agg.payload_json->>'lifecycleState' AS lifecycle_state
            FROM transformation_cases c
            JOIN transformation_plans p ON p.plan_id=c.active_plan_id
             AND p.transformation_case_id=c.transformation_case_id AND p.organization_id=c.organization_id
            JOIN transformation_case_artifact_links l ON l.transformation_case_id=c.transformation_case_id
             AND l.organization_id=c.organization_id AND l.artifact_type='initiative' AND l.artifact_id=?
            JOIN initiatives i ON i.id=l.artifact_id AND i.organization_id=c.organization_id
+           LEFT JOIN ie_aggregate_state agg ON agg.organization_id=i.organization_id
+            AND agg.aggregate_type='initiative' AND agg.aggregate_id=i.id
           WHERE c.transformation_case_id=? AND c.organization_id=?
             AND EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id=c.project_id AND pm.user_id=?)
             AND EXISTS (SELECT 1 FROM organization_members om WHERE om.organization_id=c.organization_id
@@ -103,7 +135,7 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
       )
     ).rows[0];
     if (!current) throw new Error('initiative_lifecycle_authority_required');
-    if (String(current.status).toUpperCase() !== expectedStatus)
+    if (!matchesExpectedStage(current, expectedStatus))
       throw new Error('initiative_lifecycle_expected_status_drift');
     const milestoneRows = input.targetStatus === 'SCHEDULED'
       ? (await client.query<any>(
@@ -268,7 +300,7 @@ export async function executeGovernedInitiativeTransition(
       await client.query<any>(
         `SELECT c.version case_version,p.version plan_version,c.context_snapshot_id,
                 i.status,i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,
-                i.baseline_version
+                i.baseline_version,agg.payload_json->>'lifecycleState' AS lifecycle_state
            FROM transformation_cases c
            JOIN transformation_plans p ON p.plan_id=c.active_plan_id
             AND p.transformation_case_id=c.transformation_case_id
@@ -278,6 +310,8 @@ export async function executeGovernedInitiativeTransition(
             AND l.organization_id=c.organization_id
             AND l.artifact_type='initiative' AND l.artifact_id=?
            JOIN initiatives i ON i.id=l.artifact_id AND i.organization_id=c.organization_id
+           LEFT JOIN ie_aggregate_state agg ON agg.organization_id=i.organization_id
+            AND agg.aggregate_type='initiative' AND agg.aggregate_id=i.id
           WHERE c.transformation_case_id=? AND c.organization_id=?
             AND EXISTS (SELECT 1 FROM project_members pm
                          WHERE pm.project_id=c.project_id AND pm.user_id=?)
@@ -286,7 +320,7 @@ export async function executeGovernedInitiativeTransition(
       )
     ).rows[0];
     if (!current) throw new Error('initiative_lifecycle_authority_required');
-    if (String(current.status).toUpperCase() !== expectedStatus)
+    if (!matchesExpectedStage(current, expectedStatus))
       throw new Error('initiative_lifecycle_expected_status_drift');
 
     const milestoneRows = (
@@ -466,14 +500,174 @@ export async function executeGovernedInitiativeTransition(
         return withPgTransaction(async (client) => {
           const row = (
             await client.query<any>(
-              `SELECT status,baseline_version,schedule_baseline_id FROM initiatives
-                WHERE id=? AND organization_id=?`,
+              `SELECT i.status,i.baseline_version,i.schedule_baseline_id,
+                      agg.payload_json->>'lifecycleState' AS lifecycle_state
+                 FROM initiatives i
+                 LEFT JOIN ie_aggregate_state agg ON agg.organization_id=i.organization_id
+                  AND agg.aggregate_type='initiative' AND agg.aggregate_id=i.id
+                WHERE i.id=? AND i.organization_id=?`,
               [input.initiativeId, input.organizationId]
             )
           ).rows[0];
-          return row && String(row.status).toUpperCase() === targetStatus ? row : null;
+          if (!row) return null;
+          // H1c: read-back potwierdza OBIE prawdy — kod kolumny (7) i etap
+          // silnika (12). Porównanie samego `status === targetStatus` nie miało
+          // szans przejść: `targetStatus` jest etapem, kolumna jest kodem.
+          const expectedStage = resolveInitiativeLifecycleStage(targetStatus);
+          if (!expectedStage) return null;
+          const statusOk =
+            String(row.status).toUpperCase() === INITIATIVE_STAGE_TO_STATUS[expectedStage];
+          const stageOk =
+            resolveInitiativeStageForRow({
+              aggregateLifecycleState: row.lifecycle_state == null ? null : String(row.lifecycle_state),
+              dbStatus: row.status,
+            }) === expectedStage;
+          return statusOk && stageOk ? row : null;
         });
       },
     },
+  });
+}
+
+/* ============================================================================
+ * H1b — SKRZYNKA RECENZENTA (odczyt propozycji przejścia cyklu życia)
+ *
+ * Przewód, nie nowy silnik. Etap H1 (14.09) odmroził trasy zapisu
+ * `lifecycle-transition-proposals` / `lifecycle-transition-executions`, ale
+ * ŻADEN odczyt nie istniał: `proposalVersionId` powstaje w `registerGovernedProposal`
+ * i wraca WYŁĄCZNIE w odpowiedzi 201 na POST propozycji. Recenzent, który
+ * loguje się później (a to jest cała istota recenzji — proponuje ktoś inny niż
+ * zatwierdza, POST wymusza `initiative_lifecycle_self_review_denied`), nie miał
+ * żadnej drogi, by ten identyfikator poznać. Bez niego ani
+ * `POST /api/v8/agent-proposals/:id/scopes/:scopeKey/review`, ani
+ * `POST /:id/lifecycle-transition-executions` nie da się wywołać z interfejsu.
+ *
+ * Ta funkcja NIE liczy prowenancji, NIE zapisuje i NIE ocenia uprawnień do
+ * zapisu — czyta wiersze, które już powstały, i pokazuje je wyłącznie dwóm
+ * osobom, które i tak je znają: autorowi propozycji oraz recenzentowi
+ * wskazanemu w `reviewer_authority_json` (fail-closed: kto nie jest ani jednym,
+ * ani drugim, nie zobaczy wiersza, nawet w swojej organizacji).
+ *
+ * Zakres `proposal_id LIKE 't01-lifecycle:%'` odcina wszystkie inne rodziny
+ * propozycji A05 (zespół projektu, sprawa transformacji, KPI) — skrzynka
+ * Inicjatyw pokazuje wyłącznie przejścia cyklu życia inicjatyw.
+ * ==========================================================================*/
+
+export interface InitiativeTransitionProposalRow {
+  proposalVersionId: string;
+  proposalId: string;
+  status: string;
+  initiativeId: string;
+  initiativeName: string | null;
+  initiativeStatus: string | null;
+  transformationCaseId: string;
+  fromStatus: string;
+  toStatus: string;
+  pmoDomain: string;
+  scopeKey: string;
+  reason: string | null;
+  proposerUserId: string;
+  proposerName: string | null;
+  createdAt: string;
+  expiresAt: string;
+  reviewDecision: string | null;
+  reviewedAt: string | null;
+  reviewedByUserId: string | null;
+  /** Czy PYTAJĄCY jest recenzentem tej propozycji (a nie tylko jej autorem). */
+  viewerIsReviewer: boolean;
+  /** Gotowa do `POST /:id/lifecycle-transition-executions` (A05 zatwierdzone). */
+  executable: boolean;
+}
+
+export interface ListInitiativeTransitionProposalsInput {
+  organizationId: string;
+  viewerUserId: string;
+  /** Zawęź do jednej inicjatywy (trasa per-inicjatywa). */
+  initiativeId?: string;
+  /** Filtr statusu propozycji A05 ('pending' = czeka na decyzję recenzenta). */
+  status?: 'pending' | 'approved' | 'rejected' | 'all';
+  limit?: number;
+}
+
+const PENDING_PROPOSAL_STATUSES = ['pending_review', 'partially_approved'];
+
+function fullName(first: unknown, last: unknown, email: unknown): string | null {
+  const name = [String(first ?? '').trim(), String(last ?? '').trim()].filter(Boolean).join(' ');
+  return name || (email ? String(email) : null);
+}
+
+export async function listEarlyInitiativeTransitionProposals(
+  input: ListInitiativeTransitionProposalsInput
+): Promise<InitiativeTransitionProposalRow[]> {
+  const limit = Math.min(Math.max(Number(input.limit ?? 200), 1), 500);
+  // Kolejność parametrów odpowiada kolejności `?` w tekście zapytania:
+  // (1) viewer w kolumnie wyliczanej, (2) organizationId, (3) autor, (4) recenzent.
+  const params: unknown[] = [
+    input.viewerUserId,
+    input.organizationId,
+    input.viewerUserId,
+    input.viewerUserId,
+  ];
+  let sql = `SELECT p.proposal_version_id,p.proposal_id,p.status,p.created_by_user_id,p.created_at,
+                    p.expires_at,p.change_reason,p.after_json,p.before_json,p.reviewer_authority_json,
+                    i.name AS initiative_name,i.status AS initiative_status,
+                    u.first_name AS proposer_first_name,u.last_name AS proposer_last_name,u.email AS proposer_email,
+                    r.decision AS review_decision,r.reviewed_at AS reviewed_at,
+                    r.reviewed_by_user_id AS reviewed_by_user_id,
+                    (EXISTS (SELECT 1 FROM jsonb_each(p.reviewer_authority_json) e
+                              WHERE e.value @> to_jsonb(?::text))) AS viewer_is_reviewer
+               FROM v8_agent_proposal_versions p
+               LEFT JOIN initiatives i ON i.id=(p.after_json->>'initiativeId')
+                                      AND i.organization_id=p.organization_id
+               LEFT JOIN users u ON u.id=p.created_by_user_id
+               LEFT JOIN v8_agent_proposal_scope_reviews r ON r.proposal_version_id=p.proposal_version_id
+              WHERE p.organization_id=?
+                AND p.proposal_id LIKE 't01-lifecycle:%'
+                AND (p.created_by_user_id=?
+                     OR EXISTS (SELECT 1 FROM jsonb_each(p.reviewer_authority_json) e2
+                                 WHERE e2.value @> to_jsonb(?::text)))`;
+  if (input.initiativeId) {
+    sql += ` AND (p.after_json->>'initiativeId')=?`;
+    params.push(input.initiativeId);
+  }
+  const statusFilter = input.status ?? 'all';
+  if (statusFilter === 'pending') {
+    sql += ` AND p.status IN (${PENDING_PROPOSAL_STATUSES.map(() => '?').join(',')})`;
+    params.push(...PENDING_PROPOSAL_STATUSES);
+  } else if (statusFilter !== 'all') {
+    sql += ` AND p.status=?`;
+    params.push(statusFilter);
+  }
+  sql += ` ORDER BY p.created_at DESC LIMIT ${limit}`;
+
+  const rows = await queryAll<any>(sql, params);
+  return rows.map((row) => {
+    const after = typeof row.after_json === 'string' ? JSON.parse(row.after_json) : row.after_json;
+    const before =
+      typeof row.before_json === 'string' ? JSON.parse(row.before_json) : row.before_json;
+    const pmoDomain = String(after?.pmoDomain ?? '');
+    return {
+      proposalVersionId: String(row.proposal_version_id),
+      proposalId: String(row.proposal_id),
+      status: String(row.status),
+      initiativeId: String(after?.initiativeId ?? ''),
+      initiativeName: row.initiative_name ? String(row.initiative_name) : null,
+      initiativeStatus: row.initiative_status ? String(row.initiative_status) : null,
+      transformationCaseId: String(after?.transformationCaseId ?? ''),
+      fromStatus: String(after?.expectedStatus ?? before?.status ?? ''),
+      toStatus: String(after?.targetStatus ?? ''),
+      pmoDomain,
+      scopeKey: pmoDomain ? `initiative_lifecycle:${pmoDomain.toLowerCase()}` : '',
+      reason: row.change_reason ? String(row.change_reason) : null,
+      proposerUserId: String(row.created_by_user_id),
+      proposerName: fullName(row.proposer_first_name, row.proposer_last_name, row.proposer_email),
+      createdAt: new Date(row.created_at).toISOString(),
+      expiresAt: new Date(row.expires_at).toISOString(),
+      reviewDecision: row.review_decision ? String(row.review_decision) : null,
+      reviewedAt: row.reviewed_at ? new Date(row.reviewed_at).toISOString() : null,
+      reviewedByUserId: row.reviewed_by_user_id ? String(row.reviewed_by_user_id) : null,
+      viewerIsReviewer: row.viewer_is_reviewer === true || row.viewer_is_reviewer === 't',
+      executable: String(row.status) === 'approved' && String(row.review_decision) === 'approved',
+    };
   });
 }

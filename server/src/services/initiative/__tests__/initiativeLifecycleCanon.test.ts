@@ -72,11 +72,30 @@ describe('initiativeLifecycleCanon (P11)', () => {
     expect(bad.code).toBe('UNKNOWN_STATUS');
   });
 
-  it('coerceInitiativeStatusForWrite accepts canonical PMO statuses', () => {
+  // H1c / DEC-506 — POPRAWIONA ASERCJA, NIE ZŁAGODZONA.
+  // Ten test twierdził, że `EXECUTING` jest „kanonicznym statusem PMO" i że
+  // writer ma go zwrócić DOSŁOWNIE. To było nieprawdą od migracji
+  // `20262103_p12_initiative_status_slownik.sql`: `EXECUTING` nie należy do
+  // siedmiu kodów `InitiativeStatus` i `UPDATE initiatives SET status='EXECUTING'`
+  // łamie CHECK `initiatives_status_check_p12`. Test przechodził tylko dlatego,
+  // że pilnował wartości, której baza i tak by nie przyjęła.
+  // Teraz `EXECUTING` jest ETAPEM silnika (12, DEC-490), a writer oddaje OBIE
+  // prawdy: etap dla agregatu i zapisywalny kod dla kolumny.
+  it('coerceInitiativeStatusForWrite mapuje etap silnika na zapisywalny kod kolumny', () => {
     const ok = coerceInitiativeStatusForWrite('EXECUTING');
     expect(ok.ok).toBe(true);
     if (!ok.ok) throw new Error('expected success');
-    expect(ok.status).toBe('EXECUTING');
+    expect(ok.stage).toBe('IN_EXECUTION');
+    expect(ok.status).toBe(InitiativeStatus.IN_EXECUTION);
+    expect(Object.values(InitiativeStatus)).toContain(ok.status);
+  });
+
+  it('coerceInitiativeStatusForWrite przyjmuje też kod docelowy wprost', () => {
+    const ok = coerceInitiativeStatusForWrite('APPROVED');
+    expect(ok.ok).toBe(true);
+    if (!ok.ok) throw new Error('expected success');
+    expect(ok.status).toBe(InitiativeStatus.APPROVED);
+    expect(ok.stage).toBe('APPROVED_BACKLOG');
   });
 
   it('buildInitiativeOutboundHandoffPayload includes bounded common fields', () => {

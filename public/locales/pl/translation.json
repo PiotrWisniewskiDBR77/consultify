@@ -10980,7 +10980,8 @@
       "list": "Inicjatywy",
       "plan": "Plan",
       "capacity": "Obciążenie",
-      "workReport": "Raport pracy"
+      "workReport": "Raport pracy",
+      "transitionInbox": "Do akceptacji"
     },
     "capacityAdvisor": {
       "propose": "Zaproponuj opcje",
@@ -14265,6 +14266,32 @@
       "plan-governance": "Plan i zatwierdzenia",
       "adoption-evidence-learning": "Adopcja, dowody i wiedza",
       "workspace": "Narzędzia karty"
+    },
+    "transitionInbox": {
+      "sectionAria": "Przejścia do akceptacji",
+      "approve": "Zatwierdź",
+      "approveTitle": "Zatwierdź to przejście",
+      "reject": "Odrzuć z powodem",
+      "rejectTitle": "Odrzuć to przejście",
+      "whyLabel": "Dlaczego",
+      "noReason": "Nie podano powodu.",
+      "expires": "Ważne do {{date}}",
+      "openDisabled": "Propozycja nie ma własnego dokumentu — zmienia etap inicjatywy powyżej.",
+      "emptyTitle": "Nic do zatwierdzenia",
+      "emptyDescription": "Trafiają tu zmiany etapu zaproponowane przez kogoś innego. Zanim zdecydujesz, zobaczysz inicjatywę, przejście i powód.",
+      "error": "Nie udało się wczytać przejść do akceptacji:",
+      "status": {
+        "pending": "Czeka na twoją decyzję",
+        "approved": "Zatwierdzone — gotowe do wykonania",
+        "rejected": "Odrzucone"
+      },
+      "columns": {
+        "initiative": "Inicjatywa",
+        "transition": "Przejście",
+        "proposer": "Zaproponował",
+        "createdAt": "Data propozycji",
+        "domain": "Obszar nadzoru"
+      }
     }
   },
   "execution": {

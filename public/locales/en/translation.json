@@ -11813,7 +11813,8 @@
       "list": "Initiatives",
       "plan": "Plan",
       "capacity": "Load",
-      "workReport": "Work report"
+      "workReport": "Work report",
+      "transitionInbox": "For approval"
     },
     "capacityAdvisor": {
       "propose": "Propose options",
@@ -15090,6 +15091,32 @@
       "plan-governance": "Plan and governance",
       "adoption-evidence-learning": "Adoption, evidence and learning",
       "workspace": "Workspace tools"
+    },
+    "transitionInbox": {
+      "sectionAria": "Transition approvals",
+      "approve": "Approve",
+      "approveTitle": "Approve this transition",
+      "reject": "Reject with a reason",
+      "rejectTitle": "Reject this transition",
+      "whyLabel": "Why",
+      "noReason": "No reason given.",
+      "expires": "Valid until {{date}}",
+      "openDisabled": "A proposal has no document of its own — it changes the stage of the initiative above.",
+      "emptyTitle": "Nothing to approve",
+      "emptyDescription": "Stage changes proposed by someone else land here. You will see the initiative, the transition and the reason before you decide.",
+      "error": "Could not load transition approvals:",
+      "status": {
+        "pending": "Awaiting your decision",
+        "approved": "Approved — ready to apply",
+        "rejected": "Rejected"
+      },
+      "columns": {
+        "initiative": "Initiative",
+        "transition": "Transition",
+        "proposer": "Proposed by",
+        "createdAt": "Proposed on",
+        "domain": "Governance area"
+      }
     }
   },
   "execution": {

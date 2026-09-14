@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Filter,
   GitBranch,
+  Inbox,
   Lightbulb,
   List,
   MoreVertical,
@@ -159,6 +160,7 @@ import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { Menu2PresetDropdown } from './Menu2PresetDropdown';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
 import { PortfolioHealthView } from './PortfolioHealthView';
+import { TransitionInboxSurface } from './TransitionInboxSurface';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -274,9 +276,18 @@ const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLI
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
 const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
-  FOUR_BUTTONS_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
-);
+/* H1b (14.09) — „Do akceptacji": skrzynka recenzenta przejść cyklu życia.
+   Domyślnie OFF: wygląd idzie do właściciela na ZRZUCIE, nie przez „włącz
+   flagę i zobacz". Przy OFF zakładka nie istnieje ani w Menu 1, ani w zbiorze
+   dopuszczonych adresów — parytet z dzisiejszym ekranem jest zupełny. */
+const TRANSITION_INBOX_ENABLED = import.meta.env.VITE_TRANSITION_INBOX === 'true';
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
+  'list',
+  'plan',
+  'capacity',
+  ...(FOUR_BUTTONS_ENABLED ? (['workReport'] as ModuleTab[]) : []),
+  ...(TRANSITION_INBOX_ENABLED ? (['transitionInbox'] as ModuleTab[]) : []),
+]);
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
   // A2 (DEC-498 §1): trzecia soczewka Menu 3 — lista parkingu — istnieje TYLKO
@@ -945,6 +956,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               id: 'workReport' as ModuleTab,
               label: t('initiatives.tabs.workReport', 'Work report'),
               icon: <Activity size={16} />,
+            },
+          ]
+        : []),
+      ...(TRANSITION_INBOX_ENABLED
+        ? [
+            {
+              id: 'transitionInbox' as ModuleTab,
+              label: t('initiatives.tabs.transitionInbox', 'For approval'),
+              icon: <Inbox size={16} />,
             },
           ]
         : []),
@@ -1937,6 +1957,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
+    if (activeTab === 'transitionInbox' && TRANSITION_INBOX_ENABLED) {
+      return <TransitionInboxSurface />;
+    }
     if (activeTab === 'plan') {
       return (
         <PlanScenarioSurface
