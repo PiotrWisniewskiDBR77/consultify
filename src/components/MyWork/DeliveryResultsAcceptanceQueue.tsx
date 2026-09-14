@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -71,16 +72,37 @@ interface AcceptanceRow extends TableRow {
   source: Delivery | Results;
 }
 
-const columns: TableColumn[] = [
-  { id: 'gate', label: 'Acceptance gate', sortable: true },
-  { id: 'initiative', label: 'Initiative', sortable: true },
-  { id: 'exactSource', label: 'Exact source', sortable: true },
-  { id: 'status', label: 'Status', sortable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'gate',
+    label: t('myWork.deliveryResultsAcceptanceQueue.columnAcceptanceGate', 'Acceptance gate'),
+    sortable: true,
+  },
+  {
+    id: 'initiative',
+    label: t('myWork.deliveryResultsAcceptanceQueue.columnInitiative', 'Initiative'),
+    sortable: true,
+  },
+  {
+    id: 'exactSource',
+    label: t('myWork.deliveryResultsAcceptanceQueue.columnExactSource', 'Exact source'),
+    sortable: true,
+  },
+  {
+    id: 'status',
+    label: t('myWork.deliveryResultsAcceptanceQueue.columnStatus', 'Status'),
+    sortable: true,
+  },
 ];
-const refs = (items: Ref[]) =>
-  items.length ? items.map((x) => `${x.ref} v${x.version}`).join(', ') : 'None';
 
 export const DeliveryResultsAcceptanceQueue = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
+  const none = t('myWork.deliveryResultsAcceptanceQueue.none', 'None');
+  const refs = useCallback(
+    (items: Ref[]) => (items.length ? items.map((x) => `${x.ref} v${x.version}`).join(', ') : none),
+    [none]
+  );
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [queue, setQueue] = useState<Queue>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -105,12 +127,20 @@ export const DeliveryResultsAcceptanceQueue = () => {
   useEffect(() => {
     void load();
   }, [load]);
+  const deliveryAcceptanceLabel = t(
+    'myWork.deliveryResultsAcceptanceQueue.deliveryAcceptance',
+    'Delivery Acceptance'
+  );
+  const resultsAcceptanceLabel = t(
+    'myWork.deliveryResultsAcceptanceQueue.resultsAcceptance',
+    'Results Acceptance'
+  );
   const rows = useMemo<AcceptanceRow[]>(
     () => [
       ...(queue.delivery ?? []).map((x) => ({
         id: `delivery:${x.decisionId}`,
-        title: 'Delivery Acceptance',
-        gate: 'Delivery Acceptance',
+        title: deliveryAcceptanceLabel,
+        gate: deliveryAcceptanceLabel,
         initiative: `${x.initiativeId} v${x.initiativeVersion}`,
         exactSource: `${x.executionCaseId} v${x.executionCaseVersion}`,
         status: x.status,
@@ -118,15 +148,15 @@ export const DeliveryResultsAcceptanceQueue = () => {
       })),
       ...(queue.results ?? []).map((x) => ({
         id: `results:${x.resultsCaseId}`,
-        title: 'Results Acceptance',
-        gate: 'Results Acceptance',
+        title: resultsAcceptanceLabel,
+        gate: resultsAcceptanceLabel,
         initiative: x.initiativeId,
         exactSource: `${x.packId} v${x.packVersion}`,
         status: x.status,
         source: x,
       })),
     ],
-    [queue]
+    [queue, deliveryAcceptanceLabel, resultsAcceptanceLabel]
   );
   const selected = rows.find((x) => x.id === selectedId) ?? null;
   const commandId = (key: string) => {
@@ -194,38 +224,62 @@ export const DeliveryResultsAcceptanceQueue = () => {
       setWrite(e instanceof RuntimeApiError && e.status === 409 ? 'CONFLICT' : 'FAILED');
     }
   };
+
+  const acceptanceLabel = t(
+    'myWork.deliveryResultsAcceptanceQueue.title',
+    'Delivery and Results Acceptance'
+  );
+
   if (state === 'LOADING')
     return (
-      <section aria-label="Delivery and Results Acceptance" className="p-4" role="status">
-        Loading acceptance work
+      <section aria-label={acceptanceLabel} className="p-4" role="status">
+        {t('myWork.deliveryResultsAcceptanceQueue.loading', 'Loading acceptance work')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Delivery and Results Acceptance" className="p-4" role="alert">
-        Acceptance work unavailable.{' '}
+      <section aria-label={acceptanceLabel} className="p-4" role="alert">
+        {t('myWork.deliveryResultsAcceptanceQueue.unavailable', 'Acceptance work unavailable.')}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
-          Retry
+          {t('myWork.deliveryResultsAcceptanceQueue.retry', 'Retry')}
         </button>
       </section>
     );
   if (!rows.length && !receipt) return null;
   return (
-    <section aria-label="Delivery and Results Acceptance" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">Delivery and Results Acceptance</h3>
+    <section aria-label={acceptanceLabel} className="border-b border-c-border p-4">
+      <h3 className="font-semibold">{acceptanceLabel}</h3>
       <p className="text-xs text-c-text-muted">
-        Independent decisions over exact, versioned execution evidence. No completion shortcut.
+        {t(
+          'myWork.deliveryResultsAcceptanceQueue.subtitle',
+          'Independent decisions over exact, versioned execution evidence. No completion shortcut.'
+        )}
       </p>
       {receipt && (
         <div role="status" className="my-3 rounded border border-c-success/40 p-3 text-sm">
           <strong>
-            {String(receipt.type)} receipt · {String(receipt.lifecycle)}
+            {t('myWork.deliveryResultsAcceptanceQueue.receiptHeading', '{{type}} receipt · {{lifecycle}}', {
+              type: String(receipt.type),
+              lifecycle: String(receipt.lifecycle),
+            })}
           </strong>
-          {'resultsCaseId' in receipt && <div>Results Case {String(receipt.resultsCaseId)}</div>}
+          {'resultsCaseId' in receipt && (
+            <div>
+              {t('myWork.deliveryResultsAcceptanceQueue.resultsCase', 'Results Case {{id}}', {
+                id: String(receipt.resultsCaseId),
+              })}
+            </div>
+          )}
           {'packId' in receipt && (
             <div>
-              Immutable Benefits Handoff Pack {String(receipt.packId)} v
-              {String(receipt.version ?? receipt.packVersion)}
+              {t(
+                'myWork.deliveryResultsAcceptanceQueue.immutableBenefitsHandoffPack',
+                'Immutable Benefits Handoff Pack {{packId}} v{{version}}',
+                {
+                  packId: String(receipt.packId),
+                  version: String(receipt.version ?? receipt.packVersion),
+                }
+              )}
             </div>
           )}
         </div>
@@ -233,8 +287,11 @@ export const DeliveryResultsAcceptanceQueue = () => {
       {(write === 'CONFLICT' || write === 'FAILED') && (
         <p role="alert" className="text-c-danger">
           {write === 'CONFLICT'
-            ? 'Evidence version changed. Reload before deciding.'
-            : 'Decision was not saved.'}
+            ? t(
+                'myWork.deliveryResultsAcceptanceQueue.conflict',
+                'Evidence version changed. Reload before deciding.'
+              )
+            : t('myWork.deliveryResultsAcceptanceQueue.failed', 'Decision was not saved.')}
         </p>
       )}
       {rows.length > 0 && (
@@ -249,74 +306,140 @@ export const DeliveryResultsAcceptanceQueue = () => {
             const delivery = row.id.startsWith('delivery:') ? (row.source as Delivery) : null;
             const results = row.id.startsWith('results:') ? (row.source as Results) : null;
             return (
-              <div className="space-y-3 p-4 text-sm" aria-label={`${row.gate} Workbench`}>
+              <div
+                className="space-y-3 p-4 text-sm"
+                aria-label={t(
+                  'myWork.deliveryResultsAcceptanceQueue.workbenchAriaLabel',
+                  '{{gate}} Workbench',
+                  { gate: row.gate }
+                )}
+              >
                 <div>
-                  <strong>Canonical ID</strong> {delivery?.decisionId ?? results?.resultsCaseId}
+                  <strong>{t('myWork.deliveryResultsAcceptanceQueue.canonicalId', 'Canonical ID')}</strong>{' '}
+                  {delivery?.decisionId ?? results?.resultsCaseId}
                 </div>
                 {delivery && (
                   <div className="grid gap-2 md:grid-cols-2">
                     <p>
-                      Initiative {delivery.initiativeId} v{delivery.initiativeVersion}
+                      {t('myWork.deliveryResultsAcceptanceQueue.initiative', 'Initiative {{id}} v{{version}}', {
+                        id: delivery.initiativeId,
+                        version: delivery.initiativeVersion,
+                      })}
                     </p>
                     <p>
-                      Execution Case {delivery.executionCaseId} v{delivery.executionCaseVersion}
+                      {t(
+                        'myWork.deliveryResultsAcceptanceQueue.executionCase',
+                        'Execution Case {{id}} v{{version}}',
+                        { id: delivery.executionCaseId, version: delivery.executionCaseVersion }
+                      )}
                     </p>
                     <p>
-                      Baseline {delivery.baselineRef.ref} v{delivery.baselineRef.version}
+                      {t('myWork.deliveryResultsAcceptanceQueue.baseline', 'Baseline {{ref}} v{{version}}', {
+                        ref: delivery.baselineRef.ref,
+                        version: delivery.baselineRef.version,
+                      })}
                     </p>
                     <p>
-                      Scope {delivery.scopeRef.ref} v{delivery.scopeRef.version}
-                    </p>
-                    <p>Deliverables: {refs(delivery.deliverableRefs)}</p>
-                    <p>Milestones: {refs(delivery.milestoneRefs)}</p>
-                    <p>
-                      Open Tasks:{' '}
-                      {delivery.openTaskRefs
-                        .map(
-                          (x) =>
-                            `${x.taskId} v${x.version} · owner ${x.ownerId ?? 'UNKNOWN'} · evidence ${x.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}`
-                        )
-                        .join('; ') || 'None'}
+                      {t('myWork.deliveryResultsAcceptanceQueue.scope', 'Scope {{ref}} v{{version}}', {
+                        ref: delivery.scopeRef.ref,
+                        version: delivery.scopeRef.version,
+                      })}
                     </p>
                     <p>
-                      Open Decisions:{' '}
-                      {delivery.openDecisionRefs
-                        .map(
-                          (x) =>
-                            `${x.decisionId} v${x.version} · owner ${x.ownerId ?? 'UNKNOWN'} · evidence ${x.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}`
-                        )
-                        .join('; ') || 'None'}
+                      {t('myWork.deliveryResultsAcceptanceQueue.deliverables', 'Deliverables: {{refs}}', {
+                        refs: refs(delivery.deliverableRefs),
+                      })}
                     </p>
                     <p>
-                      Residual risks:{' '}
-                      {delivery.riskResiduals
-                        .map(
-                          (x) =>
-                            `${x.residualId} · ${x.ownerId ?? 'UNKNOWN'} · ${x.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}`
-                        )
-                        .join('; ') || 'None'}
+                      {t('myWork.deliveryResultsAcceptanceQueue.milestones', 'Milestones: {{refs}}', {
+                        refs: refs(delivery.milestoneRefs),
+                      })}
                     </p>
-                    <p>Finance: {refs(delivery.financeActualRefs)}</p>
                     <p>
-                      Operational handover {delivery.operationalHandoverRef.ref} v
-                      {delivery.operationalHandoverRef.version}
+                      {t('myWork.deliveryResultsAcceptanceQueue.openTasks', 'Open Tasks: {{value}}', {
+                        value:
+                          delivery.openTaskRefs
+                            .map(
+                              (x) =>
+                                `${x.taskId} v${x.version} · owner ${x.ownerId ?? 'UNKNOWN'} · evidence ${x.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}`
+                            )
+                            .join('; ') || none,
+                      })}
                     </p>
-                    <p>Benefit Owner {delivery.benefitOwnerId}</p>
-                    <p>KPI contracts: {refs(delivery.kpiMeasurementContractRefs)}</p>
+                    <p>
+                      {t('myWork.deliveryResultsAcceptanceQueue.openDecisions', 'Open Decisions: {{value}}', {
+                        value:
+                          delivery.openDecisionRefs
+                            .map(
+                              (x) =>
+                                `${x.decisionId} v${x.version} · owner ${x.ownerId ?? 'UNKNOWN'} · evidence ${x.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}`
+                            )
+                            .join('; ') || none,
+                      })}
+                    </p>
+                    <p>
+                      {t('myWork.deliveryResultsAcceptanceQueue.residualRisks', 'Residual risks: {{value}}', {
+                        value:
+                          delivery.riskResiduals
+                            .map(
+                              (x) =>
+                                `${x.residualId} · ${x.ownerId ?? 'UNKNOWN'} · ${x.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}`
+                            )
+                            .join('; ') || none,
+                      })}
+                    </p>
+                    <p>
+                      {t('myWork.deliveryResultsAcceptanceQueue.finance', 'Finance: {{refs}}', {
+                        refs: refs(delivery.financeActualRefs),
+                      })}
+                    </p>
+                    <p>
+                      {t(
+                        'myWork.deliveryResultsAcceptanceQueue.operationalHandover',
+                        'Operational handover {{ref}} v{{version}}',
+                        {
+                          ref: delivery.operationalHandoverRef.ref,
+                          version: delivery.operationalHandoverRef.version,
+                        }
+                      )}
+                    </p>
+                    <p>
+                      {t('myWork.deliveryResultsAcceptanceQueue.benefitOwner', 'Benefit Owner {{id}}', {
+                        id: delivery.benefitOwnerId,
+                      })}
+                    </p>
+                    <p>
+                      {t('myWork.deliveryResultsAcceptanceQueue.kpiContracts', 'KPI contracts: {{refs}}', {
+                        refs: refs(delivery.kpiMeasurementContractRefs),
+                      })}
+                    </p>
                   </div>
                 )}
                 {results && (
                   <div>
                     <p>
-                      Immutable Benefits Handoff Pack {results.packId} v{results.packVersion}
+                      {t(
+                        'myWork.deliveryResultsAcceptanceQueue.immutableBenefitsHandoffPackShort',
+                        'Immutable Benefits Handoff Pack {{packId}} v{{version}}',
+                        { packId: results.packId, version: results.packVersion }
+                      )}
                     </p>
-                    <p>Initiative {results.initiativeId} must remain DELIVERED until accepted.</p>
+                    <p>
+                      {t(
+                        'myWork.deliveryResultsAcceptanceQueue.mustRemainDelivered',
+                        'Initiative {{id}} must remain DELIVERED until accepted.',
+                        { id: results.initiativeId }
+                      )}
+                    </p>
                   </div>
                 )}
                 <label className="block">
-                  Rationale
+                  {t('myWork.deliveryResultsAcceptanceQueue.rationale', 'Rationale')}
                   <textarea
-                    aria-label="Acceptance rationale"
+                    aria-label={t(
+                      'myWork.deliveryResultsAcceptanceQueue.rationaleAriaLabel',
+                      'Acceptance rationale'
+                    )}
                     value={rationale}
                     onChange={(e) => setRationale(e.target.value)}
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -328,7 +451,11 @@ export const DeliveryResultsAcceptanceQueue = () => {
                       <label key={key}>
                         {key}
                         <input
-                          aria-label={`Results ${key}`}
+                          aria-label={t(
+                            'myWork.deliveryResultsAcceptanceQueue.resultsFieldAriaLabel',
+                            'Results {{field}}',
+                            { field: key }
+                          )}
                           type={key === 'dueAt' ? 'datetime-local' : 'text'}
                           value={accountable[key]}
                           onChange={(e) => setAccountable((x) => ({ ...x, [key]: e.target.value }))}
@@ -345,19 +472,19 @@ export const DeliveryResultsAcceptanceQueue = () => {
             row.id.startsWith('delivery:') ? (
               <div className="flex flex-wrap gap-2 p-3">
                 <button className="btn-secondary" onClick={() => void decideDelivery('STOP')}>
-                  Stop
+                  {t('myWork.deliveryResultsAcceptanceQueue.stop', 'Stop')}
                 </button>
                 <button className="btn-secondary" onClick={() => void decideDelivery('RETURN')}>
-                  Return
+                  {t('myWork.deliveryResultsAcceptanceQueue.return', 'Return')}
                 </button>
                 <button
                   className="btn-secondary"
                   onClick={() => void decideDelivery('ACCEPT_WITH_RESIDUALS')}
                 >
-                  Accept with residuals
+                  {t('myWork.deliveryResultsAcceptanceQueue.acceptWithResiduals', 'Accept with residuals')}
                 </button>
                 <button className="btn-primary" onClick={() => void decideDelivery('ACCEPT')}>
-                  Accept delivery
+                  {t('myWork.deliveryResultsAcceptanceQueue.acceptDelivery', 'Accept delivery')}
                 </button>
               </div>
             ) : (
@@ -366,16 +493,16 @@ export const DeliveryResultsAcceptanceQueue = () => {
                   className="btn-secondary"
                   onClick={() => void decideResults('REJECT_WITH_BLOCKERS')}
                 >
-                  Reject with blockers
+                  {t('myWork.deliveryResultsAcceptanceQueue.rejectWithBlockers', 'Reject with blockers')}
                 </button>
                 <button
                   className="btn-secondary"
                   onClick={() => void decideResults('ACCEPT_WITH_GAPS')}
                 >
-                  Accept with gaps
+                  {t('myWork.deliveryResultsAcceptanceQueue.acceptWithGaps', 'Accept with gaps')}
                 </button>
                 <button className="btn-primary" onClick={() => void decideResults('ACCEPT')}>
-                  Accept results
+                  {t('myWork.deliveryResultsAcceptanceQueue.acceptResults', 'Accept results')}
                 </button>
               </div>
             )

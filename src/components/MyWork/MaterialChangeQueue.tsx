@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -52,13 +53,27 @@ interface Row extends TableRow {
   status: string;
   source: Change;
 }
-const columns: TableColumn[] = [
-  { id: 'target', label: 'Versioned target', sortable: true },
-  { id: 'classification', label: 'Classification', sortable: true },
-  { id: 'authority', label: 'Authority', sortable: true },
-  { id: 'status', label: 'Status', sortable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'target',
+    label: t('myWork.materialChangeQueue.columnVersionedTarget', 'Versioned target'),
+    sortable: true,
+  },
+  {
+    id: 'classification',
+    label: t('myWork.materialChangeQueue.columnClassification', 'Classification'),
+    sortable: true,
+  },
+  {
+    id: 'authority',
+    label: t('myWork.materialChangeQueue.columnAuthority', 'Authority'),
+    sortable: true,
+  },
+  { id: 'status', label: t('myWork.materialChangeQueue.columnStatus', 'Status'), sortable: true },
 ];
 export const MaterialChangeQueue = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [items, setItems] = useState<Change[]>([]),
     [selectedId, setSelectedId] = useState<string | null>(null),
@@ -84,14 +99,16 @@ export const MaterialChangeQueue = () => {
     () =>
       items.map((x) => ({
         id: x.proposalId,
-        title: `Material Change ${x.proposalId}`,
+        title: t('myWork.materialChangeQueue.rowTitle', 'Material Change {{proposalId}}', {
+          proposalId: x.proposalId,
+        }),
         target: `${x.target.kind} · ${x.target.initiativeId ?? x.target.aggregateId}:${x.target.cardKey ?? ''} v${x.target.version}`,
         classification: x.classification,
         authority: x.authorityId,
         status: x.status,
         source: x,
       })),
-    [items]
+    [items, t]
   );
   const selected = rows.find((x) => x.id === selectedId) ?? null;
   const act = async (
@@ -128,41 +145,57 @@ export const MaterialChangeQueue = () => {
       setWrite(e instanceof RuntimeApiError && e.status === 409 ? 'CONFLICT' : 'FAILED');
     }
   };
+  const materialChangesLabel = t('myWork.materialChangeQueue.title', 'Material Changes');
   if (state === 'LOADING')
     return (
-      <section aria-label="Material Changes" role="status" className="p-4">
-        Loading material changes
+      <section aria-label={materialChangesLabel} role="status" className="p-4">
+        {t('myWork.materialChangeQueue.loading', 'Loading material changes')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Material Changes" role="alert" className="p-4">
-        Material changes unavailable.{' '}
+      <section aria-label={materialChangesLabel} role="alert" className="p-4">
+        {t('myWork.materialChangeQueue.unavailable', 'Material changes unavailable.')}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
-          Retry
+          {t('myWork.materialChangeQueue.retry', 'Retry')}
         </button>
       </section>
     );
   if (!rows.length && !receipt) return null;
   return (
-    <section aria-label="Material Changes" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">Material Change decisions</h3>
+    <section aria-label={materialChangesLabel} className="border-b border-c-border p-4">
+      <h3 className="font-semibold">
+        {t('myWork.materialChangeQueue.decisionsTitle', 'Material Change decisions')}
+      </h3>
       <p className="text-xs text-c-text-muted">
-        Approved truth and baselines change only through exact, independently reviewed proposals.
+        {t(
+          'myWork.materialChangeQueue.subtitle',
+          'Approved truth and baselines change only through exact, independently reviewed proposals.'
+        )}
       </p>
       {receipt && (
         <p role="status" className="my-2 rounded border border-c-success/40 p-3">
-          Proposal {String(receipt.proposalId)} · {String(receipt.action)}
+          {t('myWork.materialChangeQueue.receiptProposal', 'Proposal {{proposalId}} · {{action}}', {
+            proposalId: String(receipt.proposalId),
+            action: String(receipt.action),
+          })}
           {receipt.targetVersion
-            ? ` · published v${String(receipt.targetVersion)}; previous v${String(receipt.oldVersion)} remains in history`
+            ? t(
+                'myWork.materialChangeQueue.receiptPublished',
+                ' · published v{{targetVersion}}; previous v{{oldVersion}} remains in history',
+                {
+                  targetVersion: String(receipt.targetVersion),
+                  oldVersion: String(receipt.oldVersion),
+                }
+              )
             : ''}
         </p>
       )}
       {(write === 'CONFLICT' || write === 'FAILED') && (
         <p role="alert" className="text-c-danger">
           {write === 'CONFLICT'
-            ? 'Target is stale. Reload; publishing is blocked.'
-            : 'No transition was saved.'}
+            ? t('myWork.materialChangeQueue.conflict', 'Target is stale. Reload; publishing is blocked.')
+            : t('myWork.materialChangeQueue.failed', 'No transition was saved.')}
         </p>
       )}
       {rows.length > 0 && (
@@ -174,23 +207,41 @@ export const MaterialChangeQueue = () => {
           itemIds={rows.map((x) => x.id)}
           getItemById={(id) => rows.find((x) => x.id === id) ?? null}
           renderPreview={(row) => (
-            <div className="space-y-3 p-4 text-sm" aria-label="Material Change Workbench">
-              <p>Proposal {row.id}</p>
+            <div
+              className="space-y-3 p-4 text-sm"
+              aria-label={t('myWork.materialChangeQueue.workbenchAriaLabel', 'Material Change Workbench')}
+            >
+              <p>{t('myWork.materialChangeQueue.proposal', 'Proposal {{id}}', { id: row.id })}</p>
               <p>{row.target}</p>
               <p>
-                Old hash <code>{row.source.oldHash}</code>
+                {t('myWork.materialChangeQueue.oldHash', 'Old hash')} <code>{row.source.oldHash}</code>
               </p>
               <p>
-                New hash <code>{row.source.newHash}</code>
+                {t('myWork.materialChangeQueue.newHash', 'New hash')} <code>{row.source.newHash}</code>
               </p>
               <p>
-                Tolerance {row.source.tolerance.policyRef} v{row.source.tolerance.policyVersion} ·{' '}
-                {row.source.tolerance.withinTolerance ? 'within' : 'outside'} ·{' '}
-                {row.source.tolerance.rationale}
+                {t(
+                  'myWork.materialChangeQueue.tolerance',
+                  'Tolerance {{ref}} v{{version}} · {{withinLabel}} · {{rationale}}',
+                  {
+                    ref: row.source.tolerance.policyRef,
+                    version: row.source.tolerance.policyVersion,
+                    withinLabel: row.source.tolerance.withinTolerance
+                      ? t('myWork.materialChangeQueue.within', 'within')
+                      : t('myWork.materialChangeQueue.outside', 'outside'),
+                    rationale: row.source.tolerance.rationale,
+                  }
+                )}
               </p>
-              <p>Reversibility {row.source.reversibility}</p>
+              <p>
+                {t('myWork.materialChangeQueue.reversibility', 'Reversibility {{value}}', {
+                  value: row.source.reversibility,
+                })}
+              </p>
               <section>
-                <h4 className="font-medium">Exact old → proposed truth</h4>
+                <h4 className="font-medium">
+                  {t('myWork.materialChangeQueue.oldToProposedTruth', 'Exact old → proposed truth')}
+                </h4>
                 {row.source.diff.map((d) => (
                   <div
                     key={d.path}
@@ -203,7 +254,9 @@ export const MaterialChangeQueue = () => {
                 ))}
               </section>
               <section>
-                <h4 className="font-medium">Complete blast radius</h4>
+                <h4 className="font-medium">
+                  {t('myWork.materialChangeQueue.completeBlastRadius', 'Complete blast radius')}
+                </h4>
                 {Object.entries(row.source.blastRadius).map(([kind, impact]) => (
                   <p key={kind}>
                     {kind}: {impact.knowledgeState} ·{' '}
@@ -214,26 +267,39 @@ export const MaterialChangeQueue = () => {
               </section>
               {row.source.target.kind !== 'INITIATIVE_CARD' && (
                 <p>
-                  Context: open canonical{' '}
-                  {row.source.target.kind === 'PLANNING_BASELINE' ? 'Plan' : 'Execution Case'}{' '}
-                  workspace. This queue never shadow-edits its baseline.
+                  {t(
+                    'myWork.materialChangeQueue.contextOpenCanonical',
+                    'Context: open canonical {{workspace}} workspace. This queue never shadow-edits its baseline.',
+                    {
+                      workspace:
+                        row.source.target.kind === 'PLANNING_BASELINE'
+                          ? t('myWork.materialChangeQueue.planWorkspace', 'Plan')
+                          : t('myWork.materialChangeQueue.executionCaseWorkspace', 'Execution Case'),
+                    }
+                  )}
                 </p>
               )}
               {row.source.status === 'PENDING' && (
                 <>
                   <label className="block">
-                    Decision rationale
+                    {t('myWork.materialChangeQueue.decisionRationale', 'Decision rationale')}
                     <textarea
-                      aria-label="Material change rationale"
+                      aria-label={t(
+                        'myWork.materialChangeQueue.decisionRationaleAriaLabel',
+                        'Material change rationale'
+                      )}
                       value={rationale}
                       onChange={(e) => setRationale(e.target.value)}
                       className="block w-full rounded border border-c-border bg-c-surface p-2"
                     />
                   </label>
                   <label className="block">
-                    Conditions
+                    {t('myWork.materialChangeQueue.conditions', 'Conditions')}
                     <textarea
-                      aria-label="Material change conditions"
+                      aria-label={t(
+                        'myWork.materialChangeQueue.conditionsAriaLabel',
+                        'Material change conditions'
+                      )}
                       value={conditions}
                       onChange={(e) => setConditions(e.target.value)}
                       className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -247,31 +313,31 @@ export const MaterialChangeQueue = () => {
             <div className="flex flex-wrap gap-2 p-3">
               {row.source.status === 'DRAFT' && (
                 <button className="btn-primary" onClick={() => void act('REQUEST')}>
-                  Request independent review
+                  {t('myWork.materialChangeQueue.requestReview', 'Request independent review')}
                 </button>
               )}
               {row.source.status === 'PENDING' && (
                 <>
                   <button className="btn-secondary" onClick={() => void act('DECIDE', 'REJECT')}>
-                    Reject
+                    {t('myWork.materialChangeQueue.reject', 'Reject')}
                   </button>
                   <button className="btn-secondary" onClick={() => void act('DECIDE', 'RETURN')}>
-                    Return
+                    {t('myWork.materialChangeQueue.return', 'Return')}
                   </button>
                   <button
                     className="btn-secondary"
                     onClick={() => void act('DECIDE', 'CONDITIONAL')}
                   >
-                    Approve conditionally
+                    {t('myWork.materialChangeQueue.approveConditionally', 'Approve conditionally')}
                   </button>
                   <button className="btn-primary" onClick={() => void act('DECIDE', 'APPROVE')}>
-                    Approve
+                    {t('myWork.materialChangeQueue.approve', 'Approve')}
                   </button>
                 </>
               )}
               {['APPROVED', 'CONDITIONALLY_APPROVED'].includes(row.source.status) && (
                 <button className="btn-primary" onClick={() => void act('PUBLISH')}>
-                  Publish approved change
+                  {t('myWork.materialChangeQueue.publishApprovedChange', 'Publish approved change')}
                 </button>
               )}
             </div>

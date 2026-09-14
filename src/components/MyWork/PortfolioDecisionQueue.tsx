@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -50,12 +51,30 @@ interface PortfolioRow extends TableRow {
   source: PendingPortfolioDecision;
 }
 
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Decision', sortable: true, width: '220px' },
-  { id: 'initiativeId', label: 'Initiative', sortable: true },
-  { id: 'scenario', label: 'Scenario snapshot', sortable: true },
-  { id: 'disposition', label: 'Proposed disposition', sortable: true, filterable: true },
-  { id: 'dueAt', label: 'Due', sortable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'title',
+    label: t('myWork.portfolioDecisionQueue.columnDecision', 'Decision'),
+    sortable: true,
+    width: '220px',
+  },
+  {
+    id: 'initiativeId',
+    label: t('myWork.portfolioDecisionQueue.columnInitiative', 'Initiative'),
+    sortable: true,
+  },
+  {
+    id: 'scenario',
+    label: t('myWork.portfolioDecisionQueue.columnScenarioSnapshot', 'Scenario snapshot'),
+    sortable: true,
+  },
+  {
+    id: 'disposition',
+    label: t('myWork.portfolioDecisionQueue.columnProposedDisposition', 'Proposed disposition'),
+    sortable: true,
+    filterable: true,
+  },
+  { id: 'dueAt', label: t('myWork.portfolioDecisionQueue.columnDue', 'Due'), sortable: true },
 ];
 
 function normalizeList(body: unknown): PendingPortfolioDecision[] {
@@ -74,6 +93,8 @@ function text(value: unknown) {
 }
 
 export const PortfolioDecisionQueue: React.FC = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [decisions, setDecisions] = useState<PendingPortfolioDecision[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -105,14 +126,14 @@ export const PortfolioDecisionQueue: React.FC = () => {
     () =>
       decisions.map((decision) => ({
         id: decision.decisionId,
-        title: 'Portfolio Decision',
+        title: t('myWork.portfolioDecisionQueue.rowTitle', 'Portfolio Decision'),
         initiativeId: decision.initiativeId,
         scenario: `${decision.scenarioId} · v${decision.scenarioVersion}`,
         disposition: text(decision.membershipSnapshot.disposition),
         dueAt: decision.dueAt,
         source: decision,
       })),
-    [decisions]
+    [decisions, t]
   );
   const selected = rows.find((row) => row.id === selectedId) ?? null;
   const gateGuard = useGateSignoffGuard('PORTFOLIO', selectedId);
@@ -153,8 +174,19 @@ export const PortfolioDecisionQueue: React.FC = () => {
       const approved = outcome === 'APPROVED' || outcome === 'CONDITIONALLY_APPROVED';
       setReceipt(
         approved
-          ? `${result.response?.status ?? outcome} · lifecycle readback ${result.mutation?.lifecycleState ?? 'APPROVED_BACKLOG'}`
-          : `${result.response?.status ?? outcome} · lifecycle remains READY_FOR_DECISION`
+          ? t(
+              'myWork.portfolioDecisionQueue.receiptApproved',
+              '{{status}} · lifecycle readback {{lifecycleState}}',
+              {
+                status: result.response?.status ?? outcome,
+                lifecycleState: result.mutation?.lifecycleState ?? 'APPROVED_BACKLOG',
+              }
+            )
+          : t(
+              'myWork.portfolioDecisionQueue.receiptOther',
+              '{{status}} · lifecycle remains READY_FOR_DECISION',
+              { status: result.response?.status ?? outcome }
+            )
       );
       setRationale('');
       setConditions('');
@@ -168,24 +200,30 @@ export const PortfolioDecisionQueue: React.FC = () => {
     }
   };
 
+  const portfolioDecisionsLabel = t(
+    'myWork.portfolioDecisionQueue.title',
+    'Portfolio decisions'
+  );
+
   if (state === 'LOADING')
     return (
-      <section aria-label="Portfolio decisions" className="p-4">
+      <section aria-label={portfolioDecisionsLabel} className="p-4">
         <div role="status" className="flex items-center gap-2 text-sm text-c-text-muted">
-          <Loader2 aria-hidden="true" className="animate-spin" size={16} /> Loading Portfolio
-          decisions
+          <Loader2 aria-hidden="true" className="animate-spin" size={16} />{' '}
+          {t('myWork.portfolioDecisionQueue.loading', 'Loading Portfolio decisions')}
         </div>
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Portfolio decisions" className="p-4">
+      <section aria-label={portfolioDecisionsLabel} className="p-4">
         <div role="alert" className="flex items-center justify-between gap-3 text-sm text-c-danger">
           <span className="flex items-center gap-2">
-            <AlertTriangle aria-hidden="true" size={16} /> Portfolio decisions are unavailable.
+            <AlertTriangle aria-hidden="true" size={16} />{' '}
+            {t('myWork.portfolioDecisionQueue.unavailable', 'Portfolio decisions are unavailable.')}
           </span>
           <button type="button" className="btn-secondary" onClick={() => void load()}>
-            Retry
+            {t('myWork.portfolioDecisionQueue.retry', 'Retry')}
           </button>
         </div>
       </section>
@@ -193,11 +231,16 @@ export const PortfolioDecisionQueue: React.FC = () => {
   if (!rows.length && !receipt) return null;
 
   return (
-    <section aria-label="Portfolio decisions" className="border-b border-c-border">
+    <section aria-label={portfolioDecisionsLabel} className="border-b border-c-border">
       <div className="px-4 pt-3">
-        <h3 className="font-semibold text-c-text-primary">Portfolio decisions waiting on you</h3>
+        <h3 className="font-semibold text-c-text-primary">
+          {t('myWork.portfolioDecisionQueue.waitingOnYou', 'Portfolio decisions waiting on you')}
+        </h3>
         <p className="text-xs text-c-text-muted">
-          One Initiative and one frozen Portfolio Scenario snapshot per independent decision.
+          {t(
+            'myWork.portfolioDecisionQueue.subtitle',
+            'One Initiative and one frozen Portfolio Scenario snapshot per independent decision.'
+          )}
         </p>
       </div>
       {receipt && (
@@ -208,8 +251,14 @@ export const PortfolioDecisionQueue: React.FC = () => {
       {(writeState === 'CONFLICT' || writeState === 'FAILED') && (
         <div role="alert" className="mx-4 mt-2 text-sm text-c-danger">
           {writeState === 'CONFLICT'
-            ? 'The Initiative or Portfolio Scenario changed. Reload before deciding.'
-            : 'The Portfolio Decision was not changed.'}
+            ? t(
+                'myWork.portfolioDecisionQueue.conflict',
+                'The Initiative or Portfolio Scenario changed. Reload before deciding.'
+              )
+            : t(
+                'myWork.portfolioDecisionQueue.failed',
+                'The Portfolio Decision was not changed.'
+              )}
         </div>
       )}
       <TableWithPreviewLayout<PortfolioRow>
@@ -225,35 +274,53 @@ export const PortfolioDecisionQueue: React.FC = () => {
             <div className="space-y-4 p-4 text-sm">
               <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-c-text-muted">Canonical Decision ID</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.portfolioDecisionQueue.canonicalDecisionId', 'Canonical Decision ID')}
+                  </dt>
                   <dd>{row.id}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Initiative snapshot</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.portfolioDecisionQueue.initiativeSnapshot', 'Initiative snapshot')}
+                  </dt>
                   <dd>
                     {row.initiativeId} · v{row.source.initiativeVersion}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Scenario snapshot</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.portfolioDecisionQueue.scenarioSnapshot', 'Scenario snapshot')}
+                  </dt>
                   <dd>{row.scenario}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Due / requester</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.portfolioDecisionQueue.dueRequester', 'Due / requester')}
+                  </dt>
                   <dd>
                     {row.dueAt} · {row.source.requesterId}
                   </dd>
                 </div>
                 <div className="col-span-2">
-                  <dt className="text-c-text-muted">Frozen Card versions</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.portfolioDecisionQueue.frozenCardVersions', 'Frozen Card versions')}
+                  </dt>
                   <dd className="break-all">{JSON.stringify(row.source.cardVersions)}</dd>
                 </div>
               </dl>
               <section
-                aria-label="Membership snapshot"
+                aria-label={t(
+                  'myWork.portfolioDecisionQueue.membershipSnapshotAriaLabel',
+                  'Membership snapshot'
+                )}
                 className="rounded-md border border-c-border p-3"
               >
-                <h4 className="font-medium">Frozen membership snapshot</h4>
+                <h4 className="font-medium">
+                  {t(
+                    'myWork.portfolioDecisionQueue.frozenMembershipSnapshot',
+                    'Frozen membership snapshot'
+                  )}
+                </h4>
                 <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {['disposition', 'rank', 'rankOverride', 'confidence', 'rationale'].map((key) => (
                     <div key={key}>
@@ -263,7 +330,9 @@ export const PortfolioDecisionQueue: React.FC = () => {
                   ))}
                 </dl>
                 <details className="mt-3">
-                  <summary>Exact snapshot JSON</summary>
+                  <summary>
+                    {t('myWork.portfolioDecisionQueue.exactSnapshotJson', 'Exact snapshot JSON')}
+                  </summary>
                   <pre className="mt-2 overflow-auto whitespace-pre-wrap text-xs">
                     {JSON.stringify(membership, null, 2)}
                   </pre>
@@ -274,24 +343,39 @@ export const PortfolioDecisionQueue: React.FC = () => {
                   role="alert"
                   className="rounded-md border border-c-warning/40 bg-c-warning/10 p-3 text-c-warning"
                 >
-                  Governance projection is unavailable. Decision is fail-closed.
+                  {t(
+                    'myWork.portfolioDecisionQueue.governanceUnavailable',
+                    'Governance projection is unavailable. Decision is fail-closed.'
+                  )}
                 </div>
               ) : !quorumRef ? (
                 <div
                   role="alert"
                   className="rounded-md border border-c-warning/40 bg-c-warning/10 p-3 text-c-warning"
                 >
-                  Required Gate Signoff quorum is not satisfied.
+                  {t(
+                    'myWork.portfolioDecisionQueue.quorumNotSatisfied',
+                    'Required Gate Signoff quorum is not satisfied.'
+                  )}
                 </div>
               ) : quorumRef ? (
                 <div className="rounded-md border border-c-border p-3">
-                  Satisfied quorum: {quorumRef.quorumId} · v{quorumRef.version}
+                  {t(
+                    'myWork.portfolioDecisionQueue.satisfiedQuorum',
+                    'Satisfied quorum: {{quorumId}} · v{{version}}',
+                    { quorumId: quorumRef.quorumId, version: quorumRef.version }
+                  )}
                 </div>
               ) : null}
               <label className="block">
-                <span className="mb-1 block text-c-text-muted">Portfolio outcome</span>
+                <span className="mb-1 block text-c-text-muted">
+                  {t('myWork.portfolioDecisionQueue.portfolioOutcome', 'Portfolio outcome')}
+                </span>
                 <select
-                  aria-label="Portfolio outcome"
+                  aria-label={t(
+                    'myWork.portfolioDecisionQueue.portfolioOutcomeAriaLabel',
+                    'Portfolio outcome'
+                  )}
                   className="w-full rounded-md border border-c-border bg-c-surface p-2"
                   value={outcome}
                   onChange={(event) => setOutcome(event.target.value as PortfolioOutcome)}
@@ -312,9 +396,17 @@ export const PortfolioDecisionQueue: React.FC = () => {
               </label>
               {outcome === 'CONDITIONALLY_APPROVED' && (
                 <label className="block">
-                  <span className="mb-1 block text-c-text-muted">Conditions (one per line)</span>
+                  <span className="mb-1 block text-c-text-muted">
+                    {t(
+                      'myWork.portfolioDecisionQueue.conditionsOnePerLine',
+                      'Conditions (one per line)'
+                    )}
+                  </span>
                   <textarea
-                    aria-label="Portfolio conditions"
+                    aria-label={t(
+                      'myWork.portfolioDecisionQueue.portfolioConditionsAriaLabel',
+                      'Portfolio conditions'
+                    )}
                     className="min-h-20 w-full rounded-md border border-c-border bg-c-surface p-2"
                     value={conditions}
                     onChange={(event) => setConditions(event.target.value)}
@@ -323,9 +415,17 @@ export const PortfolioDecisionQueue: React.FC = () => {
               )}
               {outcome === 'MERGED' && (
                 <label className="block">
-                  <span className="mb-1 block text-c-text-muted">Merge target Initiative ID</span>
+                  <span className="mb-1 block text-c-text-muted">
+                    {t(
+                      'myWork.portfolioDecisionQueue.mergeTargetInitiativeId',
+                      'Merge target Initiative ID'
+                    )}
+                  </span>
                   <input
-                    aria-label="Merge target Initiative ID"
+                    aria-label={t(
+                      'myWork.portfolioDecisionQueue.mergeTargetInitiativeIdAriaLabel',
+                      'Merge target Initiative ID'
+                    )}
                     className="w-full rounded-md border border-c-border bg-c-surface p-2"
                     value={mergeTarget}
                     onChange={(event) => setMergeTarget(event.target.value)}
@@ -333,9 +433,17 @@ export const PortfolioDecisionQueue: React.FC = () => {
                 </label>
               )}
               <label className="block">
-                <span className="mb-1 block text-c-text-muted">Portfolio Decision rationale</span>
+                <span className="mb-1 block text-c-text-muted">
+                  {t(
+                    'myWork.portfolioDecisionQueue.portfolioDecisionRationale',
+                    'Portfolio Decision rationale'
+                  )}
+                </span>
                 <textarea
-                  aria-label="Portfolio Decision rationale"
+                  aria-label={t(
+                    'myWork.portfolioDecisionQueue.portfolioDecisionRationaleAriaLabel',
+                    'Portfolio Decision rationale'
+                  )}
                   className="min-h-24 w-full rounded-md border border-c-border bg-c-surface p-2"
                   value={rationale}
                   onChange={(event) => setRationale(event.target.value)}
@@ -358,7 +466,7 @@ export const PortfolioDecisionQueue: React.FC = () => {
               }
               onClick={() => void decide()}
             >
-              Record Portfolio Decision
+              {t('myWork.portfolioDecisionQueue.recordDecision', 'Record Portfolio Decision')}
             </button>
           </div>
         )}

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import {
   type ActionContext,
@@ -39,13 +40,39 @@ interface ClosureRow extends TableRow {
   version: number;
   source: any;
 }
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Closure Case', sortable: true, width: '240px' },
-  { id: 'initiative', label: 'Initiative', sortable: true },
-  { id: 'executionCase', label: 'Execution Case', sortable: true },
-  { id: 'snapshot', label: 'Effectiveness Snapshot', sortable: true },
-  { id: 'authority', label: 'Independent authority', sortable: true },
-  { id: 'status', label: 'Status', sortable: true, filterable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'title',
+    label: t('myWork.closureDecisionQueue.columnClosureCase', 'Closure Case'),
+    sortable: true,
+    width: '240px',
+  },
+  {
+    id: 'initiative',
+    label: t('myWork.closureDecisionQueue.columnInitiative', 'Initiative'),
+    sortable: true,
+  },
+  {
+    id: 'executionCase',
+    label: t('myWork.closureDecisionQueue.columnExecutionCase', 'Execution Case'),
+    sortable: true,
+  },
+  {
+    id: 'snapshot',
+    label: t('myWork.closureDecisionQueue.columnEffectivenessSnapshot', 'Effectiveness Snapshot'),
+    sortable: true,
+  },
+  {
+    id: 'authority',
+    label: t('myWork.closureDecisionQueue.columnIndependentAuthority', 'Independent authority'),
+    sortable: true,
+  },
+  {
+    id: 'status',
+    label: t('myWork.closureDecisionQueue.columnStatus', 'Status'),
+    sortable: true,
+    filterable: true,
+  },
 ];
 const lines = (value: string) =>
   value
@@ -59,6 +86,8 @@ const refs = (value: string) =>
   });
 
 export const ClosureDecisionQueue = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [rows, setRows] = useState<ClosureRow[]>([]);
   const [effectiveness, setEffectiveness] = useState<any[]>([]);
@@ -287,24 +316,28 @@ export const ClosureDecisionQueue = () => {
     }
   };
 
+  const closureCasesLabel = t('myWork.closureDecisionQueue.title', 'Closure Cases');
+
   if (state === 'LOADING')
     return (
-      <section aria-label="Closure Cases" role="status">
-        Loading Closure Cases
+      <section aria-label={closureCasesLabel} role="status">
+        {t('myWork.closureDecisionQueue.loading', 'Loading Closure Cases')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Closure Cases" role="alert">
-        Closure Cases unavailable.
+      <section aria-label={closureCasesLabel} role="alert">
+        {t('myWork.closureDecisionQueue.unavailable', 'Closure Cases unavailable.')}
       </section>
     );
   return (
-    <section aria-label="Closure Cases" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">Closure Cases</h3>
+    <section aria-label={closureCasesLabel} className="border-b border-c-border p-4">
+      <h3 className="font-semibold">{closureCasesLabel}</h3>
       <p className="text-xs text-c-text-muted">
-        Independent Closure decision after immutable Effectiveness Snapshot. Archive remains
-        separate.
+        {t(
+          'myWork.closureDecisionQueue.subtitle',
+          'Independent Closure decision after immutable Effectiveness Snapshot. Archive remains separate.'
+        )}
       </p>
       <TableWithPreviewLayout<ClosureRow>
         selectedId={selectedId}
@@ -316,34 +349,65 @@ export const ClosureDecisionQueue = () => {
         renderPreview={(row) => (
           <div className="space-y-2 p-4 text-sm">
             <p>
-              Closure Case {row.id} v{row.version}
-            </p>
-            <p>Effectiveness Snapshot {row.snapshot}</p>
-            <p>
-              Initiative {row.initiative} · Execution Case {row.executionCase}
-            </p>
-            <p>Lessons {row.source.lessons.join(', ')}</p>
-            <p>
-              Lineage{' '}
-              {row.source.lineageRefs.map((ref: any) => `${ref.ref} v${ref.version}`).join(', ')}
+              {t('myWork.closureDecisionQueue.previewClosureCase', 'Closure Case {{id}} v{{version}}', {
+                id: row.id,
+                version: row.version,
+              })}
             </p>
             <p>
-              Follow-ups{' '}
-              {row.source.followUps
-                .map((item: any) =>
-                  item.kind === 'TASK_REF'
-                    ? `${item.taskId} v${item.version}`
-                    : `${item.itemId} · ${item.ownerId} · ${item.dueAt}`
-                )
-                .join(', ')}
+              {t('myWork.closureDecisionQueue.previewEffectivenessSnapshot', 'Effectiveness Snapshot {{snapshot}}', {
+                snapshot: row.snapshot,
+              })}
             </p>
             <p>
-              Retention {row.source.retention.classification} · {row.source.retention.policyRef.ref}{' '}
-              v{row.source.retention.policyRef.version} · legal hold{' '}
-              {String(row.source.retention.legalHold)}
+              {t(
+                'myWork.closureDecisionQueue.previewInitiativeExecution',
+                'Initiative {{initiative}} · Execution Case {{executionCase}}',
+                { initiative: row.initiative, executionCase: row.executionCase }
+              )}
+            </p>
+            <p>
+              {t('myWork.closureDecisionQueue.previewLessons', 'Lessons {{lessons}}', {
+                lessons: row.source.lessons.join(', '),
+              })}
+            </p>
+            <p>
+              {t('myWork.closureDecisionQueue.previewLineage', 'Lineage {{lineage}}', {
+                lineage: row.source.lineageRefs
+                  .map((ref: any) => `${ref.ref} v${ref.version}`)
+                  .join(', '),
+              })}
+            </p>
+            <p>
+              {t('myWork.closureDecisionQueue.previewFollowUps', 'Follow-ups {{followUps}}', {
+                followUps: row.source.followUps
+                  .map((item: any) =>
+                    item.kind === 'TASK_REF'
+                      ? `${item.taskId} v${item.version}`
+                      : `${item.itemId} · ${item.ownerId} · ${item.dueAt}`
+                  )
+                  .join(', '),
+              })}
+            </p>
+            <p>
+              {t(
+                'myWork.closureDecisionQueue.previewRetention',
+                'Retention {{classification}} · {{ref}} v{{version}} · legal hold {{legalHold}}',
+                {
+                  classification: row.source.retention.classification,
+                  ref: row.source.retention.policyRef.ref,
+                  version: row.source.retention.policyRef.version,
+                  legalHold: String(row.source.retention.legalHold),
+                }
+              )}
             </p>
             {policyEnforced && !gate.quorumRef && (
-              <p role="alert">CLOSURE GateSignoff quorum is not satisfied.</p>
+              <p role="alert">
+                {t(
+                  'myWork.closureDecisionQueue.quorumNotSatisfied',
+                  'CLOSURE GateSignoff quorum is not satisfied.'
+                )}
+              </p>
             )}
           </div>
         )}
@@ -357,21 +421,31 @@ export const ClosureDecisionQueue = () => {
         />
       </TableWithPreviewLayout>
       <section
-        aria-label="Closure request workbench"
+        aria-label={t('myWork.closureDecisionQueue.requestWorkbenchAriaLabel', 'Closure request workbench')}
         className="mt-4 rounded border border-c-border p-4"
       >
-        <h4 className="font-medium">Request Closure Case</h4>
+        <h4 className="font-medium">
+          {t('myWork.closureDecisionQueue.requestTitle', 'Request Closure Case')}
+        </h4>
         <label className="text-xs">
-          Reviewed Effectiveness
+          {t('myWork.closureDecisionQueue.reviewedEffectiveness', 'Reviewed Effectiveness')}
           <select
-            aria-label="Closure Effectiveness Case"
+            aria-label={t(
+              'myWork.closureDecisionQueue.effectivenessCaseAriaLabel',
+              'Closure Effectiveness Case'
+            )}
             value={request.effectivenessCaseId}
             onChange={(event) =>
               setRequest((current) => ({ ...current, effectivenessCaseId: event.target.value }))
             }
             className="block w-full rounded border border-c-border bg-c-surface p-2"
           >
-            <option value="">Select immutable Effectiveness Snapshot</option>
+            <option value="">
+              {t(
+                'myWork.closureDecisionQueue.selectEffectivenessSnapshot',
+                'Select immutable Effectiveness Snapshot'
+              )}
+            </option>
             {effectiveness.map((item) => (
               <option key={item.effectivenessCaseId} value={item.effectivenessCaseId}>
                 {item.effectivenessCaseId} · {item.effectivenessSnapshotId} · {item.reviewOutcome}
@@ -386,7 +460,11 @@ export const ClosureDecisionQueue = () => {
               <label key={key} className="text-xs">
                 {key}
                 <input
-                  aria-label={`Closure request ${key}`}
+                  aria-label={t(
+                    'myWork.closureDecisionQueue.requestFieldAriaLabel',
+                    'Closure request {{field}}',
+                    { field: key }
+                  )}
                   type={key === 'followUpDueAt' ? 'datetime-local' : 'text'}
                   value={String(request[key as keyof typeof request])}
                   onChange={(event) =>
@@ -398,30 +476,36 @@ export const ClosureDecisionQueue = () => {
             ))}
           <label className="text-xs">
             <input
-              aria-label="Closure request legalHold"
+              aria-label={t(
+                'myWork.closureDecisionQueue.requestLegalHoldAriaLabel',
+                'Closure request legalHold'
+              )}
               type="checkbox"
               checked={request.legalHold}
               onChange={(event) =>
                 setRequest((current) => ({ ...current, legalHold: event.target.checked }))
               }
             />{' '}
-            Legal hold
+            {t('myWork.closureDecisionQueue.legalHoldLabel', 'Legal hold')}
           </label>
         </div>
         <button
           className="btn-secondary mt-3"
           onClick={() => runAction('closure.request.submit', () => void submitRequest())}
         >
-          Request independent Closure
+          {t('myWork.closureDecisionQueue.requestSubmit', 'Request independent Closure')}
         </button>
       </section>
       {selected?.status === 'PENDING' && (
         <section
-          aria-label="Closure decision workbench"
+          aria-label={t(
+            'myWork.closureDecisionQueue.decisionWorkbenchAriaLabel',
+            'Closure decision workbench'
+          )}
           className="mt-4 rounded border border-c-border p-4"
         >
           <select
-            aria-label="Closure outcome"
+            aria-label={t('myWork.closureDecisionQueue.outcomeAriaLabel', 'Closure outcome')}
             value={decision.outcome}
             onChange={(event) =>
               setDecision((current) => ({ ...current, outcome: event.target.value }))
@@ -433,7 +517,7 @@ export const ClosureDecisionQueue = () => {
             ))}
           </select>
           <textarea
-            aria-label="Closure rationale"
+            aria-label={t('myWork.closureDecisionQueue.rationaleAriaLabel', 'Closure rationale')}
             value={decision.rationale}
             onChange={(event) =>
               setDecision((current) => ({ ...current, rationale: event.target.value }))
@@ -442,7 +526,7 @@ export const ClosureDecisionQueue = () => {
           />
           {decision.outcome === 'CLOSE' && (
             <input
-              aria-label="Closure Snapshot ID"
+              aria-label={t('myWork.closureDecisionQueue.snapshotIdAriaLabel', 'Closure Snapshot ID')}
               value={decision.snapshotId}
               onChange={(event) =>
                 setDecision((current) => ({ ...current, snapshotId: event.target.value }))
@@ -459,27 +543,39 @@ export const ClosureDecisionQueue = () => {
             }
             onClick={() => void decide()}
           >
-            Decide Closure
+            {t('myWork.closureDecisionQueue.decide', 'Decide Closure')}
           </button>
         </section>
       )}
       {selected?.status === 'CLOSED' && (
-        <section aria-label="Archive workbench" className="mt-4 rounded border border-c-border p-4">
-          <h4 className="font-medium">Archive closed Initiative</h4>
+        <section
+          aria-label={t('myWork.closureDecisionQueue.archiveWorkbenchAriaLabel', 'Archive workbench')}
+          className="mt-4 rounded border border-c-border p-4"
+        >
+          <h4 className="font-medium">
+            {t('myWork.closureDecisionQueue.archiveTitle', 'Archive closed Initiative')}
+          </h4>
           <label className="block text-xs">
             <input
-              aria-label="Legal hold"
+              aria-label={t('myWork.closureDecisionQueue.legalHoldAriaLabel', 'Legal hold')}
               type="checkbox"
               checked={legalHold}
               onChange={(event) => setLegalHold(event.target.checked)}
             />{' '}
-            Active legal hold
+            {t('myWork.closureDecisionQueue.activeLegalHold', 'Active legal hold')}
           </label>
-          {legalHold && <p role="alert">Archive blocked: active legal hold.</p>}
+          {legalHold && (
+            <p role="alert">
+              {t('myWork.closureDecisionQueue.archiveBlocked', 'Archive blocked: active legal hold.')}
+            </p>
+          )}
           <label className="mt-2 block text-xs">
-            Retention policy ref
+            {t('myWork.closureDecisionQueue.retentionPolicyRef', 'Retention policy ref')}
             <input
-              aria-label="Retention policy ref"
+              aria-label={t(
+                'myWork.closureDecisionQueue.retentionPolicyRefAriaLabel',
+                'Retention policy ref'
+              )}
               value={archive.retentionRef}
               onChange={(event) =>
                 setArchive((current) => ({ ...current, retentionRef: event.target.value }))
@@ -488,9 +584,9 @@ export const ClosureDecisionQueue = () => {
             />
           </label>
           <label className="mt-2 block text-xs">
-            Export ref
+            {t('myWork.closureDecisionQueue.exportRef', 'Export ref')}
             <input
-              aria-label="Archive export ref"
+              aria-label={t('myWork.closureDecisionQueue.exportRefAriaLabel', 'Archive export ref')}
               value={archive.exportRef}
               onChange={(event) =>
                 setArchive((current) => ({ ...current, exportRef: event.target.value }))
@@ -503,20 +599,24 @@ export const ClosureDecisionQueue = () => {
             disabled={legalHold || !archive.retentionRef || !archive.exportRef}
             onClick={() => runAction('closure.archive.create', () => void archiveSelected())}
           >
-            Create Archive Manifest
+            {t('myWork.closureDecisionQueue.createArchiveManifest', 'Create Archive Manifest')}
           </button>
         </section>
       )}
       {receipt && (
         <div role="status" className="mt-3 rounded border border-c-success/40 p-3">
           {receipt.type === 'ARCHIVE'
-            ? `Archive Manifest ${String(receipt.archiveId)} · read-only`
+            ? t('myWork.closureDecisionQueue.receiptArchive', 'Archive Manifest {{id}} · read-only', {
+                id: String(receipt.archiveId),
+              })
             : `${String(receipt.type)} · ${String(receipt.snapshotId ?? receipt.closureCaseId)} · ${String(receipt.status ?? (receipt.type === 'CLOSURE_SNAPSHOT' ? 'CLOSED' : ''))}`}
         </div>
       )}
       {(write === 'CONFLICT' || write === 'FAILED') && (
         <p role="alert">
-          {write === 'CONFLICT' ? 'Closure source changed. Reload.' : 'Closure command failed.'}
+          {write === 'CONFLICT'
+            ? t('myWork.closureDecisionQueue.conflict', 'Closure source changed. Reload.')
+            : t('myWork.closureDecisionQueue.failed', 'Closure command failed.')}
         </p>
       )}
     </section>

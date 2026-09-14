@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -26,16 +27,42 @@ interface GateRow extends TableRow {
   source: GateSignoffProjection;
 }
 
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Sign-off', sortable: true, width: '220px' },
-  { id: 'gate', label: 'Gate', sortable: true, filterable: true },
-  { id: 'initiativeId', label: 'Initiative', sortable: true },
-  { id: 'profile', label: 'Policy profile', sortable: true, filterable: true },
-  { id: 'quorum', label: 'Quorum', sortable: true },
-  { id: 'sla', label: 'SLA', sortable: true, filterable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'title',
+    label: t('myWork.gateSignoffQueue.columnSignOff', 'Sign-off'),
+    sortable: true,
+    width: '220px',
+  },
+  {
+    id: 'gate',
+    label: t('myWork.gateSignoffQueue.columnGate', 'Gate'),
+    sortable: true,
+    filterable: true,
+  },
+  {
+    id: 'initiativeId',
+    label: t('myWork.gateSignoffQueue.columnInitiative', 'Initiative'),
+    sortable: true,
+  },
+  {
+    id: 'profile',
+    label: t('myWork.gateSignoffQueue.columnPolicyProfile', 'Policy profile'),
+    sortable: true,
+    filterable: true,
+  },
+  { id: 'quorum', label: t('myWork.gateSignoffQueue.columnQuorum', 'Quorum'), sortable: true },
+  {
+    id: 'sla',
+    label: t('myWork.gateSignoffQueue.columnSla', 'SLA'),
+    sortable: true,
+    filterable: true,
+  },
 ];
 
 export const GateSignoffQueue: React.FC = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [items, setItems] = useState<GateSignoffProjection[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -67,7 +94,7 @@ export const GateSignoffQueue: React.FC = () => {
     () =>
       items.map((item) => ({
         id: `${item.gate}:${item.decisionId}`,
-        title: 'Gate Sign-off',
+        title: t('myWork.gateSignoffQueue.rowTitle', 'Gate Sign-off'),
         gate: item.gate,
         initiativeId: item.initiativeId,
         profile: item.effectivePolicy.profile,
@@ -75,7 +102,7 @@ export const GateSignoffQueue: React.FC = () => {
         sla: `${item.sla.state} · ${item.sla.hours}h`,
         source: item,
       })),
-    [items]
+    [items, t]
   );
   const selected = rows.find((row) => row.id === selectedId) ?? null;
   const eligibleBindings =
@@ -107,7 +134,15 @@ export const GateSignoffQueue: React.FC = () => {
         rationale: rationale.trim(),
       });
       setReceipt(
-        `${outcome} recorded for ${selected.source.gate}:${selected.source.decisionId}. Quorum readback requested.`
+        t(
+          'myWork.gateSignoffQueue.receipt',
+          '{{outcome}} recorded for {{gate}}:{{decisionId}}. Quorum readback requested.',
+          {
+            outcome,
+            gate: selected.source.gate,
+            decisionId: selected.source.decisionId,
+          }
+        )
       );
       setRationale('');
       setWriteState('IDLE');
@@ -120,23 +155,27 @@ export const GateSignoffQueue: React.FC = () => {
     }
   };
 
+  const gateSignoffsLabel = t('myWork.gateSignoffQueue.title', 'Gate sign-offs');
+
   if (state === 'LOADING')
     return (
-      <section aria-label="Gate sign-offs" className="p-4">
+      <section aria-label={gateSignoffsLabel} className="p-4">
         <div role="status" className="flex items-center gap-2 text-sm text-c-text-muted">
-          <Loader2 aria-hidden="true" className="animate-spin" size={16} /> Loading Gate Sign-offs
+          <Loader2 aria-hidden="true" className="animate-spin" size={16} />{' '}
+          {t('myWork.gateSignoffQueue.loading', 'Loading Gate Sign-offs')}
         </div>
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Gate sign-offs" className="p-4">
+      <section aria-label={gateSignoffsLabel} className="p-4">
         <div role="alert" className="flex items-center justify-between gap-3 text-sm text-c-danger">
           <span className="flex items-center gap-2">
-            <AlertTriangle aria-hidden="true" size={16} /> Gate Sign-offs are unavailable.
+            <AlertTriangle aria-hidden="true" size={16} />{' '}
+            {t('myWork.gateSignoffQueue.unavailable', 'Gate Sign-offs are unavailable.')}
           </span>
           <button type="button" className="btn-secondary" onClick={() => void load()}>
-            Retry
+            {t('myWork.gateSignoffQueue.retry', 'Retry')}
           </button>
         </div>
       </section>
@@ -144,11 +183,16 @@ export const GateSignoffQueue: React.FC = () => {
   if (!rows.length && !receipt) return null;
 
   return (
-    <section aria-label="Gate sign-offs" className="border-b border-c-border">
+    <section aria-label={gateSignoffsLabel} className="border-b border-c-border">
       <div className="px-4 pt-3">
-        <h3 className="font-semibold text-c-text-primary">Gate Sign-offs waiting on you</h3>
+        <h3 className="font-semibold text-c-text-primary">
+          {t('myWork.gateSignoffQueue.waitingOnYou', 'Gate Sign-offs waiting on you')}
+        </h3>
         <p className="text-xs text-c-text-muted">
-          Actor-owned sign-off tasks. This is not a mutable approvals list.
+          {t(
+            'myWork.gateSignoffQueue.subtitle',
+            'Actor-owned sign-off tasks. This is not a mutable approvals list.'
+          )}
         </p>
       </div>
       {receipt && (
@@ -159,8 +203,8 @@ export const GateSignoffQueue: React.FC = () => {
       {(writeState === 'CONFLICT' || writeState === 'FAILED') && (
         <div role="alert" className="mx-4 mt-2 text-sm text-c-danger">
           {writeState === 'CONFLICT'
-            ? 'Quorum changed. Reload before signing again.'
-            : 'Sign-off was not recorded.'}
+            ? t('myWork.gateSignoffQueue.conflict', 'Quorum changed. Reload before signing again.')
+            : t('myWork.gateSignoffQueue.failed', 'Sign-off was not recorded.')}
         </div>
       )}
       <TableWithPreviewLayout<GateRow>
@@ -177,61 +221,96 @@ export const GateSignoffQueue: React.FC = () => {
             <div className="space-y-4 p-4 text-sm">
               <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-c-text-muted">Decision / Initiative</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.decisionInitiative', 'Decision / Initiative')}
+                  </dt>
                   <dd>
                     {item.decisionId} · {item.initiativeId}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Gate / SLA</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.gateSla', 'Gate / SLA')}
+                  </dt>
                   <dd>
                     {item.gate} · {item.sla.state} · {item.sla.hours}h
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Policy snapshot</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.policySnapshot', 'Policy snapshot')}
+                  </dt>
                   <dd>
                     {item.effectivePolicy.policyId} · v{item.effectivePolicy.policyVersion}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Profile / source</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.profileSource', 'Profile / source')}
+                  </dt>
                   <dd>
                     {item.effectivePolicy.profile} · {item.effectivePolicy.source}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Required quorum</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.requiredQuorum', 'Required quorum')}
+                  </dt>
                   <dd>
-                    {rule.quorum}; roles:{' '}
-                    {rule.requiredRoles.length ? rule.requiredRoles.join(', ') : 'any bound role'}
+                    {t('myWork.gateSignoffQueue.requiredQuorumValue', '{{quorum}}; roles: {{roles}}', {
+                      quorum: rule.quorum,
+                      roles: rule.requiredRoles.length
+                        ? rule.requiredRoles.join(', ')
+                        : t('myWork.gateSignoffQueue.anyBoundRole', 'any bound role'),
+                    })}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Separation</dt>
-                  <dd>{rule.separation ? 'Requester cannot sign' : 'Not required'}</dd>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.separation', 'Separation')}
+                  </dt>
+                  <dd>
+                    {rule.separation
+                      ? t('myWork.gateSignoffQueue.requesterCannotSign', 'Requester cannot sign')
+                      : t('myWork.gateSignoffQueue.notRequired', 'Not required')}
+                  </dd>
                 </div>
                 <div className="col-span-2">
-                  <dt className="text-c-text-muted">Quorum readback</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.gateSignoffQueue.quorumReadback', 'Quorum readback')}
+                  </dt>
                   <dd>
                     {item.quorum.quorumId} · v{item.quorum.version} · {item.quorum.status}
-                    {item.quorum.receiptId ? ` · receipt ${item.quorum.receiptId}` : ''}
+                    {item.quorum.receiptId
+                      ? t('myWork.gateSignoffQueue.quorumReceiptSuffix', ' · receipt {{receiptId}}', {
+                          receiptId: item.quorum.receiptId,
+                        })
+                      : ''}
                   </dd>
                 </div>
               </dl>
               <div className="rounded-md border border-c-border p-3">
-                <strong>Recorded progress:</strong> {item.quorum.signoffs.length}/{rule.quorum}.
-                Individual approvals are immutable audit evidence and are not editable here.
+                <strong>{t('myWork.gateSignoffQueue.recordedProgress', 'Recorded progress:')}</strong>{' '}
+                {t(
+                  'myWork.gateSignoffQueue.recordedProgressValue',
+                  '{{signed}}/{{quorum}}. Individual approvals are immutable audit evidence and are not editable here.',
+                  { signed: item.quorum.signoffs.length, quorum: rule.quorum }
+                )}
               </div>
               {!item.actorEligible && (
                 <div role="alert" className="text-c-warning">
-                  You have no eligible business-role binding for this sign-off.
+                  {t(
+                    'myWork.gateSignoffQueue.noEligibleBinding',
+                    'You have no eligible business-role binding for this sign-off.'
+                  )}
                 </div>
               )}
               <label className="block">
-                <span className="mb-1 block text-c-text-muted">Signing role</span>
+                <span className="mb-1 block text-c-text-muted">
+                  {t('myWork.gateSignoffQueue.signingRole', 'Signing role')}
+                </span>
                 <select
-                  aria-label="Signing role"
+                  aria-label={t('myWork.gateSignoffQueue.signingRoleAriaLabel', 'Signing role')}
                   className="w-full rounded-md border border-c-border bg-c-surface p-2"
                   value={roleKey}
                   onChange={(event) => setRoleKey(event.target.value)}
@@ -245,12 +324,21 @@ export const GateSignoffQueue: React.FC = () => {
               </label>
               {selectedBinding?.mode === 'DELEGATED' && (
                 <div className="rounded-md border border-c-border p-3">
-                  Exact delegation: {selectedBinding.delegationProof?.delegationRef} · v
-                  {selectedBinding.delegationProof?.version} · from {selectedBinding.delegatedFrom}
+                  {t(
+                    'myWork.gateSignoffQueue.exactDelegation',
+                    'Exact delegation: {{ref}} · v{{version}} · from {{delegatedFrom}}',
+                    {
+                      ref: selectedBinding.delegationProof?.delegationRef,
+                      version: selectedBinding.delegationProof?.version,
+                      delegatedFrom: selectedBinding.delegatedFrom,
+                    }
+                  )}
                 </div>
               )}
               <fieldset>
-                <legend className="mb-1 text-c-text-muted">Your sign-off</legend>
+                <legend className="mb-1 text-c-text-muted">
+                  {t('myWork.gateSignoffQueue.yourSignOff', 'Your sign-off')}
+                </legend>
                 <div className="flex flex-wrap gap-3">
                   {(['APPROVE', 'REJECT', 'ABSTAIN'] as const).map((value) => (
                     <label key={value} className="flex items-center gap-1">
@@ -267,9 +355,14 @@ export const GateSignoffQueue: React.FC = () => {
                 </div>
               </fieldset>
               <label className="block">
-                <span className="mb-1 block text-c-text-muted">Sign-off rationale</span>
+                <span className="mb-1 block text-c-text-muted">
+                  {t('myWork.gateSignoffQueue.signOffRationale', 'Sign-off rationale')}
+                </span>
                 <textarea
-                  aria-label="Sign-off rationale"
+                  aria-label={t(
+                    'myWork.gateSignoffQueue.signOffRationaleAriaLabel',
+                    'Sign-off rationale'
+                  )}
                   className="min-h-24 w-full rounded-md border border-c-border bg-c-surface p-2"
                   value={rationale}
                   onChange={(event) => setRationale(event.target.value)}
@@ -286,7 +379,7 @@ export const GateSignoffQueue: React.FC = () => {
               disabled={!selectedBinding || !rationale.trim() || writeState === 'SAVING'}
               onClick={() => void sign()}
             >
-              Record my sign-off
+              {t('myWork.gateSignoffQueue.recordSignOff', 'Record my sign-off')}
             </button>
           </div>
         )}
