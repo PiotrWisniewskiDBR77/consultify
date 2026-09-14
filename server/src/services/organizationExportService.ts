@@ -143,7 +143,19 @@ export async function exportOrganizationData(
   client: PoolClient,
   organizationId: string,
   contract: readonly OrganizationExportTableContract[] = ORGANIZATION_EXPORT_TABLES,
-  options: { actorId?: string } = {}
+  options: {
+    actorId?: string;
+    stream?: {
+      batchSize: number;
+      writeTable: (input: {
+        identity: string;
+        rows: Record<string, unknown>[];
+        columns: string[];
+        first: boolean;
+        final: boolean;
+      }) => Promise<void>;
+    };
+  } = {}
 ): Promise<OrganizationExportResult> {
   assertNotReservedOrganizationId(organizationId);
   const columns = await client.query<CatalogColumn>(
@@ -248,6 +260,7 @@ export async function exportOrganizationData(
   const interviewRows = new Map<string, Record<string, unknown>[]>();
   const canonicalRows = new Map<string, Record<string, unknown>[]>();
   const decisionRows = new Map<string, Record<string, unknown>[]>();
+  const streamedTables = new Set<string>();
   for (const [key, table] of tables) {
     const name = publicKey(table.schema, table.table);
     const policy = policies.get(key);
@@ -449,14 +462,254 @@ export async function exportOrganizationData(
       }
       predicate = `EXISTS (SELECT 1 FROM ${qualified(edge.parentSchema, edge.parentTable)} AS owner_scope WHERE owner_scope.${qi(edge.parentColumn)}=export_row.${qi(edge.childColumn)} AND owner_scope.${qi(parent.ownerColumn)}::text=$1)`;
     }
-    const rows = await client.query(
-      `SELECT ${projection
+    const selectSql = `SELECT ${projection
         .map((column) => snapshotColumn(column, table.types[column], policy.decisionPrivacyKind))
         .join(
           ','
-        )} FROM ${qualified(table.schema, table.table)} AS export_row WHERE ${predicate} ORDER BY ${order}`,
-      [organizationId]
-    );
+        )} FROM ${qualified(table.schema, table.table)} AS export_row WHERE ${predicate} ORDER BY ${order}`;
+    if (options.stream && contentPrivacyProjected(policy)) {
+      const batchSize = Math.max(1, Math.min(10_000, options.stream.batchSize));
+      let offset = 0;
+      let tableRows = 0;
+      for (;;) {
+        const page = await client.query(`${selectSql} LIMIT $2 OFFSET $3`, [
+          organizationId,
+          batchSize,
+          offset,
+        ]);
+        let projectedRows: Record<string, unknown>[];
+        if (policy.personalTaskPrivacy) {
+          projectedRows = page.rows.map(projectPersonalTaskExport);
+        } else if (policy.interviewPrivacy) {
+          const kind = policy.interviewPrivacy;
+          let parents = new Map<string, Record<string, unknown>>();
+          if (kind !== 'session' && kind !== 'assignment') {
+            const sessionIds = [
+              ...new Set(page.rows.map((row) => String(row.session_id || '')).filter(Boolean)),
+            ];
+            if (sessionIds.length) {
+              const parentRows = await client.query(
+                `SELECT id,is_anonymous,owner_id FROM public.interview_sessions
+                  WHERE organization_id::text=$1 AND id::text=ANY($2::text[])`,
+                [organizationId, sessionIds]
+              );
+              parents = new Map(parentRows.rows.map((row) => [String(row.id), row]));
+            }
+          }
+          projectedRows = [];
+          let missingParent = false;
+          for (const row of page.rows) {
+            const parent =
+              kind === 'session' || kind === 'assignment'
+                ? row
+                : parents.get(String(row.session_id));
+            if (!parent) {
+              missingParent = true;
+              continue;
+            }
+            projectedRows.push(
+              projectInterviewExportRow(
+                kind,
+                row,
+                {
+                  is_anonymous: parent.is_anonymous,
+                  respondentId: kind === 'assignment' ? parent.assignee_user_id : parent.owner_id,
+                },
+                options.actorId
+              )
+            );
+          }
+          if (missingParent) unresolved(name, 'interview_privacy_parent_missing_or_outside_tenant');
+        } else if (policy.decisionPrivacyKind === 'decision') {
+          const decisionIds = page.rows.map((row) => String(row.id));
+          const findingIds = page.rows.map((row) => String(row.source_id || '')).filter(Boolean);
+          const handoffs = decisionIds.length
+            ? (
+                await client.query(
+                  `SELECT * FROM public.interview_insight_handoffs
+                    WHERE organization_id::text=$1 AND target_kind='decision'
+                      AND target_id::text=ANY($2::text[])`,
+                  [organizationId, decisionIds]
+                )
+              ).rows
+            : [];
+          const findings = findingIds.length
+            ? (
+                await client.query(
+                  `SELECT * FROM public.interview_insight_findings
+                    WHERE organization_id::text=$1 AND id::text=ANY($2::text[])`,
+                  [organizationId, findingIds]
+                )
+              ).rows
+            : [];
+          const insightIds = [...new Set(handoffs.map((row) => String(row.insight_id)).filter(Boolean))];
+          const insights = insightIds.length
+            ? (
+                await client.query(
+                  `SELECT * FROM public.interview_insights
+                    WHERE organization_id::text=$1 AND id::text=ANY($2::text[])`,
+                  [organizationId, insightIds]
+                )
+              ).rows
+            : [];
+          const pointers = findingIds.length
+            ? (
+                await client.query(
+                  `SELECT * FROM public.interview_insight_evidence_pointers
+                    WHERE organization_id::text=$1 AND finding_id::text=ANY($2::text[])`,
+                  [organizationId, findingIds]
+                )
+              ).rows
+            : [];
+          const parsedObjects = insights.map((row) => {
+            const parse = (value: unknown) => {
+              if (value && typeof value === 'object') return value as Record<string, any>;
+              try {
+                return JSON.parse(String(value || '{}')) as Record<string, any>;
+              } catch {
+                return {};
+              }
+            };
+            return { row, context: parse(row.generation_context_json), scope: parse(row.analysis_scope_json) };
+          });
+          const questionIds = [
+            ...new Set(
+              parsedObjects.flatMap(({ context }) =>
+                Array.isArray(context?.evidenceEnrichment?.questionIds)
+                  ? context.evidenceEnrichment.questionIds.map(String)
+                  : []
+              )
+            ),
+          ];
+          const sessionIds = [
+            ...new Set(
+              parsedObjects.flatMap(({ row, scope }) => {
+                const selected = Array.isArray(row.source_session_ids)
+                  ? row.source_session_ids
+                  : Array.isArray(scope.source_session_ids)
+                    ? scope.source_session_ids
+                    : [];
+                return selected.map(String);
+              })
+            ),
+          ];
+          const questions = questionIds.length
+            ? (
+                await client.query(
+                  `SELECT * FROM public.interview_questions
+                    WHERE organization_id::text=$1 AND id::text=ANY($2::text[])`,
+                  [organizationId, questionIds]
+                )
+              ).rows
+            : [];
+          const sessions = sessionIds.length
+            ? (
+                await client.query(
+                  `SELECT * FROM public.interview_sessions
+                    WHERE organization_id::text=$1 AND id::text=ANY($2::text[])`,
+                  [organizationId, sessionIds]
+                )
+              ).rows
+            : [];
+          const auditKey = identity('public', 'interview_insight_audit_log');
+          const auditCatalog = tables.get(auditKey);
+          const receiptSnapshot = await readFindingReceiptSnapshot(
+            client,
+            organizationId,
+            findingIds,
+            auditCatalog
+              ? {
+                  ...auditCatalog,
+                  primaryKey: pks.get(auditKey) || [],
+                  foreignKeyCount: foreignKeys.rows.filter(
+                    (edge) => identity(edge.child_schema, edge.child_table) === auditKey
+                  ).length,
+                }
+              : undefined
+          );
+          const sources = {
+            ...receiptSnapshot,
+            handoffs,
+            findings,
+            insights,
+            pointers,
+            questions,
+            sessions,
+          };
+          projectedRows = page.rows.map((row) => {
+            const safe = projectDecisionSourceIdentity(row);
+            if (canExportInterviewDecisionContent(row, organizationId, options.actorId, sources)) {
+              safe.title = row.title;
+              safe.description = row.description;
+              safe.export_payload_scope = 'verified_interview_handoff_body';
+            }
+            return safe;
+          });
+        } else if (policy.decisionPrivacyKind) {
+          projectedRows = page.rows.map(projectDecisionSourceIdentity);
+        } else {
+          // Canonical stores are page-projected to lineage. The optional
+          // MANUAL_HUB body upgrade is intentionally handled only by the
+          // synchronous compatibility path until its page-local proof is wired.
+          projectedRows = page.rows.map((row) =>
+            projectCanonicalExportLineage(row, policy.canonicalLineageColumns || [])
+          );
+          if (page.rows.length) unresolved(name, 'canonical_content_privacy_unresolved_lineage_only');
+        }
+        const safeRows = projectedRows.map((row) => sanitize(row) as Record<string, unknown>);
+        const final = page.rows.length < batchSize;
+        await options.stream.writeTable({
+          identity: name,
+          rows: safeRows,
+          columns: safeRows.length
+            ? [...new Set(safeRows.flatMap((row) => Object.keys(row)))].sort()
+            : projection,
+          first: offset === 0,
+          final,
+        });
+        tableRows += safeRows.length;
+        offset += page.rows.length;
+        if (final) break;
+      }
+      streamedTables.add(name);
+      result.rowCounts[name] = tableRows;
+      result.totalRows += tableRows;
+      if (!result.securityManifest.includedSchemas.includes(table.schema))
+        result.securityManifest.includedSchemas.push(table.schema);
+      continue;
+    }
+    const retainForPrivacy =
+      key === identity('public', 'organizations');
+    if (options.stream && !retainForPrivacy) {
+      const batchSize = Math.max(1, Math.min(10_000, options.stream.batchSize));
+      let offset = 0;
+      let tableRows = 0;
+      for (;;) {
+        const page = await client.query(
+          `${selectSql} LIMIT $2 OFFSET $3`,
+          [organizationId, batchSize, offset]
+        );
+        const safeRows = page.rows.map((row) => sanitize(row) as Record<string, unknown>);
+        const final = page.rows.length < batchSize;
+        await options.stream.writeTable({
+          identity: name,
+          rows: safeRows,
+          columns: projection,
+          first: offset === 0,
+          final,
+        });
+        tableRows += safeRows.length;
+        offset += page.rows.length;
+        if (final) break;
+      }
+      streamedTables.add(name);
+      result.rowCounts[name] = tableRows;
+      result.totalRows += tableRows;
+      if (!result.securityManifest.includedSchemas.includes(table.schema))
+        result.securityManifest.includedSchemas.push(table.schema);
+      continue;
+    }
+    const rows = await client.query(selectSql, [organizationId]);
     if (policy.interviewPrivacy) interviewRows.set(key, rows.rows);
     if (policy.canonicalLineageColumns) canonicalRows.set(key, rows.rows);
     if (policy.decisionPrivacyKind) decisionRows.set(policy.decisionPrivacyKind, rows.rows);
@@ -474,10 +727,8 @@ export async function exportOrganizationData(
     );
     if (policy.canonicalLineageColumns && rows.rows.length)
       unresolved(name, 'canonical_content_privacy_unresolved_lineage_only');
-    if (policy.personalTaskPrivacy && rows.rows.length)
-      unresolved(name, 'task_source_or_supplemental_content_privacy_unresolved');
-    if (policy.decisionPrivacyKind && rows.rows.length)
-      unresolved(name, 'decision_source_or_supplemental_content_privacy_unresolved');
+    // DEC-493 authorizes organization-owned task/Interview/Decision business
+    // content. The existing family projectors remove person identification.
     if (!result.securityManifest.includedSchemas.includes(table.schema))
       result.securityManifest.includedSchemas.push(table.schema);
     if (key === identity('public', 'organizations')) {
@@ -611,5 +862,33 @@ export async function exportOrganizationData(
     });
   result.securityManifest.complete =
     result.securityManifest.unresolvedTables.length === 0 && result.skipped.length === 0;
+  if (options.stream) {
+    if (result.organization) {
+      await options.stream.writeTable({
+        identity: 'public.organizations',
+        rows: [result.organization],
+        columns: Object.keys(result.organization),
+        first: true,
+        final: true,
+      });
+      streamedTables.add('organizations');
+    }
+    for (const policy of contract.filter((entry) => entry.category === 'EXPORT')) {
+      const name = publicKey(policy.schema, policy.table);
+      if (name === 'organizations' || streamedTables.has(name)) continue;
+      const rows = result.tables[name] || [];
+      await options.stream.writeTable({
+        identity: name,
+        rows,
+        columns: rows.length
+          ? [...new Set(rows.flatMap((row) => Object.keys(row)))].sort()
+          : policy.projection,
+        first: true,
+        final: true,
+      });
+      result.rowCounts[name] = rows.length;
+      delete result.tables[name];
+    }
+  }
   return result;
 }

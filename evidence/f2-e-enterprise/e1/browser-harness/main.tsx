@@ -1,0 +1,13 @@
+import '../../../../src/index.css';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { Toaster } from 'react-hot-toast';
+import i18n from '../../../../src/i18n';
+import { useAppStore } from '../../../../src/store/useAppStore';
+import Screen from '../../../../dev-render/screens/p13-eksport-organizacje';
+const params = new URLSearchParams(location.search);
+const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+document.documentElement.classList.toggle('dark', theme === 'dark');
+useAppStore.setState({ theme });
+void i18n.changeLanguage(params.get('lang') || 'en');
+createRoot(document.getElementById('root')!).render(<React.StrictMode><Screen/><Toaster position="bottom-center"/></React.StrictMode>);

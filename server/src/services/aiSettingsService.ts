@@ -122,7 +122,7 @@ const DEFAULT_ORG = {
   enabled_model_ids: [],
   max_ai_calls_per_day: 100,
   max_tokens_per_month: 500000,
-  monthly_budget_usd: 0,
+  monthly_budget_usd: 50,
   hard_limit_usd: 0,
   freeze_on_limit: false,
   web_search_enabled: true,

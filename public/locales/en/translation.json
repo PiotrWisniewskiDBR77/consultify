@@ -1,4 +1,15 @@
 {
+  "enterpriseExport": {
+    "action": "Export data",
+    "preparing": "Preparing the full organization export…",
+    "resuming": "Resuming the organization export…",
+    "ready": "The organization export is ready ({{rows}} rows).",
+    "failedWithCode": "The organization export failed ({{code}}). You can retry it.",
+    "retry": "Retry export",
+    "progressLabel": "Organization export progress",
+    "progressTables": "Tables {{completed}} of {{total}}",
+    "rows": "{{rows}} rows processed"
+  },
   "actionCard": {
     "title": "Action card",
     "open": "Open card",

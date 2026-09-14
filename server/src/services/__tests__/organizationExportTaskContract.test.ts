@@ -109,13 +109,12 @@ describe('organization export personal task content boundary', () => {
       expect(output).not.toContain(secret);
     }
     expect(result.tables.tasks[0].export_payload_scope).toBe(
-      'manual_personal_fields_supplemental_unresolved'
+      'task_business_content_identity_removed_dec493'
     );
-    expect(result.securityManifest.complete).toBe(false);
-    expect(result.securityManifest.unresolvedTables).toContainEqual({
-      table: 'tasks',
-      reason: 'task_source_or_supplemental_content_privacy_unresolved',
-    });
+    expect(result.tables.tasks[0]).not.toHaveProperty('assignee_id');
+    expect(result.tables.tasks[0]).not.toHaveProperty('reporter_id');
+    expect(result.securityManifest.complete).toBe(true);
+    expect(result.securityManifest.unresolvedTables).toEqual([]);
     expect(JSON.stringify(rows)).toBe(before);
   });
   it.each([
@@ -127,18 +126,20 @@ describe('organization export personal task content boundary', () => {
     ['linked initiative', { initiative_id: 'initiative-a' }],
     ['linked project', { project_id: 'project-a' }],
     ['typed execution task', { task_type: 'execution_task' }],
-  ] as const)('keeps %s lineage without copied body', async (_label, patch) => {
+  ] as const)('exports %s business content without person identity under DEC-493', async (_label, patch) => {
     const m = mockClient({
       tasks: [task({ ...patch, title: secret, description: secret, tags: secret })],
     });
     const result = await exportOrganizationData(m.client, 'org-a', contracts);
     for (const output of [JSON.stringify(result), organizationExportToCsv(result)])
-      expect(output).not.toContain(secret);
+      expect(output).toContain(secret);
     expect(result.tables.tasks[0].id).toBe('task-a');
     expect(result.tables.tasks[0].export_payload_scope).toBe(
-      'task_lineage_source_content_unresolved'
+      'task_business_content_identity_removed_dec493'
     );
-    expect(result.securityManifest.complete).toBe(false);
+    expect(result.tables.tasks[0]).not.toHaveProperty('assignee_id');
+    expect(result.tables.tasks[0]).not.toHaveProperty('reporter_id');
+    expect(result.securityManifest.complete).toBe(true);
   });
   it('does not query tasks after description type drift', async () => {
     const m = mockClient({ tasks: [task()] }, 'tasks');

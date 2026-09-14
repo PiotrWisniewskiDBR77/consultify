@@ -19,6 +19,11 @@
     },
     {
       "schema": "public",
+      "table": "finance_prediction_conflict_resolutions",
+      "column": "state"
+    },
+    {
+      "schema": "public",
       "table": "lane_decisions",
       "column": "state"
     },

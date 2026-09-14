@@ -283,6 +283,52 @@ test('semantic evidence rejects comments and accepts the same exact executable S
   }
 });
 
+test('public business disposition mutations are RED for missing entry, family, unresolved basis, and fake runtime source', () => {
+  const repositoryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'e1-public-disposition-'));
+  const runtimePath = 'server/src/business.ts';
+  const policyPath = 'docs/ssot/organization-export-public-business-dispositions.e1.json';
+  fs.mkdirSync(path.join(repositoryRoot, 'server/src'), { recursive: true });
+  fs.mkdirSync(path.join(repositoryRoot, 'docs/ssot'), { recursive: true });
+  fs.writeFileSync(path.join(repositoryRoot, runtimePath), "const sql = 'SELECT * FROM exact_business';\n");
+  const disposition = {
+    identity: 'public.exact_business',
+    classification: 'EXPORT',
+    family: 'EXACT_BUSINESS',
+    snapshotRows: 0,
+    runtimeReferences: [`${runtimePath}:1`],
+  };
+  fs.writeFileSync(path.join(repositoryRoot, policyPath), JSON.stringify({ entries: [disposition] }));
+  const row = exportRow('exact_business');
+  row.family = 'EXACT_BUSINESS';
+  row.semanticEvidence = [{ kind: 'PUBLIC_BUSINESS_DISPOSITION', path: policyPath, identity: disposition.identity }];
+  const options = {
+    expectedTotal: 1,
+    repositoryRoot,
+    validateSemanticEvidence: true,
+    publicDispositions: new Map([[disposition.identity, disposition]]),
+    requirePublicDispositionCompleteness: true,
+  };
+  assert.deepEqual(verifyClassificationInventory(inventory([row]), options).errors, []);
+
+  const wrongFamily = structuredClone(row);
+  wrongFamily.family = 'FAKE_FAMILY';
+  assert.match(verifyClassificationInventory(inventory([wrongFamily]), options).errors.join('\n'), /family differs/);
+
+  assert.match(
+    verifyClassificationInventory(inventory([row]), { ...options, publicDispositions: new Map() }).errors.join('\n'),
+    /disposition entry is missing/
+  );
+
+  const unresolved = { ...row, classification: 'EXCLUDE_SECURITY', exclusionBasis: 'ACTIVE_SEMANTIC_POLICY_MISSING' };
+  assert.match(verifyClassificationInventory(inventory([unresolved]), options).errors.join('\n'), /semantically unresolved/);
+
+  fs.writeFileSync(path.join(repositoryRoot, runtimePath), "const sql = 'SELECT * FROM another_table';\n");
+  assert.match(
+    verifyClassificationInventory(inventory([row]), options).errors.join('\n'),
+    /not an executable SQL or exact policy source/
+  );
+});
+
 test('unqualified public writer cannot authorize a same-named v8 physical relation', () => {
   const repositoryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'e1-schema-collision-'));
   const relative = 'server/src/source.ts';
@@ -357,5 +403,48 @@ test('exact lifecycle-state policy rejects exclusion and incomplete coverage mut
       requireLifecycleStateCompleteness: true,
     }).errors.join('\n'),
     /exportable state column lacks an exact lifecycle-state policy/
+  );
+});
+
+test('v8 fail-closed relations require an exact reviewed disposition', () => {
+  const row = {
+    schema: 'v8',
+    table: 'legacy_copy',
+    classification: 'EXCLUDE_SECURITY',
+    family: 'V8_HISTORICAL_INACTIVE',
+    reason: 'The empty historical schema copy has no active schema-qualified writer.',
+    sourceEvidence: 'exact disposition evidence',
+    exclusionBasis: 'ACTIVE_SEMANTIC_POLICY_MISSING',
+    v8Disposition: 'HISTORICAL_PARALLEL_SCHEMA_COPY',
+  };
+  const disposition = {
+    identity: 'v8.legacy_copy',
+    disposition: 'HISTORICAL_PARALLEL_SCHEMA_COPY',
+    snapshotRows: 0,
+    activeSchemaQualifiedWriterEvidence: [],
+    sourceEvidence: ['DDL', 'COUNT', 'WRITER_NONE'],
+  };
+  const options = {
+    expectedTotal: 1,
+    v8Dispositions: new Map([[disposition.identity, disposition]]),
+    requireV8DispositionCompleteness: true,
+  };
+  assert.deepEqual(verifyClassificationInventory(inventory([row]), options).errors, []);
+  assert.match(
+    verifyClassificationInventory(inventory([row]), {
+      expectedTotal: 1,
+      requireV8DispositionCompleteness: true,
+    }).errors.join('\n'),
+    /requires an exact reviewed disposition/
+  );
+  const nonempty = structuredClone(disposition);
+  nonempty.snapshotRows = 1;
+  assert.match(
+    verifyClassificationInventory(inventory([row]), {
+      expectedTotal: 1,
+      v8Dispositions: new Map([[nonempty.identity, nonempty]]),
+      requireV8DispositionCompleteness: true,
+    }).errors.join('\n'),
+    /requires measured zero snapshot rows/
   );
 });

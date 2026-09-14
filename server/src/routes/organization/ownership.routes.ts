@@ -18,11 +18,17 @@ import logger from '../../utils/Logger.js';
 import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import { exportOrganizationData, organizationExportToCsv } from '../../services/organizationLifecycleService.js';
 import { writeOrganizationExportArchive } from '../../services/organizationExportArchiveService.js';
+import {
+  getOrganizationExportJob,
+  getOrganizationExportJobDownload,
+  startOrganizationExportJob,
+} from '../../services/organizationExportJobService.js';
 import { OrgPoliciesError } from '../../services/OrgPoliciesService.js';
 import { withOrganizationExportSnapshot } from '../../services/organizationExportSnapshot.js';
 import { hasPermission, ROLES } from '../../services/permissionService.js';
 
 const router = Router();
+const exportResumeToken = (req: AuthRequest) => String(req.headers['x-export-resume-token'] || '');
 
 // Apply rate limiting and auth
 router.use(apiAuthRateLimiter);
@@ -66,6 +72,12 @@ router.get(
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await requireOrganizationExportOwner(req, res))) return;
+    if (process.env.ENABLE_ENTERPRISE_EXPORT_FULL === 'true') {
+      return res.status(409).json({
+        code: 'ORG_EXPORT_ASYNC_REQUIRED',
+        startPath: `/api/organizations/${req.params.orgId}/export-jobs`,
+      });
+    }
     const client = await acquirePgClient();
     try {
       await req.emitAuditEvent?.({
@@ -110,6 +122,73 @@ router.get(
         return res.status(error.statusCode).json({ code: error.code });
       }
       throw error;
+    }
+  })
+);
+
+router.post(
+  '/:orgId/export-jobs',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await requireOrganizationExportOwner(req, res))) return;
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'organization_export_requested',
+      resourceType: 'organization_data',
+      resourceId: req.params.orgId,
+      metadata: { scope: 'full_e1', mode: 'resumable_archive' },
+    });
+    const started = startOrganizationExportJob({
+      organizationId: req.params.orgId,
+      actorId: req.user?.id,
+      emitAudit: req.emitAuditEvent,
+    });
+    return res.status(202).json(started);
+  })
+);
+
+router.get(
+  '/:orgId/export-jobs/:jobId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await requireOrganizationExportOwner(req, res))) return;
+    try {
+      return res.json(
+        getOrganizationExportJob(req.params.jobId, req.params.orgId, exportResumeToken(req))
+      );
+    } catch (error: any) {
+      return res.status(error?.code === 'EXPORT_JOB_NOT_FOUND' ? 404 : 409).json({ code: error?.code });
+    }
+  })
+);
+
+router.get(
+  '/:orgId/export-jobs/:jobId/download',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await requireOrganizationExportOwner(req, res))) return;
+    try {
+      const download = getOrganizationExportJobDownload(
+        req.params.jobId,
+        req.params.orgId,
+        exportResumeToken(req)
+      );
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'organization_export_downloaded',
+        resourceType: 'organization_data',
+        resourceId: req.params.orgId,
+        metadata: {
+          scope: 'full_e1',
+          format: 'zip',
+          jobId: req.params.jobId,
+          asOf: download.manifest.asOf,
+          totalRows: download.manifest.totalRows,
+          complete: download.manifest.complete,
+        },
+      });
+      return res.download(download.path, `organization-export-${req.params.orgId}.zip`);
+    } catch (error: any) {
+      return res.status(error?.code === 'EXPORT_JOB_NOT_FOUND' ? 404 : 409).json({ code: error?.code });
     }
   })
 );

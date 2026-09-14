@@ -40,6 +40,11 @@ import {
   RESERVED_ORGANIZATION_IDS,
 } from '../services/organizationLifecycleService.js';
 import { writeOrganizationExportArchive } from '../services/organizationExportArchiveService.js';
+import {
+  getOrganizationExportJob,
+  getOrganizationExportJobDownload,
+  startOrganizationExportJob,
+} from '../services/organizationExportJobService.js';
 import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { acquirePgClient } from '../database/PostgresDatabase.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -738,6 +743,79 @@ router.put(
   validateBody(UpdateOrganizationAdminSchema),
   SuperAdminController.updateOrganization
 );
+
+router.post(
+  '/organizations/:id/export-jobs',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if ((RESERVED_ORGANIZATION_IDS as readonly string[]).includes(id)) {
+      return res.status(400).json({ code: 'ORG_ID_RESERVED' });
+    }
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'organization_export_requested',
+      resourceType: 'organization_data',
+      resourceId: id,
+      metadata: { scope: 'full_e1', mode: 'resumable_archive' },
+    });
+    return res.status(202).json(
+      startOrganizationExportJob({
+        organizationId: id,
+        actorId: req.user?.id,
+        emitAudit: req.emitAuditEvent,
+      })
+    );
+  })
+);
+
+router.get(
+  '/organizations/:id/export-jobs/:jobId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      return res.json(
+        getOrganizationExportJob(
+          req.params.jobId,
+          req.params.id,
+          String(req.headers['x-export-resume-token'] || '')
+        )
+      );
+    } catch (error: any) {
+      return res.status(error?.code === 'EXPORT_JOB_NOT_FOUND' ? 404 : 409).json({ code: error?.code });
+    }
+  })
+);
+
+router.get(
+  '/organizations/:id/export-jobs/:jobId/download',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const download = getOrganizationExportJobDownload(
+        req.params.jobId,
+        req.params.id,
+        String(req.headers['x-export-resume-token'] || '')
+      );
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'organization_export_downloaded',
+        resourceType: 'organization_data',
+        resourceId: req.params.id,
+        metadata: {
+          scope: 'full_e1',
+          format: 'zip',
+          jobId: req.params.jobId,
+          asOf: download.manifest.asOf,
+          totalRows: download.manifest.totalRows,
+          complete: download.manifest.complete,
+        },
+      });
+      return res.download(download.path, `organization-export-${req.params.id}.zip`);
+    } catch (error: any) {
+      return res.status(error?.code === 'EXPORT_JOB_NOT_FOUND' ? 404 : 409).json({ code: error?.code });
+    }
+  })
+);
 /**
  * GET /api/superadmin/organizations/:id/export
  * P5 (kryterium 12, S2.7) — pełny eksport danych jednej organizacji do pliku,
@@ -753,6 +831,12 @@ router.get(
     const { id } = req.params;
     if ((RESERVED_ORGANIZATION_IDS as readonly string[]).includes(id)) {
       return res.status(400).json({ code: 'ORG_ID_RESERVED' });
+    }
+    if (process.env.ENABLE_ENTERPRISE_EXPORT_FULL === 'true') {
+      return res.status(409).json({
+        code: 'ORG_EXPORT_ASYNC_REQUIRED',
+        startPath: `/api/superadmin/organizations/${id}/export-jobs`,
+      });
     }
     const format = req.query.format === 'zip' ? 'zip' : req.query.format === 'csv' ? 'csv' : 'json';
     const client = await acquirePgClient();

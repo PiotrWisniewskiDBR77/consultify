@@ -1,0 +1,1661 @@
+public	access_code_usage	public	access_codes	code_id	id	CASCADE
+public	access_code_usage	public	users	user_id	id	CASCADE
+public	access_codes	public	organizations	organization_id	id	CASCADE
+public	access_codes	public	users	created_by	id	CASCADE
+public	access_requests	public	organizations	organization_id	id	CASCADE
+public	access_requests	public	users	reviewed_by	id	SET NULL
+public	account_deletion_request_receipts	public	gdpr_requests	request_id	id	RESTRICT
+public	account_deletion_request_receipts	public	organizations	organization_id	id	RESTRICT
+public	account_deletion_request_receipts	public	users	user_id	id	RESTRICT
+public	account_deletion_requests	public	users	user_id	id	NO ACTION
+public	active_sessions	public	users	user_id	id	CASCADE
+public	activity_logs	public	organizations	organization_id	id	CASCADE
+public	activity_logs	public	users	user_id	id	SET NULL
+public	adkar_assessments	public	organizations	organization_id	id	CASCADE
+public	adkar_assessments	public	projects	project_id	id	CASCADE
+public	admin_audit_logs	public	organizations	organization_id	id	CASCADE
+public	admin_audit_logs	public	users	admin_id	id	NO ACTION
+public	admin_audit_logs	public	users	reviewed_by	id	NO ACTION
+public	admin_dashboards	public	organizations	organization_id	id	CASCADE
+public	admin_iam_invitation_commands	public	invitations	invitation_id	id	NO ACTION
+public	admin_iam_invitation_commands	public	organizations	organization_id	id	CASCADE
+public	admin_iam_invitation_commands	public	users	actor_id	id	NO ACTION
+public	admin_iam_invitation_delivery_attempts	public	admin_iam_invitation_commands	command_id	id	CASCADE
+public	admin_iam_invitation_delivery_attempts	public	invitations	invitation_id	id	CASCADE
+public	admin_iam_invitation_delivery_attempts	public	organizations	organization_id	id	CASCADE
+public	admin_iam_job_events	public	admin_iam_jobs	job_id	id	RESTRICT
+public	admin_iam_member_commands	public	organizations	organization_id	id	CASCADE
+public	admin_iam_member_commands	public	users	actor_id	id	NO ACTION
+public	admin_iam_member_commands	public	users	target_user_id	id	NO ACTION
+public	admin_report_executions	public	users	executed_by	id	SET NULL
+public	admin_saved_reports	public	organizations	organization_id	id	CASCADE
+public	admin_sessions	public	users	admin_user_id	id	CASCADE
+public	ai_ab_assignments	public	ai_ab_experiments	experiment_id	id	NO ACTION
+public	ai_ab_experiments	public	ai_system_prompts	prompt_id	id	NO ACTION
+public	ai_ab_outcomes	public	ai_ab_experiments	experiment_id	id	NO ACTION
+public	ai_agent_audit_reviews	public	ai_agent_audit_runs	run_id	id	CASCADE
+public	ai_agent_job_attempts	public	ai_agent_job_receipts	receipt_id	receipt_id	NO ACTION
+public	ai_agent_plan_steps	public	ai_agent_plans	plan_id	id	CASCADE
+public	ai_budgets	public	organizations	organization_id	id	CASCADE
+public	ai_chat_run_events	public	ai_chat_runs	run_id	id	NO ACTION
+public	ai_contexts	public	organizations	organization_id	id	CASCADE
+public	ai_experiment_variants	public	ai_experiments	experiment_id	id	CASCADE
+public	ai_experiments	public	organizations	organization_id	id	CASCADE
+public	ai_feedback	public	organizations	organization_id	id	CASCADE
+public	ai_feedback	public	users	user_id	id	SET NULL
+public	ai_playbook_runs	public	ai_playbook_templates	template_id	id	CASCADE
+public	ai_playbook_runs	public	organizations	organization_id	id	CASCADE
+public	ai_playbook_runs	public	users	initiated_by	id	SET NULL
+public	ai_playbook_template_versions	public	ai_playbook_templates	template_id	id	CASCADE
+public	ai_playbook_templates	public	organizations	organization_id	id	CASCADE
+public	ai_policies	public	organizations	organization_id	id	CASCADE
+public	ai_prompt_versions	public	ai_system_prompts	prompt_id	id	CASCADE
+public	ai_purpose_assignments	public	ai_purposes	purpose	purpose	CASCADE
+public	ai_style_learning_patterns	public	organizations	organization_id	id	SET NULL
+public	ai_style_learning_patterns	public	users	user_id	id	CASCADE
+public	ai_usage_logs	public	organizations	organization_id	id	CASCADE
+public	ai_usage_logs	public	users	user_id	id	SET NULL
+public	ai_user_style_profiles	public	organizations	organization_id	id	SET NULL
+public	ai_user_style_profiles	public	users	user_id	id	CASCADE
+public	analysis_financial_scenarios	public	digitization_analyses	analysis_id	id	CASCADE
+public	analysis_financials	public	digitization_analyses	analysis_id	id	CASCADE
+public	analysis_financials	public	initiatives	initiative_id	id	SET NULL
+public	analytics_dashboards	public	users	created_by	id	SET NULL
+public	analytics_report_executions	public	analytics_reports	report_id	id	CASCADE
+public	analytics_report_executions	public	users	executed_by	id	SET NULL
+public	analytics_reports	public	users	created_by	id	SET NULL
+public	api_key_usage	public	api_keys	api_key_id	id	CASCADE
+public	api_keys	public	api_keys	rotated_from_id	id	SET NULL
+public	api_keys	public	organizations	organization_id	id	CASCADE
+public	api_keys	public	users	created_by	id	SET NULL
+public	approval_assignments	public	organizations	org_id	id	CASCADE
+public	approval_assignments	public	users	assigned_to_user_id	id	SET NULL
+public	approval_assignments	public	users	escalated_to_user_id	id	SET NULL
+public	approval_requests	public	approval_workflows	workflow_id	id	CASCADE
+public	approval_requests	public	organizations	organization_id	id	CASCADE
+public	approval_requests	public	users	requester_id	id	NO ACTION
+public	approval_requests	public	users	resolved_by	id	NO ACTION
+public	approval_workflows	public	organizations	organization_id	id	CASCADE
+public	approval_workflows	public	users	created_by	id	NO ACTION
+public	approved_domains	public	organizations	organization_id	id	CASCADE
+public	artifact_handoff_receipts	public	artifact_handoff_proposals	proposal_id	proposal_id	RESTRICT
+public	artifact_lifecycle_events	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	artifact_lifecycle_events	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	artifact_lifecycle_events	public	organizations	organization_id	id	NO ACTION
+public	assessment_area_assignments	public	assessments	assessment_id	id	CASCADE
+public	assessment_decisions	public	assessments	assessment_id	id	CASCADE
+public	assessment_gate_decisions	public	assessments	assessment_id	id	CASCADE
+public	assessment_initiative_batches	public	assessment_reports	report_id	id	SET NULL
+public	assessment_initiative_batches	public	assessments	assessment_id	id	CASCADE
+public	assessment_initiative_batches	public	organizations	organization_id	id	CASCADE
+public	assessment_initiative_generation_runs	public	assessment_reports	report_id	id	SET NULL
+public	assessment_initiative_generation_runs	public	assessments	assessment_id	id	CASCADE
+public	assessment_initiative_links	public	assessment_initiative_batches	batch_id	id	CASCADE
+public	assessment_initiative_links	public	assessments	assessment_id	id	CASCADE
+public	assessment_responses	public	assessments	assessment_id	id	CASCADE
+public	assessment_reviews	public	assessments	assessment_id	id	CASCADE
+public	assessment_sessions	public	assessments	assessment_id	id	CASCADE
+public	assessment_user_state	public	assessments	assessment_id	id	CASCADE
+public	assessment_versions	public	assessments	assessment_id	id	CASCADE
+public	assessment_workflow_transitions	public	assessment_workflows	workflow_id	id	CASCADE
+public	assessments	public	organizations	organization_id	id	CASCADE
+public	assessments	public	projects	project_id	id	CASCADE
+public	async_jobs	public	organizations	organization_id	id	NO ACTION
+public	attribution_events	public	organizations	organization_id	id	CASCADE
+public	attribution_events	public	users	user_id	id	SET NULL
+public	audit_events	public	organizations	org_id	id	SET NULL
+public	audit_events	public	users	actor_id	id	SET NULL
+public	audit_log	public	organizations	organization_id	id	CASCADE
+public	audit_log	public	users	user_id	id	SET NULL
+public	audit_logs	public	organizations	organization_id	id	CASCADE
+public	audit_logs	public	users	user_id	id	SET NULL
+public	audit_pack_criteria	public	audit_packs	pack_id	id	CASCADE
+public	audit_packs	public	audit_norm_sources	source_id	id	SET NULL
+public	audits	public	organizations	organization_id	id	CASCADE
+public	automation_rule_executions	public	automation_rules	rule_id	id	CASCADE
+public	automation_rule_executions	public	organizations	organization_id	id	NO ACTION
+public	automation_rule_executions	public	users	user_id	id	NO ACTION
+public	automation_rules	public	users	created_by	id	SET NULL
+public	backup_records	public	organizations	organization_id	id	CASCADE
+public	benefit_measurements	public	initiative_benefits	benefit_id	id	CASCADE
+public	billing_alerts	public	organizations	organization_id	id	CASCADE
+public	billing_alerts	public	subscription_plans	auto_upgrade_plan_id	id	NO ACTION
+public	billing_credits	public	organizations	organization_id	id	NO ACTION
+public	billing_disputes	public	organizations	organization_id	id	NO ACTION
+public	billing_email_queue	public	organizations	organization_id	id	NO ACTION
+public	billing_notification_preferences	public	organizations	organization_id	id	NO ACTION
+public	billing_refunds	public	invoices	invoice_id	id	NO ACTION
+public	billing_refunds	public	organizations	organization_id	id	NO ACTION
+public	billing_usage_events	public	organizations	organization_id	id	NO ACTION
+public	blueprint_wbs_items	public	initiative_templates	template_id	id	CASCADE
+public	budget_alerts	public	initiative_budgets	budget_id	id	CASCADE
+public	budget_entries	public	initiatives	initiative_id	id	CASCADE
+public	budget_entries	public	organizations	organization_id	id	CASCADE
+public	budget_initiative_links	public	budgets	budget_id	id	CASCADE
+public	budget_initiative_links	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	budget_initiative_links	public	initiatives	initiative_id	id	CASCADE
+public	budget_initiative_links	public	initiatives	initiative_id,organization_id	id,organization_id	NO ACTION
+public	budget_line_items	public	initiative_budgets	budget_id	id	CASCADE
+public	budget_lines	public	budgets	budget_id	id	CASCADE
+public	budget_overspend_signals	public	organizations	organization_id	id	CASCADE
+public	budget_scenarios	public	budgets	budget_id	id	CASCADE
+public	budget_snapshots	public	budgets	budget_id	id	CASCADE
+public	budget_thresholds	public	organizations	organization_id	id	CASCADE
+public	budget_transactions	public	budget_line_items	line_item_id	id	SET NULL
+public	budget_transactions	public	initiative_budgets	budget_id	id	CASCADE
+public	budgets	public	organizations	organization_id	id	CASCADE
+public	budgets	public	projects	project_id	id	SET NULL
+public	budgets	public	tool_sessions	source_tool_session_id	id	NO ACTION
+public	business_metric_values	public	business_metrics	metric_id	id	CASCADE
+public	business_metrics	public	users	created_by	id	SET NULL
+public	calendar_feed_log	public	organizations	organization_id	id	CASCADE
+public	candidate_competency_signals	public	candidate_documents	document_id	id	CASCADE
+public	candidate_competency_signals	public	candidate_profiles	candidate_id	id	CASCADE
+public	candidate_documents	public	candidate_profiles	candidate_id	id	CASCADE
+public	candidate_match_results	public	candidate_profiles	candidate_id	id	CASCADE
+public	capabilities	public	competency_categories	category_id	id	SET NULL
+public	capability_requirements	public	capabilities	capability_id	id	CASCADE
+public	case_core	public	organizations	organization_id	id	NO ACTION
+public	case_core	public	projects	project_id	id	CASCADE
+public	case_core	public	users	sponsor_user_id	id	SET NULL
+public	case_plan_versions	public	case_core	case_id	case_id	CASCADE
+public	case_plan_versions	public	case_plan_versions	supersedes_plan_version_id	case_plan_version_id	NO ACTION
+public	case_plan_view_state	public	case_plan_versions	case_plan_version_id	case_plan_version_id	CASCADE
+public	case_workspace_action_proposal_decisions	public	case_workspace_action_proposals	action_proposal_id	action_proposal_id	CASCADE
+public	case_workspace_action_proposals	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_action_proposals	public	case_plan_versions	case_plan_version_id	case_plan_version_id	NO ACTION
+public	case_workspace_action_proposals	public	case_workspace_action_proposals	supersedes_action_proposal_id	action_proposal_id	NO ACTION
+public	case_workspace_action_proposals	public	case_workspace_capabilities	capability_registry_id	capability_registry_id	NO ACTION
+public	case_workspace_action_proposals	public	v8_execution_runs	run_id	run_id	NO ACTION
+public	case_workspace_artifact_links	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_capability_idempotency_keys	public	case_workspace_capabilities	capability_registry_id	capability_registry_id	CASCADE
+public	case_workspace_feature_flag_definitions	public	case_workspace_feature_flag_definitions	parent_flag_key	flag_key	NO ACTION
+public	case_workspace_feature_flags	public	case_workspace_feature_flag_definitions	flag_key	flag_key	NO ACTION
+public	case_workspace_gateway_evaluations	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_gateway_evaluations	public	case_workspace_run_bindings	run_id	run_id	NO ACTION
+public	case_workspace_node_result_acceptances	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_node_result_acceptances	public	case_workspace_gateway_evaluations	caused_by_gateway_node_run_id	node_run_id	NO ACTION
+public	case_workspace_node_result_acceptances	public	case_workspace_run_bindings	run_id	run_id	NO ACTION
+public	case_workspace_node_run_attempts	public	case_workspace_capabilities	capability_registry_id	capability_registry_id	NO ACTION
+public	case_workspace_node_run_attempts	public	case_workspace_node_runs	node_run_id	node_run_id	NO ACTION
+public	case_workspace_node_runs	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_node_runs	public	case_workspace_action_proposals	action_proposal_id	action_proposal_id	NO ACTION
+public	case_workspace_node_runs	public	case_workspace_run_bindings	run_id	run_id	NO ACTION
+public	case_workspace_node_runs	public	case_workspace_waits	wait_id	wait_id	NO ACTION
+public	case_workspace_run_bindings	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_run_bindings	public	case_plan_versions	case_plan_version_id	case_plan_version_id	NO ACTION
+public	case_workspace_run_bindings	public	v8_execution_runs	run_id	run_id	NO ACTION
+public	case_workspace_runs	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_runs	public	case_plan_versions	case_plan_version_id	case_plan_version_id	NO ACTION
+public	case_workspace_runs	public	case_workspace_run_bindings	run_id	run_id	NO ACTION
+public	case_workspace_value_measurements	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_waits	public	case_core	case_id	case_id	NO ACTION
+public	case_workspace_waits	public	case_workspace_action_proposals	action_proposal_id	action_proposal_id	NO ACTION
+public	case_workspace_waits	public	case_workspace_run_bindings	run_id	run_id	NO ACTION
+public	chat_handoff_owner_claims	public	artifact_handoff_receipts	handoff_receipt_id	receipt_id	RESTRICT
+public	chat_handoff_owner_claims	public	chat_handoff_owner_ingress	ingress_id	ingress_id	RESTRICT
+public	chat_handoff_owner_claims	public	organizations	organization_id	id	NO ACTION
+public	chat_handoff_owner_ingress	public	artifact_handoff_proposals	proposal_id	proposal_id	RESTRICT
+public	chat_handoff_owner_ingress	public	organizations	organization_id	id	NO ACTION
+public	chat_projects	public	organizations	organization_id	id	SET NULL
+public	chat_projects	public	users	user_id	id	CASCADE
+public	chat_target_mapping_attempts	public	chat_target_mapping_receipts	ingress_id	ingress_id	RESTRICT
+public	chat_target_mapping_attempts	public	organizations	organization_id	id	NO ACTION
+public	chat_target_mapping_receipts	public	chat_handoff_owner_ingress	ingress_id	ingress_id	RESTRICT
+public	chat_target_mapping_receipts	public	organizations	organization_id	id	NO ACTION
+public	checkout_sessions	public	organizations	organization_id	id	NO ACTION
+public	checkout_sessions	public	users	user_id	id	NO ACTION
+public	client_context	public	organizations	organization_id	id	CASCADE
+public	closure_delivery_receipts	public	initiatives	initiative_id	id	CASCADE
+public	closure_delivery_receipts	public	organizations	organization_id	id	CASCADE
+public	cloud_import_jobs	public	cloud_sources	cloud_source_id	id	CASCADE
+public	cloud_sources	public	organizations	organization_id	id	CASCADE
+public	cloud_sync_log	public	organizations	organization_id	id	CASCADE
+public	collab_session_events	public	collab_sessions	session_id	id	CASCADE
+public	communication_plan_items	public	communication_plans	plan_id	id	CASCADE
+public	communication_send_log	public	communication_plan_items	plan_item_id	id	SET NULL
+public	competency_categories	public	organizations	organization_id	id	CASCADE
+public	competency_levels	public	organizations	organization_id	id	CASCADE
+public	compliance_records	public	organizations	organization_id	id	CASCADE
+public	compliance_settings	public	organizations	organization_id	id	CASCADE
+public	compute_job_outputs	public	compute_jobs	job_id	id	NO ACTION
+public	compute_job_outputs	public	finance_artifacts	output_artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	compute_job_outputs	public	finance_working_revisions	output_working_revision_id	working_revision_id	NO ACTION
+public	compute_job_outputs	public	organizations	organization_id	id	NO ACTION
+public	compute_job_runs	public	compute_jobs	job_id	id	NO ACTION
+public	compute_job_runs	public	finance_reason_codes	reason_code	code	NO ACTION
+public	compute_jobs	public	compute_jobs	replayed_from_job_id	id	NO ACTION
+public	compute_jobs	public	finance_artifacts	input_artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	compute_jobs	public	finance_engine_manifests	engine_manifest_id	engine_manifest_id	NO ACTION
+public	compute_jobs	public	finance_reason_codes	reason_code	code	NO ACTION
+public	compute_jobs	public	organizations	organization_id	id	NO ACTION
+public	compute_kill_switches	public	organizations	organization_id	id	NO ACTION
+public	compute_org_concurrency_limits	public	organizations	organization_id	id	NO ACTION
+public	connectors	public	organizations	organization_id	id	CASCADE
+public	consultant_org_links	public	organizations	organization_id	id	NO ACTION
+public	consultant_org_links	public	users	consultant_id	id	NO ACTION
+public	consultant_project_access	public	organizations	organization_id	id	CASCADE
+public	consultant_project_access	public	projects	project_id	id	CASCADE
+public	consultant_project_access	public	users	consultant_user_id	id	CASCADE
+public	consultant_project_access	public	users	invited_by_user_id	id	SET NULL
+public	content_analytics	public	organizations	organization_id	id	SET NULL
+public	content_analytics	public	users	user_id	id	SET NULL
+public	content_categories	public	content_categories	parent_id	id	SET NULL
+public	content_categories	public	organizations	organization_id	id	CASCADE
+public	content_categories	public	users	created_by	id	SET NULL
+public	content_comments	public	content_comments	parent_comment_id	id	CASCADE
+public	content_comments	public	users	user_id	id	CASCADE
+public	content_favorites	public	users	user_id	id	CASCADE
+public	content_permissions	public	organizations	organization_id	id	CASCADE
+public	content_permissions	public	users	granted_by	id	SET NULL
+public	content_permissions	public	users	user_id	id	CASCADE
+public	content_reviews	public	users	requested_by	id	CASCADE
+public	content_reviews	public	users	reviewer_id	id	CASCADE
+public	content_tag_mappings	public	content_tags	tag_id	id	CASCADE
+public	content_tags	public	organizations	organization_id	id	CASCADE
+public	content_tags	public	users	created_by	id	SET NULL
+public	conversation_message_attachments	public	conversation_messages	message_id	id	CASCADE
+public	conversation_messages	public	conversation_sessions	session_id	id	SET NULL
+public	conversation_sessions	public	conversations	conversation_id	id	CASCADE
+public	conversation_share_views	public	conversation_shares	share_id	id	CASCADE
+public	conversation_shares	public	conversations	conversation_id	id	CASCADE
+public	conversations	public	chat_projects	chat_project_id	id	SET NULL
+public	credit_applications	public	credit_notes	credit_note_id	id	CASCADE
+public	credit_applications	public	invoices	invoice_id	id	CASCADE
+public	credit_notes	public	invoices	invoice_id	id	SET NULL
+public	credit_notes	public	organizations	organization_id	id	CASCADE
+public	custom_prompts	public	organizations	organization_id	id	CASCADE
+public	custom_prompts	public	users	created_by	id	SET NULL
+public	custom_statuses	public	organizations	organization_id	id	CASCADE
+public	custom_trends	public	organizations	company_id	id	CASCADE
+public	customer_communications	public	users	created_by	id	NO ACTION
+public	customer_contracts	public	organizations	organization_id	id	CASCADE
+public	customer_lifecycle_transitions	public	customer_lifecycle_stages	from_stage_id	id	NO ACTION
+public	customer_lifecycle_transitions	public	customer_lifecycle_stages	to_stage_id	id	NO ACTION
+public	customer_lifecycle_transitions	public	organizations	organization_id	id	CASCADE
+public	customer_lifecycle_transitions	public	users	transitioned_by	id	NO ACTION
+public	data_deletion_log	public	data_subject_requests	dsar_request_id	id	NO ACTION
+public	data_export_requests	public	organizations	organization_id	id	CASCADE
+public	data_export_requests	public	users	user_id	id	CASCADE
+public	data_residency	public	organizations	organization_id	id	NO ACTION
+public	data_retention_policies	public	organizations	organization_id	id	CASCADE
+public	dbr77_processes	public	multi_framework_assessments	assessment_id	id	CASCADE
+public	dbr77_workstations	public	multi_framework_assessments	assessment_id	id	CASCADE
+public	decision_alternatives	public	decisions	decision_id	id	CASCADE
+public	decision_comments	public	decisions	decision_id	id	CASCADE
+public	decision_consulted_opinions	public	decision_delegations	delegation_id	id	SET NULL
+public	decision_consulted_opinions	public	decisions	decision_id	id	CASCADE
+public	decision_delegations	public	decisions	decision_id	id	CASCADE
+public	decision_escalation_chain	public	decisions	decision_id	id	CASCADE
+public	decision_escalation_log	public	decisions	decision_id	id	CASCADE
+public	decision_history	public	decisions	decision_id	id	CASCADE
+public	decision_impacts	public	decisions	decision_id	id	CASCADE
+public	decision_risks	public	decisions	decision_id	id	CASCADE
+public	decision_stakeholders	public	decisions	decision_id	id	CASCADE
+public	decision_votes	public	decisions	decision_id	id	CASCADE
+public	decisions	public	initiatives	initiative_id	id	SET NULL
+public	decisions	public	organizations	organization_id	id	CASCADE
+public	decisions	public	projects	project_id	id	SET NULL
+public	decisions	public	tasks	task_id	id	SET NULL
+public	decisions	public	users	created_by	id	SET NULL
+public	decisions	public	users	decision_maker_id	id	SET NULL
+public	delay_signals	public	organizations	organization_id	id	CASCADE
+public	deliverable_bundle_versions	public	deliverable_bundles	bundle_id	id	CASCADE
+public	demo_session_tenants	public	demo_sessions	session_id	id	CASCADE
+public	demo_session_tenants	public	organizations	base_org_id	id	CASCADE
+public	demo_session_tenants	public	organizations	tenant_org_id	id	CASCADE
+public	demo_sessions	public	organizations	base_org_id	id	CASCADE
+public	demo_sessions	public	organizations	session_org_id	id	CASCADE
+public	demo_sessions	public	users	user_id	id	CASCADE
+public	developer_settings	public	users	user_id	id	CASCADE
+public	digitization_axis_scores	public	digitization_analyses	analysis_id	id	CASCADE
+public	dlp_policies	public	organizations	organization_id	id	CASCADE
+public	dlp_policies	public	users	created_by	id	NO ACTION
+public	dlp_violations	public	dlp_policies	policy_id	id	CASCADE
+public	dlp_violations	public	organizations	organization_id	id	CASCADE
+public	dlp_violations	public	users	resolved_by	id	NO ACTION
+public	dlp_violations	public	users	user_id	id	NO ACTION
+public	domain_verifications	public	organizations	organization_id	id	NO ACTION
+public	dsar_activity_log	public	data_subject_requests	request_id	id	CASCADE
+public	dunning_states	public	organizations	organization_id	id	NO ACTION
+public	email_sender_verifications	public	organizations	organization_id	id	NO ACTION
+public	email_sends	public	email_templates	template_id	id	SET NULL
+public	email_sends	public	organizations	organization_id	id	CASCADE
+public	email_signatures	public	users	user_id	id	CASCADE
+public	email_templates	public	organizations	organization_id	id	CASCADE
+public	enterprise_contracts	public	organizations	organization_id	id	NO ACTION
+public	execution_action_audit	public	execution_action_registry	action_id	action_id	NO ACTION
+public	execution_action_audit	public	organizations	organization_id	id	NO ACTION
+public	execution_audit_log	public	initiatives	initiative_id	id	CASCADE
+public	execution_audit_log	public	users	changed_by	id	SET NULL
+public	execution_budget_delete_receipts	public	execution_action_registry	action_id	action_id	NO ACTION
+public	execution_budget_delete_receipts	public	organizations	organization_id	id	NO ACTION
+public	execution_case_links	public	case_core	case_id	case_id	NO ACTION
+public	execution_case_links	public	initiatives	initiative_id	id	NO ACTION
+public	execution_case_links	public	organizations	organization_id	id	NO ACTION
+public	execution_case_links	public	projects	project_id	id	NO ACTION
+public	execution_delivery_evidence	public	case_workspace_artifact_links	artifact_link_id	link_id	NO ACTION
+public	execution_delivery_evidence	public	execution_case_links	execution_link_id	link_id	NO ACTION
+public	execution_delivery_evidence	public	organizations	organization_id	id	NO ACTION
+public	execution_identity_aliases	public	case_core	legacy_case_id	case_id	NO ACTION
+public	execution_identity_aliases	public	execution_case_links	execution_link_id	link_id	NO ACTION
+public	execution_identity_aliases	public	initiatives	legacy_initiative_id	id	NO ACTION
+public	execution_identity_aliases	public	organizations	organization_id	id	NO ACTION
+public	execution_link_reopen_receipts	public	execution_case_links	execution_link_id	link_id	NO ACTION
+public	execution_link_reopen_receipts	public	organizations	organization_id	id	NO ACTION
+public	execution_results_signal_outbox	public	case_core	case_id	case_id	NO ACTION
+public	execution_results_signal_outbox	public	execution_case_links	execution_link_id	link_id	NO ACTION
+public	execution_results_signal_outbox	public	execution_delivery_evidence	evidence_id	evidence_id	NO ACTION
+public	execution_results_signal_outbox	public	initiatives	initiative_id	id	NO ACTION
+public	execution_results_signal_outbox	public	organizations	organization_id	id	NO ACTION
+public	execution_spine_backfill_receipts	public	case_core	legacy_case_id	case_id	NO ACTION
+public	execution_spine_backfill_receipts	public	execution_case_links	canonical_execution_link_id	link_id	NO ACTION
+public	execution_spine_backfill_receipts	public	execution_case_links	legacy_execution_link_id	link_id	NO ACTION
+public	execution_spine_backfill_receipts	public	execution_spine_backfill_runs	run_id	run_id	NO ACTION
+public	execution_spine_backfill_receipts	public	initiatives	legacy_initiative_id	id	NO ACTION
+public	execution_spine_backfill_receipts	public	organizations	organization_id	id	NO ACTION
+public	execution_spine_backfill_runs	public	organizations	organization_id	id	NO ACTION
+public	execution_spine_identity_quarantine	public	case_core	legacy_case_id	case_id	NO ACTION
+public	execution_spine_identity_quarantine	public	execution_case_links	legacy_execution_link_id	link_id	NO ACTION
+public	execution_spine_identity_quarantine	public	execution_spine_backfill_runs	run_id	run_id	NO ACTION
+public	execution_spine_identity_quarantine	public	initiatives	legacy_initiative_id	id	NO ACTION
+public	execution_spine_identity_quarantine	public	organizations	organization_id	id	NO ACTION
+public	external_digital_assessments	public	organizations	organization_id	id	CASCADE
+public	external_digital_assessments	public	projects	project_id	id	CASCADE
+public	facility_users	public	organization_facilities	facility_id	id	CASCADE
+public	facility_users	public	users	assigned_by	id	SET NULL
+public	facility_users	public	users	user_id	id	CASCADE
+public	feature_update_events	public	feature_updates	update_id	id	CASCADE
+public	feature_update_events	public	organizations	organization_id	id	CASCADE
+public	feature_update_events	public	users	user_id	id	SET NULL
+public	feature_update_reads	public	feature_updates	update_id	id	CASCADE
+public	feature_update_reads	public	users	user_id	id	CASCADE
+public	feature_updates	public	organizations	organization_id	id	CASCADE
+public	feature_updates	public	users	created_by	id	SET NULL
+public	feature_votes	public	feature_requests	feature_id	id	CASCADE
+public	feature_votes	public	users	user_id	id	CASCADE
+public	feedback	public	users	user_id	id	CASCADE
+public	feedback_analysis	public	system_feedback	feedback_id	id	CASCADE
+public	feedback_comments	public	feedback_items	feedback_id	id	CASCADE
+public	feedback_comments	public	users	user_id	id	CASCADE
+public	feedback_status_history	public	system_feedback	feedback_id	id	CASCADE
+public	feedback_votes	public	feedback_items	feedback_id	id	CASCADE
+public	feedback_votes	public	users	user_id	id	CASCADE
+public	finance_analysis_benchmarks	public	finance_analysis_kpi_catalog	kpi_catalog_id	id	NO ACTION
+public	finance_analysis_benchmarks	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_analysis_definitions	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_analysis_kpi_catalog	public	finance_analysis_kpi_catalog	superseded_by_id	id	NO ACTION
+public	finance_analysis_kpi_catalog	public	organizations	organization_id	id	NO ACTION
+public	finance_analysis_kpi_values	public	finance_analysis_kpi_catalog	kpi_catalog_id	id	NO ACTION
+public	finance_analysis_kpi_values	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_analysis_kpi_values	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_analysis_kpi_values	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_analysis_variance	public	finance_analysis_kpi_catalog	kpi_catalog_id	id	NO ACTION
+public	finance_analysis_variance	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_analysis_variance	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_analysis_variance	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_artifact_aliases	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_artifact_aliases	public	finance_business_versions	business_version_id	business_version_id	NO ACTION
+public	finance_artifacts	public	finance_business_versions	current_business_version_id	business_version_id	NO ACTION
+public	finance_artifacts	public	organizations	organization_id	id	NO ACTION
+public	finance_baseline_assumptions	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_assumptions	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_baseline_assumptions	public	finance_stmt_periods	base_period_id	period_id	NO ACTION
+public	finance_baseline_assumptions	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_baseline_backtest_line_results	public	finance_baseline_backtest_runs	backtest_run_id	id	NO ACTION
+public	finance_baseline_backtest_line_results	public	finance_baseline_backtest_runs	backtest_run_id,organization_id	id,organization_id	NO ACTION
+public	finance_baseline_backtest_line_results	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_baseline_backtest_line_results	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_baseline_backtest_line_results	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_baseline_backtest_runs	public	finance_business_versions	actual_statement_pack_business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_backtest_runs	public	finance_business_versions	baseline_business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_backtest_runs	public	finance_stmt_periods	holdout_period_end_id	period_id	NO ACTION
+public	finance_baseline_backtest_runs	public	finance_stmt_periods	holdout_period_start_id	period_id	NO ACTION
+public	finance_baseline_context_command_receipts	public	finance_baseline_workspace_contexts	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_context_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_baseline_context_command_receipts	public	users	created_by	id	NO ACTION
+public	finance_baseline_models	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_outputs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_outputs	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_baseline_outputs	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_baseline_outputs	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_baseline_schedules	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_schedules	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_baseline_schedules	public	finance_stmt_periods	effective_from_period_id	period_id	NO ACTION
+public	finance_baseline_schedules	public	finance_stmt_periods	effective_to_period_id	period_id	NO ACTION
+public	finance_baseline_solver_diagnostics	public	compute_jobs	compute_job_id	id	NO ACTION
+public	finance_baseline_solver_diagnostics	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_solver_diagnostics	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_baseline_workspace_contexts	public	finance_business_versions	source_analysis_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_workspace_contexts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_workspace_contexts	public	finance_business_versions	source_statement_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_baseline_workspace_contexts	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_baseline_workspace_contexts	public	finance_stmt_periods	opening_balance_sheet_period_id	period_id	NO ACTION
+public	finance_baseline_workspace_contexts	public	organizations	organization_id	id	NO ACTION
+public	finance_baseline_workspace_contexts	public	users	configured_by	id	NO ACTION
+public	finance_budget_approval_command_receipts	public	budget_snapshots	snapshot_id,budget_id	id,budget_id	NO ACTION
+public	finance_budget_approval_command_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_approval_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_approval_command_receipts	public	users	approved_by	id	NO ACTION
+public	finance_budget_discard_command_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_discard_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_discard_command_receipts	public	users	archived_by	id	NO ACTION
+public	finance_budget_document_import_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_document_import_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_document_import_receipts	public	users	imported_by	id	NO ACTION
+public	finance_budget_initiative_link_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_initiative_link_receipts	public	initiatives	initiative_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_initiative_link_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_initiative_link_receipts	public	users	created_by	id	NO ACTION
+public	finance_budget_initiative_unlink_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_initiative_unlink_receipts	public	initiatives	initiative_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_initiative_unlink_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_initiative_unlink_receipts	public	users	created_by	id	NO ACTION
+public	finance_budget_line_command_receipts	public	budget_lines	line_id,budget_id	id,budget_id	NO ACTION
+public	finance_budget_line_command_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_line_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_line_command_receipts	public	users	created_by	id	NO ACTION
+public	finance_budget_projection_command_receipts	public	budget_scenarios	scenario_id,budget_id	id,budget_id	NO ACTION
+public	finance_budget_projection_command_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_projection_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_projection_command_receipts	public	users	created_by	id	NO ACTION
+public	finance_budget_registration_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_registration_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_registration_receipts	public	tool_sessions	source_tool_session_id	id	NO ACTION
+public	finance_budget_registration_receipts	public	users	created_by	id	NO ACTION
+public	finance_budget_scenario_adjustment_command_receipts	public	budget_scenarios	scenario_id,budget_id	id,budget_id	NO ACTION
+public	finance_budget_scenario_adjustment_command_receipts	public	budgets	budget_id,organization_id	id,organization_id	NO ACTION
+public	finance_budget_scenario_adjustment_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_budget_scenario_adjustment_command_receipts	public	users	created_by	id	NO ACTION
+public	finance_business_versions	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_business_versions	public	finance_business_versions	parent_version_id	business_version_id	NO ACTION
+public	finance_business_versions	public	finance_business_versions	superseded_by_version_id	business_version_id	NO ACTION
+public	finance_business_versions	public	finance_compute_snapshots	compute_snapshot_id	compute_snapshot_id	NO ACTION
+public	finance_business_versions	public	finance_engine_manifests	engine_manifest_id	engine_manifest_id	NO ACTION
+public	finance_business_versions	public	finance_working_revisions	source_working_revision_id	working_revision_id	NO ACTION
+public	finance_comment_assignments	public	finance_comments	comment_id	id	NO ACTION
+public	finance_comment_assignments	public	finance_comments	comment_id,organization_id	id,organization_id	NO ACTION
+public	finance_comment_assignments	public	organizations	organization_id	id	NO ACTION
+public	finance_comments	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_comments	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_comments	public	organizations	organization_id	id	NO ACTION
+public	finance_compute_snapshots	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_compute_snapshots	public	finance_engine_manifests	engine_manifest_id	engine_manifest_id	NO ACTION
+public	finance_compute_snapshots	public	finance_working_revisions	working_revision_id	working_revision_id	NO ACTION
+public	finance_digitization_analysis_archive_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_digitization_analysis_duplicate_command_receipts	public	digitization_analyses	duplicate_analysis_id	id	RESTRICT
+public	finance_digitization_analysis_duplicate_command_receipts	public	digitization_analyses	source_analysis_id	id	RESTRICT
+public	finance_digitization_analysis_financials_receipts	public	analysis_financials	financials_id	id	RESTRICT
+public	finance_digitization_analysis_financials_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_digitization_analysis_initiative_link_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_digitization_analysis_initiative_link_receipts	public	initiatives	initiative_id	id	RESTRICT
+public	finance_digitization_analysis_planned_benefit_command_receipts	public	benefit_tracking	benefit_tracking_id	id	RESTRICT
+public	finance_digitization_analysis_planned_benefit_command_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_digitization_analysis_registration_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_digitization_analysis_scenario_command_receipts	public	analysis_financial_scenarios	scenario_id	id	RESTRICT
+public	finance_digitization_analysis_scenario_command_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_digitization_analysis_update_receipts	public	digitization_analyses	analysis_id	id	RESTRICT
+public	finance_exceptions	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_exceptions	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_exceptions	public	finance_working_revisions	working_revision_id	working_revision_id	NO ACTION
+public	finance_exceptions	public	organizations	organization_id	id	NO ACTION
+public	finance_export_evidence_items	public	finance_export_manifests	export_manifest_id	export_manifest_id	NO ACTION
+public	finance_export_manifest_sources	public	finance_export_manifests	export_manifest_id	export_manifest_id	NO ACTION
+public	finance_export_manifests	public	finance_artifacts	primary_artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_export_manifests	public	finance_business_versions	primary_business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_export_manifests	public	organizations	organization_id	id	NO ACTION
+public	finance_import_receipts	public	finance_artifacts	artifact_id	artifact_id	NO ACTION
+public	finance_import_receipts	public	finance_business_versions	business_version_id	business_version_id	NO ACTION
+public	finance_import_receipts	public	finance_working_revisions	working_revision_id	working_revision_id	NO ACTION
+public	finance_import_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_legal_holds	public	organizations	organization_id	id	NO ACTION
+public	finance_lineage_edges	public	finance_business_versions	source_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_lineage_edges	public	finance_business_versions	target_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_lineage_edges	public	organizations	organization_id	id	NO ACTION
+public	finance_lineage_freshness_events	public	finance_lineage_edges	triggering_edge_id	id	NO ACTION
+public	finance_lineage_freshness_events	public	organizations	organization_id	id	NO ACTION
+public	finance_periods	public	organizations	organization_id	id	CASCADE
+public	finance_post_investment_reviews	public	financial_models	baseline_model_id	id	NO ACTION
+public	finance_post_investment_reviews	public	initiatives	initiative_id	id	CASCADE
+public	finance_post_investment_reviews	public	initiatives	initiative_id,organization_id	id,organization_id	NO ACTION
+public	finance_post_investment_reviews	public	organizations	organization_id	id	CASCADE
+public	finance_prediction_authoring_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_authoring_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_prediction_conflict_resolutions	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_conflict_resolutions	public	finance_prediction_preflight_findings	finding_id	id	NO ACTION
+public	finance_prediction_driver_line_map	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_prediction_driver_overrides	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_driver_overrides	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_prediction_driver_overrides	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_prediction_driver_overrides	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_prediction_financing	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_financing	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_prediction_financing	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_prediction_impact_chain	public	finance_analysis_kpi_catalog	kpi_catalog_id	id	NO ACTION
+public	finance_prediction_impact_chain	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_impact_chain	public	finance_prediction_impact_chain	cannibalizes_impact_id	id	NO ACTION
+public	finance_prediction_impact_chain	public	finance_prediction_initiatives	initiative_id	id	NO ACTION
+public	finance_prediction_impact_chain	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_prediction_impact_chain	public	finance_stmt_periods	start_period_id	period_id	NO ACTION
+public	finance_prediction_impact_chain	public	financial_statement_lines	statement_line_id	id	NO ACTION
+public	finance_prediction_initiatives	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_initiatives	public	finance_stmt_periods	default_start_period_id	period_id	NO ACTION
+public	finance_prediction_outputs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_outputs	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_prediction_outputs	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_prediction_outputs	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_prediction_preflight_findings	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_preflight_findings	public	finance_prediction_preflight_runs	preflight_run_id	id	NO ACTION
+public	finance_prediction_preflight_findings	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_prediction_preflight_findings	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_prediction_preflight_findings	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_prediction_preflight_runs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_prediction_preflight_runs	public	finance_prediction_preflight_runs	superseded_by_preflight_run_id	id	NO ACTION
+public	finance_prediction_scenarios	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_reconciliation_runs	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_reconciliation_runs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_reconciliation_runs	public	finance_exceptions	coverage_exception_id	id	NO ACTION
+public	finance_reconciliation_runs	public	finance_exceptions	linked_exception_id	id	NO ACTION
+public	finance_reconciliation_runs	public	organizations	organization_id	id	NO ACTION
+public	finance_retention_policies	public	finance_retention_policies	superseded_by_policy_id	retention_policy_id	NO ACTION
+public	finance_review_checklists	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_review_checklists	public	organizations	organization_id	id	NO ACTION
+public	finance_saved_views	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_saved_views	public	organizations	organization_id	id	NO ACTION
+public	finance_settings_command_receipts	public	organizations	organization_id	id	CASCADE
+public	finance_settings_states	public	organizations	organization_id	id	CASCADE
+public	finance_statement_confirmation_receipts	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_statement_confirmation_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_statement_confirmation_receipts	public	finance_statement_source_receipts	source_receipt_id,organization_id,statement_id	receipt_id,organization_id,statement_id	NO ACTION
+public	finance_statement_confirmation_receipts	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_statement_confirmation_receipts	public	financial_statement_packs	statement_pack_id,organization_id	id,organization_id	NO ACTION
+public	finance_statement_confirmation_receipts	public	financial_statements	statement_id,organization_id	id,organization_id	NO ACTION
+public	finance_statement_confirmation_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_statement_confirmation_receipts	public	users	confirmed_by	id	NO ACTION
+public	finance_statement_manual_mapping_decisions	public	finance_statement_source_receipts	source_receipt_id,organization_id,statement_id	receipt_id,organization_id,statement_id	NO ACTION
+public	finance_statement_manual_mapping_decisions	public	financial_statement_candidate_rows	candidate_row_id,statement_id	id,statement_id	NO ACTION
+public	finance_statement_manual_mapping_decisions	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_statement_manual_mapping_decisions	public	financial_statements	statement_id,organization_id	id,organization_id	NO ACTION
+public	finance_statement_manual_mapping_decisions	public	organizations	organization_id	id	NO ACTION
+public	finance_statement_manual_mapping_decisions	public	users	decided_by	id	NO ACTION
+public	finance_statement_pack_archive_command_receipts	public	financial_statement_packs	pack_id,organization_id	id,organization_id	NO ACTION
+public	finance_statement_pack_archive_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_statement_pack_archive_command_receipts	public	users	archived_by	id	NO ACTION
+public	finance_statement_source_receipts	public	financial_statement_ingest_runs	ingest_run_id,statement_id,organization_id	id,statement_id,organization_id	NO ACTION
+public	finance_statement_source_receipts	public	financial_statements	statement_id,organization_id	id,organization_id	NO ACTION
+public	finance_statement_source_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_statement_source_receipts	public	users	imported_by	id	NO ACTION
+public	finance_stmt_calendars	public	organizations	organization_id	id	NO ACTION
+public	finance_stmt_entities	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_stmt_entities	public	finance_stmt_entities	parent_entity_row_id	id	NO ACTION
+public	finance_stmt_fx	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_stmt_fx	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_stmt_lines	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_stmt_lines	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_stmt_lines	public	finance_stmt_lines	reclassified_from_line_id	id	NO ACTION
+public	finance_stmt_lines	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_stmt_lines	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_stmt_periods	public	finance_stmt_calendars	fiscal_calendar_id	fiscal_calendar_id	NO ACTION
+public	finance_stmt_periods	public	finance_stmt_periods	previous_period_id	period_id	NO ACTION
+public	finance_stmt_periods	public	organizations	organization_id	id	NO ACTION
+public	finance_stmt_reconciliation	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_stmt_reconciliation	public	finance_reconciliation_runs	reconciliation_run_id	id	NO ACTION
+public	finance_stmt_reconciliation	public	finance_stmt_entities	elimination_counterparty_entity_id	id	NO ACTION
+public	finance_stmt_reconciliation	public	finance_stmt_entities	entity_id	id	NO ACTION
+public	finance_stmt_reconciliation	public	finance_stmt_periods	period_id	period_id	NO ACTION
+public	finance_stmt_reconciliation	public	finance_stmt_reconciliation	duplicate_of_row_id	id	NO ACTION
+public	finance_stmt_reconciliation	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	finance_stmt_reconciliation	public	financial_statement_lines	reclass_target_line_id	id	NO ACTION
+public	finance_stmt_source_evidence	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_stmt_source_evidence	public	finance_stmt_lines	stmt_line_id	id	NO ACTION
+public	finance_valuation_advisor_output_variants	public	finance_business_versions	compared_business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_advisor_output_variants	public	finance_valuation_advisor_outputs	advisor_output_id	id	NO ACTION
+public	finance_valuation_advisor_outputs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_advisor_outputs	public	finance_compute_snapshots	compute_snapshot_id	compute_snapshot_id	NO ACTION
+public	finance_valuation_cases	public	organizations	organization_id	id	NO ACTION
+public	finance_valuation_comps	public	finance_valuation_methods	method_id	id	NO ACTION
+public	finance_valuation_comps	public	finance_valuation_methods	method_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_compute_command_receipts	public	compute_jobs	job_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_compute_command_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_depth_command_receipts	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_depth_command_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_depth_command_receipts	public	finance_valuation_depth_states	organization_id,business_version_id	organization_id,business_version_id	NO ACTION
+public	finance_valuation_depth_command_receipts	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_depth_command_receipts	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_depth_states	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_depth_states	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_depth_states	public	finance_working_revisions	source_working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_depth_states	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_direct_assumptions	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_direct_assumptions	public	finance_working_revisions	source_working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_discard_receipts	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_discard_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_discard_receipts	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_discard_receipts	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_ev_equity_bridge	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_ev_equity_bridge	public	finance_working_revisions	source_working_revision_id	working_revision_id	NO ACTION
+public	finance_valuation_ev_equity_bridge_components	public	finance_valuation_ev_equity_bridge	bridge_id	id	NO ACTION
+public	finance_valuation_ev_equity_bridge_components	public	finance_valuation_ev_equity_bridge	bridge_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_input_command_events	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_input_command_events	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_input_command_events	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_methods	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_methods	public	finance_working_revisions	source_working_revision_id	working_revision_id	NO ACTION
+public	finance_valuation_negotiation_pack_receipts	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_negotiation_pack_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_negotiation_pack_receipts	public	finance_valuation_negotiation_packs	organization_id,business_version_id	organization_id,business_version_id	NO ACTION
+public	finance_valuation_negotiation_pack_receipts	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_negotiation_pack_receipts	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_negotiation_packs	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_negotiation_packs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_negotiation_packs	public	finance_working_revisions	source_working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_negotiation_packs	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_pptx_exports	public	artifact_export_receipts	export_receipt_id	export_receipt_id	NO ACTION
+public	finance_valuation_pptx_exports	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_pptx_exports	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_pptx_exports	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_pptx_exports	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_registration_command_receipts	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_valuation_registration_command_receipts	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_registration_command_receipts	public	finance_working_revisions	working_revision_id,organization_id	working_revision_id,organization_id	NO ACTION
+public	finance_valuation_registration_command_receipts	public	organizations	organization_id	id	NO ACTION
+public	finance_valuation_registration_command_receipts	public	users	created_by	id	NO ACTION
+public	finance_valuation_registration_command_receipts	public	valuations	legacy_valuation_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_sensitivity_cells	public	finance_valuation_sensitivity_grids	grid_id	id	NO ACTION
+public	finance_valuation_sensitivity_cells	public	finance_valuation_sensitivity_grids	grid_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_sensitivity_grids	public	finance_valuation_methods	method_id	id	NO ACTION
+public	finance_valuation_sensitivity_grids	public	finance_valuation_methods	method_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_terminal	public	finance_valuation_methods	method_id	id	NO ACTION
+public	finance_valuation_terminal	public	finance_valuation_methods	method_id,organization_id	id,organization_id	NO ACTION
+public	finance_valuation_terminal	public	finance_working_revisions	source_working_revision_id	working_revision_id	NO ACTION
+public	finance_valuation_variants	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_valuation_variants	public	finance_valuation_cases	case_id	case_id	NO ACTION
+public	finance_valuation_wacc_inputs	public	finance_business_versions	business_version_id,organization_id	business_version_id,organization_id	NO ACTION
+public	finance_working_revisions	public	finance_artifacts	artifact_id,organization_id	artifact_id,organization_id	NO ACTION
+public	finance_working_revisions	public	finance_business_versions	business_version_id	business_version_id	NO ACTION
+public	finance_working_revisions	public	finance_business_versions	source_business_version_id	business_version_id	NO ACTION
+public	financial_analyses	public	financial_statement_packs	source_statement_pack_id	id	SET NULL
+public	financial_analyses	public	organizations	organization_id	id	CASCADE
+public	financial_analysis_findings	public	financial_analyses	analysis_id	id	CASCADE
+public	financial_analysis_insights	public	financial_analyses	analysis_id	id	CASCADE
+public	financial_analysis_ratios	public	financial_analyses	analysis_id	id	CASCADE
+public	financial_model_events	public	financial_models	model_id	id	CASCADE
+public	financial_model_outputs	public	financial_models	model_id	id	CASCADE
+public	financial_model_validations	public	financial_models	model_id	id	CASCADE
+public	financial_model_versions	public	financial_models	model_id	id	CASCADE
+public	financial_models	public	financial_models	case_id	id	CASCADE
+public	financial_models	public	financial_statement_packs	source_statement_pack_id	id	SET NULL
+public	financial_ratio_snapshots	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_candidate_rows	public	financial_statement_extracted_sections	section_id	id	SET NULL
+public	financial_statement_candidate_rows	public	financial_statement_ingest_runs	ingest_run_id	id	CASCADE
+public	financial_statement_candidate_rows	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_extracted_sections	public	financial_statement_ingest_runs	ingest_run_id	id	CASCADE
+public	financial_statement_extracted_sections	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_ingest_runs	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_line_aliases	public	financial_statement_lines	statement_line_id	id	CASCADE
+public	financial_statement_mapping_candidates	public	financial_statement_candidate_rows	candidate_row_id	id	CASCADE
+public	financial_statement_mapping_candidates	public	financial_statement_ingest_runs	ingest_run_id	id	CASCADE
+public	financial_statement_mapping_candidates	public	financial_statement_lines	canonical_line_id	id	SET NULL
+public	financial_statement_mapping_candidates	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_packs	public	financial_statement_packs	base_pack_id	id	SET NULL
+public	financial_statement_quality_runs	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_repair_sessions	public	financial_statement_ingest_runs	ingest_run_id	id	SET NULL
+public	financial_statement_repair_sessions	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_source_artifacts	public	financial_statement_ingest_runs	ingest_run_id	id	CASCADE
+public	financial_statement_source_artifacts	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_validations	public	financial_statement_packs	statement_pack_id	id	CASCADE
+public	financial_statement_validations	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_value_evidence	public	financial_statement_candidate_rows	candidate_row_id	id	SET NULL
+public	financial_statement_value_evidence	public	financial_statement_values	statement_value_id	id	CASCADE
+public	financial_statement_value_versions	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_values	public	finance_periods	period_id	id	RESTRICT
+public	financial_statement_values	public	financial_statement_candidate_rows	source_candidate_row_id	id	SET NULL
+public	financial_statement_values	public	financial_statement_lines	canonical_line_id	id	NO ACTION
+public	financial_statement_values	public	financial_statement_mapping_candidates	selected_mapping_candidate_id	id	SET NULL
+public	financial_statement_values	public	financial_statements	statement_id	id	CASCADE
+public	financial_statement_versions	public	financial_statements	statement_id	id	CASCADE
+public	financial_statements	public	financial_statement_packs	statement_pack_id	id	SET NULL
+public	flow_accepted_classic_runtime_adoptions	public	initiative_candidates	candidate_id	id	NO ACTION
+public	flow_accepted_classic_runtime_adoptions	public	initiatives	classic_initiative_id	id	NO ACTION
+public	flow_accepted_classic_runtime_adoptions	public	organizations	organization_id	id	NO ACTION
+public	flow_accepted_classic_runtime_adoptions	public	projects	project_id	id	NO ACTION
+public	flow_accepted_classic_runtime_adoptions	public	swot_candidate_handoffs	swot_handoff_receipt_id	id	NO ACTION
+public	flow_accepted_classic_runtime_adoptions	public	tool_outputs	tool_output_id	id	NO ACTION
+public	flow_teresa_chat_draft_adoptions	public	initiatives	chat_initiative_id	id	NO ACTION
+public	flow_teresa_chat_draft_adoptions	public	organizations	organization_id	id	NO ACTION
+public	flow_teresa_chat_draft_adoptions	public	projects	project_id	id	NO ACTION
+public	framework_entitlements	public	organizations	organization_id	id	CASCADE
+public	framework_entitlements	public	users	granted_by	id	NO ACTION
+public	framework_import_logs	public	multi_framework_assessments	assessment_id	id	SET NULL
+public	framework_import_logs	public	organizations	organization_id	id	CASCADE
+public	framework_import_logs	public	users	imported_by	id	NO ACTION
+public	framework_score_history	public	multi_framework_assessments	assessment_id	id	CASCADE
+public	framework_score_history	public	users	changed_by	id	NO ACTION
+public	generated_workbook_versions	public	generated_workbooks	workbook_id	id	CASCADE
+public	generic_assessment_reports	public	organizations	organization_id	id	CASCADE
+public	generic_assessment_reports	public	projects	project_id	id	CASCADE
+public	generic_assessment_reports	public	users	uploaded_by	id	SET NULL
+public	help_analytics	public	organizations	organization_id	id	SET NULL
+public	help_analytics	public	users	user_id	id	SET NULL
+public	help_events	public	users	user_id	id	SET NULL
+public	help_feedback	public	organizations	organization_id	id	SET NULL
+public	help_feedback	public	users	user_id	id	SET NULL
+public	help_micro_video_dismissals	public	users	user_id	id	CASCADE
+public	help_playbook_steps	public	help_playbooks	playbook_key	key	CASCADE
+public	idea_business_cases	public	my_ideas	idea_id	id	CASCADE
+public	idea_financial_cases	public	my_ideas	idea_id	id	CASCADE
+public	ideas	public	organizations	organization_id	id	CASCADE
+public	ie_initiative_card_selection	public	ie_initiative_card_catalog	card_key	card_key	NO ACTION
+public	ie_initiative_card_versions	public	ie_initiative_card_catalog	card_key	card_key	NO ACTION
+public	ie_outbox_delivery_receipts	public	ie_outbox_events	source_event_id	id	NO ACTION
+public	initiative_benefits	public	initiative_kpis	source_initiative_kpi_id	id	SET NULL
+public	initiative_benefits	public	initiatives	initiative_id	id	CASCADE
+public	initiative_budget_items	public	initiatives	initiative_id	id	CASCADE
+public	initiative_budget_items	public	organizations	organization_id	id	CASCADE
+public	initiative_budgets	public	initiatives	initiative_id	id	CASCADE
+public	initiative_budgets	public	organizations	organization_id	id	NO ACTION
+public	initiative_closure_evidence	public	initiative_closure_requests	closure_request_id	id	RESTRICT
+public	initiative_closure_evidence	public	initiatives	initiative_id	id	RESTRICT
+public	initiative_closure_evidence	public	organizations	organization_id	id	RESTRICT
+public	initiative_closure_requests	public	initiatives	initiative_id	id	CASCADE
+public	initiative_closure_requests	public	organizations	organization_id	id	CASCADE
+public	initiative_closure_requests	public	users	approver_id	id	SET NULL
+public	initiative_dependencies	public	initiatives	from_initiative_id	id	CASCADE
+public	initiative_dependencies	public	initiatives	to_initiative_id	id	CASCADE
+public	initiative_dependencies	public	organizations	organization_id	id	CASCADE
+public	initiative_dependencies	public	projects	project_id	id	SET NULL
+public	initiative_gate_roles	public	initiatives	initiative_id	id	CASCADE
+public	initiative_gate_roles	public	users	assigned_by	id	SET NULL
+public	initiative_gate_roles	public	users	user_id	id	SET NULL
+public	initiative_intangible_assets	public	initiatives	initiative_id	id	CASCADE
+public	initiative_intangible_assets	public	organizations	organization_id	id	CASCADE
+public	initiative_kpi_mappings	public	initiative_kpis	kpi_id	id	CASCADE
+public	initiative_kpi_mappings	public	initiatives	initiative_id	id	SET NULL
+public	initiative_kpis	public	initiatives	initiative_id	id	SET NULL
+public	initiative_kpis	public	kpi_definition_versions	id,current_definition_version	kpi_id,version_no	NO ACTION
+public	initiative_lifecycle_gate_decisions	public	initiative_lifecycle_gate_decisions	supersedes_decision_id	decision_id	NO ACTION
+public	initiative_lifecycle_gate_decisions	public	initiatives	initiative_id	id	NO ACTION
+public	initiative_lifecycle_gate_decisions	public	transformation_cases	transformation_case_id	transformation_case_id	NO ACTION
+public	initiative_lifecycle_gate_decisions	public	users	human_actor_user_id	id	NO ACTION
+public	initiative_lifecycle_gate_decisions	public	v8_agent_proposal_scope_reviews	a05_approval_receipt_ref	review_id	NO ACTION
+public	initiative_lifecycle_gate_decisions	public	v8_agent_proposal_versions	a05_proposal_version_id	proposal_version_id	NO ACTION
+public	initiative_milestone_dependencies	public	initiative_milestones	source_milestone_id	id	CASCADE
+public	initiative_milestone_dependencies	public	initiative_milestones	target_milestone_id	id	CASCADE
+public	initiative_milestone_dependencies	public	initiatives	initiative_id	id	CASCADE
+public	initiative_milestone_dependencies	public	organizations	organization_id	id	CASCADE
+public	initiative_milestones	public	decisions	gate_decision_id	id	SET NULL
+public	initiative_milestones	public	initiatives	initiative_id	id	CASCADE
+public	initiative_milestones	public	organizations	organization_id	id	CASCADE
+public	initiative_resources	public	initiatives	initiative_id	id	CASCADE
+public	initiative_resources	public	organizations	organization_id	id	CASCADE
+public	initiative_schedule_baselines	public	initiatives	initiative_id	id	CASCADE
+public	initiative_schedule_baselines	public	organizations	organization_id	id	CASCADE
+public	initiative_schedule_baselines	public	users	created_by	id	SET NULL
+public	initiative_stakeholders	public	initiatives	initiative_id	id	CASCADE
+public	initiative_stakeholders	public	stakeholder_registry	registry_id	id	SET NULL
+public	initiative_status_history	public	initiatives	initiative_id	id	CASCADE
+public	initiative_templates	public	organizations	organization_id	id	CASCADE
+public	initiative_tools	public	initiatives	initiative_id	id	CASCADE
+public	initiative_tools	public	organizations	organization_id	id	CASCADE
+public	initiatives	public	initiative_templates	initiative_template_id	id	SET NULL
+public	initiatives	public	organizations	organization_id	id	CASCADE
+public	initiatives	public	users	owner_business_id	id	SET NULL
+public	initiatives	public	users	owner_execution_id	id	SET NULL
+public	initiatives	public	users	sponsor_id	id	SET NULL
+public	integration_audit_log	public	organizations	organization_id	id	CASCADE
+public	integration_ownership	public	users	owner_user_id	id	CASCADE
+public	integration_sync_log	public	integrations	integration_id	id	CASCADE
+public	integration_sync_logs	public	organizations	organization_id	id	CASCADE
+public	integration_sync_mappings	public	integrations	integration_id	id	CASCADE
+public	integration_sync_runs	public	integrations	integration_id	id	CASCADE
+public	integration_sync_runs	public	organizations	organization_id	id	CASCADE
+public	integration_webhooks	public	integrations	integration_id	id	CASCADE
+public	interview_ai_suggestion_audit	public	interview_questions	question_id	id	CASCADE
+public	interview_answer_history	public	interview_assignments	assignment_id	id	CASCADE
+public	interview_answer_history	public	interview_questions	question_id	id	CASCADE
+public	interview_evidence	public	interview_questions	question_id	id	SET NULL
+public	interview_evidence	public	interview_sessions	session_id	id	CASCADE
+public	interview_insights	public	organizations	organization_id	id	CASCADE
+public	interview_library_template_questions	public	interview_library_templates	template_id	id	CASCADE
+public	interview_messages	public	interview_sessions	session_id	id	CASCADE
+public	interview_notes	public	interview_sessions	session_id	id	CASCADE
+public	interview_public_answer_receipts	public	interview_distributions	distribution_id	id	RESTRICT
+public	interview_questions	public	interview_distributions	answered_via_distribution_id	id	SET NULL
+public	interview_questions	public	interview_sessions	session_id	id	CASCADE
+public	interview_template_questions	public	interview_templates	template_id	id	CASCADE
+public	invitation_events	public	invitations	invitation_id	id	CASCADE
+public	invitation_events	public	users	performed_by_user_id	id	SET NULL
+public	invitations	public	organizations	organization_id	id	CASCADE
+public	invitations	public	users	invited_by	id	SET NULL
+public	invoice_templates	public	organizations	organization_id	id	CASCADE
+public	invoices	public	organizations	organization_id	id	CASCADE
+public	ip_access_rules	public	organizations	organization_id	id	CASCADE
+public	ip_access_rules	public	users	created_by	id	SET NULL
+public	ip_access_rules	public	users	user_id	id	CASCADE
+public	journey_events	public	users	user_id	id	CASCADE
+public	kb_article_collections	public	kb_collections	collection_id	id	CASCADE
+public	kb_article_sources	public	kb_sources	source_id	id	CASCADE
+public	kb_article_tags	public	kb_tags	tag_id	id	CASCADE
+public	kb_article_translations	public	kb_articles	article_id	id	CASCADE
+public	kb_article_views	public	kb_articles	article_id	id	CASCADE
+public	kb_articles	public	kb_categories	category_id	id	NO ACTION
+public	kb_category_translations	public	kb_categories	category_id	id	CASCADE
+public	kb_collection_translations	public	kb_collections	collection_id	id	CASCADE
+public	kb_collections	public	kb_collections	parent_collection_id	id	SET NULL
+public	kb_tag_translations	public	kb_tags	tag_id	id	CASCADE
+public	kb_tags	public	kb_tags	redirect_to_tag_id	id	SET NULL
+public	knowledge_chunks	public	knowledge_docs	doc_id	id	CASCADE
+public	knowledge_documents	public	organizations	organization_id	id	NO ACTION
+public	knowledge_documents	public	projects	project_id	id	NO ACTION
+public	knowledge_pill_sections	public	knowledge_pill_versions	pill_version_id	id	CASCADE
+public	knowledge_pill_versions	public	knowledge_pills	pill_id	id	CASCADE
+public	kpi_crosswalk	public	rvn_kpi_definitions	canonical_kpi_id	kpi_id	RESTRICT
+public	kpi_definition_versions	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_deviation_actions	public	kpi_deviation_cases	case_id	id	CASCADE
+public	kpi_deviation_cases	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_financial_mappings	public	financial_statement_lines	statement_line_id	id	CASCADE
+public	kpi_financial_mappings	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_measurements	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_recovery_actions	public	kpi_recovery_cards	recovery_card_id	id	CASCADE
+public	kpi_recovery_actions	public	tasks	linked_task_id	id	SET NULL
+public	kpi_recovery_cards	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_recovery_cards	public	kpi_deviation_cases	deviation_case_id	id	CASCADE
+public	kpi_recovery_cause_decisions	public	kpi_recovery_cards	recovery_card_id	id	CASCADE
+public	kpi_recovery_checkpoints	public	kpi_recovery_cards	recovery_card_id	id	CASCADE
+public	kpi_recovery_checkpoints	public	kpi_time_series	kpi_time_series_id	id	SET NULL
+public	kpi_recovery_experiments	public	kpi_recovery_cards	recovery_card_id	id	CASCADE
+public	kpi_scorecard_items	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_scorecard_items	public	kpi_scorecards	scorecard_id	id	CASCADE
+public	kpi_time_series	public	initiative_kpis	kpi_id	id	CASCADE
+public	kpi_time_series	public	kpi_definition_versions	definition_version_id	id	SET NULL
+public	lane_decisions	public	organizations	organization_id	id	CASCADE
+public	lane_execution_plans	public	lane_decisions	decision_id	id	CASCADE
+public	lane_execution_plans	public	organizations	organization_id	id	CASCADE
+public	legal_document_acceptances	public	legal_documents	document_id	id	NO ACTION
+public	legal_document_acceptances	public	users	user_id	id	CASCADE
+public	legal_documents	public	users	created_by	id	NO ACTION
+public	legal_documents	public	users	published_by	id	NO ACTION
+public	llm_org_policies	public	organizations	organization_id	id	CASCADE
+public	login_history	public	users	user_id	id	CASCADE
+public	management_report_approvals	public	management_report_versions	version_id	id	SET NULL
+public	management_report_approvals	public	management_reports	report_id	id	CASCADE
+public	management_report_approvals	public	users	assigned_to	id	SET NULL
+public	management_report_approvals	public	users	decided_by	id	SET NULL
+public	management_report_audit_log	public	management_report_versions	version_id	id	SET NULL
+public	management_report_audit_log	public	management_reports	report_id	id	CASCADE
+public	management_report_comments	public	management_report_comments	parent_comment_id	id	CASCADE
+public	management_report_comments	public	management_report_versions	version_id	id	SET NULL
+public	management_report_comments	public	management_reports	report_id	id	CASCADE
+public	management_report_comments	public	users	created_by	id	SET NULL
+public	management_report_comments	public	users	resolved_by	id	SET NULL
+public	management_report_recipients	public	management_reports	report_id	id	CASCADE
+public	management_report_recipients	public	users	user_id	id	SET NULL
+public	management_report_schedules	public	organizations	organization_id	id	CASCADE
+public	management_report_schedules	public	projects	project_id	id	SET NULL
+public	management_report_schedules	public	users	created_by	id	SET NULL
+public	management_report_templates	public	organizations	organization_id	id	CASCADE
+public	management_report_templates	public	users	created_by	id	SET NULL
+public	management_report_versions	public	management_reports	report_id	id	CASCADE
+public	management_report_versions	public	users	created_by	id	SET NULL
+public	management_reports	public	organizations	organization_id	id	CASCADE
+public	management_reports	public	projects	project_id	id	SET NULL
+public	management_reports	public	users	generated_by	id	SET NULL
+public	marketplace_imports	public	organizations	organization_id	id	CASCADE
+public	maturity_assessments	public	projects	project_id	id	CASCADE
+public	mcp_audit_logs	public	organizations	organization_id	id	SET NULL
+public	mcp_audit_logs	public	users	user_id	id	SET NULL
+public	mcp_provider_allowlist	public	mcp_providers	provider_id	id	CASCADE
+public	mcp_provider_allowlist	public	organizations	organization_id	id	CASCADE
+public	mcp_provider_tools_cache	public	mcp_providers	provider_id	id	CASCADE
+public	mcp_provider_tools_cache	public	organizations	organization_id	id	CASCADE
+public	mcp_providers	public	organizations	organization_id	id	CASCADE
+public	meeting_follow_ups	public	meetings	meeting_id	id	CASCADE
+public	message_edits	public	conversation_messages	message_id	id	CASCADE
+public	method_approvals	public	method_sessions	session_id	id	CASCADE
+public	method_approvals	public	organizations	organization_id	id	CASCADE
+public	method_events	public	method_sessions	session_id	id	CASCADE
+public	method_events	public	organizations	organization_id	id	CASCADE
+public	method_evidence	public	method_sessions	session_id	id	CASCADE
+public	method_evidence	public	organizations	organization_id	id	CASCADE
+public	method_findings	public	method_outputs	output_id	id	CASCADE
+public	method_findings	public	organizations	organization_id	id	CASCADE
+public	method_initiative_drafts	public	method_outputs	output_id	id	CASCADE
+public	method_initiative_drafts	public	method_outputs	superseded_by_output_id	id	SET NULL
+public	method_initiative_drafts	public	method_sessions	session_id	id	CASCADE
+public	method_initiative_drafts	public	organizations	organization_id	id	CASCADE
+public	method_outputs	public	method_outputs	revision_of_output_id	id	SET NULL
+public	method_outputs	public	method_sessions	session_id	id	CASCADE
+public	method_outputs	public	method_snapshots	snapshot_id	id	RESTRICT
+public	method_outputs	public	organizations	organization_id	id	CASCADE
+public	method_packs	public	organizations	organization_id	id	CASCADE
+public	method_report_snapshots	public	method_outputs	output_id	id	CASCADE
+public	method_report_snapshots	public	method_outputs	superseded_by_output_id	id	SET NULL
+public	method_report_snapshots	public	method_sessions	session_id	id	CASCADE
+public	method_report_snapshots	public	organizations	organization_id	id	CASCADE
+public	method_session_create_idempotency	public	method_sessions	session_id	id	CASCADE
+public	method_session_create_idempotency	public	organizations	organization_id	id	CASCADE
+public	method_session_report_metadata	public	method_sessions	session_id	id	CASCADE
+public	method_session_report_metadata	public	organizations	organization_id	id	CASCADE
+public	method_session_role_events	public	method_sessions	session_id	id	CASCADE
+public	method_session_role_events	public	organizations	organization_id	id	CASCADE
+public	method_session_roles	public	method_sessions	session_id	id	CASCADE
+public	method_session_roles	public	organizations	organization_id	id	CASCADE
+public	method_sessions	public	method_sessions	revision_of_session_id	id	SET NULL
+public	method_sessions	public	organizations	organization_id	id	CASCADE
+public	method_snapshots	public	method_sessions	session_id	id	CASCADE
+public	method_snapshots	public	organizations	organization_id	id	CASCADE
+public	method_teresa_previews	public	method_sessions	session_id	id	CASCADE
+public	method_teresa_previews	public	organizations	organization_id	id	CASCADE
+public	mfa_attempts	public	users	user_id	id	CASCADE
+public	mfa_login_challenges	public	organizations	organization_id	id	CASCADE
+public	mfa_login_challenges	public	users	user_id	id	CASCADE
+public	mobile_devices	public	users	user_id	id	CASCADE
+public	mobile_preferences	public	users	user_id	id	CASCADE
+public	module_help	public	help_articles	article_id	id	NO ACTION
+public	module_interest	public	organizations	org_id	id	SET NULL
+public	module_interest	public	users	user_id	id	CASCADE
+public	multi_framework_assessments	public	organizations	organization_id	id	CASCADE
+public	my_idea_activity	public	my_ideas	idea_id	id	CASCADE
+public	my_idea_conversions	public	my_ideas	idea_id	id	CASCADE
+public	my_idea_edges	public	my_ideas	source_idea_id	id	CASCADE
+public	my_idea_edges	public	my_ideas	target_idea_id	id	CASCADE
+public	my_idea_map_snapshots	public	my_ideas	idea_id	id	CASCADE
+public	my_idea_maps	public	my_ideas	idea_id	id	CASCADE
+public	myw_agent_canonical_outbox	public	organizations	organization_id	id	NO ACTION
+public	myw_agent_materialization_approvals	public	myw_agent_materialization_proposals	proposal_id	proposal_id	NO ACTION
+public	myw_agent_materialization_approvals	public	organizations	organization_id	id	NO ACTION
+public	myw_agent_materialization_approvals	public	users	approver_id	id	NO ACTION
+public	myw_agent_materialization_proposals	public	organizations	organization_id	id	NO ACTION
+public	myw_agent_materialization_proposals	public	users	requester_id	id	NO ACTION
+public	myw_agent_materialization_receipts	public	myw_agent_materialization_approvals	approval_id	approval_id	NO ACTION
+public	myw_agent_materialization_receipts	public	myw_agent_materialization_proposals	proposal_id	proposal_id	NO ACTION
+public	myw_agent_materialization_receipts	public	organizations	organization_id	id	NO ACTION
+public	myw_agent_materialization_receipts	public	users	materialized_by	id	NO ACTION
+public	notification_activity_log	public	notifications	notification_id	id	CASCADE
+public	notification_activity_log	public	users	user_id	id	SET NULL
+public	notification_comments	public	notifications	notification_id	id	CASCADE
+public	notification_comments	public	users	user_id	id	CASCADE
+public	notification_delivery_log	public	notifications	notification_id	id	CASCADE
+public	notification_digest_queue	public	notifications	notification_id	id	CASCADE
+public	notification_rules	public	organizations	organization_id	id	CASCADE
+public	notification_rules	public	users	created_by	id	SET NULL
+public	notification_settings	public	users	user_id	id	CASCADE
+public	notifications	public	users	user_id	id	CASCADE
+public	oauth_links	public	users	user_id	id	CASCADE
+public	offline_sync_queue	public	mobile_devices	device_id	id	NO ACTION
+public	offline_sync_queue	public	users	user_id	id	NO ACTION
+public	okr_check_ins	public	okr_key_results	key_result_id	id	CASCADE
+public	okr_key_results	public	initiative_kpis	kpi_id	id	SET NULL
+public	okr_key_results	public	kpi_definition_versions	kpi_definition_version_id	id	SET NULL
+public	okr_key_results	public	okr_objectives	objective_id	id	CASCADE
+public	okr_objectives	public	okr_cycles	cycle_id	id	SET NULL
+public	okr_vnext_alignments	public	okr_vnext_objectives	source_objective_id	objective_id	NO ACTION
+public	okr_vnext_alignments	public	okr_vnext_objectives	target_objective_id	objective_id	NO ACTION
+public	okr_vnext_approved_snapshots	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_checkin_occurrences	public	okr_vnext_cycles	cycle_id	cycle_id	NO ACTION
+public	okr_vnext_checkins	public	okr_vnext_checkin_occurrences	cadence_occurrence_id	cadence_occurrence_id	NO ACTION
+public	okr_vnext_checkins	public	okr_vnext_checkins	correction_of_checkin_id	checkin_id	NO ACTION
+public	okr_vnext_checkins	public	okr_vnext_key_results	key_result_id	key_result_id	NO ACTION
+public	okr_vnext_checkins	public	okr_vnext_objectives	objective_id	objective_id	NO ACTION
+public	okr_vnext_checkins	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_cycles	public	okr_vnext_program_policy_versions	policy_version_id	policy_version_id	NO ACTION
+public	okr_vnext_cycles	public	okr_vnext_programs	program_id	program_id	NO ACTION
+public	okr_vnext_decision_links	public	okr_vnext_key_results	key_result_id	key_result_id	NO ACTION
+public	okr_vnext_decision_links	public	okr_vnext_objectives	objective_id	objective_id	NO ACTION
+public	okr_vnext_decision_links	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_decision_links	public	okr_vnext_support_requests	support_request_id	request_id	NO ACTION
+public	okr_vnext_key_results	public	okr_vnext_objectives	objective_id	objective_id	NO ACTION
+public	okr_vnext_key_results	public	okr_vnext_program_policy_versions	progress_calc_policy_version_id	policy_version_id	NO ACTION
+public	okr_vnext_key_results	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_objectives	public	okr_vnext_program_policy_versions	confidence_calc_policy_version_id	policy_version_id	NO ACTION
+public	okr_vnext_objectives	public	okr_vnext_program_policy_versions	progress_calc_policy_version_id	policy_version_id	NO ACTION
+public	okr_vnext_objectives	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_program_policy_versions	public	okr_vnext_programs	program_id	program_id	NO ACTION
+public	okr_vnext_programs	public	okr_vnext_program_policy_versions	active_policy_version_id	policy_version_id	NO ACTION
+public	okr_vnext_reflections	public	okr_vnext_objectives	objective_id	objective_id	NO ACTION
+public	okr_vnext_reflections	public	okr_vnext_program_policy_versions	scoring_policy_version_id	policy_version_id	NO ACTION
+public	okr_vnext_reflections	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_reviews	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_set_versions	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	okr_vnext_sets	public	okr_vnext_approved_snapshots	latest_approved_snapshot_id	snapshot_id	NO ACTION
+public	okr_vnext_sets	public	okr_vnext_cycles	cycle_id	cycle_id	NO ACTION
+public	okr_vnext_sets	public	okr_vnext_programs	program_id	program_id	NO ACTION
+public	okr_vnext_sets	public	okr_vnext_sets	carried_from_set_id	set_id	NO ACTION
+public	okr_vnext_support_requests	public	okr_vnext_checkins	origin_checkin_id	checkin_id	NO ACTION
+public	okr_vnext_support_requests	public	okr_vnext_key_results	key_result_id	key_result_id	NO ACTION
+public	okr_vnext_support_requests	public	okr_vnext_objectives	objective_id	objective_id	NO ACTION
+public	okr_vnext_support_requests	public	okr_vnext_sets	set_id	set_id	NO ACTION
+public	operational_alert_delivery_receipts	public	operational_alert_delivery_outbox	delivery_id	delivery_id	NO ACTION
+public	operational_alert_incident_events	public	operational_alert_incidents	incident_id	incident_id	NO ACTION
+public	operational_alert_repair_attempts	public	operational_alert_repair_intents	intent_id,organization_id	intent_id,organization_id	NO ACTION
+public	operational_alert_repair_receipts	public	operational_alert_repair_intents	intent_id,organization_id	intent_id,organization_id	NO ACTION
+public	operational_alert_repair_receipts	public	operational_alert_signals	signal_id,organization_id	signal_id,organization_id	NO ACTION
+public	organization_ai_settings	public	organizations	organization_id	id	CASCADE
+public	organization_billing	public	organizations	organization_id	id	CASCADE
+public	organization_billing	public	subscription_plans	subscription_plan_id	id	NO ACTION
+public	organization_branding	public	organizations	organization_id	id	CASCADE
+public	organization_context_claims	public	organization_context_items	item_id	id	CASCADE
+public	organization_context_consumer_bindings	public	artifact_handoff_proposals	proposal_id	proposal_id	RESTRICT
+public	organization_context_upload_receipts	public	knowledge_docs	document_id	id	RESTRICT
+public	organization_context_upload_receipts	public	organizations	organization_id	id	RESTRICT
+public	organization_data_retention	public	organizations	organization_id	id	CASCADE
+public	organization_events	public	organizations	organization_id	id	CASCADE
+public	organization_facilities	public	organizations	organization_id	id	CASCADE
+public	organization_members	public	organizations	organization_id	id	CASCADE
+public	organization_members	public	users	user_id	id	CASCADE
+public	organization_metadata	public	organizations	organization_id	id	CASCADE
+public	organization_profiles	public	organizations	organization_id	id	CASCADE
+public	organization_seats	public	organizations	organization_id	id	CASCADE
+public	organization_seats	public	users	user_id	id	SET NULL
+public	organization_settings	public	organizations	organization_id	id	CASCADE
+public	organization_switch_log	public	organizations	from_organization_id	id	NO ACTION
+public	organization_switch_log	public	organizations	to_organization_id	id	NO ACTION
+public	organization_switch_log	public	users	user_id	id	NO ACTION
+public	organizations	public	users	owner_id	id	NO ACTION
+public	ownership_transfers	public	organizations	organization_id	id	CASCADE
+public	ownership_transfers	public	users	from_user_id	id	NO ACTION
+public	ownership_transfers	public	users	to_user_id	id	NO ACTION
+public	ownership_transfers	public	users	transferred_by	id	NO ACTION
+public	partner	public	organizations	organization_id	id	SET NULL
+public	partner_activity_log	public	partner_organizations	partner_org_id	id	SET NULL
+public	partner_campaign_links	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_certificates	public	partner_certifications	certification_id	id	CASCADE
+public	partner_certificates	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_certification_attempts	public	partner_certifications	certification_id	id	CASCADE
+public	partner_certification_attempts	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_certification_mutation_receipts	public	partner_organizations	partner_org_id	id	RESTRICT
+public	partner_certification_mutation_receipts	public	users	user_id	id	RESTRICT
+public	partner_certifications	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_client_organizations	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_commissions	public	partner_client_organizations	client_org_id	id	SET NULL
+public	partner_commissions	public	partner_licenses	license_id	id	SET NULL
+public	partner_commissions	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_connection_receipts	public	organizations	organization_id	id	RESTRICT
+public	partner_connection_receipts	public	users	user_id	id	RESTRICT
+public	partner_invoices	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_learning_progress	public	partner_certifications	certification_id	id	CASCADE
+public	partner_learning_progress	public	partner_learning_modules	module_id	id	CASCADE
+public	partner_licenses	public	partner_client_organizations	client_org_id	id	SET NULL
+public	partner_licenses	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_operator_review_receipts	public	users	actor_user_id	id	RESTRICT
+public	partner_organizations	public	organizations	owner_organization_id	id	RESTRICT
+public	partner_outreach_enrollments	public	partner_outreach_campaigns	campaign_id	id	CASCADE
+public	partner_outreach_enrollments	public	partner_outreach_leads	lead_id	id	CASCADE
+public	partner_outreach_events	public	partner_outreach_campaigns	campaign_id	id	CASCADE
+public	partner_outreach_events	public	partner_outreach_leads	lead_id	id	CASCADE
+public	partner_outreach_events	public	partner_outreach_message_instances	message_instance_id	id	SET NULL
+public	partner_outreach_message_instances	public	partner_outreach_campaigns	campaign_id	id	CASCADE
+public	partner_outreach_message_instances	public	partner_outreach_enrollments	enrollment_id	id	CASCADE
+public	partner_outreach_message_instances	public	partner_outreach_leads	lead_id	id	CASCADE
+public	partner_outreach_message_instances	public	partner_outreach_steps	step_id	id	CASCADE
+public	partner_outreach_steps	public	partner_outreach_campaigns	campaign_id	id	CASCADE
+public	partner_owner_binding_receipts	public	partner_owner_binding_receipts	apply_run_id	run_id	RESTRICT
+public	partner_owner_binding_receipts	public	users	actor_user_id	id	RESTRICT
+public	partner_projects	public	partner_client_organizations	client_org_id	id	SET NULL
+public	partner_projects	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_referral_click_receipts	public	partner_organizations	partner_org_id	id	RESTRICT
+public	partner_referral_clicks	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_regions	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_resource_downloads	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_resource_downloads	public	partner_resources	resource_id	id	CASCADE
+public	partner_specializations	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_users	public	partner_organizations	partner_org_id	id	CASCADE
+public	partner_users	public	users	user_id	id	CASCADE
+public	password_resets	public	users	user_id	id	CASCADE
+public	payment_attempts	public	invoices	invoice_id	id	NO ACTION
+public	payment_attempts	public	organizations	organization_id	id	NO ACTION
+public	payment_failures	public	invoices	invoice_id	id	SET NULL
+public	payment_failures	public	organizations	organization_id	id	CASCADE
+public	payment_failures	public	subscriptions	subscription_id	id	SET NULL
+public	payment_methods	public	organizations	organization_id	id	CASCADE
+public	pdf_imports	public	organizations	organization_id	id	CASCADE
+public	pdf_imports	public	projects	project_id	id	SET NULL
+public	pdf_imports	public	users	user_id	id	SET NULL
+public	permission_requests	public	organizations	organization_id	id	CASCADE
+public	permission_requests	public	users	reviewed_by	id	SET NULL
+public	permission_requests	public	users	user_id	id	CASCADE
+public	pinned_prompts	public	users	user_id	id	CASCADE
+public	plan_features	public	subscription_plans	plan_id	id	CASCADE
+public	pmo_roles	public	organizations	organization_id	id	CASCADE
+public	predictive_model_predictions	public	predictive_models	model_id	id	CASCADE
+public	predictive_model_runs	public	predictive_models	model_id	id	CASCADE
+public	predictive_models	public	users	created_by	id	SET NULL
+public	presentation_cards	public	presentation_decks	deck_id	id	CASCADE
+public	presentation_deck_versions	public	presentation_decks	deck_id	id	CASCADE
+public	presentation_governance_subscriber_tokens	public	presentation_governance_alert_subscriptions	subscription_id	id	CASCADE
+public	pricing_plan_features	public	subscription_plans	plan_id	id	CASCADE
+public	process_definitions	public	organizations	organization_id	id	NO ACTION
+public	process_versions	public	process_definitions	process_definition_id	process_definition_id	CASCADE
+public	programs	public	programs	parent_program_id	id	SET NULL
+public	project_ai_settings	public	projects	project_id	id	CASCADE
+public	project_budgets	public	projects	project_id	id	CASCADE
+public	project_insights	public	interview_sessions	session_id	id	SET NULL
+public	project_insights	public	projects	project_id	id	CASCADE
+public	project_kpis	public	projects	project_id	id	CASCADE
+public	project_kpis	public	users	owner_id	id	SET NULL
+public	project_members	public	projects	project_id	id	CASCADE
+public	project_members	public	users	added_by_id	id	SET NULL
+public	project_members	public	users	user_id	id	CASCADE
+public	project_members	public	workstreams	workstream_id	id	SET NULL
+public	project_notification_settings	public	projects	project_id	id	CASCADE
+public	project_steering_board	public	projects	project_id	id	CASCADE
+public	project_steering_board	public	users	created_by_id	id	SET NULL
+public	project_steering_board_members	public	projects	project_id	id	CASCADE
+public	project_steering_board_members	public	users	user_id	id	CASCADE
+public	project_team_members	public	organizations	organization_id	id	CASCADE
+public	project_team_members	public	projects	project_id	id	CASCADE
+public	project_team_members	public	users	user_id	id	CASCADE
+public	project_users	public	projects	project_id	id	CASCADE
+public	project_users	public	users	user_id	id	CASCADE
+public	projects	public	organizations	organization_id	id	CASCADE
+public	projects	public	users	owner_id	id	SET NULL
+public	proration_records	public	organizations	organization_id	id	NO ACTION
+public	purpose_assignments	public	model_registry	fallback_model_id	id	SET NULL
+public	purpose_assignments	public	model_registry	registry_model_id	id	CASCADE
+public	push_notification_log	public	users	user_id	id	NO ACTION
+public	radar_actions	public	radar_processed_signals	signal_id	id	SET NULL
+public	radar_actions	public	users	user_id	id	CASCADE
+public	radar_processed_signals	public	radar_raw_items	raw_item_id	id	CASCADE
+public	radar_processed_signals	public	radar_sources	source_id	id	CASCADE
+public	radar_ranked_signals	public	radar_processed_signals	signal_id	id	CASCADE
+public	radar_ranked_signals	public	users	user_id	id	CASCADE
+public	radar_raw_items	public	radar_sources	source_id	id	CASCADE
+public	raid_items	public	initiatives	initiative_id	id	SET NULL
+public	raid_items	public	organizations	organization_id	id	CASCADE
+public	rapid_lean_assessments	public	organizations	organization_id	id	CASCADE
+public	rapid_lean_assessments	public	projects	project_id	id	CASCADE
+public	refresh_tokens	public	users	user_id	id	CASCADE
+public	report_agent_messages	public	organizations	organization_id	id	CASCADE
+public	report_blocks	public	reports	report_id	id	CASCADE
+public	report_builder_activity	public	report_builder_reports	report_id	id	CASCADE
+public	report_builder_activity	public	users	action_by	id	NO ACTION
+public	report_builder_block_types	public	organizations	organization_id	id	NO ACTION
+public	report_builder_block_types	public	users	created_by	id	NO ACTION
+public	report_builder_comment_activity	public	report_builder_comments	comment_id	id	CASCADE
+public	report_builder_comment_activity	public	report_builder_reports	report_id	id	CASCADE
+public	report_builder_comment_activity	public	users	action_by	id	NO ACTION
+public	report_builder_comments	public	report_builder_comments	parent_comment_id	id	CASCADE
+public	report_builder_comments	public	report_builder_reports	report_id	id	CASCADE
+public	report_builder_comments	public	users	resolved_by	id	NO ACTION
+public	report_builder_comments	public	users	user_id	id	NO ACTION
+public	report_builder_reports	public	organizations	organization_id	id	NO ACTION
+public	report_builder_reports	public	report_builder_reports	parent_report_id	id	NO ACTION
+public	report_builder_reports	public	users	approved_by	id	NO ACTION
+public	report_builder_reports	public	users	created_by	id	NO ACTION
+public	report_builder_reports	public	users	sent_external_by	id	NO ACTION
+public	report_builder_reports	public	users	sent_internal_by	id	NO ACTION
+public	report_builder_sections	public	report_builder_reports	report_id	id	CASCADE
+public	report_builder_sections	public	users	edited_by	id	NO ACTION
+public	report_builder_sessions	public	report_builder_reports	report_id	id	CASCADE
+public	report_builder_sessions	public	users	user_id	id	NO ACTION
+public	report_builder_templates	public	organizations	organization_id	id	NO ACTION
+public	report_builder_templates	public	users	created_by	id	NO ACTION
+public	report_builder_versions	public	report_builder_reports	report_id	id	CASCADE
+public	report_comments	public	assessment_reports	report_id	id	CASCADE
+public	report_comments	public	report_comments	parent_comment_id	id	CASCADE
+public	report_comments	public	users	resolved_by	id	SET NULL
+public	report_comments	public	users	user_id	id	SET NULL
+public	report_distributions	public	status_reports	report_id	id	CASCADE
+public	report_edit_history	public	assessment_reports	report_id	id	CASCADE
+public	report_edit_history	public	report_comments	related_comment_id	id	SET NULL
+public	report_edit_history	public	users	editor_id	id	SET NULL
+public	report_quality_gates	public	organizations	organization_id	id	CASCADE
+public	report_section_history	public	status_reports	report_id	id	CASCADE
+public	report_snapshots	public	reports	report_id	id	CASCADE
+public	reports	public	organizations	organization_id	id	CASCADE
+public	research_evidence	public	organizations	organization_id	id	CASCADE
+public	results_kpi_report_snapshots	public	organizations	organization_id	id	NO ACTION
+public	results_kpi_report_snapshots	public	users	created_by	id	NO ACTION
+public	revenue_recognition	public	organizations	organization_id	id	CASCADE
+public	revoked_tokens	public	users	user_id	id	CASCADE
+public	roi_assumptions	public	initiatives	initiative_id	id	CASCADE
+public	roi_realized_values	public	financial_models	baseline_model_id	id	NO ACTION
+public	roi_realized_values	public	initiatives	initiative_id	id	CASCADE
+public	role_permissions	public	permissions	permission_key	key	NO ACTION
+public	rvn_execution_signal_receipts	public	execution_case_links	source_execution_link_id	link_id	NO ACTION
+public	rvn_execution_signal_receipts	public	execution_results_signal_outbox	source_signal_id	signal_id	NO ACTION
+public	rvn_execution_signal_receipts	public	organizations	organization_id	id	NO ACTION
+public	rvn_finance_reconciliation_decisions	public	organizations	organization_id	id	NO ACTION
+public	rvn_finance_reconciliation_decisions	public	rvn_roi_finance_reconciliations	reconciliation_id,organization_id	reconciliation_id,organization_id	RESTRICT
+public	rvn_finance_reconciliation_grant_events	public	organizations	organization_id	id	NO ACTION
+public	rvn_kpi_corrective_actions	public	rvn_kpi_deviation_cases	deviation_case_id	case_id	NO ACTION
+public	rvn_kpi_definition_versions	public	rvn_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	rvn_kpi_definitions	public	rvn_kpi_definition_versions	current_definition_version_id	definition_version_id	NO ACTION
+public	rvn_kpi_definitions	public	rvn_kpi_response_policies	response_policy_id	response_policy_id	NO ACTION
+public	rvn_kpi_deviation_cases	public	rvn_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	rvn_kpi_deviation_cases	public	rvn_kpi_deviation_cases	reopened_from_case_id	case_id	NO ACTION
+public	rvn_kpi_deviation_cases	public	rvn_kpi_effectiveness_verifications	close_effectiveness_verification_id	verification_id	NO ACTION
+public	rvn_kpi_deviation_cases	public	rvn_kpi_measurements	recovery_observation_measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_deviation_cases	public	rvn_kpi_measurements	trigger_measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_effectiveness_verification_measurements	public	rvn_kpi_effectiveness_verifications	verification_id	verification_id	NO ACTION
+public	rvn_kpi_effectiveness_verification_measurements	public	rvn_kpi_measurements	measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_effectiveness_verifications	public	rvn_kpi_deviation_cases	deviation_case_id	case_id	NO ACTION
+public	rvn_kpi_initiative_impacts	public	initiatives	initiative_id	id	NO ACTION
+public	rvn_kpi_initiative_impacts	public	rvn_kpi_definition_versions	definition_version_id_at_commitment	definition_version_id	NO ACTION
+public	rvn_kpi_initiative_impacts	public	rvn_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	rvn_kpi_initiative_impacts	public	rvn_kpi_initiative_impacts	superseded_by_impact_id	impact_id	NO ACTION
+public	rvn_kpi_initiative_impacts	public	rvn_kpi_measurements	baseline_measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_initiative_impacts	public	rvn_kpi_measurements	reviewed_attribution_measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_measurements	public	rvn_kpi_definition_versions	definition_version_id	definition_version_id	NO ACTION
+public	rvn_kpi_measurements	public	rvn_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	rvn_kpi_measurements	public	rvn_kpi_measurements	correction_of_measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_recovery_actions	public	kpi_recovery_cards	recovery_card_id,organization_id	id,organization_id	CASCADE
+public	rvn_kpi_recovery_actions	public	tasks	linked_task_id,organization_id	id,organization_id	SET NULL
+public	rvn_kpi_recovery_checkpoints	public	kpi_recovery_cards	recovery_card_id,organization_id	id,organization_id	CASCADE
+public	rvn_kpi_recovery_checkpoints	public	kpi_time_series	kpi_time_series_id,organization_id	id,organization_id	SET NULL
+public	rvn_kpi_scorecard_items	public	rvn_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	rvn_kpi_scorecard_items	public	rvn_kpi_scorecards	scorecard_id	scorecard_id	NO ACTION
+public	rvn_kpi_scorecard_review_snapshot_measurements	public	rvn_kpi_measurements	measurement_id	measurement_id	NO ACTION
+public	rvn_kpi_scorecard_review_snapshot_measurements	public	rvn_kpi_scorecard_review_snapshots	snapshot_id	snapshot_id	NO ACTION
+public	rvn_kpi_scorecard_review_snapshots	public	rvn_kpi_scorecard_review_snapshots	superseded_by_snapshot_id	snapshot_id	NO ACTION
+public	rvn_kpi_scorecard_review_snapshots	public	rvn_kpi_scorecards	scorecard_id	scorecard_id	NO ACTION
+public	rvn_platform_consumer_processed	public	rvn_platform_events	event_id	event_id	NO ACTION
+public	rvn_platform_obligations	public	rvn_platform_events	source_event_id	event_id	NO ACTION
+public	rvn_platform_outbox	public	rvn_platform_events	event_id	event_id	NO ACTION
+public	rvn_platform_resource_visibility	public	rvn_platform_visibility_policies	policy_id	policy_id	NO ACTION
+public	rvn_roi_actual_entries	public	rvn_roi_actual_entries	correction_of_actual_entry_id	actual_entry_id	NO ACTION
+public	rvn_roi_actual_entries	public	rvn_roi_benefit_lines	benefit_line_id	benefit_line_id	NO ACTION
+public	rvn_roi_actual_entries	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_actual_entries	public	rvn_roi_cost_lines	cost_line_id	cost_line_id	NO ACTION
+public	rvn_roi_actual_snapshots	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_approval_snapshots	public	rvn_roi_calculation_runs	decision_calculation_run_id	run_id	NO ACTION
+public	rvn_roi_approval_snapshots	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_assumption_outcomes	public	rvn_roi_assumptions	assumption_id	assumption_id	NO ACTION
+public	rvn_roi_assumption_outcomes	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_assumption_outcomes	public	rvn_roi_post_investment_reviews	pir_id	pir_id	NO ACTION
+public	rvn_roi_assumptions	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_baselines	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_benefit_evidence_links	public	rvn_kpi_definition_versions	pinned_kpi_definition_version_id	definition_version_id	NO ACTION
+public	rvn_roi_benefit_evidence_links	public	rvn_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	rvn_roi_benefit_evidence_links	public	rvn_roi_benefit_lines	benefit_line_id	benefit_line_id	NO ACTION
+public	rvn_roi_benefit_evidence_links	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_benefit_lines	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_calculation_policy	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_calculation_runs	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_calculation_runs	public	rvn_roi_scenarios	scenario_id	scenario_id	NO ACTION
+public	rvn_roi_cases	public	initiatives	initiative_id	id	NO ACTION
+public	rvn_roi_cases	public	rvn_roi_actual_snapshots	current_actual_snapshot_id	actual_snapshot_id	NO ACTION
+public	rvn_roi_cases	public	rvn_roi_approval_snapshots	latest_approved_snapshot_id	snapshot_id	NO ACTION
+public	rvn_roi_cases	public	rvn_roi_approval_snapshots	original_approved_snapshot_id	snapshot_id	NO ACTION
+public	rvn_roi_cases	public	rvn_roi_calculation_runs	decision_calculation_run_id	run_id	NO ACTION
+public	rvn_roi_cases	public	rvn_roi_forecast_versions	current_forecast_version_id	forecast_version_id	NO ACTION
+public	rvn_roi_cost_lines	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_finance_links	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_finance_projections	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_finance_projections	public	rvn_roi_finance_reconciliations	last_reconciliation_id	reconciliation_id	NO ACTION
+public	rvn_roi_finance_reconciliations	public	rvn_finance_reconciliation_decisions	terminal_decision_id,reconciliation_id,organization_id,terminal_decision_version,terminal_decision_status,decision_policy_version,decision_policy_digest	decision_id,reconciliation_id,organization_id,decision_version,decision_status,decision_policy_version,decision_policy_digest	RESTRICT
+public	rvn_roi_finance_reconciliations	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_finance_reconciliations	public	rvn_roi_finance_links	finance_link_id	link_id	NO ACTION
+public	rvn_roi_forecast_versions	public	rvn_roi_approval_snapshots	compared_against_snapshot_id	snapshot_id	NO ACTION
+public	rvn_roi_forecast_versions	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_post_investment_reviews	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_risks	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_scenario_overrides	public	rvn_roi_scenarios	scenario_id	scenario_id	NO ACTION
+public	rvn_roi_scenarios	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_variance_causes	public	rvn_roi_variances	variance_id	variance_id	NO ACTION
+public	rvn_roi_variances	public	rvn_roi_actual_snapshots	reference_actual_snapshot_id	actual_snapshot_id	NO ACTION
+public	rvn_roi_variances	public	rvn_roi_approval_snapshots	reference_approval_snapshot_id	snapshot_id	NO ACTION
+public	rvn_roi_variances	public	rvn_roi_cases	case_id	case_id	NO ACTION
+public	rvn_roi_variances	public	rvn_roi_forecast_versions	reference_forecast_version_id	forecast_version_id	NO ACTION
+public	rvn_roi_visibility_governance	public	organizations	organization_id	id	NO ACTION
+public	sandbox_activity	public	sandbox_projects	sandbox_id	id	CASCADE
+public	sandbox_exports	public	projects	destination_project_id	id	NO ACTION
+public	sandbox_exports	public	sandbox_projects	sandbox_id	id	NO ACTION
+public	sandbox_exports	public	users	user_id	id	NO ACTION
+public	sandbox_projects	public	organizations	organization_id	id	CASCADE
+public	sandbox_projects	public	projects	project_id	id	NO ACTION
+public	schedule_executions	public	report_schedules	schedule_id	id	CASCADE
+public	schedule_trigger_rules	public	report_schedules	schedule_id	id	CASCADE
+public	seat_transactions	public	organizations	organization_id	id	CASCADE
+public	seat_transactions	public	users	triggered_by_user_id	id	SET NULL
+public	security_events	public	organizations	organization_id	id	SET NULL
+public	security_events	public	users	user_id	id	SET NULL
+public	security_settings	public	organizations	organization_id	id	CASCADE
+public	sessions	public	projects	project_id	id	NO ACTION
+public	sessions	public	users	user_id	id	NO ACTION
+public	settings_audit_log	public	users	user_id	id	CASCADE
+public	settings_templates	public	users	user_id	id	CASCADE
+public	skills_gap_snapshots	public	organizations	organization_id	id	CASCADE
+public	sms_delivery_log	public	users	user_id	id	SET NULL
+public	sms_verification_codes	public	users	user_id	id	CASCADE
+public	spending_alerts	public	organizations	organization_id	id	CASCADE
+public	sso_configurations	public	organizations	organization_id	id	CASCADE
+public	sso_sessions	public	organizations	organization_id	id	CASCADE
+public	sso_sessions	public	sso_configurations	sso_config_id	id	CASCADE
+public	sso_sessions	public	users	user_id	id	CASCADE
+public	staffing_plan_roles	public	staffing_plans	staffing_plan_id	id	CASCADE
+public	stakeholder_engagements	public	organizations	organization_id	id	CASCADE
+public	stakeholder_engagements	public	projects	project_id	id	CASCADE
+public	stakeholder_engagements	public	stakeholder_registry	stakeholder_id	id	CASCADE
+public	stakeholder_engagements	public	users	created_by	id	SET NULL
+public	stakeholder_registry	public	organizations	organization_id	id	CASCADE
+public	stakeholder_registry	public	users	created_by	id	SET NULL
+public	stakeholder_registry	public	users	user_id	id	SET NULL
+public	status_reports	public	organizations	organization_id	id	CASCADE
+public	status_reports	public	projects	project_id	id	SET NULL
+public	status_reports	public	users	created_by	id	SET NULL
+public	steerco_pack_recipients	public	steerco_packs	pack_id	id	CASCADE
+public	studio_ai_sessions	public	studio_documents	document_id	id	CASCADE
+public	studio_comments	public	studio_documents	document_id	id	CASCADE
+public	studio_comments	public	users	author_id	id	SET NULL
+public	studio_comments	public	users	resolved_by	id	SET NULL
+public	studio_documents	public	initiatives	linked_initiative_id	id	SET NULL
+public	studio_documents	public	organizations	organization_id	id	CASCADE
+public	studio_documents	public	projects	linked_project_id	id	SET NULL
+public	studio_documents	public	tasks	linked_task_id	id	SET NULL
+public	studio_documents	public	users	created_by	id	SET NULL
+public	studio_snapshots	public	studio_documents	document_id	id	CASCADE
+public	studio_snapshots	public	users	created_by	id	SET NULL
+public	studio_templates	public	organizations	organization_id	id	CASCADE
+public	studio_templates	public	users	created_by	id	SET NULL
+public	subscription_changes	public	organizations	organization_id	id	CASCADE
+public	subscription_changes	public	subscription_plans	from_plan_id	id	SET NULL
+public	subscription_changes	public	subscription_plans	to_plan_id	id	SET NULL
+public	subscription_changes	public	subscriptions	subscription_id	id	SET NULL
+public	subscription_changes	public	users	approved_by	id	SET NULL
+public	subscription_changes	public	users	requested_by	id	SET NULL
+public	subscription_events	public	organizations	organization_id	id	CASCADE
+public	subscription_events	public	subscriptions	subscription_id	id	SET NULL
+public	subscription_state_history	public	organizations	organization_id	id	NO ACTION
+public	subscriptions	public	organizations	organization_id	id	CASCADE
+public	subscriptions	public	subscription_plans	plan_id	id	NO ACTION
+public	superadmin_audit_log	public	users	admin_user_id	id	NO ACTION
+public	superadmin_confirmed_actions	public	users	admin_id	id	NO ACTION
+public	superadmin_impersonation_sessions	public	users	admin_id	id	NO ACTION
+public	superadmin_impersonation_sessions	public	users	target_user_id	id	NO ACTION
+public	swot_proposals	public	tool_sessions	tool_session_id	id	CASCADE
+public	sync_error_log	public	integrations	integration_id	id	CASCADE
+public	sync_rate_limits	public	integrations	integration_id	id	CASCADE
+public	system_feedback	public	users	user_id	id	CASCADE
+public	task_comments	public	tasks	task_id	id	CASCADE
+public	task_comments	public	users	user_id	id	CASCADE
+public	task_dependencies	public	tasks	from_task_id	id	CASCADE
+public	task_dependencies	public	tasks	to_task_id	id	CASCADE
+public	task_history	public	tasks	task_id	id	CASCADE
+public	task_labels	public	projects	project_id	id	CASCADE
+public	tasks	public	custom_statuses	custom_status_id	id	SET NULL
+public	tasks	public	organizations	organization_id	id	CASCADE
+public	tasks	public	projects	project_id	id	CASCADE
+public	tasks	public	users	assignee_id	id	SET NULL
+public	tasks	public	users	escalated_to_id	id	SET NULL
+public	tasks	public	users	reporter_id	id	SET NULL
+public	team_members	public	teams	team_id	id	CASCADE
+public	team_members	public	users	user_id	id	CASCADE
+public	teams	public	organizations	organization_id	id	CASCADE
+public	teams	public	users	lead_id	id	SET NULL
+public	template_provenance_approval_receipts	public	organizations	organization_id	id	RESTRICT
+public	teresa_audit_log	public	teresa_proposals	proposal_id	id	NO ACTION
+public	teresa_handoff_results	public	teresa_proposals	proposal_id	id	NO ACTION
+public	threat_intelligence	public	organizations	organization_id	id	CASCADE
+public	threat_intelligence	public	users	blocked_by	id	NO ACTION
+public	ticket_messages	public	support_tickets	ticket_id	id	CASCADE
+public	token_ledger	public	organizations	organization_id	id	CASCADE
+public	token_ledger	public	users	actor_user_id	id	SET NULL
+public	token_transactions	public	organizations	organization_id	id	CASCADE
+public	token_transactions	public	token_packages	package_id	id	SET NULL
+public	token_transactions	public	users	user_id	id	CASCADE
+public	tp_ai_usage	public	tp_workspace_settings	workspace_id	workspace_id	NO ACTION
+public	tp_attachments	public	tp_fields	field_id	id	CASCADE
+public	tp_attachments	public	tp_records	record_id	id	CASCADE
+public	tp_automation_actions	public	tp_automations	automation_id	id	CASCADE
+public	tp_automation_runs	public	tp_automations	automation_id	id	CASCADE
+public	tp_automations	public	tp_bases	base_id	id	CASCADE
+public	tp_automations	public	tp_tables	table_id	id	CASCADE
+public	tp_base_members	public	tp_bases	base_id	id	CASCADE
+public	tp_cell_history	public	tp_tables	table_id	id	CASCADE
+public	tp_connector_runs	public	tp_connectors	connector_id	id	CASCADE
+public	tp_connectors	public	tp_tables	target_table_id	id	SET NULL
+public	tp_dimensions	public	tp_fields	source_field_id	id	NO ACTION
+public	tp_dimensions	public	tp_governed_models	model_id	model_id	CASCADE
+public	tp_dimensions	public	tp_tables	source_table_id	id	NO ACTION
+public	tp_distributions	public	tp_bases	base_id	id	CASCADE
+public	tp_extension_installs	public	tp_bases	base_id	id	CASCADE
+public	tp_extension_installs	public	tp_extensions	extension_id	id	CASCADE
+public	tp_fields	public	tp_tables	table_id	id	CASCADE
+public	tp_form_submissions	public	tp_forms	form_id	id	CASCADE
+public	tp_form_submissions	public	tp_tables	table_id	id	CASCADE
+public	tp_forms	public	tp_tables	embed_target_table_id	id	SET NULL
+public	tp_forms	public	tp_tables	table_id	id	CASCADE
+public	tp_governed_models	public	tp_bases	base_id	id	CASCADE
+public	tp_interfaces	public	tp_bases	base_id	id	CASCADE
+public	tp_kpi_definitions	public	tp_fields	source_field_id	id	NO ACTION
+public	tp_kpi_definitions	public	tp_governed_models	model_id	model_id	CASCADE
+public	tp_kpi_definitions	public	tp_tables	source_table_id	id	NO ACTION
+public	tp_model_sources	public	tp_governed_models	model_id	model_id	CASCADE
+public	tp_model_sources	public	tp_tables	table_id	id	NO ACTION
+public	tp_module_sync_results	public	tp_governed_models	model_id	model_id	CASCADE
+public	tp_qa_reports	public	tp_tables	table_id	id	CASCADE
+public	tp_qa_suggestion_dismissals	public	tp_tables	table_id	id	CASCADE
+public	tp_record_comments	public	tp_record_comments	parent_id	id	CASCADE
+public	tp_record_comments	public	tp_tables	table_id	id	CASCADE
+public	tp_record_links	public	tp_fields	from_field_id	id	CASCADE
+public	tp_record_links	public	tp_records	from_record_id	id	CASCADE
+public	tp_record_links	public	tp_records	to_record_id	id	CASCADE
+public	tp_record_provenance	public	tp_connectors	connector_id	id	SET NULL
+public	tp_record_provenance	public	tp_records	record_id	id	CASCADE
+public	tp_record_sources	public	tp_records	record_id	id	CASCADE
+public	tp_record_watches	public	tp_tables	table_id	id	CASCADE
+public	tp_records	public	tp_tables	table_id	id	CASCADE
+public	tp_row_policies	public	tp_fields	condition_field_id	id	NO ACTION
+public	tp_row_policies	public	tp_tables	table_id	id	CASCADE
+public	tp_schema_versions	public	tp_bases	base_id	id	CASCADE
+public	tp_source_packs	public	tp_tables	table_id	id	SET NULL
+public	tp_table_conversions	public	tp_source_packs	source_pack_id	id	SET NULL
+public	tp_table_conversions	public	tp_tables	table_id	id	CASCADE
+public	tp_table_syncs	public	tp_tables	source_table_id	id	CASCADE
+public	tp_table_syncs	public	tp_tables	target_table_id	id	CASCADE
+public	tp_tables	public	tp_bases	base_id	id	CASCADE
+public	tp_views	public	tp_tables	table_id	id	CASCADE
+public	tp_webhook_buffer	public	tp_connectors	connector_id	id	CASCADE
+public	tp_webhook_payloads	public	tp_webhooks	webhook_id	id	CASCADE
+public	tp_webhook_relays	public	tp_bases	base_id	id	CASCADE
+public	tp_webhooks	public	tp_bases	base_id	id	CASCADE
+public	transaction_readiness_scores	public	organizations	organization_id	id	CASCADE
+public	transformation_case_artifact_links	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_case_artifact_links	public	transformation_stage_proposals	source_proposal_id	proposal_id	NO ACTION
+public	transformation_case_audit_events	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_cases	public	transformation_plans	active_plan_id	plan_id	NO ACTION
+public	transformation_final_output_governance	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_final_output_governance	public	transformation_final_output_runs	final_output_run_id	run_id	NO ACTION
+public	transformation_final_output_governance	public	v8_agent_proposal_versions	governed_proposal_version_id	proposal_version_id	NO ACTION
+public	transformation_final_output_runs	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_mobilization_owner_receipts	public	transformation_monitoring_definitions	monitoring_definition_id	monitoring_definition_id	NO ACTION
+public	transformation_monitoring_snapshots	public	transformation_monitoring_definitions	monitoring_definition_id	monitoring_definition_id	NO ACTION
+public	transformation_plan_steps	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_plan_steps	public	transformation_plans	plan_id	plan_id	CASCADE
+public	transformation_planning_intakes	public	transformation_cases	converted_case_id	transformation_case_id	NO ACTION
+public	transformation_plans	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_project_team_audit_events	public	transformation_project_team_blueprints	blueprint_version_id	blueprint_version_id	NO ACTION
+public	transformation_project_team_blueprints	public	transformation_cases	transformation_case_id	transformation_case_id	NO ACTION
+public	transformation_project_team_blueprints	public	v8_agent_proposal_versions	governed_proposal_version_id	proposal_version_id	NO ACTION
+public	transformation_project_team_receipts	public	transformation_project_team_blueprints	blueprint_version_id	blueprint_version_id	NO ACTION
+public	transformation_result_gate_governance	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_result_gate_governance	public	v8_agent_proposal_versions	governed_proposal_version_id	proposal_version_id	NO ACTION
+public	transformation_stage_proposals	public	transformation_cases	transformation_case_id	transformation_case_id	CASCADE
+public	transformation_stage_proposals	public	transformation_plans	plan_id	plan_id	NO ACTION
+public	transformation_stage_proposals	public	v8_agent_proposal_versions	governed_proposal_version_id	proposal_version_id	NO ACTION
+public	transformation_template_conversion_receipts	public	transformation_cases	transformation_case_id	transformation_case_id	NO ACTION
+public	transformation_template_conversion_receipts	public	transformation_planning_intakes	intake_id	intake_id	CASCADE
+public	transformation_template_conversion_receipts	public	transformation_plans	plan_id	plan_id	NO ACTION
+public	transformation_template_conversion_receipts	public	v8_execution_runs	canonical_run_id	run_id	NO ACTION
+public	trigger_fire_log	public	report_schedules	schedule_id	id	CASCADE
+public	trigger_fire_log	public	schedule_trigger_rules	rule_id	id	CASCADE
+public	trusted_devices	public	users	user_id	id	CASCADE
+public	usage_records	public	organizations	organization_id	id	CASCADE
+public	usage_records	public	users	user_id	id	SET NULL
+public	user_2fa	public	users	user_id	id	CASCADE
+public	user_achievements	public	users	user_id	id	CASCADE
+public	user_activation_status	public	users	user_id	id	CASCADE
+public	user_activity_summary	public	organizations	organization_id	id	CASCADE
+public	user_activity_summary	public	users	user_id	id	CASCADE
+public	user_adoption_metrics	public	organizations	organization_id	id	CASCADE
+public	user_adoption_metrics	public	users	user_id	id	CASCADE
+public	user_ai_preferences	public	users	user_id	id	NO ACTION
+public	user_ai_profiles	public	users	user_id	id	CASCADE
+public	user_ai_settings	public	users	user_id	id	CASCADE
+public	user_api_keys	public	organizations	organization_id	id	CASCADE
+public	user_api_keys	public	users	user_id	id	CASCADE
+public	user_appearance_preferences	public	users	user_id	id	CASCADE
+public	user_availability	public	users	user_id	id	CASCADE
+public	user_capabilities	public	capabilities	capability_id	id	CASCADE
+public	user_collaboration_preferences	public	users	user_id	id	CASCADE
+public	user_consents	public	organizations	organization_id	id	NO ACTION
+public	user_consents	public	users	user_id	id	NO ACTION
+public	user_contact	public	users	user_id	id	CASCADE
+public	user_data_export_receipts	public	data_export_requests	request_id	id	CASCADE
+public	user_data_export_receipts	public	organizations	organization_id	id	CASCADE
+public	user_data_export_receipts	public	users	user_id	id	CASCADE
+public	user_data_retention	public	users	user_id	id	NO ACTION
+public	user_experiments	public	users	user_id	id	CASCADE
+public	user_gdpr_consents	public	users	user_id	id	CASCADE
+public	user_goals	public	users	user_id	id	CASCADE
+public	user_group_members	public	user_groups	group_id	id	CASCADE
+public	user_group_members	public	users	added_by	id	SET NULL
+public	user_group_members	public	users	user_id	id	CASCADE
+public	user_groups	public	organizations	organization_id	id	CASCADE
+public	user_groups	public	users	created_by	id	SET NULL
+public	user_mfa	public	users	user_id	id	CASCADE
+public	user_mfa_methods	public	users	user_id	id	CASCADE
+public	user_onboarding	public	users	user_id	id	CASCADE
+public	user_onboarding_progress	public	organizations	organization_id	id	CASCADE
+public	user_onboarding_progress	public	users	user_id	id	CASCADE
+public	user_points_ledger	public	users	user_id	id	CASCADE
+public	user_productivity_preferences	public	users	user_id	id	CASCADE
+public	user_profiles	public	users	user_id	id	CASCADE
+public	user_radar_profiles	public	users	user_id	id	CASCADE
+public	user_sessions	public	users	user_id	id	CASCADE
+public	user_settings_history	public	users	user_id	id	CASCADE
+public	user_settings_templates	public	users	user_id	id	CASCADE
+public	user_token_balance	public	users	user_id	id	CASCADE
+public	user_tooltips_seen	public	onboarding_tooltips	tooltip_id	id	NO ACTION
+public	user_tour_progress	public	onboarding_tours	tour_id	id	NO ACTION
+public	user_webhooks	public	users	user_id	id	CASCADE
+public	user_work_preferences	public	users	user_id	id	CASCADE
+public	users	public	organizations	organization_id	id	NO ACTION
+public	v8_action_proposals	public	v8_execution_runs	execution_run_id	run_id	NO ACTION
+public	v8_activity_feed	public	v8_workspace_sessions	session_id	session_id	NO ACTION
+public	v8_agent_branch_tasks	public	v8_agent_work_graphs	graph_id	graph_id	NO ACTION
+public	v8_agent_contradiction_resolutions	public	v8_agent_work_graphs	graph_id	graph_id	NO ACTION
+public	v8_agent_proposal_governance_events	public	v8_agent_proposal_versions	proposal_version_id	proposal_version_id	NO ACTION
+public	v8_agent_proposal_scope_reviews	public	v8_agent_proposal_versions	proposal_version_id	proposal_version_id	NO ACTION
+public	v8_agent_proposal_versions	public	v8_agent_proposal_versions	supersedes_proposal_version_id	proposal_version_id	NO ACTION
+public	v8_agent_quality_eval_cases	public	v8_agent_quality_eval_runs	eval_run_id	eval_run_id	NO ACTION
+public	v8_agent_resource_reservations	public	v8_agent_resource_policies	policy_id	policy_id	NO ACTION
+public	v8_agent_run_aliases	public	v8_agent_run_identities	canonical_run_id	canonical_run_id	NO ACTION
+public	v8_agent_run_identities	public	v8_execution_runs	canonical_run_id	run_id	NO ACTION
+public	v8_agent_template_governance_events	public	ai_playbook_template_versions	template_id,version	template_id,version	NO ACTION
+public	v8_audit_entries	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_calendar_items	public	v8_calendar_sources	source_id	calendar_source_id	SET NULL
+public	v8_calendar_items_extended_itemtype	public	v8_calendar_sources	source_id	calendar_source_id	SET NULL
+public	v8_calendar_sources	public	integrations	connection_id	id	SET NULL
+public	v8_canary_configs	public	v8_release_bundles	bundle_id	bundle_id	NO ACTION
+public	v8_chat_action_proposals	v8	v8_action_proposals	underlying_proposal_id	proposal_id	NO ACTION
+public	v8_chat_execution_handoffs	v8	v8_context_snapshots	context_snapshot_id	snapshot_id	NO ACTION
+public	v8_chat_execution_handoffs	v8	v8_execution_runs	execution_run_id	run_id	NO ACTION
+public	v8_collaboration_events	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_compliance_checks	public	v8_workspace_sessions	session_id	session_id	NO ACTION
+public	v8_consumer_tool_policies	public	v8_tool_catalog	tool_id	tool_id	NO ACTION
+public	v8_content_governance	public	v8_workspace_sessions	session_id	session_id	NO ACTION
+public	v8_context_snapshots	public	v8_context_snapshots	parent_snapshot_id	snapshot_id	NO ACTION
+public	v8_cross_module_activity	public	v8_workspace_sessions	session_id	session_id	NO ACTION
+public	v8_degraded_conditions	public	v8_support_traces	support_trace_id	trace_id	NO ACTION
+public	v8_deviation_records	public	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	v8_eval_gates	public	v8_release_bundles	bundle_id	bundle_id	NO ACTION
+public	v8_facilitation_sessions	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_initiative_decompositions	public	v8_initiative_decompositions	parent_id	decomposition_id	NO ACTION
+public	v8_initiative_materializations	public	v8_initiative_entrypoints	entrypoint_id	entrypoint_id	NO ACTION
+public	v8_kpi_definitions	public	initiative_kpis	canonical_kpi_id	id	SET NULL
+public	v8_kpi_next_actions	public	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	v8_kpi_next_actions	public	v8_kpi_signals	signal_id	signal_id	NO ACTION
+public	v8_kpi_signals	public	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	v8_lane_execution_plans	public	v8_lane_decisions	decision_id	id	CASCADE
+public	v8_memory_promotion_requests	public	v8_working_memory_entries	source_entry_id	entry_id	NO ACTION
+public	v8_mindmap_nodes	public	v8_mindmap_nodes	parent_id	id	CASCADE
+public	v8_rebaseline_proposals	public	v8_execution_runs	execution_run_id	run_id	NO ACTION
+public	v8_release_bundles	public	v8_prompt_presets	preset_id	preset_id	NO ACTION
+public	v8_restore_requests	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_restore_requests	public	v8_version_snapshots	safety_snapshot_id	snapshot_id	NO ACTION
+public	v8_restore_requests	public	v8_version_snapshots	target_version_snapshot_id	snapshot_id	NO ACTION
+public	v8_retrieval_traces	public	v8_retrieval_requests	request_id	request_id	NO ACTION
+public	v8_roi_realization_entries	public	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+public	v8_rollback_records	public	v8_release_bundles	bundle_id	bundle_id	NO ACTION
+public	v8_rollback_records	public	v8_release_bundles	previous_bundle_id	bundle_id	NO ACTION
+public	v8_room_memberships	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_room_presence	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_run_state_transitions	public	v8_execution_runs	run_id	run_id	NO ACTION
+public	v8_session_module_links	public	v8_workspace_sessions	session_id	session_id	NO ACTION
+public	v8_superadmin_surfaces	public	v8_superadmin_domains	domain_id	domain_id	NO ACTION
+public	v8_surface_presence	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_tenant_connector_installations	public	v8_connector_packages	package_id	package_id	NO ACTION
+public	v8_tool_action_governance	public	v8_tool_session_governance	session_id	session_id	NO ACTION
+public	v8_tool_invocation_log	public	v8_tool_catalog	tool_id	tool_id	NO ACTION
+public	v8_tool_invocation_traces	public	v8_tool_invocation_log	invocation_id	invocation_id	NO ACTION
+public	v8_tool_session_governance	public	v8_shared_tools_registry	tool_id	tool_id	NO ACTION
+public	v8_tools_v8_bridging_contracts	public	v8_shared_tools_registry	tool_id	tool_id	NO ACTION
+public	v8_version_snapshots	public	v8_collaboration_rooms	room_id	room_id	NO ACTION
+public	v8_webhook_deliveries	public	v8_webhook_registrations	registration_id	registration_id	NO ACTION
+public	valuation_snapshots	public	valuations	valuation_id	id	CASCADE
+public	valuations	public	organizations	organization_id	id	CASCADE
+public	verification_tokens	public	users	user_id	id	CASCADE
+public	virtual_worker_conversations	public	virtual_workers	worker_id	id	CASCADE
+public	virtual_worker_evaluations	public	virtual_workers	worker_id	id	CASCADE
+public	virtual_worker_insights	public	virtual_workers	worker_id	id	CASCADE
+public	virtual_worker_knowledge_assignments	public	virtual_workers	worker_id	id	CASCADE
+public	virtual_worker_messages	public	virtual_worker_conversations	conversation_id	id	CASCADE
+public	virtual_worker_profiles	public	virtual_workers	worker_id	id	CASCADE
+public	virtual_worker_releases	public	virtual_worker_evaluations	evaluation_id	id	SET NULL
+public	virtual_worker_releases	public	virtual_worker_profiles	profile_id	id	SET NULL
+public	virtual_worker_releases	public	virtual_workers	worker_id	id	CASCADE
+public	watchlist_items	public	users	user_id	id	CASCADE
+public	webhook_deliveries	public	webhooks	webhook_id	id	CASCADE
+public	webhook_subscriptions	public	organizations	organization_id	id	CASCADE
+public	webhooks	public	organizations	organization_id	id	CASCADE
+public	webhooks	public	users	created_by	id	SET NULL
+public	white_label_assets	public	organizations	organization_id	id	NO ACTION
+public	white_label_config	public	organizations	organization_id	id	NO ACTION
+public	work_canvas_versions	public	work_canvas_drafts	draft_id	id	CASCADE
+public	workstreams	public	projects	project_id	id	CASCADE
+public	workstreams	public	users	owner_id	id	SET NULL
+v8	v8_action_proposals	v8	v8_execution_runs	execution_run_id	run_id	NO ACTION
+v8	v8_activity_feed	v8	v8_workspace_sessions	session_id	session_id	NO ACTION
+v8	v8_audit_entries	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_canary_configs	v8	v8_release_bundles	bundle_id	bundle_id	NO ACTION
+v8	v8_chat_action_proposals	v8	v8_action_proposals	underlying_proposal_id	proposal_id	NO ACTION
+v8	v8_chat_execution_handoffs	v8	v8_context_snapshots	context_snapshot_id	snapshot_id	NO ACTION
+v8	v8_chat_execution_handoffs	v8	v8_execution_runs	execution_run_id	run_id	NO ACTION
+v8	v8_collaboration_events	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_compliance_checks	v8	v8_workspace_sessions	session_id	session_id	NO ACTION
+v8	v8_consumer_tool_policies	v8	v8_tool_catalog	tool_id	tool_id	NO ACTION
+v8	v8_content_governance	v8	v8_workspace_sessions	session_id	session_id	NO ACTION
+v8	v8_context_snapshots	v8	v8_context_snapshots	parent_snapshot_id	snapshot_id	NO ACTION
+v8	v8_cross_module_activity	v8	v8_workspace_sessions	session_id	session_id	NO ACTION
+v8	v8_degraded_conditions	v8	v8_support_traces	support_trace_id	trace_id	NO ACTION
+v8	v8_deviation_records	v8	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+v8	v8_eval_gates	v8	v8_release_bundles	bundle_id	bundle_id	NO ACTION
+v8	v8_facilitation_sessions	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_initiative_decompositions	v8	v8_initiative_decompositions	parent_id	decomposition_id	NO ACTION
+v8	v8_initiative_materializations	v8	v8_initiative_entrypoints	entrypoint_id	entrypoint_id	NO ACTION
+v8	v8_kpi_finance_reconciliations	v8	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+v8	v8_memory_promotion_requests	v8	v8_working_memory_entries	source_entry_id	entry_id	NO ACTION
+v8	v8_rebaseline_proposals	v8	v8_execution_runs	execution_run_id	run_id	NO ACTION
+v8	v8_release_bundles	v8	v8_prompt_presets	preset_id	preset_id	NO ACTION
+v8	v8_restore_requests	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_restore_requests	v8	v8_version_snapshots	safety_snapshot_id	snapshot_id	NO ACTION
+v8	v8_restore_requests	v8	v8_version_snapshots	target_version_snapshot_id	snapshot_id	NO ACTION
+v8	v8_retrieval_traces	v8	v8_retrieval_requests	request_id	request_id	NO ACTION
+v8	v8_roi_realization_entries	v8	v8_kpi_definitions	kpi_id	kpi_id	NO ACTION
+v8	v8_rollback_records	v8	v8_release_bundles	bundle_id	bundle_id	NO ACTION
+v8	v8_rollback_records	v8	v8_release_bundles	previous_bundle_id	bundle_id	NO ACTION
+v8	v8_room_memberships	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_room_presence	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_run_state_transitions	v8	v8_execution_runs	run_id	run_id	NO ACTION
+v8	v8_session_module_links	v8	v8_workspace_sessions	session_id	session_id	NO ACTION
+v8	v8_superadmin_surfaces	v8	v8_superadmin_domains	domain_id	domain_id	NO ACTION
+v8	v8_surface_presence	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION
+v8	v8_tenant_connector_installations	v8	v8_connector_packages	package_id	package_id	NO ACTION
+v8	v8_tool_action_governance	v8	v8_tool_session_governance	session_id	session_id	NO ACTION
+v8	v8_tool_invocation_log	v8	v8_tool_catalog	tool_id	tool_id	NO ACTION
+v8	v8_tool_invocation_traces	v8	v8_tool_invocation_log	invocation_id	invocation_id	NO ACTION
+v8	v8_tool_session_governance	v8	v8_shared_tools_registry	tool_id	tool_id	NO ACTION
+v8	v8_tools_v8_bridging_contracts	v8	v8_shared_tools_registry	tool_id	tool_id	NO ACTION
+v8	v8_version_snapshots	v8	v8_collaboration_rooms	room_id	room_id	NO ACTION

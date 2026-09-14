@@ -28,6 +28,14 @@
     },
     {
       "schema": "public",
+      "table": "ai_deep_thinking_confirms",
+      "columns": [
+        "token"
+      ],
+      "sourceEvidence": "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.ai_deep_thinking_confirms; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_deep_thinking_confirms=0; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+    },
+    {
+      "schema": "public",
       "table": "approved_domains",
       "columns": [
         "verification_token"
@@ -42,6 +50,14 @@
         "fencing_token"
       ],
       "sourceEvidence": "SQL_INSERT_INTO server/src/services/lineage/operationClaimService.ts:153; SQL_UPDATE server/src/services/lineage/operationClaimService.ts:188; SQL_UPDATE server/src/services/lineage/operationClaimService.ts:349; SQL_UPDATE server/src/services/lineage/operationClaimService.ts:437; SQL_FROM server/src/services/lineage/operationClaimService.ts:217"
+    },
+    {
+      "schema": "public",
+      "table": "case_workspace_node_runs",
+      "columns": [
+        "lease_fencing_token"
+      ],
+      "sourceEvidence": "SCHEMA_DDL server/migrations/20260810_case_workspace_node_run_and_inbox.sql:100; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.case_workspace_node_runs=0; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5; RUNTIME_PATH server/src/services/caseWorkspace/nodeRunService.ts:283"
     },
     {
       "schema": "public",
@@ -79,6 +95,14 @@
     },
     {
       "schema": "public",
+      "table": "consent_records",
+      "columns": [
+        "confirmation_token"
+      ],
+      "sourceEvidence": "SCHEMA_DDL server/migrations/263_gdpr_compliance.sql:109; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.consent_records=0; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+    },
+    {
+      "schema": "public",
       "table": "conversation_shares",
       "columns": [
         "share_token"
@@ -92,6 +116,22 @@
         "share_link_token"
       ],
       "sourceEvidence": "SQL_INSERT_INTO server/src/services/analyticsService.ts:347; SQL_INSERT_INTO server/src/services/dashboardBuilderService.ts:67; SQL_UPDATE server/src/services/analyticsService.ts:403; SQL_UPDATE server/src/services/dashboardBuilderService.ts:94; SQL_UPDATE server/src/services/dashboardBuilderService.ts:105"
+    },
+    {
+      "schema": "public",
+      "table": "domain_verifications",
+      "columns": [
+        "verification_token"
+      ],
+      "sourceEvidence": "SCHEMA_DDL server/migrations/264_whitelabel_extended.sql:53; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.domain_verifications=0; RUNTIME_PATH server/src/database/PostgresDatabase.ts:316; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+    },
+    {
+      "schema": "public",
+      "table": "email_sender_verifications",
+      "columns": [
+        "verification_token"
+      ],
+      "sourceEvidence": "SCHEMA_DDL server/migrations/264_whitelabel_extended.sql:113; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.email_sender_verifications=0; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
     },
     {
       "schema": "public",
@@ -235,6 +275,14 @@
         "share_token"
       ],
       "sourceEvidence": "SQL_INSERT_INTO server/src/_backup/ts-js-collisions/repositories/ManagementReportRepository.js:15; SQL_INSERT_INTO server/src/repositories/ManagementReportRepository.ts:17; SQL_UPDATE server/src/_backup/ts-js-collisions/repositories/ManagementReportRepository.js:63; SQL_UPDATE server/src/_backup/ts-js-collisions/repositories/ManagementReportRepository.js:76; SQL_UPDATE server/src/_backup/ts-js-collisions/repositories/ManagementReportRepository.js:208"
+    },
+    {
+      "schema": "public",
+      "table": "mobile_devices",
+      "columns": [
+        "push_token"
+      ],
+      "sourceEvidence": "SCHEMA_DDL server/migrations/265_mobile_pwa.sql:8; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.mobile_devices=0; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
     },
     {
       "schema": "public",
@@ -390,6 +438,14 @@
         "share_password"
       ],
       "sourceEvidence": "SQL_INSERT_INTO server/src/services/tablePlatform/AuditService.ts:423; SQL_INSERT_INTO server/src/services/tablePlatform/MetadataService.ts:497; SQL_INSERT_INTO server/src/services/tablePlatform/MetadataService.ts:695; SQL_INSERT_INTO server/src/services/tablePlatform/MetadataService.ts:1198; SQL_UPDATE server/src/services/tablePlatform/MetadataService.ts:336"
+    },
+    {
+      "schema": "public",
+      "table": "v10_onboarding_sessions",
+      "columns": [
+        "resume_token"
+      ],
+      "sourceEvidence": "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_onboarding_sessions; LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_onboarding_sessions=0; RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
     },
     {
       "schema": "public",

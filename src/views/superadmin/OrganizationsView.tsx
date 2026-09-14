@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { ConfirmDialog } from '../../components/MyWork/shared/ConfirmDialog';
@@ -67,6 +68,11 @@ type OrganizationRow = Organization & {
 
 const DESTRUCTIVE_DELETION_DISABLED_COPY =
   'Automated deletion is disabled until retention and legal-hold rules are approved.';
+
+const ENTERPRISE_EXPORT_FULL = import.meta.env.VITE_ENTERPRISE_EXPORT_FULL === 'true';
+const ENTERPRISE_EXPORT_TOAST_ID = 'organization-export';
+const exportResumeStorageKey = (organizationId: string) =>
+  `enterprise-export:${organizationId}`;
 
 type JsonRecord = Record<string, unknown> & {
   data?: JsonRecord | unknown[];
@@ -121,6 +127,7 @@ const getAccessCodesPayload = (value: unknown) =>
   getListPayload<AccessCode>(value, ['codes', 'accessCodes', 'items']);
 
 export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUsers }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('organizations');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -136,7 +143,14 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   }>({ organizations: null, requests: null, codes: null });
   const exportInFlight = useRef(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [exportProgress, setExportProgress] = useState<{
+    percent: number;
+    completedTables: number;
+    totalTables: number;
+    rows: number;
+  } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [exportRetry, setExportRetry] = useState<{ id: string; name: string } | null>(null);
 
   // Modal States
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -259,28 +273,90 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     exportInFlight.current = true;
     setProcessingId(id);
     try {
+      toast.remove(ENTERPRISE_EXPORT_TOAST_ID);
       setActionError(null);
+      setExportRetry(null);
       setExportNotice(null);
-      const blob = await Api.exportOrganizationData(id, 'json');
-      const disclosure = organizationExportDisclosure(JSON.parse(await blob.text()), id);
+      setExportProgress(null);
+      let blob: Blob;
+      let disclosureMessage: string;
+      let disclosureComplete = true;
+      let extension = 'json';
+      if (ENTERPRISE_EXPORT_FULL) {
+        type ResumeState = { jobId: string; resumeToken: string };
+        const storedRaw = sessionStorage.getItem(exportResumeStorageKey(id));
+        let resume: ResumeState | null = null;
+        try {
+          resume = storedRaw ? (JSON.parse(storedRaw) as ResumeState) : null;
+        } catch {
+          sessionStorage.removeItem(exportResumeStorageKey(id));
+        }
+
+        if (!resume?.jobId || !resume.resumeToken) {
+          setExportNotice(t('enterpriseExport.preparing'));
+          const started = await Api.startOrganizationExportJob(id);
+          resume = { jobId: started.job.id, resumeToken: started.resumeToken };
+          sessionStorage.setItem(exportResumeStorageKey(id), JSON.stringify(resume));
+        } else {
+          setExportNotice(t('enterpriseExport.resuming'));
+        }
+
+        let job = await Api.getOrganizationExportJob(id, resume.jobId, resume.resumeToken);
+        while (job.phase === 'queued' || job.phase === 'running') {
+          setExportProgress({
+            percent: job.percent,
+            completedTables: job.completedTables,
+            totalTables: job.totalTables,
+            rows: job.rows,
+          });
+          await new Promise((resolve) => window.setTimeout(resolve, 1000));
+          job = await Api.getOrganizationExportJob(id, resume.jobId, resume.resumeToken);
+        }
+        if (job.phase !== 'ready') {
+          sessionStorage.removeItem(exportResumeStorageKey(id));
+          throw new Error(
+            t('enterpriseExport.failedWithCode', { code: job.errorCode || 'ORG_EXPORT_FAILED' })
+          );
+        }
+        setExportProgress({
+          percent: 100,
+          completedTables: job.completedTables,
+          totalTables: job.totalTables,
+          rows: job.rows,
+        });
+        blob = await Api.downloadOrganizationExportJob(id, resume.jobId, resume.resumeToken);
+        sessionStorage.removeItem(exportResumeStorageKey(id));
+        disclosureMessage = t('enterpriseExport.ready', { rows: job.rows });
+        extension = 'zip';
+      } else {
+        blob = await Api.exportOrganizationData(id, 'json');
+        const disclosure = organizationExportDisclosure(JSON.parse(await blob.text()), id);
+        disclosureMessage = disclosure.message;
+        disclosureComplete = disclosure.complete;
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       const safeName = name.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || id;
       link.href = url;
-      link.download = `organization-export-${safeName}.json`;
+      link.download = `organization-export-${safeName}.${extension}`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setExportNotice(disclosure.message);
-      if (disclosure.complete) toast.success(disclosure.message);
+      setExportNotice(disclosureMessage);
+      if (disclosureComplete) toast.success(disclosureMessage, { id: ENTERPRISE_EXPORT_TOAST_ID });
     } catch (err) {
+      toast.remove(ENTERPRISE_EXPORT_TOAST_ID);
       const message = normalizeApiErrorMessage(err, 'Failed to export organization data');
+      setExportNotice(null);
+      setExportProgress(null);
+      if (ENTERPRISE_EXPORT_FULL) setExportRetry({ id, name });
       setActionError(message);
       toast.error(message);
     } finally {
       exportInFlight.current = false;
       setProcessingId(null);
+      setExportProgress(null);
     }
   };
 
@@ -756,7 +832,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         },
         {
           id: 'export-data',
-          label: 'Export Data',
+          label: t('enterpriseExport.action'),
           icon: Download,
           disabled: processingId === org.id,
           onClick: () => handleExportOrg(org.id, getOrgName(org)),
@@ -1075,7 +1151,16 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           role="alert"
           className="mb-6 rounded-lg border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-4 text-sm text-danger-700 dark:text-danger-300"
         >
-          {actionError}
+          <span>{actionError}</span>
+          {exportRetry && (
+            <button
+              type="button"
+              className="ml-3 rounded-md border border-current px-3 py-1 font-medium"
+              onClick={() => handleExportOrg(exportRetry.id, exportRetry.name)}
+            >
+              {t('enterpriseExport.retry')}
+            </button>
+          )}
         </div>
       )}
 
@@ -1085,6 +1170,28 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           className="mb-6 rounded-lg border border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-800 dark:text-slate-200"
         >
           {exportNotice}
+          {exportProgress && (
+            <div className="mt-3" aria-label={t('enterpriseExport.progressLabel')}>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span>
+                  {t('enterpriseExport.progressTables', {
+                    completed: exportProgress.completedTables,
+                    total: exportProgress.totalTables || '—',
+                  })}
+                </span>
+                <span>{exportProgress.percent}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${exportProgress.percent}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                {t('enterpriseExport.rows', { rows: exportProgress.rows })}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
