@@ -1372,6 +1372,7 @@ const ReportDefinitionTransitionSchema = z.discriminatedUnion('action', [
 const ReportTransitionBase = z.object({
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1),
+  profile: z.literal('initiative_work_report').optional(),
 });
 const ReportTransitionSchema = z.discriminatedUnion('action', [
   ReportTransitionBase.extend({ action: z.literal('VALIDATE') }),
@@ -7312,6 +7313,10 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      if (payload.workReport && !isInitiativesWorkReportEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       if (payload.ownerId !== actor.userId || payload.approverId === actor.userId) {
         res.status(403).json({ error: { code: 'REPORT_RUN_OWNER_REQUIRED' } });
         return;
@@ -7410,13 +7415,21 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const { expectedVersion, clientRequestId, profile, ...payload } = parsed.data;
+      if (profile === 'initiative_work_report' && !isInitiativesWorkReportEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       const reportRunId = firstParam(req.params.reportRunId);
       const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
         (item: any) => item.reportRunId === reportRunId
       ) as any;
       if (!run) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      if (run.workReport && !isInitiativesWorkReportEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
       const actorIsAuthorized =

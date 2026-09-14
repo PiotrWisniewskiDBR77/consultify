@@ -16,7 +16,7 @@ Kod E1 po finalnym przeglądzie i poprawkach jest gotowy do ponownego przeglądu
 - usunięto atrapę `report={true}`; listę przebiegów renderuje `StandardTable`;
 - jeśli PMO nie dostarcza bieżącego projektu, zakres degraduje się do `All initiatives`.
 
-Przy serwerowej fladze OFF wszystkie cztery dedykowane trasy `/work-reports/*`, łącznie z odczytem PDF, zwracają `FEATURE_DISABLED`, a runner okresowy kończy pracę przed pierwszym odczytem lub zapisem. Współdzielone, kanoniczne odczyty `reportDefinition` i `reportRun` pozostają dostępne dla innych konsumentów istniejącego silnika raportów.
+Przy serwerowej fladze OFF wszystkie cztery dedykowane trasy `/work-reports/*`, łącznie z odczytem PDF, zwracają `FEATURE_DISABLED`, a runner okresowy kończy pracę przed pierwszym odczytem lub zapisem. Wspólna trasa tworzenia `reportRun` rozpoznaje `workReport` przed odczytem źródeł i zapisem; przejścia z UI niosą profil `initiative_work_report`, więc także kończą się przed odczytem przebiegu. Serwer dodatkowo rozpoznaje istniejący Work report po odczycie, aby wykluczyć obejście przez pominięcie profilu. Zwykłe kanoniczne zapisy oraz wspólne odczyty `reportDefinition` i `reportRun` pozostają bez zmian dla innych konsumentów silnika raportów.
 
 ## Migracja
 

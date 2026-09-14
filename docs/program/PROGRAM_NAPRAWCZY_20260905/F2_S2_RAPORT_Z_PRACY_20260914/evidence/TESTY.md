@@ -16,7 +16,8 @@ Ostrzeżenia `act(...)` w istniejącym teście hubu nie wpływają na wynik 4/4 
 
 - `reportDefinitions.adminGate.routes.test.ts --retry=0` — PASS 8/8, w tym MEMBER → 403 dla create/transition przebiegu;
 - `workReport.serverFlag.routes.test.ts --retry=0` — PASS 2/2: default OFF blokuje preview/schedule/PDF/deliver, ON wpuszcza wszystkie cztery trasy do właściwych handlerów;
-- osiem skupionych plików testowych — PASS 27/27 (`--retry=0`);
+- `reportRun.workReportFlag.routes.test.ts --retry=0` — PASS 4/4: OFF zatrzymuje profilowane create/transition przed odczytem i zapisem, ON wykonuje create→VALIDATE, zwykły canonical reportRun działa przy OFF, a pominięcie profilu nie obchodzi bramki istniejącego Work reportu;
+- dziewięć skupionych plików testowych — PASS 31/31 (`--retry=0`);
 - skan tokenów c-\* tylko w zmienionych ekranach względem `src/index.css` — PASS, 9/9 tokenów istnieje;
 - zrzuty Vite/CUA: light 24 423 B, dark 24 732 B — wizualnie sprawdzone.
 

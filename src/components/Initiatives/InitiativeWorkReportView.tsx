@@ -301,11 +301,13 @@ export function InitiativeWorkReportView({
       });
       await transitionReportRun(reportRunId, {
         action: 'VALIDATE',
+        profile: 'initiative_work_report',
         expectedVersion: 1,
         clientRequestId: crypto.randomUUID(),
       });
       await transitionReportRun(reportRunId, {
         action: 'FREEZE',
+        profile: 'initiative_work_report',
         expectedVersion: 2,
         clientRequestId: crypto.randomUUID(),
       });
@@ -357,6 +359,7 @@ export function InitiativeWorkReportView({
   const approve = async (run: any) => {
     await transitionReportRun(run.reportRunId, {
       action: 'DECIDE',
+      profile: 'initiative_work_report',
       outcome: 'APPROVED',
       rationale: t('initiatives.workReport.approvalRationale', 'Approved for distribution'),
       expectedVersion: run.version,
