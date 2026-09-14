@@ -26,6 +26,8 @@
  * @module services/presentationLayoutVariantsService
  */
 
+import { withResolvedLocaleInstruction } from './ai/languagePolicy.js';
+
 import logger from '../utils/Logger.js';
 import {
   DELIVERABLE_GENERATION_PURPOSE,
@@ -209,7 +211,7 @@ async function generateVariantsViaLlm(
   const result = await (llmService as any).call({
     type: 'structured',
     modelConfig: { id: 'premium' },
-    systemPrompt,
+    systemPrompt: withResolvedLocaleInstruction(systemPrompt, meta?.language),
     messages: [{ role: 'user', content: userPrompt }],
     schema: OutputSchema,
     maxTokens: 3000,
@@ -372,7 +374,7 @@ async function remixViaLlm(
   const result = await (llmService as any).call({
     type: 'structured',
     modelConfig: { id: 'premium' },
-    systemPrompt,
+    systemPrompt: withResolvedLocaleInstruction(systemPrompt, meta?.language),
     messages: [{ role: 'user', content: userPrompt }],
     schema: OutputSchema,
     maxTokens: 1500,
