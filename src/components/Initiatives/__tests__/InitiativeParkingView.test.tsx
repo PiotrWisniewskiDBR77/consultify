@@ -62,8 +62,14 @@ describe('F2-1 E1 A2 — lista parkingu', () => {
     renderView();
     const table = await screen.findByTestId('initiatives-parking-table');
     await within(table).findByText('Second robotics pilot');
-    expect(within(table).getByText('Overlaps the automation wave already running.')).toBeVisible();
-    expect(within(table).getByText('Returns when the automation wave closes.')).toBeVisible();
+    // Tekst wystepuje dwa razy (wiersz tabeli + otwarty podglad) — to celowe,
+    // wiec liczymy wystapienia zamiast zadac jednego.
+    expect(
+      within(table).getAllByText('Overlaps the automation wave already running.').length
+    ).toBeGreaterThan(0);
+    expect(
+      within(table).getAllByText('Returns when the automation wave closes.').length
+    ).toBeGreaterThan(0);
   });
 
   it('gdy warunek powrotu nie zostal podany, mowi to wprost zamiast zostawiac pustke', async () => {
