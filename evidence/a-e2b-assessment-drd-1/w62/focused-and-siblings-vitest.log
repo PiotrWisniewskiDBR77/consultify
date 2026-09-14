@@ -1,0 +1,59 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-w62-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-w62-20260914
+
+ ✓ tests/unit/i18n/i18nTrescPolska.test.ts > i18n — strażnik TREŚCI pl≠en (ratchet) > baseline zastanego długu istnieje i jest posortowaną listą stringów 98ms
+ ✓ tests/unit/i18n/i18nTrescPolska.test.ts > i18n — strażnik TREŚCI pl≠en (ratchet) > żaden NOWY klucz nie ma treści pl identycznej z en (poza białą listą) ani martwego angielskiego słowa w pl 0ms
+ ✓ tests/unit/i18n/i18nTrescPolska.test.ts > i18n — strażnik TREŚCI pl≠en (ratchet) > STRAŻNIK BIAŁEJ LISTY: każdy wpis IDENTITY_WHITELIST jest uzasadnioną nazwą własną/skrótem, nie zwykłym słowem pospolitym 0ms
+ ✓ tests/unit/i18n/i18nTrescPolska.test.ts > i18n — zero duplikatów kluczy JSON na dowolnym poziomie (pl, en) > public/locales/en/translation.json nie ma zduplikowanych kluczy 65ms
+ ✓ tests/unit/i18n/i18nTrescPolska.test.ts > i18n — zero duplikatów kluczy JSON na dowolnym poziomie (pl, en) > public/locales/pl/translation.json nie ma zduplikowanych kluczy 85ms
+ ✓ tests/unit/i18n/i18nTrescPolska.test.ts (5 tests) 252ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > routes visible DRD and maturity-matrix chrome through bilingual i18n keys 228ms
+ ✓ src/components/assessment/__tests__/day275-macierz-w-panelu.test.tsx > Day 275 — macierz obok tabeli w panelu jakości > renderuje kanoniczny grid z dokładnych answers.drd oraz zachowuje StandardTable obok 54ms
+ ✓ src/components/assessment/__tests__/day275-macierz-w-panelu.test.tsx (1 test) 58ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > nie ma polskiego defaultValue w t() (z ogonkami ani bez) 88ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > nie ma polskich napisów poza t() w treści JSX i atrybutach 52ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > rejestr metodyk (frameworkRegistry.ts) nie ma polskich napisów w literałach 3ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts (4 tests) 374ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDMatrixSession > renders the matrix surface with the axis areas 60ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDMatrixSession > click on a level writes answers.areas[areaId].achievedLevel (canonical shape, no scoreSummary) 29ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDMatrixSession > hydrates cell color from an existing achievedLevel 21ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm (Piotr original) renders as the default DRD session surface > renders without error and reflects hydrated area scores from the adapter 21ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm — per-axis levelCount (ASM-001A fix: no hardcoded 1-5) > offers levels 1-7 for "Digital Processes" (levelCount 7) and writes level 6/7 to onChange 165ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm — per-axis levelCount (ASM-001A fix: no hardcoded 1-5) > regression: "Digital Business Models" (levelCount 5) still offers exactly 5 levels, unchanged 301ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm <-> DRDMatrixSession parity for a levelCount=7 axis (ASM-001A reopen scenario) > achievedLevel:6/targetLevel:7 on a 7-level axis renders as "6" (Matrix) and "6/7" (Form axis summary) — never "6/5" or clamped 35ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > drdAnswersAdapter round-trip (Form <-> canonical) > areasToFormData maps achievedLevel/targetLevel into per-axis areaScores 1ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > drdAnswersAdapter round-trip (Form <-> canonical) > formDataToAreas merges back and preserves richer per-area fields (notes) 0ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > drdAnswersAdapter round-trip (Form <-> canonical) > round-trips canonical -> form -> canonical without loss of scores 0ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx (10 tests) 637ms
+     ✓ regression: "Digital Business Models" (levelCount 5) still offers exactly 5 levels, unchanged  301ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > SSOT ma polską nazwę dla każdego obszaru osi 1 (przesłanka testu, nie założenie) 3ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > pasek obszarów pisze „Procesy Sprzedaży", nie „Sales Processes" 60ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > etykietaObszaru bierze namePL — tak samo, jak robi to drzewo sesji 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > etykietyPoziomowZMetodyki(oś 1) zwraca dokładnie siedem nazw z książki 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > siatka rysuje te nazwy w wierszach, od 7 u góry do 1 na dole 37ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PRZED naprawą (503 px): 9 kolumn schodzi do progu czytelności, nie niżej 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PO naprawie (drzewo sesji schowane, macierz bez sufitu ≈ 780 px): 9 kolumn mieści się bez przewijania 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > szeroki kadr edytora (1400 px) NIE chudnie — minimum zostaje bazowe 1ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr niezmierzony (jsdom, pierwsza klatka) zachowuje się jak przed zmianą 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > rysuje siatkę obszary × poziomy z drabiną i polskimi nazwami obszarów 50ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > przelicza stan warsztatu na stan siatki bez wymyślania zer 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx (11 tests) 155ms
+ ✓ tests/components/assessment/AssessmentSessionEditorView.canonical-drd.test.tsx > AssessmentSessionEditorView — canonical DRD owner > mounts Method Core before legacy loading and never calls a legacy reader or writer 39ms
+ ✓ tests/components/assessment/AssessmentSessionEditorView.canonical-drd.test.tsx (1 test) 44ms
+
+ Test Files  6 passed (6)
+      Tests  32 passed (32)
+   Start at  15:35:11
+   Duration  6.55s (transform 5.73s, setup 1.72s, import 9.09s, tests 1.52s, environment 6.57s)
+
+
+ Test Files  6 passed (6)
+      Tests  32 passed (32)
+   Start at  15:35:11
+   Duration  6.56s (transform 5.73s, setup 1.72s, import 9.09s, tests 1.52s, environment 6.57s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-w62-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-w62-20260914/junit.xml

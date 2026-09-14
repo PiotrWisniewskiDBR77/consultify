@@ -1,0 +1,4 @@
+Base advance 4de31efbcb..7ecfcf007b intersects the package file list only at public/locales/en/translation.json and public/locales/pl/translation.json.
+Semantic JSON leaf-key comparison: EN overlap 0/36 package keys; PL overlap 0/36 package keys.
+Package leaf-key set after rebase is identical for EN and PL. Component/test overlap: 0 files.
+Therefore the eight retained UI screenshots remain valid for the changed Assessment chrome.
