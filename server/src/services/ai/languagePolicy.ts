@@ -26,6 +26,26 @@ export const DEFAULT_AI_LANGUAGE: AiLanguage = 'en';
 
 export type ResolvedLocale = AiLanguage;
 
+/**
+ * Języki, które wolno przyjąć BEZ jawnego wyboru użytkownika (DEC-511, 2026-09-14).
+ *
+ * PRZYCZYNA (zgłoszenie testera `78e8df54`, staging 14.09 06:31 UTC): pytanie po
+ * angielsku przy UI=EN dostało odpowiedź po niemiecku. Front wysyła w
+ * `body.language` język WĄTKU (`chatLanguageByConversationId`), a
+ * `resolveLocale()` traktuje każdą wartość z żądania jako „jawny wybór", więc
+ * `users.language` nigdy nie było czytane — język raz przyklejony do wątku
+ * wygrywał z profilem użytkownika na zawsze.
+ *
+ * Decyzja CTO: profil (`users.language`) ma pierwszeństwo przed językiem wątku,
+ * a język spoza tej listy może wejść WYŁĄCZNIE jako jawny wybór użytkownika.
+ */
+export const IMPLICIT_THREAD_LANGUAGES: readonly AiLanguage[] = ['en', 'pl'];
+
+export function isImplicitThreadLanguage(language: unknown): boolean {
+  const normalized = normalizeAiLanguage(language);
+  return !!normalized && IMPLICIT_THREAD_LANGUAGES.includes(normalized);
+}
+
 /** Etykiety podawane modelowi — pełna nazwa + endonim, żeby model nie zgadywał. */
 export const AI_LANGUAGE_LABELS: Record<AiLanguage, string> = {
   pl: 'Polish (Polski)',
@@ -189,6 +209,22 @@ export async function resolveLocale(
     return explicitRequestLocale;
   }
 
+  const profileLocale = await resolveProfileLocale(req);
+  if (profileLocale) return profileLocale;
+
+  if (req) req.resolvedLocale = DEFAULT_AI_LANGUAGE;
+  return DEFAULT_AI_LANGUAGE;
+}
+
+/**
+ * Locale wynikające z TOŻSAMOŚCI użytkownika (token → `users.language` → legacy
+ * `users.locale` → `organizations.default_language`). Zwraca `null`, gdy żadne
+ * z tych źródeł nic nie mówi — dzięki temu wołający może rozstrzygnąć sam
+ * (np. dopuścić język wątku), zamiast dostać przedwczesną domyślkę `en`.
+ */
+export async function resolveProfileLocale(
+  req: LanguageRequestLike | null | undefined
+): Promise<ResolvedLocale | null> {
   const alreadyResolved = normalizeAiLanguage(req?.resolvedLocale);
   if (alreadyResolved) return alreadyResolved;
 
@@ -244,8 +280,52 @@ export async function resolveLocale(
     // Locale lookup is fail-open for chat availability; DEC-510 fallback remains `en`.
   }
 
+  return null;
+}
+
+export type ChatLanguageSource = 'explicit' | 'profile' | 'thread' | 'default';
+
+export interface ChatLanguageDecision {
+  language: ResolvedLocale;
+  source: ChatLanguageSource;
+}
+
+/**
+ * Język odpowiedzi czatu (DEC-511). Kolejność, w odróżnieniu od `resolveLocale`,
+ * rozdziela JAWNY wybór użytkownika od języka WĄTKU przysłanego przez front:
+ *
+ *   1. `explicit`  — użytkownik sam wybrał język (selektor w czacie). Dowolny wspierany kod.
+ *   2. profil      — `users.language` → legacy `users.locale` → `organizations.default_language`.
+ *   3. `thread`    — język wątku, ale TYLKO gdy należy do `IMPLICIT_THREAD_LANGUAGES`.
+ *   4. `en`.
+ *
+ * Skutek dla zgłoszenia `78e8df54`: wątek z historią DE przy `users.language='en'`
+ * odpowiada po angielsku, a DE może wrócić wyłącznie po jawnym wyborze.
+ */
+export async function resolveChatResponseLanguage(
+  req: LanguageRequestLike | null | undefined,
+  options?: { explicit?: unknown; thread?: unknown }
+): Promise<ChatLanguageDecision> {
+  const explicit = normalizeAiLanguage(options?.explicit);
+  if (explicit) {
+    if (req) req.resolvedLocale = explicit;
+    return { language: explicit, source: 'explicit' };
+  }
+
+  const profile = await resolveProfileLocale(req);
+  if (profile) {
+    if (req) req.resolvedLocale = profile;
+    return { language: profile, source: 'profile' };
+  }
+
+  const thread = normalizeAiLanguage(options?.thread);
+  if (thread && IMPLICIT_THREAD_LANGUAGES.includes(thread)) {
+    if (req) req.resolvedLocale = thread;
+    return { language: thread, source: 'thread' };
+  }
+
   if (req) req.resolvedLocale = DEFAULT_AI_LANGUAGE;
-  return DEFAULT_AI_LANGUAGE;
+  return { language: DEFAULT_AI_LANGUAGE, source: 'default' };
 }
 
 /** Compatibility alias retained for existing callers. */

@@ -221,8 +221,10 @@ const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'CO
  */
 const toolCategoryLabel = (category: 'strategic' | 'operational' | 'digital' | 'automation') => {
   const t = i18next.t.bind(i18next);
-  if (category === 'operational') return t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations');
-  if (category === 'digital') return t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital');
+  if (category === 'operational')
+    return t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations');
+  if (category === 'digital')
+    return t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital');
   if (category === 'automation') return i18next.language === 'pl' ? 'Automatyzacja' : 'Automation';
   return t('discoveryToolsMain.knownToolPreviewV3.categoryStrategy', 'Strategy');
 };
@@ -320,6 +322,21 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const stepDefs = getStepDefinitions();
   const currentStepDef = stepDefs[currentStep - 1];
   const progress = calculateProgress();
+
+  /**
+   * N3 (zgłoszenie testera `6c07439e`): „AI Draft wisi na 0%".
+   * `calculateProgress()` liczy UKOŃCZONE KROKI sesji, a generowanie szkicu
+   * żadnego kroku nie domyka (`dynamicSwot.ts:977` ustawia tylko `'ready'`),
+   * więc licznik pokazuje 0% w trakcie generowania i po udanym generowaniu.
+   * To nie jest pasek postępu AI i nie może udawać, że nim jest — w trakcie
+   * generowania pokazujemy stan NIEOKREŚLONY zamiast mylącego zera.
+   */
+  const isGeneratingFullSession = currentSession?.sessionGenerationStatus === 'generating';
+  const progressLabel = isGeneratingFullSession
+    ? isPolish
+      ? 'Generowanie…'
+      : 'Generating…'
+    : `${progress}%`;
 
   const [toolSessionId, setToolSessionId] = useState<string | null>(sessionId || null);
   const [toolStatus, setToolStatus] = useState<
@@ -1376,7 +1393,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {t('discoveryToolsMain.toolDocumentView.progress')}
                 </div>
-                <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">{progress}%</div>
+                <div
+                  className="mt-1 text-sm text-slate-700 dark:text-slate-300"
+                  data-tool-progress-indeterminate={isGeneratingFullSession ? 'true' : undefined}
+                >
+                  {progressLabel}
+                </div>
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
@@ -1838,13 +1860,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                       ? isPolish
                         ? 'Przekroczono limit czasu generowania. Twoje dane są bezpieczne.'
                         : 'Generation timed out. Your work is safe.'
-                      : /cancel|anulow/i.test(toolAiError)
+                      : /no usable draft|invalid result|bez wyniku/i.test(toolAiError)
                         ? isPolish
-                          ? 'Generowanie anulowano. Twoje dane są bezpieczne.'
-                          : 'Generation was cancelled. Your work is safe.'
-                        : isPolish
-                          ? 'Dostawca AI nie odpowiedział. Twoje dane są bezpieczne.'
-                          : 'The AI provider did not respond. Your work is safe.'}
+                          ? 'Model nie zwrócił gotowego szkicu. Twoje dane są bezpieczne.'
+                          : 'The model returned no usable draft. Your work is safe.'
+                        : /cancel|anulow/i.test(toolAiError)
+                          ? isPolish
+                            ? 'Generowanie anulowano. Twoje dane są bezpieczne.'
+                            : 'Generation was cancelled. Your work is safe.'
+                          : isPolish
+                            ? 'Dostawca AI nie odpowiedział. Twoje dane są bezpieczne.'
+                            : 'The AI provider did not respond. Your work is safe.'}
                   </span>
                   <button
                     type="button"
@@ -2367,7 +2393,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         showZeroBadge: true,
         children: (
           <p className="text-xs text-c-text-secondary">
-            {isPolish ? `Postęp sesji: ${progress}%` : `Session progress: ${progress}%`}
+            {isPolish ? `Postęp sesji: ${progressLabel}` : `Session progress: ${progressLabel}`}
           </p>
         ),
       },
@@ -2554,9 +2580,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   type: 'tool',
                 }}
                 moznaEdytowac={toolStatus !== 'APPROVED'}
-                powodTylkoOdczyt={
-                  isPolish ? 'sesja zatwierdzona' : 'session is approved'
-                }
+                powodTylkoOdczyt={isPolish ? 'sesja zatwierdzona' : 'session is approved'}
                 /* Oba uzupełnienia prowadzą do ISTNIEJĄCEGO mechanizmu
                    propozycji tej karty: `TeresaSwotProposals` (tabela
                    `swot_proposals`, akcept/odrzucenie po stronie serwera).
