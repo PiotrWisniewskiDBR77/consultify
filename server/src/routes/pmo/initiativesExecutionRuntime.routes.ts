@@ -39,6 +39,7 @@ import { z } from 'zod';
 import databaseConfig from '../../config/DatabaseConfig.js';
 import { isExecutionReportE4Enabled } from '../../config/executionReportE4Flag.js';
 import { isInitiativesWorkloadEnabled } from '../../config/FeatureFlags.js';
+import { isInitiativesPlanEnabled } from '../../config/initiativesPlanFlag.js';
 import { isInitiativesWorkReportEnabled } from '../../config/initiativesWorkReportFlag.js';
 import { InitiativeStatus, type InitiativeStatusType } from '../../constants/initiativeStatuses.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
@@ -2099,6 +2100,14 @@ export function createInitiativesExecutionRuntimeRouter(
         .json({ ...result, proposal: readBack[0] ?? null });
     })
   );
+
+  router.use(['/planning', '/plan-scenarios', '/plan-analysis-proposals'], (_req, res, next) => {
+    if (!isInitiativesPlanEnabled()) {
+      res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+      return;
+    }
+    next();
+  });
 
   router.get(
     '/source-proposals',
@@ -9284,8 +9293,7 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
       : new ConfiguredPortfolioConsultingModelGateway(),
   },
   analyzePlanDependencies,
-  planDependencyAnalysisEnabled: () =>
-    process.env.VITE_INITIATIVES_PLAN_ANALYSIS === 'true',
+  planDependencyAnalysisEnabled: isInitiativesPlanEnabled,
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,
