@@ -15,7 +15,8 @@
  *  · lista renderuje wiersze pozostalych realizacji szybciej niz limit
  *    (test: przed uplywem 12 s zegara),
  *  · realizacja, ktora nie odpowiedziala, jest OZNACZONA na liscie wyboru,
- *  · wybor wiszacej realizacji konczy sie polskim stanem „nie odpowiada",
+ *  · wybor wiszacej realizacji konczy sie stanem „nie odpowiada" w jezyku
+ *    interfejsu (klucz `execution.resources.caseNotRespondingSuffix`, DEC-461),
  *    a nie wiecznym szkieletem.
  *
  * DOWOD MUTACYJNY: zdjecie limitu z `load(id)` (goly `Promise.all`) ->
@@ -276,7 +277,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     );
     const lastNode = registerFilterControl.mock.calls.at(-1)?.[0];
     const registered = render(<MemoryRouter>{lastNode as React.ReactNode}</MemoryRouter>);
-    expect(registered.getByText('Akceptacja ACO — nie odpowiada')).toBeInTheDocument();
+    expect(registered.getByText('Akceptacja ACO — not responding')).toBeInTheDocument();
   });
 
   it('zgłasza realizację bez odpowiedzi NATYCHMIAST, nie po zamknięciu całego wachlarza', async () => {
@@ -300,7 +301,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     );
   });
 
-  it('wybór wiszącej realizacji kończy się polskim „nie odpowiada", nie wiecznym szkieletem', async () => {
+  it('wybór wiszącej realizacji kończy się stanem „nie odpowiada", nie wiecznym szkieletem', async () => {
     wiszaceRealizacje();
     readExecutionCase.mockImplementation(async (caseId: string) => {
       if (caseId === HANGING_CASE) return new Promise(() => {});

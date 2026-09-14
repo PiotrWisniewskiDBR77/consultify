@@ -677,8 +677,16 @@ export const ExecutionResourcesSurface = ({
               {/* Realizacja, ktora nie odpowiedziala, jest OZNACZONA na liscie —
                   inaczej uzytkownik wybiera ja w kolko i za kazdym razem czeka. */}
               {`${
-                c.initiativeTitle || c.title || `Realizacja · ${String(c.executionCaseId).slice(-8)}`
-              }${unreachableCaseIds.includes(c.executionCaseId) ? ' — nie odpowiada' : ''}`}
+                c.initiativeTitle ||
+                c.title ||
+                t('execution.resources.caseFallbackName', 'Delivery · {{short}}', {
+                  short: String(c.executionCaseId).slice(-8),
+                })
+              }${
+                unreachableCaseIds.includes(c.executionCaseId)
+                  ? t('execution.resources.caseNotRespondingSuffix', ' — not responding')
+                  : ''
+              }`}
             </option>
           ))}
         </select>
@@ -686,7 +694,9 @@ export const ExecutionResourcesSurface = ({
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, caseId, cases, unreachableCaseIds]);
+    // `t` w zaleznosciach: bez tego przelaczenie jezyka zostawialoby w Menu 2
+    // etykiety z poprzedniego jezyka az do nastepnej zmiany danych.
+  }, [onRegisterFilterControl, caseId, cases, unreachableCaseIds, t]);
 
   // ── MENU 2 · JEDEN primary CTA ───────────────────────────────────────────
   // „Dodaj dostępność" (plan 1.12 C2). Bez tego przycisku podaż zostaje na
@@ -743,7 +753,9 @@ export const ExecutionResourcesSurface = ({
   if (state === 'CASE_UNREACHABLE') {
     const nazwa =
       cases.find((item) => item.executionCaseId === caseId)?.initiativeTitle ||
-      `Realizacja · ${String(caseId).slice(-8)}`;
+      t('execution.resources.caseFallbackName', 'Delivery · {{short}}', {
+        short: String(caseId).slice(-8),
+      });
     return (
       <div
         role="alert"
