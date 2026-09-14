@@ -441,6 +441,8 @@ const Wave3CreatorsCrimsonScreen = React.lazy(() => import('./screens/wave3-crea
 const Wave4ChoicesCrimsonScreen = React.lazy(() => import('./screens/wave4-choices-crimson'));
 const Wave5InternalCrimsonScreen = React.lazy(() => import('./screens/wave5-internal-crimson'));
 const ZwornikProjectsScreen = React.lazy(() => import('./screens/zwornik-projects'));
+const Z41PmoProjektyScreen = React.lazy(() => import('./screens/z41-pmo-projekty'));
+const Z41PmoProjektyOffScreen = React.lazy(() => import('./screens/z41-pmo-projekty-off'));
 const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
@@ -2378,6 +2380,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'zwornik-projects': {
     label: '#78 Zwornik /projects — Stakeholderzy · Finanse · Zespół · Role · Zadania',
     render: () => <ZwornikProjectsScreen />,
+  },
+  'z41-pmo-projekty': {
+    label:
+      'Z-41 (14.09) — S5 PMO E3: REALNY <MyProjects/> (/projects) z podglądem 5 bramek etapów (<ProjectStageGatesPanel>), 1 projekt „PMO E3 Chicago Pilot". &lang=pl|en &theme=light|dark',
+    render: () => <Z41PmoProjektyScreen />,
+  },
+  'z41-pmo-projekty-off': {
+    label:
+      'Z-41 (14.09) — S5 PMO E3: REALNY <AppRoutes/> na /projects przy VITE_PMO_PROJECTS OFF (domyślnie) — dowód przekierowania na /my-work. &lang=pl|en &theme=light|dark',
+    render: () => <Z41PmoProjektyOffScreen />,
   },
   'settings-crimson-neutralized': {
     label: 'Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)',
