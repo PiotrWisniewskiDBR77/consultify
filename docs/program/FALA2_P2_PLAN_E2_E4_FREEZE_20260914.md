@@ -23,12 +23,13 @@ All new user-facing copy is available in English and Polish, with English first.
 
 - Rebase: no conflicts; merge base equals `19b633c81e`.
 - Focused tests: 11 files, 28 tests, all passed with `--retry=0`.
-- HOLD repair tests: 5 affected files, 18 tests, all passed. The RED test first proved that an inactive condition was flattened to a hard edge; GREEN proves inactive and active behavior in the helper, canonical writer flow, and solver.
+- HOLD repair tests: 4 non-database files / 14 tests passed, plus 1 Real PostgreSQL file / 1 test passed: 5 files and 15/15 tests in total. The RED artifact runs the regression assertion on exact pre-fix parent `8a2a58930e` and exits 1 because the inactive conditional observation is received as hard edge `["A"]` instead of `[]`. GREEN proves inactive and active behavior in the helper, canonical writer flow, and solver.
 - Real PostgreSQL: `cx-a-b-plan-pg` on port 5300, `RUN_DB_TESTS=1`, `MOCK_DB=false`; 1 file, 1 test passed. Readback proves proposal version 2, two accepted observations, and retained `CONDITIONAL` kind, exact condition, and `conditionActive=false` review state.
 - Server TypeScript: W56 base 0 errors / candidate 0 errors, both exit code 0 with 8 GB heap.
 - Frontend TypeScript: the W56 base and candidate both reached the mandatory 120-second ceiling before emitting diagnostics. On the preceding exact W54 base, the base measured 177 existing errors and the candidate measured 178; the only added error was the stale Plan history-tab symbol in `InitiativesHub.tsx`. It was repaired before W56 in the rebased implementation. This is explicit timeout evidence, not a green global frontend TypeScript claim.
 - Per-file esbuild for the HOLD repair: four affected frontend production files and four affected server production files passed.
 - UI evidence: 12 JPEG files, 847,179 bytes total. EN/PL × light/dark × full/empty are present; the four full-state captures were regenerated and show the explicit condition-active control. Four timeline captures prove horizon controls, critical paths, and the frozen in-progress bar.
+- Reproducible logs: `conditional-dependency-red.log` records the exact pre-fix parent, command, failing assertion, and exit 1; `conditional-dependency-green.log` records 4/4 files and 14/14 non-database tests; `conditional-dependency-realpg-green.log` records 1/1 file and 1/1 database test with local database identity and redacted credentials.
 
 ## Evidence boundary
 

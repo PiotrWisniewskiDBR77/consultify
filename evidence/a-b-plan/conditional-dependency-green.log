@@ -1,0 +1,41 @@
+EXACT_CANDIDATE=db1b310032864fcf56893b270ba788f72f6d8420
+COMMAND=npx --no-install vitest run src/components/Initiatives/__tests__/planDependencyReview.test.ts src/components/Initiatives/__tests__/PlanDependencyAnalysisPanel.test.tsx src/components/Initiatives/__tests__/PlanScenarioSurface.aiReviewFlow.test.tsx server/src/domain/initiatives-execution/__tests__/planSolver.test.ts --retry=0
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+ ✓ src/components/Initiatives/__tests__/planDependencyReview.test.ts > applyDependencyObservationReviews > persists only accepted observations and produces a stable logical order 31ms
+ ✓ src/components/Initiatives/__tests__/planDependencyReview.test.ts > applyDependencyObservationReviews > retains existing human dependencies while adding an accepted proposal 0ms
+ ✓ src/components/Initiatives/__tests__/planDependencyReview.test.ts > applyDependencyObservationReviews > preserves conditional edges and hardens only a condition that is currently active 1ms
+ ✓ src/components/Initiatives/__tests__/planDependencyReview.test.ts (3 tests) 33ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > places a dependency chain in successive periods 39ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > enforces only active conditional dependencies and retains inactive conditions as non-blocking 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > keeps parallel dependants in the same earliest feasible period 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > reports an impossible own window without inventing an assignment 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > makes an UNKNOWN capacity constraint explicit instead of treating it as zero 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > pushes excess demand to the next period when capacity is known 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > reports dependency cycles and leaves their members unassigned 1ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > is deterministic for the same input 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts > solvePlanScenario > accepts a legacy payload without optional solver fields 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planSolver.test.ts (9 tests) 42ms
+ ✓ src/components/Initiatives/__tests__/PlanDependencyAnalysisPanel.test.tsx > PlanDependencyAnalysisPanel > supports item and bulk review, persists edits and distinguishes critical path kinds 114ms
+ ✓ src/components/Initiatives/__tests__/PlanDependencyAnalysisPanel.test.tsx (1 test) 115ms
+ ✓ src/components/Initiatives/__tests__/PlanScenarioSurface.aiReviewFlow.test.tsx > PlanScenarioSurface AI dependency review flow > requests AI analysis and applies approved dependencies plus logical order through canonical writers 183ms
+ ✓ src/components/Initiatives/__tests__/PlanScenarioSurface.aiReviewFlow.test.tsx (1 test) 184ms
+
+ Test Files  4 passed (4)
+      Tests  14 passed (14)
+   Start at  13:35:32
+   Duration  1.29s (transform 582ms, setup 412ms, import 774ms, tests 375ms, environment 1.07s)
+
+
+ Test Files  4 passed (4)
+      Tests  14 passed (14)
+   Start at  13:35:32
+   Duration  1.29s (transform 582ms, setup 412ms, import 774ms, tests 375ms, environment 1.07s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
+GREEN_EXIT=0
