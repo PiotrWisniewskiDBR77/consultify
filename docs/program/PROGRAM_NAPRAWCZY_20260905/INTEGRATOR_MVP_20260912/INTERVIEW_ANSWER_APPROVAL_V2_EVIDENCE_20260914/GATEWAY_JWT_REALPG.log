@@ -102,4 +102,3 @@ stdout | server/src/routes/v8/__tests__/interviewAnswerApproval.gateway.pg.test.
       Tests  4 passed (4)
    Start at  02:21:30
    Duration  17.33s (transform 12.33s, setup 149ms, import 413ms, tests 16.22s, environment 452ms)
-

@@ -40,4 +40,3 @@ stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidence
       Tests  9 passed (9)
    Start at  02:21:21
    Duration  7.53s (transform 460ms, setup 105ms, import 306ms, tests 1.94s, environment 291ms)
-

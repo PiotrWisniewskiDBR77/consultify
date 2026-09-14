@@ -28,4 +28,3 @@ stdout | server/src/services/interview/__tests__/interviewAnswerDecisionService.
       Tests  6 passed (6)
    Start at  02:21:19
    Duration  1.05s (transform 179ms, setup 110ms, import 246ms, tests 299ms, environment 311ms)
-
