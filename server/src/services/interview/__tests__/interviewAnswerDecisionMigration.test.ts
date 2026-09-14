@@ -1,19 +1,24 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-const migrationPath = resolve(
-  process.cwd(),
-  'server/migrations/20262170_interview_answer_decisions.sql'
-);
-const migration = readFileSync(migrationPath, 'utf8');
-const executable = migration
-  .split('\n')
-  .filter((line) => !line.trimStart().startsWith('--'))
-  .join('\n');
+let executable = '';
 
 describe('Interview answer decisions additive migration contract', () => {
+  beforeAll(() => {
+    const testPath = expect.getState().testPath;
+    if (!testPath) throw new Error('Vitest did not expose the current test path');
+    const migrationPath = resolve(
+      dirname(testPath),
+      '../../../../migrations/20262170_interview_answer_decisions.sql'
+    );
+    executable = readFileSync(migrationPath, 'utf8')
+      .split('\n')
+      .filter((line) => !line.trimStart().startsWith('--'))
+      .join('\n');
+  });
+
   it('uses only the explicitly authorized additive statement families', () => {
     const statements = executable
       .split(';')

@@ -20,6 +20,8 @@ function handlerSource(name: string, nextName: string): string {
   return controllerSource.slice(start, end);
 }
 
+const normalizeSqlWhitespace = (source: string): string => source.replace(/\s+/g, ' ').trim();
+
 describe('Interview approval lifecycle owner contract', () => {
   it('persists submit lifecycle state and answer history in one fail-closed transaction', () => {
     const source = handlerSource('submitAssignment', 'sendBackAssignment');
@@ -27,7 +29,9 @@ describe('Interview approval lifecycle owner contract', () => {
     expect(source).toContain('queryHelpers.withPgTransaction');
     expect(source).toContain("reason: 'submission'");
     expect(source).toContain('ensureTable: false');
-    expect(source).toContain("UPDATE interview_sessions SET status = 'submitted'");
+    expect(normalizeSqlWhitespace(source)).toContain(
+      "UPDATE interview_sessions SET status = 'submitted'"
+    );
     expect(source).toContain('SUBMISSION_ATOMIC_PERSISTENCE_FAILED');
     expect(source).toContain('idempotentReplay: true');
     expect(source).toContain("status IN ('in_progress', 'sent_back')");
@@ -40,7 +44,9 @@ describe('Interview approval lifecycle owner contract', () => {
     expect(source).toContain('queryHelpers.withPgTransaction');
     expect(source).toContain("reason: 'send_back'");
     expect(source).toContain("WHERE id = ? AND status = 'submitted'");
-    expect(source).toContain("UPDATE interview_sessions SET status = 'active'");
+    expect(normalizeSqlWhitespace(source)).toContain(
+      "UPDATE interview_sessions SET status = 'active'"
+    );
     expect(source).not.toContain('fail-open');
     expect(source).not.toContain('answer-history snapshot skipped');
   });
@@ -50,7 +56,9 @@ describe('Interview approval lifecycle owner contract', () => {
 
     expect(source).toContain('queryHelpers.withPgTransaction');
     expect(source).toContain("WHERE id = ? AND status = 'submitted'");
-    expect(source).toContain("UPDATE interview_sessions SET status = 'completed'");
+    expect(normalizeSqlWhitespace(source)).toContain(
+      "UPDATE interview_sessions SET status = 'completed'"
+    );
     expect(source).toContain('UPDATE tasks SET status = ?, progress = ?, updated_at = ?');
     expect(source).toContain('INTERVIEW_APPROVE_STATE_CONFLICT');
   });

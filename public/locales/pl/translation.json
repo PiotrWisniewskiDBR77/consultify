@@ -7489,6 +7489,7 @@
     },
     "answerApproval": {
       "policy": {
+        "enabledLabel": "Włącz zatwierdzanie odpowiedzi",
         "modeLabel": "Tryb zatwierdzania odpowiedzi",
         "modeAi": "AI",
         "modeManager": "Menedżer",
