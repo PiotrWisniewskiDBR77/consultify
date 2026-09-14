@@ -15708,6 +15708,35 @@
         "unassigned": "Bez właściciela",
         "no_due_date": "Bez terminu"
       },
+      "status": {
+        "open": "Otwarte",
+        "todo": "Do zrobienia",
+        "in_progress": "W toku",
+        "in_execution": "W realizacji",
+        "pending": "Oczekuje",
+        "blocked": "Zablokowane",
+        "done": "Wykonane",
+        "completed": "Zakończone",
+        "decided": "Rozstrzygnięte",
+        "approved": "Zatwierdzone",
+        "unknown": "Nieznane"
+      },
+      "priority": {
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski",
+        "unset": "Nie ustawiono"
+      },
+      "preview": {
+        "openDisabled": "Użyj akcji rekordu źródłowego, aby otworzyć ten element pracy.",
+        "details": "Szczegóły pracy",
+        "noDefinition": "Nie zapisano definicji wykonania.",
+        "noDueDate": "Bez terminu",
+        "noProject": "Bez przypisanego projektu",
+        "noOwner": "Bez przypisanego właściciela",
+        "openSource": "Otwórz rekord źródłowy"
+      },
       "windows": {
         "previousWeek": "Miniony tydzień",
         "nextWeek": "Nadchodzący tydzień",
