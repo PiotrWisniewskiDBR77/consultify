@@ -4135,6 +4135,23 @@
         "status": "Status",
         "pass": "Zatwierdź bramkę",
         "missing": "Brakuje przed następną bramką",
+        "criteria": {
+          "hasStrategicGoals": "Zdefiniowane cele strategiczne",
+          "hasChallenges": "Udokumentowane wyzwania",
+          "hasConstraints": "Zidentyfikowane ograniczenia",
+          "contextReadinessOk": "Gotowość kontekstu na poziomie co najmniej 80%",
+          "assessmentComplete": "Oceniono wszystkie osie",
+          "gapAnalysisReviewed": "Zweryfikowano analizę luk",
+          "hasInitiatives": "Zdefiniowano co najmniej jedną inicjatywę",
+          "allInitiativesOwned": "Każda inicjatywa ma właściciela",
+          "prioritiesSet": "Ustalono priorytety inicjatyw",
+          "roadmapBaselined": "Zatwierdzono bazowy plan mapy drogowej",
+          "allAssignedToWaves": "Każdą inicjatywę przypisano do fali",
+          "noDependencyConflicts": "Brak konfliktów zależności",
+          "allInitiativesClosed": "Wszystkie inicjatywy zakończono lub anulowano",
+          "noBlockingDecisions": "Brak oczekujących decyzji blokujących",
+          "kpisMeasured": "Wykonano pomiary KPI"
+        },
         "names": {
           "readiness": "Bramka gotowości",
           "design": "Bramka projektu rozwiązania",

@@ -4985,6 +4985,23 @@
         "status": "Status",
         "pass": "Pass gate",
         "missing": "Missing before the next gate",
+        "criteria": {
+          "hasStrategicGoals": "Strategic goals defined",
+          "hasChallenges": "Challenges documented",
+          "hasConstraints": "Constraints identified",
+          "contextReadinessOk": "Context readiness score at least 80%",
+          "assessmentComplete": "All axes assessed",
+          "gapAnalysisReviewed": "Gap analysis reviewed",
+          "hasInitiatives": "At least one initiative defined",
+          "allInitiativesOwned": "All initiatives have owners",
+          "prioritiesSet": "Initiative priorities set",
+          "roadmapBaselined": "Roadmap baselined",
+          "allAssignedToWaves": "All initiatives assigned to waves",
+          "noDependencyConflicts": "No dependency conflicts",
+          "allInitiativesClosed": "All initiatives completed or cancelled",
+          "noBlockingDecisions": "No blocking decisions pending",
+          "kpisMeasured": "KPIs measured"
+        },
         "names": {
           "readiness": "Readiness gate",
           "design": "Design gate",

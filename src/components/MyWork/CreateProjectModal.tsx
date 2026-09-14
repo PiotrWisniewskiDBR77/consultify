@@ -18,7 +18,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [name, setName] = useState('');
-  const [goal, setGoal] = useState('');
   const [description, setDescription] = useState('');
   const [standard, setStandard] = useState<'pmbok' | 'prince2' | 'agile' | 'safe' | 'custom'>(
     'pmbok'
@@ -31,7 +30,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setName('');
-    setGoal('');
     setDescription('');
     setStandard('pmbok');
     setStartDate('');
@@ -47,7 +45,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     try {
       const project = await Api.createProject({
         name: name.trim(),
-        goal: goal.trim() || undefined,
         description: description.trim() || undefined,
         status: 'active',
         pmo_standard: standard,
@@ -111,14 +108,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 className={`${inputClass} mt-1.5`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-              />
-            </label>
-            <label className="col-span-2 text-sm font-medium text-c-text">
-              {t('myWork.createProjectModal.goal', 'Goal')}
-              <input
-                className={`${inputClass} mt-1.5`}
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
               />
             </label>
             <label className="col-span-2 text-sm font-medium text-c-text">

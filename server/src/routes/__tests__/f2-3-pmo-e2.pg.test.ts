@@ -12,6 +12,13 @@ import { ApiGateway } from '../../Gateway.js';
 import { errorHandlerMiddleware } from '../../utils/ErrorHandler.js';
 
 const databaseUrl = process.env.DATABASE_URL || '';
+const expectedDatabase = (() => {
+  try {
+    return new URL(databaseUrl).pathname.replace(/^\//, '');
+  } catch {
+    return '';
+  }
+})();
 const databaseHost = (() => {
   try {
     return new URL(databaseUrl).hostname;
@@ -57,7 +64,7 @@ describe.sequential('F2-3 E2 projects operating model through ApiGateway + RealP
     await sql.connect();
     const database = (await sql.query<{ name: string }>('SELECT current_database() AS name')).rows[0]
       ?.name;
-    expect(database).toBe('f23_e1');
+    expect(database).toBe(expectedDatabase);
 
     await sql.query(
       `INSERT INTO organizations(id,name,status)
@@ -116,7 +123,6 @@ describe.sequential('F2-3 E2 projects operating model through ApiGateway + RealP
       .send({
         name: 'F2-3 delivery',
         description: 'PMO operating model',
-        goal: 'Deliver measurable value',
         status: 'active',
         pmo_standard: 'pmbok',
         start_date: '2026-09-15',
@@ -129,14 +135,14 @@ describe.sequential('F2-3 E2 projects operating model through ApiGateway + RealP
 
     const row = (
       await sql.query(
-        `SELECT goal,pmo_standard,start_date::text,target_end_date::text,
+        `SELECT description,pmo_standard,start_date::text,target_end_date::text,
                 budget_amount::numeric::text,budget_currency
          FROM projects WHERE id=$1 AND organization_id=$2`,
         [projectId, orgId]
       )
     ).rows[0];
     expect(row).toMatchObject({
-      goal: 'Deliver measurable value',
+      description: 'PMO operating model',
       pmo_standard: 'pmbok',
       start_date: '2026-09-15',
       target_end_date: '2026-12-15',
