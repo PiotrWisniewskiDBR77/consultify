@@ -10,6 +10,7 @@
 import { History, RefreshCw, RotateCcw, Save, Send, Shield } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
@@ -25,7 +26,10 @@ type PolicyFormState = {
   requireLocalForDataClasses: string;
   allowedDataClasses: string;
   operatingMode: string;
+  answerApprovalMode: AnswerApprovalMode;
 };
+
+type AnswerApprovalMode = 'ai' | 'manager' | 'two_stage';
 
 type PolicyVersion = {
   id: string;
@@ -48,6 +52,31 @@ const EMPTY_FORM: PolicyFormState = {
   requireLocalForDataClasses: '',
   allowedDataClasses: '',
   operatingMode: 'standard',
+  answerApprovalMode: 'manager',
+};
+
+const ANSWER_APPROVAL_MODES: AnswerApprovalMode[] = ['ai', 'manager', 'two_stage'];
+
+const readAnswerApprovalPolicy = (
+  policy: Record<string, unknown>
+): {
+  mode: AnswerApprovalMode;
+  unsupported: boolean;
+} => {
+  const interview = isRecord(policy.interview) ? policy.interview : null;
+  const answerApproval =
+    interview && isRecord(interview.answerApproval) ? interview.answerApproval : null;
+  if (!answerApproval) return { mode: 'manager', unsupported: false };
+  const version = answerApproval.version;
+  const mode = answerApproval.mode;
+  if (
+    version !== 1 ||
+    typeof mode !== 'string' ||
+    !ANSWER_APPROVAL_MODES.includes(mode as AnswerApprovalMode)
+  ) {
+    return { mode: 'manager', unsupported: true };
+  }
+  return { mode: mode as AnswerApprovalMode, unsupported: false };
 };
 
 const toCsv = (value: unknown) =>
@@ -189,7 +218,10 @@ const extractPolicySnapshot = (value: unknown) => {
   };
 };
 
-const policyConfirmsSaved = (expected: Record<string, unknown>, actual: Record<string, unknown>) =>
+const policyConfirmsSaved = (
+  expected: Record<string, unknown>,
+  actual: Record<string, unknown>
+): boolean =>
   Object.entries(expected).every(([key, expectedValue]) => {
     const actualValue = actual[key];
     if (Array.isArray(expectedValue)) {
@@ -197,6 +229,9 @@ const policyConfirmsSaved = (expected: Record<string, unknown>, actual: Record<s
         Array.isArray(actualValue) &&
         expectedValue.every((item) => actualValue.map(String).includes(String(item)))
       );
+    }
+    if (isRecord(expectedValue)) {
+      return isRecord(actualValue) && policyConfirmsSaved(expectedValue, actualValue);
     }
     return String(actualValue ?? '') === String(expectedValue ?? '');
   });
@@ -209,6 +244,7 @@ const formatDateTime = (value: string | null | undefined) => {
 };
 
 export const OrgAIPolicyTab: React.FC = () => {
+  const { t } = useTranslation();
   const [orgId, setOrgId] = useState('');
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([]);
   const [loadingOrganizations, setLoadingOrganizations] = useState(false);
@@ -227,6 +263,7 @@ export const OrgAIPolicyTab: React.FC = () => {
   const [livePolicyUpdatedAt, setLivePolicyUpdatedAt] = useState<string | null>(null);
   const [latestDraftStatus, setLatestDraftStatus] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [answerApprovalPolicyUnsupported, setAnswerApprovalPolicyUnsupported] = useState(false);
 
   const resetPolicyState = () => {
     setHasLoadedPolicy(false);
@@ -239,6 +276,7 @@ export const OrgAIPolicyTab: React.FC = () => {
     setLastLoadedAt(null);
     setForm(EMPTY_FORM);
     setRaw('{}');
+    setAnswerApprovalPolicyUnsupported(false);
   };
 
   const selectOrgId = (nextOrgId: string) => {
@@ -279,6 +317,8 @@ export const OrgAIPolicyTab: React.FC = () => {
   }, []);
 
   const syncFormFromPolicy = (policyObj: any) => {
+    const normalizedPolicy = isRecord(policyObj) ? policyObj : {};
+    const answerApproval = readAnswerApprovalPolicy(normalizedPolicy);
     setForm({
       allowedRegions: toCsv(policyObj?.allowed_regions),
       allowProviderTypes: toCsv(policyObj?.allow_provider_types),
@@ -287,31 +327,38 @@ export const OrgAIPolicyTab: React.FC = () => {
       requireLocalForDataClasses: toCsv(policyObj?.require_local_for_data_classes),
       allowedDataClasses: toCsv(policyObj?.allowed_data_classes),
       operatingMode: String(policyObj?.operating_mode || 'standard'),
+      answerApprovalMode: answerApproval.mode,
     });
+    setAnswerApprovalPolicyUnsupported(answerApproval.unsupported);
     setRaw(JSON.stringify(policyObj || {}, null, 2));
   };
 
   const rebuildPolicy = (nextForm: PolicyFormState) => {
-    const policyObj = {
-      ...(fromCsv(nextForm.allowProviderTypes).length > 0
-        ? { allow_provider_types: fromCsv(nextForm.allowProviderTypes) }
-        : {}),
-      ...(fromCsv(nextForm.denyProviderTypes).length > 0
-        ? { deny_provider_types: fromCsv(nextForm.denyProviderTypes) }
-        : {}),
-      ...(fromCsv(nextForm.allowedRegions).length > 0
-        ? { allowed_regions: fromCsv(nextForm.allowedRegions) }
-        : {}),
-      ...(fromCsv(nextForm.allowedOriginVendors).length > 0
-        ? { allow_origin_vendors: fromCsv(nextForm.allowedOriginVendors) }
-        : {}),
-      ...(fromCsv(nextForm.allowedDataClasses).length > 0
-        ? { allowed_data_classes: fromCsv(nextForm.allowedDataClasses) }
-        : {}),
-      ...(fromCsv(nextForm.requireLocalForDataClasses).length > 0
-        ? { require_local_for_data_classes: fromCsv(nextForm.requireLocalForDataClasses) }
-        : {}),
-      operating_mode: nextForm.operatingMode || 'standard',
+    if (answerApprovalPolicyUnsupported) return;
+    const policyObj: Record<string, unknown> = isRecord(parsed) ? { ...parsed } : {};
+    const updateCsvKey = (key: string, value: string) => {
+      const items = fromCsv(value);
+      if (items.length > 0) policyObj[key] = items;
+      else delete policyObj[key];
+    };
+    updateCsvKey('allow_provider_types', nextForm.allowProviderTypes);
+    updateCsvKey('deny_provider_types', nextForm.denyProviderTypes);
+    updateCsvKey('allowed_regions', nextForm.allowedRegions);
+    updateCsvKey('allow_origin_vendors', nextForm.allowedOriginVendors);
+    updateCsvKey('allowed_data_classes', nextForm.allowedDataClasses);
+    updateCsvKey('require_local_for_data_classes', nextForm.requireLocalForDataClasses);
+    policyObj.operating_mode = nextForm.operatingMode || 'standard';
+    const currentInterview = isRecord(policyObj.interview) ? policyObj.interview : {};
+    const currentAnswerApproval = isRecord(currentInterview.answerApproval)
+      ? currentInterview.answerApproval
+      : {};
+    policyObj.interview = {
+      ...currentInterview,
+      answerApproval: {
+        ...currentAnswerApproval,
+        version: 1,
+        mode: nextForm.answerApprovalMode,
+      },
     };
     setRaw(JSON.stringify(policyObj, null, 2));
   };
@@ -394,6 +441,15 @@ export const OrgAIPolicyTab: React.FC = () => {
     }
     if (!parsed) {
       toast.error('Invalid JSON');
+      return;
+    }
+    if (answerApprovalPolicyUnsupported) {
+      toast.error(
+        t(
+          'interview.answerApproval.policy.unsupportedVersion',
+          'Unsupported answer approval policy version'
+        )
+      );
       return;
     }
     if (!hasLoadedPolicy || policyLoadError) {
@@ -486,7 +542,14 @@ export const OrgAIPolicyTab: React.FC = () => {
           </button>
           <button
             onClick={() => void savePolicy(saveMode)}
-            disabled={loading || saving || !parsed || !hasLoadedPolicy || !!policyLoadError}
+            disabled={
+              loading ||
+              saving ||
+              !parsed ||
+              !hasLoadedPolicy ||
+              !!policyLoadError ||
+              answerApprovalPolicyUnsupported
+            }
             title={
               !hasLoadedPolicy || policyLoadError ? 'Load the current org policy first' : undefined
             }
@@ -558,6 +621,39 @@ export const OrgAIPolicyTab: React.FC = () => {
               <option value="approved">approved</option>
               <option value="published">published</option>
             </select>
+          </div>
+          <div>
+            <label
+              htmlFor="interview-answer-approval-mode"
+              className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
+            >
+              {t('interview.answerApproval.policy.modeLabel', 'Answer approval mode')}
+            </label>
+            <select
+              id="interview-answer-approval-mode"
+              value={form.answerApprovalMode}
+              onChange={(e) =>
+                updateForm({ answerApprovalMode: e.target.value as AnswerApprovalMode })
+              }
+              disabled={!hasLoadedPolicy || !!policyLoadError || answerApprovalPolicyUnsupported}
+              className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+            >
+              <option value="ai">{t('interview.answerApproval.policy.modeAi', 'AI')}</option>
+              <option value="manager">
+                {t('interview.answerApproval.policy.modeManager', 'Manager')}
+              </option>
+              <option value="two_stage">
+                {t('interview.answerApproval.policy.modeTwoStage', 'Two-stage')}
+              </option>
+            </select>
+            {answerApprovalPolicyUnsupported ? (
+              <p role="alert" className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                {t(
+                  'interview.answerApproval.policy.unsupportedVersion',
+                  'Unsupported answer approval policy version'
+                )}
+              </p>
+            ) : null}
           </div>
         </div>
         {policyLoadError ? (

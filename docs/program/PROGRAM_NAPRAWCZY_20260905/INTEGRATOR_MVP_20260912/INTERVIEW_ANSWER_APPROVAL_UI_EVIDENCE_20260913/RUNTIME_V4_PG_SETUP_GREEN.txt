@@ -1,0 +1,8 @@
+container=cx-interview-ui-v4-pg18-20260913
+volume=cx-interview-ui-v4-pg18-data
+port=6454
+pg=18.6 (Debian 18.6-1.pgdg12+2)
+public_tables_after_migration=1820
+schema_sha256=bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78
+migration_run1_exit=0
+migration_run2_exit=0

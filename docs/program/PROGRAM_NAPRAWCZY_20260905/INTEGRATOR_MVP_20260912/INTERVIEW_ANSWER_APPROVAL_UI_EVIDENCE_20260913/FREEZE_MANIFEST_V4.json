@@ -1,0 +1,438 @@
+{
+  "schemaVersion": 1,
+  "candidate": "INTERVIEW_ANSWER_APPROVAL_UI_V4",
+  "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
+  "baseCommit": "cfea70de8a02df900f22416e0728de383d1bde26",
+  "headBeforeUi": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "timezone": "America/Chicago",
+  "fileCount": 52,
+  "distIndexSha256": "49299c4447ca620a049bee24de302e9df163513ec234f16708b438bca0d590d9",
+  "focused": {
+    "passed": 44,
+    "total": 44,
+    "artifact": "FOCUSED_GREEN_V17_44_OF_44.json",
+    "artifactSha256": "149305d32f594762e8c1d94082aa2173a2c6083ae9763295cb268622674e7b34"
+  },
+  "runtimeV4": {
+    "schemaSha256": "bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78",
+    "postgres": "18.6",
+    "ports": {
+      "api": 4214,
+      "preview": 5290,
+      "postgres": 6454
+    },
+    "migrationRuns": 2,
+    "manager": {
+      "approveStatus": 200,
+      "sendBackStatus": 200,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "localHttpFailures": 0
+    },
+    "respondent": {
+      "patchStatus": 200,
+      "resubmitStatus": 200,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "localHttpFailures": 0
+    },
+    "superadmin": {
+      "policyLoadStatus": 200,
+      "policyDraftSaveStatus": 200,
+      "guardedHealthStatus": 200,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "localHttpFailures": 0
+    },
+    "controlledLoading": {
+      "preResolutionApproveControls": 0,
+      "preResolutionSendBackControls": 0,
+      "preResolutionSubmitControls": 0,
+      "preResolutionEnabledAnswerEditors": 0,
+      "postResolutionManagerControlVisible": true
+    },
+    "sqlReadback": {
+      "commands": 4,
+      "decisions": 5,
+      "approvedSiblingPreserved": true,
+      "correctedAnswerResubmitted": true
+    }
+  },
+  "cleanup": {
+    "fixtureResidualRows": 0,
+    "portsFree": [
+      4214,
+      5290,
+      6454
+    ],
+    "ownedContainerCount": 0,
+    "ownedNamedVolumeCount": 0,
+    "port6456Touched": false
+  },
+  "files": [
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_MANAGER_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 131444,
+      "sha256": "bdb4a221827148ea536f29234e0381220dc074e480ce8b553e4456d5a8d48488",
+      "gitBlob": "6adf78cb7f9ac25388f2ebf717d1e803e03f7d17"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_MANAGER_SEND_BACK_MUTATION_WITH_EXTERNAL_ABORT_QUALIFICATION.json",
+      "kind": "evidence",
+      "bytes": 4187,
+      "sha256": "c24ac6681b9474f80d14fd38194ece807da6ba1b4d2e85d1e974e77c84ced983",
+      "gitBlob": "5f2cc6789276cbfed0d32c5719c4bde23353eaf8"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_COLD_READ_FOREIGN_DENIAL.json",
+      "kind": "evidence",
+      "bytes": 247,
+      "sha256": "20f55befa0c46770d477cc2a42625b2537e1ca13c59646e8630bead5e20e8909",
+      "gitBlob": "561e8af419a6f1a31bcc9a1cc157890c6e76616c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SCHEMA_RED.json",
+      "kind": "evidence",
+      "bytes": 1015,
+      "sha256": "a80664dd90d619cfac237800587aa73d4e3b5eb4f6ee157efce770bf4a8864c5",
+      "gitBlob": "bafeb05556be7368c3deae6bee93ab377b247af7"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SELECTOR_GREEN.json",
+      "kind": "evidence",
+      "bytes": 1787,
+      "sha256": "d60fbd255f6764a5ae497ebd87e1e4478ee3f5460efc3c2a48d752154292fd1d",
+      "gitBlob": "a76901b91a21856dc6bb035060531fb03ea04c5f"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SQL_READBACK.json",
+      "kind": "evidence",
+      "bytes": 260,
+      "sha256": "949842ec2891a4c7666b42073842f68446ef2f2d1e3cfd5ee334cb40e91bf72b",
+      "gitBlob": "da35c624e755cafd4670391c4d2a7142e7f57908"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SYSTEM_HEALTH_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 154212,
+      "sha256": "aada92acb14923243a63a1afd23b70816c21c425f916ee2280c953d6867ab413",
+      "gitBlob": "c1b96d308dcd071553fcc32f1fb479904a7d291d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SYSTEM_HEALTH_READONLY_GREEN.json",
+      "kind": "evidence",
+      "bytes": 715,
+      "sha256": "2d77019b23baf6daba0b29f7d2f6eea8f4f57dbfad1d1e748608ea38c8aaff5c",
+      "gitBlob": "1c94fc3f596eaf1d88993eb286aad5a14dc4b51a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_TWO_CONSECUTIVE_GET_GREEN.json",
+      "kind": "evidence",
+      "bytes": 108,
+      "sha256": "991ea7dda4878018d249eb0524ee057c2a571f896df91fc9bdee3cfa5a8c3e38",
+      "gitBlob": "735e6fa739731fc8525c77e6068099d34c3e3993"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_TWO_STAGE_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 166324,
+      "sha256": "0327a3b30c40998305d2b87f1e17589f1459ed32c265903f33e1e530766d83cf",
+      "gitBlob": "1725cce8f7b3766a77f0df63b240b68d3b380ec3"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_RESPONDENT_DARK_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 119597,
+      "sha256": "ce52e5c0f5cf8ef272318b32d76f74270d4d84fdc0cb98c34ba354d9ec7c0612",
+      "gitBlob": "eb433dfaaeb0ef5fa13300a17da22f5597d1885d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_RESPONDENT_RESUBMIT_PRE_INSIGHTS_FIX_RED.json",
+      "kind": "evidence",
+      "bytes": 12430,
+      "sha256": "f7f1bf477ed95d9e8391ac88a353fdcb34b79e7d0715db791c4947cbed4f3b12",
+      "gitBlob": "0531ed7d75ab0565e16e057f20200148d7818272"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_ROLES_READONLY_GREEN.json",
+      "kind": "evidence",
+      "bytes": 1635,
+      "sha256": "fabd9dd1cf096d8d50948cd3af029c762708247ed738e00f3ef1aecb0fbb50c5",
+      "gitBlob": "eef5963cb52df700468cb3bc2df9257023e5663c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_ROLES_SQL_READBACK.json",
+      "kind": "evidence",
+      "bytes": 4991,
+      "sha256": "4c0183fe5c659a8f457943b91d8637c2e6929e16824e71d354184a2ebb4065be",
+      "gitBlob": "2ab47d6a8e6d6fe52f1f1729658a22935dea8f9c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FOCUSED_GREEN_V16_39_OF_39.json",
+      "kind": "evidence",
+      "bytes": 16237,
+      "sha256": "a420db547593d7117bb66f0c318d84b6a5f8f6d4eff3476c22f11b57ed0753e1",
+      "gitBlob": "1344847a85fe5807564896d84e923fb959408522"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FOCUSED_GREEN_V17_44_OF_44.json",
+      "kind": "evidence",
+      "bytes": 18303,
+      "sha256": "149305d32f594762e8c1d94082aa2173a2c6083ae9763295cb268622674e7b34",
+      "gitBlob": "c5f76b9e7025ea6e8f2a217425aa21d6720ec1ad"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FREEZE_MANIFEST_V2.json",
+      "kind": "evidence",
+      "bytes": 11276,
+      "sha256": "cd3b7ea8bf475f6df6431def3f8fff0387a9a27973876a69947f45f292795193",
+      "gitBlob": "f414de4243fc7eef5d4347917be49204d8e89973"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FREEZE_MANIFEST_V3.json",
+      "kind": "evidence",
+      "bytes": 12428,
+      "sha256": "dda80164724b48fd1c0750a59a7c2a932df409e681d12d75d76d704ebaf5113d",
+      "gitBlob": "4128972ef0f50f53574c4dcb9d9692a8ade5f3ab"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/INTERVIEW_ANSWER_APPROVAL_UI_FINAL_REPORT_20260913.md",
+      "kind": "evidence",
+      "bytes": 5675,
+      "sha256": "c8ed2ba8a492b78b0fea8a2a54731137b44450a38ef226be334b92a180cc648c",
+      "gitBlob": "5ef18c9b4ade856df4804986c5f918a5770f5f43"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RED_V1.json",
+      "kind": "evidence",
+      "bytes": 33448,
+      "sha256": "6bf4af8fd941d4cea803797c7c1bf72550863ac25f6d9d852ccfc6ccaf1ed110",
+      "gitBlob": "93b6b530d353703947d66788f340eb7e2e2ef51e"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RED_V2.json",
+      "kind": "evidence",
+      "bytes": 114163,
+      "sha256": "f196cac9a2f4fc0cf8da54dbd6c859489ce2ab721bb3d4f06e0a1be640ffee4f",
+      "gitBlob": "3f61e50cd4661d8c181653030ec971c911e1ee49"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RED_V3_FAIL_OPEN_MUTATION.json",
+      "kind": "evidence",
+      "bytes": 34426,
+      "sha256": "a8fbc2ff1a526eba4216604631bea2912cfa06b472de39cd73594e172ad1e6b1",
+      "gitBlob": "1dda6c35eea6f1fc36ddaed67c0ab163c7f7cdab"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_FIXTURE_SEED.mjs",
+      "kind": "evidence",
+      "bytes": 3826,
+      "sha256": "5a01bb9b9eaedbab089e03e1dcab5bc900c913944d07af31fb0f4df495fe3551",
+      "gitBlob": "7aa74371523b1dbc4be388c6945db95ca1f62a07"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_FIXTURE_SEED_GREEN.json",
+      "kind": "evidence",
+      "bytes": 503,
+      "sha256": "92820017a59230c832c25ac217928e4eff378870badfad1b48843dcf7cc068c4",
+      "gitBlob": "dc7974cb11a9443756df55509082f5d617671aa6"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_LOADING_FAIL_CLOSED_GREEN.json",
+      "kind": "evidence",
+      "bytes": 538,
+      "sha256": "45a46b797645c37c659ebe0ac1a36c231004c251d9b35c7019d5de043792284a",
+      "gitBlob": "c40a45abd46627260f46c8fe2aca93158fabb7fe"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_AFTER_DECISIONS_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 146487,
+      "sha256": "d7f5b2a48f8497fa3f79275131d8d70f5c09fd096471522ea71689e86e645387",
+      "gitBlob": "959891bda9d10e98549ba89a450f6a4fa81ded77"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_BUSINESS_GREEN.json",
+      "kind": "evidence",
+      "bytes": 14054,
+      "sha256": "d6e332e5c67a4d6e054bf10da83df070a7c7538e86eff36326dff49087c038c7",
+      "gitBlob": "75edffc19c2c63dfac24d16eb0c4c1053a3afa4d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 134785,
+      "sha256": "ceb52631ebb16e98c288be5bf3d3bb4f831cb874818ba8222a44002e1f973ccc",
+      "gitBlob": "ebddf3d73bf612e90e8a394bac204d6aa9a5baa7"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_LOADING_FAIL_CLOSED_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 121238,
+      "sha256": "17b70ca71f49526fc156bf0600c8eba9018e27b30670c2980a2a72e73a53efd0",
+      "gitBlob": "78f2b7f71821fbb85eb1a855dedeeaf6e30b102a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_PG_SETUP_GREEN.txt",
+      "kind": "evidence",
+      "bytes": 280,
+      "sha256": "047c15c92985f3e011f294db1d9b1e02092aa5e1cb369d5ce44549fe9b250cd4",
+      "gitBlob": "4d654698a88a94c5424f5e18559f16be6b56af5a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_RESPONDENT_BUSINESS_GREEN.json",
+      "kind": "evidence",
+      "bytes": 11794,
+      "sha256": "bfdd935470f765deb8bd3e4be2eb3637b8a66762bf409fd166344fcb61ab3e7f",
+      "gitBlob": "689dd3648221385e4ebe2c4a482bbbf22c992c6b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_RESPONDENT_CORRECTED_DARK_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 128475,
+      "sha256": "45e512c0639de9ee3e3402bf09ec4fcf00f72bfc3d6b9360ea1f1692707610b8",
+      "gitBlob": "1cf2a47548fd2db8b68aed7dece4474ffae28879"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_RESPONDENT_SENT_BACK_DARK_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 118633,
+      "sha256": "6b0a29fe396a2895d53691414931be68b6841563ab3151a261e47b082d052f0b",
+      "gitBlob": "8f8ec34c578ea1bbaace8b7abe56d96a7cd92ead"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SQL_READBACK.json",
+      "kind": "evidence",
+      "bytes": 6318,
+      "sha256": "1ae6361a210669e1eb46d0504294d5a25442229e74a4a1293d349ba7d9a32f54",
+      "gitBlob": "26fc0ca4b87da3966c7c760c8b368033a231695b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SUPERADMIN_POLICY_HEALTH_GREEN.json",
+      "kind": "evidence",
+      "bytes": 7351,
+      "sha256": "3b61208b31021c4d65a589a09470a727fe6d48bbee57b8218d749ee7104a9990",
+      "gitBlob": "617c9f61a8c6ceebab7f0e555f31002e7f852b0b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SUPERADMIN_POLICY_HEALTH_LIGHT_1440X900.png",
+      "kind": "screenshot",
+      "bytes": 162914,
+      "sha256": "ba450360331299ba238c17d0c1cebb947b43e37888223ec0bbe57beaefff6edc",
+      "gitBlob": "4b655865da774e9dc0a51f2e24ad91d067202826"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/STYLE_AND_DIFF_SCOPE.txt",
+      "kind": "evidence",
+      "bytes": 356,
+      "sha256": "f40a42eb88c78a40b98d786e1935aae8d630d85cb0d10f4abaa6d939206017a2",
+      "gitBlob": "ca2544fd371c024d772c9c4eacd6f18e6a0f1f35"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTERVIEW_ANSWER_APPROVAL_UI_PLAN_20260913.md",
+      "kind": "documentation",
+      "bytes": 3517,
+      "sha256": "2029cf7e1bbcf4fc2d79363b5a9afa2e2ed8c6960246443432c6c3027bbf3cbd",
+      "gitBlob": "963fd3d6b0e004721b934f7b6754c22501fb9612"
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "kind": "source",
+      "bytes": 2220724,
+      "sha256": "876ab40cf26114762d5947130644ebdb9067d0744e7d4fd5c2219016e91f32ee",
+      "gitBlob": "6b4cd4c9a24fb86dd62806d9aef17908f7719b55"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "kind": "source",
+      "bytes": 2373822,
+      "sha256": "6d18278dc85dbcfd6c7ae4cd576aae04e724f7dccf3a0d423f455dc274949e6a",
+      "gitBlob": "2e9f98e20d06c4ab6016db7a60deebd5ed1c4402"
+    },
+    {
+      "path": "server/src/routes/llm.routes.ts",
+      "kind": "source",
+      "bytes": 100067,
+      "sha256": "17a6454b06b3e5a97766f0d8f4eaf07c2a7fc7d4fff0c132c5714aa4ce6ee81d",
+      "gitBlob": "138bd15aea59217b4a9d79a8b0449c3f6605778f"
+    },
+    {
+      "path": "src/components/Interview/InterviewHub.tsx",
+      "kind": "source",
+      "bytes": 427465,
+      "sha256": "095a59c73ea8a91f0a964cda0aeb832d1c832e8f13562d729664ffea9d6ef74a",
+      "gitBlob": "730335cd0a364f3b4c7a5dd96278bbcd48a8ec5c"
+    },
+    {
+      "path": "src/components/Interview/InterviewSingleQuestionRuntime.tsx",
+      "kind": "source",
+      "bytes": 129017,
+      "sha256": "f72fe1c3ac0abb9aa4ca55f9e5681612e9823ca97b44c25e9add16655471de1b",
+      "gitBlob": "29c9a0574b5759bd4f788235382331c38f2d54bc"
+    },
+    {
+      "path": "src/components/Interview/InterviewWorkspace.tsx",
+      "kind": "source",
+      "bytes": 167091,
+      "sha256": "6677def114f01847bd78f36ad552b90ac52a1dfd3e73e65138bc6cff93cd0feb",
+      "gitBlob": "192c89a4096d5f3fffbbd9c1621685799d45e417"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx",
+      "kind": "test",
+      "bytes": 10525,
+      "sha256": "ac75020a3e28548203f7ac896ea70e9800f870f18cc8b70148e7c0dfe0e19126",
+      "gitBlob": "9b5ea3dec58985d074a4f9599a4479899cc382d4"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewSingleQuestionRuntime.ownerBehavior.test.tsx",
+      "kind": "test",
+      "bytes": 4614,
+      "sha256": "b6b460b866c838c23eb78bbb25875c31cb321efd174a322cbb39e2df473585c9",
+      "gitBlob": "3d9d08c238b0c32c7940ccfe756dc7917fb935fe"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx",
+      "kind": "test",
+      "bytes": 31148,
+      "sha256": "f80960ef4ff3fd9308e898bbb8ac7986db4431e353830447f7599acf8f5912c0",
+      "gitBlob": "58eec7cd141816dd9a0cdf27da2318063d0603e9"
+    },
+    {
+      "path": "src/services/__tests__/api.getSystemHealth.guarded.test.ts",
+      "kind": "test",
+      "bytes": 1113,
+      "sha256": "f19ce4693229c8025b6c66e36b84c3b6fe8232c4f762ebcc89a705281be955ac",
+      "gitBlob": "b62ada48f0aaae87dbbfe739ca36d0fb0917e113"
+    },
+    {
+      "path": "src/services/api.ts",
+      "kind": "source",
+      "bytes": 776765,
+      "sha256": "bbd91e3b853173455da10c6c0b649bd56d26318ec861ec13f5e012f8912e9cf5",
+      "gitBlob": "e33dacad97836c41889485bc761f9928b305061c"
+    },
+    {
+      "path": "src/services/api/v8/interview.ts",
+      "kind": "source",
+      "bytes": 31941,
+      "sha256": "e22cba3d162d1d9a07476631ed59d702df6589fe5f8443b2e9a1301221da1725",
+      "gitBlob": "4ca48e059319f12e51138a4fdb8543cc12dc2d14"
+    },
+    {
+      "path": "src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx",
+      "kind": "source",
+      "bytes": 34515,
+      "sha256": "5f27a44cea7841f55d2989d2fb0bdde917b443635092fdf575b381821a50b14f",
+      "gitBlob": "cc30f9274f9bb19c92d88b42b493a3b94349a8bf"
+    },
+    {
+      "path": "tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx",
+      "kind": "test",
+      "bytes": 10015,
+      "sha256": "d2d85397c55c14c0e1416f6bbeb34cbce35dbb1f6adda9770f15d24b9cda066c",
+      "gitBlob": "104ab83d4f7e0de6cce21292c681e61f6c182453"
+    }
+  ]
+}
