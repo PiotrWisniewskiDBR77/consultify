@@ -13935,6 +13935,41 @@
       "reject": "Odrzuć",
       "savedAt": "Zapisano {{time}}"
     },
+    "planAnalysis": {
+      "sectionAria": "Obserwacje AI o zależnościach",
+      "title": "Analiza zależności AI",
+      "subtitle": "Sprawdź każdą obserwację, zanim zmieni plan. Model: {{model}}",
+      "acceptAll": "Zatwierdź wszystkie",
+      "clearAll": "Wyczyść zatwierdzenia",
+      "acceptObservation": "Zatwierdź tę obserwację",
+      "rationale": "Uzasadnienie AI — zmień je, gdy Twoje dowody zmieniają propozycję",
+      "dependencyType": "Rodzaj zależności",
+      "condition": "Warunek uruchomienia",
+      "humanComment": "Komentarz recenzenta",
+      "humanCommentPlaceholder": "Zapisz, dlaczego zatwierdzasz, odrzucasz lub zmieniasz tę obserwację",
+      "noChangeComment": "Sprawdzono bez zmiany uzasadnienia AI.",
+      "criticalPaths": "Ścieżki krytyczne",
+      "empty": "AI nie znalazło obserwacji o zależnościach opartych na danych tego planu.",
+      "applyAccepted": "Zastosuj zatwierdzone obserwacje ({{count}})",
+      "rejectAnalysis": "Odrzuć analizę",
+      "timelineTitle": "Oś czasu planu",
+      "timelineWeeks": "Horyzont 1 i 3 miesięcy ma podział tygodniowy.",
+      "timelineMonths": "Horyzont 6 i 12 miesięcy ma podział miesięczny.",
+      "horizonMonths_one": "{{count}} miesiąc",
+      "horizonMonths_few": "{{count}} miesiące",
+      "horizonMonths_many": "{{count}} miesięcy",
+      "horizonMonths_other": "{{count}} miesiąca",
+      "frozenLegend": "Ciemny granat oznacza realizację: pozycja jest zamrożona w tym widoku planowania.",
+      "kind": {
+        "ABSOLUTE": "Bezwzględna",
+        "CONDITIONAL": "Warunkowa"
+      },
+      "confidence": {
+        "HIGH": "Wysoka pewność",
+        "MEDIUM": "Średnia pewność",
+        "LOW": "Niska pewność"
+      }
+    },
     "planCard": {
       "publishedReadOnly": "Plan opublikowany — utwórz nową wersję (szkic), aby zmienić.",
       "newDraftVersion": "Utwórz nową wersję (szkic)",

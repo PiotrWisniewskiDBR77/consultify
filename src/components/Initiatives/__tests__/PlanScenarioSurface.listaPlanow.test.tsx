@@ -21,6 +21,12 @@ vi.mock('@/i18n', () => ({
 vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   listPlanScenarioRegister,
   readPlanScenario,
+  listPlannableInitiatives: vi.fn(async () => ({ initiatives: [] })),
+  listCapacityScenarioRegister: vi.fn(async () => ({ scenarios: [] })),
+  readCapacityScenario: vi.fn(),
+  listPlanAnalysisProposals: vi.fn(async () => ({ items: [] })),
+  registerInitiativeForPlanning: vi.fn(),
+  writeInitiativeDependencies: vi.fn(),
   readPlanScenarioDiff: vi.fn(),
   readPlanScenarioHistory: vi.fn(async () => ({ versions: [] })),
   createPlanAnalysisProposal: vi.fn(),
@@ -87,7 +93,7 @@ describe('P11 — lista planów', () => {
       </MemoryRouter>
     );
     expect(await screen.findAllByText('Plan modernizacji zakładu')).not.toHaveLength(0);
-    expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('Nazwa');
+    expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('Name');
     expect(screen.queryByText('Inicjatywa nie jest wierszem')).not.toBeInTheDocument();
   });
 
