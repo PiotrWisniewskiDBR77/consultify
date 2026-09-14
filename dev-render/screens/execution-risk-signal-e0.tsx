@@ -8,7 +8,7 @@ const tone: Record<Level, string> = {
   1: 'border-c-warning/30 bg-c-warning/10 text-c-warning',
   2: 'border-c-warning/50 bg-c-warning/15 text-c-warning',
   3: 'border-c-danger/40 bg-c-danger/10 text-c-danger',
-  UNKNOWN: 'border-c-border-subtle bg-c-surface-muted text-c-text-muted',
+  UNKNOWN: 'border-c-border-subtle bg-c-surface-subtle text-c-text-muted',
 };
 
 const Icon = ({ level }: { level: Level }) =>
@@ -66,7 +66,7 @@ const AxisCard = ({ axis }: { axis: (typeof axes)[number] }) => (
         {axis.level === 'UNKNOWN' ? '—' : `Poziom ${axis.level}`}
       </span>
     </div>
-    <p className="mt-4 text-lg font-semibold text-c-text-primary">{axis.value}</p>
+    <p className="mt-4 text-lg font-semibold text-c-text">{axis.value}</p>
     <p className="mt-1 text-xs font-medium">{axis.verdict}</p>
     <p className="mt-3 text-xs leading-5 text-c-text-secondary">{axis.detail}</p>
     <p className="mt-3 text-[11px] text-c-text-muted">Pomiar: 13.09.2026, 15:30</p>
@@ -80,7 +80,7 @@ const VariantA = () => (
         <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
           Wariant A · rekomendowany
         </p>
-        <h2 className="mt-1 text-base font-semibold text-c-text-primary">
+        <h2 className="mt-1 text-base font-semibold text-c-text">
           Trzy osie w jednym wierszu
         </h2>
       </div>
@@ -101,7 +101,7 @@ const VariantB = () => (
         <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
           Wariant B · audyt
         </p>
-        <h2 className="mt-1 text-base font-semibold text-c-text-primary">Pionowy ślad dowodowy</h2>
+        <h2 className="mt-1 text-base font-semibold text-c-text">Pionowy ślad dowodowy</h2>
       </div>
       <Aggregate />
     </div>
@@ -118,7 +118,7 @@ const VariantB = () => (
           >
             <Icon level={axis.level} />
           </span>
-          <strong className="text-c-text-primary">{axis.name}</strong>
+          <strong className="text-c-text">{axis.name}</strong>
           <span className="text-c-text-secondary">{axis.value}</span>
           <span className="text-c-text-muted">{axis.detail}</span>
         </div>
@@ -134,7 +134,7 @@ const VariantC = () => (
         <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
           Wariant C · legenda
         </p>
-        <h2 className="mt-1 text-base font-semibold text-c-text-primary">Macierz 3 × 4</h2>
+        <h2 className="mt-1 text-base font-semibold text-c-text">Macierz 3 × 4</h2>
       </div>
       <span className="text-xs text-c-text-muted">
         Szary tylko, gdy wszystkie osie są bez danych
@@ -150,7 +150,7 @@ const VariantC = () => (
       <strong className="py-2 text-c-text-secondary">Brak danych</strong>
       {axes.map((axis) => (
         <React.Fragment key={axis.name}>
-          <strong className="flex items-center text-left text-c-text-primary">{axis.name}</strong>
+          <strong className="flex items-center text-left text-c-text">{axis.name}</strong>
           {[0, 1, 2, 3, 'UNKNOWN'].map((level) => (
             <span
               key={String(level)}
@@ -166,7 +166,7 @@ const VariantC = () => (
 );
 
 const ExecutionRiskSignalE0Screen: React.FC = () => (
-  <main className="min-h-screen bg-c-bg p-6 text-c-text-primary">
+  <main className="min-h-screen bg-c-bg p-6 text-c-text">
     <div className="mx-auto max-w-[1360px]">
       <header className="mb-5 flex items-end justify-between gap-6">
         <div>
@@ -179,7 +179,7 @@ const ExecutionRiskSignalE0Screen: React.FC = () => (
             artefaktem CTO 8c073b0a pozostaje EVIDENCE_MISSING.
           </p>
         </div>
-        <span className="rounded-full border border-c-border-subtle bg-c-surface-muted px-3 py-1.5 text-xs text-c-text-secondary">
+        <span className="rounded-full border border-c-border-subtle bg-c-surface-subtle px-3 py-1.5 text-xs text-c-text-secondary">
           Kod produkcyjny: zablokowany do akceptu
         </span>
       </header>
