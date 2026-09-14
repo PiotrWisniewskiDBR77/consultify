@@ -11262,6 +11262,26 @@
     }
   },
   "initiatives": {
+    "workload": {
+      "aria": "Initiatives workload",
+      "person": "Team member",
+      "capacity": "Weekly capacity",
+      "availability": "Availability",
+      "projectScope": "Project scope",
+      "allProjects": "All projects",
+      "initiativeStatus": "Initiative status",
+      "horizon": "Horizon",
+      "weeks": "weeks",
+      "green": "Below 85%",
+      "amber": "85–100%",
+      "red": "Above 100%",
+      "error": "Workload data could not be loaded.",
+      "empty": "No scheduled workload matches this scope.",
+      "source": "Capacity source",
+      "profile": "Person profile",
+      "default": "Default policy",
+      "cellHint": "{{demand}} h demand / {{supply}} h capacity"
+    },
     "register": {
       "archiveLocked": "Lifecycle changes and archiving run through a controlled process."
     },

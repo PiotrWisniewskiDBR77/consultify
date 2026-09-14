@@ -80,6 +80,7 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
+import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import {
@@ -136,6 +137,7 @@ import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiative
 import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
 import { InitiativePreparationReadView } from './InitiativePreparationReadView';
 import { InitiativeWorkReportView } from './InitiativeWorkReportView';
+import { InitiativeWorkloadSurface } from './InitiativeWorkloadSurface';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -277,6 +279,7 @@ const FOUR_BUTTONS_ENABLED = isInitiativesFourButtonsEnabled();
 // K5-8: "Work report" (4th Menu 2 tab) stays hidden until Codex ships the real
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
+<<<<<<< HEAD
 const WORK_REPORT_ENABLED = import.meta.env.VITE_INITIATIVES_WORK_REPORT === 'true';
 /* H1b (14.09) — „Do akceptacji": skrzynka recenzenta przejść cyklu życia.
    Domyślnie OFF: wygląd idzie do właściciela na ZRZUCIE, nie przez „włącz
@@ -290,6 +293,13 @@ const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   ...(WORK_REPORT_ENABLED ? (['workReport'] as ModuleTab[]) : []),
   ...(TRANSITION_INBOX_ENABLED ? (['transitionInbox'] as ModuleTab[]) : []),
 ]);
+=======
+const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
+const INITIATIVES_WORKLOAD_ENABLED = isInitiativesWorkloadEnabled();
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
+  FOUR_BUTTONS_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
+);
+>>>>>>> 568ebdc987 (Add initiative workload heatmap E1 [ODMROZENIE 05_INITIATIVES DEC-497])
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
   // A2 (DEC-498 §1): trzecia soczewka Menu 3 — lista parkingu — istnieje TYLKO
@@ -1988,6 +1998,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           }}
         />
       );
+    }
+    if (activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED) {
+      return <InitiativeWorkloadSurface initiatives={allInitiatives as any[]} />;
     }
     if (activeTab === 'capacity')
       return (
