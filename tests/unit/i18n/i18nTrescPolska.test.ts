@@ -28,6 +28,8 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { findDuplicateKeys } from '../../../scripts/i18n/detect-duplicate-json-keys.mjs';
+
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
 const ROOT = process.cwd();
@@ -389,5 +391,39 @@ describe('i18n — strażnik TREŚCI pl≠en (ratchet)', () => {
       whitelistGuardViolations.length,
       `${whitelistGuardViolations.length} wpis(y) IDENTITY_WHITELIST bez uzasadnienia (dodaj do ALLOWED_PROPER_NOUNS z komentarzem albo usuń):\n${preview}`
     ).toBe(0);
+  });
+});
+
+/**
+ * H1e task 3 (14.09.2026) — ZASTANY duplikat klucza `initiatives.analysis`:
+ * dwa osobne bloki `"analysis": {...}` wewnątrz `"initiatives": {...}` w OBU
+ * plikach. `readLocale()` powyżej używa `JSON.parse`, które po cichu zjada
+ * PIERWSZY blok — ani ten plik, ani żaden inny test i18n (wszystkie liczą na
+ * wyniku `JSON.parse`) nie miał jak tego złapać.
+ *
+ * `findDuplicateKeys` parsuje SUROWY tekst (nie `JSON.parse`) i zgłasza każdy
+ * powtórzony klucz w tym samym obiekcie, na dowolnym poziomie zagnieżdżenia —
+ * nie tylko duplikaty najwyższego poziomu.
+ *
+ * MUTACJA: wklej z powrotem drugi blok `"analysis": {...}` do
+ * `initiatives` w dowolnym z dwóch plików → ten test ma zaświecić na czerwono.
+ */
+describe('i18n — zero duplikatów kluczy JSON na dowolnym poziomie (pl, en)', () => {
+  it('public/locales/en/translation.json nie ma zduplikowanych kluczy', () => {
+    const text = readFileSync(resolve(ROOT, 'public/locales/en/translation.json'), 'utf8');
+    const duplicates = findDuplicateKeys(text);
+    const preview = duplicates
+      .map((d) => `${d.path} — linia ${d.firstLine} i linia ${d.secondLine}`)
+      .join('\n');
+    expect(duplicates.length, `duplikaty kluczy w en/translation.json:\n${preview}`).toBe(0);
+  });
+
+  it('public/locales/pl/translation.json nie ma zduplikowanych kluczy', () => {
+    const text = readFileSync(resolve(ROOT, 'public/locales/pl/translation.json'), 'utf8');
+    const duplicates = findDuplicateKeys(text);
+    const preview = duplicates
+      .map((d) => `${d.path} — linia ${d.firstLine} i linia ${d.secondLine}`)
+      .join('\n');
+    expect(duplicates.length, `duplikaty kluczy w pl/translation.json:\n${preview}`).toBe(0);
   });
 });
