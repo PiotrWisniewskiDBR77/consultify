@@ -11,6 +11,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { InitiativeStatus, normalizeInitiativeStatus } from '../../constants/initiativeStatuses.js';
+
 import type {
   CreateExecutiveReviewPackParams,
   CreateKPIParams,
@@ -1118,14 +1120,13 @@ interface ResultsSnapshotRow {
   created_at: string | null;
 }
 
-function normalizeLifecycleBucket(
+export function normalizeLifecycleBucket(
   status: string | null | undefined
 ): 'in-realization' | 'realized' | null {
-  const normalized = String(status || '')
-    .trim()
-    .toUpperCase();
-  if (['APPROVED', 'SCHEDULED', 'EXECUTING'].includes(normalized)) return 'in-realization';
-  if (['DONE', 'TRACKING'].includes(normalized)) return 'realized';
+  const normalized = normalizeInitiativeStatus(String(status || ''));
+  if (normalized === InitiativeStatus.APPROVED || normalized === InitiativeStatus.IN_EXECUTION)
+    return 'in-realization';
+  if (normalized === InitiativeStatus.CLOSED) return 'realized';
   return null;
 }
 

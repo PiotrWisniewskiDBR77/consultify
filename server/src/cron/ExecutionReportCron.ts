@@ -7,6 +7,7 @@
  *  - runReportCadenceScan: detects status reports due this period (findDueReports).
  *  - runReportDistributionScan: sends queued distributions (processReportDistributions).
  */
+import { InitiativeStatus } from '../constants/initiativeStatuses.js';
 import distributionSvc from '../services/executionDistributionService.js';
 import { findDueReports } from '../services/reportCadenceService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
@@ -19,12 +20,15 @@ export interface CadenceScanResult {
 }
 
 /** Distinct orgs that have execution work worth scanning. */
-async function activeOrgIds(): Promise<string[]> {
+export async function activeOrgIds(): Promise<string[]> {
   try {
     const rows = (await dbAll(
-      `SELECT DISTINCT organization_id FROM initiatives
-       WHERE UPPER(COALESCE(status, '')) IN ('EXECUTING', 'BLOCKED')`,
-      []
+      `SELECT organization_id,
+              MAX(CASE WHEN COALESCE(on_hold, FALSE) THEN 1 ELSE 0 END) AS has_on_hold
+       FROM initiatives
+       WHERE UPPER(COALESCE(status, '')) = ?
+       GROUP BY organization_id`,
+      [InitiativeStatus.IN_EXECUTION]
     )) as Array<Record<string, unknown>>;
     return rows
       .map((r) => (r.organization_id != null ? String(r.organization_id) : ''))

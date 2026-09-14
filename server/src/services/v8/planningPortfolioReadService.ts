@@ -1,6 +1,6 @@
 // INI-04: the gate/transition constants are no longer read here directly — the
 // approval profile comes from `initiativeCapabilityMatrix`, which owns them.
-import { isScheduledOnward } from '../../constants/initiativeStatuses.js';
+import { InitiativeStatus, isScheduledOnward } from '../../constants/initiativeStatuses.js';
 import {
   initiativeExists,
   isInitiativeUnifiedReadEnabled,
@@ -1034,7 +1034,7 @@ export async function getInitiativeGateReadinessRead(
     'PMO / Project Manager'
   );
 
-  if (['PENDING_REVIEW', 'REVIEW', 'PROMOTED', 'PLANNING'].includes(currentStatus)) {
+  if (currentStatus === InitiativeStatus.PENDING_APPROVAL) {
     addCheck(
       'summary',
       'Summary / problem statement',
@@ -1044,7 +1044,10 @@ export async function getInitiativeGateReadinessRead(
       'Initiative Owner'
     );
   }
-  if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(currentStatus)) {
+  if (
+    currentStatus === InitiativeStatus.PENDING_APPROVAL ||
+    currentStatus === InitiativeStatus.APPROVED
+  ) {
     addCheck(
       'sponsor',
       'Sponsor assigned',
@@ -1054,7 +1057,7 @@ export async function getInitiativeGateReadinessRead(
       'PMO / Portfolio Owner'
     );
   }
-  if (currentStatus === 'APPROVED') {
+  if (currentStatus === InitiativeStatus.APPROVED) {
     const start = ini.planned_start_date || ini.start_date || null;
     const end = ini.planned_end_date || ini.end_date || null;
     addCheck(
@@ -1121,7 +1124,10 @@ export async function getInitiativeGateReadinessRead(
     );
   }
 
-  if (['PLANNING', 'APPROVED'].includes(currentStatus)) {
+  if (
+    currentStatus === InitiativeStatus.PENDING_APPROVAL ||
+    currentStatus === InitiativeStatus.APPROVED
+  ) {
     addCheck(
       'scope',
       'Scope defined',
@@ -1166,7 +1172,7 @@ export async function getInitiativeGateReadinessRead(
     }
   }
 
-  if (currentStatus === 'DONE') {
+  if (currentStatus === InitiativeStatus.CLOSED) {
     addCheck(
       'benefits_owner',
       'Business Owner assigned (benefits owner)',

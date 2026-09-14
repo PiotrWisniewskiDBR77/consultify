@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { INITIATIVE_STAGE_TO_STATUS } from '../../constants/initiativeLifecycleStages.js';
+
 import type {
   AcceptBenefitsReviewParams,
   AcceptDeliveryHandoffParams,
@@ -6285,7 +6287,7 @@ async function acceptMobilizationResultsInner(
         409,
         'Applied blueprint with tasks, milestones and resources is required'
       );
-    if (result.initiative_status !== 'SCHEDULED')
+    if (result.initiative_status !== INITIATIVE_STAGE_TO_STATUS.SCHEDULED)
       throw new TransformationCaseOperationError(
         'TRANSFORMATION_INITIATIVE_NOT_SCHEDULED',
         409,
@@ -6456,7 +6458,7 @@ async function acceptExecutionStartInner(
         [current.transformation_case_id, current.organization_id]
       )
     ).rows[0];
-    if (!initiative || initiative.status !== 'EXECUTING')
+    if (!initiative || initiative.status !== INITIATIVE_STAGE_TO_STATUS.IN_EXECUTION)
       throw new TransformationCaseOperationError(
         'TRANSFORMATION_INITIATIVE_NOT_EXECUTING',
         409,
@@ -6673,7 +6675,7 @@ async function acceptExecutionResultsInner(
         409,
         'Execution start must be accepted first'
       );
-    if (checkpoint.initiativeStatus !== 'DONE')
+    if (checkpoint.initiativeStatus !== INITIATIVE_STAGE_TO_STATUS.DELIVERED)
       throw new TransformationCaseOperationError(
         'TRANSFORMATION_INITIATIVE_NOT_DONE',
         409,
