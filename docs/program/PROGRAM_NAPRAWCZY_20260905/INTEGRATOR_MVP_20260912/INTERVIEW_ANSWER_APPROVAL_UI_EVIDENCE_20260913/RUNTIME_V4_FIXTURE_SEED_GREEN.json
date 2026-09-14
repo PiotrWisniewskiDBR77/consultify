@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "ids": {
+    "orgId": "iaa-ui-v4-20260913-org",
+    "managerId": "iaa-ui-v4-20260913-manager",
+    "respondentId": "iaa-ui-v4-20260913-respondent",
+    "superadminId": "iaa-ui-v4-20260913-superadmin",
+    "sessionId": "iaa-ui-v4-20260913-session",
+    "assignmentId": "iaa-ui-v4-20260913-assignment",
+    "q1": "iaa-ui-v4-20260913-q1",
+    "q2": "iaa-ui-v4-20260913-q2",
+    "submissionId": "iaa-ui-v4-20260913-submission-1"
+  },
+  "submitStatus": 200,
+  "approvalCount": null
+}

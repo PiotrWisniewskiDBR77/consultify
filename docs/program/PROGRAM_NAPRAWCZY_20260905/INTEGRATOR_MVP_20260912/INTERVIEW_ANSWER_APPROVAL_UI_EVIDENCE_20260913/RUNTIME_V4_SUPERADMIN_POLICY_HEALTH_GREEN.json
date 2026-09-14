@@ -1,0 +1,353 @@
+{
+  "pageErrors": [],
+  "consoleErrors": [],
+  "httpErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/settings/preferences/accessibility",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/csrf-token",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/admin/flags",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/feature-flags/runtime",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "body": {
+        "eventName": "voice_stopped",
+        "status": "idle"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai-settings/user",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v10/teresa/voice-config",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "body": {
+        "eventName": "voice_unavailable",
+        "status": "error",
+        "unavailableReason": "server_missing_gemini_live_key"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/access-requests",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/platform-stats",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/system-health/detailed",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/health/detailed",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/signals",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/demo/status",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai-governance/policy",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/providers",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/control/usage",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/costs",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/diagnose",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/organizations",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy/history",
+      "body": null
+    },
+    {
+      "method": "PUT",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy",
+      "body": {
+        "policy": {
+          "futureTop": {
+            "preserved": "yes"
+          },
+          "interview": {
+            "answerApproval": {
+              "mode": "two_stage",
+              "version": 1,
+              "futureModeKey": "keep-me"
+            },
+            "futureInterviewKey": {
+              "preserved": 42
+            }
+          },
+          "operating_mode": "standard"
+        },
+        "mode": "draft"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy/history",
+      "body": null
+    }
+  ],
+  "responses": [
+    {
+      "method": "GET",
+      "path": "/api/csrf-token",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/preferences/accessibility",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/admin/flags",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/feature-flags/runtime",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai-settings/user",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v10/teresa/voice-config",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/health/detailed",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/access-requests",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/system-health/detailed",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/signals",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/demo/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai-governance/policy",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/providers",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/control/usage",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/costs",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/diagnose",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/platform-stats",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/superadmin/organizations",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy/history",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy/history",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-v4-20260913-org/policy",
+      "status": 200
+    }
+  ],
+  "status": "PASS",
+  "capturedAt": "2026-09-13T23:51:55.512Z",
+  "sourceCommit": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "indexSha256": "49299c4447ca620a049bee24de302e9df163513ec234f16708b438bca0d590d9",
+  "fixture": {
+    "orgId": "iaa-ui-v4-20260913-org",
+    "superadminId": "iaa-ui-v4-20260913-superadmin"
+  },
+  "policy": {
+    "initialMode": "manager",
+    "savedMode": "two_stage",
+    "loadStatus": 200,
+    "saveStatus": 200
+  },
+  "guardedHealth": {
+    "method": "GET",
+    "path": "/api/system-health/detailed",
+    "status": 200
+  }
+}
