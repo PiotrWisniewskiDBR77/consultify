@@ -1,0 +1,25 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-c-s5-e3b-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-c-s5-e3b-20260914
+
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > uses the five PMBOK-lite roles selected by DEC-488 with explicit permissions 212ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > keeps capacity per person and derives responsibility, communication and acceptance inputs from project roles 8ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > produces different approval inputs for different team compositions 2ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > separates sponsor and steering reviewers from PMO and project-leader requesters 0ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts (4 tests) 226ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:55:20
+   Duration  1.58s (transform 224ms, setup 310ms, import 66ms, tests 226ms, environment 768ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:55:20
+   Duration  1.59s (transform 224ms, setup 310ms, import 66ms, tests 226ms, environment 768ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-c-s5-e3b-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-c-s5-e3b-20260914/junit.xml
