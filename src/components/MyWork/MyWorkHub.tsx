@@ -2355,6 +2355,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           : document
       )
     );
+    // P-T14 (fala D3, 2026-09-14) — „nazwa nie synchronizuje paneli".
+    // PREMISA ZMIERZONA na 08c1bb7a26: ta funkcja aktualizowała WYŁĄCZNIE
+    // `openDocuments`, więc po zmianie nazwy z zakładki wiersz na liście
+    // Pomysłów dalej pokazywał starą nazwę — `MyIdeasListContent` dociąga
+    // dane dopiero na zmianę `refreshTrigger` (prop, linia ~4340), a
+    // `handleDocumentSaved` (jedyne miejsce, które go podbijało) nie leży na
+    // tej ścieżce. Defekt był ASYMETRYCZNY: warsztat -> zakładka+lista
+    // synchronizowało się, zakładka -> lista nie.
+    setRefreshTrigger((previous) => previous + 1);
   }, []);
 
   // Count update handlers
@@ -3064,7 +3073,26 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   aria-controls={`my-work-document-panel-${doc.id}`}
                   aria-selected={isActive}
                   tabIndex={isActive ? 0 : -1}
-                  onClick={() => setActiveDocumentId(doc.id)}
+                  onClick={() => {
+                    // P-T14 (fala D3, 2026-09-14) — „zakładka «próba 1»
+                    // przenosi na inną kartę".
+                    // PREMISA ZMIERZONA na 08c1bb7a26: `hubDocs` (linia 2920)
+                    // to CAŁE `openDocuments`, bez filtra po typie, więc na
+                    // zakładce Pomysły wisiały też karty zadań/decyzji. Klik
+                    // ustawiał WYŁĄCZNIE `activeDocumentId`, bez `setActiveTab`
+                    // — `renderContent` rysowało kartę wg `activeDoc.type`, a
+                    // Menu 1/2 dalej mówiło „Pomysły". Stąd wrażenie, że
+                    // zakładka „przenosi na inną kartę".
+                    // NAPRAWA: ta sama para co w `handleOpenDocument`
+                    // (linia 1286-1288) — zakładka modułu idzie za typem
+                    // dokumentu, więc nagłówek zgadza się z treścią.
+                    const docTab = getDocumentTab(doc.type);
+                    if (docTab !== activeTab) {
+                      programmaticTabSwitchRef.current = true;
+                      setActiveTab(docTab);
+                    }
+                    setActiveDocumentId(doc.id);
+                  }}
                   onDoubleClick={renameControls?.onDoubleClick}
                   onKeyDown={(event) => {
                     renameControls?.onKeyDown(event);
@@ -4141,6 +4169,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onLockedChange={handleIdeaLockedChange}
               onGraphSummaryChange={handleIdeaGraphSummaryChange}
               onTableContextChange={setIdeaTableContext}
+              // P-T14 — nazwa nadana na zakładce (`handleIdeaTabRename`)
+              // trafia do warsztatu tym kanałem. `key` nie zmienia się przy
+              // zmianie nazwy, więc bez tego propa nagłówek warsztatu
+              // zostawał ze starą nazwą aż do ponownego otwarcia pomysłu.
+              externalTitle={activeDoc.name}
             />
           </React.Suspense>
         );

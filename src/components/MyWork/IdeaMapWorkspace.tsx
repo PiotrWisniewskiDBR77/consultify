@@ -286,6 +286,17 @@ type IdeaMapWorkspaceProps = {
   onLockedChange?: (locked: boolean) => void;
   onGraphSummaryChange?: (summary: string | null) => void;
   onTableContextChange?: (ctx: Record<string, unknown> | null) => void;
+  /**
+   * P-T14 (fala D3, 2026-09-14) — „nazwa nie synchronizuje paneli".
+   * Tytuł nadany Z ZEWNĄTRZ (zmiana nazwy na zakładce w MyWorkHub). Warsztat
+   * trzyma własny `title` w stanie lokalnym, zasiewany RAZ przy wczytaniu
+   * pomysłu (linia ~1877), a `key` montowania to `idea-workspace-${id}` —
+   * przy zmianie nazwy id się nie zmienia, więc nie ma przemontowania i
+   * nagłówek warsztatu zostawał ze starą nazwą. Ten prop jest jedynym
+   * kanałem, którym nowa nazwa dociera bez przemontowania (i bez utraty
+   * stanu płótna, co zrobiłby `key` z tytułem).
+   */
+  externalTitle?: string;
 };
 
 // IdeaConvertTarget union is owned by the SSOT registry (ideaConvertTargets.ts).
@@ -361,6 +372,7 @@ const zapiszPanelZamkniety = (zamkniety: boolean): void => {
 };
 
 export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
+  externalTitle,
   ideaId,
   initialOpenMap,
   creationPayload,
@@ -491,6 +503,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     realIdRef.current = realId;
   }, [realId]);
   const [title, setTitle] = useState('');
+
+  /**
+   * P-T14 — nowa nazwa z zakładki wchodzi do warsztatu BEZ przemontowania.
+   * Pusty/nieznany `externalTitle` jest ignorowany, żeby nie wyczyścić tytułu
+   * wczytanego z serwera; równe wartości nie powodują zapisu stanu.
+   */
+  useEffect(() => {
+    const next = String(externalTitle ?? '').trim();
+    if (!next) return;
+    setTitle((previous) => (previous === next ? previous : next));
+  }, [externalTitle]);
   const [seedText, setSeedText] = useState('');
   const [stage, setStage] = useState<string>('seed');
   const [branch, setBranch] = useState<string>('');

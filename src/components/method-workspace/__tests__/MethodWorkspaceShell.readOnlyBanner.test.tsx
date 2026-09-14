@@ -58,8 +58,11 @@ function renderShell(readOnly: boolean) {
       readiness={makeReadiness()}
       mode="guided_manual"
       onExit={vi.fn()}
+      onModeChange={vi.fn()}
       saveState="SAVED"
+      saveLastSavedAt={null}
       saveErrorMessage={null}
+      onSaveNow={vi.fn()}
       onSaveRetry={vi.fn()}
       onSaveStay={vi.fn()}
       navigatorProps={{ nodes: [], activeUnitId: null, onSelect: vi.fn() }}
@@ -81,6 +84,29 @@ function renderShell(readOnly: boolean) {
         canGoBack: false,
         canGoNext: true,
       }}
+      teresaProps={{
+        sixQuestions: {
+          whereAreWe: 'x',
+          whatMattersNow: 'x',
+          why: 'x',
+          whatIsMissing: 'x',
+          nextSafeAction: 'x',
+        },
+        proposalQueue: [],
+        onCommit: vi.fn(),
+        onTakeLead: vi.fn(),
+        onLetMeWorkManually: vi.fn(),
+        mode: 'guided_manual',
+      }}
+      matrixProps={{
+        rows: [],
+        levels: [1, 2, 3, 4],
+        selection: null,
+        onSelect: vi.fn(),
+        onCloseSideSheet: vi.fn(),
+        renderSideSheet: () => null,
+      }}
+      reportContent={<p data-testid="report-content">Raport</p>}
       readOnly={readOnly}
     />
   );
