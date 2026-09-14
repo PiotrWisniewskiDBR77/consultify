@@ -677,6 +677,13 @@ const kolumnaDniPoTerminie = (t: (key: string, fallback: string) => string): Tab
 });
 
 /** Kolumny DECYZJI (P16/R3). */
+/**
+ * K5-7 (2026-09-13) — te same kolumny (Termin/Status/Osoba) co w tabeli Praca
+ * (`ExecutionWorkSurface.buildCols`), ten sam mechanizm defektu: bez
+ * `dataType` podłoga zjazdu (`getColumnFitFloor`) spada do 90 px zamiast
+ * 110/130/150 px, a treść przy przepełnieniu zlewa się z sąsiednią kolumną.
+ * Zmierzone na tej samej powierzchni (tabela Decyzje, Risk management).
+ */
 const buildDecisionColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
   kolumnaTytul(t),
   {
@@ -684,12 +691,14 @@ const buildDecisionColumns = (t: (key: string, fallback: string) => string): Tab
     label: t('execution.decisions.columns.due', 'Needed by'),
     sortable: true,
     width: '150px',
+    dataType: 'date',
   },
   {
     id: 'decydent',
     label: t('execution.decisions.columns.decisionMaker', 'Decision maker'),
     sortable: true,
     width: '170px',
+    dataType: 'owner',
   },
   {
     id: 'statusLabel',
@@ -697,6 +706,7 @@ const buildDecisionColumns = (t: (key: string, fallback: string) => string): Tab
     sortable: true,
     filterable: true,
     width: '140px',
+    dataType: 'status',
     render: (row) => {
       const raw = String(row.rawStatus ?? '').toUpperCase();
       // Zero crimsona na danych: „Odrzucona" to WYNIK, nie awaria. Czerwień w
@@ -711,13 +721,14 @@ const buildDecisionColumns = (t: (key: string, fallback: string) => string): Tab
       return <span className={`font-medium ${tone}`}>{String(row.statusLabel ?? '')}</span>;
     },
   },
-  kolumnaDniPoTerminie(t),
+  { ...kolumnaDniPoTerminie(t), dataType: 'number', align: 'right' },
   {
     id: 'escalation',
     label: t('execution.governance.columns.escalation', 'Escalation'),
     sortable: true,
     filterable: true,
     width: '130px',
+    dataType: 'status',
     render: (row) => {
       const step = Number(row.escalationStep ?? 0);
       const tone =

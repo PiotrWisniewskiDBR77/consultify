@@ -135,6 +135,15 @@ const sourceTypeLabel = (
  * „RAPORT · POZIOM · OKRES · STAN DANYCH NA · AUTOR" (zrzut PRZED
  * `evidence/jezyk-j7/przed/15-raporty-lista-en.png`). Teraz przez `t()`.
  */
+/**
+ * K5-7 (2026-09-13) — sam defekt co w tabeli Praca (`ExecutionWorkSurface`)
+ * i Decyzje (`ExecutionControlSurface`): bez `dataType` kolumny Status/Data/
+ * Autor dzielą podłogę 90 px zamiast 130/180/150 px i przy przepełnieniu
+ * (podgląd otwarty, 1440 px) treść zlewa się z sąsiednią kolumną. `period` to
+ * ZAKRES dat („01/07/2026 – 30/09/2026"), nie pojedyncza data — typ `date`
+ * podnosi mu podłogę zjazdu (110 px zamiast 90 px), a sufit prozy nie jest mu
+ * potrzebny: kanon każe skracać datę, nie rozpychać kolumnę.
+ */
 const kolumnyRaportow = (t: (key: string, fallback: string) => string): TableColumn[] => [
   { id: 'title', label: t('executionReports.columns.title', 'Report'), sortable: true, width: '300px' },
   {
@@ -143,6 +152,7 @@ const kolumnyRaportow = (t: (key: string, fallback: string) => string): TableCol
     sortable: true,
     filterable: true,
     width: '190px',
+    dataType: 'status',
   },
   {
     id: 'status',
@@ -150,10 +160,29 @@ const kolumnyRaportow = (t: (key: string, fallback: string) => string): TableCol
     sortable: true,
     filterable: true,
     width: '150px',
+    dataType: 'status',
   },
-  { id: 'period', label: t('executionReports.columns.period', 'Period'), sortable: true, width: '220px' },
-  { id: 'asOf', label: t('executionReports.columns.asOf', 'Data as of'), sortable: true, width: '160px' },
-  { id: 'author', label: t('executionReports.columns.author', 'Author'), sortable: true, width: '170px' },
+  {
+    id: 'period',
+    label: t('executionReports.columns.period', 'Period'),
+    sortable: true,
+    width: '220px',
+    dataType: 'date',
+  },
+  {
+    id: 'asOf',
+    label: t('executionReports.columns.asOf', 'Data as of'),
+    sortable: true,
+    width: '160px',
+    dataType: 'date',
+  },
+  {
+    id: 'author',
+    label: t('executionReports.columns.author', 'Author'),
+    sortable: true,
+    width: '170px',
+    dataType: 'owner',
+  },
 ];
 const kolumnyDefinicji = (t: (key: string, fallback: string) => string): TableColumn[] => [
   {
@@ -168,6 +197,7 @@ const kolumnyDefinicji = (t: (key: string, fallback: string) => string): TableCo
     sortable: true,
     filterable: true,
     width: '190px',
+    dataType: 'status',
   },
   {
     id: 'cadence',
@@ -175,12 +205,14 @@ const kolumnyDefinicji = (t: (key: string, fallback: string) => string): TableCo
     sortable: true,
     filterable: true,
     width: '150px',
+    dataType: 'status',
   },
   {
     id: 'audience',
     label: t('executionReports.columns.audience', 'Audience'),
     sortable: true,
     width: '230px',
+    dataType: 'text',
   },
   {
     id: 'state',
@@ -188,6 +220,7 @@ const kolumnyDefinicji = (t: (key: string, fallback: string) => string): TableCo
     sortable: true,
     filterable: true,
     width: '150px',
+    dataType: 'status',
   },
 ];
 // 1.12-R4b: 11 presetów → 3 (kanon Menu 3 ≤3 chipy — zrzut R4
