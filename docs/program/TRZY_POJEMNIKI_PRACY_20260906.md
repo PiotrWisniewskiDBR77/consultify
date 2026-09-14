@@ -1274,14 +1274,14 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą; Z-38 heatmapa PL WDROŻONA, fala C3) | `7722319dfc` | 14.09 |
-| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA) | `174f371a13` | 14.09 |
-| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA) | `174f371a13` | 14.09 |
-| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA) | `174f371a13` | 14.09 |
+| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA; Q1 E5 dogrywka: bramka `WORKLOAD_CAPACITY` osłonięta flagą, `reasonKey+params` zamiast literału EN) | `1154ebd809` | 14.09 |
+| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA; Q1 E5 dogrywka wliczona) | `1154ebd809` | 14.09 |
+| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA; Q1 E5 dogrywka wliczona) | `1154ebd809` | 14.09 |
 | Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu WDROŻONA na staging `6dfb338ba0`, fala C1) | `6dfb338ba0` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
-| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🔧 W TOKU (S4 odbiór = HOLD CTO, Z-45: `identityMode` regresja rodzeństwa testów, naprawa u Codexa) | `4d381f6811` | 14.09 |
+| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🧪 NA STAGINGU (S4 v3 PRZYJĘTE: 0 `as any`, typy jawne, 20/20 source-contract, golden-flow RealPG 12/12, tsc 177; Z-45 zamknięta) | `1154ebd809` | 14.09 |
 | Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Praca | P-E2c eskalacja/delegacja/zmiana zasobów | Codex F2-2 | DEC-485/486 | D | akcja + wynik po zmianie | ⬜ NIE ZACZĘTE (serwis jest, bez ekranu) | `managerActionExecutionService` | — |
@@ -1503,3 +1503,35 @@ wstrzymane u właściciela (bez zmiany stanu B-E1, nadal 🔧 W TOKU / HOLD CTO)
 stagingu)**, **Z-44 rozliczona**, **Z-45 otwarta (u Codexa)**, **Z-46 otwarta**, **Z-47 dług
 drobny (otwarta)**, **Z-48 nowa (drobna, tor D, otwarta)**, **Z-49 nowa (procedura, zapisana)**,
 **Z-50 nowa (zamknięta — reguła zapisana)**.
+
+**EWIDENCJA (uzupełnienie 14.09, po S4 v3/Q1 E5).** §5: **B-E1 (S4)** → v2 HOLD (10× `as any` w
+`ExecutionHub`, 2 testy source-contract czerwone, wykryte równolegle przez CTO i review Codexa)
+→ **v3 `861db8842f` PRZYJĘTE** (0 `as any`, typy jawne `core.ts:2667`,
+`executionBankModel.ts:124`, `executionRealData.ts:50`; 20/20 source-contract z niezmienionymi
+asercjami; golden-flow RealPG 12/12; tsc 177; Z-45 zamknięta naprawą domyślnej wartości +
+wołaczy + testów rodzeństwa) → linia `1e6c435fa9` → stan przechodzi **🔧 W TOKU (HOLD) →
+🧪 NA STAGINGU** `1154ebd809` (jedno wdrożenie wg Z-44/Z-49, health+tag potwierdzone). **OB2/
+OB3/OB4** → Q1 E5 `f05fabae66` PRZYJĘTE (bramka `WORKLOAD_CAPACITY` osłonięta flagą,
+`reasonKey+params` zamiast literału EN w `workloadCapacityService.ts:1197`, komentarz do
+fałszywego alarmu hooka z30) → linia **`1154ebd809`** — stan pozostaje **🧪 NA STAGINGU** (był już
+🧪 na `174f371a13`; dopisane tylko SHA linii, bez zmiany stanu). Dwa P3 nieblokujące zastane przy
+okazji, do Codexa tor D (poza liczeniem §5): `WorkIntelligenceReport.tsx:718` klucze
+`common.property/value` nie istnieją; 7 `as any` poza `ExecutionHub` w delcie S4. Nowa reguła
+bramki **Z-51** (rodzeństwo z pełnej listy importerów, nie z delty; `as any` w delcie = regresja
+do uzasadnienia) zapisana do Z-45. **DEC-508** — zgoda CTO na migrację addytywną Z-39
+`20262200_projects_current_phase.sql`, warunkowa (zero danych, test świeżej bazy + no-op na
+stagingu, 4 suity RealPG S5 zielone) → odblokowuje S5 E3b po spełnieniu warunków, poza zakresem
+§5 (nie jest jeszcze etapem tabeli). Pilotaż (Z-46, domknięte częściowo): org prezentacyjna EN =
+**Northwind Manufacturing Ltd.** (`468b234c-…`, 13 inicjatyw, 46 zadań, ocena APPROVED, raport
+EN, 2 decki EN), Piotr OWNER, 5 testerów ADMIN, Irina założona (login 200) — poza zakresem §5.
+
+**Liczniki §5 — po S4 v3/Q1 E5 (14.09, koniec dnia):** ✅ 2 · 🧪 18 · 🔧 6 · ⬜ 21 · 👁 0 · 🚀 0 ·
+⛔ 0 (47 etapów). Zmiana wobec poprzedniego przeliczenia: 🧪 17→18 (+1: B-E1), 🔧 7→6 (−1: B-E1
+wyszło z HOLD), reszta bez zmiany (OB2/OB3/OB4 były już 🧪, dopisane tylko SHA `1154ebd809`).
+Skrzynka: **Z-43 → w C4 (na linii, nie na stagingu — bez zmiany)**, **Z-45 zamknięta (S4 v3
+PRZYJĘTE)**, **Z-46 domknięte częściowo (Northwind + Irina; 2 konta testerów nadal do
+potwierdzenia przez właściciela — Tomek/Kasia)**, **Z-47 dług drobny (otwarta, bez zmiany)**,
+**Z-48 nowa (drobna, tor D, otwarta, bez zmiany)**, **Z-49 procedura (zapisana, bez zmiany)**,
+**Z-50 zamknięta (bez zmiany)**, **Z-51 nowa (reguła bramki, zapisana)**, **Z-52 nowa (biblioteka
+bez wywołania, DRD-EN `compileDrdPack.ts`, u Codexa fala J1)**, **Z-53 nowa (luka pomiaru
+S1.1–S1.16, ostatni pomiar 13.09, otwarta)**.

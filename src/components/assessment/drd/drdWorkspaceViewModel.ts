@@ -18,12 +18,24 @@ import type {
   MethodEvidenceState,
   MethodNavigatorNode,
 } from '@/components/method-workspace/types';
-import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
+import { compileDrdPack, type DrdPackLanguage } from '@/method-core/methods/drd/compileDrdPack';
+import { currentDrdPackLanguage } from '@/method-core/methods/drd/drdPackLanguage';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import { DRD_STRUCTURE, type DRDAxis } from '@/services/drdStructure';
+import { nazwaWJezyku } from './drdNazwa';
 import { EVIDENCE_STRENGTHS, type EvidenceStrength, type MethodEvent } from '@/method-core/contracts';
 
-export const { pack } = compileDrdPack();
+/**
+ * DEC-461 (fala J1): this used to be `export const { pack } = compileDrdPack()`
+ * — a MODULE-LEVEL const, so the pack was compiled exactly once, in Polish,
+ * the first time anything imported this file, and it stayed Polish for the
+ * rest of the session no matter what the interface language did. Screens must
+ * ask for the pack in the viewer's language instead; `compileDrdPack` caches
+ * per language, so calling this on every render is cheap after the first.
+ */
+export function getDrdPack(lang: DrdPackLanguage = currentDrdPackLanguage()) {
+  return compileDrdPack(lang).pack;
+}
 
 // Output current/target/gap rollup IS a fixed-schema record list (rows =
 // units) — TRIADA doctrine case 1, not case 3 (LiveMatrix's unit×level grid
@@ -134,7 +146,20 @@ export function unitAnswerStates(
   return [...byQuestion.values()];
 }
 
-export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavigatorNode[] {
+/**
+ * DEC-461 (fala J1): `lang` decides which name variant the navigator shows
+ * (`DRDAxis.name` vs `.namePL`) — the tree used to be `namePL || name`
+ * unconditionally, i.e. Polish for an English viewer, the exact defect
+ * `drdNazwa.ts` was written for. `openQuestionCount` is a COUNT and is
+ * identical in both languages; the pack is still fetched per language so no
+ * caller warms the cache in the wrong one.
+ */
+export function buildNavigatorNodes(
+  events: readonly MethodEvent[],
+  lang: DrdPackLanguage = currentDrdPackLanguage()
+): MethodNavigatorNode[] {
+  const pack = getDrdPack(lang);
+  const poPolsku = lang === 'pl';
   const nodes: MethodNavigatorNode[] = [];
   for (const axis of DRD_STRUCTURE as DRDAxis[]) {
     const axisAreaStates = axis.areas.map((area) => {
@@ -152,7 +177,7 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
 
     nodes.push({
       unitId: `axis-${axis.id}`,
-      name: axis.namePL || axis.name,
+      name: nazwaWJezyku(axis.namePL, axis.name, poPolsku),
       parentId: null,
       order: axis.id,
       currentLevel: null,
@@ -173,7 +198,7 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
       const openCount = pack.questions.filter((q) => q.unitId === area.id && q.level === focusLevel).length;
       nodes.push({
         unitId: area.id,
-        name: area.namePL || area.name,
+        name: nazwaWJezyku(area.namePL, area.name, poPolsku),
         parentId: `axis-${axis.id}`,
         order: idx,
         currentLevel: progression.currentLevel,
@@ -191,7 +216,9 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
 export function buildMatrixRowsForAxis(
   events: readonly MethodEvent[],
   axis: DRDAxis,
-  pendingPreviewUnitLevels: Set<string>
+  pendingPreviewUnitLevels: Set<string>,
+  /** DEC-461: row labels in the viewer's language (was `namePL || name`). */
+  lang: DrdPackLanguage = currentDrdPackLanguage()
 ): MatrixRow[] {
   return axis.areas.map((area) => {
     const confirmed = confirmedLevelsFor(events, area.id);
@@ -200,7 +227,7 @@ export function buildMatrixRowsForAxis(
     const levels = area.levels.map((l) => l.level).sort((a, b) => a - b);
     return {
       unitId: area.id,
-      unitName: area.namePL || area.name,
+      unitName: nazwaWJezyku(area.namePL, area.name, lang === 'pl'),
       levels: levels.map((level) => {
         const achieved = progression.currentLevel !== null && level <= progression.currentLevel;
         const aboveGap = progression.aboveGapLevels.includes(level);

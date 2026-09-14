@@ -25,7 +25,13 @@ import type {
   ScoringResult,
 } from '../../contracts';
 
-import { compileDrdPack, DRD_AGGREGATION_VERSION, DRD_METHOD_PACK_ID } from './compileDrdPack';
+import {
+  compileDrdPack,
+  DRD_AGGREGATION_VERSION,
+  DRD_METHOD_PACK_ID,
+  type DrdPackLanguage,
+} from './compileDrdPack';
+import { currentDrdPackLanguage } from './drdPackLanguage';
 
 // ---------------------------------------------------------------------------
 // Evidence strength ordering (E0 < E1 < E2 < E3 < E4)
@@ -86,8 +92,15 @@ function parseAnswer(raw: unknown): DrdAnswerRecord | null {
 // Pack access helpers
 // ---------------------------------------------------------------------------
 
-function getPack(): MethodPack {
-  return compileDrdPack().pack;
+/**
+ * Scoring/aggregation reads ids and numbers, never prose, so the language
+ * here does not change any result — it only decides which labels ride along
+ * on the units/questions the caller gets back. Following the viewer's
+ * language keeps those labels consistent with the screen that asked
+ * (DEC-461).
+ */
+function getPack(lang: DrdPackLanguage = currentDrdPackLanguage()): MethodPack {
+  return compileDrdPack(lang).pack;
 }
 
 function findUnit(pack: MethodPack, unitId: string): MethodUnit | undefined {
@@ -374,7 +387,7 @@ export const drdAdapter: MethodAdapter = {
   methodPackId: DRD_METHOD_PACK_ID,
 
   async loadPack(version: string): Promise<MethodPack> {
-    const { pack } = compileDrdPack();
+    const { pack } = compileDrdPack(currentDrdPackLanguage());
     if (version !== pack.manifest.version) {
       throw new Error(
         `${DRD_METHOD_PACK_ID} adapter: requested pack version "${version}" does not match compiled ` +

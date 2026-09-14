@@ -35,6 +35,12 @@ import {
   LEGACY_FLAG_FALSE,
   LEGACY_FLAG_TRUE,
 } from '../services/interview/interviewLegacyFlags.js';
+import {
+  komunikatNieczytelnejOdpowiedzi,
+  ocenCzytelnoscOdpowiedzi,
+  uzasadnienieNieczytelnejOdpowiedzi,
+  zalecenieNieczytelnychOdpowiedzi,
+} from '../services/interview/interviewAnswerIntelligibility.js';
 import { sanitizeQuestionText } from '../services/interview/interviewQuestionTextSanitizer.js';
 import {
   canonicalStatusToken,
@@ -3041,7 +3047,13 @@ const INTERVIEW_AI_REVIEW_TIMEOUT_MS = (() => {
   return Number.isFinite(raw) && raw > 0 ? raw : 20000;
 })();
 
-async function evaluateInterviewSessionAnswers(params: {
+/**
+ * Eksportowana WYŁĄCZNIE po to, żeby dało się odebrać testem kontraktowym
+ * P-T16 (bełkot nie dociera do modelu). Funkcja nie dotyka bazy — bierze
+ * pytania jako argument — więc test jest czysty i nie potrzebuje PostgreSQL.
+ * Konsumenci produkcyjni są w tym samym pliku, poniżej.
+ */
+export async function evaluateInterviewSessionAnswers(params: {
   session: { id?: string; name?: string };
   questions: any[];
   language?: unknown;
@@ -3076,6 +3088,30 @@ async function evaluateInterviewSessionAnswers(params: {
     (q) =>
       canonicalStatusToken(q.status) === 'answered' && String(q.answer_text || '').trim().length > 0
   );
+
+  // P-T16 (pilotaż Tomka, DEC-496 pkt XVI) — DRUGI deterministyczny podział,
+  // tym samym wzorcem co #48a wyżej: odpowiedź, której nie da się zrozumieć,
+  // nie trafia do modelu WCALE.
+  //
+  // Przyczyna zmierzona na linii: prompt systemowy niżej każe modelowi napisać
+  // uzasadnienie „tied to the actual answer text (quote or paraphrase it) —
+  // never a generic statement". Dla wejścia `asdasdasd` nie ma czego
+  // parafrazować, a odpowiedzi ogólnej zabrania instrukcja — więc model raz
+  // zwraca zera z uwagą „nonsensical", a raz dopisuje zmyślony akapit.
+  // Dokładnie to zgłosił tester: „raz odrzucona, raz zamieniona w zmyślony
+  // akapit". `temperature: 0.1` tego nie leczy, bo to nie jest szum
+  // próbkowania, tylko zmyślanie wymuszone promptem.
+  //
+  // Reguła rozstrzygająca (jedyna, wspólna): `ocenCzytelnoscOdpowiedzi`.
+  const unintelligibleQuestions: any[] = [];
+  const intelligibleQuestions: any[] = [];
+  for (const question of answeredQuestions) {
+    if (ocenCzytelnoscOdpowiedzi(question.answer_text).nieczytelna) {
+      unintelligibleQuestions.push(question);
+    } else {
+      intelligibleQuestions.push(question);
+    }
+  }
 
   const criterionKeys = INTERVIEW_RUBRIC_CRITERIA.map((c) => c.key) as [string, ...string[]];
   const RubricCriterionSchema = z.object({
@@ -3117,12 +3153,12 @@ async function evaluateInterviewSessionAnswers(params: {
   let recommendations: string[] = [];
   let modelProvenance: InterviewAiReviewSnapshot['modelProvenance'] = null;
 
-  if (answeredQuestions.length > 0) {
+  if (intelligibleQuestions.length > 0) {
     const rubricText = INTERVIEW_RUBRIC_CRITERIA.map(
       (c, i) => `${i + 1}. ${c.labelEn} (key: "${c.key}") — ${c.descriptionEn}`
     ).join('\n');
 
-    const questionsForPrompt = answeredQuestions
+    const questionsForPrompt = intelligibleQuestions
       .map((q, i) => {
         return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
 Question: ${q.question_text}
@@ -3160,13 +3196,19 @@ For each weak answer choose the most useful fixType:
 - complete_required_fields
 - correct_meaning
 
+If an answer is unreadable, random characters, or otherwise carries no interpretable meaning, score every
+criterion 0 and say plainly that the answer cannot be interpreted. NEVER invent, guess, complete, or
+paraphrase content that is not literally present in the answer — a fabricated summary of an empty answer is
+the single worst failure mode of this task. (Answers detected as unintelligible are filtered out in code
+before this prompt; this rule covers the borderline cases that reach you.)
+
 Also provide 2-5 actionable, session-level recommendations for improving the weakest answers overall.
 Write all feedback, justifications, and recommendations in ${lang}.
 Return valid JSON matching the schema. Do not include any field for an overall score or overall verdict — those are computed separately.`;
 
     const userPrompt = `Session: ${session?.name || 'Interview session'}
 Total questions: ${questions.length}
-Answered (being scored below): ${answeredQuestions.length}
+Answered (being scored below): ${intelligibleQuestions.length}
 
 ${questionsForPrompt}`;
 
@@ -3199,7 +3241,7 @@ ${questionsForPrompt}`;
       : [];
     recommendations = Array.isArray(evaluation.recommendations) ? evaluation.recommendations : [];
 
-    const expectedIds = answeredQuestions.map((question) => String(question.id));
+    const expectedIds = intelligibleQuestions.map((question) => String(question.id));
     const returnedIds = llmEvaluations.map((item) => String(item.questionId));
     const returnedIdSet = new Set(returnedIds);
     if (
@@ -3215,9 +3257,28 @@ ${questionsForPrompt}`;
   const llmByQuestionId = new Map(llmEvaluations.map((item) => [String(item.questionId), item]));
   const answeredIds = new Set(answeredQuestions.map((q) => String(q.id)));
 
+  // P-T16: stała ocena odpowiedzi nieczytelnych — ta sama za każdym uruchomieniem,
+  // bo nie pochodzi od modelu. Zero punktów w każdym kryterium z jawnym powodem,
+  // `fixType: 'clarify'` (respondent ma doprecyzować, nie dopisać dowodów).
+  const unintelligibleIds = new Set(unintelligibleQuestions.map((q) => String(q.id)));
+  const unintelligibleRubric = INTERVIEW_RUBRIC_CRITERIA.map((criterion) => ({
+    criterion: criterion.key,
+    score: 0,
+    justification: uzasadnienieNieczytelnejOdpowiedzi(langCode),
+  }));
+
   const questionEvaluations = (questions as any[]).map((q) => {
     const qid = String(q.id);
     const isAnswered = answeredIds.has(qid);
+    if (unintelligibleIds.has(qid)) {
+      return {
+        questionId: qid,
+        isAnswered: true,
+        rubric: unintelligibleRubric,
+        feedback: komunikatNieczytelnejOdpowiedzi(langCode),
+        fixType: 'clarify' as InterviewAiFixType,
+      };
+    }
     const llmItem = llmByQuestionId.get(qid);
     return {
       questionId: qid,
@@ -3227,6 +3288,12 @@ ${questionsForPrompt}`;
       fixType: llmItem?.fixType,
     };
   });
+
+  // Zalecenie sesyjne dopisywane raz, deterministycznie — inaczej sesja złożona
+  // wyłącznie z bełkotu nie dostałaby ŻADNEJ wskazówki (model nie był wołany).
+  if (unintelligibleQuestions.length > 0) {
+    recommendations = [zalecenieNieczytelnychOdpowiedzi(langCode), ...recommendations];
+  }
 
   return {
     ...buildInterviewAiReviewSnapshot(

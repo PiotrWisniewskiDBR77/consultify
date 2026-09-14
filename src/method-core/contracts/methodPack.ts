@@ -39,7 +39,15 @@ export interface MethodPackManifest {
   readonly name: string;
   readonly version: string;
   readonly ownerUserId: string | null;
+  /** Every language this pack's compiler can emit. */
   readonly languages: readonly string[];
+  /**
+   * The language THIS compiled instance actually carries in `units[].name`,
+   * `questions[].canonicalWording` and `questions[].whyItMatters`. Optional
+   * because packs loaded from storage predate the per-language compile
+   * (DEC-461) — absent means "unknown / whatever `languages[0]` was".
+   */
+  readonly compiledLanguage?: string;
   readonly readiness: MethodPackReadiness;
 
   /**

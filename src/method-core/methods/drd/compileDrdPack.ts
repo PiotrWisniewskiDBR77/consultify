@@ -154,7 +154,10 @@ function qbankSectionId(areaId: string, axisId: number): string {
  * paraphrase, no invention).
  */
 function splitEvidenceText(example: string): string[] {
-  const withoutLabel = example.replace(/^Dow[oó]d\s*:\s*/i, '').trim();
+  // PL corpus labels the block "Dowód:", the EN mirror labels it "Evidence:".
+  // Both are stripped so the compiled `expectedEvidence` items never carry the
+  // label as part of the first item.
+  const withoutLabel = example.replace(/^(?:Dow[oó]d|Evidence)\s*:\s*/i, '').trim();
   if (!withoutLabel) return [];
   return withoutLabel
     .split(';')
@@ -166,10 +169,27 @@ function splitEvidenceText(example: string): string[] {
 // Compiler
 // ---------------------------------------------------------------------------
 
-let cached: DrdCompileResult | null = null;
+/**
+ * Language of the COMPILED pack content (unit names, question wording,
+ * `whyItMatters`). DEC-461 (2026-09-14): EN is the default — the product's
+ * software and demo data lead in English; PL is produced on demand for a
+ * Polish viewer. Note this is the language of the METHODOLOGY CONTENT read
+ * out of `DRD_STRUCTURE` / `getDRDKnowledge()`, not UI chrome (that stays
+ * i18next's job).
+ */
+export type DrdPackLanguage = 'pl' | 'en';
 
-/** Compiles the DRD Method Pack. Pure/deterministic — same output every call (cached after first). */
-export function compileDrdPack(): DrdCompileResult {
+/**
+ * One cached result PER LANGUAGE. A single `cached` slot used to make the
+ * first caller's language win for the whole session — switching the
+ * interface language then left the questionnaire in the previous language
+ * until a full reload.
+ */
+const cachedByLanguage = new Map<DrdPackLanguage, DrdCompileResult>();
+
+/** Compiles the DRD Method Pack. Pure/deterministic — same output every call for the same `lang` (cached per language). */
+export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
+  const cached = cachedByLanguage.get(lang);
   if (cached) return cached;
 
   const units: MethodUnit[] = [];
@@ -191,10 +211,15 @@ export function compileDrdPack(): DrdCompileResult {
       const parentId = axisGroupId(axis.id);
       const levelScale = area.levels.map((l) => l.level).sort((a, b) => a - b);
 
+      const areaName = lang === 'pl' ? area.namePL || area.name : area.name || area.namePL || area.id;
+      const axisName = lang === 'pl' ? axis.namePL || axis.name : axis.name || axis.namePL || '';
       const unit: MethodUnit = {
         unitId: area.id,
-        name: area.namePL || area.name,
-        description: `${area.name}${area.namePL ? ` (${area.namePL})` : ''} — obszar osi ${axis.id} ${axis.name}${axis.namePL ? ` (${axis.namePL})` : ''}.`,
+        name: areaName,
+        description:
+          lang === 'pl'
+            ? `${area.name}${area.namePL ? ` (${area.namePL})` : ''} — obszar osi ${axis.id} ${axis.name}${axis.namePL ? ` (${axis.namePL})` : ''}.`
+            : `${areaName} — area of axis ${axis.id} ${axisName}.`,
         parentId,
         order: unitOrder++,
         levelScale,
@@ -223,7 +248,7 @@ export function compileDrdPack(): DrdCompileResult {
         if (hasOverride) unitLevelPairsWithOverrideContent++;
         else areaHasFullCoverage = false;
 
-        const knowledge = getDRDKnowledge(area.id, lvl.level, 'pl');
+        const knowledge = getDRDKnowledge(area.id, lvl.level, lang);
         const expectedEvidence = splitEvidenceText(knowledge.example);
         const technologyExamples = knowledge.suggestedTechnologies;
 
@@ -244,7 +269,7 @@ export function compileDrdPack(): DrdCompileResult {
             // empty and counted in fieldGaps, not invented. ---
             intent: '',
             plainLanguageExplanation: '',
-            whyItMatters: whyHint.pl,
+            whyItMatters: whyHint[lang],
             glossaryRefs: [],
             positiveAnswerExample: '',
             partialAnswerExample: '',
@@ -354,10 +379,13 @@ export function compileDrdPack(): DrdCompileResult {
     name: 'DRD — Digital Readiness Diagnosis (Digital Pathfinder)',
     version: DRD_METHOD_PACK_VERSION,
     ownerUserId: null,
-    // English QBank/override content (`*.en.md`, `*Axis*.en.ts`) exists in
-    // the repo but was NOT compiled in this pass (scope decision — PL is the
-    // primary demo language). Reported as a gap, not silently claimed.
-    languages: ['pl'],
+    // Both language mirrors are compiled from this file now (DEC-461): the
+    // curated EN overrides (`*Axis*.en.ts`) are read through
+    // `getDRDKnowledge(..., lang)` exactly like the PL ones. `languages`
+    // lists what this COMPILER can produce, not what a single call returned —
+    // `compiledLanguage` below is the language of THIS result.
+    languages: ['en', 'pl'],
+    compiledLanguage: lang,
     readiness: 'methodology_review',
     licence: {
       holder: 'DBR77 / Digital Pathfinder (Dr. Piotr Wiśniewski)',
@@ -419,9 +447,11 @@ export function compileDrdPack(): DrdCompileResult {
       '(verified against ASSESSMENT_KB_DRD.md, which itself flags the old "34 areas" comment as ' +
       'wrong). MethodAdapter has no pathway hook, so it is NOT wired into this pack — flagging ' +
       'instead of silently picking one model.',
-    'English QBank v2 (*.en.md) and English override files (*Axis*.en.ts) exist and are FULLY ' +
-      'populated per grep, but were not compiled into this pack version (manifest.languages = ["pl"] ' +
-      'only). Scope decision for this pass, not a content gap in the source.',
+    'LEVEL TITLES/DESCRIPTIONS ARE NOT LANGUAGE-SWITCHED: `DRD_STRUCTURE` carries exactly ONE ' +
+      'variant per level (`title`/`description`, no `titlePL`), so a compile with lang="en" still ' +
+      'emits the Polish level titles that the corpus happens to hold for axes 5 and 6 (measured ' +
+      '2026-08-30: 11 + 14 Polish titles, 27 + 26 Polish descriptions out of 233). This is a CONTENT ' +
+      'gap in drdStructure.ts, not a wiring gap here — translating it needs the methodology owner.',
   ];
 
   const readinessRationale =
@@ -438,11 +468,12 @@ export function compileDrdPack(): DrdCompileResult {
     'higher; it cannot be "draft" either since real, sourced, licensed content is compiled. ' +
     'methodology_review is the honest ceiling. canStartSession() correctly refuses this readiness.';
 
-  cached = {
+  const result: DrdCompileResult = {
     pack,
     report: { coverage, fieldGaps, discrepancies, readinessRationale },
   };
-  return cached;
+  cachedByLanguage.set(lang, result);
+  return result;
 }
 
 // ---------------------------------------------------------------------------

@@ -130,6 +130,9 @@ import './slowLocaleFetch';
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 const AccentSoftTokenFixScreen = React.lazy(() => import('./screens/accent-soft-token-fix'));
+const PT14PomyslyEtapKandydatScreen = React.lazy(
+  () => import('./screens/p-t14-pomysly-etap-kandydat')
+);
 const UiFoundationFocus01EvidenceScreen = React.lazy(
   () => import('./screens/ui-foundation-focus-01-evidence')
 );
@@ -1452,6 +1455,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'preview-4-zakladki': {
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
     render: () => <PreviewZakladkiScreen />,
+  },
+  'p-t14-pomysly-etap-kandydat': {
+    label:
+      'P-T14 — Pomysły: etap zmieniany z wiersza (1 lista) + „Przejrzyj kandydaturę” z nazwanym wynikiem (PRZED/PO)',
+    render: () => <PT14PomyslyEtapKandydatScreen />,
   },
   'accent-soft-token-fix': {
     label:

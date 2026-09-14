@@ -85,9 +85,9 @@ import {
   evidenceStateFor,
   evidenceStrengthFor,
   getOutputUnitColumns,
-  pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
+import { useDrdPack } from './useDrdPack';
 import { AssessmentSaveStateIndicator } from './AssessmentSaveStateIndicator';
 import { DrdSourceIndicator } from './DrdSourceIndicator';
 import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
@@ -453,6 +453,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
 > = ({ storage: storageProp, demoSessionId, onExit, seedTo, initialViewMode, forceState }) => {
   const { t, i18n } = useTranslation();
   const isPolish = (i18n.language || 'pl').toLowerCase().startsWith('pl');
+  // DEC-461: the questionnaire body (area names, question wording, "Why do we
+  // ask") follows the viewer's language. Was a module-level Polish const.
+  const pack = useDrdPack();
   // MVP-OWNER-FREEZE (2026-09-05) — czytane NA GÓRZE komponentu, przed
   // jakimkolwiek wczesnym `return` (reguły hooków); używane dopiero przy
   // `canFreeze` niżej.
@@ -1484,7 +1487,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               aktywnaSekcja={focusQuestions[0]?.questionId ?? null}
               kontekstArtefaktu={{
                 type: 'assessment-question',
-                title: `DRD · ${activeAxis.namePL || activeAxis.name} · ${activeArea.namePL || activeArea.name} — poziom ${focusLevelFallback}`,
+                title: `DRD · ${nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish)} · ${nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish)} — ${t('assessment.drd.level', 'Level').toLowerCase()} ${focusLevelFallback}`,
                 status: session.state,
               }}
               moznaEdytowac={canWrite}
@@ -1504,7 +1507,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           }}
           interviewProps={{
             breadcrumb: [
-              activeAxis.namePL || activeAxis.name,
+              nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish),
               nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
               t('assessment.drd.http.field.level', 'Level {{level}}', {
                 level: focusLevelFallback,
