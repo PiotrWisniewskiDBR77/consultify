@@ -47,7 +47,8 @@ export interface RealInitiativeLike {
   actualEndDate?: string | null;
   scheduleShiftCount?: number | null;
   currentStage?: string | null;
-  [key: string]: unknown;
+  onHold?: unknown;
+  on_hold?: unknown;
 }
 
 export interface RealDecisionLike {
@@ -370,8 +371,7 @@ export function isBlockedInitiative(initiative: RealInitiativeLike): boolean {
   const status = normalizeInitiativeStatus(initiative?.status);
   if (status === 'BLOCKED') return true;
   if (status !== 'EXECUTING') return false;
-  const record = initiative as Record<string, unknown>;
-  return truthy(record?.onHold ?? record?.on_hold);
+  return truthy(initiative.onHold ?? initiative.on_hold);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
