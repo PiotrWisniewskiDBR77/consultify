@@ -51,7 +51,7 @@ import {
 } from '../auditsMethodApi';
 
 export function countAuditCriteriaTree(criteria: readonly unknown[]): number {
-  return criteria.reduce(
+  return criteria.reduce<number>(
     (total, criterion) => {
       const childrenValue =
         criterion && typeof criterion === 'object'
