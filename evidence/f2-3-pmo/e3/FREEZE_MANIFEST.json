@@ -1,0 +1,26 @@
+{
+  "package": "F2-3 PMO E3",
+  "freeze": "R2",
+  "date": "2026-09-14",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW",
+  "base_sha": "f9239fe307882d5a54c2251b5f631b4a173e702e",
+  "implementation_sha": "4be756f1a8de787203a111766a22f53e574de588",
+  "review_sha": "5a114bf0eb",
+  "diff_range": "f9239fe307882d5a54c2251b5f631b4a173e702e..4be756f1a8de787203a111766a22f53e574de588",
+  "feature_flag": { "name": "VITE_PMO_PROJECTS", "default": "OFF" },
+  "validation": {
+    "server_tsc": "PASS",
+    "esbuild_per_file": "PASS 8/8",
+    "focused_unit_contract": "PASS 16/16",
+    "all_five_gates_realpg": "PASS 1/1",
+    "gateway_jwt_realpg": "PASS 3/3",
+    "transaction_rollback_realpg": "PASS 1/1",
+    "diff_check": "PASS"
+  },
+  "browser_evidence": [
+    { "path": "evidence/f2-3-pmo/e3/01_stage_gates_dark.png", "sha256": "307c225cf3689862eb636d174328a1824bb62d3ebc278ae6d60ac43641863b0f" },
+    { "path": "evidence/f2-3-pmo/e3/02_stage_gates_light.png", "sha256": "ebd0d4b2fcb0f407549563da6284e08e9eb50234666fadf2fcdd231f6b68ba7c" }
+  ],
+  "evidence": { "bytes_total": 1040887, "files_total": 31, "limit_bytes": 2097152 },
+  "final_candidate_ref": "refs/heads/backup/codex/pmo-projekty-role-statusy-20260913-r2-20260914"
+}
