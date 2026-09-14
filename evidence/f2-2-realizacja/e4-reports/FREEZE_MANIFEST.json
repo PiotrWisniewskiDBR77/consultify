@@ -1,0 +1,109 @@
+{
+  "package": "Q2 F2-2 E4 Execution reports",
+  "base": "29d1db9f00793dab6aeac5f68656200cddf9e529",
+  "candidate": "d89bd146c17c8469827b9984e857976975c9e819",
+  "files": [
+    {
+      "path": "dev-render/main.tsx",
+      "bytes": 159902,
+      "sha256": "831e5571e99adeabcdafa0897206d0720289ff5bed5ec0514171fb122738126d"
+    },
+    {
+      "path": "dev-render/screens/z42-realizacja-raporty.tsx",
+      "bytes": 4997,
+      "sha256": "336eda99323399e524e89e55becdba2a958da68071881981f68e1671d43889ca"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e4-reports/dark.png",
+      "bytes": 71184,
+      "sha256": "a9872f064746e433a6fc0f68d6cb30279d1ccddda8e3da602465f47173cb5b78"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e4-reports/light.png",
+      "bytes": 65773,
+      "sha256": "cb951027abdd8bf4fa2de62a78f8f8a025c8e8723fb0689623640fe434ebf1cb"
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "bytes": 2244133,
+      "sha256": "4520cc7260417ecf7dfc64590a925a240f3408c01c22c70589a8721de1acaeaa"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "bytes": 2399257,
+      "sha256": "1742744db6bedc797ed43b1ce41e736feafaf9a99af3600aeb20a27dd6d92eff"
+    },
+    {
+      "path": "server/src/config/executionReportE4Flag.ts",
+      "bytes": 110,
+      "sha256": "f3dd248bae122fd0b76e778d159f4cc84425be887505aa1b6574faefa7a8f6a1"
+    },
+    {
+      "path": "server/src/domain/initiatives-execution/reportRun.ts",
+      "bytes": 17145,
+      "sha256": "d1d33bb924bfffcda19756e9c468497b8da2a9bfebf28ebe39201187cbf977f6"
+    },
+    {
+      "path": "server/src/routes/executionReports.routes.ts",
+      "bytes": 21269,
+      "sha256": "7471452eac7048ae167d8fb78cf15eed5dd0caca686957839ecdd08edb9022ab"
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/executionReportE4.serverFlag.routes.test.ts",
+      "bytes": 3653,
+      "sha256": "8433618be26ce0f10ffa2517530c6e2fa3d351230a509234176bd737e38aab9c"
+    },
+    {
+      "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
+      "bytes": 357480,
+      "sha256": "9cf1d7807340b92c2b0748f8df071c6ad445092c8e4c6a39ed80fb294a20a94f"
+    },
+    {
+      "path": "server/src/services/executionReportProfileService.ts",
+      "bytes": 2658,
+      "sha256": "ee98dc36886c8f3636e7fa99498d276d11295b91776654c9b10d66dc25642fb1"
+    },
+    {
+      "path": "server/src/services/scheduledReportService.ts",
+      "bytes": 32416,
+      "sha256": "f00d148a0c2f59f0ba474ff54ed5b8c6f0f1974b8c897a81702aa3534b96e170"
+    },
+    {
+      "path": "src/components/Execution/ExecutionHub.tsx",
+      "bytes": 264769,
+      "sha256": "0aa5dc35d015cb7cbb109de457f412aa43758c210bb12f7638333fd0c97373f1"
+    },
+    {
+      "path": "src/components/Execution/ExecutionReportE4Surface.tsx",
+      "bytes": 26001,
+      "sha256": "902340bc450ab8e3f3fa99af2e680ebb0f9e1ddcb7cdc21fc1fbc7a6c31c3830"
+    },
+    {
+      "path": "src/components/Execution/__tests__/ExecutionReportE4Surface.canon.test.tsx",
+      "bytes": 4073,
+      "sha256": "8594aab2d13b245e3ea633eb9da33d213595c1e6f6be385af90927f3d9e6db1f"
+    },
+    {
+      "path": "src/components/shared/TableWithPreviewLayout.tsx",
+      "bytes": 30458,
+      "sha256": "6acb341b890427ab2faad82ba676514128affe0d3811faf2b476e317d44e1628"
+    },
+    {
+      "path": "src/components/standard/StandardModuleBar.tsx",
+      "bytes": 29611,
+      "sha256": "bcf7f3489af6191311258d853321ba5d80a96a0c9e0f72692d6af7fec88acf7e"
+    },
+    {
+      "path": "src/services/initiatives-execution/runtimeApi.ts",
+      "bytes": 80156,
+      "sha256": "2d3f7bbe3b46c2fbf6794230ff6aa0def4526a21eb701dfbc1dbf4386c7554fd"
+    },
+    {
+      "path": "tests/integration/initiatives-execution/executionReportE4.gateway.smtp.realdb.test.ts",
+      "bytes": 18216,
+      "sha256": "4a0cb52dea767aa378714699baee9758a19faa8417046bf37e1894c14b6c1e2f"
+    }
+  ],
+  "fileCount": 20,
+  "evidenceBytes": 136957
+}
