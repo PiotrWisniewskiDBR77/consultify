@@ -8,13 +8,16 @@ const startStream = vi.fn();
 const abortStream = vi.fn(() => true);
 let streamedContent = '';
 let streamStartedAt: number | null = null;
+// N3: strumien musi dac sie WYLACZYC w tescie — strazniki ciszy reaguja na
+// przejscie „trwa -> skonczony", a nie na sam brak tresci.
+let isStreaming = false;
 
 vi.mock('@/hooks/useAIStream', () => ({
   useAIStream: () => ({
     startStream,
     abortStream,
     retryLastStream: vi.fn(),
-    isStreaming: false,
+    isStreaming,
     streamedContent,
     streamStartedAt,
     error: null,
@@ -30,6 +33,7 @@ describe('useToolAI full-session terminal lifecycle', () => {
     abortStream.mockClear();
     streamedContent = '';
     streamStartedAt = null;
+    isStreaming = false;
     useToolStore.getState().createSession('dynamic-swot');
   });
 
@@ -132,4 +136,52 @@ describe('useToolAI full-session terminal lifecycle', () => {
     expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('ready');
     expect((useToolStore.getState().currentSession?.inputData as any).items).toHaveLength(1);
   });
+
+  // N3 (zgloszenie testera `6c07439e`, staging 2026-09-14 05:07 UTC): „AI Draft"
+  // wisial na 0% ponad 30 s bez zadnego komunikatu — jedyna akcja to Cancel.
+  // PRZYCZYNA: efekt stosujacy wynik wychodzil bez sladu przy pustym
+  // `streamedContent` (odpowiedz w calosci w `<thinking>`), zostawiajac status
+  // `generating` i `error === null` az do licznika 90 s.
+  // MUTACJA: usuniecie strażnika `fullSessionWasStreamingRef` wywraca ten test
+  // (status zostaje `generating`, error `null`).
+  it('zamienia cisze po koncu strumienia na blad z mozliwoscia ponowienia', async () => {
+    let endStream: () => void = () => {};
+    startStream.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          endStream = resolve;
+        })
+    );
+    isStreaming = true;
+    const initialData = useToolStore.getState().currentSession?.inputData;
+    const { result, rerender } = renderHook(() => useToolAI({ toolType: 'dynamic-swot' }));
+
+    let generation!: Promise<void>;
+    act(() => {
+      generation = result.current.generateFullSession();
+    });
+    expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('generating');
+
+    // Strumien konczy sie nie zostawiajac ani jednego widocznego znaku.
+    isStreaming = false;
+    streamedContent = '';
+    // Rerender i uplyw czasu MUSZA byc w osobnych `act` — inaczej efekt
+    // strażnika nie zdazy sie uruchomic przed przesunieciem zegara.
+    await act(async () => {
+      endStream();
+      rerender();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_500);
+      await generation;
+    });
+
+    expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('error');
+    expect(result.current.error).toContain('work is safe');
+    // Blad pojawia sie ZANIM zadziala twarda siatka 90 s.
+    expect(abortStream).not.toHaveBeenCalled();
+    // Dane uzytkownika nietkniete — ponowienie jest bezpieczne.
+    expect(useToolStore.getState().currentSession?.inputData).toEqual(initialData);
+  });
+
 });

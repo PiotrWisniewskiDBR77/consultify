@@ -45,6 +45,7 @@ import {
   withResolvedLocaleInstruction,
 } from '../services/ai/languagePolicy.js';
 import {
+  classifyProviderError,
   mapProviderError,
   toSafeErrorBody,
   toSafeSseFrame,
@@ -137,33 +138,31 @@ const router = Router();
 
 /** Chat streaming is provider-bearing: stale role claims and SUPERADMIN do not
  * replace an authoritative ACTIVE tenant membership row. */
-const requireActiveChatMembership = asyncHandler(
-  async (req: AuthRequest, res: Response, next) => {
-    const userId = String(req.userId || req.user?.id || '').trim();
-    const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
-    if (!userId || !organizationId) {
+const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: Response, next) => {
+  const userId = String(req.userId || req.user?.id || '').trim();
+  const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
+  if (!userId || !organizationId) {
+    return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
+  }
+  try {
+    const membership = await dbGet<{ status?: string }>(
+      `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
+      [userId, organizationId],
+      { fallback: false }
+    );
+    if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
       return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
-    try {
-      const membership = await dbGet<{ status?: string }>(
-        `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
-        [userId, organizationId],
-        { fallback: false }
-      );
-      if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
-        return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
-      }
-    } catch (error) {
-      logger.warn('[AI Stream] membership verification unavailable', {
-        userId,
-        organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
-    }
-    next();
+  } catch (error) {
+    logger.warn('[AI Stream] membership verification unavailable', {
+      userId,
+      organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
   }
-);
+  next();
+});
 
 function isConnectorFreshDataAsk(message: unknown): boolean {
   const text = String(message || '').toLowerCase();
@@ -731,7 +730,6 @@ router.post(
     } finally {
       client.release();
     }
-
   })
 );
 
@@ -4163,8 +4161,7 @@ router.post(
         } as any;
       }
 
-      const orgKnowledgeRetrievalEnabled =
-        process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
+      const orgKnowledgeRetrievalEnabled = process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
 
       // Day 131 fix (N3): an EXPLICIT context-scope choice made by the user is authoritative.
       // The feature flag may supply a default when the user made no choice, but it must never
@@ -4246,7 +4243,9 @@ router.post(
                 type: 'document',
                 title: String(chunk?.filename || 'Organization document'),
                 reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
-                excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                excerpt: String(chunk?.content || '')
+                  .trim()
+                  .slice(0, 500),
                 fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
               })),
             });
@@ -4280,9 +4279,8 @@ router.post(
           (knowledgeSources as any)?.organizationData !== false &&
           !userNarrowedContextScope;
         if (allowOrganizationData && req.organizationId && message && message.trim().length > 0) {
-          const { buildModuleContextGrounding } = await import(
-            '../services/ai/moduleContextGrounding.js'
-          );
+          const { buildModuleContextGrounding } =
+            await import('../services/ai/moduleContextGrounding.js');
           const moduleGrounding = await buildModuleContextGrounding({
             organizationId: req.organizationId,
             userId: String(req.userId || (req as any).user?.id || ''),
@@ -4434,7 +4432,9 @@ router.post(
                   type: 'document',
                   title: String(chunk?.filename || 'Organization document'),
                   reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
-                  excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                  excerpt: String(chunk?.content || '')
+                    .trim()
+                    .slice(0, 500),
                   fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
                 })),
               });
@@ -4448,94 +4448,95 @@ router.post(
           );
         }
 
-        if (governedAttachmentDocIds.length > 0) try {
-          const ragModule = await import('../services/ragService.js');
-          const ragService = (ragModule.default || ragModule) as any;
-          const chunks = await ragService.searchRelevantChunks(message, {
-            limit: 5,
-            organizationId: req.organizationId || undefined,
-            // FIX-2 (dyżur 210): thread the real requester so an owner-aware
-            // access filter (ragService.appendKnowledgeDocAccessFilter) can
-            // see their own private docs. Same identity resolution as
-            // sharedRetrieval.retrieveContext above.
-            userId: (req as any).user?.id || (req as any).userId || undefined,
-            documentIds: governedAttachmentDocIds,
-          });
-
-          if (Array.isArray(chunks) && chunks.length > 0) {
-            attachmentChunksInjected = true;
-            emitSSE({
-              type: 'thought',
-              step: 'attachments',
-              status: 'completed',
-              label: `Found ${chunks.length} relevant fragment(s) across ${governedAttachmentDocIds.length} attachment(s).`,
+        if (governedAttachmentDocIds.length > 0)
+          try {
+            const ragModule = await import('../services/ragService.js');
+            const ragService = (ragModule.default || ragModule) as any;
+            const chunks = await ragService.searchRelevantChunks(message, {
+              limit: 5,
+              organizationId: req.organizationId || undefined,
+              // FIX-2 (dyżur 210): thread the real requester so an owner-aware
+              // access filter (ragService.appendKnowledgeDocAccessFilter) can
+              // see their own private docs. Same identity resolution as
+              // sharedRetrieval.retrieveContext above.
+              userId: (req as any).user?.id || (req as any).userId || undefined,
+              documentIds: governedAttachmentDocIds,
             });
-            const attachmentsText = chunks
-              .slice(0, 5)
-              .map((c: any, i: number) => {
+
+            if (Array.isArray(chunks) && chunks.length > 0) {
+              attachmentChunksInjected = true;
+              emitSSE({
+                type: 'thought',
+                step: 'attachments',
+                status: 'completed',
+                label: `Found ${chunks.length} relevant fragment(s) across ${governedAttachmentDocIds.length} attachment(s).`,
+              });
+              const attachmentsText = chunks
+                .slice(0, 5)
+                .map((c: any, i: number) => {
+                  const source = String(c?.source || 'Attachment');
+                  const content = String(c?.content || '').trim();
+                  return `[A${i + 1}] ${source}\n${content}`;
+                })
+                .join('\n\n');
+              const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
                 const source = String(c?.source || 'Attachment');
-                const content = String(c?.content || '').trim();
-                return `[A${i + 1}] ${source}\n${content}`;
-              })
-              .join('\n\n');
-            const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
-              const source = String(c?.source || 'Attachment');
-              return {
-                id: `attachment_${i + 1}`,
-                type: 'document',
-                title: source,
-                reference: source,
-                excerpt: String(c?.content || '')
-                  .trim()
-                  .slice(0, 500),
-                // GF-CHAT-02 fragment anchor: real chunk ordinal
-                // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
-                // `null` — never a fabricated `0` — when the source has none.
-                fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
-              };
-            });
-            emitSSE({ type: 'citations', citations: attachmentCitations });
-            hasGovernedGrounding = true;
+                return {
+                  id: `attachment_${i + 1}`,
+                  type: 'document',
+                  title: source,
+                  reference: source,
+                  excerpt: String(c?.content || '')
+                    .trim()
+                    .slice(0, 500),
+                  // GF-CHAT-02 fragment anchor: real chunk ordinal
+                  // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
+                  // `null` — never a fabricated `0` — when the source has none.
+                  fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
+                };
+              });
+              emitSSE({ type: 'citations', citations: attachmentCitations });
+              hasGovernedGrounding = true;
 
-            pipelineRequest = {
-              ...pipelineRequest,
-              options: {
-                ...(pipelineRequest.options || {}),
-                systemInstruction:
-                  String((pipelineRequest.options as any)?.systemInstruction || '') +
-                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
-              },
-              context: {
-                ...((pipelineRequest as any).context || {}),
-                external: {
-                  ...(context as any)?.external,
-                  attachmentsRag: {
-                    documentIds: governedAttachmentDocIds,
-                    chunks,
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
+                },
+                context: {
+                  ...((pipelineRequest as any).context || {}),
+                  external: {
+                    ...(context as any)?.external,
+                    attachmentsRag: {
+                      documentIds: governedAttachmentDocIds,
+                      chunks,
+                    },
                   },
                 },
-              },
-            } as any;
+              } as any;
 
-            if (chatRunId) {
-              import('../services/ai/chatTraceService.js')
-                .then((m: any) =>
-                  (m.default || m).addEvent(chatRunId, 'attachment_rag', {
-                    attachmentDocIdsCount: governedAttachmentDocIds.length,
-                    chunksCount: chunks.length,
-                  })
-                )
-                .catch(() => {
-                  /* ignore */
-                });
+              if (chatRunId) {
+                import('../services/ai/chatTraceService.js')
+                  .then((m: any) =>
+                    (m.default || m).addEvent(chatRunId, 'attachment_rag', {
+                      attachmentDocIdsCount: governedAttachmentDocIds.length,
+                      chunksCount: chunks.length,
+                    })
+                  )
+                  .catch(() => {
+                    /* ignore */
+                  });
+              }
             }
+          } catch (err: any) {
+            logger.warn(
+              '[AI Stream] Attachment RAG failed, continuing without it:',
+              err?.message || String(err)
+            );
           }
-        } catch (err: any) {
-          logger.warn(
-            '[AI Stream] Attachment RAG failed, continuing without it:',
-            err?.message || String(err)
-          );
-        }
 
         // Fallback: if RAG returned no chunks (e.g. embedding failure, query mismatch),
         // load raw chunks directly from DB to ensure the AI always sees attachment content.
@@ -5000,9 +5001,8 @@ router.post(
             writeProposalTools: {
               context: {
                 onProposalToolCall: async (toolName: string, args: unknown) => {
-                  const { checkChatPermission } = await import(
-                    '../services/chatPermissionService.js'
-                  );
+                  const { checkChatPermission } =
+                    await import('../services/chatPermissionService.js');
                   const chatPermission = await checkChatPermission(
                     String(req.userId || ''),
                     String(req.organizationId || ''),
@@ -5012,7 +5012,8 @@ router.post(
                     return {
                       status: 'PROPOSAL_REJECTED',
                       tool: toolName,
-                      message: chatPermission.reason || 'Write permission denied; no change was made.',
+                      message:
+                        chatPermission.reason || 'Write permission denied; no change was made.',
                     };
                   }
 
@@ -5120,7 +5121,6 @@ router.post(
           ).slice(0, 160)}`
         );
       }
-
 
       // Day206 / 17-B: READ-only tool loop. The executor stays on the existing
       // governed path; no raw result is ever emitted through SSE.
@@ -5405,14 +5405,28 @@ router.post(
         if (isClientConnected && !streamAborted) {
           // If the stream iterator threw (e.g. Gemini 429 rate limit), send a clear error.
           if (streamIterationError) {
-            const errMsg = String(streamIterationError?.message || 'Stream failed');
-            const isRateLimit = /quota|rate.limit|429|too many/i.test(errMsg);
+            // N3 (zgloszenie `6c07439e`): TIMEOUT dostawcy wychodzil stad jako
+            // bezimienny `STREAM_ERROR` z surowa trescia bledu, wiec narzedzie
+            // nie potrafilo odroznic „AI nie zdazylo" od „AI padlo" i nie mialo
+            // czego pokazac uzytkownikowi. `mapProviderError` ma juz kanoniczny
+            // `AI_TIMEOUT` (504, retryable) — uzywamy go zamiast wlasnej heurystyki,
+            // a tresc dostawcy zostaje w logu (kontrakt CHAT-OWN-016).
+            const mapped = mapProviderError(streamIterationError, {
+              legacyCode:
+                classifyProviderError(streamIterationError) === 'AI_RATE_LIMIT'
+                  ? 'RATE_LIMIT'
+                  : 'STREAM_ERROR',
+            });
+            logger.error(
+              `[Stream] Iterator error (mapped ${mapped.errorCode}): ${mapped.logMessage.slice(0, 300)}`
+            );
             res.write(
               `data: ${JSON.stringify({
-                error: isRateLimit
-                  ? 'LLM rate limit exceeded. Please wait a moment or switch to a different model tier.'
-                  : `AI stream error: ${errMsg.slice(0, 200)}`,
-                code: isRateLimit ? 'RATE_LIMIT' : 'STREAM_ERROR',
+                error: mapped.safeMessage,
+                code: mapped.legacyCode,
+                errorCode: mapped.errorCode,
+                httpStatus: mapped.httpStatus,
+                retryable: mapped.retryable,
               })}\n\n`
             );
           } else if (!accumulatedContent || accumulatedContent.trim().length === 0) {
@@ -6604,14 +6618,16 @@ router.get(
         organizationId: req.organizationId,
         error: err instanceof Error ? err.message : String(err),
       });
-      return res.status(503).json(
-        toSafeErrorBody(
-          mapProviderError(
-            { code: 'PARTIAL_RECOVERY_UNAVAILABLE' },
-            { legacyCode: 'PARTIAL_RECOVERY_UNAVAILABLE' }
+      return res
+        .status(503)
+        .json(
+          toSafeErrorBody(
+            mapProviderError(
+              { code: 'PARTIAL_RECOVERY_UNAVAILABLE' },
+              { legacyCode: 'PARTIAL_RECOVERY_UNAVAILABLE' }
+            )
           )
-        )
-      );
+        );
     }
   })
 );
@@ -6699,11 +6715,13 @@ router.post(
     const refinedText = String(result?.content || result?.text || '').trim();
 
     if (!refinedText) {
-      return res.status(502).json(
-        toSafeErrorBody(
-          mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
-        )
-      );
+      return res
+        .status(502)
+        .json(
+          toSafeErrorBody(
+            mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
+          )
+        );
     }
 
     return res.json({ text: refinedText });
@@ -6782,11 +6800,13 @@ router.post(
     const responseText = String(result?.content || result?.text || '').trim();
 
     if (!responseText) {
-      return res.status(502).json(
-        toSafeErrorBody(
-          mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
-        )
-      );
+      return res
+        .status(502)
+        .json(
+          toSafeErrorBody(
+            mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
+          )
+        );
     }
 
     return res.json({ response: responseText });
@@ -6967,7 +6987,7 @@ router.get(
       return res.json(info);
     } catch (err: any) {
       logger.error('[AI Routes] Policy GET error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -6987,7 +7007,7 @@ router.patch(
       return res.json(result);
     } catch (err: any) {
       logger.error('[AI Routes] Policy PATCH error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7009,7 +7029,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7035,7 +7055,7 @@ router.get(
       const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
       return res.json(memory);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7073,7 +7093,7 @@ router.post(
       );
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7087,7 +7107,7 @@ router.get(
       const preferences = await AIMemoryManager.getUserPreferences(req.userId!);
       return res.json(preferences);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7102,7 +7122,7 @@ router.patch(
       const result = await AIMemoryManager.updateUserPreferences(req.userId!, req.body);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7130,7 +7150,7 @@ router.delete(
       const result = await AIMemoryManager.clearProjectMemory(req.params.projectId);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7148,7 +7168,7 @@ router.get(
         ...memory,
       });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7166,7 +7186,7 @@ router.patch(
       const result = await AIMemoryManager.updateOrganizationMemory(req.organizationId!, req.body);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7184,7 +7204,7 @@ router.delete(
       const result = await AIMemoryManager.clearOrganizationMemory(req.organizationId!);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7219,7 +7239,7 @@ router.post(
       );
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7239,7 +7259,7 @@ router.get(
       );
       return res.json(actions);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7259,7 +7279,7 @@ router.patch(
       });
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7279,7 +7299,7 @@ router.patch(
       });
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7298,7 +7318,7 @@ router.post(
       });
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7351,7 +7371,9 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[AI] Action Center error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error'), actions: [] });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error'), actions: [] });
     }
   })
 );
@@ -7395,7 +7417,9 @@ router.get(
       return res.json({ success: true, runs });
     } catch (err: any) {
       logger.error('[AI] Run Ledger error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error'), runs: [] });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error'), runs: [] });
     }
   })
 );
@@ -7420,7 +7444,9 @@ router.get(
       return res.json({ success: true, audit });
     } catch (err: any) {
       logger.error('[AI] Action audit error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7448,7 +7474,7 @@ router.get(
       return res.json({ proposals });
     } catch (err: any) {
       logger.error('[AI] Unified proposals read error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -7506,7 +7532,7 @@ router.get(
         });
         return;
       }
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8015,7 +8041,7 @@ router.get(
       });
       return res.json(logs);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8034,7 +8060,7 @@ router.get(
       );
       return res.json(stats);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8051,7 +8077,7 @@ router.post(
       const result = await AIAuditLogger.recordUserDecision(req.params.id, decision, feedback);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8096,7 +8122,7 @@ router.get(
         explanations,
       });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8169,7 +8195,7 @@ router.get(
       );
       return res.json(exportData);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8202,7 +8228,7 @@ router.get(
     } catch (err: any) {
       return res.status(500).json({
         status: 'error',
-        ...mapAppErrorResponse((err as Error), req, 'error'),
+        ...mapAppErrorResponse(err as Error, req, 'error'),
       });
     }
   })
@@ -8219,7 +8245,7 @@ router.post(
     } catch (err: any) {
       return res.status(500).json({
         status: 'error',
-        ...mapAppErrorResponse((err as Error), undefined, 'error'),
+        ...mapAppErrorResponse(err as Error, undefined, 'error'),
       });
     }
   })
@@ -8244,7 +8270,7 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Suggestions error:', err);
       return res.status(500).json({
-        ...mapAppErrorResponse((err as Error), req, 'error'),
+        ...mapAppErrorResponse(err as Error, req, 'error'),
         suggestions: [],
       });
     }
@@ -8272,7 +8298,7 @@ router.post(
     } catch (err: any) {
       logger.error('[AI] Suggestions error:', err);
       return res.status(500).json({
-        ...mapAppErrorResponse((err as Error), req, 'error'),
+        ...mapAppErrorResponse(err as Error, req, 'error'),
         suggestions: [],
       });
     }
@@ -8297,7 +8323,9 @@ router.get(
       return res.json({ success: true, patterns: [] });
     } catch (err: any) {
       logger.error('[AI] Get patterns error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8368,7 +8396,9 @@ router.post(
       return res.json(result);
     } catch (err: any) {
       logger.error('[AI] Approve action error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8391,7 +8421,9 @@ router.post(
       return res.json(result);
     } catch (err: any) {
       logger.error('[AI] Reject action error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8424,7 +8456,9 @@ router.get(
       return res.json({ success: true, actions: actionsWithPatterns });
     } catch (err: any) {
       logger.error('[AI] Get pending actions error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error'), actions: [] });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error'), actions: [] });
     }
   })
 );
@@ -8509,7 +8543,9 @@ router.post(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Feedback error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8567,7 +8603,9 @@ router.post(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Report error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8718,7 +8756,9 @@ router.get(
       return res.json({ success: true, suggestions });
     } catch (err: any) {
       logger.error('[AI] Proactive suggestions error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8742,7 +8782,9 @@ router.post(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Suggestion action error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8764,7 +8806,9 @@ router.get(
       return res.json({ success: true, metrics });
     } catch (err: any) {
       logger.error('[AI] Suggestion metrics error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8793,7 +8837,9 @@ router.post(
       return res.json({ success: true, metrics });
     } catch (err: any) {
       logger.error('[AI] Quality calculation error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8812,7 +8858,9 @@ router.get(
       return res.json({ success: true, metrics });
     } catch (err: any) {
       logger.error('[AI] Aggregate quality metrics error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8831,7 +8879,9 @@ router.get(
       return res.json({ success: true, trends });
     } catch (err: any) {
       logger.error('[AI] Quality trends error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8909,7 +8959,9 @@ router.get(
       return res.json({ success: true, ...status });
     } catch (err: any) {
       logger.error('[AI] Soft cap status error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res
+        .status(500)
+        .json({ success: false, ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8935,7 +8987,7 @@ router.post(
       return res.json({ success: true, initiative: result });
     } catch (err: any) {
       logger.error('[AI] Generate initiative error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8954,7 +9006,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Sense-check error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -8978,7 +9030,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Risk score error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9004,7 +9056,7 @@ router.post(
       return res.json({ success: true, narrative });
     } catch (err: any) {
       logger.error('[AI] Narrate error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9077,7 +9129,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Decision room error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9098,7 +9150,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Monte Carlo error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9122,7 +9174,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Document extraction error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9147,7 +9199,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Assessment question error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9167,7 +9219,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Assessment score error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9184,7 +9236,7 @@ router.get(
       const tier = (req as any).subscriptionTier || 'free';
       return res.json({ success: true, tier, limits: getTierLimits(tier) });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9201,7 +9253,7 @@ router.post(
       const { estimateTokenCount } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, estimatedTokens: estimateTokenCount(text, language) });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9215,7 +9267,7 @@ router.get(
       const { getCacheStats } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, ...getCacheStats() });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9231,7 +9283,7 @@ router.get(
       const { getIndustryBenchmark } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, benchmark: getIndustryBenchmark(industry) });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );
@@ -9244,7 +9296,7 @@ router.get(
       const { getAllIndustryBenchmarks } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, benchmarks: getAllIndustryBenchmarks() });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(err as Error, req, 'error') });
     }
   })
 );

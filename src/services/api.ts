@@ -2991,6 +2991,12 @@ export const Api = {
                   'TRIAL_EXPIRED',
                   'AI_LIMIT_REACHED',
                   'TRIAL_PROFILE_INCOMPLETE',
+                  // N3 (zgloszenie `6c07439e`): lista SSE rozjechala sie z lista HTTP
+                  // wyzej (`accessErrorCodes` przy non-OK) — blokada tokenow przychodzi
+                  // strumieniem ze statusem 200, wiec bez tych dwoch kodow uzytkownik
+                  // nie dostawal ANI komunikatu, ani modala; narzedzie po prostu milklo.
+                  'AI_TOKEN_BUDGET_EXCEEDED',
+                  'INSUFFICIENT_TOKENS',
                 ];
 
                 const dataCode =
@@ -3232,16 +3238,16 @@ export const Api = {
     const res = await fetch(
       `${API_URL}/organizations/${encodeURIComponent(orgId)}/export?format=json`,
       {
-      headers: getHeaders(),
+        headers: getHeaders(),
       }
     );
     if (!res.ok) {
       const message =
         res.status === 423
-        ? 'Organization export is unavailable while a legal hold is active.'
-        : res.status === 403 || res.status === 401
-          ? 'You do not have permission to export this organization.'
-          : 'Failed to export organization data. Please try again.';
+          ? 'Organization export is unavailable while a legal hold is active.'
+          : res.status === 403 || res.status === 401
+            ? 'You do not have permission to export this organization.'
+            : 'Failed to export organization data. Please try again.';
       throw Object.assign(new Error(message), { status: res.status });
     }
     return res.blob();
@@ -13138,7 +13144,7 @@ export const Api = {
     return getCachedJson(
       `${API_URL}/system-health/detailed`,
       30_000,
-      'Failed to fetch system health',
+      'Failed to fetch system health'
     );
   },
   getRecognitionSchedule: async (id: string) => {
