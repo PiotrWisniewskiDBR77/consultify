@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import type { PlanDependencyAnalysisResult } from '../../../services/ai/planDependencyAnalysisService.js';
 import { MaterialCommandConflictError } from '../materialCommand.js';
-import { createPlanAnalysisProposal } from '../planAnalysisProposal.js';
+import { createPlanAnalysisProposal, reviewPlanAnalysisProposal } from '../planAnalysisProposal.js';
 import { PostgresInitiativeReader } from '../postgresInitiativeReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../postgresMaterialCommandUnitOfWork.js';
 import type { PlanScenario } from '../planScenario.js';
@@ -208,6 +208,49 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
       foundationId,
       rolloutId,
     ]);
+
+    const reviewed = await reviewPlanAnalysisProposal(uow, {
+      organizationId,
+      actorId,
+      aggregateType: 'plan_analysis_proposal',
+      aggregateId: proposalId,
+      expectedVersion: 1,
+      clientRequestId: randomUUID(),
+      correlationId: randomUUID(),
+      policyId: 'dec-497-p2-e2',
+      policyVersion: 1,
+      commandType: 'plan-analysis.review',
+      payload: {
+        outcome: 'ACCEPT',
+        rationale: 'Reviewed both observations against the operating plan.',
+        observationReviews: dependencyAnalysis.observations.map((observation, index) => ({
+          observationId: observation.observationId,
+          outcome: index === 0 ? ('ACCEPTED' as const) : ('REJECTED' as const),
+          humanComment:
+            index === 0
+              ? 'Confirmed: the governed source must be delivered first.'
+              : 'Training may proceed with the sandbox cohort.',
+          finalObservation: {
+            ...observation,
+            rationale:
+              index === 0
+                ? 'Human-confirmed: the rollout consumes the governed source deliverable.'
+                : observation.rationale,
+          },
+        })),
+      },
+    });
+    expect(reviewed.response.acceptedDependencyObservations).toEqual([
+      expect.objectContaining({ observationId: 'absolute-source-before-rollout' }),
+    ]);
+    const reviewedStored = await pool.query<{ version: number; payload_json: Record<string, any> }>(
+      `SELECT version,payload_json FROM ie_aggregate_state
+        WHERE organization_id=$1 AND aggregate_type='plan_analysis_proposal' AND aggregate_id=$2`,
+      [organizationId, proposalId]
+    );
+    expect(reviewedStored.rows[0].version).toBe(2);
+    expect(reviewedStored.rows[0].payload_json.observationReviews).toHaveLength(2);
+    expect(reviewedStored.rows[0].payload_json.acceptedDependencyObservations).toHaveLength(1);
 
     await pool.query(
       `UPDATE ie_aggregate_state

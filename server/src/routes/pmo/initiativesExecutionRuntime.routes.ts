@@ -710,7 +710,27 @@ const PlanAnalysisReviewSchema = z.object({
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1),
   outcome: z.enum(['ACCEPT', 'REJECT']),
-  rationale: z.string().min(1),
+  rationale: z.string().trim().min(1),
+  observationReviews: z
+    .array(
+      z.object({
+        observationId: z.string().trim().min(1),
+        outcome: z.enum(['ACCEPTED', 'REJECTED']),
+        humanComment: z.string().trim().min(1).max(4_000),
+        finalObservation: z.object({
+          observationId: z.string().trim().min(1),
+          predecessorId: z.string().trim().min(1),
+          successorId: z.string().trim().min(1),
+          kind: z.enum(['ABSOLUTE', 'CONDITIONAL']),
+          condition: z.string().trim().min(1).max(2_000).nullable(),
+          rationale: z.string().trim().min(1).max(4_000),
+          evidenceRefs: z.array(z.string().trim().min(1)).min(1).max(12),
+          confidence: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+        }),
+      })
+    )
+    .max(500)
+    .optional(),
 });
 const CapacityRangeSchema = z.object({
   knowledgeState: z.enum(['KNOWN', 'ESTIMATED', 'UNKNOWN', 'UNCONFIRMED']),
@@ -4939,7 +4959,11 @@ export function createInitiativesExecutionRuntimeRouter(
         policyId: 'plan-analysis-review',
         policyVersion: 1,
         commandType: 'plan-analysis.review',
-        payload: { outcome: parsed.data.outcome, rationale: parsed.data.rationale },
+        payload: {
+          outcome: parsed.data.outcome,
+          rationale: parsed.data.rationale,
+          observationReviews: parsed.data.observationReviews,
+        },
       });
       res.json(result);
     })
