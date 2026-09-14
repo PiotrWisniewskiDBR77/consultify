@@ -1044,6 +1044,33 @@ wyjaśnienia — **Z-37**). Flagi: `VITE_INITIATIVES_WORKLOAD` + `ENABLE_INITIAT
 Z-2: integratory w toku: S5 PMO E3, RP1b, kosmetyka Q1; worktree usunięte: `fala-b4`,
 `q1-obciazenie`.
 
+**S5 PMO E3 (Codex, fundament fali F) — ODEBRANE i WDROŻONE na staging (push `7332fa2a6f`; run
+`34832477666` „failure" = timeout czekania na Railway, wdrożenie realne: health `7332fa2a6f`;
+migracja `20262190` zaaplikowana przez release-migration-gate na stagingu — log Applying 1, PASS
+checks=12; tag `staging-deployed` nadal `3e1363d01a` — Z-35).** Linia `94754c3b4d`/`a3d2e5e207` →
+merge `1e86081ca0` (kandydat `1afbeec41e`, 0 konfliktów; wykrywacz duplikatów 0) → `7332fa2a6f`;
+tag cofnięcia `rollback-pre-s5-pmo-20260914` = `257e851d94`; testy 14 plików delty 35/35 (front
+20, serwer 5, RealPG 10) + powtórka po merge; sonda CTO 6/6 (ADMIN `POST /api/pmo/projects` 201;
+rola+alokacja 201; bramka bez kryteriów 400 `Gate not ready` + 0 wierszy `stage_gates`;
+TASK_ASSIGNEE/org OWNER bez roli projektowej 403 — DEC-504 fail-closed dwuwarstwowo: middleware
+`gate.approve` enforce + rola z `project_members` w tej samej transakcji; PASSED z pokwitowaniem,
+faza → Assessment; CLOSURE bez KPI 400); parytet OFF: `VITE_PMO_PROJECTS === 'true'` (jedno
+wyrażenie, test na rozdzielone `import.meta.env`), `/projects` → `/my-work`, bundle 0×
+`pmo.projects.*`, brak pozycji w menu; flaga na stagingu nieustawiona; kanon w powłoce ✓ (Menu 1,
+okruszki, StandardModuleBar z Menu 2 Projekty|Programy, Menu 3 chipy, CTA „Nowy projekt" neutralne,
+StandardTable + kebab, StandardPreview z 5 bramkami; light/dark różne); bramka tsc 0/189 (0 z
+delty), canon 349, artefakt 8-0-117, język OK, build OK (heap 12 GB — zastane). **Znaleziska:**
+(a) **Z-39** schemat poza migracjami: 4 suity RealPG S5 padają na bazie z samych migracji
+(`projects.current_phase` nie istnieje), przechodzą na schemacie stagingu — źródło kolumny do
+ustalenia; propozycja: migracja addytywna `ADD COLUMN IF NOT EXISTS` (Codex, STOP przed
+napisaniem) — KANAŁ wpis 39; (b) **Z-40** surowe podpisy faz w UI PMO („Assessment → Initiatives",
+„Roadmap → Execution") → etykiety i18n (Codex); (c) **Z-41** zrzuty PMO po polsku — DEC-461
+EN-first: przed pokazaniem właścicielowi zrzut EN; (d) **Z-24 nie domknięte** (zgłoszone):
+`passGate` zapisuje `requested_by = approved_by` = ten sam userId (brak czworga oczu),
+PROJECT_LEADER ma `initiative.review` + komplet wykonawczy; ciało 403 puste; OWNER widzi ocenę
+gotowości przed 403 → **S5 E3b** u Codexa (wpis 39). Zrzuty:
+`~/Developer/cto-codex/zrzuty-s5-pmo-20260914/` + README.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
