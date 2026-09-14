@@ -11,8 +11,9 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import enTranslation from '../../../../public/locales/en/translation.json';
 import type { V8InterviewApi, V8InterviewAssignment } from '@/services/api/v8/interview';
+
+import enTranslation from '../../../../public/locales/en/translation.json';
 
 const resolveEnKey = (key: string): string | undefined => {
   const value = key
@@ -75,7 +76,12 @@ const {
   setInterviewBreadcrumbs: vi.fn(),
   getMyAssignments: vi.fn<typeof V8InterviewApi.getMyAssignments>(),
   getSession: vi.fn(async () => null),
-  appStoreState: { currentProjectId: 'proj-1' as string | null, scopedReviewer: false },
+  appStoreState: {
+    currentProjectId: 'proj-1' as string | null,
+    scopedReviewer: false,
+    canAssign: true,
+    canViewInsights: true,
+  },
 }));
 
 vi.mock('@/services/api', () => ({
@@ -112,11 +118,11 @@ vi.mock('@/services/api/v8/interview', () => ({
 
 vi.mock('@/hooks/useInterviewPermissions', () => ({
   useInterviewPermissions: () => ({
-    canAssign: true,
+    canAssign: appStoreState.canAssign,
     canViewManaged: !appStoreState.scopedReviewer,
     canViewOverdue: true,
     canSendReminder: true,
-    canViewInsights: true,
+    canViewInsights: appStoreState.canViewInsights,
     canCreateInsights: true,
     canReviewInsights: true,
     canPublishInsights: true,
@@ -196,6 +202,8 @@ beforeEach(() => {
   setCurrentProjectId.mockReset();
   appStoreState.currentProjectId = 'proj-1';
   appStoreState.scopedReviewer = false;
+  appStoreState.canAssign = true;
+  appStoreState.canViewInsights = true;
   getMyAssignments.mockReset();
   getMyAssignments.mockResolvedValue({ assignments: [] });
   getSession.mockReset();
@@ -296,5 +304,24 @@ describe('Interview notification record read without list membership', () => {
     );
     expect(screen.queryByRole('button', { name: 'accept canonical assignment' })).toBeNull();
     expect(getSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('Interview Hub capability-scoped supporting data', () => {
+  it('does not request manager-only templates or insights for a respondent', async () => {
+    appStoreState.canAssign = false;
+    appStoreState.canViewInsights = false;
+    renderTab('my_assignments');
+
+    await waitFor(() => expect(getMyAssignments).toHaveBeenCalled());
+    expect(apiGet).not.toHaveBeenCalledWith('/interview/templates');
+    expect(listInsights).not.toHaveBeenCalled();
+  });
+
+  it('keeps loading templates and insights for an authorized manager', async () => {
+    renderTab('templates');
+
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/interview/templates'));
+    expect(listInsights).toHaveBeenCalledTimes(1);
   });
 });
