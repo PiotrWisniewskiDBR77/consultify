@@ -11,6 +11,10 @@ export function verifyClassificationInventory(inventory, options = {}) {
   const requiredColumnExclusions = options.requiredColumnExclusions ?? new Map();
   const requiredLifecycleStateExports = options.requiredLifecycleStateExports ?? new Set();
   const requireLifecycleStateCompleteness = options.requireLifecycleStateCompleteness ?? false;
+  const v8Dispositions = options.v8Dispositions ?? new Map();
+  const requireV8DispositionCompleteness = options.requireV8DispositionCompleteness ?? false;
+  const publicDispositions = options.publicDispositions ?? new Map();
+  const requirePublicDispositionCompleteness = options.requirePublicDispositionCompleteness ?? false;
   const validateSemanticEvidence = options.validateSemanticEvidence ?? false;
   const rows = Array.isArray(inventory?.tables) ? inventory.tables : [];
   const byIdentity = new Map();
@@ -146,6 +150,31 @@ export function verifyClassificationInventory(inventory, options = {}) {
             }
             continue;
           }
+          if (evidence.kind === 'PUBLIC_BUSINESS_DISPOSITION') {
+            if (
+              evidence.path !==
+              'docs/ssot/organization-export-public-business-dispositions.e1.json'
+            ) continue;
+            try {
+              const policy = JSON.parse(fs.readFileSync(absolute, 'utf8'));
+              const disposition = policy.entries?.find((entry) => entry.identity === identity);
+              if (!disposition || disposition.classification !== 'EXPORT') continue;
+              accepted ||= (disposition.runtimeReferences ?? []).some((reference) => {
+                const match = /^(server\/src\/[^:]+):(\d+)$/.exec(reference);
+                if (!match) return false;
+                const runtimePath = path.resolve(repositoryRoot, match[1]);
+                if (!fs.existsSync(runtimePath)) return false;
+                const line = fs.readFileSync(runtimePath, 'utf8').split(/\r?\n/)[Number(match[2]) - 1] ?? '';
+                return new RegExp(`\\b${row.table.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`).test(line);
+              });
+              if (!accepted && identity === 'public._v8_flag_backup_20260710') {
+                accepted = disposition.snapshotRows === 0 && disposition.runtimeReferences?.length === 0;
+              }
+            } catch {
+              // Invalid disposition is not evidence.
+            }
+            continue;
+          }
           if (!Number.isInteger(evidence.line) || evidence.line < 1) continue;
           if (!evidence.path.startsWith('server/src/')) continue;
           const source = fs
@@ -235,6 +264,52 @@ export function verifyClassificationInventory(inventory, options = {}) {
     ) {
       reject(identity, 'EXCLUDE_SECURITY requires an explicit exclusionBasis');
     }
+    if (requirePublicDispositionCompleteness && row.schema === 'public' && row.exclusionBasis === 'ACTIVE_SEMANTIC_POLICY_MISSING') {
+      reject(identity, 'active public business relation remains semantically unresolved');
+    }
+    if (requirePublicDispositionCompleteness && publicDispositions.has(identity)) {
+      const disposition = publicDispositions.get(identity);
+      if (row.classification !== disposition.classification) {
+        reject(identity, 'classification differs from exact public business disposition');
+      }
+      if (row.family !== disposition.family) {
+        reject(identity, 'family differs from exact public business disposition');
+      }
+    }
+    if (
+      requirePublicDispositionCompleteness &&
+      row.schema === 'public' &&
+      row.semanticEvidence?.some((evidence) => evidence?.kind === 'PUBLIC_BUSINESS_DISPOSITION') &&
+      !publicDispositions.has(identity)
+    ) {
+      reject(identity, 'exact public business disposition entry is missing');
+    }
+    if (row.schema === 'v8' && row.classification === 'EXCLUDE_SECURITY' && requireV8DispositionCompleteness) {
+      const disposition = v8Dispositions.get(identity);
+      if (!disposition) {
+        reject(identity, 'excluded v8 relation requires an exact reviewed disposition');
+      } else {
+        if (row.v8Disposition !== disposition.disposition) {
+          reject(identity, 'classification v8Disposition differs from reviewed disposition');
+        }
+        if (
+          !['HISTORICAL_PARALLEL_SCHEMA_COPY', 'INACTIVE_SCHEMA_ONLY_RELATION', 'SECURITY_CREDENTIAL_STATE'].includes(
+            disposition.disposition
+          )
+        ) {
+          reject(identity, 'unknown v8 disposition');
+        }
+        if (disposition.snapshotRows !== 0) {
+          reject(identity, 'inactive v8 disposition requires measured zero snapshot rows');
+        }
+        if (!Array.isArray(disposition.activeSchemaQualifiedWriterEvidence) || disposition.activeSchemaQualifiedWriterEvidence.length !== 0) {
+          reject(identity, 'inactive v8 disposition cannot retain active qualified writer evidence');
+        }
+        if (!Array.isArray(disposition.sourceEvidence) || disposition.sourceEvidence.length < 3) {
+          reject(identity, 'v8 disposition requires DDL, live count, and active-writer evidence');
+        }
+      }
+    }
   }
 
   const measured = {
@@ -256,6 +331,19 @@ export function verifyClassificationInventory(inventory, options = {}) {
   for (const identity of requiredLifecycleStateExports) {
     if (byIdentity.get(identity)?.classification !== 'EXPORT') {
       reject(identity, 'required lifecycle-state policy must identify an EXPORT relation');
+    }
+  }
+  if (requireV8DispositionCompleteness) {
+    for (const identity of v8Dispositions.keys()) {
+      const row = byIdentity.get(identity);
+      if (row?.schema !== 'v8' || row?.classification !== 'EXCLUDE_SECURITY') {
+        reject(identity, 'v8 disposition must map exactly to an excluded schema-v8 relation');
+      }
+    }
+  }
+  if (requirePublicDispositionCompleteness) {
+    for (const identity of publicDispositions.keys()) {
+      if (!byIdentity.has(identity)) reject(identity, 'public business disposition identity is absent');
     }
   }
   if (measured.classified + measured.unresolved !== measured.total) {
@@ -341,19 +429,27 @@ export function verifyClassificationInventory(inventory, options = {}) {
 }
 
 function runCli() {
-  const path = process.argv[2];
+  const inventoryPath = process.argv[2];
   const exclusionsPath = process.argv[3];
   const lifecycleStatePath = process.argv[4];
-  if (!path || !exclusionsPath || !lifecycleStatePath) {
+  const v8DispositionsPath = process.argv[5];
+  if (!inventoryPath || !exclusionsPath || !lifecycleStatePath || !v8DispositionsPath) {
     console.error(
-      'usage: verify-organization-export-classification.mjs <inventory.json> <required-exclusions.json> <required-lifecycle-state.json>'
+      'usage: verify-organization-export-classification.mjs <inventory.json> <required-exclusions.json> <required-lifecycle-state.json> <v8-dispositions.json>'
     );
     process.exitCode = 2;
     return;
   }
-  const inventory = JSON.parse(fs.readFileSync(path, 'utf8'));
+  const inventory = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
   const exclusions = JSON.parse(fs.readFileSync(exclusionsPath, 'utf8'));
   const lifecycleState = JSON.parse(fs.readFileSync(lifecycleStatePath, 'utf8'));
+  const v8DispositionDocument = JSON.parse(fs.readFileSync(v8DispositionsPath, 'utf8'));
+  const publicDispositionDocument = JSON.parse(
+    fs.readFileSync(
+      path.resolve(process.cwd(), 'docs/ssot/organization-export-public-business-dispositions.e1.json'),
+      'utf8'
+    )
+  );
   const requiredColumnExclusions = new Map(
     exclusions.tables.map((row) => [`${row.schema}.${row.table}`, row.columns])
   );
@@ -363,6 +459,10 @@ function runCli() {
       lifecycleState.tables.map((row) => `${row.schema}.${row.table}`)
     ),
     requireLifecycleStateCompleteness: true,
+    v8Dispositions: new Map(v8DispositionDocument.entries.map((row) => [row.identity, row])),
+    requireV8DispositionCompleteness: true,
+    publicDispositions: new Map(publicDispositionDocument.entries.map((row) => [row.identity, row])),
+    requirePublicDispositionCompleteness: true,
     validateSemanticEvidence: true,
   });
   if (result.errors.length) {

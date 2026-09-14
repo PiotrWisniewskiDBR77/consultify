@@ -14,7 +14,14 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-SKIP_NAMES = {"PostgresDatabase.ts", "DatabaseInitializer.ts", "conflictTargets.ts"}
+# Generated export policy is an output of classification, never independent
+# evidence that a business relation has a real writer or reviewed source.
+SKIP_NAMES = {
+    "PostgresDatabase.ts",
+    "DatabaseInitializer.ts",
+    "conflictTargets.ts",
+    "organizationExportEnterpriseContract.generated.ts",
+}
 SQL_REFERENCE = re.compile(
     r"\b(?P<verb>INSERT\s+INTO|UPDATE|DELETE\s+FROM|FROM|JOIN)\s+(?:(?P<schema>public|v8)\.)?[\"`']?(?P<table>[A-Za-z_][A-Za-z0-9_]*)[\"`']?",
     re.I,

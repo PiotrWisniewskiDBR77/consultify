@@ -86,6 +86,7 @@ EXACT_COLUMN_EXCLUSIONS = {
 BUSINESS_LIFECYCLE_STATE_TABLES = {
     "public.artifact_handoff_proposals",
     "public.artifact_lineage_operation_claims",
+    "public.finance_prediction_conflict_resolutions",
     "public.chat_target_mapping_receipts",
     "public.lane_decisions",
     "public.method_sessions",
@@ -193,13 +194,25 @@ def compute_paths(rows: list[dict]) -> dict[str, list[dict]]:
     return paths
 
 
-def materialize(inventory: dict, approved: dict, semantic_index: dict | None = None) -> dict:
+def materialize(inventory: dict, approved: dict, semantic_index: dict | None = None, v8_dispositions: dict | None = None, public_dispositions: dict | None = None) -> dict:
     rows = copy.deepcopy(inventory["tables"])
     by_id = {identity(row): row for row in rows}
     approved_by_id = {f"{row['schema']}.{row['table']}": row for row in approved["tables"]}
     semantic_by_id = {
         f"{row['schema']}.{row['table']}": row for row in (semantic_index or {}).get("entries", [])
     }
+    v8_disposition_by_id = {
+        row["identity"]: row for row in (v8_dispositions or {}).get("entries", [])
+    }
+    public_disposition_by_id = {
+        row["identity"]: row for row in (public_dispositions or {}).get("entries", [])
+    }
+    expected_inactive_v8 = {
+        table_id for table_id, row in semantic_by_id.items()
+        if table_id.startswith("v8.") and not row.get("sources")
+    }
+    if v8_dispositions is not None and set(v8_disposition_by_id) != expected_inactive_v8:
+        raise ValueError("v8 dispositions must exactly cover schema-v8 relations without qualified active writers")
     missing_credentials = sorted(CREDENTIAL_TABLES - by_id.keys())
     if missing_credentials:
         raise ValueError(f"credential identities missing from live inventory: {missing_credentials}")
@@ -208,12 +221,34 @@ def materialize(inventory: dict, approved: dict, semantic_index: dict | None = N
         raise ValueError(f"approved identities missing from live inventory: {missing_approved}")
 
     paths = compute_paths(rows)
+    expected_public_dispositions = {
+        table_id for table_id in paths
+        if table_id.startswith("public.")
+        and table_id not in approved_by_id
+        and table_id not in SEMANTIC_OVERRIDES
+        and table_id not in CREDENTIAL_TABLES
+        and not semantic_by_id.get(table_id, {}).get("sources")
+        and table_id not in DERIVED_OVERRIDES
+    }
+    if public_dispositions is not None and set(public_disposition_by_id) != expected_public_dispositions:
+        raise ValueError("public dispositions must exactly cover tenant-owned public relations without semantic writer evidence")
     decisions = []
     for table_id in sorted(by_id):
         row = by_id[table_id]
         base = {"schema": row["schema"], "table": row["table"]}
         if table_id in DERIVED_OVERRIDES:
             decision = {**base, "category": "DERIVED", **DERIVED_OVERRIDES[table_id]}
+        elif table_id in public_disposition_by_id and public_disposition_by_id[table_id]["classification"] == "EXCLUDE_SECURITY":
+            disposition = public_disposition_by_id[table_id]
+            decision = {
+                **base,
+                "category": "EXCLUDE_SECURITY",
+                "family": disposition["family"],
+                "reason": disposition["reason"],
+                "sourceEvidence": "; ".join(disposition["sourceEvidence"]),
+                "exclusionBasis": disposition["exclusionBasis"],
+                "publicDisposition": True,
+            }
         elif table_id in CREDENTIAL_TABLES:
             decision = {
                 **base,
@@ -223,14 +258,27 @@ def materialize(inventory: dict, approved: dict, semantic_index: dict | None = N
                 "sourceEvidence": f"staging-schema-inventory.json::{table_id}; reviewed exact credential identity list",
                 "exclusionBasis": "CREDENTIAL_OR_SESSION_MATERIAL",
             }
+        elif table_id in v8_disposition_by_id:
+            disposition = v8_disposition_by_id[table_id]
+            decision = {
+                **base,
+                "category": "EXCLUDE_SECURITY",
+                "family": "V8_CREDENTIAL_SECURITY" if disposition["disposition"] == "SECURITY_CREDENTIAL_STATE" else "V8_HISTORICAL_INACTIVE",
+                "reason": disposition["reason"],
+                "sourceEvidence": "; ".join(disposition["sourceEvidence"]),
+                "exclusionBasis": disposition["exclusionBasis"],
+                "v8Disposition": disposition["disposition"],
+            }
         elif table_id in paths and (
             table_id in approved_by_id
             or semantic_by_id.get(table_id, {}).get("sources")
             or table_id in SEMANTIC_OVERRIDES
+            or public_disposition_by_id.get(table_id, {}).get("classification") == "EXPORT"
         ):
             previous = approved_by_id.get(table_id, {})
             semantic = semantic_by_id.get(table_id, {})
             override_family, override_source = SEMANTIC_OVERRIDES.get(table_id, (None, None))
+            public_disposition = public_disposition_by_id.get(table_id)
             column = direct_column(row)
             if table_id == "public.organizations":
                 ownership = {"kind": "ORGANIZATION_ROOT", "column": "id"}
@@ -244,14 +292,17 @@ def materialize(inventory: dict, approved: dict, semantic_index: dict | None = N
             decision = {
                 **base,
                 "category": "EXPORT",
-                "family": previous.get("family", override_family or semantic.get("family", "SEMANTIC_SOURCE_MISSING")),
+                "family": previous.get("family", public_disposition.get("family") if public_disposition else override_family or semantic.get("family", "SEMANTIC_SOURCE_MISSING")),
                 "reason": previous.get(
                     "reason",
                     "The live schema proves this tenant-owned relation through an exact organization discriminator or foreign-key path.",
                 ),
-                "sourceEvidence": previous.get("sourceEvidence", override_source or semantic.get("sourceEvidence", evidence)),
+                "sourceEvidence": previous.get("sourceEvidence", "; ".join(public_disposition["sourceEvidence"]) if public_disposition else override_source or semantic.get("sourceEvidence", evidence)),
                 "ownership": ownership,
                 "semanticEvidence": (
+                    [{"kind": "PUBLIC_BUSINESS_DISPOSITION", "path": "docs/ssot/organization-export-public-business-dispositions.e1.json", "identity": table_id}]
+                    if public_disposition
+                    else
                     [{"kind": "EXPLICIT_POLICY", "path": "docs/ssot/organization-export-explicit-semantic-overrides.e1.json", "identity": table_id}]
                     if table_id in SEMANTIC_OVERRIDES
                     else semantic.get("sources", [])
@@ -339,6 +390,8 @@ def main() -> int:
     parser.add_argument("--approved", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--semantic-index", type=Path)
+    parser.add_argument("--v8-dispositions", type=Path)
+    parser.add_argument("--public-dispositions", type=Path)
     parser.add_argument("--csv-out", type=Path)
     parser.add_argument("--required-exclusions-out", type=Path)
     parser.add_argument("--required-lifecycle-state-out", type=Path)
@@ -347,6 +400,8 @@ def main() -> int:
         json.loads(args.inventory.read_text(encoding="utf-8")),
         json.loads(args.approved.read_text(encoding="utf-8")),
         json.loads(args.semantic_index.read_text(encoding="utf-8")) if args.semantic_index else None,
+        json.loads(args.v8_dispositions.read_text(encoding="utf-8")) if args.v8_dispositions else None,
+        json.loads(args.public_dispositions.read_text(encoding="utf-8")) if args.public_dispositions else None,
     )
     args.out.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.csv_out:
@@ -354,7 +409,7 @@ def main() -> int:
 
         with args.csv_out.open("w", encoding="utf-8", newline="") as handle:
             fieldnames = ("schema", "table", "category", "family", "reason", "sourceEvidence", "exclusionBasis", "ownership")
-            writer = csv.DictWriter(handle, fieldnames=fieldnames)
+            writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
             writer.writeheader()
             for decision in result["tables"]:
                 writer.writerow(

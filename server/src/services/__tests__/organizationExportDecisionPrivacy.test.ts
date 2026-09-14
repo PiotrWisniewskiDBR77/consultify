@@ -512,7 +512,7 @@ describe('Decision source-aware export JSON CSV', () => {
   it.each([
     ['public', false, 'admin', true],
     ['respondent', true, 'respondent', true],
-    ['other admin', true, 'admin', false],
+    ['other admin', true, 'admin', true],
   ] as const)(
     'exports %s with actor-scoped body and private supplemental exclusion',
     async (_name, anonymous, actor, allowed) => {
@@ -608,7 +608,7 @@ describe('Decision prompt-input privacy', () => {
         actorId: 'admin',
       });
       for (const serialized of [JSON.stringify(result), organizationExportToCsv(result)]) {
-        expect(serialized).not.toContain('FINDING');
+        expect(serialized).toContain('FINDING');
         expect(serialized).not.toContain('PRIVATE_PROMPT_SENTINEL');
       }
       expect(result.tables.decisions).toHaveLength(1);
@@ -646,8 +646,10 @@ describe('Decision evidence-linked KB privacy', () => {
       const result = await exportOrganizationData(engineClient(f), 'a', contracts, {
         actorId: 'admin',
       });
-      for (const serialized of [JSON.stringify(result), organizationExportToCsv(result)])
-        expect(serialized).not.toContain('FINDING');
+      for (const serialized of [JSON.stringify(result), organizationExportToCsv(result)]) {
+        expect(serialized).toContain('FINDING');
+        expect(serialized).not.toContain('private-doc');
+      }
       expect(result.tables.decisions).toHaveLength(1);
       expect(JSON.stringify(f)).toBe(before);
     }

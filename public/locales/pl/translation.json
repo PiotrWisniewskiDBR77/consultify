@@ -1,4 +1,15 @@
 {
+  "enterpriseExport": {
+    "action": "Eksportuj dane",
+    "preparing": "Przygotowywanie pełnego eksportu organizacji…",
+    "resuming": "Wznawianie eksportu organizacji…",
+    "ready": "Eksport organizacji jest gotowy ({{rows}} wierszy).",
+    "failedWithCode": "Eksport organizacji nie powiódł się ({{code}}). Możesz spróbować ponownie.",
+    "retry": "Ponów eksport",
+    "progressLabel": "Postęp eksportu organizacji",
+    "progressTables": "Tabele {{completed}} z {{total}}",
+    "rows": "Przetworzono {{rows}} wierszy"
+  },
   "actionCard": {
     "title": "Karta działania",
     "open": "Otwórz kartę",

@@ -5,8 +5,11 @@ import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 
 import archiver from 'archiver';
+import type { PoolClient } from 'pg';
 
 import type { OrganizationExportResult } from './organizationLifecycleService.js';
+import { ORGANIZATION_EXPORT_TABLES } from './organizationExportContract.js';
+import { exportOrganizationData } from './organizationExportService.js';
 
 interface ArchiveFileReceipt {
   path: string;
@@ -26,6 +29,8 @@ export interface OrganizationExportArchiveManifest {
   excludedTables: OrganizationExportResult['securityManifest']['excludedTables'];
   derivedTables: NonNullable<OrganizationExportResult['securityManifest']['derivedTables']>;
   notIncluded: NonNullable<OrganizationExportResult['securityManifest']['notIncluded']>;
+  unresolvedTables: OrganizationExportResult['securityManifest']['unresolvedTables'];
+  skippedReads: OrganizationExportResult['skipped'];
   complete: boolean;
 }
 
@@ -59,11 +64,17 @@ const safeIdentity = (identity: string): string => {
 };
 
 async function receipt(root: string, relative: string, rows: number): Promise<ArchiveFileReceipt> {
-  const bytes = await fs.readFile(path.join(root, relative));
+  const hash = createHash('sha256');
+  let bytes = 0;
+  for await (const chunk of createReadStream(path.join(root, relative))) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    bytes += buffer.byteLength;
+    hash.update(buffer);
+  }
   return {
     path: relative,
-    sha256: createHash('sha256').update(bytes).digest('hex'),
-    bytes: bytes.length,
+    sha256: hash.digest('hex'),
+    bytes,
     rows,
   };
 }
@@ -90,6 +101,134 @@ async function writeTableFiles(
   return [await receipt(root, jsonPath, rows.length), await receipt(root, csvPath, rows.length)];
 }
 
+interface StreamingTableState {
+  jsonPath: string;
+  csvPath: string;
+  columns: string[];
+  rows: number;
+}
+
+async function writeStreamingTableBatch(
+  root: string,
+  states: Map<string, StreamingTableState>,
+  input: {
+    identity: string;
+    rows: Record<string, unknown>[];
+    columns: string[];
+    first: boolean;
+    final: boolean;
+  }
+): Promise<void> {
+  const safe = safeIdentity(input.identity);
+  let state = states.get(safe);
+  if (input.first) {
+    if (state) throw new Error(`Duplicate first export batch for ${safe}`);
+    await fs.mkdir(path.join(root, 'json'), { recursive: true });
+    await fs.mkdir(path.join(root, 'csv'), { recursive: true });
+    state = {
+      jsonPath: `json/${safe}.json`,
+      csvPath: `csv/${safe}.csv`,
+      columns: [...input.columns],
+      rows: 0,
+    };
+    states.set(safe, state);
+    await fs.writeFile(path.join(root, state.jsonPath), '[\n', 'utf8');
+    await fs.writeFile(
+      path.join(root, state.csvPath),
+      `${state.columns.map(csvCell).join(',')}\n`,
+      'utf8'
+    );
+  }
+  if (!state) throw new Error(`Export batch arrived before first batch for ${safe}`);
+  if (input.rows.length) {
+    const jsonLines = input.rows.map(
+      (row, index) => `${state!.rows + index > 0 ? ',\n' : ''}${JSON.stringify(canonical(row))}`
+    );
+    await fs.appendFile(path.join(root, state.jsonPath), jsonLines.join(''), 'utf8');
+    await fs.appendFile(
+      path.join(root, state.csvPath),
+      `${input.rows
+        .map((row) => state!.columns.map((column) => csvCell(row[column])).join(','))
+        .join('\n')}\n`,
+      'utf8'
+    );
+    state.rows += input.rows.length;
+  }
+  if (input.final) await fs.appendFile(path.join(root, state.jsonPath), '\n]\n', 'utf8');
+}
+
+async function finalizeArchive(
+  result: OrganizationExportResult,
+  outputPath: string,
+  temporaryRoot: string,
+  files: ArchiveFileReceipt[]
+): Promise<OrganizationExportArchiveManifest> {
+  const organizationId = String(result.organization?.id || '');
+  const manifest: OrganizationExportArchiveManifest = {
+    formatVersion: 'consultify-organization-export-archive-v1',
+    contractVersion: result.securityManifest.policyVersion,
+    asOf: result.exportedAt,
+    organizationId,
+    totalRows: result.totalRows,
+    rowCounts: canonical(result.rowCounts) as Record<string, number>,
+    files: files.sort((left, right) => left.path.localeCompare(right.path)),
+    excludedTables: result.securityManifest.excludedTables,
+    derivedTables: result.securityManifest.derivedTables ?? [],
+    notIncluded: result.securityManifest.notIncluded ?? [],
+    unresolvedTables: result.securityManifest.unresolvedTables,
+    skippedReads: result.skipped,
+    complete: result.securityManifest.complete,
+  };
+  await fs.writeFile(path.join(temporaryRoot, 'manifest.json'), `${JSON.stringify(canonical(manifest), null, 2)}\n`, 'utf8');
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  const archive = archiver('zip', { zlib: { level: 6 } });
+  const target = createWriteStream(outputPath, { flags: 'wx' });
+  const completed = pipeline(archive, target);
+  archive.directory(temporaryRoot, false);
+  await archive.finalize();
+  await completed;
+  return manifest;
+}
+
+export async function writeOrganizationExportArchiveStreaming(
+  client: PoolClient,
+  organizationId: string,
+  outputPath: string,
+  options: {
+    actorId?: string;
+    batchSize?: number;
+    onProgress?: (progress: { completedTables: number; totalTables: number; rows: number }) => void;
+  } = {}
+): Promise<OrganizationExportArchiveManifest> {
+  const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), `consultify-org-export-stream-${randomUUID()}-`));
+  const states = new Map<string, StreamingTableState>();
+  const totalTables = ORGANIZATION_EXPORT_TABLES.filter((entry) => entry.category === 'EXPORT').length;
+  let completedTables = 0;
+  let rows = 0;
+  try {
+    const result = await exportOrganizationData(client, organizationId, undefined, {
+      actorId: options.actorId,
+      stream: {
+        batchSize: options.batchSize ?? 500,
+        writeTable: async (input) => {
+          await writeStreamingTableBatch(temporaryRoot, states, input);
+          rows += input.rows.length;
+          if (input.final) completedTables += 1;
+          options.onProgress?.({ completedTables, totalTables, rows });
+        },
+      },
+    });
+    const files: ArchiveFileReceipt[] = [];
+    for (const state of states.values()) {
+      files.push(await receipt(temporaryRoot, state.jsonPath, state.rows));
+      files.push(await receipt(temporaryRoot, state.csvPath, state.rows));
+    }
+    return await finalizeArchive(result, outputPath, temporaryRoot, files);
+  } finally {
+    await fs.rm(temporaryRoot, { recursive: true, force: true });
+  }
+}
+
 export async function writeOrganizationExportArchive(
   result: OrganizationExportResult,
   outputPath: string
@@ -103,32 +242,7 @@ export async function writeOrganizationExportArchive(
     for (const identity of Object.keys(result.tables).sort()) {
       files.push(...(await writeTableFiles(temporaryRoot, identity, result.tables[identity])));
     }
-    const manifest: OrganizationExportArchiveManifest = {
-      formatVersion: 'consultify-organization-export-archive-v1',
-      contractVersion: result.securityManifest.policyVersion,
-      asOf: result.exportedAt,
-      organizationId,
-      totalRows: result.totalRows,
-      rowCounts: canonical(result.rowCounts) as Record<string, number>,
-      files: files.sort((left, right) => left.path.localeCompare(right.path)),
-      excludedTables: result.securityManifest.excludedTables,
-      derivedTables: result.securityManifest.derivedTables ?? [],
-      notIncluded: result.securityManifest.notIncluded ?? [],
-      complete: result.securityManifest.complete,
-    };
-    await fs.writeFile(
-      path.join(temporaryRoot, 'manifest.json'),
-      `${JSON.stringify(canonical(manifest), null, 2)}\n`,
-      'utf8'
-    );
-    await fs.mkdir(path.dirname(outputPath), { recursive: true });
-    const archive = archiver('zip', { zlib: { level: 6 } });
-    const target = createWriteStream(outputPath, { flags: 'wx' });
-    const completed = pipeline(archive, target);
-    archive.directory(temporaryRoot, false);
-    await archive.finalize();
-    await completed;
-    return manifest;
+    return await finalizeArchive(result, outputPath, temporaryRoot, files);
   } finally {
     await fs.rm(temporaryRoot, { recursive: true, force: true });
   }

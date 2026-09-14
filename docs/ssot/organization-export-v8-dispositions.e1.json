@@ -1,0 +1,1798 @@
+{
+  "policyVersion": "organization-export-v8-dispositions-e1-1",
+  "asOfSchemaSha256": "bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78",
+  "decisionRule": "Only exact schema-qualified active writers authorize v8 EXPORT; empty baseline-created relations without one fail closed, with credential state called out separately.",
+  "counts": {
+    "total": 119,
+    "historicalParallel": 115,
+    "inactiveSchemaOnly": 2,
+    "security": 2
+  },
+  "entries": [
+    {
+      "identity": "v8.v8_action_proposals",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_action_proposals is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10794",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_action_proposals=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_action_proposals"
+      ]
+    },
+    {
+      "identity": "v8.v8_activity_feed",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_activity_feed is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10813",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_activity_feed=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_activity_feed"
+      ]
+    },
+    {
+      "identity": "v8.v8_admin_rebind_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_admin_rebind_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10824",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_admin_rebind_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_admin_rebind_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_admin_surface_ownership",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_admin_surface_ownership is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10835",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_admin_surface_ownership=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_admin_surface_ownership"
+      ]
+    },
+    {
+      "identity": "v8.v8_ai_proposal_visibility",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_ai_proposal_visibility is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10846",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_ai_proposal_visibility=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_ai_proposal_visibility"
+      ]
+    },
+    {
+      "identity": "v8.v8_ai_suggestions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_ai_suggestions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10858",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_ai_suggestions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_ai_suggestions"
+      ]
+    },
+    {
+      "identity": "v8.v8_anna_lp_configs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_anna_lp_configs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10872",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_anna_lp_configs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_anna_lp_configs"
+      ]
+    },
+    {
+      "identity": "v8.v8_audit_entries",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_audit_entries is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10884",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_audit_entries=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_audit_entries"
+      ]
+    },
+    {
+      "identity": "v8.v8_auth_escalations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_auth_escalations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10900",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_auth_escalations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_auth_escalations"
+      ]
+    },
+    {
+      "identity": "v8.v8_business_object_sync_states",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_business_object_sync_states is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10910",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_business_object_sync_states=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_business_object_sync_states"
+      ]
+    },
+    {
+      "identity": "v8.v8_calendar_phases",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_calendar_phases is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10924",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_calendar_phases=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_calendar_phases"
+      ]
+    },
+    {
+      "identity": "v8.v8_canary_configs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_canary_configs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10932",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_canary_configs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_canary_configs"
+      ]
+    },
+    {
+      "identity": "v8.v8_canonical_object_states",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_canonical_object_states is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10942",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_canonical_object_states=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_canonical_object_states"
+      ]
+    },
+    {
+      "identity": "v8.v8_chat_action_proposals",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_chat_action_proposals is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10951",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_chat_action_proposals=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_chat_action_proposals"
+      ]
+    },
+    {
+      "identity": "v8.v8_chat_execution_handoffs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_chat_execution_handoffs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10962",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_chat_execution_handoffs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_chat_execution_handoffs"
+      ]
+    },
+    {
+      "identity": "v8.v8_cloud_linked_source_refreshes",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_cloud_linked_source_refreshes is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10974",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_cloud_linked_source_refreshes=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_cloud_linked_source_refreshes"
+      ]
+    },
+    {
+      "identity": "v8.v8_collaboration_events",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_collaboration_events is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10985",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_collaboration_events=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_collaboration_events"
+      ]
+    },
+    {
+      "identity": "v8.v8_collaboration_rooms",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_collaboration_rooms is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:10997",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_collaboration_rooms=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_collaboration_rooms"
+      ]
+    },
+    {
+      "identity": "v8.v8_collaborative_decisions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_collaborative_decisions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11009",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_collaborative_decisions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_collaborative_decisions"
+      ]
+    },
+    {
+      "identity": "v8.v8_compliance_checks",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_compliance_checks is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11021",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_compliance_checks=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_compliance_checks"
+      ]
+    },
+    {
+      "identity": "v8.v8_concurrency_strategies",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_concurrency_strategies is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11031",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_concurrency_strategies=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_concurrency_strategies"
+      ]
+    },
+    {
+      "identity": "v8.v8_conflict_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_conflict_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11044",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_conflict_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_conflict_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_conflict_resolutions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_conflict_resolutions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11057",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_conflict_resolutions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_conflict_resolutions"
+      ]
+    },
+    {
+      "identity": "v8.v8_connection_credentials",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "SECURITY_CREDENTIAL_STATE",
+      "exclusionBasis": "CREDENTIAL_OR_SESSION_MATERIAL",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_connection_credentials stores connector credential or authentication state and is excluded in full even though the measured snapshot is empty.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11073",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_connection_credentials=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_connection_credentials"
+      ]
+    },
+    {
+      "identity": "v8.v8_connector_auth_states",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "SECURITY_CREDENTIAL_STATE",
+      "exclusionBasis": "CREDENTIAL_OR_SESSION_MATERIAL",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_connector_auth_states stores connector credential or authentication state and is excluded in full even though the measured snapshot is empty.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11088",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_connector_auth_states=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_connector_auth_states"
+      ]
+    },
+    {
+      "identity": "v8.v8_connector_fleet_health",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_connector_fleet_health is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11100",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_connector_fleet_health=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_connector_fleet_health"
+      ]
+    },
+    {
+      "identity": "v8.v8_connector_packages",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_connector_packages is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11117",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_connector_packages=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_connector_packages"
+      ]
+    },
+    {
+      "identity": "v8.v8_consumer_tool_policies",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_consumer_tool_policies is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11128",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_consumer_tool_policies=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_consumer_tool_policies"
+      ]
+    },
+    {
+      "identity": "v8.v8_content_governance",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_content_governance is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11143",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_content_governance=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_content_governance"
+      ]
+    },
+    {
+      "identity": "v8.v8_context_snapshots",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_context_snapshots is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11154",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_context_snapshots=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_context_snapshots"
+      ]
+    },
+    {
+      "identity": "v8.v8_coordinated_publishes",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_coordinated_publishes is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11176",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_coordinated_publishes=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_coordinated_publishes"
+      ]
+    },
+    {
+      "identity": "v8.v8_cross_initiative_dependencies",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_cross_initiative_dependencies is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11186",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_cross_initiative_dependencies=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_cross_initiative_dependencies"
+      ]
+    },
+    {
+      "identity": "v8.v8_cross_module_activity",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_cross_module_activity is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11199",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_cross_module_activity=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_cross_module_activity"
+      ]
+    },
+    {
+      "identity": "v8.v8_dead_letter_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_dead_letter_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11211",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_dead_letter_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_dead_letter_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_decision_chains",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_decision_chains is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11234",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_decision_chains=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_decision_chains"
+      ]
+    },
+    {
+      "identity": "v8.v8_degraded_conditions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_degraded_conditions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11246",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_degraded_conditions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_degraded_conditions"
+      ]
+    },
+    {
+      "identity": "v8.v8_demo_trial_configs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_demo_trial_configs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11260",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_demo_trial_configs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_demo_trial_configs"
+      ]
+    },
+    {
+      "identity": "v8.v8_deviation_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_deviation_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11272",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_deviation_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_deviation_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_emergency_pauses",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_emergency_pauses is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11288",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_emergency_pauses=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_emergency_pauses"
+      ]
+    },
+    {
+      "identity": "v8.v8_eval_gates",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_eval_gates is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11301",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_eval_gates=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_eval_gates"
+      ]
+    },
+    {
+      "identity": "v8.v8_execution_runs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_execution_runs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11312",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_execution_runs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_execution_runs"
+      ]
+    },
+    {
+      "identity": "v8.v8_execution_signals",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_execution_signals is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11330",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_execution_signals=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_execution_signals"
+      ]
+    },
+    {
+      "identity": "v8.v8_executive_review_packs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_executive_review_packs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11341",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_executive_review_packs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_executive_review_packs"
+      ]
+    },
+    {
+      "identity": "v8.v8_facilitation_sessions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_facilitation_sessions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11353",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_facilitation_sessions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_facilitation_sessions"
+      ]
+    },
+    {
+      "identity": "v8.v8_finance_document_ingestions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_finance_document_ingestions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11376",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_finance_document_ingestions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_finance_document_ingestions"
+      ]
+    },
+    {
+      "identity": "v8.v8_finance_locked_states",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_finance_locked_states is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11387",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_finance_locked_states=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_finance_locked_states"
+      ]
+    },
+    {
+      "identity": "v8.v8_governance_sensitive_fields",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_governance_sensitive_fields is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11398",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_governance_sensitive_fields=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_governance_sensitive_fields"
+      ]
+    },
+    {
+      "identity": "v8.v8_health_signals",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_health_signals is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11409",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_health_signals=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_health_signals"
+      ]
+    },
+    {
+      "identity": "v8.v8_home_block_maturity",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_home_block_maturity is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11421",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_home_block_maturity=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_home_block_maturity"
+      ]
+    },
+    {
+      "identity": "v8.v8_inbox_materializations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_inbox_materializations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11430",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_inbox_materializations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_inbox_materializations"
+      ]
+    },
+    {
+      "identity": "v8.v8_initiative_decompositions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_initiative_decompositions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11441",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_initiative_decompositions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_initiative_decompositions"
+      ]
+    },
+    {
+      "identity": "v8.v8_initiative_economics_linkages",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_initiative_economics_linkages is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11455",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_initiative_economics_linkages=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_initiative_economics_linkages"
+      ]
+    },
+    {
+      "identity": "v8.v8_initiative_entrypoints",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_initiative_entrypoints is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11466",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_initiative_entrypoints=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_initiative_entrypoints"
+      ]
+    },
+    {
+      "identity": "v8.v8_initiative_materializations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_initiative_materializations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11475",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_initiative_materializations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_initiative_materializations"
+      ]
+    },
+    {
+      "identity": "v8.v8_kpi_definitions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_kpi_definitions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11483",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_kpi_definitions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_kpi_definitions"
+      ]
+    },
+    {
+      "identity": "v8.v8_kpi_finance_reconciliations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_kpi_finance_reconciliations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11499",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_kpi_finance_reconciliations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_kpi_finance_reconciliations"
+      ]
+    },
+    {
+      "identity": "v8.v8_landing_page_sections",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_landing_page_sections is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11510",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_landing_page_sections=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_landing_page_sections"
+      ]
+    },
+    {
+      "identity": "v8.v8_lock_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_lock_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11521",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_lock_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_lock_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_memory_promotion_requests",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_memory_promotion_requests is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11535",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_memory_promotion_requests=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_memory_promotion_requests"
+      ]
+    },
+    {
+      "identity": "v8.v8_notification_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_notification_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11548",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_notification_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_notification_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_notification_triggers",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_notification_triggers is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11563",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_notification_triggers=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_notification_triggers"
+      ]
+    },
+    {
+      "identity": "v8.v8_output_ai_governance",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_output_ai_governance is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11575",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_output_ai_governance=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_output_ai_governance"
+      ]
+    },
+    {
+      "identity": "v8.v8_output_artifacts",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_output_artifacts is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11586",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_output_artifacts=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_output_artifacts"
+      ]
+    },
+    {
+      "identity": "v8.v8_output_exports",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_output_exports is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11600",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_output_exports=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_output_exports"
+      ]
+    },
+    {
+      "identity": "v8.v8_output_recalls",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_output_recalls is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11611",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_output_recalls=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_output_recalls"
+      ]
+    },
+    {
+      "identity": "v8.v8_platform_seam_registry",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_platform_seam_registry is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11622",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_platform_seam_registry=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_platform_seam_registry"
+      ]
+    },
+    {
+      "identity": "v8.v8_process_flow_edges",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "INACTIVE_SCHEMA_ONLY_RELATION",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": false,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_process_flow_edges is an empty schema-only relation created by the baseline parity migration with no active schema-qualified writer or proven business record path.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11633",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_process_flow_edges=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_process_flow_edges"
+      ]
+    },
+    {
+      "identity": "v8.v8_process_flow_nodes",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "INACTIVE_SCHEMA_ONLY_RELATION",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": false,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_process_flow_nodes is an empty schema-only relation created by the baseline parity migration with no active schema-qualified writer or proven business record path.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11646",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_process_flow_nodes=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_process_flow_nodes"
+      ]
+    },
+    {
+      "identity": "v8.v8_promotion_gates",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_promotion_gates is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11663",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_promotion_gates=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_promotion_gates"
+      ]
+    },
+    {
+      "identity": "v8.v8_prompt_presets",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_prompt_presets is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11676",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_prompt_presets=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_prompt_presets"
+      ]
+    },
+    {
+      "identity": "v8.v8_provenance_ledger",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_provenance_ledger is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11690",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_provenance_ledger=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_provenance_ledger"
+      ]
+    },
+    {
+      "identity": "v8.v8_provider_depth_profiles",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_provider_depth_profiles is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11706",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_provider_depth_profiles=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_provider_depth_profiles"
+      ]
+    },
+    {
+      "identity": "v8.v8_provider_health",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_provider_health is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11719",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_provider_health=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_provider_health"
+      ]
+    },
+    {
+      "identity": "v8.v8_publish_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_publish_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11735",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_publish_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_publish_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_rebaseline_proposals",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_rebaseline_proposals is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11750",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_rebaseline_proposals=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_rebaseline_proposals"
+      ]
+    },
+    {
+      "identity": "v8.v8_recurring_output_programs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_recurring_output_programs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11763",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_recurring_output_programs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_recurring_output_programs"
+      ]
+    },
+    {
+      "identity": "v8.v8_refresh_timing_policies",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_refresh_timing_policies is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11777",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_refresh_timing_policies=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_refresh_timing_policies"
+      ]
+    },
+    {
+      "identity": "v8.v8_release_bundles",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_release_bundles is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11788",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_release_bundles=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_release_bundles"
+      ]
+    },
+    {
+      "identity": "v8.v8_replay_requests",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_replay_requests is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11803",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_replay_requests=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_replay_requests"
+      ]
+    },
+    {
+      "identity": "v8.v8_resource_type_mappings",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_resource_type_mappings is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11815",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_resource_type_mappings=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_resource_type_mappings"
+      ]
+    },
+    {
+      "identity": "v8.v8_restore_requests",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_restore_requests is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11825",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_restore_requests=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_restore_requests"
+      ]
+    },
+    {
+      "identity": "v8.v8_results_handoff_events",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_results_handoff_events is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11841",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_results_handoff_events=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_results_handoff_events"
+      ]
+    },
+    {
+      "identity": "v8.v8_retrieval_requests",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_retrieval_requests is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11850",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_retrieval_requests=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_retrieval_requests"
+      ]
+    },
+    {
+      "identity": "v8.v8_retrieval_traces",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_retrieval_traces is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11866",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_retrieval_traces=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_retrieval_traces"
+      ]
+    },
+    {
+      "identity": "v8.v8_retry_policies",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_retry_policies is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11885",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_retry_policies=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_retry_policies"
+      ]
+    },
+    {
+      "identity": "v8.v8_review_gates",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_review_gates is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11897",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_review_gates=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_review_gates"
+      ]
+    },
+    {
+      "identity": "v8.v8_roi_realization_entries",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_roi_realization_entries is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11908",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_roi_realization_entries=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_roi_realization_entries"
+      ]
+    },
+    {
+      "identity": "v8.v8_rollback_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_rollback_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11920",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_rollback_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_rollback_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_room_memberships",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_room_memberships is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11929",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_room_memberships=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_room_memberships"
+      ]
+    },
+    {
+      "identity": "v8.v8_room_presence",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_room_presence is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11938",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_room_presence=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_room_presence"
+      ]
+    },
+    {
+      "identity": "v8.v8_run_state_transitions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_run_state_transitions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11951",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_run_state_transitions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_run_state_transitions"
+      ]
+    },
+    {
+      "identity": "v8.v8_schema_drift_events",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_schema_drift_events is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11961",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_schema_drift_events=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_schema_drift_events"
+      ]
+    },
+    {
+      "identity": "v8.v8_session_insights",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_session_insights is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11971",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_session_insights=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_session_insights"
+      ]
+    },
+    {
+      "identity": "v8.v8_session_module_links",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_session_module_links is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:11982",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_session_module_links=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_session_module_links"
+      ]
+    },
+    {
+      "identity": "v8.v8_shared_tools_registry",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_shared_tools_registry is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12009",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_shared_tools_registry=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_shared_tools_registry"
+      ]
+    },
+    {
+      "identity": "v8.v8_signal_aggregations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_signal_aggregations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12022",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_signal_aggregations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_signal_aggregations"
+      ]
+    },
+    {
+      "identity": "v8.v8_source_materialization_records",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_source_materialization_records is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12033",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_source_materialization_records=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_source_materialization_records"
+      ]
+    },
+    {
+      "identity": "v8.v8_superadmin_domains",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_superadmin_domains is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12049",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_superadmin_domains=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_superadmin_domains"
+      ]
+    },
+    {
+      "identity": "v8.v8_superadmin_surfaces",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_superadmin_surfaces is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12060",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_superadmin_surfaces=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_superadmin_surfaces"
+      ]
+    },
+    {
+      "identity": "v8.v8_support_notes",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_support_notes is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12071",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_support_notes=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_support_notes"
+      ]
+    },
+    {
+      "identity": "v8.v8_support_traces",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_support_traces is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12082",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_support_traces=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_support_traces"
+      ]
+    },
+    {
+      "identity": "v8.v8_surface_presence",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_surface_presence is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12095",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_surface_presence=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_surface_presence"
+      ]
+    },
+    {
+      "identity": "v8.v8_synced_source_refs",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_synced_source_refs is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12106",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_synced_source_refs=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_synced_source_refs"
+      ]
+    },
+    {
+      "identity": "v8.v8_template_families",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_template_families is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12117",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_template_families=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_template_families"
+      ]
+    },
+    {
+      "identity": "v8.v8_tenant_connector_installations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tenant_connector_installations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12127",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tenant_connector_installations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tenant_connector_installations"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_action_governance",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_action_governance is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12136",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_action_governance=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_action_governance"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_catalog",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_catalog is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12146",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_catalog=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_catalog"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_collaboration_adapters",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_collaboration_adapters is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12163",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_collaboration_adapters=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_collaboration_adapters"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_event_registry",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_event_registry is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12180",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_event_registry=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_event_registry"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_invocation_log",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_invocation_log is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12191",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_invocation_log=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_invocation_log"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_invocation_traces",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_invocation_traces is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12209",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_invocation_traces=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_invocation_traces"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_readiness_audits",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_readiness_audits is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12229",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_readiness_audits=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_readiness_audits"
+      ]
+    },
+    {
+      "identity": "v8.v8_tool_session_governance",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tool_session_governance is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12239",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tool_session_governance=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tool_session_governance"
+      ]
+    },
+    {
+      "identity": "v8.v8_tools_v8_bridging_contracts",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_tools_v8_bridging_contracts is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12252",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_tools_v8_bridging_contracts=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_tools_v8_bridging_contracts"
+      ]
+    },
+    {
+      "identity": "v8.v8_unreconciled_delta_escalations",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_unreconciled_delta_escalations is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12265",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_unreconciled_delta_escalations=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_unreconciled_delta_escalations"
+      ]
+    },
+    {
+      "identity": "v8.v8_version_snapshots",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_version_snapshots is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12281",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_version_snapshots=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_version_snapshots"
+      ]
+    },
+    {
+      "identity": "v8.v8_working_memory_entries",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_working_memory_entries is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12298",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_working_memory_entries=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_working_memory_entries"
+      ]
+    },
+    {
+      "identity": "v8.v8_workspace_permissions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_workspace_permissions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12309",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_workspace_permissions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_workspace_permissions"
+      ]
+    },
+    {
+      "identity": "v8.v8_workspace_sessions",
+      "classification": "EXCLUDE_SECURITY",
+      "disposition": "HISTORICAL_PARALLEL_SCHEMA_COPY",
+      "exclusionBasis": "ACTIVE_SEMANTIC_POLICY_MISSING",
+      "publicCounterpart": true,
+      "snapshotRows": 0,
+      "activeSchemaQualifiedWriterEvidence": [],
+      "reason": "v8.v8_workspace_sessions is an empty physical parallel-schema copy created by the baseline parity migration with no active schema-qualified writer; exporting it would claim duplicate or stale business history.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260719_baseline_gap.sql:12320",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/v8-live-row-counts.tsv::v8.v8_workspace_sessions=0",
+        "ACTIVE_WRITER_NONE docs/ssot/organization-export-semantic-source-index.e1.json::v8.v8_workspace_sessions"
+      ]
+    }
+  ]
+}

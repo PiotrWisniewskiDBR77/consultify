@@ -1,0 +1,2343 @@
+{
+  "policyVersion": "organization-export-public-business-dispositions-e1-1",
+  "asOfSchemaSha256": "bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78",
+  "decisionRule": "Every entry is an exact physical identity. No prefix, regex, or inferred table name grants export authority at runtime. The frozen output records the reviewed business family, live tenant path precondition, exact schema evidence, measured row count and production runtime references.",
+  "counts": {
+    "total": 148,
+    "export": 145,
+    "security": 3
+  },
+  "entries": [
+    {
+      "identity": "public._v8_flag_backup_20260710",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public._v8_flag_backup_20260710",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public._v8_flag_backup_20260710=0",
+        "ACTIVE_RUNTIME_NONE exact historical backup identity; no production reference found"
+      ],
+      "runtimeReferences": []
+    },
+    {
+      "identity": "public.account_deletion_request_receipts",
+      "classification": "EXPORT",
+      "family": "PRIVACY_GOVERNANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PRIVACY_GOVERNANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20261030_settings_account_deletion_request_lifecycle.sql:8",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.account_deletion_request_receipts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_audit_log",
+      "classification": "EXPORT",
+      "family": "AUDIT",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AUDIT relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:61",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_audit_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_cost_tracking",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/init-pgvector.sql:173",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_cost_tracking=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:157",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:157",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_data_access_log",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:88",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_data_access_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_deep_thinking_confirms",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.ai_deep_thinking_confirms",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_deep_thinking_confirms=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_eval_golden_sets",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/671_enterprise_ai_eval_golden_sets.sql:5",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_eval_golden_sets=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:289",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:289",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_feature_control",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/init-pgvector.sql:129",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_feature_control=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:155",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:290",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:155",
+        "server/src/database/PostgresDatabase.ts:290",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_learned_patterns",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:23",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_learned_patterns=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_learning_interactions",
+      "classification": "EXPORT",
+      "family": "LEARNING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEARNING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:5",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_learning_interactions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_learning_metrics",
+      "classification": "EXPORT",
+      "family": "LEARNING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEARNING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/076_ai_self_learning_enhanced.sql.sql:83",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_learning_metrics=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_nudge_log",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:36",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_nudge_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_observability_snapshots",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/671_enterprise_ai_eval_golden_sets.sql:58",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_observability_snapshots=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_organization_settings",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:120",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_organization_settings=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.ai_rate_limits",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/053_learning_system.sql:105",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.ai_rate_limits=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.assessment_responses",
+      "classification": "EXPORT",
+      "family": "ASSESSMENT",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed ASSESSMENT relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/248_assessment_enhancements.sql:63",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.assessment_responses=0",
+        "RUNTIME_PATH server/src/database/conflictTargets.ts:61",
+        "RUNTIME_PATH server/src/utils/security.utils.ts:128",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/conflictTargets.ts:61",
+        "server/src/utils/security.utils.ts:128",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.audit_findings",
+      "classification": "EXPORT",
+      "family": "AUDIT",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AUDIT relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260627_audits.sql:71",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.audit_findings=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/initiative/auditInitiativeService.ts:13"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/initiative/auditInitiativeService.ts:13"
+      ]
+    },
+    {
+      "identity": "public.backup_records",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:1244",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.backup_records=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:190",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:190",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.benefit_targets",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/262_benefits_tracking.sql:213",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.benefit_targets=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.benefits_reports",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/262_benefits_tracking.sql:166",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.benefits_reports=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.billing_credits",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:694",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.billing_credits=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:139",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:139",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.billing_disputes",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:761",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.billing_disputes=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:142",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:142",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.billing_email_queue",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:714",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.billing_email_queue=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:140",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:140",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.billing_notification_preferences",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:741",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.billing_notification_preferences=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:141",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:141",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.billing_refunds",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:783",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.billing_refunds=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:143",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:143",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.billing_usage_events",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:672",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.billing_usage_events=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:138",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:138",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.budget_alerts",
+      "classification": "EXPORT",
+      "family": "FINANCE_BUDGET",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE_BUDGET relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/065_budget_tracking.sql:97",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.budget_alerts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.budget_line_items",
+      "classification": "EXPORT",
+      "family": "FINANCE_BUDGET",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE_BUDGET relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/065_budget_tracking.sql:32",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.budget_line_items=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.budget_thresholds",
+      "classification": "EXPORT",
+      "family": "FINANCE_BUDGET",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE_BUDGET relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/564_execution_delay_budget_t041_t042.sql:86",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.budget_thresholds=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:301",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:301",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.budget_transactions",
+      "classification": "EXPORT",
+      "family": "FINANCE_BUDGET",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE_BUDGET relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/065_budget_tracking.sql:52",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.budget_transactions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.case_workspace_node_run_attempts",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260810_case_workspace_node_run_and_inbox.sql:280",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.case_workspace_node_run_attempts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/caseWorkspace/nodeRunService.ts:284"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/caseWorkspace/nodeRunService.ts:284"
+      ]
+    },
+    {
+      "identity": "public.case_workspace_node_runs",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260810_case_workspace_node_run_and_inbox.sql:100",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.case_workspace_node_runs=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/caseWorkspace/nodeRunService.ts:283"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/caseWorkspace/nodeRunService.ts:283"
+      ]
+    },
+    {
+      "identity": "public.case_workspace_runs",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260811a_case_workspace_run_lifecycle.sql:69",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.case_workspace_runs=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/caseWorkspace/runLifecycleService.ts:30",
+        "RUNTIME_PATH server/src/services/caseWorkspace/runLifecycleService.ts:51"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/caseWorkspace/runLifecycleService.ts:30",
+        "server/src/services/caseWorkspace/runLifecycleService.ts:51"
+      ]
+    },
+    {
+      "identity": "public.checkout_sessions",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:625",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.checkout_sessions=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:136",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:136",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.client_context",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:1188",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.client_context=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:180",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:180",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.compliance_records",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:1233",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.compliance_records=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:189",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:189",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.consent_records",
+      "classification": "EXPORT",
+      "family": "PRIVACY_GOVERNANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PRIVACY_GOVERNANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/263_gdpr_compliance.sql:109",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.consent_records=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.custom_statuses",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:186",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.custom_statuses=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:169",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:1946",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:1990"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:169",
+        "server/src/database/PostgresDatabase.ts:1946",
+        "server/src/database/PostgresDatabase.ts:1990"
+      ]
+    },
+    {
+      "identity": "public.data_deletion_log",
+      "classification": "EXPORT",
+      "family": "PRIVACY_GOVERNANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PRIVACY_GOVERNANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/263_gdpr_compliance.sql:218",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.data_deletion_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.data_subject_requests",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/046_compliance.sql:147",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.data_subject_requests=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.dbr77_processes",
+      "classification": "EXPORT",
+      "family": "OPERATING_MODEL",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed OPERATING_MODEL relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/042_multi_framework_assessment.sql:87",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.dbr77_processes=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.dbr77_workstations",
+      "classification": "EXPORT",
+      "family": "OPERATING_MODEL",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed OPERATING_MODEL relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/042_multi_framework_assessment.sql:160",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.dbr77_workstations=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.decision_votes",
+      "classification": "EXPORT",
+      "family": "DECISIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed DECISIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/728_beta_missing_tables_2.sql:32",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.decision_votes=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.deliverable_bundle_versions",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/786_deliverable_bundles_lifecycle.sql:39",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.deliverable_bundle_versions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.domain_verifications",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/264_whitelabel_extended.sql:53",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.domain_verifications=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:316",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:316",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.dsar_activity_log",
+      "classification": "EXPORT",
+      "family": "PRIVACY_GOVERNANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PRIVACY_GOVERNANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/263_gdpr_compliance.sql:83",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.dsar_activity_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.dunning_states",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:586",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.dunning_states=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:134",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:134",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.email_sender_verifications",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/264_whitelabel_extended.sql:113",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.email_sender_verifications=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.enterprise_feature_flags",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/260_enterprise_features.sql:278",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.enterprise_feature_flags=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.facility_users",
+      "classification": "EXPORT",
+      "family": "FACILITIES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FACILITIES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/060_work_dimensions.sql:65",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.facility_users=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.feedback_status_history",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260303_feedback_behavior_t106_t113.sql:26",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.feedback_status_history=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_analysis_benchmarks",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_d03_analysis_01_tables.sql:223",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_analysis_benchmarks=0",
+        "RUNTIME_PATH server/src/routes/v8/finance-v2/analysis.routes.ts:167",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/finance/canonical/exceptionInboxService.ts:26"
+      ],
+      "runtimeReferences": [
+        "server/src/routes/v8/finance-v2/analysis.routes.ts:167",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/finance/canonical/exceptionInboxService.ts:26"
+      ]
+    },
+    {
+      "identity": "public.finance_baseline_backtest_line_results",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_d05_baseline_01_tables.sql:313",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_baseline_backtest_line_results=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_baseline_backtest_runs",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_d05_baseline_01_tables.sql:284",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_baseline_backtest_runs=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_export_evidence_items",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_b06_reproducibility_retention_export.sql:259",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_export_evidence_items=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_export_manifest_sources",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_b06_reproducibility_retention_export.sql:251",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_export_manifest_sources=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_export_manifests",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_b06_reproducibility_retention_export.sql:146",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_export_manifests=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_legal_holds",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_b06_reproducibility_retention_export.sql:119",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_legal_holds=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_periods",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.finance_periods",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_periods=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_prediction_conflict_resolutions",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_d07_prediction_01_tables.sql:462",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_prediction_conflict_resolutions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_retention_policies",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_b06_reproducibility_retention_export.sql:89",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_retention_policies=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_stmt_fx",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_d01_statements_01_tables.sql:200",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_stmt_fx=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.finance_stmt_source_evidence",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260809_finance_v3_d01_statements_01_tables.sql:378",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.finance_stmt_source_evidence=0",
+        "RUNTIME_PATH server/src/types/finance/financeValueSemantics.ts:112",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/types/finance/financeValueSemantics.ts:112",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.financial_analysis_findings",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.financial_analysis_findings",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.financial_analysis_findings=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.financial_model_version_diffs",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/653_v4_finance_enterprise.sql:41",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.financial_model_version_diffs=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.financial_statement_templates",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260803_fin005_statement_ready_contract.sql:129",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.financial_statement_templates=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:320",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:320",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.framework_import_logs",
+      "classification": "EXPORT",
+      "family": "ASSESSMENT",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed ASSESSMENT relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/042_multi_framework_assessment.sql:251",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.framework_import_logs=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.framework_score_history",
+      "classification": "EXPORT",
+      "family": "ASSESSMENT",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed ASSESSMENT relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/042_multi_framework_assessment.sql:230",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.framework_score_history=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.initiative_budgets",
+      "classification": "EXPORT",
+      "family": "FINANCE_BUDGET",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE_BUDGET relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/065_budget_tracking.sql:10",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.initiative_budgets=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.initiative_feature_flags",
+      "classification": "EXPORT",
+      "family": "INITIATIVES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed INITIATIVES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260620_5000_initiative_gate_ai_flags.sql:18",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.initiative_feature_flags=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/initiative/initiativeGateAiConfig.ts:20"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/initiative/initiativeGateAiConfig.ts:20"
+      ]
+    },
+    {
+      "identity": "public.initiative_gate_ai_events",
+      "classification": "EXPORT",
+      "family": "INITIATIVES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed INITIATIVES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260620_6000_initiative_gate_ai_events.sql:20",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.initiative_gate_ai_events=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/initiative/gateAiTelemetryService.ts:6",
+        "RUNTIME_PATH server/src/services/initiative/gateAiTelemetryService.ts:18"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/initiative/gateAiTelemetryService.ts:6",
+        "server/src/services/initiative/gateAiTelemetryService.ts:18"
+      ]
+    },
+    {
+      "identity": "public.initiative_linked_items",
+      "classification": "EXPORT",
+      "family": "INITIATIVES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed INITIATIVES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260621_1000_initiative_linked_items.sql:11",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.initiative_linked_items=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/initiative/initiativeLinkedItemsService.ts:13"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/initiative/initiativeLinkedItemsService.ts:13"
+      ]
+    },
+    {
+      "identity": "public.legacy_task_cutover_step_ledger",
+      "classification": "EXPORT",
+      "family": "TASKS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed TASKS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20261722_legacy_task_cutover_step_ledger.sql:1",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.legacy_task_cutover_step_ledger=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.legal_holds",
+      "classification": "EXPORT",
+      "family": "LEGAL_GOVERNANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEGAL_GOVERNANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/263_gdpr_compliance.sql:332",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.legal_holds=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.management_report_recipients",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/062_management_reports.sql:88",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.management_report_recipients=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.method_evidence",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260813_method_core_1_kernel.sql:132",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.method_evidence=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.mfa_attempts",
+      "classification": "EXCLUDE_SECURITY",
+      "family": "SECURITY_AUTHENTICATION",
+      "snapshotRows": 0,
+      "reason": "Authentication challenge/session telemetry contains person and network authentication evidence and is excluded in full.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:802",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.mfa_attempts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "exclusionBasis": "CREDENTIAL_OR_SESSION_MATERIAL"
+    },
+    {
+      "identity": "public.mobile_devices",
+      "classification": "EXPORT",
+      "family": "MOBILE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed MOBILE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/265_mobile_pwa.sql:8",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.mobile_devices=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.mobile_preferences",
+      "classification": "EXPORT",
+      "family": "MOBILE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed MOBILE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/265_mobile_pwa.sql:68",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.mobile_preferences=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.multi_framework_initiatives",
+      "classification": "EXPORT",
+      "family": "INITIATIVES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed INITIATIVES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/043_multi_framework_assessments_complete.sql:229",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.multi_framework_initiatives=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.multi_framework_reports",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/043_multi_framework_assessments_complete.sql:190",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.multi_framework_reports=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.notification_digest_queue",
+      "classification": "EXPORT",
+      "family": "NOTIFICATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed NOTIFICATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/257_notification_system.sql:169",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.notification_digest_queue=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.offline_sync_queue",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/265_mobile_pwa.sql:125",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.offline_sync_queue=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.organization_context_upload_receipts",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20261016_org_context_upload_idempotency.sql:114",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.organization_context_upload_receipts=0",
+        "RUNTIME_PATH server/src/routes/ai.routes.ts:625",
+        "RUNTIME_PATH server/src/routes/ai.routes.ts:639",
+        "RUNTIME_PATH server/src/routes/ai.routes.ts:717"
+      ],
+      "runtimeReferences": [
+        "server/src/routes/ai.routes.ts:625",
+        "server/src/routes/ai.routes.ts:639",
+        "server/src/routes/ai.routes.ts:717"
+      ]
+    },
+    {
+      "identity": "public.organization_facilities",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:1894",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.organization_facilities=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.organization_llm_settings",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations-v2/001_baseline_20260413.sql:21643",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.organization_llm_settings=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.partner_activity_log",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/215_partner_portal.sql:256",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_activity_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.partner_commissions",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/215_partner_portal.sql:186",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_commissions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.partner_economics_policy_events",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260818_partner_economics_policy_events.sql:309",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_economics_policy_events=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/partnerEconomicsPolicy.ts:233"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/partnerEconomicsPolicy.ts:233"
+      ]
+    },
+    {
+      "identity": "public.partner_invoices",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/215_partner_portal.sql:207",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_invoices=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.partner_licenses",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/215_partner_portal.sql:168",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_licenses=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:346",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:346",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.partner_owner_binding_receipts",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/958_partner_owner_binding_receipts.sql:62",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_owner_binding_receipts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.partner_projects",
+      "classification": "EXPORT",
+      "family": "PARTNER",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PARTNER relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/215_partner_portal.sql:149",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.partner_projects=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.pdf_imports",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/563_framework_entitlements_pdf_import.sql:44",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.pdf_imports=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.presentation_template_governance_events",
+      "classification": "EXPORT",
+      "family": "PRESENTATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PRESENTATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/767_presentation_template_governance.sql:95",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.presentation_template_governance_events=0",
+        "RUNTIME_PATH server/src/services/presentationTemplateGovernanceService.ts:111",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/presentationTemplateGovernanceService.ts:111",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.project_role_overrides",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20261250_day319_runtime_ddl_gap.sql:16",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.project_role_overrides=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:930",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:930",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.proration_records",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:650",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.proration_records=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:137",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:137",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.push_notification_log",
+      "classification": "EXPORT",
+      "family": "NOTIFICATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed NOTIFICATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/265_mobile_pwa.sql:167",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.push_notification_log=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.report_blocks",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:1268",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.report_blocks=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:194",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:194",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.report_comments",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:2108",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.report_comments=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.report_edit_history",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:2135",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.report_edit_history=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.report_snapshots",
+      "classification": "EXPORT",
+      "family": "REPORTING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed REPORTING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/000_initdb_core_tables.sql:1279",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.report_snapshots=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:195",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:195",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.retention_policies",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/263_gdpr_compliance.sql:165",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.retention_policies=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:365",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:365",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.rvn_kpi_recovery_backfill_receipts",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20261036_rvn_kpi_recovery_children.sql:75",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.rvn_kpi_recovery_backfill_receipts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.sandbox_activity",
+      "classification": "EXPORT",
+      "family": "SANDBOX",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed SANDBOX relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/267_sandbox_project.sql:182",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.sandbox_activity=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.sandbox_exports",
+      "classification": "EXPORT",
+      "family": "SANDBOX",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed SANDBOX relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/267_sandbox_project.sql:146",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.sandbox_exports=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.sandbox_projects",
+      "classification": "EXPORT",
+      "family": "SANDBOX",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed SANDBOX relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/267_sandbox_project.sql:8",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.sandbox_projects=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:367",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:367",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.security_settings",
+      "classification": "EXPORT",
+      "family": "SECURITY_CONFIGURATION",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed SECURITY_CONFIGURATION relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/101_security_sessions.sql:24",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.security_settings=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:64",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:3553",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:3561"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:64",
+        "server/src/database/DatabaseInitializer.ts:3553",
+        "server/src/database/DatabaseInitializer.ts:3561"
+      ]
+    },
+    {
+      "identity": "public.siri_dimension_scores",
+      "classification": "EXPORT",
+      "family": "SIRI",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed SIRI relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/946_siri_16d_source_of_truth.sql:31",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.siri_dimension_scores=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.siri_prioritisation_snapshots",
+      "classification": "EXPORT",
+      "family": "SIRI",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed SIRI relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/946_siri_16d_source_of_truth.sql:84",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.siri_prioritisation_snapshots=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.sso_login_attempts",
+      "classification": "EXCLUDE_SECURITY",
+      "family": "SECURITY_AUTHENTICATION",
+      "snapshotRows": 0,
+      "reason": "Authentication challenge/session telemetry contains person and network authentication evidence and is excluded in full.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/032_sso_configuration.sql.sql:93",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.sso_login_attempts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "exclusionBasis": "CREDENTIAL_OR_SESSION_MATERIAL"
+    },
+    {
+      "identity": "public.studio_ai_sessions",
+      "classification": "EXPORT",
+      "family": "STUDIO",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed STUDIO relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/081_studio_tables.sql:136",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.studio_ai_sessions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.studio_comments",
+      "classification": "EXPORT",
+      "family": "STUDIO",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed STUDIO relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/081_studio_tables.sql:72",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.studio_comments=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.studio_templates",
+      "classification": "EXPORT",
+      "family": "STUDIO",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed STUDIO relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/081_studio_tables.sql:100",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.studio_templates=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.subscription_state_history",
+      "classification": "EXPORT",
+      "family": "BILLING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BILLING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/900_prod_missing_tables_hotfix.sql:608",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.subscription_state_history=0",
+        "RUNTIME_PATH server/src/database/DatabaseInitializer.ts:135",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/DatabaseInitializer.ts:135",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.task_status_transitions",
+      "classification": "EXPORT",
+      "family": "TASKS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed TASKS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/628_v4_tasks_decisions_a1.sql:17",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.task_status_transitions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.tp_notifications",
+      "classification": "EXPORT",
+      "family": "NOTIFICATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed NOTIFICATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.tp_notifications",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.tp_notifications=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_achievements",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/130_user_achievements.sql:8",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_achievements=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_appearance_preferences",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/132_appearance_extensions.sql:4",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_appearance_preferences=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_collaboration_preferences",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/131_settings_preferences_extended.sql:80",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_collaboration_preferences=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_consents",
+      "classification": "EXPORT",
+      "family": "PRIVACY_GOVERNANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed PRIVACY_GOVERNANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/106_security_privacy_enterprise.sql:5",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_consents=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_experiments",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/032_analytics.sql.sql:5",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_experiments=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_points_ledger",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/never-ran/031_gamification.sql.sql:5",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_points_ledger=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_productivity_preferences",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/133_work_productivity_preferences.sql:28",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_productivity_preferences=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.user_work_preferences",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/133_work_productivity_preferences.sql:5",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.user_work_preferences=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v10_connector_sessions",
+      "classification": "EXCLUDE_SECURITY",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "Authentication challenge/session telemetry contains person and network authentication evidence and is excluded in full.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_connector_sessions",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_connector_sessions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "exclusionBasis": "CREDENTIAL_OR_SESSION_MATERIAL"
+    },
+    {
+      "identity": "public.v10_learning_feedback",
+      "classification": "EXPORT",
+      "family": "LEARNING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEARNING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_learning_feedback",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_learning_feedback=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v10_learning_incidents",
+      "classification": "EXPORT",
+      "family": "LEARNING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEARNING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_learning_incidents",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_learning_incidents=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v10_learning_retention_previews",
+      "classification": "EXPORT",
+      "family": "LEARNING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEARNING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_learning_retention_previews",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_learning_retention_previews=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v10_learning_stewardship_queue",
+      "classification": "EXPORT",
+      "family": "LEARNING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed LEARNING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_learning_stewardship_queue",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_learning_stewardship_queue=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v10_onboarding_events",
+      "classification": "EXPORT",
+      "family": "ONBOARDING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed ONBOARDING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_onboarding_events",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_onboarding_events=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v10_onboarding_sessions",
+      "classification": "EXPORT",
+      "family": "ONBOARDING",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed ONBOARDING relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.v10_onboarding_sessions",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v10_onboarding_sessions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v8_calendar_items_extended_itemtype",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260411_v8_calendar_items_extended_itemtype.sql:10",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v8_calendar_items_extended_itemtype=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/tablePlatform/migrationHistoricalChecksums.ts:195"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/tablePlatform/migrationHistoricalChecksums.ts:195"
+      ]
+    },
+    {
+      "identity": "public.v8_finance_document_ingestions__w18",
+      "classification": "EXPORT",
+      "family": "FINANCE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed FINANCE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260323_v8_finance_runtime.sql:17",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v8_finance_document_ingestions__w18=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v8_mindmap_ai_proposals",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260331_v8_mindmap_nodes_p12b.sql:28",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v8_mindmap_ai_proposals=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.v8_mindmap_nodes",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260331_v8_mindmap_nodes_p12b.sql:4",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v8_mindmap_nodes=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/v8/mindmapService.ts:36",
+        "RUNTIME_PATH server/src/services/v8/mindmapService.ts:196"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/v8/mindmapService.ts:36",
+        "server/src/services/v8/mindmapService.ts:196"
+      ]
+    },
+    {
+      "identity": "public.v8_shadow_comparisons",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/20260324_v8_shadow_comparisons.sql:4",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.v8_shadow_comparisons=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "RUNTIME_PATH server/src/services/v8/shadowModeService.ts:46",
+        "RUNTIME_PATH server/src/services/v8/shadowModeService.ts:182"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5",
+        "server/src/services/v8/shadowModeService.ts:46",
+        "server/src/services/v8/shadowModeService.ts:182"
+      ]
+    },
+    {
+      "identity": "public.white_label_assets",
+      "classification": "EXPORT",
+      "family": "WHITE_LABEL",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed WHITE_LABEL relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/264_whitelabel_extended.sql:8",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.white_label_assets=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:390",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:390",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.white_label_themes",
+      "classification": "EXPORT",
+      "family": "WHITE_LABEL",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed WHITE_LABEL relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/264_whitelabel_extended.sql:152",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.white_label_themes=0",
+        "RUNTIME_PATH server/src/database/PostgresDatabase.ts:391",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/database/PostgresDatabase.ts:391",
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_decisions",
+      "classification": "EXPORT",
+      "family": "DECISIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed DECISIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.z139_backup_919_decisions",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_decisions=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_initiative_kpis",
+      "classification": "EXPORT",
+      "family": "INITIATIVES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed INITIATIVES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.z139_backup_919_initiative_kpis",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_initiative_kpis=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_initiatives",
+      "classification": "EXPORT",
+      "family": "INITIATIVES",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed INITIATIVES relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.z139_backup_919_initiatives",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_initiatives=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_interview_insights",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.z139_backup_919_interview_insights",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_interview_insights=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_notebook_pages",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/919_z139_full_scope_double_escape_reconciliation.sql:261",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_notebook_pages=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_notebooks",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/919_z139_full_scope_double_escape_reconciliation.sql:242",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_notebooks=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_raid_items",
+      "classification": "EXPORT",
+      "family": "AI_GOVERNANCE_AND_USAGE",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed AI_GOVERNANCE_AND_USAGE relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.z139_backup_919_raid_items",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_raid_items=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_tasks",
+      "classification": "EXPORT",
+      "family": "TASKS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed TASKS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "LIVE_SCHEMA evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json::public.z139_backup_919_tasks",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_tasks=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    },
+    {
+      "identity": "public.z139_backup_919_work_canvas_drafts",
+      "classification": "EXPORT",
+      "family": "BUSINESS_OPERATIONS",
+      "snapshotRows": 0,
+      "reason": "The exact reviewed BUSINESS_OPERATIONS relation stores tenant-owned business state; its live tenant path, exact schema, measured snapshot, and concrete runtime evidence authorize export with exact column policy.",
+      "sourceEvidence": [
+        "SCHEMA_DDL server/migrations/919_z139_full_scope_double_escape_reconciliation.sql:302",
+        "LIVE_ROW_COUNT evidence/f2-e-enterprise/e1/public-business-live-row-counts.tsv::public.z139_backup_919_work_canvas_drafts=0",
+        "RUNTIME_PATH server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ],
+      "runtimeReferences": [
+        "server/src/services/organizationExportEnterpriseContract.generated.ts:5"
+      ]
+    }
+  ]
+}

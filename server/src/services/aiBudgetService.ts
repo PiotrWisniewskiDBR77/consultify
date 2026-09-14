@@ -311,10 +311,77 @@ const aiBudgetService = {
       [organizationId]
     );
 
+    // The organization settings screen is the authority for the organization-wide
+    // monthly cost policy. ai_budgets remains the usage ledger and carries scoped
+    // user/token/request budgets. A deterministic ledger row makes the UI setting
+    // effective even for organizations that never created an ai_budgets record.
+    const settings = await dbGet<Row>(
+      `SELECT monthly_budget_usd, hard_limit_usd, freeze_on_limit
+         FROM organization_ai_settings WHERE organization_id = ?`,
+      [organizationId]
+    );
+    const finiteNonNegative = (value: unknown, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+    };
+    const monthlyLimit = finiteNonNegative(settings?.monthly_budget_usd, 50);
+    const hardLimit = finiteNonNegative(settings?.hard_limit_usd, 0);
+    const freezeOnLimit =
+      settings?.freeze_on_limit === true ||
+      settings?.freeze_on_limit === 1 ||
+      settings?.freeze_on_limit === 't';
+    const canonicalId = `org-settings-monthly-cost:${organizationId}`;
+    let canonical = budgets.find((budget) => budget.id === canonicalId);
+    if (!canonical) {
+      const priorUsage = budgets
+        .filter(
+          (budget) =>
+            !budget.user_id &&
+            budget.budget_type === 'cost' &&
+            budget.period === 'monthly'
+        )
+        .reduce((highest, budget) => Math.max(highest, Number(budget.current_usage) || 0), 0);
+      const now = new Date().toISOString();
+      await dbRun(
+        `INSERT INTO ai_budgets (
+           id, organization_id, user_id, budget_type, period, budget_limit,
+           warning_threshold, hard_limit, current_usage, is_active, created_at, updated_at
+         ) VALUES (?, ?, NULL, 'cost', 'monthly', ?, 0.8, ?, ?, true, ?, ?)`,
+        [canonicalId, organizationId, monthlyLimit, freezeOnLimit || hardLimit > 0 ? 1 : 0, priorUsage, now, now]
+      );
+      canonical = {
+        id: canonicalId,
+        organization_id: organizationId,
+        user_id: null,
+        budget_type: 'cost',
+        period: 'monthly',
+        budget_limit: monthlyLimit,
+        warning_threshold: 0.8,
+        hard_limit: freezeOnLimit || hardLimit > 0 ? 1 : 0,
+        current_usage: priorUsage,
+        is_active: true,
+      };
+      budgets.push(canonical);
+    }
+
     let allowed = true;
     const warnings: string[] = [];
 
+    const canonicalCurrent = Number(canonical.current_usage) || 0;
+    const canonicalProjected = canonicalCurrent + usage.cost;
+    const blockingLimit = hardLimit > 0 ? hardLimit : freezeOnLimit ? monthlyLimit : 0;
+    if (blockingLimit > 0 && canonicalProjected >= blockingLimit) {
+      allowed = false;
+      warnings.push('organization cost budget exceeded');
+    } else if (monthlyLimit > 0 && canonicalProjected / monthlyLimit >= 0.8) {
+      warnings.push(`organization cost budget at ${((canonicalProjected / monthlyLimit) * 100).toFixed(0)}%`);
+    }
+
     for (const b of budgets) {
+      if (b.id === canonicalId) continue;
+      // Legacy organization-wide monthly cost limits are no longer authorities;
+      // their measured usage seeded the canonical ledger row above.
+      if (!b.user_id && b.budget_type === 'cost' && b.period === 'monthly') continue;
       const limit = (b.budget_limit as number) ?? 0;
       const current = (b.current_usage as number) ?? 0;
       const wt = (b.warning_threshold as number) ?? 0.8;
@@ -338,7 +405,15 @@ const aiBudgetService = {
       }
     }
 
-    return { allowed, warnings, budgetsChecked: budgets.length };
+    return {
+      allowed,
+      warnings,
+      budgetsChecked: 1 + budgets.filter(
+        (budget) =>
+          budget.id !== canonicalId &&
+          !(!budget.user_id && budget.budget_type === 'cost' && budget.period === 'monthly')
+      ).length,
+    };
   },
 
   async recordUsage(

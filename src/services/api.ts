@@ -3195,6 +3195,60 @@ export const Api = {
     return res.blob();
   },
 
+  startOrganizationExportJob: async (id: string): Promise<{
+    job: {
+      id: string;
+      organizationId: string;
+      phase: 'queued' | 'running' | 'ready' | 'failed';
+      completedTables: number;
+      totalTables: number;
+      rows: number;
+      percent: number;
+      errorCode?: string;
+    };
+    resumeToken: string;
+  }> => {
+    const res = await fetch(`${API_URL}/superadmin/organizations/${encodeURIComponent(id)}/export-jobs`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to start organization export');
+  },
+
+  getOrganizationExportJob: async (
+    organizationId: string,
+    jobId: string,
+    resumeToken: string
+  ): Promise<{
+    id: string;
+    organizationId: string;
+    phase: 'queued' | 'running' | 'ready' | 'failed';
+    completedTables: number;
+    totalTables: number;
+    rows: number;
+    percent: number;
+    errorCode?: string;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/superadmin/organizations/${encodeURIComponent(organizationId)}/export-jobs/${encodeURIComponent(jobId)}`,
+      { headers: { ...getHeaders(), 'x-export-resume-token': resumeToken } }
+    );
+    return handleResponse(res, 'Failed to resume organization export');
+  },
+
+  downloadOrganizationExportJob: async (
+    organizationId: string,
+    jobId: string,
+    resumeToken: string
+  ): Promise<Blob> => {
+    const res = await fetch(
+      `${API_URL}/superadmin/organizations/${encodeURIComponent(organizationId)}/export-jobs/${encodeURIComponent(jobId)}/download`,
+      { headers: { ...getHeaders(), 'x-export-resume-token': resumeToken } }
+    );
+    if (!res.ok) throw new Error('Failed to download organization export');
+    return res.blob();
+  },
+
   // [ODMROZENIE WSPOLNE DEC-468] Tenant-admin self-service export; server checks persisted membership.
   exportOwnOrganizationData: async (orgId: string): Promise<Blob> => {
     const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(orgId)}/export?format=json`, {

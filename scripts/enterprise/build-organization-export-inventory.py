@@ -129,6 +129,8 @@ def main() -> int:
                 if "exclusionBasis" not in approved:
                     raise SystemExit(f"approved EXCLUDE_SECURITY policy {key} is missing exclusionBasis")
                 entry["exclusionBasis"] = approved["exclusionBasis"]
+                if "v8Disposition" in approved:
+                    entry["v8Disposition"] = approved["v8Disposition"]
             if approved["category"] == "DERIVED":
                 if "derivedFrom" not in approved:
                     raise SystemExit(f"approved DERIVED policy {key} is missing derivedFrom")

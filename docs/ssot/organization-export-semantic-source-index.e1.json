@@ -6,7 +6,8 @@
   "excludedDiscoverySources": [
     "DatabaseInitializer.ts",
     "PostgresDatabase.ts",
-    "conflictTargets.ts"
+    "conflictTargets.ts",
+    "organizationExportEnterpriseContract.generated.ts"
   ],
   "entries": [
     {
@@ -622,12 +623,12 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3288,
+          "line": 3372,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3298,
+          "line": 3382,
           "kind": "SQL_UPDATE"
         },
         {
@@ -636,7 +637,7 @@
           "kind": "SQL_UPDATE"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/services/adminSessionService.ts:178; SQL_INSERT_INTO server/src/services/adminSessionService.ts:204; SQL_UPDATE server/src/routes/superadmin.routes.ts:3288; SQL_UPDATE server/src/routes/superadmin.routes.ts:3298; SQL_UPDATE server/src/services/adminSessionService.ts:228"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/services/adminSessionService.ts:178; SQL_INSERT_INTO server/src/services/adminSessionService.ts:204; SQL_UPDATE server/src/routes/superadmin.routes.ts:3372; SQL_UPDATE server/src/routes/superadmin.routes.ts:3382; SQL_UPDATE server/src/services/adminSessionService.ts:228"
     },
     {
       "schema": "public",
@@ -1161,6 +1162,11 @@
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
+          "line": 346,
+          "kind": "SQL_INSERT_INTO"
+        },
+        {
+          "path": "server/src/services/aiBudgetService.ts",
           "line": 278,
           "kind": "SQL_UPDATE"
         },
@@ -1171,16 +1177,11 @@
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 372,
-          "kind": "SQL_UPDATE"
-        },
-        {
-          "path": "server/src/services/aiCostControlService.ts",
-          "line": 297,
+          "line": 447,
           "kind": "SQL_UPDATE"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/services/aiBudgetService.ts:201; SQL_UPDATE server/src/services/aiBudgetService.ts:278; SQL_UPDATE server/src/services/aiBudgetService.ts:295; SQL_UPDATE server/src/services/aiBudgetService.ts:372; SQL_UPDATE server/src/services/aiCostControlService.ts:297"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/services/aiBudgetService.ts:201; SQL_INSERT_INTO server/src/services/aiBudgetService.ts:346; SQL_UPDATE server/src/services/aiBudgetService.ts:278; SQL_UPDATE server/src/services/aiBudgetService.ts:295; SQL_UPDATE server/src/services/aiBudgetService.ts:447"
     },
     {
       "schema": "public",
@@ -2202,31 +2203,31 @@
       "sources": [
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 498,
+          "line": 573,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 570,
+          "line": 645,
           "kind": "SQL_DELETE_FROM"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 462,
+          "line": 537,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 520,
+          "line": 595,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 532,
+          "line": 607,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/services/aiBudgetService.ts:498; SQL_DELETE_FROM server/src/services/aiBudgetService.ts:570; SQL_FROM server/src/services/aiBudgetService.ts:462; SQL_FROM server/src/services/aiBudgetService.ts:520; SQL_FROM server/src/services/aiBudgetService.ts:532"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/services/aiBudgetService.ts:573; SQL_DELETE_FROM server/src/services/aiBudgetService.ts:645; SQL_FROM server/src/services/aiBudgetService.ts:537; SQL_FROM server/src/services/aiBudgetService.ts:595; SQL_FROM server/src/services/aiBudgetService.ts:607"
     },
     {
       "schema": "public",
@@ -3036,31 +3037,31 @@
       "sources": [
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 444,
+          "line": 519,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 454,
+          "line": 529,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 391,
+          "line": 466,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 420,
+          "line": 495,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/services/aiBudgetService.ts",
-          "line": 441,
+          "line": 516,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_UPDATE server/src/services/aiBudgetService.ts:444; SQL_UPDATE server/src/services/aiBudgetService.ts:454; SQL_FROM server/src/services/aiBudgetService.ts:391; SQL_FROM server/src/services/aiBudgetService.ts:420; SQL_FROM server/src/services/aiBudgetService.ts:441"
+      "sourceEvidence": "SQL_UPDATE server/src/services/aiBudgetService.ts:519; SQL_UPDATE server/src/services/aiBudgetService.ts:529; SQL_FROM server/src/services/aiBudgetService.ts:466; SQL_FROM server/src/services/aiBudgetService.ts:495; SQL_FROM server/src/services/aiBudgetService.ts:516"
     },
     {
       "schema": "public",
@@ -3587,16 +3588,16 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3464,
+          "line": 3548,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3475,
+          "line": 3559,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/middleware/apiLogging.middleware.ts:220; SQL_FROM server/src/routes/security.routes.ts:415; SQL_FROM server/src/routes/settings.routes.ts:5941; SQL_FROM server/src/routes/superadmin.routes.ts:3464; SQL_FROM server/src/routes/superadmin.routes.ts:3475"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/middleware/apiLogging.middleware.ts:220; SQL_FROM server/src/routes/security.routes.ts:415; SQL_FROM server/src/routes/settings.routes.ts:5941; SQL_FROM server/src/routes/superadmin.routes.ts:3548; SQL_FROM server/src/routes/superadmin.routes.ts:3559"
     },
     {
       "schema": "public",
@@ -3638,31 +3639,31 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3086,
+          "line": 3170,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3105,
+          "line": 3189,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 425,
+          "line": 430,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 527,
+          "line": 532,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2979,
+          "line": 3063,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_UPDATE server/src/routes/superadmin.routes.ts:3086; SQL_UPDATE server/src/routes/superadmin.routes.ts:3105; SQL_FROM server/src/routes/superadmin.routes.ts:425; SQL_FROM server/src/routes/superadmin.routes.ts:527; SQL_FROM server/src/routes/superadmin.routes.ts:2979"
+      "sourceEvidence": "SQL_UPDATE server/src/routes/superadmin.routes.ts:3170; SQL_UPDATE server/src/routes/superadmin.routes.ts:3189; SQL_FROM server/src/routes/superadmin.routes.ts:430; SQL_FROM server/src/routes/superadmin.routes.ts:532; SQL_FROM server/src/routes/superadmin.routes.ts:3063"
     },
     {
       "schema": "public",
@@ -3671,31 +3672,31 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3017,
+          "line": 3101,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3045,
+          "line": 3129,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3073,
+          "line": 3157,
           "kind": "SQL_DELETE_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2968,
+          "line": 3052,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2980,
+          "line": 3064,
           "kind": "SQL_JOIN"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3017; SQL_UPDATE server/src/routes/superadmin.routes.ts:3045; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:3073; SQL_FROM server/src/routes/superadmin.routes.ts:2968; SQL_JOIN server/src/routes/superadmin.routes.ts:2980"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3101; SQL_UPDATE server/src/routes/superadmin.routes.ts:3129; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:3157; SQL_FROM server/src/routes/superadmin.routes.ts:3052; SQL_JOIN server/src/routes/superadmin.routes.ts:3064"
     },
     {
       "schema": "public",
@@ -5377,12 +5378,12 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 188,
+          "line": 193,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 213,
+          "line": 218,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -5401,7 +5402,7 @@
           "kind": "SQL_INSERT_INTO"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:188; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:213; SQL_INSERT_INTO server/src/routes/v8/my-work.routes.ts:1736; SQL_INSERT_INTO server/src/routes/work-canvas.routes.ts:2925; SQL_INSERT_INTO server/src/services/AuditEventsService.ts:62"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:193; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:218; SQL_INSERT_INTO server/src/routes/v8/my-work.routes.ts:1736; SQL_INSERT_INTO server/src/routes/work-canvas.routes.ts:2925; SQL_INSERT_INTO server/src/services/AuditEventsService.ts:62"
     },
     {
       "schema": "public",
@@ -6006,11 +6007,11 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5086,
+          "line": 5170,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_FROM server/src/routes/superadmin.routes.ts:5086"
+      "sourceEvidence": "SQL_FROM server/src/routes/superadmin.routes.ts:5170"
     },
     {
       "schema": "public",
@@ -6019,31 +6020,31 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5036,
+          "line": 5120,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5062,
+          "line": 5146,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5073,
+          "line": 5157,
           "kind": "SQL_DELETE_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4998,
+          "line": 5082,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5020,
+          "line": 5104,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:5036; SQL_UPDATE server/src/routes/superadmin.routes.ts:5062; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:5073; SQL_FROM server/src/routes/superadmin.routes.ts:4998; SQL_FROM server/src/routes/superadmin.routes.ts:5020"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:5120; SQL_UPDATE server/src/routes/superadmin.routes.ts:5146; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:5157; SQL_FROM server/src/routes/superadmin.routes.ts:5082; SQL_FROM server/src/routes/superadmin.routes.ts:5104"
     },
     {
       "schema": "public",
@@ -6065,31 +6066,31 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2523,
+          "line": 2607,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2578,
+          "line": 2662,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2517,
+          "line": 2601,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2531,
+          "line": 2615,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2572,
+          "line": 2656,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2523; SQL_UPDATE server/src/routes/superadmin.routes.ts:2578; SQL_FROM server/src/routes/superadmin.routes.ts:2517; SQL_FROM server/src/routes/superadmin.routes.ts:2531; SQL_FROM server/src/routes/superadmin.routes.ts:2572"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2607; SQL_UPDATE server/src/routes/superadmin.routes.ts:2662; SQL_FROM server/src/routes/superadmin.routes.ts:2601; SQL_FROM server/src/routes/superadmin.routes.ts:2615; SQL_FROM server/src/routes/superadmin.routes.ts:2656"
     },
     {
       "schema": "public",
@@ -9942,31 +9943,31 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5141,
+          "line": 5225,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5160,
+          "line": 5244,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5175,
+          "line": 5259,
           "kind": "SQL_DELETE_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5109,
+          "line": 5193,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 5126,
+          "line": 5210,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:5141; SQL_UPDATE server/src/routes/superadmin.routes.ts:5160; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:5175; SQL_FROM server/src/routes/superadmin.routes.ts:5109; SQL_FROM server/src/routes/superadmin.routes.ts:5126"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:5225; SQL_UPDATE server/src/routes/superadmin.routes.ts:5244; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:5259; SQL_FROM server/src/routes/superadmin.routes.ts:5193; SQL_FROM server/src/routes/superadmin.routes.ts:5210"
     },
     {
       "schema": "public",
@@ -9980,7 +9981,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4399,
+          "line": 4483,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -9990,7 +9991,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4463,
+          "line": 4547,
           "kind": "SQL_UPDATE"
         },
         {
@@ -9999,7 +10000,7 @@
           "kind": "SQL_DELETE_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:286; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4399; SQL_UPDATE server/src/controllers/superadmin/customerController.ts:310; SQL_UPDATE server/src/routes/superadmin.routes.ts:4463; SQL_DELETE_FROM server/src/controllers/superadmin/customerController.ts:320"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:286; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4483; SQL_UPDATE server/src/controllers/superadmin/customerController.ts:310; SQL_UPDATE server/src/routes/superadmin.routes.ts:4547; SQL_DELETE_FROM server/src/controllers/superadmin/customerController.ts:320"
     },
     {
       "schema": "public",
@@ -10013,7 +10014,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3814,
+          "line": 3898,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -10023,7 +10024,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3846,
+          "line": 3930,
           "kind": "SQL_UPDATE"
         },
         {
@@ -10032,7 +10033,7 @@
           "kind": "SQL_DELETE_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:18; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3814; SQL_UPDATE server/src/controllers/superadmin/customerController.ts:30; SQL_UPDATE server/src/routes/superadmin.routes.ts:3846; SQL_DELETE_FROM server/src/controllers/superadmin/customerController.ts:39"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:18; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3898; SQL_UPDATE server/src/controllers/superadmin/customerController.ts:30; SQL_UPDATE server/src/routes/superadmin.routes.ts:3930; SQL_DELETE_FROM server/src/controllers/superadmin/customerController.ts:39"
     },
     {
       "schema": "public",
@@ -10046,7 +10047,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3949,
+          "line": 4033,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -10065,7 +10066,7 @@
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:48; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3949; SQL_FROM server/src/controllers/superadmin/customerController.ts:63; SQL_FROM server/src/controllers/superadmin/customerController.ts:90; SQL_FROM server/src/controllers/superadmin/customerController.ts:92"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:48; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4033; SQL_FROM server/src/controllers/superadmin/customerController.ts:63; SQL_FROM server/src/controllers/superadmin/customerController.ts:90; SQL_FROM server/src/controllers/superadmin/customerController.ts:92"
     },
     {
       "schema": "public",
@@ -10074,26 +10075,26 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4238,
+          "line": 4322,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4050,
+          "line": 4134,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4079,
+          "line": 4163,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4080,
+          "line": 4164,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4238; SQL_FROM server/src/routes/superadmin.routes.ts:4050; SQL_FROM server/src/routes/superadmin.routes.ts:4079; SQL_FROM server/src/routes/superadmin.routes.ts:4080"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4322; SQL_FROM server/src/routes/superadmin.routes.ts:4134; SQL_FROM server/src/routes/superadmin.routes.ts:4163; SQL_FROM server/src/routes/superadmin.routes.ts:4164"
     },
     {
       "schema": "public",
@@ -10135,7 +10136,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4119,
+          "line": 4203,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -10145,7 +10146,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 4161,
+          "line": 4245,
           "kind": "SQL_UPDATE"
         },
         {
@@ -10154,7 +10155,7 @@
           "kind": "SQL_DELETE_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:138; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4119; SQL_UPDATE server/src/controllers/superadmin/customerController.ts:158; SQL_UPDATE server/src/routes/superadmin.routes.ts:4161; SQL_DELETE_FROM server/src/controllers/superadmin/customerController.ts:175"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/controllers/superadmin/customerController.ts:138; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:4203; SQL_UPDATE server/src/controllers/superadmin/customerController.ts:158; SQL_UPDATE server/src/routes/superadmin.routes.ts:4245; SQL_DELETE_FROM server/src/controllers/superadmin/customerController.ts:175"
     },
     {
       "schema": "public",
@@ -11296,31 +11297,31 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3211,
+          "line": 3295,
           "kind": "SQL_INSERT_INTO"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3236,
+          "line": 3320,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3245,
+          "line": 3329,
           "kind": "SQL_DELETE_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3122,
+          "line": 3206,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3165,
+          "line": 3249,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3211; SQL_UPDATE server/src/routes/superadmin.routes.ts:3236; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:3245; SQL_FROM server/src/routes/superadmin.routes.ts:3122; SQL_FROM server/src/routes/superadmin.routes.ts:3165"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:3295; SQL_UPDATE server/src/routes/superadmin.routes.ts:3320; SQL_DELETE_FROM server/src/routes/superadmin.routes.ts:3329; SQL_FROM server/src/routes/superadmin.routes.ts:3206; SQL_FROM server/src/routes/superadmin.routes.ts:3249"
     },
     {
       "schema": "public",
@@ -11329,21 +11330,21 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3257,
+          "line": 3341,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3133,
+          "line": 3217,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3183,
+          "line": 3267,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_UPDATE server/src/routes/superadmin.routes.ts:3257; SQL_FROM server/src/routes/superadmin.routes.ts:3133; SQL_FROM server/src/routes/superadmin.routes.ts:3183"
+      "sourceEvidence": "SQL_UPDATE server/src/routes/superadmin.routes.ts:3341; SQL_FROM server/src/routes/superadmin.routes.ts:3217; SQL_FROM server/src/routes/superadmin.routes.ts:3267"
     },
     {
       "schema": "public",
@@ -19953,17 +19954,17 @@
           "kind": "SQL_INSERT_INTO"
         },
         {
-          "path": "server/src/services/v8/interviewInsightFindingsService.ts",
-          "line": 1828,
+          "path": "server/src/services/organizationExportService.ts",
+          "line": 529,
           "kind": "SQL_FROM"
         },
         {
           "path": "server/src/services/v8/interviewInsightFindingsService.ts",
-          "line": 1877,
+          "line": 1828,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "EXPORT_POLICY server/src/services/organizationExportDecisionContract.ts:370; SQL_INSERT_INTO server/src/services/demo/demoSeedService.ts:3882; SQL_INSERT_INTO server/src/services/v8/interviewInsightFindingsService.ts:1838; SQL_FROM server/src/services/v8/interviewInsightFindingsService.ts:1828; SQL_FROM server/src/services/v8/interviewInsightFindingsService.ts:1877"
+      "sourceEvidence": "EXPORT_POLICY server/src/services/organizationExportDecisionContract.ts:370; SQL_INSERT_INTO server/src/services/demo/demoSeedService.ts:3882; SQL_INSERT_INTO server/src/services/v8/interviewInsightFindingsService.ts:1838; SQL_FROM server/src/services/organizationExportService.ts:529; SQL_FROM server/src/services/v8/interviewInsightFindingsService.ts:1828"
     },
     {
       "schema": "public",
@@ -20602,7 +20603,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 1697,
+          "line": 1781,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -20616,7 +20617,7 @@
           "kind": "SQL_INSERT_INTO"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/billing.routes.ts:329; SQL_INSERT_INTO server/src/routes/billing/billing.routes.ts:1284; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:1697; SQL_INSERT_INTO server/src/services/InvoiceService.ts:225; SQL_INSERT_INTO server/src/services/billing/BillingCommandService.ts:1065"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/billing.routes.ts:329; SQL_INSERT_INTO server/src/routes/billing/billing.routes.ts:1284; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:1781; SQL_INSERT_INTO server/src/services/InvoiceService.ts:225; SQL_INSERT_INTO server/src/services/billing/BillingCommandService.ts:1065"
     },
     {
       "schema": "public",
@@ -26079,7 +26080,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 459,
+          "line": 464,
           "kind": "SQL_FROM"
         },
         {
@@ -26088,7 +26089,7 @@
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/services/OrgPoliciesService.ts:162; SQL_UPDATE server/src/services/OrgPoliciesService.ts:156; SQL_FROM server/src/routes/admin/legal-hold.routes.ts:31; SQL_FROM server/src/routes/superadmin.routes.ts:459; SQL_FROM server/src/services/OrgPoliciesService.ts:27"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/services/OrgPoliciesService.ts:162; SQL_UPDATE server/src/services/OrgPoliciesService.ts:156; SQL_FROM server/src/routes/admin/legal-hold.routes.ts:31; SQL_FROM server/src/routes/superadmin.routes.ts:464; SQL_FROM server/src/services/OrgPoliciesService.ts:27"
     },
     {
       "schema": "public",
@@ -27201,11 +27202,11 @@
       "sources": [
         {
           "path": "server/src/routes/organization/ownership.routes.ts",
-          "line": 449,
+          "line": 528,
           "kind": "SQL_INSERT_INTO"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/organization/ownership.routes.ts:449"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/organization/ownership.routes.ts:528"
     },
     {
       "schema": "public",
@@ -28410,7 +28411,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 3674,
+          "line": 3758,
           "kind": "SQL_FROM"
         },
         {
@@ -28419,7 +28420,7 @@
           "kind": "SQL_JOIN"
         }
       ],
-      "sourceEvidence": "SQL_FROM server/src/routes/organization/rbac.routes.ts:236; SQL_FROM server/src/routes/superadmin.routes.ts:3674; SQL_JOIN server/src/routes/organization/rbac.routes.ts:266"
+      "sourceEvidence": "SQL_FROM server/src/routes/organization/rbac.routes.ts:236; SQL_FROM server/src/routes/superadmin.routes.ts:3758; SQL_JOIN server/src/routes/organization/rbac.routes.ts:266"
     },
     {
       "schema": "public",
@@ -34003,7 +34004,7 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2252,
+          "line": 2336,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -34018,11 +34019,11 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2311,
+          "line": 2395,
           "kind": "SQL_UPDATE"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/settings.routes.ts:149; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2252; SQL_UPDATE server/src/routes/ai/ai-settings.routes.ts:389; SQL_UPDATE server/src/routes/ai/ai-settings.routes.ts:481; SQL_UPDATE server/src/routes/superadmin.routes.ts:2311"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/settings.routes.ts:149; SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2336; SQL_UPDATE server/src/routes/ai/ai-settings.routes.ts:389; SQL_UPDATE server/src/routes/ai/ai-settings.routes.ts:481; SQL_UPDATE server/src/routes/superadmin.routes.ts:2395"
     },
     {
       "schema": "public",
@@ -34947,11 +34948,11 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 332,
+          "line": 337,
           "kind": "SQL_FROM"
         }
       ],
-      "sourceEvidence": "SQL_FROM server/src/routes/superadmin.routes.ts:332"
+      "sourceEvidence": "SQL_FROM server/src/routes/superadmin.routes.ts:337"
     },
     {
       "schema": "public",
@@ -35204,7 +35205,7 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2112,
+          "line": 2196,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -35214,12 +35215,12 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2140,
+          "line": 2224,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2170,
+          "line": 2254,
           "kind": "SQL_UPDATE"
         },
         {
@@ -35228,7 +35229,7 @@
           "kind": "SQL_UPDATE"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2112; SQL_INSERT_INTO server/src/routes/systemHealth.routes.ts:236; SQL_UPDATE server/src/routes/superadmin.routes.ts:2140; SQL_UPDATE server/src/routes/superadmin.routes.ts:2170; SQL_UPDATE server/src/routes/systemHealth.routes.ts:263"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2196; SQL_INSERT_INTO server/src/routes/systemHealth.routes.ts:236; SQL_UPDATE server/src/routes/superadmin.routes.ts:2224; SQL_UPDATE server/src/routes/superadmin.routes.ts:2254; SQL_UPDATE server/src/routes/systemHealth.routes.ts:263"
     },
     {
       "schema": "public",
@@ -35825,7 +35826,7 @@
       "sources": [
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2910,
+          "line": 2994,
           "kind": "SQL_INSERT_INTO"
         },
         {
@@ -35835,12 +35836,12 @@
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2933,
+          "line": 3017,
           "kind": "SQL_UPDATE"
         },
         {
           "path": "server/src/routes/superadmin.routes.ts",
-          "line": 2945,
+          "line": 3029,
           "kind": "SQL_UPDATE"
         },
         {
@@ -35849,7 +35850,7 @@
           "kind": "SQL_UPDATE"
         }
       ],
-      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2910; SQL_INSERT_INTO server/src/services/threatIntelligenceService.ts:141; SQL_UPDATE server/src/routes/superadmin.routes.ts:2933; SQL_UPDATE server/src/routes/superadmin.routes.ts:2945; SQL_UPDATE server/src/services/threatIntelligenceService.ts:167"
+      "sourceEvidence": "SQL_INSERT_INTO server/src/routes/superadmin.routes.ts:2994; SQL_INSERT_INTO server/src/services/threatIntelligenceService.ts:141; SQL_UPDATE server/src/routes/superadmin.routes.ts:3017; SQL_UPDATE server/src/routes/superadmin.routes.ts:3029; SQL_UPDATE server/src/services/threatIntelligenceService.ts:167"
     },
     {
       "schema": "public",

@@ -1,4 +1,15 @@
 {
+  "enterpriseExport": {
+    "action": "Daten exportieren",
+    "preparing": "Der vollständige Organisationsexport wird vorbereitet…",
+    "resuming": "Der Organisationsexport wird fortgesetzt…",
+    "ready": "Der Organisationsexport ist fertig ({{rows}} Zeilen).",
+    "failedWithCode": "Der Organisationsexport ist fehlgeschlagen ({{code}}). Sie können es erneut versuchen.",
+    "retry": "Export erneut versuchen",
+    "progressLabel": "Fortschritt des Organisationsexports",
+    "progressTables": "Tabellen {{completed}} von {{total}}",
+    "rows": "{{rows}} Zeilen verarbeitet"
+  },
   "chatSignals": {
     "untitled": "Signal ohne Titel",
     "severity": {

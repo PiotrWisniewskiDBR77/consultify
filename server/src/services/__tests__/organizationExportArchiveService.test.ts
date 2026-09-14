@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { OrganizationExportResult } from '../organizationLifecycleService.js';
 import { writeOrganizationExportArchive } from '../organizationExportArchiveService.js';
@@ -35,7 +35,11 @@ describe('organization enterprise archive', () => {
         excludedColumns: [],
       },
     };
+    const wholeFileRead = vi.spyOn(fs, 'readFile');
     const manifest = await writeOrganizationExportArchive(result, output);
+    // Mutation guard: restoring receipt-level fs.readFile makes this fail.
+    expect(wholeFileRead).not.toHaveBeenCalled();
+    wholeFileRead.mockRestore();
     expect(manifest.files.map((file) => file.path)).toEqual([
       'csv/public.organizations.csv',
       'csv/public.tasks.csv',

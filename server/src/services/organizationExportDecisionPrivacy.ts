@@ -8,36 +8,49 @@ import {
  * Literal source fingerprints are identity claims, never content hashes.
  */
 type Row = Record<string, unknown>;
-/** Explicit structural projection; no arbitrary free text from auxiliary stores. */
+const PERSON_IDENTITY_KEY = /^(?:actor_id|user_id|owner_id|assignee_id|reporter_id|created_by|created_by_user_id|updated_by|updated_by_user_id|archived_by|decided_by|decision_maker_id|decision_owner_id|assigned_to|escalated_to|recipient_email|recipient_name|email)$/i;
+const DEC493_BUSINESS_COLUMNS = new Set([
+  'id', 'organization_id', 'project_id', 'initiative_id', 'task_id', 'source_type', 'source_id',
+  'insight_id', 'finding_id', 'target_id', 'target_kind', 'target_ref_type', 'pointer_type',
+  'pointer_state', 'source_ref', 'source_fingerprint', 'captured_excerpt', 'captured_at',
+  'removal_reason', 'removed_at', 'duplicate_observed_count', 'metadata_json', 'status',
+  'workflow_status', 'review_status', 'readback_status', 'readback_summary', 'readback_updated_at',
+  'version', 'created_at', 'updated_at', 'deadline', 'decided_at', 'title', 'description', 'type',
+  'priority', 'impact', 'pmo_domain', 'required', 'finding_statement', 'confidence_level',
+  'limits_text', 'limits_json', 'next_action_text', 'next_action_json', 'prompt_type', 'content',
+  'structured_content', 'evidence_links', 'unknowns', 'counterpoints', 'assumptions',
+  'confidence_score', 'insight_category', 'category', 'evidence_map_json', 'executive_summary',
+  'issues_json', 'missing_data_json', 'opportunities_json', 'section_completions', 'signals_json',
+  'themes_json', 'payload_json', 'operator_decision_json',
+]);
+const removeNestedPersonIdentity = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(removeNestedPersonIdentity);
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(value as Row)
+        .filter(([key]) => !PERSON_IDENTITY_KEY.test(key))
+        .map(([key, nested]) => [key, removeNestedPersonIdentity(nested)])
+    );
+  }
+  if (typeof value === 'string' && /^[\[{]/.test(value.trim())) {
+    try {
+      return JSON.stringify(removeNestedPersonIdentity(JSON.parse(value)));
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};
+
+/** DEC-493 projection: retain substantive Interview/Decision content and strip person identity. */
 export function projectDecisionSourceIdentity(row: Row): Row {
-  const names = [
-    'id',
-    'organization_id',
-    'project_id',
-    'initiative_id',
-    'task_id',
-    'source_type',
-    'source_id',
-    'insight_id',
-    'finding_id',
-    'target_id',
-    'target_kind',
-    'target_ref_type',
-    'pointer_type',
-    'pointer_state',
-    'decision_maker_id',
-    'created_by',
-    'status',
-    'workflow_status',
-    'version',
-    'created_at',
-    'updated_at',
-    'deadline',
-    'decided_at',
-  ];
   return {
-    ...Object.fromEntries(names.filter((k) => k in row).map((k) => [k, row[k]])),
-    export_payload_scope: 'decision_source_or_supplemental_content_unresolved',
+    ...Object.fromEntries(
+      Object.entries(row)
+        .filter(([key]) => DEC493_BUSINESS_COLUMNS.has(key) && !PERSON_IDENTITY_KEY.test(key))
+        .map(([key, value]) => [key, removeNestedPersonIdentity(value)])
+    ),
+    export_payload_scope: 'interview_and_decision_content_identity_removed_dec493',
   };
 }
 export interface DecisionSourceSnapshot {

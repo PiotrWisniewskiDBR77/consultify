@@ -56,6 +56,55 @@ if (!globalState.__P13_ORGANIZATIONS_FIXTURE__) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const path = new URL(url, window.location.origin).pathname;
     if (path in readyPayloads) return json(readyPayloads[path]);
+    const jobStart = path.match(/^\/api\/superadmin\/organizations\/([^/]+)\/export-jobs$/);
+    if (jobStart && (init?.method || 'GET') === 'POST') {
+      if (new URL(window.location.href).searchParams.get('exportState') === 'denied') {
+        return json({ code: 'ORG_EXPORT_PERMISSION_REQUIRED' }, 403);
+      }
+      return json(
+        {
+          job: {
+            id: 'job-e1-fixture',
+            organizationId: jobStart[1],
+            phase: 'queued',
+            completedTables: 0,
+            totalTables: 1379,
+            rows: 0,
+            percent: 0,
+          },
+          resumeToken: 'fixture-resume-token',
+        },
+        202
+      );
+    }
+    const jobStatus = path.match(
+      /^\/api\/superadmin\/organizations\/([^/]+)\/export-jobs\/job-e1-fixture$/
+    );
+    if (jobStatus) {
+      const state = new URL(window.location.href).searchParams.get('exportState');
+      if (state === 'conflict') return json({ code: 'EXPORT_JOB_NOT_READY' }, 409);
+      if (state === 'failed') {
+        return json({
+          id: 'job-e1-fixture',
+          organizationId: jobStatus[1],
+          phase: 'failed',
+          completedTables: 684,
+          totalTables: 1379,
+          rows: 12842,
+          percent: 49,
+          errorCode: 'LEGAL_HOLD',
+        });
+      }
+      return json({
+        id: 'job-e1-fixture',
+        organizationId: jobStatus[1],
+        phase: 'running',
+        completedTables: 684,
+        totalTables: 1379,
+        rows: 12842,
+        percent: 49,
+      });
+    }
     // P5 — GET /api/superadmin/organizations/:id/export?format=json|csv
     const exportMatch = path.match(/^\/api\/superadmin\/organizations\/([^/]+)\/export$/);
     if (exportMatch) {
