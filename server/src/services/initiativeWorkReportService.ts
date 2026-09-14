@@ -47,6 +47,46 @@ const safeText = (value: unknown, fallback: string) => {
   return text || fallback;
 };
 
+export function selectInitiativeWorkReportSections(content: InitiativeWorkReportContent) {
+  const recentThreshold = new Date(content.generatedAt).getTime() - 7 * 86_400_000;
+  switch (content.templateId) {
+    case 'EXECUTIVE_SUMMARY':
+      return {
+        initiativeHeading: 'Priority initiatives',
+        initiatives: content.initiatives.slice(0, 5),
+        decisionDebtors: content.decisionDebtors.slice(0, 5),
+      };
+    case 'PORTFOLIO_STATUS':
+      return {
+        initiativeHeading: 'Initiatives',
+        initiatives: content.initiatives,
+        decisionDebtors: [],
+      };
+    case 'DECISION_BACKLOG':
+      return {
+        initiativeHeading: null,
+        initiatives: [],
+        decisionDebtors: content.decisionDebtors,
+      };
+    case 'DELIVERY_RISKS':
+      return {
+        initiativeHeading: 'Initiatives requiring attention',
+        initiatives: content.initiatives.filter((item) =>
+          /BLOCK|RISK|DELAY|ESCALAT/i.test(item.status)
+        ),
+        decisionDebtors: content.decisionDebtors.filter((debtor) => debtor.overdue > 0),
+      };
+    case 'WEEKLY_TEAM_UPDATE':
+      return {
+        initiativeHeading: 'Initiatives updated this week',
+        initiatives: content.initiatives.filter(
+          (item) => new Date(item.updatedAt).getTime() >= recentThreshold
+        ),
+        decisionDebtors: content.decisionDebtors,
+      };
+  }
+}
+
 export async function renderInitiativeWorkReportPdf(
   content: InitiativeWorkReportContent
 ): Promise<Buffer> {
@@ -81,12 +121,10 @@ export async function renderInitiativeWorkReportPdf(
     doc.text(`${safeText(status, 'UNKNOWN')}: ${count}`);
   }
 
-  const showInitiatives = content.templateId !== 'DECISION_BACKLOG';
+  const selected = selectInitiativeWorkReportSections(content);
+  const showInitiatives = selected.initiativeHeading !== null;
   const showDecisionOwners = content.templateId !== 'PORTFOLIO_STATUS';
-  const initiatives =
-    content.templateId === 'DELIVERY_RISKS'
-      ? content.initiatives.filter((item) => /BLOCK|RISK|DELAY|ESCALAT/i.test(item.status))
-      : content.initiatives;
+  const initiatives = selected.initiatives;
 
   if (showInitiatives) {
     doc.moveDown(1.2);
@@ -94,9 +132,7 @@ export async function renderInitiativeWorkReportPdf(
       .font(PDF_FONT.bold)
       .fontSize(13)
       .fillColor('#0f172a')
-      .text(
-        content.templateId === 'DELIVERY_RISKS' ? 'Initiatives requiring attention' : 'Initiatives'
-      );
+      .text(selected.initiativeHeading ?? 'Initiatives');
     if (initiatives.length === 0) {
       doc
         .font(PDF_FONT.italic)
@@ -125,10 +161,10 @@ export async function renderInitiativeWorkReportPdf(
     doc.moveDown(1.2);
     if (doc.y > 680) doc.addPage();
     doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Decision owners');
-    if (content.decisionDebtors.length === 0) {
+    if (selected.decisionDebtors.length === 0) {
       doc.font(PDF_FONT.italic).fontSize(10).fillColor('#64748b').text('No pending decisions.');
     }
-    for (const debtor of content.decisionDebtors) {
+    for (const debtor of selected.decisionDebtors) {
       if (doc.y > 730) doc.addPage();
       doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(debtor.authorityName);
       doc
