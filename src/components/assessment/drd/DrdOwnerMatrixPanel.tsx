@@ -47,6 +47,7 @@ import {
   usePodpisUkrytychKolumn,
 } from './DRDAssessmentEditor';
 import { drdOdpowiedziZOutputu } from './DRDMatrixReadOnly';
+import { nazwaWJezyku } from './drdNazwa';
 
 import type { MatrixCellState, MatrixRow, MatrixSelection } from '@/components/method-workspace/types';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
@@ -99,7 +100,7 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
   renderSideSheet,
   className = '',
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const podpisUkrytychKolumn = usePodpisUkrytychKolumn();
   /**
    * „Przestronny" i „Pełny ekran" żyją TU, a nie w ekranie sesji: to ustawienia
@@ -142,7 +143,8 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
     );
   }
 
-  const nazwaOsi = axis.namePL ?? axis.name;
+  // DEC-461: axis caption in the viewer's language (was unconditionally PL).
+  const nazwaOsi = nazwaWJezyku(axis.namePL, axis.name, (i18n.language || '').toLowerCase().startsWith('pl'));
 
   /**
    * Siatka + otoczka. `siatka(fill)` jest jedną definicją używaną w zakładce

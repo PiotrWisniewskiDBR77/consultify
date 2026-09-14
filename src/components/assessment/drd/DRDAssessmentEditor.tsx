@@ -38,6 +38,8 @@ import { getAssessmentGuidanceLive } from '@/services/assessmentKnowledge/assess
 import type { AssessmentGuidanceOutput } from '@/services/assessmentKnowledge/assessmentGuidanceService';
 import { getDRDKnowledge } from '@/services/assessmentKnowledge/drdKnowledge';
 import { getDRDAxisWhyHint } from '@/services/assessmentKnowledge/whyThisMatters';
+import { useDrdPackLanguage } from './useDrdPack';
+import { nazwaWJezyku } from './drdNazwa';
 import {
   DRD_AXIS_KEY_MAP,
   DRD_STRUCTURE,
@@ -239,6 +241,11 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
       : compact
         ? MATRIX_DENSITY.compact
         : MATRIX_DENSITY.spacious;
+  // DEC-461: `getDRDKnowledge()` defaults to Polish when no language is
+  // passed, so the grid's technology chips were Polish-sourced for an EN
+  // viewer. `useTranslation` also subscribes this grid to `languageChanged`,
+  // so switching the language in Settings repaints it without a reload.
+  const gridLang = useDrdPackLanguage();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hiddenPx, setHiddenPx] = useState(0);
   /** Zmierzona szerokość kadru siatki (0 = jeszcze nie mierzone / brak DOM-u). */
@@ -370,7 +377,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                     const isTarget = target > 0 && level <= target && !isAchieved;
 
                     const areaLevelInfo = area.levels?.find((l) => l.level === level);
-                    const knowledge = getDRDKnowledge(area.id, level);
+                    const knowledge = getDRDKnowledge(area.id, level, gridLang);
                     const techs = knowledge?.suggestedTechnologies || [];
 
                     const isSelected =
@@ -792,6 +799,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   const { t, i18n } = useTranslation();
   const podpisUkrytychKolumn = usePodpisUkrytychKolumn();
   const isPl = (i18n.language || '').toLowerCase().startsWith('pl');
+  // DEC-461: questionnaire CONTENT (questions, evidence example, suggested
+  // technologies) in the viewer's language. `getDRDKnowledge`'s own default is
+  // still 'pl', so every call site here passes this explicitly.
+  const lang = useDrdPackLanguage();
   const [axisId, setAxisId] = useState<number>(currentAxisId ?? 1);
   const [areaId, setAreaId] = useState<string>(
     currentAreaId ?? DRD_STRUCTURE[0]?.areas?.[0]?.id ?? '1A'
@@ -945,15 +956,19 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
     void getAssessmentGuidanceLive({
       framework: 'DRD',
       dimensionId: area.id,
-      dimensionName: area.namePL || area.name,
+      dimensionName: nazwaWJezyku(area.namePL, area.name, lang === 'pl'),
       levelNumber: level.level,
       levelTitle: level.title,
       levelDescription: level.description,
-      language: 'pl',
+      // DEC-461: was hardcoded 'pl' — an EN viewer got Polish AI guidance
+      // under an English question.
+      language: lang,
     })
       .then((data) => setGuidance((prev) => ({ ...prev, [key]: { loading: false, data } })))
       .catch(() => setGuidance((prev) => ({ ...prev, [key]: { loading: false } })));
-  }, []);
+    // `lang` IS a dependency (DEC-461): guidance is fetched in the viewer's
+    // language, so a language switch must be able to request it again.
+  }, [lang]);
 
   // When area changes, default focus to "next likely" level (achieved+1), unless controlled externally.
   React.useEffect(() => {
@@ -1440,7 +1455,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 const tooltipLevelInfo = tooltipArea?.levels?.find(
                   (l) => l.level === hoverCell.level
                 );
-                const tooltipKnowledge = getDRDKnowledge(hoverCell.areaId, hoverCell.level);
+                const tooltipKnowledge = getDRDKnowledge(hoverCell.areaId, hoverCell.level, lang);
                 const tooltipState = getAreaState(value, hoverCell.areaId, levelCount);
                 const tooltipAchieved = tooltipState.achievedLevel || 0;
                 const tooltipTarget = tooltipState.targetLevel || 0;
@@ -1534,7 +1549,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   const popupLevelInfo = popupArea?.levels?.find(
                     (l) => l.level === popupCell.level
                   );
-                  const popupKnowledge = getDRDKnowledge(popupCell.areaId, popupCell.level);
+                  const popupKnowledge = getDRDKnowledge(popupCell.areaId, popupCell.level, lang);
                   const popupState = getAreaState(value, popupCell.areaId, levelCount);
                   const popupAchieved = popupState.achievedLevel || 0;
                   const popupTarget = popupState.targetLevel || 0;
@@ -1826,7 +1841,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 const isImplicit = achieved && (state.achievedLevel || 0) > lvl.level;
                 const isTarget = (state.targetLevel || 0) === lvl.level;
                 const isSkipped = (state.levelDecisions || {})[String(lvl.level)] === 'skip';
-                const knowledge = getDRDKnowledge(areaId, lvl.level);
+                const knowledge = getDRDKnowledge(areaId, lvl.level, lang);
                 const note = state.levelNotes?.[String(lvl.level)] || '';
                 const isSelected = activeLevel === lvl.level;
                 const isOpen = isSelected && isDetailsOpen;
