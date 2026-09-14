@@ -136,6 +136,7 @@ describe.skipIf(!REAL_DB)(
     }
 
     beforeAll(async () => {
+    process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
       const { Pool: PgPool } = await import('pg');
       pool = new PgPool({ connectionString: CONNECTION_STRING });
       await pool.query(`INSERT INTO organizations (id, name) VALUES ($1,'IAA evidence race')`, [
@@ -154,7 +155,7 @@ describe.skipIf(!REAL_DB)(
       await pool.query(
         `INSERT INTO organization_ai_policy (organization_id, policy)
        VALUES ($1,$2::jsonb)`,
-        [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, mode: 'manager' } } })]
+        [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } } })]
       );
       const { InterviewController } = await import('../../../controllers/InterviewController.js');
       app = express();
@@ -706,7 +707,7 @@ describe.skipIf(!REAL_DB)(
         `UPDATE organization_ai_policy
          SET policy=$2::jsonb
          WHERE organization_id=$1`,
-        [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, mode: 'ai' } } })]
+        [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, enabled: true, mode: 'ai' } } })]
       );
       const rubric = (score: number) =>
         ['concreteness', 'evidence', 'depth', 'measurability', 'coherence'].map((criterion) => ({
@@ -757,7 +758,7 @@ describe.skipIf(!REAL_DB)(
            WHERE organization_id=$1`,
           [
             orgId,
-            JSON.stringify({ interview: { answerApproval: { version: 1, mode: 'manager' } } }),
+            JSON.stringify({ interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } } }),
           ]
         );
         await pool.query(`DELETE FROM organizations WHERE id=$1`, [otherOrgId]);

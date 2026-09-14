@@ -8342,6 +8342,7 @@
     },
     "answerApproval": {
       "policy": {
+        "enabledLabel": "Enable answer approval",
         "modeLabel": "Answer approval mode",
         "modeAi": "AI",
         "modeManager": "Manager",
