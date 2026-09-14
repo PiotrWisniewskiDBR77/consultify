@@ -1,0 +1,124 @@
+=== src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > declares every Interview object type from the owner decision 1ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > keeps every supported business action discoverable in row and preview 2ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > has real, translated PL and EN labels for every action key 25ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > keeps the session preview chrome and AI hints in both locale files 21ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > uses the resolved list locale for Interview hub dates and translated preview labels 2ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > is consumed by the row-menu host and every dedicated preview action component 1ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx > Interview action matrix contract > dispatches the matrix-backed action from every dedicated preview footer 135ms
+ ✓ src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx (7 tests) 189ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  16:57:52
+   Duration  1.42s (transform 567ms, setup 98ms, import 808ms, tests 189ms, environment 248ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  16:57:52
+   Duration  1.42s (transform 567ms, setup 98ms, import 808ms, tests 189ms, environment 248ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+
+EXIT 0
+
+=== src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub assignment lifecycle readback > updates the Inbox row from the card response without refetch or a session status inference 225ms
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview notification record read without list membership > opens the explicit assignment through its protected detail when lists are empty 122ms
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview notification record read without list membership > denied explicit detail never opens an assignment card 60ms
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub capability-scoped supporting data > does not request manager-only templates or insights for a respondent 22ms
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx > Interview Hub capability-scoped supporting data > keeps loading templates and insights for an authorized manager 29ms
+ ✓ src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx (5 tests) 459ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  16:57:54
+   Duration  3.50s (transform 1.94s, setup 98ms, import 2.64s, tests 459ms, environment 223ms)
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  16:57:54
+   Duration  3.50s (transform 1.94s, setup 98ms, import 2.64s, tests 459ms, environment 223ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+EXIT 0
+
+=== src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+ ✓ src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx > InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397) > T3: panel podglądu = tylko rekord, bez zakładek i bez Teresy (MUTACJA: przywróć zakładkę → RED) 121ms
+ ✓ src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx > InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397) > T3b (DEC-397b, nadpisuje DEC-397): zamknij X → klik wiersza PONOWNIE otwiera panel (MUTACJA: usuń jedenPanel.otworz() w onRowClick → RED) 169ms
+ ✓ src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx > InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397) > T4: markup korzenia panelu nie wprowadza klas spoza tokenów 57ms
+ ✓ src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx > InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397) > T4 (źródło): bespoke <aside bg-slate-50 dark:bg-navy-950> nie istnieje już w InterviewHub.tsx 1ms
+ ✓ src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx (4 tests) 350ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  16:57:58
+   Duration  3.52s (transform 2.10s, setup 96ms, import 2.76s, tests 350ms, environment 232ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  16:57:58
+   Duration  3.52s (transform 2.10s, setup 96ms, import 2.76s, tests 350ms, environment 232ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+EXIT 0
+
+=== src/components/Interview/__tests__/interviewDefaultSessionNames.pinOnSource.test.ts ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66
+
+ ✓ src/components/Interview/__tests__/interviewDefaultSessionNames.pinOnSource.test.ts > Interview — domyślne nazwy sesji/zadań nie kolidują ze sobą (pin na źródle) > handleNewSession NIE wstawia twardego angielskiego literału — idzie przez t() 32ms
+ ✓ src/components/Interview/__tests__/interviewDefaultSessionNames.pinOnSource.test.ts > Interview — domyślne nazwy sesji/zadań nie kolidują ze sobą (pin na źródle) > klucz interview.hub.newSessionDefaultName istnieje w pl i en, z interpolacją {{date}}, i pl różni się od en 1ms
+ ✓ src/components/Interview/__tests__/interviewDefaultSessionNames.pinOnSource.test.ts > Interview — domyślne nazwy sesji/zadań nie kolidują ze sobą (pin na źródle) > getAssignmentTitle odróżnia wiersze przez dueAt (nie createdAt — koliduje w seedzie) 0ms
+ ✓ src/components/Interview/__tests__/interviewDefaultSessionNames.pinOnSource.test.ts (3 tests) 34ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:58:02
+   Duration  485ms (transform 63ms, setup 96ms, import 41ms, tests 34ms, environment 232ms)
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:58:02
+   Duration  487ms (transform 63ms, setup 96ms, import 41ms, tests 34ms, environment 232ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b2-ui-w66/junit.xml
+
+EXIT 0

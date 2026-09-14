@@ -1,0 +1,3 @@
+1:  d232c7a449 = 1:  b4e2e6c9f2 [ODMROZENIE 02_INTERVIEW DEC-461] E2b-2 WIP lokalizacja ekranu Interview
+2:  21d95a9305 = 2:  a20dbc5cd7 [ODMROZENIE 02_INTERVIEW DEC-461] freeze E2b-2 i projekt Z-63 STOP
+3:  fb1bc9f6a3 = 3:  78d58e75e1 [ODMROZENIE 02_INTERVIEW DEC-461] dowody freeze E2b-2

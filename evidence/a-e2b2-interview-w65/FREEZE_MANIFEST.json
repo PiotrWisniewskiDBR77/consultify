@@ -1,8 +1,8 @@
 {
   "package": "A/E E2b-2 Interview UI",
   "status": "FROZEN_PENDING_INDEPENDENT_REVIEW",
-  "base": "34888b04459987f3bfc7527dae43a25655ceef09",
-  "contentSha": "d232c7a449590047b9ef22ad78e6530a1841a472",
+  "base": "59a8c44c04a3ad53853b6813c3e69d083ec5e189",
+  "contentSha": "b4e2e6c9f2dde2b69d380ed8f474d77ff842a6ed",
   "productAndTestFiles": [
     {
       "path": "public/locales/en/translation.json",
@@ -85,5 +85,11 @@
   "z63d7": "STOP_PENDING_DEC_513_NO_MIGRATION_NO_IMPLEMENTATION",
   "knownBaseline": {
     "InterviewHub.smoke": "13/14 passed + 2 unhandled on base and candidate; missing useInterviewReviewAccess in test mock"
+  },
+  "refreeze": {
+    "channelEntry": "W66",
+    "rangeDiff": "3/3 patch-equivalent",
+    "focusedTests": "19/19",
+    "productScopeCollision": "none; W66 base delta contains CTO documentation only"
   }
 }

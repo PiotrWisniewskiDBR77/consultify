@@ -1,6 +1,6 @@
 # E2b-2 Interview — receipt
 
-**Werdykt: FREEZE, oczekuje na niezależny review.** Baza `34888b0445`, content `d232c7a449`.
+**Werdykt: FREEZE, oczekuje na niezależny review.** Baza W66 `59a8c44c04`, content po rebase `b4e2e6c9f2dde2b69d380ed8f474d77ff842a6ed`.
 
 | Bramka | Wynik |
 |---|---|
@@ -17,5 +17,8 @@
 | UI | 4/4 EN/PL × light/dark; boczny preview otwarty; console/page errors 0 |
 | Evidence size | poniżej 2 MB |
 | Z-63/D7 | STOP; tylko projekt; brak migracji i implementacji |
+| Refreeze W66 | range-diff 3/3 patch-equivalent; focused tests 19/19 |
 
 Pierwsze uruchomienie tsc bazy przekroczyło limit 120 s; powtórzenie na rozgrzanych zależnościach zakończyło się i dało 177. Screenshot runner przechwytywał cztery jawnie atrapowe odczyty V8 i zwracał poprawne puste koperty, aby zmierzyć produkcyjny `InterviewHub` bez błędów sieci przy zachowaniu danych sesji z istniejącego harnessu.
+
+Refreeze W66 wykonano na exact base `59a8c44c04a3ad53853b6813c3e69d083ec5e189`. Delta bazy wobec W65 obejmuje wyłącznie dokumentację CTO, dlatego nie koliduje z zakresem Interview. Initiatives i Chat nie zostały dotknięte.
