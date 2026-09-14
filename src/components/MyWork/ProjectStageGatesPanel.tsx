@@ -109,10 +109,29 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
   const columns = useMemo<TableColumn[]>(
     () => [
       {
+        // ── SZEROKOŚĆ (Z-43, 14.09): 230+170=400px > 285px dostępne w panelu
+        // podglądu (zmierzone Playwright na `min-width` 340px kanonu preview:
+        // `.overflow-x-auto` viewport = 285.19px). Tabela była SZERSZA niż
+        // kontener, więc `overflow-x-auto` bez przewinięcia obcinał prawą
+        // krawędź kolumny „Status" w połowie znaku ("Passed"→"Pas",
+        // "Not ready"→"Not", "Upcoming"→"Upc") — to była OKLUZJA przez
+        // przepełnienie, nie zawijanie tekstu.
+        //
+        // ŚWIADOMIE BEZ `primary: true`. Ta mini-tabela ma tylko DWIE
+        // kolumny wewnątrz wąskiego panelu podglądu (nie jest rejestrem
+        // encji z resize/sortem jak 94 ekrany listowe) — deklaracja
+        // `primary` daje kolumnie twardą podłogę 200px w `<th>` (`cfg.minWidth`
+        // z `getColumnTypeFloor`, FilterableTable.tsx:337 — ta podłoga jest
+        // egzekwowana przez CSS `min-width` NIEZALEŻNIE od `columnFit`,
+        // więc żadna wartość `width` poniżej 200px nie miała żadnego efektu
+        // — zmierzone: `width:'120px'` i `width:'150px'` dawały identyczny
+        // renderowany nagłówek 200px). Bez `primary` kolumna dostaje zwykłą
+        // podłogę typu `text` (140px), a 140+130=270px < 285px dostępne —
+        // tabela mieści się bez przewijania na całym zakresie panelu
+        // (`clamp(340px, 28%, 480px)`).
         id: 'gateType',
         label: t('myWork.projects.stageGates.gate', 'Gate'),
-        primary: true,
-        width: '230px',
+        width: '140px',
         dataType: 'text',
         render: (tableRow: TableRow) => {
           const row = tableRow as unknown as ProjectStageGateRow;
@@ -129,19 +148,27 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
       {
         id: 'state',
         label: t('myWork.projects.stageGates.status', 'Status'),
-        width: '170px',
+        width: '130px',
         dataType: 'status',
         render: (tableRow: TableRow) => {
           const row = tableRow as unknown as ProjectStageGateRow;
-          const className =
+          const scheme =
             row.state === 'PASSED'
               ? 'text-[var(--c-success)]'
               : row.state === 'NOT_READY'
                 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-c-text-secondary';
           return (
-            <span className="flex flex-col items-start gap-1">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${className}`}>
+            // Plakietka (ikona+tekst) na WŁASNEJ linii z `whitespace-nowrap` —
+            // przy wąskiej kolumnie (120px) etykieta stanu ("Not ready",
+            // PL "Nadchodząca") nie może się złamać w połowie wyrazu.
+            // Przycisk „Pass gate"/„Zatwierdź bramkę" idzie na DRUGĄ linię
+            // (bez nowrap — najdłuższa etykieta PL ma prawo zawinąć się na
+            // dwa wiersze zamiast uciąć).
+            <span className="flex flex-col items-start gap-1 min-w-0">
+              <span
+                className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${scheme}`}
+              >
                 {row.state === 'PASSED' ? <CheckCircle2 size={13} /> : <CircleDot size={13} />}
                 {t(`myWork.projects.stageGates.states.${row.state.toLowerCase()}`)}
               </span>
@@ -152,10 +179,12 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
                 className="inline-flex h-7 items-center gap-1 rounded-full border border-c-border px-2 text-[10px] font-medium text-c-text disabled:opacity-40"
                 title={row.missingElements.map(criterionLabel).join(', ') || undefined}
               >
-                <LockKeyhole size={11} />
-                {passing === row.gateType
-                  ? t('common.saving', 'Saving…')
-                  : t('myWork.projects.stageGates.pass', 'Pass gate')}
+                <LockKeyhole size={11} className="shrink-0" />
+                <span className="text-left leading-tight">
+                  {passing === row.gateType
+                    ? t('common.saving', 'Saving…')
+                    : t('myWork.projects.stageGates.pass', 'Pass gate')}
+                </span>
               </button>
             </span>
           );
