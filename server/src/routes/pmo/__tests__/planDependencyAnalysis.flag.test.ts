@@ -2,13 +2,15 @@
 
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createInitiativesExecutionRuntimeRouter } from '../initiativesExecutionRuntime.routes.js';
 
 const NO_RETRY = { retry: 0 } as const;
 
 describe('DEC-497 P2 E1 — default-OFF dependency analysis gate', NO_RETRY, () => {
+  beforeEach(() => vi.stubEnv('ENABLE_INITIATIVES_PLAN', 'true'));
+  afterEach(() => vi.unstubAllEnvs());
   it('does not call AI or write a proposal when the flag is OFF', async () => {
     const analyze = vi.fn();
     const reader = {
