@@ -103,8 +103,24 @@ export type TransitionRefusal =
   | { kind: 'readiness_blocked'; blockers: readonly string[] }
   | { kind: 'pack_not_released'; methodPackId: string };
 
+/**
+ * Na czym oparło się prawo aktora do TEJ zmiany stanu.
+ *
+ * - `process_role` — aktor ma rolę procesową z `TRANSITION_AUTHORITY`
+ *   (dla `frozen`: `approver`). Droga domyślna i jedyna do 05.09.2026.
+ * - `organization_owner` — MVP-OWNER-FREEZE (2026-09-05): aktor NIE ma roli
+ *   `approver`, ale jest same-tenant ACTIVE OWNER organizacji i zamraża
+ *   sesję. Mechanizm ról zostaje nietknięty; to jest DODATKOWA, wąska
+ *   ścieżka dla organizacji jednoosobowej — patrz `MethodSessionService.transition`.
+ *
+ * Pole jest opcjonalne, żeby każdy istniejący `{ ok: true }` pozostał
+ * poprawnym `TransitionResult` (żaden istniejący sprawdzacz `result.ok` nie
+ * wymaga zmiany).
+ */
+export type TransitionAuthority = 'process_role' | 'organization_owner';
+
 export type TransitionResult =
-  | { ok: true }
+  | { ok: true; authority?: TransitionAuthority }
   | { ok: false; refusal: TransitionRefusal };
 
 /**
