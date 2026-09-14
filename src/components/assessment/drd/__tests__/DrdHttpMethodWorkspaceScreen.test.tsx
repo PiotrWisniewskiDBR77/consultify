@@ -1,12 +1,10 @@
 /**
  * @vitest-environment jsdom
  *
- * DrdMethodWorkspaceScreen — `drdHttpSourceOfTruthV1` flag gate (P0C,
- * 2026-08-13). Covers the component-visible half of the P0C brief's 8 test
+ * DrdMethodWorkspaceScreen — server-authoritative runtime behavior. Covers
+ * the component-visible half of the P0C brief's 8 test
  * requirements:
- *  1. flag OFF -> legacy `DrdSessionRuntime`, ZERO calls into
- *     `@/method-core/api/methodCoreApi`.
- *  2. flag ON -> `DrdHttpSessionRuntime`, source indicator shows SERVER.
+ *  1. J2 product route -> `DrdHttpSessionRuntime`, source indicator SERVER.
  *  3. a 409 on write shows an explicit conflict screen, never a silent
  *     overwrite.
  *  5. the recovery-queue screen requires an explicit click (apply/discard)
@@ -107,36 +105,17 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('requirement 1 — flag OFF: legacy runtime, zero HTTP calls', () => {
-  it('mounts without forceHttpSourceOfTruth and never touches methodCoreApi', async () => {
-    const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
-
-    expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
-    expect(hoisted.createSession).not.toHaveBeenCalled();
-    expect(hoisted.getSession).not.toHaveBeenCalled();
-    expect(hoisted.listEvents).not.toHaveBeenCalled();
-    expect(hoisted.appendEvent).not.toHaveBeenCalled();
-
-    // The legacy path's own indicator — proves which store actually backed
-    // this paint (DEMO_LOCAL), not merely "no HTTP mock was hit by luck".
-    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' }));
-    const indicator = screen.getAllByTestId('drd-source-indicator')[0];
-    expect(indicator).toHaveAttribute('data-source', 'DEMO_LOCAL');
-  });
-});
-
-describe('requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER', () => {
-  it('creates a session over HTTP and renders the SERVER indicator once ready', async () => {
+describe('requirement 1 — J2 product route: DrdHttpSessionRuntime, indicator shows SERVER', () => {
+  it.each([undefined, false, true])('creates over HTTP for retired flag value %s', async (retiredFlag) => {
     const storage = makeMemoryStorage();
     hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
 
-    render(<DrdMethodWorkspaceScreen storage={storage} forceHttpSourceOfTruth />);
+    render(<DrdMethodWorkspaceScreen storage={storage} forceHttpSourceOfTruth={retiredFlag} />);
 
     expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
     expect(hoisted.createSession).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' }));
+    fireEvent.click(screen.getByRole('button', { name: /Ustawienia|Settings/ }));
     const indicator = await screen.findByTestId('drd-source-indicator');
     expect(indicator).toHaveAttribute('data-source', 'SERVER');
   });
@@ -190,7 +169,7 @@ describe('canonical cold reopen identity and read-only contract', () => {
     render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
 
     expect(await screen.findByText(/DRD/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' }));
+    fireEvent.click(screen.getByRole('button', { name: /Ustawienia|Settings/ }));
     const settings = screen.getByTestId('method-workspace-settings');
     // 2026-08-26 assessment cleanup: the raw session id moved off the
     // card's default view into the collapsed "Szczegóły techniczne"
@@ -198,17 +177,17 @@ describe('canonical cold reopen identity and read-only contract', () => {
     // the header's already-truncated "Sesja {id.slice(0,8)}"). Still
     // present in the DOM (native <details> content isn't removed, only
     // visually collapsed), just under its new label.
-    expect(within(settings).getByText(/ID sesji:\s*sess-http-1/)).toBeInTheDocument();
+    expect(within(settings).getByText(/(?:ID sesji|Session ID):\s*sess-http-1/)).toBeInTheDocument();
     expect(within(settings).getByText(new RegExp(DRD_METHOD_PACK_VERSION.replaceAll('.', '\\.')))).toBeInTheDocument();
-    expect(within(settings).getByText('Wersja sesji v7')).toBeInTheDocument();
+    expect(within(settings).getByText(/Wersja sesji v7|Session version v7/)).toBeInTheDocument();
     // DEC-415b (06.09): „Zapisz teraz" zniknął z nagłówka razem z pigułką
     // statusu i „Zapisano" — zapis jest automatyczny, więc nie ma czym
     // potwierdzać braku prawa zapisu w nagłówku. Kontrakt tylko-do-odczytu
     // czytamy tam, gdzie realnie mieszka: w panelu Ustawień tej samej sesji.
-    expect(within(settings).getByText('Tylko odczyt')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Pracuję samodzielnie' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Prowadzi Teresa' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ustawienia' })).toBeEnabled();
+    expect(within(settings).getByText(/Tylko odczyt|Read only/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Pracuję samodzielnie|I work independently/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Prowadzi Teresa|Teresa leads/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ustawienia|Settings/ })).toBeEnabled();
   });
 });
 
@@ -223,7 +202,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Ustawienia' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Ustawienia|Settings/ }));
     expect(await screen.findByTestId('freeze-button')).toBeDisabled();
     expect(hoisted.freeze).not.toHaveBeenCalled();
   });
@@ -237,7 +216,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
     );
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ustawienia' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Ustawienia|Settings/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Send for review/i }));
 
     expect(await screen.findByTestId('drd-http-conflict-view')).toBeInTheDocument();

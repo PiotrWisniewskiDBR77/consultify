@@ -1475,6 +1475,15 @@ router.post(
       /* audit best-effort */
     }
 
+    // This route owns and removes the whole fixture. Its cleanup receipt cannot
+    // retain a FK to the fixture user that is deleted immediately below.
+    await DbPromise.run(
+      `DELETE FROM admin_audit_logs
+        WHERE admin_id = ? AND action_type = 'test_support_cleanup'`,
+      [existing.user_id],
+      { fallback: false }
+    );
+
     // Delete users/org at the end
     await DbPromise.run(`DELETE FROM users WHERE organization_id = ?`, [existing.organization_id], {
       fallback: false,

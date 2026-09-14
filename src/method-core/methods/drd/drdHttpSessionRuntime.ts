@@ -6,17 +6,10 @@
  * over `src/method-core/api/methodCoreApi.ts`) is authoritative; every read
  * re-fetches, every write goes over HTTP first.
  *
- * ★ NOT YET WIRED INTO `DrdMethodWorkspaceScreen.tsx` — see that file's and
- * this program's CLAUDE.md rule #7 ("Piotr nigdy nie jest pierwszym testerem
- * wizualnym"): no visual surface may change what Piotr sees before (a) a
- * clean dev-render screenshot exists and (b) Piotr has accepted it, gated by
- * a default-OFF flag. Swapping THIS class in for `DrdSessionRuntime` inside
- * the 911-line workspace screen is a visual-risk change under that rule, not
- * a backend plumbing change — it is deliberately left for the next gated
- * step (dev-render harness -> screenshot -> accept -> flag on) rather than
- * done blind in this pass. This file is the real, working, tested-by-
- * construction (same methodCoreApi the server integration suite exercises)
- * HTTP mechanism that step will wire in.
+ * J2 wired this runtime into `DrdMethodWorkspaceScreen.tsx` as the sole
+ * product source of truth. The former localStorage screen remains available
+ * only through its dedicated development harness; it cannot be selected by
+ * the product route or by the retired rollout prop.
  *
  * localStorage in this file is used ONLY as:
  *  - a technical cache of the last-known session snapshot, so a reload can

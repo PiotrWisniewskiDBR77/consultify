@@ -1,5 +1,6 @@
 import { ChevronDown, Layers } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
 
@@ -18,7 +19,6 @@ interface DocumentCardMenu5Props {
   readMode: boolean;
   onReadModeChange?: (readMode: boolean) => void;
   ai: Omit<PracujZAIProps, 'aktywnaSekcja' | 'isPolish'>;
-  isPolish?: boolean;
 }
 
 export const DocumentCardMenu5: React.FC<DocumentCardMenu5Props> = ({
@@ -28,8 +28,9 @@ export const DocumentCardMenu5: React.FC<DocumentCardMenu5Props> = ({
   readMode,
   onReadModeChange,
   ai,
-  isPolish = true,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.resolvedLanguage?.startsWith('pl') ?? i18n.language?.startsWith('pl') ?? false;
   const [open, setOpen] = useState(false);
   return (
     <NModeMenu2
@@ -46,7 +47,7 @@ export const DocumentCardMenu5: React.FC<DocumentCardMenu5Props> = ({
             className="inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:border-c-border hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <Layers size={14} aria-hidden />
-            {isPolish ? 'Sekcje' : 'Sections'}
+            {t('common.sections', 'Sections')}
             <ChevronDown size={13} aria-hidden />
           </button>
           {open ? (
