@@ -1,0 +1,52 @@
+{
+  "ledgerPresent": true,
+  "failed": [],
+  "skipped": [],
+  "pending": [],
+  "unexplainedDrift": [],
+  "approvedVariants": [
+    "000_z_core_baseline.sql",
+    "20260127_pmo_task_fields.sql",
+    "20260128_task_notification_rules.sql",
+    "20260128_task_overdue_notifications.sql",
+    "20260213_task_source_origin.sql",
+    "20260222_interview_conversational_inference.sql",
+    "20260223_competency_taxonomy.sql",
+    "20260228_budget_initiative_links.sql",
+    "20260228_financial_model_versions.sql",
+    "20260303_feedback_behavior_t106_t113.sql",
+    "20260304_feedback_items_canonical_tickets.sql",
+    "20260311_origin_tracking.sql",
+    "20260314_presentation_decks_deck_json.sql",
+    "20260316_financial_statement_packs.sql",
+    "20260628_initiative_core_section_prompts.sql",
+    "513_initiative_card_scope_templates.sql",
+    "515_team_chat_projects.sql",
+    "520_ai_enterprise_tables.sql",
+    "534_notification_enhancements.sql",
+    "542_project_members_consultant_overlay_and_steering_board.sql",
+    "543_initiative_resource_tables.sql",
+    "548_audit_log_api_keys_compatibility.sql",
+    "561_execution_control_t039_t040.sql",
+    "565_kpi_time_series_roi_attribution_finance.sql",
+    "570_finance_analysis_budgeting_t052_t053.sql",
+    "573_people_change_comms_t043_t044_t045.sql",
+    "575_interview_sendback_missing_items.sql",
+    "578_llm_logs_compat_columns.sql",
+    "700_table_platform_foundation.sql",
+    "704_forms.sql",
+    "727_beta_missing_tables.sql",
+    "914_okr_management.sql"
+  ],
+  "postconditionVerified": [
+    "542_project_members_consultant_overlay_and_steering_board.sql",
+    "548_audit_log_api_keys_compatibility.sql",
+    "573_people_change_comms_t043_t044_t045.sql"
+  ],
+  "attestedLegacyVariants": [
+    "730_partner_users_uuid_columns.sql"
+  ],
+  "unverifiable": [],
+  "state": "ok",
+  "detail": "chain complete; 32 approved historical variant(s); 3 postcondition-verified; 1 schema-attested legacy variant(s)"
+}

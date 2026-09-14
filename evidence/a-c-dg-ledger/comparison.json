@@ -1,0 +1,3379 @@
+{
+  "source": {
+    "repoHead": "1154ebd80950d5c7fdd2c2bb88c296e2c98ff35e",
+    "ledgerMeasuredAt": "2026-09-14T16:52:49.662Z"
+  },
+  "counts": {
+    "repoDirectoryRegularFiles": 1131,
+    "repoRunnableExtensions": 1129,
+    "repoStrictRequired": 916,
+    "repoExcludedByPolicy": 213,
+    "ledgerRows": 1010,
+    "ledgerSuccess": 1002,
+    "ledgerSkipped": 7,
+    "ledgerFailed": 1,
+    "requiredMissingSuccess": 0,
+    "requiredAbsentAnyLedgerRow": 0,
+    "requiredNonSuccess": 0,
+    "ledgerAbsentRepo": 92,
+    "ledgerExcludedRepo": 2,
+    "repoRunnableAbsentLedger": 211,
+    "duplicateFilenameIdentityRepo": 0,
+    "duplicateFilenameIdentityLedger": 0,
+    "duplicateRepoVersionGroups": 151,
+    "duplicateLedgerVersionGroups": 120,
+    "identicalContentGroups": 0,
+    "duplicateArtifactNames": 0
+  },
+  "missingRequiredSuccess": [],
+  "missingRequiredAnyRow": [],
+  "requiredNonSuccess": [],
+  "ledgerAbsentRepo": [
+    {
+      "filename": "20260807_finance_recovery_international_canonical_lines.sql",
+      "status": "success",
+      "version": "20260807"
+    },
+    {
+      "filename": "600_model_registry.sql",
+      "status": "success",
+      "version": "600"
+    },
+    {
+      "filename": "601_presentation_decks_traceability.sql",
+      "status": "success",
+      "version": "601"
+    },
+    {
+      "filename": "603_mcp_providers_registry.sql",
+      "status": "success",
+      "version": "603"
+    },
+    {
+      "filename": "604_tools_missing_known_tools_library.sql",
+      "status": "skipped",
+      "version": "604"
+    },
+    {
+      "filename": "605_ai_usage_logs_cost_contract_v3.sql",
+      "status": "success",
+      "version": "605"
+    },
+    {
+      "filename": "606_notification_types_integrations_channels.sql",
+      "status": "success",
+      "version": "606"
+    },
+    {
+      "filename": "607_research_evidence_v3.sql",
+      "status": "success",
+      "version": "607"
+    },
+    {
+      "filename": "608_marketplace_imports_v3.sql",
+      "status": "success",
+      "version": "608"
+    },
+    {
+      "filename": "609_cloud_sync_log_v3.sql",
+      "status": "success",
+      "version": "609"
+    },
+    {
+      "filename": "610_calendar_feed_log_v3.sql",
+      "status": "success",
+      "version": "610"
+    },
+    {
+      "filename": "610_organization_style_profiles.sql",
+      "status": "success",
+      "version": "610"
+    },
+    {
+      "filename": "610_presentation_analytics.sql",
+      "status": "success",
+      "version": "610"
+    },
+    {
+      "filename": "611_organization_media_library.sql",
+      "status": "success",
+      "version": "611"
+    },
+    {
+      "filename": "612_results_kpi_global_and_deviation.sql",
+      "status": "success",
+      "version": "612"
+    },
+    {
+      "filename": "613_results_kpi_report_snapshots.sql",
+      "status": "success",
+      "version": "613"
+    },
+    {
+      "filename": "614_report_builder_results_kpi_report_template.sql",
+      "status": "success",
+      "version": "614"
+    },
+    {
+      "filename": "615_llm_routing_rules.sql",
+      "status": "success",
+      "version": "615"
+    },
+    {
+      "filename": "616_usage_pricing_tiers.sql",
+      "status": "success",
+      "version": "616"
+    },
+    {
+      "filename": "617_financial_statements_parse_method_expand.sql",
+      "status": "success",
+      "version": "617"
+    },
+    {
+      "filename": "617_generic_assessment_reports_pathc_patch.sql",
+      "status": "skipped",
+      "version": "617"
+    },
+    {
+      "filename": "617_initiative_dependencies_source_id.sql",
+      "status": "success",
+      "version": "617"
+    },
+    {
+      "filename": "617_interview_insight_activity.sql",
+      "status": "success",
+      "version": "617"
+    },
+    {
+      "filename": "618_financial_analyses_source_statements.sql",
+      "status": "success",
+      "version": "618"
+    },
+    {
+      "filename": "618_tools_missing_12_consulting_tools.sql",
+      "status": "skipped",
+      "version": "618"
+    },
+    {
+      "filename": "619_consulting_templates.sql",
+      "status": "success",
+      "version": "619"
+    },
+    {
+      "filename": "619_missing_critical_tables.sql",
+      "status": "success",
+      "version": "619"
+    },
+    {
+      "filename": "620_tool_assets.sql",
+      "status": "success",
+      "version": "620"
+    },
+    {
+      "filename": "621_assessment_evidence.sql",
+      "status": "success",
+      "version": "621"
+    },
+    {
+      "filename": "622_my_idea_map_versions.sql",
+      "status": "success",
+      "version": "622"
+    },
+    {
+      "filename": "623_railway_schema_compat.sql",
+      "status": "success",
+      "version": "623"
+    },
+    {
+      "filename": "624_v4_audit_events_unified.sql",
+      "status": "success",
+      "version": "624"
+    },
+    {
+      "filename": "625_v4_task_hierarchy_unified.sql",
+      "status": "skipped",
+      "version": "625"
+    },
+    {
+      "filename": "626_notebook_lifecycle_v4_note05.sql",
+      "status": "success",
+      "version": "626"
+    },
+    {
+      "filename": "626_v4_rslt03_deviation_evidence.sql",
+      "status": "success",
+      "version": "626"
+    },
+    {
+      "filename": "627_notebook_fts_v4_note03.ts",
+      "status": "success",
+      "version": "627"
+    },
+    {
+      "filename": "628_v4_tasks_decisions_a1.sql",
+      "status": "success",
+      "version": "628"
+    },
+    {
+      "filename": "629_v4_inbox_focus_a1.sql",
+      "status": "success",
+      "version": "629"
+    },
+    {
+      "filename": "630_v4_task_baseline_snapshots.sql",
+      "status": "success",
+      "version": "630"
+    },
+    {
+      "filename": "631_kpi_semantic_layer_v4_rslt01.sql",
+      "status": "success",
+      "version": "631"
+    },
+    {
+      "filename": "631_v4_inbox_ai_evals.sql",
+      "status": "success",
+      "version": "631"
+    },
+    {
+      "filename": "632_v4_inbox_connectors.sql",
+      "status": "success",
+      "version": "632"
+    },
+    {
+      "filename": "633_v4_idea_canonical_schema.sql",
+      "status": "success",
+      "version": "633"
+    },
+    {
+      "filename": "634_v4_task_automation_rules.sql",
+      "status": "success",
+      "version": "634"
+    },
+    {
+      "filename": "635_v4_benchmark_org_policies.sql",
+      "status": "success",
+      "version": "635"
+    },
+    {
+      "filename": "636_user_preferences.sql",
+      "status": "success",
+      "version": "636"
+    },
+    {
+      "filename": "637_assessment_evidence_unique_dimension.sql",
+      "status": "success",
+      "version": "637"
+    },
+    {
+      "filename": "638_benchmark_dataset_versions.sql",
+      "status": "success",
+      "version": "638"
+    },
+    {
+      "filename": "639_v4_programs_hierarchy.sql",
+      "status": "success",
+      "version": "639"
+    },
+    {
+      "filename": "640_v4_rslt03_deviation_linkage.sql",
+      "status": "success",
+      "version": "640"
+    },
+    {
+      "filename": "641_v4_tool_runtime_contract.sql",
+      "status": "success",
+      "version": "641"
+    },
+    {
+      "filename": "642_v4_decision_playbooks.sql",
+      "status": "success",
+      "version": "642"
+    },
+    {
+      "filename": "643_v4_task_milestones.sql",
+      "status": "success",
+      "version": "643"
+    },
+    {
+      "filename": "644_v4_custom_fields_extended.sql",
+      "status": "success",
+      "version": "644"
+    },
+    {
+      "filename": "645_v4_closed_loop_workarounds.sql",
+      "status": "success",
+      "version": "645"
+    },
+    {
+      "filename": "646_v4_raid_scoring.sql",
+      "status": "success",
+      "version": "646"
+    },
+    {
+      "filename": "647_v4_workload_capacity.sql",
+      "status": "success",
+      "version": "647"
+    },
+    {
+      "filename": "648_v4_collab_sessions.sql",
+      "status": "success",
+      "version": "648"
+    },
+    {
+      "filename": "649_v4_staffing_plans.sql",
+      "status": "success",
+      "version": "649"
+    },
+    {
+      "filename": "650_v4_stakeholder_comm_enhanced.sql",
+      "status": "success",
+      "version": "650"
+    },
+    {
+      "filename": "650_v4_unified_knowledge_graph.sql",
+      "status": "success",
+      "version": "650"
+    },
+    {
+      "filename": "651_v4_notebook_capture_pipeline.sql",
+      "status": "success",
+      "version": "651"
+    },
+    {
+      "filename": "651_v4_sso_sessions.sql",
+      "status": "success",
+      "version": "651"
+    },
+    {
+      "filename": "652_v4_ai_governance.sql",
+      "status": "success",
+      "version": "652"
+    },
+    {
+      "filename": "652_v4_interview_enterprise.sql",
+      "status": "success",
+      "version": "652"
+    },
+    {
+      "filename": "653_v4_advisor_response_log.sql",
+      "status": "success",
+      "version": "653"
+    },
+    {
+      "filename": "653_v4_finance_enterprise.sql",
+      "status": "success",
+      "version": "653"
+    },
+    {
+      "filename": "654_v4_canonical_inbox.sql",
+      "status": "success",
+      "version": "654"
+    },
+    {
+      "filename": "654_v4_reports_enterprise.sql",
+      "status": "success",
+      "version": "654"
+    },
+    {
+      "filename": "655_v4_initiative_blueprints.sql",
+      "status": "success",
+      "version": "655"
+    },
+    {
+      "filename": "655_v4_presentations_enterprise.sql",
+      "status": "success",
+      "version": "655"
+    },
+    {
+      "filename": "656_v4_results_enterprise.sql",
+      "status": "success",
+      "version": "656"
+    },
+    {
+      "filename": "656_v4_scim_enhanced.sql",
+      "status": "skipped",
+      "version": "656"
+    },
+    {
+      "filename": "657_v4_intent_routing.sql",
+      "status": "success",
+      "version": "657"
+    },
+    {
+      "filename": "658_v4_ai_data_classification.sql",
+      "status": "success",
+      "version": "658"
+    },
+    {
+      "filename": "659_v4_eval_harness.sql",
+      "status": "success",
+      "version": "659"
+    },
+    {
+      "filename": "660_v4_realtime_platform.sql",
+      "status": "success",
+      "version": "660"
+    },
+    {
+      "filename": "661_v4_inbox_focus_assessments.sql",
+      "status": "success",
+      "version": "661"
+    },
+    {
+      "filename": "662_v4_initiatives_tools_enterprise.sql",
+      "status": "success",
+      "version": "662"
+    },
+    {
+      "filename": "663_v4_final_batch.sql",
+      "status": "success",
+      "version": "663"
+    },
+    {
+      "filename": "664_v4_observability_trace_org_scope.sql",
+      "status": "success",
+      "version": "664"
+    },
+    {
+      "filename": "665_v6_interview_templates_foundation.sql",
+      "status": "skipped",
+      "version": "665"
+    },
+    {
+      "filename": "666_v6_interview_runtime_answers.sql",
+      "status": "skipped",
+      "version": "666"
+    },
+    {
+      "filename": "667_v6_interview_answer_design_guide.sql",
+      "status": "success",
+      "version": "667"
+    },
+    {
+      "filename": "668_statement_ready_contract.sql",
+      "status": "success",
+      "version": "668"
+    },
+    {
+      "filename": "668_v6_interview_question_helper_fields.sql",
+      "status": "success",
+      "version": "668"
+    },
+    {
+      "filename": "668_v6_interview_template_area_tags.sql",
+      "status": "success",
+      "version": "668"
+    },
+    {
+      "filename": "669_organization_context_os.sql",
+      "status": "success",
+      "version": "669"
+    },
+    {
+      "filename": "669_statement_import_rebuild.sql",
+      "status": "success",
+      "version": "669"
+    },
+    {
+      "filename": "670_v6_interview_insights_three_layer.sql",
+      "status": "success",
+      "version": "670"
+    },
+    {
+      "filename": "725_organizations_missing_columns.sql",
+      "status": "success",
+      "version": "725"
+    },
+    {
+      "filename": "726_partner_users_missing_columns.sql",
+      "status": "success",
+      "version": "726"
+    }
+  ],
+  "ledgerExcludedRepo": [
+    {
+      "filename": "210_ai_system_prompts.sql",
+      "status": "success",
+      "version": "210"
+    },
+    {
+      "filename": "add_response_feedback.sql",
+      "status": "failed",
+      "version": "add"
+    }
+  ],
+  "repoNoLedgerAny": [
+    "000_initdb_core_tables.sql",
+    "015_enterprise_customers_module.sql",
+    "031_performance_indexes.sql",
+    "037_ai_budgets_init.sql",
+    "039_initiative_report_tracking.sql",
+    "040_initiative_roadmap_columns.sql",
+    "042_multi_framework_assessment.sql",
+    "043_multi_framework_assessments_complete.sql",
+    "043_security_policies.sql",
+    "044_api_keys.sql",
+    "044_multi_framework_audit.sql",
+    "045_branding.sql",
+    "045_initiative_templates.sql",
+    "046_compliance.sql",
+    "047_content_module_enterprise.sql",
+    "048_content_module_permissions.sql",
+    "051_memory_system.sql",
+    "051_report_comments.sql",
+    "052_ab_testing.sql",
+    "053_learning_system.sql",
+    "060_digitization_analyses.sql",
+    "060_work_dimensions.sql",
+    "061_digitization_versioning.sql",
+    "061_initiative_lifecycle.sql",
+    "062_management_reports.sql",
+    "063_project_kpis.sql",
+    "063_raid_items.sql",
+    "064_execution_stages.sql",
+    "064_management_reports_enterprise.sql",
+    "065_budget_tracking.sql",
+    "065_report_templates.sql",
+    "066_status_reports.sql",
+    "067_economics_initiative_integration.sql",
+    "067b_subscription_plans_token_limit.sql",
+    "068_economics_analysis_financials.sql",
+    "070_help_feedback.sql",
+    "074_pinned_prompts.sql",
+    "075_ai_user_memory.sql",
+    "080_user_settings_extended.sql",
+    "090_feedback_enhancements.sql",
+    "091_payment_methods.sql",
+    "100_owner_role.sql",
+    "100_owner_role_postgres.sql",
+    "100_user_onboarding_flow.sql",
+    "101_security_sessions.sql",
+    "101_security_sessions_postgres.sql",
+    "105_user_integrations.sql",
+    "106_security_privacy_enterprise.sql",
+    "107_sms_mfa.sql",
+    "110_workspace_defaults.sql",
+    "120_settings_enhancement_tables.sql",
+    "125_settings_seed_data.sql",
+    "126_settings_complete_tables.sql",
+    "127_consultant_project_access.sql",
+    "127_user_profile_extensions.sql",
+    "128_notification_extensions.sql",
+    "129_ai_preferences_extensions.sql",
+    "129_user_availability.sql",
+    "130_security_extensions.sql",
+    "130_user_achievements.sql",
+    "130_user_profile_extended.sql",
+    "131_integrations_extensions.sql",
+    "131_settings_preferences_extended.sql",
+    "132_appearance_extensions.sql",
+    "133_work_productivity_preferences.sql",
+    "134_advanced_security.sql",
+    "140_settings_advanced_features.sql",
+    "150_billing_phase2.sql",
+    "160_configuration_enhancements.sql",
+    "160b_subscription_plans_columns.sql",
+    "200_customer_lifecycle.sql",
+    "200_enterprise_feedback_system.sql",
+    "201_ai_partial_responses.sql",
+    "201_customer_playbooks.sql",
+    "20260409_p25d_help_seed_and_lifecycle.sql",
+    "20260409_p26_kb_fts5_search.sql",
+    "20260411_consultify_partner_kb_seed.sql",
+    "20260412_seed_business_templates.sql",
+    "20260608_megatrends_seed.sql",
+    "20260628_finance_seed_readiness_fix.sql",
+    "20260720_seed_v6_interview_library_templates.sql",
+    "20262105_seed_business_templates_origin_runtime_repair.sql",
+    "202_ai_latency_metrics.sql",
+    "202_customer_contracts.sql",
+    "203_ai_memory_metrics.sql",
+    "203_support_tickets.sql",
+    "204_rag_quality_metrics.sql",
+    "205_citation_verification.sql",
+    "206_proactive_suggestions.sql",
+    "206_secret_rotation.sql",
+    "207_user_ai_preferences.sql",
+    "208_ai_usage_logs.sql",
+    "209_llm_tier_assignments.sql",
+    "210_sso_scim.sql",
+    "211_settings_advanced.sql",
+    "216_partner_referral_system.sql",
+    "217_partner_discount_system.sql",
+    "220_teams_extended.sql",
+    "221_knowledge_base_tables.sql",
+    "223_billing_mock_seed.sql",
+    "224_security_mock_seed.sql",
+    "225_security_mock_seed_extra.sql",
+    "226_compliance_mock_seed.sql",
+    "227_feedback_mock_seed.sql",
+    "228_partner_referral_mock_seed.sql",
+    "229_admin_overview_seed.sql",
+    "230_settings_demo_seed.sql",
+    "230_superadmin_overview_production.sql",
+    "231_customers_live_data.sql",
+    "232_configuration_module_tables.sql",
+    "233_configuration_module_seed.sql",
+    "234_credit_notes_seed.sql",
+    "234_revenue_module_complete.sql",
+    "234_revenue_module_tables.sql",
+    "235_revenue_module_seed.sql",
+    "236_security_module_extended.sql",
+    "237_security_demo_seed.sql",
+    "238_analytics_module_tables.sql",
+    "238_content_module_seed.sql",
+    "240_ai_development_demo_seed.sql",
+    "240_customer_automation.sql",
+    "240_usage_alerts_tracking.sql",
+    "241_customer_communications.sql",
+    "241_email_verification.sql",
+    "242_webhook_retry_queue.sql",
+    "243_invoice_reminders.sql",
+    "244_onboarding_progress.sql",
+    "245_project_enhancements.sql",
+    "246_projects_columns.sql",
+    "247_initiative_enhancements.sql",
+    "248_assessment_enhancements.sql",
+    "249_report_system.sql",
+    "250_ai_memory_system.sql",
+    "250_entity_translations.sql",
+    "251_ai_learning_system.sql",
+    "251_llm_providers_demo_seed.sql",
+    "252_complete_demo_data_seed.sql",
+    "252_tools_system.sql",
+    "253_mywork_system.sql",
+    "254_onboarding_extended.sql",
+    "255_help_system.sql",
+    "257_notification_system.sql",
+    "258_advanced_security.sql",
+    "259_audit_logging.sql",
+    "259_p31_settings_registry_cleanup.sql",
+    "260_enterprise_features.sql",
+    "261_analytics_system.sql",
+    "262_benefits_tracking.sql",
+    "263_gdpr_compliance.sql",
+    "264_whitelabel_extended.sql",
+    "265_mobile_pwa.sql",
+    "266_knowledge_rag.sql",
+    "267_sandbox_project.sql",
+    "270_add_impersonator_id.sql",
+    "271_management_reports_extended.sql",
+    "281_knowledge_hub.sql",
+    "282_conversation_branches.sql",
+    "283_conversation_sharing.sql",
+    "285_user_style_profiles.sql",
+    "286_assessment_workflow_enhancements.sql",
+    "290_enterprise_documentation_expansion.sql",
+    "291_knowledge_base_polish_translations.sql",
+    "291_tools_initiatives.sql",
+    "292_assessment_reports_workflow.sql",
+    "292_decision_management.sql",
+    "292_initiative_dependencies.sql",
+    "292_knowledge_base_polish_translations_extended.sql",
+    "292_tools_decisions_link.sql",
+    "293_assessment_workflow.sql",
+    "293_initiative_milestones.sql",
+    "294_execution_center.sql",
+    "295_interview_context.sql",
+    "295_unified_decisions.sql",
+    "296_ai_actions_table.sql",
+    "296_interview_templates.sql",
+    "297_decision_impacts_table.sql",
+    "297_interview_library_templates.sql",
+    "298_fix_missing_columns.sql",
+    "298_interview_draft_templates.sql",
+    "298_interview_library_template_enhancements.sql",
+    "299_add_assessments_description.sql",
+    "299_interview_assignments.sql",
+    "300_add_assessments_framework_columns.sql",
+    "300_fix_decision_history_changed_at.js",
+    "301_fix_decision_history_changed_at_sqlite.js",
+    "301_maturity_assessments_updated_at.sql",
+    "302_decisions_schema_fix.sql",
+    "303_decision_escalation_delegation.sql",
+    "303_interview_assignments_extended.sql",
+    "305_interview_insights.sql",
+    "306_interview_insights_ai_upgrade.sql",
+    "307_interview_insights_session_category_bridge.sql",
+    "334_initiative_watchers.sql",
+    "335_conversation_language.sql",
+    "335_initiative_stakeholders.sql",
+    "420_interview_demo_data.sql",
+    "425_interview_extended_demo_data.sql",
+    "426_interview_insights_professional_content.sql",
+    "427_insight_professional_content_v2.sql",
+    "500_comprehensive_demo_data.sql",
+    "501_interview_demo_data.sql",
+    "512_report_builder_repair_sqlite.sql",
+    "513_org_report_templates_demo.sql",
+    "771_demo_mock_seed_cleanup.sql",
+    "784_dbr77_template_seeds.sql",
+    "785_dbr77_template_seeds_f32.sql",
+    "add_chat_projects.js",
+    "add_chat_projects.sql",
+    "add_mywork_tables.sql",
+    "assessment-module.sql",
+    "fix_conversations_table.sql"
+  ],
+  "duplicateArtifactNames": [],
+  "identicalContentGroups": [],
+  "duplicateRepoVersions": [
+    {
+      "version": "000",
+      "files": [
+        "000_initdb_core_tables.sql",
+        "000_schema_migrations.sql",
+        "000_z_core_baseline.sql",
+        "000_zz_core_baseline_producers_fresh_db_gap.sql"
+      ]
+    },
+    {
+      "version": "043",
+      "files": [
+        "043_multi_framework_assessments_complete.sql",
+        "043_security_policies.sql"
+      ]
+    },
+    {
+      "version": "044",
+      "files": [
+        "044_api_keys.sql",
+        "044_multi_framework_audit.sql"
+      ]
+    },
+    {
+      "version": "045",
+      "files": [
+        "045_branding.sql",
+        "045_initiative_templates.sql"
+      ]
+    },
+    {
+      "version": "051",
+      "files": [
+        "051_memory_system.sql",
+        "051_report_comments.sql"
+      ]
+    },
+    {
+      "version": "060",
+      "files": [
+        "060_digitization_analyses.sql",
+        "060_work_dimensions.sql"
+      ]
+    },
+    {
+      "version": "061",
+      "files": [
+        "061_digitization_versioning.sql",
+        "061_initiative_lifecycle.sql"
+      ]
+    },
+    {
+      "version": "063",
+      "files": [
+        "063_project_kpis.sql",
+        "063_raid_items.sql"
+      ]
+    },
+    {
+      "version": "064",
+      "files": [
+        "064_execution_stages.sql",
+        "064_management_reports_enterprise.sql"
+      ]
+    },
+    {
+      "version": "065",
+      "files": [
+        "065_budget_tracking.sql",
+        "065_report_templates.sql"
+      ]
+    },
+    {
+      "version": "100",
+      "files": [
+        "100_owner_role.sql",
+        "100_owner_role_postgres.sql",
+        "100_user_onboarding_flow.sql"
+      ]
+    },
+    {
+      "version": "101",
+      "files": [
+        "101_security_sessions.sql",
+        "101_security_sessions_postgres.sql"
+      ]
+    },
+    {
+      "version": "127",
+      "files": [
+        "127_consultant_project_access.sql",
+        "127_user_profile_extensions.sql"
+      ]
+    },
+    {
+      "version": "129",
+      "files": [
+        "129_ai_preferences_extensions.sql",
+        "129_user_availability.sql"
+      ]
+    },
+    {
+      "version": "130",
+      "files": [
+        "130_security_extensions.sql",
+        "130_user_achievements.sql",
+        "130_user_profile_extended.sql"
+      ]
+    },
+    {
+      "version": "131",
+      "files": [
+        "131_integrations_extensions.sql",
+        "131_settings_preferences_extended.sql"
+      ]
+    },
+    {
+      "version": "200",
+      "files": [
+        "200_customer_lifecycle.sql",
+        "200_enterprise_feedback_system.sql"
+      ]
+    },
+    {
+      "version": "201",
+      "files": [
+        "201_ai_partial_responses.sql",
+        "201_customer_playbooks.sql"
+      ]
+    },
+    {
+      "version": "20260128",
+      "files": [
+        "20260128_task_notification_rules.sql",
+        "20260128_task_overdue_notifications.sql"
+      ]
+    },
+    {
+      "version": "20260223",
+      "files": [
+        "20260223_competency_taxonomy.sql",
+        "20260223_llm_providers_boolean_flags.sql"
+      ]
+    },
+    {
+      "version": "20260228",
+      "files": [
+        "20260228_budget_initiative_links.sql",
+        "20260228_cv_matching_t067.sql",
+        "20260228_financial_model_versions.sql"
+      ]
+    },
+    {
+      "version": "20260303",
+      "files": [
+        "20260303_feedback_behavior_t106_t113.sql",
+        "20260303_link_graph_v3.sql",
+        "20260303_schema_alignment.sql"
+      ]
+    },
+    {
+      "version": "20260304",
+      "files": [
+        "20260304_feedback_items_canonical_tickets.sql",
+        "20260304_transaction_readiness_sellix.sql"
+      ]
+    },
+    {
+      "version": "20260307",
+      "files": [
+        "20260307_my_work_signals.sql",
+        "20260307_notebook_maturity.sql"
+      ]
+    },
+    {
+      "version": "20260308",
+      "files": [
+        "20260308_my_ideas_ai_incubator.sql",
+        "20260308_notebook_status_pinned.sql"
+      ]
+    },
+    {
+      "version": "20260323",
+      "files": [
+        "20260323_v8_chat_execution.sql",
+        "20260323_v8_collaboration_room.sql",
+        "20260323_v8_concurrent_editing.sql",
+        "20260323_v8_context_snapshot.sql",
+        "20260323_v8_context_snapshot_00base.sql",
+        "20260323_v8_context_snapshot_identity_chain.sql",
+        "20260323_v8_execution_spine.sql",
+        "20260323_v8_execution_spine_00base.sql",
+        "20260323_v8_execution_spine_approval_flow.sql",
+        "20260323_v8_execution_spine_context_binding.sql",
+        "20260323_v8_execution_visibility.sql",
+        "20260323_v8_finance_integration.sql",
+        "20260323_v8_finance_runtime.sql",
+        "20260323_v8_governed_retrieval.sql",
+        "20260323_v8_governed_retrieval_00base.sql",
+        "20260323_v8_governed_retrieval_freshness.sql",
+        "20260323_v8_knowledge_retrieval.sql",
+        "20260323_v8_landing_superadmin.sql",
+        "20260323_v8_multiplayer_hardening.sql",
+        "20260323_v8_multiplayer_presence_runtime.sql",
+        "20260323_v8_mywork_roof.sql",
+        "20260323_v8_operator_admin.sql",
+        "20260323_v8_planning_continuity.sql",
+        "20260323_v8_planning_execution_visibility.sql",
+        "20260323_v8_pm_sync_auth.sql",
+        "20260323_v8_pm_sync_truth.sql",
+        "20260323_v8_pm_sync_truth_00base.sql",
+        "20260323_v8_pm_sync_truth_operator_recovery.sql",
+        "20260323_v8_prompt_os_runtime.sql",
+        "20260323_v8_publish_review.sql",
+        "20260323_v8_replay_deadletter.sql",
+        "20260323_v8_reports_output_runtime.sql",
+        "20260323_v8_reports_pres_model.sql",
+        "20260323_v8_results_roi.sql",
+        "20260323_v8_results_runtime.sql",
+        "20260323_v8_source_truth.sql",
+        "20260323_v8_source_truth_lifecycle.sql",
+        "20260323_v8_tool_collaboration.sql",
+        "20260323_v8_tool_governance.sql",
+        "20260323_v8_tool_governance_00base.sql",
+        "20260323_v8_tool_governance_enforcement.sql",
+        "20260323_v8_tools_org_admin.sql",
+        "20260323_v8_trust_audit.sql",
+        "20260323_v8_trust_audit_00base.sql",
+        "20260323_v8_trust_audit_provenance.sql",
+        "20260323_v8_version_replay.sql",
+        "20260323_v8_version_replay_00base.sql",
+        "20260323_v8_version_replay_runtime.sql",
+        "20260323_v8_workspace_ai_facilitation.sql",
+        "20260323_v8_workspace_collaboration.sql",
+        "20260323_v8_workspace_cross_module.sql",
+        "20260323_v8_workspace_governance.sql"
+      ]
+    },
+    {
+      "version": "20260324",
+      "files": [
+        "20260324_v81_artifact_runs_wave1.sql",
+        "20260324_v81_artifact_substrate_wave1.sql",
+        "20260324_v81_sheet_artifact_wave2.sql",
+        "20260324_v8_feature_flags.sql",
+        "20260324_v8_shadow_comparisons.sql"
+      ]
+    },
+    {
+      "version": "20260330",
+      "files": [
+        "20260330_p17b_artifact_runs_preflight_failure_packaging.sql",
+        "20260330_p25b_kb_next_action_and_primers.sql",
+        "20260330_v81_templates_as_outputs_artifacts.sql"
+      ]
+    },
+    {
+      "version": "20260331",
+      "files": [
+        "20260331_p04b_kpi_signals_next_actions.sql",
+        "20260331_p25b_backfill_next_action.sql",
+        "20260331_p26b_kb_collections_tags_surfaces.sql",
+        "20260331_p28_workbench_p29_partner_program_ledger.sql",
+        "20260331_p35b_canonical_model_completion.sql",
+        "20260331_p35b_conversation_soft_delete.sql",
+        "20260331_v8_calendar_interop_p02b.sql",
+        "20260331_v8_finance_lane_p05b.sql",
+        "20260331_v8_mindmap_nodes_p12b.sql",
+        "20260331_v8_radar_triage_p06b.sql"
+      ]
+    },
+    {
+      "version": "20260409",
+      "files": [
+        "20260409_fix_virtual_workers_postgres.sql",
+        "20260409_p17c_artifact_run_audit_log.sql",
+        "20260409_p17c_artifact_runs_cancelled_status.sql",
+        "20260409_p25d_help_seed_and_lifecycle.sql",
+        "20260409_p25e_slug_unique_constraint.sql",
+        "20260409_p26_kb_fts5_search.sql",
+        "20260409_p26_kb_hero_asset_refs.sql",
+        "20260409_p26_kb_translation_status.sql",
+        "20260409_p35_conversation_fts.sql"
+      ]
+    },
+    {
+      "version": "20260411",
+      "files": [
+        "20260411_consultify_partner_kb_seed.sql",
+        "20260411_p01_provider_catalog_states.sql",
+        "20260411_p01_webhook_registrations.sql",
+        "20260411_p01_workflow_policy.sql",
+        "20260411_p11_status_history_org_id_backfill.sql",
+        "20260411_p28_definition_versions.sql",
+        "20260411_p29_partner_program_ledger_entry_type_check.sql",
+        "20260411_p30d_organization_type_and_new_fields.sql",
+        "20260411_partner_certification_v2.sql",
+        "20260411_tp_record_comments_mentions.sql",
+        "20260411_v8_calendar_interop_p02d_bridge.sql",
+        "20260411_v8_calendar_items_extended_itemtype.sql",
+        "20260411_v8_p03d_manager_lane_tables.sql",
+        "20260411_v8_p03e_forecast_columns.sql"
+      ]
+    },
+    {
+      "version": "20260412",
+      "files": [
+        "20260412_kb_promote_consultify_lanes.sql",
+        "20260412_module_interest_waitlist.sql",
+        "20260412_organization_switch_log.sql",
+        "20260412_performance_indexes.sql",
+        "20260412_seed_business_templates.sql"
+      ]
+    },
+    {
+      "version": "20260417",
+      "files": [
+        "20260417_chat_message_types_execution_family.sql",
+        "20260417_feedback_workflow_columns.sql"
+      ]
+    },
+    {
+      "version": "20260425",
+      "files": [
+        "20260425_wave3_ai_run_ledger.sql",
+        "20260425_wave4_research_sessions.sql",
+        "20260425_wave5_artifact_runtime.sql",
+        "20260425_wave6_context_learning.sql",
+        "20260425_wave7_connector_runtime.sql",
+        "20260425_wave8_agent_runtime.sql",
+        "20260425_wave9_outcome_runtime.sql"
+      ]
+    },
+    {
+      "version": "20260508",
+      "files": [
+        "20260508_block_a_template_lifecycle.sql",
+        "20260508_block_b_record_provenance.sql",
+        "20260508_block_c_ai_operator.sql"
+      ]
+    },
+    {
+      "version": "20260513",
+      "files": [
+        "20260513_block_d_form_intake.sql",
+        "20260513_user_function_profile.sql"
+      ]
+    },
+    {
+      "version": "20260602",
+      "files": [
+        "20260602_chat_message_idempotency_ordering.sql",
+        "20260602_my_ideas_folders_favorites_recents.sql",
+        "20260602_notebook_containers.sql"
+      ]
+    },
+    {
+      "version": "20260603",
+      "files": [
+        "20260603_document_studio_editor_state.sql",
+        "20260603_generated_initiatives.sql",
+        "20260603_initiative_generator_catchup.sql"
+      ]
+    },
+    {
+      "version": "20260608",
+      "files": [
+        "20260608_megatrends_seed.sql",
+        "20260608_rollout_tables.sql"
+      ]
+    },
+    {
+      "version": "20260620",
+      "files": [
+        "20260620_1000_notebook_topics.ts",
+        "20260620_2000_notebook_fts_repair.ts",
+        "20260620_3000_notebook_cover.ts",
+        "20260620_4000_notebook_versions.ts",
+        "20260620_5000_initiative_gate_ai_flags.sql",
+        "20260620_6000_initiative_gate_ai_events.sql"
+      ]
+    },
+    {
+      "version": "20260623",
+      "files": [
+        "20260623_benefits_register.sql",
+        "20260623_change_champions.sql",
+        "20260623_change_control.sql",
+        "20260623_cutover_runbook.sql",
+        "20260623_decision_escalated_to.sql",
+        "20260623_distribution_delivery.sql",
+        "20260623_meetings_baseline.sql",
+        "20260623_pir.sql",
+        "20260623_plan_baselines.sql",
+        "20260623_raid_assumption_issue.sql",
+        "20260623_rollout_stages.sql"
+      ]
+    },
+    {
+      "version": "20260624",
+      "files": [
+        "20260624_benefit_profile_taxonomy.sql",
+        "20260624_benefits_register_promote.sql",
+        "20260624_finance_analysis_investment_category.sql",
+        "20260624_initiative_column_dedup.sql",
+        "20260624_initiative_status_normalize.sql",
+        "20260624_kpi_kind_lineage.sql",
+        "20260624_value_capture_gates.sql",
+        "20260624_value_ledger.sql"
+      ]
+    },
+    {
+      "version": "20260625",
+      "files": [
+        "20260625_initiative_missing_columns.sql",
+        "20260625_initiative_title_name_sync.sql"
+      ]
+    },
+    {
+      "version": "20260627",
+      "files": [
+        "20260627_audits.sql",
+        "20260627_initiative_candidates.sql",
+        "20260627_initiative_roi_drop.sql"
+      ]
+    },
+    {
+      "version": "20260628",
+      "files": [
+        "20260628_ensure_digitization_analyses.sql",
+        "20260628_finance_seed_readiness_fix.sql",
+        "20260628_initiative_core_section_prompts.sql",
+        "20260628_tools_ambition_decomposer_activate.sql",
+        "20260628_tools_capability_mapper_activate.sql",
+        "20260628_tools_focus_tradeoff_activate.sql",
+        "20260628_tools_narrative_engine_activate.sql",
+        "20260628_tools_value_chain_activate.sql"
+      ]
+    },
+    {
+      "version": "20260702",
+      "files": [
+        "20260702_initiative_section_prompt_quality.sql",
+        "20260702_v81_artifact_draft_flag.sql"
+      ]
+    },
+    {
+      "version": "20260703",
+      "files": [
+        "20260703_interview_question_consultant_grade_rewrite.sql",
+        "20260703_v8_kpi_finance_reconciliation_deviation.sql"
+      ]
+    },
+    {
+      "version": "20260719",
+      "files": [
+        "20260719_artifact_evidence_note_type.sql",
+        "20260719_artifact_evidence_sheet_type.sql",
+        "20260719_baseline_gap.sql",
+        "20260719_initiative_execution_columns.sql",
+        "20260719_interview_axis_gap_templates.sql",
+        "20260719_management_reports_type_check.sql",
+        "20260719_red_admin_compliance_roadmap_tables.sql",
+        "20260719_red_admin_security_audit_columns.sql",
+        "20260719_red_ai_audit_logs_success_columns.sql",
+        "20260719_red_ai_budgets_columns.sql",
+        "20260719_red_ai_usage_stats.sql",
+        "20260719_red_ai_user_memory_columns.sql",
+        "20260719_red_assess_assessment_reports_version.sql",
+        "20260719_red_assess_missing_tables.sql",
+        "20260719_red_assessdep_workflow_schema_fixes.sql",
+        "20260719_red_assessments_type_alias.sql",
+        "20260719_red_budget_routes_columns.sql",
+        "20260719_red_dunning_notifications.sql",
+        "20260719_red_email_template_versions.sql",
+        "20260719_red_kb_fts_gin.sql",
+        "20260719_red_manager_action_audit_log.sql",
+        "20260719_red_metrics_events.sql",
+        "20260719_red_misc_system_health_alerts_operator_enabled.sql",
+        "20260719_red_mrr_snapshots_net_change.sql",
+        "20260719_red_pmo2_missing_governance_roadmap_tables.sql",
+        "20260719_red_pmo_missing_pmo_tables.sql",
+        "20260719_red_pmoadmin_data_retention_policies.sql",
+        "20260719_red_results_kpi_report_template.sql",
+        "20260719_red_risk_register.sql",
+        "20260719_red_subscription_history.sql",
+        "20260719_red_sync_integration_api_keys_and_providers.sql",
+        "20260719_red_task_escalations.sql",
+        "20260719_red_tasks_sla_escalation_columns.sql",
+        "20260719_red_v8_initiatives_actual_end_date.sql",
+        "20260719_status_reports_m14_columns_backfill.sql"
+      ]
+    },
+    {
+      "version": "20260720",
+      "files": [
+        "20260720_access_codes_hash_columns.sql",
+        "20260720_access_codes_reconcile.sql",
+        "20260720_analytics_module_tables.sql",
+        "20260720_assessment_collaboration.sql",
+        "20260720_fala4_kpi_snap_milestone_deps_ai_policies.sql",
+        "20260720_mcp_providers_missing_columns.sql",
+        "20260720_pmo_roles_table.sql",
+        "20260720_project_team_members.sql",
+        "20260720_report_builder_kpi_review_template.sql",
+        "20260720_seed_v6_interview_library_templates.sql"
+      ]
+    },
+    {
+      "version": "20260728",
+      "files": [
+        "20260728_agent_folders.sql",
+        "20260728_vault_folders.sql"
+      ]
+    },
+    {
+      "version": "20260801",
+      "files": [
+        "20260801_asm005_007_evidence_quality_output.sql",
+        "20260801_exe002004_idempotency_keys.sql",
+        "20260801_fin003_004_case_scenario_baseline.sql",
+        "20260801_res003a_kpi_recovery_card.sql"
+      ]
+    },
+    {
+      "version": "20260802",
+      "files": [
+        "20260802_asm008_candidate_handoff.sql",
+        "20260802_exe005006_change_progress_spine.sql",
+        "20260802_fin005_statement_upload_idempotency.sql",
+        "20260802_fin006_candidate_handoff.sql",
+        "20260802_fin006_candidate_handoff_source_snapshot.sql",
+        "20260802_ini005_resources_cas_version.sql",
+        "20260802_int001_template_publication_versions.sql",
+        "20260802_int008_candidate_handoff.sql",
+        "20260802_interview_ai_suggestion_audit.sql",
+        "20260802_interview_insight_v6_schema_parity.sql",
+        "20260802_mat006_workbook_lifecycle.sql",
+        "20260802_mat007_009_fresh_db_guard.sql",
+        "20260802_mat010_artifact_lineage.sql",
+        "20260802_mat010_lineage_pending_events.sql",
+        "20260802_mvp_core_schema_parity.sql",
+        "20260802_results_deviation_schema_parity.sql",
+        "20260802_swot_proposals.sql",
+        "20260802_tls007_swot_candidate_handoff.sql"
+      ]
+    },
+    {
+      "version": "20260803",
+      "files": [
+        "20260803_00_okr_runtime_prerequisites.sql",
+        "20260803_decision_boolean_schema_normalization.sql",
+        "20260803_fin005_statement_ready_contract.sql",
+        "20260803_ini005_allocated_capacity_fte.sql",
+        "20260803_res002_kpi_definition_versions.sql",
+        "20260803_res003_kpi_time_series_measurement_identity.sql",
+        "20260803_res009_okr_check_ins_deterministic_order.sql",
+        "20260803_res009_okr_key_result_definition_version.sql",
+        "20260803_res010_kpi_scorecards.sql",
+        "20260803_res011_kpi_visibility.sql"
+      ]
+    },
+    {
+      "version": "20260804",
+      "files": [
+        "20260804_fin005_statement_upload_idempotency_hardening.sql",
+        "20260804_m02a_tasks_tenant_idempotency.sql"
+      ]
+    },
+    {
+      "version": "20260805",
+      "files": [
+        "20260805_fin005_statement_upload_idempotency_state_machine.sql",
+        "20260805_ini_candidate_acceptance_receipt_reconcile.sql",
+        "20260805_m01p03b_ai_response_feedback_fresh_db_gap.sql",
+        "20260805_m02p03_inbox_projection_lifecycle.sql"
+      ]
+    },
+    {
+      "version": "20260806",
+      "files": [
+        "20260806_fin005_idempotency_orphan_tracking.sql",
+        "20260806_mfa_user_mfa_table.sql",
+        "20260806_superadmin_mfa_methods_table.sql",
+        "20260806_v8_agent_template_version_prerequisite.sql"
+      ]
+    },
+    {
+      "version": "20260807",
+      "files": [
+        "20260807_00_template_visibility_prerequisite.sql",
+        "20260807_agent_t01_transformation_case.sql",
+        "20260807_approve_dbr77_workbook_templates.sql",
+        "20260807_origin_runtime_assessment_report.sql",
+        "20260807_v8_agent_adapter_orchestration.sql",
+        "20260807_v8_agent_context_grounding.sql",
+        "20260807_v8_agent_operator_console.sql",
+        "20260807_v8_agent_proposal_governance.sql",
+        "20260807_v8_agent_quality_evaluation.sql",
+        "20260807_v8_agent_run_identity.sql",
+        "20260807_v8_agent_template_governance.sql",
+        "20260807_v8_multi_agent_work_manager.sql"
+      ]
+    },
+    {
+      "version": "20260808",
+      "files": [
+        "20260808_assessment_report_origin_runtime.sql",
+        "20260808_board_ready_documents_templates.sql",
+        "20260808_documents_template_kpi_formula_repair.sql",
+        "20260808_t01_portfolio_decision_resolution.sql",
+        "20260808_t01_project_team_blueprints.sql",
+        "20260808_u04_recovery_experiments.sql",
+        "20260808_v8_agent_admin_settings.sql",
+        "20260808_v8_agent_canonical_projection_bindings.sql",
+        "20260808_v8_agent_resource_governance.sql"
+      ]
+    },
+    {
+      "version": "20260809",
+      "files": [
+        "20260809_artifact_studio_audit_and_presentation_cards.sql",
+        "20260809_case_workspace_artifact_links.sql",
+        "20260809_case_workspace_capability_registry.sql",
+        "20260809_case_workspace_case_core.sql",
+        "20260809_case_workspace_case_plan_version.sql",
+        "20260809_case_workspace_execution_graph.sql",
+        "20260809_case_workspace_history_value.sql",
+        "20260809_case_workspace_migration_readiness.sql",
+        "20260809_case_workspace_plays.sql",
+        "20260809_case_workspace_proposals_approvals.sql",
+        "20260809_case_workspace_run_binding.sql",
+        "20260809_case_workspace_wait_subscription.sql",
+        "20260809_finance_v3_b01_core_artifacts.sql",
+        "20260809_finance_v3_b02_lifecycle_events.sql",
+        "20260809_finance_v3_b03_lineage_freshness.sql",
+        "20260809_finance_v3_b04_compute_jobs.sql",
+        "20260809_finance_v3_b05_exception_ledger.sql",
+        "20260809_finance_v3_b06_reproducibility_retention_export.sql",
+        "20260809_finance_v3_b07_observability.sql",
+        "20260809_finance_v3_d01_statements_01_tables.sql",
+        "20260809_finance_v3_d01_statements_02_integrity.sql",
+        "20260809_finance_v3_d01_statements_03_readiness.sql",
+        "20260809_finance_v3_d01b_statements_02b_integrity_scope_fix.sql",
+        "20260809_finance_v3_d03_analysis_01_tables.sql",
+        "20260809_finance_v3_d03_analysis_02_integrity.sql",
+        "20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql",
+        "20260809_finance_v3_d03_analysis_04_readiness.sql",
+        "20260809_finance_v3_d05_baseline_01_tables.sql",
+        "20260809_finance_v3_d05_baseline_02_integrity.sql",
+        "20260809_finance_v3_d05_baseline_03_readiness.sql",
+        "20260809_finance_v3_d07_prediction_01_tables.sql",
+        "20260809_finance_v3_d07_prediction_02_integrity.sql",
+        "20260809_finance_v3_d07_prediction_03_readiness.sql",
+        "20260809_finance_v3_d09_valuation_01_tables.sql",
+        "20260809_finance_v3_d09_valuation_02_integrity.sql",
+        "20260809_finance_v3_d_ap04_autosave_checkpoints.sql",
+        "20260809_finance_v3_d_ap06_comments_01_tables.sql",
+        "20260809_finance_v3_d_ap07_saved_views_01_tables.sql",
+        "20260809_finance_v3_e007_03_legacy_actual_protection.sql",
+        "20260809_rvn_platform_canonical_object_type_extend.sql",
+        "20260809_rvn_platform_events_outbox.sql",
+        "20260809_rvn_platform_management_chain.sql",
+        "20260809_rvn_platform_visibility_core.sql",
+        "20260809_t01_u03_owner_backed_execution.sql",
+        "20260809_v8_wave8_agent_runtime_forward.sql"
+      ]
+    },
+    {
+      "version": "20260810",
+      "files": [
+        "20260810_case_workspace_event_outbox.sql",
+        "20260810_case_workspace_node_run_and_inbox.sql",
+        "20260810_finance_v3_co9_statement_money_numeric.sql",
+        "20260810_finance_v3_d01c_real_company_integrity_fix.sql",
+        "20260810_finance_v3_d02_reconciliation_coverage.sql",
+        "20260810_finance_v3_e007_04_actual_protection_schema_qualified.sql",
+        "20260810_finance_v3_w2_b04_queue_ops.sql",
+        "20260810_idea_business_case.sql",
+        "20260810_idea_confidentiality.sql",
+        "20260810_idea_conversion_mapping_version.sql",
+        "20260810_idea_maturity_gates.sql",
+        "20260810_rvn_kpi_core.sql",
+        "20260810_t01_initiative_lifecycle_gate_decisions.sql",
+        "20260810_t01_u02_native_final_outputs.sql"
+      ]
+    },
+    {
+      "version": "20260811",
+      "files": [
+        "20260811_rvn_kpi_deviation_loop.sql",
+        "20260811_rvn_platform_obligations.sql"
+      ]
+    },
+    {
+      "version": "20260812",
+      "files": [
+        "20260812_artifact_approval_four_eyes.sql",
+        "20260812_idea_financial_case.sql",
+        "20260812_rvn_kpi_scorecards.sql"
+      ]
+    },
+    {
+      "version": "20260813",
+      "files": [
+        "20260813_audits_method_core.sql",
+        "20260813_method_core_1_kernel.sql",
+        "20260813_method_core_2_outputs.sql",
+        "20260813_method_core_3_http_idempotency.sql",
+        "20260813_method_core_4_bypass_status.sql",
+        "20260813_repair_a_ai_instruction_suggestions.sql",
+        "20260813_repair_b_tp_schema_proposals_level.sql",
+        "20260813_repair_c1_core_identity_columns.sql",
+        "20260813_repair_c2_projects_columns.sql",
+        "20260813_repair_c3_settings_llm_providers.sql",
+        "20260813_repair_d_steering_board_timestamptz.sql",
+        "20260813_repair_e_api_keys_status_typesafe.sql",
+        "20260813_rvn_kpi_initiative_impacts.sql",
+        "20260813_rvn_kpi_measurement_cadence.sql"
+      ]
+    },
+    {
+      "version": "20260816",
+      "files": [
+        "20260816_admin_iam_operations.sql",
+        "20260816_recovery_runtime_schema_parity.sql",
+        "20260816_rvn_roi_economic_model.sql"
+      ]
+    },
+    {
+      "version": "20260818",
+      "files": [
+        "20260818_partner_economics_policy_events.sql",
+        "20260818_rvn_roi_forecast_actual.sql"
+      ]
+    },
+    {
+      "version": "20260821",
+      "files": [
+        "20260821_initiatives_status_default_draft.sql",
+        "20260821_rvn_roi_pir_teresa_draft_freeze.sql"
+      ]
+    },
+    {
+      "version": "20260822",
+      "files": [
+        "20260822_finance_v3_e007_05_benefit_tracking_protection_reattach.sql",
+        "20260822_rvn_okr_program_cycle.sql"
+      ]
+    },
+    {
+      "version": "20260823",
+      "files": [
+        "20260823_billing_webhooks_schema_convergence.sql",
+        "20260823_chat_project_context_governance.sql",
+        "20260823_finance_v3_bv_terminal_immutability.sql",
+        "20260823_runtime_ddl_schema_convergence.sql",
+        "20260823_rvn_okr_set.sql",
+        "20260823_status_reports_legacy_columns_fresh_db.sql"
+      ]
+    },
+    {
+      "version": "20260824",
+      "files": [
+        "20260824_finance_v3_bv_superseded_immutability.sql",
+        "20260824_rvn_okr_objective_key_result.sql"
+      ]
+    },
+    {
+      "version": "20260825",
+      "files": [
+        "20260825_finance_v3_w9c7_valuation_child_tenant_fk.sql",
+        "20260825_rvn_okr_alignment.sql",
+        "20260825_rvn_okr_checkin.sql"
+      ]
+    },
+    {
+      "version": "20260826",
+      "files": [
+        "20260826_day15_audit_events_org_ts_index.sql",
+        "20260826_finance_v3_w2_rls_pilot_policies.sql",
+        "20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
+        "20260826_meetings_day10_decisions.sql",
+        "20260826_rvn_okr_review_reflection.sql",
+        "20260826_rvn_okr_support.sql"
+      ]
+    },
+    {
+      "version": "20260827",
+      "files": [
+        "20260827_calendar_events.sql",
+        "20260827_finance_v3_w3_backfill_artifacts_unique.sql",
+        "20260827_rvn_okr_teresa_reflection_draft.sql"
+      ]
+    },
+    {
+      "version": "20260830",
+      "files": [
+        "20260830_day144_kpi_lifecycle_decouple.sql",
+        "20260830_day147_object_attachments.sql",
+        "20260830_day158_kpi_crosswalk.sql",
+        "20260830_day159_chunk_org_backfill.sql",
+        "20260830_day166_decision_risk_fields.sql",
+        "20260830_day175_task_risk_alternatives.sql",
+        "20260830_rvn_roi_finance_projections.sql"
+      ]
+    },
+    {
+      "version": "20260831",
+      "files": [
+        "20260831_day209_knowledge_chunks_created_at.sql",
+        "20260831_rvn_okr_not_calculable_reason.sql"
+      ]
+    },
+    {
+      "version": "20260901",
+      "files": [
+        "20260901_initiative_object_attachments_type.sql",
+        "20260901_partner_program_ledger_governance.sql"
+      ]
+    },
+    {
+      "version": "20260903",
+      "files": [
+        "20260903_admin_invitation_events.sql",
+        "20260903_ai_user_tiers.sql",
+        "20260903_assessment_report_metadata.sql",
+        "20260903_help_categories.sql"
+      ]
+    },
+    {
+      "version": "20260904",
+      "files": [
+        "20260904_admin_seat_management_repair.sql",
+        "20260904_help_shape_alignment.sql"
+      ]
+    },
+    {
+      "version": "20260905",
+      "files": [
+        "20260905_assessment_business_unit.sql",
+        "20260905_attribution_events_repair.sql",
+        "20260905_finance_analysis_definition_name.sql",
+        "20260905_p3_conversation_empty_title_default.sql"
+      ]
+    },
+    {
+      "version": "20260906",
+      "files": [
+        "20260906_ai_organization_memory_memory_key.sql",
+        "20260906_partner_legacy_cutover.sql",
+        "20260906_rvn_roi_card_three_parts.sql",
+        "20260906_usage_counters_unique_index.sql"
+      ]
+    },
+    {
+      "version": "20260907",
+      "files": [
+        "20260907_finance_legacy_cutover.sql",
+        "20260907_usage_counters_unique_index_fix.sql"
+      ]
+    },
+    {
+      "version": "20260908",
+      "files": [
+        "20260908_admin_backup_restore_integrity.sql",
+        "20260908_execution_bvp_spine.sql"
+      ]
+    },
+    {
+      "version": "20260909",
+      "files": [
+        "20260909_backup_receipts_legacy_shape_repair.sql",
+        "20260909_data_dr_backup_health.sql"
+      ]
+    },
+    {
+      "version": "20260910",
+      "files": [
+        "20260910_claude_a_assessment_initiative_batch_uniqueness.sql",
+        "20260910_claude_a_audit_initiative_proposal_exactly_once.sql",
+        "20260910_claude_a_interview_candidate_exactly_once.sql"
+      ]
+    },
+    {
+      "version": "20260912",
+      "files": [
+        "20260912_claude_c_document_version_lineage.sql",
+        "20260912_claude_c_handoff_spine.sql",
+        "20260912_claude_c_handoff_spine_version_unique.sql",
+        "20260912_claude_c_meeting_boundary.sql",
+        "20260912_claude_c_org_context_snapshots.sql",
+        "20260912_claude_c_workbook_schema.sql"
+      ]
+    },
+    {
+      "version": "20260917",
+      "files": [
+        "20260917_execution_action_audit_immutability.sql",
+        "20260917_interview_distribution_invite_governance.sql",
+        "20260917_results_execution_signal_ingress.sql"
+      ]
+    },
+    {
+      "version": "20260928",
+      "files": [
+        "20260928_chat_handoff_owner_ingress.sql",
+        "20260928_fin_results_reconciliation_decision.sql"
+      ]
+    },
+    {
+      "version": "20260930",
+      "files": [
+        "20260930_ai_agent_job_receipts.sql",
+        "20260930_execution_flow_adapter_reliability.sql"
+      ]
+    },
+    {
+      "version": "20261003",
+      "files": [
+        "20261003_operational_alert_constraint_shape_repair.sql",
+        "20261003_operational_alert_missed_signal_repair.sql"
+      ]
+    },
+    {
+      "version": "20261023",
+      "files": [
+        "20261023_integrations_connector_legacy_shape_repair.sql",
+        "20261023_integrations_connector_runtime_shape.sql"
+      ]
+    },
+    {
+      "version": "20261039",
+      "files": [
+        "20261039_knowledge_vault_document_metadata.sql",
+        "20261039_settings_mfa_challenges.sql"
+      ]
+    },
+    {
+      "version": "20261054",
+      "files": [
+        "20261054_finance_budget_approval_command.sql",
+        "20261054_finance_statement_confidence_bounds.sql"
+      ]
+    },
+    {
+      "version": "20261057",
+      "files": [
+        "20261057_finance_statement_confidence_bounds.sql",
+        "20261057_finance_statement_pack_comparative_period_identity.sql"
+      ]
+    },
+    {
+      "version": "20261058",
+      "files": [
+        "20261058_finance_budget_initiative_link_command.sql",
+        "20261058_finance_statement_canonical_mapping_taxonomy.sql"
+      ]
+    },
+    {
+      "version": "20261061",
+      "files": [
+        "20261061_finance_valuation_input_events_tenant_fks.sql",
+        "20261061_flow_accepted_classic_runtime_adoption.sql"
+      ]
+    },
+    {
+      "version": "20261913",
+      "files": [
+        "20261913_day310_ai_nudge_runtime_schema.sql",
+        "20261913_imported_reports_coverage_percent.sql"
+      ]
+    },
+    {
+      "version": "20262103",
+      "files": [
+        "20262103_p12_initiative_status_slownik.sql",
+        "20262103_users_weekly_capacity_hours.sql"
+      ]
+    },
+    {
+      "version": "20262105",
+      "files": [
+        "20262105_seed_business_templates_origin_runtime_repair.sql",
+        "20262105_tools_library_card_content.sql"
+      ]
+    },
+    {
+      "version": "202",
+      "files": [
+        "202_ai_latency_metrics.sql",
+        "202_customer_contracts.sql"
+      ]
+    },
+    {
+      "version": "203",
+      "files": [
+        "203_ai_memory_metrics.sql",
+        "203_support_tickets.sql"
+      ]
+    },
+    {
+      "version": "206",
+      "files": [
+        "206_proactive_suggestions.sql",
+        "206_secret_rotation.sql"
+      ]
+    },
+    {
+      "version": "210",
+      "files": [
+        "210_ai_system_prompts.sql",
+        "210_sso_scim.sql"
+      ]
+    },
+    {
+      "version": "230",
+      "files": [
+        "230_settings_demo_seed.sql",
+        "230_superadmin_overview_production.sql"
+      ]
+    },
+    {
+      "version": "234",
+      "files": [
+        "234_credit_notes_seed.sql",
+        "234_revenue_module_complete.sql",
+        "234_revenue_module_tables.sql"
+      ]
+    },
+    {
+      "version": "238",
+      "files": [
+        "238_analytics_module_tables.sql",
+        "238_content_module_seed.sql"
+      ]
+    },
+    {
+      "version": "240",
+      "files": [
+        "240_ai_development_demo_seed.sql",
+        "240_customer_automation.sql",
+        "240_usage_alerts_tracking.sql"
+      ]
+    },
+    {
+      "version": "241",
+      "files": [
+        "241_customer_communications.sql",
+        "241_email_verification.sql"
+      ]
+    },
+    {
+      "version": "250",
+      "files": [
+        "250_ai_memory_system.sql",
+        "250_entity_translations.sql"
+      ]
+    },
+    {
+      "version": "251",
+      "files": [
+        "251_ai_learning_system.sql",
+        "251_llm_providers_demo_seed.sql"
+      ]
+    },
+    {
+      "version": "252",
+      "files": [
+        "252_complete_demo_data_seed.sql",
+        "252_tools_system.sql"
+      ]
+    },
+    {
+      "version": "259",
+      "files": [
+        "259_audit_logging.sql",
+        "259_p31_settings_registry_cleanup.sql"
+      ]
+    },
+    {
+      "version": "291",
+      "files": [
+        "291_knowledge_base_polish_translations.sql",
+        "291_tools_initiatives.sql"
+      ]
+    },
+    {
+      "version": "292",
+      "files": [
+        "292_assessment_reports_workflow.sql",
+        "292_decision_management.sql",
+        "292_initiative_dependencies.sql",
+        "292_knowledge_base_polish_translations_extended.sql",
+        "292_tools_decisions_link.sql"
+      ]
+    },
+    {
+      "version": "293",
+      "files": [
+        "293_assessment_workflow.sql",
+        "293_initiative_milestones.sql"
+      ]
+    },
+    {
+      "version": "295",
+      "files": [
+        "295_interview_context.sql",
+        "295_unified_decisions.sql"
+      ]
+    },
+    {
+      "version": "296",
+      "files": [
+        "296_ai_actions_table.sql",
+        "296_interview_templates.sql"
+      ]
+    },
+    {
+      "version": "297",
+      "files": [
+        "297_decision_impacts_table.sql",
+        "297_interview_library_templates.sql"
+      ]
+    },
+    {
+      "version": "298",
+      "files": [
+        "298_fix_missing_columns.sql",
+        "298_interview_draft_templates.sql",
+        "298_interview_library_template_enhancements.sql"
+      ]
+    },
+    {
+      "version": "299",
+      "files": [
+        "299_add_assessments_description.sql",
+        "299_interview_assignments.sql"
+      ]
+    },
+    {
+      "version": "300",
+      "files": [
+        "300_add_assessments_framework_columns.sql",
+        "300_fix_decision_history_changed_at.js"
+      ]
+    },
+    {
+      "version": "301",
+      "files": [
+        "301_fix_decision_history_changed_at_sqlite.js",
+        "301_maturity_assessments_updated_at.sql"
+      ]
+    },
+    {
+      "version": "303",
+      "files": [
+        "303_decision_escalation_delegation.sql",
+        "303_interview_assignments_extended.sql"
+      ]
+    },
+    {
+      "version": "335",
+      "files": [
+        "335_conversation_language.sql",
+        "335_initiative_stakeholders.sql"
+      ]
+    },
+    {
+      "version": "512",
+      "files": [
+        "512_assessment_initiative_generation_runs.sql",
+        "512_report_builder_repair_sqlite.sql"
+      ]
+    },
+    {
+      "version": "513",
+      "files": [
+        "513_initiative_card_scope_templates.sql",
+        "513_org_report_templates_demo.sql"
+      ]
+    },
+    {
+      "version": "515",
+      "files": [
+        "515_ai_decision_memory.sql",
+        "515_team_chat_projects.sql"
+      ]
+    },
+    {
+      "version": "539",
+      "files": [
+        "539_builtin_role_permissions.sql",
+        "539_initiative_comments_ai_prompt.sql"
+      ]
+    },
+    {
+      "version": "540",
+      "files": [
+        "540_raid_ai_prompt_enhanced.sql",
+        "540_task_labels_and_circuit_breaker.sql"
+      ]
+    },
+    {
+      "version": "542",
+      "files": [
+        "542_fix_initiative_section_ai_prompt_keys.sql",
+        "542_project_members_consultant_overlay_and_steering_board.sql"
+      ]
+    },
+    {
+      "version": "571",
+      "files": [
+        "571_financial_modeling_t054.sql",
+        "571_valuation_t055_t056_t057.sql"
+      ]
+    },
+    {
+      "version": "573",
+      "files": [
+        "573_people_change_comms_t043_t044_t045.sql",
+        "573_valuation_exports_and_version.sql"
+      ]
+    },
+    {
+      "version": "730",
+      "files": [
+        "730_base_members_roles.sql",
+        "730_beta_schema_fixes.sql",
+        "730_partner_users_uuid_columns.sql"
+      ]
+    },
+    {
+      "version": "731",
+      "files": [
+        "731_tasks_missing_columns.sql",
+        "731_view_interface_locks.sql"
+      ]
+    },
+    {
+      "version": "750",
+      "files": [
+        "750_presentation_decks_00base.sql",
+        "750_v4_results_enterprise_runtime_completion.sql"
+      ]
+    },
+    {
+      "version": "754",
+      "files": [
+        "754_interview_ai_review_memory.sql",
+        "754_p10_interview_insight_candidates.sql"
+      ]
+    },
+    {
+      "version": "755",
+      "files": [
+        "755_interview_insight_scope_material_quality.sql",
+        "755_my_ideas_00base.sql"
+      ]
+    },
+    {
+      "version": "760",
+      "files": [
+        "760_presentation_legacy_normalization.sql",
+        "760_work_canvas_runtime.sql"
+      ]
+    },
+    {
+      "version": "783",
+      "files": [
+        "783_benefits_register_closure_handoff.sql",
+        "783_deliverable_template_provenance.sql"
+      ]
+    },
+    {
+      "version": "785",
+      "files": [
+        "785_dbr77_template_seeds_f32.sql",
+        "785_tp_base_templates_org_scope.sql"
+      ]
+    },
+    {
+      "version": "791",
+      "files": [
+        "791_admin_sessions_00base.sql",
+        "791_organizations_dunning_columns.sql"
+      ]
+    },
+    {
+      "version": "792",
+      "files": [
+        "792_admin_sessions_extended_columns.sql",
+        "792_email_templates_00base.sql"
+      ]
+    },
+    {
+      "version": "794",
+      "files": [
+        "794_gdpr_requests_missing_columns.sql",
+        "794_permission_requests_00base.sql"
+      ]
+    },
+    {
+      "version": "798",
+      "files": [
+        "798_login_history_missing_columns.sql",
+        "798_partner_certifications_00base.sql"
+      ]
+    },
+    {
+      "version": "932",
+      "files": [
+        "932_canonical_inbox_items_source_status_initiative.sql",
+        "932_decision_workflow_canonical.sql",
+        "932_initiative_candidate_acceptance_receipt.sql",
+        "932_initiatives_execution_material_commands.sql",
+        "932_report_builder_archive_columns.sql"
+      ]
+    },
+    {
+      "version": "933",
+      "files": [
+        "933_initiative_card_versions.sql",
+        "933_initiative_section_types_closure.sql",
+        "933_report_builder_section_trace_columns.sql"
+      ]
+    },
+    {
+      "version": "934",
+      "files": [
+        "934_initiative_closure_evidence_gate.sql",
+        "934_organization_governance_profiles.sql",
+        "934_report_exports_history.sql"
+      ]
+    },
+    {
+      "version": "935",
+      "files": [
+        "935_exe009_closure_delivery_receipt.sql",
+        "935_plan_scenario_time_basis.sql"
+      ]
+    },
+    {
+      "version": "942",
+      "files": [
+        "942_ai_agent_plan_run_idempotency.sql",
+        "942_chat_m01p04a_attachment_status.sql",
+        "942_ideas_collaboration_tool_sessions.sql"
+      ]
+    },
+    {
+      "version": "943",
+      "files": [
+        "943_presentation_exported_version.sql",
+        "943_work_canvas_timestamp_parity_postgres.sql"
+      ]
+    },
+    {
+      "version": "946",
+      "files": [
+        "946_benefit_tracking_fresh_install.sql",
+        "946_siri_16d_source_of_truth.sql",
+        "946_tool_outputs_reports_lineage.sql"
+      ]
+    },
+    {
+      "version": "948",
+      "files": [
+        "948_tool_promotion_idempotency.sql",
+        "948_tool_promotion_tenant_idempotency.sql"
+      ]
+    },
+    {
+      "version": "add",
+      "files": [
+        "add_chat_projects.js",
+        "add_chat_projects.sql",
+        "add_mywork_tables.sql",
+        "add_response_feedback.sql"
+      ]
+    }
+  ],
+  "duplicateLedgerVersions": [
+    {
+      "version": "000",
+      "rows": 3,
+      "filenames": [
+        "000_schema_migrations.sql",
+        "000_z_core_baseline.sql",
+        "000_zz_core_baseline_producers_fresh_db_gap.sql"
+      ]
+    },
+    {
+      "version": "20260128",
+      "rows": 2,
+      "filenames": [
+        "20260128_task_notification_rules.sql",
+        "20260128_task_overdue_notifications.sql"
+      ]
+    },
+    {
+      "version": "20260223",
+      "rows": 2,
+      "filenames": [
+        "20260223_competency_taxonomy.sql",
+        "20260223_llm_providers_boolean_flags.sql"
+      ]
+    },
+    {
+      "version": "20260228",
+      "rows": 3,
+      "filenames": [
+        "20260228_budget_initiative_links.sql",
+        "20260228_cv_matching_t067.sql",
+        "20260228_financial_model_versions.sql"
+      ]
+    },
+    {
+      "version": "20260303",
+      "rows": 3,
+      "filenames": [
+        "20260303_feedback_behavior_t106_t113.sql",
+        "20260303_link_graph_v3.sql",
+        "20260303_schema_alignment.sql"
+      ]
+    },
+    {
+      "version": "20260304",
+      "rows": 2,
+      "filenames": [
+        "20260304_feedback_items_canonical_tickets.sql",
+        "20260304_transaction_readiness_sellix.sql"
+      ]
+    },
+    {
+      "version": "20260307",
+      "rows": 2,
+      "filenames": [
+        "20260307_my_work_signals.sql",
+        "20260307_notebook_maturity.sql"
+      ]
+    },
+    {
+      "version": "20260308",
+      "rows": 2,
+      "filenames": [
+        "20260308_my_ideas_ai_incubator.sql",
+        "20260308_notebook_status_pinned.sql"
+      ]
+    },
+    {
+      "version": "20260323",
+      "rows": 52,
+      "filenames": [
+        "20260323_v8_chat_execution.sql",
+        "20260323_v8_collaboration_room.sql",
+        "20260323_v8_concurrent_editing.sql",
+        "20260323_v8_context_snapshot_00base.sql",
+        "20260323_v8_context_snapshot_identity_chain.sql",
+        "20260323_v8_context_snapshot.sql",
+        "20260323_v8_execution_spine_00base.sql",
+        "20260323_v8_execution_spine_approval_flow.sql",
+        "20260323_v8_execution_spine_context_binding.sql",
+        "20260323_v8_execution_spine.sql",
+        "20260323_v8_execution_visibility.sql",
+        "20260323_v8_finance_integration.sql",
+        "20260323_v8_finance_runtime.sql",
+        "20260323_v8_governed_retrieval_00base.sql",
+        "20260323_v8_governed_retrieval_freshness.sql",
+        "20260323_v8_governed_retrieval.sql",
+        "20260323_v8_knowledge_retrieval.sql",
+        "20260323_v8_landing_superadmin.sql",
+        "20260323_v8_multiplayer_hardening.sql",
+        "20260323_v8_multiplayer_presence_runtime.sql",
+        "20260323_v8_mywork_roof.sql",
+        "20260323_v8_operator_admin.sql",
+        "20260323_v8_planning_continuity.sql",
+        "20260323_v8_planning_execution_visibility.sql",
+        "20260323_v8_pm_sync_auth.sql",
+        "20260323_v8_pm_sync_truth_00base.sql",
+        "20260323_v8_pm_sync_truth_operator_recovery.sql",
+        "20260323_v8_pm_sync_truth.sql",
+        "20260323_v8_prompt_os_runtime.sql",
+        "20260323_v8_publish_review.sql",
+        "20260323_v8_replay_deadletter.sql",
+        "20260323_v8_reports_output_runtime.sql",
+        "20260323_v8_reports_pres_model.sql",
+        "20260323_v8_results_roi.sql",
+        "20260323_v8_results_runtime.sql",
+        "20260323_v8_source_truth_lifecycle.sql",
+        "20260323_v8_source_truth.sql",
+        "20260323_v8_tool_collaboration.sql",
+        "20260323_v8_tool_governance_00base.sql",
+        "20260323_v8_tool_governance_enforcement.sql",
+        "20260323_v8_tool_governance.sql",
+        "20260323_v8_tools_org_admin.sql",
+        "20260323_v8_trust_audit_00base.sql",
+        "20260323_v8_trust_audit_provenance.sql",
+        "20260323_v8_trust_audit.sql",
+        "20260323_v8_version_replay_00base.sql",
+        "20260323_v8_version_replay_runtime.sql",
+        "20260323_v8_version_replay.sql",
+        "20260323_v8_workspace_ai_facilitation.sql",
+        "20260323_v8_workspace_collaboration.sql",
+        "20260323_v8_workspace_cross_module.sql",
+        "20260323_v8_workspace_governance.sql"
+      ]
+    },
+    {
+      "version": "20260324",
+      "rows": 5,
+      "filenames": [
+        "20260324_v81_artifact_runs_wave1.sql",
+        "20260324_v81_artifact_substrate_wave1.sql",
+        "20260324_v81_sheet_artifact_wave2.sql",
+        "20260324_v8_feature_flags.sql",
+        "20260324_v8_shadow_comparisons.sql"
+      ]
+    },
+    {
+      "version": "20260330",
+      "rows": 3,
+      "filenames": [
+        "20260330_p17b_artifact_runs_preflight_failure_packaging.sql",
+        "20260330_p25b_kb_next_action_and_primers.sql",
+        "20260330_v81_templates_as_outputs_artifacts.sql"
+      ]
+    },
+    {
+      "version": "20260331",
+      "rows": 10,
+      "filenames": [
+        "20260331_p04b_kpi_signals_next_actions.sql",
+        "20260331_p25b_backfill_next_action.sql",
+        "20260331_p26b_kb_collections_tags_surfaces.sql",
+        "20260331_p28_workbench_p29_partner_program_ledger.sql",
+        "20260331_p35b_canonical_model_completion.sql",
+        "20260331_p35b_conversation_soft_delete.sql",
+        "20260331_v8_calendar_interop_p02b.sql",
+        "20260331_v8_finance_lane_p05b.sql",
+        "20260331_v8_mindmap_nodes_p12b.sql",
+        "20260331_v8_radar_triage_p06b.sql"
+      ]
+    },
+    {
+      "version": "20260409",
+      "rows": 7,
+      "filenames": [
+        "20260409_fix_virtual_workers_postgres.sql",
+        "20260409_p17c_artifact_run_audit_log.sql",
+        "20260409_p17c_artifact_runs_cancelled_status.sql",
+        "20260409_p25e_slug_unique_constraint.sql",
+        "20260409_p26_kb_hero_asset_refs.sql",
+        "20260409_p26_kb_translation_status.sql",
+        "20260409_p35_conversation_fts.sql"
+      ]
+    },
+    {
+      "version": "20260411",
+      "rows": 13,
+      "filenames": [
+        "20260411_p01_provider_catalog_states.sql",
+        "20260411_p01_webhook_registrations.sql",
+        "20260411_p01_workflow_policy.sql",
+        "20260411_p11_status_history_org_id_backfill.sql",
+        "20260411_p28_definition_versions.sql",
+        "20260411_p29_partner_program_ledger_entry_type_check.sql",
+        "20260411_p30d_organization_type_and_new_fields.sql",
+        "20260411_partner_certification_v2.sql",
+        "20260411_tp_record_comments_mentions.sql",
+        "20260411_v8_calendar_interop_p02d_bridge.sql",
+        "20260411_v8_calendar_items_extended_itemtype.sql",
+        "20260411_v8_p03d_manager_lane_tables.sql",
+        "20260411_v8_p03e_forecast_columns.sql"
+      ]
+    },
+    {
+      "version": "20260412",
+      "rows": 4,
+      "filenames": [
+        "20260412_kb_promote_consultify_lanes.sql",
+        "20260412_module_interest_waitlist.sql",
+        "20260412_organization_switch_log.sql",
+        "20260412_performance_indexes.sql"
+      ]
+    },
+    {
+      "version": "20260417",
+      "rows": 2,
+      "filenames": [
+        "20260417_chat_message_types_execution_family.sql",
+        "20260417_feedback_workflow_columns.sql"
+      ]
+    },
+    {
+      "version": "20260425",
+      "rows": 7,
+      "filenames": [
+        "20260425_wave3_ai_run_ledger.sql",
+        "20260425_wave4_research_sessions.sql",
+        "20260425_wave5_artifact_runtime.sql",
+        "20260425_wave6_context_learning.sql",
+        "20260425_wave7_connector_runtime.sql",
+        "20260425_wave8_agent_runtime.sql",
+        "20260425_wave9_outcome_runtime.sql"
+      ]
+    },
+    {
+      "version": "20260508",
+      "rows": 3,
+      "filenames": [
+        "20260508_block_a_template_lifecycle.sql",
+        "20260508_block_b_record_provenance.sql",
+        "20260508_block_c_ai_operator.sql"
+      ]
+    },
+    {
+      "version": "20260513",
+      "rows": 2,
+      "filenames": [
+        "20260513_block_d_form_intake.sql",
+        "20260513_user_function_profile.sql"
+      ]
+    },
+    {
+      "version": "20260602",
+      "rows": 3,
+      "filenames": [
+        "20260602_chat_message_idempotency_ordering.sql",
+        "20260602_my_ideas_folders_favorites_recents.sql",
+        "20260602_notebook_containers.sql"
+      ]
+    },
+    {
+      "version": "20260603",
+      "rows": 3,
+      "filenames": [
+        "20260603_document_studio_editor_state.sql",
+        "20260603_generated_initiatives.sql",
+        "20260603_initiative_generator_catchup.sql"
+      ]
+    },
+    {
+      "version": "20260620",
+      "rows": 6,
+      "filenames": [
+        "20260620_1000_notebook_topics.ts",
+        "20260620_2000_notebook_fts_repair.ts",
+        "20260620_3000_notebook_cover.ts",
+        "20260620_4000_notebook_versions.ts",
+        "20260620_5000_initiative_gate_ai_flags.sql",
+        "20260620_6000_initiative_gate_ai_events.sql"
+      ]
+    },
+    {
+      "version": "20260623",
+      "rows": 11,
+      "filenames": [
+        "20260623_benefits_register.sql",
+        "20260623_change_champions.sql",
+        "20260623_change_control.sql",
+        "20260623_cutover_runbook.sql",
+        "20260623_decision_escalated_to.sql",
+        "20260623_distribution_delivery.sql",
+        "20260623_meetings_baseline.sql",
+        "20260623_pir.sql",
+        "20260623_plan_baselines.sql",
+        "20260623_raid_assumption_issue.sql",
+        "20260623_rollout_stages.sql"
+      ]
+    },
+    {
+      "version": "20260624",
+      "rows": 8,
+      "filenames": [
+        "20260624_benefit_profile_taxonomy.sql",
+        "20260624_benefits_register_promote.sql",
+        "20260624_finance_analysis_investment_category.sql",
+        "20260624_initiative_column_dedup.sql",
+        "20260624_initiative_status_normalize.sql",
+        "20260624_kpi_kind_lineage.sql",
+        "20260624_value_capture_gates.sql",
+        "20260624_value_ledger.sql"
+      ]
+    },
+    {
+      "version": "20260625",
+      "rows": 2,
+      "filenames": [
+        "20260625_initiative_missing_columns.sql",
+        "20260625_initiative_title_name_sync.sql"
+      ]
+    },
+    {
+      "version": "20260627",
+      "rows": 3,
+      "filenames": [
+        "20260627_audits.sql",
+        "20260627_initiative_candidates.sql",
+        "20260627_initiative_roi_drop.sql"
+      ]
+    },
+    {
+      "version": "20260628",
+      "rows": 7,
+      "filenames": [
+        "20260628_ensure_digitization_analyses.sql",
+        "20260628_initiative_core_section_prompts.sql",
+        "20260628_tools_ambition_decomposer_activate.sql",
+        "20260628_tools_capability_mapper_activate.sql",
+        "20260628_tools_focus_tradeoff_activate.sql",
+        "20260628_tools_narrative_engine_activate.sql",
+        "20260628_tools_value_chain_activate.sql"
+      ]
+    },
+    {
+      "version": "20260702",
+      "rows": 2,
+      "filenames": [
+        "20260702_initiative_section_prompt_quality.sql",
+        "20260702_v81_artifact_draft_flag.sql"
+      ]
+    },
+    {
+      "version": "20260703",
+      "rows": 2,
+      "filenames": [
+        "20260703_interview_question_consultant_grade_rewrite.sql",
+        "20260703_v8_kpi_finance_reconciliation_deviation.sql"
+      ]
+    },
+    {
+      "version": "20260719",
+      "rows": 35,
+      "filenames": [
+        "20260719_artifact_evidence_note_type.sql",
+        "20260719_artifact_evidence_sheet_type.sql",
+        "20260719_baseline_gap.sql",
+        "20260719_initiative_execution_columns.sql",
+        "20260719_interview_axis_gap_templates.sql",
+        "20260719_management_reports_type_check.sql",
+        "20260719_red_admin_compliance_roadmap_tables.sql",
+        "20260719_red_admin_security_audit_columns.sql",
+        "20260719_red_ai_audit_logs_success_columns.sql",
+        "20260719_red_ai_budgets_columns.sql",
+        "20260719_red_ai_usage_stats.sql",
+        "20260719_red_ai_user_memory_columns.sql",
+        "20260719_red_assess_assessment_reports_version.sql",
+        "20260719_red_assessdep_workflow_schema_fixes.sql",
+        "20260719_red_assessments_type_alias.sql",
+        "20260719_red_assess_missing_tables.sql",
+        "20260719_red_budget_routes_columns.sql",
+        "20260719_red_dunning_notifications.sql",
+        "20260719_red_email_template_versions.sql",
+        "20260719_red_kb_fts_gin.sql",
+        "20260719_red_manager_action_audit_log.sql",
+        "20260719_red_metrics_events.sql",
+        "20260719_red_misc_system_health_alerts_operator_enabled.sql",
+        "20260719_red_mrr_snapshots_net_change.sql",
+        "20260719_red_pmo2_missing_governance_roadmap_tables.sql",
+        "20260719_red_pmoadmin_data_retention_policies.sql",
+        "20260719_red_pmo_missing_pmo_tables.sql",
+        "20260719_red_results_kpi_report_template.sql",
+        "20260719_red_risk_register.sql",
+        "20260719_red_subscription_history.sql",
+        "20260719_red_sync_integration_api_keys_and_providers.sql",
+        "20260719_red_task_escalations.sql",
+        "20260719_red_tasks_sla_escalation_columns.sql",
+        "20260719_red_v8_initiatives_actual_end_date.sql",
+        "20260719_status_reports_m14_columns_backfill.sql"
+      ]
+    },
+    {
+      "version": "20260720",
+      "rows": 9,
+      "filenames": [
+        "20260720_access_codes_hash_columns.sql",
+        "20260720_access_codes_reconcile.sql",
+        "20260720_analytics_module_tables.sql",
+        "20260720_assessment_collaboration.sql",
+        "20260720_fala4_kpi_snap_milestone_deps_ai_policies.sql",
+        "20260720_mcp_providers_missing_columns.sql",
+        "20260720_pmo_roles_table.sql",
+        "20260720_project_team_members.sql",
+        "20260720_report_builder_kpi_review_template.sql"
+      ]
+    },
+    {
+      "version": "20260728",
+      "rows": 2,
+      "filenames": [
+        "20260728_agent_folders.sql",
+        "20260728_vault_folders.sql"
+      ]
+    },
+    {
+      "version": "20260801",
+      "rows": 4,
+      "filenames": [
+        "20260801_asm005_007_evidence_quality_output.sql",
+        "20260801_exe002004_idempotency_keys.sql",
+        "20260801_fin003_004_case_scenario_baseline.sql",
+        "20260801_res003a_kpi_recovery_card.sql"
+      ]
+    },
+    {
+      "version": "20260802",
+      "rows": 18,
+      "filenames": [
+        "20260802_asm008_candidate_handoff.sql",
+        "20260802_exe005006_change_progress_spine.sql",
+        "20260802_fin005_statement_upload_idempotency.sql",
+        "20260802_fin006_candidate_handoff_source_snapshot.sql",
+        "20260802_fin006_candidate_handoff.sql",
+        "20260802_ini005_resources_cas_version.sql",
+        "20260802_int001_template_publication_versions.sql",
+        "20260802_int008_candidate_handoff.sql",
+        "20260802_interview_ai_suggestion_audit.sql",
+        "20260802_interview_insight_v6_schema_parity.sql",
+        "20260802_mat006_workbook_lifecycle.sql",
+        "20260802_mat007_009_fresh_db_guard.sql",
+        "20260802_mat010_artifact_lineage.sql",
+        "20260802_mat010_lineage_pending_events.sql",
+        "20260802_mvp_core_schema_parity.sql",
+        "20260802_results_deviation_schema_parity.sql",
+        "20260802_swot_proposals.sql",
+        "20260802_tls007_swot_candidate_handoff.sql"
+      ]
+    },
+    {
+      "version": "20260803",
+      "rows": 10,
+      "filenames": [
+        "20260803_00_okr_runtime_prerequisites.sql",
+        "20260803_decision_boolean_schema_normalization.sql",
+        "20260803_fin005_statement_ready_contract.sql",
+        "20260803_ini005_allocated_capacity_fte.sql",
+        "20260803_res002_kpi_definition_versions.sql",
+        "20260803_res003_kpi_time_series_measurement_identity.sql",
+        "20260803_res009_okr_check_ins_deterministic_order.sql",
+        "20260803_res009_okr_key_result_definition_version.sql",
+        "20260803_res010_kpi_scorecards.sql",
+        "20260803_res011_kpi_visibility.sql"
+      ]
+    },
+    {
+      "version": "20260804",
+      "rows": 2,
+      "filenames": [
+        "20260804_fin005_statement_upload_idempotency_hardening.sql",
+        "20260804_m02a_tasks_tenant_idempotency.sql"
+      ]
+    },
+    {
+      "version": "20260805",
+      "rows": 4,
+      "filenames": [
+        "20260805_fin005_statement_upload_idempotency_state_machine.sql",
+        "20260805_ini_candidate_acceptance_receipt_reconcile.sql",
+        "20260805_m01p03b_ai_response_feedback_fresh_db_gap.sql",
+        "20260805_m02p03_inbox_projection_lifecycle.sql"
+      ]
+    },
+    {
+      "version": "20260806",
+      "rows": 4,
+      "filenames": [
+        "20260806_fin005_idempotency_orphan_tracking.sql",
+        "20260806_mfa_user_mfa_table.sql",
+        "20260806_superadmin_mfa_methods_table.sql",
+        "20260806_v8_agent_template_version_prerequisite.sql"
+      ]
+    },
+    {
+      "version": "20260807",
+      "rows": 13,
+      "filenames": [
+        "20260807_00_template_visibility_prerequisite.sql",
+        "20260807_agent_t01_transformation_case.sql",
+        "20260807_approve_dbr77_workbook_templates.sql",
+        "20260807_finance_recovery_international_canonical_lines.sql",
+        "20260807_origin_runtime_assessment_report.sql",
+        "20260807_v8_agent_adapter_orchestration.sql",
+        "20260807_v8_agent_context_grounding.sql",
+        "20260807_v8_agent_operator_console.sql",
+        "20260807_v8_agent_proposal_governance.sql",
+        "20260807_v8_agent_quality_evaluation.sql",
+        "20260807_v8_agent_run_identity.sql",
+        "20260807_v8_agent_template_governance.sql",
+        "20260807_v8_multi_agent_work_manager.sql"
+      ]
+    },
+    {
+      "version": "20260808",
+      "rows": 9,
+      "filenames": [
+        "20260808_assessment_report_origin_runtime.sql",
+        "20260808_board_ready_documents_templates.sql",
+        "20260808_documents_template_kpi_formula_repair.sql",
+        "20260808_t01_portfolio_decision_resolution.sql",
+        "20260808_t01_project_team_blueprints.sql",
+        "20260808_u04_recovery_experiments.sql",
+        "20260808_v8_agent_admin_settings.sql",
+        "20260808_v8_agent_canonical_projection_bindings.sql",
+        "20260808_v8_agent_resource_governance.sql"
+      ]
+    },
+    {
+      "version": "20260809",
+      "rows": 45,
+      "filenames": [
+        "20260809_artifact_studio_audit_and_presentation_cards.sql",
+        "20260809_case_workspace_artifact_links.sql",
+        "20260809_case_workspace_capability_registry.sql",
+        "20260809_case_workspace_case_core.sql",
+        "20260809_case_workspace_case_plan_version.sql",
+        "20260809_case_workspace_execution_graph.sql",
+        "20260809_case_workspace_history_value.sql",
+        "20260809_case_workspace_migration_readiness.sql",
+        "20260809_case_workspace_plays.sql",
+        "20260809_case_workspace_proposals_approvals.sql",
+        "20260809_case_workspace_run_binding.sql",
+        "20260809_case_workspace_wait_subscription.sql",
+        "20260809_finance_v3_b01_core_artifacts.sql",
+        "20260809_finance_v3_b02_lifecycle_events.sql",
+        "20260809_finance_v3_b03_lineage_freshness.sql",
+        "20260809_finance_v3_b04_compute_jobs.sql",
+        "20260809_finance_v3_b05_exception_ledger.sql",
+        "20260809_finance_v3_b06_reproducibility_retention_export.sql",
+        "20260809_finance_v3_b07_observability.sql",
+        "20260809_finance_v3_d01b_statements_02b_integrity_scope_fix.sql",
+        "20260809_finance_v3_d01_statements_01_tables.sql",
+        "20260809_finance_v3_d01_statements_02_integrity.sql",
+        "20260809_finance_v3_d01_statements_03_readiness.sql",
+        "20260809_finance_v3_d03_analysis_01_tables.sql",
+        "20260809_finance_v3_d03_analysis_02_integrity.sql",
+        "20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql",
+        "20260809_finance_v3_d03_analysis_04_readiness.sql",
+        "20260809_finance_v3_d05_baseline_01_tables.sql",
+        "20260809_finance_v3_d05_baseline_02_integrity.sql",
+        "20260809_finance_v3_d05_baseline_03_readiness.sql",
+        "20260809_finance_v3_d07_prediction_01_tables.sql",
+        "20260809_finance_v3_d07_prediction_02_integrity.sql",
+        "20260809_finance_v3_d07_prediction_03_readiness.sql",
+        "20260809_finance_v3_d09_valuation_01_tables.sql",
+        "20260809_finance_v3_d09_valuation_02_integrity.sql",
+        "20260809_finance_v3_d_ap04_autosave_checkpoints.sql",
+        "20260809_finance_v3_d_ap06_comments_01_tables.sql",
+        "20260809_finance_v3_d_ap07_saved_views_01_tables.sql",
+        "20260809_finance_v3_e007_03_legacy_actual_protection.sql",
+        "20260809_rvn_platform_canonical_object_type_extend.sql",
+        "20260809_rvn_platform_events_outbox.sql",
+        "20260809_rvn_platform_management_chain.sql",
+        "20260809_rvn_platform_visibility_core.sql",
+        "20260809_t01_u03_owner_backed_execution.sql",
+        "20260809_v8_wave8_agent_runtime_forward.sql"
+      ]
+    },
+    {
+      "version": "20260810",
+      "rows": 14,
+      "filenames": [
+        "20260810_case_workspace_event_outbox.sql",
+        "20260810_case_workspace_node_run_and_inbox.sql",
+        "20260810_finance_v3_co9_statement_money_numeric.sql",
+        "20260810_finance_v3_d01c_real_company_integrity_fix.sql",
+        "20260810_finance_v3_d02_reconciliation_coverage.sql",
+        "20260810_finance_v3_e007_04_actual_protection_schema_qualified.sql",
+        "20260810_finance_v3_w2_b04_queue_ops.sql",
+        "20260810_idea_business_case.sql",
+        "20260810_idea_confidentiality.sql",
+        "20260810_idea_conversion_mapping_version.sql",
+        "20260810_idea_maturity_gates.sql",
+        "20260810_rvn_kpi_core.sql",
+        "20260810_t01_initiative_lifecycle_gate_decisions.sql",
+        "20260810_t01_u02_native_final_outputs.sql"
+      ]
+    },
+    {
+      "version": "20260811",
+      "rows": 2,
+      "filenames": [
+        "20260811_rvn_kpi_deviation_loop.sql",
+        "20260811_rvn_platform_obligations.sql"
+      ]
+    },
+    {
+      "version": "20260812",
+      "rows": 3,
+      "filenames": [
+        "20260812_artifact_approval_four_eyes.sql",
+        "20260812_idea_financial_case.sql",
+        "20260812_rvn_kpi_scorecards.sql"
+      ]
+    },
+    {
+      "version": "20260813",
+      "rows": 14,
+      "filenames": [
+        "20260813_audits_method_core.sql",
+        "20260813_method_core_1_kernel.sql",
+        "20260813_method_core_2_outputs.sql",
+        "20260813_method_core_3_http_idempotency.sql",
+        "20260813_method_core_4_bypass_status.sql",
+        "20260813_repair_a_ai_instruction_suggestions.sql",
+        "20260813_repair_b_tp_schema_proposals_level.sql",
+        "20260813_repair_c1_core_identity_columns.sql",
+        "20260813_repair_c2_projects_columns.sql",
+        "20260813_repair_c3_settings_llm_providers.sql",
+        "20260813_repair_d_steering_board_timestamptz.sql",
+        "20260813_repair_e_api_keys_status_typesafe.sql",
+        "20260813_rvn_kpi_initiative_impacts.sql",
+        "20260813_rvn_kpi_measurement_cadence.sql"
+      ]
+    },
+    {
+      "version": "20260816",
+      "rows": 3,
+      "filenames": [
+        "20260816_admin_iam_operations.sql",
+        "20260816_recovery_runtime_schema_parity.sql",
+        "20260816_rvn_roi_economic_model.sql"
+      ]
+    },
+    {
+      "version": "20260818",
+      "rows": 2,
+      "filenames": [
+        "20260818_partner_economics_policy_events.sql",
+        "20260818_rvn_roi_forecast_actual.sql"
+      ]
+    },
+    {
+      "version": "20260821",
+      "rows": 2,
+      "filenames": [
+        "20260821_initiatives_status_default_draft.sql",
+        "20260821_rvn_roi_pir_teresa_draft_freeze.sql"
+      ]
+    },
+    {
+      "version": "20260822",
+      "rows": 2,
+      "filenames": [
+        "20260822_finance_v3_e007_05_benefit_tracking_protection_reattach.sql",
+        "20260822_rvn_okr_program_cycle.sql"
+      ]
+    },
+    {
+      "version": "20260823",
+      "rows": 6,
+      "filenames": [
+        "20260823_billing_webhooks_schema_convergence.sql",
+        "20260823_chat_project_context_governance.sql",
+        "20260823_finance_v3_bv_terminal_immutability.sql",
+        "20260823_runtime_ddl_schema_convergence.sql",
+        "20260823_rvn_okr_set.sql",
+        "20260823_status_reports_legacy_columns_fresh_db.sql"
+      ]
+    },
+    {
+      "version": "20260824",
+      "rows": 2,
+      "filenames": [
+        "20260824_finance_v3_bv_superseded_immutability.sql",
+        "20260824_rvn_okr_objective_key_result.sql"
+      ]
+    },
+    {
+      "version": "20260825",
+      "rows": 3,
+      "filenames": [
+        "20260825_finance_v3_w9c7_valuation_child_tenant_fk.sql",
+        "20260825_rvn_okr_alignment.sql",
+        "20260825_rvn_okr_checkin.sql"
+      ]
+    },
+    {
+      "version": "20260826",
+      "rows": 6,
+      "filenames": [
+        "20260826_day15_audit_events_org_ts_index.sql",
+        "20260826_finance_v3_w2_rls_pilot_policies.sql",
+        "20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
+        "20260826_meetings_day10_decisions.sql",
+        "20260826_rvn_okr_review_reflection.sql",
+        "20260826_rvn_okr_support.sql"
+      ]
+    },
+    {
+      "version": "20260827",
+      "rows": 3,
+      "filenames": [
+        "20260827_calendar_events.sql",
+        "20260827_finance_v3_w3_backfill_artifacts_unique.sql",
+        "20260827_rvn_okr_teresa_reflection_draft.sql"
+      ]
+    },
+    {
+      "version": "20260830",
+      "rows": 7,
+      "filenames": [
+        "20260830_day144_kpi_lifecycle_decouple.sql",
+        "20260830_day147_object_attachments.sql",
+        "20260830_day158_kpi_crosswalk.sql",
+        "20260830_day159_chunk_org_backfill.sql",
+        "20260830_day166_decision_risk_fields.sql",
+        "20260830_day175_task_risk_alternatives.sql",
+        "20260830_rvn_roi_finance_projections.sql"
+      ]
+    },
+    {
+      "version": "20260831",
+      "rows": 2,
+      "filenames": [
+        "20260831_day209_knowledge_chunks_created_at.sql",
+        "20260831_rvn_okr_not_calculable_reason.sql"
+      ]
+    },
+    {
+      "version": "20260901",
+      "rows": 2,
+      "filenames": [
+        "20260901_initiative_object_attachments_type.sql",
+        "20260901_partner_program_ledger_governance.sql"
+      ]
+    },
+    {
+      "version": "20260903",
+      "rows": 4,
+      "filenames": [
+        "20260903_admin_invitation_events.sql",
+        "20260903_ai_user_tiers.sql",
+        "20260903_assessment_report_metadata.sql",
+        "20260903_help_categories.sql"
+      ]
+    },
+    {
+      "version": "20260904",
+      "rows": 2,
+      "filenames": [
+        "20260904_admin_seat_management_repair.sql",
+        "20260904_help_shape_alignment.sql"
+      ]
+    },
+    {
+      "version": "20260905",
+      "rows": 4,
+      "filenames": [
+        "20260905_assessment_business_unit.sql",
+        "20260905_attribution_events_repair.sql",
+        "20260905_finance_analysis_definition_name.sql",
+        "20260905_p3_conversation_empty_title_default.sql"
+      ]
+    },
+    {
+      "version": "20260906",
+      "rows": 4,
+      "filenames": [
+        "20260906_ai_organization_memory_memory_key.sql",
+        "20260906_partner_legacy_cutover.sql",
+        "20260906_rvn_roi_card_three_parts.sql",
+        "20260906_usage_counters_unique_index.sql"
+      ]
+    },
+    {
+      "version": "20260907",
+      "rows": 2,
+      "filenames": [
+        "20260907_finance_legacy_cutover.sql",
+        "20260907_usage_counters_unique_index_fix.sql"
+      ]
+    },
+    {
+      "version": "20260908",
+      "rows": 2,
+      "filenames": [
+        "20260908_admin_backup_restore_integrity.sql",
+        "20260908_execution_bvp_spine.sql"
+      ]
+    },
+    {
+      "version": "20260909",
+      "rows": 2,
+      "filenames": [
+        "20260909_backup_receipts_legacy_shape_repair.sql",
+        "20260909_data_dr_backup_health.sql"
+      ]
+    },
+    {
+      "version": "20260910",
+      "rows": 3,
+      "filenames": [
+        "20260910_claude_a_assessment_initiative_batch_uniqueness.sql",
+        "20260910_claude_a_audit_initiative_proposal_exactly_once.sql",
+        "20260910_claude_a_interview_candidate_exactly_once.sql"
+      ]
+    },
+    {
+      "version": "20260912",
+      "rows": 6,
+      "filenames": [
+        "20260912_claude_c_document_version_lineage.sql",
+        "20260912_claude_c_handoff_spine.sql",
+        "20260912_claude_c_handoff_spine_version_unique.sql",
+        "20260912_claude_c_meeting_boundary.sql",
+        "20260912_claude_c_org_context_snapshots.sql",
+        "20260912_claude_c_workbook_schema.sql"
+      ]
+    },
+    {
+      "version": "20260917",
+      "rows": 3,
+      "filenames": [
+        "20260917_execution_action_audit_immutability.sql",
+        "20260917_interview_distribution_invite_governance.sql",
+        "20260917_results_execution_signal_ingress.sql"
+      ]
+    },
+    {
+      "version": "20260928",
+      "rows": 2,
+      "filenames": [
+        "20260928_chat_handoff_owner_ingress.sql",
+        "20260928_fin_results_reconciliation_decision.sql"
+      ]
+    },
+    {
+      "version": "20260930",
+      "rows": 2,
+      "filenames": [
+        "20260930_ai_agent_job_receipts.sql",
+        "20260930_execution_flow_adapter_reliability.sql"
+      ]
+    },
+    {
+      "version": "20261003",
+      "rows": 2,
+      "filenames": [
+        "20261003_operational_alert_constraint_shape_repair.sql",
+        "20261003_operational_alert_missed_signal_repair.sql"
+      ]
+    },
+    {
+      "version": "20261023",
+      "rows": 2,
+      "filenames": [
+        "20261023_integrations_connector_legacy_shape_repair.sql",
+        "20261023_integrations_connector_runtime_shape.sql"
+      ]
+    },
+    {
+      "version": "20261039",
+      "rows": 2,
+      "filenames": [
+        "20261039_knowledge_vault_document_metadata.sql",
+        "20261039_settings_mfa_challenges.sql"
+      ]
+    },
+    {
+      "version": "20261054",
+      "rows": 2,
+      "filenames": [
+        "20261054_finance_budget_approval_command.sql",
+        "20261054_finance_statement_confidence_bounds.sql"
+      ]
+    },
+    {
+      "version": "20261057",
+      "rows": 2,
+      "filenames": [
+        "20261057_finance_statement_confidence_bounds.sql",
+        "20261057_finance_statement_pack_comparative_period_identity.sql"
+      ]
+    },
+    {
+      "version": "20261058",
+      "rows": 2,
+      "filenames": [
+        "20261058_finance_budget_initiative_link_command.sql",
+        "20261058_finance_statement_canonical_mapping_taxonomy.sql"
+      ]
+    },
+    {
+      "version": "20261061",
+      "rows": 2,
+      "filenames": [
+        "20261061_finance_valuation_input_events_tenant_fks.sql",
+        "20261061_flow_accepted_classic_runtime_adoption.sql"
+      ]
+    },
+    {
+      "version": "20261913",
+      "rows": 2,
+      "filenames": [
+        "20261913_day310_ai_nudge_runtime_schema.sql",
+        "20261913_imported_reports_coverage_percent.sql"
+      ]
+    },
+    {
+      "version": "20262103",
+      "rows": 2,
+      "filenames": [
+        "20262103_p12_initiative_status_slownik.sql",
+        "20262103_users_weekly_capacity_hours.sql"
+      ]
+    },
+    {
+      "version": "515",
+      "rows": 2,
+      "filenames": [
+        "515_ai_decision_memory.sql",
+        "515_team_chat_projects.sql"
+      ]
+    },
+    {
+      "version": "539",
+      "rows": 2,
+      "filenames": [
+        "539_builtin_role_permissions.sql",
+        "539_initiative_comments_ai_prompt.sql"
+      ]
+    },
+    {
+      "version": "540",
+      "rows": 2,
+      "filenames": [
+        "540_raid_ai_prompt_enhanced.sql",
+        "540_task_labels_and_circuit_breaker.sql"
+      ]
+    },
+    {
+      "version": "542",
+      "rows": 2,
+      "filenames": [
+        "542_fix_initiative_section_ai_prompt_keys.sql",
+        "542_project_members_consultant_overlay_and_steering_board.sql"
+      ]
+    },
+    {
+      "version": "571",
+      "rows": 2,
+      "filenames": [
+        "571_financial_modeling_t054.sql",
+        "571_valuation_t055_t056_t057.sql"
+      ]
+    },
+    {
+      "version": "573",
+      "rows": 2,
+      "filenames": [
+        "573_people_change_comms_t043_t044_t045.sql",
+        "573_valuation_exports_and_version.sql"
+      ]
+    },
+    {
+      "version": "610",
+      "rows": 3,
+      "filenames": [
+        "610_calendar_feed_log_v3.sql",
+        "610_organization_style_profiles.sql",
+        "610_presentation_analytics.sql"
+      ]
+    },
+    {
+      "version": "617",
+      "rows": 4,
+      "filenames": [
+        "617_financial_statements_parse_method_expand.sql",
+        "617_generic_assessment_reports_pathc_patch.sql",
+        "617_initiative_dependencies_source_id.sql",
+        "617_interview_insight_activity.sql"
+      ]
+    },
+    {
+      "version": "618",
+      "rows": 2,
+      "filenames": [
+        "618_financial_analyses_source_statements.sql",
+        "618_tools_missing_12_consulting_tools.sql"
+      ]
+    },
+    {
+      "version": "619",
+      "rows": 2,
+      "filenames": [
+        "619_consulting_templates.sql",
+        "619_missing_critical_tables.sql"
+      ]
+    },
+    {
+      "version": "626",
+      "rows": 2,
+      "filenames": [
+        "626_notebook_lifecycle_v4_note05.sql",
+        "626_v4_rslt03_deviation_evidence.sql"
+      ]
+    },
+    {
+      "version": "631",
+      "rows": 2,
+      "filenames": [
+        "631_kpi_semantic_layer_v4_rslt01.sql",
+        "631_v4_inbox_ai_evals.sql"
+      ]
+    },
+    {
+      "version": "650",
+      "rows": 2,
+      "filenames": [
+        "650_v4_stakeholder_comm_enhanced.sql",
+        "650_v4_unified_knowledge_graph.sql"
+      ]
+    },
+    {
+      "version": "651",
+      "rows": 2,
+      "filenames": [
+        "651_v4_notebook_capture_pipeline.sql",
+        "651_v4_sso_sessions.sql"
+      ]
+    },
+    {
+      "version": "652",
+      "rows": 2,
+      "filenames": [
+        "652_v4_ai_governance.sql",
+        "652_v4_interview_enterprise.sql"
+      ]
+    },
+    {
+      "version": "653",
+      "rows": 2,
+      "filenames": [
+        "653_v4_advisor_response_log.sql",
+        "653_v4_finance_enterprise.sql"
+      ]
+    },
+    {
+      "version": "654",
+      "rows": 3,
+      "filenames": [
+        "654_canonical_inbox_items_producer_fresh_db_gap.sql",
+        "654_v4_canonical_inbox.sql",
+        "654_v4_reports_enterprise.sql"
+      ]
+    },
+    {
+      "version": "655",
+      "rows": 2,
+      "filenames": [
+        "655_v4_initiative_blueprints.sql",
+        "655_v4_presentations_enterprise.sql"
+      ]
+    },
+    {
+      "version": "656",
+      "rows": 2,
+      "filenames": [
+        "656_v4_results_enterprise.sql",
+        "656_v4_scim_enhanced.sql"
+      ]
+    },
+    {
+      "version": "668",
+      "rows": 3,
+      "filenames": [
+        "668_statement_ready_contract.sql",
+        "668_v6_interview_question_helper_fields.sql",
+        "668_v6_interview_template_area_tags.sql"
+      ]
+    },
+    {
+      "version": "669",
+      "rows": 3,
+      "filenames": [
+        "669_organization_context_os.sql",
+        "669_statement_import_rebuild.sql",
+        "669_tool_facilitation_producer_fresh_db_gap.sql"
+      ]
+    },
+    {
+      "version": "725",
+      "rows": 2,
+      "filenames": [
+        "725_module_sync.sql",
+        "725_organizations_missing_columns.sql"
+      ]
+    },
+    {
+      "version": "726",
+      "rows": 2,
+      "filenames": [
+        "726_partner_users_missing_columns.sql",
+        "726_table_dependency_config.sql"
+      ]
+    },
+    {
+      "version": "730",
+      "rows": 3,
+      "filenames": [
+        "730_base_members_roles.sql",
+        "730_beta_schema_fixes.sql",
+        "730_partner_users_uuid_columns.sql"
+      ]
+    },
+    {
+      "version": "731",
+      "rows": 2,
+      "filenames": [
+        "731_tasks_missing_columns.sql",
+        "731_view_interface_locks.sql"
+      ]
+    },
+    {
+      "version": "750",
+      "rows": 2,
+      "filenames": [
+        "750_presentation_decks_00base.sql",
+        "750_v4_results_enterprise_runtime_completion.sql"
+      ]
+    },
+    {
+      "version": "754",
+      "rows": 2,
+      "filenames": [
+        "754_interview_ai_review_memory.sql",
+        "754_p10_interview_insight_candidates.sql"
+      ]
+    },
+    {
+      "version": "755",
+      "rows": 2,
+      "filenames": [
+        "755_interview_insight_scope_material_quality.sql",
+        "755_my_ideas_00base.sql"
+      ]
+    },
+    {
+      "version": "760",
+      "rows": 2,
+      "filenames": [
+        "760_presentation_legacy_normalization.sql",
+        "760_work_canvas_runtime.sql"
+      ]
+    },
+    {
+      "version": "783",
+      "rows": 2,
+      "filenames": [
+        "783_benefits_register_closure_handoff.sql",
+        "783_deliverable_template_provenance.sql"
+      ]
+    },
+    {
+      "version": "791",
+      "rows": 2,
+      "filenames": [
+        "791_admin_sessions_00base.sql",
+        "791_organizations_dunning_columns.sql"
+      ]
+    },
+    {
+      "version": "792",
+      "rows": 2,
+      "filenames": [
+        "792_admin_sessions_extended_columns.sql",
+        "792_email_templates_00base.sql"
+      ]
+    },
+    {
+      "version": "794",
+      "rows": 2,
+      "filenames": [
+        "794_gdpr_requests_missing_columns.sql",
+        "794_permission_requests_00base.sql"
+      ]
+    },
+    {
+      "version": "798",
+      "rows": 2,
+      "filenames": [
+        "798_login_history_missing_columns.sql",
+        "798_partner_certifications_00base.sql"
+      ]
+    },
+    {
+      "version": "932",
+      "rows": 5,
+      "filenames": [
+        "932_canonical_inbox_items_source_status_initiative.sql",
+        "932_decision_workflow_canonical.sql",
+        "932_initiative_candidate_acceptance_receipt.sql",
+        "932_initiatives_execution_material_commands.sql",
+        "932_report_builder_archive_columns.sql"
+      ]
+    },
+    {
+      "version": "933",
+      "rows": 3,
+      "filenames": [
+        "933_initiative_card_versions.sql",
+        "933_initiative_section_types_closure.sql",
+        "933_report_builder_section_trace_columns.sql"
+      ]
+    },
+    {
+      "version": "934",
+      "rows": 3,
+      "filenames": [
+        "934_initiative_closure_evidence_gate.sql",
+        "934_organization_governance_profiles.sql",
+        "934_report_exports_history.sql"
+      ]
+    },
+    {
+      "version": "935",
+      "rows": 2,
+      "filenames": [
+        "935_exe009_closure_delivery_receipt.sql",
+        "935_plan_scenario_time_basis.sql"
+      ]
+    },
+    {
+      "version": "942",
+      "rows": 3,
+      "filenames": [
+        "942_ai_agent_plan_run_idempotency.sql",
+        "942_chat_m01p04a_attachment_status.sql",
+        "942_ideas_collaboration_tool_sessions.sql"
+      ]
+    },
+    {
+      "version": "943",
+      "rows": 2,
+      "filenames": [
+        "943_presentation_exported_version.sql",
+        "943_work_canvas_timestamp_parity_postgres.sql"
+      ]
+    },
+    {
+      "version": "946",
+      "rows": 3,
+      "filenames": [
+        "946_benefit_tracking_fresh_install.sql",
+        "946_siri_16d_source_of_truth.sql",
+        "946_tool_outputs_reports_lineage.sql"
+      ]
+    },
+    {
+      "version": "948",
+      "rows": 2,
+      "filenames": [
+        "948_tool_promotion_idempotency.sql",
+        "948_tool_promotion_tenant_idempotency.sql"
+      ]
+    }
+  ]
+}
