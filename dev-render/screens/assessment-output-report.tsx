@@ -237,6 +237,13 @@ function installFetchStub(variant: string): void {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     try {
+      // Non-UUID demo ids make reportApi probe the legacy assessment store
+      // before method-core. Answer the honest empty probe locally so the
+      // harness does not emit a misleading network 404 before rendering the
+      // frozen Output fixture below.
+      if (/\/api\/v8\/assessment\/out-(?:1|3)$/.test(url)) {
+        return jsonResponse({ data: { assessment: null } });
+      }
       if (/\/api\/method\/outputs\/out-1$/.test(url)) {
         return jsonResponse({ output: HAPPY_OUTPUT, superseded: false, supersededByOutputId: null });
       }

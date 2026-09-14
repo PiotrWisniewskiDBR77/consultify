@@ -26,7 +26,7 @@ function renderMenu(): void {
       activeSection="summary"
       onSectionChange={() => undefined}
       readMode
-      ai={{ onAnalizuj: () => undefined, kontekstArtefaktu: {} }}
+      ai={{ onAnalizuj: () => undefined, kontekstArtefaktu: { type: 'task' } }}
     />
   );
 }
