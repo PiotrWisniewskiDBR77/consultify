@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { StandardPreview } from '@/components/standard/StandardPreview';
 import {
   StandardTable,
   type TableColumn,
@@ -147,6 +148,23 @@ const ATTENTION_REASON_FALLBACK: Record<string, string> = {
   NO_DUE_DATE: 'No due date',
 };
 
+const humanizeCode = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/^\p{L}/u, (letter) => letter.toUpperCase());
+
+const badgeClass = (value: string): string => {
+  const normalized = value.toUpperCase();
+  if (['DONE', 'COMPLETED', 'DECIDED', 'APPROVED'].includes(normalized))
+    return 'bg-c-success/10 text-c-success';
+  if (['BLOCKED', 'OVERDUE', 'CRITICAL'].includes(normalized))
+    return 'bg-c-danger/10 text-danger-700 dark:text-danger-300';
+  if (['HIGH', 'IN_PROGRESS', 'IN_EXECUTION', 'PENDING'].includes(normalized))
+    return 'bg-c-warning/10 text-[#8a4517] dark:text-c-warning';
+  return 'bg-c-surface-subtle text-c-text-secondary';
+};
+
 export function WorkIntelligenceReport({
   analysisEnabled = false,
   onOpenDocument,
@@ -161,6 +179,7 @@ export function WorkIntelligenceReport({
   const [generation, setGeneration] = useState<{ id: string; created: boolean; asOf: string } | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [selectedAttentionId, setSelectedAttentionId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -317,7 +336,14 @@ export function WorkIntelligenceReport({
             id: 'priority',
             label: t('execution.workAnalysis.columns.priority', 'Priority'),
             sortable: true,
-            dataType: 'status' as const,
+            render: (row: TableRow) => {
+              const code = String(row.priority || 'UNSET');
+              return (
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
+                  {t(`execution.workAnalysis.priority.${code.toLowerCase()}`, humanizeCode(code))}
+                </span>
+              );
+            },
           },
         ]
       : []),
@@ -332,6 +358,14 @@ export function WorkIntelligenceReport({
       id: 'status',
       label: t('execution.reports.intelligence.columns.status', 'Status'),
       sortable: true,
+      render: (row: TableRow) => {
+        const code = String(row.status || 'UNKNOWN');
+        return (
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
+            {t(`execution.workAnalysis.status.${code.toLowerCase()}`, humanizeCode(code))}
+          </span>
+        );
+      },
     },
     {
       id: 'ownerId',
@@ -419,6 +453,19 @@ export function WorkIntelligenceReport({
       setBusyAction(null);
     }
   };
+  const managerActionsFor = (row: (typeof attentionRows)[number]) =>
+    ([
+      ['escalate', t('execution.workAnalysis.actions.escalate', 'Escalate')],
+      ['reassign', t('execution.workAnalysis.actions.delegate', 'Delegate')],
+      ['set_capacity', t('execution.workAnalysis.actions.resources', 'Change resources')],
+    ] as const).flatMap(([actionId, label]) => {
+      const binding = row.managerBindings.find((problem) =>
+        problem.actions.some((action) => action.id === actionId)
+      );
+      return binding ? [{ actionId, label, binding }] : [];
+    });
+  const selectedAttentionRow =
+    attentionRows.find((row) => row.id === selectedAttentionId) ?? null;
   const attentionColumns: TableColumn[] = [
     { id: 'title', label: t('execution.workAnalysis.columns.record', 'Attention record'), primary: true, dataType: 'text' },
     {
@@ -432,38 +479,6 @@ export function WorkIntelligenceReport({
       ).join(', '),
     },
     { id: 'projectTitle', label: t('execution.workAnalysis.columns.project', 'Project'), dataType: 'text' },
-    {
-      id: 'managerActions',
-      label: t('execution.workAnalysis.columns.actions', 'Manager actions'),
-      render: (tableRow: TableRow) => {
-        const row = tableRow as unknown as (typeof attentionRows)[number];
-        const actions = [
-          ['escalate', t('execution.workAnalysis.actions.escalate', 'Escalate')],
-          ['reassign', t('execution.workAnalysis.actions.delegate', 'Delegate')],
-          ['set_capacity', t('execution.workAnalysis.actions.resources', 'Change resources')],
-        ] as const;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {actions.map(([actionId, label]) => {
-              const binding = row.managerBindings.find((problem) => problem.actions.some((action) => action.id === actionId));
-              if (!binding) return null;
-              const key = `${binding.id}:${actionId}`;
-              return (
-                <button
-                  key={actionId}
-                  type="button"
-                  disabled={busyAction !== null}
-                  onClick={(event) => { event.stopPropagation(); void runManagerAction(row, actionId); }}
-                  className="rounded-lg border border-c-border px-2 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-                >
-                  {busyAction === key ? t('execution.workAnalysis.actions.running', 'Working…') : label}
-                </button>
-              );
-            })}
-          </div>
-        );
-      },
-    },
   ];
 
   return (
@@ -551,13 +566,157 @@ export function WorkIntelligenceReport({
               </p>
             ) : null}
             {actionMessage ? <p role="status" className="mt-2 text-sm text-c-text-secondary">{actionMessage}</p> : null}
-            <div className="mt-3">
-              <StandardTable
-                columns={attentionColumns}
-                data={attentionRows as any}
-                density="compact"
-                empty={{ title: t('execution.workAnalysis.noAttention', 'No records require management attention') }}
-              />
+            <div className="mt-3 min-h-[360px]">
+              <div className="flex min-h-0 gap-3">
+                <div className="min-w-0 flex-1">
+                  <StandardTable
+                    columns={attentionColumns}
+                    data={attentionRows as any}
+                    density="compact"
+                    selectedRowId={selectedAttentionId}
+                    onRowClick={(row) => setSelectedAttentionId(String(row.id))}
+                    rowMenu={(tableRow) => {
+                      const row = tableRow as unknown as (typeof attentionRows)[number];
+                      return {
+                        primary: managerActionsFor(row).map(({ actionId, label }) => ({
+                          id: actionId,
+                          label,
+                          onClick: () => void runManagerAction(row, actionId),
+                          disabled: busyAction !== null,
+                        })),
+                        universalHandlers: {
+                          preview: () => setSelectedAttentionId(row.id),
+                        },
+                      };
+                    }}
+                    empty={{ title: t('execution.workAnalysis.noAttention', 'No records require management attention') }}
+                  />
+                </div>
+                {selectedAttentionRow ? (() => {
+                  const row = selectedAttentionRow;
+                  const actions = managerActionsFor(selectedAttentionRow);
+                  const canOpen =
+                    (row.kind === 'TASK' || row.kind === 'DECISION') && Boolean(onOpenDocument);
+                  return (
+                    <aside className="w-[min(420px,42%)] shrink-0 overflow-hidden rounded-xl border border-c-border bg-c-surface">
+                      <StandardPreview
+                        title={row.title}
+                        onClose={() => setSelectedAttentionId(null)}
+                        openDisabledReason={t(
+                          'execution.workAnalysis.preview.openDisabled',
+                          'Use the source record action to open this work item.'
+                        )}
+                        meta={{
+                        pills: [
+                          {
+                            label: t(
+                              `execution.workAnalysis.status.${row.status.toLowerCase()}`,
+                              humanizeCode(row.status)
+                            ),
+                            tone: row.status === 'BLOCKED' ? 'critical' : 'neutral',
+                          },
+                          {
+                            label: trPair(
+                              t,
+                              KIND_LABEL_KEY[row.kind] ?? [row.kind, humanizeCode(row.kind)]
+                            ),
+                            tone: 'neutral',
+                          },
+                        ],
+                        trailing: row.dueAt
+                          ? new Date(row.dueAt).toLocaleDateString(i18n.language)
+                          : t('execution.workAnalysis.preview.noDueDate', 'No due date'),
+                      }}
+                        details={{
+                        label: t('execution.workAnalysis.preview.details', 'Work details'),
+                        text:
+                          row.definitionOfDone ||
+                          t(
+                            'execution.workAnalysis.preview.noDefinition',
+                            'No definition of done has been recorded.'
+                          ),
+                        properties: [
+                          {
+                            id: 'reason',
+                            label: t('execution.workAnalysis.columns.reason', 'Reason'),
+                            value: row.reasons
+                              .map((reason) =>
+                                t(
+                                  `execution.workAnalysis.reasons.${reason.toLowerCase()}`,
+                                  ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
+                                )
+                              )
+                              .join(', '),
+                          },
+                          {
+                            id: 'project',
+                            label: t('execution.workAnalysis.columns.project', 'Project'),
+                            value:
+                              row.projectTitle ||
+                              t('execution.workAnalysis.preview.noProject', 'No project assigned'),
+                          },
+                          {
+                            id: 'owner',
+                            label: t('execution.reports.intelligence.columns.owner', 'Owner'),
+                            value:
+                              row.ownerId ||
+                              t('execution.workAnalysis.preview.noOwner', 'No owner assigned'),
+                          },
+                        ],
+                        propertyLabel: t('common.property', 'Property'),
+                        valueLabel: t('common.value', 'Value'),
+                        onCopy: () => void navigator.clipboard?.writeText(row.title),
+                      }}
+                        relations={
+                        row.projectTitle
+                          ? [
+                              {
+                                id: row.projectId ?? undefined,
+                                label: row.projectTitle,
+                                type: 'project',
+                              },
+                            ]
+                          : []
+                      }
+                        actions={{
+                        informational: actions.map(({ actionId, label, binding }) => ({
+                          id: actionId,
+                          variant: actionId === 'escalate' ? 'warning' : 'neutral',
+                          label:
+                            busyAction === `${binding.id}:${actionId}`
+                              ? t('execution.workAnalysis.actions.running', 'Working…')
+                              : label,
+                          disabled: busyAction !== null,
+                          onClick: () => void runManagerAction(row, actionId),
+                        })),
+                      }}
+                        whatsNext={{
+                        items: [
+                          {
+                            id: 'open-source',
+                            label: t(
+                              'execution.workAnalysis.preview.openSource',
+                              'Open source record'
+                            ),
+                            disabled: !canOpen,
+                            onClick: () => {
+                              if (!canOpen || !onOpenDocument) return;
+                              onOpenDocument({
+                                id: row.id,
+                                title: row.title,
+                                kind: row.kind as 'TASK' | 'DECISION',
+                                status: row.status,
+                                executionCaseId: row.executionCaseId,
+                              });
+                            },
+                          },
+                        ],
+                      }}
+                      />
+                    </aside>
+                  );
+                })() : null}
+              </div>
             </div>
           </section>
         ) : null}

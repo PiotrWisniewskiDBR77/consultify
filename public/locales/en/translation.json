@@ -16683,6 +16683,35 @@
         "unassigned": "Unassigned",
         "no_due_date": "No due date"
       },
+      "status": {
+        "open": "Open",
+        "todo": "To do",
+        "in_progress": "In progress",
+        "in_execution": "In execution",
+        "pending": "Pending",
+        "blocked": "Blocked",
+        "done": "Done",
+        "completed": "Completed",
+        "decided": "Decided",
+        "approved": "Approved",
+        "unknown": "Unknown"
+      },
+      "priority": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low",
+        "unset": "Not set"
+      },
+      "preview": {
+        "openDisabled": "Use the source record action to open this work item.",
+        "details": "Work details",
+        "noDefinition": "No definition of done has been recorded.",
+        "noDueDate": "No due date",
+        "noProject": "No project assigned",
+        "noOwner": "No owner assigned",
+        "openSource": "Open source record"
+      },
       "windows": {
         "previousWeek": "Previous week",
         "nextWeek": "Next week",
