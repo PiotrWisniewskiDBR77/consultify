@@ -63,6 +63,7 @@ describe('F2-3 E2 CreateProjectModal native form behavior', () => {
     expect(api.createProject).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Factory modernization', pmo_standard: 'pmbok' })
     );
+    expect(api.createProject.mock.calls[0]?.[0]).not.toHaveProperty('goal');
     expect(onSaved).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

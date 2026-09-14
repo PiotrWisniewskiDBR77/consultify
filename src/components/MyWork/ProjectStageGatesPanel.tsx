@@ -36,6 +36,11 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [passing, setPassing] = useState<ProjectStageGateType | null>(null);
+  const criterionLabel = useCallback(
+    (criterionKey: string) =>
+      t(`myWork.projects.stageGates.criteria.${criterionKey}`, { defaultValue: criterionKey }),
+    [t]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -145,7 +150,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
                 disabled={!row.actionable || passing !== null}
                 onClick={() => void passGate(row.gateType)}
                 className="inline-flex h-7 items-center gap-1 rounded-full border border-c-border px-2 text-[10px] font-medium text-c-text disabled:opacity-40"
-                title={row.missingElements.join(', ') || undefined}
+                title={row.missingElements.map(criterionLabel).join(', ') || undefined}
               >
                 <LockKeyhole size={11} />
                 {passing === row.gateType
@@ -157,7 +162,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
         },
       },
     ],
-    [passGate, passing, t]
+    [criterionLabel, passGate, passing, t]
   );
 
   return (
@@ -190,7 +195,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
       {nextGate?.missingElements.length ? (
         <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
           {t('myWork.projects.stageGates.missing', 'Missing before the next gate')}: {' '}
-          {nextGate.missingElements.join(', ')}
+          {nextGate.missingElements.map(criterionLabel).join(', ')}
         </p>
       ) : null}
     </div>

@@ -74,7 +74,13 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
   });
 
   it('fails closed until each gate has evidence, then persists all five transitions', async () => {
-    expect((await evaluateGate(projectId, GATE_TYPES.READINESS_GATE)).status).toBe('NOT_READY');
+    const readinessBeforeEvidence = await evaluateGate(projectId, GATE_TYPES.READINESS_GATE);
+    expect(readinessBeforeEvidence.status).toBe('NOT_READY');
+    expect(readinessBeforeEvidence.completionCriteria).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ criterion: 'hasStrategicGoals', evidence: 'NOT_MET' }),
+      ])
+    );
     await pool.query(
       `UPDATE projects SET context_data=$1 WHERE id=$2`,
       [
@@ -160,7 +166,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     );
     const blockedClosure = await evaluateGate(projectId, GATE_TYPES.CLOSURE_GATE);
     expect(blockedClosure.status).toBe('NOT_READY');
-    expect(blockedClosure.missingElements).toContain('No blocking decisions pending');
+    expect(blockedClosure.missingElements).toContain('noBlockingDecisions');
     await pool.query(`UPDATE decisions SET status='decided' WHERE id=$1`, [decisionId]);
     await passGate(projectId, GATE_TYPES.CLOSURE_GATE, actorId, undefined, undefined, {
       organizationId,
