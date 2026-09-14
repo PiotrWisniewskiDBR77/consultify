@@ -6,7 +6,10 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ExecutionBankViews } from '@/components/Execution/ExecutionBankViews';
+import {
+  ExecutionBankViews,
+  formatExecutionBankDate,
+} from '@/components/Execution/ExecutionBankViews';
 import {
   buildExecutionBankRows,
   buildExecutionCalendarWindow,
@@ -196,7 +199,12 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
     );
     for (const label of ['1m', '3m', '6m', '12m'])
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
-    expect(screen.getByText(/Reporting date Jan 31, 2028/)).toBeInTheDocument();
+    // DEC-510: zapis daty idzie za locale konta (`localeListy`), nie za
+    // przybitym `Intl.DateTimeFormat('en')`. Oczekiwanie liczy zapis TYM SAMYM
+    // formaterem co produkt — nadal sprawdzamy KONKRETNĄ datę obok etykiety.
+    expect(
+      screen.getByText(new RegExp(`Reporting date ${formatExecutionBankDate('2028-01-31')}`))
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '12m' }));
     expect(onHorizonChange).toHaveBeenCalledWith(12);
     fireEvent.click(screen.getByRole('button', { name: '2028-02' }));

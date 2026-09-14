@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import i18n from 'i18next';
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 import { useTranslation } from 'react-i18next';
 import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
@@ -34,7 +34,7 @@ import {
  * są module-scope (poza komponentem), więc tłumaczenie idzie przez instancję
  * `i18next`, tak samo jak w `src/utils/listDateFormat.ts`.
  */
-const tr = (klucz: string, domyslny: string): string => i18n.t(klucz, domyslny) as string;
+const tr = (klucz: string, domyslny: string): string => tlumaczPozaHookiem(klucz, domyslny) as string;
 
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -305,7 +305,7 @@ const HEADER_KEYS: Record<string, string> = {
 
 const naglowekRaportu = (etykieta: string) => {
   const klucz = HEADER_KEYS[etykieta];
-  return klucz ? i18n.t(`execution.report.header.${klucz}`, etykieta) : etykieta;
+  return klucz ? tlumaczPozaHookiem(`execution.report.header.${klucz}`, etykieta) : etykieta;
 };
 
 /* ── Data table (glass) ─────────────────────────────────────────────────── */
@@ -337,7 +337,7 @@ const DataTable: React.FC<{
               colSpan={headers.length}
               className="px-3 py-6 text-center text-[11px] text-slate-600 dark:text-slate-500"
             >
-              {emptyText ?? i18n.t('execution.report.noData', 'No data')}
+              {emptyText ?? tlumaczPozaHookiem('execution.report.noData', 'No data')}
             </td>
           </tr>
         ) : (
@@ -368,7 +368,7 @@ const AiInsightStrip: React.FC<{ items: string[]; emptyText?: string }> = ({
   <div className="space-y-1.5">
     {items.length === 0 ? (
       <div className="rounded-lg border border-dashed border-slate-300/60 px-3 py-3 text-[11px] text-slate-600 dark:border-white/[0.06] dark:text-slate-500">
-        {emptyText ?? i18n.t('execution.report.noInsights', 'No insights generated.')}
+        {emptyText ?? tlumaczPozaHookiem('execution.report.noInsights', 'No insights generated.')}
       </div>
     ) : (
       items.map((item, idx) => (
@@ -424,14 +424,14 @@ const QualityFooter: React.FC<{ report: ReportDef }> = ({ report }) => {
   return (
     <div className="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-navy-900/40">
       <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-        {i18n.t('execution.report.dataQualityPosture', 'Data quality posture')}
+        {tlumaczPozaHookiem('execution.report.dataQualityPosture', 'Data quality posture')}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {[
-          `${i18n.t('execution.report.freshness', 'Freshness')}: ${dq.freshnessLabel ?? '—'}`,
-          `${i18n.t('execution.report.confidence', 'Confidence')}: ${dq.confidence ?? '—'}`,
-          `${i18n.t('execution.report.missingBaseline', 'Missing baseline')}: ${dq.missingBaselineCount ?? 0}`,
-          `${i18n.t('execution.report.missingEstimate', 'Missing estimate')}: ${dq.missingEstimateCount ?? 0}`,
+          `${tlumaczPozaHookiem('execution.report.freshness', 'Freshness')}: ${dq.freshnessLabel ?? '—'}`,
+          `${tlumaczPozaHookiem('execution.report.confidence', 'Confidence')}: ${dq.confidence ?? '—'}`,
+          `${tlumaczPozaHookiem('execution.report.missingBaseline', 'Missing baseline')}: ${dq.missingBaselineCount ?? 0}`,
+          `${tlumaczPozaHookiem('execution.report.missingEstimate', 'Missing estimate')}: ${dq.missingEstimateCount ?? 0}`,
         ].map((tag) => (
           <span
             key={tag}
@@ -642,30 +642,30 @@ const IssueTag: React.FC<{ row: InitiativeRow }> = ({ row }) => {
   if (row.blocked)
     return (
       <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-medium text-danger-400">
-        {row.blockedReason || i18n.t('execution.report.issue.blocked', 'Blocked')}
+        {row.blockedReason || tlumaczPozaHookiem('execution.report.issue.blocked', 'Blocked')}
       </span>
     );
   if (row.missingDates)
     return (
       <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-        {i18n.t('execution.report.issue.missingDates', 'Missing dates')}
+        {tlumaczPozaHookiem('execution.report.issue.missingDates', 'Missing dates')}
       </span>
     );
   if (row.overdueTasks > 0)
     return (
       <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-        {i18n.t('execution.report.issue.overdueTasks', 'Overdue tasks')}
+        {tlumaczPozaHookiem('execution.report.issue.overdueTasks', 'Overdue tasks')}
       </span>
     );
   if (row.overdueDecisions > 0)
     return (
       <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-400">
-        {i18n.t('execution.report.issue.decisionDebt', 'Decision debt')}
+        {tlumaczPozaHookiem('execution.report.issue.decisionDebt', 'Decision debt')}
       </span>
     );
   return (
     <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-      {i18n.t('execution.report.issue.onTrack', 'On track')}
+      {tlumaczPozaHookiem('execution.report.issue.onTrack', 'On track')}
     </span>
   );
 };
@@ -1127,7 +1127,7 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
               .slice(0, 4)
               .map((a) => [
                 a.message,
-                i18n.t('execution.report.portfolio', 'Portfolio'),
+                tlumaczPozaHookiem('execution.report.portfolio', 'Portfolio'),
                 <span className={severityText(a.severity)}>{a.severity}</span>,
               ]),
           ]}
@@ -1405,9 +1405,9 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
               {r.name}
             </ALink>,
             r.blocked ? (
-              <span className="text-danger-400">{i18n.t('common.yes', 'Yes')}</span>
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
             ) : (
-              i18n.t('common.no', 'No')
+              tlumaczPozaHookiem('common.no', 'No')
             ),
             <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
@@ -1523,9 +1523,9 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
               {r.overdueDecisions}
             </span>,
             r.blocked ? (
-              <span className="text-danger-400">{i18n.t('common.yes', 'Yes')}</span>
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
             ) : (
-              i18n.t('common.no', 'No')
+              tlumaczPozaHookiem('common.no', 'No')
             ),
           ])}
           emptyText={tr("executionReports.doc.empty.noInitiativesWaitingOnDecisions", "No initiatives waiting on decisions.")}
@@ -1606,9 +1606,9 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
             .map((r) => [
               r.name,
               r.blocked ? (
-              <span className="text-danger-400">{i18n.t('common.yes', 'Yes')}</span>
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
             ) : (
-              i18n.t('common.no', 'No')
+              tlumaczPozaHookiem('common.no', 'No')
             ),
               <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
               formatDate(data.nextMilestones.find((m) => m.initiativeId === r.id)?.targetDate),
@@ -1647,9 +1647,9 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
             </ALink>,
             <ConfBadge score={r.confidence} />,
             r.blocked ? (
-              <span className="text-danger-400">{i18n.t('common.yes', 'Yes')}</span>
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
             ) : (
-              i18n.t('common.no', 'No')
+              tlumaczPozaHookiem('common.no', 'No')
             ),
             <span className={r.highRiskCount > 0 ? 'text-danger-400' : ''}>{r.highRiskCount}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
@@ -1671,7 +1671,7 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
               .slice(0, 4)
               .map((a) => [
                 a.message,
-                i18n.t('execution.report.portfolio', 'Portfolio'),
+                tlumaczPozaHookiem('execution.report.portfolio', 'Portfolio'),
                 <span className={severityText(a.severity)}>{a.severity}</span>,
               ]),
             ...data.riskSignals
