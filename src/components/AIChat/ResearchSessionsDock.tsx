@@ -315,7 +315,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
             <textarea
               value={scope}
               onChange={(event) => setScope(event.target.value)}
-              placeholder="{t('aios.research.scope', 'Scope and constraints')}"
+              placeholder={t('aios.research.scope', 'Scope and constraints')}
               rows={2}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
