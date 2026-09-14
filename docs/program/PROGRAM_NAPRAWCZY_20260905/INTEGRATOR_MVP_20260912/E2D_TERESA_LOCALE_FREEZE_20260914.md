@@ -17,12 +17,12 @@
 - Pre-rebase content commit: `2c52e8caf373fbfcb8f8717228244e2f9240dadb`; exact backup `backup/codex/a-e2d-teresa-locale-20260914-2c52e8caf3-20260914`.
 - Rebase onto `08c1bb7a26` completed without conflicts; rebased content commit `38d98f424eb0e3173541921daa9e5b4dcfc7877d`.
 - RED before implementation: language policy **10 failed / 14 passed**.
-- GREEN after rebase: **5 files / 58 tests passed**, `--retry=0`.
+- GREEN after rebase: **5 files / 58 tests passed**, `--retry=0`; changed RealPG suite additionally passed **5/5**, collected with no skip.
 - Covered siblings: language policy 24, deck brief 5, layout director 8, layout variants 10, presentation template draft 11.
-- Server TypeScript: exact new base **1 error** (`rateLimitUserId.middleware.ts` TS2664), candidate **0 errors**.
+- Server TypeScript, repeated after shared dependency repair: exact new base **0 errors**, candidate **0 errors**.
 - Original content commit hooks: Teresa contract **19/19**; artifact, labels, density and language ratchets passed.
 - `git diff --check`: clean.
-- RealPG: not required. Database interaction is read-only and its precedence/query contract is isolated with `DbPromise` behavior tests; no migration exists.
+- Fresh RealPG proof: `cx-a-e2d-pg`, PG18+vector, `127.0.0.1:5330/consultify_e2d`; strict schema migration passed. `RUN_DB_TESTS=1 MOCK_DB=false` collected and passed the changed `managementReports.titleLanguage.realdb.test.ts` **5/5**, with **0 skipped**. The package adds no migration.
 
 ## Freeze identities
 

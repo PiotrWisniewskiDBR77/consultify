@@ -6,11 +6,23 @@
   "preRebaseContentCommit": "2c52e8caf373fbfcb8f8717228244e2f9240dadb",
   "status": "READY_FOR_INDEPENDENT_REVIEW",
   "migration": false,
-  "realPg": "NOT_REQUIRED_UNIT_DB_CONTRACT",
+  "realPg": {
+    "status": "PROVEN",
+    "container": "cx-a-e2d-pg",
+    "identity": "127.0.0.1:5330/consultify_e2d",
+    "image": "pgvector/pgvector:pg18",
+    "strictMigrations": "PASS",
+    "environment": {
+      "RUN_DB_TESTS": "1",
+      "MOCK_DB": "false"
+    },
+    "test": "tests/integration/managementReports.titleLanguage.realdb.test.ts",
+    "result": "5/5 collected, 0 skipped"
+  },
   "tests": {
-    "focused": "58/58",
+    "focused": "58/58 unit and caller tests + 5/5 RealPG",
     "serverTypeScript": {
-      "baseErrors": 1,
+      "baseErrors": 0,
       "candidateErrors": 0
     }
   },
