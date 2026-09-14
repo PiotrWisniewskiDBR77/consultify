@@ -1337,6 +1337,90 @@ zapisana)**, **Z-52 nowa (biblioteka bez wywołania, DRD-EN, u Codexa fala J1)**
 (luka pomiaru S1.1–S1.16, otwarta)**, **DEC-508 (zgoda migracja addytywna Z-39, warunkowa)**,
 **DEC-509 (pakiet JĘZYK, w toku)**.
 
+**Fala D2 `4f9db7f9c6` PRZYJĘTA (CTO, 14.09 wieczór).** P-T14 (Pomysły/Moja praca, **nie**
+Inicjatywy): zmiana etapu z wiersza jednym kliknięciem (zapis natychmiastowy, toast, cofnięcie),
+„Przejrzyj kandydaturę" → nazwany wynik zamiast telemetrii z hashem; 11 testów. P-T16: bełkot w
+Wywiadzie nie idzie do modelu, stała odpowiedź „Nie rozumiem — doprecyzuj" EN/PL; 21 testów.
+Długi zostawione świadomie: natywny `<select>` w `IdeaStageSelectCell` (naruszenie kanonu) i
+zrzut w harnessie porównawczym — skierowane do fali D3.
+
+**D-i Codexa `1003bc636d` PRZYJĘTE → linia `61f945b28e` (14.09 wieczór).** 2 testy: mock daty
+lokalny, asercje na żywym preview. **Z-33/D-g ZAMKNIĘTE**: ledger strict kompletny 916/916, bez
+backfillu (liczby 1009/1133 z poprzednich pomiarów miały różne mianowniki — nie regresja, artefakt
+liczenia).
+
+**Fala J1 `08c1bb7a26` PRZYJĘTA (CTO, DEC-509, 14.09 wieczór).** Kwestionariusz DRD po angielsku:
+`compileDrdPack(lang='en')`, cache per język, 6 wołaczy okablowanych, `useDrdPack` z
+`languageChanged`, twarde `namePL||name` usunięte; 39/233/699 zielone w obu językach, 0 znaków PL
+w EN. **Z-52 ZAMKNIĘTE.** Nowe długi zapisane: **Z-58 nowa** — 25 polskich tytułów poziomów na
+osiach 5–6 bez wariantu EN (treść, decyzja właściciela metodyki wymagana; test przypina liczbę 25
+jako ratchet), „Sesja {id}"/„Pytanie 3 z 7" nieprzetłumaczone → do fali D3, `manifest.licence.notice`
+po polsku w obu językach (lustro w `MethodPackRegistry.ts`), `drdMatrixCellContent.ts:125`
+`namePL||name` pozostawione z uzasadnieniem z 01.09 (świadomy wyjątek, nie dług).
+
+**Fala D1 `dd4fc82b38` PRZYJĘTA (CTO, 14.09 wieczór).** **U2 „What's next" w Decisions —
+ZAMKNIĘTE przez kanon**: blok był obecny i pusty; `TABLE_AND_PREVIEW_CANON` §7.3 pkt 4.4/„Reguła
+strefy" — strefa tylko przy konwersji, Decisions bez konwersji → strefa **nieobecna z zasady**,
+nie defekt. Naprawa w budowniczym `executionPreviewHead.tsx` dla 9 podglądów Realizacji
+(nextStep → proza bloku 3), 8 testów, zrzuty `zrzuty-u2-decisions-20260914/`. **P-T15
+NAPRAWIONE**: trasa DELETE i handler istniały, kosz był `disabled` na sztywno („zbudowane,
+niepodłączone"); 404 dla obcej org (org-scope), 403 nie-właściciel; testy 4/4 + 4/4. **P-T06
+NAPRAWIONE**: kontrast toru 1,00 → 1,46 jasny / 6,24 ciemny; nowy współdzielony
+`SettingsToggleControl`; rodzina `AISettings/SettingsToggle` ×8 miała stan ON w crimsonie —
+usunięte; `BrandVoicePanel` objęty tą samą naprawą. Rejestr P-T: 06/14/15/16 → **wdrożone** (po
+health). Etap §5 U2 → **✅** (zamknięty kanonem, na zrzucie) — pozostaje 🧪 po health, jeśli
+formuła §0.1 tego wymaga na stagingu.
+
+**Pomiar 16 kryteriów S1.1–S1.16 na żywo — wykonany (Z-53 rozliczone, 14.09 wieczór).** **8/16**
+zamknięte (`cto-codex/pomiar-mvp-20260914/POMIAR_16.md`): ZAMKNIĘTE S1.1, S1.2 (warunkowo), S1.5
+(7/7 + Meeting zaślepka), S1.8, S1.9, S1.10, S1.12, S1.16. OTWARTE: S1.3 (0 kart działania), S1.4
+(generator DOCX/PPTX/PDF działa, ale 155 znaków PL w narracji EN → pakiet JĘZYK), S1.6 (6/16
+modułów zmierzone), S1.7 (czystka wykonana, patrz niżej), S1.11 (rejestr zamrożenia z 10.09 vs 515
+commitów ODMROZENIE — rozjazd), S1.13 (`VITE_VF1_INSIGHT_CARD_CONTRACT` brak na stagingu), S1.14
+(K7 nie zaczęte), S1.15 (kod jest, `ENABLE_INTERVIEW_ANSWER_APPROVAL` OFF — czeka na Tak
+właściciela, 5. obraz wysłany). Retest: **P-T17/P-T20/P-T22 NAPRAWIONE** (P-T22: realna przyczyna
+= cudza sesja `roles=[]` bez etykiety → **Z-54 nowa**), P-T19 niemierzalne bez trwałej rejestracji.
+**Z-55 nowa** — kebab „Delete" ocen nic nie robi, `DELETE /api/assessments` kłamie sukcesem → do
+fali D3. Dwa pytania czekają na właściciela: czy Meeting wypada z pojemnika 1; czy akcepty z
+`90833bc94a` przenoszą się na `1154ebd809`+.
+
+**S1.7 czystka DBR77 — wykonana (14.09, `cto-codex/czystka-dbr77-20260914/`, rollback 559
+wierszy).** −14 QA-wniosków, −3 inicjatywy z promptu czatu, −16 zadań, −sesja retestu; 5 inicjatyw
+bez tytułu → backfill z name. Do decyzji właściciela: wnioski „Ted 2"/„Temat"/„Zupa z raka" (Piotr,
+realna treść), „[ACCEPTANCE] Benefits realization", ocena „QA UI 45 Tables". Zostają: 10 stubów
+SWOT, duplikaty PdM ×4 itd., ~40 inicjatyw teresa_chat PL. Oceny: 11 archived, max 8% — kryterium
+„ocena 100%" pozostaje otwarte.
+
+**DEC-510 (język, E1, 14.09 wieczór).** Resolver `users.language → organizations.default_language
+→ en`, `users.language` kanoniczne, `DEFAULT_AI_LANGUAGE` → en, bez tabeli snapshotów i migracji
+(fala 2). E2 start w kolejności: E2d Teresa → E2c serwer → E2b UI. Dane: DBR77
+`default_language=en`, `users.language` NULL→en dla 5 kont (rollback `jezyk-dane-20260914/`).
+Inwentarz Codexa E0: 699 pytań, 521/534 users bez języka, 893 twarde UI, 649 EN==PL, 282
+prompty/59 plików.
+
+**DEC-511 (14.09 wieczór).** Druga migracja addytywna `project_members.normalized_project_role`,
+luka wykryta przy Z-39 (**Z-56 nowa**), ta sama dyscyplina warunkowa co DEC-508. **Z-57 nowa —
+kandydat pomiaru**: pełny diff kolumn staging vs świeża baza po migracjach. Z-39 kandydat
+`6f545e222e` przyjęty do odbioru.
+
+**Z-47 aktualizacja (dysk, 14.09 wieczór).** 3,3 → 16 GiB (stary kandydat, cache, 102 osierocone
+wolumeny Docker, 3 obrazy sprzątnięte).
+
+**Wdrożenie zbiorcze `dd4fc82b38` na staging — w toku (14.09 wieczór).** Tag cofnięcia
+`rollback-pre-fala-d-20260914` = `1154ebd809`.
+
+**Z-2 (aktualizacja 14.09 wieczór, po D1/D2/J1/D-i/pomiarze 8/16/czystce/DEC-510/DEC-511/
+Z-54..Z-58).** Linia = `dd4fc82b38` (merge `08c1bb7a26` do kandydata fali D1 `c5d982ec6c`);
+**staging `dd4fc82b38` w wdrożeniu** (jeszcze nie potwierdzony health/tag — nie zakładać
+wdrożonego stanu przed weryfikacją). U2 → ✅ (kanon), P-T06/14/15/16/17/20/22 →
+naprawione/wdrożone (po health). Pomiar 16 kryteriów: 8/16 zamknięte, 8 otwartych (patrz wyżej).
+S1.7 czystka DBR77 wykonana. Skrzynka: **Z-33/D-g zamknięte**, **Z-52 zamknięte**, **Z-54 nowa
+(cudza sesja `roles=[]` bez etykiety, P-T22)**, **Z-55 nowa (kebab Delete ocen kłamie sukcesem, do
+D3)**, **Z-56 nowa (druga migracja addytywna `normalized_project_role`, luka Z-39)**, **Z-57 nowa
+(kandydat pomiaru — diff kolumn staging vs świeża baza)**, **Z-58 nowa (25 tytułów poziomów DRD
+PL bez EN, decyzja właściciela metodyki)**, **DEC-510 (język, resolver `users.language`, fala 2
+bez migracji)**, **DEC-511 (zgoda migracja addytywna `normalized_project_role`, warunkowa)**.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
