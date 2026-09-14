@@ -59,7 +59,6 @@ export interface InterviewSessionPreviewBodyProps {
 export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyProps> = ({
   session,
   ownerName,
-  isPolish,
   statusConfig,
   progress,
   detailsExpanded,
@@ -168,7 +167,7 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
     <div className="space-y-4">
       <PreviewMetaCard pills={pills} />
       <PreviewDetailsSection
-        label={t('interview.sessionPreview.propertiesLabel', isPolish ? 'Przebieg' : 'Progress')}
+        label={t('interview.sessionPreview.propertiesLabel')}
         customActions={customActions}
         expanded={detailsExpanded}
         onToggleExpanded={onToggleDetailsExpanded}
@@ -177,8 +176,8 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
       >
         <ArtifactPropertiesTable
           rows={wlasciwosci}
-          propertyLabel={isPolish ? 'Właściwość' : 'Property'}
-          valueLabel={isPolish ? 'Wartość' : 'Value'}
+          propertyLabel={t('interview.sessionPreview.property')}
+          valueLabel={t('interview.sessionPreview.value')}
         />
       </PreviewDetailsSection>
     </div>
@@ -213,7 +212,6 @@ export interface InterviewSessionPreviewFooterProps {
 
 export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFooterProps> = ({
   session,
-  isPolish,
   canRunAi,
   aiHints,
   onRunAiHint,
@@ -283,7 +281,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
       <PreviewActionBar
         rows={actionRows}
         overflowActions={overflowActions}
-        overflowLabel={isPolish ? 'Więcej akcji' : 'More actions'}
+        overflowLabel={t('interview.sessionPreview.moreActions')}
       />
     </div>
   );

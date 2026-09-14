@@ -7208,6 +7208,12 @@
       "initiatives": "Initiatives",
       "assigned": "Assigned",
       "pendingReview": "Pending Review",
+      "previewAiHints": {
+        "summarize": "Summarize",
+        "risks": "Risks",
+        "extractRisks": "Extract risks",
+        "nextSteps": "Next steps"
+      },
       "couldNotSendReminders": "Could not send reminders",
       "couldNotApprove": "Could not approve",
       "couldNotSendBack": "Could not send back",
@@ -9198,7 +9204,11 @@
       "copyStats": "Copy stats",
       "copyId": "Copy ID",
       "generateInsights": "Generate insights",
-      "aiAvailableAfterCompletion": "AI available after completion"
+      "aiAvailableAfterCompletion": "AI available after completion",
+      "propertiesLabel": "Progress",
+      "property": "Property",
+      "value": "Value",
+      "moreActions": "More actions"
     },
     "assignmentPreview": {
       "progress": "Progress",
