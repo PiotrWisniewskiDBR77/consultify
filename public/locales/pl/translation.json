@@ -9152,7 +9152,47 @@
         "overviewTitle": "Podgląd macierzy",
         "overviewSubtitle": "Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.",
         "levelRamp": "Skala poziomów",
-        "areasAssessed": "Ocenione obszary"
+        "areasAssessed": "Ocenione obszary",
+        "readOnly": {
+          "axisNotFound": "Macierzy tej osi nie da się narysować: struktura osi {{axisNumber}} nie występuje w metodyce przypiętej do tego Outputu.",
+          "overflowHint_one": "Jeszcze {{count}} kolumna po prawej — przewiń w bok.",
+          "overflowHint_few": "Jeszcze {{count}} kolumny po prawej — przewiń w bok.",
+          "overflowHint_many": "Jeszcze {{count}} kolumn po prawej — przewiń w bok.",
+          "overflowHint_other": "Jeszcze {{count}} kolumny po prawej — przewiń w bok."
+        }
+      },
+      "saveState": {
+        "label": {
+          "SERVER": "Serwer",
+          "SAVING": "Zapisywanie…",
+          "SAVED": "Zapisano",
+          "OFFLINE": "Offline",
+          "RECOVERY_DRAFT": "Lokalny szkic",
+          "CONFLICT": "Konflikt wersji",
+          "RECONNECTING": "Łączenie…",
+          "RECOVERED": "Przywrócono"
+        },
+        "description": {
+          "SERVER": "Widok zgodny z ostatnim potwierdzonym stanem serwera.",
+          "SAVING": "Trwa zapis na serwerze.",
+          "SAVED": "Serwer właśnie potwierdził ten zapis.",
+          "OFFLINE": "Brak połączenia z serwerem. Praca nie ginie — jest kolejkowana lokalnie.",
+          "RECOVERY_DRAFT": "Masz niezapisane lokalne zmiany, jeszcze niepotwierdzone przez serwer. To NIE jest źródło prawdy.",
+          "CONFLICT": "Sesja zmieniła się na serwerze. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.",
+          "RECONNECTING": "Próba ponownego połączenia z serwerem w toku.",
+          "RECOVERED": "Połączenie i dane zostały przywrócone i potwierdzone przez serwer."
+        }
+      },
+      "teresaPrompt": {
+        "missingWording": "(treść pytania niedostępna)",
+        "compareLevels": "Wytłumacz różnicę między poziomem {{lower}}, {{level}} i {{upper}} dla tej jednostki.",
+        "askExamples": "Podaj konkretne przykłady i dowody, jakich mam szukać przy tym pytaniu.",
+        "askExplain": "Wytłumacz to pytanie i podpowiedz, jak na nie rzetelnie odpowiedzieć.",
+        "context": "Metoda: DRD (Digital Readiness Diagnostic), oś: {{axisName}}.",
+        "unitLine": "Jednostka: {{unitName}} ({{unitId}}), poziom: {{level}}.",
+        "questionLine": "Pytanie: {{wording}}",
+        "currentAnswer": "Moja obecna odpowiedź: {{answer}}",
+        "currentAnswerEmpty": "Moja obecna odpowiedź: (jeszcze pusta)"
       },
       "http": {
         "blockers": {
@@ -9322,7 +9362,11 @@
         "canonLabel": "Kanon: "
       },
       "ownerMatrix": {
-        "closeCellDetails": "Zamknij szczegóły komórki"
+        "closeCellDetails": "Zamknij szczegóły komórki",
+        "axisNotFound": "Macierzy tej osi nie da się narysować: struktura osi {{axisNumber}} nie występuje w metodyce tej sesji.",
+        "rowHint": "Kliknij komórkę",
+        "levelLabel": "Poziom",
+        "cellDetailsAriaLabel": "Szczegóły komórki: {{unitId}}, poziom {{level}}"
       },
       "method": {
         "axisMatrixHeading": "Macierz osi",
@@ -51252,7 +51296,12 @@
     },
     "voice": {
       "unsupportedTooltip": "Ta przeglądarka nie udostępnia rozpoznawania mowy — użyj klawiatury lub Teresy.",
-      "unsupported": "Mowa niedostępna w tej przeglądarce"
+      "unsupported": "Mowa niedostępna w tej przeglądarce",
+      "dictate": "Podyktuj",
+      "listening": "Słucham…",
+      "processing": "Przetwarzam…",
+      "startDictationAriaLabel": "Podyktuj odpowiedź",
+      "stopDictationAriaLabel": "Zatrzymaj dyktowanie odpowiedzi"
     },
     "teresa": {
       "statement": {

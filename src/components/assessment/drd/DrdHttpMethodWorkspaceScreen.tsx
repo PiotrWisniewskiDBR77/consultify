@@ -776,24 +776,53 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     ) => {
       const question =
         focusQuestions.find((q) => q.questionId === questionId) ?? focusQuestions[0] ?? null;
-      const unitName = activeArea.namePL || activeArea.name;
-      const axisName = activeAxis.namePL || activeAxis.name;
+      // GRANICE JĘZYKOWE (KANON_Z_ODBIOROW.md): angielskie nazwy obszarów/osi
+      // są wiodące w metodyce — namePL tylko gdy UI faktycznie jest po polsku.
+      const unitName = isPolish ? activeArea.namePL || activeArea.name : activeArea.name;
+      const axisName = isPolish ? activeAxis.namePL || activeAxis.name : activeAxis.name;
       const currentAnswer = (draftAnswerText[questionId] ?? questionAnswerState(events, questionId).text ?? '').trim();
-      const wording = question?.canonicalWording ?? '(treść pytania niedostępna)';
+      const wording =
+        question?.canonicalWording ?? t('assessment.drd.teresaPrompt.missingWording', '(question text unavailable)');
       const ask =
         topic === 'compare_levels'
-          ? `Wytłumacz różnicę między poziomem ${focusLevelFallback - 1}, ${focusLevelFallback} i ${focusLevelFallback + 1} dla tej jednostki.`
+          ? t('assessment.drd.teresaPrompt.compareLevels', {
+              lower: focusLevelFallback - 1,
+              level: focusLevelFallback,
+              upper: focusLevelFallback + 1,
+              defaultValue:
+                'Explain the difference between level {{lower}}, {{level}} and {{upper}} for this unit.',
+            })
           : topic === 'examples'
-            ? 'Podaj konkretne przykłady i dowody, jakich mam szukać przy tym pytaniu.'
-            : 'Wytłumacz to pytanie i podpowiedz, jak na nie rzetelnie odpowiedzieć.';
+            ? t(
+                'assessment.drd.teresaPrompt.askExamples',
+                'Give concrete examples and evidence I should look for on this question.'
+              )
+            : t(
+                'assessment.drd.teresaPrompt.askExplain',
+                'Explain this question and suggest how to answer it reliably.'
+              );
 
       const teresaPrompt = [
-        `Metoda: DRD (Digital Readiness Diagnostic), oś: ${axisName}.`,
-        `Jednostka: ${unitName} (${activeArea.id}), poziom: ${focusLevelFallback}.`,
-        `Pytanie: ${wording}`,
+        t('assessment.drd.teresaPrompt.context', {
+          axisName,
+          defaultValue: 'Method: DRD (Digital Readiness Diagnostic), axis: {{axisName}}.',
+        }),
+        t('assessment.drd.teresaPrompt.unitLine', {
+          unitName,
+          unitId: activeArea.id,
+          level: focusLevelFallback,
+          defaultValue: 'Unit: {{unitName}} ({{unitId}}), level: {{level}}.',
+        }),
+        t('assessment.drd.teresaPrompt.questionLine', {
+          wording,
+          defaultValue: 'Question: {{wording}}',
+        }),
         currentAnswer
-          ? `Moja obecna odpowiedź: ${currentAnswer}`
-          : 'Moja obecna odpowiedź: (jeszcze pusta)',
+          ? t('assessment.drd.teresaPrompt.currentAnswer', {
+              answer: currentAnswer,
+              defaultValue: 'My current answer: {{answer}}',
+            })
+          : t('assessment.drd.teresaPrompt.currentAnswerEmpty', 'My current answer: (still empty)'),
         ask,
       ].join('\n');
 

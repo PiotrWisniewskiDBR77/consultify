@@ -52,6 +52,10 @@ const IDENTITY_WHITELIST_RAW = [
   'Jira', 'Slack', 'Teams', 'Google Drive', 'OneDrive', 'Dropbox', 'e-mail',
   'Email', 'OK', 'Kanban', 'Backlog', 'Sprint', 'Baseline', 'Dashboard', 'Excel',
   'Word', 'PowerPoint',
+  // DRD EN pilot fix (DEC-461, 14.09.2026) — `assessment.drd.saveState.label.OFFLINE`:
+  // "Offline" is the same loanword in Polish tech UI as Kanban/Baseline/Backlog
+  // above (nikt nie mówi "stan bez połączenia" jako etykietę stanu w badge'u).
+  'Offline',
   // MVP naprawy noc 3 (05/06.09.2026) — Presentations DeckBuilder toolbar
   // "Diagrams" panel item labels: SWOT and Venn are the internationally
   // used names of these diagram archetypes, not English words with a
@@ -211,7 +215,7 @@ const ALLOWED_PROPER_NOUNS = [
   // identycznie jak w angielskim (nie tłumaczy się ich w praktyce rynkowej):
   'Status', 'Import', 'Export', 'Menu', 'Program', 'Push', 'Blog', 'Euro',
   'Email', 'Kanban', 'Backlog', 'Sprint', 'Baseline', 'Dashboard', 'Gantt',
-  'Webhook', 'Sponsor', 'Portfolio', 'Administrator', 'Partner',
+  'Webhook', 'Sponsor', 'Portfolio', 'Administrator', 'Partner', 'Offline',
   // Marki/nazwy produktów (nie tłumaczy się nazw własnych produktów):
   'Consultify', 'Teresa', 'Jira', 'Slack', 'Teams', 'Dropbox', 'Outlook',
   'Trello', 'Excel', 'Word', 'Autopilot', 'Premium', 'Enterprise',
