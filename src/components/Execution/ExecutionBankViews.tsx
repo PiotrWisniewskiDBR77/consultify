@@ -22,13 +22,14 @@ import type {
 export type ExecutionBankViewMode = 'table' | 'kanban' | 'calendar' | 'gantt';
 
 export interface ExecutionBankIdentity {
+  id: string;
   initiativeId: string;
-  executionCaseId: string | null;
 }
 
 export interface ExecutionBankViewsProps {
   rows: readonly ExecutionBankRow[];
   view: ExecutionBankViewMode;
+  enhanced?: boolean;
   selected: ExecutionBankIdentity | null;
   calendarWindow: ExecutionCalendarWindow;
   onSelect: (row: ExecutionBankRow) => void;
@@ -80,20 +81,24 @@ export const describeExecutionBankUnknown = unknownLabel;
 export const formatExecutionBankDate = readableDate;
 const caseAvailabilityLabel = (row: ExecutionBankRow) =>
   row.executionCaseId ? 'Execution Case linked' : 'No Execution Case';
-
 const temporalClass = 'text-xs tabular-nums text-c-text-secondary';
 
 const BankTable = ({
   rows,
   selected,
+  calendarWindow,
+  enhanced = false,
   onSelect,
   onOpen,
-}: Pick<ExecutionBankViewsProps, 'rows' | 'selected' | 'onSelect' | 'onOpen'>) => {
+}: Pick<
+  ExecutionBankViewsProps,
+  'rows' | 'selected' | 'calendarWindow' | 'enhanced' | 'onSelect' | 'onOpen'
+>) => {
   const columns = useMemo<TableColumn[]>(
     () => [
       {
-        id: 'initiativeCase',
-        label: 'Initiative / Case',
+        id: enhanced ? 'initiative' : 'initiativeCase',
+        label: enhanced ? 'Initiative' : 'Initiative / Case',
         width: '250px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
@@ -101,10 +106,12 @@ const BankTable = ({
             <div
               data-testid={`execution-bank-table-item-${row.id}`}
               data-initiative-id={row.initiativeId}
-              data-execution-case-id={row.executionCaseId ?? undefined}
+              data-execution-case-id={enhanced ? undefined : (row.executionCaseId ?? undefined)}
             >
               <div className="text-sm font-semibold text-c-text">{row.name}</div>
-              <div className="text-[11px] text-c-text-muted">{caseAvailabilityLabel(row)}</div>
+              <div className="text-[11px] text-c-text-muted">
+                {enhanced ? (row.projectId ?? 'No project assigned') : caseAvailabilityLabel(row)}
+              </div>
             </div>
           );
         },
@@ -168,7 +175,9 @@ const BankTable = ({
           const row = source as unknown as ExecutionBankRow;
           return (
             <div>
-              <div data-testid={`execution-bank-progress-${row.executionCaseId}`}>
+              <div
+                data-testid={`execution-bank-progress-${enhanced ? row.id : row.executionCaseId}`}
+              >
                 {evidenceLabel(row.progress, '%')}
               </div>
               <div className="text-[11px] text-c-text-muted">{evidenceLabel(row.confidence)}</div>
@@ -198,17 +207,19 @@ const BankTable = ({
       },
       {
         id: 'varianceDays',
-        label: 'Variance',
-        width: '150px',
+        label: enhanced ? 'Timeline position' : 'Variance',
+        width: enhanced ? '210px' : '150px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
           return (
             <span
-              data-testid={`execution-bank-variance-${row.executionCaseId}`}
+              data-testid={`execution-bank-variance-${enhanced ? row.id : row.executionCaseId}`}
               className={temporalClass}
             >
               {row.varianceDays.status === 'KNOWN'
-                ? `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`
+                ? enhanced
+                  ? `${row.varianceDays.reference?.toLowerCase()} ${row.varianceDays.value >= 0 ? '+' : ''}${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · as of ${readableDate(calendarWindow.asOf)}`
+                  : `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`
                 : unknownLabel(row.varianceDays.reason)}
             </span>
           );
@@ -276,7 +287,7 @@ const BankTable = ({
         ),
       },
     ],
-    []
+    [calendarWindow.asOf, enhanced]
   );
   const rowMenu = (source: Record<string, unknown>): StandardRowMenu => {
     const row = source as unknown as ExecutionBankRow;
@@ -289,10 +300,7 @@ const BankTable = ({
     <StandardTable
       columns={columns}
       data={rows as Array<ExecutionBankRow & Record<string, unknown>>}
-      selectedRowId={
-        selected?.executionCaseId ??
-        (selected?.initiativeId ? `initiative:${selected.initiativeId}` : null)
-      }
+      selectedRowId={selected?.id ?? null}
       onRowClick={(row) => onSelect(row as unknown as ExecutionBankRow)}
       onRowDoubleClick={(row) => onOpen(row as unknown as ExecutionBankRow)}
       rowDescription={(row) => (row as unknown as ExecutionBankRow).description}
@@ -307,7 +315,11 @@ const BankTable = ({
   );
 };
 
-const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | 'onSelect'>) => {
+const BankKanban = ({
+  rows,
+  enhanced = false,
+  onSelect,
+}: Pick<ExecutionBankViewsProps, 'rows' | 'enhanced' | 'onSelect'>) => {
   const stateIds = ['ACTIVE', 'PAUSED', 'CLOSING', 'CLOSED', 'UNKNOWN'];
   const extra = rows.map((row) => row.executionState).filter((state) => !stateIds.includes(state));
   const columns: StandardKanbanColumn[] = [...stateIds, ...new Set(extra)].map((id) => ({
@@ -341,7 +353,9 @@ const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | '
                 : 'neutral',
           },
         ],
-        projectLabel: caseAvailabilityLabel(row),
+        projectLabel: enhanced
+          ? (row.projectId ?? 'No project assigned')
+          : caseAvailabilityLabel(row),
         dueLabel: dateEvidenceLabel(row.displayFinish),
         ownerName: row.ownerName ?? row.ownerId ?? undefined,
         ownerInitials: (row.ownerName ?? row.ownerId ?? '?').slice(0, 2).toUpperCase(),
@@ -355,10 +369,14 @@ const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | '
           <span
             data-testid={`execution-bank-kanban-item-${row.id}`}
             data-initiative-id={row.initiativeId}
-            data-execution-case-id={row.executionCaseId ?? undefined}
+            data-execution-case-id={enhanced ? undefined : (row.executionCaseId ?? undefined)}
             className="text-[10px] text-c-text-muted"
           >
-            {row.executionCaseId ? 'Native case identity retained' : 'Initiative awaiting a case'}
+            {enhanced
+              ? `Initiative history retained · data as of ${readableDate(row.updatedAt.meta.asOf)}`
+              : row.executionCaseId
+                ? 'Native case identity retained'
+                : 'Initiative awaiting a case'}
           </span>
         ),
       }));
@@ -406,12 +424,13 @@ const HorizonControls = ({
 const BankCalendar = ({
   rows,
   calendarWindow,
+  enhanced = false,
   onSelect,
   onHorizonChange,
   onDrilldownMonth,
 }: Pick<
   ExecutionBankViewsProps,
-  'rows' | 'calendarWindow' | 'onSelect' | 'onHorizonChange' | 'onDrilldownMonth'
+  'rows' | 'calendarWindow' | 'enhanced' | 'onSelect' | 'onHorizonChange' | 'onDrilldownMonth'
 >) => {
   const { t } = useTranslation();
   const buckets = calendarWindow.drilldown?.buckets ?? calendarWindow.buckets;
@@ -441,7 +460,7 @@ const BankCalendar = ({
                   key={row.id}
                   data-testid={`execution-bank-calendar-item-${row.id}`}
                   data-initiative-id={row.initiativeId}
-                  data-execution-case-id={row.executionCaseId ?? undefined}
+                  data-execution-case-id={enhanced ? undefined : (row.executionCaseId ?? undefined)}
                   onClick={() => onSelect(row)}
                   className="mt-2 block w-full rounded-lg border border-c-border-subtle bg-c-surface p-2 text-left focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
@@ -470,7 +489,7 @@ const BankCalendar = ({
               key={row.id}
               data-testid={`execution-bank-calendar-item-${row.id}`}
               data-initiative-id={row.initiativeId}
-              data-execution-case-id={row.executionCaseId ?? undefined}
+              data-execution-case-id={enhanced ? undefined : (row.executionCaseId ?? undefined)}
               onClick={() => onSelect(row)}
               className="mr-2 mt-2 rounded-full border border-c-border-subtle px-3 py-1 text-xs"
             >
@@ -660,9 +679,13 @@ const GanttTrack = ({
 const BankGantt = ({
   rows,
   calendarWindow,
+  enhanced = false,
   onSelect,
   onHorizonChange,
-}: Pick<ExecutionBankViewsProps, 'rows' | 'calendarWindow' | 'onSelect' | 'onHorizonChange'>) => (
+}: Pick<
+  ExecutionBankViewsProps,
+  'rows' | 'calendarWindow' | 'enhanced' | 'onSelect' | 'onHorizonChange'
+>) => (
   <div className="h-full overflow-auto" data-testid="execution-bank-gantt">
     <HorizonControls calendarWindow={calendarWindow} onHorizonChange={onHorizonChange} />
     <div className="min-w-[980px] px-4 pb-4">
@@ -721,16 +744,18 @@ const BankGantt = ({
           key={row.id}
           data-testid={`execution-bank-gantt-item-${row.id}`}
           data-initiative-id={row.initiativeId}
-          data-execution-case-id={row.executionCaseId ?? undefined}
+          data-execution-case-id={enhanced ? undefined : (row.executionCaseId ?? undefined)}
           onClick={() => onSelect(row)}
           className="grid w-full grid-cols-[220px_minmax(730px,1fr)] gap-3 border-b border-c-border-subtle py-3 text-left focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <span>
             <strong className="block text-sm">{row.name}</strong>
-            <small className="text-c-text-muted">{caseAvailabilityLabel(row)}</small>
+            <small className="text-c-text-muted">
+              {enhanced ? (row.projectId ?? 'No project assigned') : caseAvailabilityLabel(row)}
+            </small>
             <small
               className="mt-1 block text-c-text-secondary"
-              data-testid={`execution-bank-variance-${row.executionCaseId ?? row.id}`}
+              data-testid={`execution-bank-variance-${enhanced ? row.id : (row.executionCaseId ?? row.id)}`}
             >
               {row.varianceDays.status === 'KNOWN'
                 ? `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`

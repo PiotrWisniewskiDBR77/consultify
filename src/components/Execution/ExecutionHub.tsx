@@ -733,6 +733,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // czytają ją SYNCHRONICZNIE w renderze, więc deklaracja niżej = ReferenceError
   // (TDZ). Stała stoi więc na samej górze stanu, nad wszystkimi czytelnikami.
   const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+  const fourButtonsEnabled = isExecutionFlagEnabled('fourButtons');
   const [executionBankAsOf, setExecutionBankAsOf] = useState(() => {
     const requested = searchParams.get('asOf');
     return requested && Number.isFinite(Date.parse(requested))
@@ -778,6 +779,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   // Active/All toggle (consistent with InitiativesHub)
   const [scope, setScope] = useState<'active' | 'all'>('active');
+  const [executionBankProjectFilter, setExecutionBankProjectFilter] = useState('ALL');
+  const [executionBankStatusFilter, setExecutionBankStatusFilter] = useState('ALL');
+  const [executionBankOwnerFilter, setExecutionBankOwnerFilter] = useState('ALL');
+  const [executionBankPriorityFilter, setExecutionBankPriorityFilter] = useState('ALL');
+  const [executionBankTimeFilter, setExecutionBankTimeFilter] = useState('ALL');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [managerCommandRowContent, setManagerCommandRowContent] = useState<React.ReactNode>(null);
@@ -2147,6 +2153,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             name: initiative.name,
             description: initiative.description,
             lifecycleStatus: String(initiative.status),
+            projectId: (initiative as any).projectId ?? null,
+            priority: (initiative as any).priority ?? null,
             ownerId:
               owner?.id ??
               (initiative as any).ownerExecutionId ??
@@ -2171,13 +2179,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           };
         }),
         executionCases,
-        { asOf: executionBankAsOf }
+        { asOf: executionBankAsOf, identityMode: fourButtonsEnabled ? 'INITIATIVE' : 'LEGACY' }
       ),
-    [executionBankAsOf, executionCases, initiatives]
+    [executionBankAsOf, executionCases, fourButtonsEnabled, initiatives]
   );
 
   const executionBankRowsBeforePreset = useMemo(() => {
-    const statusFilters = activeStatusFilter ? [activeStatusFilter] : undefined;
+    const statusFilters =
+      executionBankStatusFilter !== 'ALL'
+        ? [executionBankStatusFilter]
+        : activeStatusFilter
+          ? [activeStatusFilter]
+          : undefined;
     const activeStates = scope === 'active' ? ['ACTIVE', 'PAUSED', 'CLOSING'] : undefined;
     const dataIssues = summaryFilters.flatMap((filter) => {
       if (filter.column !== 'data') return [];
@@ -2190,9 +2203,44 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       search: searchQuery,
       lifecycleStatuses: statusFilters,
       executionStates: activeStates,
+      projectIds:
+        executionBankProjectFilter === 'ALL'
+          ? undefined
+          : [executionBankProjectFilter === 'NO_PROJECT' ? null : executionBankProjectFilter],
+      ownerIds:
+        executionBankOwnerFilter === 'ALL'
+          ? undefined
+          : [executionBankOwnerFilter === 'NO_OWNER' ? 'UNKNOWN' : executionBankOwnerFilter],
+      priorities: executionBankPriorityFilter === 'ALL' ? undefined : [executionBankPriorityFilter],
+      timeWindow:
+        executionBankTimeFilter === 'ALL'
+          ? undefined
+          : executionBankTimeFilter === 'PAST_DUE'
+            ? { endExclusive: executionBankAsOf.slice(0, 10) }
+            : {
+                start: executionBankAsOf.slice(0, 10),
+                endExclusive: new Date(
+                  Date.parse(executionBankAsOf) +
+                    (executionBankTimeFilter === 'NEXT_30' ? 30 : 90) * 86_400_000
+                )
+                  .toISOString()
+                  .slice(0, 10),
+              },
       dataIssues: dataIssues.length ? dataIssues : undefined,
     });
-  }, [activeStatusFilter, executionBankRowsAll, scope, searchQuery, summaryFilters]);
+  }, [
+    activeStatusFilter,
+    executionBankAsOf,
+    executionBankOwnerFilter,
+    executionBankPriorityFilter,
+    executionBankProjectFilter,
+    executionBankRowsAll,
+    executionBankStatusFilter,
+    executionBankTimeFilter,
+    scope,
+    searchQuery,
+    summaryFilters,
+  ]);
 
   const executionBankRows = useMemo(() => {
     const preset =
@@ -2802,6 +2850,96 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
+  const executionBankFilterOptions = useMemo(() => {
+    const unique = (values: Array<string | null>) =>
+      [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) =>
+        a.localeCompare(b)
+      );
+    return {
+      projects: unique(executionBankRowsAll.map((row) => row.projectId)),
+      statuses: unique(executionBankRowsAll.map((row) => row.lifecycleStatus)),
+      owners: unique(executionBankRowsAll.map((row) => row.ownerId)),
+      priorities: unique(executionBankRowsAll.map((row) => row.priority)),
+      hasNoProject: executionBankRowsAll.some((row) => row.projectId === null),
+      hasNoOwner: executionBankRowsAll.some((row) => row.ownerId === null),
+    };
+  }, [executionBankRowsAll]);
+
+  const executionBankFilterControls = fourButtonsEnabled ? (
+    <div
+      className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto"
+      data-testid="execution-bank-filter-controls"
+    >
+      <select
+        aria-label="Bank project filter"
+        value={executionBankProjectFilter}
+        onChange={(event) => setExecutionBankProjectFilter(event.target.value)}
+        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+      >
+        <option value="ALL">All projects</option>
+        {executionBankFilterOptions.hasNoProject ? (
+          <option value="NO_PROJECT">No project</option>
+        ) : null}
+        {executionBankFilterOptions.projects.map((projectId) => (
+          <option key={projectId} value={projectId}>
+            {projectId}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Bank status filter"
+        value={executionBankStatusFilter}
+        onChange={(event) => setExecutionBankStatusFilter(event.target.value)}
+        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+      >
+        <option value="ALL">All statuses</option>
+        {executionBankFilterOptions.statuses.map((status) => (
+          <option key={status} value={status}>
+            {status}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Bank owner filter"
+        value={executionBankOwnerFilter}
+        onChange={(event) => setExecutionBankOwnerFilter(event.target.value)}
+        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+      >
+        <option value="ALL">All owners</option>
+        {executionBankFilterOptions.hasNoOwner ? <option value="NO_OWNER">No owner</option> : null}
+        {executionBankFilterOptions.owners.map((ownerId) => (
+          <option key={ownerId} value={ownerId}>
+            {ownerId}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Bank priority filter"
+        value={executionBankPriorityFilter}
+        onChange={(event) => setExecutionBankPriorityFilter(event.target.value)}
+        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+      >
+        <option value="ALL">All priorities</option>
+        {executionBankFilterOptions.priorities.map((priority) => (
+          <option key={priority} value={priority}>
+            {priority}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Bank time filter"
+        value={executionBankTimeFilter}
+        onChange={(event) => setExecutionBankTimeFilter(event.target.value)}
+        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+      >
+        <option value="ALL">Any time</option>
+        <option value="PAST_DUE">Past due</option>
+        <option value="NEXT_30">Next 30 days</option>
+        <option value="NEXT_90">Next 90 days</option>
+      </select>
+    </div>
+  ) : null;
+
   const rightControls = useMemo(() => {
     const showScope = activeTab === 'list';
 
@@ -2839,9 +2977,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return <div className="flex min-w-0 items-center gap-2">{surfaceControl}</div>;
     }
 
-    return <div className="flex min-w-0 items-center gap-2">{scopeToggle}</div>;
+    return (
+      <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
+        {scopeToggle}
+        {executionBankFilterControls}
+      </div>
+    );
   }, [
     activeTab,
+    executionBankFilterControls,
     scopeToggle,
     workFilterControl,
     resourcesFilterControl,
@@ -3160,6 +3304,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleClearFilters = useCallback(() => {
     if (activeTab === 'list') {
       setSummaryFilters([]);
+      setExecutionBankProjectFilter('ALL');
+      setExecutionBankStatusFilter('ALL');
+      setExecutionBankOwnerFilter('ALL');
+      setExecutionBankPriorityFilter('ALL');
+      setExecutionBankTimeFilter('ALL');
       return;
     }
     if (activeTab === 'reports') {
@@ -5683,11 +5832,12 @@ Please return:
               <ExecutionBankViews
                 rows={executionBankRows}
                 view={bankView}
+                enhanced={fourButtonsEnabled}
                 selected={
                   selectedBankRow
                     ? {
+                        id: selectedBankRow.id,
                         initiativeId: selectedBankRow.initiativeId,
-                        executionCaseId: selectedBankRow.executionCaseId,
                       }
                     : null
                 }
@@ -5708,7 +5858,11 @@ Please return:
                   <div
                     data-testid="execution-bank-preview"
                     data-initiative-id={selectedBankRow.initiativeId}
-                    data-execution-case-id={selectedBankRow.executionCaseId ?? undefined}
+                    data-execution-case-id={
+                      fourButtonsEnabled
+                        ? undefined
+                        : (selectedBankRow.executionCaseId ?? undefined)
+                    }
                   >
                     <StandardPreview
                       title={selectedBankRow.name || t('execution.initiativeLabel', 'Initiative')}
@@ -5723,15 +5877,25 @@ Please return:
                       onOpenFull={() => openBankRow(selectedBankRow)}
                       meta={{
                         pills: [
-                          {
-                            label: selectedBankRow.lifecycleStatus,
-                            tone: statusChipTone(selectedBankRow.lifecycleStatus),
-                          },
-                          {
-                            label: selectedBankRow.executionState,
-                            tone: statusChipTone(selectedBankRow.executionState),
-                          },
-                          { label: progressLabel, tone: 'neutral' },
+                          ...(fourButtonsEnabled && selectedBankRow.lifecycleStatus === 'UNKNOWN'
+                            ? []
+                            : [
+                                {
+                                  label: selectedBankRow.lifecycleStatus,
+                                  tone: statusChipTone(selectedBankRow.lifecycleStatus),
+                                },
+                              ]),
+                          ...(fourButtonsEnabled && selectedBankRow.executionState === 'UNKNOWN'
+                            ? []
+                            : [
+                                {
+                                  label: selectedBankRow.executionState,
+                                  tone: statusChipTone(selectedBankRow.executionState),
+                                },
+                              ]),
+                          ...(fourButtonsEnabled && selectedBankRow.progress.status === 'UNKNOWN'
+                            ? []
+                            : [{ label: progressLabel, tone: 'neutral' as const }]),
                         ],
                         trailing: (
                           <span className="text-[11px] font-semibold text-c-text-secondary">
@@ -5741,26 +5905,71 @@ Please return:
                         ),
                       }}
                       details={{
-                        text: [
-                          selectedBankRow.executionCaseId
-                            ? `Execution Case linked · Version ${selectedBankRow.executionCaseVersion ?? 'not reported'}`
-                            : 'No Execution Case linked',
-                          `Lifecycle: ${selectedBankRow.lifecycleStatus}`,
-                          `Execution state: ${selectedBankRow.executionState}`,
-                          `Baseline: ${bankDateLabel(selectedBankRow.baselineFinish)}`,
-                          `Current plan: ${bankDateLabel(selectedBankRow.currentPlanFinish)}`,
-                          `Forecast: ${bankDateLabel(selectedBankRow.forecastFinish)}`,
-                          `Actual: ${bankDateLabel(selectedBankRow.actualFinish)}`,
-                          '',
-                          selectedBankRow.description?.trim() ||
-                            t('common.noDescription', 'No description'),
-                        ].join('\n'),
+                        text: fourButtonsEnabled
+                          ? selectedBankRow.description?.trim() ||
+                            t('common.noDescription', 'No description')
+                          : [
+                              selectedBankRow.executionCaseId
+                                ? `Execution Case linked · Version ${selectedBankRow.executionCaseVersion ?? 'not reported'}`
+                                : 'No Execution Case linked',
+                              `Lifecycle: ${selectedBankRow.lifecycleStatus}`,
+                              `Execution state: ${selectedBankRow.executionState}`,
+                              `Baseline: ${bankDateLabel(selectedBankRow.baselineFinish)}`,
+                              `Current plan: ${bankDateLabel(selectedBankRow.currentPlanFinish)}`,
+                              `Forecast: ${bankDateLabel(selectedBankRow.forecastFinish)}`,
+                              `Actual: ${bankDateLabel(selectedBankRow.actualFinish)}`,
+                              '',
+                              selectedBankRow.description?.trim() ||
+                                t('common.noDescription', 'No description'),
+                            ].join('\n'),
+                        properties: fourButtonsEnabled
+                          ? [
+                              {
+                                id: 'lifecycle',
+                                label: 'Lifecycle',
+                                value:
+                                  selectedBankRow.lifecycleStatus === 'UNKNOWN'
+                                    ? 'Not reported'
+                                    : selectedBankRow.lifecycleStatus,
+                              },
+                              {
+                                id: 'execution-state',
+                                label: 'Execution state',
+                                value:
+                                  selectedBankRow.executionState === 'UNKNOWN'
+                                    ? 'Not reported'
+                                    : selectedBankRow.executionState,
+                              },
+                              { id: 'progress', label: 'Progress', value: progressLabel },
+                              {
+                                id: 'baseline',
+                                label: 'Baseline',
+                                value: bankDateLabel(selectedBankRow.baselineFinish),
+                              },
+                              {
+                                id: 'current-plan',
+                                label: 'Current plan',
+                                value: bankDateLabel(selectedBankRow.currentPlanFinish),
+                              },
+                              {
+                                id: 'forecast',
+                                label: 'Forecast',
+                                value: bankDateLabel(selectedBankRow.forecastFinish),
+                              },
+                              {
+                                id: 'actual',
+                                label: 'Actual',
+                                value: bankDateLabel(selectedBankRow.actualFinish),
+                              },
+                            ]
+                          : undefined,
                         onCopy: () =>
                           void navigator.clipboard?.writeText(
                             `${selectedBankRow.name} — ${progressLabel}`
                           ),
                       }}
                       relations={sourceRelations}
+                      hideRelationsWhenEmpty={fourButtonsEnabled}
                     />
                     <div data-testid="execution-bank-progress" className="sr-only">
                       {progressLabel}
