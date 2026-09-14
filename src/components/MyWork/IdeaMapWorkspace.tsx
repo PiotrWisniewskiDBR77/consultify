@@ -5502,8 +5502,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'properties'}
         onExport={() => setExportMenuOpen(true)}
         onConvert={() => handlePanelChange('tools')}
-        onDiscussWithTeresa={handleTeresaDiscuss}
-        teresaCommands={teresaCommands}
         // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
         // ff_evidencePanel (default OFF, patrz src/utils/evidencePanelFlag.ts).
         // OFF → prop `undefined` → nic się nie dokłada pod Powiązania → zero
