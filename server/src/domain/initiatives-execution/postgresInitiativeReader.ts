@@ -39,6 +39,7 @@ export interface SourceProposalReadModel {
 export interface InitiativeReadModel {
   version: number;
   initiative: RegisteredInitiative;
+  projectTitle?: string | null;
   updatedAt: string;
 }
 
@@ -1863,11 +1864,18 @@ export class PostgresInitiativeReader {
       aggregate_id: string;
       version: number;
       payload_json: RegisteredInitiative;
+      project_title: string | null;
       updated_at: Date | string;
     }>(
-      `SELECT aggregate_id, version, payload_json, updated_at
-         FROM ie_aggregate_state
-        WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = ANY($2::text[])`,
+      `SELECT s.aggregate_id, s.version, s.payload_json, s.updated_at,
+              p.name AS project_title
+         FROM ie_aggregate_state s
+         LEFT JOIN projects p
+           ON p.organization_id = s.organization_id
+          AND p.id = (s.payload_json->>'projectId')
+        WHERE s.organization_id = $1
+          AND s.aggregate_type = 'initiative'
+          AND s.aggregate_id = ANY($2::text[])`,
       [organizationId, unique]
     );
     return new Map(
@@ -1876,6 +1884,7 @@ export class PostgresInitiativeReader {
         {
           version: row.version,
           initiative: row.payload_json,
+          projectTitle: row.project_title,
           updatedAt:
             row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
         },

@@ -1,0 +1,16 @@
+import '../src/index.css';
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+import i18n from '../src/i18n';
+import ExecutionReportDay11Screen from './screens/execution-report-day11';
+
+const language = new URLSearchParams(window.location.search).get('lang') || 'en';
+void i18n.changeLanguage(language);
+
+createRoot(document.getElementById('dev-render-root')!).render(
+  <React.StrictMode>
+    <ExecutionReportDay11Screen />
+  </React.StrictMode>
+);

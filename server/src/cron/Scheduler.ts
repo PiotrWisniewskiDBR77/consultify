@@ -99,6 +99,26 @@ export async function runDecisionEscalationSchedulerTick(): Promise<void> {
   }
 }
 
+/** F2-2 E2: default-OFF weekly work-analysis generation, Monday at week start. */
+export async function runExecutionWorkAnalysisSchedulerTick(): Promise<void> {
+  if (process.env.ENABLE_EXECUTION_WORK_ANALYSIS !== 'true') return;
+  try {
+    const { generateWeeklyExecutionWorkAnalyses } = await import(
+      '../services/execution/executionWorkAnalysisService.js'
+    );
+    const result = await generateWeeklyExecutionWorkAnalyses();
+    logger.info('[Scheduler] Weekly execution work analyses generated', result);
+  } catch (err: any) {
+    logger.error('[Scheduler] Weekly execution work analysis failed:', err?.message || err);
+  }
+}
+
+export function registerExecutionWorkAnalysisJob(
+  schedule: typeof cron.schedule = cron.schedule
+): cron.ScheduledTask {
+  return schedule('0 5 * * 1', runExecutionWorkAnalysisSchedulerTick, { timezone: 'UTC' });
+}
+
 export function registerInternalBetaBackupJob(
   schedule: typeof cron.schedule = cron.schedule
 ): cron.ScheduledTask {
@@ -1049,6 +1069,9 @@ export const Scheduler = {
       timezone: 'UTC',
     });
     this.jobs.push(job46);
+
+    const job47 = registerExecutionWorkAnalysisJob();
+    this.jobs.push(job47);
 
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off), Admin IAM Alert Evaluation (Every 5min, default-on), Decision Escalation Sweep (Daily 00:10 UTC, default-on)'
