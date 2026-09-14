@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import type { PlanDependencyAnalysisResult } from '../../../services/ai/planDependencyAnalysisService.js';
+import { MaterialCommandConflictError } from '../materialCommand.js';
 import { createPlanAnalysisProposal } from '../planAnalysisProposal.js';
 import { PostgresInitiativeReader } from '../postgresInitiativeReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../postgresMaterialCommandUnitOfWork.js';
@@ -208,11 +209,38 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
       rolloutId,
     ]);
 
+    await pool.query(
+      `UPDATE ie_aggregate_state
+          SET version=4,
+              payload_json=jsonb_set(payload_json,'{scenarioVersion}','4'::jsonb)
+        WHERE organization_id=$1 AND aggregate_type='plan_scenario' AND aggregate_id=$2`,
+      [organizationId, scenarioId]
+    );
     const replay = await createPlanAnalysisProposal(uow, command, {
       prepareDependencyAnalysis: analyze,
     });
     expect(replay.status).toBe('REPLAYED');
     expect(replay.response).toEqual(result.response);
     expect(analyze).toHaveBeenCalledTimes(1);
+
+    const staleAnalyze = vi.fn().mockResolvedValue({
+      ...dependencyAnalysis,
+      inputScenarioVersion: 4,
+    });
+    await expect(
+      createPlanAnalysisProposal(
+        uow,
+        {
+          ...command,
+          aggregateId: `stale-${proposalId}`,
+          clientRequestId: randomUUID(),
+        },
+        { prepareDependencyAnalysis: staleAnalyze }
+      )
+    ).rejects.toMatchObject<Partial<MaterialCommandConflictError>>({
+      expectedVersion: 3,
+      currentVersion: 4,
+    });
+    expect(staleAnalyze).not.toHaveBeenCalled();
   });
 });

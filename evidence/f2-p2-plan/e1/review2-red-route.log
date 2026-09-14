@@ -1,0 +1,98 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 02:08:38:838 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 02:08:39:839 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 02:08:39:839 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 02:08:39:839 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 02:08:39:839 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 02:08:39:839 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 02:08:39:839 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > does not call AI or write a proposal when the flag is OFF 21ms
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a body scenario that differs from the URL before AI 4ms
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI 4ms
+ × server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > lets a stored receipt win after the source Plan version advances 7ms
+   → expected 409 to be 200 // Object.is equality
+ ❯ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts (4 tests | 1 failed) 38ms
+     ✓ does not call AI or write a proposal when the flag is OFF 21ms
+     ✓ rejects a body scenario that differs from the URL before AI 4ms
+     ✓ rejects a stale Plan aggregate version before AI 4ms
+     × lets a stored receipt win after the source Plan version advances 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > lets a stored receipt win after the source Plan version advances
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts:157:29
+    155|       });
+    156|
+    157|     expect(response.status).toBe(200);
+       |                             ^
+    158|     expect(response.body).toEqual(replay);
+    159|     expect(analyze).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  02:08:38
+   Duration  929ms (transform 539ms, setup 99ms, import 709ms, tests 38ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > lets a stored receipt win after the source Plan version advances
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts:157:29
+    155|       });
+    156|
+    157|     expect(response.status).toBe(200);
+       |                             ^
+    158|     expect(response.body).toEqual(replay);
+    159|     expect(analyze).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  02:08:38
+   Duration  934ms (transform 539ms, setup 99ms, import 709ms, tests 38ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
