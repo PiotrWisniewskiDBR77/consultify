@@ -33,7 +33,10 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '../../../../public/locales/en/translation.json';
+import pl from '../../../../public/locales/pl/translation.json';
 import { ProjectStageGatesPanel } from '../ProjectStageGatesPanel';
+
+const locale = vi.hoisted(() => ({ language: 'en' as 'en' | 'pl' }));
 
 const api = vi.hoisted(() => ({
   getProjectCurrentStageGate: vi.fn(),
@@ -46,14 +49,15 @@ vi.mock('@/services/api', () => ({ Api: api }));
 // EN zamiast atrapy `key`, żeby test na tekst statusu/przycisku miał sens.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'en' },
+    i18n: { language: locale.language },
     t: (key: string, fallback?: string | { defaultValue?: string }) => {
+      const dictionary = locale.language === 'pl' ? pl : en;
       const translated = key
         .split('.')
         .reduce<unknown>(
           (value, part) =>
             value && typeof value === 'object' ? (value as Record<string, unknown>)[part] : undefined,
-          en
+          dictionary
         );
       if (typeof translated === 'string') return translated;
       return typeof fallback === 'string' ? fallback : fallback?.defaultValue || key;
@@ -74,6 +78,7 @@ const MEASURED_PREVIEW_TABLE_BUDGET_PX = 285;
 describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    locale.language = 'en';
     api.getProjectCurrentStageGate.mockResolvedValue({
       currentPhase: 'Assessment',
       nextGate: 'DESIGN_GATE',
@@ -128,5 +133,35 @@ describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
     for (const button of buttons) {
       expect(button.className).not.toContain('whitespace-nowrap');
     }
+  });
+
+  it('przy polskim locale i szerokości 360 px zachowuje pełne „Zatwierdzona" oraz budżet Z-43', async () => {
+    locale.language = 'pl';
+    api.getProjectCurrentStageGate.mockResolvedValue({
+      currentPhase: 'Assessment',
+      nextGate: 'DESIGN_GATE',
+      gateType: 'DESIGN_GATE',
+      status: 'PASSED',
+      completionCriteria: [],
+      missingElements: [],
+    });
+
+    const { container } = render(
+      <div style={{ width: 360 }} data-testid="mobile-preview-360">
+        <ProjectStageGatesPanel projectId="project-1" />
+      </div>
+    );
+
+    const badge = await screen.findByText('Zatwierdzona');
+    expect(badge).toHaveClass('whitespace-nowrap');
+    expect(screen.getByTestId('mobile-preview-360')).toHaveStyle({ width: '360px' });
+
+    const widths = Array.from(container.querySelectorAll('th[data-column-id]')).map((th) =>
+      parseFloat((th as HTMLElement).style.width || '0')
+    );
+    expect(widths).toHaveLength(2);
+    expect(widths.reduce((sum, width) => sum + width, 0)).toBeLessThanOrEqual(
+      MEASURED_PREVIEW_TABLE_BUDGET_PX
+    );
   });
 });

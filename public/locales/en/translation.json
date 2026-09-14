@@ -4894,7 +4894,7 @@
       "subPrograms": "Sub-programs",
       "initiatives4": "initiatives",
       "noProjectsYet": "No projects yet",
-      "projectsCreatedInThe": "Projects created in the Initiatives module will appear here.",
+      "projectsCreatedInThe": "Projects created here will appear in this list.",
       "project2": "Project",
       "members2": "members",
       "initiatives5": "initiatives",
@@ -4951,7 +4951,6 @@
       },
       "approvalRoles": {
         "BUSINESS_AUTHORITY": "Business approver",
-        "GATE_AUTHORITY": "Stage-gate approver",
         "DOMAIN_AUTHORITY": "Domain approver",
         "GATE_REQUESTER": "Stage-gate requester"
       },
@@ -5032,7 +5031,7 @@
       "noTasksForThis": "No tasks for this project yet.",
       "emptyState": {
         "title": "No projects yet",
-        "description": "Projects created in the Initiatives module will appear here."
+        "description": "Projects created here will appear in this list."
       },
       "loadError": "Failed to load projects",
       "table": {

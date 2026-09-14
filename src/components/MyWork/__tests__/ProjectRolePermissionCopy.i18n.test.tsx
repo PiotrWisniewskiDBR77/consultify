@@ -19,7 +19,7 @@ const roles = [
   'WORKSTREAM_OWNER',
   'TASK_ASSIGNEE',
 ];
-const approvalRoles = ['BUSINESS_AUTHORITY', 'GATE_AUTHORITY', 'DOMAIN_AUTHORITY'];
+const approvalRoles = ['BUSINESS_AUTHORITY', 'DOMAIN_AUTHORITY', 'GATE_REQUESTER'];
 
 function OperatingModelLanguageSurface({ language }: { language: 'en' | 'pl' }) {
   const translate = createRealT(language);
@@ -72,7 +72,7 @@ describe('F2-3 E2 role permission localized behavior', () => {
       }
       expect(screen.getByRole('option', { name: language === 'pl' ? 'Sponsor projektu' : 'Project sponsor' })).toBeInTheDocument();
       expect(screen.getByTestId('approval-inputs')).toHaveTextContent(
-        language === 'pl' ? 'Osoba zatwierdzająca bramkę' : 'Stage-gate approver'
+        language === 'pl' ? 'Wnioskodawca bramki etapu' : 'Stage-gate requester'
       );
     });
   }
