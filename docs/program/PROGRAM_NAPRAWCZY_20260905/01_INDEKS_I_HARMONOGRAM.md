@@ -402,7 +402,7 @@ kolejnej promocji staging/demo i przy KAŻDYM akcepcie właściciela, nie jednor
 **Uzupełnienie DEC-496 (CTO, 14.09) — zgłoszenia Pawła P-P06…P-P13 (widget feedback, staging).**
 Zgłaszający: `pawel.mroczkowski@dbr77.com` (OWNER, org DBR77). Kontynuacja tabeli P-P01…P-P05;
 razem z tym uzupełnieniem Paweł ma **13 zgłoszeń** (5 + 8), wszystkie z widgetu, każde ze zrzutem
-i logami.
+i logami (uzupełnione niżej o P-P14/P-P15 — patrz „Z-2 cz. 4”, razem 15).
 
 | Nr | ID | Czas (UTC, 14.09) | Waga | Moduł | Opis | Stan |
 |---|---|---|---|---|---|---|
@@ -414,10 +414,15 @@ i logami.
 | P-P11 | `ceb436ce` | 04:31 | MEDIUM | Assessment | Zgłoszenie ogólne pilotażu (nawigacja, spójność danych) | do listy UX |
 | P-P12 | `b7ac5351` | 04:31 | MEDIUM | Assessment | Raport generuje się mimo pustych pól (większość obszarów bez danych) | naprawione `b7d27ccc30` — 🧪 na stagingu (fala A cz. 3) |
 | P-P13 | `56c2cc19` | 04:43 | MEDIUM | Presentations | Wygenerowane raporty oceny nie są widoczne w Materials/Documents (tylko lokalne pobranie) | naprawione `b7d27ccc30` — 🧪 na stagingu (fala A cz. 3); brak w Materials/Documents dla org QA = brak danych, nie defekt (potwierdzić na koncie z raportem) |
+| P-P14 | `66f30ed7` | 05:39 | MEDIUM | AI chat (dyktowanie) | Dyktowanie głosowe łamie się dla języków innych niż pl/en/de — `useUniversalVoice.ts:351` mapował `lang` tylko na te trzy warianty, reszta spadała na `pl-PL` | naprawione `c62541b62f` (pawel-0539) — 🧪 na stagingu (fala A cz. 4), poprawka `LANG_TO_BCP47` |
+| P-P15 | `2305a440` | 05:37 | LOW | Feedback (widget) | Dwa miejsca na zgłoszenie tego samego pomysłu (Report i Feature) | nie defekt — decyzja CTO: Report = tylko Bug, Feature → „Idea / Feature” |
 
 P-P10, P-P12, P-P13 zebrane w jedną gałąź Opus `integracja/kandydat-pawel-assessment-20260914`
 (wspólny obszar Assessment/raporty). P-P08/P-P09 pozostają decyzją produktu, nie defektem —
-skrót w raporcie Opus assessment. P-P11 ogólne — trafia do zbiorczej listy UX pilotażu.
+skrót w raporcie Opus assessment. P-P11 ogólne — trafia do zbiorczej listy UX pilotażu. P-P14
+naprawione gałęzią `pawel-0539` w falę A cz. 4; P-P15 nie jest defektem — zamknięte decyzją
+produktu. Razem Paweł ma **15 zgłoszeń**; licznik pilotażu ogółem (wszyscy zgłaszający,
+14.09) — **37**.
 
 **Fala A cz. 1 — WDROŻONA na staging 14.09 04:31 UTC.**
 Linia `c3ac90ca73` → `005ead2ece` (merge drobne `8a445ba920` + pilot-blokery `005ead2ece`), run
@@ -539,6 +544,44 @@ był tam zapisywany dla tej organizacji, ścieżka zapisu działa gdzie indziej 
 koncie z realnym raportem przed pełnym zamknięciem P-P13).
 Znaleziska: sesja DRD QA `8cdf5624` zostawiona na stagingu — „Delete” w kebabie listy Processes nie
 otwiera dialogu (**Z-18**, nowy defekt, nie regresja tej fali).
+
+**DEC-502 (14.09) — F2-E migracja: zgoda na wariant B (Codex, 14.09).** Codex wybrał wariant B
+(trwałe staging pełnego snapshotu asOf + trwałe części z SHA + idempotentny resume) — CTO zgadza
+się. Pula migracji: `20262200`–`20262219`. Warunki: addytywność (żadnej migracji nieodwracalnej
+bez punktu cofnięcia), STOP natychmiast po napisaniu SQL — bez zastosowania na żywej bazie bez
+osobnego przeglądu. KANAL wpis 23.
+
+**Codex wznowiony 14.09 01:23.** Po wklejeniu polecenia przez właściciela Codex potwierdził wpisy
+16–22 i otworzył pięć torów: **S1** paczka 5 D1–D4 (8–14 h), **S2** P1 Raport z pracy z PDF+SMTP
+(32–48 h), **S3** P2 Plan (32–48 h), **S4** F2-2 E2 Praca (24–36 h), **S5** F2-3 PMO E3
+(32–48 h). Follow-up XV/XVI/XVII (uwagi rdzenia Tomka) wchodzi jako
+`codex/interview-pilot-fixes-20260914` dopiero po S1; XIV odłożone na później. Codex usunął
+duplikat wpisu w `OD_CODEXA.md`.
+
+**Z-2 cz. 4 — w wdrożeniu (integrator, gałąź `integracja/kandydat-fala-a4-20260914`).**
+`drd-output-en` `744394e45e` + `answer-state-hints` `1efa59275f` + `pawel-0539` `c62541b62f`
+(P-P14: dyktowanie — `useUniversalVoice.ts:351` mapował `lang` tylko na pl/en/de, reszta spadała
+na `pl-PL`, naprawa przez `LANG_TO_BCP47`; P-P15: nie defekt, decyzja CTO — Report = tylko Bug,
+Feature → „Idea / Feature”) + `chunk-reload` `47f9fe7900` (Z-11: `MainLayout` leniwie ładowany
+ponad `RouteErrorBoundary`, więc trafiał w globalny `ErrorBoundary` bez automatycznego odświeżenia;
+teraz `chunkLoadRecovery` + `ChunkUpdateBanner` + guard `vite:preloadError`). Tabela P-P uzupełniona
+o P-P14 (`66f30ed7`, 05:39, dyktowanie) i P-P15 (`2305a440`, 05:37, dwa miejsca na pomysł) — razem
+Paweł **15**, pilotaż ogółem **37**. Karta Pawła „zablokowany” 06:1x to stara karta sprzed
+wdrożenia fali A cz. 3 (konto/limity/sesje/czat zwracały 200 — dowód w `LOG_APPLY_20260914.md`);
+instrukcja dla Pawła: wyloguj się i odśwież stronę; systemowa naprawa = Z-11 (patrz wyżej).
+
+**Dług znaleziony 14.09 (uzupełnienie, g–j):**
+(g) `VITE_BUILD_SHA`/`VITE_GIT_SHA` używane w `AppContext.ts:72`, nigdy nie wstrzykiwane w
+buildzie (fantom) — potrzebne do porównania wersji klient/serwer; (h) deep-link
+`/admin/ai-operations` spada do Members; (i) 12 zastanych czerwonych testów DRD/czatu (lista w
+bramce fali A cz. 3/cz. 4) — do osobnego dyżuru; (j) sesja DRD QA `8cdf5624` w org QA Fable
+zostawiona (Delete w kebabie nie działa, Z-18).
+
+**Dysk 14.09 ~07:00 UTC.** 12 GiB wolne (99 % zajęte); worktree nadzorcy `wt/*` 55 GB,
+worktree Codexa `codex-wt/*` 57 GB (5 nowych torów po ~3,9 GB każdy). Bundle z sierpnia nadal
+nieusunięty: `Consultify-safety-checkpoints` 20 GB + `consultify-cleanup-recovery-20260815` 12 GB +
+`canonical` 7 GB — decyzja właściciela o usunięciu (Z-19). Codex dostał polecenie czystki
+(KANAL wpis 23). CTO kasuje worktree po każdym scaleniu.
 
 ---
 
