@@ -1490,7 +1490,7 @@ export const ExecutionWorkSurface = ({
     onRegisterFilterControl(
       <div className={MENU_2_FILTERS_ROW}>
         <select
-          aria-label="Execution Case for work"
+          aria-label={t('execution.work.aria.executionCaseForWork', 'Execution Case for work')}
           value={caseId}
           className={MENU_2_FILTER_SELECT}
           onChange={(e) => {
@@ -1625,7 +1625,7 @@ export const ExecutionWorkSurface = ({
   // propa `onRegisterFilterControl` powyżej. Rejestruje `null` w widoku
   // dokumentu (documentId) — tam nie ma listy do filtrowania.
   return (
-    <section aria-label="Execution Work" className="flex h-full min-h-0 flex-col p-4">
+    <section aria-label={t('execution.work.aria.executionWork', 'Execution Work')} className="flex h-full min-h-0 flex-col p-4">
       {/* Cichy pasek informacyjny — JEDNO miejsce na komunikaty o stanie
           danych w tej zakładce, tuż pod Menu 3 i nad tabelą (nigdy w Menu 2). */}
       {degradedBanner}
@@ -2283,7 +2283,7 @@ export const ExecutionWorkSurface = ({
       )}
       {showWorkspace && selected && (
         <section
-          aria-label="Execution Work item workspace"
+          aria-label={t('execution.work.aria.executionWorkItemWorkspace', 'Execution Work item workspace')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="flex items-center justify-between">
@@ -2312,7 +2312,7 @@ export const ExecutionWorkSurface = ({
       )}
       {!documentId && caseId && (
         <section
-          aria-label="Execution Milestones"
+          aria-label={t('execution.work.aria.executionMilestones', 'Execution Milestones')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <h3 className="font-semibold">{t('execution.work.milestones', 'Milestones')}</h3>
@@ -2396,7 +2396,7 @@ export const ExecutionWorkSurface = ({
       )}
       {caseId && (toolMode === 'TASK' || toolMode === 'DECISION') && (
         <section
-          aria-label="Execution Workbench"
+          aria-label={t('execution.work.aria.executionWorkbench', 'Execution Workbench')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -2463,16 +2463,19 @@ export const ExecutionWorkSurface = ({
                     {selected.status === 'PENDING' && (
                       <>
                         <button className="btn-secondary" onClick={() => void act('APPROVED')}>
-                          APPROVED
+                          {t('execution.work.decision.approved', 'APPROVED')}
                         </button>
                         <button
                           className="btn-secondary"
                           onClick={() => void act('CONDITIONALLY_APPROVED')}
                         >
-                          CONDITIONALLY_APPROVED
+                          {t(
+                            'execution.work.decision.conditionallyApproved',
+                            'CONDITIONALLY_APPROVED'
+                          )}
                         </button>
                         <button className="btn-secondary" onClick={() => void act('RETURNED')}>
-                          RETURNED
+                          {t('execution.work.decision.returned', 'RETURNED')}
                         </button>
                       </>
                     )}

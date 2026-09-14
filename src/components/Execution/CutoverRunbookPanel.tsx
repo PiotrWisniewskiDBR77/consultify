@@ -142,7 +142,9 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
       data-testid="cutover-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-c-text">Cutover runbook + rollback</h3>
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('execution.rollout.cutover.title', 'Cutover runbook + rollback')}
+        </h3>
         {runbook && (
           <span className="text-xs text-c-text-muted">
             {t('execution.rollout.cutover.stepCount', '{{count}} steps', {
@@ -213,7 +215,7 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
                   </span>
                   {step.isRollback && (
                     <span className="rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
-                      ROLLBACK
+                      {t('execution.rollout.cutover.rollbackBadge', 'ROLLBACK')}
                     </span>
                   )}
                   <span

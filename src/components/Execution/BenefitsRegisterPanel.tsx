@@ -157,7 +157,7 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
                     <div className="flex items-center gap-1">
                       {b.source === HANDOFF_SOURCE && (
                         <span className="inline-block rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-                          handoff M14
+                          {t('execution.rollout.benefits.handoffBadge', 'handoff M14')}
                         </span>
                       )}
                       <span
