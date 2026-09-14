@@ -5,6 +5,16 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 // instancję i18n wprost. Ekran awarii i tak nie przerysowuje się po zmianie
 // języka (użytkownik trafia tu raz, po czym przeładowuje stronę).
 import i18n from '@/i18n';
+// Z-11 (2026-09-14): JEDEN mechanizm wykrywania/naprawy "nieistniejący chunk
+// po wdrożeniu", dzielony z `ErrorBoundary` (powłoka wyżej, łapie awarię
+// samego `MainLayout`) i z globalnym listenerem `vite:preloadError`
+// (src/bootstrap/installChunkReloadGuard.ts) — nie osobna implementacja per trasa.
+import {
+  announceChunkUpdateAvailable,
+  attemptChunkReload,
+  hasAlreadyAttemptedChunkReload,
+  isChunkLoadError,
+} from '@/utils/chunkLoadRecovery';
 
 interface Props {
   children: ReactNode;
@@ -15,6 +25,9 @@ interface State {
   hasError: boolean;
   error: Error | null;
   didAutoReload: boolean;
+  // Już próbowaliśmy raz w tej sesji (globalnie, nie per trasa) i chunk
+  // nadal brakuje — pokaż baner "nowa wersja", nie generyczny ekran awarii.
+  chunkReloadExhausted: boolean;
   telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
 }
 
@@ -31,6 +44,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       didAutoReload: false,
+      chunkReloadExhausted: false,
       telemetryDelivery: 'idle',
     };
   }
@@ -40,6 +54,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       hasError: true,
       error,
       didAutoReload: false,
+      chunkReloadExhausted: false,
       telemetryDelivery: 'idle',
     };
   }
@@ -73,18 +88,17 @@ export class RouteErrorBoundary extends Component<Props, State> {
     }
 
     // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
-    // but users shouldn't have to click anything. Guard against infinite reload loops by allowing
-    // only one auto-reload per path per session.
+    // but users shouldn't have to click anything. Guard against infinite reload loops via the
+    // shared, session-wide (not per-path) one-time flag in chunkLoadRecovery.ts.
     if (this.shouldHardReload(error) && !this.state.didAutoReload) {
       try {
-        const path = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
-        const key = `__route_error_boundary_hard_reload__:${path}`;
-        const already = typeof window !== 'undefined' ? window.sessionStorage.getItem(key) : '1';
-        if (!already && typeof window !== 'undefined') {
-          window.sessionStorage.setItem(key, String(Date.now()));
+        if (hasAlreadyAttemptedChunkReload()) {
+          this.setState({ chunkReloadExhausted: true });
+          announceChunkUpdateAvailable();
+        } else {
           this.setState({ didAutoReload: true }, () => {
             // Slight delay so logs/state flush before reload.
-            setTimeout(() => window.location.reload(), 50);
+            setTimeout(() => attemptChunkReload(), 50);
           });
         }
       } catch {
@@ -97,17 +111,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
   }
 
   private shouldHardReload(error: Error | null): boolean {
-    const msg = `${String(error || '')}\n${String((error as any)?.message || '')}`;
-    // Common cases:
-    // - Vite dev: "Outdated Optimize Dep" / 504
-    // - Vite/Prod: dynamic import chunk missing / stale bundle after deploy
-    return (
-      msg.includes('Outdated Optimize Dep') ||
-      msg.includes('Failed to fetch dynamically imported module') ||
-      msg.includes('dynamically imported module') ||
-      msg.includes('Importing a module script failed') ||
-      msg.includes('module script failed')
-    );
+    return isChunkLoadError(error);
   }
 
   handleReset = () => {
@@ -149,6 +153,37 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Z-11: already used the one automatic reload this session and the
+      // chunk is STILL missing — show the "new version, refresh" banner
+      // instead of the generic route-crash screen (same UI as
+      // ErrorBoundary's equivalent state, for one consistent mechanism).
+      if (this.state.chunkReloadExhausted) {
+        return (
+          <div className="flex items-center justify-center min-h-screen bg-c-bg p-4">
+            <div
+              role="alert"
+              aria-live="assertive"
+              data-testid="route-error-boundary-chunk-update-banner"
+              className="max-w-md w-full bg-c-surface border border-c-border rounded-lg shadow-lg p-8 text-center"
+            >
+              <p className="mb-4 text-c-text">
+                {i18n.t(
+                  'errors.chunkUpdate.message',
+                  'A new version of the app is available — refresh the page.'
+                )}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-c-text text-c-surface rounded-lg font-medium hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus"
+              >
+                <RefreshCw className="w-4 h-4" />
+                {i18n.t('errors.chunkUpdate.action', 'Refresh')}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       // Custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback;

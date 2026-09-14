@@ -3,6 +3,12 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 // Komponent KLASOWY — bez dostepu do `useTranslation`; ekran awarii nie
 // przerysowuje sie po zmianie jezyka, wiec instancja i18n wystarczy.
 import i18n from '@/i18n';
+import {
+  announceChunkUpdateAvailable,
+  attemptChunkReload,
+  hasAlreadyAttemptedChunkReload,
+  isChunkLoadError,
+} from '@/utils/chunkLoadRecovery';
 
 import { addFeedbackBreadcrumb } from '../services/feedbackCollector';
 
@@ -15,6 +21,15 @@ interface State {
   error: Error | null;
   componentStack: string | null;
   telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
+  // Z-11 (2026-09-14): `ErrorBoundary` jest ta powłoka, w której ląduje błąd
+  // ładowania chunku `MainLayout` (lazy-loaded WYŻEJ niż `RouteErrorBoundary`,
+  // patrz routes/AppRoutes.tsx) — karta otwarta przed wdrożeniem prosi o plik
+  // usunięty przez nowy build. `chunkReloadPending` = trwa jednorazowe
+  // auto-przeładowanie (nie pokazujemy strasznego ekranu awarii na te ~50ms);
+  // `chunkReloadExhausted` = już próbowaliśmy raz w tej sesji i nadal się
+  // wywala → pokazujemy baner "nowa wersja", nie "Reset Application Data".
+  chunkReloadPending: boolean;
+  chunkReloadExhausted: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -23,10 +38,19 @@ export class ErrorBoundary extends Component<Props, State> {
     error: null,
     componentStack: null,
     telemetryDelivery: 'idle',
+    chunkReloadPending: false,
+    chunkReloadExhausted: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, componentStack: null, telemetryDelivery: 'idle' };
+    return {
+      hasError: true,
+      error,
+      componentStack: null,
+      telemetryDelivery: 'idle',
+      chunkReloadPending: false,
+      chunkReloadExhausted: false,
+    };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -35,6 +59,20 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('[ErrorBoundary] Error stack:', error.stack);
 
     this.setState({ componentStack: errorInfo.componentStack || null });
+
+    if (isChunkLoadError(error)) {
+      if (!hasAlreadyAttemptedChunkReload()) {
+        this.setState({ chunkReloadPending: true });
+        // Slight delay so telemetry below has a chance to fire before we
+        // navigate away — same reasoning as RouteErrorBoundary.
+        setTimeout(() => {
+          attemptChunkReload();
+        }, 50);
+      } else {
+        this.setState({ chunkReloadExhausted: true });
+        announceChunkUpdateAvailable();
+      }
+    }
 
     try {
       addFeedbackBreadcrumb({
@@ -118,6 +156,47 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public render() {
+    // Z-11: chunk missing after a deploy, first attempt in this session —
+    // reload is already scheduled (componentDidCatch), don't flash the
+    // scary crash screen for the ~50ms until it fires.
+    if (this.state.hasError && this.state.chunkReloadPending) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-c-bg text-c-text p-6">
+          <p data-testid="error-boundary-chunk-reload-pending" className="text-sm text-c-text-secondary">
+            {i18n.t('errors.chunkUpdate.message', 'A new version of the app is available — refresh the page.')}
+          </p>
+        </div>
+      );
+    }
+
+    // Z-11: already tried the one automatic reload this session and the
+    // chunk is STILL missing (stale CDN/edge cache) — show the same
+    // "new version, refresh" banner instead of the generic crash UI, with
+    // an explicit action button (in case the persistent top banner didn't
+    // mount, e.g. this boundary caught before ChunkUpdateBanner rendered).
+    if (this.state.hasError && this.state.chunkReloadExhausted) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-c-bg text-c-text p-6">
+          <div
+            role="alert"
+            aria-live="assertive"
+            data-testid="error-boundary-chunk-update-banner"
+            className="max-w-md w-full bg-c-surface border border-c-border rounded-xl p-8 shadow-2xl text-center"
+          >
+            <p className="mb-4 text-c-text">
+              {i18n.t('errors.chunkUpdate.message', 'A new version of the app is available — refresh the page.')}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full py-3 bg-c-text text-c-surface rounded-lg font-bold hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus"
+            >
+              {i18n.t('errors.chunkUpdate.action', 'Refresh')}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
