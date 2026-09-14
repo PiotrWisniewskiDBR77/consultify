@@ -19,6 +19,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { LLMProviderConfig } from '../../types/domain/ai';
 
@@ -54,6 +55,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   loading = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [models, setModels] = useState<LLMProviderConfig[]>(availableModels);
 
   useEffect(() => {
@@ -118,18 +120,20 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       case 'healthy':
         return (
           <span className="flex items-center gap-1 text-emerald-400">
+            {/* "Online" left as literal: PL loanword is identical to EN */}
             <Wifi className="w-3 h-3" /> Online
           </span>
         );
       case 'degraded':
         return (
           <span className="flex items-center gap-1 text-amber-400">
-            <AlertCircle className="w-3 h-3" /> Degraded
+            <AlertCircle className="w-3 h-3" /> {t('settings.modelSelector.status.degraded', 'Degraded')}
           </span>
         );
       case 'unhealthy':
         return (
           <span className="flex items-center gap-1 text-danger-400">
+            {/* "Offline" left as literal: PL loanword is identical to EN */}
             <WifiOff className="w-3 h-3" /> Offline
           </span>
         );
@@ -154,14 +158,16 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Cpu className="w-5 h-5 text-c-accent" />
-          <h3 className="font-semibold text-c-text">AI Models</h3>
+          <h3 className="font-semibold text-c-text">
+            {t('settings.modelSelector.header', 'AI Models')}
+          </h3>
         </div>
         {value && (
           <button
             onClick={() => onChange(null)}
             className="text-xs text-c-text-muted hover:text-c-text dark:hover:text-white transition-colors"
           >
-            Clear selection
+            {t('settings.modelSelector.clearSelection', 'Clear selection')}
           </button>
         )}
       </div>
@@ -263,7 +269,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                             : 'bg-c-surface-raised text-c-text-muted hover:text-c-text-secondary'
                                         }
                                     `}
-                  title={isVisible ? 'Hide model' : 'Show model'}
+                  title={
+                    isVisible
+                      ? t('settings.modelSelector.hideModel', 'Hide model')
+                      : t('settings.modelSelector.showModel', 'Show model')
+                  }
                 >
                   {isVisible ? <Eye className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                 </button>
@@ -277,9 +287,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {models.length === 0 && !loading && (
         <div className="text-center py-8">
           <Cpu className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
-          <p className="text-c-text-muted">No models available</p>
+          <p className="text-c-text-muted">
+            {t('settings.modelSelector.emptyTitle', 'No models available')}
+          </p>
           <p className="text-sm text-c-text-muted mt-1">
-            Contact your administrator to enable AI models
+            {t(
+              'settings.modelSelector.emptyBody',
+              'Contact your administrator to enable AI models',
+            )}
           </p>
         </div>
       )}

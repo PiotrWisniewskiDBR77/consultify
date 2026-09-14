@@ -8,10 +8,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronRight, Pause, Scale, X, Zap } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AIProactivityMode, ProactivityBehavior } from '../../types';
 
-// Mode configurations
+// Mode configurations (title/description text lives in i18n — see MODE_TEXT_KEYS below)
 const MODE_CONFIG: Record<
   AIProactivityMode,
   {
@@ -100,6 +101,13 @@ const MODE_CONFIG: Record<
 
 const MODES: AIProactivityMode[] = ['REACTIVE', 'BALANCED', 'PROACTIVE'];
 
+// i18n key prefix per mode — English defaults come from MODE_CONFIG above.
+const MODE_KEY: Record<AIProactivityMode, string> = {
+  REACTIVE: 'reactive',
+  BALANCED: 'balanced',
+  PROACTIVE: 'proactive',
+};
+
 interface ProactivitySelectorProps {
   value: AIProactivityMode;
   onChange: (mode: AIProactivityMode) => void;
@@ -119,6 +127,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
   showBehaviors = true,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const maxIndex = MODES.indexOf(maxAllowed);
   const selectedConfig = MODE_CONFIG[value];
   const Icon = selectedConfig.icon;
@@ -126,6 +135,19 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
   const isAllowed = (mode: AIProactivityMode) => {
     return MODES.indexOf(mode) <= maxIndex;
   };
+
+  const modeTitle = (mode: AIProactivityMode) =>
+    t(`settings.proactivitySelector.mode.${MODE_KEY[mode]}.title`, MODE_CONFIG[mode].title);
+  const modeShortDescription = (mode: AIProactivityMode) =>
+    t(
+      `settings.proactivitySelector.mode.${MODE_KEY[mode]}.shortDescription`,
+      MODE_CONFIG[mode].shortDescription,
+    );
+  const modeLongDescription = (mode: AIProactivityMode) =>
+    t(
+      `settings.proactivitySelector.mode.${MODE_KEY[mode]}.longDescription`,
+      MODE_CONFIG[mode].longDescription,
+    );
 
   if (compact) {
     return (
@@ -165,7 +187,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
           );
         })}
         <span className={`ml-2 text-sm font-medium ${selectedConfig.color}`}>
-          {selectedConfig.title}
+          {modeTitle(value)}
         </span>
       </div>
     );
@@ -176,9 +198,13 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
       {/* Header */}
       <div className="flex items-center gap-2">
         <Icon className={`w-5 h-5 ${selectedConfig.color}`} />
-        <h3 className="text-lg font-semibold text-navy-900">AI Proactivity</h3>
+        <h3 className="text-lg font-semibold text-navy-900">
+          {t('settings.proactivitySelector.header', 'AI Proactivity')}
+        </h3>
       </div>
-      <p className="text-sm text-c-text-muted">How should AI interact with you?</p>
+      <p className="text-sm text-c-text-muted">
+        {t('settings.proactivitySelector.subtitle', 'How should AI interact with you?')}
+      </p>
 
       {/* Mode Selector Cards */}
       <div className="grid grid-cols-3 gap-3">
@@ -238,17 +264,17 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
 
               {/* Title */}
               <h4 className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900'}`}>
-                {config.title}
+                {modeTitle(mode)}
               </h4>
 
               {/* Short description */}
-              <p className="text-xs text-c-text-muted">{config.shortDescription}</p>
+              <p className="text-xs text-c-text-muted">{modeShortDescription(mode)}</p>
 
               {/* Locked indicator */}
               {!allowed && (
                 <div className="absolute inset-0 rounded-xl bg-c-surface-raised flex items-center justify-center">
                   <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-1 rounded">
-                    Org limit
+                    {t('settings.proactivitySelector.orgLimit', 'Org limit')}
                   </span>
                 </div>
               )}
@@ -283,10 +309,12 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className={`font-semibold ${selectedConfig.color} mb-1`}>
-                  {selectedConfig.title} Mode
+                  {t('settings.proactivitySelector.modeHeading', '{{title}} Mode', {
+                    title: modeTitle(value),
+                  })}
                 </h4>
                 <p className="text-sm text-c-text-secondary mb-3">
-                  {selectedConfig.longDescription}
+                  {modeLongDescription(value)}
                 </p>
 
                 {/* Behavior flags */}
@@ -299,7 +327,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                         <X className="w-3.5 h-3.5 text-c-text-muted" />
                       )}
                       <span className={enabled ? 'text-c-text-secondary' : 'text-c-text-muted'}>
-                        {formatBehaviorKey(key)}
+                        {formatBehaviorKey(t, key)}
                       </span>
                     </div>
                   ))}
@@ -314,14 +342,16 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
 };
 
 // Helper to format behavior key names
-function formatBehaviorKey(key: string): string {
+function formatBehaviorKey(t: (key: string, defaultValue: string) => string, key: string): string {
   const labels: Record<string, string> = {
     autoSuggest: 'Auto-suggestions',
     nudges: 'Proactive nudges',
     contextualHints: 'Contextual hints',
     initiateConversation: 'Start conversations',
   };
-  return labels[key] || key;
+  const fallback = labels[key] || key;
+  if (!labels[key]) return fallback;
+  return t(`settings.proactivitySelector.behavior.${key}`, fallback);
 }
 
 export default ProactivitySelector;

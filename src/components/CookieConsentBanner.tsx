@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Cookie, Settings, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CookiePreferences {
   necessary: boolean;
@@ -17,6 +18,7 @@ const DEFAULT_PREFERENCES: CookiePreferences = {
 };
 
 export const CookieConsentBanner: React.FC = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>(DEFAULT_PREFERENCES);
@@ -119,16 +121,18 @@ export const CookieConsentBanner: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                       <Cookie className="w-5 h-5 lg:hidden text-primary-600" />
-                      We use cookies
+                      {t('settings.cookieConsentBanner.title', 'We use cookies')}
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                      We use cookies to enhance your experience, analyze traffic, and personalize
-                      content. You can customize your preferences or accept all cookies.{' '}
+                      {t(
+                        'settings.cookieConsentBanner.body',
+                        'We use cookies to enhance your experience, analyze traffic, and personalize content. You can customize your preferences or accept all cookies.',
+                      )}{' '}
                       <a
                         href="/legal/cookies"
                         className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
                       >
-                        Learn more
+                        {t('settings.cookieConsentBanner.learnMore', 'Learn more')}
                       </a>
                     </p>
                   </div>
@@ -143,7 +147,7 @@ export const CookieConsentBanner: React.FC = () => {
                                                        flex items-center justify-center gap-2"
                     >
                       <Settings size={16} />
-                      Customize
+                      {t('settings.cookieConsentBanner.customize', 'Customize')}
                     </button>
                     <button
                       onClick={acceptNecessary}
@@ -151,13 +155,13 @@ export const CookieConsentBanner: React.FC = () => {
                                                        border border-slate-200 dark:border-navy-700 rounded-lg
                                                        hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                     >
-                      Necessary Only
+                      {t('settings.cookieConsentBanner.necessaryOnly', 'Necessary Only')}
                     </button>
                     <button
                       onClick={acceptAll}
                       className="px-6 py-2.5 text-sm font-semibold bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors shadow-lg"
                     >
-                      Accept All
+                      {t('settings.cookieConsentBanner.acceptAll', 'Accept All')}
                     </button>
                   </div>
                 </div>
@@ -177,32 +181,44 @@ export const CookieConsentBanner: React.FC = () => {
                       <div className="space-y-4">
                         {/* Necessary Cookies */}
                         <CookieCategory
-                          title="Strictly Necessary"
-                          description="Essential for the platform to function. Cannot be disabled."
+                          title={t('settings.cookieConsentBanner.category.necessary.title', 'Strictly Necessary')}
+                          description={t(
+                            'settings.cookieConsentBanner.category.necessary.description',
+                            'Essential for the platform to function. Cannot be disabled.',
+                          )}
                           enabled={preferences.necessary}
                           locked={true}
                         />
 
                         {/* Functional Cookies */}
                         <CookieCategory
-                          title="Functional"
-                          description="Remember your preferences like theme and language."
+                          title={t('settings.cookieConsentBanner.category.functional.title', 'Functional')}
+                          description={t(
+                            'settings.cookieConsentBanner.category.functional.description',
+                            'Remember your preferences like theme and language.',
+                          )}
                           enabled={preferences.functional}
                           onToggle={() => togglePreference('functional')}
                         />
 
                         {/* Analytics Cookies */}
                         <CookieCategory
-                          title="Analytics"
-                          description="Help us understand how you use the platform to improve it."
+                          title={t('settings.cookieConsentBanner.category.analytics.title', 'Analytics')}
+                          description={t(
+                            'settings.cookieConsentBanner.category.analytics.description',
+                            'Help us understand how you use the platform to improve it.',
+                          )}
                           enabled={preferences.analytics}
                           onToggle={() => togglePreference('analytics')}
                         />
 
                         {/* Marketing Cookies */}
                         <CookieCategory
-                          title="Marketing"
-                          description="Used for personalized advertising. Currently not in use."
+                          title={t('settings.cookieConsentBanner.category.marketing.title', 'Marketing')}
+                          description={t(
+                            'settings.cookieConsentBanner.category.marketing.description',
+                            'Used for personalized advertising. Currently not in use.',
+                          )}
                           enabled={preferences.marketing}
                           onToggle={() => togglePreference('marketing')}
                           disabled={true}
@@ -216,7 +232,7 @@ export const CookieConsentBanner: React.FC = () => {
                           className="px-6 py-2.5 text-sm font-semibold bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors flex items-center gap-2"
                         >
                           <Check size={16} />
-                          Save Preferences
+                          {t('settings.cookieConsentBanner.savePreferences', 'Save Preferences')}
                         </button>
                       </div>
                     </div>
@@ -249,6 +265,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
   disabled = false,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   return (
     <div
       className={`flex items-center justify-between p-4 rounded-xl bg-white dark:bg-navy-900
@@ -262,7 +279,7 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
               className="px-2 py-0.5 text-[10px] font-bold uppercase bg-slate-100 dark:bg-white/10
                                          text-slate-500 dark:text-slate-400 rounded"
             >
-              Required
+              {t('settings.cookieConsentBanner.category.required', 'Required')}
             </span>
           )}
         </div>

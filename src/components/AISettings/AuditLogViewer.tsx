@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { AISettingsAuditEntry } from '../../types';
@@ -41,6 +42,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
   showExport = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<AISettingsAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +129,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return '—';
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (typeof value === 'boolean')
+      return value
+        ? t('settings.auditLogViewer.valueYes', 'Yes')
+        : t('settings.auditLogViewer.valueNo', 'No');
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
@@ -172,8 +177,16 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <History className="w-5 h-5 text-c-accent" />
-          <h3 className="font-semibold text-c-text">Settings Audit Log</h3>
-          <span className="text-xs text-c-text-muted">({filteredEntries.length} entries)</span>
+          <h3 className="font-semibold text-c-text">
+            {t('settings.auditLogViewer.header', 'Settings Audit Log')}
+          </h3>
+          <span className="text-xs text-c-text-muted">
+            (
+            {t('settings.auditLogViewer.entriesCount', '{{count}} entries', {
+              count: filteredEntries.length,
+            })}
+            )
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -181,7 +194,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             <button
               onClick={exportToCSV}
               className="p-2 text-c-text-secondary hover:text-c-text transition-colors"
-              title="Export CSV"
+              title={t('settings.auditLogViewer.exportCsv', 'Export CSV')}
             >
               <Download className="w-4 h-4" />
             </button>
@@ -190,7 +203,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             onClick={fetchAuditLog}
             disabled={loading}
             className="p-2 text-c-text-secondary hover:text-c-text transition-colors"
-            title="Refresh"
+            title={t('settings.auditLogViewer.refresh', 'Refresh')}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -227,7 +240,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-muted" />
                 <input
                   type="text"
-                  placeholder="Search settings..."
+                  placeholder={t('settings.auditLogViewer.searchPlaceholder', 'Search settings...')}
                   value={filterSearch}
                   onChange={(e) => setFilterSearch(e.target.value)}
                   className="
@@ -259,10 +272,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                         focus:outline-none focus:border-c-focus-solid
                                     "
                 >
-                  <option value="">All levels</option>
+                  <option value="">{t('settings.auditLogViewer.levelAll', 'All levels')}</option>
                   <option value="superadmin">SuperAdmin</option>
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
+                  <option value="admin">{t('settings.auditLogViewer.levelAdmin', 'Admin')}</option>
+                  <option value="user">{t('settings.auditLogViewer.levelUser', 'User')}</option>
                 </select>
               )}
             </div>
@@ -290,7 +303,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {!loading && !filteredEntries.length && (
         <div className="text-center py-8">
           <History className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
-          <p className="text-c-text-secondary">No audit entries found</p>
+          <p className="text-c-text-secondary">
+            {t('settings.auditLogViewer.emptyState', 'No audit entries found')}
+          </p>
         </div>
       )}
 
