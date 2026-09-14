@@ -8,8 +8,7 @@ DELETE 3
 DELETE 3
 DELETE 1
 COMMIT
-                                                                               json_build_object                                                                               
+                                                                               json_build_object
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  {"organizations" : 0, "users" : 0, "members" : 0, "sessions" : 0, "questions" : 0, "assignments" : 0, "commands" : 0, "decisions" : 0, "policies" : 0, "policy_versions" : 0}
 (1 row)
-
