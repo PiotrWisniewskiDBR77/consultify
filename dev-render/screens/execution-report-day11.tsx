@@ -1,10 +1,15 @@
 import React from 'react';
 
+import { ExecutionHub } from '../../src/components/Execution/ExecutionHub';
 import { ExecutionReportsSurface } from '../../src/components/Execution/ExecutionReportsSurface';
 import { ControlLoopReport } from '../../src/components/Execution/reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from '../../src/components/Execution/reports-intelligence/ResourcesCapacityReport';
 import { UnifiedExecutionReportGenerator } from '../../src/components/Execution/reports-intelligence/UnifiedExecutionReportGenerator';
 import { WorkIntelligenceReport } from '../../src/components/Execution/reports-intelligence/WorkIntelligenceReport';
+import { AppProviders } from '../../src/providers/AppProviders';
+import { seedRealisticSession } from '../mocks/seedStore';
+
+seedRealisticSession();
 
 const response = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), {
@@ -16,6 +21,11 @@ const installFixtureTransport = (state: string) => {
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (state === 'error') return response({ error: 'Controlled dev-render failure' }, 503);
+    if (/\/api\/tasks(?:\?|$)/.test(url)) return response([]);
+    if (/\/api\/initiatives(?:\?|$)/.test(url)) return response([]);
+    if (/\/api\/organizations\/[^/]+\/members(?:\?|$)/.test(url)) return response([]);
+    if (/\/api\/tasks\/workflow-config(?:\?|$)/.test(url))
+      return response({ statuses: ['todo', 'in_progress', 'blocked', 'done'], transitions: {} });
     if (url.includes('/report-definitions/def-weekly'))
       return response({
         definitionId: 'def-weekly',
@@ -217,6 +227,15 @@ export function ExecutionReportDay11Screen(): React.ReactElement {
   const state = params.get('state') || 'ready';
   document.documentElement.classList.toggle('dark', params.get('theme') === 'dark');
   installFixtureTransport(state);
+  if (report === 'work-shell') {
+    return (
+      <AppProviders>
+        <div className="h-screen bg-c-surface text-c-text">
+          <ExecutionHub initialTab={'work' as never} />
+        </div>
+      </AppProviders>
+    );
+  }
   return (
     /*
      * HARNESS-ONLY FIX (2026-09-02, pomiar --wysokosc): `min-h-screen`
