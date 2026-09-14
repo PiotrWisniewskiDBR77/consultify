@@ -11445,7 +11445,17 @@
       "CLOSED": "Closed",
       "REJECTED": "Rejected",
       "ON_HOLD": "On hold",
-      "unknown": "Unknown status"
+      "unknown": "Unknown status",
+      "pendingReview": "Pending review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
     },
     "statusDescription": {
       "PROPOSED": "A submitted proposal, waiting to become a draft",
