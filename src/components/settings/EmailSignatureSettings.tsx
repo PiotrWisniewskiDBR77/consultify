@@ -94,7 +94,7 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
 
   const handleSave = async () => {
     if (!formName.trim() || !formContent.trim()) {
-      toast.error('Please fill in all fields');
+      toast.error(t('settings.signatures.toastFillAllFields', 'Please fill in all fields'));
       return;
     }
 
@@ -107,7 +107,7 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
           isDefault: signatures.length === 0,
         });
         setSignatures([...signatures, response.signature]);
-        toast.success('Signature created');
+        toast.success(t('settings.signatures.toastCreated', 'Signature created'));
       } else if (editingId) {
         await Api.put(`/api/settings/signatures/${editingId}`, {
           name: formName,
@@ -118,11 +118,11 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
             s.id === editingId ? { ...s, name: formName, content: formContent } : s
           )
         );
-        toast.success('Signature updated');
+        toast.success(t('settings.signatures.toastUpdated', 'Signature updated'));
       }
       handleCancel();
     } catch (error) {
-      toast.error('Failed to save signature');
+      toast.error(t('settings.signatures.toastSaveFailed', 'Failed to save signature'));
     } finally {
       setSaving(false);
     }
@@ -134,9 +134,9 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
     try {
       await Api.delete(`/api/settings/signatures/${id}`);
       setSignatures(signatures.filter((s) => s.id !== id));
-      toast.success('Signature deleted');
+      toast.success(t('settings.signatures.toastDeleted', 'Signature deleted'));
     } catch (error) {
-      toast.error('Failed to delete signature');
+      toast.error(t('settings.signatures.toastDeleteFailed', 'Failed to delete signature'));
     }
   };
 
@@ -149,15 +149,15 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
           isDefault: s.id === id,
         }))
       );
-      toast.success('Default signature updated');
+      toast.success(t('settings.signatures.toastDefaultUpdated', 'Default signature updated'));
     } catch (error) {
-      toast.error('Failed to set default');
+      toast.error(t('settings.signatures.toastSetDefaultFailed', 'Failed to set default'));
     }
   };
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content.replace(/<[^>]*>/g, ''));
-    toast.success('Copied to clipboard');
+    toast.success(t('settings.signatures.toastCopied', 'Copied to clipboard'));
   };
 
   const getDefaultTemplate = () => {
@@ -209,7 +209,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
           >
             <Plus size={16} />
-            New Signature
+            {t('settings.signatures.newSignature', 'New Signature')}
           </button>
         )}
       </div>
@@ -218,26 +218,31 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {(isCreating || editingId) && (
         <div className={cardClass + ' p-6'}>
           <h3 className="font-semibold text-c-text mb-4">
-            {isCreating ? 'Create New Signature' : 'Edit Signature'}
+            {isCreating
+              ? t('settings.signatures.createNewTitle', 'Create New Signature')
+              : t('settings.signatures.editTitle', 'Edit Signature')}
           </h3>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                Signature Name
+                {t('settings.signatures.nameLabel', 'Signature Name')}
               </label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g., Default, Formal, Casual"
+                placeholder={t(
+                  'settings.signatures.namePlaceholder',
+                  'e.g., Default, Formal, Casual'
+                )}
                 className={inputClass}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                Signature Content
+                {t('settings.signatures.contentLabel', 'Signature Content')}
               </label>
               <textarea
                 value={formContent}
@@ -257,11 +262,12 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
             {/* Preview */}
             <div>
               <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                Preview
+                {t('settings.signatures.previewLabel', 'Preview')}
               </label>
               <div className="p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
                 <pre className="whitespace-pre-wrap text-sm text-c-text-secondary font-sans">
-                  {formContent || 'Your signature will appear here...'}
+                  {formContent ||
+                    t('settings.signatures.previewPlaceholder', 'Your signature will appear here...')}
                 </pre>
               </div>
             </div>
@@ -277,13 +283,15 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                {saving ? 'Saving...' : 'Save Signature'}
+                {saving
+                  ? t('settings.signatures.savingButton', 'Saving...')
+                  : t('settings.signatures.saveButton', 'Save Signature')}
               </button>
               <button
                 onClick={handleCancel}
                 className="px-6 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700 text-c-text-secondary rounded-lg font-medium transition-colors"
               >
-                Cancel
+                {t('settings.signatures.cancelButton', 'Cancel')}
               </button>
             </div>
           </div>
@@ -322,7 +330,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   {signature.isDefault && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full flex items-center gap-1">
                       <Star size={12} />
-                      Default
+                      {t('settings.signatures.defaultBadge', 'Default')}
                     </span>
                   )}
                 </div>
@@ -330,14 +338,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   <button
                     onClick={() => setPreviewId(previewId === signature.id ? null : signature.id)}
                     className="p-2 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors"
-                    title="Preview"
+                    title={t('settings.signatures.previewTitle', 'Preview')}
                   >
                     <Eye size={16} />
                   </button>
                   <button
                     onClick={() => handleCopy(signature.content)}
                     className="p-2 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors"
-                    title="Copy"
+                    title={t('settings.signatures.copyTitle', 'Copy')}
                   >
                     <Copy size={16} />
                   </button>
@@ -345,7 +353,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                     <button
                       onClick={() => handleSetDefault(signature.id)}
                       className="p-2 text-c-text-muted hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors"
-                      title="Set as default"
+                      title={t('settings.signatures.setDefaultTitle', 'Set as default')}
                     >
                       <Star size={16} />
                     </button>
@@ -353,14 +361,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   <button
                     onClick={() => handleEdit(signature)}
                     className="p-2 text-c-text-muted hover:text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors"
-                    title="Edit"
+                    title={t('settings.signatures.editTitleAttr', 'Edit')}
                   >
                     <Edit2 size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(signature.id)}
                     className="p-2 text-c-text-muted hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
-                    title="Delete"
+                    title={t('settings.signatures.deleteTitleAttr', 'Delete')}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -386,7 +394,9 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
           <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Tips for effective signatures:</strong>
+              <strong>
+                {t('settings.signatures.tipsHeading', 'Tips for effective signatures:')}
+              </strong>
             </p>
             <ul className="text-sm text-blue-600 dark:text-blue-300 mt-2 space-y-1 list-disc list-inside">
               <li>

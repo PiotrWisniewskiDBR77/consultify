@@ -156,14 +156,19 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
       <div>
         <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <History size={28} className="text-amber-500" />
-          Settings History
+          {t('settings.advanced.settingsHistory.title', 'Settings History')}
         </h2>
         <p className="text-c-text-muted text-sm mt-1">
           {t('settings.history.subtitle', 'View and restore previous settings changes')}
         </p>
       </div>
 
-      {loadError && <DegradedState title="Settings history unavailable" description={loadError} />}
+      {loadError && (
+        <DegradedState
+          title={t('settings.advanced.settingsHistory.unavailableTitle', 'Settings history unavailable')}
+          description={loadError}
+        />
+      )}
 
       {actionError && <Banner variant="danger" title={actionError} />}
 
@@ -180,7 +185,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search changes..."
+                placeholder={t('settings.advanced.settingsHistory.searchPlaceholder', 'Search changes...')}
                 className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
@@ -190,7 +195,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
-              <option value="all">All Categories</option>
+              <option value="all">{t('settings.advanced.settingsHistory.allCategories', 'All Categories')}</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -215,7 +220,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
             {filteredEntries.length === 0 ? (
               <div className="p-8 text-center text-c-text-muted">
                 <History size={48} className="mx-auto mb-3 opacity-50" />
-                <p>No settings changes found</p>
+                <p>{t('settings.advanced.settingsHistory.emptyState', 'No settings changes found')}</p>
               </div>
             ) : (
               <div className="divide-y divide-c-border-subtle dark:divide-white/10">
@@ -259,7 +264,9 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                         <div className="ml-[76px] p-4 bg-c-surface-raised rounded-lg space-y-3">
                           {entry.oldValue && (
                             <div className="flex gap-4">
-                              <span className="text-sm text-c-text-muted w-20">Before:</span>
+                              <span className="text-sm text-c-text-muted w-20">
+                                {t('settings.advanced.settingsHistory.beforeLabel', 'Before:')}
+                              </span>
                               <span className="text-sm text-danger-600 dark:text-danger-400 line-through">
                                 {entry.oldValue}
                               </span>
@@ -267,22 +274,30 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                           )}
                           {entry.newValue && (
                             <div className="flex gap-4">
-                              <span className="text-sm text-c-text-muted w-20">After:</span>
+                              <span className="text-sm text-c-text-muted w-20">
+                                {t('settings.advanced.settingsHistory.afterLabel', 'After:')}
+                              </span>
                               <span className="text-sm text-green-600 dark:text-green-400">
                                 {entry.newValue}
                               </span>
                             </div>
                           )}
                           <div className="flex gap-4 pt-2 border-t border-c-border-subtle dark:border-navy-700">
-                            <span className="text-sm text-c-text-muted w-20">Device:</span>
+                            <span className="text-sm text-c-text-muted w-20">
+                              {t('settings.advanced.settingsHistory.deviceLabel', 'Device:')}
+                            </span>
                             <span className="text-sm text-c-text-secondary">{entry.device}</span>
                           </div>
                           <div className="flex gap-4">
-                            <span className="text-sm text-c-text-muted w-20">IP:</span>
+                            <span className="text-sm text-c-text-muted w-20">
+                              {t('settings.advanced.settingsHistory.ipLabel', 'IP:')}
+                            </span>
                             <span className="text-sm text-c-text-secondary">{entry.ipAddress}</span>
                           </div>
                           <div className="flex gap-4">
-                            <span className="text-sm text-c-text-muted w-20">Time:</span>
+                            <span className="text-sm text-c-text-muted w-20">
+                              {t('settings.advanced.settingsHistory.timeLabel', 'Time:')}
+                            </span>
                             <span className="text-sm text-c-text-secondary">
                               {formatTimestamp(entry.timestamp)}
                             </span>
@@ -294,7 +309,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                               className="flex items-center gap-2 mt-3 px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-500/20 rounded-lg"
                             >
                               <RotateCcw size={14} />
-                              Restore Previous Value
+                              {t('settings.advanced.settingsHistory.restoreButton', 'Restore Previous Value')}
                             </button>
                           )}
                         </div>
@@ -310,13 +325,17 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-c-text">{entries.length}</p>
-              <p className="text-sm text-c-text-muted">Total Changes</p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.advanced.settingsHistory.totalChanges', 'Total Changes')}
+              </p>
             </div>
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-c-text">
                 {new Set(entries.map((e) => e.category)).size}
               </p>
-              <p className="text-sm text-c-text-muted">Categories</p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.advanced.settingsHistory.categoriesLabel', 'Categories')}
+              </p>
             </div>
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-c-text">
@@ -325,7 +344,9 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                     .length
                 }
               </p>
-              <p className="text-sm text-c-text-muted">Today</p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.advanced.settingsHistory.todayLabel', 'Today')}
+              </p>
             </div>
           </div>
         </>

@@ -292,13 +292,15 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {activeTab === 'rules' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-c-text">Custom Notification Rules</h3>
+            <h3 className="text-lg font-semibold text-c-text">
+              {t('settings.notificationRules.customRulesTitle', 'Custom Notification Rules')}
+            </h3>
             <button
               onClick={addRule}
               className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
-              Add Rule
+              {t('settings.notificationRules.addRule', 'Add Rule')}
             </button>
           </div>
 
@@ -383,7 +385,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                        Then:
+                        {t('settings.notificationRules.thenLabel', 'Then:')}
                       </label>
                       <select
                         value={rule.actions[0]?.channel || 'all'}
@@ -394,11 +396,21 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                         }
                         className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                       >
-                        <option value="all">Notify on all channels</option>
-                        <option value="desktop">Desktop only</option>
-                        <option value="mobile">Mobile only</option>
-                        <option value="email">Email only</option>
-                        <option value="none">Don't notify</option>
+                        <option value="all">
+                          {t('settings.notificationRules.channelAll', 'Notify on all channels')}
+                        </option>
+                        <option value="desktop">
+                          {t('settings.notificationRules.channelDesktop', 'Desktop only')}
+                        </option>
+                        <option value="mobile">
+                          {t('settings.notificationRules.channelMobile', 'Mobile only')}
+                        </option>
+                        <option value="email">
+                          {t('settings.notificationRules.channelEmail', 'Email only')}
+                        </option>
+                        <option value="none">
+                          {t('settings.notificationRules.channelNone', "Don't notify")}
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -425,7 +437,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <BellOff size={20} className="text-c-text-muted" />
-              Quiet Hours
+              {t('settings.notificationRules.quietHoursTitle', 'Quiet Hours')}
             </h3>
             <button
               onClick={() => setQuietHours({ ...quietHours, enabled: !quietHours.enabled })}
@@ -446,7 +458,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Start Time
+                    {t('settings.notificationRules.startTimeLabel', 'Start Time')}
                   </label>
                   <input
                     type="time"
@@ -457,7 +469,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    End Time
+                    {t('settings.notificationRules.endTimeLabel', 'End Time')}
                   </label>
                   <input
                     type="time"
@@ -470,7 +482,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Active Days
+                  {t('settings.notificationRules.activeDaysLabel', 'Active Days')}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {days.map((day) => (
@@ -502,9 +514,14 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   className="rounded"
                 />
                 <div>
-                  <p className="font-medium text-c-text">Allow Urgent Notifications</p>
+                  <p className="font-medium text-c-text">
+                    {t('settings.notificationRules.allowUrgentTitle', 'Allow Urgent Notifications')}
+                  </p>
                   <p className="text-sm text-c-text-muted">
-                    Still receive critical notifications during quiet hours
+                    {t(
+                      'settings.notificationRules.allowUrgentHint',
+                      'Still receive critical notifications during quiet hours'
+                    )}
                   </p>
                 </div>
               </label>
@@ -519,7 +536,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Volume2 size={20} className="text-blue-500" />
-              Sound Settings
+              {t('settings.notificationRules.soundSettingsTitle', 'Sound Settings')}
             </h3>
             <button
               onClick={() =>
@@ -541,7 +558,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-c-text-secondary">Volume</label>
+                  <label className="text-sm font-medium text-c-text-secondary">
+                    {t('settings.notificationRules.volumeLabel', 'Volume')}
+                  </label>
                   <span className="text-sm text-blue-600">{soundSettings.volume}%</span>
                 </div>
                 <input
@@ -558,7 +577,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-c-text-secondary">
-                  Sound per Notification Type
+                  {t('settings.notificationRules.soundPerTypeLabel', 'Sound per Notification Type')}
                 </label>
                 {notificationTypes.slice(0, 5).map((type) => (
                   <div
@@ -598,7 +617,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Monitor size={20} className="text-c-accent" />
-                Desktop Notifications
+                {t('settings.notificationRules.desktopNotificationsTitle', 'Desktop Notifications')}
               </h3>
               <button
                 onClick={() =>
@@ -666,7 +685,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Smartphone size={20} className="text-green-500" />
-                Mobile Notifications
+                {t('settings.notificationRules.mobileNotificationsTitle', 'Mobile Notifications')}
               </h3>
               <button
                 onClick={() =>
@@ -731,7 +750,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Layers size={20} className="text-amber-500" />
-              Notification Digest
+              {t('settings.notificationRules.digestTitle', 'Notification Digest')}
             </h3>
             <button
               onClick={() =>
@@ -761,7 +780,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Frequency
+                    {t('settings.notificationRules.frequencyLabel', 'Frequency')}
                   </label>
                   <select
                     value={digestSettings.frequency}
@@ -770,14 +789,20 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     }
                     className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                   >
-                    <option value="hourly">Hourly</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
+                    <option value="hourly">
+                      {t('settings.notificationRules.frequencyHourly', 'Hourly')}
+                    </option>
+                    <option value="daily">
+                      {t('settings.notificationRules.frequencyDaily', 'Daily')}
+                    </option>
+                    <option value="weekly">
+                      {t('settings.notificationRules.frequencyWeekly', 'Weekly')}
+                    </option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Delivery Time
+                    {t('settings.notificationRules.deliveryTimeLabel', 'Delivery Time')}
                   </label>
                   <input
                     type="time"
@@ -790,7 +815,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Include in Digest
+                  {t('settings.notificationRules.includeInDigestLabel', 'Include in Digest')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {notificationTypes.map((type) => (

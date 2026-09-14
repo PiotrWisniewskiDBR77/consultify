@@ -218,7 +218,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Save Changes
+          {t('settings.aiContext.saveChanges', 'Save Changes')}
         </button>
       </div>
 
@@ -226,9 +226,11 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Settings size={20} className="text-blue-500" />
-          Context Window Size
+          {t('settings.aiContext.windowSizeTitle', 'Context Window Size')}
         </h3>
-        <p className="text-sm text-c-text-muted">How much context AI can consider at once</p>
+        <p className="text-sm text-c-text-muted">
+          {t('settings.aiContext.windowSizeHint', 'How much context AI can consider at once')}
+        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -258,7 +260,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <FolderOpen size={20} className="text-amber-500" />
-          Project Context
+          {t('settings.aiContext.projectContextTitle', 'Project Context')}
         </h3>
 
         <div className="flex gap-3">
@@ -288,7 +290,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 type="text"
                 value={projectSearch}
                 onChange={(e) => setProjectSearch(e.target.value)}
-                placeholder="Search projects..."
+                placeholder={t('settings.aiContext.searchProjectsPlaceholder', 'Search projects...')}
                 className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
               />
             </div>
@@ -328,7 +330,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Users size={20} className="text-green-500" />
-            Team Data
+            {t('settings.aiContext.teamDataTitle', 'Team Data')}
           </h3>
           <button
             onClick={() => setSettings({ ...settings, includeTeamData: !settings.includeTeamData })}
@@ -373,7 +375,10 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                     type="text"
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
-                    placeholder="Search team members..."
+                    placeholder={t(
+                      'settings.aiContext.searchTeamMembersPlaceholder',
+                      'Search team members...'
+                    )}
                     className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
@@ -417,9 +422,11 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <BookOpen size={20} className="text-c-accent" />
-          Knowledge Bases
+          {t('settings.aiContext.knowledgeBasesTitle', 'Knowledge Bases')}
         </h3>
-        <p className="text-sm text-c-text-muted">Additional knowledge sources for AI</p>
+        <p className="text-sm text-c-text-muted">
+          {t('settings.aiContext.knowledgeBasesHint', 'Additional knowledge sources for AI')}
+        </p>
 
         <div className="space-y-3">
           {[
@@ -478,13 +485,18 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
 
         {/* Custom Sources */}
         <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
-          <p className="font-medium text-c-text mb-3">Custom Knowledge Sources</p>
+          <p className="font-medium text-c-text mb-3">
+            {t('settings.aiContext.customKnowledgeSourcesTitle', 'Custom Knowledge Sources')}
+          </p>
           <div className="flex gap-2 mb-3">
             <input
               type="text"
               value={newCustomSource}
               onChange={(e) => setNewCustomSource(e.target.value)}
-              placeholder="Add custom URL or path..."
+              placeholder={t(
+                'settings.aiContext.addCustomSourcePlaceholder',
+                'Add custom URL or path...'
+              )}
               className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
               onKeyPress={(e) => e.key === 'Enter' && addCustomSource()}
             />
