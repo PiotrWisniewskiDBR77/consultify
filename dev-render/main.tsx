@@ -460,6 +460,7 @@ const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notific
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const KartaDzialaniaScreen = React.lazy(() => import('./screens/karta-dzialania'));
 const KartaPlanScreen = React.lazy(() => import('./screens/karta-plan'));
+const Z3xInicjatywyPlanScreen = React.lazy(() => import('./screens/z3x-inicjatywy-plan'));
 const KartaCapacityAnalysisScreen = React.lazy(() => import('./screens/karta-capacity-analysis'));
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
 // [ODMROZENIE 00_SHARED DEC-422] Trzy karty N modułu Wyniki weszły do rejestru
@@ -858,6 +859,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Z-29 (14.09) — REALNY <InitiativesHub> przy VITE_INITIATIVES_WORK_REPORT=true, Menu 2 „Work report": produkcyjny <InitiativeWorkReportView> (P1, Codex S2) na atrapie 2 definicji PUBLISHED + 2 przebiegów (1 PUBLISHED doręczony, 1 APPROVED z doręczeniem FAILED). Przy fladze OFF zakładka nie istnieje (parytet). &theme=light|dark &lang=pl|en',
     render: () => <Z29InicjatywyRaportPracyScreen />,
+  },
+  'z3x-inicjatywy-plan': {
+    label:
+      'DEC-497 P2 — REALNY <InitiativesHub> przy VITE_INITIATIVES_PLAN=true: Plan, AI dependency observations, ABSOLUTE/CONDITIONAL paths and canonical InitiativeGantt. &state=full|empty &theme=light|dark &lang=pl|en',
+    render: () => <Z3xInicjatywyPlanScreen />,
   },
   'inicjatywy-lista': {
     label:

@@ -36,6 +36,15 @@ export interface PlanAnalysisProposal {
   reviewRationale: string | null;
   createdAt: string;
   reviewedAt: string | null;
+  observationReviews?: PlanDependencyObservationReview[];
+  acceptedDependencyObservations?: PlanDependencyObservation[];
+}
+
+export interface PlanDependencyObservationReview {
+  observationId: string;
+  outcome: 'ACCEPTED' | 'REJECTED';
+  humanComment: string;
+  finalObservation: PlanDependencyObservation;
 }
 
 export interface PlanAnalysisProposalPreparation {
@@ -193,7 +202,11 @@ export async function createPlanAnalysisProposal(
 
 export async function reviewPlanAnalysisProposal(
   uow: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<{ outcome: 'ACCEPT' | 'REJECT'; rationale: string }>
+  envelope: MaterialCommandEnvelope<{
+    outcome: 'ACCEPT' | 'REJECT';
+    rationale: string;
+    observationReviews?: PlanDependencyObservationReview[];
+  }>
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
     const current = await tx.getAggregatePayload<PlanAnalysisProposal>(
@@ -205,12 +218,52 @@ export async function reviewPlanAnalysisProposal(
       throw new MaterialCommandValidationError('Pending Plan analysis proposal required');
     if (!envelope.payload.rationale.trim())
       throw new MaterialCommandValidationError('Human review rationale required');
+    const reviews = envelope.payload.observationReviews ?? [];
+    if (current.analysisSource === 'AI' && envelope.payload.outcome === 'ACCEPT') {
+      const originalById = new Map(
+        current.dependencyObservations.map((observation) => [observation.observationId, observation])
+      );
+      if (
+        reviews.length !== current.dependencyObservations.length ||
+        new Set(reviews.map((review) => review.observationId)).size !== reviews.length
+      ) {
+        throw new MaterialCommandValidationError(
+          'Every AI dependency observation requires a human decision'
+        );
+      }
+      for (const review of reviews) {
+        const original = originalById.get(review.observationId);
+        const final = review.finalObservation;
+        if (
+          !original ||
+          final.observationId !== original.observationId ||
+          final.predecessorId !== original.predecessorId ||
+          final.successorId !== original.successorId ||
+          !review.humanComment.trim() ||
+          (final.kind === 'ABSOLUTE' && final.condition !== null) ||
+          (final.kind === 'CONDITIONAL' && !final.condition?.trim()) ||
+          !final.rationale.trim()
+        ) {
+          throw new MaterialCommandValidationError(
+            'Invalid human review of AI dependency observation'
+          );
+        }
+      }
+    }
+    const acceptedDependencyObservations =
+      current.analysisSource === 'AI' && envelope.payload.outcome === 'ACCEPT'
+        ? reviews
+            .filter((review) => review.outcome === 'ACCEPTED')
+            .map((review) => review.finalObservation)
+        : [];
     const next: PlanAnalysisProposal = {
       ...current,
       status: envelope.payload.outcome === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED',
       reviewedBy: envelope.actorId,
       reviewRationale: envelope.payload.rationale,
       reviewedAt: new Date().toISOString(),
+      observationReviews: reviews,
+      acceptedDependencyObservations,
     };
     return {
       mutation: next,
