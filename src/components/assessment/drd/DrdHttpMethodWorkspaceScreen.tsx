@@ -1402,15 +1402,20 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * jest prawdą), NIE na zbudowanym produkcie. Awaryjnie na żywo:
    * `?ff_debugBadges=1`.
    */
-  const plakietkiDiagnostyczne =
-    import.meta.env.DEV ||
-    (() => {
-      try {
-        return new URLSearchParams(window.location.search).get('ff_debugBadges') === '1';
-      } catch {
-        return false;
-      }
-    })();
+  const plakietkiDiagnostyczne = (() => {
+    let zadane: string | null = null;
+    try {
+      zadane = new URLSearchParams(window.location.search).get('ff_debugBadges');
+    } catch {
+      zadane = null;
+    }
+    // Parametr rozstrzyga w OBIE strony: `=1` włącza na zbudowanym produkcie,
+    // `=0` wyłącza w dev — bez tego drugiego harness zrzutów (który jest dev)
+    // nie potrafiłby pokazać właścicielowi obrazu, jaki zobaczy klient.
+    if (zadane === '1') return true;
+    if (zadane === '0') return false;
+    return Boolean(import.meta.env.DEV);
+  })();
 
   const isFrozen = session.state === 'frozen' || session.state === 'closed';
   const surowyWidokZadany =
