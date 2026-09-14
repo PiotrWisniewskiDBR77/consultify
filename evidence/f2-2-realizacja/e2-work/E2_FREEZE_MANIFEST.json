@@ -2,11 +2,11 @@
   "schemaVersion": 2,
   "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
   "baseSha": "88f1a1994dffa8b1f3b706476078844cbb43441f",
-  "candidateContentSha": "86f484fd6b46f6dd8d23e822a50b772d8ac817c7",
+  "candidateContentSha": "2bfca250eddf766cf922409e5b4239d8a4b09113",
   "branch": "codex/realizacja-cztery-przyciski-20260913",
   "manifestSelfExcluded": true,
-  "fileCount": 40,
-  "evidenceBytes": 1174360,
+  "fileCount": 57,
+  "evidenceBytes": 850368,
   "evidenceCapBytes": 2097152,
   "files": [
     {
@@ -20,19 +20,39 @@
       "sha256": "b849180aa0ed7da306ddf5f31b7942ace8d006478a440d24b77edf88a56eed76"
     },
     {
+      "path": "dev-render/execution-work-analysis-main.tsx",
+      "bytes": 475,
+      "sha256": "a210fe171614871d64bf03ad01df509871f2dc0177b04ea9abbae09710432e3b"
+    },
+    {
+      "path": "dev-render/execution-work-analysis.html",
+      "bytes": 360,
+      "sha256": "5fd20c4c97118866e692cf840682a0164dfafd46838501bb1a1a18776d6d5129"
+    },
+    {
       "path": "dev-render/main.tsx",
       "bytes": 156938,
       "sha256": "2b8ddc1f78c4279e959d0f9b94746b1350275a397bd618c422780cd6326a659e"
     },
     {
+      "path": "dev-render/screens/execution-report-day11.tsx",
+      "bytes": 9207,
+      "sha256": "fd0c0dfa4de636e09124e56e0cc9954bbb81b19162a79985facf5ca2498b2944"
+    },
+    {
       "path": "dev-render/screens/execution-risk-signal-e0.tsx",
-      "bytes": 7145,
-      "sha256": "c6be0e12c801ee96f8b16b62579d008b804819b260ad70988a3fc668d5fb2b4a"
+      "bytes": 7091,
+      "sha256": "d89300ccc51b642c5e107238e9f9495d39958784b5acd5267834352ac171f93d"
     },
     {
       "path": "dev-render/vite.execution-risk-signal-e0.config.ts",
       "bytes": 526,
       "sha256": "86445b0887380695fe4fcd8ee92dd06c63f349b36691ca331577012fa9572458"
+    },
+    {
+      "path": "dev-render/vite.execution-work-analysis.config.ts",
+      "bytes": 533,
+      "sha256": "9c87118d147b6cf2aacb4cc9d15c5aafd30c905d7f6f0c489f069c2df3824275"
     },
     {
       "path": "docs/program/FALA2/F2_2_E0_E1_AUDIT_20260913.md",
@@ -76,43 +96,93 @@
     },
     {
       "path": "evidence/f2-2-realizacja/e0/risk-signal-e0-dark-1440x900.png",
-      "bytes": 146554,
-      "sha256": "85a9713f2dd25d2fc73d997725807aa418f900f54f2da21af4898501b1234f40"
+      "bytes": 344736,
+      "sha256": "e52441ab9d70f3edc22a158596e9c142d53e7f1ba9836e611ecab1cd05fc8a44"
     },
     {
       "path": "evidence/f2-2-realizacja/e0/risk-signal-e0-light-1440x900.png",
-      "bytes": 145325,
-      "sha256": "0de99e84b39f4e85013e0a19ff22ef6c9ad06cf1605e170edb7651b7f319ff43"
+      "bytes": 342356,
+      "sha256": "4e612bb261be374062066f336154ca1b990e40ae1a8aebd29391a432835dfdbd"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/AUTHOR_FIX_RECEIPT_20260914.md",
+      "bytes": 2859,
+      "sha256": "81d631b77b6828bee60b233acf44f52cd0c40b0e29e5387a29b0d818ce23b25c"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/AUTHOR_REREVIEW_CLOSURE_20260914.md",
+      "bytes": 2512,
+      "sha256": "b223d6f06e38f953e0cd566751eba822aef8905ac35909753205c1f43338a280"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/BROWSER_RECEIPT.md",
-      "bytes": 1290,
-      "sha256": "e3134ac88568312f6a9f7959cb497320d1e57bcba5ea1398f36c9fe13ee4a9be"
+      "bytes": 1021,
+      "sha256": "34b6fa4df90a870fd01848035b401a2612aa74afd2d88d7eba8fef6cf4b755f1"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/E2_FINAL_RECEIPT.md",
-      "bytes": 1426,
-      "sha256": "68f5d0c39a655b642a14d210b790f29497521f7f5758b9e78f417fbe11c1355a"
+      "bytes": 1599,
+      "sha256": "2da43f03867f7af8ed866dc57019aaa1c55170d0124c2deec0ac8607c3c98935"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/INDEPENDENT_REREVIEW_20260914.md",
+      "bytes": 6841,
+      "sha256": "6964003260e68fa4689c3b747e2efa79ec40f19185abbdf7da6ad8e8b73599bf"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/INDEPENDENT_REVIEW_20260914.md",
+      "bytes": 6171,
+      "sha256": "126035f7d889ad93833013b6f2bc8aa0cb1ae6d4d07397943e8edb3f1d757fde"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-dark.png",
-      "bytes": 423865,
-      "sha256": "f2b62f354469020d070c67aab382d4b9a5efe0a4efe348f5c5ed19d01d8f70d8"
+      "bytes": 56306,
+      "sha256": "8a49dedc612669fa3b04938349bd6fc4765d534043ef1d65c8929978f0b2b69d"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-light.png",
-      "bytes": 427243,
-      "sha256": "af381199bf08e446d4d25925734942769e7d754b757336b2460d1f0132381b3a"
+      "bytes": 57310,
+      "sha256": "66f4cf2fdca2e46e3383847234e82b0869110503aa7b1c8438c5da50becadcc4"
     },
     {
       "path": "public/locales/en/translation.json",
-      "bytes": 2233651,
-      "sha256": "c88f36faf12203f47c4c96266691af3a9f10b3b7e4ec7a9fe0232c5955db8de6"
+      "bytes": 2234487,
+      "sha256": "a6235720b0857eb9e543edb0a8ee1d67f576b750985653aedff9f39fe8e5fe80"
     },
     {
       "path": "public/locales/pl/translation.json",
-      "bytes": 2387514,
-      "sha256": "950d4b20fff2b890c8d3264366f89cb4f1d5e1ba331861178ac67b5bb4e6a1b9"
+      "bytes": 2388436,
+      "sha256": "cb542e8dec998b5176be60ffa5efe9b28e3615afc42cc568b8a29a9052a7b890"
+    },
+    {
+      "path": "server/src/cron/Scheduler.ts",
+      "bytes": 48125,
+      "sha256": "e8f15275ca6ffe222c22b8f4f5e707b8267e876bfa757cf39599b1da98edcf65"
+    },
+    {
+      "path": "server/src/cron/__tests__/workSignalProducerScheduler.test.ts",
+      "bytes": 1269,
+      "sha256": "0a8bc6bbe574922ceed23e0340fea043cbfa6ef2b988bf4b1c6d6a72cf79f6e5"
+    },
+    {
+      "path": "server/src/domain/initiatives-execution/postgresInitiativeReader.ts",
+      "bytes": 88856,
+      "sha256": "571f8e5afcdfe86e496cbaaea5d58b12bcbb9a8d084b6ae9ca491f6030cc693a"
+    },
+    {
+      "path": "server/src/middleware/__tests__/executionSpineLegacyReadOnly.middleware.test.ts",
+      "bytes": 5969,
+      "sha256": "aa00d90b3f4b3528475a9a7bceee10d0b7709972515e5f23ace6bbfdc739dcbc"
+    },
+    {
+      "path": "server/src/middleware/executionSpineLegacyReadOnly.middleware.ts",
+      "bytes": 6057,
+      "sha256": "c99a90a241134a022e973b5954725cedaa941218ee7a20e229dc5b6bc8c81dd8"
+    },
+    {
+      "path": "server/src/routes/__tests__/executionWorkAnalysis.gateway.pg.test.ts",
+      "bytes": 10932,
+      "sha256": "e1d80a260b1c490ad78c94b45158e884ea8fbda2ef7e76d59e5d050ccf5006f4"
     },
     {
       "path": "server/src/routes/__tests__/initiativesExecutionRuntime.dropdown.pg.test.ts",
@@ -120,9 +190,19 @@
       "sha256": "66745806fe05706a857604a41936ec8fff0ffaba56214ff0471df700636c8967"
     },
     {
+      "path": "server/src/routes/executionReports.routes.ts",
+      "bytes": 20364,
+      "sha256": "459d802dcea7f15ba3bef5d4ee243a6ec75087a07da91b2feac5b2614c15027c"
+    },
+    {
       "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
-      "bytes": 316947,
-      "sha256": "60bcb6d86a470558b1567f9d77562ffe31615bcb402fe4a71b3f2715990352fa"
+      "bytes": 317011,
+      "sha256": "55026237fb0a98625b688ea906767f2e9a668f42cc54eef83448b663d93f88f8"
+    },
+    {
+      "path": "server/src/services/execution/executionWorkAnalysisService.ts",
+      "bytes": 10259,
+      "sha256": "fd649e26b6aa430347682740df228f3306da7554cc2bc1c92e67ebce42c3a7f0"
     },
     {
       "path": "src/components/Execution/ExecutionBankViews.tsx",
@@ -151,8 +231,8 @@
     },
     {
       "path": "src/components/Execution/__tests__/f2-2-entry-contract.red.test.ts",
-      "bytes": 1714,
-      "sha256": "cab299ca14337f3a0b46c68924de1c6bd1cbfe89b35bb5845a1d2ed6760c923a"
+      "bytes": 1755,
+      "sha256": "2d8bb17c6bddf0531a9e055209286103817970b51c008dff16a5d653ca03b312"
     },
     {
       "path": "src/components/Execution/executionBankModel.ts",
@@ -171,13 +251,13 @@
     },
     {
       "path": "src/components/Execution/reports-intelligence/WorkIntelligenceReport.tsx",
-      "bytes": 28367,
-      "sha256": "48e4b8aa901fa2932586a134c7c0afe0888ed9db3066ef61f45ac28e1f69b7a9"
+      "bytes": 35179,
+      "sha256": "1f1d14e4896302f646d1253c37801c66d6860822d1b7176d861e0116e52572cb"
     },
     {
       "path": "src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx",
-      "bytes": 10817,
-      "sha256": "2c172f59592fb40ecaafe6040c12fb329ceffa1622ea751803205138d724e6fe"
+      "bytes": 14155,
+      "sha256": "2391da8ce21bdc0178b5d498f17df42883f06e0b215cad11dd0b34f22f6a5823"
     },
     {
       "path": "src/components/Execution/reports-intelligence/__tests__/workAnalysisModel.test.ts",
@@ -188,6 +268,11 @@
       "path": "src/components/Execution/reports-intelligence/workAnalysisModel.ts",
       "bytes": 4861,
       "sha256": "a45095c2a7f1f364add437e6d1cb5032f08138b428a8fad369c5ac88dc82e0f5"
+    },
+    {
+      "path": "src/services/executionReports/executionReportsApi.ts",
+      "bytes": 4708,
+      "sha256": "904f740c0ed8f96e2e828619ac3bab166c09afa135d8eb0ef42e136a82c945f9"
     },
     {
       "path": "src/services/initiatives-execution/runtimeApi.ts",
