@@ -1,0 +1,307 @@
+===== server/src/method-core/__tests__/httpSessionsListing.integration.test.ts =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:26:31:2631 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:26:31:2631 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:26:31:2631 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:31:2631 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:31:2631 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:32:2632 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:32:2632 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:32:2632 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:26:32:2632 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+2026-09-14 18:26:32:2632 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+2026-09-14 18:26:32:2632 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path) 60ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 2. filters by methodPackId 19ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 3. filters by state 29ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 3b. an unknown state value is refused with 400, not silently ignored 2ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 4. filters by projectId 16ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 5. filters by ownerUserId 15ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 6. paginates with limit/offset and reports the TOTAL of the filtered set, not just the page 25ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 7. defaults to limit=20 when no limit is given 7ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 8. a limit above the hard max (100) is refused with 400, not silently clamped 2ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 8b. limit=100 itself is accepted (boundary, not off-by-one) 8ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 9. two sessions with the IDENTICAL created_at sort identically across repeated calls (id tie-breaker) 20ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 10. each item reports state, methodPackVersion, domainStage, ownerUserId and timestamps 14ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 11. hasFrozenOutput is false before freeze and true once the session has a frozen Output 58ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 12. a reopened session appears as a SEPARATE list entry with revisionOfSessionId pointing at the original 55ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 13. a request with no Authorization header is refused with 401 1ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts (15 tests) 1889ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  18:26:31
+   Duration  2.19s (transform 1.10s, setup 88ms, import 136ms, tests 1.89s, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  18:26:31
+   Duration  2.19s (transform 1.10s, setup 88ms, import 136ms, tests 1.89s, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:26:34:2634 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:26:34:2634 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:26:34:2634 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 18:26:34:2634 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 18:26:34:2634 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > migration created the append-only snapshot table with its DB-level guarantees 34ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved 14ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > excludes a restricted-visibility claim from the default (non-admin) governed claims read, includes it when includeRestricted=true 4ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > tenant negative: org A cannot approve org B claims, and org B never sees org A claims 2ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > rejects a direct empty publish before writing a snapshot version 2ms
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > two simultaneous approve/reject calls on the same claim resolve to exactly one decision
+2026-09-14 18:26:34:2634 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > two simultaneous approve/reject calls on the same claim resolve to exactly one decision
+2026-09-14 18:26:34:2634 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > approves pending claims, then publishes v1 excluding still-unapproved claims and carrying exact refs (claim id + file_hash + version) 18ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > immutability: a direct UPDATE against a published snapshot version is rejected by the DB trigger 2ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > reopen: publishing v2 does not change v1 — same content_hash, byte-identical snapshot_json 7ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > tenant negative: org B cannot read org A pinned snapshot versions 1ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > two simultaneous approve/reject calls on the same claim resolve to exactly one decision 8ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > hard-deleting the cited source document is DETECTABLE on the pinned read, and does not alter the stored snapshot content 11ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > canonicalizeForHash sorts object keys recursively (order-independent hashing) 0ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts (12 tests) 244ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  18:26:33
+   Duration  1.08s (transform 351ms, setup 90ms, import 448ms, tests 244ms, environment 220ms)
+
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  18:26:33
+   Duration  1.08s (transform 351ms, setup 90ms, import 448ms, tests 244ms, environment 220ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL)
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL)
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:26:36:2636 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL)
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL)
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL)
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL)
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:26:37:2637 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:26:37:2637 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:26:37:2637 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [31merror[39m: [31m[AppErrorMapper] route error At least one approved governed claim is required to publish a snapshot.[39m {"correlationId":"0dc8ffc9-3862-4e5c-8184-28f8df7fb82b","errorCode":"INTERNAL","stack":"NoApprovedGovernedClaimsError: At least one approved governed claim is required to publish a snapshot.\n    at OrganizationContextService.publishSnapshotVersion (/Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/server/src/services/organizationContext/OrganizationContextService.ts:2229:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/server/src/routes/organization-context.routes.ts:203:23","method":"POST","path":"/governed/publish"}
+
+stdout | server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer
+2026-09-14 18:26:37:2637 [31merror[39m: [31m[AppErrorMapper] route error At least one approved governed claim is required to publish a snapshot.[39m {"correlationId":"0dc8ffc9-3862-4e5c-8184-28f8df7fb82b","errorCode":"INTERNAL","stack":"NoApprovedGovernedClaimsError: At least one approved governed claim is required to publish a snapshot.\n    at OrganizationContextService.publishSnapshotVersion (/Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/server/src/services/organizationContext/OrganizationContextService.ts:2229:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/server/src/routes/organization-context.routes.ts:203:23","method":"POST","path":"/governed/publish"}
+
+ ✓ server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > creates a pending document claim through the production source writer 126ms
+ ✓ server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > denies insufficient role, stale membership and foreign-tenant approval 16ms
+ ✓ server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > owner approves and publishes exactly one immutable snapshot through mounted HTTP 12ms
+ ✓ server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts > ORG-BVP-001 — mounted organization golden path (real PostgreSQL) > reopens the exact tenant snapshot through HTTP and a fresh PostgreSQL connection 18ms
+ ✓ server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts (4 tests) 1467ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:26:35
+   Duration  2.07s (transform 980ms, setup 100ms, import 90ms, tests 1.47s, environment 234ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:26:35
+   Duration  2.07s (transform 980ms, setup 100ms, import 90ms, tests 1.47s, environment 234ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

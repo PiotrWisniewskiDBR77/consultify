@@ -1,0 +1,282 @@
+===== src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > „Dokumenty" liczą po statusKey (a nie po nieistniejącym status) 57ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > suma chipów równa się liczbie wierszy (żaden wiersz nie ginie) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > każdy klucz statusu z REPORT_STATUS_META daje niezerowy licznik, gdy taki wiersz istnieje 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > szablony i prezentacje dalej liczą po polu status (zero regresji) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > pole źródłowe jest jawne per zakładka 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > jawnie wylicza kategorię statusów niewidocznych w kompaktowych pigułkach 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > puste/nieznane statusy nie tworzą chipa-śmiecia 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts (7 tests) 60ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:26:05
+   Duration  774ms (transform 71ms, setup 144ms, import 13ms, tests 60ms, environment 465ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:26:05
+   Duration  775ms (transform 71ms, setup 144ms, import 13ms, tests 60ms, environment 465ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 39ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 12ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 12ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Biblioteka wzorców': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 14ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > dropdown Status niesie pozycję „Robocze" (dawny przycisk „Pokaż robocze") 96ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > 43 wiersze mają dokładnie 3 pigułki 8 + 34 + 1 oraz osobny total All 43 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: Menu 3 = formaty + źródła, Menu 2 bez dropdownu Widoczność 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: pstryczek Galeria|Tabela stoi w Menu 2, nie w treści 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: CTA „Nowy wzorzec" jest ZAMROŻONY (disabled + powód) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': CTA NIE jest zamrożony 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': CTA NIE jest zamrożony 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': CTA NIE jest zamrożony 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': CTA NIE jest zamrożony 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Arkusze: segment „Arkusze | Źródła danych" nie jest renderowany (Fala 2 · 3.17) 7ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx (22 tests) 333ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  18:26:06
+   Duration  1.78s (transform 613ms, setup 97ms, import 1.03s, tests 333ms, environment 235ms)
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  18:26:06
+   Duration  1.78s (transform 613ms, setup 97ms, import 1.03s, tests 333ms, environment 235ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > renders a real StandardTable element, not a bespoke grid 48ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns) 32ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes 19ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never gives the DEMONSTRATION source-type chip a success (emerald) shell 20ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell) 17ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > VERIFIED gets the success (emerald) shell on the verification axis 16ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > changing verificationStatus never changes the rendered source-type label — same pack, four verification states 44ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason 135ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit 53ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason 60ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > enables "Start audit" for a published pack that HAS a source, and calls onStartAudit 51ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > uses the full nested criteria tree as the detail count, matching the list total 21ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows ErrorState with a working retry when the pack list failed to load 8ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows an explanatory EmptyState when there are no packs at all 7ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders the raw technical packKey under the title (RAPORT_B #8) 8ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > kebab pakietu w statusie szkicu pokazuje OBIE pozycje, włączone, gdy actor może zarządzać biblioteką 12ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > klik „Zatwierdź (ekspert)" woła onApprovePackExpert z tym pakietem 11ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > po zatwierdzeniu eksperckim „Publikuj" jest włączony i woła onPublishPack 10ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > bez uprawnień administratora organizacji OBIE pozycje są widoczne, ale wyłączone z uczciwym powodem — nigdy ukryte 10ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > dla pakietu już opublikowanego obie pozycje kebaba są wyłączone 9ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > evaluateApproveExpertGate: odmawia bez uprawnień, potem bez statusu przedpublikacyjnego, potem gdy już zatwierdzony, przepuszcza w przeciwnym razie 1ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > evaluatePublishPackGate: odmawia bez uprawnień, gdy już opublikowany/wycofany, i gdy brak zatwierdzenia eksperckiego 0ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx (22 tests) 595ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  18:26:09
+   Duration  2.02s (transform 745ms, setup 97ms, import 1.02s, tests 595ms, environment 232ms)
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  18:26:09
+   Duration  2.02s (transform 745ms, setup 97ms, import 1.02s, tests 595ms, environment 232ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/Organization/__tests__/GovernedContextWorkspace.claimCount.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/Organization/__tests__/GovernedContextWorkspace.claimCount.test.tsx > GovernedContextWorkspace claim total > shows the server total and the visible page size instead of presenting LIMIT 200 as the total 242ms
+ ✓ src/components/Organization/__tests__/GovernedContextWorkspace.claimCount.test.tsx (1 test) 243ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:26:11
+   Duration  938ms (transform 187ms, setup 96ms, import 283ms, tests 243ms, environment 238ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:26:11
+   Duration  939ms (transform 187ms, setup 96ms, import 283ms, tests 243ms, environment 238ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/Organization/redesign/__tests__/OrganizationSourcesClaimsScreen.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/Organization/redesign/__tests__/OrganizationSourcesClaimsScreen.test.tsx > OrganizationSourcesClaimsScreen > scala dawne trzy ekrany Źródeł (Pliki + Twierdzenia + Konflikty-duplikat) w jeden ekran 29ms
+ ✓ src/components/Organization/redesign/__tests__/OrganizationSourcesClaimsScreen.test.tsx (1 test) 30ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:26:13
+   Duration  762ms (transform 215ms, setup 96ms, import 324ms, tests 30ms, environment 231ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:26:13
+   Duration  763ms (transform 215ms, setup 96ms, import 324ms, tests 30ms, environment 231ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > shows a canonical Method Core DRD session and opens its canonical editor route 78ms
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails
+[AssessmentHub] Core assessment load warning: Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails
+[AssessmentHub] Core assessment load warning: Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD
+[AssessmentHub] Core assessment load warning: DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD
+[AssessmentHub] Core assessment load warning: DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.
+
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > shows an externally created same-org session after an ADMIN page refresh without client owner filtering 39ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps non-DRD legacy rows but never lets a legacy DRD id masquerade as canonical 17ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails 30ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > D-01: canonical DRD borrows name, score and confidence from its legacy twin (same projectId) 25ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > D-01: keeps the id-based fallback label when no legacy twin shares the project 16ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD 9ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx (7 tests) 216ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:26:14
+   Duration  1.94s (transform 956ms, setup 97ms, import 1.31s, tests 216ms, environment 233ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:26:14
+   Duration  1.94s (transform 956ms, setup 97ms, import 1.31s, tests 216ms, environment 233ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/assessment/library/__tests__/AssessmentLibraryTab.offlineRetry.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/assessment/library/__tests__/AssessmentLibraryTab.offlineRetry.test.tsx > Assessment Library — offline retry state (Z-64) > mounts a canonical error state after an aborted request and retries with the same idempotency key 108ms
+ ✓ src/components/assessment/library/__tests__/AssessmentLibraryTab.offlineRetry.test.tsx (1 test) 110ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:26:17
+   Duration  1.11s (transform 316ms, setup 103ms, import 448ms, tests 110ms, environment 235ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:26:17
+   Duration  1.11s (transform 316ms, setup 103ms, import 448ms, tests 110ms, environment 235ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > deklarowana suma szerokości kolumn mieści się w desktopowym budżecie panelu 111ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > żadna kolumna nie deklaruje `primary: true` (podłoga 200px odtworzyłaby defekt) 31ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie) 119ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony" 23ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx (4 tests) 286ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:26:18
+   Duration  1.55s (transform 566ms, setup 98ms, import 840ms, tests 286ms, environment 244ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:26:18
+   Duration  1.55s (transform 566ms, setup 98ms, import 840ms, tests 286ms, environment 244ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+===== src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > wszystkie cztery narzędzia dzielą jednego gospodarza panelu 33ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > panel elementu jest JEDYNYM korzeniem kolumny — powłoka nie dokłada drugiego 1ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > Teresa jest ZAKŁADKĄ tego panelu, a globalny dok ustępuje na całej trasie warsztatu 1ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > zakładka ma WŁASNY stan — wejście na płótno zaczyna od obiektu, nie od rozmowy 1ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > nad płótnem nie pływają karty analizy, a paleta stoi po lewej 0ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > Matryca (Tabela) dostaje rynnę, bo nakładka nie może leżeć na siatce 0ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts > Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie > panel da się zamknąć, a zamknięcie jest zapamiętane 0ms
+ ✓ src/components/MyWork/__tests__/ideaWorkspaceJedenPanel.contract.test.ts (7 tests) 37ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:26:20
+   Duration  565ms (transform 64ms, setup 97ms, import 7ms, tests 37ms, environment 239ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:26:20
+   Duration  567ms (transform 64ms, setup 97ms, import 7ms, tests 37ms, environment 239ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
