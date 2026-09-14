@@ -51639,6 +51639,7 @@
       "targetLevel": "Poziom docelowy"
     },
     "navigator": {
+      "openQuestions": "Pytania otwarte na tym poziomie: {{count}}",
       "noStructure": "Method Pack nie dostarczył jeszcze struktury."
     },
     "help": {

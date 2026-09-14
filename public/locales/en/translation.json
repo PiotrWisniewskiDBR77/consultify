@@ -51261,6 +51261,7 @@
       "targetLevel": "Target level"
     },
     "navigator": {
+      "openQuestions": "Questions open at this level: {{count}}",
       "noStructure": "The Method Pack has not delivered a structure yet."
     },
     "help": {

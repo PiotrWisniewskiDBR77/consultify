@@ -112,6 +112,13 @@ export interface ReportSessionMeta {
   readonly domainStage: string | null;
   readonly mode: 'guided_manual' | 'teresa_led';
   readonly ownerUserId: string;
+  /**
+   * ★ FALA J3 (2026-09-14): imię i nazwisko (albo e-mail) właściciela sesji,
+   * dołączane OBOK identyfikatora przez `GET /api/method/sessions/:id`.
+   * `null`/brak, gdy serwer nie zna nazwy — dokument wraca wtedy do
+   * identyfikatora zamiast pokazywać pustkę.
+   */
+  readonly ownerName?: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly version: number;
@@ -124,6 +131,8 @@ export interface ReportApproval {
   readonly decision: 'approved' | 'sent_back';
   readonly comment: string | null;
   readonly actorUserId: string;
+  /** ★ FALA J3: nazwa osoby, patrz `ReportSessionMeta.ownerName`. */
+  readonly actorName?: string | null;
   readonly createdAt: string;
 }
 

@@ -1036,7 +1036,16 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             value={
               latestApproval ? (
                 <span>
-                  <span className="font-mono text-[12px]">{latestApproval.actorUserId}</span>
+                  {/*
+                    ★ FALA J3 (2026-09-14): do dziś stał tu surowy UUID —
+                    czytelnik dokumentu dla zarządu nie wiedział, kto
+                    zatwierdził ocenę. Nazwa przychodzi ze śladu audytu
+                    (`actorName`); brak nazwy → identyfikator, jak dotąd,
+                    zamiast pustego miejsca.
+                  */}
+                  <span className={latestApproval.actorName ? 'text-[12px]' : 'font-mono text-[12px]'}>
+                    {latestApproval.actorName || latestApproval.actorUserId}
+                  </span>
                   {' · '}
                   {formatDate(latestApproval.createdAt)}
                 </span>
@@ -1220,8 +1229,8 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
             <Property
               label={t('assessment.report.props.sessionOwner', 'Session owner')}
-              value={session?.ownerUserId ?? '—'}
-              mono={!!session?.ownerUserId}
+              value={session?.ownerName || session?.ownerUserId || '—'}
+              mono={!session?.ownerName && !!session?.ownerUserId}
             />
             <Property
               label={t('assessment.report.props.sessionOpened', 'Session opened')}
