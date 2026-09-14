@@ -91,6 +91,7 @@ import {
 } from '../method-core/outputs/index.js';
 import { computeContentHash, genId, nowIso } from '../method-core/db.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import { resolveResponseLanguage } from '../services/ai/responseLanguage.js';
 import {
   AssessmentSkipReasonError,
   assessmentSkipReasonService,
@@ -326,6 +327,30 @@ async function readUserLanguage(userId: string): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * ŚLAD AUDYTU ZAMROŻENIA WŁAŚCICIELSKIEGO — dwa warianty językowe, nie jeden.
+ *
+ * To zdanie ZAPISUJE SIĘ do `method_approvals.comment` i raport drukuje je
+ * DOSŁOWNIE („The approval was recorded … — „…"", `AssessmentReportDocument`
+ * przez `assessment.report.intro.approvalComment`). Do 2026-09-14 było zaszyte
+ * po polsku niezależnie od konta — zmierzone na żywo na koncie EN (staging
+ * a2b0a0fe32, sesja 381966f5): jedno polskie zdanie w angielskim dokumencie
+ * dla zarządu. To samo widać było w evidence/jezyk-j5/po.
+ *
+ * TEKST, NIE KOD: wiersz jest ZAPISEM AUDYTOWYM — zamiana na `key+params`
+ * unieważniłaby odczyt wierszy już zapisanych (ten sam powód, dla którego
+ * `EventDerivedOutputBridge` trzyma `scope`/`limitations` jako tekst w dwóch
+ * wariantach). Wiersze zapisane wcześniej zostają nietknięte.
+ *
+ * Wariant wybiera `resolveResponseLanguage` — ten sam mechanizm, co w E2c
+ * i w mostku Outputu; brak deklaracji języka → 'en' (reguła programu dla
+ * wersji angielskiej).
+ */
+const SLAD_ZAMROZENIA_WLASCICIELA: Record<'pl' | 'en', string> = {
+  pl: 'Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).',
+  en: 'Frozen by the organization owner (the approver role was not filled in this session).',
+};
 
 async function getUserOrganizationId(userId: string): Promise<string | null> {
   const row = await DbPromise.get<{ organization_id: string | null }>(
@@ -1706,7 +1731,12 @@ router.post(
           revision: revisionUnderReview,
           decision: 'approved',
           comment:
-            'Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).',
+            SLAD_ZAMROZENIA_WLASCICIELA[
+              resolveResponseLanguage({
+                requested: await readUserLanguage(actorUserId),
+                samples: [],
+              })
+            ],
           actorUserId,
         });
       }
