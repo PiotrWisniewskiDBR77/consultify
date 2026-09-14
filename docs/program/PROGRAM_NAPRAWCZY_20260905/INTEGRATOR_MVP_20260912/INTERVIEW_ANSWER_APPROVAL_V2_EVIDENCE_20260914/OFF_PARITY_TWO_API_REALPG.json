@@ -1,7 +1,7 @@
 {
   "verdict": "PASS",
-  "baseSha": "9e9a5f94e71cf099104382cb28f568061b36a2f2",
-  "candidateHeadBeforeFreeze": "5cc5a5cdd36f6426250d5a76fc6893be7b280533",
+  "baseSha": "90059a10547437b618f3bcc25ed09613ccdda33f",
+  "candidateHeadBeforeFreeze": "23de0e39327ad645983ce5931ab21fe9cdfd121d",
   "database": {
     "container": "cx-s1-v2-pg",
     "host": "127.0.0.1",
