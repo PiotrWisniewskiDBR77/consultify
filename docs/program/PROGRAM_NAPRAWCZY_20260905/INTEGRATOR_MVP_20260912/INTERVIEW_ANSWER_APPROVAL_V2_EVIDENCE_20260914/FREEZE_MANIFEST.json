@@ -1,0 +1,856 @@
+{
+  "schemaVersion": 2,
+  "package": "S1 interview answer approval v2",
+  "verdict": "FUNCTIONAL_REVIEW_ACCEPT_EVIDENCE_CAP_PASS",
+  "generatedAt": "2026-09-14T02:30:00-05:00",
+  "branch": "codex/interview-answer-approval-20260913",
+  "baseAtFreeze": {
+    "ref": "origin/integracja/20260911",
+    "sha": "88f1a1994dffa8b1f3b706476078844cbb43441f"
+  },
+  "candidateHeadBeforeEvidenceCapFreezeCommit": "f972991dcc036050fc0df8cd882788e39c2bd923",
+  "functionalReview": "ACCEPT",
+  "activation": {
+    "environment": "ENABLE_INTERVIEW_ANSWER_APPROVAL=true",
+    "organizationPolicy": "interview.answerApproval.enabled=true",
+    "operator": "both-required",
+    "defaults": "OFF"
+  },
+  "migration": {
+    "newMigration": false,
+    "authorizedExisting": "20262170"
+  },
+  "validation": {
+    "codeValidationBase": "90059a10547437b618f3bcc25ed09613ccdda33f",
+    "focusedVitest": {
+      "files": 8,
+      "testsPassed": 62,
+      "testsFailed": 0,
+      "retry": 0
+    },
+    "gatewayJwtRealPg": {
+      "passed": 4,
+      "failed": 0,
+      "container": "cx-s1-v2-pg",
+      "port": 6454,
+      "database": "consultify_s1_v2"
+    },
+    "offParity": {
+      "verdict": "PASS",
+      "line": "90059a10547437b618f3bcc25ed09613ccdda33f",
+      "normalizedSha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8"
+    },
+    "serverTypecheck": "PASS",
+    "esbuildPerFile": "PASS",
+    "changedUiTokenCheck": "PASS",
+    "retainedEvidenceDiffCheck": "PASS",
+    "postValidationChanges": "evidence-only cleanup and conflict-free rebase"
+  },
+  "evidenceCap": {
+    "limitBytes": 2097152,
+    "committedProgramEvidenceBytes": 1860231,
+    "marginBytes": 236921,
+    "removedRedundantArtifacts": [
+      "INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/ESLINT_GREEN.log",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/BUILD_V6_GREEN.log",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/BUILD_V7_GREEN.log",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ESLINT_V3_GREEN.log",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FRONTEND_TSC_V4_BASELINE_189_CHANGED_PATH_0.log",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FRONTEND_TSC_V5_RAW.log",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RED_V1.json",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RED_V2.json",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RED_V3_FAIL_OPEN_MUTATION.json",
+      "INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SCHEMA_RESTORE.log"
+    ]
+  },
+  "deferred": {
+    "D6": "not cheap",
+    "D7": "would overlap CTO-owned InterviewWorkspace save repair"
+  },
+  "manifestExcludes": [
+    "FREEZE_MANIFEST.json self hash"
+  ],
+  "fileCount": 130,
+  "files": [
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/DIFF_CHECK_GREEN.log",
+      "status": "A",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/EMPTY_DB_STRICT_MIGRATION_FIRST.log",
+      "status": "A",
+      "bytes": 41120,
+      "sha256": "e2db35aeff050feacc81a0153550c1854122f49973593841f905bdfcb0384e00"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/EMPTY_DB_STRICT_MIGRATION_SECOND.log",
+      "status": "A",
+      "bytes": 554,
+      "sha256": "947b793f3c91f8d185998d7a584aa81c87b391ec8f27d76e11cadbe2154f7847"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/FOCUSED_GREEN.json",
+      "status": "A",
+      "bytes": 54052,
+      "sha256": "86e00961df7387efc48933dab67bdb74076598a2eabcccc6d77bf933d1a46533"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/FREEZE_MANIFEST.json",
+      "status": "A",
+      "bytes": 15610,
+      "sha256": "525f37dcab1b92584bf9c625ef0fd56556655029782af28067e3e1adc5b8722a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/I18N_CONTENT_GREEN.json",
+      "status": "A",
+      "bytes": 2026,
+      "sha256": "2b95b0bbe9d576edcfc9b802acf7ac2749079bf98eecf441f9fa6716934cc2d4"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/LANGUAGE_RATCHET_GREEN.log",
+      "status": "A",
+      "bytes": 248,
+      "sha256": "84bc82461aa93ad87a9a1004810d484e8aca73c5bccf26b27c7e2881ccdf68f3"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/P1_RACE_HARNESS_HOLD_V2.json",
+      "status": "A",
+      "bytes": 6271,
+      "sha256": "21ec34c13a3923c7398c983807ba2f9c2b85872df6d956c08385df90768598e8"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/P1_RACE_HARNESS_HOLD_V3.json",
+      "status": "A",
+      "bytes": 7250,
+      "sha256": "1ec5da90dcf6e72c5d4e3aa04ac3ddff452a634ee80c3bfa6679e920433974e7"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/P1_RACE_HARNESS_HOLD_V4.json",
+      "status": "A",
+      "bytes": 4567,
+      "sha256": "aec8bb4ce41eda4f89d16f8f0d773b1eefc8ef5cff36a1add2e5589e9da37f90"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/PRETTIER_GREEN.log",
+      "status": "A",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/README.md",
+      "status": "A",
+      "bytes": 10322,
+      "sha256": "19fd19f451e3c226b5ceb3680f6410bc4bd4194584112599b5f6523b891c79a9"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_CASCADE_CLEANUP.log",
+      "status": "A",
+      "bytes": 284,
+      "sha256": "29575212f18aa27a57847f39839c542805ca9f15d4925ddd230717daee96056d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_LEFT_JOIN_LOCK_QUALIFIED_RED_V3.json",
+      "status": "A",
+      "bytes": 997,
+      "sha256": "d4bc8168f66f3aec36314d0e60edbf7daa2f0c337b435efd5239bd35e88a67ac"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_RACE_HARNESS_HOLD_V3.json",
+      "status": "A",
+      "bytes": 3135,
+      "sha256": "3722e48eea71260ca103610161201fd91694ed25baf9f3a1125784f88c58365d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_SERVICE_RACE_GREEN.json",
+      "status": "A",
+      "bytes": 7514,
+      "sha256": "236fe5bc44a0d5dc4e80335abe032cf6190325d7453dfea632e6160af147d152"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/SERVER_TSC_GREEN.log",
+      "status": "A",
+      "bytes": 118,
+      "sha256": "a4ce17320e8c284e9a9539482180d5c1044fc6ea5adb3a461475c051d2eb0313"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/SIGNED_GATEWAY_PG_GREEN.json",
+      "status": "A",
+      "bytes": 2046,
+      "sha256": "c0b8c79d22db6c747d4510d077655fb68064d56c6a47f9cec6f07303f2f73a76"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/STAGING_SCHEMA_CATALOG_READBACK.log",
+      "status": "A",
+      "bytes": 244,
+      "sha256": "1a14545aef8c2b5aac65c45373098db1569cfa4e22598b4f9fc96c0c0625b8a3"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/STAGING_SCHEMA_MIGRATION_FIRST.log",
+      "status": "A",
+      "bytes": 499,
+      "sha256": "cb9dc357d07010e0969e76ffe696cae0451109fc2d71e6c6e16fe6e94ab55513"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/STAGING_SCHEMA_MIGRATION_SECOND.log",
+      "status": "A",
+      "bytes": 455,
+      "sha256": "2bc5e5665794c6909cbed3e9dcb8a219725666d10aa70b1a92f71200e9379ef9"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/V3_REALPG_SERVICE_RACE_EVIDENCE_HOLD.json",
+      "status": "A",
+      "bytes": 7505,
+      "sha256": "3a1a2441ff8f9d37f50b4394e1b72f04503c33c5b967e475a36655b194e16bf2"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/V4_RETURNED_ANSWER_MANAGER_EXACT_GREEN.json",
+      "status": "A",
+      "bytes": 4582,
+      "sha256": "62d62c689f6cd6346f589e985c9f88ab690f92e11a3c7ab57025aaee38bbefe4"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_MANAGER_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 131444,
+      "sha256": "bdb4a221827148ea536f29234e0381220dc074e480ce8b553e4456d5a8d48488"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_MANAGER_SEND_BACK_MUTATION_WITH_EXTERNAL_ABORT_QUALIFICATION.json",
+      "status": "A",
+      "bytes": 4187,
+      "sha256": "c24ac6681b9474f80d14fd38194ece807da6ba1b4d2e85d1e974e77c84ced983"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_COLD_READ_FOREIGN_DENIAL.json",
+      "status": "A",
+      "bytes": 247,
+      "sha256": "20f55befa0c46770d477cc2a42625b2537e1ca13c59646e8630bead5e20e8909"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SCHEMA_RED.json",
+      "status": "A",
+      "bytes": 1015,
+      "sha256": "a80664dd90d619cfac237800587aa73d4e3b5eb4f6ee157efce770bf4a8864c5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SELECTOR_GREEN.json",
+      "status": "A",
+      "bytes": 1787,
+      "sha256": "d60fbd255f6764a5ae497ebd87e1e4478ee3f5460efc3c2a48d752154292fd1d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SQL_READBACK.json",
+      "status": "A",
+      "bytes": 260,
+      "sha256": "949842ec2891a4c7666b42073842f68446ef2f2d1e3cfd5ee334cb40e91bf72b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SYSTEM_HEALTH_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 154212,
+      "sha256": "aada92acb14923243a63a1afd23b70816c21c425f916ee2280c953d6867ab413"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_SYSTEM_HEALTH_READONLY_GREEN.json",
+      "status": "A",
+      "bytes": 715,
+      "sha256": "2d77019b23baf6daba0b29f7d2f6eea8f4f57dbfad1d1e748608ea38c8aaff5c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_TWO_CONSECUTIVE_GET_GREEN.json",
+      "status": "A",
+      "bytes": 108,
+      "sha256": "991ea7dda4878018d249eb0524ee057c2a571f896df91fc9bdee3cfa5a8c3e38"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_POLICY_TWO_STAGE_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 166324,
+      "sha256": "0327a3b30c40998305d2b87f1e17589f1459ed32c265903f33e1e530766d83cf"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_RESPONDENT_DARK_1440X900.png",
+      "status": "A",
+      "bytes": 119597,
+      "sha256": "ce52e5c0f5cf8ef272318b32d76f74270d4d84fdc0cb98c34ba354d9ec7c0612"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_RESPONDENT_RESUBMIT_PRE_INSIGHTS_FIX_RED.json",
+      "status": "A",
+      "bytes": 12430,
+      "sha256": "f7f1bf477ed95d9e8391ac88a353fdcb34b79e7d0715db791c4947cbed4f3b12"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_ROLES_READONLY_GREEN.json",
+      "status": "A",
+      "bytes": 1635,
+      "sha256": "fabd9dd1cf096d8d50948cd3af029c762708247ed738e00f3ef1aecb0fbb50c5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/ACTUAL_ROLES_SQL_READBACK.json",
+      "status": "A",
+      "bytes": 4991,
+      "sha256": "4c0183fe5c659a8f457943b91d8637c2e6929e16824e71d354184a2ebb4065be"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/CHECK_UI_V2_GREEN.log",
+      "status": "A",
+      "bytes": 1187,
+      "sha256": "9b6154052431057d2e19b90b4568de29235943f445ecd558646221c27f368063"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/CHECK_UI_V3_GREEN.log",
+      "status": "A",
+      "bytes": 1200,
+      "sha256": "fded02a751d36c98f9248960e644e982862a975980e0856cdc40bb28af77ba5e"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/CLEANUP_FINAL_ZERO_READBACK.log",
+      "status": "A",
+      "bytes": 33,
+      "sha256": "42507ef15a6bd84c97cfaefea50255aa7ef466e54d962ff4198a7bc1fc7b38e5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/CLEANUP_INITIAL_AND_CASCADE_READBACK.log",
+      "status": "A",
+      "bytes": 6438,
+      "sha256": "55df50f28665d2d1b53a4fe98ad99c8e651f138fb88ca1590c39177154937bf5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/DIFF_CHECK_V3_GREEN.log",
+      "status": "A",
+      "bytes": 12,
+      "sha256": "1ca4a13146b2891c0e462123ac0cb848f92e6221f18b870a1b78c232d1956c35"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/DISPOSABLE_SCHEMA_MIGRATION_RUN1.log",
+      "status": "A",
+      "bytes": 130,
+      "sha256": "fd1e26d678f156cab9738e6ff1b759d5bc53a7a2960259e5de885b065508fa81"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/DISPOSABLE_SCHEMA_MIGRATION_RUN2.log",
+      "status": "A",
+      "bytes": 130,
+      "sha256": "fd1e26d678f156cab9738e6ff1b759d5bc53a7a2960259e5de885b065508fa81"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FOCUSED_GREEN_V16_39_OF_39.json",
+      "status": "A",
+      "bytes": 16237,
+      "sha256": "a420db547593d7117bb66f0c318d84b6a5f8f6d4eff3476c22f11b57ed0753e1"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FOCUSED_GREEN_V17_44_OF_44.json",
+      "status": "A",
+      "bytes": 18303,
+      "sha256": "149305d32f594762e8c1d94082aa2173a2c6083ae9763295cb268622674e7b34"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FREEZE_MANIFEST_V2.json",
+      "status": "A",
+      "bytes": 11276,
+      "sha256": "cd3b7ea8bf475f6df6431def3f8fff0387a9a27973876a69947f45f292795193"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FREEZE_MANIFEST_V3.json",
+      "status": "A",
+      "bytes": 12428,
+      "sha256": "dda80164724b48fd1c0750a59a7c2a932df409e681d12d75d76d704ebaf5113d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FREEZE_MANIFEST_V4.json",
+      "status": "A",
+      "bytes": 19866,
+      "sha256": "f3284b57ebb2930d378c6a8a35822e12ec2e278f79c03635ff1c75d54ccf0d44"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/FRONTEND_TSC_V5_BASELINE_CHANGED_PATH.log",
+      "status": "A",
+      "bytes": 55,
+      "sha256": "7754f5c1fdc809e2b184127f543886175a25b3dda3998d7d1d651dbf3228dafe"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/INDEPENDENT_REVIEW_V4.md",
+      "status": "A",
+      "bytes": 5258,
+      "sha256": "bd6f01bb4e8cb74ea41a00aed81b6fe331a6f4bff414522c28c9033f66c57a92"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/INTERVIEW_ANSWER_APPROVAL_UI_FINAL_REPORT_20260913.md",
+      "status": "A",
+      "bytes": 5669,
+      "sha256": "e75adf5739bfa05d057767b7124c9b7004f7cd78b9beb80428d8d7a8aca85296"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/PRETTIER_LOCALE_BASELINE_HEAD.log",
+      "status": "A",
+      "bytes": 222,
+      "sha256": "784c31b9b2986f76bcfa2400f666f061d05047f3d02622ff857b640c5dc0a052"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/PRETTIER_V3_GREEN.log",
+      "status": "A",
+      "bytes": 79,
+      "sha256": "09c172a2dba67a5688756807bc65470e1f1ea544b0d552553dd384eb4a72425c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RESOURCE_CLEANUP_ZERO.log",
+      "status": "A",
+      "bytes": 69,
+      "sha256": "2231a7e6bdefc07b1e59b4b217f8af26d48f9b2b14eedf961420699d0aa62399"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_CLEANUP_ZERO.log",
+      "status": "A",
+      "bytes": 153,
+      "sha256": "259f6a54a7b2f44335641e664133fe7784e24f7028c24f6f29adf0ec8bec2f55"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_FIXTURE_CLEANUP_ZERO.log",
+      "status": "A",
+      "bytes": 541,
+      "sha256": "57bd4017a2c4dc9bce69f0784bee5c48434563e3cb44e4279b97cad870a3284e"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_FIXTURE_SEED.mjs",
+      "status": "A",
+      "bytes": 3826,
+      "sha256": "5a01bb9b9eaedbab089e03e1dcab5bc900c913944d07af31fb0f4df495fe3551"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_FIXTURE_SEED_GREEN.json",
+      "status": "A",
+      "bytes": 503,
+      "sha256": "92820017a59230c832c25ac217928e4eff378870badfad1b48843dcf7cc068c4"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_LOADING_FAIL_CLOSED_GREEN.json",
+      "status": "A",
+      "bytes": 538,
+      "sha256": "45a46b797645c37c659ebe0ac1a36c231004c251d9b35c7019d5de043792284a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_AFTER_DECISIONS_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 146487,
+      "sha256": "d7f5b2a48f8497fa3f79275131d8d70f5c09fd096471522ea71689e86e645387"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_BUSINESS_GREEN.json",
+      "status": "A",
+      "bytes": 14054,
+      "sha256": "d6e332e5c67a4d6e054bf10da83df070a7c7538e86eff36326dff49087c038c7"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 134785,
+      "sha256": "ceb52631ebb16e98c288be5bf3d3bb4f831cb874818ba8222a44002e1f973ccc"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MANAGER_LOADING_FAIL_CLOSED_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 121238,
+      "sha256": "17b70ca71f49526fc156bf0600c8eba9018e27b30670c2980a2a72e73a53efd0"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MIGRATION_RUN1.log",
+      "status": "A",
+      "bytes": 130,
+      "sha256": "fd1e26d678f156cab9738e6ff1b759d5bc53a7a2960259e5de885b065508fa81"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_MIGRATION_RUN2.log",
+      "status": "A",
+      "bytes": 1054,
+      "sha256": "2b44944347742e2bf0cc03aa0692393798ed531cf405dad775e79b6859166005"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_PG_SETUP_GREEN.txt",
+      "status": "A",
+      "bytes": 280,
+      "sha256": "047c15c92985f3e011f294db1d9b1e02092aa5e1cb369d5ce44549fe9b250cd4"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_RESPONDENT_BUSINESS_GREEN.json",
+      "status": "A",
+      "bytes": 11794,
+      "sha256": "bfdd935470f765deb8bd3e4be2eb3637b8a66762bf409fd166344fcb61ab3e7f"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_RESPONDENT_CORRECTED_DARK_1440X900.png",
+      "status": "A",
+      "bytes": 128475,
+      "sha256": "45e512c0639de9ee3e3402bf09ec4fcf00f72bfc3d6b9360ea1f1692707610b8"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_RESPONDENT_SENT_BACK_DARK_1440X900.png",
+      "status": "A",
+      "bytes": 118633,
+      "sha256": "6b0a29fe396a2895d53691414931be68b6841563ab3151a261e47b082d052f0b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SQL_READBACK.json",
+      "status": "A",
+      "bytes": 6318,
+      "sha256": "1ae6361a210669e1eb46d0504294d5a25442229e74a4a1293d349ba7d9a32f54"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SUPERADMIN_POLICY_HEALTH_GREEN.json",
+      "status": "A",
+      "bytes": 7351,
+      "sha256": "3b61208b31021c4d65a589a09470a727fe6d48bbee57b8218d749ee7104a9990"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/RUNTIME_V4_SUPERADMIN_POLICY_HEALTH_LIGHT_1440X900.png",
+      "status": "A",
+      "bytes": 162914,
+      "sha256": "ba450360331299ba238c17d0c1cebb947b43e37888223ec0bbe57beaefff6edc"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/SERVER_TSC_V1_ZERO.log",
+      "status": "A",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/SERVER_TSC_V2_ZERO.log",
+      "status": "A",
+      "bytes": 13,
+      "sha256": "ae83a3ae13d7b3bd00ee127bc7bdb3a9fa0a2ca71b3490011b0c284069ed243f"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_UI_EVIDENCE_20260913/STYLE_AND_DIFF_SCOPE.txt",
+      "status": "A",
+      "bytes": 356,
+      "sha256": "f40a42eb88c78a40b98d786e1935aae8d630d85cb0d10f4abaa6d939206017a2"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/DECISION_REALPG.log",
+      "status": "A",
+      "bytes": 2303,
+      "sha256": "daf5214532f89094a1ae4cad0e7f090e06f08610a4f8dbfba8eeb217cc0c5d8b"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/DECISION_UNIT.log",
+      "status": "A",
+      "bytes": 294,
+      "sha256": "cdcb85fcaf969fa38bce91b8ad8c30bdb96bec580c16f63558601b33038936c3"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/DIFF_CHECK.log",
+      "status": "A",
+      "bytes": 97,
+      "sha256": "0e6b6c1b14108b5cfa452446de0b05638b8daf9620e5d727fef2cb865fad727a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/ESBUILD_PER_FILE.json",
+      "status": "A",
+      "bytes": 1999,
+      "sha256": "80ff4de3b3d92fde30c6639d08670f089e01f4c377c41a11ca668bf60fcf3299"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/FOCUSED_TESTS.json",
+      "status": "A",
+      "bytes": 1430,
+      "sha256": "f1a9b844cfc4f1512ac4dcdaee0b94d5787b65fc9653ea704e74416a19d2a7bb"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/FREEZE_20260914.md",
+      "status": "A",
+      "bytes": 2571,
+      "sha256": "a10ec87e5bb2d8d9f1a4910dfcde566292470eddc1d040f7cdeaa9974ffafd9e"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/GATEWAY_JWT_REALPG.log",
+      "status": "A",
+      "bytes": 16918,
+      "sha256": "57f5ff507c3de9c37e4b1d50fd7566dc281764cd1273b39faac5bacc52dd526c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/HOST_ENOSPC_20260914.md",
+      "status": "A",
+      "bytes": 909,
+      "sha256": "1db331ba5b0f90221abae7149e7a8906f07640a5231d7747a942493f6de68967"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/MIGRATION_CONTRACT.log",
+      "status": "A",
+      "bytes": 268,
+      "sha256": "30303adb3cc5ebf9ed3095d18e34d9692a8ceab9a66a429f9c2259c63f723122"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_CANDIDATE_ENV_OFF.log",
+      "status": "A",
+      "bytes": 18030,
+      "sha256": "c7f3746197b45bf95b5f129f05928ea7266e868fb6dd5e7f7bf4e815ee52ee51"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_CANDIDATE_ORG_OFF.log",
+      "status": "A",
+      "bytes": 18030,
+      "sha256": "43012019e24a20047bdbfb086a114c4fe5c53b59aa136b3f89440667fa9578d5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_LINE_CURRENT.log",
+      "status": "A",
+      "bytes": 17972,
+      "sha256": "46958a0db0e92b52b1358cd78567e8710cca7f94bd6ac08d81681fd6167f317d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_TWO_API_REALPG.json",
+      "status": "A",
+      "bytes": 8039,
+      "sha256": "4cd47779c7fd247164ca1e027799b4032ca8d279438f906e1b2ea80ce28737bf"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/ORG_POLICY_UI.log",
+      "status": "A",
+      "bytes": 286,
+      "sha256": "4b9822cdb350779cc67aae4b5049704e9199e5a15978b147cf5c7118d4285c9a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OWNER_SQL_CONTRACT.log",
+      "status": "A",
+      "bytes": 270,
+      "sha256": "ad9abf2f0f664ce207129d384ab21277623b78f109fb47c5ecff05c5544224f6"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/POLICY_UNIT.log",
+      "status": "A",
+      "bytes": 277,
+      "sha256": "2b81351195411232636650a73c36bff0c1888c40319129d5097634f9a7cbe4e2"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/RACE_REALPG.log",
+      "status": "A",
+      "bytes": 4916,
+      "sha256": "cead9929ed9e1401d27de597e4dac0505b2039480f535509e53dbf71dfe96213"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/REALPG_SCHEMA_READBACK.txt",
+      "status": "A",
+      "bytes": 91,
+      "sha256": "cc48cbd547f898365c3a55a62c89d361675c6a7f87cf1c4a0715777cd93fcfb4"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/SERVER_TSC_ZERO.log",
+      "status": "A",
+      "bytes": 118,
+      "sha256": "a4ce17320e8c284e9a9539482180d5c1044fc6ea5adb3a461475c051d2eb0313"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/UI_TOKEN_CHECK.txt",
+      "status": "A",
+      "bytes": 145,
+      "sha256": "addd2d5e127db763c4f6ad81468819f0a0c270664b36c2eb6b98e491ecae183a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTERVIEW_ANSWER_APPROVAL_IMPLEMENTATION_PLAN_20260913.md",
+      "status": "A",
+      "bytes": 15227,
+      "sha256": "d1bed6f4b13f0219cf84ff56e51c6631a2fda47c90632c5d2a4d5f1c227b035f"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTERVIEW_ANSWER_APPROVAL_UI_PLAN_20260913.md",
+      "status": "A",
+      "bytes": 3517,
+      "sha256": "2029cf7e1bbcf4fc2d79363b5a9afa2e2ed8c6960246443432c6c3027bbf3cbd"
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "status": "M",
+      "bytes": 2234442,
+      "sha256": "a9c77e11095e859101ecccc4637406a7a0e10f134a4c70d75eb3506ee2c2ba6b"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "status": "M",
+      "bytes": 2388410,
+      "sha256": "856a43d9c6492b5da6334ba3f0f87d91004228c1012585bf36435b03f67d4411"
+    },
+    {
+      "path": "server/migrations/20262170_interview_answer_decisions.sql",
+      "status": "A",
+      "bytes": 4477,
+      "sha256": "b5ce36cd849ba031f8123f061aecf0b52eeb0ef3a83efd8a682c37f552b67457"
+    },
+    {
+      "path": "server/src/config/envValidator.ts",
+      "status": "M",
+      "bytes": 9262,
+      "sha256": "c39c42a9c0a18a09ea6f42e8134f68d062fcbe0151aeea886fc2a24a2d0cfc0d"
+    },
+    {
+      "path": "server/src/controllers/InterviewController.ts",
+      "status": "M",
+      "bytes": 427520,
+      "sha256": "c0635b9c1a24bf026874480e497e63d716fe0c85e5bef966fd333ce09a9ae8dc"
+    },
+    {
+      "path": "server/src/routes/interview.routes.ts",
+      "status": "M",
+      "bytes": 21178,
+      "sha256": "27cf32a88c072761813b35fd9c4e9de8d2c71be995446071b1bb4d1245fbb905"
+    },
+    {
+      "path": "server/src/routes/llm.routes.ts",
+      "status": "M",
+      "bytes": 100067,
+      "sha256": "17a6454b06b3e5a97766f0d8f4eaf07c2a7fc7d4fff0c132c5714aa4ce6ee81d"
+    },
+    {
+      "path": "server/src/routes/v8/__tests__/interview.routes.test.ts",
+      "status": "M",
+      "bytes": 62973,
+      "sha256": "0c1b8f0292c8baf7d0918d6aba4bb87d91f22f4c30f7d25d3f8b188abab09f7b"
+    },
+    {
+      "path": "server/src/routes/v8/__tests__/interviewAnswerApproval.gateway.pg.test.ts",
+      "status": "A",
+      "bytes": 11701,
+      "sha256": "cf433894f15a1266296b46b3911600fef540b710e5e9fccf65bf5995924672de"
+    },
+    {
+      "path": "server/src/routes/v8/interview.routes.ts",
+      "status": "M",
+      "bytes": 79216,
+      "sha256": "8ec53926cc9ef02f43c2ae4e6d29f61b5964b17ea5ca2ad838a53a205b8eaab8"
+    },
+    {
+      "path": "server/src/scripts/proofs/interviewAnswerApprovalOffParityProbe.ts",
+      "status": "A",
+      "bytes": 5111,
+      "sha256": "c6f9b2c811e35d4dffb3f31dd918cd61b64c3362fd2324e097239bf9bceca5fe"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerApprovalPolicy.test.ts",
+      "status": "A",
+      "bytes": 6327,
+      "sha256": "3a5b5c52e4f70516fcef94169d7d6d605580721dbd9a4d107c01245c15202b0e"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts",
+      "status": "A",
+      "bytes": 40157,
+      "sha256": "901ced85489612f5fc2cfdafe17cb3de817e73620e1cfdecd0d15bcc71990c0b"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionMigration.test.ts",
+      "status": "A",
+      "bytes": 3258,
+      "sha256": "ec25c4ed1545a2adfd90648f0983f90cd801d80b860a3a1e017ff98b0ebafb24"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts",
+      "status": "A",
+      "bytes": 16239,
+      "sha256": "88b12751fa06955c7977534ee07d25d50543704b475e28e78256808f494c8ebb"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionService.test.ts",
+      "status": "A",
+      "bytes": 25867,
+      "sha256": "387cbdc2ce2a524151139a74ae13d6b679dd009f27ec69a07fec7f2b31240232"
+    },
+    {
+      "path": "server/src/services/interview/interviewAnswerApprovalPolicy.ts",
+      "status": "A",
+      "bytes": 8003,
+      "sha256": "e86e113656b78e37f5b9fc61fac35ee5fa0b6b3c4b31dcd8d821f45e616009e8"
+    },
+    {
+      "path": "server/src/services/interview/interviewAnswerDecisionService.ts",
+      "status": "A",
+      "bytes": 39034,
+      "sha256": "1f637d7849b4a3335c3cfd8401baaf20e0ca08a9096ca1e82f6911b76028ba4d"
+    },
+    {
+      "path": "src/components/Interview/InterviewHub.tsx",
+      "status": "M",
+      "bytes": 427465,
+      "sha256": "095a59c73ea8a91f0a964cda0aeb832d1c832e8f13562d729664ffea9d6ef74a"
+    },
+    {
+      "path": "src/components/Interview/InterviewSingleQuestionRuntime.tsx",
+      "status": "M",
+      "bytes": 129017,
+      "sha256": "f72fe1c3ac0abb9aa4ca55f9e5681612e9823ca97b44c25e9add16655471de1b"
+    },
+    {
+      "path": "src/components/Interview/InterviewWorkspace.tsx",
+      "status": "M",
+      "bytes": 167091,
+      "sha256": "6677def114f01847bd78f36ad552b90ac52a1dfd3e73e65138bc6cff93cd0feb"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts",
+      "status": "M",
+      "bytes": 4555,
+      "sha256": "c194a80cc58f6390c0a25f79503a7780f97417d77a683c4bab4a9dec06560693"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx",
+      "status": "M",
+      "bytes": 10525,
+      "sha256": "ac75020a3e28548203f7ac896ea70e9800f870f18cc8b70148e7c0dfe0e19126"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewSingleQuestionRuntime.ownerBehavior.test.tsx",
+      "status": "M",
+      "bytes": 4614,
+      "sha256": "b6b460b866c838c23eb78bbb25875c31cb321efd174a322cbb39e2df473585c9"
+    },
+    {
+      "path": "src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx",
+      "status": "M",
+      "bytes": 31148,
+      "sha256": "f80960ef4ff3fd9308e898bbb8ac7986db4431e353830447f7599acf8f5912c0"
+    },
+    {
+      "path": "src/services/__tests__/api.getSystemHealth.guarded.test.ts",
+      "status": "A",
+      "bytes": 1113,
+      "sha256": "f19ce4693229c8025b6c66e36b84c3b6fe8232c4f762ebcc89a705281be955ac"
+    },
+    {
+      "path": "src/services/api.ts",
+      "status": "M",
+      "bytes": 776801,
+      "sha256": "852881c44b0d446dd21ba809d6d415b7b9a0c51a85a291b532bea7e43a25a03f"
+    },
+    {
+      "path": "src/services/api/v8/interview.ts",
+      "status": "M",
+      "bytes": 31941,
+      "sha256": "e22cba3d162d1d9a07476631ed59d702df6589fe5f8443b2e9a1301221da1725"
+    },
+    {
+      "path": "src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx",
+      "status": "M",
+      "bytes": 35604,
+      "sha256": "4805019a09cb89c9a4c7bc5e2b5be969a7221ff9f5b24f17137b1f3cd333305f"
+    },
+    {
+      "path": "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts",
+      "status": "M",
+      "bytes": 61339,
+      "sha256": "c3004fadf351c7d88e08be15d527dd9fc12868153cf3a047f7959273d0784b62"
+    },
+    {
+      "path": "tests/unit/services/v8-interview-api.test.ts",
+      "status": "M",
+      "bytes": 16260,
+      "sha256": "05ea93657c090c0ed3e6bf1e361830403ddeb5e35af683fba6546e161aa2f8fc"
+    },
+    {
+      "path": "tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx",
+      "status": "M",
+      "bytes": 10185,
+      "sha256": "00b2b6e8868b45656e947e407503e6935d864ba4bf91df4359e1842ef8d39c54"
+    }
+  ]
+}

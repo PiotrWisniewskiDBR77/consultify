@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "capturedAt": "2026-09-13T18:19:03.485Z",
+  "sourceCommit": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "indexSha256": "914aa33e33c28ecae468cf0e31dd180d8fbcbf805d6ee5a89056fb9cb8739710",
+  "fixture": {
+    "orgId": "iaa-ui-20260913175715-06ce0b08-org",
+    "assignmentId": "iaa-ui-20260913175715-06ce0b08-assignment",
+    "sessionId": "iaa-ui-20260913175715-06ce0b08-session",
+    "questionOneId": "iaa-ui-20260913175715-06ce0b08-q1",
+    "questionTwoId": "iaa-ui-20260913175715-06ce0b08-q2"
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "businessWrites": [],
+  "results": [
+    {
+      "role": "manager",
+      "theme": "light",
+      "visible": {
+        "q1": "What evidence confirms the current lead time?\n\nApproved",
+        "q2": "What should be corrected before approval?\n\nPending approval\n\nReason for sending this answer back\nApprove answer\nSend answer back"
+      },
+      "supportRequests": [
+        {
+          "method": "GET",
+          "path": "/api/v8/interview/insights"
+        },
+        {
+          "method": "GET",
+          "path": "/api/interview/templates"
+        }
+      ],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "failedLocal": []
+    },
+    {
+      "role": "respondent",
+      "theme": "dark",
+      "visible": {
+        "q1": "What evidence confirms the current lead time?\n\nApproved",
+        "q2": "What should be corrected before approval?\n\nPending approval"
+      },
+      "supportRequests": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "failedLocal": []
+    }
+  ]
+}

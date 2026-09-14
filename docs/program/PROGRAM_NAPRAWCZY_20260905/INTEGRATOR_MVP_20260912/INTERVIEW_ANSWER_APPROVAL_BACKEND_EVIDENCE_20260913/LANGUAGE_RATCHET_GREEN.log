@@ -1,0 +1,3 @@
+BRAMKA JĘZYKOWA: commit dotyka public/locales/**.json — tryb szybki nie
+  potrafi bezpiecznie policzyć K1/K2/K3a/K3b z samej delty, robię pełny skan.
+BRAMKA JĘZYKOWA: OK (nic nie wzrosło). Spadki: K3a -247, K4pl -9, K4en -9, K5en -1, K7 -2

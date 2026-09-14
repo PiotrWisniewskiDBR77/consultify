@@ -1,0 +1,192 @@
+{
+  "verdict": "PASS",
+  "baseSha": "90059a10547437b618f3bcc25ed09613ccdda33f",
+  "candidateHeadBeforeFreeze": "23de0e39327ad645983ce5931ab21fe9cdfd121d",
+  "database": {
+    "container": "cx-s1-v2-pg",
+    "host": "127.0.0.1",
+    "port": 6454,
+    "name": "consultify_s1_v2"
+  },
+  "apiProbe": "POST /api/v8/interview/assignments/:id/submit",
+  "sameDatabase": true,
+  "cases": {
+    "line": {
+      "env": false,
+      "organization": true,
+      "sha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8"
+    },
+    "candidate_env_off": {
+      "env": false,
+      "organization": true,
+      "sha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8",
+      "identicalToLine": true
+    },
+    "candidate_org_off": {
+      "env": true,
+      "organization": false,
+      "sha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8",
+      "identicalToLine": true
+    }
+  },
+  "normalizedResponse": {
+    "body": {
+      "data": {
+        "aiReview": {
+          "overallScore": 0,
+          "overallVerdict": "empty",
+          "questionEvaluations": [],
+          "recommendations": [],
+          "rubricCriteria": [
+            {
+              "description": "Specific facts, names, numbers, or examples instead of vague generalities (\"some\", \"a lot\", \"we try to\").",
+              "key": "concreteness",
+              "label": "Concreteness",
+              "maxScore": 4
+            },
+            {
+              "description": "Cites something checkable — a data point, named system/process, document, or observed event — to support the claim.",
+              "key": "evidence",
+              "label": "Evidence",
+              "maxScore": 4
+            },
+            {
+              "description": "Goes beyond restating the question — explains mechanism, root cause, trade-off, or context rather than a surface answer.",
+              "key": "depth",
+              "label": "Depth",
+              "maxScore": 4
+            },
+            {
+              "description": "Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).",
+              "key": "measurability",
+              "label": "Measurability",
+              "maxScore": 4
+            },
+            {
+              "description": "Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.",
+              "key": "coherence",
+              "label": "Coherence",
+              "maxScore": 4
+            }
+          ],
+          "rubricVersion": "oxford-v1",
+          "weakAnswerMap": []
+        },
+        "assignment": {
+          "aiReview": {
+            "overallScore": 0,
+            "overallVerdict": "empty",
+            "questionEvaluations": [],
+            "recommendations": [],
+            "rubricCriteria": [
+              {
+                "description": "Specific facts, names, numbers, or examples instead of vague generalities (\"some\", \"a lot\", \"we try to\").",
+                "key": "concreteness",
+                "label": "Concreteness",
+                "maxScore": 4
+              },
+              {
+                "description": "Cites something checkable — a data point, named system/process, document, or observed event — to support the claim.",
+                "key": "evidence",
+                "label": "Evidence",
+                "maxScore": 4
+              },
+              {
+                "description": "Goes beyond restating the question — explains mechanism, root cause, trade-off, or context rather than a surface answer.",
+                "key": "depth",
+                "label": "Depth",
+                "maxScore": 4
+              },
+              {
+                "description": "Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).",
+                "key": "measurability",
+                "label": "Measurability",
+                "maxScore": 4
+              },
+              {
+                "description": "Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.",
+                "key": "coherence",
+                "label": "Coherence",
+                "maxScore": 4
+              }
+            ],
+            "rubricVersion": "oxford-v1",
+            "weakAnswerMap": []
+          },
+          "aiReviewedAt": "<timestamp>",
+          "ai_review_snapshot_json": "{\"overallScore\":0,\"overallVerdict\":\"empty\",\"questionEvaluations\":[],\"recommendations\":[],\"weakAnswerMap\":[],\"rubricVersion\":\"oxford-v1\",\"rubricCriteria\":[{\"key\":\"concreteness\",\"label\":\"Concreteness\",\"description\":\"Specific facts, names, numbers, or examples instead of vague generalities (\\\"some\\\", \\\"a lot\\\", \\\"we try to\\\").\",\"maxScore\":4},{\"key\":\"evidence\",\"label\":\"Evidence\",\"description\":\"Cites something checkable — a data point, named system/process, document, or observed event — to support the claim.\",\"maxScore\":4},{\"key\":\"depth\",\"label\":\"Depth\",\"description\":\"Goes beyond restating the question — explains mechanism, root cause, trade-off, or context rather than a surface answer.\",\"maxScore\":4},{\"key\":\"measurability\",\"label\":\"Measurability\",\"description\":\"Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).\",\"maxScore\":4},{\"key\":\"coherence\",\"label\":\"Coherence\",\"description\":\"Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.\",\"maxScore\":4}]}",
+          "ai_reviewed_at": "<timestamp>",
+          "archived_at": null,
+          "archived_by": null,
+          "archived_via_session": false,
+          "assignee_user_id": "<user>",
+          "create_request_fingerprint": null,
+          "create_request_key": null,
+          "created_at": "<timestamp>",
+          "created_by": null,
+          "due_at": null,
+          "escalate_to": null,
+          "escalated_at": null,
+          "escalation_count": 0,
+          "id": "<assignment>",
+          "is_active": 1,
+          "is_anonymous": false,
+          "is_team_assignment": 0,
+          "last_reminder_type": null,
+          "missing_items_json": null,
+          "notes": null,
+          "organization_id": "<organization>",
+          "priority": "medium",
+          "process_ref": null,
+          "project_id": null,
+          "reminder_count": 0,
+          "reminder_sent_at": null,
+          "reviewDecisionMemory": [],
+          "review_decision_memory_json": null,
+          "sent_back_at": null,
+          "sent_back_reason": null,
+          "session_id": "<session>",
+          "started_at": null,
+          "status": "submitted",
+          "submitted_at": "<timestamp>",
+          "task_id": null,
+          "template_id": "template-off-parity",
+          "template_version": 1,
+          "updated_at": "<timestamp>"
+        },
+        "completenessPercent": 0,
+        "entersContext": false,
+        "session": {
+          "answeredQuestions": 0,
+          "completedAt": null,
+          "id": "<session>",
+          "lastActivityAt": "<timestamp>",
+          "name": "IAA OFF parity session",
+          "organizationId": "<organization>",
+          "ownerId": "<user>",
+          "progress": {},
+          "runtimeModeDefault": "single_question",
+          "startedAt": "<timestamp>",
+          "status": "submitted",
+          "summaryConstraints": [],
+          "summaryFacts": [],
+          "summaryGaps": [],
+          "summaryPainPoints": [],
+          "templateVersion": 1,
+          "totalQuestions": 0
+        }
+      },
+      "meta": {
+        "contract": "interview_runtime_read_v1",
+        "version": "v8"
+      }
+    },
+    "persisted": {
+      "assignment_status": "submitted",
+      "decision_count": 0,
+      "history_count": 0,
+      "session_status": "submitted"
+    },
+    "status": 200
+  }
+}

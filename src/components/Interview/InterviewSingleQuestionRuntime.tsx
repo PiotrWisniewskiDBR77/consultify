@@ -30,6 +30,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api, API_URL, getHeaders } from '@/services/api';
+import type { V8InterviewAnswerApproval } from '@/services/api/v8/interview';
 import type { ArtifactType } from '@/utils/artifactLinks';
 import { buildArtifactCode, getArtifactLabel } from '@/utils/artifactLinks';
 import { stripInternalTextSuffix } from '@/utils/stripInternalTextSuffix';
@@ -70,6 +71,8 @@ interface InterviewSingleQuestionRuntimeProps {
   onSaveAndExit?: () => void;
   sessionName?: string;
   readOnly?: boolean;
+  answerApprovals?: V8InterviewAnswerApproval[];
+  isQuestionReadOnly?: (questionId: string) => boolean;
   isSubmitting?: boolean;
   immersive?: boolean;
   /**
@@ -195,7 +198,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   onSubmitSession,
   onSaveAndExit,
   sessionName,
-  readOnly = false,
+  readOnly: workspaceReadOnly = false,
+  isQuestionReadOnly,
   isSubmitting = false,
   immersive = false,
   answerHistoryByQuestionId,
@@ -289,6 +293,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     () => orderedQuestions.find((question) => question.id === currentQuestionId) || null,
     [currentQuestionId, orderedQuestions]
   );
+  const readOnly =
+    currentQuestion && isQuestionReadOnly
+      ? isQuestionReadOnly(currentQuestion.id)
+      : workspaceReadOnly;
 
   const currentIndex = currentQuestion
     ? orderedQuestions.findIndex((question) => question.id === currentQuestion.id)

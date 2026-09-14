@@ -1,0 +1,75 @@
+{
+  "verdict": "PASS",
+  "files": [
+    {
+      "file": "server/src/config/envValidator.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/controllers/InterviewController.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/routes/v8/__tests__/interviewAnswerApproval.gateway.pg.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/__tests__/interviewAnswerApprovalPolicy.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionMigration.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionService.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/interviewAnswerApprovalPolicy.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/services/interview/interviewAnswerDecisionService.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "server/src/scripts/proofs/interviewAnswerApprovalOffParityProbe.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "file": "tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx",
+      "exitCode": 0,
+      "output": ""
+    }
+  ]
+}

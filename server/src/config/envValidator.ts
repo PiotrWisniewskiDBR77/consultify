@@ -156,6 +156,13 @@ const validationRules: EnvValidationRule[] = [
     validator: (value) => !value || value === 'true' || value === 'false',
     errorMessage: 'ENABLE_TEST_GATEWAY must be "true" or "false"',
   },
+  {
+    key: 'ENABLE_INTERVIEW_ANSWER_APPROVAL',
+    required: false,
+    defaultValue: 'false',
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'ENABLE_INTERVIEW_ANSWER_APPROVAL must be "true" or "false"',
+  },
 ];
 
 interface ValidationResult {
