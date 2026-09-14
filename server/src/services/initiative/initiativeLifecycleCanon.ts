@@ -8,6 +8,11 @@
  */
 
 import {
+  type InitiativeLifecycleStage,
+  resolveInitiativeLifecycleStage,
+  resolveInitiativeStageWriteTarget,
+} from '../../constants/initiativeLifecycleStages.js';
+import {
   GATE_TRANSITIONS,
   InitiativeStatus,
   type InitiativeStatusType,
@@ -237,22 +242,65 @@ export {
   validateTransition as p11ValidateTransition,
 };
 
-/** Guard: refuse to propose persisting unknown enum-like status (write path helper). */
+/**
+ * Etap silnika (12, DEC-490) dla konkretnego wiersza inicjatywy.
+ *
+ * KOLEJNOŚĆ PRAWDY jest znacząca: agregat silnika
+ * (`ie_aggregate_state.payload_json.lifecycleState`) WYGRYWA, bo tylko on
+ * rozróżnia etapy, które kolapsują na ten sam kod kolumny (APPROVED_BACKLOG
+ * vs SCHEDULED, DELIVERED vs CLOSED). Kolumna `initiatives.status` jest
+ * ZAPASEM dla wierszy sprzed wprowadzenia agregatu — wtedy odtwarzamy etap
+ * z siedmiokodowego kodu, świadomie tracąc rozróżnienie wewnątrz kolapsu
+ * (czytamy pierwszy etap z grupy, nie zgadujemy dalszego).
+ */
+export function resolveInitiativeStageForRow(input: {
+  aggregateLifecycleState?: string | null;
+  dbStatus: string | unknown;
+}): InitiativeLifecycleStage | null {
+  const fromAggregate = resolveInitiativeLifecycleStage(input.aggregateLifecycleState);
+  if (fromAggregate) return fromAggregate;
+  return resolveInitiativeLifecycleStage(normalizeInitiativeDbStatusForRead(input.dbStatus));
+}
+
+/**
+ * Guard ścieżki ZAPISU: cel przejścia → para {etap silnika, kod kolumny}.
+ *
+ * H1c / DEC-506 — TO JEST MIEJSCE, KTÓRE BYŁO ZEPSUTE. Do 14.09 ta funkcja
+ * porównywała cel wprost z siedmioma kodami `InitiativeStatus` i odrzucała
+ * WSZYSTKO, co przychodziło w słowniku etapów silnika — a dokładnie tym
+ * słownikiem mówi `EarlyLifecycleProposalSchema` (PROMOTED · PLANNING ·
+ * SCHEDULED · EXECUTING · DONE). Skutek: żaden cel, który dało się
+ * zaproponować, nie był zapisywalny; zatwierdzona recenzja A05 kończyła się
+ * 409 `UNKNOWN_TARGET_STATUS` (tripwire `h1b-lifecycle-target-vocabulary-gap`).
+ *
+ * Teraz cel przechodzi przez JEDNO źródło mapowania
+ * (`constants/initiativeLifecycleStages.ts`): 12 etapów DEC-490 → 7 kodów P12.
+ * Zwracamy OBIE prawdy, bo obie są potrzebne — `status` idzie do kolumny
+ * (CHECK `initiatives_status_check_p12`), `stage` do agregatu silnika, żeby
+ * dwunastostopniowa prawda nie ginęła przy kolapsie (np. APPROVED_BACKLOG
+ * i SCHEDULED to ten sam kod `APPROVED`).
+ *
+ * Nadal NIE ZGADUJEMY: wartość spoza obu słowników to odmowa, nie „DRAFT na
+ * wszelki wypadek" (canon §5.5).
+ */
 export function coerceInitiativeStatusForWrite(
   candidate: string | unknown
-): { ok: true; status: string } | { ok: false; code: 'UNKNOWN_STATUS'; message: string } {
+):
+  | { ok: true; status: string; stage: InitiativeLifecycleStage; archived: boolean }
+  | { ok: false; code: 'UNKNOWN_STATUS'; message: string } {
   const raw = String(candidate ?? '')
     .trim()
     .toUpperCase();
   if (!raw) {
     return { ok: false, code: 'UNKNOWN_STATUS', message: 'Status is required' };
   }
-  if (!KNOWN_DB_STATUSES.has(raw)) {
+  const target = resolveInitiativeStageWriteTarget(raw);
+  if (!target) {
     return {
       ok: false,
       code: 'UNKNOWN_STATUS',
       message: `Refusing unknown initiative status "${raw}" (schema drift guard)`,
     };
   }
-  return { ok: true, status: raw };
+  return { ok: true, status: target.status, stage: target.stage, archived: target.archived };
 }

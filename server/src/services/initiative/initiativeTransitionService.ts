@@ -442,6 +442,11 @@ export async function executeInitiativeTransition(
     };
   }
   const nextStatus = coercedNext.status;
+  // H1c / DEC-506 — druga prawda tego samego celu: etap silnika (12, DEC-490).
+  // `nextStatus` idzie do kolumny (7 kodów, CHECK P12), `nextStage` do agregatu
+  // silnika, żeby kolaps 12→7 nie zjadał informacji (APPROVED_BACKLOG i
+  // SCHEDULED to ten sam kod `APPROVED`, DELIVERED i CLOSED to ten sam `CLOSED`).
+  const nextStage = coercedNext.stage;
   const overrideReasonTrimmed = params.overrideReason ? String(params.overrideReason).trim() : '';
 
   type TransitionOutcome =
@@ -1501,6 +1506,44 @@ export async function executeInitiativeTransition(
         `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`,
         lifecycleParams
       );
+
+      // ---- H1c / DEC-506: ETAP SILNIKA (12) DO AGREGATU, W TEJ SAMEJ TRANSAKCJI ----
+      //
+      // Kolumna `initiatives.status` niesie SIEDEM kodów i nie ma jak odróżnić
+      // APPROVED_BACKLOG od SCHEDULED ani DELIVERED od CLOSED. Dwunastostopniowa
+      // prawda DEC-490 mieszka więc tam, gdzie już dziś mieszka —
+      // `ie_aggregate_state` (`aggregate_type='initiative'`, klucz
+      // `payload_json.lifecycleState`), zapisywana przez `registerInitiative`
+      // i czytana przez `initiativeUnifiedReader`.
+      //
+      // W TEJ SAMEJ TRANSAKCJI — celowo. Gdyby etap lądował po COMMIT-cie, każdy
+      // błąd między zapisami zostawiałby kolumnę i agregat w rozjeździe, czyli
+      // dokładnie stan, który H1c ma zlikwidować. `||` scala z istniejącym
+      // payloadem, więc nie kasujemy pól, których ta ścieżka nie zna.
+      const stagePatch = JSON.stringify({ initiativeId: id, lifecycleState: nextStage });
+      try {
+        await client.query(
+          `INSERT INTO ie_aggregate_state
+             (organization_id, aggregate_type, aggregate_id, version, payload_json, updated_at)
+           VALUES (?, 'initiative', ?, 1, CAST(? AS jsonb), NOW())
+           ON CONFLICT (organization_id, aggregate_type, aggregate_id) DO UPDATE
+             SET version = ie_aggregate_state.version + 1,
+                 payload_json = ie_aggregate_state.payload_json || CAST(? AS jsonb),
+                 updated_at = NOW()`,
+          [orgId, id, stagePatch, stagePatch]
+        );
+      } catch (stageErr: unknown) {
+        // FAIL CLOSED, z jednym wyjątkiem: baza bez tabeli agregatu (stary
+        // bootstrap „thin"). Tam etapu nie ma gdzie zapisać i milczenie byłoby
+        // kłamstwem — dlatego głośny WARN, nie ciche `catch {}`.
+        const msg = String((stageErr as Error)?.message || stageErr || '');
+        if (!/ie_aggregate_state/i.test(msg) || !/does not exist|no such table/i.test(msg)) {
+          throw stageErr;
+        }
+        logger.warn(
+          `[initiatives] etap silnika ${nextStage} NIE zapisany dla ${id}: brak tabeli ie_aggregate_state`
+        );
+      }
 
       // Benefits tracking window defaults — same transaction/client now. Only a
       // genuinely-missing legacy column is swallowed; any other error aborts

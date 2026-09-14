@@ -2,6 +2,11 @@ import { createHash } from 'node:crypto';
 
 import { executeInitiativeTransition } from '../initiative/initiativeTransitionService.js';
 import {
+  INITIATIVE_STAGE_TO_STATUS,
+  resolveInitiativeLifecycleStage,
+} from '../../constants/initiativeLifecycleStages.js';
+import { resolveInitiativeStageForRow } from '../initiative/initiativeLifecycleCanon.js';
+import {
   recordInitiativeLifecycleGateDecision,
   type InitiativeLifecycleGateDomain,
 } from '../initiative/initiativeLifecycleGateDecisionService.js';
@@ -44,6 +49,30 @@ const EXPECTED_BY_TARGET: Record<LifecycleTarget, string> = {
   DONE: 'EXECUTING',
 };
 
+/**
+ * H1c / DEC-506 — porównanie „czy inicjatywa stoi tam, gdzie propozycja zakłada".
+ *
+ * DLACZEGO NIE `String(row.status) !== expectedStatus`: `APPROVED_EXPECTED_BY_TARGET`
+ * i `EXPECTED_BY_TARGET` mówią słownikiem ETAPÓW (REVIEW · PROMOTED · APPROVED ·
+ * SCHEDULED · EXECUTING), a kolumna `initiatives.status` niesie SIEDEM kodów P12.
+ * Surowe porównanie było prawdziwe wyłącznie dla jednego celu (SCHEDULED, bo
+ * oczekiwał literalnego `APPROVED`); cztery pozostałe odbijały się o
+ * `initiative_lifecycle_expected_status_drift` ZANIM ktokolwiek doszedł do
+ * writera. Teraz obie strony sprowadzamy do etapu silnika i porównujemy etapy.
+ */
+function matchesExpectedStage(
+  row: { status?: unknown; lifecycle_state?: unknown },
+  expected: string
+): boolean {
+  const expectedStage = resolveInitiativeLifecycleStage(expected);
+  if (!expectedStage) return false;
+  const actualStage = resolveInitiativeStageForRow({
+    aggregateLifecycleState: row.lifecycle_state == null ? null : String(row.lifecycle_state),
+    dbStatus: row.status,
+  });
+  return actualStage === expectedStage;
+}
+
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   if (value && typeof value === 'object') {
@@ -83,13 +112,16 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
     const current = (
       await client.query<any>(
         `SELECT c.version case_version,p.version plan_version,c.context_snapshot_id,i.status,
-                i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,i.baseline_version
+                i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,i.baseline_version,
+                agg.payload_json->>'lifecycleState' AS lifecycle_state
            FROM transformation_cases c
            JOIN transformation_plans p ON p.plan_id=c.active_plan_id
             AND p.transformation_case_id=c.transformation_case_id AND p.organization_id=c.organization_id
            JOIN transformation_case_artifact_links l ON l.transformation_case_id=c.transformation_case_id
             AND l.organization_id=c.organization_id AND l.artifact_type='initiative' AND l.artifact_id=?
            JOIN initiatives i ON i.id=l.artifact_id AND i.organization_id=c.organization_id
+           LEFT JOIN ie_aggregate_state agg ON agg.organization_id=i.organization_id
+            AND agg.aggregate_type='initiative' AND agg.aggregate_id=i.id
           WHERE c.transformation_case_id=? AND c.organization_id=?
             AND EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id=c.project_id AND pm.user_id=?)
             AND EXISTS (SELECT 1 FROM organization_members om WHERE om.organization_id=c.organization_id
@@ -103,7 +135,7 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
       )
     ).rows[0];
     if (!current) throw new Error('initiative_lifecycle_authority_required');
-    if (String(current.status).toUpperCase() !== expectedStatus)
+    if (!matchesExpectedStage(current, expectedStatus))
       throw new Error('initiative_lifecycle_expected_status_drift');
     const milestoneRows = input.targetStatus === 'SCHEDULED'
       ? (await client.query<any>(
@@ -268,7 +300,7 @@ export async function executeGovernedInitiativeTransition(
       await client.query<any>(
         `SELECT c.version case_version,p.version plan_version,c.context_snapshot_id,
                 i.status,i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,
-                i.baseline_version
+                i.baseline_version,agg.payload_json->>'lifecycleState' AS lifecycle_state
            FROM transformation_cases c
            JOIN transformation_plans p ON p.plan_id=c.active_plan_id
             AND p.transformation_case_id=c.transformation_case_id
@@ -278,6 +310,8 @@ export async function executeGovernedInitiativeTransition(
             AND l.organization_id=c.organization_id
             AND l.artifact_type='initiative' AND l.artifact_id=?
            JOIN initiatives i ON i.id=l.artifact_id AND i.organization_id=c.organization_id
+           LEFT JOIN ie_aggregate_state agg ON agg.organization_id=i.organization_id
+            AND agg.aggregate_type='initiative' AND agg.aggregate_id=i.id
           WHERE c.transformation_case_id=? AND c.organization_id=?
             AND EXISTS (SELECT 1 FROM project_members pm
                          WHERE pm.project_id=c.project_id AND pm.user_id=?)
@@ -286,7 +320,7 @@ export async function executeGovernedInitiativeTransition(
       )
     ).rows[0];
     if (!current) throw new Error('initiative_lifecycle_authority_required');
-    if (String(current.status).toUpperCase() !== expectedStatus)
+    if (!matchesExpectedStage(current, expectedStatus))
       throw new Error('initiative_lifecycle_expected_status_drift');
 
     const milestoneRows = (
@@ -466,12 +500,29 @@ export async function executeGovernedInitiativeTransition(
         return withPgTransaction(async (client) => {
           const row = (
             await client.query<any>(
-              `SELECT status,baseline_version,schedule_baseline_id FROM initiatives
-                WHERE id=? AND organization_id=?`,
+              `SELECT i.status,i.baseline_version,i.schedule_baseline_id,
+                      agg.payload_json->>'lifecycleState' AS lifecycle_state
+                 FROM initiatives i
+                 LEFT JOIN ie_aggregate_state agg ON agg.organization_id=i.organization_id
+                  AND agg.aggregate_type='initiative' AND agg.aggregate_id=i.id
+                WHERE i.id=? AND i.organization_id=?`,
               [input.initiativeId, input.organizationId]
             )
           ).rows[0];
-          return row && String(row.status).toUpperCase() === targetStatus ? row : null;
+          if (!row) return null;
+          // H1c: read-back potwierdza OBIE prawdy — kod kolumny (7) i etap
+          // silnika (12). Porównanie samego `status === targetStatus` nie miało
+          // szans przejść: `targetStatus` jest etapem, kolumna jest kodem.
+          const expectedStage = resolveInitiativeLifecycleStage(targetStatus);
+          if (!expectedStage) return null;
+          const statusOk =
+            String(row.status).toUpperCase() === INITIATIVE_STAGE_TO_STATUS[expectedStage];
+          const stageOk =
+            resolveInitiativeStageForRow({
+              aggregateLifecycleState: row.lifecycle_state == null ? null : String(row.lifecycle_state),
+              dbStatus: row.status,
+            }) === expectedStage;
+          return statusOk && stageOk ? row : null;
         });
       },
     },
