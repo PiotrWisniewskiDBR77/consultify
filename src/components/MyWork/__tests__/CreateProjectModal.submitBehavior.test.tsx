@@ -66,4 +66,12 @@ describe('F2-3 E2 CreateProjectModal native form behavior', () => {
     expect(onSaved).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('matches the API positive-budget contract', () => {
+    mountModal();
+    const budget = screen.getByRole('spinbutton', { name: /Budget/i });
+
+    expect(budget).toHaveAttribute('min', '0.01');
+    expect(budget).toHaveAttribute('step', '0.01');
+  });
 });

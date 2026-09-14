@@ -12,6 +12,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { AppError } from '../types/index.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { normalizeProjectRole } from '../utils/roleNormalization.js';
 
@@ -317,7 +318,7 @@ async function checkAllInitiativesHaveOwners(projectId: string): Promise<boolean
       `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND (owner_business_id IS NULL OR owner_business_id = '')`,
       [projectId]
     );
-    return row ? row.cnt === 0 : false;
+    return row ? Number(row.cnt) === 0 : false;
   } catch {
     return false;
   }
@@ -408,7 +409,7 @@ async function checkAllInitiativesClosed(projectId: string): Promise<boolean> {
       `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('CLOSED', 'REJECTED')`,
       [projectId]
     );
-    return row ? row.cnt === 0 : false;
+    return row ? Number(row.cnt) === 0 : false;
   } catch {
     return false;
   }
@@ -421,12 +422,16 @@ async function checkNoBlockingDecisions(projectId: string): Promise<boolean> {
       `SELECT COUNT(*) as cnt FROM decisions 
        WHERE project_id = ? 
        AND status IN ('pending', 'escalated')
-       AND (required = 1 OR type IN ('INITIATIVE_APPROVAL', 'PHASE_TRANSITION', 'EXECUTION'))`,
-      [projectId]
+       AND (
+         LOWER(COALESCE(NULLIF(TRIM(required), ''), 'false')) NOT IN ('false', '0', 'no', 'off')
+         OR type IN ('INITIATIVE_APPROVAL', 'PHASE_TRANSITION', 'EXECUTION')
+       )`,
+      [projectId],
+      { fallback: false }
     );
-    return row ? row.cnt === 0 : true;
-  } catch {
-    return false;
+    return row ? Number(row.cnt) === 0 : false;
+  } catch (error) {
+    throwStageGateCriterionError('noBlockingDecisions', projectId, error);
   }
 }
 
@@ -434,13 +439,44 @@ async function countKPIs(projectId: string): Promise<number> {
   try {
     const row = await DbPromise.get<{ cnt: number }>(
       db,
-      `SELECT COUNT(*) as cnt FROM kpi_results WHERE project_id = ?`,
-      [projectId]
+      `SELECT COUNT(DISTINCT measured.kpi_id) AS cnt
+         FROM (
+           SELECT pk.id AS kpi_id
+             FROM project_kpis pk
+            WHERE pk.project_id = ?
+              AND pk.current_value IS NOT NULL
+              AND pk.last_updated_at IS NOT NULL
+           UNION
+           SELECT km.kpi_id
+             FROM initiatives i
+             JOIN initiative_kpis ik ON ik.initiative_id = i.id
+             JOIN kpi_measurements km ON km.kpi_id = ik.id
+            WHERE i.project_id = ?
+         ) measured`,
+      [projectId, projectId],
+      { fallback: false }
     );
-    return row ? row.cnt : 0;
-  } catch {
-    return 0;
+    return Number(row?.cnt ?? 0);
+  } catch (error) {
+    throwStageGateCriterionError('kpisMeasured', projectId, error);
   }
+}
+
+function throwStageGateCriterionError(
+  criterion: string,
+  projectId: string,
+  error: unknown
+): never {
+  logger.error('[StageGateService] Criterion query failed', {
+    criterion,
+    projectId,
+    error: error instanceof Error ? error.message : String(error),
+  });
+  throw new AppError(
+    500,
+    `Unable to evaluate stage gate criterion: ${criterion}`,
+    'STAGE_GATE_CRITERION_QUERY_FAILED'
+  );
 }
 
 /**
