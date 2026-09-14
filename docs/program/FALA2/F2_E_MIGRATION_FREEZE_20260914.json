@@ -1,0 +1,34 @@
+{
+  "packet": "F2-E",
+  "variant": "B",
+  "date": "2026-09-14",
+  "verdict": "PASS_STOP_AFTER_MIGRATION",
+  "branch": "codex/enterprise-trust-pack-20260913",
+  "base": "90059a10547437b618f3bcc25ed09613ccdda33f",
+  "migration": "server/migrations/20262200_enterprise_export_snapshot_resume.sql",
+  "migrationSha256": "a5ec40700dee5aceed651a0f5b4a040d428354e3fc9b4378f58261a24f8aca66",
+  "freshPostgres": {
+    "database": "f2e_empty_final",
+    "pass1": "PASS",
+    "pass2Pending": 0,
+    "f2eColumns": 39
+  },
+  "stagingSchemaClone": {
+    "source": "/Users/piotrwisniewski/Developer/cto-codex/staging-schema-20260913.sql",
+    "database": "f2e_schema_final",
+    "pass1": "PASS",
+    "pass2Pending": 0,
+    "f2eColumns": 39
+  },
+  "realPostgresContract": {
+    "idempotentRequest": "PASS",
+    "fencedLease": "PASS",
+    "staleFenceRejected": "PASS",
+    "pinnedAsOf": "PASS",
+    "immutableParts": "PASS",
+    "hashedTokensOnly": "PASS",
+    "partDigestVerified": "PASS"
+  },
+  "railwayPreDeployUnchanged": true,
+  "e2Started": false
+}
