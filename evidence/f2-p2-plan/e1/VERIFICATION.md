@@ -22,6 +22,7 @@ Verdict: **PASS for the local E1 contract; external provider success is NOT_PROV
 
 - Post-review focused Vitest after rebase, exact three files, `--retry=0`: **3 files passed, 11 tests passed**. See `review-fix-focused-tests.log`.
 - Second-review focused Vitest, exact three files, `--retry=0`: **3 files passed, 12 tests passed**. See `review2-focused-tests.log`.
+- Final-line focused Vitest after rebase to `52fdcfebd5`: **3 files passed, 12 tests passed**, including RealPG. See `final-line-focused-tests.log`.
 - Focused review RED→GREEN: stale input initially reached command execution and returned 500; after the fix it returns 409 and the analyzer count remains zero. See `review-fix-red-route.log` and `review-fix-green-route.log`.
 - Server TypeScript `--noEmit`: **PASS**. See `server-tsc.log`.
 - Per-file esbuild for the new service: **PASS**. See `service-esbuild.log`.
