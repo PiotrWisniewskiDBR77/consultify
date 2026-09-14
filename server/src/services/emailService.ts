@@ -37,7 +37,7 @@ interface SendEmailOptions {
   attachments?: Array<{
     filename: string;
     path?: string;
-    content?: string;
+    content?: string | Buffer;
     contentType?: string;
   }>;
 }
