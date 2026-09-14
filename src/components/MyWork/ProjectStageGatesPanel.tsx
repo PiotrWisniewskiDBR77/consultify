@@ -29,7 +29,10 @@ const gateLabelKey: Record<ProjectStageGateType, string> = {
   CLOSURE_GATE: 'closure',
 };
 
-export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projectId }) => {
+export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?: string }> = ({
+  projectId,
+  requesterId,
+}) => {
   const { t } = useTranslation();
   const [current, setCurrent] = useState<CurrentStageGateResponse | null>(null);
   const [history, setHistory] = useState<ProjectStageGateHistoryItem[]>([]);
@@ -92,7 +95,15 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
     async (gateType: ProjectStageGateType) => {
       setPassing(gateType);
       try {
-        await Api.passProjectStageGate(projectId, gateType);
+        if (!requesterId) {
+          throw new Error(
+            t(
+              'myWork.projects.stageGates.requesterMissing',
+              'Assign a project manager or PMO requester before approving this gate'
+            )
+          );
+        }
+        await Api.passProjectStageGate(projectId, gateType, requesterId);
         toast.success(t('myWork.projects.stageGates.passed', 'Stage gate passed'));
         await load();
       } catch (cause: any) {
@@ -103,7 +114,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
         setPassing(null);
       }
     },
-    [load, projectId, t]
+    [load, projectId, requesterId, t]
   );
 
   const columns = useMemo<TableColumn[]>(
@@ -139,7 +150,8 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
             <span className="flex flex-col gap-0.5">
               <span>{t(`myWork.projects.stageGates.names.${gateLabelKey[row.gateType]}`)}</span>
               <span className="text-[10px] font-normal text-c-text-muted">
-                {row.fromPhase} → {row.toPhase}
+                {t(`myWork.projects.stageGates.phases.${row.fromPhase.toLowerCase()}`)} →{' '}
+                {t(`myWork.projects.stageGates.phases.${row.toPhase.toLowerCase()}`)}
               </span>
             </span>
           );
@@ -174,10 +186,17 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
               </span>
               <button
                 type="button"
-                disabled={!row.actionable || passing !== null}
+                disabled={!row.actionable || passing !== null || !requesterId}
                 onClick={() => void passGate(row.gateType)}
                 className="inline-flex h-7 items-center gap-1 rounded-full border border-c-border px-2 text-[10px] font-medium text-c-text disabled:opacity-40"
-                title={row.missingElements.map(criterionLabel).join(', ') || undefined}
+                title={
+                  !requesterId
+                    ? t(
+                        'myWork.projects.stageGates.requesterMissing',
+                        'Assign a project manager or PMO requester before approving this gate'
+                      )
+                    : row.missingElements.map(criterionLabel).join(', ') || undefined
+                }
               >
                 <LockKeyhole size={11} className="shrink-0" />
                 <span className="text-left leading-tight">
@@ -191,7 +210,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
         },
       },
     ],
-    [criterionLabel, passGate, passing, t]
+    [criterionLabel, passGate, passing, requesterId, t]
   );
 
   return (

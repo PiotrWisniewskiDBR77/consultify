@@ -3671,12 +3671,13 @@ export const Api = {
   passProjectStageGate: async (
     projectId: string,
     gateType: string,
+    requestedBy: string,
     notes?: string
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/stage-gates/${projectId}/pass/${gateType}`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ notes: notes || undefined }),
+      body: JSON.stringify({ requestedBy, notes: notes || undefined }),
     });
     return handleResponse(res, 'Failed to pass the project stage gate');
   },

@@ -4952,7 +4952,8 @@
       "approvalRoles": {
         "BUSINESS_AUTHORITY": "Business approver",
         "GATE_AUTHORITY": "Stage-gate approver",
-        "DOMAIN_AUTHORITY": "Domain approver"
+        "DOMAIN_AUTHORITY": "Domain approver",
+        "GATE_REQUESTER": "Stage-gate requester"
       },
       "permissions": {
         "approve-business-case": "approve the business case",
@@ -4986,6 +4987,15 @@
         "status": "Status",
         "pass": "Pass gate",
         "missing": "Missing before the next gate",
+        "requesterMissing": "Assign a project manager or PMO requester before approving this gate",
+        "phases": {
+          "context": "Context",
+          "assessment": "Assessment",
+          "initiatives": "Initiatives",
+          "roadmap": "Roadmap",
+          "execution": "Execution",
+          "stabilization": "Stabilization"
+        },
         "criteria": {
           "hasStrategicGoals": "Strategic goals defined",
           "hasChallenges": "Challenges documented",

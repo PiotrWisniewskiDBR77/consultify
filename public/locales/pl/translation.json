@@ -4102,7 +4102,8 @@
       "approvalRoles": {
         "BUSINESS_AUTHORITY": "Osoba zatwierdzająca biznesowo",
         "GATE_AUTHORITY": "Osoba zatwierdzająca bramkę",
-        "DOMAIN_AUTHORITY": "Osoba zatwierdzająca merytorycznie"
+        "DOMAIN_AUTHORITY": "Osoba zatwierdzająca merytorycznie",
+        "GATE_REQUESTER": "Wnioskodawca bramki etapu"
       },
       "permissions": {
         "approve-business-case": "zatwierdzać uzasadnienie biznesowe",
@@ -4136,6 +4137,15 @@
         "status": "Status",
         "pass": "Zatwierdź bramkę",
         "missing": "Brakuje przed następną bramką",
+        "requesterMissing": "Przypisz kierownika projektu lub wnioskodawcę PMO przed zatwierdzeniem tej bramki",
+        "phases": {
+          "context": "Kontekst",
+          "assessment": "Ocena",
+          "initiatives": "Inicjatywy",
+          "roadmap": "Mapa drogowa",
+          "execution": "Realizacja",
+          "stabilization": "Stabilizacja"
+        },
         "criteria": {
           "hasStrategicGoals": "Zdefiniowane cele strategiczne",
           "hasChallenges": "Udokumentowane wyzwania",

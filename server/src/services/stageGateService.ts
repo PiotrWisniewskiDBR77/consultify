@@ -486,10 +486,9 @@ function throwStageGateCriterionError(
  */
 const STAGE_GATE_APPROVER_ROLES = new Set([
   'PROJECT_SPONSOR',
-  'PROJECT_LEADER',
   'STEERING_COMMITTEE',
-  'PMO',
 ]);
+const STAGE_GATE_REQUESTER_ROLES = new Set(['PROJECT_LEADER', 'PMO']);
 
 export class StageGateForbiddenError extends Error {
   readonly code = 'STAGE_GATE_ROLE_FORBIDDEN';
@@ -515,6 +514,7 @@ export async function passGate(
   _actorRole?: string | null,
   governance?: {
     organizationId: string;
+    requestedBy: string;
     decisionId?: string | null;
     policyId?: string | null;
     policyVersion?: number | null;
@@ -557,6 +557,56 @@ export async function passGate(
   // controller's asyncHandler to the global error handler as an honest 5xx.
   try {
     await queryHelpers.withPgTransaction(async (client) => {
+      const membershipResult = await client.query<{
+        project_role?: string | null;
+        normalized_project_role?: string | null;
+      }>(
+        `SELECT pm.project_role, pm.normalized_project_role
+           FROM project_members pm
+           JOIN projects p ON p.id = pm.project_id AND p.organization_id = ?
+          WHERE pm.project_id = ? AND pm.user_id = ?
+          LIMIT 1`,
+        [governance.organizationId, projectId, userId]
+      );
+      const membership = membershipResult.rows[0];
+      const projectRole = normalizeProjectRole(
+        membership?.normalized_project_role || membership?.project_role
+      );
+      if (!projectRole || !STAGE_GATE_APPROVER_ROLES.has(projectRole)) {
+        throw new StageGateForbiddenError();
+      }
+
+      if (governance.requestedBy === userId) {
+        throw new AppError(
+          403,
+          'The stage-gate requester cannot approve the same gate',
+          'SEPARATION_OF_DUTIES_REQUIRED'
+        );
+      }
+
+      const requesterResult = await client.query<{
+        project_role?: string | null;
+        normalized_project_role?: string | null;
+      }>(
+        `SELECT pm.project_role, pm.normalized_project_role
+           FROM project_members pm
+           JOIN projects p ON p.id = pm.project_id AND p.organization_id = ?
+          WHERE pm.project_id = ? AND pm.user_id = ?
+          LIMIT 1`,
+        [governance.organizationId, projectId, governance.requestedBy]
+      );
+      const requesterMembership = requesterResult.rows[0];
+      const requesterRole = normalizeProjectRole(
+        requesterMembership?.normalized_project_role || requesterMembership?.project_role
+      );
+      if (!requesterRole || !STAGE_GATE_REQUESTER_ROLES.has(requesterRole)) {
+        throw new AppError(
+          403,
+          'Stage-gate requester must be a project manager or PMO member',
+          'STAGE_GATE_REQUESTER_ROLE_FORBIDDEN'
+        );
+      }
+
       const projectResult = await client.query<{ current_phase?: Phase }>(
         `SELECT current_phase FROM projects
           WHERE id = ? AND organization_id = ?
@@ -574,24 +624,6 @@ export async function passGate(
           'Stage gate does not match the current project phase',
           'STAGE_GATE_PHASE_CONFLICT'
         );
-      }
-
-      const membershipResult = await client.query<{
-        project_role?: string | null;
-        normalized_project_role?: string | null;
-      }>(
-        `SELECT project_role, normalized_project_role
-           FROM project_members
-          WHERE project_id = ? AND user_id = ?
-          LIMIT 1`,
-        [projectId, userId]
-      );
-      const membership = membershipResult.rows[0];
-      const projectRole = normalizeProjectRole(
-        membership?.normalized_project_role || membership?.project_role
-      );
-      if (!projectRole || !STAGE_GATE_APPROVER_ROLES.has(projectRole)) {
-        throw new StageGateForbiddenError();
       }
 
       const evaluation = await evaluateGate(projectId, gateType);
@@ -615,7 +647,7 @@ export async function passGate(
           governance.quorumId ?? null,
           governance.quorumVersion ?? null,
           governance.quorumReceiptId ?? null,
-          userId,
+          governance.requestedBy,
           userId,
           notes || null,
         ],
