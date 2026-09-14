@@ -1,7 +1,8 @@
 /**
  * Initiative Auto-Start Job
  *
- * Transitions initiatives from SCHEDULED → EXECUTING when start date is reached.
+ * Transitions initiatives from etap SCHEDULED (kod kolumny APPROVED) do
+ * IN_EXECUTION, gdy nadeszła data startu.
  *
  * - Runs from Scheduler (cron) in non-test environments
  * - Best-effort: does not fail the scheduler loop
@@ -90,13 +91,37 @@ export async function autoStartScheduledInitiatives(options: { limit?: number } 
   // time zone cannot be matched` on every run, which the outer try/catch in
   // the scheduler swallowed silently, meaning this job never actually ran.
   // Casting both sides to `timestamptz` fixes the type mismatch.
+  //
+  // ★ H1d: SELEKTOR KANDYDATÓW BYŁ MARTWY. Warunek brzmiał
+  // `UPPER(status) = 'SCHEDULED'`, a od migracji
+  // `20262103_p12_initiative_status_slownik.sql` kolumna `initiatives.status`
+  // nie może przyjąć tej wartości (CHECK `initiatives_status_check_p12`:
+  // PROPOSED · DRAFT · PENDING_APPROVAL · APPROVED · IN_EXECUTION · CLOSED ·
+  // REJECTED). Zapytanie zwracało ZERO wierszy na każdej bazie po migracji —
+  // cron „działał" (bez błędu, bez wyjątku) i nie startował nigdy niczego.
+  // Naprawa INI-005 z 08-01 przeniosła zapis do kanonicznego silnika, ale
+  // zostawiła ten filtr na starym słowniku, więc sama też nigdy się nie
+  // wykonała.
+  //
+  // Etap `SCHEDULED` (DEC-490) mapuje się na kod kolumny `APPROVED` — tak samo
+  // jak `APPROVED_BACKLOG`. Kod kolumny SAM w sobie nie odróżnia „zatwierdzona,
+  // ale bez okna" od „okno i baseline zatwierdzone". Rozróżnienie żyje w etapie
+  // silnika (`ie_aggregate_state.payload_json.lifecycleState`), więc kandydatów
+  // wybieramy PARĄ: kod kolumny + etap. Bez części etapowej cron startowałby
+  // inicjatywy z backlogu, którym nikt nie zatwierdził harmonogramu.
   const rows = await queryHelpers.queryAll<any>(
-    `SELECT id, organization_id as "organizationId", status, planned_start_date as "plannedStartDate", start_date as "startDate"
-     FROM initiatives
-     WHERE UPPER(status) = 'SCHEDULED'
-     ORDER BY COALESCE(planned_start_date::timestamptz, start_date::timestamptz) ASC
+    `SELECT i.id, i.organization_id as "organizationId", i.status,
+            i.planned_start_date as "plannedStartDate", i.start_date as "startDate"
+     FROM initiatives i
+     JOIN ie_aggregate_state agg
+       ON agg.organization_id = i.organization_id
+      AND agg.aggregate_type = 'initiative'
+      AND agg.aggregate_id = i.id
+     WHERE i.status = ?
+       AND agg.payload_json->>'lifecycleState' = ?
+     ORDER BY COALESCE(i.planned_start_date::timestamptz, i.start_date::timestamptz) ASC
      LIMIT ?`,
-    [limit]
+    [InitiativeStatus.APPROVED, 'SCHEDULED', limit]
   );
 
   for (const r of rows || []) {
