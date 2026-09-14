@@ -26,7 +26,8 @@ type TemplateId =
   | 'PORTFOLIO_STATUS'
   | 'DECISION_BACKLOG'
   | 'DELIVERY_RISKS'
-  | 'WEEKLY_TEAM_UPDATE';
+  | 'WEEKLY_TEAM_UPDATE'
+  | 'WORKLOAD_CAPACITY';
 type ReportContent = {
   generatedAt: string;
   title: string;
@@ -92,6 +93,7 @@ export function InitiativeWorkReportView({
         ['DECISION_BACKLOG', t('initiatives.workReport.templates.decisions', 'Decision backlog')],
         ['DELIVERY_RISKS', t('initiatives.workReport.templates.risks', 'Delivery risks')],
         ['WEEKLY_TEAM_UPDATE', t('initiatives.workReport.templates.weekly', 'Weekly team update')],
+        ['WORKLOAD_CAPACITY', t('initiatives.workReport.templates.workload', 'Workload capacity')],
       ] as Array<[TemplateId, string]>,
     [t]
   );
@@ -205,16 +207,42 @@ export function InitiativeWorkReportView({
           projectIds,
           generalBacklogAllowed: projectIds.length === 0,
         },
-        outputSchema: { kind: 'initiative_work_report', templateId: form.templateId },
+        outputSchema: {
+          kind:
+            form.templateId === 'WORKLOAD_CAPACITY'
+              ? 'initiative_workload_report'
+              : 'initiative_work_report',
+          templateId: form.templateId,
+        },
         sections: [
           { sectionId: 'PORTFOLIO', title: 'Portfolio summary', mandatory: true },
           { sectionId: 'INITIATIVES', title: 'Initiatives', mandatory: true },
           { sectionId: 'DECISIONS', title: 'Decision owners', mandatory: true },
         ],
-        sourceBindings: [
-          { bindingId: 'initiatives', sourceType: 'initiative', required: true, scope: 'tenant' },
-          { bindingId: 'decisions', sourceType: 'decision', required: false, scope: 'tenant' },
-        ],
+        sourceBindings:
+          form.templateId === 'WORKLOAD_CAPACITY'
+            ? [
+                {
+                  bindingId: 'workload',
+                  sourceType: 'initiative_workload',
+                  required: true,
+                  scope: 'tenant',
+                },
+              ]
+            : [
+                {
+                  bindingId: 'initiatives',
+                  sourceType: 'initiative',
+                  required: true,
+                  scope: 'tenant',
+                },
+                {
+                  bindingId: 'decisions',
+                  sourceType: 'decision',
+                  required: false,
+                  scope: 'tenant',
+                },
+              ],
         formulas: [],
         units: [],
         currencies: [],

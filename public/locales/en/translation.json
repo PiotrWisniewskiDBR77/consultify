@@ -11309,7 +11309,25 @@
       "profile": "Person profile",
       "default": "Default policy",
       "cellHint": "{{demand}} h demand / {{supply}} h capacity",
-      "noCapacity": "No capacity"
+      "noCapacity": "No capacity",
+      "weeklyHours": "Hours per week",
+      "availabilityPercent": "Availability percent",
+      "saveAvailability": "Save availability",
+      "propose": "Propose plan moves",
+      "proposing": "Analyzing…",
+      "proposalsTitle": "Planning proposals",
+      "proposalsDisclaimer": "Suggestions require human approval and do not change running assignments.",
+      "proposalTask": "Planned task",
+      "proposalMove": "Suggested move",
+      "proposalHours": "Hours",
+      "proposalWeek": "Week",
+      "noProposals": "No safe planning move was found.",
+      "reportDefinition": "Published workload report definition",
+      "noReportDefinition": "No compatible published definition",
+      "generateReport": "Generate workload report",
+      "generatingReport": "Generating…",
+      "reportTitle": "Initiatives workload report",
+      "reportFrozen": "Report frozen for approval"
     },
     "register": {
       "archiveLocked": "Lifecycle changes and archiving run through a controlled process."
@@ -11854,7 +11872,8 @@
         "portfolio": "Portfolio status",
         "decisions": "Decision backlog",
         "risks": "Delivery risks",
-        "weekly": "Weekly team update"
+        "weekly": "Weekly team update",
+        "workload": "Workload capacity"
       },
       "cadence": { "onDemand": "On demand", "weekly": "Weekly", "monthly": "Monthly" },
       "scope": { "all": "All initiatives", "current": "Current project" },

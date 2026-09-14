@@ -1129,9 +1129,8 @@ router.get(
         supplyHours: Math.round(totalSupply * 10) / 10,
         gapHours: Math.round((totalSupply - totalDemand) * 10) / 10,
         utilizationPercent: totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
-        overloadedCount: rows.filter(
-          (row) => row.capacityExceeded || row.utilizationPercent > 100
-        ).length,
+        overloadedCount: rows.filter((row) => row.capacityExceeded || row.utilizationPercent > 100)
+          .length,
         peopleWithoutProfileSupply: plan.people.filter(
           (person) => person.supplySource === 'DOMYSLNA'
         ).length,

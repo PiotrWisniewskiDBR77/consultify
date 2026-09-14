@@ -1996,7 +1996,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
     }
     if (activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED) {
-      return <InitiativeWorkloadSurface initiatives={allInitiatives as any[]} />;
+      return (
+        <InitiativeWorkloadSurface
+          initiatives={allInitiatives as any[]}
+          currentUserId={String(currentUserId || '')}
+          proposalRequestId={capacityCreateRequestId}
+        />
+      );
     }
     if (activeTab === 'capacity')
       return (
@@ -2996,7 +3002,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           data-testid="initiatives-plan-state-dropdown"
         />
       )}
-      {activeTab === 'capacity' && (
+      {activeTab === 'capacity' && !INITIATIVES_WORKLOAD_ENABLED && (
         <Menu2PresetDropdown
           compact
           label={t('initiatives.filters.capacityStatus', 'Status')}
@@ -3032,25 +3038,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 label: t('initiatives.plan.newPlan', 'New plan'),
                 onClick: () => setPlanCreateRequestId((value) => value + 1),
               }
-            : activeTab === 'capacity'
+            : activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED
               ? {
-                  label: t('initiatives.capacityAnalysis.newAnalysis', 'New analysis'),
+                  label: t('initiatives.workload.propose', 'Propose plan moves'),
                   onClick: () => setCapacityCreateRequestId((value) => value + 1),
                 }
-              : activeTab !== 'list'
-                ? undefined
-                : isPilotParticipant
-                  ? {
-                      label: t('initiatives.form.newInitiative'),
-                      onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
-                      locked: true,
-                      lockedReason: t(
-                        'initiatives.pilot.createLocked',
-                        'Available in the next project phase'
-                      ),
-                    }
-                  : {
-                      /* TEST-DANE D-15 (09.09.2026): jedyne wejscie „New initiative"
+              : activeTab === 'capacity'
+                ? {
+                    label: t('initiatives.capacityAnalysis.newAnalysis', 'New analysis'),
+                    onClick: () => setCapacityCreateRequestId((value) => value + 1),
+                  }
+                : activeTab !== 'list'
+                  ? undefined
+                  : isPilotParticipant
+                    ? {
+                        label: t('initiatives.form.newInitiative'),
+                        onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
+                        locked: true,
+                        lockedReason: t(
+                          'initiatives.pilot.createLocked',
+                          'Available in the next project phase'
+                        ),
+                      }
+                    : {
+                        /* TEST-DANE D-15 (09.09.2026): jedyne wejscie „New initiative"
                      otwieralo kreator AI, ktorego krok 3 to `Generate AI draft`
                      — bez dzialajacego LLM nie dalo sie utworzyc inicjatywy
                      z interfejsu, choc API dziala. Recznego formularza NIE
@@ -3062,35 +3073,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                      „zbudowane, ale niepodlaczone". Tu jest ten brakujacy
                      przewod: kanoniczny wariant CTA z menu (TRIADA §A2/§C4,
                      ten sam co „Dodaj raport" w Realizacji), dwie pozycje. */
-                      label: t('initiatives.form.newInitiative'),
-                      onClick: () => undefined,
-                      menu: {
-                        ariaLabel: t('initiatives.form.newInitiative'),
-                        items: [
-                          {
-                            id: 'manual',
-                            label: t('initiatives.form.newInitiativeManual', 'Fill in the form'),
-                            description: t(
-                              'initiatives.form.newInitiativeManualDesc',
-                              'Title, project and a short summary — no AI needed.'
-                            ),
-                            onSelect: () => {
-                              setNewProjectId(currentProjectId || '');
-                              setShowNewModal(true);
+                        label: t('initiatives.form.newInitiative'),
+                        onClick: () => undefined,
+                        menu: {
+                          ariaLabel: t('initiatives.form.newInitiative'),
+                          items: [
+                            {
+                              id: 'manual',
+                              label: t('initiatives.form.newInitiativeManual', 'Fill in the form'),
+                              description: t(
+                                'initiatives.form.newInitiativeManualDesc',
+                                'Title, project and a short summary — no AI needed.'
+                              ),
+                              onSelect: () => {
+                                setNewProjectId(currentProjectId || '');
+                                setShowNewModal(true);
+                              },
                             },
-                          },
-                          {
-                            id: 'ai',
-                            label: t('initiatives.form.newInitiativeAi', 'AI initiative wizard'),
-                            description: t(
-                              'initiatives.form.newInitiativeAiDesc',
-                              'Build a draft from a source insight, then review it.'
-                            ),
-                            onSelect: () => setShowInitiativeWizard(true),
-                          },
-                        ],
-                      },
-                    }
+                            {
+                              id: 'ai',
+                              label: t('initiatives.form.newInitiativeAi', 'AI initiative wizard'),
+                              description: t(
+                                'initiatives.form.newInitiativeAiDesc',
+                                'Build a draft from a source insight, then review it.'
+                              ),
+                              onSelect: () => setShowInitiativeWizard(true),
+                            },
+                          ],
+                        },
+                      }
         }
         filterControls={rightControls}
         commandRowContent={
@@ -3115,14 +3126,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               ? undefined
               : commandRowRightContent
         }
-        chips={canonicalMenu3.map((preset) => ({
-          ...preset,
-          count:
-            initiativesFourButtonsEnabled && activeTab === 'list'
-              ? undefined
-              : (canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0),
-        }))}
-        activeChip={canonicalMenu3.length ? canonicalMenu3Preset[activeTab] : null}
+        chips={
+          activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED
+            ? []
+            : canonicalMenu3.map((preset) => ({
+                ...preset,
+                count:
+                  initiativesFourButtonsEnabled && activeTab === 'list'
+                    ? undefined
+                    : (canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0),
+              }))
+        }
+        activeChip={
+          activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED
+            ? null
+            : canonicalMenu3.length
+              ? canonicalMenu3Preset[activeTab]
+              : null
+        }
         onChipChange={(id) => {
           setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));
           if (initiativesFourButtonsEnabled && activeTab === 'list') {

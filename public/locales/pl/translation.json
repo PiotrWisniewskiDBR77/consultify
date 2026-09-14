@@ -10529,7 +10529,25 @@
       "profile": "Profil osoby",
       "default": "Polityka domyślna",
       "cellHint": "{{demand}} h popytu / {{supply}} h dostępności",
-      "noCapacity": "Brak dostępności"
+      "noCapacity": "Brak dostępności",
+      "weeklyHours": "Godziny tygodniowo",
+      "availabilityPercent": "Procent dostępności",
+      "saveAvailability": "Zapisz dostępność",
+      "propose": "Zaproponuj przesunięcia planu",
+      "proposing": "Analizowanie…",
+      "proposalsTitle": "Propozycje planistyczne",
+      "proposalsDisclaimer": "Sugestie wymagają akceptacji człowieka i nie zmieniają bieżących przydziałów.",
+      "proposalTask": "Planowane zadanie",
+      "proposalMove": "Sugerowane przesunięcie",
+      "proposalHours": "Godziny",
+      "proposalWeek": "Tydzień",
+      "noProposals": "Nie znaleziono bezpiecznego przesunięcia w planie.",
+      "reportDefinition": "Opublikowana definicja raportu obciążenia",
+      "noReportDefinition": "Brak zgodnej opublikowanej definicji",
+      "generateReport": "Generuj raport obciążenia",
+      "generatingReport": "Generowanie…",
+      "reportTitle": "Raport obciążenia inicjatyw",
+      "reportFrozen": "Raport zamrożony do zatwierdzenia"
     },
     "register": {
       "archiveLocked": "Zmiany cyklu życia i archiwizacja są wykonywane w kontrolowanym procesie."
@@ -11074,7 +11092,8 @@
         "portfolio": "Status portfela",
         "decisions": "Zaległe decyzje",
         "risks": "Ryzyka realizacji",
-        "weekly": "Tygodniowa aktualizacja zespołu"
+        "weekly": "Tygodniowa aktualizacja zespołu",
+        "workload": "Obciążenie i dostępność"
       },
       "cadence": { "onDemand": "Na żądanie", "weekly": "Co tydzień", "monthly": "Co miesiąc" },
       "scope": { "all": "Wszystkie inicjatywy", "current": "Bieżący projekt" },
