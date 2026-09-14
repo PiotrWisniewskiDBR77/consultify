@@ -24,7 +24,13 @@ stagingu w toku. **Zastane czerwienie (baseline, bez zmian tą gałęzią):** `z
 `pawel-wywiad` `4972cb5600` ✔ (P-P03/04/05 naprawione; flaga `drdHttpSourceOfTruthV1`
 `defaultValue:false` w kodzie, a na stagingu ON — do wyjaśnienia skąd, Z-12). Fala A cz. 2 w toku:
 `tomek-konto` + `archived-filter` + `drd-en` + `pawel-wywiad` + hotfix `AccessLimitService.ts`
-(DEC-500) + wolumen `STORAGE_DIR`. Skrzynka pochodna: Z-10, Z-11, Z-12.
+(DEC-500) + wolumen `STORAGE_DIR`. Skrzynka pochodna: Z-10, Z-11, Z-12, Z-15, Z-16.
+
+**Aktualizacja Z-2 (14.09 wieczór).** Fala A cz. 2 WDROŻONA na staging (run `34808376933`,
+success); demo `90833bc94a` nietknięte tą falą (health potwierdzony curl-em). `pawel-inicjatywa`
+`6e28178435` ✔ (P-P06). Kolejka fali A cz. 3: `tomek-czat` (scalone `4cbb435fdd`, patrz wyżej) +
+`pawel-inicjatywa` (scalone) + `pawel-assessment` (w toku) + `drd-output-en` (w toku, Z-15).
+Szczegóły: sekcja 14.09.2026 niżej, „Fala A cz. 2 — WDROŻONA".
 
 **Z-3 (14.09).** KANAL.md — Wpis 16 do Codexa (DEC-495 skrót + cztery uwagi rdzenia Tomka
 XV/XVI/XVII/XIV) — dopisany, patrz sekcja niżej.
@@ -77,9 +83,19 @@ a na stagingu jest ON — do wyjaśnienia, skąd wzięło się to nadpisanie (zm
 `ENABLE_TERESA_MINDMAP` ON), ale brakuje struktury aplikacji w prompcie systemowym — decyzja
 produktu, nie defekt kodu; do rozstrzygnięcia z właścicielem.
 
-**Z-14 (14.09, Z-2 / tomek-czat).** Nowy alarm: świeżo zarejestrowana organizacja → 404 na całym
-`/api/v8` (kształt „organizacja martwa od rejestracji" wraca) — pomiar org `tt2tt` Tomka na
-stagingu w toku.
+**Z-14 (14.09, Z-2 / tomek-czat) — ROZLICZONE.** Org `tt2tt` → 404 na `/api/v8` to STARE
+zgłoszenie Tomka z 10–11.09 (org „TT22TT 2" `8bed87c6`, TRIAL, 0 wierszy `v8.v8_feature_flags`),
+kod rejestracji naprawiony 10.09 `5140a0cfdd` PRZED tym zgłoszeniem — nie nowy defekt. Pełne
+rozliczenie: sekcja 14.09.2026 niżej, „Z-14 rozliczone".
+
+**Z-15 (14.09, nowe).** DRD z zamrożonym Output w EN nadal po polsku: `DrdSourceIndicator.tsx:24-25`
+(DANE Z SERWERA/SZKIC ODZYSKIWANIA), kolumna JEDNOSTKA, serwer `EventDerivedOutputBridge.ts`
+(scope/limitations PL) — gałąź `integracja/kandydat-drd-output-en-20260914` (Sonnet, w toku) →
+fala A cz. 3.
+
+**Z-16 (14.09, nowe, z rozliczenia Z-14).** Decyzja otwarta: 22× organizacje
+`ateliertoys-demo-session-*` (efemeryczne, tryb demo) pominięte w naprawie danych `v8_feature_flags`
+14.09 — sprzątać, wykluczyć na stałe z higieny, czy zostawić jako oczekiwany artefakt trybu demo?
 
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
@@ -430,6 +446,53 @@ właściciel doładowuje; router ich nie wybiera.
 `~/Developer/handoff-docs/codex-wt`) blokowało tury Codexa; ostatni meldunek 22:28 13.09, wpisy
 16–19 bez odpowiedzi; CTO zabił procesy 05:05 UTC; reguła higieny narzędzi = KANAL Wpis 20;
 właściciel wznawia turę w aplikacji. Pamięć nadzorcy: `codex-stoi-zawieszone-rg`.
+
+**Fala A cz. 2 — WDROŻONA na staging 14.09 (run `34808376933`, success).** Linia `1a953d6410` →
+`06335d6e9d` (+ rejestr `2c11d00a0f`); merge: `tomek-konto` `aae7268350`, `archived-filter`
+`536cb9baac`, `drd-en` `0b314f3d4a`, `pawel-wywiad` `3d15651733`, hotfix `AccessLimitService`
+`06335d6e9d` (`parseAiRolesEnabled`: parse→odescapowanie→fallback ADVISOR+warn; test RED 5→GREEN 5);
+tag cofnięcia `rollback-pre-fala-a2-20260914` = `1a953d6410`; `staging-deployed` = `06335d6e9d`;
+demo `790c828fc0` nietknięte — **zmierzone** `curl -s https://demo.consultify.ai/api/health` 14.09
+po wdrożeniu: gitSha nadal `90833bc94adb7e6827882f9963c796365dea371b` (= stan poranny, zgodne z
+„demo nietknięte", niezależnie od tego który commit-tip `790c828fc0` opisuje na linii). Bramka:
+tsc serwer 0, front 188 (linia 189), język bez wzrostu, canon 349, artefakt 8-0-117, build OK,
+6 plików testów zielone, 2 zastane czerwienie identyczne na linii (`zapytajTerese` 2/5,
+`naglowekIStanOdpowiedzi` 3/7), 4 testy realdb nieuruchomione. Zrzuty (konto QA Northwind, jasny):
+`~/Developer/wt/fala-a2/evidence/fala-a2-20260914/` — profil ✔, `/help` ✔, upload komunikat ✔,
+AI Health 100% ✔, pstryczek Archived ✔ (org QA bez archiwalnych — pusty stan), DRD-EN ✖
+(patrz Z-15). NIE przeszło: wolumen `/data` — `railway volume add` panikuje (`volume.rs:836`) →
+Z-9 wymaga panelu Railway (prośba do właściciela wysłana); `STORAGE_DIR` nieustawiony celowo.
+
+**Z-15 (nowe) — DRD Output EN nadal po polsku.** DRD z zamrożonym Output w EN nadal renderuje
+polskie napisy: `DrdSourceIndicator.tsx:24-25` (DANE Z SERWERA/SZKIC ODZYSKIWANIA), kolumna
+JEDNOSTKA, serwer `EventDerivedOutputBridge.ts` (scope/limitations PL) — gałąź
+`integracja/kandydat-drd-output-en-20260914` (Sonnet, w toku) → fala A cz. 3.
+
+**Z-14 rozliczone (CTO, 14.09).** Org Tomka „TT22TT 2" `8bed87c6` (TRIAL, 10.09 13:16) miała
+0 wierszy `v8.v8_feature_flags` → 404 `V8_ORG_DISABLED` na `/api/v8/*` (middleware
+`v8FeatureGate.middleware.ts:27/69`, `featureFlagService.ts:94/140`; `NODE_ENV=production` bez
+fallbacku); `api_logs` 10.09: 404 na `/api/v8/assessment` ×3, `interview/assignments/my`,
+`interview/insights`, `chat handoff-proposals`; 503 `/api/demo/status` ×6 → tłumaczy uwagi Tomka
+(First Value plan, Kreator wniosków, tryb demo, brak insights). Kod rejestracji naprawiony 10.09
+08:35 (`auth.routes.ts:1965-1994` `provisionDefaultV8Flags`, commit `5140a0cfdd`) — Tomek
+zarejestrował się PRZED wdrożeniem. Naprawa danych staging: `tt2tt` 10 wierszy + 5 org (3×
+„TT22TT 3" `3935603f`/`be953b47`/`a6b81efe`, „My Company" `9151ee70`, „QA Fable" 13.09 `c56e8bd5`)
+po 10 wierszy, `updated_by='cto-higiena-20260914'`, rollbacki w
+`~/Developer/cto-codex/higiena-dbr77-20260913/`. Pominięte: 22× `ateliertoys-demo-session-*`
+(efemeryczne, tryb demo) — decyzja otwarta (Z-16). WNIOSEK: uwagi Tomka z docx pochodzą z 10–11.09
+(`api_logs`: ostatnia aktywność 11.09 06:34), część już nieaktualna; P-T20 First Value plan /
+P-T17 Kreator wniosków / P-T18 tryb demo = ten sam defekt flag → retest.
+
+**Z-2 aktualizacja (14.09) — kolejka fali A cz. 3.** `pawel-inicjatywa` `6e28178435` ✔ (P-P06:
+`initiativeWriteTruth.ts:148` blokował w przeglądarce bez żądania; `RequiredProjectPicker`
+`autoSelectFirst` + komunikaty i18n; baseline polityki `'*'` na stagingu ISTNIEJE — nie powrót
+09.09); `tomek-czat` `4cbb435fdd` ✔; kolejka fali A cz. 3: `tomek-czat` + `pawel-inicjatywa` +
+`pawel-assessment` (w toku) + `drd-output-en` (w toku). Worktree usunięte po scaleniu:
+`tomek-konto`, `archived-filter`, `drd-en`, `pawel-wywiad`, + Szampana (`paczka5`, `pilot-blokery`,
+`drobne`, `kanon-sweep`, `fala-a1`, `docs-fala2`, `s14-work`, `s14b-work`) — dysk 57 GiB.
+
+**Codex — nadal bez odpowiedzi (14.09).** `OD_CODEXA` 22:29 13.09 mimo sprzątnięcia procesów `rg`;
+właściciel proszony o wznowienie tury.
 
 ---
 
