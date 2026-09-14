@@ -10,7 +10,11 @@ scalona `d73ccb90a7`) → push/staging przez CTO 14.09.
 `b3e1cb3cf2`, XI historia logowania OK `221ec76e86`, II `/help` OK `1d768b7eea`; XII reset hasła
 w toku — mail nie dochodzi, konfiguracja `settings.smtp_*` nadpisuje env; V avatar — rekomendacja
 `STORAGE_DIR`, decyzja przy wdrożeniu, Z-9) i `integracja/kandydat-tomek-czat-20260914`
-(IX, XXI, IV, XXII, XIII, VII/X — stan nieaktualizowany w tym przebiegu).
+(IX, XXI, IV, XXII, XIII, VII/X — stan nieaktualizowany w tym przebiegu). **Uzupełnienie:**
+`pawel-wywiad` `4972cb5600` ✔ (P-P03/04/05 naprawione; flaga `drdHttpSourceOfTruthV1`
+`defaultValue:false` w kodzie, a na stagingu ON — do wyjaśnienia skąd, Z-12). Fala A cz. 2 w toku:
+`tomek-konto` + `archived-filter` + `drd-en` + `pawel-wywiad` + hotfix `AccessLimitService.ts`
+(DEC-500) + wolumen `STORAGE_DIR`. Skrzynka pochodna: Z-10, Z-11, Z-12.
 
 **Z-3 (14.09).** KANAL.md — Wpis 16 do Codexa (DEC-495 skrót + cztery uwagi rdzenia Tomka
 XV/XVI/XVII/XIV) — dopisany, patrz sekcja niżej.
@@ -42,6 +46,20 @@ DEC-491, SSOT granicy praca/ryzyko), potem start pakietów P1..P4 wg DEC-497.
 **Z-9 (14.09).** `STORAGE_DIR` avatary (P-T05, Tomek) — dysk kontenera potwierdzony jako przyczyna
 (`users.routes.ts:27` diskStorage, `storagePaths.ts:78` fallback cwd); ustawić wolumen Railway
 przy najbliższym wdrożeniu.
+
+**Z-10 (14.09, DEC-500).** Rodzina defektu podwójnie escapowanego JSON w kolumnach `*_json` —
+6 innych kolumn na stagingu z podobnym kształtem (`audit_events.before_json` 71 / `after_json` 12,
+`conclusion_source_packs.evidence_refs_json` 1, `conclusions.evidence_refs_json` 1,
+`presentation_decks.deck_json` 1 / `content_json_native` 1); NIE ruszane w hotfixie 14.09, na demo
+0 trafień — osobne zlecenie pomiaru i naprawy.
+
+**Z-11 (14.09, DEC-500).** Drugi objaw „nie działa” po wdrożeniu: stara zakładka klienta woła
+nieistniejący chunk `MainLayout-*.js` (stary manifest po podmianie builda) — dług: retry pobrania
+chunku i/lub baner „nowa wersja, odśwież stronę".
+
+**Z-12 (14.09, DEC-500 / Z-2).** Flaga `drdHttpSourceOfTruthV1` ma `defaultValue:false` w kodzie,
+a na stagingu jest ON — do wyjaśnienia, skąd wzięło się to nadpisanie (zmierzone przy odbiorze
+`pawel-wywiad` `4972cb5600`).
 
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
@@ -129,7 +147,7 @@ kandydata wchodzą tylko naprawy czerwonej bramki i tylko przez integratora. (2)
 i `zatwierdzanie-inicjatyw` zostają na osobnych gałęziach → fala 2. (3) Codex usuwa własne worktree
 gałęzi już scalonych do rc2 (dysk pełny). (4) Codex dostaje duże zadania fali 2 promptami od właściciela.
 
-**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-499**. Następna wolna: DEC-500.
+**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-500**. Następna wolna: DEC-501.
 Znaczniki odmrożenia muszą wskazywać moduł z `docs/program/MVP_FINAL_ZAMROZONE.json` — Finanse nie są
 tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
@@ -350,8 +368,40 @@ stagingu (rollback w `LOG_APPLY_20260914.md`).
 
 **Stan gałęzi napraw do fali A cz.2 (Z-2):** `tomek-konto` `6660d7ba86` ✔; `archived-filter`
 `574eb6e20c` ✔ (zrzut wysłany właścicielowi 14.09, meldunek); `drd-en` `129dfd7ff5` ✔ (bez zrzutu —
-dowód po wdrożeniu); `tomek-czat` (w toku); `pawel-wywiad` (w toku); `pawel-inicjatywa` (w toku);
-`pawel-assessment` (w toku). Warunek startu cz.2: wynik diagnozy Teresy (P-P07).
+dowód po wdrożeniu); `pawel-wywiad` `4972cb5600` ✔ (P-P03/04/05 naprawione; flaga
+`drdHttpSourceOfTruthV1` `defaultValue:false` w kodzie, a na stagingu ON — do wyjaśnienia skąd,
+Z-12); `tomek-czat` (w toku); `pawel-inicjatywa` (w toku); `pawel-assessment` (w toku). Fala A cz. 2
+w toku: `tomek-konto` + `archived-filter` + `drd-en` + `pawel-wywiad` + hotfix `AccessLimitService`
+(DEC-500) + wolumen `STORAGE_DIR`. Warunek startu cz.2: wynik diagnozy Teresy (P-P07).
+
+**DEC-500 (CTO na mandacie właściciela, 14.09) — Awaria Teresy na stagingu 14.09 = dane, nie kod;
+hotfix odporności + rodzina defektu.**
+Zgłoszenie właściciela ~04:45 UTC + P-P07 Pawła (04:24, `AI_STREAM_ERROR`). **Przyczyna:**
+`organization_limits.ai_roles_enabled_json` dla org DBR77 (`lim-a3e05d4a-…`, `lim-dbr77`) trzymał
+podwójnie escapowany JSON `[\"ADVISOR\",\"EXECUTOR\",\"RESEARCHER\"]` od 2026-09-09 07:45:57 UTC
+(era czystki „sierota to nie wzorzec"); `AccessLimitService.ts:96` `JSON.parse` bez try/catch →
+każdy `/api/ai/chat/stream` organizacji padał przed wyborem modelu; `api_logs` pokazywał 200 (SSE —
+błąd w strumieniu), więc monitoring statusów nie widział. **Wykluczone:** regresja fali A (diff
+pusty w `ai.routes`/`accessPolicy`/`access`), dostawcy (OpenRouter ważny, 184,50/200), bezpiecznik
+(wyzerowany restartem 04:40). **Naprawa danych:** staging 04:49:15 UTC UPDATE 2 wierszy; demo
+~05:10 UTC UPDATE 2 wierszy (te same ID, ten sam czas 09.09) — **czat Teresy dla DBR77 na demo nie
+działał od 09.09 i nikt nie zgłosił**; rollbacki i snapshoty w
+`~/Developer/cto-codex/higiena-dbr77-20260913/` (`rollback-teresa-limits-20260914.sql`,
+`demo-org-limits-rollback-20260914.sql`, `LOG_APPLY_20260914.md`). **Dowód:** 3× `POST
+/api/ai/chat/stream` 200 + `[DONE]` (04:49–04:51 UTC, konto QA). **Hotfix kodu** (try/catch +
+odescapowanie + fallback `['ADVISOR']` + warn) w fali A cz. 2. **Rodzina** (Z-10): 6 innych kolumn
+JSON na stagingu z podobnym kształtem (`audit_events.before_json` 71 / `after_json` 12,
+`conclusion_source_packs.evidence_refs_json` 1, `conclusions.evidence_refs_json` 1,
+`presentation_decks.deck_json` 1 / `content_json_native` 1) — NIE ruszane, na demo 0 — osobne
+zlecenie. **Drugi objaw „nie działa"** (Z-11): stara karta prosi o nieistniejący chunk
+`MainLayout-*.js` po wdrożeniu → dług: retry/baner „nowa wersja, odśwież". **Dostawcy:**
+`openai-01`/`deepseek-01`/`deepseek-reasoner-01` `is_active=true`+unhealthy (brak środków) —
+właściciel doładowuje; router ich nie wybiera.
+
+**Codex stoi — 14.09 ~05:00 UTC.** 68 zawieszonych procesów `rg` (13–23 h, skany całego
+`~/Developer/handoff-docs/codex-wt`) blokowało tury Codexa; ostatni meldunek 22:28 13.09, wpisy
+16–19 bez odpowiedzi; CTO zabił procesy 05:05 UTC; reguła higieny narzędzi = KANAL Wpis 20;
+właściciel wznawia turę w aplikacji. Pamięć nadzorcy: `codex-stoi-zawieszone-rg`.
 
 ---
 
