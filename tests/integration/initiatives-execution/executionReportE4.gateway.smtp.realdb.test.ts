@@ -189,7 +189,20 @@ maybeDescribe('Q2 execution report profile — Gateway/JWT/PG/PDF/SMTP', () => {
       sections: [{ id: 'delivery', title: 'Delivery', narrative: 'On track' }],
     });
     expect(created.status, JSON.stringify(created.body)).toBe(201);
+    expect(created.body.payload.locale).toBe('en');
     const kpi = created.body.payload.sections.find((section: any) => section.id === 'canonical-kpi-results');
+    expect(kpi.titleMessage).toEqual({
+      key: 'executionReports.kpiResults',
+      value: 'KPI results',
+      locale: 'en',
+    });
+    expect(kpi.table.columns.map((column: any) => column.labelMessage?.key)).toEqual([
+      'executionReports.initiative',
+      'executionReports.kpi',
+      'executionReports.result',
+      'executionReports.target',
+      'executionReports.measuredAt',
+    ]);
     expect(kpi.table.rows).toContainEqual(expect.objectContaining({ kpi: 'Lead time', actual: '8 days', target: '10 days' }));
   });
 
