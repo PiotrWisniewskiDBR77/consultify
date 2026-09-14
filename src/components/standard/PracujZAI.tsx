@@ -385,7 +385,15 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
         title={disabled ? (disabledTytul ?? etykietaPrzycisku) : etykietaPrzycisku}
         disabled={disabled}
         onClick={() => setOtwarte((v) => !v)}
-        className={`${BTN_BASE} border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 ${className}`}
+        /* ★ F4 (zgłoszenie właściciela 15.09, warsztat Pomysłów → Process Flow):
+           „Work with AI" był fioletowy (`c-ai` = #6d28d9 jasny / #a78bfa ciemny)
+           z tintem i obwódką — czyli AKCENT KOLOROWY na CTA. Kanon triady/SPEC-A:
+           CTA i stany aktywne są NEUTRALNE, jedyny akcent to `c-focus` na fokusie.
+           Kształt zostaje 1:1 z `NModeMenu2.BTN_BASE` (h-8 rounded-lg) — ten sam
+           przycisk stoi w pasku obok rodzeństwa h-8 na 19 ekranach, więc pigułka
+           h-9 rozjechałaby pasek. Klasa neutralna jest DOKŁADNIE tą, której używa
+           rodzeństwo w tym samym pasku (`NModeMenu2.Menu2HowToButton`). */
+        className={`${BTN_BASE} border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text ${className}`}
       >
         {analizaWToku || panel.faza === 'zbieranie' ? (
           <Loader2 size={13} className="animate-spin shrink-0" />
@@ -495,7 +503,7 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
                         zamknijPanel();
                         void uruchom();
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-c-ai/40 bg-c-ai/10 px-3 py-1.5 text-xs font-medium text-c-ai hover:bg-c-ai/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       <Check size={13} />
                       {et('zatwierdz')}
@@ -593,7 +601,7 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
                       data-testid="pracuj-z-ai-zatwierdz"
                       disabled={!panel.propozycje.some((p) => p.wybrana)}
                       onClick={() => zatwierdz(aktywneZrodlo)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-c-ai/40 bg-c-ai/10 px-3 py-1.5 text-xs font-medium text-c-ai hover:bg-c-ai/15 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       <Check size={13} />
                       {et('zatwierdz')}

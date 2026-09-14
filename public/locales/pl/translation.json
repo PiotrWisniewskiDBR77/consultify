@@ -40839,6 +40839,10 @@
     "increaseBudget": "Zwiększ budżet"
   },
   "mindmap": {
+    "pracujZAI": {
+      "opisAktywneCentrum": "Propozycje dla aktywnego p\u0142\u00f3tna pojawi\u0105 si\u0119 do zatwierdzenia.",
+      "opisCalyPomysl": "Propozycje dla ca\u0142ego pomys\u0142u pojawi\u0105 si\u0119 do zatwierdzenia."
+    },
     "nodeModel": {
       "myIdea": "Moj pomysl",
       "clickToEdit": "Kliknij, aby edytowac"

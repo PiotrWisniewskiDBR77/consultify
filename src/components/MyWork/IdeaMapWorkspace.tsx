@@ -476,8 +476,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const { slot: gniazdoAnalizyPlotna } = useCanvasAnalysisSlot();
   // Otwarcie Teresy (skądkolwiek) musi też otworzyć panel — inaczej klik
   // „Omów z Teresą" przy zamkniętym panelu byłby martwy.
+  //
+  // ★ NAPRAWA F4 (zgłoszenie właściciela 15.09, warsztat Pomysłów → Process
+  // Flow: „prawego panelu właściwości nie da się zamknąć"). ZMIERZONE
+  // (playwright, dev-render `processflow-canvas`, realny `IdeaMapWorkspace`):
+  // przy OTWARTYM panelu Teresy klik w „×" i w „Panel" NIE chowały panelu —
+  // stan wracał do otwartego w tej samej klatce, `localStorage` wracał z "1"
+  // na "0". Przyczyna: ten efekt był POZIOMOWY, nie zboczowy — wołał się przy
+  // KAŻDEJ zmianie `isChatCollapsed` i wymuszał `panelZamkniety = false`, gdy
+  // tylko rozmowa była otwarta. Zamknięcie panelu zamykało czat (patrz niżej —
+  // ten skutek uboczny też zdjęty), dok Teresy natychmiast przywracał
+  // `isChatCollapsed = false`, a efekt otwierał panel z powrotem. Pętla.
+  //
+  // Teraz otwarcie panelu jest ZDARZENIEM: tylko przejście „rozmowa zamknięta
+  // → otwarta". Świadome zamknięcie panelu (`panelZamkniety`) jest odtąd
+  // nadrzędne i nie da się go cofnąć samym faktem, że Teresa stoi otwarta.
+  // Osobny ref (nie `poprzedniStanCzatu`, który obsługuje zakładkę) — dwa
+  // efekty nie mogą zjadać sobie nawzajem pamięci poprzedniego stanu.
+  const poprzedniCzatDlaPanelu = useRef<boolean>(isChatCollapsed);
   useEffect(() => {
-    if (!isChatCollapsed) {
+    const byloZamkniete = poprzedniCzatDlaPanelu.current;
+    poprzedniCzatDlaPanelu.current = isChatCollapsed;
+    if (byloZamkniete && !isChatCollapsed) {
       setPanelZamkniety(false);
       zapiszPanelZamkniety(false);
     }
@@ -1564,10 +1584,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const orgContextRef = useRef<string | null>(null);
   const orgContextFetchedRef = useRef(false);
+  /**
+   * ★ NAPRAWA F4: „Work with AI → Analizuj" woła serwer i potrafi milczeć przez
+   * kilka sekund. Bez tego stanu przycisk nie dawał ŻADNEJ oznaki, że coś się
+   * dzieje (`PracujZAI` ma gotowy spinner na propie `analizaWToku`, tylko nikt
+   * go tu nie karmił) — a „brak reakcji" właściciel czyta jako „nie działa".
+   */
+  const [aiPlotnaWToku, setAiPlotnaWToku] = useState(false);
 
   const handleGenerateCanvasAI = useCallback(
     async (generatorType: string) => {
       if (!realId) return;
+      setAiPlotnaWToku(true);
       // Fetch org context summary once for AI proposal enrichment
       if (!orgContextFetchedRef.current) {
         orgContextFetchedRef.current = true;
@@ -1613,6 +1641,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         if (batch?.proposals?.length) {
           setProposalBatch(batch);
           setActivePanel('tools');
+          // ★ NAPRAWA F4 (zgłoszenie właściciela 15.09: „«Work with AI» tu nie
+          // działa"). ZMIERZONE: menu OTWIERA się, a akcje wołają realny
+          // `generateAIProposal` — martwych pozycji nie ma. Nieszczelna była
+          // DROGA WYNIKU: propozycje lądują w prawym panelu (`activePanel =
+          // 'tools'`), a ten panel bywa świadomie zamknięty (`panelZamkniety`),
+          // więc z perspektywy użytkownika „nic się nie stało". Wynik AI musi
+          // sam pokazać panel — inaczej jedyna widoczna reakcja to brak reakcji.
+          setPanelZamkniety(false);
+          zapiszPanelZamkniety(false);
         } else {
           toast(t('mindmap.aiReturnedNoProposalsToReview'), {
             icon: '🤖',
@@ -1620,6 +1657,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
       } catch (error: any) {
         toast.error(error?.message || t('mindmap.failedToRunAi'));
+      } finally {
+        setAiPlotnaWToku(false);
       }
     },
     [
@@ -1645,6 +1684,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     },
     [setActivePanel]
   );
+
+  /**
+   * ★ NAPRAWA F4 — JEDNO znaczenie „×" w prawym panelu.
+   *
+   * W gałęzi `renderIdeaRightPanel()` (kanoniczny accordion Akcje·Właściwości·
+   * Powiązania) „×" nagłówka osadzonej sekcji wołał SAM `handlePanelChange(null)`.
+   * To nie chowało kolumny — zerowało tylko sekcję, a `elementInspectorRail`
+   * spadał na `IdeaElementInspector`, czyli panel zostawał na ekranie z INNĄ
+   * treścią. Dokładnie to zgłosił właściciel: „panelu właściwości nie da się
+   * zamknąć". Teraz „×" ZAWSZE znaczy „schowaj prawy panel" (Teresa zostaje),
+   * a powrót jest jeden: przycisk „Panel" w rogu Menu 1.
+   */
+  const zamknijPrawyPanel = useCallback(() => {
+    handlePanelChange(null);
+    setPanelZamkniety(true);
+    zapiszPanelZamkniety(true);
+  }, [handlePanelChange]);
 
   const toolsPanelOpen = activePanel === 'tools';
   const contextPanelOpen = activePanel === 'context';
@@ -4675,21 +4731,46 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   const nastepny = !panelZamkniety;
                   setPanelZamkniety(nastepny);
                   zapiszPanelZamkniety(nastepny);
-                  // Zamknięcie panelu zamyka też rozmowę — inaczej globalny
-                  // sygnał czatu natychmiast otwierałby panel z powrotem
-                  // (ten sam warunek co „X" w `IdeaElementInspector`).
-                  if (nastepny && !isChatCollapsed) toggleChatCollapse();
+                  // ★ NAPRAWA F4: tu stało `if (nastepny && !isChatCollapsed)
+                  // toggleChatCollapse()`. Był to obejście pętli opisanej wyżej
+                  // (efekt poziomowy na `isChatCollapsed`), a kosztem było
+                  // dokładnie to, o co prosi właściciel: nie dawało się zamknąć
+                  // panelu właściwości TAK, ŻEBY ZOSTAŁA SAMA TERESA — zamknięcie
+                  // panelu gasiło przy okazji rozmowę. Pętli już nie ma (efekt
+                  // jest zboczowy), więc panel zamyka się sam, a dok Teresy
+                  // zostaje nietknięty (F3 jest właścicielem panelu Teresy).
                 }}
                 panelLabel={t('mindmap.cornerPanel', 'Panel')}
               />
+              {/* ★ NAPRAWA F4: `analizaWToku` — przycisk pokazuje spinner przez
+                  czas wołania AI (dotąd milczał). Opisy zgód szły z TWARDO
+                  WPISANEGO polskiego tekstu — na angielskim UI (DEC-461: EN
+                  najpierw) właściciel zobaczyłby polskie zdanie w środku
+                  angielskiego ekranu. Teraz przez `t()` z angielskim
+                  fallbackiem. */}
               <PracujZAI
                 isPolish={Boolean(isPolish)}
                 onAnalizuj={() => void handleGenerateCanvasAI('canvas_analysis')}
+                analizaWToku={aiPlotnaWToku}
                 aktywnaSekcja={activeTool}
                 kontekstArtefaktu={{ title: title || seedText, status: stage, type: 'idea' }}
                 moznaEdytowac
-                uzupelnijSekcje={{ rodzaj: 'wlasnaPropozycja', uruchom: () => handleGenerateCanvasAI('active_canvas'), opis: 'Propozycje dla aktywnego centrum pojawią się do zatwierdzenia.' }}
-                uzupelnijDokument={{ rodzaj: 'wlasnaPropozycja', uruchom: () => handleGenerateCanvasAI('whole_idea'), opis: 'Propozycje dla całego pomysłu pojawią się do zatwierdzenia.' }}
+                uzupelnijSekcje={{
+                  rodzaj: 'wlasnaPropozycja',
+                  uruchom: () => handleGenerateCanvasAI('active_canvas'),
+                  opis: t(
+                    'mindmap.pracujZAI.opisAktywneCentrum',
+                    'Proposals for the active canvas will appear for your approval.'
+                  ),
+                }}
+                uzupelnijDokument={{
+                  rodzaj: 'wlasnaPropozycja',
+                  uruchom: () => handleGenerateCanvasAI('whole_idea'),
+                  opis: t(
+                    'mindmap.pracujZAI.opisCalyPomysl',
+                    'Proposals for the whole idea will appear for your approval.'
+                  ),
+                }}
               />
               </div>
             }
@@ -4743,9 +4824,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   ideaCreatedAt={ideaCreatedAt}
                   ideaUpdatedAt={lastSavedAt}
                   onClosePanel={() => {
+                    // ★ NAPRAWA F4: „×" chowa WYŁĄCZNIE panel właściwości.
+                    // Wołanie `toggleChatCollapse()` (zdjęte) gasiło przy okazji
+                    // Teresę i — przez poziomowy efekt na `isChatCollapsed` —
+                    // wracało bumerangiem, otwierając panel z powrotem.
                     setPanelZamkniety(true);
                     zapiszPanelZamkniety(true);
-                    if (!isChatCollapsed) toggleChatCollapse();
                   }}
                   element={
                     selection.type === 'none' || !selection.primaryId
@@ -5512,7 +5596,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             {...ideaWorkspaceToolsSharedProps}
             open
             embedded
-            onClose={() => handlePanelChange(null)}
+            onClose={zamknijPrawyPanel}
           />
         }
         relationsContent={
@@ -5520,7 +5604,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             {...ideaContextPanelSharedProps}
             open
             embedded
-            onClose={() => handlePanelChange(null)}
+            onClose={zamknijPrawyPanel}
           />
         }
         aiSuggestionsContent={
@@ -5528,7 +5612,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             {...ideaAISuggestionsPanelSharedProps}
             open
             embedded
-            onClose={() => handlePanelChange(null)}
+            onClose={zamknijPrawyPanel}
           />
         }
       />
