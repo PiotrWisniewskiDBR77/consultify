@@ -1,0 +1,92 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:08:04:84 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:08:04:84 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:08:04:84 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:04:84 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:04:84 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:05:85 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:05:85 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:05:85 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:08:05:85 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+2026-09-14 18:08:05:85 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+2026-09-14 18:08:05:85 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path) 68ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 2. filters by methodPackId 16ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 3. filters by state 26ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 3b. an unknown state value is refused with 400, not silently ignored 2ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 4. filters by projectId 14ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 5. filters by ownerUserId 14ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 6. paginates with limit/offset and reports the TOTAL of the filtered set, not just the page 22ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 7. defaults to limit=20 when no limit is given 7ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 8. a limit above the hard max (100) is refused with 400, not silently clamped 2ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 8b. limit=100 itself is accepted (boundary, not off-by-one) 8ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 9. two sessions with the IDENTICAL created_at sort identically across repeated calls (id tie-breaker) 19ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 10. each item reports state, methodPackVersion, domainStage, ownerUserId and timestamps 13ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 11. hasFrozenOutput is false before freeze and true once the session has a frozen Output 53ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 12. a reopened session appears as a SEPARATE list entry with revisionOfSessionId pointing at the original 51ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 13. a request with no Authorization header is refused with 401 1ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts (15 tests) 1748ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  18:08:04
+   Duration  1.99s (transform 1.04s, setup 91ms, import 73ms, tests 1.75s, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  18:08:04
+   Duration  1.99s (transform 1.04s, setup 91ms, import 73ms, tests 1.75s, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

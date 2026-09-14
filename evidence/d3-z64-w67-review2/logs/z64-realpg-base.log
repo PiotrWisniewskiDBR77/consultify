@@ -1,0 +1,152 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:07:53:753 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 18:07:53:753 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 18:07:53:753 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:53:753 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:53:753 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:54:754 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:54:754 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:54:754 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL
+2026-09-14 18:07:54:754 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+2026-09-14 18:07:54:754 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+2026-09-14 18:07:54:754 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ × server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path) 59ms
+   → expected undefined to be 'METHOD_SESSION_ORG_FORBIDDEN' // Object.is equality
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 2. filters by methodPackId 18ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 3. filters by state 24ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 3b. an unknown state value is refused with 400, not silently ignored 2ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 4. filters by projectId 13ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 5. filters by ownerUserId 13ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 6. paginates with limit/offset and reports the TOTAL of the filtered set, not just the page 22ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 7. defaults to limit=20 when no limit is given 7ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 8. a limit above the hard max (100) is refused with 400, not silently clamped 2ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 8b. limit=100 itself is accepted (boundary, not off-by-one) 8ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 9. two sessions with the IDENTICAL created_at sort identically across repeated calls (id tie-breaker) 19ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 10. each item reports state, methodPackVersion, domainStage, ownerUserId and timestamps 13ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 11. hasFrozenOutput is false before freeze and true once the session has a frozen Output 54ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 12. a reopened session appears as a SEPARATE list entry with revisionOfSessionId pointing at the original 53ms
+ ✓ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 13. a request with no Authorization header is refused with 401 1ms
+ ❯ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts (15 tests | 1 failed) 1883ms
+     × 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path) 59ms
+     ✓ 2. filters by methodPackId 18ms
+     ✓ 3. filters by state 24ms
+     ✓ 3b. an unknown state value is refused with 400, not silently ignored 2ms
+     ✓ 4. filters by projectId 13ms
+     ✓ 5. filters by ownerUserId 13ms
+     ✓ 6. paginates with limit/offset and reports the TOTAL of the filtered set, not just the page 22ms
+     ✓ 7. defaults to limit=20 when no limit is given 7ms
+     ✓ 8. a limit above the hard max (100) is refused with 400, not silently clamped 2ms
+     ✓ 8b. limit=100 itself is accepted (boundary, not off-by-one) 8ms
+     ✓ 9. two sessions with the IDENTICAL created_at sort identically across repeated calls (id tie-breaker) 19ms
+     ✓ 10. each item reports state, methodPackVersion, domainStage, ownerUserId and timestamps 13ms
+     ✓ 11. hasFrozenOutput is false before freeze and true once the session has a frozen Output 54ms
+     ✓ 12. a reopened session appears as a SEPARATE list entry with revisionOfSessionId pointing at the original 53ms
+     ✓ 13. a request with no Authorization header is refused with 401 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+AssertionError: expected undefined to be 'METHOD_SESSION_ORG_FORBIDDEN' // Object.is equality
+
+- Expected:
+"METHOD_SESSION_ORG_FORBIDDEN"
+
++ Received:
+undefined
+
+ ❯ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts:207:39
+    205|       .set('Authorization', `Bearer ${otherOrgToken}`);
+    206|     expect(crossTenantRead.status).toBe(403);
+    207|     expect(crossTenantRead.body.code).toBe('METHOD_SESSION_ORG_FORBIDD…
+       |                                       ^
+    208|
+    209|     // The authentication middleware runs before the route reads a ses…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  18:07:52
+   Duration  2.22s (transform 1.08s, setup 96ms, import 157ms, tests 1.88s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/method-core/__tests__/httpSessionsListing.integration.test.ts > GET /api/method/sessions — real PostgreSQL > 1. lists only sessions belonging to the caller organization — a different tenant never sees them (deny-path)
+AssertionError: expected undefined to be 'METHOD_SESSION_ORG_FORBIDDEN' // Object.is equality
+
+- Expected:
+"METHOD_SESSION_ORG_FORBIDDEN"
+
++ Received:
+undefined
+
+ ❯ server/src/method-core/__tests__/httpSessionsListing.integration.test.ts:207:39
+    205|       .set('Authorization', `Bearer ${otherOrgToken}`);
+    206|     expect(crossTenantRead.status).toBe(403);
+    207|     expect(crossTenantRead.body.code).toBe('METHOD_SESSION_ORG_FORBIDD…
+       |                                       ^
+    208|
+    209|     // The authentication middleware runs before the route reads a ses…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  18:07:52
+   Duration  2.23s (transform 1.08s, setup 96ms, import 157ms, tests 1.88s, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof/junit.xml
