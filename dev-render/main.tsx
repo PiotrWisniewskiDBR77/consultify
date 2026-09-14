@@ -612,6 +612,7 @@ const Dec495InicjatywyArchiwumScreen = React.lazy(
 const F2InicjatywyAnalizaScreen = React.lazy(() => import('./screens/f2-inicjatywy-analiza'));
 const P2bInicjatywyEmptyScreen = React.lazy(() => import('./screens/p2b-inicjatywy-empty'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
+const ExecutionRiskSignalE0Screen = React.lazy(() => import('./screens/execution-risk-signal-e0'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-execution-i18n')
@@ -703,6 +704,11 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'execution-risk-signal-e0': {
+    label:
+      'F2-2 E0 — sygnalizacja ryzyka Realizacji: trzy warianty zgodne z DEC-487/493; artefakt CTO 8c073b0a EVIDENCE_MISSING',
+    render: () => <ExecutionRiskSignalE0Screen />,
+  },
   's114b-narzedzia': {
     label:
       'S1.14b — naprawy Idea/Notes/Documents: &part=b1|b2|w3|b3|b6|w11 (realne ConvertToDialog, AccessBlockedModal, OrgSetupWizard, NotebookVersionHistory).',

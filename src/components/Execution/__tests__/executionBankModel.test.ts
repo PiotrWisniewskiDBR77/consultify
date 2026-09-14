@@ -13,6 +13,8 @@ const initiatives: ExecutionBankInitiativeSource[] = [
     id: 'initiative-a',
     name: 'Alpha',
     lifecycleStatus: 'IN_EXECUTION',
+    projectId: 'project-1',
+    priority: 'HIGH',
     ownerId: 'owner-1',
     progress: null,
     baselineEndDate: '2028-02-10',
@@ -24,6 +26,8 @@ const initiatives: ExecutionBankInitiativeSource[] = [
     id: 'initiative-b',
     name: 'Beta',
     lifecycleStatus: 'SCHEDULED',
+    projectId: null,
+    priority: 'LOW',
     ownerId: null,
     progress: null,
     baselineEndDate: null,
@@ -34,6 +38,8 @@ const initiatives: ExecutionBankInitiativeSource[] = [
     id: 'initiative-c',
     name: 'Gamma',
     lifecycleStatus: 'CLOSED',
+    projectId: 'project-2',
+    priority: 'MEDIUM',
     ownerId: 'owner-2',
     progress: 100,
     baselineEndDate: '2028-02-28',
@@ -70,6 +76,7 @@ describe('E1b executionBankModel', () => {
       ['initiative-b', 'case-b'],
     ]);
     expect(rows[0]).toMatchObject({
+      id: 'initiative-a',
       lifecycleStatus: 'IN_EXECUTION',
       executionState: 'ACTIVE',
       executionCaseVersion: 4,
@@ -92,6 +99,39 @@ describe('E1b executionBankModel', () => {
     });
     expect(rows[0].currentPlanFinish).toMatchObject({ status: 'KNOWN', value: '2028-03-20' });
     expect(rows[1].varianceDays).toMatchObject({ status: 'KNOWN', value: 1, reference: 'ACTUAL' });
+  });
+
+  it('renders one user-facing Initiative when several technical Execution Case shadows exist', () => {
+    const rows = buildExecutionBankRows(
+      [initiatives[0]],
+      [
+        { ...cases[0], executionCaseId: 'case-a-v3', version: 3 },
+        { ...cases[0], executionCaseId: 'case-a-v5', version: 5 },
+        { ...cases[0], executionCaseId: 'case-a-v4', version: 4 },
+      ],
+      { asOf: '2028-01-31' }
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: 'initiative-a',
+      initiativeId: 'initiative-a',
+      executionCaseId: 'case-a-v5',
+      executionCaseVersion: 5,
+    });
+  });
+
+  it('preserves the legacy row identity when the new default-OFF feature is not enabled', () => {
+    const rows = buildExecutionBankRows(
+      [initiatives[0], { ...initiatives[1], id: 'initiative-without-case' }],
+      [cases[0]],
+      { asOf: '2028-01-31', identityMode: 'LEGACY' }
+    );
+
+    expect(rows.map((row) => row.id).sort()).toEqual([
+      'case-a',
+      'initiative:initiative-without-case',
+    ]);
   });
 
   it('keeps missing and invalid evidence UNKNOWN with reasons instead of zero or invented dates', () => {
@@ -264,5 +304,18 @@ describe('E1b executionBankModel', () => {
         (row) => row.executionCaseId
       )
     ).toEqual(['case-c', 'case-b']);
+    expect(
+      filterExecutionBankRows(rows, { projectIds: [null] }).map((row) => row.initiativeId)
+    ).toEqual(['initiative-b']);
+    expect(
+      filterExecutionBankRows(rows, { projectIds: ['project-1'], priorities: ['high'] }).map(
+        (row) => row.initiativeId
+      )
+    ).toEqual(['initiative-a']);
+    expect(
+      filterExecutionBankRows(rows, {
+        timeWindow: { start: '2028-02-01', endExclusive: '2028-03-02' },
+      }).map((row) => row.initiativeId)
+    ).toEqual(['initiative-a', 'initiative-c']);
   });
 });
