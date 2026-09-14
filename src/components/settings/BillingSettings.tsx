@@ -1,6 +1,7 @@
 import { Clock, CreditCard, ExternalLink, FileText } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { usePermissions } from '../../hooks/usePermissions';
 import { User } from '../../types';
@@ -11,11 +12,12 @@ interface BillingSettingsProps {
 }
 
 export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
   const { isAdmin, canManageOrgBilling } = usePermissions();
 
   return (
     <div className="max-w-4xl relative">
-      <h2 className="text-lg font-semibold text-c-text mb-6">Subscription & Billing</h2>
+      <h2 className="text-lg font-semibold text-c-text mb-6">{t('settings.billingSettings.title', 'Subscription & Billing')}</h2>
       <BillingCore
         mode={isAdmin ? 'org-admin' : 'user'}
         currentUser={currentUser}
@@ -29,26 +31,26 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
       {/* Legal Documents Section */}
       <div className="mt-8 pt-6 border-t border-c-border-subtle dark:border-navy-700">
         <h3 className="text-sm font-semibold text-c-text-secondary mb-4">
-          Billing & Subscription Terms
+          {t('settings.billingSettings.legalSectionTitle', 'Billing & Subscription Terms')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <LegalDocumentLink
             to="/legal/subscription"
             icon={<FileText className="w-4 h-4" />}
-            title="Subscription Agreement"
-            description="Plans, pricing, AI credits"
+            title={t('settings.billingSettings.subscriptionAgreementTitle', 'Subscription Agreement')}
+            description={t('settings.billingSettings.subscriptionAgreementDesc', 'Plans, pricing, AI credits')}
           />
           <LegalDocumentLink
             to="/legal/sla"
             icon={<Clock className="w-4 h-4" />}
-            title="Service Level Agreement"
-            description="Uptime & support guarantees"
+            title={t('settings.billingSettings.slaTitle', 'Service Level Agreement')}
+            description={t('settings.billingSettings.slaDesc', 'Uptime & support guarantees')}
           />
           <LegalDocumentLink
             to="/legal/refunds"
             icon={<CreditCard className="w-4 h-4" />}
-            title="Refund Policy"
-            description="Cancellations & refunds"
+            title={t('settings.billingSettings.refundPolicyTitle', 'Refund Policy')}
+            description={t('settings.billingSettings.refundPolicyDesc', 'Cancellations & refunds')}
           />
         </div>
       </div>

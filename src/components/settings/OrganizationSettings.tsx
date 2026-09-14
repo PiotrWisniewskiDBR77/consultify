@@ -102,7 +102,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       }
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load organizations');
+      toast.error(t('settings.organization.loadOrgsError', 'Failed to load organizations'));
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       loadFinanceSettings();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load organization details');
+      toast.error(t('settings.organization.loadOrgDetailsError', 'Failed to load organization details'));
     }
   };
 
@@ -149,23 +149,23 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       // For now, let's assume valid UUID is passed OR backend handles email.
       // If backend rejects, we show error.
       await Api.addOrganizationMember(selectedOrg.id, newMemberEmail, newMemberRole);
-      toast.success('Member added successfully');
+      toast.success(t('settings.organization.memberAdded', 'Member added successfully'));
       setNewMemberEmail('');
       setIsAddMemberOpen(false);
       loadOrgDetails(selectedOrg.id);
     } catch (error: any) {
       // If error suggests invalid ID, user knows they need ID
-      toast.error(error.message || 'Failed to add member');
+      toast.error(error.message || t('settings.organization.addMemberError', 'Failed to add member'));
     }
   };
   const handleActivateBilling = async () => {
     if (!selectedOrg) return;
     try {
       await Api.activateBilling(selectedOrg.id);
-      toast.success('Billing activated! Tokens added.');
+      toast.success(t('settings.organization.billingActivated', 'Billing activated! Tokens added.'));
       loadOrgDetails(selectedOrg.id);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to activate billing');
+      toast.error(error.message || t('settings.organization.activateBillingError', 'Failed to activate billing'));
     }
   };
 
@@ -185,13 +185,13 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     // Blokada musi siedzieć W HANDLERZE, nie tylko w atrybucie przycisku.
     if (creatingOrg) return;
     if (!newOrgName.trim()) {
-      toast.error('Organization name is required');
+      toast.error(t('settings.organization.nameRequired', 'Organization name is required'));
       return;
     }
     setCreatingOrg(true);
     try {
       await Api.createOrganization(newOrgName.trim());
-      toast.success('Organization created successfully!');
+      toast.success(t('settings.organization.createdSuccess', 'Organization created successfully!'));
       setIsCreateOrgModalOpen(false);
       setNewOrgName('');
       await fetchOrganizations();
@@ -233,7 +233,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             onClick={() => setIsCreateOrgModalOpen(true)}
             className="bg-c-text hover:bg-c-text text-c-surface px-4 py-2 rounded-lg font-medium transition-colors"
           >
-            Create Organization
+            {t('settings.organization.createOrg', 'Create Organization')}
           </button>
         </div>
 
@@ -244,7 +244,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
                   <Building2 size={20} className="text-c-accent" />
-                  Create Organization
+                  {t('settings.organization.createOrgModalTitle', 'Create Organization')}
                 </h3>
                 <button
                   onClick={() => setIsCreateOrgModalOpen(false)}
@@ -256,13 +256,13 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Organization Name
+                    {t('settings.organization.orgNameLabel', 'Organization Name')}
                   </label>
                   <input
                     type="text"
                     value={newOrgName}
                     onChange={(e) => setNewOrgName(e.target.value)}
-                    placeholder="e.g., Acme Corporation"
+                    placeholder={t('settings.organization.orgNamePlaceholder', 'e.g., Acme Corporation')}
                     className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] text-navy-900"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
                     autoFocus
@@ -273,7 +273,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     onClick={() => setIsCreateOrgModalOpen(false)}
                     className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
                   >
-                    Cancel
+                    {t('settings.organization.cancel', 'Cancel')}
                   </button>
                   <button
                     onClick={handleCreateOrganization}
@@ -281,7 +281,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     className="px-6 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {creatingOrg && <Loader2 size={16} className="animate-spin" />}
-                    {creatingOrg ? 'Creating...' : 'Create Organization'}
+                    {creatingOrg ? t('settings.organization.creating', 'Creating...') : t('settings.organization.createOrgModalTitle', 'Create Organization')}
                   </button>
                 </div>
               </div>
@@ -299,7 +299,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         <div>
           <h2 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
             <Building2 className="text-c-accent" />
-            Organization Settings
+            {t('settings.organization.title', 'Organization Settings')}
           </h2>
           <p className="text-c-text-muted text-sm mt-1">
             {t('settings.organization.subtitle', 'Manage members, billing, and tokens.')}
@@ -325,10 +325,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
             <CreditCard size={20} className="text-c-text-muted" />
-            Billing Status
+            {t('settings.organization.billingStatus', 'Billing Status')}
           </h3>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-c-text-secondary">Status</span>
+            <span className="text-c-text-secondary">{t('settings.organization.status', 'Status')}</span>
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 selectedOrg?.billing_status === 'ACTIVE'
@@ -345,7 +345,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <AlertCircle size={20} className="text-amber-600 dark:text-amber-500 shrink-0" />
                 <div>
                   <h4 className="font-semibold text-amber-900 dark:text-amber-400 text-sm">
-                    Trial Active
+                    {t('settings.organization.trialActive', 'Trial Active')}
                   </h4>
                   <p className="text-amber-700 dark:text-amber-500/80 text-xs mt-1">
                     {t(
@@ -362,20 +362,20 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             disabled={selectedOrg?.billing_status === 'ACTIVE'}
             className="w-full bg-c-surface dark:bg-c-surface text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {selectedOrg?.billing_status === 'ACTIVE' ? 'Billing Active' : 'Activate Billing'}
+            {selectedOrg?.billing_status === 'ACTIVE' ? t('settings.organization.billingActive', 'Billing Active') : t('settings.organization.activateBilling', 'Activate Billing')}
           </button>
         </div>
 
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
             <Coins size={20} className="text-c-text-muted" />
-            Token Balance & Usage
+            {t('settings.organization.tokenBalanceUsage', 'Token Balance & Usage')}
           </h3>
           <div className="flex flex-col items-center justify-center py-4">
             <div className="text-4xl font-bold text-navy-900 mb-1">
               {formatListNumber(selectedOrg?.token_balance, '0')}
             </div>
-            <div className="text-sm text-c-text-muted">Available Tokens</div>
+            <div className="text-sm text-c-text-muted">{t('settings.organization.availableTokens', 'Available Tokens')}</div>
           </div>
 
           {/* Trial Usage Bar - uses API values, no hardcode */}
@@ -396,7 +396,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   return (
                     <>
                       <div className="flex justify-between text-xs text-c-text-muted mb-2">
-                        <span>Trial Usage</span>
+                        <span>{t('settings.organization.trialUsage', 'Trial Usage')}</span>
                         <span>{usedPct}% Used</span>
                       </div>
                       <div className="w-full bg-c-surface-raised rounded-full h-2.5">
@@ -437,21 +437,21 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 bg-c-surface-raised">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
             <Coins size={20} className="text-c-text-muted" />
-            Recent Token Activity
+            {t('settings.organization.recentTokenActivity', 'Recent Token Activity')}
           </h3>
         </div>
         <div className="max-h-64 overflow-y-auto">
           {!selectedOrg?.ledger || selectedOrg.ledger.length === 0 ? (
-            <div className="p-8 text-center text-c-text-muted text-sm">No token activity yet.</div>
+            <div className="p-8 text-center text-c-text-muted text-sm">{t('settings.organization.noTokenActivity', 'No token activity yet.')}</div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-c-surface-raised sticky top-0">
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
-                    Type
+                    {t('settings.organization.tokenLogType', 'Type')}
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
-                    Amount
+                    {t('settings.organization.tokenLogAmount', 'Amount')}
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
                     {t('settings.organization.tokenLogReason', 'Reason')}
@@ -575,14 +575,14 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between bg-c-surface-raised">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
             <Users size={20} className="text-c-text-muted" />
-            Team Members
+            {t('settings.organization.teamMembers', 'Team Members')}
           </h3>
           <button
             onClick={() => setIsAddMemberOpen(!isAddMemberOpen)}
             className="flex items-center gap-1.5 bg-c-text hover:bg-c-text text-c-surface px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
-            Add Member
+            {t('settings.organization.addMember', 'Add Member')}
           </button>
         </div>
 
@@ -591,34 +591,34 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             <div className="flex gap-4 items-end">
               <div className="flex-1">
                 <label className="block text-xs font-semibold text-c-text-muted mb-1">
-                  User ID / Email
+                  {t('settings.organization.userIdOrEmail', 'User ID / Email')}
                 </label>
                 <input
                   type="text"
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
-                  placeholder="Enter User ID (or Email if supported)"
+                  placeholder={t('settings.organization.userIdPlaceholder', 'Enter User ID (or Email if supported)')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
                 />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-semibold text-c-text-muted mb-1">Role</label>
+                <label className="block text-xs font-semibold text-c-text-muted mb-1">{t('settings.organization.role', 'Role')}</label>
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
                 >
-                  <option value="ADMIN">Admin</option>
-                  <option value="MEMBER">Member</option>
-                  <option value="CONSULTANT">Consultant</option>
-                  <option value="VIEWER">Viewer</option>
+                  <option value="ADMIN">{t('settings.organization.roleAdmin', 'Admin')}</option>
+                  <option value="MEMBER">{t('settings.organization.roleMember', 'Member')}</option>
+                  <option value="CONSULTANT">{t('settings.organization.roleConsultant', 'Consultant')}</option>
+                  <option value="VIEWER">{t('settings.organization.roleViewer', 'Viewer')}</option>
                 </select>
               </div>
               <button
                 onClick={handleAddMember}
                 className="bg-c-surface dark:bg-c-surface text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90"
               >
-                Send Invite
+                {t('settings.organization.sendInvite', 'Send Invite')}
               </button>
             </div>
             <p className="text-[10px] text-c-text-muted mt-2">
@@ -643,7 +643,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <div>
                   <div className="font-semibold text-navy-900 text-sm">
                     {member.first_name} {member.last_name}{' '}
-                    {member.user_id === currentUser.id && '(You)'}
+                    {member.user_id === currentUser.id && t('settings.organization.youSuffix', '(You)')}
                   </div>
                   <div className="text-xs text-c-text-muted">{member.email || member.user_id}</div>
                 </div>
@@ -662,13 +662,13 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   {member.role}
                 </span>
                 <div className="text-xs text-c-text-muted">
-                  Joined {formatListDate(member.created_at)}
+                  {t('settings.organization.joined', 'Joined')} {formatListDate(member.created_at)}
                 </div>
               </div>
             </div>
           ))}
           {members.length === 0 && (
-            <div className="p-8 text-center text-c-text-muted text-sm">No members found.</div>
+            <div className="p-8 text-center text-c-text-muted text-sm">{t('settings.organization.noMembers', 'No members found.')}</div>
           )}
         </div>
       </div>

@@ -395,9 +395,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       setSaving(true);
       const response = await Api.put(`/organization-profiles/${effectiveOrgId}`, profile);
       setCompleteness(response.completeness || 0);
-      toast.success('Profile saved successfully');
+      toast.success(t('settings.orgProfile.saved', 'Profile saved successfully'));
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save profile');
+      toast.error(error.message || t('settings.orgProfile.saveError', 'Failed to save profile'));
     } finally {
       setSaving(false);
     }
@@ -411,11 +411,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       const response = await Api.post(`/organization-profiles/${effectiveOrgId}/analyze`, {
         analysisType: 'strategic_positioning',
       });
-      toast.success('Analysis complete');
+      toast.success(t('settings.orgProfile.analysisComplete', 'Analysis complete'));
       // Could open a modal with results
       console.log('Analysis:', response.analysis);
     } catch (error: any) {
-      toast.error(error.message || 'Analysis failed');
+      toast.error(error.message || t('settings.orgProfile.analysisError', 'Analysis failed'));
     } finally {
       setAnalyzing(false);
     }
@@ -483,7 +483,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         <div>
           <h2 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
             <Building2 className="text-c-accent" />
-            Strategic Profile
+            {t('settings.orgProfile.title', 'Strategic Profile')}
           </h2>
           <p className="text-c-text-muted text-sm mt-1">
             {t(
@@ -496,7 +496,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         {/* Completeness Indicator */}
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <div className="text-sm text-c-text-muted">Profile Completeness</div>
+            <div className="text-sm text-c-text-muted">{t('settings.orgProfile.completenessLabel', 'Profile Completeness')}</div>
             <div className="text-2xl font-bold text-navy-900">{completeness}%</div>
           </div>
           <div className="w-16 h-16 relative">
@@ -538,7 +538,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Save Profile
+          {t('settings.orgProfile.saveProfile', 'Save Profile')}
         </button>
         <button
           onClick={handleAnalyze}
@@ -546,14 +546,14 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700 text-navy-900 rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          AI Analysis
+          {t('settings.orgProfile.aiAnalysis', 'AI Analysis')}
         </button>
         <button
           onClick={fetchProfile}
           className="flex items-center gap-2 px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 rounded-lg transition-colors"
         >
           <RefreshCw size={16} />
-          Refresh
+          {t('settings.orgProfile.refresh', 'Refresh')}
         </button>
       </div>
 
@@ -563,20 +563,20 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       <div className="space-y-4">
         {/* Industry Context */}
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
-          {renderSectionHeader('industry', 'Industry Context', <Briefcase size={20} />)}
+          {renderSectionHeader('industry', t('settings.orgProfile.sectionIndustry', 'Industry Context'), <Briefcase size={20} />)}
           {expandedSections.industry && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Industry *
+                    {t('settings.orgProfile.industryLabel', 'Industry *')}
                   </label>
                   <select
                     value={profile.industry || ''}
                     onChange={(e) => updateField('industry', e.target.value)}
                     className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   >
-                    <option value="">Select Industry</option>
+                    <option value="">{t('settings.orgProfile.selectIndustry', 'Select Industry')}</option>
                     {INDUSTRIES.map((ind) => (
                       <option key={ind} value={ind}>
                         {ind}
@@ -586,13 +586,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Industry Subsector
+                    {t('settings.orgProfile.industrySubsector', 'Industry Subsector')}
                   </label>
                   <input
                     type="text"
                     value={profile.industry_subsector || ''}
                     onChange={(e) => updateField('industry_subsector', e.target.value)}
-                    placeholder="e.g., SaaS, Fintech, E-commerce"
+                    placeholder={t('settings.orgProfile.industrySubsectorPlaceholder', 'e.g., SaaS, Fintech, E-commerce')}
                     className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                   />
                 </div>
@@ -625,13 +625,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
         {/* Company Info */}
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
-          {renderSectionHeader('company', 'Company Information', <Building2 size={20} />)}
+          {renderSectionHeader('company', t('settings.orgProfile.sectionCompany', 'Company Information'), <Building2 size={20} />)}
           {expandedSections.company && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Company Size *
+                    {t('settings.orgProfile.companySize', 'Company Size *')}
                   </label>
                   <select
                     value={profile.company_size || 'MID_MARKET'}
@@ -647,7 +647,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Employee Count
+                    {t('settings.orgProfile.employeeCount', 'Employee Count')}
                   </label>
                   <input
                     type="number"
@@ -692,7 +692,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Founding Year
+                    {t('settings.orgProfile.foundingYear', 'Founding Year')}
                   </label>
                   <input
                     type="number"
@@ -705,13 +705,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Headquarters Country
+                  {t('settings.orgProfile.headquartersCountry', 'Headquarters Country')}
                 </label>
                 <input
                   type="text"
                   value={profile.headquarters_country || ''}
                   onChange={(e) => updateField('headquarters_country', e.target.value)}
-                  placeholder="e.g., Poland"
+                  placeholder={t('settings.orgProfile.hqCountryPlaceholder', 'e.g., Poland')}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
@@ -721,13 +721,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
         {/* Strategic Context */}
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
-          {renderSectionHeader('strategic', 'Strategic Context', <Target size={20} />)}
+          {renderSectionHeader('strategic', t('settings.orgProfile.sectionStrategic', 'Strategic Context'), <Target size={20} />)}
           {expandedSections.strategic && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Competitive Position *
+                    {t('settings.orgProfile.competitivePosition', 'Competitive Position *')}
                   </label>
                   <select
                     value={profile.competitive_position || 'CHALLENGER'}
@@ -749,7 +749,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Growth Stage *
+                    {t('settings.orgProfile.growthStage', 'Growth Stage *')}
                   </label>
                   <select
                     value={profile.growth_stage || 'MATURE'}
@@ -769,7 +769,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Strategic Priorities (comma-separated)
+                  {t('settings.orgProfile.strategicPriorities', 'Strategic Priorities (comma-separated)')}
                 </label>
                 <CommaListInput
                   value={profile.strategic_priorities || []}
@@ -783,13 +783,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Mission Statement
+                  {t('settings.orgProfile.missionStatement', 'Mission Statement')}
                 </label>
                 <textarea
                   value={profile.mission_statement || ''}
                   onChange={(e) => updateField('mission_statement', e.target.value)}
                   rows={2}
-                  placeholder="What is your organization's mission?"
+                  placeholder={t('settings.orgProfile.missionPlaceholder', "What is your organization's mission?")}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none resize-none"
                 />
               </div>
@@ -799,13 +799,13 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
         {/* Digital Context */}
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
-          {renderSectionHeader('digital', 'Digital & Technology', <Cpu size={20} />)}
+          {renderSectionHeader('digital', t('settings.orgProfile.sectionDigital', 'Digital & Technology'), <Cpu size={20} />)}
           {expandedSections.digital && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Digital Maturity Self-Assessment (1-7)
+                    {t('settings.orgProfile.digitalMaturity', 'Digital Maturity Self-Assessment (1-7)')}
                   </label>
                   <input
                     type="number"
@@ -822,7 +822,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    Cloud Adoption Level
+                    {t('settings.orgProfile.cloudAdoption', 'Cloud Adoption Level')}
                   </label>
                   <select
                     value={profile.cloud_adoption_level || 'PARTIAL'}
@@ -839,7 +839,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Digital Budget (% of total IT spend)
+                  {t('settings.orgProfile.digitalBudget', 'Digital Budget (% of total IT spend)')}
                 </label>
                 <input
                   type="number"
@@ -855,12 +855,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Technology Stack (comma-separated)
+                  {t('settings.orgProfile.technologyStack', 'Technology Stack (comma-separated)')}
                 </label>
                 <CommaListInput
                   value={profile.technology_stack || []}
                   onChange={(val) => updateField('technology_stack', val)}
-                  placeholder="e.g., AWS, React, Python, Kubernetes"
+                  placeholder={t('settings.orgProfile.techStackPlaceholder', 'e.g., AWS, React, Python, Kubernetes')}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
@@ -870,45 +870,45 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
         {/* Market Context */}
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
-          {renderSectionHeader('market', 'Market & Competition', <TrendingUp size={20} />)}
+          {renderSectionHeader('market', t('settings.orgProfile.sectionMarket', 'Market & Competition'), <TrendingUp size={20} />)}
           {expandedSections.market && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Primary Markets (comma-separated)
+                  {t('settings.orgProfile.primaryMarkets', 'Primary Markets (comma-separated)')}
                 </label>
                 <CommaListInput
                   value={profile.primary_markets || []}
                   onChange={(val) => updateField('primary_markets', val)}
-                  placeholder="e.g., Poland, DACH, CEE"
+                  placeholder={t('settings.orgProfile.primaryMarketsPlaceholder', 'e.g., Poland, DACH, CEE')}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Customer Segments (comma-separated)
+                  {t('settings.orgProfile.customerSegments', 'Customer Segments (comma-separated)')}
                 </label>
                 <CommaListInput
                   value={profile.customer_segments || []}
                   onChange={(val) => updateField('customer_segments', val)}
-                  placeholder="e.g., B2B, Enterprise, SMB"
+                  placeholder={t('settings.orgProfile.customerSegmentsPlaceholder', 'e.g., B2B, Enterprise, SMB')}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Key Competitors (comma-separated)
+                  {t('settings.orgProfile.keyCompetitors', 'Key Competitors (comma-separated)')}
                 </label>
                 <CommaListInput
                   value={profile.key_competitors || []}
                   onChange={(val) => updateField('key_competitors', val)}
-                  placeholder="e.g., Competitor A, Competitor B"
+                  placeholder={t('settings.orgProfile.keyCompetitorsPlaceholder', 'e.g., Competitor A, Competitor B')}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Estimated Market Share (%)
+                  {t('settings.orgProfile.marketShare', 'Estimated Market Share (%)')}
                 </label>
                 <input
                   type="number"
@@ -928,7 +928,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
         {/* Constraints */}
         <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
-          {renderSectionHeader('constraints', 'Constraints & Risk', <Shield size={20} />)}
+          {renderSectionHeader('constraints', t('settings.orgProfile.sectionConstraints', 'Constraints & Risk'), <Shield size={20} />)}
           {expandedSections.constraints && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
               <div>
@@ -961,7 +961,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Risk Appetite
+                  {t('settings.orgProfile.riskAppetite', 'Risk Appetite')}
                 </label>
                 <div className="flex gap-3">
                   {RISK_APPETITES.map((risk) => (
@@ -1039,7 +1039,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           className="flex items-center gap-2 px-6 py-3 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          Save Strategic Profile
+          {t('settings.orgProfile.saveStrategicProfile', 'Save Strategic Profile')}
         </button>
       </div>
     </div>

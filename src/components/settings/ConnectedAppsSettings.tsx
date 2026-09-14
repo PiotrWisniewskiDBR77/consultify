@@ -889,7 +889,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         if (data.authUrl) {
           window.location.href = data.authUrl;
         } else {
-          toast.error('No authorization URL returned');
+          toast.error(t('settings.integrations.noAuthUrl', 'No authorization URL returned'));
         }
       } catch (err: unknown) {
         toast.error(
@@ -1331,7 +1331,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                   onClick={() => handleTest(app.id)}
                                   disabled={testingProvider === app.id}
                                   className="p-1.5 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
-                                  title="Test connection"
+                                  title={t('settings.integrations.testConnection', 'Test connection')}
                                 >
                                   {testingProvider === app.id ? (
                                     <Loader2 size={14} className="animate-spin" />
@@ -1424,8 +1424,8 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                 </h3>
                 <p className="text-xs text-c-text-muted mt-0.5">
                   {connectModalApp.authType === 'basic'
-                    ? 'Provide your Apple ID and app-specific password.'
-                    : 'Provide the required configuration below.'}
+                    ? t('settings.integrations.appleIdHint', 'Provide your Apple ID and app-specific password.')
+                    : t('settings.integrations.configHint', 'Provide the required configuration below.')}
                 </p>
               </div>
               <button
@@ -1440,7 +1440,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                 <>
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-c-text-secondary">
-                      Apple ID Email
+                      {t('settings.integrations.appleIdEmail', 'Apple ID Email')}
                     </label>
                     <input
                       value={draftConfig.username || ''}
@@ -1448,13 +1448,13 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                         setDraftConfig((prev) => ({ ...prev, username: e.target.value }))
                       }
                       className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
-                      placeholder="your@icloud.com"
+                      placeholder={t('settings.integrations.appleIdPlaceholder', 'your@icloud.com')}
                       type="email"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-c-text-secondary">
-                      App-Specific Password
+                      {t('settings.integrations.appSpecificPassword', 'App-Specific Password')}
                     </label>
                     <input
                       value={draftConfig.password || ''}
@@ -1467,7 +1467,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                     />
                   </div>
                   <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                    <p className="font-medium">How to generate an app-specific password:</p>
+                    <p className="font-medium">{t('settings.integrations.appSpecificHowTo', 'How to generate an app-specific password:')}</p>
                     <ol className="list-decimal list-inside space-y-0.5 text-blue-600 dark:text-blue-400">
                       <li>
                         Go to{' '}
@@ -1480,8 +1480,8 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                           appleid.apple.com
                         </a>
                       </li>
-                      <li>Sign In &amp; Security &rarr; App-Specific Passwords</li>
-                      <li>Generate a password labeled "Consultify"</li>
+                      <li>{t('settings.integrations.appSpecificStep2', 'Sign In & Security → App-Specific Passwords')}</li>
+                      <li>{t('settings.integrations.appSpecificStep3', 'Generate a password labeled "Consultify"')}</li>
                     </ol>
                   </div>
                 </>
