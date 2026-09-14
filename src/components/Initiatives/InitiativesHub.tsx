@@ -1624,7 +1624,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       Object.keys(quickUpdatePayload).length > 0
         ? ids.map((id) => {
             const row = initiatives.find((item) => item.id === id) as
-              (PortfolioInitiative & { canonicalVersion?: number }) | undefined;
+              | (PortfolioInitiative & { canonicalVersion?: number })
+              | undefined;
             return quickUpdateInitiativeWriteTruth(id, quickUpdatePayload, row?.canonicalVersion);
           })
         : [];
@@ -2087,7 +2088,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
-<<<<<<< HEAD
     if (initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'parking') {
       return (
         <InitiativeParkingView
@@ -2110,13 +2110,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
     }
 
-    // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
-    // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
-    if (
-      (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') ||
-      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
-    ) {
-=======
     if (activeTab === 'workReport' && WORK_REPORT_ENABLED) {
       return (
         <InitiativeWorkReportView
@@ -2126,8 +2119,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         />
       );
     }
-    if (activeTab === 'list' && preparationLens === 'analysis') {
->>>>>>> b191f58827 ([ODMROZENIE 05_INITIATIVES DEC-497] [ODMROZENIE WSPOLNE DEC-497] work report E1 WIP)
+
+    // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
+    // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
+    if (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}
