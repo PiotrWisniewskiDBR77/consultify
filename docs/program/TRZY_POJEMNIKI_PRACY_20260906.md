@@ -538,8 +538,10 @@ MVP zgłoszenia    [████████████████████
 **Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **41**
 (+1 = H1e dołożone 14.09 po wdrożeniu fali B3). Z tego: 0 zaakceptowanych, **8 na stagingu** (20%,
 A1+A2 fali B2 Inicjatywy `90059a1054` + H1/H2/B-E0 fali B1 Realizacja `88f1a1994d` + H1b/H1c/H1d
-fali B3 `78086fb2c8`, wszystkie za flagami OFF), **6 w toku** (A4 DEC-499, B-E1 F2-2, silnik
-raportów, PMO E3, P6, H1e — warunek włączenia bramki GO, DEC-507), **27 nie zaczętych**. Duże
+fali B3 `78086fb2c8`, wszystkie za flagami OFF), **8 w toku** (A4 DEC-499, B-E1 F2-2, silnik
+raportów, PMO E3, P6, H1e — gotowe do scalenia `1b9d467823` warunek DEC-507, RP1 — gotowe do
+odbioru CTO Codex S2 `4d8113fa46`, OB1 — gotowe do odbioru Codex Q1 `d27172ed3c`), **25 nie
+zaczętych**. Duże
 pakiety Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
 dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v2 ACCEPT `e1a2c2c160`
 w odbiorze CTO). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
@@ -724,6 +726,51 @@ komponentu bez powłoki Menu 1/2/3; przed pokazaniem właścicielowi potrzebny z
 Liczniki §5 przeliczone: 45 etapów (+1 H1e) — ✅ 2 · 🧪 9 · 🔧 6 · ⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0;
 FALA 2 = 41 etapów (0 ✅, 8 🧪, 6 🔧, 27 ⬜). Co blokuje: akcept wyglądu fali B na czystym zrzucie
 w powłoce (Z-27), H1e (warunek włączenia DEC-507), Z-25/Z-26 (decyzje właściciela).
+
+**H1e gotowe (14.09, Sonnet, gałąź `integracja/kandydat-h1e-20260914`, HEAD `1b9d467823`, kopia
+`backup/h1e-20260914`).** Preflight START (`initiativeTransitionPreflightService.ts:158-172`)
+warstwuje `evaluateInitiativeTransitionCondition` dla `CURRENT_GO_DECISION` **tylko** przy
+`ENABLE_LIFECYCLE_GO_GATE` ON (`dfffcc5ab9`; 3 przypadki testowe). Komunikat
+`CLOSURE_WORK_INCOMPLETE` dodany w `initiativeLifecycleMessages` + i18n en/pl (`b3919f055b`).
+Po drodze naprawiony duplikat klucza `initiatives.analysis` (2 bloki: legacy 11 kluczy + portfolio
+38 → scalone 49, bez kolizji podkluczy; EN l.12230/14982, PL l.11399/14157) i podpięty
+`scripts/i18n/detect-duplicate-json-keys.mjs` do i18nTrescPolska (`1b9d467823`). Warunek włączenia
+bramki GO (DEC-507) spełniony po wejściu na linię (fala B4). **EWIDENCJA:** §5 H1e
+🔧 W TOKU → **🔧 gotowe do scalenia `1b9d467823`**.
+
+**Z-27 rozliczone + H1f (14.09, Sonnet, gałąź `integracja/kandydat-z27-zrzuty-20260914`, HEAD
+`04b2cdf5ca`, kopia `backup/z27-zrzuty-20260914`).** Harness
+`dev-render/screens/z27-inicjatywy-skrzynka.tsx` montuje cały `InitiativesHub` (flagi budowy →
+dwa procesy vite ON/OFF); zrzuty w powłoce `~/Developer/cto-codex/zrzuty-z27-skrzynka-20260914/v2/`
+(jasny+ciemny: lista, podgląd, OFF). Poprawki po oku CTO: pigułki Menu 3 rejestru przeciekały do
+zakładki (`InitiativesHub.tsx:3079` `commandRowContent` — wyłączone dla `transitionInbox`,
+`9602bd949c`), surowe kody przejść/obszaru → etykiety i18n (`initiativeStatusLabels.ts`
+wydzielone z `InitiativePreviewV3`; 9 brakujących kluczy `initiatives.status.*` — nigdy nie
+istniały, mock testowy zwracał `defaultValue`; `c86f2e5c5e`, `04b2cdf5ca`); kolory akcji-pill
+(zielony Zatwierdź / czerwony Odrzuć) = kanon TABLE_AND_PREVIEW_CANON §7.3b — **bez zmian**
+(premisa CTO błędna, agent poprawnie odmówił). Zrzut wysłany właścicielowi (Tak/Nie wygląd
+skrzynki). **Dług — Z-28 (nowy, dyżur i18n):** etykieta „Zatwierdzony" (rodzaj męski) przy
+inicjatywie (żeński: „Zatwierdzona") — klucz `initiatives.status.approved`.
+
+**Codex 14.09, 03:43–04:17.** **S2 P1 Raport z pracy — FINAL ACCEPT** (`4d8113fa46`, baza
+`61334b2c21`, kopia `backup/codex/raport-z-pracy-inicjatyw-20260914-final-gate2-20260914`;
+9 plików testów delty 31/31, RealPG runner→PDF→EmailService→lokalny SMTP→PG→dashboard 2/2; żywy
+SMTP stagingu nietknięty) → odbiór CTO w toku (integrator `p1-raport`). **S5 PMO E3 R2
+REQUEST_CHANGES.** **Q1 P3 Obciążenie E1 — ACCEPT** (`d27172ed3c`, receipt `bdf4321105`, kopia
+`backup/codex/obciazenie-inicjatyw-20260914-20260914`; heatmapa osoba×tydzień
+StandardTable+Preview, progi <85/85–100/>100, horyzont 4/8/12/26 tyg., flagi OFF, bez migracji;
+E2–E4 nie zaczęte) → kolejka odbioru (KANAL wpis 33: S1 v3 → P1 → Q1 → S4 → S5 → S3). Wpisy KANAL
+32–33.
+
+**Z-2 (aktualizacja 14.09, integratory w toku).** Cztery równoległe: paczka 5 v3
+(`wt/paczka5v3`), P1 (`wt/p1-raport`), fala B4 = H1e + Z-27 (`wt/fala-b4`). Worktree usunięte po
+scaleniu/porzuceniu: `fala-a2`, `fala-b3`, `h1b`, `paczka5v2`. Dysk ~25 GiB.
+
+**EWIDENCJA (uzupełnienie 14.09, po H1e/Z-27/S2/Q1).** §5: H1e → **🔧 gotowe do scalenia**;
+RP1 → **🔧 gotowe do odbioru CTO** (Codex S2 FINAL ACCEPT `4d8113fa46`); OB1 → **🔧 gotowe do
+odbioru** (Codex Q1 E1 ACCEPT `d27172ed3c`). Skrzynka: Z-27 rozliczone, **Z-28** nowy (etykieta
+rodzaju żeńskiego „Zatwierdzona"). Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 9 · 🔧 8 ·
+⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 41 etapów (0 ✅, 8 🧪, 8 🔧, 25 ⬜).
 
 ---
 
@@ -1014,11 +1061,11 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
-| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | ⬜ NIE ZACZĘTE (atrapa) | — | — |
+| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🔧 GOTOWE DO ODBIORU (Codex Q1 E1 ACCEPT) | `d27172ed3c` | 14.09 |
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ⬜ NIE ZACZĘTE (atrapa za flagą OFF) | `VITE_INITIATIVES_WORK_REPORT` | — |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🔧 GOTOWE DO ODBIORU CTO (Codex S2 FINAL ACCEPT) | `4d8113fa46` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
@@ -1039,7 +1086,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `78086fb2c8` | 14.09 |
 | Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B3 | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🧪 NA STAGINGU | `78086fb2c8` | 14.09 |
 | Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B3 | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🧪 NA STAGINGU (flaga `ENABLE_LIFECYCLE_GO_GATE` OFF, DEC-507) | `78086fb2c8` | 14.09 |
-| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🔧 W TOKU | `integracja/kandydat-h1e-20260914` | 14.09 |
+| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🔧 GOTOWE DO SCALENIA | `1b9d467823` | 14.09 |
 | Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | ⬜ NIE ZACZĘTE (dyżur wydany, nienaprawione) | KANAL wpis 31 | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
@@ -1050,11 +1097,12 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (45 etapów, +1 = H1e dołożone 14.09 po wdrożeniu fali B3; H1b/H1c/H1d przechodzą
-🔧 „gotowe do scalenia"→🧪 NA STAGINGU `78086fb2c8`, D-j bez zmiany):** ✅ 2 · 🧪 9 · 🔧 6 · ⬜ 28 ·
-👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (45 etapów; 14.09 wieczór: H1e → gotowe do scalenia `1b9d467823`, RP1 → gotowe do
+odbioru CTO `4d8113fa46`, OB1 → gotowe do odbioru `d27172ed3c`; RP1/OB1 przechodzą
+⬜ NIE ZACZĘTE → 🔧 W TOKU, H1e zostaje 🔧 z adnotacją „gotowe do scalenia"):** ✅ 2 · 🧪 9 ·
+🔧 8 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**41 etapów to FALA 2** (0 ✅, 8 🧪, 6 🔧, 27 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**41 etapów to FALA 2** (0 ✅, 8 🧪, 8 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 

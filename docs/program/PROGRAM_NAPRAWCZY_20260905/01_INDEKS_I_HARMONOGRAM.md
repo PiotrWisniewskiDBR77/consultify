@@ -111,6 +111,31 @@ fala A cz. 3.
 (kliknięcie nie robi nic; brak dialogu = brak destrukcyjnej akcji, więc nie blokuje pilotażu, ale
 kebab jest martwy). Do przydziału.
 
+**Z-27 (14.09) — ROZLICZONE.** Zrzuty fali B3 pokazywały powierzchnię komponentu
+`TransitionInboxSurface` bez powłoki Menu 1/2/3. Naprawa H1f (Sonnet, gałąź
+`integracja/kandydat-z27-zrzuty-20260914`, HEAD `04b2cdf5ca`, kopia `backup/z27-zrzuty-20260914`):
+harness `dev-render/screens/z27-inicjatywy-skrzynka.tsx` montuje cały `InitiativesHub`; zrzuty
+jasny+ciemny w powłoce (`~/Developer/cto-codex/zrzuty-z27-skrzynka-20260914/v2/`), wysłane
+właścicielowi do Tak/Nie. Poprawki po oku CTO: pigułki Menu 3 przeciekające do zakładki wyłączone
+(`InitiativesHub.tsx:3079`, `9602bd949c`), surowe kody statusów/obszaru zamienione na etykiety
+i18n (`initiativeStatusLabels.ts`, `c86f2e5c5e`/`04b2cdf5ca`); kolory akcji-pill zielony/czerwony
+potwierdzone jako kanon TABLE_AND_PREVIEW_CANON §7.3b, bez zmian.
+
+**Z-28 (14.09, nowe, dyżur i18n).** Etykieta „Zatwierdzony" (rodzaj męski) przy inicjatywie
+(rodzaj żeński: „Zatwierdzona") — klucz `initiatives.status.approved`. Do przydziału.
+
+**H1e gotowe do scalenia (14.09).** Sonnet, gałąź `integracja/kandydat-h1e-20260914`, HEAD
+`1b9d467823`, kopia `backup/h1e-20260914`. Warunek włączenia bramki GO spełniony po wejściu na
+linię (fala B4, razem z Z-27/H1f).
+
+**Codex 14.09, 03:43–04:17.** S2 P1 Raport z pracy **FINAL ACCEPT** (`4d8113fa46`) → odbiór CTO
+w toku. S5 PMO E3 R2 **REQUEST_CHANGES**. Q1 P3 Obciążenie E1 **ACCEPT** (`d27172ed3c`) →
+kolejka odbioru (KANAL wpis 33: S1 v3 → P1 → Q1 → S4 → S5 → S3). Wpisy KANAL 32–33.
+
+**Z-2 (aktualizacja 14.09).** Integratory w toku: paczka 5 v3 (`wt/paczka5v3`), P1
+(`wt/p1-raport`), fala B4 = H1e + Z-27 (`wt/fala-b4`). Worktree usunięte: `fala-a2`, `fala-b3`,
+`h1b`, `paczka5v2`. Dysk ~25 GiB.
+
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
 (zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).
