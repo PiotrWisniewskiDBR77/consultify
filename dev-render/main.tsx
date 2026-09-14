@@ -638,6 +638,7 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
 );
 const MethodWorkspaceScreen = React.lazy(() => import('./screens/method-workspace'));
 const DrdHttpWorkspaceScreen = React.lazy(() => import('./screens/drd-http-workspace'));
+const PawelDokumentyUploadScreen = React.lazy(() => import('./screens/pawel-dokumenty-upload'));
 const SiriWorkspaceScreen = React.lazy(() => import('./screens/siri-workspace'));
 const SiriTierScreen = React.lazy(() => import('./screens/siri-tier'));
 const AssessmentArtifactsRestartScreen = React.lazy(
@@ -880,6 +881,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'OCENA — zakładka „Biblioteka" (wejście do metodyki DRD): REALNY <AssessmentHub initialTab="library"> → AssessmentLibraryTab. Do 2026-09-02 była to REPLIKA triady.',
     render: () => <DrdLibraryEntryScreen />,
+  },
+  'pawel-dokumenty-upload': {
+    label:
+      'P-P05 (pilotaz Pawla) — REALNY <DocumentSidePanel> z atrapa serwera na window.fetch: POST /documents/upload zwraca 400 DOCUMENTS_PROJECT_ID_REQUIRED. &projekt=1 = panel z projektem.',
+    render: () => <PawelDokumentyUploadScreen />,
   },
   'drd-http-workspace': {
     label:

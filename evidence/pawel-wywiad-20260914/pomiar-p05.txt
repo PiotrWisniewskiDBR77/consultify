@@ -1,0 +1,2 @@
+PRZED (kod sprzed naprawy): KOMUNIKAT NA EKRANIE: (BRAK — cisza); w konsoli ApiError: Project id is required for project-scoped uploads.
+PO  (po naprawie):         KOMUNIKAT NA EKRANIE: Upload of “MapaRozwojuDigitalnego-Plastmet(1).pdf” failed: Project id is required for project-scoped uploads.

@@ -71,7 +71,7 @@ import {
   DrdHttpSessionRuntime,
   type DrdHttpRuntimeState,
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
-import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
+import type { MethodEvent, MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { useAppStore } from '@/store/useAppStore';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
@@ -498,6 +498,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * zmienia się tylko to, KTÓRY poziom pokazujemy człowiekowi.
    */
   const [pinnedFocus, setPinnedFocus] = useState<{ unitId: string; level: number } | null>(null);
+  /**
+   * Stan odpowiedzi wybrany ręcznie w TEJ sesji przeglądarki (P-P04) oraz
+   * ostatnia lista zdarzeń — oba jako refy, bo debounce autozapisu trzyma
+   * domknięcie z renderu sprzed wyboru (patrz komentarz przy `save`).
+   */
+  const chosenAnswerStateRef = useRef<Record<string, InterviewFocusQuestion['answerState']>>({});
+  const eventsRef = useRef<readonly MethodEvent[]>([]);
   /** Panel „Analizuj" z „Pracuj z AI" — ocena gotowości sesji, zero zapisu. */
   const [analizaOtwarta, setAnalizaOtwarta] = useState(false);
   // True for the duration of an explicit reconciliation call (refresh() from
@@ -599,6 +606,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const runtime = runtimeRef.current;
 
   const events = state?.events ?? [];
+  eventsRef.current = events;
   const pendingPreviews = state?.previews ?? [];
   const pendingPreviewUnitLevels = useMemo(() => {
     const set = new Set<string>();
@@ -684,12 +692,30 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       );
       if (!entry) return { ok: true };
       const [questionId, text] = entry;
+      // ★ P-P04 (pilotaż Pawła 14.09: „zmieniam Partially na Confirmed i po
+      // sekundzie wraca na Partially").
+      //
+      // ZMIERZONA PRZYCZYNA: autozapis szkicu wysyłał ZAWSZE
+      // `answerState: 'partial'`, a `questionAnswerState()` bierze OSTATNIE
+      // zdarzenie odpowiedzi dla pytania. Kliknięcie stanu zapisywało
+      // `ANSWER_CONFIRMED(confirmed)`, ale uzbrojony wcześniej debounce (800 ms)
+      // dopisywał po nim `ANSWER_DRAFTED(partial)` — pigułka wracała na
+      // „Częściowo", mimo że człowiek wybrał co innego.
+      //
+      // LEKARSTWO: szkic NIE decyduje o stanie odpowiedzi — przenosi stan już
+      // wybrany. Czytamy go z refów (`chosenAnswerStateRef` / `eventsRef`), bo
+      // `markDirty()` zamraża `save` z renderu sprzed wyboru — odczyt ze stałej
+      // domknięcia dawałby znów „partial".
+      const currentState =
+        chosenAnswerStateRef.current[questionId] ??
+        questionAnswerState(eventsRef.current, questionId).state ??
+        'partial';
       try {
         await runtime.recordAnswer({
           unitId: activeArea.id,
           level: focusLevelFallback,
           questionId,
-          answerState: 'partial',
+          answerState: currentState,
           text,
           draft: true,
         });
@@ -729,6 +755,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       // Przypnij poziom ZANIM zdarzenie wróci — inaczej przeliczony
       // `blockedAtLevel` zdążyłby podmienić pytanie pod palcem.
       setPinnedFocus({ unitId: activeArea.id, level: focusLevelFallback });
+      // P-P04: zapamiętaj wybór NATYCHMIAST, żeby autozapis szkicu (debounce
+      // ze starego domknięcia) go nie cofnął, zanim zdarzenie wróci z serwera.
+      chosenAnswerStateRef.current[questionId] = answerState;
       await runtime.recordAnswer({
         unitId: activeArea.id,
         level: focusLevelFallback,
@@ -1270,7 +1299,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   // the last known session), 'offline' (queued writes, still show the last
   // known session so work is never blocked), or a transient 'loading' with a
   // session already known (handled by the shell's own `loading` prop below).
-  const sourceKind = state.status === 'ready' ? 'SERVER' : 'RECOVERY_DRAFT';
+  // P-P03: przejściowe `loading` PO ZAPISIE (runWrite -> refresh) to wciąż
+  // ostatni potwierdzony przez serwer obraz — plakietka „SZKIC ODZYSKIWANIA"
+  // przy każdym naciśnięciu klawisza była nieprawdą i wyglądała jak awaria.
+  const sourceKind =
+    state.status === 'ready' || (state.status === 'loading' && Boolean(state.session))
+      ? 'SERVER'
+      : 'RECOVERY_DRAFT';
 
   if (session.state === 'frozen' || session.state === 'closed') {
     return (
@@ -1415,7 +1450,25 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           onSaveStay={acknowledgeFailure}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          loading={state.status === 'loading' && Boolean(state.session)}
+          /**
+           * ★ P-P03 (pilotaż Pawła 14.09: „wpisanie odpowiedzi przeładowuje
+           * sesję i gubi postęp").
+           *
+           * ZMIERZONA PRZYCZYNA: `DrdHttpSessionRuntime.runWrite()` po KAŻDYM
+           * zapisie woła `refresh()`, a ten ustawia `status: 'loading'`. Przy
+           * `Boolean(state.session)` powłoka dostawała `loading`, a
+           * `MethodWorkspaceShell` zastępuje wtedy CAŁY warsztat napisem
+           * „Loading session…". Panel wywiadu jest odmontowywany, więc jego
+           * własny `activeSequenceIndex` wraca do zera — ekran „sam" cofa się
+           * na Krok 1 w środku pisania (zmierzone: 5 wygaszeń na jedną frazę
+           * przy 400 ms opóźnienia sieci).
+           *
+           * LEKARSTWO: pełnoekranowe „Loading session…" należy WYŁĄCZNIE do
+           * bootstrapu (brak sesji — obsłużony wcześniejszym returnem). Gdy
+           * sesja jest znana, warsztat zostaje zamontowany, a o trwającym
+           * zapisie mówi plakietka zapisu (`saveState`) — nic nie znika.
+           */
+          loading={state.status === 'loading' && !state.session}
           readOnly={!canWrite}
           // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5) —
           // see DrdMethodWorkspaceScreen.tsx's sibling comment: this

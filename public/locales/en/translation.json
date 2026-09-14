@@ -36281,7 +36281,10 @@
     "contextAssetSelector": {
       "loadingDocuments": "Loading documents...",
       "orgWideResearchModeSearches": "Org-wide research mode searches the full approved organization context. No specific\n          documents need to be selected."
-    }
+    },
+    "uploadNeedsProject": "This view has no project selected, so the file cannot be added to project documents. Upload it under “My documents”, or open the panel from a project.",
+    "uploadFailed": "Upload of “{{name}}” failed. The file was not saved.",
+    "uploadFailedWithReason": "Upload of “{{name}}” failed: {{reason}}"
   },
   "intelligence": {
     "analyzing": "Analyzing…",
