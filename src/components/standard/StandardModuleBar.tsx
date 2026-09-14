@@ -559,7 +559,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
            wypełnia rodzica (`min-w-0` w ModuleNavBar) i scroll przejmuje
            nadmiar zamiast nachodzić. */
         className="app-table-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap pb-1"
-        aria-label="Presety tabeli"
+        aria-label={t('common.tablePresets', isPolish ? 'Presety tabeli' : 'Table presets')}
       >
         {chips.map((chip) => {
           const isActive = activeChip === chip.id;

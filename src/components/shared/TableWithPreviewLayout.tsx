@@ -486,8 +486,16 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 ? PREVIEW_HEADER_ICON_BUTTON_ACTIVE
                 : PREVIEW_HEADER_ICON_BUTTON
             }
-            title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
-            aria-label={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
+            title={
+              pinnedId === selectedItem.id
+                ? t('common.unpin', 'Unpin')
+                : t('common.pinForComparison', 'Pin for comparison')
+            }
+            aria-label={
+              pinnedId === selectedItem.id
+                ? t('common.unpin', 'Unpin')
+                : t('common.pinForComparison', 'Pin for comparison')
+            }
           >
             {pinnedId === selectedItem.id ? (
               <PinOff size={PREVIEW_HEADER_ICON_SIZE} />
@@ -596,8 +604,8 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                      stanu (pułapka nr 1 z CLAUDE.md). Stan aktywny pinezki ma
                      akcent `--c-info`, ten sam co w nagłówku obok. */
                   className={PREVIEW_HEADER_ICON_BUTTON_ACTIVE}
-                  title="Unpin"
-                  aria-label="Unpin"
+                  title={t('common.unpin', 'Unpin')}
+                  aria-label={t('common.unpin', 'Unpin')}
                 >
                   <PinOff size={PREVIEW_HEADER_ICON_SIZE} />
                 </button>

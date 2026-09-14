@@ -734,6 +734,7 @@
     "pin": "Przypnij",
     "unpin": "Odepnij",
     "pinForComparison": "Przypnij do porównania",
+    "tablePresets": "Presety tabeli",
     "saved": "Zapisano",
     "analysis": "Analiza",
     "analyzing": "Analizowanie…",
@@ -51834,6 +51835,11 @@
       "send": "Wyślij e-mailem",
       "downloadPdf": "Pobierz PDF",
       "noSources": "Brak źródeł dowodowych",
+      "sourceTypes": {
+        "execution_report_snapshot": "Migawka raportu Realizacji",
+        "report_run": "Poprzedni nadzorowany raport",
+        "evidence": "Dowód raportu"
+      },
       "empty": "Nie ma jeszcze raportów Realizacji",
       "emptyHint": "Utwórz pierwszy nadzorowany raport z bieżących danych Realizacji i wyników KPI.",
       "detail": {

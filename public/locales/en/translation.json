@@ -2738,6 +2738,7 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "pinForComparison": "Pin for comparison",
+    "tablePresets": "Table presets",
     "saved": "Saved",
     "optional": "optional",
     "analysis": "Analysis",
@@ -51456,6 +51457,11 @@
       "send": "Send by email",
       "downloadPdf": "Download PDF",
       "noSources": "No evidence sources",
+      "sourceTypes": {
+        "execution_report_snapshot": "Execution report snapshot",
+        "report_run": "Previous governed report",
+        "evidence": "Report evidence"
+      },
       "empty": "No execution reports yet",
       "emptyHint": "Create the first governed report from current delivery data and KPI results.",
       "detail": {

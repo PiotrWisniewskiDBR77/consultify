@@ -714,8 +714,14 @@ const Z27InicjatywySkrzynkaScreen = React.lazy(
 const Z30InicjatywyObciazenieScreen = React.lazy(
   () => import('./screens/z30-inicjatywy-obciazenie')
 );
+const Z42RealizacjaRaportyScreen = React.lazy(() => import('./screens/z42-realizacja-raporty'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'z42-realizacja-raporty': {
+    label:
+      'Z-42 (14.09) — REALNY <ExecutionHub> w pełnej powłoce z zakładką Raporty E4, StandardTable i otwartym StandardPreview. Wymaga VITE_EXECUTION_REPORT_E4=true. &tab=reports &lang=en|pl &theme=light|dark',
+    render: () => <Z42RealizacjaRaportyScreen />,
+  },
   'z27-inicjatywy-skrzynka': {
     label:
       'Z-27 (14.09) — REALNY <InitiativesHub> W CAŁOŚCI (Menu 1/2/3) z zakładką Menu 1 „Do akceptacji" aktywną — wymaga serwera uruchomionego z VITE_TRANSITION_INBOX=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/initiatives/lifecycle-transition-proposals zwraca 2 propozycje. &tab=transitionInbox &lang=pl|en &theme=light|dark',

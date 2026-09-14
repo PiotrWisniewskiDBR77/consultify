@@ -23,12 +23,12 @@ import {
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
-  Menu2PresetDropdown,
   StandardPreview,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { Menu2PresetDropdown } from '@/components/standard/Menu2PresetDropdown';
 
 import type { ExecutionMenu3Contract, ExecutionSurfacePrimaryCta } from './canonicalMenu3';
 
@@ -528,7 +528,11 @@ export function ExecutionReportE4Surface({
             </div>
           </div>
           <div className="mt-3 flex gap-2">
-            <button className="btn-primary" disabled={busy} onClick={() => void create()}>
+            <button
+              className="rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-surface transition-opacity hover:opacity-90 disabled:opacity-50"
+              disabled={busy}
+              onClick={() => void create()}
+            >
               {t('executionReports.wizard.generate', 'Generate snapshot')}
             </button>
             <button className="btn-secondary" onClick={() => setWizardOpen(false)}>
@@ -594,7 +598,10 @@ export function ExecutionReportE4Surface({
               downloadLabel: t('executionReports.e4.downloadPdf', 'Download PDF'),
             }}
             relations={(row.source.sources ?? []).map((source: any) => ({
-              label: `${source.sourceType} · ${source.sourceId}`,
+              label: t(
+                `executionReports.e4.sourceTypes.${String(source.sourceType).toLowerCase()}`,
+                t('executionReports.e4.sourceTypes.evidence', 'Report evidence')
+              ),
             }))}
             relationsEmptyLabel={t('executionReports.e4.noSources', 'No evidence sources')}
             whatsNext={{
@@ -673,13 +680,17 @@ export function ExecutionReportE4Surface({
                   id: 'approve',
                   label: t('executionReports.e4.approve', 'Approve'),
                   onClick: () => void approve(row as ReportRow),
-                  disabled: (row as ReportRow).rawStatus !== 'FROZEN',
+                  disabled:
+                    (row as ReportRow).rawStatus !== 'FROZEN' ||
+                    (row as ReportRow).source.approverId !== currentUserId,
                 },
                 {
                   id: 'send',
                   label: t('executionReports.e4.send', 'Send by email'),
                   onClick: () => void deliver(row as ReportRow),
-                  disabled: (row as ReportRow).rawStatus !== 'APPROVED',
+                  disabled:
+                    (row as ReportRow).rawStatus !== 'APPROVED' ||
+                    (row as ReportRow).source.approverId !== currentUserId,
                 },
               ],
             },
