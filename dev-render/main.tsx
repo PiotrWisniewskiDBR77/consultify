@@ -610,6 +610,9 @@ const Dec495InicjatywyArchiwumScreen = React.lazy(
   () => import('./screens/dec495-inicjatywy-archiwum')
 );
 const F2InicjatywyAnalizaScreen = React.lazy(() => import('./screens/f2-inicjatywy-analiza'));
+const Z29InicjatywyRaportPracyScreen = React.lazy(
+  () => import('./screens/z29-inicjatywy-raport-pracy')
+);
 const P2bInicjatywyEmptyScreen = React.lazy(() => import('./screens/p2b-inicjatywy-empty'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
@@ -820,6 +823,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'F2-1 E1 (DEC-498 §1 A1+A2) — REALNY <InitiativesHub> przy VITE_INITIATIVES_FOUR_BUTTONS=true, Menu 3 „Analysis": produkcyjny <InitiativeConsultingAnalysisView> na fiksturze z PRODUKCYJNEJ deterministycznej bramy modelu (5 kryteriow wlasciciela, decyzje IN/PARKING/ARCHIVE z powodem i warunkiem powrotu). &krok=lista|analiza|parking &theme=light|dark &lang=pl|en',
     render: () => <F2InicjatywyAnalizaScreen />,
+  },
+  'z29-inicjatywy-raport-pracy': {
+    label:
+      'Z-29 (14.09) — REALNY <InitiativesHub> przy VITE_INITIATIVES_WORK_REPORT=true, Menu 2 „Work report": produkcyjny <InitiativeWorkReportView> (P1, Codex S2) na atrapie 2 definicji PUBLISHED + 2 przebiegów (1 PUBLISHED doręczony, 1 APPROVED z doręczeniem FAILED). Przy fladze OFF zakładka nie istnieje (parytet). &theme=light|dark &lang=pl|en',
+    render: () => <Z29InicjatywyRaportPracyScreen />,
   },
   'inicjatywy-lista': {
     label:
