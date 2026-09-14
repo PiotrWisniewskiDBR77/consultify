@@ -1,0 +1,19 @@
+{
+  "pageErrors": [],
+  "consoleErrors": [],
+  "httpErrors": [],
+  "status": "PASS",
+  "capturedAt": "2026-09-13T23:54:04.569Z",
+  "sourceCommit": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "indexSha256": "49299c4447ca620a049bee24de302e9df163513ec234f16708b438bca0d590d9",
+  "controlledLoading": {
+    "sameScopeGetReachedRealApiAndPg": true,
+    "controlsBeforeResolution": {
+      "approve": 0,
+      "sendBack": 0,
+      "reviewSubmit": 0,
+      "enabledAnswerEditors": 0
+    },
+    "postResolutionManagerControlVisible": true
+  }
+}

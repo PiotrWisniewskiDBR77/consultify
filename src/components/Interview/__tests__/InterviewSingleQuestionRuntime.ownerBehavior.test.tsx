@@ -63,13 +63,7 @@ const baseProps = {
 
 describe('Interview single-question owner behavior', () => {
   it('renders the immersive list, progress and stable navigation controls', () => {
-    render(
-      <InterviewSingleQuestionRuntime
-        {...baseProps}
-        immersive
-        onUpdateQuestion={vi.fn()}
-      />
-    );
+    render(<InterviewSingleQuestionRuntime {...baseProps} immersive onUpdateQuestion={vi.fn()} />);
     expect(
       screen.getByRole('navigation', {
         name: 'interview.singleQuestionRuntime.questionNavigation',
@@ -119,5 +113,32 @@ describe('Interview single-question owner behavior', () => {
     expect(
       screen.getByRole('button', { name: 'interview.singleQuestionRuntime.reviewAndSubmit' })
     ).toBeEnabled();
+  });
+
+  it('uses the per-question approval lock while a returned sibling stays editable', async () => {
+    render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        immersive
+        readOnly
+        isQuestionReadOnly={(questionId) => questionId !== 'q-1'}
+        onUpdateQuestion={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole('button', { name: 'interview.singleQuestionRuntime.saveAnswer' })
+    ).toBeEnabled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'interview.singleQuestionRuntime.nextQuestion' })
+    );
+    expect(
+      await screen.findByRole('heading', { name: questions[1].questionText })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'interview.singleQuestionRuntime.saveAnswer' })
+    ).toBeNull();
+    expect(
+      screen.getByPlaceholderText('interview.singleQuestionRuntime.writeTheAnswerOrRecord')
+    ).toBeDisabled();
   });
 });

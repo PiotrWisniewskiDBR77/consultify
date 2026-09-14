@@ -1,0 +1,20 @@
+CREATE TABLE
+NOTICE:  relation "interview_answer_decision_commands" already exists, skipping
+NOTICE:  relation "uq_interview_answer_decision_commands_request" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+NOTICE:  relation "uq_interview_answer_decision_commands_submission" already exists, skipping
+NOTICE:  relation "uq_interview_answer_decision_commands_assignment_sequence" already exists, skipping
+CREATE INDEX
+NOTICE:  relation "idx_interview_answer_decision_commands_assignment" already exists, skipping
+NOTICE:  relation "interview_answer_decisions" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "uq_interview_answer_decisions_submission_ordinal" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+NOTICE:  relation "uq_interview_answer_decisions_submission_question_event" already exists, skipping
+NOTICE:  relation "idx_interview_answer_decisions_assignment_submission" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+NOTICE:  relation "idx_interview_answer_decisions_question_projection" already exists, skipping
