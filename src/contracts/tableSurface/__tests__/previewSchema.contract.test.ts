@@ -242,17 +242,30 @@ describe('PreviewSchema — blok Details', () => {
 });
 
 describe('PreviewSchema — Relations i Meta', () => {
-  it('wymaga kanonicznego pustego stanu Relations', () => {
+  it('odrzuca ZADEKLAROWANY, ale pusty napis stanu Relations', () => {
     const schema = baseSchema();
     schema.relations.emptyLabel = '   ';
     expect(codes(schema)).toContain('PREVIEW_RELATIONS_NO_EMPTY_LABEL');
   });
 
-  it('renderuje blok Relations także dla rekordu bez relacji', () => {
+  it('NIE wymaga emptyLabel — blok bez powiazan jest ukryty (TRIADA §A7)', () => {
+    // Kanon z 2026-09-13: pusty blok Relations sie nie renderuje
+    // (`PreviewRelations.tsx`, `showEmpty` domyslnie false), wiec schemat, ktory
+    // nie deklaruje napisu pustego stanu, jest POPRAWNY. Wczesniejsza regula R03
+    // („Relations zawsze jako blok") wymuszala napis, ktorego nie bylo gdzie
+    // pokazac — i to ona zostawiala szesc podgladow z pusta ramka.
+    const schema = baseSchema();
+    delete (schema.relations as { emptyLabel?: string }).emptyLabel;
+    expect(schema.relations.emptyLabel).toBeUndefined();
+    expect(codes(schema)).not.toContain('PREVIEW_RELATIONS_NO_EMPTY_LABEL');
+  });
+
+  it('trzyma Relations w kanonicznej kolejnosci blokow, takze gdy relacji brak', () => {
+    // Kolejnosc DEKLARACJI blokow sie nie zmienia — ukrywaniem rzadzi render,
+    // nie kontrakt („kolejnosc obecnych blokow sie nie zmienia", CANON §7.0).
     const schema = baseSchema();
     expect(previewBlockOrder(schema)).toContain('relations');
     expect(schema.relations.items(EMPTY_PREVIEW_PROBE)).toEqual([]);
-    expect(schema.relations.emptyLabel).toBe('No relations');
   });
 
   it('odrzuca rekomendację dłuższą niż twarde maksimum 24 słów', () => {

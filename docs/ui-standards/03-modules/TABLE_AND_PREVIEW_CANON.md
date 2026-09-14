@@ -242,7 +242,7 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 | 2 | **Meta** | pasek statusu/typu/daty/sesji — stan, nie treść | §7.3 pkt 2 |
 | 3 | **Treść (Details)** | centrum, scrollowalne, bogaty domyślny szablon, licznik słów, **kebab lokalny** (Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·Export·Pobierz) | §7.3 pkt 3 |
 | 4 | **AI** | ramka z chipami akcji AI (Podsumuj/Zasugeruj) dopasowanymi do encji — opcjonalna karta stopki | §7.3 pkt 4.1 |
-| 5 | **Relations** | klikalne pigułki powiązań albo „Brak powiązań" — opcjonalna karta stopki | §7.3 pkt 4.2 |
+| 5 | **Relations** | klikalne pigułki powiązań — opcjonalna karta stopki; **blok bez powiązań jest UKRYTY**, a `emptyLabel` deklaruje tylko ekran, który świadomie włącza `showEmpty` | §7.3 pkt 4.2 |
 | 6 | **Akcje = pill** | siatka 2 kolumny, `h-9 rounded-full`, przez `PreviewActionBar`+`actionPillClass()`; anty-duplikacja (nie dubluj Open/eksport) — opcjonalny blok, pomiń jeśli nic nie zostaje (TRIADA A7 pkt 6) | §7.3b, §7.3 pkt 4.3 |
 
 **Blok opcjonalny, POZA numeracją — „Co dalej" / What's-next (create-strip, ANEKS #4):** renderowany
