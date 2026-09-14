@@ -354,7 +354,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   className={textInputClass}
                   value={brandKit.name}
                   disabled={inputDisabled}
-                  placeholder={t('settings.brandKitGovernanceSettings.namePlaceholder', 'Acme Consulting')}
+                  placeholder="Acme Consulting"
                   onChange={(event) => updateField('name', event.target.value)}
                 />
               </div>

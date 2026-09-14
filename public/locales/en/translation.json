@@ -51,7 +51,21 @@
     "loading": "Loading handoff acceptances…",
     "unavailable": "Handoff queue unavailable.",
     "retry": "Retry",
-    "returnWithBlockers": "Return with blockers"
+    "returnWithBlockers": "Return with blockers",
+    "sectionLabel": "Handoff acceptances",
+    "rowTitle": "Handoff Acceptance",
+    "executionCase": "Execution Case",
+    "conflict": "Initiative or package changed; reload required.",
+    "notSaved": "No decision was saved.",
+    "canonicalId": "Canonical ID",
+    "case": "Case",
+    "rolloutLabel": "Rollout:",
+    "pilot": "pilot",
+    "waves": "waves",
+    "rationaleAriaLabel": "Handoff rationale",
+    "failClosed": "Handoff decision is fail-closed until its exact Gate Sign-off quorum is satisfied.",
+    "acceptConditionally": "Accept conditionally",
+    "acceptHandoff": "Accept handoff"
   },
   "notFoundPage": {
     "title": "Page not found",
@@ -819,17 +833,31 @@
         {
           "title": "Financial Intelligence",
           "description": "Consultify extends classic consulting with financial models, analysis, valuation, and forecasting.",
-          "bullets": ["Financial models", "Financial analysis", "Company valuation", "Forecasting"]
+          "bullets": [
+            "Financial models",
+            "Financial analysis",
+            "Company valuation",
+            "Forecasting"
+          ]
         },
         {
           "title": "Reports & Presentations",
           "description": "Consultify turns live work into reports, executive presentations, and consulting deliverables.",
-          "bullets": ["Reports", "Executive presentations", "Notes"]
+          "bullets": [
+            "Reports",
+            "Executive presentations",
+            "Notes"
+          ]
         },
         {
           "title": "My Work",
           "description": "Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.",
-          "bullets": ["Tasks", "Decisions", "Ideas", "Initiatives"]
+          "bullets": [
+            "Tasks",
+            "Decisions",
+            "Ideas",
+            "Initiatives"
+          ]
         }
       ]
     },
@@ -988,37 +1016,61 @@
           "badge": "AI Core",
           "title": "Strategic AI Advisor",
           "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
-          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
+          "highlights": [
+            "Diagnostic Assessment",
+            "Gap Analysis",
+            "Benchmark vs. Industry"
+          ]
         },
         "economics": {
           "badge": "Economics",
           "title": "Financial Modeling & ROI",
           "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
-          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
+          "highlights": [
+            "NPV / IRR Modeling",
+            "Sensitivity Analysis",
+            "Live ROI Tracking"
+          ]
         },
         "execution": {
           "badge": "Execution",
           "title": "Initiative Management",
           "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
-          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
+          "highlights": [
+            "Initiative Roadmap",
+            "Human Approval Gates",
+            "Risk Flagging"
+          ]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Report & Presentation Builder",
           "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
-          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
+          "highlights": [
+            "Auto-Generated Decks",
+            "Narrative Engine",
+            "Source Traceability"
+          ]
         },
         "chat": {
           "badge": "Chat",
           "title": "AI Expert Interview",
           "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
-          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
+          "highlights": [
+            "Context-Aware Chat",
+            "Framework Library",
+            "Cited Answers"
+          ]
         },
         "results": {
           "badge": "Results",
           "title": "Impact Tracking",
           "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
-          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
+          "highlights": [
+            "KPI Dashboard",
+            "Deviation Alerts",
+            "Value Attribution"
+          ]
         }
       }
     },
@@ -1519,27 +1571,42 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": ["Basic tools", "Directory listing"]
+        "benefits": [
+          "Basic tools",
+          "Directory listing"
+        ]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": ["Priority support", "Training materials"]
+        "benefits": [
+          "Priority support",
+          "Training materials"
+        ]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": ["Dedicated manager", "Beta feature access"]
+        "benefits": [
+          "Dedicated manager",
+          "Beta feature access"
+        ]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": ["Co-marketing", "Conference speaking"]
+        "benefits": [
+          "Co-marketing",
+          "Conference speaking"
+        ]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": ["Revenue share boost", "Executive partnership"]
+        "benefits": [
+          "Revenue share boost",
+          "Executive partnership"
+        ]
       }
     },
     "onboarding": {
@@ -2944,7 +3011,8 @@
     "redo": "Redo",
     "tableWithPreview": "Table and preview workspace",
     "conflict": "Conflict",
-    "sections": "Sections"
+    "sections": "Sections",
+    "backToAutoFit": "Back to auto-fit"
   },
   "superadmin": {
     "confirm": {
@@ -5359,7 +5427,8 @@
       "priorityCritical": "Critical",
       "priorityHigh": "High",
       "priorityMedium": "Medium",
-      "priorityLow": "Low"
+      "priorityLow": "Low",
+      "moreActions": "More actions"
     },
     "tasksList": {
       "possibleDuplicate": "Possible duplicate ({{count}})",
@@ -5564,7 +5633,8 @@
       "sourceArtifact": "Source artifact",
       "sourceDocuments": "Source documents",
       "sessionsAndNotes": "Sessions, notes & findings",
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "showLess": "Show less"
     },
     "taskDetail": {
       "label": "Notify only",
@@ -5903,7 +5973,15 @@
       "actionsHiddenInReadMode": "Actions are hidden in preview mode",
       "created": "Created",
       "blockedPlaceholder": "What is blocking this task?",
-      "selectInitiative": "Select an initiative (optional)"
+      "selectInitiative": "Select an initiative (optional)",
+      "riskAlternativesNotSaved": "Task saved, but Risk & Alternatives could not be saved",
+      "versionConflict": "This task changed in another session. Your draft is preserved; reopen the task to review the latest version.",
+      "generatedSectionReady": "Draft generated. Review it and save the task to persist your changes.",
+      "generatedSectionLocalOnly": "Draft generated for this view. It is not included in the server Task Save.",
+      "generatedSectionReferenceOnly": "Suggestions generated for reference. They are not included in Task Save.",
+      "generatedSectionSaveNotice": "Review this draft, then save the task to persist it.",
+      "generatedSectionLocalOnlyNotice": "This draft is local to this view and is not included in the server Task Save.",
+      "generatedSectionReferenceOnlyNotice": "These suggestions are reference-only and are not included in Task Save."
     },
     "dependencies": {
       "toastError": "Select a source task first",
@@ -6261,7 +6339,8 @@
       "fileTooLarge": "File {{fileName}} is too large (max {{maxSizeMB}}MB)",
       "uploadedCount_one": "Uploaded {{count}} file",
       "uploadedCount_other": "Uploaded {{count}} files",
-      "confirmDelete": "Are you sure you want to delete \"{{name}}\"?"
+      "confirmDelete": "Are you sure you want to delete \"{{name}}\"?",
+      "toastDownloadError": "Failed to download attachment"
     },
     "riskAssessment": {
       "riskAnalysis": "Risk Analysis",
@@ -6481,7 +6560,15 @@
       "label2": "Assigned to me",
       "label3": "Owned by me",
       "today": "Today",
-      "weekdaysShort": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+      "weekdaysShort": [
+        "Mo",
+        "Tu",
+        "We",
+        "Th",
+        "Fr",
+        "Sa",
+        "Su"
+      ],
       "mobileFiltersButton": "Sources & filters",
       "mobileFiltersTitle": "Sources & filters"
     },
@@ -6745,7 +6832,13 @@
         "whatItIs": "What it is",
         "whyItMatters": "Why it matters",
         "howToThinkAboutIt": "How to think about it"
-      }
+      },
+      "talkToTeresa": "Talk to Teresa",
+      "saveToNotebook": "Save to Notebook",
+      "createIdea": "Create Idea",
+      "exploreDeeper": "Explore Deeper",
+      "watchTopic": "Watch Topic",
+      "notRelevant": "Not Relevant"
     },
     "shortcuts": {
       "moveUp": "Move selection up",
@@ -7020,6 +7113,431 @@
       "pendingProposals": "Pending proposals",
       "pendingApprovals": "Pending approvals",
       "accountabilityNote": "Every AI intervention is logged with human accountability."
+    },
+    "aiAnalysisProposalReviewQueue": {
+      "cardTarget": "Card target",
+      "exactSource": "Exact source",
+      "confidence": "Confidence",
+      "requestedBy": "Requested by",
+      "sectionLabel": "AI Analysis reviews",
+      "loading": "Loading AI analysis reviews",
+      "unavailable": "AI review queue unavailable.",
+      "title": "AI Analysis proposals",
+      "disclaimer": "AI output is a proposal until an independent human review publishes exact truth.",
+      "proposalLabel": "Proposal",
+      "cardRetained": "Card v{{newVersion}}; v{{oldVersion}} retained with AI lineage",
+      "noTruthChange": "no truth change",
+      "staleConflict": "Card or source is stale. Review blocked.",
+      "notSaved": "Review was not saved.",
+      "workbenchLabel": "AI Analysis Review Workbench",
+      "initiativeVersion": "Initiative",
+      "modelLabel": "Model",
+      "promptLabel": "Prompt",
+      "templateLabel": "template",
+      "inputHashLabel": "Input hash",
+      "confidenceLabel": "confidence",
+      "evidenceLabel": "Evidence",
+      "counterEvidenceLabel": "Counter-evidence",
+      "noneDeclared": "None declared",
+      "humanRationale": "Human rationale",
+      "rationaleAriaLabel": "AI review rationale",
+      "editedFragmentLabel": "Exact edited human fragment (JSON)",
+      "editedFragmentAriaLabel": "AI edited fragment",
+      "reject": "Reject",
+      "publishHumanEdit": "Publish human edit",
+      "acceptProposal": "Accept proposal"
+    },
+    "analysisDecisionQueue": {
+      "decision": "Decision",
+      "initiative": "Initiative",
+      "gate": "Gate",
+      "requestedBy": "Requested by",
+      "due": "Due",
+      "rowTitle": "Analysis Decision",
+      "sectionLabel": "Analysis decisions",
+      "loading": "Loading Analysis decisions",
+      "unavailable": "Analysis decisions are unavailable.",
+      "retry": "Retry",
+      "title": "Analysis decisions waiting on you",
+      "subtitle": "Dedicated canonical Analysis gate queue; it does not open the legacy Decision detail.",
+      "conflict": "This Analysis Decision changed. Reload before deciding again.",
+      "failed": "The Analysis Decision was not changed.",
+      "canonicalDecisionId": "Canonical Decision ID",
+      "frozenAnalysisCards": "Frozen analysis cards",
+      "decisionRationale": "Decision rationale",
+      "rationaleAriaLabel": "Analysis Decision rationale",
+      "failClosed": "Analysis decision is fail-closed until its exact Gate Sign-off quorum is satisfied.",
+      "returnAnalysis": "Return analysis",
+      "approveAnalysis": "Approve analysis"
+    },
+    "definitionDecisionQueue": {
+      "decision": "Decision",
+      "initiative": "Initiative",
+      "gate": "Gate",
+      "requestedBy": "Requested by",
+      "due": "Due",
+      "rowTitle": "Definition Decision",
+      "sectionLabel": "Definition decisions",
+      "loading": "Loading Definition decisions",
+      "unavailable": "Definition decisions are unavailable.",
+      "retry": "Retry",
+      "title": "Definition decisions waiting on you",
+      "subtitle": "Canonical gate decisions; approve or return with a human rationale.",
+      "conflict": "This Decision changed. Reload before deciding again.",
+      "failed": "The Decision was not changed. Retry or inspect the Initiative.",
+      "frozenCardVersions": "Frozen card versions",
+      "decisionRationale": "Decision rationale",
+      "failClosed": "Definition decision is fail-closed until its exact Gate Sign-off quorum is satisfied.",
+      "return": "Return",
+      "approveDefinition": "Approve Definition"
+    },
+    "executionCanonicalWorkQueue": {
+      "sectionLabel": "My canonical execution work",
+      "loading": "Loading canonical execution work",
+      "unavailable": "Canonical execution work unavailable.",
+      "title": "My Execution work",
+      "subtitle": "Same canonical Task, Decision and OperationalAllocation IDs as Execution.",
+      "executionCase": "Execution Case"
+    },
+    "taskDetailModal": {
+      "loadFailed": "Failed to load task details",
+      "titleRequired": "Title is required",
+      "taskUpdated": "Task updated",
+      "taskCreated": "Task created",
+      "saveFailed": "Failed to save task",
+      "titlePlaceholder": "Enter task title",
+      "statusTodo": "Todo",
+      "statusInProgress": "In Progress",
+      "statusBlocked": "Blocked",
+      "statusDone": "Done",
+      "priorityLow": "Low",
+      "priorityMedium": "Medium",
+      "priorityHigh": "High",
+      "priorityUrgent": "Urgent",
+      "progress": "Progress",
+      "reasonForBlocking": "Reason for blocking",
+      "descriptionPlaceholder": "Add details...",
+      "subtasks": "Subtasks",
+      "addItem": "+ Add Item",
+      "subtaskPlaceholder": "Subtask...",
+      "noSubtasks": "No subtasks",
+      "linkedInitiative": "Linked Initiative",
+      "assignee": "Assignee",
+      "unassigned": "Unassigned",
+      "cancel": "Cancel",
+      "saveTask": "Save Task",
+      "removeSubtask": "Remove subtask"
+    },
+    "closureDecisionQueue": {
+      "activeLegalHold": "Active legal hold",
+      "archiveBlocked": "Archive blocked: active legal hold.",
+      "archiveTitle": "Archive closed Initiative",
+      "archiveWorkbenchAriaLabel": "Archive workbench",
+      "columnClosureCase": "Closure Case",
+      "columnEffectivenessSnapshot": "Effectiveness Snapshot",
+      "columnExecutionCase": "Execution Case",
+      "columnIndependentAuthority": "Independent authority",
+      "columnInitiative": "Initiative",
+      "columnStatus": "Status",
+      "conflict": "Closure source changed. Reload.",
+      "createArchiveManifest": "Create Archive Manifest",
+      "decide": "Decide Closure",
+      "decisionWorkbenchAriaLabel": "Closure decision workbench",
+      "effectivenessCaseAriaLabel": "Closure Effectiveness Case",
+      "exportRef": "Export ref",
+      "exportRefAriaLabel": "Archive export ref",
+      "failed": "Closure command failed.",
+      "legalHoldAriaLabel": "Legal hold",
+      "legalHoldLabel": "Legal hold",
+      "loading": "Loading Closure Cases",
+      "outcomeAriaLabel": "Closure outcome",
+      "previewClosureCase": "Closure Case {{id}} v{{version}}",
+      "previewEffectivenessSnapshot": "Effectiveness Snapshot {{snapshot}}",
+      "previewFollowUps": "Follow-ups {{followUps}}",
+      "previewInitiativeExecution": "Initiative {{initiative}} · Execution Case {{executionCase}}",
+      "previewLessons": "Lessons {{lessons}}",
+      "previewLineage": "Lineage {{lineage}}",
+      "previewRetention": "Retention {{classification}} · {{ref}} v{{version}} · legal hold {{legalHold}}",
+      "quorumNotSatisfied": "CLOSURE GateSignoff quorum is not satisfied.",
+      "rationaleAriaLabel": "Closure rationale",
+      "receiptArchive": "Archive Manifest {{id}} · read-only",
+      "requestFieldAriaLabel": "Closure request {{field}}",
+      "requestLegalHoldAriaLabel": "Closure request legalHold",
+      "requestSubmit": "Request independent Closure",
+      "requestTitle": "Request Closure Case",
+      "requestWorkbenchAriaLabel": "Closure request workbench",
+      "retentionPolicyRef": "Retention policy ref",
+      "retentionPolicyRefAriaLabel": "Retention policy ref",
+      "reviewedEffectiveness": "Reviewed Effectiveness",
+      "selectEffectivenessSnapshot": "Select immutable Effectiveness Snapshot",
+      "snapshotIdAriaLabel": "Closure Snapshot ID",
+      "subtitle": "Independent Closure decision after immutable Effectiveness Snapshot. Archive remains separate.",
+      "title": "Closure Cases",
+      "unavailable": "Closure Cases unavailable."
+    },
+    "deliveryResultsAcceptanceQueue": {
+      "acceptDelivery": "Accept delivery",
+      "acceptResults": "Accept results",
+      "acceptWithGaps": "Accept with gaps",
+      "acceptWithResiduals": "Accept with residuals",
+      "baseline": "Baseline {{ref}} v{{version}}",
+      "benefitOwner": "Benefit Owner {{id}}",
+      "canonicalId": "Canonical ID",
+      "columnAcceptanceGate": "Acceptance gate",
+      "columnExactSource": "Exact source",
+      "columnInitiative": "Initiative",
+      "columnStatus": "Status",
+      "conflict": "Evidence version changed. Reload before deciding.",
+      "deliverables": "Deliverables: {{refs}}",
+      "deliveryAcceptance": "Delivery Acceptance",
+      "executionCase": "Execution Case {{id}} v{{version}}",
+      "failed": "Decision was not saved.",
+      "finance": "Finance: {{refs}}",
+      "immutableBenefitsHandoffPack": "Immutable Benefits Handoff Pack {{packId}} v{{version}}",
+      "immutableBenefitsHandoffPackShort": "Immutable Benefits Handoff Pack {{packId}} v{{version}}",
+      "initiative": "Initiative {{id}} v{{version}}",
+      "kpiContracts": "KPI contracts: {{refs}}",
+      "loading": "Loading acceptance work",
+      "milestones": "Milestones: {{refs}}",
+      "mustRemainDelivered": "Initiative {{id}} must remain DELIVERED until accepted.",
+      "none": "None",
+      "openDecisions": "Open Decisions: {{value}}",
+      "openTasks": "Open Tasks: {{value}}",
+      "operationalHandover": "Operational handover {{ref}} v{{version}}",
+      "rationale": "Rationale",
+      "rationaleAriaLabel": "Acceptance rationale",
+      "receiptHeading": "{{type}} receipt · {{lifecycle}}",
+      "rejectWithBlockers": "Reject with blockers",
+      "residualRisks": "Residual risks: {{value}}",
+      "resultsAcceptance": "Results Acceptance",
+      "resultsCase": "Results Case {{id}}",
+      "resultsFieldAriaLabel": "Results {{field}}",
+      "retry": "Retry",
+      "return": "Return",
+      "scope": "Scope {{ref}} v{{version}}",
+      "stop": "Stop",
+      "subtitle": "Independent decisions over exact, versioned execution evidence. No completion shortcut.",
+      "title": "Delivery and Results Acceptance",
+      "unavailable": "Acceptance work unavailable.",
+      "workbenchAriaLabel": "{{gate}} Workbench"
+    },
+    "effectivenessClosureQueue": {
+      "activeLegalHold": "Active legal hold",
+      "archiveBlocked": "Archive blocked: active legal hold.",
+      "asOf": "asOf {{asOf}}",
+      "baselineCurrentTarget": "Baseline {{baseline}} · current {{current}} · target {{target}} {{unit}}{{currency}}",
+      "benefitsHandoffPack": "Benefits Handoff Pack {{packId}} v{{version}}",
+      "cardContractJsonAriaLabel": "{{label}} contract JSON",
+      "cardIdAriaLabel": "{{label}} ID",
+      "columnCurrentAuthority": "Current authority",
+      "columnEffectivenessCase": "Effectiveness Case",
+      "columnInitiative": "Initiative",
+      "columnResultsLineage": "Exact results lineage",
+      "columnStatus": "Status",
+      "conflict": "Source version changed. Reload before acting.",
+      "createArchiveManifest": "Create Archive Manifest",
+      "createCard": "Create {{label}}",
+      "createWithSelectedObservations": "Create with selected exact observations",
+      "effectivenessCase": "Effectiveness Case",
+      "effectivenessCaseId": "Effectiveness Case {{id}}",
+      "exportRef": "Export ref",
+      "exportRefAriaLabel": "Archive export ref",
+      "failed": "No canonical transition was saved.",
+      "financeReconciliation": "Finance reconciliation",
+      "knowledgeConfidenceEvidence": "{{knowledgeState}} · confidence {{confidence}} · evidence {{evidence}}",
+      "kpiSource": "KPI {{contractRef}} v{{contractVersion}} · source {{sourceRef}} v{{sourceVersion}}",
+      "legalHoldAriaLabel": "Legal hold",
+      "loading": "Loading benefits work",
+      "measurementNote": "MEASURED financial observations require an exact AVAILABLE reconciliation. NOT_MEASURED is forced to null + UNKNOWN and cannot invent a value.",
+      "notMeasuredNone": "NOT_MEASURED / none",
+      "observationSummary": "{{measurementState}} · observed {{observedValue}} · {{knowledgeState}} · Finance {{finance}}",
+      "observationsAriaLabel": "Results KPI observations",
+      "observationsTitle": "Canonical Results KPI observations",
+      "pageTitle": "Benefits, Effectiveness and Closure",
+      "rationale": "Rationale",
+      "rationaleAriaLabel": "Effectiveness rationale",
+      "receiptArchive": "Archive Manifest {{archiveId}} · read-only",
+      "receiptClosureSnapshot": "Closure Snapshot {{snapshotId}} · CLOSED",
+      "receiptEffectivenessSnapshot": "Effectiveness Snapshot {{snapshotId}} · {{outcome}} · lifecycle EFFECTIVENESS_REVIEWED",
+      "receiptHeading": "{{type}} receipt",
+      "requestReview": "Request review",
+      "resultsCase": "Results Case {{resultsCaseId}} v{{version}}",
+      "resultsKpiObservation": "Results KPI observation",
+      "retentionPolicyRef": "Retention policy ref",
+      "retentionPolicyRefAriaLabel": "Retention policy ref",
+      "retry": "Retry",
+      "rowTitle": "Effectiveness {{initiativeId}}",
+      "selectObservationAriaLabel": "Select observation {{id}}",
+      "subtitle": "Measurement, independent review, closure and archive are separate canonical gates.",
+      "title": "Benefits and Closure",
+      "unavailable": "Benefits work unavailable.",
+      "workbenchAriaLabel": "Effectiveness Workbench"
+    },
+    "gateSignoffQueue": {
+      "anyBoundRole": "any bound role",
+      "columnGate": "Gate",
+      "columnInitiative": "Initiative",
+      "columnPolicyProfile": "Policy profile",
+      "columnQuorum": "Quorum",
+      "columnSignOff": "Sign-off",
+      "columnSla": "SLA",
+      "conflict": "Quorum changed. Reload before signing again.",
+      "decisionInitiative": "Decision / Initiative",
+      "exactDelegation": "Exact delegation: {{ref}} · v{{version}} · from {{delegatedFrom}}",
+      "failed": "Sign-off was not recorded.",
+      "gateSla": "Gate / SLA",
+      "loading": "Loading Gate Sign-offs",
+      "noEligibleBinding": "You have no eligible business-role binding for this sign-off.",
+      "notRequired": "Not required",
+      "policySnapshot": "Policy snapshot",
+      "profileSource": "Profile / source",
+      "quorumReadback": "Quorum readback",
+      "quorumReceiptSuffix": " · receipt {{receiptId}}",
+      "receipt": "{{outcome}} recorded for {{gate}}:{{decisionId}}. Quorum readback requested.",
+      "recordSignOff": "Record my sign-off",
+      "recordedProgress": "Recorded progress:",
+      "recordedProgressValue": "{{signed}}/{{quorum}}. Individual approvals are immutable audit evidence and are not editable here.",
+      "requesterCannotSign": "Requester cannot sign",
+      "requiredQuorum": "Required quorum",
+      "requiredQuorumValue": "{{quorum}}; roles: {{roles}}",
+      "retry": "Retry",
+      "rowTitle": "Gate Sign-off",
+      "separation": "Separation",
+      "signOffRationale": "Sign-off rationale",
+      "signOffRationaleAriaLabel": "Sign-off rationale",
+      "signingRole": "Signing role",
+      "signingRoleAriaLabel": "Signing role",
+      "subtitle": "Actor-owned sign-off tasks. This is not a mutable approvals list.",
+      "title": "Gate sign-offs",
+      "unavailable": "Gate Sign-offs are unavailable.",
+      "waitingOnYou": "Gate Sign-offs waiting on you",
+      "yourSignOff": "Your sign-off"
+    },
+    "materialChangeQueue": {
+      "approve": "Approve",
+      "approveConditionally": "Approve conditionally",
+      "columnAuthority": "Authority",
+      "columnClassification": "Classification",
+      "columnStatus": "Status",
+      "columnVersionedTarget": "Versioned target",
+      "completeBlastRadius": "Complete blast radius",
+      "conditions": "Conditions",
+      "conditionsAriaLabel": "Material change conditions",
+      "conflict": "Target is stale. Reload; publishing is blocked.",
+      "contextOpenCanonical": "Context: open canonical {{workspace}} workspace. This queue never shadow-edits its baseline.",
+      "decisionRationale": "Decision rationale",
+      "decisionRationaleAriaLabel": "Material change rationale",
+      "decisionsTitle": "Material Change decisions",
+      "executionCaseWorkspace": "Execution Case",
+      "failed": "No transition was saved.",
+      "loading": "Loading material changes",
+      "newHash": "New hash",
+      "oldHash": "Old hash",
+      "oldToProposedTruth": "Exact old → proposed truth",
+      "outside": "outside",
+      "planWorkspace": "Plan",
+      "proposal": "Proposal {{id}}",
+      "publishApprovedChange": "Publish approved change",
+      "receiptProposal": "Proposal {{proposalId}} · {{action}}",
+      "receiptPublished": " · published v{{targetVersion}}; previous v{{oldVersion}} remains in history",
+      "reject": "Reject",
+      "requestReview": "Request independent review",
+      "retry": "Retry",
+      "return": "Return",
+      "reversibility": "Reversibility {{value}}",
+      "rowTitle": "Material Change {{proposalId}}",
+      "subtitle": "Approved truth and baselines change only through exact, independently reviewed proposals.",
+      "title": "Material Changes",
+      "tolerance": "Tolerance {{ref}} v{{version}} · {{withinLabel}} · {{rationale}}",
+      "unavailable": "Material changes unavailable.",
+      "within": "within",
+      "workbenchAriaLabel": "Material Change Workbench"
+    },
+    "portfolioDecisionQueue": {
+      "canonicalDecisionId": "Canonical Decision ID",
+      "columnDecision": "Decision",
+      "columnDue": "Due",
+      "columnInitiative": "Initiative",
+      "columnProposedDisposition": "Proposed disposition",
+      "columnScenarioSnapshot": "Scenario snapshot",
+      "conditionsOnePerLine": "Conditions (one per line)",
+      "conflict": "The Initiative or Portfolio Scenario changed. Reload before deciding.",
+      "dueRequester": "Due / requester",
+      "exactSnapshotJson": "Exact snapshot JSON",
+      "failed": "The Portfolio Decision was not changed.",
+      "frozenCardVersions": "Frozen Card versions",
+      "frozenMembershipSnapshot": "Frozen membership snapshot",
+      "governanceUnavailable": "Governance projection is unavailable. Decision is fail-closed.",
+      "initiativeSnapshot": "Initiative snapshot",
+      "loading": "Loading Portfolio decisions",
+      "membershipSnapshotAriaLabel": "Membership snapshot",
+      "mergeTargetInitiativeId": "Merge target Initiative ID",
+      "mergeTargetInitiativeIdAriaLabel": "Merge target Initiative ID",
+      "portfolioConditionsAriaLabel": "Portfolio conditions",
+      "portfolioDecisionRationale": "Portfolio Decision rationale",
+      "portfolioDecisionRationaleAriaLabel": "Portfolio Decision rationale",
+      "portfolioOutcome": "Portfolio outcome",
+      "portfolioOutcomeAriaLabel": "Portfolio outcome",
+      "quorumNotSatisfied": "Required Gate Signoff quorum is not satisfied.",
+      "receiptApproved": "{{status}} · lifecycle readback {{lifecycleState}}",
+      "receiptOther": "{{status}} · lifecycle remains READY_FOR_DECISION",
+      "recordDecision": "Record Portfolio Decision",
+      "retry": "Retry",
+      "rowTitle": "Portfolio Decision",
+      "satisfiedQuorum": "Satisfied quorum: {{quorumId}} · v{{version}}",
+      "scenarioSnapshot": "Scenario snapshot",
+      "subtitle": "One Initiative and one frozen Portfolio Scenario snapshot per independent decision.",
+      "title": "Portfolio decisions",
+      "unavailable": "Portfolio decisions are unavailable.",
+      "waitingOnYou": "Portfolio decisions waiting on you"
+    },
+    "scheduleDecisionQueue": {
+      "approveConditionally": "Approve conditionally",
+      "approveSchedule": "Approve schedule",
+      "canonicalDecisionId": "Canonical Decision ID",
+      "capacity": "Capacity",
+      "columnCapacity": "Capacity",
+      "columnDecision": "Decision",
+      "columnDue": "Due",
+      "columnInitiative": "Initiative",
+      "columnPlan": "Plan",
+      "commitments": "Commitments",
+      "conditionsAriaLabel": "Schedule Decision conditions",
+      "conditionsOnePerLine": "Conditions, one per line",
+      "conflict": "This Schedule Decision changed. Reload before deciding.",
+      "criticalDependencies": "Critical dependencies",
+      "criticalPeriods": "Critical periods",
+      "decisionRationale": "Decision rationale",
+      "decisionRationaleAriaLabel": "Schedule Decision rationale",
+      "failClosed": "Schedule decision is fail-closed until its exact Gate Sign-off quorum is satisfied.",
+      "failed": "The Schedule Decision was not changed.",
+      "frozenHandoffPackage": "· frozen Handoff Package",
+      "hold": "Hold",
+      "initiative": "Initiative",
+      "loading": "Loading Schedule decisions",
+      "none": "None",
+      "plan": "Plan",
+      "portfolio": "Portfolio",
+      "retry": "Retry",
+      "return": "Return",
+      "rowTitle": "Schedule Decision",
+      "subtitle": "Canonical gate queue. Approval schedules the Initiative and freezes a Handoff Package; it does not start Execution.",
+      "title": "Schedule decisions",
+      "unavailable": "Schedule decisions are unavailable.",
+      "waitingOnYou": "Schedule decisions waiting on you",
+      "window": "Window"
+    },
+    "focusCockpit": {
+      "dueToday": "Today",
+      "dueTomorrow": "Tomorrow",
+      "toggleTask": "Toggle task",
+      "lanes": {
+        "myList": "My list (capture)",
+        "today": "Today",
+        "thisWeek": "This Week"
+      },
+      "addTask": "Task",
+      "preview": "Preview"
     }
   },
   "step1": {
@@ -9241,7 +9759,7 @@
       "exportHint": "Export this context to enrich your Tools or Assessment"
     }
   },
-"assessment": {
+  "assessment": {
     "maturityMatrix": {
       "progress": "{{completed}} of {{total}} areas evaluated",
       "complete": "Complete assessment",
@@ -12055,8 +12573,15 @@
         "weekly": "Weekly team update",
         "workload": "Workload capacity"
       },
-      "cadence": { "onDemand": "On demand", "weekly": "Weekly", "monthly": "Monthly" },
-      "scope": { "all": "All initiatives", "current": "Current project" },
+      "cadence": {
+        "onDemand": "On demand",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "scope": {
+        "all": "All initiatives",
+        "current": "Current project"
+      },
       "listTitle": "Work reports",
       "listDescription": "Frozen report runs with their approval and delivery status.",
       "runStatus": {
@@ -19088,7 +19613,24 @@
       },
       "professional": {
         "saved": "Saved",
-        "error": "Error"
+        "error": "Error",
+        "title": "Professional Profile",
+        "description": "Showcase your professional background and expertise",
+        "bio": "About Me",
+        "bioPlaceholder": "Tell us about yourself, your experience, and what you do...",
+        "characters": "characters",
+        "skills": "Skills",
+        "addSkill": "Add a skill...",
+        "certifications": "Certifications",
+        "addCert": "Add Certification",
+        "noCerts": "No certifications added yet",
+        "education": "Education",
+        "addEdu": "Add Education",
+        "noEdu": "No education entries added yet",
+        "workExperience": "Work Experience",
+        "addWork": "Add Experience",
+        "noWork": "No work experience added yet",
+        "socialLinks": "Social Links"
       },
       "bio": {
         "saved": "Saved",
@@ -19113,7 +19655,11 @@
       "regionalCanonicalHint": "Timezone, date, time, number and unit formats are managed together in Regional Settings.",
       "validation": {
         "firstNameRequired": "First name is required before saving"
-      }
+      },
+      "avatarAlt": "Profile",
+      "saveNotConfirmedError": "Profile save was not confirmed by the server",
+      "changesNotConfirmedError": "Profile changes were not confirmed by the server",
+      "saveError": "Failed to save profile settings"
     },
     "signatures": {
       "title": "Email Signatures",
@@ -19155,7 +19701,32 @@
       "tipConcise": "Keep it concise - include only essential contact information",
       "tipConsistent": "Use a consistent format across all your signatures",
       "tipRole": "Include your role and company for professional context",
-      "tipLinks": "Add relevant social links or portfolio URLs if appropriate"
+      "tipLinks": "Add relevant social links or portfolio URLs if appropriate",
+      "toastFillAllFields": "Please fill in all fields",
+      "toastCreated": "Signature created",
+      "toastUpdated": "Signature updated",
+      "toastSaveFailed": "Failed to save signature",
+      "toastDeleted": "Signature deleted",
+      "toastDeleteFailed": "Failed to delete signature",
+      "toastDefaultUpdated": "Default signature updated",
+      "toastSetDefaultFailed": "Failed to set default",
+      "toastCopied": "Copied to clipboard",
+      "newSignature": "New Signature",
+      "createNewTitle": "Create New Signature",
+      "nameLabel": "Signature Name",
+      "contentLabel": "Signature Content",
+      "previewLabel": "Preview",
+      "previewPlaceholder": "Your signature will appear here...",
+      "savingButton": "Saving...",
+      "saveButton": "Save Signature",
+      "cancelButton": "Cancel",
+      "defaultBadge": "Default",
+      "previewTitle": "Preview",
+      "copyTitle": "Copy",
+      "setDefaultTitle": "Set as default",
+      "editTitleAttr": "Edit",
+      "deleteTitleAttr": "Delete",
+      "tipsHeading": "Tips for effective signatures:"
     },
     "work": {
       "title": "Work Preferences",
@@ -19622,7 +20193,23 @@
       "orgLimitBody": "Your organization has set the maximum proactivity level to <0>{{level}}</0>. Contact your administrator if you need a higher level.",
       "privacySubtitle": "Manage how your data is handled and retained.",
       "piiRedactionHint": "Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.",
-      "webSearchHint": "Enables the model to search the web for real-time information. May increase latency."
+      "webSearchHint": "Enables the model to search the web for real-time information. May increase latency.",
+      "behavior": {
+        "title": "AI Behavior",
+        "description": "Customize how AI assists you"
+      },
+      "contextSaved": "AI context settings saved",
+      "contextError": "Failed to save AI context settings",
+      "context": {
+        "title": "AI Context",
+        "description": "Control what information AI can access"
+      },
+      "modelsSaved": "AI model settings saved",
+      "modelsError": "Failed to save AI model settings",
+      "models": {
+        "title": "AI Model Selection",
+        "description": "Choose and configure AI models for different use cases"
+      }
     },
     "aiUsage": {
       "title": "AI Usage Overview",
@@ -19759,7 +20346,13 @@
         "format_html": "HTML",
         "format_html_desc": "Rich formatting",
         "format_plain": "Plain Text",
-        "format_plain_desc": "Simple text format"
+        "format_plain_desc": "Simple text format",
+        "frequencyInstant": "Instant (no digest)",
+        "frequencyHourly": "Hourly",
+        "frequencyDaily": "Daily",
+        "frequencyWeekly": "Weekly",
+        "description": "Bundle notifications into periodic summaries",
+        "time": "Preferred Time"
       },
       "sounds": {
         "title": "Sound & Desktop Notifications",
@@ -19806,8 +20399,32 @@
         "active": "Active"
       },
       "vip": {
-        "empty": "No presentations yet."
-      }
+        "empty": "No presentations yet.",
+        "title": "VIP Contacts",
+        "description": "Always receive notifications from these people"
+      },
+      "keywords": {
+        "addPlaceholder": "Add keyword...",
+        "title": "Priority Keywords",
+        "description": "Always notify when these keywords appear"
+      },
+      "readOnlySave": "Notification rules are read-only until persistence is connected",
+      "rules": {
+        "title": "Notification Rules",
+        "description": "Configure advanced notification preferences",
+        "projectRules": "Project Rules",
+        "addRule": "Add Project Rule",
+        "ruleType": "Notification Mode",
+        "priorityFilter": "Priority Filter",
+        "allPriorities": "All priorities",
+        "highMedium": "High & Medium only",
+        "highOnly": "High priority only",
+        "selectProject": "Select a project..."
+      },
+      "readOnlyTitle": "Notification rules are read-only",
+      "readOnlyDescription": "Project notification rules, digests, keywords, and VIP contacts are visible only until their persistence API is connected.",
+      "rulesSaved": "Notification rules saved",
+      "rulesError": "Failed to save notification rules"
     },
     "integrations": {
       "title": "Integrations",
@@ -19863,7 +20480,17 @@
       "viewMappings": "View Mappings",
       "subtitle": "Connect external tools to streamline your workflow.",
       "orgRequiredBody": "Integrations are configured at the organization level. Please create or join an organization first in the Organization settings.",
-      "channelMappingHint": "Assign at least one project to a Slack or Teams channel. Optional mapping webhook URLs can override the default webhook per project."
+      "channelMappingHint": "Assign at least one project to a Slack or Teams channel. Optional mapping webhook URLs can override the default webhook per project.",
+      "testConnection": "Test connection",
+      "appleIdPlaceholder": "your@icloud.com",
+      "appleIdEmail": "Apple ID Email",
+      "appSpecificPassword": "App-Specific Password",
+      "appSpecificHowTo": "How to generate an app-specific password:",
+      "appSpecificStep2": "Sign In & Security → App-Specific Passwords",
+      "appSpecificStep3": "Generate a password labeled \"Consultify\"",
+      "noAuthUrl": "No authorization URL returned",
+      "appleIdHint": "Provide your Apple ID and app-specific password.",
+      "configHint": "Provide the required configuration below."
     },
     "availability": {
       "title": "Availability & Focus",
@@ -20475,7 +21102,22 @@
         "ai": "AI",
         "focus": "Focus"
       },
-      "connected": "Connected"
+      "connected": "Connected",
+      "settingsHistory": {
+        "title": "Settings History",
+        "unavailableTitle": "Settings history unavailable",
+        "searchPlaceholder": "Search changes...",
+        "allCategories": "All Categories",
+        "emptyState": "No settings changes found",
+        "beforeLabel": "Before:",
+        "afterLabel": "After:",
+        "deviceLabel": "Device:",
+        "timeLabel": "Time:",
+        "restoreButton": "Restore Previous Value",
+        "totalChanges": "Total Changes",
+        "categoriesLabel": "Categories",
+        "todayLabel": "Today"
+      }
     },
     "accessibility": {
       "saved": "Accessibility preferences saved",
@@ -20717,7 +21359,33 @@
       "answerPlaceholder": "Your answer",
       "pendingVerification": "Pending verification",
       "geoAlertsTitle": "Geolocation Alerts",
-      "geoAlertsHint": "Alert on login from new locations"
+      "geoAlertsHint": "Alert on login from new locations",
+      "ipRequired": "IP address is required",
+      "ipAdded": "IP rule added",
+      "ipError": "Failed to add IP rule",
+      "ipDeleted": "IP rule deleted",
+      "deleteError": "Failed to delete",
+      "answerRequired": "Answer is required",
+      "questionAdded": "Security question added",
+      "questionError": "Failed to add security question",
+      "questionDeleted": "Security question deleted",
+      "contactRequired": "Contact value is required",
+      "recoveryAdded": "Recovery contact added",
+      "recoveryError": "Failed to add recovery contact",
+      "recoveryDeleted": "Recovery contact deleted",
+      "settingsSaved": "Security settings saved",
+      "settingsError": "Failed to save settings",
+      "passwordPolicy": "Password Policy",
+      "securityQuestions": "Security Questions",
+      "suspiciousActivity": "Suspicious Activity",
+      "advanced": {
+        "title": "Advanced Security",
+        "description": "Enhanced security features and controls"
+      },
+      "ipRules": "IP Allowlist / Blocklist",
+      "recovery": "Recovery Options",
+      "loginLocations": "Recent Login Locations",
+      "settings": "Security Settings"
     },
     "appearance": {
       "label": "Appearance",
@@ -20851,7 +21519,11 @@
         "toolbarHint": "Choose which items appear in the header toolbar",
         "quickAccessTitle": "Quick Access Menu",
         "quickAccessHint": "Customize quick actions in the + menu"
-      }
+      },
+      "unavailable": "Appearance preferences unavailable",
+      "missingPreferencesError": "Appearance preferences response was missing preferences",
+      "loadError": "Failed to load appearance preferences",
+      "saveNotConfirmedError": "Appearance settings save was not confirmed by the server"
     },
     "sidebar": {
       "title": "SETTINGS",
@@ -21343,7 +22015,10 @@
     },
     "preferences": {
       "saved": "Saved",
-      "error": "Error"
+      "error": "Error",
+      "general": {
+        "title": "General Preferences"
+      }
     },
     "dataControls": {
       "saved": "Saved",
@@ -21352,7 +22027,61 @@
       "importTitle": "Import Data",
       "importSources": "From ClickUp, Monday, Asana",
       "important": "Important",
-      "deletionWarning": "Data deletion is permanent and cannot be reversed. Make sure to export your data before deleting if you need a backup."
+      "deletionWarning": "Data deletion is permanent and cannot be reversed. Make sure to export your data before deleting if you need a backup.",
+      "categoryTasksName": "Tasks",
+      "categoryTasksDescription": "Your tasks and subtasks",
+      "categoryProjectsName": "Projects",
+      "categoryProjectsDescription": "Project data and settings",
+      "categoryMessagesName": "Messages",
+      "categoryMessagesDescription": "Direct messages and notifications",
+      "categoryCommentsName": "Comments",
+      "categoryCommentsDescription": "Comments on tasks and projects",
+      "categoryFilesName": "Files",
+      "categoryFilesDescription": "Uploaded files and attachments",
+      "categoryActivityName": "Activity Logs",
+      "categoryActivityDescription": "Your activity history",
+      "categoryAiName": "AI Conversations",
+      "categoryAiDescription": "AI chat history and context",
+      "retentionKeepForever": "Keep forever",
+      "retentionDays30": "30 days",
+      "retentionDays60": "60 days",
+      "retentionDays90": "90 days",
+      "retentionMonths6": "6 months",
+      "retentionYear1": "1 year",
+      "retentionYears2": "2 years",
+      "dataRetention": "Data Retention",
+      "save": "Save",
+      "autoAnonymization": "Automatic Data Anonymization",
+      "autoAnonymizationHint": "Automatically anonymize old data on schedule",
+      "anonymizationSchedule": "Anonymization Schedule",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "exportFormat": "Export Format",
+      "formatJsonDescription": "Machine-readable format",
+      "formatCsvDescription": "Spreadsheet compatible",
+      "formatPdfDescription": "Human-readable report",
+      "exportAllMyData": "Export All My Data",
+      "dataCategories": "Data Categories",
+      "itemsCount": "{{count}} items",
+      "export": "Export",
+      "clickAgainToConfirm": "Click again to confirm",
+      "delete": "Delete",
+      "deleteConfirmMessage": "Click delete again to permanently remove all {{category}}. This cannot be undone.",
+      "cancel": "Cancel",
+      "dataPortability": "Data Portability",
+      "portabilityExportInitiated": "Data portability export initiated",
+      "exportForTransfer": "Export for Transfer",
+      "gdprCompliantPackage": "GDPR-compliant data package",
+      "importWizardBeta": "Import wizard is in beta — contact support to get started",
+      "exportStarted": "Export started",
+      "exportQueued": "Export queued. You will receive an email when ready.",
+      "exportError": "Failed to export data",
+      "exportAllQueued": "Full data export queued. You will receive an email when ready.",
+      "deleted": "Data deleted successfully",
+      "deleteError": "Failed to delete data",
+      "title": "Data Controls",
+      "description": "Manage your data retention, export, and deletion"
     },
     "saveFailed": "Save failed",
     "responseStyle": {
@@ -21484,7 +22213,18 @@
       "setUp2fa": "Set up 2FA",
       "terminate": "Terminate",
       "title": "Authentication & Access",
-      "twoFactor": "Two-Factor Authentication"
+      "twoFactor": "Two-Factor Authentication",
+      "sessionsUnavailable": "Active sessions unavailable",
+      "loginHistoryUnavailable": "Login history unavailable",
+      "recoveryUnavailable": "Recovery options unavailable",
+      "loadSessionsError": "Failed to load active sessions",
+      "loadHistoryError": "Failed to load login history",
+      "loadRecoveryError": "Failed to load recovery options",
+      "loadAuthDataError": "Failed to load authentication data",
+      "recoveryReloadError": "Recovery options were saved but could not be reloaded",
+      "unknownDevice": "Unknown Device",
+      "unknown": "Unknown",
+      "recently": "Recently"
     },
     "avatar": {
       "guideline4": "Professional photos help build trust with your team",
@@ -21506,7 +22246,8 @@
       "savePhoto": "Save Photo",
       "uploadError": "Failed to upload photo",
       "uploading": "Uploading...",
-      "uploadSuccess": "Profile photo updated successfully!"
+      "uploadSuccess": "Profile photo updated successfully!",
+      "uploadAriaLabel": "Upload profile photo"
     },
     "save": "Save Changes",
     "saving": "Saving...",
@@ -21560,7 +22301,13 @@
       "updateRegularly": "Update regularly for best security",
       "viewAll": "View All",
       "viewAvailability": "View availability",
-      "viewFullHistory": "View full history"
+      "viewFullHistory": "View full history",
+      "unavailable": "Security overview unavailable",
+      "missingDataError": "Security overview response was missing required data",
+      "loadError": "Failed to load security overview",
+      "unknownDate": "Unknown date",
+      "unknownDevice": "Unknown Device",
+      "unknown": "Unknown"
     },
     "voice": {
       "autoSpeak": "Auto-speak Responses",
@@ -21675,7 +22422,50 @@
     },
     "orgProfile": {
       "subtitle": "Define your organization context for AI-powered strategic insights",
-      "prioritiesPlaceholder": "e.g., Digital transformation, Customer experience, Cost optimization"
+      "prioritiesPlaceholder": "e.g., Digital transformation, Customer experience, Cost optimization",
+      "saveProfile": "Save Profile",
+      "aiAnalysis": "AI Analysis",
+      "refresh": "Refresh",
+      "title": "Strategic Profile",
+      "completenessLabel": "Profile Completeness",
+      "sectionIndustry": "Industry Context",
+      "sectionCompany": "Company Information",
+      "sectionStrategic": "Strategic Context",
+      "sectionDigital": "Digital & Technology",
+      "sectionMarket": "Market & Competition",
+      "sectionConstraints": "Constraints & Risk",
+      "industryLabel": "Industry *",
+      "selectIndustry": "Select Industry",
+      "industrySubsector": "Industry Subsector",
+      "industrySubsectorPlaceholder": "e.g., SaaS, Fintech, E-commerce",
+      "companySize": "Company Size *",
+      "employeeCount": "Employee Count",
+      "foundingYear": "Founding Year",
+      "headquartersCountry": "Headquarters Country",
+      "hqCountryPlaceholder": "e.g., Poland",
+      "competitivePosition": "Competitive Position *",
+      "growthStage": "Growth Stage *",
+      "strategicPriorities": "Strategic Priorities (comma-separated)",
+      "missionStatement": "Mission Statement",
+      "missionPlaceholder": "What is your organization's mission?",
+      "digitalMaturity": "Digital Maturity Self-Assessment (1-7)",
+      "cloudAdoption": "Cloud Adoption Level",
+      "digitalBudget": "Digital Budget (% of total IT spend)",
+      "technologyStack": "Technology Stack (comma-separated)",
+      "techStackPlaceholder": "e.g., AWS, React, Python, Kubernetes",
+      "primaryMarkets": "Primary Markets (comma-separated)",
+      "primaryMarketsPlaceholder": "e.g., Poland, DACH, CEE",
+      "customerSegments": "Customer Segments (comma-separated)",
+      "customerSegmentsPlaceholder": "e.g., B2B, Enterprise, SMB",
+      "keyCompetitors": "Key Competitors (comma-separated)",
+      "keyCompetitorsPlaceholder": "e.g., Competitor A, Competitor B",
+      "marketShare": "Estimated Market Share (%)",
+      "riskAppetite": "Risk Appetite",
+      "saved": "Profile saved successfully",
+      "saveError": "Failed to save profile",
+      "analysisComplete": "Analysis complete",
+      "analysisError": "Analysis failed",
+      "saveStrategicProfile": "Save Strategic Profile"
     },
     "organization": {
       "loading": "Loading organization details...",
@@ -21686,10 +22476,70 @@
       "tokenLogReason": "Reason",
       "tokenLogWhen": "When",
       "inviteIdNote": "* Note: For this release, please use User ID if Email lookup is not configured.",
-      "duplicateName": "You already have an organization with this name."
+      "duplicateName": "You already have an organization with this name.",
+      "loadOrgsError": "Failed to load organizations",
+      "loadOrgDetailsError": "Failed to load organization details",
+      "memberAdded": "Member added successfully",
+      "addMemberError": "Failed to add member",
+      "billingActivated": "Billing activated! Tokens added.",
+      "activateBillingError": "Failed to activate billing",
+      "nameRequired": "Organization name is required",
+      "createdSuccess": "Organization created successfully!",
+      "createOrg": "Create Organization",
+      "createOrgModalTitle": "Create Organization",
+      "orgNameLabel": "Organization Name",
+      "orgNamePlaceholder": "e.g., Acme Corporation",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "title": "Organization Settings",
+      "billingStatus": "Billing Status",
+      "status": "Status",
+      "trialActive": "Trial Active",
+      "billingActive": "Billing Active",
+      "activateBilling": "Activate Billing",
+      "tokenBalanceUsage": "Token Balance & Usage",
+      "availableTokens": "Available Tokens",
+      "trialUsage": "Trial Usage",
+      "recentTokenActivity": "Recent Token Activity",
+      "noTokenActivity": "No token activity yet.",
+      "tokenLogType": "Type",
+      "tokenLogAmount": "Amount",
+      "teamMembers": "Team Members",
+      "addMember": "Add Member",
+      "userIdOrEmail": "User ID / Email",
+      "userIdPlaceholder": "Enter User ID (or Email if supported)",
+      "role": "Role",
+      "roleAdmin": "Admin",
+      "roleMember": "Member",
+      "roleConsultant": "Consultant",
+      "roleViewer": "Viewer",
+      "sendInvite": "Send Invite",
+      "youSuffix": "(You)",
+      "joined": "Joined",
+      "noMembers": "No members found."
     },
     "professionalProfile": {
-      "companyName": "Company Name"
+      "companyName": "Company Name",
+      "website": "Website",
+      "portfolio": "Portfolio",
+      "certificationName": "Certification Name",
+      "issuingOrganization": "Issuing Organization",
+      "expiryDateOptional": "Expiry Date (optional)",
+      "credentialIdOptional": "Credential ID (optional)",
+      "verificationUrlOptional": "Verification URL (optional)",
+      "institutionName": "Institution Name",
+      "degree": "Degree",
+      "fieldOfStudyOptional": "Field of Study (optional)",
+      "descriptionOptional": "Description (optional)",
+      "positionTitle": "Position/Title",
+      "locationOptional": "Location (optional)",
+      "save": "Save",
+      "cancel": "Cancel",
+      "currentlyStudying": "Currently studying",
+      "current": "Current",
+      "currentPosition": "Current position",
+      "issued": "Issued",
+      "expires": "Expires"
     },
     "profileCompleteness": {
       "congratulations": "Congratulations!",
@@ -21719,11 +22569,56 @@
       "personalityHint": "Choose how AI communicates with you",
       "contextHint": "What information AI can use for better responses",
       "historyTitle": "Historical Data",
-      "historyDescription": "Learn from your past work"
+      "historyDescription": "Learn from your past work",
+      "featuresTitle": "AI Features",
+      "autoSuggestionsTitle": "Auto-Suggestions",
+      "autoSuggestionsDescription": "Get AI suggestions while working",
+      "commentsTitle": "AI in Comments",
+      "commentsDescription": "AI assistance in comment sections",
+      "autocompleteTitle": "Smart Autocomplete",
+      "autocompleteDescription": "AI-powered text completion",
+      "proactiveInsightsTitle": "Proactive Insights",
+      "proactiveInsightsDescription": "AI suggests improvements unprompted",
+      "personalitySectionTitle": "AI Personality",
+      "responseStyleTitle": "Response Style",
+      "responseLengthLabel": "Response Length",
+      "formalityLevelLabel": "Formality Level",
+      "formalityCasual": "Casual",
+      "formalityFormal": "Formal",
+      "technicalDepthLabel": "Technical Depth",
+      "technicalSimple": "Simple",
+      "technicalTechnical": "Technical",
+      "contextSourcesTitle": "Context Sources",
+      "projectContextTitle": "Current Project Context",
+      "projectContextDescription": "Use current project information",
+      "teamPatternsTitle": "Team Patterns",
+      "teamPatternsDescription": "Use team's collective patterns",
+      "saveChanges": "Save Changes"
     },
     "aiModels": {
       "perUseCaseTitle": "Model per Use Case",
-      "perUseCaseHint": "Select different models for specific tasks"
+      "perUseCaseHint": "Select different models for specific tasks",
+      "estimatedMonthlyCost": "Estimated Monthly Cost",
+      "estimatedCostHint": "Based on average usage patterns",
+      "selectDefaultModel": "Select Default AI Model",
+      "useDefaultModel": "Use Default Model",
+      "advancedSettingsTitle": "Advanced Settings",
+      "temperatureLabel": "Temperature / Creativity",
+      "temperaturePrecise": "Precise",
+      "temperatureBalanced": "Balanced",
+      "temperatureCreative": "Creative",
+      "maxResponseTokensLabel": "Max Response Tokens",
+      "maxResponseTokensHint": "Maximum length of AI responses",
+      "tokensShort": "Short (256)",
+      "tokensMedium": "Medium (4K)",
+      "tokensLong": "Long (16K)",
+      "streamResponsesLabel": "Stream Responses",
+      "tipsTitle": "Model Selection Tips",
+      "tipComplexReasoning": "Use GPT-4 Turbo or Claude 3 Opus for complex reasoning tasks",
+      "tipQuickQueries": "Use GPT-3.5 or Gemini Pro for quick, simple queries to save costs",
+      "tipLowerTemperature": "Lower temperature (0.3-0.5) for factual/analytical tasks",
+      "tipHigherTemperature": "Higher temperature (0.8-1.2) for creative writing",
+      "saveChanges": "Save Changes"
     },
     "quickActions": {
       "subtitle": "Configure command palette and quick actions",
@@ -21734,17 +22629,233 @@
       "whenType": "When notification type is:",
       "empty": "No custom rules configured",
       "addFirst": "Add your first rule",
-      "digestHint": "Group notifications together and receive them as a summary"
+      "digestHint": "Group notifications together and receive them as a summary",
+      "customRulesTitle": "Custom Notification Rules",
+      "addRule": "Add Rule",
+      "thenLabel": "Then:",
+      "channelAll": "Notify on all channels",
+      "channelDesktop": "Desktop only",
+      "channelMobile": "Mobile only",
+      "channelEmail": "Email only",
+      "channelNone": "Don't notify",
+      "quietHoursTitle": "Quiet Hours",
+      "startTimeLabel": "Start Time",
+      "endTimeLabel": "End Time",
+      "activeDaysLabel": "Active Days",
+      "allowUrgentTitle": "Allow Urgent Notifications",
+      "allowUrgentHint": "Still receive critical notifications during quiet hours",
+      "soundSettingsTitle": "Sound Settings",
+      "volumeLabel": "Volume",
+      "soundPerTypeLabel": "Sound per Notification Type",
+      "desktopNotificationsTitle": "Desktop Notifications",
+      "mobileNotificationsTitle": "Mobile Notifications",
+      "digestTitle": "Notification Digest",
+      "frequencyLabel": "Frequency",
+      "frequencyHourly": "Hourly",
+      "frequencyDaily": "Daily",
+      "frequencyWeekly": "Weekly",
+      "deliveryTimeLabel": "Delivery Time",
+      "includeInDigestLabel": "Include in Digest"
     },
     "webauthn": {
       "unsupportedTitle": "Passkeys Not Supported",
       "unsupportedBody": "Your browser or device doesn't support passkeys (WebAuthn). Please use a modern browser like Chrome, Safari, Firefox, or Edge.",
       "renamePlaceholder": "Enter new name",
       "tipRemoveUnused": "Remove passkeys from devices you no longer use",
-      "whatArePasskeysTitle": "What are passkeys?"
+      "whatArePasskeysTitle": "What are passkeys?",
+      "fetchError": "Failed to load passkeys",
+      "createCredentialError": "Failed to create credential",
+      "registrationCancelled": "Registration was cancelled or denied",
+      "alreadyRegistered": "This authenticator is already registered",
+      "registerError": "Failed to register passkey",
+      "renameError": "Failed to rename passkey",
+      "revokeConfirm": "Are you sure you want to remove this passkey? You will need to use another authentication method.",
+      "revokeError": "Failed to remove passkey",
+      "title": "Passkeys & Security Keys",
+      "subtitle": "Use biometrics or security keys for secure passwordless login",
+      "registering": "Registering...",
+      "addPasskey": "Add Passkey",
+      "whatArePasskeysBody": "Passkeys are a secure replacement for passwords. They use your device's biometrics (Face ID, Touch ID, fingerprint) or a physical security key to verify your identity.",
+      "emptyTitle": "No passkeys registered",
+      "emptyDescription": "Add a passkey to enable passwordless login",
+      "unnamedPasskey": "Unnamed Passkey",
+      "added": "Added",
+      "lastUsed": "Last used",
+      "synced": "Synced",
+      "securityTips": "Security Tips",
+      "tipMultipleDevices": "Register passkeys on multiple devices for backup access",
+      "tipHardwareKey": "Consider using a hardware security key for high-security accounts"
     },
     "integrationsMarketplace": {
       "deprecated": "This view has been replaced by Connected Apps in Settings."
+    },
+    "billingSettings": {
+      "title": "Subscription & Billing",
+      "legalSectionTitle": "Billing & Subscription Terms",
+      "subscriptionAgreementTitle": "Subscription Agreement",
+      "subscriptionAgreementDesc": "Plans, pricing, AI credits",
+      "slaTitle": "Service Level Agreement",
+      "slaDesc": "Uptime & support guarantees",
+      "refundPolicyTitle": "Refund Policy",
+      "refundPolicyDesc": "Cancellations & refunds"
+    },
+    "billingSubscriptionModule": {
+      "billingDataUnavailable": "Billing data unavailable",
+      "cancelSubscription": "Cancel Subscription",
+      "currentUsage": "Current Usage",
+      "teamMembers": "Team Members",
+      "projects": "Projects",
+      "storage": "Storage",
+      "aiTokens": "AI Tokens",
+      "noInvoicesYet": "No invoices yet.",
+      "noUsageDataAvailable": "No usage data available.",
+      "billingHistory": "Billing History",
+      "paymentMethods": "Payment Methods",
+      "addMethod": "Add Method",
+      "noPaymentMethodsOnFile": "No payment methods on file.",
+      "default": "Default",
+      "subscriptionCancelledToast": "Subscription cancelled.",
+      "heading": "Billing & Subscription"
+    },
+    "generalPreferencesSettings": {
+      "onboardingResetToast": "Onboarding reset. You will see the tutorial on next login.",
+      "resetOnboardingFailedToast": "Failed to reset onboarding",
+      "configureApplicationBehavior": "Configure application behavior",
+      "startupPreferences": "Startup Preferences",
+      "defaultStartupView": "Default Startup View",
+      "showWelcomeMessage": "Show Welcome Message",
+      "displayWelcomeScreenOnStartup": "Display welcome screen on startup",
+      "autoSave": "Auto-Save",
+      "enableAutoSave": "Enable Auto-Save",
+      "autoSaveDescription": "Automatically save changes periodically",
+      "saveInterval": "Save Interval",
+      "confirmationDialogs": "Confirmation Dialogs",
+      "tooltipsAndHints": "Tooltips & Hints",
+      "resetOnboardingTutorial": "Reset Onboarding Tutorial",
+      "regionalSettings": "Regional Settings",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "weekStartsOn": "Week Starts On"
+    },
+    "personalAnalyticsModule": {
+      "title": "Personal Analytics",
+      "export": "Export",
+      "tasksCompleted": "Tasks Completed",
+      "hoursLogged": "Hours Logged",
+      "productivityScore": "Productivity Score",
+      "focusTime": "Focus Time",
+      "activityHeatmap": "Activity Heatmap",
+      "less": "Less",
+      "more": "More",
+      "dailyBreakdown": "Daily Breakdown",
+      "weeklyGoals": "Weekly Goals"
+    },
+    "brandKitGovernanceSettings": {
+      "title": "Brand Kit Governance",
+      "readOnly": "Read-only",
+      "noBrandKitConfiguredYet": "No brand kit configured yet.",
+      "identity": "Identity",
+      "name": "Name",
+      "invalidHexColor": "Invalid hex color",
+      "slideChrome": "Slide Chrome",
+      "headerText": "Header text",
+      "footerText": "Footer text",
+      "showPageNumbers": "Show page numbers",
+      "showConfidentialityMarker": "Show confidentiality marker",
+      "confidentialityAndLegal": "Confidentiality & Legal",
+      "defaultConfidentiality": "Default confidentiality",
+      "appliedToNewPresentationsHint": "Applied to new presentations unless explicitly overridden.",
+      "disclaimerText": "Disclaimer text",
+      "watermarkText": "Watermark text",
+      "watermarkPlaceholder": "CONFIDENTIAL"
+    },
+    "aiContext": {
+      "saveChanges": "Save Changes",
+      "windowSizeTitle": "Context Window Size",
+      "windowSizeHint": "How much context AI can consider at once",
+      "projectContextTitle": "Project Context",
+      "searchProjectsPlaceholder": "Search projects...",
+      "teamDataTitle": "Team Data",
+      "searchTeamMembersPlaceholder": "Search team members...",
+      "knowledgeBasesTitle": "Knowledge Bases",
+      "knowledgeBasesHint": "Additional knowledge sources for AI",
+      "customKnowledgeSourcesTitle": "Custom Knowledge Sources",
+      "addCustomSourcePlaceholder": "Add custom URL or path..."
+    },
+    "advancedSecuritySettings": {
+      "locationUpdateError": "Failed to update location",
+      "activityAcknowledged": "Activity acknowledged",
+      "activityAcknowledgeError": "Failed to acknowledge activity",
+      "locationTrusted": "Location marked as trusted",
+      "locationUntrusted": "Location unmarked",
+      "tabIpRules": "IP Rules",
+      "tabRecovery": "Recovery",
+      "tabLoginLocations": "Login Locations",
+      "tabSettings": "Settings",
+      "minimumLength": "Minimum Length",
+      "charactersCount": "{{count}} characters",
+      "passwordExpires": "Password Expires",
+      "daysCount": "{{count}} days",
+      "never": "Never",
+      "historyCount": "History Count",
+      "passwordsCount": "{{count}} passwords",
+      "requireUppercase": "Require Uppercase",
+      "requireNumbers": "Require Numbers",
+      "requireSpecialChars": "Require Special Chars",
+      "passwordLastChanged": "Password last changed:",
+      "expires": "Expires:",
+      "addRule": "Add Rule",
+      "ipAddressPlaceholder": "IP Address or CIDR",
+      "allow": "Allow",
+      "block": "Block",
+      "descriptionPlaceholder": "Description (optional)",
+      "cancel": "Cancel",
+      "noIpRules": "No IP rules configured",
+      "addQuestion": "Add Question",
+      "customQuestionPlaceholder": "Or enter custom question...",
+      "saveQuestion": "Save Question",
+      "answerMasked": "Answer: ••••••••",
+      "noSecurityQuestions": "No security questions set up",
+      "addRecoveryContact": "Add Recovery Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "trustedPerson": "Trusted Person",
+      "namePlaceholder": "Name",
+      "setAsPrimary": "Set as primary recovery contact",
+      "addContact": "Add Contact",
+      "primary": "Primary",
+      "verified": "Verified",
+      "noRecoveryContacts": "No recovery contacts configured",
+      "proxy": "Proxy",
+      "trusted": "Trusted",
+      "untrust": "Untrust",
+      "trust": "Trust",
+      "noLoginLocations": "No login locations recorded",
+      "acknowledge": "Acknowledge",
+      "noSuspiciousActivities": "No suspicious activities detected",
+      "saveSettings": "Save Settings",
+      "singleSessionOnly": "Single Session Only",
+      "singleSessionOnlyHint": "Only allow one active session at a time",
+      "reauthTimeout": "Re-authentication Timeout",
+      "minutes15": "15 minutes",
+      "minutes30": "30 minutes",
+      "hour1": "1 hour",
+      "hours2": "2 hours",
+      "hours8": "8 hours",
+      "notificationPreferences": "Notification Preferences",
+      "notifyNewLogin": "New login alerts",
+      "notifyPasswordChange": "Password change alerts",
+      "notifySuspiciousActivity": "Suspicious activity alerts",
+      "notifyRecoveryChange": "Recovery contact change alerts"
+    },
+    "signature": {
+      "title": "Email Signatures",
+      "description": "Create and manage your email signatures"
+    },
+    "personalAnalytics": {
+      "unavailableDescription": "Personal productivity analytics are not connected to a persisted analytics source yet.",
+      "loadError": "Failed to load personal analytics",
+      "unavailableTitle": "Personal analytics unavailable"
     }
   },
   "showcase": {
@@ -30653,7 +31764,12 @@
       },
       "rootcause": {
         "uploaderTitle": "Root Cause Signals",
-        "suggestions": ["Incident Reports", "5 Whys Docs", "PFMEA", "Ishikawa Diagrams"],
+        "suggestions": [
+          "Incident Reports",
+          "5 Whys Docs",
+          "PFMEA",
+          "Ishikawa Diagrams"
+        ],
         "diagnosticLabel": "Diagnostic Questions:",
         "diagnosticBody": "These answers help AI identify hidden root causes behind the declared challenges.",
         "questions": [
@@ -30721,7 +31837,12 @@
       },
       "evidence": {
         "uploaderTitle": "Evidence",
-        "suggestions": ["Raw Data Exports", "KPI Dashboards", "System Logs", "Financial Reports"],
+        "suggestions": [
+          "Raw Data Exports",
+          "KPI Dashboards",
+          "System Logs",
+          "Financial Reports"
+        ],
         "title": "Evidence & Data Points",
         "description": "Hard facts, metrics, or logs that prove the existence of challenges.",
         "columns": {
@@ -34733,19 +35854,38 @@
           "registered": {
             "title": "Registered",
             "description": "For those starting the partnership",
-            "requirements": ["Registration", "Basic training"],
-            "benefits": ["10% discount", "Access to materials", "Email support"]
+            "requirements": [
+              "Registration",
+              "Basic training"
+            ],
+            "benefits": [
+              "10% discount",
+              "Access to materials",
+              "Email support"
+            ]
           },
           "certified": {
             "title": "Certified",
             "description": "For experienced consultants",
-            "requirements": ["Certification exam", "Min. 3 projects"],
-            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
+            "requirements": [
+              "Certification exam",
+              "Min. 3 projects"
+            ],
+            "benefits": [
+              "12% discount",
+              "Partner logo",
+              "Dedicated support",
+              "Catalog listing"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "For strategic partners",
-            "requirements": ["10+ projects", "Case study", "References"],
+            "requirements": [
+              "10+ projects",
+              "Case study",
+              "References"
+            ],
             "benefits": [
               "14% discount",
               "Dedicated account manager",
@@ -38287,7 +39427,13 @@
         "aiReminderFormFailed": "AI could not fill the reminder form",
         "aiEscalationFormFailed": "AI could not fill the escalation form",
         "aiConsequenceScenariosFailed": "AI could not generate consequence scenarios",
-        "aiCommentDraftFailed": "AI could not prepare comment text"
+        "aiCommentDraftFailed": "AI could not prepare comment text",
+        "alternativeDeleteFailed": "Could not delete this option on the server",
+        "alternativeSyncFailed": "Could not save this option to the server",
+        "riskDeleteFailed": "Could not delete this risk on the server",
+        "riskSyncFailed": "Could not save this risk to the server",
+        "projectRequired": "Project is required",
+        "saveFirst": "Save the decision first"
       },
       "ai": {
         "prosConsPrompt": "For this decision option, generate 3 concrete pros and 3 concrete cons. Return JSON only: {\"pros\":[\"...\"],\"cons\":[\"...\"]}.\n\nOption title: {{altTitle}}\nDescription: {{altDescription}}\nDecision context: {{decisionTitle}}",
@@ -39856,7 +41002,13 @@
     },
     "dependencies": {
       "comingSoon": "This module will allow visual linking between tasks (Blocks / Blocked By). Coming in Phase 2."
-    }
+    },
+    "edit": "Edit Task",
+    "new": "New Task",
+    "title": "Title",
+    "priority": "Priority",
+    "dueDate": "Due Date",
+    "description": "Description"
   },
   "team": {
     "velocity": {
@@ -42898,7 +44050,9 @@
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt",
       "convertTo": "Convert to",
       "versionHistory": "Version history",
-      "connectionGraph": "Connection graph"
+      "connectionGraph": "Connection graph",
+      "actionFailed": "The action failed. Your note was not changed.",
+      "actions": "Note actions"
     },
     "presenceStack": {
       "viewingNow": "{{count}} viewing now"
@@ -46238,15 +47392,30 @@
         "dependency": "Dependencies"
       },
       "quickActions": {
-        "risk": ["Weekly review", "Escalate to PMO", "POC before rollout", "Transfer to vendor"],
+        "risk": [
+          "Weekly review",
+          "Escalate to PMO",
+          "POC before rollout",
+          "Transfer to vendor"
+        ],
         "assumption": [
           "Validate with stakeholder",
           "Data analysis",
           "Prototype / POC",
           "Expert interview"
         ],
-        "issue": ["Hotfix immediately", "Escalate to sponsor", "Rollback", "War room"],
-        "dependency": ["Sync meeting", "Mock API / stub", "Escalate to manager", "Alternative plan"]
+        "issue": [
+          "Hotfix immediately",
+          "Escalate to sponsor",
+          "Rollback",
+          "War room"
+        ],
+        "dependency": [
+          "Sync meeting",
+          "Mock API / stub",
+          "Escalate to manager",
+          "Alternative plan"
+        ]
       },
       "quickContingencyArgs": [
         "Manual fallback mode",
@@ -48353,10 +49522,22 @@
       "missionProcess": "Risk mission, scope, success signal, and constraints",
       "missionExample": "How do we protect a transformation from delays, cost pressure, and demand shifts?",
       "cards": [
-        ["Assumptions", "What must be true for the strategy to work"],
-        ["Risks", "What can hit outcome, cost, timing, or reputation"],
-        ["Scenarios", "How different futures change the decision"],
-        ["Moves", "Validate, mitigate, monitor, hedge, escalate"]
+        [
+          "Assumptions",
+          "What must be true for the strategy to work"
+        ],
+        [
+          "Risks",
+          "What can hit outcome, cost, timing, or reputation"
+        ],
+        [
+          "Scenarios",
+          "How different futures change the decision"
+        ],
+        [
+          "Moves",
+          "Validate, mitigate, monitor, hedge, escalate"
+        ]
       ]
     },
     "portfolioPriorityLibraryGraphic": {
@@ -48366,10 +49547,22 @@
       "missionProcess": "Portfolio mission, scope, constraints, and success signal",
       "missionExample": "Which products and initiatives should receive funding next quarter under a constrained budget?",
       "quadrants": [
-        ["Stars", "High growth and strong position: invest selectively"],
-        ["Question Marks", "High growth and weak position: test or choose the bet"],
-        ["Cash Cows", "Stable position: maintain and fund growth"],
-        ["Dogs", "Weak position: reduce, harvest, or redesign"]
+        [
+          "Stars",
+          "High growth and strong position: invest selectively"
+        ],
+        [
+          "Question Marks",
+          "High growth and weak position: test or choose the bet"
+        ],
+        [
+          "Cash Cows",
+          "Stable position: maintain and fund growth"
+        ],
+        [
+          "Dogs",
+          "Weak position: reduce, harvest, or redesign"
+        ]
       ],
       "insight": "The recommendation is not equal support for every topic, but deliberate allocation: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> portfolio initiatives -> deck -> report"
@@ -48381,10 +49574,22 @@
       "missionProcess": "Growth mission, scope, success signal, and constraints",
       "missionExample": "How do we grow premium-segment revenue without diluting margin?",
       "quadrants": [
-        ["Market penetration", "Use the current segment and channels better"],
-        ["Market development", "Enter new segments or geographies"],
-        ["Product development", "New value propositions for current customers"],
-        ["Diversification", "New product and new market, highest risk"]
+        [
+          "Market penetration",
+          "Use the current segment and channels better"
+        ],
+        [
+          "Market development",
+          "Enter new segments or geographies"
+        ],
+        [
+          "Product development",
+          "New value propositions for current customers"
+        ],
+        [
+          "Diversification",
+          "New product and new market, highest risk"
+        ]
       ],
       "insight": "The recommendation does not come from the longest idea list, but from the best sequence: scale core, test the new segment, then increase risk.",
       "output": "Source summary -> initiative -> deck -> report"
@@ -48413,11 +49618,31 @@
       "implicationsTitle": "Strategic implications",
       "movesTitle": "Bridge to initiatives",
       "forces": [
-        ["Rivalry", "4/5", "High price pressure and easily copied offers"],
-        ["New entrants", "3/5", "Entry is possible, but requires channel and trust"],
-        ["Substitutes", "2/5", "Alternatives exist but do not solve the full job"],
-        ["Buyer power", "5/5", "Large customers force discounts and SLA terms"],
-        ["Supplier power", "3/5", "Input costs move, but can be diversified"]
+        [
+          "Rivalry",
+          "4/5",
+          "High price pressure and easily copied offers"
+        ],
+        [
+          "New entrants",
+          "3/5",
+          "Entry is possible, but requires channel and trust"
+        ],
+        [
+          "Substitutes",
+          "2/5",
+          "Alternatives exist but do not solve the full job"
+        ],
+        [
+          "Buyer power",
+          "5/5",
+          "Large customers force discounts and SLA terms"
+        ],
+        [
+          "Supplier power",
+          "3/5",
+          "Input costs move, but can be diversified"
+        ]
       ],
       "implicationItems": [
         "The market may grow, but advantage without data and channel will be fragile.",
@@ -48445,11 +49670,31 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Audience, goal, success signal", "bg-sky-500"],
-        ["Core message", "One sentence that should stick", "bg-sky-500"],
-        ["Pillars", "Columns that hold the roof", "bg-blue-500"],
-        ["Proof", "What backs each pillar", "bg-amber-500"],
-        ["Narrative & outputs", "Threads, moves, report, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Audience, goal, success signal",
+          "bg-sky-500"
+        ],
+        [
+          "Core message",
+          "One sentence that should stick",
+          "bg-sky-500"
+        ],
+        [
+          "Pillars",
+          "Columns that hold the roof",
+          "bg-blue-500"
+        ],
+        [
+          "Proof",
+          "What backs each pillar",
+          "bg-amber-500"
+        ],
+        [
+          "Narrative & outputs",
+          "Threads, moves, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "houseTitle": "Message house",
       "houseHint": "Roof + pillars",
@@ -48458,9 +49703,18 @@
       "proofWord": "proof",
       "legendTitle": "Audience resonance",
       "legend": [
-        ["high", "High resonance"],
-        ["medium", "Medium resonance"],
-        ["low", "Low resonance"]
+        [
+          "high",
+          "High resonance"
+        ],
+        [
+          "medium",
+          "Medium resonance"
+        ],
+        [
+          "low",
+          "Low resonance"
+        ]
       ],
       "footer": "Narrative Engine = brief -> core message -> pillars -> proof -> narrative -> outputs",
       "pillars": [
@@ -48506,19 +49760,48 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Industry, domains, priorities, decision", "bg-sky-500"],
-        ["Capabilities", "Map capabilities by domain", "bg-sky-500"],
-        ["Maturity", "Current vs target 1-5 + weight", "bg-blue-500"],
-        ["Gaps", "Where gap × weight is widest", "bg-amber-500"],
-        ["Moves & outputs", "Build/buy/partner, initiatives, report, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Industry, domains, priorities, decision",
+          "bg-sky-500"
+        ],
+        [
+          "Capabilities",
+          "Map capabilities by domain",
+          "bg-sky-500"
+        ],
+        [
+          "Maturity",
+          "Current vs target 1-5 + weight",
+          "bg-blue-500"
+        ],
+        [
+          "Gaps",
+          "Where gap × weight is widest",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Build/buy/partner, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "ladderTitle": "Maturity ladder",
       "scaleHint": "Maturity scale 1-5",
       "legendTitle": "Gap size",
       "legend": [
-        ["critical", "Critical gap"],
-        ["moderate", "Moderate gap"],
-        ["minor", "Minor gap"]
+        [
+          "critical",
+          "Critical gap"
+        ],
+        [
+          "moderate",
+          "Moderate gap"
+        ],
+        [
+          "minor",
+          "Minor gap"
+        ]
       ],
       "currentLabel": "Current",
       "targetLabel": "Target",
@@ -48572,27 +49855,68 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Priorities, criteria, goal, constraints", "bg-sky-500"],
-        ["Priorities", "List of competing options", "bg-sky-500"],
-        ["Scoring", "Value vs effort 1-5 + fit", "bg-blue-500"],
-        ["Matrix", "Quick wins, big bets, fill-ins, money pit", "bg-amber-500"],
-        ["Moves & outputs", "Pursue/defer/drop, initiatives, report, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Priorities, criteria, goal, constraints",
+          "bg-sky-500"
+        ],
+        [
+          "Priorities",
+          "List of competing options",
+          "bg-sky-500"
+        ],
+        [
+          "Scoring",
+          "Value vs effort 1-5 + fit",
+          "bg-blue-500"
+        ],
+        [
+          "Matrix",
+          "Quick wins, big bets, fill-ins, money pit",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Pursue/defer/drop, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "matrixTitle": "Value x effort matrix",
       "scaleHint": "Scale 1-5",
       "axisValue": "Value",
       "axisEffort": "Effort",
       "quadrants": [
-        ["Quick wins", "High value, low effort"],
-        ["Big bets", "High value, high effort"],
-        ["Fill-ins", "Low value, low effort"],
-        ["Money pit", "Low value, high effort"]
+        [
+          "Quick wins",
+          "High value, low effort"
+        ],
+        [
+          "Big bets",
+          "High value, high effort"
+        ],
+        [
+          "Fill-ins",
+          "Low value, low effort"
+        ],
+        [
+          "Money pit",
+          "Low value, high effort"
+        ]
       ],
       "legendTitle": "Recommendation",
       "legend": [
-        ["pursue", "Pursue"],
-        ["defer", "Defer"],
-        ["drop", "Drop"]
+        [
+          "pursue",
+          "Pursue"
+        ],
+        [
+          "defer",
+          "Defer"
+        ],
+        [
+          "drop",
+          "Drop"
+        ]
       ],
       "footer": "Focus & Trade-offs = brief -> priorities -> value vs effort -> matrix -> moves -> outputs",
       "bubbles": [
@@ -48638,19 +49962,48 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Ambition", "One sentence + scope + success signal", "bg-violet-500"],
-        ["Signals", "What drives and constrains the ambition", "bg-violet-500"],
-        ["Themes", "Decompose into strategic themes", "bg-indigo-500"],
-        ["Targets & horizon", "Metric, target value, and time window", "bg-sky-500"],
-        ["Moves & outputs", "Priorities, initiatives, report, deck", "bg-emerald-500"]
+        [
+          "Ambition",
+          "One sentence + scope + success signal",
+          "bg-violet-500"
+        ],
+        [
+          "Signals",
+          "What drives and constrains the ambition",
+          "bg-violet-500"
+        ],
+        [
+          "Themes",
+          "Decompose into strategic themes",
+          "bg-indigo-500"
+        ],
+        [
+          "Targets & horizon",
+          "Metric, target value, and time window",
+          "bg-sky-500"
+        ],
+        [
+          "Moves & outputs",
+          "Priorities, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "cascadeTitle": "Ambition cascade",
       "cascadeHint": "Themes by horizon",
       "legendTitle": "Theme importance",
       "legend": [
-        ["high", "High importance"],
-        ["medium", "Medium importance"],
-        ["low", "Low importance"]
+        [
+          "high",
+          "High importance"
+        ],
+        [
+          "medium",
+          "Medium importance"
+        ],
+        [
+          "low",
+          "Low importance"
+        ]
       ],
       "horizonLabels": {
         "short": "Short",
@@ -48715,16 +50068,41 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Industry, chain scope, position, decision", "bg-sky-500"],
-        ["Activities", "Map 5 primary + 4 support", "bg-sky-500"],
-        ["Contribution", "Cost, value, and margin role per activity", "bg-blue-500"],
-        ["Levers", "Where to cut cost, where to raise value", "bg-amber-500"],
-        ["Moves & outputs", "Moves, initiatives, report, deck, or idea", "bg-emerald-500"]
+        [
+          "Brief",
+          "Industry, chain scope, position, decision",
+          "bg-sky-500"
+        ],
+        [
+          "Activities",
+          "Map 5 primary + 4 support",
+          "bg-sky-500"
+        ],
+        [
+          "Contribution",
+          "Cost, value, and margin role per activity",
+          "bg-blue-500"
+        ],
+        [
+          "Levers",
+          "Where to cut cost, where to raise value",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Moves, initiatives, report, deck, or idea",
+          "bg-emerald-500"
+        ]
       ],
       "chainTitle": "Value chain",
       "support": "Support activities",
       "primary": "Primary activities",
-      "supportItems": ["Firm infrastructure", "HR management", "Technology", "Procurement"],
+      "supportItems": [
+        "Firm infrastructure",
+        "HR management",
+        "Technology",
+        "Procurement"
+      ],
       "primaryItems": [
         "Inbound logistics",
         "Operations",
@@ -48735,9 +50113,18 @@
       "margin": "Margin",
       "legendTitle": "Margin role",
       "legend": [
-        ["creator", "Creates margin"],
-        ["neutral", "Neutral"],
-        ["drain", "Drains margin"]
+        [
+          "creator",
+          "Creates margin"
+        ],
+        [
+          "neutral",
+          "Neutral"
+        ],
+        [
+          "drain",
+          "Drains margin"
+        ]
       ],
       "footer": "Value Chain = brief -> activities -> contribution -> levers -> moves -> outputs",
       "legendHint": "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."
@@ -49145,7 +50532,13 @@
       "outputHintReport": "For a final source summary ready to be reviewed.",
       "outputHintPresentation": "For visual communication without rebuilding the narrative.",
       "outputHintIdea": "For promising hypotheses or directions that need further work.",
-      "groupLabels": ["Session", "Analysis", "Outputs", "Collaboration", "Records"],
+      "groupLabels": [
+        "Session",
+        "Analysis",
+        "Outputs",
+        "Collaboration",
+        "Records"
+      ],
       "finish": "Finish",
       "nextStep": "Next",
       "requestReviewTitleReady": "Request review for this session",
@@ -51722,7 +53115,11 @@
         "management": "Management",
         "detailed": "Detailed"
       },
-      "cadence": { "on_demand": "On demand", "weekly": "Weekly", "monthly": "Monthly" },
+      "cadence": {
+        "on_demand": "On demand",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
       "fields": {
         "title": "Report title",
         "recipients": "Recipients",

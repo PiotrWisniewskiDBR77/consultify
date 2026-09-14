@@ -471,7 +471,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
         <div>
           <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <CreditCard size={28} className="text-emerald-500" />
-            {t('settings.billing', 'Billing & Subscription')}
+            {t('settings.billingSubscriptionModule.heading', 'Billing & Subscription')}
           </h2>
           <p className="text-c-text-muted text-sm mt-1">{t('access.upgrade.subtitle')}</p>
         </div>

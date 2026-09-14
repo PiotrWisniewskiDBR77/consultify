@@ -290,7 +290,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                           </div>
                           <div className="flex gap-4">
                             <span className="text-sm text-c-text-muted w-20">
-                              {t('settings.advanced.settingsHistory.ipLabel', 'IP:')}
+                              IP:
                             </span>
                             <span className="text-sm text-c-text-secondary">{entry.ipAddress}</span>
                           </div>
