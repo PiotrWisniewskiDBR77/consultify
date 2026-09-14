@@ -613,7 +613,6 @@ export const InitiativeWorkloadSurface: React.FC<{
             selectedId={selectedProposalId}
             selectedItem={selectedProposal}
             onSelect={setSelectedProposalId}
-            onOpenFull={() => undefined}
             itemIds={proposalRows.map((proposal) => proposal.id)}
             getItemById={(id) => proposalRows.find((proposal) => proposal.id === id) ?? null}
             previewOpen={Boolean(selectedProposal)}
@@ -625,7 +624,10 @@ export const InitiativeWorkloadSurface: React.FC<{
                 meta={{
                   pills: [
                     {
-                      label: initiativeStatusLabel(t, proposal.initiativeStatus),
+                      label: t('initiatives.workload.proposalInitiativeStatus', {
+                        defaultValue: 'Initiative status: {{status}}',
+                        status: initiativeStatusLabel(t, proposal.initiativeStatus),
+                      }),
                       tone: 'neutral',
                     },
                     {
@@ -708,7 +710,6 @@ export const InitiativeWorkloadSurface: React.FC<{
             selectedId={selectedId}
             selectedItem={selected}
             onSelect={setSelectedId}
-            onOpenFull={() => undefined}
             itemIds={tableRows.map((row) => row.id)}
             getItemById={(id) => tableRows.find((row) => row.id === id) ?? null}
             previewOpen={Boolean(selected)}

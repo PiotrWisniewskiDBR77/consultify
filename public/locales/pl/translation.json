@@ -10652,6 +10652,7 @@
       "proposalsDisclaimer": "Sugestie wymagają akceptacji człowieka i nie zmieniają bieżących przydziałów.",
       "proposalPlanningOnly": "Tylko planowanie",
       "proposalInitiative": "Inicjatywa",
+      "proposalInitiativeStatus": "Status inicjatywy: {{status}}",
       "aiHint": "Poproś o propozycje planistyczne, gdy obciążenie w przyszłym tygodniu przekracza dostępność.",
       "allProjectsRelation": "Obciążenie w całej organizacji",
       "proposalTask": "Planowane zadanie",

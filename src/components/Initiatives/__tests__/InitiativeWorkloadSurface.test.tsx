@@ -268,7 +268,17 @@ describe('InitiativeWorkloadSurface E1', () => {
 
     fireEvent.click(task);
     expect(await within(panel).findByText('Planning only')).toBeInTheDocument();
+    expect(within(panel).getByText('Initiative status: Approved')).toBeInTheDocument();
     expect(within(panel).getAllByText('Rule')).toHaveLength(2);
+    expect(within(panel).queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
+  });
+
+  it('does not expose a dead Open action for a team-member workload preview', async () => {
+    renderSurface();
+    fireEvent.click(await screen.findByText('Anna Adams'));
+
+    expect((await screen.findAllByText('Weekly capacity')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
   });
 
   it('creates and freezes a workload run through the shared report engine', async () => {

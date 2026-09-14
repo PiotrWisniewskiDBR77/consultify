@@ -11432,6 +11432,7 @@
       "proposalsDisclaimer": "Suggestions require human approval and do not change running assignments.",
       "proposalPlanningOnly": "Planning only",
       "proposalInitiative": "Initiative",
+      "proposalInitiativeStatus": "Initiative status: {{status}}",
       "aiHint": "Ask for planning proposals when a future week exceeds available capacity.",
       "allProjectsRelation": "Organization-wide workload scope",
       "proposalTask": "Planned task",
