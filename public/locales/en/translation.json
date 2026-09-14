@@ -16439,12 +16439,35 @@
       "weekOf": "Week of",
       "completed": "Completed",
       "attention": "Requires management attention",
+      "generate": "Generate for this week",
+      "generateFailed": "The analysis could not be generated.",
+      "savedReceipt": "Saved report {{id}} · {{state}}",
+      "savedNew": "created",
+      "savedExisting": "already generated",
+      "noAttention": "No records require management attention",
+      "actionDone": "Management action completed.",
+      "actionFailed": "Management action failed.",
+      "actions": {
+        "escalate": "Escalate",
+        "delegate": "Delegate",
+        "resources": "Change resources",
+        "running": "Working…"
+      },
+      "reasons": {
+        "blocked": "Blocked",
+        "overdue": "Overdue",
+        "unassigned": "Unassigned",
+        "no_due_date": "No due date"
+      },
       "windows": {
         "previousWeek": "Previous week",
         "nextWeek": "Next week",
         "nextMonth": "Next month"
       },
       "columns": {
+        "record": "Attention record",
+        "reason": "Reason",
+        "actions": "Manager actions",
         "project": "Project",
         "priority": "Priority"
       }

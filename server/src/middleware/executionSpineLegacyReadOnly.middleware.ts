@@ -9,6 +9,16 @@ const GOVERNED_EXECUTION_CONTROL_COMMANDS = [
   // canonical absence readback. Keep the exception exact so no sibling legacy
   // execution-control mutation is reopened.
   { method: 'DELETE', path: /^\/budget\/entries\/[^/]+\/?$/ },
+  // F2-2 / DEC-495. The Manager lane action executor is the established
+  // governed command: the route keeps manage_workstreams authorization and
+  // delegates to managerActionExecutionService, which performs the mutation
+  // and writes manager_action_audit_log in one transaction. Blocking this
+  // exact endpoint made the UI's escalation/delegation/resource actions
+  // unreachable; no Runtime-v1 replacement exposes those service actions.
+  {
+    method: 'POST',
+    path: /^\/lanes\/[^/]+\/problem-actions\/execute\/?$/,
+  },
 ] as const;
 
 /**

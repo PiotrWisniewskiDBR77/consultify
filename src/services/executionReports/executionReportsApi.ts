@@ -115,6 +115,20 @@ export function createExecutionReportRun(snapshot: ExecutionReportSnapshot) {
   });
 }
 
+export function generateExecutionWorkAnalysis(weekOf: string) {
+  return request<{
+    id: string;
+    created: boolean;
+    period: { start: string; end: string };
+    asOf: string;
+    payload: ExecutionReportSnapshot;
+  }>('/work-analysis/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ weekOf }),
+  });
+}
+
 export function publishExecutionReportRun(id: string) {
   return request<ExecutionReportRunDto>(`/runs/${encodeURIComponent(id)}/publish`, {
     method: 'POST',
