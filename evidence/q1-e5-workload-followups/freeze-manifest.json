@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "package": "Q1_E5_WORKLOAD_FOLLOWUPS",
+  "exactBaseSha": "eba9d72ad9c730728b212ee7826164519e4d095c",
+  "contentSha": "ab8b8850090495e552ab054295fabbb9bfded618",
+  "manifestPath": "evidence/q1-e5-workload-followups/freeze-manifest.json",
+  "selfExcluded": true,
+  "generatedAt": "2026-09-14T15:28:46.355795+00:00",
+  "fileCount": 23,
+  "files": [
+    {
+      "path": "dev-render/screens/z30-inicjatywy-obciazenie.tsx",
+      "bytes": 13185,
+      "sha256": "54b6e0a1d990eefa9254e86d352305ba7caa562acaa32186d5d2a036e287b7c5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/Q1_E5_WORKLOAD_FOLLOWUPS_FREEZE_20260914.md",
+      "bytes": 3526,
+      "sha256": "bf4650d2211e9a00d8e82f03f1ce3aba3cf0073a5b85f5e3e670515c4f03500f"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-off-en-dark.jpg",
+      "bytes": 55475,
+      "sha256": "0db1328f2ff2317dee8b273495e4d847e4b2445bed2de7ba05b35d01ef02900f"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-off-en-light.jpg",
+      "bytes": 56050,
+      "sha256": "2577557c2f5560cbebc88231766fc11aca2513ecc84f6c8a295f97409ab63d65"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-off-pl-dark.jpg",
+      "bytes": 59515,
+      "sha256": "98f0f546caec12f58e20d7cf346f2281879f758ae0b4838fb8664ebb2d8b3819"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-off-pl-light.jpg",
+      "bytes": 60052,
+      "sha256": "8cf607a30ba47fd9b45436697d8c7734e548050fb8793de364e0df4e0738916d"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-on-en-dark.jpg",
+      "bytes": 55489,
+      "sha256": "c9c66097daf98b015fb6cbbb1dec0398116ceadf41c2a825a2ada22b536e176a"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-on-en-light.jpg",
+      "bytes": 56111,
+      "sha256": "51c54a4cb799e8104346a917fd967c38f61d0a6df3173e5370b3bae83aa9d1f6"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-on-pl-dark.jpg",
+      "bytes": 59543,
+      "sha256": "5606142f125d420e64f77fdafcbbfd27df2edc1f1973f8302c53f52e4085750c"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-on-pl-light.jpg",
+      "bytes": 60085,
+      "sha256": "d6b934ad753d763d184de20e688733de84a187dafac141a932dabc681bf1d5c6"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/workload-reason-en-dark.jpg",
+      "bytes": 56169,
+      "sha256": "18664f4839eb24feafc0938ca9d13cb392fdd4de55d5d383bc723ae7f12a754c"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/workload-reason-en-light.jpg",
+      "bytes": 56628,
+      "sha256": "96bfd09bf4b2dbbf3aac2742842fa8373025e377699f8b343ee73614371bb014"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/workload-reason-pl-dark.jpg",
+      "bytes": 59939,
+      "sha256": "b3abd28e88831047a381dcbe3939ba36af7d10a251fdea04c2279d3635ef7aad"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/workload-reason-pl-light.jpg",
+      "bytes": 62199,
+      "sha256": "6cdd7df524f0683c84743cdfcaba0d44a6b276a2ca9523e3ac29e8132bf1fc54"
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "bytes": 2245508,
+      "sha256": "a09007b21e563bcee7fe62dfe87d747ce6e47d99fb2efc9dd5d6b76b2be27782"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "bytes": 2400786,
+      "sha256": "1b3b069285f75397a76bf238c79eeb5f30760fb500960927e16214aa4a2c79d8"
+    },
+    {
+      "path": "server/src/routes/__tests__/initiativeWorkload.gateway.pg.test.ts",
+      "bytes": 15692,
+      "sha256": "746e39080b4bc4a894ad8f45e8b5d4812564cf8b0d891e03a3fc4ca448ee1579"
+    },
+    {
+      "path": "server/src/services/workloadCapacityService.ts",
+      "bytes": 52880,
+      "sha256": "4e5a9ffecd12f2086bdb801f89175afcaa53f7b89fcde8339eea1d82fb7df0ba"
+    },
+    {
+      "path": "src/components/Initiatives/InitiativeWorkReportView.tsx",
+      "bytes": 42277,
+      "sha256": "21c137b968b45593c0473c3800db84d296e3d5c216b108a0ab298e09276ebefa"
+    },
+    {
+      "path": "src/components/Initiatives/InitiativeWorkloadSurface.tsx",
+      "bytes": 31743,
+      "sha256": "19785e2c58743a76bc3b53d905cccd0b40dce0ad74a3a2fd49bff2f40bcb28ef"
+    },
+    {
+      "path": "src/components/Initiatives/__tests__/InitiativeWorkReportView.kanon.test.tsx",
+      "bytes": 9234,
+      "sha256": "59408d9d955e19deda8816b86a24b58f1c891e3f78a7c0d64cefb805269eec4b"
+    },
+    {
+      "path": "src/components/Initiatives/__tests__/InitiativeWorkloadSurface.test.tsx",
+      "bytes": 12765,
+      "sha256": "76048450b47993679fcf978fc4e9caf5d36e7711c061dc83368817c9c8073c80"
+    },
+    {
+      "path": "src/services/initiatives/initiativeWorkloadApi.ts",
+      "bytes": 2728,
+      "sha256": "0311893e9f2991d00164dc85b0d8d2e5cee161e936f438a1faafb595ca3a810b"
+    }
+  ]
+}
