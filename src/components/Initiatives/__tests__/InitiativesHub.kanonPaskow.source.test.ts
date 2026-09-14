@@ -145,6 +145,27 @@ describe('Menu 3 · pigułki rejestru nie przeciekają do skrzynki [H1f DEC-507]
     const blok = bezKomentarzy(hub.slice(start, koniec));
     expect(blok).toContain("activeTab === 'transitionInbox'");
   });
+
+  it('`commandRowContent` jest wyłączony także dla `workReport` [P1 RP1b]', () => {
+    /*
+     * Zakładka „Raport z pracy" listuje PRZEBIEGI raportu, a pigułki Menu 3
+     * filtrują INICJATYWY po statusie cyklu życia (PENDING_APPROVAL /
+     * IN_EXECUTION) — przejazd kanonu Z-29 zmierzył je nad tabelą przebiegów,
+     * gdzie nie miały czego filtrować. Ta sama klasa defektu co H1f.
+     * Mutacja: usuń `activeTab === 'workReport'` z warunku wyłączeń → RED.
+     */
+    const start = hub.indexOf('commandRowContent={');
+    const koniec = hub.indexOf('commandRowRightContent={', start);
+    const blok = bezKomentarzy(hub.slice(start, koniec));
+    expect(blok).toContain("activeTab === 'workReport'");
+
+    /* Prawy skraj Menu 3 (kebab „Więcej" = adopcja klasycznej inicjatywy) też
+       nie ma sensu nad listą przebiegów raportu. */
+    const startR = hub.indexOf('commandRowRightContent={');
+    const koniecR = hub.indexOf('chips={', startR);
+    const blokR = bezKomentarzy(hub.slice(startR, koniecR));
+    expect(blokR).toContain("activeTab === 'workReport'");
+  });
 });
 
 describe('Segment zakresu — wspólny SSOT z Realizacją', () => {
