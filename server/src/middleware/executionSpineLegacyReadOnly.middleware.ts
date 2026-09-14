@@ -71,8 +71,29 @@ export function requireCanonicalExecutionWriter(
  *    dowod: zapisyInicjatyw.raidCanonical.pg.test.ts).
  *
  * WYCOFANE, bo NIKT ICH NIE WOLA (zmierzone grepem po `src/`, 0 wolaczy):
- *   start-execution, block, unblock, lifecycle-*, apply-template,
- *   apply-blueprint. Otwieranie martwej powierzchni nic nie daje.
+ *   start-execution, block, unblock, apply-template, apply-blueprint.
+ *   Otwieranie martwej powierzchni nic nie daje.
+ *
+ * PRZYWROCONE 14.09 (FALA B / H1) — `lifecycle-transition-proposals`,
+ * `lifecycle-transition-executions`, `lifecycle-gate-decisions`:
+ *   Obie przeslanki wycofania tych trzech trasy sa FALSZYWE.
+ *   (1) Nastepcy w Runtime-v1 NIE MA — zmierzone grepem po
+ *       `server/src/routes/pmo/initiativesExecutionRuntime.routes.ts`
+ *       (0 trafien na `gate`/`lifecycle`). Kanonicznym i JEDYNYM wlascicielem
+ *       tabeli `initiative_lifecycle_gate_decisions` (INI-MVP-GATE-001, T01/U03)
+ *       jest wlasnie zamontowany tutaj handler
+ *       `POST /:id/lifecycle-gate-decisions` -> `recordInitiativeLifecycleGateDecision`,
+ *       a dla sciezki ludzkiej para proposals->executions
+ *       (`transformationInitiativeTransitionAdapterService`), ktora te sama
+ *       funkcje wola z policzonym przez serwer `sourceDigest`/`a05ApprovalReceiptRef`.
+ *   (2) „Nikt nie wola" bylo opisem FRONTU, nie regula domenowa. Bramka
+ *       ustawiona PRZED jedynym istniejacym writerem oznacza, ze kanoniczna
+ *       sciezka zapisu decyzji bramkowej odpowiada 409 w produkcji i nie da sie
+ *       jej dolozyc wolacza — retirement wyprzedzil nastepce dokladnie tak, jak
+ *       opisuje ZAWEZENIE DEC-453 powyzej.
+ *   Wyjatek jest JAWNY i WASKI: dotyczy wylacznie tych trzech podzasobow
+ *   `lifecycle-*`; `start-execution`, `block`, `unblock`, `apply-*` i `raid`
+ *   pozostaja wycofane, a bramka dziala dalej dla calej reszty.
  *
  * PRZYWROCONE (nastepcy brak lub pisze do innego modelu odczytu):
  *   milestones, resources, staffing-plans, budget-items, gate-roles, move.
@@ -82,7 +103,6 @@ export function requireCanonicalExecutionWriter(
 const LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS = [
   /^\/[^/]+\/(?:start-execution|block|unblock)\/?$/,
   /^\/[^/]+\/raid(?:\/.*)?$/,
-  /^\/[^/]+\/(?:lifecycle-transition-proposals|lifecycle-transition-executions|lifecycle-gate-decisions)(?:\/.*)?$/,
   /^\/[^/]+\/(?:apply-template|apply-blueprint)\/?$/,
 ];
 
