@@ -48,6 +48,7 @@ import type {
 import { applyAcceptedPlanProposal } from './planProposalReview';
 import {
   applyDependencyObservationReviews,
+  type ConditionalDependencySnapshot,
   type DependencyObservation,
   type ObservationReview,
 } from './planDependencyReview';
@@ -61,6 +62,7 @@ interface WindowDraft {
   confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
   rationale: string;
   dependencySnapshot: string[];
+  conditionalDependencySnapshot?: ConditionalDependencySnapshot[];
   constraintSnapshot: Array<{ constraintId: string; state: 'KNOWN' | 'UNKNOWN'; detail: string }>;
   /** P15-K5: popyt na role w oknie (FTE) — wejscie arkusza okres x rola. */
   roleDemand?: Array<{ roleId: string; roleLabel: string; fte: number }>;

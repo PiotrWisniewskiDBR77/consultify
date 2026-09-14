@@ -651,6 +651,15 @@ const PlanScenarioSchema = z.object({
         confidence: z.enum(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']),
         rationale: z.string().min(1),
         dependencySnapshot: z.array(z.string()),
+        conditionalDependencySnapshot: z
+          .array(
+            z.object({
+              predecessorId: z.string().min(1),
+              condition: z.string().trim().min(1).max(2_000),
+              active: z.boolean(),
+            })
+          )
+          .optional(),
         constraintSnapshot: z.array(
           z.object({
             constraintId: z.string().min(1),
@@ -721,6 +730,7 @@ const PlanAnalysisReviewSchema = z.object({
       z.object({
         observationId: z.string().trim().min(1),
         outcome: z.enum(['ACCEPTED', 'REJECTED']),
+        conditionActive: z.boolean().nullable(),
         humanComment: z.string().trim().min(1).max(4_000),
         finalObservation: z.object({
           observationId: z.string().trim().min(1),

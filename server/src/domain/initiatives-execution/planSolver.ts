@@ -33,6 +33,15 @@ export interface PlanSolverResult {
   assumptions: string[];
 }
 
+export function effectiveDependencyIds(window: PlannedWindow): string[] {
+  return [
+    ...window.dependencySnapshot,
+    ...(window.conditionalDependencySnapshot ?? [])
+      .filter((dependency) => dependency.active)
+      .map((dependency) => dependency.predecessorId),
+  ].filter((dependencyId, index, all) => all.indexOf(dependencyId) === index);
+}
+
 export function dependencyOrder(windows: PlannedWindow[]) {
   const byId = new Map(windows.map((window) => [window.initiativeId, window]));
   const visited = new Set<string>();
@@ -56,7 +65,7 @@ export function dependencyOrder(windows: PlannedWindow[]) {
       return;
     }
     visiting.add(window.initiativeId);
-    for (const dependency of [...window.dependencySnapshot].sort()) {
+    for (const dependency of effectiveDependencyIds(window).sort()) {
       const source = byId.get(dependency);
       if (source) visit(source, [...path, window.initiativeId]);
       else
@@ -123,7 +132,7 @@ export function solvePlanScenario(
 
   for (const window of ordered) {
     if (cycleMembers.has(window.initiativeId)) continue;
-    const dependencyIndexes = window.dependencySnapshot
+    const dependencyIndexes = effectiveDependencyIds(window)
       .map((dependency) => assignedPeriodIndex.get(dependency))
       .filter((value): value is number => value !== undefined);
     const dependencyFloor = dependencyIndexes.length ? Math.max(...dependencyIndexes) + 1 : 0;
