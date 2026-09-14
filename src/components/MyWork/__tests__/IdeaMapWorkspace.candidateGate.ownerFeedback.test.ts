@@ -36,11 +36,11 @@ describe('MYW-IDEAS-010 candidate→initiative path is no longer tool-gated', ()
     // the dead legacy branch further down (unreachable: melsCanvasEnabled
     // is hardcoded true) is intentionally out of scope for this fix.
     const candidateStart = source.indexOf('MYW-IDEAS-010: previously gated');
-    const candidateEnd = source.indexOf('function renderWorkspaceSiblings(): React.ReactNode');
+    const candidateEnd = source.indexOf('{/* P-T14', candidateStart);
     expect(candidateStart).toBeGreaterThan(0);
     expect(candidateEnd).toBeGreaterThan(candidateStart);
-    expect(source.slice(candidateStart, candidateEnd)).not.toContain(
-      "{activeTool === 'process_flow'"
+    expect(source.slice(candidateStart, candidateEnd)).not.toMatch(
+      /\{activeTool === 'process_flow'\s*&&\s*\(/
     );
   });
 

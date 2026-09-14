@@ -41,15 +41,19 @@ describe('1.1-N2: róg warsztatu idei ma dokładnie dwa przyciski — Panel i AI
     expect(fs.existsSync(path.resolve(__dirname, '../IdeaConvertMenu.tsx'))).toBe(false);
   });
 
-  it('IdeaCornerActions ma dokładnie dwa przyciski o etykietach „Panel" i „AI"', () => {
+  it('róg składa dokładnie dwa wejścia: Panel w IdeaCornerActions i kanoniczne PracujZAI', () => {
     const start = menu1Bits.indexOf('export const IdeaCornerActions');
     expect(start).toBeGreaterThan(0);
     const body = menu1Bits.slice(start);
-    expect(body.match(/<button/g)?.length).toBe(2);
+    expect(body.match(/<button/g)?.length).toBe(1);
     expect(body).toContain('data-testid="idea-corner-panel"');
-    expect(body).toContain('data-testid="idea-corner-ai"');
     expect(workspace).toContain("t('mindmap.cornerPanel', 'Panel')");
-    expect(workspace).toContain("t('mindmap.cornerAi', 'AI')");
+    const slot = workspace.slice(
+      workspace.indexOf('primaryActionSlot={'),
+      workspace.indexOf('titleAction=', workspace.indexOf('primaryActionSlot={'))
+    );
+    expect(slot.match(/<IdeaCornerActions/g)).toHaveLength(1);
+    expect(slot.match(/<PracujZAI/g)).toHaveLength(1);
   });
 
   it('chip statusu („Kształtuje się · Zapisano przed chwilą") zniknął z rogu', () => {
