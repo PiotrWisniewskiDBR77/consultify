@@ -1,0 +1,246 @@
+✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie 8, baseline 8 — dług nie rośnie)
+
+── Karty N (SPEC-N §5B) — tryb RAPORTU: wypisuję, nie blokuję ──
+  src/components/DiscoveryTools/KnownToolDetailView.tsx
+    ⚠ R1 solid/filled CTA poza slotem primary — 1 (SPEC-N §2.3; OSTRZEŻENIE, do oceny okiem)
+        L2567
+  src/components/MyWork/TaskDetailView.tsx
+    ⚠ R1 solid/filled CTA poza slotem primary — 1 (SPEC-N §2.3; OSTRZEŻENIE, do oceny okiem)
+        L7762
+  Razem: R1 (ostrzeżeń) 2 · R2+R3 aktualnie 0 / baseline 0 (blokujące, ratchet — dług nie rośnie)
+
+── danger-* poza kontekstem błędu (P6 §5 krok 7) — tryb RAPORTU, nigdy blokady ──
+  src/components/Discovery/DiscoveryCanvas.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L50
+  src/components/Discovery/InsightDetailView.tsx
+    • danger-* bez adnotacji — 8 (baseline 8)
+        L111
+        L112
+        L141
+        L142
+        L171
+        L172
+        L203
+        L220
+  src/components/Discovery/ProjectConversionModal.tsx
+    • danger-* bez adnotacji — 4 (baseline 4)
+        L117
+        L118
+        L119
+        L193
+  src/components/Discovery/RecommendationPanel.tsx
+    • danger-* bez adnotacji — 3 (baseline 3)
+        L191
+        L192
+        L195
+  src/components/Discovery/nodes/InitiativeNode.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L23
+  src/components/Discovery/nodes/PainPointNode.tsx
+    • danger-* bez adnotacji — 10 (baseline 10)
+        L23
+        L78
+        L91
+        L98
+        L106
+        L114
+        L124
+        L135
+        L138
+        L155
+  src/components/Discovery/nodes/RecommendationNode.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L21
+  src/components/DiscoveryTools/DynamicSwotLibraryGraphic.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L174
+        L175
+  src/components/DiscoveryTools/KnownToolDetailView.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L706
+  src/components/DiscoveryTools/ProcessAutomation/ProcessMapWorkSurface.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L345
+  src/components/DiscoveryTools/ToolContextPanel.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L47
+  src/components/DiscoveryTools/ToolDocumentView.tsx
+    • danger-* bez adnotacji — 5 (baseline 5)
+        L240
+        L245
+        L1139
+        L1225
+        L1834
+  src/components/DiscoveryTools/shared/ProposalCardGovernance.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L26
+        L87
+  src/components/DiscoveryTools/shared/StrategicCanvasVisuals.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L55
+  src/components/DiscoveryTools/steps/ImpactHypothesisStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L175
+  src/components/DiscoveryTools/steps/PrepareStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L59
+  src/components/DiscoveryTools/steps/ReasoningStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L59
+  src/components/DiscoveryTools/steps/ResultsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L59
+  src/components/DiscoveryTools/steps/SummaryStep.tsx
+    • danger-* bez adnotacji — 5 (baseline 5)
+        L464
+        L572
+        L579
+        L623
+        L774
+  src/components/DiscoveryTools/tools/AmbitionDecomposer/AmbitionDecomposerPhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L167
+  src/components/DiscoveryTools/tools/AmbitionDecomposer/ThemeCard.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L127
+        L231
+  src/components/DiscoveryTools/tools/CapabilityMapper/CapabilityCard.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L150
+        L270
+  src/components/DiscoveryTools/tools/CapabilityMapper/CapabilityMapperPhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L167
+  src/components/DiscoveryTools/tools/Digital/GenericDomainStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L197
+  src/components/DiscoveryTools/tools/DynamicSWOT/EvidenceEditor.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L75
+        L203
+  src/components/DiscoveryTools/tools/DynamicSWOT/SWOTBuildPhase.tsx
+    • danger-* bez adnotacji — 3 (baseline 3)
+        L60
+        L202
+        L274
+  src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInputExplorationPhase.tsx
+    • danger-* bez adnotacji — 3 (baseline 3)
+        L68
+        L69
+        L937
+  src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInsightsPhase.tsx
+    • danger-* bez adnotacji — 13 (baseline 13)
+        L89
+        L121
+        L122
+        L123
+        L162
+        L825
+        L1202
+        L1845
+        L1979
+        L1980
+        L1988
+        L1996
+        L2069
+  src/components/DiscoveryTools/tools/DynamicSWOT/SWOTQuadrantStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L178
+  src/components/DiscoveryTools/tools/FocusTradeoff/FocusTradeoffPhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L165
+  src/components/DiscoveryTools/tools/FocusTradeoff/PriorityCard.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L135
+        L239
+  src/components/DiscoveryTools/tools/GrowthPaths/GrowthPathQuadrantStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L226
+  src/components/DiscoveryTools/tools/GrowthPaths/GrowthPathsPhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L161
+  src/components/DiscoveryTools/tools/MarketForces/ForceStep.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L217
+        L293
+  src/components/DiscoveryTools/tools/MarketForces/MarketForcesPhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L171
+  src/components/DiscoveryTools/tools/NarrativeEngine/NarrativeEnginePhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L164
+  src/components/DiscoveryTools/tools/NarrativeEngine/PillarCard.tsx
+    • danger-* bez adnotacji — 3 (baseline 3)
+        L129
+        L204
+        L252
+  src/components/DiscoveryTools/tools/Operational/A3CountermeasuresStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L138
+  src/components/DiscoveryTools/tools/Operational/A3RootCauseStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L104
+  src/components/DiscoveryTools/tools/Operational/DMSEscalationStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L136
+  src/components/DiscoveryTools/tools/Operational/DMSKPIsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L146
+  src/components/DiscoveryTools/tools/Operational/InventoryClassificationStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L150
+  src/components/DiscoveryTools/tools/Operational/InventoryReplenishmentStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L143
+  src/components/DiscoveryTools/tools/Operational/OperationalSectionStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L185
+  src/components/DiscoveryTools/tools/Operational/SMEDImprovementsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L146
+  src/components/DiscoveryTools/tools/Operational/SMEDStepsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L139
+  src/components/DiscoveryTools/tools/Operational/SOPChecklistsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L136
+  src/components/DiscoveryTools/tools/Operational/SOPStandardsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L136
+  src/components/DiscoveryTools/tools/PortfolioPriority/PortfolioItemsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L213
+  src/components/DiscoveryTools/tools/PortfolioPriority/PortfolioPriorityPhases.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L151
+        L347
+  src/components/DiscoveryTools/tools/RiskUncertainty/AssumptionsStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L133
+  src/components/DiscoveryTools/tools/RiskUncertainty/RiskUncertaintyPhases.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L133
+        L476
+  src/components/DiscoveryTools/tools/RiskUncertainty/RisksStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L170
+  src/components/DiscoveryTools/tools/RiskUncertainty/ScenariosStep.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L135
+  src/components/DiscoveryTools/tools/ValueChain/ActivityCard.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L277
+  src/components/DiscoveryTools/tools/ValueChain/ValueChainPhases.tsx
+    • danger-* bez adnotacji — 1 (baseline 1)
+        L181
+  src/components/DiscoveryTools/visualizations/PorterRadar.tsx
+    • danger-* bez adnotacji — 2 (baseline 2)
+        L75
+        L158
+  src/components/DiscoveryTools/visualizations/SWOTMatrix.tsx
+    • danger-* bez adnotacji — 3 (baseline 3)
+        L35
+        L37
+        L105
+  Razem: danger-* bez adnotacji 117 / baseline 117 (RAPORT — nie blokuje, ratchet informacyjny)

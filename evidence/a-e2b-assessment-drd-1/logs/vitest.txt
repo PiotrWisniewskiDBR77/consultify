@@ -1,0 +1,36 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-20260914
+
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > routes visible DRD and maturity-matrix chrome through bilingual i18n keys 60ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > nie ma polskiego defaultValue w t() (z ogonkami ani bez) 23ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > nie ma polskich napisów poza t() w treści JSX i atrybutach 27ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts > J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też) > rejestr metodyk (frameworkRegistry.ts) nie ma polskich napisów w literałach 1ms
+ ✓ src/components/assessment/__tests__/jezykAssessment.source.test.ts (4 tests) 112ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDMatrixSession > renders the matrix surface with the axis areas 35ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDMatrixSession > click on a level writes answers.areas[areaId].achievedLevel (canonical shape, no scoreSummary) 17ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDMatrixSession > hydrates cell color from an existing achievedLevel 11ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm (Piotr original) renders as the default DRD session surface > renders without error and reflects hydrated area scores from the adapter 14ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm — per-axis levelCount (ASM-001A fix: no hardcoded 1-5) > offers levels 1-7 for "Digital Processes" (levelCount 7) and writes level 6/7 to onChange 92ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm — per-axis levelCount (ASM-001A fix: no hardcoded 1-5) > regression: "Digital Business Models" (levelCount 5) still offers exactly 5 levels, unchanged 160ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > DRDForm <-> DRDMatrixSession parity for a levelCount=7 axis (ASM-001A reopen scenario) > achievedLevel:6/targetLevel:7 on a 7-level axis renders as "6" (Matrix) and "6/7" (Form axis summary) — never "6/5" or clamped 19ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > drdAnswersAdapter round-trip (Form <-> canonical) > areasToFormData maps achievedLevel/targetLevel into per-axis areaScores 0ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > drdAnswersAdapter round-trip (Form <-> canonical) > formDataToAreas merges back and preserves richer per-area fields (notes) 0ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx > drdAnswersAdapter round-trip (Form <-> canonical) > round-trips canonical -> form -> canonical without loss of scores 0ms
+ ✓ tests/components/assessment/DRDMatrixSession.test.tsx (10 tests) 351ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  14:38:58
+   Duration  1.15s (transform 218ms, setup 264ms, import 325ms, tests 463ms, environment 792ms)
+
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  14:38:58
+   Duration  1.15s (transform 218ms, setup 264ms, import 325ms, tests 463ms, environment 792ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2b-assessment-drd-20260914/junit.xml
