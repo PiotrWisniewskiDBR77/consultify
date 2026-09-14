@@ -1,5 +1,21 @@
 <!-- SKRZYNKA: aktualne zlecenia. Nadzorca dopisuje tu; wykonawca czyta to PIERWSZE. -->
-# ★ AKTUALNE ZLECENIA (stan 13.09.2026, rano — integrator Fable)
+# ★ AKTUALNE ZLECENIA (stan 14.09.2026, rano — CTO Fable, sesja 14.09)
+
+**Z-1 (14.09).** Odbiór paczki 5 (raport Szampana, gałąź `integracja/kandydat-paczka5-20260913`
+scalona `d73ccb90a7`) → push/staging przez CTO 14.09.
+
+**Z-2 (14.09).** Blokery Tomka (DEC-496, 🔴): dwie gałęzie Opus od `0de4dc9c66` —
+`integracja/kandydat-tomek-konto-20260914` (XII, III, VIII, V, XI, II) i
+`integracja/kandydat-tomek-czat-20260914` (IX, XXI, IV, XXII, XIII, VII/X).
+
+**Z-3 (14.09).** KANAL.md — Wpis 16 do Codexa (DEC-495 skrót + cztery uwagi rdzenia Tomka
+XV/XVI/XVII/XIV) — dopisany, patrz sekcja niżej.
+
+**Z-4 (14.09).** Higiena DBR77 — apply po dry-run (sesja Szampana, `b9164136fa`).
+
+**Z-5 (14.09).** Pytanie do właściciela: adres wsparcia w mailu powitalnym —
+`support@consultify.com` (błędny, strona `.com` nie istnieje) — docelowo `support@consultify.ai`?
+Trzy domeny w kodzie (.com/.app/.ai) — decyzja właściciela.
 
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
@@ -93,6 +109,8 @@ tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
 ## 14.09.2026
 
+**Stan poranny 14.09:** staging = demo = `90833bc94a`; linia `0de4dc9c66`; tag `staging-deployed` = `90833bc94a`. Pilotaż w bazie stagingu: logowania od 13.09 tylko Paweł (7×, ostatnie 03:39 UTC 14.09) i Justyna (2×); Tomasz J./Tomasz L./Katarzyna 0 logowań (Tomek testował na koncie gmail, poza organizacją DBR77), Iriny brak konta; 0 rekordów, 0 `feedback_items`. O 03:42 UTC circuit breaker AI OPEN (deepseek 10 błędów, openai 11) w rozmowie Pawła z Teresą + 9/11 wywołań 404 na `/api/v8/*` — diagnoza u Szampana (gałąź `integracja/kandydat-pilot-blokery-20260913`). Dysk: 15→66 GiB po usunięciu 13 worktree `wt/*` (kopie na `origin/backup/*`, gałęzie lokalne zostały) + cache + 6 sierocych wolumenów. Dwie sesje nadzorcze równolegle: Szampan domyka paczkę 5 (scalona `d73ccb90a7`, odbiór w toku), pilot-blokery, drobne (`b9164136fa`), higienę DBR77 dry-run; sesja 14.09 (CTO Fable) = jedyny push/workflow/tag/rejestr/KANAL. DEC-494 (13.09) = TAK na podglądy — K5 zamknięte.
+
 **DEC-495 (CTO na mandacie, 14.09) — Wizja Inicjatyw 4 przyciski, doprecyzowanie właściciela 14.09.**
 Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_20260914.md`.
 (a) Potwierdza DEC-492/493 i SPEC_FALA2: Menu 2 = Inicjatywy / Plan / Obciążenie / Raport z pracy; Menu 3 Inicjatyw = Lista + Analiza. Stan kodu: realnie budowany tylko przycisk 1 (Analiza portfela, F2-1 `cc1c23b139`); Plan/Obciążenie reużywają `PlanScenarioSurface`/`CapacityScenarioSurface`; Raport z pracy = atrapa (`report={true}` na `InitiativePreparationReadView`).
@@ -101,6 +119,36 @@ Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_
 (d) Kryteria analizy portfela: 5 właściciela obowiązkowe (pokrycie obszaru, nakładanie się, priorytety, duplikaty vs realizowane, historia doświadczeń); Codex może rozszerzać własną wiedzą consultingową bez osobnego akceptu per kryterium.
 (e) Doprecyzowanie DEC-486: zakaz zmiany biegnących przydziałów dotyczy WYŁĄCZNIE ekranu Obciążenia; Realizacja zmienia przydziały.
 (f) Każdy etap wchodzi za flagą OFF i po akcepcie właściciela na zrzucie (DEC-492 bez zmian).
+
+**DEC-496 (CTO na mandacie, 14.09) — Zgłoszenia pilotażu: uwagi Tomka (22 punkty).**
+Źródło: docx „Uwagi do stage Consultify v2”, konto `t.tomasz.jankowski+123@gmail.com`, org `tt2tt`, staging `90833bc94a`. Lista P-T01…P-T22 (nr | moduł | uwaga skrót | typ | właściciel naprawy | stan):
+
+| Nr | Moduł | Uwaga (skrót) | Typ | Właściciel naprawy | Stan |
+|---|---|---|---|---|---|
+| P-T01 (I) | Mail powitalny | Adres wsparcia `support@consultify.com` — domena `.com` nie istnieje | ⚪ decyzja | właściciel | Z-5 |
+| P-T02 (II) | Mail powitalny | Stopka „Warsaw, Poland” do zweryfikowania (PL/US); link `/help` z maila 404 | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T03 (III) | Profil | Nie można zmienić i zapisać danych (imię, telefon) | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T04 (IV) | Chat | Załączniki nie działają — brak dostępu do treści pliku | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T05 (V) | Profil | Zdjęcie profilowe wgrywa się, następnego dnia nie wczytuje | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T06 (VI) | Ustawienia/dashboard | Suwaki „Widoczności widgetów” niewidoczne w trybie jasnym gdy OFF | ⚪ kosmetyka | — | NIEROZLICZONE — brak w Podziale CTO, do przydziału |
+| P-T07 (VII) | Chat | Obrys zaznaczonej rozmowy nachodzi na tekst | ⚪ kosmetyka | Opus `tomek-czat` | otwarte |
+| P-T08 (VIII) | Organizacje | Kilka kliknięć „utwórz” tworzy duplikaty organizacji o tej samej nazwie | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T09 (IX) | Chat | Nowa rozmowa przeskakuje do ostatniego czatu zamiast otworzyć nowe okno | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T10 (X) | Chat | Lewy panel historii zasłania tekst | ⚪ kosmetyka | Opus `tomek-czat` | otwarte |
+| P-T11 (XI) | Ustawienia/auth-access | Historia logowania nieprawdziwa/nie odświeża się po przelogowaniu | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T12 (XII) | Odzyskiwanie hasła | Link resetu nie dochodzi mailem; stare hasło nadal działa; brak opcji telefon/mail przy resecie | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T13 (XIII) | Moja Praca / Mind Map | Teresa nie pomaga w nawigacji po środowisku | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T14 (XIV) | Moja Praca | Status/priorytet 2 kliknięcia; nazwa nie synchronizuje paneli; „Przejrzyj kandydaturę” nic nie robi; zakładka „próba 1” przenosi na inną kartę; nadmiar UI w Proces Flow | 🟠 rdzeń | Codex | wpis 16 |
+| P-T15 (XV) | Wywiad | Brak możliwości usuwania dodanych załączników | 🟠 rdzeń | Codex | wpis 16 |
+| P-T16 (XVI) | Wywiad | Odpowiedź AI niespójna na bełkot (raz odrzucona, raz zamieniona w zmyślony akapit) | 🟠 rdzeń | Codex | wpis 16 |
+| P-T17 (XVII) | Kreator wniosków AI | „Nie udało się wczytać dokumentów kontekstowych” mimo 1 przeprowadzonego wywiadu | 🟠 rdzeń | Codex | wpis 16 |
+| P-T18 (XVIII) | Nawigacja | Nie można otwierać przycisków jako nowe karty przeglądarki | ⚪ kosmetyka | — | NIEROZLICZONE — brak w Podziale CTO, do przydziału |
+| P-T19 (XIX) | Onboarding/organizacja | Błąd przy tworzeniu zakładu mimo że organizacja się tworzy; nie można wyjść z panelu | ⚪ wiedza użytkownika | — | zamknięte (informacja) |
+| P-T20 (XX) | DRD ocena | „Zapytaj Teresę” → „Ta rozmowa nie istnieje” | ⚪ duplikat | — | duplikat §3 #16 First Value plan |
+| P-T21 (XXI) | DRD ocena | Problemy z dodawaniem plików; przycisk potwierdzenia nie działa; okno czatu bez zamknięcia | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T22 (XXII) | DRD ocena | Potwierdzenie/zamknięcie odpowiedzi nie działa (ciąg dalszy XXI) | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+
+Podział: 🔴 blokery → dwie gałęzie Opus od linii `0de4dc9c66`: `integracja/kandydat-tomek-konto-20260914` (XII reset hasła, III profil, VIII duplikaty org, V avatar, XI historia logowania, II /help) i `integracja/kandydat-tomek-czat-20260914` (IX nowa rozmowa, XXI DRD Teresa regresja, IV załączniki, XXII DRD potwierdzenie/zamknięcie, XIII kontekst Mind Map, VII/X kosmetyka). 🟠 rdzeń Wywiad/Moja Praca (XV usuwanie załącznika, XVI niespójność AI na bełkot, XVII Kreator wniosków kontekst, XIV Moja Praca) → Codex (KANAL.md wpis 16). ⚪ XX = duplikat §3 #16 First Value plan; XIX ctrl+click i „aktywne sesje” = wiedza użytkownika (zamknięte informacją, nie naprawą); I adres wsparcia = decyzja właściciela (trzy domeny w kodzie: .com/.app/.ai, Z-5). Znacznik commitów napraw: `DEC-496`.
 
 ---
 
