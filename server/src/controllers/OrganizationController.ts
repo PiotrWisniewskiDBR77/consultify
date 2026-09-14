@@ -103,6 +103,35 @@ export class OrganizationController {
         return;
       }
 
+      // T-VIII (tester Tomek, 2026-09-13): „kilka kliknięć spowodowało
+      // powstanie kilku organizacji o tej samej nazwie". Ten endpoint nie miał
+      // ŻADNEJ ochrony przed powtórzeniem — każde kolejne kliknięcie (albo
+      // kolejny Enter w polu nazwy) wstawiało nowy wiersz. Bramka jest
+      // idempotentna po (twórca, znormalizowana nazwa): powtórzenie dostaje
+      // 409 i identyfikator organizacji, która już istnieje, zamiast
+      // bliźniaka. Świadomie NIE jest to unikalność globalna — dwie różne
+      // firmy mogą nazywać się tak samo; dublem jest tylko powtórka tego
+      // samego właściciela. Bez migracji: wyłącznie odczyt przed zapisem.
+      const normalizedName = String(name).trim().replace(/\s+/g, ' ');
+      const duplicate = await dbGet<{ id: string; name: string }>(
+        `SELECT id, name FROM organizations
+          WHERE created_by_user_id = ?
+            AND LOWER(TRIM(name)) = LOWER(?)
+            AND COALESCE(status, 'active') <> 'deleted'
+          LIMIT 1`,
+        [userId, normalizedName]
+      );
+      if (duplicate) {
+        // Treść dla człowieka NIE wychodzi z serwera — ekran tłumaczy `code`
+        // (bramka językowa J0: serwer nie wysyła angielskich zdań do UI).
+        res.status(409).json({
+          error: 'ORGANIZATION_NAME_DUPLICATE',
+          code: 'ORGANIZATION_NAME_DUPLICATE',
+          organizationId: duplicate.id,
+        });
+        return;
+      }
+
       const { createOrganization } = await import('../services/organizationService.js');
       const org = await createOrganization({
         userId,
