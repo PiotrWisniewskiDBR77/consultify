@@ -1,6 +1,15 @@
 {
   "package": "D-2 pilot retest",
-  "baseSha": "4de31efbcb0c286cdcbdb0251b10a894db02848d",
+  "baseSha": "7ecfcf007b",
+  "originalBaseSha": "4de31efbcb0c286cdcbdb0251b10a894db02848d",
+  "originalReviewedSha": "5d70c2468b7b6bbb804be65fb171ce72384afc30",
+  "rebasedDeliverySha": "a380c4180e4135277a2ad26f10fe4bc311e95ddc",
+  "rebasedReviewSha": "0f2c640781f3aabb508199d6ba85253512ddb4e5",
+  "rebaseValidation": {
+    "rangeDiff": "2/2 commits identical",
+    "stablePatchId": "3fb2d21f83a113e6328f5f1c682cd7fe0cdd609e",
+    "nameStatusIdentical": true
+  },
   "scope": ["P-P11", "P-T13", "P-T19"],
   "verdict": {
     "P-P11": "PARTIAL_5_PASS_1_FAIL",

@@ -1,0 +1,75 @@
+{
+  "package": "D-2 pilot retest W62 refreeze",
+  "requiredBase": "7ecfcf007b",
+  "originalBase": "4de31efbcb0c286cdcbdb0251b10a894db02848d",
+  "originalReviewedSha": "5d70c2468b7b6bbb804be65fb171ce72384afc30",
+  "rebasedDeliverySha": "a380c4180e4135277a2ad26f10fe4bc311e95ddc",
+  "rebasedReviewSha": "0f2c640781f3aabb508199d6ba85253512ddb4e5",
+  "mechanicalEquivalence": {
+    "rangeDiff": "2/2 commits identical",
+    "stablePatchIdBefore": "3fb2d21f83a113e6328f5f1c682cd7fe0cdd609e",
+    "stablePatchIdAfter": "3fb2d21f83a113e6328f5f1c682cd7fe0cdd609e",
+    "nameStatusIdentical": true
+  },
+  "verdict": {
+    "P-T19": "PASS_LOCAL",
+    "P-P11": "PARTIAL_5_PASS_1_FAIL",
+    "P-T13": "STOP_OWNER_DECISION"
+  },
+  "evidenceInventorySelfExcluded": [
+    {
+      "path": "evidence/a-d2-pilot/INDEPENDENT_REVIEW.md",
+      "bytes": 3677,
+      "sha256": "45e10c25f62fe217549702c7fa0d0357c11a19b80c3f78d84b1a75294d890bcc"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pp11-asm-browser.log",
+      "bytes": 10994,
+      "sha256": "f7730833ccd171e4873aee68137c5f6e3601a0316d123fae11282f4d4db96152"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pp11-focused-vitest.log",
+      "bytes": 9755,
+      "sha256": "9fb3edffa8f9d0d3d2522d975d12722f2e32114f35676e3d7f58879c44e32811"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pt13-current-wiring-vitest.log",
+      "bytes": 2874,
+      "sha256": "1be3b3f6c99f6ef0629fe00a3f48751c0003857721e93ded6f834ce870226112"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pt13-source-measurement.txt",
+      "bytes": 4113,
+      "sha256": "ff1329f351a617e6c0ab0591bf6dc94ad4ef7d6f668262b27ff95937c5993db2"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pt19-browser-receipt.json",
+      "bytes": 5441,
+      "sha256": "53b489bbcbb1b69bef9cfd487d5d5bf5616be29bc7a660c562ea97c324f899f6"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pt19-browser-runner.mjs",
+      "bytes": 4010,
+      "sha256": "b17d4dee2530365c755daa62fbe2c40e156abdbb21653e763fdc5203c69276f3"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pt19-fresh-org-no-v8-404.png",
+      "bytes": 89013,
+      "sha256": "e636954f6ae4ebdfc3eb85abc905eda77a0ff6fb8d337ec876bac649394be4b3"
+    },
+    {
+      "path": "evidence/a-d2-pilot/pt19-realpg-flags.txt",
+      "bytes": 99,
+      "sha256": "3800d30ecee2c2353c4bb5ca2bc3dcc66ae374d0aaa59da2338015bbd11915ec"
+    }
+  ],
+  "evidenceBytesSelfExcluded": 129976,
+  "evidenceOnlyCorrection": {
+    "path": "evidence/f2-p2-plan/e1/VERIFICATION.md",
+    "from": "VITE_INITIATIVES_PLAN_ANALYSIS",
+    "to": "ENABLE_INITIATIVES_PLAN"
+  },
+  "productChange": false,
+  "migrationChange": false,
+  "testChange": false
+}

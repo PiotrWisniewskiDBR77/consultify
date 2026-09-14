@@ -2,7 +2,7 @@
 
 **Werdykt:** P-T19 jest lokalnie **PASS** na świeżej bazie i prawdziwej ścieżce przeglądarkowej; P-P11 po rozbiciu daje **5 obszarów zielonych i 1 czerwony**; P-T13 ma sprawny przewód kontekstu Mind Map, ale nadal nie ma autorytatywnej mapy aplikacji w instrukcji Teresy, dlatego zmiana produktu pozostaje **STOP — decyzja właściciela**.
 
-- Baza kodu: `4de31efbcb0c286cdcbdb0251b10a894db02848d`.
+- Baza kodu po mechanicznym rebase W62: `7ecfcf007b` (pierwotnie zbadana na `4de31efbcb0c286cdcbdb0251b10a894db02848d`; range-diff 2/2 bez zmiany patcha).
 - Źródło kryteriów: `docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`, DEC-496, wiersze P-P11, P-T13 i P-T19.
 - Środowisko: osobny PostgreSQL 16 + pgvector, `consultify_d2`, port `5321`; API `4217`; frontend `4218`; `MOCK_DB=false`; `ENABLE_V8_GLOBAL=true`.
 - Zakres jest pomiarem i propozycją. Nie ma migracji ani zmiany semantyki produktu.
@@ -63,4 +63,3 @@ Prawdziwy przebieg przeglądarkowy na świeżej bazie:
 4. Wejście do `/assessment` wyrenderowało pięć zakładek, `GET /api/v8/assessment` zwrócił **200**, a baner niedostępności V8 był nieobecny.
 
 Dowody: `evidence/a-d2-pilot/pt19-browser-receipt.json`, `pt19-realpg-flags.txt`, `pt19-fresh-org-no-v8-404.png`. P-T19 jest **PASS lokalnie**; nie jest to dowód stagingu.
-
