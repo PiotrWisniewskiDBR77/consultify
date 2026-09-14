@@ -75,6 +75,8 @@ const { mutationFetch, getInitiatives, initiatives, executionCases } = vi.hoiste
     {
       executionCaseId: 'case-a',
       initiativeId: 'initiative-a',
+      projectId: 'project-one',
+      projectTitle: 'North plant',
       version: 4,
       state: 'ACTIVE',
       executionManagerId: 'owner-one',
@@ -95,6 +97,8 @@ const { mutationFetch, getInitiatives, initiatives, executionCases } = vi.hoiste
     {
       executionCaseId: 'case-c',
       initiativeId: 'initiative-c',
+      projectId: 'project-two',
+      projectTitle: 'South plant',
       version: 7,
       state: 'CLOSED',
       executionManagerId: 'owner-one',
@@ -134,7 +138,9 @@ vi.mock('@/store/useInitiativeRefreshStore', () => ({
 }));
 vi.mock('@/hooks/useOpenChatWithContext', () => ({ useOpenChatWithContext: () => vi.fn() }));
 vi.mock('@/hooks/useOrganizationMemberNames', () => ({
-  useOrganizationMemberNames: () => (id: string) => id,
+  useOrganizationMemberNames: () => (id: string) =>
+    ({ 'owner-one': 'Marek Nowak', 'owner-two': 'Anna Kowalska' } as Record<string, string>)[id] ??
+    null,
   memberNameOrUnknown: (resolver: ((id: string) => string) | undefined, id: string) =>
     resolver?.(id) ?? 'Unknown user',
 }));
@@ -337,33 +343,43 @@ describe('E1b Execution Bank views', () => {
 
     await screen.findByText('Alpha');
     fireEvent.click(screen.getByRole('radio', { name: 'All' }));
-    const project = screen.getByRole('combobox', { name: 'Bank project filter' });
-    const status = screen.getByRole('combobox', { name: 'Bank status filter' });
-    const owner = screen.getByRole('combobox', { name: 'Bank owner filter' });
-    const priority = screen.getByRole('combobox', { name: 'Bank priority filter' });
-    const time = screen.getByRole('combobox', { name: 'Bank time filter' });
+    const project = screen.getByRole('button', { name: 'Bank project filter' });
+    const status = screen.getByRole('button', { name: 'Bank status filter' });
+    const owner = screen.getByRole('button', { name: 'Bank owner filter' });
+    const priority = screen.getByRole('button', { name: 'Bank priority filter' });
+    const time = screen.getByRole('button', { name: 'Bank time filter' });
+    expect(screen.getByTestId('execution-bank-filter-controls').querySelector('select')).toBeNull();
 
-    fireEvent.change(project, { target: { value: 'NO_PROJECT' } });
+    fireEvent.click(project);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'No project' }));
     await waitFor(() => expect(visibleInitiativeIds('table')).toEqual(['initiative-b']));
     fireEvent.click(screen.getByTestId('view-mode-kanban'));
     await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-b']));
 
-    fireEvent.change(project, { target: { value: 'ALL' } });
-    fireEvent.change(status, { target: { value: 'CLOSED' } });
+    fireEvent.click(project);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All projects' }));
+    fireEvent.click(status);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Closed' }));
     await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-c']));
 
-    fireEvent.change(status, { target: { value: 'ALL' } });
-    fireEvent.change(owner, { target: { value: 'owner-one' } });
+    fireEvent.click(status);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All statuses' }));
+    fireEvent.click(owner);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Marek Nowak' }));
     await waitFor(() =>
       expect(visibleInitiativeIds('kanban').sort()).toEqual(['initiative-a', 'initiative-c'])
     );
 
-    fireEvent.change(owner, { target: { value: 'ALL' } });
-    fireEvent.change(priority, { target: { value: 'High' } });
+    fireEvent.click(owner);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All owners' }));
+    fireEvent.click(priority);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'High' }));
     await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-a']));
 
-    fireEvent.change(priority, { target: { value: 'ALL' } });
-    fireEvent.change(time, { target: { value: 'NEXT_30' } });
+    fireEvent.click(priority);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All priorities' }));
+    fireEvent.click(time);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Next 30 days' }));
     await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-c']));
     expect(mutationFetch).not.toHaveBeenCalled();
   });

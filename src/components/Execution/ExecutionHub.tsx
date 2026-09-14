@@ -485,6 +485,7 @@ const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [InitiativeStatus.IN_EXECU
 // src/labels/executionTypeLabels.ts (patrz oba miejsca użycia niżej).
 
 interface ExecutionDecision {
+  [key: string]: unknown;
   id: string;
   title: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED';
@@ -2132,7 +2133,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const stats = useMemo(
     () => ({
       executing: statusCounts[InitiativeStatus.IN_EXECUTION] ?? 0,
-      blocked: initiatives.filter((initiative) => initiative.onHold === true).length,
+      blocked: initiatives.filter((initiative) => isBlockedInitiative(initiative as any)).length,
     }),
     [initiatives, statusCounts]
   );
@@ -2162,7 +2163,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
     ) => {
       if (attention === 'blocked') {
-        return initiative.onHold === true;
+        return isBlockedInitiative(initiative as any);
       }
       if (attention === 'missing_dates') {
         return !initiative.plannedStartDate || !initiative.plannedEndDate;
@@ -3311,7 +3312,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         name: row.name,
         status:
           row.status === InitiativeStatus.IN_EXECUTION
-            ? 'IN_EXECUTION'
+            ? 'EXECUTING'
             : row.status === InitiativeStatus.CLOSED
               ? 'DONE'
               : 'DRAFT',
@@ -3366,7 +3367,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         name: row.title,
         status:
           row.status === 'IN_EXECUTION'
-            ? 'IN_EXECUTION'
+            ? 'EXECUTING'
             : ['COMPLETED', 'DECIDED', 'APPROVED'].includes(row.status)
               ? 'DONE'
               : 'DRAFT',
@@ -3852,7 +3853,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // 1.12-R1b (3): `status === 'BLOCKED'` wprost przestaje wystarczać po
     // migracji P12 (Codex, w toku) — `isBlockedInitiative` rozpoznaje OBA
     // słowniki (BLOCKED wprost; IN_EXECUTION/EXECUTING + on_hold).
-    const blocked = dashboardBaseInitiatives.filter((i) => isBlockedInitiative(i));
+    const blocked = dashboardBaseInitiatives.filter((i) => isBlockedInitiative(i as any));
     const missingDates = dashboardBaseInitiatives.filter(
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );
@@ -3901,7 +3902,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // idą do osobnego licznika „brak dat" (metodyka A1 pkt 8: szary to luka
     // danych, nie zieleń). Silnik workstreamów, jeśli COKOLWIEK zwróci,
     // nadal ma pierwszeństwo — jest bogatszy niż same daty.
-    const dateOnTime = onTimeFromInitiatives(dashboardBaseInitiatives);
+    const dateOnTime = onTimeFromInitiatives(dashboardBaseInitiatives as any);
     const totalInit = wsTotal || dateOnTime.totalInitiatives;
     const onTrack = wsTotal ? wsOnTrack : dateOnTime.onTrackCount;
     const delayed = wsTotal ? wsDelayed : dateOnTime.delayedCount;
@@ -5866,6 +5867,7 @@ Please return:
         return (
           <WorkIntelligenceReport
             analysisEnabled={workAnalysisEnabled}
+            resolveOwnerName={resolveOwnerName}
             onOpenDocument={handleOpenWorkDocument}
           />
         );
