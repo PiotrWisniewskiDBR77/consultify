@@ -125,11 +125,16 @@ describe('InitiativeWorkReportView — canon pass (RP1b)', () => {
     /* „Weekly" pada też jako opcja kadencji w kreatorze — dla tabeli liczy się
        komórka z tooltipem surowego kodu (patrz asercja `getByTitle` niżej). */
     expect(screen.getAllByText('Weekly').length).toBeGreaterThan(0);
-    expect(screen.getByTitle('WEEKLY')).toBeTruthy();
-    /* Surowy kod nie może stać jako TREŚĆ komórki — zostaje w tooltipie. */
+    /* Surowy kod nie może stać jako TREŚĆ komórki. Kod silnika zostaje
+       dostępny w tabeli właściwości podglądu (tooltip), nie w tabeli —
+       własny `<span title>` w komórce łamał wielokropek `FilterableTable`. */
     expect(screen.queryByText('PUBLISHED')).toBeNull();
     expect(screen.queryByText('WEEKLY')).toBeNull();
-    expect(screen.getByTitle('PUBLISHED')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Weekly team update — 8-14 Sep'));
+    await screen.findByTestId('work-report-preview-deliveries');
+    expect(screen.getByTitle('WEEKLY')).toBeTruthy();
+    expect(screen.getByTitle('WEEKLY_TEAM_UPDATE')).toBeTruthy();
   });
 
   it('opens the preview on a row click with per-recipient delivery status', async () => {

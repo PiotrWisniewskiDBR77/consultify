@@ -11837,6 +11837,8 @@
       },
       "cadence": { "onDemand": "On demand", "weekly": "Weekly", "monthly": "Monthly" },
       "scope": { "all": "All initiatives", "current": "Current project" },
+      "listTitle": "Work reports",
+      "listDescription": "Frozen report runs with their approval and delivery status.",
       "runStatus": {
         "draft": "Draft",
         "validated": "Validated",

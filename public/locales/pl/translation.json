@@ -11057,6 +11057,8 @@
       },
       "cadence": { "onDemand": "Na żądanie", "weekly": "Co tydzień", "monthly": "Co miesiąc" },
       "scope": { "all": "Wszystkie inicjatywy", "current": "Bieżący projekt" },
+      "listTitle": "Raporty z pracy",
+      "listDescription": "Zamrożone przebiegi raportu wraz ze stanem akceptacji i doręczenia.",
       "runStatus": {
         "draft": "Szkic",
         "validated": "Zwalidowany",

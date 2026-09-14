@@ -37,6 +37,7 @@ import {
   transitionReportRun,
 } from '@/services/initiatives-execution/runtimeApi';
 
+import type { WorkReportDelivery } from './workReportLabels';
 import {
   failedWorkReportDeliveryCount,
   flattenWorkReportDeliveries,
@@ -478,20 +479,25 @@ export function InitiativeWorkReportView({
       sortable: true,
       render: (row) => <span className="font-semibold">{String((row as any).title)}</span>,
     },
+    /*
+     * Status i kadencja BEZ własnego `render` — celowo. `FilterableTable`
+     * zakłada wielokropek i `title` (CELL_TEXT_CLAMP_CLASS) TYLKO tekstowi,
+     * który dostaje jako czysty string; własny `<span>` traktuje jak element
+     * (popover/menu) i zostawia nietknięty — zmierzone na zrzucie 01 z 14.09:
+     * „Opublikowany" ucięte w połowie słowa pod sąsiednią kolumną. Surowy kod
+     * silnika nie znika — stoi w tooltipie tabeli właściwości podglądu.
+     */
     {
       id: 'statusLabel',
       label: t('initiatives.workReport.columns.status', 'Status'),
-      width: '170px',
+      width: '190px',
       sortable: true,
-      /* Kod silnika zostaje w tooltipie — etykieta na ekranie, kod do weryfikacji. */
-      render: (row) => <span title={(row as any).rawStatus}>{(row as any).statusLabel}</span>,
     },
     {
       id: 'cadenceLabel',
       label: t('initiatives.workReport.columns.cadence', 'Cadence'),
-      width: '140px',
+      width: '150px',
       sortable: true,
-      render: (row) => <span title={(row as any).rawCadence}>{(row as any).cadenceLabel}</span>,
     },
     {
       id: 'updatedLabel',
@@ -562,13 +568,16 @@ export function InitiativeWorkReportView({
       <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-5">
         <header className="flex shrink-0 items-start justify-between gap-4">
           <div>
+            {/* Nagłówek opisuje TO, CO WIDAĆ: listę przebiegów. Do 14.09
+                pisał „Kreator raportu z pracy" nad tabelą przebiegów —
+                a kreator jest teraz akcją, nie treścią ekranu. */}
             <h2 className="text-xl font-semibold">
-              {t('initiatives.workReport.title', 'Work report creator')}
+              {t('initiatives.workReport.listTitle', 'Work reports')}
             </h2>
             <p className="text-sm text-c-text-muted">
               {t(
-                'initiatives.workReport.description',
-                'Create a frozen report from current initiative and decision data.'
+                'initiatives.workReport.listDescription',
+                'Frozen report runs with their approval and delivery status.'
               )}
             </p>
           </div>
@@ -599,7 +608,9 @@ export function InitiativeWorkReportView({
         </header>
         {/* LISTA NA GÓRZE — kanon: ekran listowy zaczyna się od listy.
             `min-h-0 flex-1` oddaje podglądowi pełną wysokość kolumny. */}
-        <div className="min-h-0 flex-1">
+        {/* Rozwinięty kreator NIE zostawia pustej dziury pod tabelą: lista
+            dostaje wtedy stałe okno, a `flex-1` wraca po zwinięciu. */}
+        <div className={creatorOpen ? 'h-[420px] shrink-0' : 'min-h-0 flex-1'}>
           <TableWithPreviewLayout<WorkReportRow>
             selectedId={selectedRunId}
             selectedItem={selectedRun}
@@ -622,10 +633,13 @@ export function InitiativeWorkReportView({
                   'A report run has no screen of its own — the frozen content is the PDF.'
                 )}
                 meta={{
+                  /* DWA chipy, nie trzy: nazwa szablonu („Tygodniowa
+                     aktualizacja zespołu") łamała pigułkę na trzy linie
+                     i rozpychała kartę meta — szablon ma własny wiersz
+                     w tabeli właściwości. */
                   pills: [
                     { label: row.statusLabel, tone: row.statusTone },
                     { label: row.cadenceLabel, tone: 'neutral' },
-                    { label: row.templateLabel, tone: 'neutral' },
                   ],
                   trailing: row.updatedLabel,
                   recommendation:
@@ -737,7 +751,7 @@ export function InitiativeWorkReportView({
                     </p>
                   ) : (
                     <ul className="space-y-2">
-                      {row.deliveries.map((delivery) => {
+                      {row.deliveries.map((delivery: WorkReportDelivery) => {
                         const tone = workReportRecipientStatusTone(delivery.status);
                         return (
                           <li

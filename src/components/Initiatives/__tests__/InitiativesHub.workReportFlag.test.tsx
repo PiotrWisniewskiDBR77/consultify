@@ -164,6 +164,10 @@ describe('Work report tab gated by VITE_INITIATIVES_WORK_REPORT', () => {
     const workReportTab = await screen.findByRole('tab', { name: 'Work report' });
     expect(screen.getAllByRole('tab')).toHaveLength(4);
     fireEvent.click(workReportTab);
-    expect(await screen.findByText('Work report creator')).toBeInTheDocument();
+    /* P1 RP1b (14.09): nagłówek ekranu przestał brzmieć „Work report creator" —
+       kreator jest teraz zwiniętą akcją, a treścią ekranu jest LISTA przebiegów.
+       Test dalej sprawdza to samo: że klik w zakładkę montuje właściwy widok. */
+    expect(await screen.findByTestId('initiatives-work-report')).toBeInTheDocument();
+    expect(screen.getByText('Work reports')).toBeInTheDocument();
   });
 });

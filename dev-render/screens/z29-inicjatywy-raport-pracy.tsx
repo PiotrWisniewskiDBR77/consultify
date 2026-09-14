@@ -114,6 +114,37 @@ const RUNS = [
     updatedAt: '2026-09-13T07:05:00.000Z',
     audience: ['anna.kowalska@dbr77.com', 'marek.zielinski@dbr77.com'],
     delivery: { state: 'DELIVERED', deliveredCount: 2, failedCount: 0 },
+    period: { start: '2026-09-06T00:00:00.000Z', end: '2026-09-13T00:00:00.000Z' },
+    /* RP1b: `deliveryAttempts` to realny kształt agregatu `report_run`
+       (server/src/domain/initiatives-execution/reportRun.ts) — reader zwraca
+       cały `payload_json`, więc podgląd czyta dokładnie to, co da produkcja. */
+    deliveryAttempts: [
+      {
+        receiptId: 'receipt-published-1',
+        audience: ['anna.kowalska@dbr77.com', 'marek.zielinski@dbr77.com'],
+        startedAt: '2026-09-13T07:00:00.000Z',
+        recipients: [
+          {
+            address: 'anna.kowalska@dbr77.com',
+            status: 'DELIVERED',
+            attempts: 1,
+            lastAttemptAt: '2026-09-13T07:01:12.000Z',
+            lastError: null,
+            attemptToken: null,
+            leaseExpiresAt: null,
+          },
+          {
+            address: 'marek.zielinski@dbr77.com',
+            status: 'DELIVERED',
+            attempts: 1,
+            lastAttemptAt: '2026-09-13T07:01:19.000Z',
+            lastError: null,
+            attemptToken: null,
+            leaseExpiresAt: null,
+          },
+        ],
+      },
+    ],
     workReport: {
       title: 'Cotygodniowa aktualizacja zespołu — 8–14 wrz',
       templateId: 'WEEKLY_TEAM_UPDATE',
@@ -128,8 +159,36 @@ const RUNS = [
     ownerId: OWNER_ID,
     approverId: APPROVER_ID,
     updatedAt: '2026-09-12T15:40:00.000Z',
-    audience: ['tomasz.duda@dbr77.com'],
+    audience: ['tomasz.duda@dbr77.com', 'irina.kowal@dbr77.com'],
     delivery: { state: 'FAILED', deliveredCount: 0, failedCount: 1 },
+    period: { start: '2026-09-05T00:00:00.000Z', end: '2026-09-12T00:00:00.000Z' },
+    deliveryAttempts: [
+      {
+        receiptId: 'receipt-approved-1',
+        audience: ['tomasz.duda@dbr77.com', 'irina.kowal@dbr77.com'],
+        startedAt: '2026-09-12T15:30:00.000Z',
+        recipients: [
+          {
+            address: 'tomasz.duda@dbr77.com',
+            status: 'FAILED',
+            attempts: 3,
+            lastAttemptAt: '2026-09-12T15:38:41.000Z',
+            lastError: '550 5.1.1 Adresat nie istnieje',
+            attemptToken: null,
+            leaseExpiresAt: null,
+          },
+          {
+            address: 'irina.kowal@dbr77.com',
+            status: 'DELIVERED',
+            attempts: 1,
+            lastAttemptAt: '2026-09-12T15:31:02.000Z',
+            lastError: null,
+            attemptToken: null,
+            leaseExpiresAt: null,
+          },
+        ],
+      },
+    ],
     workReport: {
       title: 'Zaległe decyzje — przegląd wrzesień',
       templateId: 'DECISION_BACKLOG',
