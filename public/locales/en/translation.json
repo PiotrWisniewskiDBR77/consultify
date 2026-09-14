@@ -11773,6 +11773,7 @@
       "publishDefinition": "Publish definition",
       "awaitingDefinitions": "Definitions awaiting publication",
       "selectApprover": "Select another organization member",
+      "noEligibleApprover": "No other active administrator can approve and deliver this report.",
       "ownerRequired": "The definition owner must create and freeze this report.",
       "pendingDecisions": "pending decisions",
       "overdueDecisions": "overdue",

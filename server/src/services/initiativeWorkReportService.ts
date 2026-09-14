@@ -96,6 +96,8 @@ export async function renderInitiativeWorkReportPdf(
   // dependency layouts. Both files and names remain the shared DEC-132 SSOT.
   doc.registerFont(PDF_FONT.regular, path.join(PDF_FONT_DIR, 'Lato-Regular.ttf'));
   doc.registerFont(PDF_FONT.bold, path.join(PDF_FONT_DIR, 'Lato-Bold.ttf'));
+  doc.registerFont(PDF_FONT.italic, path.join(PDF_FONT_DIR, 'Lato-Italic.ttf'));
+  doc.registerFont(PDF_FONT.boldItalic, path.join(PDF_FONT_DIR, 'Lato-BoldItalic.ttf'));
   doc.font(PDF_FONT.regular);
   const chunks: Buffer[] = [];
   doc.on('data', (chunk: Buffer) => chunks.push(chunk));

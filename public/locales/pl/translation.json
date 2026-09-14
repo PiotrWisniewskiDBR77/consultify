@@ -10993,6 +10993,7 @@
       "publishDefinition": "Opublikuj definicję",
       "awaitingDefinitions": "Definicje oczekujące na publikację",
       "selectApprover": "Wybierz inną osobę z organizacji",
+      "noEligibleApprover": "Brak innego aktywnego administratora, który może zatwierdzić i wysłać ten raport.",
       "ownerRequired": "Właściciel definicji musi utworzyć i zamrozić ten raport.",
       "pendingDecisions": "decyzje oczekujące",
       "overdueDecisions": "po terminie",

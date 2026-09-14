@@ -34,6 +34,8 @@ interface SendEmailOptions {
   data?: Record<string, unknown>;
   /** Return false unless a configured provider acknowledges the message. */
   requireDelivery?: boolean;
+  /** Stable RFC Message-ID used by retryable delivery workflows. */
+  messageId?: string;
   attachments?: Array<{
     filename: string;
     path?: string;
@@ -153,6 +155,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     data,
     attachments = [],
     requireDelivery = false,
+    messageId,
   } = options;
 
   // 0. Render Handlebars .hbs template when one exists for `template`.
@@ -255,6 +258,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
           `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
         text,
         attachments,
+        ...(messageId ? { messageId } : {}),
       });
       logger.info('[EMAIL SERVICE] Sent successfully via SMTP');
     } catch (e: unknown) {

@@ -63,6 +63,8 @@ export interface ReportRun {
       attempts: number;
       lastAttemptAt: string | null;
       lastError: string | null;
+      attemptToken: string | null;
+      leaseExpiresAt: string | null;
     }>;
   }>;
   followUpTaskRef: { taskId: string; version: number; receiptClientRequestId: string } | null;
@@ -177,13 +179,21 @@ type Action =
       distribution: { receiptId: string; audience: string; distributedAt: string };
     }
   | { action: 'BEGIN_DELIVERY'; receiptId: string; audience: string[]; startedAt: string }
-  | { action: 'CLAIM_RECIPIENT'; receiptId: string; recipient: string; attemptedAt: string }
+  | {
+      action: 'CLAIM_RECIPIENT';
+      receiptId: string;
+      recipient: string;
+      attemptedAt: string;
+      attemptToken: string;
+      leaseExpiresAt: string;
+    }
   | {
       action: 'RECORD_RECIPIENT';
       receiptId: string;
       recipient: string;
       outcome: 'DELIVERED' | 'FAILED';
       attemptedAt: string;
+      attemptToken: string;
       error?: string;
     }
   | { action: 'FAIL'; reason: string }
@@ -286,6 +296,8 @@ export async function transitionReportRun(
               attempts: 0,
               lastAttemptAt: null,
               lastError: null,
+              attemptToken: null,
+              leaseExpiresAt: null,
             })),
           },
         ],
@@ -297,11 +309,15 @@ export async function transitionReportRun(
       const attempts = r.deliveryAttempts ?? [];
       const attempt = attempts.find((item) => item.receiptId === p.receiptId);
       const recipient = attempt?.recipients.find((item) => item.address === p.recipient);
+      const expiredSending =
+        recipient?.status === 'SENDING' &&
+        Boolean(recipient.leaseExpiresAt) &&
+        Date.parse(String(recipient.leaseExpiresAt)) <= Date.parse(p.attemptedAt);
       if (
         !attempt ||
         !recipient ||
         recipient.status === 'DELIVERED' ||
-        recipient.status === 'SENDING'
+        (recipient.status === 'SENDING' && !expiredSending)
       )
         throw new MaterialCommandValidationError('Retryable delivery recipient required');
       next = {
@@ -320,6 +336,8 @@ export async function transitionReportRun(
                         attempts: candidate.attempts + 1,
                         lastAttemptAt: p.attemptedAt,
                         lastError: null,
+                        attemptToken: p.attemptToken,
+                        leaseExpiresAt: p.leaseExpiresAt,
                       }
                 ),
               }
@@ -332,7 +350,12 @@ export async function transitionReportRun(
       const attempts = r.deliveryAttempts ?? [];
       const attempt = attempts.find((item) => item.receiptId === p.receiptId);
       const recipient = attempt?.recipients.find((item) => item.address === p.recipient);
-      if (!attempt || !recipient || recipient.status !== 'SENDING')
+      if (
+        !attempt ||
+        !recipient ||
+        recipient.status !== 'SENDING' ||
+        recipient.attemptToken !== p.attemptToken
+      )
         throw new MaterialCommandValidationError('Claimed delivery recipient required');
       next = {
         ...r,
@@ -350,6 +373,8 @@ export async function transitionReportRun(
                         lastAttemptAt: p.attemptedAt,
                         lastError:
                           p.outcome === 'FAILED' ? p.error || 'EMAIL_DELIVERY_FAILED' : null,
+                        attemptToken: null,
+                        leaseExpiresAt: null,
                       }
                 ),
               }
