@@ -4,9 +4,13 @@
 **Z-1 (14.09).** Odbiór paczki 5 (raport Szampana, gałąź `integracja/kandydat-paczka5-20260913`
 scalona `d73ccb90a7`) → push/staging przez CTO 14.09.
 
-**Z-2 (14.09).** Blokery Tomka (DEC-496, 🔴): dwie gałęzie Opus od `0de4dc9c66` —
-`integracja/kandydat-tomek-konto-20260914` (XII, III, VIII, V, XI, II) i
-`integracja/kandydat-tomek-czat-20260914` (IX, XXI, IV, XXII, XIII, VII/X).
+**Z-2 (14.09, zaktualizowane).** Blokery Tomka (DEC-496, 🔴): dwie gałęzie Opus od `0de4dc9c66` —
+`integracja/kandydat-tomek-konto-20260914` (HEAD `6660d7ba86`, kopia
+`origin/backup/tomek-konto-20260914`: III profil OK `3373e714e6`, VIII duplikaty org OK
+`b3e1cb3cf2`, XI historia logowania OK `221ec76e86`, II `/help` OK `1d768b7eea`; XII reset hasła
+w toku — mail nie dochodzi, konfiguracja `settings.smtp_*` nadpisuje env; V avatar — rekomendacja
+`STORAGE_DIR`, decyzja przy wdrożeniu, Z-9) i `integracja/kandydat-tomek-czat-20260914`
+(IX, XXI, IV, XXII, XIII, VII/X — stan nieaktualizowany w tym przebiegu).
 
 **Z-3 (14.09).** KANAL.md — Wpis 16 do Codexa (DEC-495 skrót + cztery uwagi rdzenia Tomka
 XV/XVI/XVII/XIV) — dopisany, patrz sekcja niżej.
@@ -31,6 +35,13 @@ KPI do P4, Q3 filtr projektami na końcu, Q4 wygaszenie starych ekranów Realiza
 obraz do pokazania: `plan-wdrozen-inicjatywy-realizacja-20260914.html`. Następne kroki CTO:
 fala A (paczka 5, pilot-blokery, drobne, archived-filter, tomek-konto, tomek-czat, dwie uwagi
 DEC-491, SSOT granicy praca/ryzyko), potem start pakietów P1..P4 wg DEC-497.
+
+**Z-8 (14.09).** DEC-499 Q5 do właściciela: kolejność po fali F — najpierw Agent-edytor klocków
+(P6), potem kontrakty pracy konsultanta (P5)? Rekomendacja CTO: TAK, Agent przed kontraktami.
+
+**Z-9 (14.09).** `STORAGE_DIR` avatary (P-T05, Tomek) — dysk kontenera potwierdzony jako przyczyna
+(`users.routes.ts:27` diskStorage, `storagePaths.ts:78` fallback cwd); ustawić wolumen Railway
+przy najbliższym wdrożeniu.
 
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
@@ -118,7 +129,7 @@ kandydata wchodzą tylko naprawy czerwonej bramki i tylko przez integratora. (2)
 i `zatwierdzanie-inicjatyw` zostają na osobnych gałęziach → fala 2. (3) Codex usuwa własne worktree
 gałęzi już scalonych do rc2 (dysk pełny). (4) Codex dostaje duże zadania fali 2 promptami od właściciela.
 
-**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-498**. Następna wolna: DEC-499.
+**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-499**. Następna wolna: DEC-500.
 Znaczniki odmrożenia muszą wskazywać moduł z `docs/program/MVP_FINAL_ZAMROZONE.json` — Finanse nie są
 tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
@@ -164,6 +175,40 @@ Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_
 | P-T22 (XXII) | DRD ocena | Potwierdzenie/zamknięcie odpowiedzi nie działa (ciąg dalszy XXI) | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
 
 Podział: 🔴 blokery → dwie gałęzie Opus od linii `0de4dc9c66`: `integracja/kandydat-tomek-konto-20260914` (XII reset hasła, III profil, VIII duplikaty org, V avatar, XI historia logowania, II /help) i `integracja/kandydat-tomek-czat-20260914` (IX nowa rozmowa, XXI DRD Teresa regresja, IV załączniki, XXII DRD potwierdzenie/zamknięcie, XIII kontekst Mind Map, VII/X kosmetyka). 🟠 rdzeń Wywiad/Moja Praca (XV usuwanie załącznika, XVI niespójność AI na bełkot, XVII Kreator wniosków kontekst, XIV Moja Praca) → Codex (KANAL.md wpis 16). ⚪ XX = duplikat §3 #16 First Value plan; XIX ctrl+click i „aktywne sesje” = wiedza użytkownika (zamknięte informacją, nie naprawą); I adres wsparcia = decyzja właściciela (trzy domeny w kodzie: .com/.app/.ai, Z-5). Znacznik commitów napraw: `DEC-496`.
+
+**Uzupełnienie DEC-496 (CTO, 14.09) — zgłoszenia Pawła (widget feedback, staging).**
+Zgłaszający: `pawel.mroczkowski@dbr77.com`. Tabela P-P01…P-P05 (nr | czas UTC | waga | opis | stan):
+
+| Nr | Czas (UTC, 14.09) | Waga | Opis | Stan |
+|---|---|---|---|---|
+| P-P01 | 03:49 | LOW | Profil nie zapisuje danych | = P-T03; **naprawione** `3373e714e6` (brak kolumny `phone`, zapas w `user_preferences`) |
+| P-P02 | 04:00 | MEDIUM | DRD po polsku w interfejsie EN | gałąź `integracja/kandydat-drd-en-20260914` — w toku |
+| P-P03 | 04:05 | HIGH | Wpisanie odpowiedzi w Wywiadzie przeładowuje sesję i gubi postęp | gałąź `integracja/kandydat-pawel-wywiad-20260914` (Opus) — w toku |
+| P-P04 | 04:09 | HIGH | Zmiana opcji „Partially”→„Confirmed” sama wraca | gałąź `integracja/kandydat-pawel-wywiad-20260914` (Opus) — w toku |
+| P-P05 | 04:09 | MEDIUM | Upload PDF cicho znika | gałąź `integracja/kandydat-pawel-wywiad-20260914` (Opus) — w toku |
+
+**Stan napraw Tomka (gałąź `integracja/kandydat-tomek-konto-20260914`, HEAD `6660d7ba86`, kopia
+`origin/backup/tomek-konto-20260914`):** P-T03 profil **OK** (`3373e714e6`); P-T08 duplikaty org
+**OK** (`b3e1cb3cf2`, 409 + blokada); P-T11 historia logowania **OK** (`221ec76e86`,
+`loginHistoryService` z `AuthController.login`); P-T02 `/help`→`/docs` **OK** (`1d768b7eea`).
+P-T12 reset hasła: (2) „stare hasło działa” **NIE jest defektem** (`revokeAllUserTokens` działa,
+test RealPG) — skutek braku maila; (1) mail nie dochodzi = konfiguracja: `settings.smtp_*` w bazie
+nadpisują env (`emailService.ts:182-232`) — pomiar/naprawa danych w toku. P-T05 avatar: potwierdzony
+dysk kontenera (`users.routes.ts:27` diskStorage, `storagePaths.ts:78` fallback cwd) — rekomendacja
+`STORAGE_DIR` na wolumen Railway, decyzja przy najbliższym wdrożeniu (Z-9). P-T01 adres wsparcia:
+3 domeny (`faqContent.ts:56,58` .app; `DocsApiReferenceView.tsx:62` .ai;
+`welcomeEmailService.ts:139,153` .com) — czeka na właściciela (Z-5).
+
+**Dług znaleziony 14.09 (uboczne, przy uzupełnieniu DEC-496/DEC-499):**
+(a) `src/components/Studio/StudioLinkModal.tsx:87` woła `/api/api/initiatives` (404, podwójny
+prefiks); (b) harness `dev-render/screens/p2b-inicjatywy-empty.tsx` — zustand persist po ~300 ms
+nadpisuje `isDemoMode:false` danymi demo (ekran po cichu pokazuje 9 wierszy demo zamiast realnych)
+— pułapka zrzutów; (c) etykieta pstryczka „Aktywne” (odebrana) vs „Aktualne” z DEC-495 — zostaje
+„Aktywne”; (d) `server/src/routes/users.routes.ts` = martwy kod (zamontowany jest
+`routes/user/users.routes.ts` → `UserController`); (e) `INITIATIVE_TERMINAL_STATUSES` (front)
+martwe — prawdą o archiwum jest kolumna `initiatives.archived` (migracja P12 `20262103`), status
+CHECK bez ARCHIVED; (f) KANAL Wpis 18 ma datę 2026-09-13 zamiast 14 (kosmetyka, nie ruszać — Codex
+czyta numerem).
 
 **DEC-497 (CTO na mandacie właściciela, 14.09) — Codex prowadzi duże pakiety fali 2.**
 Słowo właściciela dosłownie (14.09): „zarządzaj tez duzymi projektami na codex. Mysle ze smiało
@@ -252,6 +297,16 @@ middleware `executionSpineLegacyReadOnly.middleware.ts:85` zwraca 409, front ma 
 potwierdzone; (6) Menu 2 Realizacji = Bank/Praca/Ryzyko/Raporty **potwierdzone**
 (`src/components/Execution/executionModuleTabs.ts`), stare powierzchnie żyją jako deep-linki;
 (7) migracja `20262104_execution_report_snapshots.sql` **istnieje** — potwierdzone.
+
+**DEC-499 (CTO na mandacie właściciela, 14.09) — Odpowiedzi CTO na 5 pytań planu DEC-498.**
+Q1 **TAK** — falę C odbieramy na raporcie na ekranie + realny PDF; wysyłka mailem dokładana, gdy
+poczta stagingu potwierdzona (osobny pomiar SMTP 14.09). Q2 **TAK** — zbieranie KPI przy inicjatywie
+(A4) wchodzi do pakietu P4 Codexa w fali B (dopisane do Wpisu 17 w KANAL, patrz KANAL.md Wpis 19).
+Q3 **TAK** — filtr projektami raz, w fali F; do tego czasu ekrany = cała organizacja. Q4 **TAK**
+(słowa właściciela 14.09: „nie potrzebujemy wielu zakładek”) — Zasoby/Rollout/Podsumowanie usuwamy
+po dowiezieniu Pracy i Raportów (W1, fala D). Q5 — **czeka na właściciela** (Agent z klockami przed
+kontraktami — rekomendacja CTO). Plan: `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` §5/§6
+zaktualizowane (L2 GOTOWE fala A, A4 przydzielone fala B, U1 domknięte).
 
 ---
 

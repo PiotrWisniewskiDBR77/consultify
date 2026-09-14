@@ -439,7 +439,7 @@ statusie, kalendarz, Gantt; kolumny z typami; podgląd 6 bloków. Plik: `src/com
 | Etap | Co widać na ekranie | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept właściciela | Dni | Ryzyko |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **L1** rdzeń list/kanban/kalendarz/Gantt | ZROBIONE | — | DEC-481 | brak (na żywo) | nie | — | zamknięte | TAK 13.09 | 0 | — |
-| **L2** filtr Archiwum/Aktualne jako **przełącznik** (nie rozwijana) | pstryczek w Menu 2, archiwalne domyślnie ukryte, da się przywołać | `archived_at` / status archiwalny czytany, nie zmieniany | zrzut jasny+ciemny, test: archiwalna niewidoczna → po przełączeniu widoczna | `VITE_INITIATIVES_PORTFOLIO_ANALYSIS` | nie | — | Codex **P4 E3** | obraz listy z pstryczkiem ON/OFF | 1 | mylenie z filtrem statusu |
+| **L2** filtr Archiwum/Aktualne jako **przełącznik** (nie rozwijana) | **GOTOWE 14.09** — pstryczek Aktywne/Wszystkie/Archiwalne w Menu 2 | `?archived=true\|false` + `includeArchived=true` czytane, nie zmieniane | agent CTO, `574eb6e20c` | — | nie | — | agent CTO | obraz listy z pstryczkiem ON/OFF | 0 (zrobione) | — |
 | **L3** filtr **projektami** | rozwijana „Projekt" obok statusów; brak PMO = „wszystkie projekty" bez błędu | nie | zrzut + test degradacji bez PMO | ta sama | nie | **F2-3 PMO E3** | Codex P4 po PMO | obraz listy przefiltrowanej jednym projektem | 1 | twarde sprzężenie z PMO = zakleszczenie (dlatego degradacja) |
 
 ### 1.2 Przycisk 1 — Inicjatywy, Menu 3 „Analiza"
@@ -453,7 +453,7 @@ przejmuje i kończy (DEC-497, STOP-meldunek przed startem, żeby nie powstały d
 | **A1** przycisk „Analiza portfela inicjatyw" + 5 kryteriów obowiązkowych (pokrycie obszaru · nakładanie się · priorytety · duplikaty vs realizowane · historia doświadczeń) | tabela analizy z wierszem per inicjatywa i werdyktem per kryterium; karta „dlaczego AI tak rekomenduje" | przebieg analizy + uzasadnienia (trwałe, nie w pamięci) | RealPG, zrzuty jasny+ciemny tabeli i karty uzasadnienia | `VITE_INITIATIVES_PORTFOLIO_ANALYSIS` | **TAK** (pula `20262330-20262339`, STOP przed napisaniem) | brak twardej | Codex **P4 E1** | jeden obraz: tabela analizy + otwarta karta „dlaczego" | 3-4 | AI rekomenduje bez uzasadnienia = natychmiastowe „Nie" |
 | **A2** decyzja: zatwierdzona → do Planu/Obciążenia; niezatwierdzona → **parking z powodem** albo archiwum „no Done" | dwa przyciski decyzji, pole powodu obowiązkowe, lista parkingu | powód + warunek ponownego zaproponowania | test: inicjatywa z parkingu NIE wraca w kolejnej analizie; po usunięciu przeszkody WRACA (trigger, nie plakietka) | ta sama | TAK (jw.) | — | Codex **P4 E2** | obraz parkingu z powodami | 2-3 | „no Done" jako sama plakietka = kształt fałszywego gotowe |
 | **A3** karty N: zawsze-widoczne vs dodawane; **wycena kart** + zatwierdzenie uprawnionego | karta N inicjatywy wg ARTIFACT_ANATOMY, część kart zwinięta, wycena widoczna, przycisk zatwierdzenia zależny od uprawnienia | wycena + zatwierdzenie z autorem i czasem | zrzuty artefaktu (DoD §18.1), test odmowy dla nieuprawnionego | ta sama | TAK (jw.) | silnik zatwierdzeń (DEC-489 — rozszerzenie istniejącego) | Codex **P4 E3** | obraz karty N z wyceną i przyciskiem zatwierdzenia | 3 | budowa nowego silnika zatwierdzeń zamiast rozszerzenia = naruszenie DEC-489 |
-| **A4** **zbieranie KPI na etapie inicjatywy** (wymóg wiążący ze SPEC „MODUŁ REALIZACJA / R.4”) | karta KPI w inicjatywie: KPI podpowiadane przez AI, zatwierdzane przez właściciela/admina/komitet | definicje KPI powiązane z inicjatywą | test: KPI zatwierdzone w Inicjatywach widoczne w Realizacji/Raportach | ta sama | TAK (jw.) | R.4 Raporty (konsument) | Codex P4 — **PYTANIE Q2** (P4 czy osobny pakiet) | obraz karty KPI z podpowiedzią AI | 2-3 | **dziś NIEPRZYDZIELONE nikomu** — bez tego nie będzie śledzenia efektów |
+| **A4** **zbieranie KPI na etapie inicjatywy** (wymóg wiążący ze SPEC „MODUŁ REALIZACJA / R.4”) | karta KPI w inicjatywie: KPI podpowiadane przez AI, zatwierdzane przez właściciela/admina/komitet | definicje KPI powiązane z inicjatywą | test: KPI zatwierdzone w Inicjatywach widoczne w Realizacji/Raportach | ta sama | TAK (jw.) | R.4 Raporty (konsument) | Codex **P4** (DEC-499 Q2 TAK — wchodzi do pakietu P4, fala B) | obraz karty KPI z podpowiedzią AI | 2-3 | przydzielone P4/fala B (DEC-499); DoD: KPI zapisane przy inicjatywie, widoczne w karcie N, dostępne dla RA-E4c |
 
 ### 1.3 Przycisk 2 — Plan
 
@@ -568,11 +568,11 @@ i ryzyka; Raporty **zastępują** Raporty oraz Wdrożenie i zamknięcie.
 **Etap W1** (Codex F2-2, 1 dzień): po akcepcie Praca + Raporty usuwamy deep-linki i komponenty,
 z aliasami przekierowującymi przez jeden cykl wdrożenia. **Warunek: pytanie Q4.**
 
-### 2.7 Dwie otwarte uwagi z DEC-491 (8 uwag, 6 zamkniętych)
+### 2.7 Jedna otwarta uwaga z DEC-491 (8 uwag, 7 zamkniętych — U1 domknięte 14.09)
 
 | Uwaga | Stan | Naprawa | Wykonawca | Fala |
 |---|---|---|---|---|
-| Puste ramki **Relations** w podglądach | `PreviewRelations` już ukrywa pusty blok (przejazd kanonu 13.09), ale **kontrakt `relations.emptyLabel` w `tableSurface/validators.ts:470` pozostaje nierozstrzygnięty** — kanon TRIADA §A7 (blok bez danych = ukryty) wygrał, walidator nadal wymaga etykiety | usunąć wymóg etykiety z walidatora albo uczynić go opcjonalnym; strażnik R5 zostaje | **Sonnet** | **A** |
+| Puste ramki **Relations** w podglądach (U1) | **DOMKNIĘTE** (Szampan D3, `6a6966b1bb`) — kontrakt `relations.emptyLabel` w `tableSurface/validators.ts:470` rozstrzygnięty zgodnie z kanonem TRIADA §A7 (blok bez danych = ukryty) | usunięty wymóg etykiety z walidatora, strażnik R5 zostaje | **Sonnet** | **A** |
 | „What's next" tekstowe w podglądzie **Decisions** | otwarte (bank naprawiony, Decisions nie) | zdanie luzem → „Co dalej" w meta wg kanonu podglądu (6 bloków) | **Sonnet** | **A** |
 
 ---
@@ -635,8 +635,9 @@ Zasada: **fala = jedna partia akceptu właściciela**, nie jeden dzień. Wewnąt
 
 ### Fala A — porządki i pilotaż (dziś/jutro)
 **Zawartość:** paczka 5 (Wywiad, `d73ccb90a7`, odbiór) · pilot-blokery (`6b73ee95bd`, bezpiecznik LLM
-po circuit breakerze 03:42 UTC) · drobne (`b9164136fa`) · `archived-filter` · `drd-en` ·
-`tomek-konto` · `tomek-czat` · `pawel-wywiad` · dwie uwagi DEC-491 (§2.7) · SSOT granicy R-E3a.
+po circuit breakerze 03:42 UTC) · drobne (`b9164136fa`) · `archived-filter` (L2, **GOTOWE 14.09**,
+`574eb6e20c`) · `drd-en` · `tomek-konto` · `tomek-czat` · `pawel-wywiad` · U1 **DOMKNIĘTE** (Szampan
+D3, `6a6966b1bb`) i U2 z DEC-491 (§2.7) · SSOT granicy R-E3a.
 **Uzasadnienie:** pilotaż jest dziś zablokowany (Tomasz 0 logowań w organizacji, reset hasła nie
 działa, czat gubi rozmowy). Bez tego kolejne fale trafiają w środowisko, którego nikt nie używa.
 **Co zobaczy właściciel:** jeden obraz — lista 22 uwag Tomka ze stanem „naprawione/otwarte".
@@ -644,8 +645,9 @@ działa, czat gubi rozmowy). Bez tego kolejne fale trafiają w środowisko, któ
 **Gotowe gdy:** 5 punktów bramki MVP + zero otwartych 🔴 blokerów z DEC-496.
 
 ### Fala B — decyzja o portfelu i widoczne ryzyko
-**Zawartość:** P4 (A1·A2·A3, ewent. A4 wg Q2) · Realizacja B-E0 (sygnalizacja ryzyka, prototyp CTO
-przed kodem) · przewód H1+H2 · L2 (pstryczek Archiwum).
+**Zawartość:** P4 (A1·A2·A3·A4 — DEC-499 Q2 TAK, KPI wchodzi do P4) · Realizacja B-E0 (sygnalizacja
+ryzyka, prototyp CTO przed kodem) · przewód H1+H2. (L2 pstryczek Archiwum przeniesiony do fali A —
+**GOTOWE 14.09**, `574eb6e20c`.)
 **Uzasadnienie:** to jest „prawdziwa praca" wg właściciela i zamyka dług DEC-453 (przewód).
 Ryzyko w Banku podpina istniejący `threeAxisReportService` — najwyższy stosunek wartości do kosztu.
 **Co zobaczy właściciel:** jeden obraz — tabela analizy portfela z otwartą kartą „dlaczego AI to
@@ -693,12 +695,12 @@ elementem"), potem **P5 F2-7b kontrakty**. Spotkania pozostają OFF (DEC-483).
 | Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | Stan dziś |
 |---|---|---|---|---|---|---|---|
 | Inicjatywy | Lista | L1 rdzeń (lista/kanban/kalendarz/Gantt) | — | — | — | TAK 13.09 (DEC-481) | **JEST** |
-| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | Codex P4 | — | B | lista z pstryczkiem ON/OFF | ATRAPA |
+| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | agent CTO | — | A | lista z pstryczkiem ON/OFF | **GOTOWE 14.09** (`574eb6e20c`, `?archived=true\|false`+`includeArchived=true`, pstryczek Aktywne/Wszystkie/Archiwalne) |
 | Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | BRAK |
 | Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | CZĘŚCIOWO (F2-1 HOLD) |
 | Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | BRAK |
 | Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | BRAK |
-| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 (Q2) | RA-E4c | B | karta KPI z podpowiedzią AI | **NIEPRZYDZIELONE** |
+| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | **PRZYDZIELONE** (DEC-499 Q2 TAK — pakiet P4, fala B) |
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ATRAPA (`PlanScenarioSurface`) |
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ATRAPA |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ATRAPA |
@@ -725,7 +727,7 @@ elementem"), potem **P5 F2-7b kontrakty**. Spotkania pozostają OFF (DEC-483).
 | Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | zbudowane, bez przewodu |
 | Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | tabela bez wołaczy |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | deep-linki żyją |
-| Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | otwarte |
+| Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | **DOMKNIĘTE** (Szampan D3 `6a6966b1bb`) |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | otwarte |
 | Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | części istnieją |
 | Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | E1/E2 dostarczone |
@@ -736,6 +738,13 @@ elementem"), potem **P5 F2-7b kontrakty**. Spotkania pozostają OFF (DEC-483).
 ---
 
 ## §6 Pięć pytań do właściciela (Tak/Nie) — i założenia, które CTO bierze na siebie
+
+**Odpowiedzi CTO na mandacie właściciela (14.09, DEC-499):** Q1 TAK (raport na ekranie + realny
+PDF; wysyłka mailem dokładana osobno, po potwierdzeniu poczty stagingu — pomiar SMTP 14.09), Q2 TAK
+(KPI wchodzi do P4, fala B), Q3 TAK (filtr projektami raz, w fali F; do tego czasu cała
+organizacja), Q4 TAK (słowa właściciela: „nie potrzebujemy wielu zakładek" — Zasoby/Rollout/
+Podsumowanie usuwamy po dowiezieniu Pracy i Raportów, fala D), Q5 czeka na właściciela (rekomendacja
+CTO: Agent z klockami przed kontraktami). Treść pytań niżej bez zmian — historia.
 
 **Q1 — Raport bez wysyłki.** Poczta żywa (DEC-471, dostęp do panelu Hostingera) nadal nie działa.
 Czy falę C odbieramy na **raporcie widocznym na ekranie + pliku PDF do pobrania**, a automatyczną
