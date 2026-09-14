@@ -137,7 +137,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
         // — zmierzone: `width:'120px'` i `width:'150px'` dawały identyczny
         // renderowany nagłówek 200px). Bez `primary` kolumna dostaje zwykłą
         // podłogę typu `text` (140px). Desktop zachowuje kanoniczną tabelę,
-        // a poniżej 420px panel przechodzi na listę rekordów; nie obchodzimy
+        // a na mobilnym breakpointcie panel przechodzi na listę rekordów; nie obchodzimy
         // ani nie cofamy globalnej podłogi statusu.
         id: 'gateType',
         label: t('myWork.projects.stageGates.gate', 'Gate'),
@@ -237,7 +237,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
         </button>
       </div>
       {error ? <p className="mb-2 text-xs text-danger-500">{error}</p> : null}
-      <div className="hidden min-[420px]:block">
+      <div className="hidden sm:block">
         <StandardTable
           columns={columns}
           data={rows as unknown as TableRow[]}
@@ -248,7 +248,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
       </div>
       <ul
         data-testid="project-stage-gates-mobile-list"
-        className="divide-y divide-c-border-subtle overflow-hidden rounded-lg border border-c-border-subtle min-[420px]:hidden"
+        className="divide-y divide-c-border-subtle overflow-hidden rounded-lg border border-c-border-subtle sm:hidden"
       >
         {rows.map((row) => {
           const scheme =
