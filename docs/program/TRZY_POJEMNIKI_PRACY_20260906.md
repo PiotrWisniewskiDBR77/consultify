@@ -1418,3 +1418,28 @@ dodatki C1 z merge). Flaga OFF. Pułapki: tsc przez potok `| grep -c` + alarm �
 (bramka mierząca echo) — powtórzone do pliku z RC; build OOM bez heapu (zastane). **EWIDENCJA:**
 OB1 kosmetyka → **🧪 NA STAGINGU `ba0edc6eb1`** (za flagą; OB1 już 🧪 — dopisane tylko SHA/uwaga,
 liczniki §5 bez zmiany stanu).
+
+**Z-43 naprawione (14.09, Sonnet, gałąź `integracja/kandydat-z43-bramki-20260914`, HEAD
+`a843ef5b13`, kopia `backup/z43-bramki-20260914`; zawiera harness Z-41).** Przyczyna zmierzona:
+`ProjectStageGatesPanel.tsx:109-195` deklarował kolumny 230+170 px w panelu podglądu dającym
+~285 px (`clamp(340px,28%,480px)`); kolumna `gateType` z `primary:true` → twarda podłoga 200 px
+w `FilterableTable` (`getColumnTypeFloor`) niezależna od kontenera. Naprawa: `gateType` bez
+`primary` (podłoga 140), szerokości 140/130 px, plakietka statusu `whitespace-nowrap`, przycisk
+„Pass gate" w drugiej linii (może zawinąć). Test `ProjectStageGatesPanel.columnWidth.test.tsx`
+3/3 (suma kolumn ⊂ 285 px, brak `primary`, `nowrap` na plakiecie). Zrzuty v2
+`~/Developer/cto-codex/zrzuty-s5-pmo-20260914/en/v2/` (EN jasny/ciemny, PL, 1280 px) bez ucięć —
+oko CTO ✓. **Zrzut PMO wysłany właścicielowi (Tak/Nie, czwarty obraz).** → integrator fala C4
+(`wt/fala-c4`) w toku.
+
+**Fala C3 — Z-38 heatmapa PL (push `7722319dfc`; wdrożenie w toku przy pisaniu — status i
+health dopisze kolejny wpis).** Kandydat `018c72c4f1` (zawiera q1-kosmetyka `a427ef7af9` —
+wspólna historia z C2); szczegóły w raporcie integratora.
+
+**Z-2 (aktualizacja 14.09, po Z-41/Z-38/Z-43).** Odbiory w kolejce: S4 (Codex HOLD w review), S3
+(rebase), S5 E3b, Q2 E1 (Codex). Zrzuty do decyzji właściciela: 4 (4 przyciski, skrzynka, Raport
+pracy, PMO). Worktree CTO: `fala-c3`, `fala-c4`, `z43` (do sprzątnięcia po C4), `rejestr-0914`,
+`kandydat-20260913`. Dysk ~32 GiB.
+
+**EWIDENCJA (uzupełnienie 14.09, Z-43/C4).** Z-43 → **🔧 gotowe do scalenia `a843ef5b13` (C4)**;
+Z-38 → **w wdrożeniu (C3)**; PMO E3 — dopisz „zrzut EN v2 wysłany właścicielowi 14.09". Skrzynka:
+**Z-43 → w C4**.
