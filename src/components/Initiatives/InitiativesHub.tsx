@@ -1623,13 +1623,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         'tab'
       ) as ModuleTab | null;
       const nextTab =
-        requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : 'list';
+        requestedTab &&
+        (BASE_CANONICAL_INITIATIVES_TABS.has(requestedTab) ||
+          (requestedTab === 'plan' && planEnabled))
+          ? requestedTab
+          : 'list';
       setActiveTab(nextTab);
       setActiveDocumentId(null);
     };
     window.addEventListener('popstate', syncTabFromHistory);
     return () => window.removeEventListener('popstate', syncTabFromHistory);
-  }, [setActiveDocumentId]);
+  }, [planEnabled, setActiveDocumentId]);
 
   const handleCloseDocument = useCallback(
     (id: string) => {
