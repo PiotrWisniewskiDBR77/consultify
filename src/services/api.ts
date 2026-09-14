@@ -3197,11 +3197,15 @@ export const Api = {
 
   // [ODMROZENIE WSPOLNE DEC-468] Tenant-admin self-service export; server checks persisted membership.
   exportOwnOrganizationData: async (orgId: string): Promise<Blob> => {
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(orgId)}/export?format=json`, {
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(orgId)}/export?format=json`,
+      {
       headers: getHeaders(),
-    });
+      }
+    );
     if (!res.ok) {
-      const message = res.status === 423
+      const message =
+        res.status === 423
         ? 'Organization export is unavailable while a legal hold is active.'
         : res.status === 403 || res.status === 401
           ? 'You do not have permission to export this organization.'
@@ -3594,11 +3598,59 @@ export const Api = {
    * last_name, email, avatar_url }.
    */
   getProjectTeamMembers: async (projectId: string): Promise<any[]> => {
-    const res = await fetchWithRetry(`${API_URL}/project-members/${projectId}`, {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/members`, {
       headers: getHeaders(),
     });
     const data = await handleResponse(res, 'Failed to fetch project team members');
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data : Array.isArray(data?.members) ? data.members : [];
+  },
+
+  addProjectTeamMember: async (
+    projectId: string,
+    input: { userId: string; projectRole: string; allocationPercent: number }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/members`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    });
+    return handleResponse(res, 'Failed to add project team member');
+  },
+
+  updateProjectTeamMember: async (
+    projectId: string,
+    userId: string,
+    input: { projectRole?: string; allocationPercent?: number }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/members/${userId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    });
+    return handleResponse(res, 'Failed to update project team member');
+  },
+
+  getProjectOperatingModel: async (projectId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/operating-model`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch project operating model');
+  },
+
+  getProjectCommunicationSettings: async (projectId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/notification-settings`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch project communication settings');
+  },
+
+  updateProjectCommunicationSettings: async (projectId: string, input: any): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/pmo/projects/${projectId}/notification-settings`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    });
+    return handleResponse(res, 'Failed to update project communication settings');
   },
 
   /**
@@ -3974,7 +4026,18 @@ export const Api = {
     return handleResponse(res, 'Failed to update AI operator profile');
   },
 
-  createProject: async (data: { name: string; ownerId?: string }): Promise<any> => {
+  createProject: async (data: {
+    name: string;
+    ownerId?: string;
+    description?: string;
+    goal?: string;
+    status?: 'draft' | 'active';
+    pmo_standard?: 'prince2' | 'pmbok' | 'agile' | 'safe' | 'custom';
+    start_date?: string;
+    target_end_date?: string;
+    budget_amount?: number;
+    budget_currency?: string;
+  }): Promise<any> => {
     const res = await fetch(`${API_URL}/projects`, {
       method: 'POST',
       headers: getHeaders(),
