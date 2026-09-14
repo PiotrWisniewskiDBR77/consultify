@@ -1,0 +1,79 @@
+• Huby list z legacy menu (renderują listę, brak importu StandardModuleBar — R2b): 1 z 7 *Hub.tsx
+✓ check-list-canon: brak NOWYCH naruszeń kanonu tabel (pliki z argumentów: 2 plików; naruszeń 1, baseline 1 — dług nie rośnie)
+TERESA-CONTRACT tools 19/19
+TERESA-CONTRACT PASS menu1_entry=1 panel_entries=0 preview=2 dead=0
+✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie 8, baseline 8 — dług nie rośnie)
+• karty N (SPEC-N §5B): R1 ostrzeżeń 2 · R2+R3 aktualnie 0 / baseline 0 (dług istniejący, ratchet nie rośnie — nie blokuje; szczegóły: --report)
+• danger-* poza kontekstem błędu (P6 §5 krok 7): 117 / baseline 117 (RAPORT — nie blokuje; szczegóły: --report)
+etykiety: zbadane pliki=455, ternary=787, nieuzasadnione-identyczne=0, baseline=0
+ETYKIETY OK: ratchet i podłoga liczebności zachowane
+✓ check-triada: brak nowych naruszeń crimson (sprawdzono plików: 2)
+⚠️  src/components/Execution/ExecutionHub.tsx — hub ma 8 zakładek (limit ≤6, §4)
+✓ check-gestosc: brak regresji mechanicznych (sprawdzono plików: 5)
+check-focus-canon — dlug fokusa crimson (ring-primary-* zamiast ring-c-focus)
+
+  Naruszenia (crimson jako fokus):  59 plikow, 160 wystapien
+  Poprawne (c-focus):               690 plikow, 1898 wystapien
+  Pokrycie (plikow zgodnych):       92%
+  Pominiete (src/index.css):        2 naruszen / 21 poprawnych (definicje + zgodnosc, nie liczone do bramki)
+
+  TOP 10 plikow wg liczby naruszen (do planowania naprawy modulami):
+      13  src/components/SuperAdmin/security/SecurityPoliciesPanel.tsx
+      12  src/components/SuperAdmin/EmailConfigurationPanel.tsx
+      11  src/views/OrgSetupWizard.tsx
+       9  src/views/superadmin/SystemSettings.tsx
+       8  src/components/SuperAdmin/integrations/WebhooksPanel.tsx
+       6  src/components/Admin/AI/CustomComplianceTemplateEditor.tsx
+       6  src/components/SuperAdmin/billing/SubscriptionsPanel.tsx
+       6  src/views/superadmin/AIConfigurationView.tsx
+       6  src/views/superadmin/SecurityPoliciesView.tsx
+       5  src/components/shared/UserManagementCore.tsx
+
+  Pliki niesledzone: bez naruszen.
+
+  ⚠️  HEURYSTYKA (dynamiczna konstrukcja klasy — do RECZNEGO review, nie bramka, mozliwe falszywe trafienia):
+     37 plikow, 49 podejrzanych wierszy.
+      src/components/AIChat/Artifacts/renderers/ComparisonMatrixRenderer.tsx:195:      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      src/components/AIChat/CanvasArtifactBlockRenderer.tsx:192:      `${index}:${columns.map((column) => String(row[column] ?? '')).join('::')}`;
+      src/components/Admin/commandCenter/CommandCenterAiPolicyTab.tsx:34:const toCsv = (values: string[] | undefined | null): string => (values || []).join(', ');
+      src/components/Admin/commandCenter/CommandCenterAiPolicyTab.tsx:40:const toLines = (values: string[] | undefined | null): string => (values || []).join('\n');
+      src/components/Admin/commandCenter/CommandCenterResidencyTab.tsx:25:const toCsv = (values: string[] | undefined | null): string => (values || []).join(', ');
+      src/components/Audit/method/AuditReportDocumentView.tsx:397:  if (Array.isArray(value)) return value.length ? value.map((v) => String(v)).join('; ') : '—';
+      src/components/DiscoveryTools/KnownToolDetailView.tsx:416:        arr(tool?.tags).length > 0 ? (tool?.tags as string[]).join(' · ') : dash
+      src/components/DiscoveryTools/steps/ContextStep.tsx:674:    const composeList = (values: string[]) => values.join(', ');
+      src/components/Execution/ExecutionReportsSurface.tsx:1777:                      r.source.audience?.map((value: string) => referenceLabel(value)).join(', ') ||
+      src/components/Feedback/FeedbackSidePanel.tsx:602:        setStepsToReproduce(Array.isArray(data.steps) ? data.steps.join('\n') : String(data.steps));
+      src/components/Finance/FinancialStatementPackWorkspace.tsx:989:                        {entry.assumptions.map((a) => `${a.key}=${String(a.value)}`).join(', ')}
+      src/components/Finance/shared/FinanceCandidateHandoffModal.tsx:195:    return value.map((item) => String(item)).join(', ');
+      src/components/Initiatives/DefinitionCardContent.tsx:334:                value={Array.isArray(value) ? value.join('\n') : String(value || '')}
+      src/components/Initiatives/Generator/adapters/audit.ts:59:        opis: [f.severity, f.status].filter(Boolean).map(String).join(' · ') || undefined,
+      src/components/Initiatives/Generator/adapters/interview.ts:56:          opis: [i?.type, i?.status].filter(Boolean).map(String).join(' · ') || undefined,
+      src/components/Initiatives/Generator/adapters/tool.ts:43:        opis: [s.toolType, s.status].filter(Boolean).map(String).join(' · ') || undefined,
+      src/components/Initiatives/InitiativeDocumentView.tsx:5102:          text = parts.join('\n\n').trim() || JSON.stringify(result.parsedContent, null, 2);
+      src/components/Initiatives/sections/ResourcesSection.tsx:796:          contextText = [common, ``, `[EXISTING TOOLS]`, JSON.stringify(existing, null, 2)].join(
+      src/components/MyWork/IdeaMapWorkspace.tsx:955:        ? `Top branches: ${topBranches.map((b: string) => `"${b}"`).join(', ')}`
+      src/components/MyWork/TaskDetailView.tsx:5013:            value: dependencies.map((d) => `- ${JSON.stringify(d)}`).join('\n'),
+      src/components/MyWork/knowledge/KnowledgeCardNodes.tsx:210:        selected ? `ring-2 ring-${cfg.color}-500/60` : ''
+      src/components/MyWork/table/LinkedRecordDisplay.tsx:116:              {Array.isArray(val) ? val.join(', ') : String(val)}
+      src/components/MyWork/table/ViewRouter.tsx:506:            return cols.map((ck) => String(r?.data?.[ck] ?? '')).join('\t');
+      src/components/MyWork/table/ViewRouter.tsx:522:      const line = visibleColumns.map((c) => String(row.data?.[c.key] ?? '')).join('\t');
+      src/components/MyWork/table/csvUtils.ts:121:      return Array.isArray(val) ? val.join('; ') : String(val);
+      src/components/MyWork/table/formulaEngineCore.ts:475:  CONCAT: (args) => args.map((v) => (v == null ? '' : String(v))).join(''),
+      src/components/Subscriber/SubscriberHealthBadge.tsx:63:  const reasonText = reasons.filter((r) => typeof r === 'string' && r.length > 0).join(' · ');
+      src/components/assessment/reports/templates/CMMIReportTemplate.tsx:165:                  ? `ring-2 ring-${level.color}-500 ${getLevelBgColor(level.level)}`
+      src/components/shared/NModeBlocks/ArtifactPreviewCard.tsx:70:    ring: 'ring-primary-400/30',
+      src/components/shared/NModeCompleteness/AIFillDialog.tsx:39:  if (Array.isArray(value)) return value.map(String).join(', ');
+      ... (+19 wiecej, patrz repo)
+
+  Rejestr delt (kontekst dokument<->kod): docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md (D-01, D-05)
+
+  Dlug SPADL wzgledem baseline (61 -> 59 plikow, 169 -> 160 wystapien).
+  Zaktualizuj baseline w dol: bash scripts/check-focus-canon.sh --update-baseline
+
+  ⚠ mvp-final: ten commit rusza pliki ZAMROŻONE jako MVP final.
+     [06_EXECUTION] src/components/Execution/ExecutionHub.tsx
+     Bez znacznika [ODMROZENIE <MODUL> DEC-<numer>] commit zostanie ODRZUCONY w commit-msg.
+
+[check-flags-env-static] (a) skan OK — 0 rozdzielonych wzorcow (sprawdzono 172 plikow).
+[check-flags-env-static] (b) dowod builda OK — esbuild bundle (platform browser) z --define:import.meta.env={"VITE_ASSESSMENT_DOCX_ENABLED":"true","VITE_FINANCE_VALUE_PANELS":"true","VITE_INITIATIVE_BRIDGE":"true"} daje {"assessmentDocx":true,"financeValuePanels":true,"initiativeBridge":true}.
+BRAMKA JĘZYKOWA (szybki tryb — tylko dotknięte pliki): OK.
