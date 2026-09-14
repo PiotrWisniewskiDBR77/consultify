@@ -56,6 +56,7 @@ import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
 import { CreateProjectModal } from './CreateProjectModal';
 import { ProjectRoleAssignmentsSummary } from './ProjectRoleAssignmentsSummary';
 import { ProjectRolePermissionCopy } from './ProjectRolePermissionCopy';
+import { ProjectStageGatesPanel } from './ProjectStageGatesPanel';
 
 interface ProjectRow {
   id: string;
@@ -1817,6 +1818,8 @@ export const MyProjects: React.FC = () => {
                       ))}
                     </ul>
                 </div>
+
+                <ProjectStageGatesPanel projectId={previewProject.id} />
 
                 {/* ── Zwornik (#78): Zadania — zadania projektu ─────────────── */}
                 <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
