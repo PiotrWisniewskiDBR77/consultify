@@ -1476,6 +1476,63 @@ przeliczone w tym wpisie** — poprzedni stan zmierzony ✅3 · 🧪18 · 🔧6 
 fali D1/U2); przeliczenie po D3/J2 zostaje jako zadanie kolejnej sesji/Codexa (brak w tym
 przekazaniu narzędzia pomiaru na żywo — zgodnie z zasadą „brak pomiaru nie jest wynikiem").
 
+**EWIDENCJA (uzupełnienie 14.09 noc 2, po Z-56/DEC-511, E2d/E2c locale, S3 v2, fali
+J3/E2b-1/D-1/D-2).** Staging: `a2b0a0fe32` → `4de31efbcb` (19:45: Z-56 migracja
+`20262210_project_members_normalized_project_role.sql`, DEC-511 — fresh strict 918, S5 4 pliki/
+10 testów na czystej bazie → **W51(4) zamknięte, Z-56 zamknięte**; E2d Teresa locale DEC-510
+`0ffb1c2f30` — jeden helper `withResolvedLocaleInstruction` w 8 miejscach,
+`DEFAULT_AI_LANGUAGE='en'`, sonda na żywo: pytanie PL przy `users.language=en` → odpowiedź EN;
+E2c serwer locale `5117b3d545` — `reportLocale.ts` 36 kluczy EN/PL, locale joba zamrożone w
+e-mail/PDF; dług: 32 klucze bez wpisów w locale + ternar `scheduledReportService.ts:673` →
+E2c-bis u Codexa) → `7ecfcf007b` (S3 Plan v2 `1a18e16c5a` PRZYJĘTE — gate tylko na nowość, Menu 2
+= 3 przy OFF, trasy 200, Dropdown kanoniczny; Z-58 zamknięte) → **`5810afe184`** (21:5x: J3 CTO
+`0a9583bbdc` + E2b-1 Codexa `6a9642ffd8` + D-1 `2a80b6016d` + D-2 `605a71fc13`). Tagi
+`rollback-pre-{z56,e2d,e2c,s3v2,e2b1,d1,d2}-20260914`.
+
+**Fala J3 (CTO, Z-59 domknięcie, DEC-512).** D1 `drdMatrixCellContent.ts` nazwa obszaru po
+locale; D3 klucz `assessment.report.area.scale`; D4 audyt `method-core.routes.ts:1709` EN/PL; D5
+`outputUnitNames.ts` → `unitName` EN/PL (nowe outputy); D2 `DRDLevel.titleEN/descriptionEN` dla
+60 poziomów osi 5–6 (25 tytułów + 53 opisy) — **Z-62 nowa**: lista do akceptu właściciela
+metodyki `cto-codex/fala-j3-20260914/D2_TYTULY_POZIOMOW_EN.md`, kompilator raportuje „AWAITING
+SIGN-OFF"; `ownerName/actorName` wzbogacane; plakietki debug dev-only; `openQuestionCount` 0 dla
+frozen; 0 polskich fragmentów w EN (`zrzuty-j3-20260914/`). **Z-61 obalone** (`x-org-context`
+celowo pomijany na hostach kanonicznych — `auth.middleware.ts:235`, D-4 31.08). **Z-63 nowa
+(decyzja).** `method_sessions` bez `name` → lista pokazuje „DRD · 381966f5" — wymaga migracji
+addytywnej + PATCH + UI; propozycja do decyzji właściciela/CTO.
+
+**E2b-1** (Codex, DEC-510): 5 plików `MaturityMatrix`/`DRDAssessmentEditor`, 36 kluczy EN+PL, K4
+Assessment 3→1. **D-1** (Codex): 7 `as any` → typy; spec e2e po J2; `DrdMethodWorkspaceScreenLegacy`
+usunięty (1129→45 linii, 0 wystąpień); mock dev-render; **Z-60 zamknięte** (`isPolish` z i18n, 0
+domyślnych true); **Z-48 zamknięte** (min-width statusu 130→160 px); testy czerwone 23→12 (11
+wygaszonych). **D-2** (Codex): tylko docs/evidence — **P-T19 PASS lokalnie** (rejestracja → v8 →
+bez 404); **P-P11 PARTIAL — Z-64 nowa**: 2 defekty produktowe (brak sesji w Library dla ADMIN tej
+samej org — sesja OWNER-a; brak error/retry po przerwaniu żądania offline); **P-T13 STOP —
+rekomendacja B** (kanoniczny manifest nawigacji filtrowany rolą/org/flagą) — decyzja właściciela.
+
+**Northwind.** Zasiew przez API (14.09 ~20:00): sesja `381966f5` (39 jednostek, poziomy 2–4, cele
+3–5, gap 39/39, dowody 39, teksty EN), atrapy usunięte trasą Z-55 (rekordy `614e5f28` Northwind,
+`203d5476` DBR77, `1a2ef057`, `61e2f96b`); po J3 ponowny zasiew w toku (nowa sesja z `unitName`
+EN) i DELETE `381966f5`.
+
+**Rejestr zastanych czerwieni (D-3 Codexa).** `contractMirrorDrift.test.ts` 4,
+`DrdHttpMethodWorkspaceScreen.{naglowekIStanOdpowiedzi 3, zapytajTerese 2}`, `skipCode` 6,
+`registry.kompletnosc` 1, `AssessmentQualityReviewPanel.tiles` 1,
+`AssessmentReportDocxDownload.day50` 3/4, `MyWork` 12/11 plików — testy oczekujące PL przy EN
+domyślnym (DEC-461). Workflow „IRIS 6.0" na stagingu czerwony na Lint & Type Check od ≥5 pushy
+(dług 177 tsc).
+
+**Z-2 (aktualizacja 14.09 noc 2, po E2c/E2d/Z-56/S3 v2/fali J3/E2b-1/D-1/D-2).** Linia =
+`5810afe184` (scalenie paczki D-2 pilotaż — tylko docs+evidence — na kandydata J3+E2b-1+D-1);
+**staging `5810afe184`**. P-T19 → zweryfikowane lokalnie (PASS); P-P11 → PARTIAL. Skrzynka:
+**Z-48 zamknięte (min-width statusu, D-1)**, **Z-56 zamknięte (migracja
+`normalized_project_role`, W51(4))**, **Z-58 zamknięte (S3 v2)**, **Z-59 zamknięte (domknięcie
+falą J3)**, **Z-60 zamknięte (`isPolish` z i18n, D-1)**, **Z-61 obalona (hipoteza `x-org-context`,
+zachowanie zamierzone)**, **Z-62 nowa (25 tytułów poziomów EN, akcept metodyki właściciela)**,
+**Z-63 nowa (`method_sessions` bez `name`, decyzja migracji)**, **Z-64 nowa (P-P11 PARTIAL, 2
+defekty produktowe Library/offline)**. Liczniki §5 i pilotaż: przeliczenie pełne pozostaje zadaniem
+kolejnej sesji (brak narzędzia pomiaru na żywo w tym przekazaniu); z tego przekazania wynika:
+P-T19 PASS lokalnie, P-P11 PARTIAL, Z-48/Z-56/Z-58/Z-59/Z-60 zamknięte, Z-62/Z-63/Z-64 nowe.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)

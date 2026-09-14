@@ -1628,3 +1628,53 @@ otwarta (25 tytułów poziomów DRD PL bez EN)**, **Z-59 nowa (surowy kontrakt A
 frozen/closed, DEC-512)**, **Z-60 nowa (powłoka artefaktu PL w EN, `isPolish` domyślne, P2)**,
 **DEC-512 (frozen/closed w powłoce, Report kanoniczny domyślnie)**. S3 P2 Plan `075f239f55` —
 **HOLD CTO** (nie wchodzi na staging bez decyzji o flagowaniu/naprawie 2 testów kanonu Menu 2).
+
+**EWIDENCJA (uzupełnienie 14.09 noc 2, po Z-56/DEC-511, E2d/E2c locale, S3 v2 PRZYJĘTA, fali
+J3/E2b-1/D-1/D-2).** Staging: `a2b0a0fe32` → `4de31efbcb` (Z-56 migracja
+`20262210_project_members_normalized_project_role.sql`, DEC-511 — fresh strict 918, S5 4 pliki/
+10 testów na czystej bazie → **W51(4) zamknięte, Z-56 zamknięte**; E2d Teresa locale DEC-510
+`0ffb1c2f30` — helper `withResolvedLocaleInstruction` w 8 miejscach, `DEFAULT_AI_LANGUAGE='en'`,
+sonda: PL przy `users.language=en` → EN; E2c serwer locale `5117b3d545` — `reportLocale.ts` 36
+kluczy EN/PL, locale joba zamrożone w e-mail/PDF; dług 32 klucze + ternar
+`scheduledReportService.ts:673` → E2c-bis) → `7ecfcf007b` (S3 Plan v2 `1a18e16c5a` PRZYJĘTA —
+gate tylko na nowość, Menu 2 = 3 przy OFF, trasy 200, Dropdown kanoniczny; Z-58 zamknięte) →
+**`5810afe184`** (J3 CTO `0a9583bbdc` + E2b-1 Codexa `6a9642ffd8` + D-1 `2a80b6016d` + D-2
+`605a71fc13`, scalenie paczki pilotaż — tylko docs+evidence). Tagi
+`rollback-pre-{z56,e2d,e2c,s3v2,e2b1,d1,d2}-20260914`.
+
+Fala **J3** (CTO, Z-59 domknięcie, DEC-512): D1 nazwa obszaru po locale w
+`drdMatrixCellContent.ts`, D3 klucz `assessment.report.area.scale`, D4 audyt
+`method-core.routes.ts:1709` EN/PL, D5 `outputUnitNames.ts` → `unitName` EN/PL; D2
+`DRDLevel.titleEN/descriptionEN` dla 60 poziomów osi 5–6 — **Z-62 nowa** (akcept właściciela
+metodyki, kompilator „AWAITING SIGN-OFF"); 0 polskich fragmentów w EN. **Z-61 obalone**
+(`x-org-context` celowo pomijany na hostach kanonicznych, zamierzone). **Z-63 nowa**:
+`method_sessions` bez `name` → lista pokazuje hash zamiast nazwy, wymaga migracji addytywnej +
+PATCH + UI, decyzja właściciela/CTO. **E2b-1** (Codex): 5 plików `MaturityMatrix`/
+`DRDAssessmentEditor`, 36 kluczy EN+PL, K4 Assessment 3→1. **D-1** (Codex): 7 `as any` → typy,
+`DrdMethodWorkspaceScreenLegacy` usunięty (1129→45 linii), **Z-60 zamknięte** (`isPolish` z
+i18n), **Z-48 zamknięte** (min-width statusu 130→160 px), testy czerwone 23→12 (11 wygaszonych).
+**D-2** (Codex, tylko docs/evidence): **P-T19 PASS lokalnie** (rejestracja → v8 → bez 404);
+**P-P11 PARTIAL — Z-64 nowa** (brak sesji w Library dla ADMIN tej samej org — sesja OWNER-a; brak
+error/retry po przerwaniu żądania offline); **P-T13 STOP — rekomendacja B** (manifest nawigacji
+filtrowany rolą/org/flagą), decyzja właściciela.
+
+**Northwind.** Zasiew przez API sesja `381966f5` (39 jednostek, poziomy 2–4, cele 3–5, gap 39/39,
+dowody 39, teksty EN), atrapy usunięte trasą Z-55 (rekordy `614e5f28` Northwind, `203d5476`
+DBR77, `1a2ef057`, `61e2f96b`); po J3 ponowny zasiew w toku i DELETE `381966f5`.
+
+**Rejestr zastanych czerwieni (D-3 Codexa).** `contractMirrorDrift.test.ts` 4,
+`DrdHttpMethodWorkspaceScreen.{naglowekIStanOdpowiedzi 3, zapytajTerese 2}`, `skipCode` 6,
+`registry.kompletnosc` 1, `AssessmentQualityReviewPanel.tiles` 1,
+`AssessmentReportDocxDownload.day50` 3/4, `MyWork` 12/11 plików — oczekują PL przy EN domyślnym
+(DEC-461). Workflow „IRIS 6.0" czerwony na Lint & Type Check od ≥5 pushy (dług 177 tsc).
+
+**Liczniki §5 — po J3/E2b-1/D-1/D-2 (14.09 noc 2): bez zmiany stanu żadnego etapu tabeli** (żaden
+z powyższych torów nie dotyka wiersza §5 — to naprawy locale/i18n/kanonu poza tabelą etapów).
+Poprzedni zmierzony stan pozostaje: ✅ 3 · 🧪 18 · 🔧 6 · ⬜ 20 (47 etapów, po fali D1/U2/D3/J2).
+Pełne przeliczenie §5 i pilotażu nadal zadaniem kolejnej sesji (brak narzędzia pomiaru na żywo).
+Pilotaż z tego przekazania: **P-T19 PASS lokalnie**, **P-P11 PARTIAL**. Skrzynka: **Z-48
+zamknięte (min-width statusu, D-1)**, **Z-56 zamknięte (migracja `normalized_project_role`,
+W51(4))**, **Z-58 zamknięte (S3 v2)**, **Z-59 zamknięte (domknięcie falą J3)**, **Z-60 zamknięte
+(`isPolish` z i18n, D-1)**, **Z-61 obalona (`x-org-context` zamierzone)**, **Z-62 nowa (25
+tytułów poziomów EN, akcept metodyki właściciela)**, **Z-63 nowa (`method_sessions` bez `name`,
+decyzja migracji)**, **Z-64 nowa (P-P11 PARTIAL, 2 defekty Library/offline)**.
