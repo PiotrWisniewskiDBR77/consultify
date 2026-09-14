@@ -1,23 +1,26 @@
 {
   "package": "F2 P2 Plan E2-E4",
-  "base": "19b633c81e262b9f3c2f25b0555b2dfceab8b42e",
-  "implementation": "04109287cd",
+  "base": "a2b0a0fe32f2a3f137d919ad81248b9da0f54edd",
+  "implementation": "e3cfa2ab2730a6003f8d94c8be892738b6762b24",
   "flags": {
-    "VITE_INITIATIVES_PLAN": "default OFF; exact true enables",
-    "ENABLE_INITIATIVES_PLAN": "default OFF; exact true enables"
+    "VITE_INITIATIVES_PLAN": "default OFF; exact true enables Wave 2 dependency-analysis UI and AI request mode; established Plan tab stays available",
+    "ENABLE_INITIATIVES_PLAN": "default OFF; exact true enables AI dependency analysis, observation review, and conditional persistence; established Plan routes stay available"
   },
   "migration": "none",
   "tests": {
     "focused": {
-      "files": 11,
-      "tests": 28,
-      "result": "PASS"
+      "files": 14,
+      "tests": 47,
+      "result": "PASS",
+      "retry": 0,
+      "includesUnchangedMenu2Suites": true
     },
     "realpg": {
       "files": 1,
       "tests": 1,
       "result": "PASS",
       "mockDb": false,
+      "container": "cx-a-b-plan-pg",
       "port": 5300,
       "acceptedObservations": 2,
       "conditionalStateReadback": false
@@ -25,20 +28,21 @@
     "serverTsc": {
       "baseErrors": 0,
       "candidateErrors": 0,
-      "baseExitCode": 0,
-      "candidateExitCode": 0
+      "candidateExitCode": 0,
+      "heapGb": 8
     },
     "frontendTsc": {
-      "w56Base": "TIMEOUT_120S",
-      "w56Candidate": "TIMEOUT_120S",
-      "previousExactBaseErrors": 177,
-      "previousCandidateBeforeFixErrors": 178,
-      "fixedAddedErrors": 1,
-      "claim": "NOT_GREEN"
+      "baseErrors": 177,
+      "baseSource": "CTO W58 exact a2b0a0fe32 measurement",
+      "candidateErrors": 177,
+      "candidateExitCode": 2,
+      "delta": 0,
+      "heapGb": 8,
+      "claim": "NUMERIC_PARITY_NOT_GLOBAL_GREEN"
     },
     "esbuild": {
-      "frontendFiles": 4,
-      "serverFiles": 4,
+      "frontendFiles": 3,
+      "serverFiles": 1,
       "result": "PASS"
     },
     "holdRepairFocused": {
@@ -90,71 +94,78 @@
         "failure": "inactive CONDITIONAL produced hard dependencySnapshot edge A; expected no hard edge"
       },
       "green": "inactive retained without hard edge; active enforced by solver"
+    },
+    "offParity": {
+      "menu2": "PASS_UNCHANGED_ASSERTIONS",
+      "establishedPlanRoutes": "PASS",
+      "aiDependencyAnalysisOff": "FEATURE_DISABLED",
+      "conditionalPersistenceOff": "FEATURE_DISABLED",
+      "observationReviewOff": "FEATURE_DISABLED"
     }
   },
   "screenshots": [
     {
       "path": "evidence/a-b-plan/en-dark-empty.jpg",
-      "bytes": 30142,
-      "sha256": "14e458faa2c52af2e1a57028c18f47826fc611cf2308189bcde44f85372c1c3c"
+      "bytes": 52473,
+      "sha256": "4653e3cd9f724f9c4e2bed1d8a95235b2ac51a62cd87ae643ba937fe19a8018b"
     },
     {
       "path": "evidence/a-b-plan/en-dark-full.jpg",
-      "bytes": 86691,
-      "sha256": "51c51726b08ffd691569ea80df3f8781008ed5bb2999a25f5f9b3a0533d4766d"
+      "bytes": 126527,
+      "sha256": "2bfcb2d155b220f08891d1253d6744bef32d3c3b4f095bfb2fa78a0b6b1be79e"
     },
     {
       "path": "evidence/a-b-plan/en-dark-timeline.jpg",
-      "bytes": 86125,
-      "sha256": "5cb2a86d90460b1b29de4188b5554fd19531d448444275415237e0d96e1889a2"
+      "bytes": 121755,
+      "sha256": "229c6956bf5f0526632f0e3d2c5782de75f3b4e0c5b165adf73a39685d1809bd"
     },
     {
       "path": "evidence/a-b-plan/en-light-empty.jpg",
-      "bytes": 31472,
-      "sha256": "d8c77121209e8807f7b0cde325e7199eb9f32dc4bacefb81090228e27d3153ce"
+      "bytes": 53541,
+      "sha256": "922f2e5e6f0ad620d0ec6e9335a58940c74c39036605aaa9f351195e33aaf391"
     },
     {
       "path": "evidence/a-b-plan/en-light-full.jpg",
-      "bytes": 88167,
-      "sha256": "af65e32ee1865e135064c44bb43969bbed290389729182b8a5973f74adbdaa74"
+      "bytes": 130672,
+      "sha256": "3a2fbb6e86e1bbe686cda92bf6c59549ecc513c38697e0d6ba0f946c1e8fc403"
     },
     {
       "path": "evidence/a-b-plan/en-light-timeline.jpg",
-      "bytes": 91184,
-      "sha256": "e1ff28fa08a082190e3dbc8fd15639ddc835e9690aac99068119fb19c1abb7dc"
+      "bytes": 127798,
+      "sha256": "d5cba3423bea03fa0d415466ec1d6729db8e25ecb8f59c1df09e74190c63952d"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-empty.jpg",
-      "bytes": 31794,
-      "sha256": "0760c32f6fddfec8c892ed42d159fdd90cb80d034951c2ddf203022ed36c39c1"
+      "bytes": 54502,
+      "sha256": "4c39d5c3feb661f53adc589e551e7a2bc81a93f272f1bb9f15bbac27d2b9b0e7"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-full.jpg",
-      "bytes": 91401,
-      "sha256": "2ffcfd54c21970aff72f715aceae97040e8952baa00b4d40114f6292d2d6864d"
+      "bytes": 128248,
+      "sha256": "f5a3204811822ab69e065fd4beb1010af75ba3b818a0669dd7da143c27bbdd15"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-timeline.jpg",
-      "bytes": 89843,
-      "sha256": "248ba8c270400035a40a0c24f31b602e131b769e8fdfdcc7c65ee82f24e48450"
+      "bytes": 126962,
+      "sha256": "a653bab701c5e30dc559f97f43525b5d2260034e9bcea0af1aa37fd7306f981e"
     },
     {
       "path": "evidence/a-b-plan/pl-light-empty.jpg",
-      "bytes": 33161,
-      "sha256": "89b55b716d005834c971def4701819911c3755f59307e4b9293c7436be321ee2"
+      "bytes": 55649,
+      "sha256": "13ac74d6420b759d189a97da44c9f5bd83a8c8285ca5725e10a39cf41a7f7adc"
     },
     {
       "path": "evidence/a-b-plan/pl-light-full.jpg",
-      "bytes": 92418,
-      "sha256": "4b3a376950187e0912bc1afedba004c2164058f0816721f83744f4b39bc5e9b2"
+      "bytes": 132981,
+      "sha256": "5ea4c92dc1d1dbb9e6059c15cb86b8f03cede37784b4d931e7c87cd0cccb4860"
     },
     {
       "path": "evidence/a-b-plan/pl-light-timeline.jpg",
-      "bytes": 94781,
-      "sha256": "c05241fe8255943e9a39bbad5b53ef40b5936329b21ca7f7df3351b4618e54d3"
+      "bytes": 133158,
+      "sha256": "15f36872b0d4e5b0f7fbf4701beb3c0a5d345166f55fe74f157d7ea236697bbd"
     }
   ],
-  "reviewStatus": "FROZEN_AWAITING_INDEPENDENT_REVIEW",
+  "reviewStatus": "V2_FROZEN_AWAITING_INDEPENDENT_REVIEW",
   "holdRepair": "ABSOLUTE stays hard; CONDITIONAL retains condition and active state; solver uses only active conditional edges",
   "artifactInventory": [
     {
@@ -174,66 +185,88 @@
     },
     {
       "path": "evidence/a-b-plan/en-dark-empty.jpg",
-      "bytes": 30142,
-      "sha256": "14e458faa2c52af2e1a57028c18f47826fc611cf2308189bcde44f85372c1c3c"
+      "bytes": 52473,
+      "sha256": "4653e3cd9f724f9c4e2bed1d8a95235b2ac51a62cd87ae643ba937fe19a8018b"
     },
     {
       "path": "evidence/a-b-plan/en-dark-full.jpg",
-      "bytes": 86691,
-      "sha256": "51c51726b08ffd691569ea80df3f8781008ed5bb2999a25f5f9b3a0533d4766d"
+      "bytes": 126527,
+      "sha256": "2bfcb2d155b220f08891d1253d6744bef32d3c3b4f095bfb2fa78a0b6b1be79e"
     },
     {
       "path": "evidence/a-b-plan/en-dark-timeline.jpg",
-      "bytes": 86125,
-      "sha256": "5cb2a86d90460b1b29de4188b5554fd19531d448444275415237e0d96e1889a2"
+      "bytes": 121755,
+      "sha256": "229c6956bf5f0526632f0e3d2c5782de75f3b4e0c5b165adf73a39685d1809bd"
     },
     {
       "path": "evidence/a-b-plan/en-light-empty.jpg",
-      "bytes": 31472,
-      "sha256": "d8c77121209e8807f7b0cde325e7199eb9f32dc4bacefb81090228e27d3153ce"
+      "bytes": 53541,
+      "sha256": "922f2e5e6f0ad620d0ec6e9335a58940c74c39036605aaa9f351195e33aaf391"
     },
     {
       "path": "evidence/a-b-plan/en-light-full.jpg",
-      "bytes": 88167,
-      "sha256": "af65e32ee1865e135064c44bb43969bbed290389729182b8a5973f74adbdaa74"
+      "bytes": 130672,
+      "sha256": "3a2fbb6e86e1bbe686cda92bf6c59549ecc513c38697e0d6ba0f946c1e8fc403"
     },
     {
       "path": "evidence/a-b-plan/en-light-timeline.jpg",
-      "bytes": 91184,
-      "sha256": "e1ff28fa08a082190e3dbc8fd15639ddc835e9690aac99068119fb19c1abb7dc"
+      "bytes": 127798,
+      "sha256": "d5cba3423bea03fa0d415466ec1d6729db8e25ecb8f59c1df09e74190c63952d"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-empty.jpg",
-      "bytes": 31794,
-      "sha256": "0760c32f6fddfec8c892ed42d159fdd90cb80d034951c2ddf203022ed36c39c1"
+      "bytes": 54502,
+      "sha256": "4c39d5c3feb661f53adc589e551e7a2bc81a93f272f1bb9f15bbac27d2b9b0e7"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-full.jpg",
-      "bytes": 91401,
-      "sha256": "2ffcfd54c21970aff72f715aceae97040e8952baa00b4d40114f6292d2d6864d"
+      "bytes": 128248,
+      "sha256": "f5a3204811822ab69e065fd4beb1010af75ba3b818a0669dd7da143c27bbdd15"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-timeline.jpg",
-      "bytes": 89843,
-      "sha256": "248ba8c270400035a40a0c24f31b602e131b769e8fdfdcc7c65ee82f24e48450"
+      "bytes": 126962,
+      "sha256": "a653bab701c5e30dc559f97f43525b5d2260034e9bcea0af1aa37fd7306f981e"
     },
     {
       "path": "evidence/a-b-plan/pl-light-empty.jpg",
-      "bytes": 33161,
-      "sha256": "89b55b716d005834c971def4701819911c3755f59307e4b9293c7436be321ee2"
+      "bytes": 55649,
+      "sha256": "13ac74d6420b759d189a97da44c9f5bd83a8c8285ca5725e10a39cf41a7f7adc"
     },
     {
       "path": "evidence/a-b-plan/pl-light-full.jpg",
-      "bytes": 92418,
-      "sha256": "4b3a376950187e0912bc1afedba004c2164058f0816721f83744f4b39bc5e9b2"
+      "bytes": 132981,
+      "sha256": "5ea4c92dc1d1dbb9e6059c15cb86b8f03cede37784b4d931e7c87cd0cccb4860"
     },
     {
       "path": "evidence/a-b-plan/pl-light-timeline.jpg",
-      "bytes": 94781,
-      "sha256": "c05241fe8255943e9a39bbad5b53ef40b5936329b21ca7f7df3351b4618e54d3"
+      "bytes": 133158,
+      "sha256": "15f36872b0d4e5b0f7fbf4701beb3c0a5d345166f55fe74f157d7ea236697bbd"
+    },
+    {
+      "path": "evidence/a-b-plan/plan-v2-esbuild.log",
+      "bytes": 432,
+      "sha256": "01ee6cc6d6c482a4ba0dcfb29de072611d33f1b8945563961100e26482be0bb8"
+    },
+    {
+      "path": "evidence/a-b-plan/plan-v2-focused.log",
+      "bytes": 27284,
+      "sha256": "ed41bb9f4adc16f97f939a99eca937359b6bde82cbb8b341238c53a8fa6e8b62"
+    },
+    {
+      "path": "evidence/a-b-plan/plan-v2-realpg.log",
+      "bytes": 2435,
+      "sha256": "ccb4b20cdcc6f456a2b5a65f5094f5fda7711ba44f6c6d441a01e3c78e02f414"
+    },
+    {
+      "path": "evidence/a-b-plan/plan-v2-tsc-summary.log",
+      "bytes": 407,
+      "sha256": "5f7ff075bfc982ec3cee6b940190a5ddf4cd37c75aa25014cea42f48bbcf4e34"
     }
   ],
-  "artifactBytesExcludingManifestAndChecksum": 856010,
-  "artifactFilesExcludingManifestAndChecksum": 15,
-  "screenshotBytes": 847179
+  "artifactBytesExcludingManifestAndChecksum": 1283655,
+  "artifactFilesExcludingManifestAndChecksum": 19,
+  "screenshotBytes": 1244266,
+  "conditionalSemanticsImplementation": "04109287cd",
+  "v2Repair": "Plan tab and established routes remain available at OFF; only Wave 2 dependency analysis is gated; native select replaced by canonical Dropdown; phantom flag removed from docs"
 }

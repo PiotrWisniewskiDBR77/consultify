@@ -1,13 +1,13 @@
 # P2 Plan — E2–E4 freeze
 
-**Verdict: implementation is frozen on the required W56 line `19b633c81e` and is ready for independent review.**
+**Verdict: Plan v2 is frozen on the required W59 line `a2b0a0fe32` and is ready for independent review.**
 
 - Branch: `codex/plan-inicjatyw-20260914`
-- Required base: `19b633c81e262b9f3c2f25b0555b2dfceab8b42e`
-- Frozen implementation: `04109287cd` (the freeze receipt is the following documentation-only commit)
+- Required base: `a2b0a0fe32f2a3f137d919ad81248b9da0f54edd`
+- Frozen implementation: `e3cfa2ab2730a6003f8d94c8be892738b6762b24` (the freeze receipt is the following documentation-only commit)
 - Decision marker: `[ODMROZENIE 05_INITIATIVES DEC-497]`
 - Schema: unchanged; no migration
-- Runtime gates: `VITE_INITIATIVES_PLAN=true` and `ENABLE_INITIATIVES_PLAN=true`; both fail closed and default OFF
+- Runtime gates: `VITE_INITIATIVES_PLAN=true` and `ENABLE_INITIATIVES_PLAN=true`; both fail closed and default OFF for the Wave 2 dependency-analysis additions. The established Plan tab, solver path, and Plan routes remain available at OFF.
 
 ## Delivered behavior
 
@@ -19,16 +19,17 @@ Critical paths retain the `ABSOLUTE` and `CONDITIONAL` distinction. The timeline
 
 All new user-facing copy is available in English and Polish, with English first. Lists continue through the canonical list and preview components; the package adds no competing table implementation.
 
-## Verification after the W56 rebase
+## Verification after the W59 v2 rebase
 
-- Rebase: no conflicts; merge base equals `19b633c81e`.
-- Focused tests: 11 files, 28 tests, all passed with `--retry=0`.
+- Rebase: no conflicts; merge base equals `a2b0a0fe32`.
+- Focused tests: 14 files, 47 tests, all passed with `--retry=0`. This includes both unchanged Menu 2 regression suites: Plan remains the second of three established destinations at flag OFF.
+- OFF parity: `/planning`, `/plan-scenarios`, and `/plan-analysis-proposals` reach their established handlers at OFF. `AI_DEPENDENCY`, observation review, and persistence of `conditionalDependencySnapshot` fail closed with `FEATURE_DISABLED` until the Wave 2 flag is ON.
 - HOLD repair tests: 4 non-database files / 14 tests passed, plus 1 Real PostgreSQL file / 1 test passed: 5 files and 15/15 tests in total. The RED artifact runs the regression assertion on exact pre-fix parent `8a2a58930e` and exits 1 because the inactive conditional observation is received as hard edge `["A"]` instead of `[]`. GREEN proves inactive and active behavior in the helper, canonical writer flow, and solver.
 - Real PostgreSQL: `cx-a-b-plan-pg` on port 5300, `RUN_DB_TESTS=1`, `MOCK_DB=false`; 1 file, 1 test passed. Readback proves proposal version 2, two accepted observations, and retained `CONDITIONAL` kind, exact condition, and `conditionActive=false` review state.
-- Server TypeScript: W56 base 0 errors / candidate 0 errors, both exit code 0 with 8 GB heap.
-- Frontend TypeScript: the W56 base and candidate both reached the mandatory 120-second ceiling before emitting diagnostics. On the preceding exact W54 base, the base measured 177 existing errors and the candidate measured 178; the only added error was the stale Plan history-tab symbol in `InitiativesHub.tsx`. It was repaired before W56 in the rebased implementation. This is explicit timeout evidence, not a green global frontend TypeScript claim.
-- Per-file esbuild for the HOLD repair: four affected frontend production files and four affected server production files passed.
-- UI evidence: 12 JPEG files, 847,179 bytes total. EN/PL × light/dark × full/empty are present; the four full-state captures were regenerated and show the explicit condition-active control. Four timeline captures prove horizon controls, critical paths, and the frozen in-progress bar.
+- Server TypeScript: exact base 0 errors / candidate 0 errors with 8 GB heap.
+- Frontend TypeScript: exact base 177 existing errors (CTO W58 measurement) / candidate 177 errors (fresh candidate measurement), so the delta is 0. This is numeric parity, not a green global frontend TypeScript claim.
+- Per-file esbuild: three affected frontend production files and the affected server route passed.
+- UI evidence: 12 fresh JPEG files, 1,244,266 bytes total. EN/PL × light/dark × full/empty are present; full-state captures show the canonical dependency-type dropdown. Four timeline captures prove horizon controls, critical paths, and the frozen in-progress bar.
 - Reproducible logs: `conditional-dependency-red.log` records the exact pre-fix parent, command, failing assertion, and exit 1; `conditional-dependency-green.log` records 4/4 files and 14/14 non-database tests; `conditional-dependency-realpg-green.log` records 1/1 file and 1/1 database test with local database identity and redacted credentials.
 
 ## Evidence boundary
