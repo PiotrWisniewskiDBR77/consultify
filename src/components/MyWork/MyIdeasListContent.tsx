@@ -1876,6 +1876,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             onToggleFavorite={toggleFavorite}
             folders={foldersAvailable ? folders : undefined}
             onMoveToFolder={foldersAvailable ? handleMoveToFolder : undefined}
+            // P-T14: ten sam optymistyczny zapis co blok „stage" kebaba — jedna
+            // droga zapisu, dwie powierzchnie wywołania.
+            onChangeStage={handleZmienEtap}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
             onOpenIdeaAiChat={handleOpenIdeaAiChat}
             onOpenIdeaAiInsights={handleOpenIdeaAiInsights}

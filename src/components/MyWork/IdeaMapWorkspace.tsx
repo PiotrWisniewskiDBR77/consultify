@@ -130,6 +130,10 @@ import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import {
+  ProcessFlowCandidatePreviewCard,
+  processFlowCandidateNodeCount,
+} from './ProcessFlowCandidatePreviewCard';
+import {
   IDEA_PANEL_SECTIONS,
   type IdeaPanelSection,
   IdeaWorkspaceTools,
@@ -4953,38 +4957,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 {isPolish ? 'Kandydat gotowy' : 'Candidate ready'}
               </button>
             ) : null}
+            {/* P-T14 (pilotaż Tomka, DEC-496 pkt XIV): wynik kliknięcia
+                „Przejrzyj kandydaturę" — nazwany blok zamiast bezimiennej
+                telemetrii („N nodes · M edges · v7" + sha256 w <code>).
+                Zmierzona premisa i pełny powód: ProcessFlowCandidatePreviewCard.tsx. */}
             {candidatePreview ? (
-              <div
-                data-testid="process-flow-candidate-preview"
-                className="max-w-xs text-xs text-c-text-secondary"
-              >
-                <div>
-                  {candidatePreview.nodeCount} nodes · {candidatePreview.edgeCount} edges · v
-                  {candidatePreview.mapVersion}
-                </div>
-                <div>
-                  {((candidatePreview.projection?.nodes || []) as any[])
-                    .slice(0, 3)
-                    .map((node) => String(node?.data?.label || node?.id || ''))
-                    .filter(Boolean)
-                    .join(' → ')}
-                </div>
-                <div>
-                  {((candidatePreview.projection?.processFlow?.lanes || []) as any[])
-                    .slice(0, 3)
-                    .map((lane) => String(lane?.name || lane?.label || lane?.id || ''))
-                    .filter(Boolean)
-                    .join(', ')}
-                </div>
-                <code>{String(candidatePreview.projectionHash).slice(0, 12)}…</code>
-                <button
-                  type="button"
-                  onClick={() => setCandidatePreview(null)}
-                  className="ml-2 underline"
-                >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
-                </button>
-              </div>
+              <ProcessFlowCandidatePreviewCard
+                preview={candidatePreview}
+                isPolish={Boolean(isPolish)}
+                onCancel={() => setCandidatePreview(null)}
+              />
             ) : null}
             <button
               type="button"
@@ -4993,7 +4975,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   ? 'confirm-process-flow-candidate'
                   : 'approve-process-flow-candidate'
               }
-              disabled={candidateHandoffBusy || graphRuntime.saving}
+              // P-T14: pusty Process Flow nie może pójść do zatwierdzenia —
+              // wcześniej „Potwierdź" był aktywny nawet przy 0 węzłów.
+              disabled={
+                candidateHandoffBusy ||
+                graphRuntime.saving ||
+                Boolean(candidatePreview && processFlowCandidateNodeCount(candidatePreview) === 0)
+              }
               onClick={
                 candidatePreview
                   ? handleApproveProcessFlowCandidate

@@ -35,7 +35,6 @@ import { EmptyState, ErrorState, SkeletonState } from '@/components/shared/state
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { normalizeRowActionSections } from '@/components/standard/StandardTable';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
-import { ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type {
   ColumnDef,
   ColumnWidths,
@@ -45,9 +44,9 @@ import type {
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
-import { IDEA_STAGE_BUCKET_LABELS } from './ideaEntryTypes';
 import { IdeaPreviewBody, IdeaPreviewFooter } from './IdeaPreview';
-import { formatIdeaDate, getToolMeta, STAGE_DOT_VAR } from './ideaPreviewMeta';
+import { formatIdeaDate, getToolMeta } from './ideaPreviewMeta';
+import { IdeaStageSelectCell } from './IdeaStageSelectCell';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
@@ -192,6 +191,11 @@ interface IdeasTableContentProps {
   onToggleFavorite?: (id: string) => void;
   folders?: Array<{ id: string; name: string }>;
   onMoveToFolder?: (idea: MyIdea, folderId: string | null) => void;
+  /**
+   * P-T14: zmiana etapu JEDNYM otwarciem listy prosto z wiersza (bez kebaba).
+   * Brak handlera = kolumna „Etap" zostaje odznaką do czytania, jak dotąd.
+   */
+  onChangeStage?: (idea: MyIdea, stage: IdeaStage) => void;
   onOpenIdeaInProcessFlow: (idea: MyIdea) => void;
   onOpenIdeaAiChat?: (idea: MyIdea) => void;
   onOpenIdeaAiInsights?: (idea: MyIdea) => void;
@@ -239,6 +243,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onToggleFavorite,
   folders,
   onMoveToFolder,
+  onChangeStage,
   onOpenIdeaInProcessFlow,
   onOpenIdeaAiChat,
   onOpenIdeaAiInsights,
@@ -516,19 +521,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     }),
     [availableTagOptions, columnWidths.tags, isPolish]
   );
-
-  const renderStageBadge = (stage?: IdeaStage) => {
-    const resolvedStage = (stage || 'spark') as IdeaStage;
-    const dotVar = STAGE_DOT_VAR[resolvedStage];
-    // Canon §4.0a: neutral chip shell, color only in the leading signal dot.
-    return (
-      <ChipBase size="sm" leading={<ChipDot colorVar={dotVar} size="sm" />}>
-        {isPolish
-          ? IDEA_STAGE_BUCKET_LABELS[resolvedStage].pl
-          : IDEA_STAGE_BUCKET_LABELS[resolvedStage].en}
-      </ChipBase>
-    );
-  };
 
   const renderToolBadge = (tool?: string | null) => {
     const meta = getToolMeta(tool);
@@ -1326,7 +1318,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         className="px-3 py-2.5 text-left align-middle"
                         style={{ width: columnWidths.stage }}
                       >
-                        {renderStageBadge(idea.stage)}
+                        <IdeaStageSelectCell
+                          stage={idea.stage}
+                          isPolish={isPolish}
+                          ideaTitle={idea.title}
+                          onChangeStage={
+                            onChangeStage ? (stage) => onChangeStage(idea, stage) : undefined
+                          }
+                        />
                       </td>
                     ) : null}
                     {isColumnVisible('tags') ? (
