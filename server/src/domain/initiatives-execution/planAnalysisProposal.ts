@@ -57,8 +57,7 @@ export async function createPlanAnalysisProposal(
     /** DEC-497 P2 E1: wynik LLM zweryfikowany względem dokładnego snapshotu planu. */
     dependencyAnalysis?: PlanDependencyAnalysisResult;
     analysisKind?: 'SOLVER' | 'AI_DEPENDENCY';
-  }>
-  ,
+  }>,
   preparation: PlanAnalysisProposalPreparation = {}
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
