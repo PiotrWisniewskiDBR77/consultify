@@ -193,7 +193,7 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
       within(menu2)
         .getAllByRole('tab')
         .map((tab) => tab.textContent)
-    ).toEqual(['Initiatives', 'Plan', 'Load', 'Work report']);
+    ).toEqual(['Initiatives', 'Plan', 'Load']);
     const chips = screen.getAllByTestId(/^standard-chip-/);
     expect(chips).toHaveLength(2);
     expect(screen.getByTestId('standard-chip-list')).toHaveTextContent('Initiative list');

@@ -660,7 +660,7 @@ describe('F2-1 E1 Slice 3 Initiative consulting analysis', () => {
     const preview = await screen.findByTestId('initiatives-analysis-preview');
     expect((await within(preview).findAllByText('Unnamed Initiative')).length).toBeGreaterThan(0);
     expect(preview).not.toHaveTextContent(uuidWithoutTitle);
-    expect(within(preview).queryByText('No relations')).toBeNull();
+    expect(preview.querySelector('[data-relations-empty]')).toBeNull();
 
     cleanup();
     api.readPortfolioAnalysis.mockResolvedValueOnce({ version: 2, analysis });
@@ -725,7 +725,7 @@ describe('F2-1 E1 Slice 3 Initiative consulting analysis', () => {
     const preview = await screen.findByTestId('initiatives-analysis-preview');
     expect(preview).toHaveTextContent('Choose C.');
     expect(within(preview).queryByText('Unknown')).toBeNull();
-    expect(within(preview).queryByText('No relations')).toBeNull();
+    expect(preview.querySelector('[data-relations-empty]')).toBeNull();
     expect((await within(preview).findAllByText('Initiative Gamma')).length).toBeGreaterThan(0);
   });
 
