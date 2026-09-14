@@ -1,0 +1,22 @@
+{
+  "package": "D-2 pilot retest",
+  "baseSha": "4de31efbcb0c286cdcbdb0251b10a894db02848d",
+  "scope": ["P-P11", "P-T13", "P-T19"],
+  "verdict": {
+    "P-P11": "PARTIAL_5_PASS_1_FAIL",
+    "P-T13": "STOP_OWNER_DECISION",
+    "P-T19": "PASS_LOCAL"
+  },
+  "measurements": {
+    "assessmentFocusedVitest": "22/22",
+    "assessmentMountedBrowser": "0/2",
+    "mindMapContextWiringVitest": "12/12",
+    "newOrganizationV8Rows": "9/9 enabled",
+    "newOrganizationV8InterviewHttp": 200,
+    "newOrganizationV8AssessmentHttp": 200
+  },
+  "migration": false,
+  "productSemanticChange": false,
+  "stagingEvidence": false,
+  "evidenceDirectory": "evidence/a-d2-pilot"
+}

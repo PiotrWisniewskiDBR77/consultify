@@ -1,0 +1,10 @@
+ai_core|1
+chat|1
+finance|1
+lifecycle|1
+multiplayer|1
+outputs|1
+pm_sync|1
+results|1
+workspace|1
+9|9
