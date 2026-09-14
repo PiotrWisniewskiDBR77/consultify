@@ -3,6 +3,7 @@
  * V4-TASK-06: Workload model + capacity analytics
  */
 
+import { InitiativeStatus, type InitiativeStatusType } from '../constants/initiativeStatuses.js';
 import DbPromise, { isSilenceableMissingRelationError } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
@@ -183,8 +184,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   const userCapMap = new Map<string, { name: string; capacityHours: number }>();
   for (const m of members) {
     const existing = userCapMap.get(m.user_id);
-    const addedCap =
-      capacityHoursForAllocation(m.allocation_percent);
+    const addedCap = capacityHoursForAllocation(m.allocation_percent);
     if (existing) {
       existing.capacityHours += addedCap;
     } else {
@@ -335,11 +335,11 @@ export async function getUserForecast(orgId: string, userId: string): Promise<We
     } catch (err) {
       // task_allocations may not exist yet; fall back to estimated_hours —
       // silenceable; anything else logs.
-      logIfNotSilenceableMissingRelation(
-        'getUserForecast: task_allocations lookup failed',
-        err,
-        { orgId, userId, weekStart: wsStr }
-      );
+      logIfNotSilenceableMissingRelation('getUserForecast: task_allocations lookup failed', err, {
+        orgId,
+        userId,
+        weekStart: wsStr,
+      });
     }
 
     if (allocated === 0) {
@@ -495,11 +495,10 @@ export async function getInitiativeCapacity(
     actualMap = new Map(actualRows.map((r) => [r.user_id, Number(r.hours)]));
   } catch (err) {
     // time_entries may not exist — silenceable; anything else logs.
-    logIfNotSilenceableMissingRelation(
-      'getInitiativeCapacity: time_entries lookup failed',
-      err,
-      { orgId, initiativeId }
-    );
+    logIfNotSilenceableMissingRelation('getInitiativeCapacity: time_entries lookup failed', err, {
+      orgId,
+      initiativeId,
+    });
   }
 
   const resources: InitiativeResourceCapacity[] = [];
@@ -609,11 +608,9 @@ export async function getLevelingAlerts(orgId: string): Promise<LevelingAlerts> 
     // A missing `role` column is a real schema/migration bug (DEC-112:
     // 42703 "column does not exist" is never silenceable) — logs loudly,
     // even though this alert list still degrades to empty for the caller.
-    logIfNotSilenceableMissingRelation(
-      'getLevelingAlerts: unfilled-roles lookup failed',
-      err,
-      { orgId }
-    );
+    logIfNotSilenceableMissingRelation('getLevelingAlerts: unfilled-roles lookup failed', err, {
+      orgId,
+    });
   }
 
   return { overloaded, underutilized, unfilledRoles };
@@ -826,7 +823,13 @@ const CLOSED_TASK_STATUSES = "('done','completed','validated','cancelled')";
 
 export async function getExecutionResourcePlan(
   orgId: string,
-  options?: { weeks?: number }
+  options?: {
+    weeks?: number;
+    projectId?: string;
+    initiativeStatuses?: InitiativeStatusType[];
+    /** Include active organization members with zero scheduled demand. */
+    includeAvailablePeople?: boolean;
+  }
 ): Promise<ResourcePlan> {
   const weekCount = Math.min(26, Math.max(1, Number(options?.weeks) || 8));
   const now = new Date();
@@ -841,6 +844,39 @@ export async function getExecutionResourcePlan(
   // okna — tabela `tasks` NIE MA kolumny `start_date` ani `planned_start`
   // (sprawdzone 07.09: information_schema, 60 kolumn). Gdy taka kolumna
   // powstanie, wystarczy podmienic `start_at` w tym jednym SELECT.
+  const taskFilters = [
+    't.organization_id = ?',
+    't.assignee_id IS NOT NULL',
+    `LOWER(COALESCE(t.status, '')) NOT IN ${CLOSED_TASK_STATUSES}`,
+  ];
+  const taskParams: unknown[] = [orgId];
+  const projectId = String(options?.projectId || '').trim();
+  const initiativeStatuses = (options?.initiativeStatuses || [])
+    .filter((status): status is InitiativeStatusType =>
+      Object.values(InitiativeStatus).includes(status as InitiativeStatusType)
+    )
+    .slice(0, 20);
+  if (projectId || initiativeStatuses.length > 0) {
+    const initiativeFilters = [
+      'i.id = t.initiative_id',
+      'i.organization_id = t.organization_id',
+    ];
+    if (projectId) initiativeFilters.push('i.project_id = ?');
+    if (initiativeStatuses.length > 0) {
+      initiativeFilters.push(
+        `UPPER(COALESCE(i.status, '')) IN (${initiativeStatuses.map(() => '?').join(',')})`
+      );
+    }
+    taskFilters.push(
+      `EXISTS (
+         SELECT 1 FROM initiatives i
+          WHERE ${initiativeFilters.join('\n            AND ')}
+       )`
+    );
+    if (projectId) taskParams.push(projectId);
+    taskParams.push(...initiativeStatuses);
+  }
+
   const taskRows = await DbPromise.all<{
     task_id: string;
     title: string | null;
@@ -851,43 +887,53 @@ export async function getExecutionResourcePlan(
     hours: number | string | null;
     actual_hours: number | string | null;
   }>(
-    `SELECT id AS task_id, title, status, assignee_id AS user_id, due_date,
-            created_at AS start_at, COALESCE(estimated_hours, 0) AS hours,
-            COALESCE(actual_hours, 0) AS actual_hours
-       FROM tasks
-      WHERE organization_id = ? AND assignee_id IS NOT NULL
-        AND LOWER(COALESCE(status, '')) NOT IN ${CLOSED_TASK_STATUSES}`,
-    [orgId]
+    `SELECT t.id AS task_id, t.title, t.status, t.assignee_id AS user_id, t.due_date,
+            t.created_at AS start_at, COALESCE(t.estimated_hours, 0) AS hours,
+            COALESCE(t.actual_hours, 0) AS actual_hours
+       FROM tasks t
+      WHERE ${taskFilters.join('\n        AND ')}`,
+    taskParams
   );
-  const userIds = [...new Set(taskRows.map((row) => String(row.user_id)))];
-  if (userIds.length === 0)
+  const assignedUserIds = [...new Set(taskRows.map((row) => String(row.user_id)))];
+  if (assignedUserIds.length === 0 && !options?.includeAvailablePeople) {
     return { asOf: new Date().toISOString(), weeks, rows: [], people: [] };
+  }
 
-  const placeholders = userIds.map(() => '?').join(',');
+  const placeholders = assignedUserIds.map(() => '?').join(',');
   // Kolumny etatu przyszly migracja 20262103. Na bazie, ktora jej jeszcze nie
   // ma (starszy zrzut, atrapa testowa), NIE udajemy ze podaz jest zerowa —
   // czytamy sama tozsamosc i podstawiamy polityke 40 h x 100 %.
   let personRows: ResourcePlanPersonRow[] = [];
   const identitySql = `SELECT u.id AS user_id, ${displayNameSql('u', 'u.id')} AS name,`;
+  const identityWhere = options?.includeAvailablePeople
+    ? `u.organization_id = ? AND COALESCE(u.is_active, 1) = 1`
+    : `u.organization_id = ? AND u.id IN (${placeholders})`;
+  const identityParams = options?.includeAvailablePeople ? [orgId] : [orgId, ...assignedUserIds];
   try {
     personRows = await DbPromise.all<ResourcePlanPersonRow>(
       `${identitySql}
               COALESCE(u.job_title, u.title) AS role,
               u.weekly_capacity_hours, u.availability_percent
          FROM users u
-        WHERE u.organization_id = ? AND u.id IN (${placeholders})`,
-      [orgId, ...userIds]
+        WHERE ${identityWhere}`,
+      identityParams
     );
   } catch (err) {
     logIfNotSilenceableMissingRelation('getExecutionResourcePlan: profile columns', err, { orgId });
     personRows = (
       await DbPromise.all<{ user_id: string; name: string }>(
         `${identitySql} '' AS role FROM users u
-          WHERE u.organization_id = ? AND u.id IN (${placeholders})`,
-        [orgId, ...userIds]
+          WHERE ${identityWhere}`,
+        identityParams
       )
-    ).map((row) => ({ ...row, role: null, weekly_capacity_hours: null, availability_percent: null }));
+    ).map((row) => ({
+      ...row,
+      role: null,
+      weekly_capacity_hours: null,
+      availability_percent: null,
+    }));
   }
+  const userIds = personRows.map((row) => String(row.user_id));
   const byId = new Map(personRows.map((row) => [String(row.user_id), row]));
 
   const weekSet = new Set(weeks);
@@ -1032,9 +1078,10 @@ export function personWeeklySupplyFte(
     weeklyCapacityHours === null || weeklyCapacityHours === undefined
       ? CAPACITY_POLICY.weeklyHoursPerFte
       : Number(weeklyCapacityHours);
-  const usableHours = Number.isFinite(hours) && hours > 0 ? hours : CAPACITY_POLICY.weeklyHoursPerFte;
+  const usableHours =
+    Number.isFinite(hours) && hours > 0 ? hours : CAPACITY_POLICY.weeklyHoursPerFte;
   const availability = clampAllocationPercent(availabilityPercent ?? 100);
-  return ((usableHours * availability) / 100) / CAPACITY_POLICY.weeklyHoursPerFte;
+  return (usableHours * availability) / 100 / CAPACITY_POLICY.weeklyHoursPerFte;
 }
 
 export interface RoleWeeklySupplyRow {

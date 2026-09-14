@@ -67,6 +67,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_ARTIFACT_KNOWLEDGE_INDEX: z.boolean().default(false),
   ENABLE_DECK_FROM_KNOWLEDGE: z.boolean().default(false),
   ENABLE_AUDITS_WORKSHOP: z.boolean().default(false),
+  ENABLE_INITIATIVES_WORKLOAD: z.boolean().default(false),
   // Z4 transport (fala „Teresa steruje Ideą przez rejestr"): pozwala frontowi
   // dołożyć do zapytania czatu manifest akcji OTWARTEJ reprezentacji Idei
   // (src/actions/teresaActionManifest.ts). Model widzi je jako narzędzia; ich
@@ -295,6 +296,9 @@ export function loadFeatureFlags(): FeatureFlags {
     // Day221 / D-5: scaffold for the future Audits Workshop implementation.
     // Declaration only; no production caller exists before owner visual acceptance.
     ENABLE_AUDITS_WORKSHOP: process.env.ENABLE_AUDITS_WORKSHOP === 'true',
+    // DEC-497 / Q1 P3: governed Initiatives workload read. Default OFF keeps
+    // the existing Capacity analysis route and payload untouched.
+    ENABLE_INITIATIVES_WORKLOAD: process.env.ENABLE_INITIATIVES_WORKLOAD === 'true',
 
     // Z4 transport dla akcji otwartej Idei — default ON, jawne `false` jest
     // rollbackiem do lokalnych detektorów bez dwóch aktywnych executorów naraz.
@@ -323,6 +327,11 @@ export function loadFeatureFlags(): FeatureFlags {
 // ==========================================
 
 export const featureFlags = loadFeatureFlags();
+
+/** Call-time gate so OFF/ON parity can be proved in one runtime. */
+export function isInitiativesWorkloadEnabled(): boolean {
+  return process.env.ENABLE_INITIATIVES_WORKLOAD === 'true';
+}
 
 export function isArtifactKnowledgeIndexEnabled(): boolean {
   return process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true';
