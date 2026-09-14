@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import {
   DEFAULT_DEMO_LIMITS,
   DEFAULT_TRIAL_LIMITS,
@@ -13,6 +14,53 @@ import {
   OrganizationType,
   OrgType,
 } from './AccessTypes.js';
+
+const AI_ROLES_FALLBACK: string[] = ['ADVISOR'];
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/**
+ * Odporny parser kolumny organization_limits.ai_roles_enabled_json.
+ *
+ * Powod (awaria stagingu 14.09 04:44 UTC): jeden zepsuty znak w kolumnie
+ * (wartosc zapisana jako podwojnie zaescapowany JSON, np. [\"ADVISOR\"...])
+ * wywalal wyjatek z JSON.parse i kladl CALY czat AI organizacji.
+ * Teraz: 1) normalny parse, 2) jedna proba odescapowania, 3) fallback ['ADVISOR'].
+ */
+export function parseAiRolesEnabled(raw: unknown, organizationId?: string): string[] {
+  if (isStringArray(raw)) return raw;
+  const text = typeof raw === 'string' ? raw.trim() : '';
+  if (!text) return [...AI_ROLES_FALLBACK];
+
+  try {
+    const parsed = JSON.parse(text);
+    if (isStringArray(parsed)) return parsed;
+  } catch {
+    // idziemy dalej — proba odescapowania ponizej
+  }
+
+  try {
+    const unescaped = JSON.parse(`"${text}"`);
+    if (typeof unescaped === 'string') {
+      const parsed = JSON.parse(unescaped);
+      if (isStringArray(parsed)) {
+        logger.warn('[AccessLimitService] ai_roles_enabled_json bylo zaescapowane — odzyskano', {
+          organization_id: organizationId,
+        });
+        return parsed;
+      }
+    }
+  } catch {
+    // nie da sie odzyskac — fallback ponizej
+  }
+
+  logger.warn('[AccessLimitService] ai_roles_enabled_json nie do sparsowania — fallback ADVISOR', {
+    organization_id: organizationId,
+    raw_sample: text.slice(0, 120),
+  });
+  return [...AI_ROLES_FALLBACK];
+}
 
 export class AccessLimitService {
   private db: IDatabase;
@@ -80,7 +128,7 @@ export class AccessLimitService {
         maxInitiatives: defaults.max_initiatives,
         maxStorageMb: defaults.max_storage_mb,
         maxTotalTokens: defaults.max_total_tokens,
-        aiRolesEnabled: JSON.parse(defaults.ai_roles_enabled_json),
+        aiRolesEnabled: parseAiRolesEnabled(defaults.ai_roles_enabled_json, organizationId),
       };
     }
 
@@ -93,7 +141,7 @@ export class AccessLimitService {
       maxInitiatives: row.max_initiatives,
       maxStorageMb: row.max_storage_mb,
       maxTotalTokens: row.max_total_tokens || DEFAULT_TRIAL_LIMITS.max_total_tokens,
-      aiRolesEnabled: JSON.parse(row.ai_roles_enabled_json || '["ADVISOR"]'),
+      aiRolesEnabled: parseAiRolesEnabled(row.ai_roles_enabled_json, organizationId),
     };
   }
 
