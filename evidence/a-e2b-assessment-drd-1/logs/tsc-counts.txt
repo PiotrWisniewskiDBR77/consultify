@@ -1,0 +1,5 @@
+base_sha=a2b0a0fe32f2a3f137d919ad81248b9da0f54edd
+base_errors=177
+candidate_errors=177
+source_base=/Users/piotrwisniewski/Developer/cto-codex/KANAL.md:29 (Wpis 58 independent CTO measurement)
+candidate_command=NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false

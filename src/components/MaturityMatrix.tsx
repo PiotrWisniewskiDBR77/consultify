@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { getQuestionsForAxis } from '@/services/drdStructure';
 
@@ -24,6 +25,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
   onComplete,
   onDiagnose,
 }) => {
+  const { t } = useTranslation();
   const areas = getQuestionsForAxis(axisId);
   // Default select first area
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(areas[0]?.id || null);
@@ -93,7 +95,14 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
             />
           </div>
           <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">
-            {Object.keys(currentScores).length} of {areas.length} Areas Evaluated
+            {t(
+              'assessment.maturityMatrix.progress',
+              '{{completed}} of {{total}} areas evaluated',
+              {
+                completed: Object.keys(currentScores).length,
+                total: areas.length,
+              }
+            )}
           </span>
         </div>
 
@@ -104,7 +113,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
             onClick={onComplete}
             className="flex items-center gap-2 px-4 py-1.5 bg-white dark:bg-navy-900 text-slate-900 dark:text-white rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow"
           >
-            Complete Assessment <ArrowRight size={14} />
+            {t('assessment.maturityMatrix.complete')} <ArrowRight size={14} />
           </motion.button>
         )}
       </div>
@@ -115,7 +124,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
         <div className="w-64  border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-y-auto custom-scrollbar transition-colors duration-300">
           <div className="p-4">
             <h3 className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-3">
-              Assessment Areas
+              {t('assessment.maturityMatrix.areas')}
             </h3>
             <div className="space-y-0.5">
               {areas.map((area, idx) => {
@@ -170,14 +179,15 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                 {/* Area Title Block */}
                 <div className="mb-6">
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-300 text-[10px] font-semibold tracking-wider mb-2">
-                    AREA {currentArea.id}
+                    {t('assessment.maturityMatrix.areaCode', 'Area {{id}}', {
+                      id: currentArea.id,
+                    })}
                   </div>
                   <h2 className="text-xl font-light text-navy-900 dark:text-white mb-2">
                     {currentArea.name}
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl">
-                    Assess your organization's capability in this specific domain by selecting all
-                    levels that apply to your current reality.
+                    {t('assessment.maturityMatrix.instructions')}
                   </p>
 
                   {/* AI DIAGNOSIS CHECKPOINTS */}
@@ -187,7 +197,9 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                       className="flex items-center gap-1.5 text-xs font-medium text-navy-700 dark:text-slate-300 hover:text-navy-900 dark:hover:text-white transition-colors"
                     >
                       <Sparkles size={14} />
-                      {showAi ? 'Close AI Assistant' : 'Not sure? Ask AI to Diagnose'}
+                      {showAi
+                        ? t('assessment.maturityMatrix.ai.close')
+                        : t('assessment.maturityMatrix.ai.open')}
                     </button>
 
                     <AnimatePresence>
@@ -200,19 +212,22 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                         >
                           <div className="mt-3 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-600/50 rounded-lg">
                             <h4 className="text-slate-700 dark:text-slate-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
-                              <TeresaMark size={14} /> Digital Pathfinder AI
+                              <TeresaMark size={14} /> {t('assessment.maturityMatrix.ai.name')}
                             </h4>
 
                             {!aiResult ? (
                               <>
                                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
-                                  Describe your current processes, tools, and challenges regarding{' '}
-                                  {currentArea.name}.
+                                  {t(
+                                    'assessment.maturityMatrix.ai.prompt',
+                                    'Describe your current processes, tools, and challenges for {{area}}.',
+                                    { area: currentArea.name }
+                                  )}
                                 </p>
                                 <textarea
                                   value={aiInput}
                                   onChange={(e) => setAiInput(e.target.value)}
-                                  placeholder="e.g. We currently use Excel for everything, but we are looking at..."
+                                  placeholder={t('assessment.maturityMatrix.ai.placeholder')}
                                   className="w-full text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-600 rounded-lg p-2 text-navy-900 dark:text-slate-200 focus:outline-none focus:border-navy-400 h-20 mb-2 placeholder:text-slate-400"
                                 />
                                 <button
@@ -225,7 +240,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                   ) : (
                                     <Sparkles size={12} />
                                   )}
-                                  Diagnose Level
+                                  {t('assessment.maturityMatrix.ai.diagnose')}
                                 </button>
                               </>
                             ) : (
@@ -236,7 +251,11 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                   </div>
                                   <div>
                                     <p className="text-xs text-navy-900 dark:text-slate-100 font-medium mb-0.5">
-                                      Recommended Level: {aiResult.level}
+                                      {t(
+                                        'assessment.maturityMatrix.ai.recommendedLevel',
+                                        'Recommended level: {{level}}',
+                                        { level: aiResult.level }
+                                      )}
                                     </p>
                                     <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed italic">
                                       "{aiResult.justification}"
@@ -252,13 +271,17 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                     }}
                                     className="px-2.5 py-1 bg-green-600/20 text-green-600 dark:text-green-400 border border-green-600/50 rounded text-[10px] font-bold hover:bg-green-600/30"
                                   >
-                                    Add Level {aiResult.level}
+                                    {t(
+                                      'assessment.maturityMatrix.ai.addLevel',
+                                      'Add level {{level}}',
+                                      { level: aiResult.level }
+                                    )}
                                   </button>
                                   <button
                                     onClick={() => setAiResult(null)}
                                     className="px-2.5 py-1 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white text-[10px]"
                                   >
-                                    Try Again
+                                    {t('assessment.maturityMatrix.ai.tryAgain')}
                                   </button>
                                 </div>
                               </div>
@@ -341,7 +364,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
               </motion.div>
             ) : (
               <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">
-                Select an area to begin
+                {t('assessment.maturityMatrix.selectArea')}
               </div>
             )}
           </AnimatePresence>

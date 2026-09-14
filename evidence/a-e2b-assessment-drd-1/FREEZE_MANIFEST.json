@@ -1,0 +1,108 @@
+{
+  "package": "A-E2b Assessment/DRD package 1",
+  "base": "a2b0a0fe32f2a3f137d919ad81248b9da0f54edd",
+  "content_sha": "cecb3fd7f99ffa3b079d629ecb6da01862910fc9",
+  "scope_files": [
+    "src/components/MaturityMatrix.tsx",
+    "src/components/assessment/drd/DRDAssessmentEditor.tsx",
+    "src/components/assessment/__tests__/jezykAssessment.source.test.ts",
+    "public/locales/en/translation.json",
+    "public/locales/pl/translation.json"
+  ],
+  "results": {
+    "focused_tests": "19/19",
+    "frontend_tsc": "177 -> 177",
+    "list_canon": "349 -> 349",
+    "artefakt": "8-0-117 -> 8-0-117",
+    "assessment_K4en": "3 -> 1",
+    "total_K4en": "871 -> 869",
+    "screenshots": "8 EN/PL light/dark, no page errors"
+  },
+  "evidence": [
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/drd-editor-en-dark.jpg",
+      "sha256": "fa248e8bf9b668c9af81a0ba34db96f06ba7bb29abb729a2a3f171fdd53c3045",
+      "bytes": 132566
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/drd-editor-en-light.jpg",
+      "sha256": "53d1ebd75caf4bab84ec3336c5d6a795af0c1c2b21903e6c58b93b8aeec2b26f",
+      "bytes": 139250
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/drd-editor-pl-dark.jpg",
+      "sha256": "57c6ec5a07f791513493a6e32c573208dea10285a72b40c0f4b9483c08a05341",
+      "bytes": 125837
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/drd-editor-pl-light.jpg",
+      "sha256": "c9e3515e03f784d26203a2137c6810d185ce2e7f67efdfa8ce735a5e087440e1",
+      "bytes": 133139
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/artefakt.txt",
+      "sha256": "b88438de1e5914f288a8ceb5612bc14e5fca0c1ca0d667da01b19e9a062cdcfe",
+      "bytes": 9163
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/front-tsc-candidate.log",
+      "sha256": "b080407d1a92e0cb2bd2cc906448c447c6485918d15424cdbdf99034ac6c105e",
+      "bytes": 120042
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/i18n-content-guard.txt",
+      "sha256": "1c4387b32e09e04856e7848f75ed0c2492ba6f91e2662d9d153844e45c9fa504",
+      "bytes": 1770
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/language-after.txt",
+      "sha256": "db2d65ea691e759cad0a6686354890ee0c778f01347e1a9f7627d018cf773b2b",
+      "bytes": 7655
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/language-before.txt",
+      "sha256": "7aed248a1cbd3304ffa9595af54c9c8eb709d8fb93e99bf26133150411f772e6",
+      "bytes": 7655
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/list-canon.txt",
+      "sha256": "551405765b77c5c07774119dbdcdd57952205f65c3402bef5bebc88562b8b581",
+      "bytes": 244
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/tsc-counts.txt",
+      "sha256": "6d150820e11c34a105497f5481956728a3d2d66b9354bb872e692b59a53eb3aa",
+      "bytes": 281
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/logs/vitest.txt",
+      "sha256": "ba661deeb99a9d3aa132bb126e5c8358f0e492a756f48885b50264e710bf1cb9",
+      "bytes": 3756
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/maturity-en-dark.jpg",
+      "sha256": "278717d550bc52b58572201368fbb8cee6fd8d83ebd0be58ec37940d0ca8b447",
+      "bytes": 151994
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/maturity-en-light.jpg",
+      "sha256": "34d1c462fdaa356a041ecb544260e9694cbd397e3c4398cc6dc00cbb55b1cd78",
+      "bytes": 153471
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/maturity-pl-dark.jpg",
+      "sha256": "8a21dd098d217e86a08394cfb1d5f45b4f1f01e8932de86f72a36e9eb2d258a6",
+      "bytes": 153220
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/maturity-pl-light.jpg",
+      "sha256": "0dc2d2c7eefdc04121581e5599f43198ce4ff25469cbb6029bdf8b9598d29096",
+      "bytes": 154758
+    },
+    {
+      "path": "evidence/a-e2b-assessment-drd-1/screenshot-receipt.json",
+      "sha256": "d7aaffa2fe1f932ed83f94d2d182a11cf216d2683c26aa5647c012750e05a082",
+      "bytes": 7826
+    }
+  ]
+}

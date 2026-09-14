@@ -9231,7 +9231,26 @@
       "exportHint": "Export this context to enrich your Tools or Assessment"
     }
   },
-  "assessment": {
+"assessment": {
+    "maturityMatrix": {
+      "progress": "{{completed}} of {{total}} areas evaluated",
+      "complete": "Complete assessment",
+      "areas": "Assessment areas",
+      "areaCode": "Area {{id}}",
+      "instructions": "Assess your organization's capability in this domain by selecting every level that matches the current reality.",
+      "selectArea": "Select an area to begin",
+      "ai": {
+        "name": "Digital Pathfinder AI",
+        "open": "Not sure? Ask AI to diagnose",
+        "close": "Close AI assistant",
+        "prompt": "Describe your current processes, tools, and challenges for {{area}}.",
+        "placeholder": "For example: We currently use Excel for everything, but we are looking at…",
+        "diagnose": "Diagnose level",
+        "recommendedLevel": "Recommended level: {{level}}",
+        "addLevel": "Add level {{level}}",
+        "tryAgain": "Try again"
+      }
+    },
     "reportView": {
       "assessment": "Assessment",
       "report": "Report",
@@ -10282,6 +10301,27 @@
         "demoLocalTitle": "Legacy runtime — localStorage is the only store (flag drdHttpSourceOfTruthV1 = OFF)."
       },
       "editor": {
+        "noResults": "No results.",
+        "collapsePanel": "Collapse panel",
+        "expandNavigation": "Expand navigation",
+        "navigation": "Navigation",
+        "notAssessed": "Not assessed",
+        "clickForDetails": "Click for details",
+        "achievedImplicit": "Achieved (implicit)",
+        "notAchieved": "Not achieved",
+        "skipped": "Skipped",
+        "questions": "Questions",
+        "comment": "Comment",
+        "addAttachment": "Add attachment",
+        "addLink": "Add link",
+        "validationQuestions": "Validation questions",
+        "verified": "Verified",
+        "canonSource": "Canon",
+        "commentPlaceholder": "Facts: what exists? Gaps: what's missing? Context: scope, owners, and tools?",
+        "links": "Links",
+        "add": "Add",
+        "previous": "Previous",
+        "next": "Next",
         "generatingGuidance": "Generating guidance…",
         "consultantGuidance": "Consultant guidance",
         "whyItMatters": "Why it matters: ",
