@@ -33,19 +33,55 @@ export interface AnswerStateControlProps {
 function opcjeStanow(t: TFunction): Array<{
   id: MethodAnswerState;
   label: string;
+  tooltip: string;
   icon: React.ReactNode;
 }> {
   return [
-    { id: 'confirmed', label: t('methodWorkspace.answerState.confirmed', 'Confirmed'), icon: <Check size={14} /> },
-    { id: 'partial', label: t('methodWorkspace.answerState.partial', 'Partially'), icon: <Minus size={14} /> },
-    { id: 'no', label: t('methodWorkspace.answerState.no', 'No'), icon: <CircleSlash size={14} /> },
+    {
+      id: 'confirmed',
+      label: t('methodWorkspace.answerState.confirmed', 'Confirmed'),
+      tooltip: t('methodWorkspace.answerState.tooltipConfirmed', 'Met today and you can point to proof.'),
+      icon: <Check size={14} />,
+    },
+    {
+      id: 'partial',
+      label: t('methodWorkspace.answerState.partial', 'Partially'),
+      tooltip: t('methodWorkspace.answerState.tooltipPartial', 'Partly met — some elements are in place.'),
+      icon: <Minus size={14} />,
+    },
+    {
+      id: 'no',
+      label: t('methodWorkspace.answerState.no', 'No'),
+      tooltip: t('methodWorkspace.answerState.tooltipNo', 'Not met today.'),
+      icon: <CircleSlash size={14} />,
+    },
     {
       id: 'dont_know',
       label: t('methodWorkspace.answerState.dontKnow', 'I don’t know / I need help'),
+      tooltip: t(
+        'methodWorkspace.answerState.tooltipDontKnow',
+        'You cannot answer yet — this opens help instead of scoring.'
+      ),
       icon: <HelpCircle size={14} />,
     },
-    { id: 'no_evidence', label: t('methodWorkspace.answerState.noEvidence', 'I have no evidence'), icon: <FileQuestion size={14} /> },
-    { id: 'not_applicable', label: t('methodWorkspace.answerState.notApplicable', 'Not applicable'), icon: <AlertCircle size={14} /> },
+    {
+      id: 'no_evidence',
+      label: t('methodWorkspace.answerState.noEvidence', 'I have no evidence'),
+      tooltip: t(
+        'methodWorkspace.answerState.tooltipNoEvidence',
+        'You believe it is met but cannot show proof yet.'
+      ),
+      icon: <FileQuestion size={14} />,
+    },
+    {
+      id: 'not_applicable',
+      label: t('methodWorkspace.answerState.notApplicable', 'Not applicable'),
+      tooltip: t(
+        'methodWorkspace.answerState.tooltipNotApplicable',
+        'This level does not apply to your organisation (justification required).'
+      ),
+      icon: <AlertCircle size={14} />,
+    },
   ];
 }
 
@@ -80,19 +116,29 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
           potrzebuję pomocy" ucinała się w połowie (zmierzone na zrzucie
           `a-naglowek-po.png`) — pełna nazwa stanu jest ważniejsza niż
           upchnięcie sześciu przycisków w jednym rzędzie. */}
+      <p id="answer-state-intro" className="text-sm text-c-text-muted">
+        {t(
+          'methodWorkspace.answerState.intro',
+          'Say how far this level is met today — pick the one state that fits; you can add evidence below.'
+        )}
+      </p>
       <div
         role="radiogroup"
         aria-label={t('methodWorkspace.answerState.groupLabel', 'Answer state')}
+        aria-describedby="answer-state-intro"
         className="grid grid-cols-2 gap-2 sm:grid-cols-3"
       >
         {OPTIONS.map((option) => {
           const selected = value === option.id;
+          const tooltipId = `answer-state-tooltip-${option.id}`;
           return (
             <button
               key={option.id}
               type="button"
               role="radio"
               aria-checked={selected}
+              aria-describedby={tooltipId}
+              title={option.tooltip}
               data-selected={selected}
               disabled={disabled}
               onClick={() => handleSelect(option.id)}
@@ -105,6 +151,9 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
             >
               {option.icon}
               <span className="truncate">{option.label}</span>
+              <span id={tooltipId} className="sr-only">
+                {option.tooltip}
+              </span>
             </button>
           );
         })}

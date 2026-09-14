@@ -105,6 +105,30 @@ describe('AnswerStateControl', () => {
     expect(option.getAttribute('aria-checked')).toBe('true');
   });
 
+  // P-P08/P-P09 (Paweł, LOW, decyzja CTO 14.09): radiogroup bez etykiety/wyjaśnień
+  // dostaje jedno zdanie nad grupą + tooltip per stan (title + aria-describedby).
+  it('shows the intro sentence above the radiogroup and a tooltip per state', () => {
+    render(
+      <AnswerStateControl
+        value={null}
+        onChange={vi.fn()}
+        resolutionData={makeResolutionData()}
+        onResolutionAction={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByText(
+        'Say how far this level is met today — pick the one state that fits; you can add evidence below.'
+      )
+    ).toBeInTheDocument();
+
+    const confirmedButton = screen.getByText('Confirmed', { selector: 'span.truncate' }).closest('button')!;
+    expect(confirmedButton.getAttribute('title')).toBe('Met today and you can point to proof.');
+    const describedById = confirmedButton.getAttribute('aria-describedby');
+    expect(describedById).toBeTruthy();
+    expect(document.getElementById(describedById!)?.textContent).toBe('Met today and you can point to proof.');
+  });
+
   it('ResolutionCard actions forward to onResolutionAction', () => {
     const onResolutionAction = vi.fn();
     render(
