@@ -1,0 +1,74 @@
+[
+  {
+    "screen": "maturity",
+    "lang": "en",
+    "theme": "light",
+    "expected": {
+      "evaluated": true,
+      "assessment areas": true
+    },
+    "errors": [],
+    "text": "LOCAL\nPROTOTYPE · READ-ONLY DEMO\nDigital Pathfinder — Maturity Matrix\n\n7 axes · 39 areas · click a level → the matrix cell changes color by maturity level.\n\n1. Digital Processes\n2. Digital Products\n3. Digital Business Models\n4. Data Management\n5. Culture of Transformation\n6. Cybersecurity\n7. AI Maturity\nMATRIX OVERVIEW\n\nEvery area of the selected axis. Cell color = highest selected maturity level.\n\n1A · Sales Processes\nProcesy Sprzedaży\n–\n1B · Marketing Processes\nProcesy Marketingowe\n–\n1C · Process Technology and R&D\nTechnologia Procesowa i R&D\n–\n1D · Purchasing Processes\nProcesy Zakupowe\n–\n1E · Logistics Processes\nProcesy Logistyczne\n–\n1F · Production Processes\nProcesy Produkcyjne\n–\n1G · Quality Processes\nProcesy Jakości\n–\n1H · Financial Management\nZarządzanie Finansami\n–\n1I · HR Processes\nProcesy HR\n–\nLEVEL RAMP\n1\n2\n3\n4\n5\n6\n7\n0 OF 9 AREAS EVALUATED\nASSESSMENT AREAS\n1\nSales Processes\n2\nMarketing Processes\n3\nProcess Technology and R&D\n4\nPurchasing Processes\n5\nLogistics Processes\n6\nProd"
+  },
+  {
+    "screen": "maturity",
+    "lang": "en",
+    "theme": "dark",
+    "expected": {
+      "evaluated": true,
+      "assessment areas": true
+    },
+    "errors": [],
+    "text": "LOCAL\nPROTOTYPE · READ-ONLY DEMO\nDigital Pathfinder — Maturity Matrix\n\n7 axes · 39 areas · click a level → the matrix cell changes color by maturity level.\n\n1. Digital Processes\n2. Digital Products\n3. Digital Business Models\n4. Data Management\n5. Culture of Transformation\n6. Cybersecurity\n7. AI Maturity\nMATRIX OVERVIEW\n\nEvery area of the selected axis. Cell color = highest selected maturity level.\n\n1A · Sales Processes\nProcesy Sprzedaży\n–\n1B · Marketing Processes\nProcesy Marketingowe\n–\n1C · Process Technology and R&D\nTechnologia Procesowa i R&D\n–\n1D · Purchasing Processes\nProcesy Zakupowe\n–\n1E · Logistics Processes\nProcesy Logistyczne\n–\n1F · Production Processes\nProcesy Produkcyjne\n–\n1G · Quality Processes\nProcesy Jakości\n–\n1H · Financial Management\nZarządzanie Finansami\n–\n1I · HR Processes\nProcesy HR\n–\nLEVEL RAMP\n1\n2\n3\n4\n5\n6\n7\n0 OF 9 AREAS EVALUATED\nASSESSMENT AREAS\n1\nSales Processes\n2\nMarketing Processes\n3\nProcess Technology and R&D\n4\nPurchasing Processes\n5\nLogistics Processes\n6\nProd"
+  },
+  {
+    "screen": "maturity",
+    "lang": "pl",
+    "theme": "light",
+    "expected": {
+      "oceniono": true,
+      "obszary oceny": true
+    },
+    "errors": [],
+    "text": "LOCAL\nPROTOTYPE · READ-ONLY DEMO\nDigital Pathfinder — Maturity Matrix\n\n7 axes · 39 areas · click a level → the matrix cell changes color by maturity level.\n\n1. Digital Processes\n2. Digital Products\n3. Digital Business Models\n4. Data Management\n5. Culture of Transformation\n6. Cybersecurity\n7. AI Maturity\nMATRIX OVERVIEW\n\nKażdy obszar wybranej osi. Kolor komórki = najwyższy wybrany poziom dojrzałości.\n\n1A · Sales Processes\nProcesy Sprzedaży\n–\n1B · Marketing Processes\nProcesy Marketingowe\n–\n1C · Process Technology and R&D\nTechnologia Procesowa i R&D\n–\n1D · Purchasing Processes\nProcesy Zakupowe\n–\n1E · Logistics Processes\nProcesy Logistyczne\n–\n1F · Production Processes\nProcesy Produkcyjne\n–\n1G · Quality Processes\nProcesy Jakości\n–\n1H · Financial Management\nZarządzanie Finansami\n–\n1I · HR Processes\nProcesy HR\n–\nLEVEL RAMP\n1\n2\n3\n4\n5\n6\n7\nOCENIONO 0 Z 9 OBSZARÓW\nOBSZARY OCENY\n1\nSales Processes\n2\nMarketing Processes\n3\nProcess Technology and R&D\n4\nPurchasing Processes\n5\nLogistics Processes\n6\nProd"
+  },
+  {
+    "screen": "maturity",
+    "lang": "pl",
+    "theme": "dark",
+    "expected": {
+      "oceniono": true,
+      "obszary oceny": true
+    },
+    "errors": [],
+    "text": "LOCAL\nPROTOTYPE · READ-ONLY DEMO\nDigital Pathfinder — Maturity Matrix\n\n7 axes · 39 areas · click a level → the matrix cell changes color by maturity level.\n\n1. Digital Processes\n2. Digital Products\n3. Digital Business Models\n4. Data Management\n5. Culture of Transformation\n6. Cybersecurity\n7. AI Maturity\nMATRIX OVERVIEW\n\nKażdy obszar wybranej osi. Kolor komórki = najwyższy wybrany poziom dojrzałości.\n\n1A · Sales Processes\nProcesy Sprzedaży\n–\n1B · Marketing Processes\nProcesy Marketingowe\n–\n1C · Process Technology and R&D\nTechnologia Procesowa i R&D\n–\n1D · Purchasing Processes\nProcesy Zakupowe\n–\n1E · Logistics Processes\nProcesy Logistyczne\n–\n1F · Production Processes\nProcesy Produkcyjne\n–\n1G · Quality Processes\nProcesy Jakości\n–\n1H · Financial Management\nZarządzanie Finansami\n–\n1I · HR Processes\nProcesy HR\n–\nLEVEL RAMP\n1\n2\n3\n4\n5\n6\n7\nOCENIONO 0 Z 9 OBSZARÓW\nOBSZARY OCENY\n1\nSales Processes\n2\nMarketing Processes\n3\nProcess Technology and R&D\n4\nPurchasing Processes\n5\nLogistics Processes\n6\nProd"
+  },
+  {
+    "screen": "drd-editor",
+    "lang": "en",
+    "theme": "light",
+    "text": "DIGITAL DEVELOPMENT MAP\n1. Digital Processes\nProcess Digitalization Assessment Matrix\nAS-IS\nTO-BE\nSpacious\nFull screen\n7. AI Support\nHover for preview · Click for details\nNLP\nNLP\nDigital Twin\nML Models\nML Models\nDigital Twin\nML Models\nBI\nML Models\n6. ERP\nHover for preview · Click for details\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\n5. MES\nHover for preview · Click for details\nMES\nMES\nMES\nMES\nMES\nMES\nQMS\nWorkflow Management\nHRM\n4. Automation\nHover for preview · Click for details\nE-commerce Platform\nEm",
+    "errors": []
+  },
+  {
+    "screen": "drd-editor",
+    "lang": "en",
+    "theme": "dark",
+    "text": "DIGITAL DEVELOPMENT MAP\n1. Digital Processes\nProcess Digitalization Assessment Matrix\nAS-IS\nTO-BE\nSpacious\nFull screen\n7. AI Support\nHover for preview · Click for details\nNLP\nNLP\nDigital Twin\nML Models\nML Models\nDigital Twin\nML Models\nBI\nML Models\n6. ERP\nHover for preview · Click for details\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\n5. MES\nHover for preview · Click for details\nMES\nMES\nMES\nMES\nMES\nMES\nQMS\nWorkflow Management\nHRM\n4. Automation\nHover for preview · Click for details\nE-commerce Platform\nEm",
+    "errors": []
+  },
+  {
+    "screen": "drd-editor",
+    "lang": "pl",
+    "theme": "light",
+    "text": "MAPA ROZWOJU CYFROWEGO\n1. Digital Processes\nMacierz oceny digitalizacji procesów\nAS-IS\nTO-BE\nPrzestronny\nPełny ekran\n7. AI Support\nNajedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły\nNLP\nNLP\nDigital Twin\nML Models\nML Models\nDigital Twin\nML Models\nBI\nML Models\n6. ERP\nNajedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\n5. MES\nNajedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły\nMES\nMES\nMES\nMES\nMES\nMES\nQMS\nWorkflow Management\nHRM\n4",
+    "errors": []
+  },
+  {
+    "screen": "drd-editor",
+    "lang": "pl",
+    "theme": "dark",
+    "text": "MAPA ROZWOJU CYFROWEGO\n1. Digital Processes\nMacierz oceny digitalizacji procesów\nAS-IS\nTO-BE\nPrzestronny\nPełny ekran\n7. AI Support\nNajedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły\nNLP\nNLP\nDigital Twin\nML Models\nML Models\nDigital Twin\nML Models\nBI\nML Models\n6. ERP\nNajedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\nERP\n5. MES\nNajedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły\nMES\nMES\nMES\nMES\nMES\nMES\nQMS\nWorkflow Management\nHRM\n4",
+    "errors": []
+  }
+]

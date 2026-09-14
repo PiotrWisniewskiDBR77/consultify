@@ -17,6 +17,9 @@
  * `it`; dopisz widoczny polski napis wprost w JSX poza `t` -> RED w drugim
  * `it`. Cofnięcie obu -> GREEN.
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -42,6 +45,40 @@ const KATALOGI = [
 const PLIKI_REJESTROW = [__dirname + '/../../../services/frameworkRegistry.ts'];
 
 describe('J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też)', () => {
+  it('routes visible DRD and maturity-matrix chrome through bilingual i18n keys', () => {
+    const editor = readFileSync(resolve(__dirname, '../drd/DRDAssessmentEditor.tsx'), 'utf8');
+    const maturity = readFileSync(resolve(__dirname, '../../MaturityMatrix.tsx'), 'utf8');
+    const en = JSON.parse(
+      readFileSync(resolve(__dirname, '../../../../public/locales/en/translation.json'), 'utf8')
+    );
+    const pl = JSON.parse(
+      readFileSync(resolve(__dirname, '../../../../public/locales/pl/translation.json'), 'utf8')
+    );
+
+    for (const literal of [
+      '>Navigation<',
+      '>Validation questions<',
+      '>Add attachment<',
+      '>Previous<',
+      'title="Expand navigation"',
+    ]) {
+      expect(editor).not.toContain(literal);
+    }
+    for (const literal of [
+      'Complete Assessment',
+      'Assessment Areas',
+      'Not sure? Ask AI to Diagnose',
+      'Try Again',
+    ]) {
+      expect(maturity).not.toContain(literal);
+    }
+
+    expect(en.assessment.drd.editor.validationQuestions).toBe('Validation questions');
+    expect(pl.assessment.drd.editor.validationQuestions).toBe('Pytania walidacyjne');
+    expect(en.assessment.maturityMatrix.complete).toBe('Complete assessment');
+    expect(pl.assessment.maturityMatrix.complete).toBe('Zakończ ocenę');
+  });
+
   it('nie ma polskiego defaultValue w t() (z ogonkami ani bez)', () => {
     const zrodla = zbierzPlikiZrodlowe(KATALOGI);
     expect(znajdzPolskieDefaultValue(zrodla)).toEqual([]);
