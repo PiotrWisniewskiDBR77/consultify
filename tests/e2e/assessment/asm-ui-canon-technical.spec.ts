@@ -44,8 +44,9 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
     });
     expect(ownerSession.status()).toBe(200);
     expect((await ownerSession.json()).roles).not.toContain('approver');
-    await ownerPage.getByRole('button', { name: /Wyślij do przeglądu/i }).click();
-    await expect(ownerPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeDisabled();
+    await ownerPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click();
+    await ownerPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i }).click();
+    await expect(ownerPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i })).toBeDisabled();
 
     // Owner is not an approver: the UI must not present a successful freeze.
     await expect(ownerPage.getByTestId('freeze-button')).toBeDisabled();
@@ -53,23 +54,37 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
     const approverContext = await signedContext(browser, approver);
     const approverPage = await approverContext.newPage();
     await approverPage.goto(`/assessment/drd/${sessionId}`);
+    await approverPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click();
     await approverPage.getByTestId('freeze-button').click();
-    await expect(approverPage.getByTestId('drd-http-frozen-output-view')).toBeVisible();
+    const approverTechnical = approverPage.getByTestId('drd-frozen-technical-details');
+    await expect(approverTechnical.getByTestId('drd-http-frozen-output-view')).toBeHidden();
+    await approverTechnical.locator('summary').click();
+    await expect(approverTechnical.getByTestId('drd-http-frozen-output-view')).toBeVisible();
     // SoD stays exact: the approver freezes; the owner creates the governed
     // downstream artifacts from the immutable Output.
     await ownerPage.reload();
-    await expect(ownerPage.getByTestId('drd-http-frozen-output-view')).toBeVisible();
-    await ownerPage.getByRole('button', { name: /Generuj raport z Outputu/i }).click();
-    await ownerPage.getByRole('button', { name: /Wygeneruj z findingów/i }).click();
+    await ownerPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click();
+    const ownerTechnical = ownerPage.getByTestId('drd-frozen-technical-details');
+    await ownerTechnical.locator('summary').click();
+    await expect(ownerTechnical.getByTestId('drd-http-frozen-output-view')).toBeVisible();
+    await ownerPage.getByRole('button', { name: /Generuj raport z Outputu|Generate a report from the Output/i }).click();
+    await ownerPage.getByRole('button', { name: /Wygeneruj z findingów|Generate from findings/i }).click();
 
     const coldContext = await signedContext(browser, owner, { width: 390, height: 844 });
     const coldPage = await coldContext.newPage();
     await coldPage.goto(`/assessment/drd/${sessionId}`);
-    await expect(coldPage.getByTestId('output-panel')).toContainText('AssessmentOutput');
-    await expect(coldPage.getByTestId('report-panel')).not.toContainText('Brak zapisanego raportu');
-    await expect(coldPage.getByTestId('initiative-panel')).not.toContainText('Brak zapisanego Initiative Proposal');
+    await coldPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click();
+    const coldInitialTechnical = coldPage.getByTestId('drd-frozen-technical-details');
+    await coldInitialTechnical.locator('summary').click();
+    await expect(coldInitialTechnical.getByTestId('output-panel')).toContainText('AssessmentOutput');
+    await expect(coldInitialTechnical.getByTestId('report-panel')).not.toContainText(/Brak zapisanego raportu|No saved report/i);
+    await expect(coldInitialTechnical.getByTestId('initiative-panel')).not.toContainText(/Brak zapisanego Initiative Proposal|No saved Initiative Proposal/i);
     await coldPage.reload();
-    await expect(coldPage.getByTestId('drd-http-frozen-output-view')).toBeVisible();
+    await expect(coldPage.getByTestId('drd-http-frozen-output-view')).toHaveCount(0);
+    await coldPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click();
+    const coldTechnical = coldPage.getByTestId('drd-frozen-technical-details');
+    await coldTechnical.locator('summary').click();
+    await expect(coldTechnical.getByTestId('drd-http-frozen-output-view')).toBeVisible();
 
     const axe = await new AxeBuilder({ page: coldPage }).analyze();
     expect(axe.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious')).toEqual([]);
@@ -94,8 +109,12 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
     const second = await signedContext(browser, owner);
     const secondPage = await second.newPage();
     await Promise.all([firstPage.goto(`/assessment/drd/${sessionId}`), secondPage.goto(`/assessment/drd/${sessionId}`)]);
-    await expect(firstPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeEnabled();
-    await expect(secondPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeEnabled();
+    await Promise.all([
+      firstPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click(),
+      secondPage.getByTestId('method-workspace-shell').getByRole('button', { name: /Ustawienia|Settings/i }).click(),
+    ]);
+    await expect(firstPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i })).toBeEnabled();
+    await expect(secondPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i })).toBeEnabled();
     // Both pages hydrate the same version first. Advance the canonical row in
     // the first context, then submit the deliberately stale second context.
     // Sequencing removes scheduler-dependent refresh races while preserving
@@ -109,10 +128,10 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
       await staleRequestMayContinue;
       await route.continue();
     });
-    const staleClick = secondPage.getByRole('button', { name: /Wyślij do przeglądu/i }).click();
+    const staleClick = secondPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i }).click();
     await staleRequestWasCaptured;
-    await firstPage.getByRole('button', { name: /Wyślij do przeglądu/i }).click();
-    await expect(firstPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeDisabled();
+    await firstPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i }).click();
+    await expect(firstPage.getByRole('button', { name: /Wyślij do przeglądu|Send for review/i })).toBeDisabled();
     releaseStaleRequest();
     await staleClick;
     await expect(secondPage.getByTestId('drd-http-conflict-view')).toBeVisible();

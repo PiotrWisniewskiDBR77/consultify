@@ -35,7 +35,7 @@ const BASE_OUTPUT = {
   methodPackVersion: METHOD_PACK_VERSION,
   outputVersion: 1,
   revisionOfOutputId: null,
-  scope: 'Sesja sess-1 — drd@2.0.0-methodpack.1, zamrożona z event-store.',
+  scope: 'Scope: session sess-1, method pack drd 2.0.0-methodpack.1, frozen snapshot.',
   current: { '1A': 4, '1B': 6, '2A': null, '4C': 2, '6B': 3, '7A': 2 },
   target: { '1A': 6, '1B': 6, '2A': 4, '4C': 5, '6B': 3, '7A': 4 },
   gap: { '1A': 2, '1B': 0, '2A': null, '4C': 3, '6B': 0, '7A': 2 },
@@ -47,10 +47,10 @@ const BASE_OUTPUT = {
     completenessRatio: 4 / 6,
   },
   limitations: [
-    'Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — ' +
-      'businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), ' +
-      'NIE analiza LLM ani recenzja metodyka.',
-    'aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.',
+    'Limitations: this result is derived deterministically from the confirmed answers and the ' +
+      'attached evidence — it is not an AI analysis nor a methodologist review.',
+    'Per-axis summaries follow the method rules and are calculated when the result is ' +
+      'presented; the frozen record stores the per-area levels.',
   ],
   findings: [
     {
@@ -188,12 +188,12 @@ const EDGE_OUTPUT = {
     byGroupNorm: {},
     mappingVersion: 'event-derived-v1',
     rule:
-      'EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — to zostaje po stronie klienta przed wyświetleniem.',
+      'Per-axis summaries follow the method rules and are calculated when the result is presented; this record stores the per-area levels.',
     excluded: {},
   },
   limitations: [
     ...BASE_OUTPUT.limitations,
-    '★ DEMO BYPASS: Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm.',
+    'This Output comes from a session created through the demo bypass — it is NOT a production result and cannot be approved as released/pilot through this mechanism.',
   ],
 };
 
@@ -237,6 +237,13 @@ function installFetchStub(variant: string): void {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     try {
+      // Non-UUID demo ids make reportApi probe the legacy assessment store
+      // before method-core. Answer the honest empty probe locally so the
+      // harness does not emit a misleading network 404 before rendering the
+      // frozen Output fixture below.
+      if (/\/api\/v8\/assessment\/out-(?:1|3)$/.test(url)) {
+        return jsonResponse({ data: { assessment: null } });
+      }
       if (/\/api\/method\/outputs\/out-1$/.test(url)) {
         return jsonResponse({ output: HAPPY_OUTPUT, superseded: false, supersededByOutputId: null });
       }

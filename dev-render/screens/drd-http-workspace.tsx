@@ -4,10 +4,7 @@
  * 2026-08-13) — the HTTP-source-of-truth DRD workspace (Live Matrix +
  * Interview Focus + save indicator), never localStorage-as-truth.
  *
- * Required per CLAUDE.md #7: nobody has screenshotted this component since
- * it was written — it is NOT YET wired into production
- * (`DrdMethodWorkspaceScreen.tsx` defaults to the legacy runtime, gated
- * behind `drdHttpSourceOfTruthV1`, default OFF). This harness mounts the
+ * This harness mounts the same server-authoritative component used in production
  * REAL component against an in-memory fake HTTP server for `/api/method/**`
  * (`dev-render/mocks/methodCoreFakeServer.ts`) — real request/response
  * shapes, no backend.

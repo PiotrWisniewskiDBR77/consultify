@@ -8,9 +8,9 @@
  *  - RECOVERY_DRAFT  — HTTP runtime is showing a cached/offline/queued/
  *                       conflicted snapshot; NOT yet reconciled with the
  *                       server. Never used for a frozen Output.
- *  - DEMO_LOCAL      — the legacy `DrdSessionRuntime` path (flag OFF):
- *                       localStorage IS the only store, by design, for that
- *                       code path — this is an honest label, not a bug.
+ *  - DEMO_LOCAL      — a dedicated development harness backed by
+ *                       `DrdSessionRuntime`; the product route never emits
+ *                       this value after the J2 cutover.
  *
  * `data-testid="drd-source-indicator"` + `data-source="<value>"` so tests
  * and the dev-render screenshot harness can assert on it without depending

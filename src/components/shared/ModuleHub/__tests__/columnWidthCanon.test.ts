@@ -99,6 +99,15 @@ describe('measureColumnContent — ile kolumna NAPRAWDĘ potrzebuje', () => {
     expect(wynik.status.width).toBe('Pending approval'.length * 7 + 40);
   });
 
+  it('polska pigułka statusu mieści pełną etykietę w kanonicznej szerokości', () => {
+    const wynik = measureColumnContent({
+      columns: [{ id: 'status', label: 'STATUS', dataType: 'status' as const }],
+      rows: [{ id: '1', status: 'Zatwierdzona' }],
+      measure,
+    });
+    expect(COLUMN_MAX_WIDTH_BY_DATA_TYPE.status).toBeGreaterThanOrEqual(wynik.status.width);
+  });
+
   it('`render`, który rzuca, nie wywraca pomiaru całej tabeli', () => {
     const wynik = measureColumnContent({
       columns: [

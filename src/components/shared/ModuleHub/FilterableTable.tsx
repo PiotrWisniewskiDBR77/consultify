@@ -312,7 +312,9 @@ export const COLUMN_MIN_WIDTH_BY_DATA_TYPE: Record<
   number
 > = {
   text: 140,
-  status: 130,
+  // Z-48: Polish status pills such as "Zatwierdzona" need the full canonical
+  // status width. 130 px clipped the label after the pill padding.
+  status: 160,
   date: 110,
   owner: 150,
   number: 90,

@@ -2,9 +2,8 @@
  * DrdHttpMethodWorkspaceScreen — HTTP-source-of-truth path for the DRD
  * workspace (P0C, 2026-08-13).
  *
- * Rendered by `DrdMethodWorkspaceScreen.tsx` ONLY when `drdHttpSourceOfTruthV1`
- * is ON (default OFF). Mirrors `DrdMethodWorkspaceScreenLegacy`'s use of
- * `MethodWorkspaceShell`, reusing the SAME pure event->view-model derivation
+ * Rendered by `DrdMethodWorkspaceScreen.tsx` for every DRD session after the
+ * J2 cutover. It uses `MethodWorkspaceShell` and the pure event->view-model derivation
  * (`drdWorkspaceViewModel.ts`) — the only thing that changes is where the
  * session/events/Output come from: `DrdHttpSessionRuntime`
  * (src/method-core/methods/drd/drdHttpSessionRuntime.ts) over

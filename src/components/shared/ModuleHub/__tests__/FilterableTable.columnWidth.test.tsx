@@ -33,7 +33,7 @@ describe('FilterableTable — podłogi szerokości P2', () => {
   beforeEach(() => window.localStorage.clear());
   afterEach(() => vi.restoreAllMocks());
 
-  it('status podbija zadeklarowane 90 px do floora 130 px', () => {
+  it('status podbija zadeklarowane 90 px do floora 160 px', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
         font: '',
         measureText: () => ({ width: 0 }),
@@ -43,8 +43,8 @@ describe('FilterableTable — podłogi szerokości P2', () => {
     ]);
 
     const header = getByRole('columnheader');
-    expect(header.style.width).toBe('130px');
-    expect(header.style.minWidth).toBe('130px');
+    expect(header.style.width).toBe('160px');
+    expect(header.style.minWidth).toBe('160px');
   });
 
   it('mergePersisted podbija zapisane 95 px właściciela do 150 px', () => {
@@ -151,7 +151,7 @@ describe('FilterableTable — podłogi szerokości P2', () => {
   });
 
   it.each([
-    ['Skrzynka Moja Praca', { id: 'status', label: 'STATUS', dataType: 'status' }, 130],
+    ['Skrzynka Moja Praca', { id: 'status', label: 'STATUS', dataType: 'status' }, 160],
     ['Sejf', { id: 'owner', label: 'WŁAŚCICIEL', dataType: 'owner' }, 150],
     ['Realizacje', { id: 'deadline', label: 'TERMIN', dataType: 'date' }, 110],
     ['Sprawozdania Finanse', { id: 'amount', label: 'WARTOŚĆ', dataType: 'number' }, 90],
