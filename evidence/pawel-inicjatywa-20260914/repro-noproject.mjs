@@ -1,0 +1,37 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const OUT = process.env.OUT || '/tmp/shots';
+fs.mkdirSync(OUT, { recursive: true });
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 1600, height: 1000 } });
+const p = await ctx.newPage();
+const net = [];
+p.on('response', r => { const u=r.url(); if (u.includes('/api/') && (r.status()>=400 || /runtime-v1/.test(u))) net.push(`${r.status()} ${r.request().method()} ${u.replace('http://127.0.0.1:5370','')}`); });
+await p.goto('http://127.0.0.1:5370/login', { waitUntil: 'domcontentloaded' });
+await p.waitForTimeout(3000);
+await p.fill('input[type="email"]', 'pawel.mroczkowski@dbr77.com');
+await p.fill('input[type="password"]', 'Local!Repro123');
+await p.click('button[type="submit"]');
+await p.waitForTimeout(7000);
+for (const l of ['Skip for now']) { const e=p.locator(`text="${l}"`).first(); if (await e.count() && await e.isVisible().catch(()=>false)) { await e.click().catch(()=>{}); await p.waitForTimeout(1200);} }
+await p.goto('http://127.0.0.1:5370/initiatives', { waitUntil: 'domcontentloaded' });
+await p.waitForTimeout(7000);
+for (const l of ['Skip for now']) { const e=p.locator(`text="${l}"`).first(); if (await e.count() && await e.isVisible().catch(()=>false)) { await e.click().catch(()=>{}); await p.waitForTimeout(1200);} }
+await p.locator('text=New initiative').first().click();
+await p.waitForTimeout(1000);
+await p.locator('text=Fill in the form').first().click();
+await p.waitForTimeout(2500);
+await p.fill('#initiatives-new-modal-title', 'Org scope draft without project pick');
+await p.locator('textarea').first().fill('Created without choosing any project.');
+await p.waitForTimeout(800);
+await p.screenshot({ path: `${OUT}/${process.env.TAG||'PRZED'}-10-no-project-form.png` });
+p.on('dialog', d => d.accept());
+await p.locator('button', { hasText: /^Create$/ }).last().click();
+await p.waitForTimeout(6000);
+await p.screenshot({ path: `${OUT}/${process.env.TAG||'PRZED'}-11-no-project-result.png` });
+const modalOpen = await p.evaluate(() => Boolean(document.getElementById('initiatives-new-modal-heading')));
+const toasts = await p.evaluate(() => [...document.querySelectorAll('[class*=toast], [role=status], [role=alert]')].map(e=>e.textContent?.trim()).filter(Boolean));
+console.log('MODAL_STILL_OPEN:', modalOpen);
+console.log('TOASTS:', JSON.stringify(toasts));
+console.log('NET:\n'+net.join('\n'));
+await b.close();

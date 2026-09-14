@@ -18,12 +18,26 @@ export function RequiredProjectPicker({
   // których backend faktycznie wymaga projectId (np. Kreator Inicjatyw AI,
   // nowa decyzja bez initiative/task), nic tu nie zmieniają.
   optional = false,
+  // P-P06 (14.09.2026, zgłoszenie pilotażu Pawła `3317aaf2`): formularz ręcznej
+  // inicjatywy kończył się ślepym zaułkiem — przy pustym wyborze kanoniczny
+  // zapis rzucał `Canonical initiative creation requires projectId and
+  // initiativeOwnerId` (odtworzone lokalnie: ZERO żądań sieciowych, okno
+  // zostaje otwarte), a jeśli wybór z jakiegokolwiek powodu wrócił do
+  // „Select a project…", użytkownik nie miał jak tego zauważyć przed kliknięciem
+  // „Create". DEC-499 Q3: do czasu PMO ekrany pracują w zakresie CAŁEJ
+  // ORGANIZACJI, więc wybór projektu nie może być warunkiem utworzenia
+  // inicjatywy. Ten opt-in ustawia zakres domyślny = PIERWSZY projekt
+  // organizacji (ten sam, który widać na górze rozwijanej listy — więc wybór
+  // jest jawny na ekranie, a nie ukryty w payloadzie) zawsze, gdy `value` jest
+  // puste. Konsumenci bez tej flagi zachowują się dokładnie jak dotąd.
+  autoSelectFirst = false,
 }: {
   value: string;
   onChange: (projectId: string) => void;
   disabled?: boolean;
   language?: 'en' | 'pl';
   optional?: boolean;
+  autoSelectFirst?: boolean;
 }) {
   const { t } = useTranslation();
   const [projects, setProjects] = useState<ProjectOption[]>([]);
@@ -76,6 +90,13 @@ export function RequiredProjectPicker({
       cancelled = true;
     };
   }, [language]);
+
+  useEffect(() => {
+    if (!autoSelectFirst || loading || disabled) return;
+    if (String(value || '').trim()) return;
+    const first = visibleProjects[0];
+    if (first) onChange(first.id);
+  }, [autoSelectFirst, disabled, loading, onChange, value, visibleProjects]);
 
   const createProject = async () => {
     const name = newName.trim();

@@ -10834,6 +10834,8 @@
       "summary": "Podsumowanie",
       "summaryPlaceholder": "Krótko opisz cel i zakres inicjatywy",
       "titleRequiredError": "Podaj nazwę inicjatywy.",
+      "projectRequiredError": "Wybierz projekt dla tej inicjatywy — a jeśli lista jest pusta, najpierw utwórz projekt.",
+      "ownerUnavailableError": "Nie udało się ustalić Twojego konta. Zaloguj się ponownie i spróbuj jeszcze raz.",
       "duplicateWarning": "Inicjatywa „{{name}}” już istnieje.",
       "duplicateWarningDesc": "Sprawdź istniejącą kartę lub kontynuuj, jeśli tworzysz osobną inicjatywę.",
       "initiativeCreated": "Utworzono inicjatywę.",

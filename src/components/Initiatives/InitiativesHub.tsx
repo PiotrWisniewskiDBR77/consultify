@@ -2993,10 +2993,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* D-15: projekt jest wymagany przez kanoniczna sciezke zapisu —
                   ten sam wspolny komponent, ktorego uzywa kreator AI. */}
+              {/* P-P06 (zgłoszenie pilotażu `3317aaf2`): `autoSelectFirst` —
+                  pusty wybór projektu nie może blokować utworzenia inicjatywy
+                  (DEC-499 Q3: zakres = cała organizacja do czasu PMO). */}
               <RequiredProjectPicker
                 value={newProjectId}
                 onChange={setNewProjectId}
                 language={i18n.language === 'pl' ? 'pl' : 'en'}
+                autoSelectFirst
               />
 
               {/* Summary */}
@@ -3028,6 +3032,38 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   return;
                 }
 
+                /**
+                 * P-P06 (zgłoszenie pilotażu `3317aaf2`, 14.09.2026): jedyny
+                 * komunikat, jaki dostawał użytkownik przy nierozstrzygniętym
+                 * zakresie, brzmiał „Canonical initiative creation requires
+                 * projectId and initiativeOwnerId" — surowy tekst z warstwy
+                 * zapisu (`initiativeWriteTruth.ts`), z nazwami pól API.
+                 * Odtworzone lokalnie: okno zostaje otwarte, ZERO żądań (to
+                 * zgadza się z `api_logs` stagingu — o 04:12 UTC nie ma ani
+                 * jednego POST-a inicjatywy). Bramka zostaje, ale mówi po
+                 * ludzku i osobno dla każdego brakującego składnika.
+                 */
+                const scopeProjectId = String(newProjectId || currentProjectId || '').trim();
+                const scopeOwnerId = String((currentUser as any)?.id || '').trim();
+                if (!scopeProjectId) {
+                  toast.error(
+                    t(
+                      'initiatives.form.projectRequiredError',
+                      'Choose a project for this initiative — or create one first if the list is empty.'
+                    )
+                  );
+                  return;
+                }
+                if (!scopeOwnerId) {
+                  toast.error(
+                    t(
+                      'initiatives.form.ownerUnavailableError',
+                      'Your user account could not be resolved. Sign in again and retry.'
+                    )
+                  );
+                  return;
+                }
+
                 // Check for duplicates
                 const duplicateName = checkDuplicateInitiative(newTitle.trim(), allInitiatives);
                 if (duplicateName) {
@@ -3045,8 +3081,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 try {
                   setIsCreating(true);
                   const { createdId, truth } = await createInitiativeWriteTruth({
-                    projectId: newProjectId || currentProjectId || '',
-                    initiativeOwnerId: String((currentUser as any)?.id || ''),
+                    projectId: scopeProjectId,
+                    initiativeOwnerId: scopeOwnerId,
                     title: newTitle.trim(),
                     problem: newSummary.trim() || newTitle.trim(),
                     proposedOutcome: newSummary.trim() || null,
