@@ -709,12 +709,20 @@ const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka
 const Z27InicjatywySkrzynkaScreen = React.lazy(
   () => import('./screens/z27-inicjatywy-skrzynka')
 );
+const Z30InicjatywyObciazenieScreen = React.lazy(
+  () => import('./screens/z30-inicjatywy-obciazenie')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'z27-inicjatywy-skrzynka': {
     label:
       'Z-27 (14.09) — REALNY <InitiativesHub> W CAŁOŚCI (Menu 1/2/3) z zakładką Menu 1 „Do akceptacji" aktywną — wymaga serwera uruchomionego z VITE_TRANSITION_INBOX=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/initiatives/lifecycle-transition-proposals zwraca 2 propozycje. &tab=transitionInbox &lang=pl|en &theme=light|dark',
     render: () => <Z27InicjatywySkrzynkaScreen />,
+  },
+  'z30-inicjatywy-obciazenie': {
+    label:
+      'Z-30 (14.09) — REALNY <InitiativesHub> W CAŁOŚCI (Menu 1/2/3) z zakładką „Obciążenie" (heatmapa Q1 P3, InitiativeWorkloadSurface) — wymaga serwera uruchomionego z VITE_INITIATIVES_WORKLOAD=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/execution-control/capacity/initiative-workload: 4 osoby × 8 tygodni (70/90/120% + 1 krytyczna „No capacity"). &tab=capacity &openPreview=1 &lang=pl|en &theme=light|dark',
+    render: () => <Z30InicjatywyObciazenieScreen />,
   },
   'h1b-skrzynka-przejsc': {
     label:

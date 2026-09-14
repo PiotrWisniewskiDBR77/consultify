@@ -2875,11 +2875,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       { id: 'published', label: t('initiatives.plan.filters.published', 'Published') },
       { id: 'conflicted', label: t('initiatives.plan.filters.conflicted', 'With conflicts') },
     ],
-    capacity: [
-      { id: 'drafts', label: t('initiatives.capacityAnalysis.filters.drafts', 'Drafts') },
-      { id: 'published', label: t('initiatives.capacityAnalysis.filters.published', 'Published') },
-      { id: 'gaps', label: t('initiatives.capacityAnalysis.filters.gaps', 'With gaps') },
-    ],
+    /* Q1 P3 DEC-495: te trzy pigułki (Drafts/Published/With gaps) filtrują
+       SCENARIUSZE PLANU MOCY z `CapacityScenarioSurface` (linia, flaga OFF).
+       Przy `INITIATIVES_WORKLOAD_ENABLED` zakładka „Load" renderuje
+       `InitiativeWorkloadSurface` (heatmapa Q1) — inny archetyp, bez pojęcia
+       „draft/published/gaps"; te same id/onChipChange nic tam nie robiłyby
+       (heatmapa nie przyjmuje `activePreset`), więc chipy tylko przeciekały
+       jako martwe kliknięcia. Pusta lista = brak chipów w Menu 3 dla ON,
+       identycznie jak `commandRowContent` już był wyłączony dla `capacity`
+       bezwarunkowo (patrz test „Q1 P3 DEC-495" w
+       InitiativesHub.kanonPaskow.source.test.ts). */
+    capacity: INITIATIVES_WORKLOAD_ENABLED
+      ? []
+      : [
+          { id: 'drafts', label: t('initiatives.capacityAnalysis.filters.drafts', 'Drafts') },
+          {
+            id: 'published',
+            label: t('initiatives.capacityAnalysis.filters.published', 'Published'),
+          },
+          { id: 'gaps', label: t('initiatives.capacityAnalysis.filters.gaps', 'With gaps') },
+        ],
   };
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
 
@@ -2996,7 +3011,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           data-testid="initiatives-plan-state-dropdown"
         />
       )}
-      {activeTab === 'capacity' && (
+      {/* Q1 P3 DEC-495: jak wyżej przy `canonicalMenu3Definitions.capacity` —
+          dropdown „Status" (Drafts/Published/With gaps) filtruje scenariusze
+          `CapacityScenarioSurface`; przy heatmapie (`INITIATIVES_WORKLOAD_ENABLED`)
+          nie ma odpowiednika, więc znika zamiast wisieć jako martwy filtr. */}
+      {activeTab === 'capacity' && !INITIATIVES_WORKLOAD_ENABLED && (
         <Menu2PresetDropdown
           compact
           label={t('initiatives.filters.capacityStatus', 'Status')}
