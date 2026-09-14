@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
   "baseSha": "88f1a1994dffa8b1f3b706476078844cbb43441f",
-  "candidateContentSha": "867e326d2a650645aaae7817342e9e18ac8acf13",
+  "candidateContentSha": "86f484fd6b46f6dd8d23e822a50b772d8ac817c7",
   "branch": "codex/realizacja-cztery-przyciski-20260913",
   "manifestSelfExcluded": true,
   "fileCount": 40,
@@ -46,8 +46,8 @@
     },
     {
       "path": "docs/ssot/SYGNALIZACJA_RYZYKA_REALIZACJI.md",
-      "bytes": 6016,
-      "sha256": "38e604e05598dc0343c68484cb14eb8af864f1ab6709d401a07494591a599ea2"
+      "bytes": 6012,
+      "sha256": "f7e92a1af566d475ad0388f9d0d7156840365e560bc21fc2e352c9a82390ec96"
     },
     {
       "path": "evidence/f2-2-realizacja/e0-e1/FREEZE_MANIFEST.json",
