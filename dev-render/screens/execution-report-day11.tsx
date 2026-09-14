@@ -64,6 +64,9 @@ const installFixtureTransport = (state: string) => {
                 },
               ],
       });
+    if (url.endsWith('/api/execution-reports/definitions'))
+      return response({ definitions: [] });
+    if (url.endsWith('/api/execution-reports/runs')) return response({ items: [] });
     if (url.includes('/execution-cases/case-1/work'))
       return response({
         tasks:
@@ -71,26 +74,55 @@ const installFixtureTransport = (state: string) => {
             ? []
             : [
                 {
-                  taskId: 'task-overdue',
-                  title: 'Close supplier readiness gap',
-                  status: 'BLOCKED',
+                  taskId: 'task-previous-1',
+                  title: 'Close prior supplier gap',
+                  status: 'DONE',
                   assigneeId: 'anna',
-                  dueAt: '2026-08-20T12:00:00Z',
-                  slaAt: '2026-08-21T12:00:00Z',
+                  dueAt: '2026-09-08T12:00:00Z',
+                  completedAt: '2026-09-08T15:00:00Z',
+                  slaAt: '2026-09-08T16:00:00Z',
                   dependencies: ['decision-1'],
                   evidenceRefs: ['ev-1'],
                   definitionOfDone: 'Acceptance evidence',
                   version: 4,
                 },
                 {
-                  taskId: 'task-undated',
-                  title: 'Confirm rollout support',
-                  status: 'OPEN',
+                  taskId: 'task-previous-2',
+                  title: 'Complete prior safety review',
+                  status: 'DONE',
                   assigneeId: 'marek',
-                  dueAt: null,
+                  dueAt: '2026-09-09T12:00:00Z',
+                  completedAt: '2026-09-09T14:00:00Z',
                   evidenceRefs: [],
                   version: 2,
                 },
+                {
+                  taskId: 'task-previous-3',
+                  title: 'Sign prior readiness checklist',
+                  status: 'DONE',
+                  assigneeId: 'anna',
+                  dueAt: '2026-09-10T12:00:00Z',
+                  completedAt: '2026-09-10T13:00:00Z',
+                  evidenceRefs: ['ev-3'],
+                  version: 1,
+                },
+                ...[
+                  ['task-next-1', 'Close supplier readiness gap', '2026-09-15T12:00:00Z', 'BLOCKED'],
+                  ['task-next-2', 'Confirm rollout support', '2026-09-16T12:00:00Z', 'OPEN'],
+                  ['task-next-3', 'Validate operator training', '2026-09-17T12:00:00Z', 'OPEN'],
+                  ['task-month-1', 'Prepare scale-up decision', '2026-09-25T12:00:00Z', 'OPEN'],
+                  ['task-month-2', 'Complete benefits review', '2026-10-01T12:00:00Z', 'OPEN'],
+                  ['task-month-3', 'Approve phase-two scope', '2026-10-10T12:00:00Z', 'OPEN'],
+                ].map(([taskId, title, dueAt, status], index) => ({
+                  taskId,
+                  title,
+                  status,
+                  priority: index === 0 ? 'HIGH' : index < 3 ? 'MEDIUM' : 'LOW',
+                  assigneeId: index % 2 === 0 ? 'anna' : 'marek',
+                  dueAt,
+                  evidenceRefs: [],
+                  version: 1,
+                })),
               ],
         decisions:
           state === 'empty'
@@ -139,13 +171,13 @@ const installFixtureTransport = (state: string) => {
       return response({
         data: {
           problems: lane === 'action-queue' && state !== 'empty' ? [{
-            id: 'aq-task-blocked-task-overdue',
+            id: 'aq-task-blocked-task-next-1',
             severity: 'critical',
             problemType: 'overdue_task',
             title: 'Close supplier readiness gap',
             rootCause: 'Blocked and overdue',
             sourceEntityType: 'TASK',
-            sourceEntityId: 'task-overdue',
+            sourceEntityId: 'task-next-1',
             sourceEntityName: 'Close supplier readiness gap',
             ownerId: 'anna',
             ownerName: 'Anna Kowalska',
