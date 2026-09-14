@@ -1,9 +1,9 @@
+import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 import type {
   LegacyInitiativeApiRow,
   RegisteredInitiativeReadModel,
 } from '@/services/initiatives-execution/runtimeApi';
 import { InitiativeStatus, type PortfolioInitiative } from '@/types';
-import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 
 export type InitiativeLifecyclePreset =
   | 'PREPARATION'
@@ -336,7 +336,8 @@ export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiati
  * Surowa wartosc zostaje na `displayStatus`, wiec diagnoza jest dalej mozliwa.
  */
 export const runtimeLifecycleToInitiativeStatus = (rawLifecycle: string): InitiativeStatus => {
-  type RuntimeLifecycle = import('@/contracts/initiatives-execution/foundation').InitiativeLifecycleStatus;
+  type RuntimeLifecycle =
+    import('@/contracts/initiatives-execution/foundation').InitiativeLifecycleStatus;
   const normalized = String(rawLifecycle ?? '')
     .trim()
     .toUpperCase();
@@ -406,6 +407,7 @@ export const toCanonicalInitiativeRegisterItem = (
     // `registerArea`/`registerAxisRaw`/`registerCategory` unset here is an
     // honest "brak danych", not a bug. Never invent a value for this source.
     status: runtimeLifecycleToInitiativeStatus(projection.lifecycle),
+    archived: projection.lifecycle === 'ARCHIVED',
     displayStatus: projection.lifecycle,
     priority: initiative.priority as PortfolioInitiative['priority'],
     progress: undefined as unknown as number,
@@ -416,13 +418,14 @@ export const toCanonicalInitiativeRegisterItem = (
     // Uczciwe „brak dopasowania": nie tworzymy `ownerBusiness` bez nazwiska
     // (patrz komentarz nad funkcją) — kolumna wtedy renderuje „—", nigdy
     // literał ani surowy UUID.
-    ownerBusiness: ownerId && ownerDisplayName
-      ? {
-          id: ownerId,
-          firstName: ownerDisplayName,
-          lastName: '',
-        }
-      : undefined,
+    ownerBusiness:
+      ownerId && ownerDisplayName
+        ? {
+            id: ownerId,
+            firstName: ownerDisplayName,
+            lastName: '',
+          }
+        : undefined,
     createdAt: updatedAt,
     updatedAt,
   } as PortfolioInitiative;
@@ -444,7 +447,9 @@ const normalizeLegacyInitiativeStatus = (raw: unknown): InitiativeStatus => {
   const value = String(raw ?? '')
     .trim()
     .toUpperCase();
-  return KNOWN_INITIATIVE_STATUSES.has(value) ? (value as InitiativeStatus) : InitiativeStatus.DRAFT;
+  return KNOWN_INITIATIVE_STATUSES.has(value)
+    ? (value as InitiativeStatus)
+    : InitiativeStatus.DRAFT;
 };
 
 /**
@@ -456,7 +461,9 @@ const normalizeLegacyInitiativeStatus = (raw: unknown): InitiativeStatus => {
 export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
   row: LegacyInitiativeApiRow
 ): PortfolioInitiative => {
-  const rawStatus = String(row.status ?? '').trim().toUpperCase();
+  const rawStatus = String(row.status ?? '')
+    .trim()
+    .toUpperCase();
   const ownerBusiness = row.ownerBusiness?.id
     ? {
         id: row.ownerBusiness.id,
@@ -544,11 +551,12 @@ export const mergeLegacyInitiativesIntoRegister = (
   const legacyById = new Map(legacyRows.map((row) => [row.id, row] as const));
   const reconciled = canonicalRows.map((row) => {
     const legacyMatch = row.id ? legacyById.get(row.id) : undefined;
-    if (!legacyMatch || legacyMatch.status === row.status) return row;
+    if (!legacyMatch) return row;
     return {
       ...row,
-      status: legacyMatch.status,
+      status: legacyMatch.status === row.status ? row.status : legacyMatch.status,
       displayStatus: legacyMatch.displayStatus ?? row.displayStatus,
+      archived: Boolean(row.archived || legacyMatch.archived),
     };
   });
   const knownIds = new Set(canonicalRows.map((row) => row.id));

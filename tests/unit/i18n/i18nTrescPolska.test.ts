@@ -49,6 +49,11 @@ const IDENTITY_WHITELIST_RAW = [
   'GO', 'CONDITIONAL GO', 'NO-GO', 'Conservative', 'Base', 'Upside', 'Expected',
   'Actual', 'Payback', 'CAPEX', 'OPEX', 'FTE', 'BAU', 'YTD', 'OEE', 'MES', 'IoT',
   'Hard', 'Avoided',
+  // F2-1 E1 A2 (14.09.2026) — „Parking" to prawdziwe polskie slowo ze slownika
+  // (miejsce postojowe), a wlasciciel uzyl go doslownie w opisie funkcji:
+  // „jak nie to idzie na parking albo do archiwum". Ten sam status co Plan/Bank/
+  // System nizej — zbieznosc pisowni, nie brak tlumaczenia.
+  'Parking',
   'Jira', 'Slack', 'Teams', 'Google Drive', 'OneDrive', 'Dropbox', 'e-mail',
   'Email', 'OK', 'Kanban', 'Backlog', 'Sprint', 'Baseline', 'Dashboard', 'Excel',
   'Word', 'PowerPoint',
@@ -227,6 +232,8 @@ const ALLOWED_PROPER_NOUNS = [
   // niezmienna w polskich raportach doradczych (Business Case/Wyniki):
   'Conservative', 'Base', 'Upside', 'Expected', 'Actual', 'Payback', 'Hard',
   'Avoided',
+  // F2-1 E1 A2 (14.09.2026) — patrz uzasadnienie przy IDENTITY_WHITELIST_RAW.
+  'Parking',
   // P8-i18n-strażnik (10.09.2026) — dawno przyswojone polskie słowa
   // (Plan/Bank/System/Format/Panel/Diagram/Media/Agent/Limit/Trend/Bonus —
   // istnieją w słowniku języka polskiego niezależnie od informatyki, ta sama

@@ -1,0 +1,888 @@
+{
+  "scenarios": [
+    {
+      "id": "scenario-published-1",
+      "name": "Operations portfolio 2026",
+      "state": "PUBLISHED",
+      "version": 2,
+      "scope": {
+        "portfolioId": "project-1",
+        "asOf": "2026-09-14T00:00:00.000Z"
+      },
+      "updatedAt": "2026-09-14T00:00:00.000Z"
+    }
+  ],
+  "contextVersions": [
+    {
+      "snapshotId": "ctx-harness-1",
+      "version": 3,
+      "schemaVersion": 1,
+      "contentHash": "harness-content-hash",
+      "claimCount": 42,
+      "createdAt": "2026-09-14T00:00:00.000Z"
+    }
+  ],
+  "analysis": {
+    "analysisId": "analysis-harness-1",
+    "aggregateVersion": 2,
+    "status": "PENDING_REVIEW",
+    "rubricVersion": "portfolio-consulting-v1",
+    "requestDigest": "harness-digest",
+    "snapshot": {
+      "snapshotVersion": 1,
+      "organizationId": "org-harness",
+      "asOf": "2026-09-14T00:00:00.000Z",
+      "source": {
+        "system": "initiativeUnifiedReader",
+        "version": "1",
+        "capturedAt": "2026-09-14T00:00:00.000Z"
+      },
+      "portfolio": {
+        "scenarioId": "scenario-published-1",
+        "aggregateVersion": 4,
+        "scenarioVersion": 2,
+        "facts": {
+          "name": "Operations portfolio 2026",
+          "asOf": "2026-09-14T00:00:00.000Z"
+        }
+      },
+      "initiatives": [
+        {
+          "initiativeId": "initiative-1",
+          "initiativeVersion": 1,
+          "projectId": "project-1",
+          "source": "CANONICAL",
+          "facts": {
+            "name": "Warehouse picking automation",
+            "priority": "HIGH",
+            "status": "PROPOSED",
+            "area": "Operations"
+          },
+          "evidenceRefs": [
+            "initiative:initiative-1:1"
+          ]
+        },
+        {
+          "initiativeId": "initiative-2",
+          "initiativeVersion": 1,
+          "projectId": "project-1",
+          "source": "CANONICAL",
+          "facts": {
+            "name": "Second warehouse robotics pilot",
+            "priority": "HIGH",
+            "status": "PROPOSED",
+            "area": "Operations"
+          },
+          "evidenceRefs": [
+            "initiative:initiative-2:1"
+          ]
+        },
+        {
+          "initiativeId": "initiative-3",
+          "initiativeVersion": 1,
+          "projectId": "project-1",
+          "source": "CANONICAL",
+          "facts": {
+            "name": "Supplier quality scorecard",
+            "priority": "MEDIUM",
+            "status": "PROPOSED",
+            "area": "Procurement"
+          },
+          "evidenceRefs": [
+            "initiative:initiative-3:1"
+          ]
+        },
+        {
+          "initiativeId": "initiative-4",
+          "initiativeVersion": 1,
+          "projectId": "project-1",
+          "source": "CANONICAL",
+          "facts": {
+            "name": "Shift planning rework",
+            "priority": "MEDIUM",
+            "status": "PROPOSED",
+            "area": "People"
+          },
+          "evidenceRefs": [
+            "initiative:initiative-4:1"
+          ]
+        },
+        {
+          "initiativeId": "initiative-5",
+          "initiativeVersion": 1,
+          "projectId": "project-1",
+          "source": "CANONICAL",
+          "facts": {
+            "name": "Energy metering rollout",
+            "priority": "LOW",
+            "status": "PROPOSED",
+            "area": "Maintenance"
+          },
+          "evidenceRefs": [
+            "initiative:initiative-5:1"
+          ]
+        }
+      ],
+      "decisionHistory": [
+        {
+          "decisionId": "decision-historic-1",
+          "version": 2,
+          "initiativeId": "initiative-2",
+          "sourceRef": "decision:decision-historic-1:2",
+          "facts": {
+            "outcome": "REJECTED",
+            "disposition": "PARKING",
+            "reason": "Robotics pilot was parked while the first automation wave was still running.",
+            "returnCondition": "Returns when the first automation wave closes its acceptance."
+          }
+        }
+      ],
+      "runningWork": [
+        {
+          "aggregateType": "execution_case",
+          "aggregateId": "case-1",
+          "version": 3,
+          "sourceRef": "execution_case:case-1:3",
+          "facts": {
+            "name": "Automation wave 1",
+            "state": "ACTIVE"
+          }
+        }
+      ],
+      "organizationContext": {
+        "snapshotId": "ctx-harness-1",
+        "version": 3,
+        "contentHash": "harness-content-hash",
+        "facts": {
+          "industry": "Manufacturing"
+        }
+      }
+    },
+    "model": {
+      "runId": "9ad9bc8ec397fd185dbcbccf0aab1b4f7cd5359fb37e49bfef3998402f127cbf",
+      "provider": "deterministic",
+      "modelId": "portfolio-consulting-deterministic",
+      "modelVersion": "1",
+      "promptVersion": "portfolio-consulting-v1",
+      "generatedAt": "2026-09-14T00:00:00.000Z"
+    },
+    "items": [
+      {
+        "itemId": "obs-coverage_gap",
+        "position": 1,
+        "kind": "OBSERVATION",
+        "criterion": "COVERAGE_GAP",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Area coverage: the frozen portfolio spans 5 Initiative(s); the areas named in their frozen fields are the only ones covered, so any area absent from this snapshot is uncovered.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "obs-overlap",
+        "position": 2,
+        "kind": "OBSERVATION",
+        "criterion": "OVERLAP",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Overlap: 5 Initiative(s) were compared field by field on the frozen snapshot; the pairs listed below share the same frozen scope fields.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "obs-priority",
+        "position": 3,
+        "kind": "OBSERVATION",
+        "criterion": "PRIORITY",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Priority spread: the frozen priority of every Initiative in scope is listed below; a portfolio where every item carries the same priority has no usable ordering.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "obs-new_vs_extension",
+        "position": 4,
+        "kind": "OBSERVATION",
+        "criterion": "NEW_VS_EXTENSION",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "New versus already running: 1 running work item(s) were matched against the Initiatives in scope, to separate genuinely new work from an extension of work already under way.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "obs-decision_history",
+        "position": 5,
+        "kind": "OBSERVATION",
+        "criterion": "DECISION_HISTORY",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Experience history: 1 earlier Decision(s) exist for the Initiatives in scope, including parking and archive dispositions with their return conditions.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "rec-coverage_gap",
+        "position": 6,
+        "kind": "RECOMMENDATION",
+        "criterion": "COVERAGE_GAP",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Confirm the uncovered areas deliberately, or add an Initiative for each area that is worth the work.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Leave the portfolio unchanged and record why."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "rec-overlap",
+        "position": 7,
+        "kind": "RECOMMENDATION",
+        "criterion": "OVERLAP",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Merge or explicitly separate the Initiatives that share the same frozen scope.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Leave the portfolio unchanged and record why."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "rec-priority",
+        "position": 8,
+        "kind": "RECOMMENDATION",
+        "criterion": "PRIORITY",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Re-spread priorities so the order of work is decidable.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Leave the portfolio unchanged and record why."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "rec-new_vs_extension",
+        "position": 9,
+        "kind": "RECOMMENDATION",
+        "criterion": "NEW_VS_EXTENSION",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Where work is already running, extend the running item instead of opening a second Initiative.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Leave the portfolio unchanged and record why."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "rec-decision_history",
+        "position": 10,
+        "kind": "RECOMMENDATION",
+        "criterion": "DECISION_HISTORY",
+        "initiativeIds": [
+          "initiative-1",
+          "initiative-2",
+          "initiative-3",
+          "initiative-4",
+          "initiative-5"
+        ],
+        "rationale": "Re-read every parking return condition before re-proposing an Initiative that was stopped earlier.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          },
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          },
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          },
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          },
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Leave the portfolio unchanged and record why."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": null
+      },
+      {
+        "itemId": "dec-initiative-1",
+        "position": 11,
+        "kind": "DECISION",
+        "criterion": "COVERAGE_GAP",
+        "initiativeIds": [
+          "initiative-1"
+        ],
+        "rationale": "Covers an area with no other Initiative in the frozen snapshot and is not running yet. Human review decides; this row proposes nothing more than the disposition below.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-1",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-1:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Decide the opposite disposition and record the reason."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": {
+          "kind": "IN",
+          "reason": "Covers an area with no other Initiative in the frozen snapshot and is not running yet.",
+          "returnCondition": null
+        }
+      },
+      {
+        "itemId": "dec-initiative-2",
+        "position": 12,
+        "kind": "DECISION",
+        "criterion": "OVERLAP",
+        "initiativeIds": [
+          "initiative-2"
+        ],
+        "rationale": "Overlaps work already running, so a second Initiative would duplicate effort. Human review decides; this row proposes nothing more than the disposition below.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-2",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-2:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Decide the opposite disposition and record the reason."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": {
+          "kind": "PARKING",
+          "reason": "Overlaps work already running, so a second Initiative would duplicate effort.",
+          "returnCondition": "Returns when the running work closes without covering this scope."
+        }
+      },
+      {
+        "itemId": "dec-initiative-3",
+        "position": 13,
+        "kind": "DECISION",
+        "criterion": "PRIORITY",
+        "initiativeIds": [
+          "initiative-3"
+        ],
+        "rationale": "An earlier Decision already dispositioned this scope and nothing in the snapshot changed it. Human review decides; this row proposes nothing more than the disposition below.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-3",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-3:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Decide the opposite disposition and record the reason."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": {
+          "kind": "ARCHIVE",
+          "reason": "An earlier Decision already dispositioned this scope and nothing in the snapshot changed it.",
+          "returnCondition": "Returns when the frozen context shows the earlier blocking condition is gone."
+        }
+      },
+      {
+        "itemId": "dec-initiative-4",
+        "position": 14,
+        "kind": "DECISION",
+        "criterion": "NEW_VS_EXTENSION",
+        "initiativeIds": [
+          "initiative-4"
+        ],
+        "rationale": "Covers an area with no other Initiative in the frozen snapshot and is not running yet. Human review decides; this row proposes nothing more than the disposition below.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-4",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-4:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Decide the opposite disposition and record the reason."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": {
+          "kind": "IN",
+          "reason": "Covers an area with no other Initiative in the frozen snapshot and is not running yet.",
+          "returnCondition": null
+        }
+      },
+      {
+        "itemId": "dec-initiative-5",
+        "position": 15,
+        "kind": "DECISION",
+        "criterion": "DECISION_HISTORY",
+        "initiativeIds": [
+          "initiative-5"
+        ],
+        "rationale": "Overlaps work already running, so a second Initiative would duplicate effort. Human review decides; this row proposes nothing more than the disposition below.",
+        "evidence": [
+          {
+            "initiativeId": "initiative-5",
+            "field": "facts.name",
+            "source": "initiativeUnifiedReader",
+            "sourceRef": "initiative:initiative-5:1"
+          }
+        ],
+        "confidence": "MEDIUM",
+        "alternatives": [
+          "Decide the opposite disposition and record the reason."
+        ],
+        "missingData": [
+          "Deterministic derivation — no model judgement was applied."
+        ],
+        "proposedDisposition": {
+          "kind": "PARKING",
+          "reason": "Overlaps work already running, so a second Initiative would duplicate effort.",
+          "returnCondition": "Returns when the running work closes without covering this scope."
+        }
+      }
+    ],
+    "requestedBy": "user-harness"
+  },
+  "dispositions": [
+    {
+      "decisionId": "portfolio-analysis:analysis-harness-1:dec-initiative-2:initiative-2",
+      "initiativeId": "initiative-2",
+      "kind": "PARKING",
+      "reason": "Overlaps work already running, so a second Initiative would duplicate effort.",
+      "returnCondition": "Returns when the running work closes without covering this scope.",
+      "actorId": "user-harness",
+      "decidedAt": "2026-09-14T00:00:00.000Z",
+      "analysisId": "analysis-harness-1",
+      "projectId": "project-1"
+    },
+    {
+      "decisionId": "portfolio-analysis:analysis-harness-1:dec-initiative-3:initiative-3",
+      "initiativeId": "initiative-3",
+      "kind": "ARCHIVE",
+      "reason": "An earlier Decision already dispositioned this scope and nothing in the snapshot changed it.",
+      "returnCondition": "Returns when the frozen context shows the earlier blocking condition is gone.",
+      "actorId": "user-harness",
+      "decidedAt": "2026-09-13T00:00:00.000Z",
+      "analysisId": "analysis-harness-1",
+      "projectId": "project-1"
+    },
+    {
+      "decisionId": "portfolio-analysis:analysis-harness-1:dec-initiative-5:initiative-5",
+      "initiativeId": "initiative-5",
+      "kind": "PARKING",
+      "reason": "Overlaps work already running, so a second Initiative would duplicate effort.",
+      "returnCondition": "Returns when the running work closes without covering this scope.",
+      "actorId": "user-harness",
+      "decidedAt": "2026-09-12T00:00:00.000Z",
+      "analysisId": "analysis-harness-1",
+      "projectId": "project-1"
+    }
+  ]
+}
