@@ -71,4 +71,107 @@ describe('DEC-497 P2 E1 — default-OFF dependency analysis gate', NO_RETRY, () 
     expect(response.body).toEqual({ error: { code: 'FEATURE_DISABLED' } });
     expect(analyze).not.toHaveBeenCalled();
   });
+
+  it('rejects a body scenario that differs from the URL before AI', async () => {
+    const analyze = vi.fn();
+    const app = createPlanAnalysisRouteTestApp({ analyze, enabled: true, foundVersion: 2 });
+
+    const response = await request(app)
+      .post('/plan-scenarios/plan-url/analysis-proposals/proposal-flag')
+      .send({
+        expectedVersion: 0,
+        clientRequestId: 'request-mismatched-plan',
+        scenarioId: 'plan-body',
+        inputAggregateVersion: 2,
+        analysisKind: 'AI_DEPENDENCY',
+        useCapacity: false,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: { code: 'VALIDATION_FAILED' } });
+    expect(analyze).not.toHaveBeenCalled();
+  });
+
+  it('rejects a stale Plan aggregate version before AI', async () => {
+    const analyze = vi.fn().mockResolvedValue({
+      source: 'AI',
+      model: 'should-not-run',
+      analyzedAt: '2026-09-14T02:00:00.000Z',
+      inputScenarioVersion: 2,
+      observations: [],
+      criticalPaths: [],
+    });
+    const app = createPlanAnalysisRouteTestApp({ analyze, enabled: true, foundVersion: 2 });
+
+    const response = await request(app)
+      .post('/plan-scenarios/plan-url/analysis-proposals/proposal-stale')
+      .send({
+        expectedVersion: 0,
+        clientRequestId: 'request-stale-plan',
+        scenarioId: 'plan-url',
+        inputAggregateVersion: 1,
+        analysisKind: 'AI_DEPENDENCY',
+        useCapacity: false,
+      });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      error: {
+        code: 'VERSION_OR_IDEMPOTENCY_CONFLICT',
+        expectedVersion: 1,
+        currentVersion: 2,
+      },
+    });
+    expect(analyze).not.toHaveBeenCalled();
+  });
 });
+
+function createPlanAnalysisRouteTestApp(input: {
+  analyze: ReturnType<typeof vi.fn>;
+  enabled: boolean;
+  foundVersion: number;
+}) {
+  const reader = {
+    findPlanScenario: vi.fn().mockResolvedValue({
+      version: input.foundVersion,
+      scenario: {
+        scenarioId: 'plan-url',
+        scenarioVersion: 2,
+        status: 'DRAFT',
+        portfolioScenarioId: 'portfolio-flag',
+        portfolioScenarioVersion: 1,
+        timezone: 'Europe/Warsaw',
+        periods: [
+          {
+            periodId: 'W1',
+            start: '2026-09-14T00:00:00.000Z',
+            end: '2026-09-21T00:00:00.000Z',
+          },
+        ],
+        windows: [],
+      },
+    }),
+    findPortfolioScenario: vi.fn().mockResolvedValue({
+      scenario: { scope: { portfolioId: 'portfolio-scope' } },
+    }),
+    listPlanDependencyAnalysisContext: vi.fn().mockResolvedValue([]),
+    listCapacityScenarios: vi.fn().mockResolvedValue([]),
+  };
+  const app = express();
+  app.use(express.json());
+  app.use((req, _res, next) => {
+    (req as any).user = { id: 'owner-1', organizationId: 'org-1', role: 'OWNER' };
+    next();
+  });
+  app.use(
+    createInitiativesExecutionRuntimeRouter({
+      unitOfWork: {} as any,
+      reader: reader as any,
+      authorize: async () => true,
+      resolvePolicy: async () => ({ policyId: 'policy', version: 1 }) as any,
+      analyzePlanDependencies: input.analyze,
+      planDependencyAnalysisEnabled: () => input.enabled,
+    })
+  );
+  return app;
+}
