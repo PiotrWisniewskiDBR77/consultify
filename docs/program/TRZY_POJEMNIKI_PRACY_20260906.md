@@ -1402,3 +1402,19 @@ wdrożeniu; C3 (Z-38) w toku; Z-43 (bramki PMO) w toku. Codex (kopie z ostatniej
 `e2-line94754-ui-canon` → `e2-final-review-hold`; Q1 `e234-prereset` (reset przed E2–E4 wg wpisu
 38). Worktree CTO usunięte: `fala-c1`, `z38`, `z41` (Z-43 w toku). Dysk ~32 GiB. Skrzynka: **Z-41
 rozliczone**, **Z-43 nowe**.
+
+**Fala C2 — kosmetyka Q1 Obciążenia WDROŻONA na staging (14.09, push `ba0edc6eb1`; run
+`34834974795` **success**, 13 min; tag `staging-deployed` przesunięty przez workflow na
+`ba0edc6eb1`).** Staging przed `6dfb338ba0`; kandydat `a427ef7af9` (3 commity: test-strażnik
+`06ba9fba5f`, chipy Menu 3 + dropdown „Status" gated `INITIATIVES_WORKLOAD_ENABLED`
+`28fc516145`, harness z30 `a427ef7af9`) → merge `57708dac31` → +2 merge linii (`2366869d35`,
+`63dd6605a8`) → `ba0edc6eb1`. Zero konfliktów (C1 już na linii: `commandRowContent` ma oba
+warunki capacity+workReport; `dev-render/main.tsx` z29+z30). Tag cofnięcia
+`rollback-pre-fala-c2-20260914` = `6dfb338ba0`; bramka: tsc serwer 0, front 189, język OK,
+canon 349, artefakt 8-0-117, build 36 s (heap 12 GB), testy kanonPaskow 14/14 (C1 dołożyła
+przypadek), workReport 17/17; delta = 7 plików. Zrzuty
+`~/Developer/cto-codex/zrzuty-q1-obciazenie-20260914/v2/` ważne (diff InitiativesHub = tylko
+dodatki C1 z merge). Flaga OFF. Pułapki: tsc przez potok `| grep -c` + alarm → fałszywe 0
+(bramka mierząca echo) — powtórzone do pliku z RC; build OOM bez heapu (zastane). **EWIDENCJA:**
+OB1 kosmetyka → **🧪 NA STAGINGU `ba0edc6eb1`** (za flagą; OB1 już 🧪 — dopisane tylko SHA/uwaga,
+liczniki §5 bez zmiany stanu).
