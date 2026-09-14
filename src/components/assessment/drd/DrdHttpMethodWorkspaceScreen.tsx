@@ -1860,7 +1860,10 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             isFrozen ? (
               <details data-testid="drd-frozen-technical-details" className="mt-1">
                 <summary className="cursor-pointer font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
-                  {t('methodWorkspace.info.technicalDetails', 'Technical details')}
+                  {t(
+                    'assessment.drd.http.frozen.technicalDetails',
+                    'Technical details — frozen result'
+                  )}
                 </summary>
                 <div className="mt-2">{frozenRawView(true)}</div>
               </details>

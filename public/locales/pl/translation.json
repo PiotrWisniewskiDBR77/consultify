@@ -9383,6 +9383,7 @@
           "sourceTitle": "Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage.",
           "stateClosed": "Zamknięta",
           "stateFrozen": "Zamrożona",
+          "technicalDetails": "Szczegóły techniczne — zamrożony wynik",
           "reportEmpty": {
             "title": "Ta sesja nie ma jeszcze zamrożonego wyniku",
             "description": "Sesja jest zamrożona na serwerze, ale nie znaleziono jej wyniku — raport powstaje z wyniku, nigdy z kopii lokalnej. Odśwież sesję albo wygeneruj raport, gdy wynik będzie dostępny."

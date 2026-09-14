@@ -321,30 +321,91 @@ describe('EventDerivedOutputBridge — scope/limitations w języku konta', () =>
   it("language='en' — scope i limitations są po angielsku, bez ani jednego polskiego znaku", async () => {
     const { scope, limitations } = await zamroz('en');
 
-    expect(scope).toContain('frozen from the event store');
+    expect(scope).toContain('frozen snapshot');
     expect(maPolskieZnaki(scope)).toBe(false);
     expect(limitations.length).toBeGreaterThan(0);
     for (const l of limitations) {
       expect(maPolskieZnaki(l)).toBe(false);
     }
-    expect(limitations.join(' ')).toContain('generated automatically from the event store');
+    expect(limitations.join(' ')).toContain('derived deterministically from the confirmed answers');
   });
 
   it("language='pl' — scope i limitations zostają po polsku (naprawa EN nie zabiera polskiego)", async () => {
     const { scope, limitations } = await zamroz('pl');
 
-    expect(scope).toContain('zamrożona z event-store');
+    expect(scope).toContain('stan zamrożony');
     expect(maPolskieZnaki(scope)).toBe(true);
-    expect(limitations.join(' ')).toContain('wygenerowany automatycznie z event-store');
+    expect(limitations.join(' ')).toContain('z potwierdzonych odpowiedzi');
   });
 
   it('brak języka — wypada angielski, nie polski (reguła programu: EN jest domyślne)', async () => {
     const { scope, limitations } = await zamroz(undefined);
 
     expect(maPolskieZnaki(scope)).toBe(false);
-    expect(scope).toContain('frozen from the event store');
+    expect(scope).toContain('frozen snapshot');
     for (const l of limitations) {
       expect(maPolskieZnaki(l)).toBe(false);
     }
   });
+
+  /**
+   * FALA J2 (14.09) — „dramat właściciela". `scope`, `limitations` i zdania
+   * znalezisk są DRUKOWANE w raporcie z oceny; do 14.09 mówiły o naszym
+   * kodzie: „EventDerivedOutputBridge", „vertical-slice demo", „event-store",
+   * „client-side". To nazwy klas i magazynów, nie język klienta — a raz
+   * zamrożone zostają w rekordzie na zawsze.
+   *
+   * Bramka pilnuje OBU wariantów językowych naraz, bo poprzednie naprawy
+   * językowe raz po raz zostawiały drugi wariant nietknięty.
+   */
+  const ZAKAZANE = /EventDerivedOutputBridge|vertical-slice|event-store|event store|client-side|drdAdapter|aggregation\.byGroup|businessMeaning/i;
+
+  it.each(['pl', 'en'])(
+    'język=%s — zamrożone zdania nie niosą nazw klas, plików ani magazynów',
+    async (language) => {
+      const { scope, limitations } = await zamroz(language);
+      expect(scope).not.toMatch(ZAKAZANE);
+      for (const l of limitations) {
+        expect(l).not.toMatch(ZAKAZANE);
+      }
+    }
+  );
+
+  it.each(['pl', 'en'])(
+    'język=%s — zdania znalezisk też są w języku klienta, nie w języku kodu',
+    async (language) => {
+      const zdania = deriveFindingsFromEvents(
+        [
+          makeEvent({ id: 'ev-a', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 3 }),
+          makeEvent({
+            id: 'ev-b',
+            type: 'EVIDENCE_ATTACHED',
+            unitId: '1A',
+            payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2' },
+          }),
+        ],
+        language as 'pl' | 'en'
+      ).findings;
+
+      expect(zdania.length).toBeGreaterThan(0);
+      for (const f of zdania) {
+        for (const tekst of [
+          f.businessMeaning,
+          f.recommendation,
+          f.expectedOutcome ?? '',
+          f.riskOrOpportunity ?? '',
+          f.priorityRationale ?? '',
+        ]) {
+          expect(tekst).not.toMatch(ZAKAZANE);
+        }
+      }
+      // Wariant językowy naprawdę się przełącza (regresja: jeden szablon na oba).
+      // Diakrytyki tu nie wystarczą — polskie zdanie znaleziska potrafi nie
+      // mieć ani jednej („Obszar 1A potwierdzony na poziomie 3"), więc
+      // sprawdzamy słowo-znacznik wariantu.
+      const tresc = zdania.map((f) => f.businessMeaning).join(' ');
+      expect(tresc).toMatch(language === 'pl' ? /Obszar/ : /Area/);
+      expect(tresc).not.toMatch(language === 'pl' ? /Area/ : /Obszar/);
+    }
+  );
 });

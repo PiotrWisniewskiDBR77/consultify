@@ -10179,6 +10179,7 @@
           "sourceTitle": "A frozen Output always comes from the server response, never from localStorage.",
           "stateClosed": "Closed",
           "stateFrozen": "Frozen",
+          "technicalDetails": "Technical details — frozen result",
           "reportEmpty": {
             "title": "There is no frozen result for this session yet",
             "description": "The session is frozen on the server, but its Output has not been found — the report is built from the Output, never from a local copy. Refresh the session, or generate the report once the Output is available."

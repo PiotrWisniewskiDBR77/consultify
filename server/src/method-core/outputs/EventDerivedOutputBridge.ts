@@ -61,13 +61,70 @@ function unitBucket(map: Map<string, UnitAccumulator>, unitId: string): UnitAccu
   return bucket;
 }
 
+/**
+ * ZDANIA ZNALEZISK — język klienta, dwa warianty (fala J2, 14.09).
+ *
+ * `businessMeaning` / `riskOrOpportunity` / `recommendation` /
+ * `expectedOutcome` / `priorityRationale` są DRUKOWANE w raporcie z oceny
+ * i w prezentacji, czyli czyta je klient. Do 14.09 były wyłącznie po polsku
+ * (niezależnie od języka konta) i mówiły o „event-store" — czyli o naszym
+ * magazynie zdarzeń, a nie o jego firmie. Nazwy klas, plików i magazynów
+ * nie należą do dokumentu dla zarządu.
+ */
+const TEKSTY_ZNALEZISK: Record<
+  ResponseLanguage,
+  {
+    potwierdzone: (unit: string, poziom: number, dowody: number) => string;
+    bezPoziomu: (unit: string) => string;
+    luka: (unit: string, luka: number) => string;
+    rekomendacjaLuka: (unit: string, z: number | null, doPoziomu: number | null) => string;
+    rekomendacjaUtrzymaj: (unit: string) => string;
+    wynikLuka: (unit: string) => string;
+    wynikUtrzymanie: (unit: string) => string;
+    priorytetLuka: (luka: number) => string;
+    priorytetBrakLuki: string;
+  }
+> = {
+  pl: {
+    potwierdzone: (unit, poziom, dowody) =>
+      `Obszar ${unit} potwierdzony na poziomie ${poziom}, poparty dowodami (${dowody}).`,
+    bezPoziomu: (unit) =>
+      `Obszar ${unit}: dowody zebrane, poziom nie został jeszcze potwierdzony.`,
+    luka: (unit, luka) => `Luka ${luka} poziomu/-ów do celu na obszarze ${unit}.`,
+    rekomendacjaLuka: (unit, z, doPoziomu) =>
+      `Zaplanuj działania podnoszące obszar ${unit} z poziomu ${z} do ${doPoziomu}.`,
+    rekomendacjaUtrzymaj: (unit) => `Utrzymaj obecny poziom obszaru ${unit}.`,
+    wynikLuka: (unit) => `Zamknięcie luki na obszarze ${unit}.`,
+    wynikUtrzymanie: (unit) => `Stabilizacja obszaru ${unit} na obecnym poziomie.`,
+    priorytetLuka: (luka) => `Kolejność wynika z wielkości luki (${luka}).`,
+    priorytetBrakLuki: 'Brak wyliczonej luki.',
+  },
+  en: {
+    potwierdzone: (unit, poziom, dowody) =>
+      `Area ${unit} confirmed at level ${poziom}, supported by evidence (${dowody}).`,
+    bezPoziomu: (unit) => `Area ${unit}: evidence collected, the level is not confirmed yet.`,
+    luka: (unit, luka) => `A gap of ${luka} level(s) to the target in area ${unit}.`,
+    rekomendacjaLuka: (unit, z, doPoziomu) =>
+      `Plan the actions that take area ${unit} from level ${z} to ${doPoziomu}.`,
+    rekomendacjaUtrzymaj: (unit) => `Keep area ${unit} at its current level.`,
+    wynikLuka: (unit) => `The gap in area ${unit} is closed.`,
+    wynikUtrzymanie: (unit) => `Area ${unit} stays stable at its current level.`,
+    priorytetLuka: (luka) => `The order follows the size of the gap (${luka}).`,
+    priorytetBrakLuki: 'No gap has been calculated.',
+  },
+};
+
 /** Pure — exported so a unit test can assert the derivation without a DB. */
-export function deriveFindingsFromEvents(events: readonly MethodEvent[]): {
+export function deriveFindingsFromEvents(
+  events: readonly MethodEvent[],
+  jezyk: ResponseLanguage = 'en'
+): {
   findings: OutputFindingInput[];
   current: Record<string, number | null>;
   target: Record<string, number | null>;
   gap: Record<string, number | null>;
 } {
+  const teksty = TEKSTY_ZNALEZISK[jezyk];
   const byUnit = new Map<string, UnitAccumulator>();
 
   for (const event of events) {
@@ -138,26 +195,28 @@ export function deriveFindingsFromEvents(events: readonly MethodEvent[]): {
       contradictingEvidence: [],
       businessMeaning:
         u.currentLevel !== null
-          ? `Jednostka ${u.unitId} potwierdzona na poziomie ${u.currentLevel} (${u.evidence.length} dowód/-ody w event-store).`
-          : `Jednostka ${u.unitId}: dowody zebrane, poziom nie został jeszcze potwierdzony.`,
+          ? teksty.potwierdzone(u.unitId, u.currentLevel, u.evidence.length)
+          : teksty.bezPoziomu(u.unitId),
       rootCauseHypothesis: null,
       riskOrOpportunity:
         gap[u.unitId] !== null && (gap[u.unitId] as number) > 0
-          ? `Luka ${gap[u.unitId]} poziomu/-ów do celu na jednostce ${u.unitId}.`
+          ? teksty.luka(u.unitId, gap[u.unitId] as number)
           : null,
       recommendation:
         gap[u.unitId] !== null && (gap[u.unitId] as number) > 0
-          ? `Zaplanuj działania podnoszące jednostkę ${u.unitId} z poziomu ${u.currentLevel} do ${u.targetLevel}.`
-          : `Utrzymaj obecny poziom jednostki ${u.unitId}.`,
+          ? teksty.rekomendacjaLuka(u.unitId, u.currentLevel, u.targetLevel)
+          : teksty.rekomendacjaUtrzymaj(u.unitId),
       prerequisite: null,
       expectedOutcome:
         gap[u.unitId] !== null && (gap[u.unitId] as number) > 0
-          ? `Zamknięcie luki na jednostce ${u.unitId}.`
-          : `Stabilizacja jednostki ${u.unitId} na obecnym poziomie.`,
+          ? teksty.wynikLuka(u.unitId)
+          : teksty.wynikUtrzymanie(u.unitId),
       kpiProposal: null,
       confidence: 'medium',
       priorityRationale:
-        gap[u.unitId] !== null ? `Sortowanie wg wielkości luki (${gap[u.unitId]}).` : 'Brak wyliczonej luki.',
+        gap[u.unitId] !== null
+          ? teksty.priorytetLuka(gap[u.unitId] as number)
+          : teksty.priorytetBrakLuki,
       sourceLocators: [...u.answerEventIds, ...u.evidence.map((e) => e.locator)],
     });
   }
@@ -192,32 +251,32 @@ const TEKSTY_OUTPUTU: Record<
 > = {
   pl: {
     scope: (sessionId, packId, packVersion) =>
-      `Sesja ${sessionId} — ${packId}@${packVersion}, zamrożona z event-store.`,
+      `Zakres: sesja ${sessionId}, metodyka ${packId} ${packVersion}, stan zamrożony.`,
     aggregationRule:
-      'EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — ' +
-      'to zostaje po stronie klienta (np. drdAdapter.aggregate) przed wyświetleniem.',
+      'Podsumowania per oś liczone są według reguł metodyki w chwili prezentacji wyniku; ' +
+      'ten zapis przechowuje poziomy per obszar.',
     limitationTemplates:
-      'Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice ' +
-      'demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych ' +
-      '(unit/level/evidence), NIE analiza LLM ani recenzja metodyka.',
+      'Ograniczenia: ten wynik powstał w sposób deterministyczny z potwierdzonych odpowiedzi ' +
+      'i załączonych dowodów — nie jest analizą AI ani recenzją metodyka.',
     limitationAggregation:
-      'aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.',
+      'Podsumowania per oś liczone są według reguł metodyki przy prezentacji wyniku; ' +
+      'zamrożony zapis przechowuje poziomy per obszar.',
     limitationDemoBypass:
       ' Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem ' +
       'produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm.',
   },
   en: {
     scope: (sessionId, packId, packVersion) =>
-      `Session ${sessionId} — ${packId}@${packVersion}, frozen from the event store.`,
+      `Scope: session ${sessionId}, method pack ${packId} ${packVersion}, frozen snapshot.`,
     aggregationRule:
-      'EventDerivedOutputBridge does not compute per-axis/pillar aggregation (a method-specific ' +
-      'rule) — that stays on the client side (e.g. drdAdapter.aggregate) before display.',
+      'Per-axis summaries follow the method rules and are calculated when the result is ' +
+      'presented; this record stores the per-area levels.',
     limitationTemplates:
-      'Output generated automatically from the event store (EventDerivedOutputBridge, vertical-slice ' +
-      'demo) — businessMeaning/recommendation are deterministic templates built from real data ' +
-      '(unit/level/evidence), NOT an LLM analysis nor a methodologist review.',
+      'Limitations: this result is derived deterministically from the confirmed answers and the ' +
+      'attached evidence — it is not an AI analysis nor a methodologist review.',
     limitationAggregation:
-      'aggregation.byGroup is empty — per-axis aggregation is a method rule and is computed client-side.',
+      'Per-axis summaries follow the method rules and are calculated when the result is ' +
+      'presented; the frozen record stores the per-area levels.',
     limitationDemoBypass:
       ' This Output comes from a session created through the demo bypass — it is NOT a production ' +
       'result and cannot be approved as released/pilot through this mechanism.',
@@ -245,7 +304,7 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
     const jezyk = resolveResponseLanguage({ requested: input.language ?? null, samples: [] });
     const teksty = TEKSTY_OUTPUTU[jezyk];
     const events = await this.events.listBySession(input.organizationId, input.sessionId);
-    const { findings, current, target, gap } = deriveFindingsFromEvents(events);
+    const { findings, current, target, gap } = deriveFindingsFromEvents(events, jezyk);
 
     const totalUnits = Object.keys(current).length;
     const unitsWithAcceptedEvidence = findings.length;

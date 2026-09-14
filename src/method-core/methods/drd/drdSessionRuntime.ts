@@ -577,25 +577,25 @@ export class DrdSessionRuntime {
         contradictingEvidence: [],
         businessMeaning:
           acc.currentLevel !== null
-            ? `Jednostka ${unitId} potwierdzona na poziomie ${acc.currentLevel} (${acc.evidence.length} dowód/-ody).`
-            : `Jednostka ${unitId}: dowody zebrane, poziom nie został jeszcze potwierdzony.`,
+            ? `Obszar ${unitId} potwierdzony na poziomie ${acc.currentLevel}, poparty dowodami (${acc.evidence.length}).`
+            : `Obszar ${unitId}: dowody zebrane, poziom nie został jeszcze potwierdzony.`,
         rootCauseHypothesis: '',
         riskOrOpportunity:
           gap[unitId] !== null && (gap[unitId] as number) > 0
-            ? `Luka ${gap[unitId]} poziomu/-ów do celu na jednostce ${unitId}.`
+            ? `Luka ${gap[unitId]} poziomu/-ów do celu na obszarze ${unitId}.`
             : '',
         recommendation:
           gap[unitId] !== null && (gap[unitId] as number) > 0
-            ? `Zaplanuj działania podnoszące jednostkę ${unitId} z poziomu ${acc.currentLevel} do ${acc.targetLevel}.`
-            : `Utrzymaj obecny poziom jednostki ${unitId}.`,
+            ? `Zaplanuj działania podnoszące obszar ${unitId} z poziomu ${acc.currentLevel} do ${acc.targetLevel}.`
+            : `Utrzymaj obecny poziom obszaru ${unitId}.`,
         prerequisite: null,
         expectedOutcome:
           gap[unitId] !== null && (gap[unitId] as number) > 0
-            ? `Zamknięcie luki na jednostce ${unitId}.`
-            : `Stabilizacja jednostki ${unitId}.`,
+            ? `Zamknięcie luki na obszarze ${unitId}.`
+            : `Stabilizacja obszaru ${unitId} na obecnym poziomie.`,
         kpiProposal: null,
         confidence: 'medium',
-        priorityRationale: gap[unitId] !== null ? `Sortowanie wg wielkości luki (${gap[unitId]}).` : 'Brak wyliczonej luki.',
+        priorityRationale: gap[unitId] !== null ? `Kolejność wynika z wielkości luki (${gap[unitId]}).` : 'Brak wyliczonej luki.',
         sourceLocators: [...acc.answerEventIds, ...acc.evidence.map((e) => e.locator)],
       });
     }
@@ -609,12 +609,20 @@ export class DrdSessionRuntime {
       organizationId: state.session.organizationId,
       module: state.session.module,
       methodology: { methodPackId: state.session.methodPackId, version: state.session.methodPackVersion },
-      scope: `Sesja ${state.session.id} — ${state.session.methodPackId}@${state.session.methodPackVersion} (vertical slice demo).`,
+      // ★ FALA J2: te zdania czyta KLIENT w raporcie z oceny (to samo
+      // lekarstwo, co w `server/src/method-core/outputs/
+      // EventDerivedOutputBridge.ts` — rodzeństwo tej samej wady).
+      scope: `Zakres: sesja ${state.session.id}, metodyka ${state.session.methodPackId} ${state.session.methodPackVersion}, stan zamrożony.`,
       snapshotId: `local-snapshot:${state.session.id}:${nowIso()}`,
       current,
       target,
       gap,
-      aggregation: { byGroup: {}, mappingVersion: 'event-derived-v1', rule: 'client mirror of EventDerivedOutputBridge — per-axis grouping not computed here.', excluded: {} },
+      aggregation: {
+        byGroup: {},
+        mappingVersion: 'event-derived-v1',
+        rule: 'Podsumowania per oś liczone są według reguł metodyki przy prezentacji wyniku; ten zapis przechowuje poziomy per obszar.',
+        excluded: {},
+      },
       visualModel: { kind: 'matrix', dataRef: current },
       evidenceCompleteness: {
         totalUnits,
@@ -623,9 +631,10 @@ export class DrdSessionRuntime {
         completenessRatio: totalUnits > 0 ? unitsWithAcceptedEvidence / totalUnits : 0,
       },
       limitations: [
-        'Output wygenerowany automatycznie z lokalnego event-store (vertical-slice demo, przeglądarka) — ' +
-          'businessMeaning/recommendation to deterministyczne szablony, NIE analiza LLM ani recenzja metodyka.',
-        'aggregation.byGroup jest pusta — agregacja per-oś (drdAdapter.aggregate) liczona jest osobno do wyświetlenia.',
+        'Ograniczenia: ten wynik powstał w sposób deterministyczny z potwierdzonych odpowiedzi ' +
+          'i załączonych dowodów — nie jest analizą AI ani recenzją metodyka.',
+        'Podsumowania per oś liczone są według reguł metodyki przy prezentacji wyniku; ' +
+          'zamrożony zapis przechowuje poziomy per obszar.',
       ],
       findings,
       prioritisationResult: null,
