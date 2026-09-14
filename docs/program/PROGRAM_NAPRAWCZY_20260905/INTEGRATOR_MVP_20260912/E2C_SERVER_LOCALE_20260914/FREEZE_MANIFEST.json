@@ -1,8 +1,9 @@
 {
+  "schemaVersion": 2,
   "package": "E2c server locale",
   "branch": "codex/a-e2c-server-locale-20260914",
-  "exactBase": "08c1bb7a2614a84092b8c4ed52404df69dcfd907",
-  "testedCandidate": "c22b295f1bc294f75a3d6c6bf8b841e82be7ede2",
+  "exactBase": "19b633c81e262b9f3c2f25b0555b2dfceab8b42e",
+  "testedCandidate": "ecad112f173d6b9ad524decbec786049d64876bb",
   "verdict": "READY_FOR_INDEPENDENT_REVIEW",
   "scopeCount": 7,
   "scope": [
@@ -28,7 +29,9 @@
       "runDbTests": true,
       "mockDb": false,
       "container": "cx-a-e2c-pg",
-      "port": 5331
+      "port": 5331,
+      "database": "consultify_q2",
+      "freshDatabase": true
     },
     "serverTypeScript": {
       "exactBaseExit": 0,
@@ -41,6 +44,97 @@
     "compileDrdPack": false,
     "d3": false
   },
+  "inventoryPolicy": {
+    "ordering": "lexicographic path",
+    "count": 12,
+    "hashes": "SHA-256 and Git blob over file bytes",
+    "manifestSelfExclusion": "The manifest is listed but its sha256 and gitBlob are null because embedding its own digest would be recursive."
+  },
+  "inventory": [
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/E2C_SERVER_LOCALE_20260914/FREEZE_MANIFEST.json",
+      "sha256": null,
+      "gitBlob": null,
+      "selfExcluded": true
+    },
+    {
+      "path": "evidence/e2c-server/TEST_RESULTS.md",
+      "sha256": "8f799f38713706e46934282a0b40921651fc1ff68433a73043bbc951979e0651",
+      "gitBlob": "1ead76e1df098bb97490067dc55747ba413a50fa",
+      "bytes": 1861,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/routes/__tests__/executionReports.export.test.ts",
+      "sha256": "007f3cc2c5df126099fd9f3eef9bde4666a19ae7d7f506ea09fc996baafd0463",
+      "gitBlob": "e8a858366195d94ff6ffb6fa4f2442bc74c26328",
+      "bytes": 5151,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/routes/assessment-reports.routes.ts",
+      "sha256": "d334be705281bb817fdfd8d3a4a1aa6b4f3dfd179168fa3c36275031e9a0f9f5",
+      "gitBlob": "b46d5785b30313da30e59e6ec0a527feacccc29e",
+      "bytes": 121902,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/routes/executionReports.routes.ts",
+      "sha256": "b4ccea5aeacee24f8bc5b8b7dff3ffd442e7f29e712a380bbdcaa3843ab48b49",
+      "gitBlob": "e41bb3e437b610d3958b9f5b99b106d2fe7aacd3",
+      "bytes": 27142,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
+      "sha256": "a5725792681f6f61ef940d0ac89c73a2c59a214a0952ab9d3166be68871156e3",
+      "gitBlob": "229014f384e8a99098b530716db8f0a7edeb73ec",
+      "bytes": 360778,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts",
+      "sha256": "7c0eb9e9b21e221d63b9fbce74ff37964757764cb12f00fd825bb58a25e7a332",
+      "gitBlob": "074b6186af6e71542d482e087397fa13c3e07cb2",
+      "bytes": 16495,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/services/__tests__/scheduledReportService.locale.test.ts",
+      "sha256": "4338db2f10b21a5f0acec6d083121519ccd9ceabb68dfd42526501a005da5aa6",
+      "gitBlob": "aeebc2031bf8652f5b4f92357bd44a4bb1303582",
+      "bytes": 1166,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/services/report/__tests__/reportLocale.test.ts",
+      "sha256": "16810f28b261dd662de21b13e9bd6eeb3f4e48a3b9ee77c5d6311ce80a8e6438",
+      "gitBlob": "24a9d20e4ce2675d16276065cf9fe135bc6ac685",
+      "bytes": 896,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/services/report/reportLocale.ts",
+      "sha256": "a57bf0ec101ba9ec051f042f71fe012ca34ee6781ea167ff31fd163e45f6814e",
+      "gitBlob": "28d8c1d9f175911f8444215dd598b82684f69c9b",
+      "bytes": 4879,
+      "selfExcluded": false
+    },
+    {
+      "path": "server/src/services/scheduledReportService.ts",
+      "sha256": "12049782df6589ab1db2cc5048e53ecc14d08ba59e7a67820d0f9671f157edbd",
+      "gitBlob": "62450c9fe7581614ce03b0b517f86552dbc55874",
+      "bytes": 34751,
+      "selfExcluded": false
+    },
+    {
+      "path": "tests/integration/initiatives-execution/executionReportE4.gateway.smtp.realdb.test.ts",
+      "sha256": "e4ba0aac73d500646955f9bcbbb9908447ed3f4a487fef91d83ff745a46052b9",
+      "gitBlob": "c4d5424eb78dfe8171f3b76910ddb77796085594",
+      "bytes": 18670,
+      "selfExcluded": false
+    }
+  ],
   "evidence": "evidence/e2c-server",
   "independentReview": "NOT_RUN_STOP_BEFORE_INDEPENDENT_REVIEW"
 }
