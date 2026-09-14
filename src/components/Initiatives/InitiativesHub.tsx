@@ -1,11 +1,10 @@
-import { listDefinitionApprovals } from '@/services/initiatives-execution/definitionApprovalApi';
+import type { TFunction } from 'i18next';
 /**
  * InitiativesHub
  * Unified Initiatives module with ModuleHub UI pattern
  * Integrates original Portfolio components (Kanban, List, Timeline, Grid)
  * Connected to real API endpoints
  */
-
 import {
   Activity,
   AlertTriangle,
@@ -35,9 +34,12 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import {
+  initiativeReadinessCheckLabel,
+  opiszOdmoweZmianyStatusu,
+} from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
 import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
@@ -50,7 +52,6 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
-import { InitiativePreparationReadView } from './InitiativePreparationReadView';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
@@ -63,10 +64,7 @@ import {
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
 import { getLocalizedStatusLabel, getStatusesForModule } from '@/services/initiativeLifecycle';
-import {
-  initiativeReadinessCheckLabel,
-  opiszOdmoweZmianyStatusu,
-} from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
+import { listDefinitionApprovals } from '@/services/initiatives-execution/definitionApprovalApi';
 import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
@@ -75,11 +73,12 @@ import {
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
 import { useConversationStore } from '@/store/useConversationStore';
+import { isInitiativeBridgeEnabled } from '@/utils/initiativeBridgeFlag';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
-import { isInitiativeBridgeEnabled } from '@/utils/initiativeBridgeFlag';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
+import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import {
@@ -98,6 +97,7 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import { PortfolioGridView } from '../Portfolio/PortfolioGridView';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
+import { Banner } from '../shared/Banner';
 // ModuleHub components
 import { HubWorkAreaLoadError, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -117,12 +117,13 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
-import { Banner } from '../shared/Banner';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
+import { InitiativeConsultingAnalysisView } from './InitiativeConsultingAnalysisView';
+import { InitiativeParkingView } from './InitiativeParkingView';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -131,8 +132,8 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
-import { Menu2PresetDropdown } from './Menu2PresetDropdown';
-import { PortfolioHealthView } from './PortfolioHealthView';
+import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
+import { InitiativePreparationReadView } from './InitiativePreparationReadView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -155,7 +156,9 @@ import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiati
 import { initiativeSourceLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
+import { Menu2PresetDropdown } from './Menu2PresetDropdown';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
+import { PortfolioHealthView } from './PortfolioHealthView';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -276,6 +279,10 @@ const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
 );
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
+  // A2 (DEC-498 §1): trzecia soczewka Menu 3 — lista parkingu — istnieje TYLKO
+  // przy fladze czterech przyciskow; przy OFF adres `?lens=parking` ma dawac
+  // dokladnie to, co dawal na linii (liste), a nie pusty ekran.
+  if (requested === 'parking' && FOUR_BUTTONS_ENABLED) return 'parking';
   return requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
     ? 'portfolioHealth'
     : ['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')
@@ -283,8 +290,8 @@ const resolvePreparationLens = (params: URLSearchParams) => {
       : 'list';
 };
 
-
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
+  const initiativesFourButtonsEnabled = isInitiativesFourButtonsEnabled();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentProjectId, currentUser, currentOrganization } = useAppStore();
@@ -300,7 +307,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const requestedTab = searchParams.get('tab') as ModuleTab | null;
     return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
-  const [preparationLens, setPreparationLens] = useState(() => resolvePreparationLens(searchParams));
+  const [preparationLens, setPreparationLens] = useState(() =>
+    resolvePreparationLens(searchParams)
+  );
   useEffect(() => {
     setPreparationLens(resolvePreparationLens(searchParams));
   }, [searchParams]);
@@ -320,9 +329,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [activeLifecyclePreset, setActiveLifecyclePreset] =
     useState<InitiativeLifecyclePreset | null>(null);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
+    list: resolvePreparationLens(searchParams),
     plan: 'all',
     capacity: 'all',
   });
+  useEffect(() => {
+    if (!initiativesFourButtonsEnabled) return;
+    const lens = resolvePreparationLens(searchParams);
+    setCanonicalMenu3Preset((current) =>
+      current.list === lens ? current : { ...current, list: lens }
+    );
+  }, [initiativesFourButtonsEnabled, searchParams]);
   const [canonicalMenu3Counts, setCanonicalMenu3Counts] = useState<
     Record<string, Record<string, number>>
   >({});
@@ -352,6 +369,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
   /** Aktualne / Wszystkie / Archiwalne — Kanban columns and data filtering */
   const [scope, setScope] = useState<RegisterScope>('active');
+  /**
+   * F2-1 (flaga ON): osobny pstryczek Bieżące/Archiwum w Menu 3 analizy.
+   * Przy fladze OFF nieużywany — filtruje kanoniczny `rowMatchesRegisterScope`.
+   */
+  const [fourButtonsArchiveScope, setFourButtonsArchiveScope] = useState<'current' | 'archive'>(
+    'current'
+  );
+  const [fourButtonsProjectId, setFourButtonsProjectId] = useState('');
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -373,6 +398,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Set when the V8 portfolio read fails and we silently fall back to legacy
   // reads — surfaces an honest degraded banner instead of a silent fallback.
   const fetchRetryRef = useRef(0);
+  const initiativeFetchRequestRef = useRef(0);
+  const initiativeFetchScopeRef = useRef('');
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
   );
@@ -484,6 +511,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     (currentUser as any)?.displayName ||
     [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
     null;
+  const initiativeFetchScopeKey = `${currentOrganization?.id ?? ''}:${currentUserId ?? ''}`;
+  initiativeFetchScopeRef.current = initiativeFetchScopeKey;
+
+  useEffect(() => {
+    if (!initiativesFourButtonsEnabled) return;
+    initiativeFetchRequestRef.current += 1;
+    setFourButtonsProjectId('');
+    setFourButtonsArchiveScope('current');
+    setInitiatives([]);
+    setAllInitiatives([]);
+  }, [currentOrganization?.id, currentUserId, initiativesFourButtonsEnabled]);
 
   // D4b (2026-09-07/08): rejestr runtime-v1 niesie tylko `initiativeOwnerId`
   // (UUID) — bez tej mapy `toCanonicalInitiativeRegisterItem` nie ma jak
@@ -543,6 +581,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const fetchData = useCallback(
     async (showRefreshIndicator = false) => {
+      const requestId = ++initiativeFetchRequestRef.current;
+      const requestScopeKey = initiativeFetchScopeKey;
+      const isCurrentRequest = () =>
+        requestId === initiativeFetchRequestRef.current &&
+        requestScopeKey === initiativeFetchScopeRef.current;
       if (showRefreshIndicator) {
         setIsRefreshing(true);
       } else {
@@ -578,6 +621,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }),
             listDefinitionApprovals().catch(() => ({ enabled: false, items: [] })),
           ]);
+          if (!isCurrentRequest()) return;
           // PUSTA LISTA INICJATYW (07.09.2026) — bezpiecznik konstrukcyjny.
           // Przyczyna zgloszenia „w inicjatywach jest pusto" byla w adapterze
           // (`runtimeLifecycleToInitiativeStatus`, naprawiona), ale sam ksztalt
@@ -641,18 +685,27 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           initiativesDemoData.initiatives,
           allowDemoData
         );
+        if (!isCurrentRequest()) return;
         const response: { initiatives: PortfolioInitiative[] } = {
           initiatives: sourceRows.filter((initiative) => {
             if (
               !canonicalInitiativeMatchesRegisterFilters(initiative, {
-                projectId: currentProjectId,
+                projectId: initiativesFourButtonsEnabled
+                  ? fourButtonsProjectId || null
+                  : currentProjectId,
                 priorities: filters.priority,
               })
             ) {
               return false;
             }
-            if (!rowMatchesRegisterScope(initiative, scope)) {
+            if (!initiativesFourButtonsEnabled && !rowMatchesRegisterScope(initiative, scope)) {
               return false;
+            }
+            if (initiativesFourButtonsEnabled) {
+              const archived = Boolean(
+                (initiative as PortfolioInitiative & { archived?: boolean }).archived
+              );
+              if (fourButtonsArchiveScope === 'current' ? archived : !archived) return false;
             }
             if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
             if (activeLifecyclePreset) {
@@ -684,6 +737,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         // Duplicate detection uses the same canonical source of truth, including history.
         setAllInitiatives(sourceRows);
       } catch (error: any) {
+        if (!isCurrentRequest()) return;
         console.error('[InitiativesHub] Fetch error:', error);
         const isNetworkError = isInitiativesNetworkError(error);
         if (isNetworkError && fetchRetryRef.current < 3) {
@@ -705,17 +759,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
         setLoadErrorCode(initiativeLoadErrorCode(error));
       } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
+        if (isCurrentRequest()) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     },
     [
       currentProjectId,
+      initiativesFourButtonsEnabled,
+      fourButtonsArchiveScope,
+      fourButtonsProjectId,
       activeStatusFilter,
       activeLifecyclePreset,
       allowDemoData,
       currentUserDisplayName,
       currentUserId,
+      initiativeFetchScopeKey,
       filters.priority,
       initiativesDemoData.initiatives,
       resolveOwnerMemberName,
@@ -796,13 +856,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // statusu w Menu 2 zerował pozostałe pozycje dropdownu).
   const registerCountBase = useMemo(() => {
     const scoped = filterCanonicalInitiativeRegisterScope(allInitiatives, {
-      projectId: currentProjectId,
+      projectId: initiativesFourButtonsEnabled ? fourButtonsProjectId || null : currentProjectId,
       priorities: filters.priority,
     });
     const needle = searchQuery.toLocaleLowerCase();
     return scoped.filter((initiative) => {
-      if (!rowMatchesRegisterScope(initiative, scope)) {
+      if (!initiativesFourButtonsEnabled && !rowMatchesRegisterScope(initiative, scope)) {
         return false;
+      }
+      if (initiativesFourButtonsEnabled) {
+        const archived = Boolean(
+          (initiative as PortfolioInitiative & { archived?: boolean }).archived
+        );
+        if (fourButtonsArchiveScope === 'current' ? archived : !archived) return false;
       }
       if (
         needle &&
@@ -812,7 +878,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       }
       return ALLOWED_STATUSES.includes(initiative.status as InitiativeStatus);
     });
-  }, [allInitiatives, currentProjectId, filters.priority, scope, searchQuery]);
+  }, [
+    allInitiatives,
+    currentProjectId,
+    filters.priority,
+    fourButtonsArchiveScope,
+    fourButtonsProjectId,
+    initiativesFourButtonsEnabled,
+    scope,
+    searchQuery,
+  ]);
 
   // Status counts for dropdown — jedyne miejsce liczenia (podawane w dół).
   const statusCounts: Record<string, number> = useMemo(() => {
@@ -823,11 +898,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return counts;
   }, [registerCountBase]);
 
+  const fourButtonsProjectOptions = useMemo(() => {
+    const projects = new Map<string, string>();
+    allInitiatives.forEach((initiative) => {
+      const id = String(initiative.projectId || '').trim();
+      if (!id) return;
+      const label = String(initiative.projectName || '').trim() || id;
+      projects.set(id, label);
+    });
+    return [...projects]
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [allInitiatives]);
+
   // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =
     activeTab !== 'list' || preparationLens !== 'list'
       ? []
-      : ['table', 'kanban', 'timeline', 'grid'];
+      : initiativesFourButtonsEnabled
+        ? ['table', 'kanban', 'calendar', 'timeline']
+        : ['table', 'kanban', 'timeline', 'grid'];
 
   // Owner-approved IA: lifecycle/statuses belong to the initiative registry.
   // Candidate and portfolio semantics remain preserved in the data model, but
@@ -1997,8 +2087,32 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
+    if (initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'parking') {
+      return (
+        <InitiativeParkingView
+          scopeKey={initiativeFetchScopeKey}
+          initiativeName={(initiativeId) =>
+            allInitiatives.find((entry) => entry.id === initiativeId)?.name
+          }
+        />
+      );
+    }
+
+    if (initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
+      return (
+        <InitiativeConsultingAnalysisView
+          scopeKey={initiativeFetchScopeKey}
+          authorityId={currentUserId ?? ''}
+          onNavigatePlan={() => setActiveTab('plan')}
+          onNavigateCapacity={() => setActiveTab('capacity')}
+        />
+      );
+    }
+
+    // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
+    // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
     if (
-      (activeTab === 'list' && preparationLens === 'analysis') ||
+      (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') ||
       (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
     ) {
       return (
@@ -2269,6 +2383,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </div>
         );
       case 'timeline':
+        if (initiativesFourButtonsEnabled) {
+          return (
+            <InitiativePortfolioScheduleView
+              initiatives={searchedInitiatives}
+              onOpen={handleOpenInitiativeDocument}
+              mode="gantt"
+            />
+          );
+        }
         return (
           <div className="h-full overflow-hidden">
             <TableWithPreviewLayout<PreviewItem>
@@ -2288,6 +2411,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             </TableWithPreviewLayout>
           </div>
         );
+      case 'calendar':
+        return (
+          <InitiativePortfolioScheduleView
+            initiatives={searchedInitiatives}
+            onOpen={handleOpenInitiativeDocument}
+            mode="calendar"
+          />
+        );
       default:
         return null;
     }
@@ -2301,6 +2432,36 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ten sam kod klas co bliźniaczy pstryczek w Realizacji. Do 08.09.2026 oba
   // moduły miały własne warianty tego samego elementu (h-8 vs h-9, inne
   // obwódki i inne tło aktywnego) — właściciel nazwał to chaosem menu.
+  // KANON PASKÓW §A2: slot filtrów Menu 2 deklaruje kontrolki, nie rysuje ich
+  // — pstryczek F2-1 mieszka w osobnej zmiennej, tak samo jak `scopeToggle`.
+  const fourButtonsScopeToggle = (
+    <div
+      className={MENU_2_SEGMENT_GROUP}
+      role="radiogroup"
+      aria-label={t('initiatives.archiveScope.label', 'Register scope')}
+      data-testid="initiatives-archive-scope"
+    >
+      {(['current', 'archive'] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={fourButtonsArchiveScope === value}
+          onClick={() => setFourButtonsArchiveScope(value)}
+          className={
+            fourButtonsArchiveScope === value
+              ? MENU_2_SEGMENT_ITEM_ACTIVE
+              : MENU_2_SEGMENT_ITEM_INACTIVE
+          }
+        >
+          {value === 'current'
+            ? t('initiatives.archiveScope.current', 'Current')
+            : t('initiatives.archiveScope.archive', 'Archive')}
+        </button>
+      ))}
+    </div>
+  );
+
   const scopeToggle = (
     <div
       className={MENU_2_SEGMENT_GROUP}
@@ -2653,6 +2814,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Menu 3 (chipy) — ≤3 pozycje o największej wartości decyzyjnej; reszta
   // wyłącznie w dropdownie Menu 2 (`rightControls`, `Menu2PresetDropdown`).
   const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> = {
+    list: initiativesFourButtonsEnabled
+      ? [
+          {
+            id: 'list',
+            label: t('initiatives.fourButtonsWorkspace.list', 'Initiative list'),
+          },
+          {
+            id: 'analysis',
+            label: t('initiatives.fourButtonsWorkspace.analysis', 'Initiative analysis'),
+          },
+          {
+            id: 'parking',
+            label: t('initiatives.fourButtonsWorkspace.parking', 'Parking'),
+          },
+        ]
+      : [],
     plan: [
       { id: 'drafts', label: t('initiatives.plan.filters.drafts', 'Drafts') },
       { id: 'published', label: t('initiatives.plan.filters.published', 'Published') },
@@ -2694,25 +2871,43 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     <div className={MENU_2_FILTERS_ROW}>
       {activeTab === 'list' && (
         <>
-          <select
-            aria-label={t('initiatives.workspace.label', 'Initiative workspace')}
-            value={preparationLens}
-            className={MENU_2_FILTER_SELECT}
-            onChange={(event) => {
-              setPreparationLens(event.target.value);
-              const next = new URLSearchParams(searchParams);
-              next.set('lens', event.target.value);
-              setSearchParams(next, { replace: true });
-            }}
-          >
-            <option value="list">{t('initiatives.workspace.list', 'List')}</option>
-            <option value="analysis">{t('initiatives.workspace.analysis', 'Analysis')}</option>
-            {PORTFOLIO_HEALTH_ENABLED && (
-              <option value="portfolioHealth">
-                {t('initiatives.tabs.portfolioHealth', 'Portfolio health')}
-              </option>
-            )}
-          </select>
+          {!initiativesFourButtonsEnabled && (
+            <select
+              aria-label={t('initiatives.workspace.label', 'Initiative workspace')}
+              value={preparationLens}
+              className={MENU_2_FILTER_SELECT}
+              onChange={(event) => {
+                setPreparationLens(event.target.value);
+                const next = new URLSearchParams(searchParams);
+                next.set('lens', event.target.value);
+                setSearchParams(next, { replace: true });
+              }}
+            >
+              <option value="list">{t('initiatives.workspace.list', 'List')}</option>
+              <option value="analysis">{t('initiatives.workspace.analysis', 'Analysis')}</option>
+              {PORTFOLIO_HEALTH_ENABLED && (
+                <option value="portfolioHealth">
+                  {t('initiatives.tabs.portfolioHealth', 'Portfolio health')}
+                </option>
+              )}
+            </select>
+          )}
+          {initiativesFourButtonsEnabled && (
+            <select
+              aria-label={t('initiatives.filters.project', 'Project')}
+              value={fourButtonsProjectId}
+              onChange={(event) => setFourButtonsProjectId(event.target.value)}
+              className={MENU_2_FILTER_SELECT}
+              data-testid="initiatives-project-filter"
+            >
+              <option value="">{t('initiatives.filters.allProjects', 'All projects')}</option>
+              {fourButtonsProjectOptions.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.label}
+                </option>
+              ))}
+            </select>
+          )}
           {priorityFilter}
           <select
             id="initiative-priority-filter"
@@ -2745,7 +2940,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }}
             data-testid="initiatives-lifecycle-dropdown"
           />
-          {scopeToggle}
+          {initiativesFourButtonsEnabled ? fourButtonsScopeToggle : scopeToggle}
         </>
       )}
       {activeTab === 'plan' && (
@@ -2863,7 +3058,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             ? undefined
             : isBulkMode
               ? bulkBarContent
-              : commandRowContent
+              : initiativesFourButtonsEnabled && activeTab === 'list'
+                ? undefined
+                : commandRowContent
         }
         /* Menu 3 · prawy skraj — kanoniczny slot. `StandardModuleBar` dokłada
            tu jeszcze „Pokaż panel" (`useStandardPanelControls`), więc oba
@@ -2877,13 +3074,27 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         chips={canonicalMenu3.map((preset) => ({
           ...preset,
-          count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+          count:
+            initiativesFourButtonsEnabled && activeTab === 'list'
+              ? undefined
+              : (canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0),
         }))}
         activeChip={canonicalMenu3.length ? canonicalMenu3Preset[activeTab] : null}
-        onChipChange={(id) =>
-          setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }))
-        }
+        onChipChange={(id) => {
+          setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));
+          if (initiativesFourButtonsEnabled && activeTab === 'list') {
+            setPreparationLens(id);
+            const next = new URLSearchParams(searchParams);
+            next.set('lens', id);
+            setSearchParams(next, { replace: true });
+          }
+        }}
         viewModes={availableViewModes}
+        viewModeLabels={
+          initiativesFourButtonsEnabled && activeTab === 'list'
+            ? { timeline: t('initiatives.schedule.gantt', 'Gantt') }
+            : undefined
+        }
       >
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
           {/* Cichy pasek informacyjny o stanie danych — JEDNO miejsce, pod

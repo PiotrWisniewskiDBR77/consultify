@@ -10808,6 +10808,8 @@
       "noInitiativesFoundDesc": "Żadna inicjatywa nie pasuje do bieżących filtrów. Spróbuj poszerzyć wyszukiwanie lub wyczyścić filtry."
     },
     "filters": {
+      "project": "Projekt",
+      "allProjects": "Wszystkie projekty",
       "priority": "Priorytet",
       "allPriorities": "Wszystkie priorytety",
       "lifecycle": "Cykl życia",
@@ -14127,6 +14129,106 @@
       "label": "Widok inicjatyw",
       "list": "Lista",
       "analysis": "Analiza"
+    },
+    "fourButtonsWorkspace": {
+      "list": "Lista inicjatyw",
+      "analysis": "Analiza inicjatyw",
+      "parking": "Parking"
+    },
+    "parking": {
+      "title": "Parking",
+      "returnCondition": "Warunek powrotu",
+      "noReturnCondition": "Nie podano",
+      "noFullView": "Wpis parkingu nie ma własnej strony — to powód, dla którego zapisano decyzję.",
+      "decidedBy": "Zdecydował",
+      "analysis": "Analiza",
+      "empty": "Nic nie jest zaparkowane",
+      "emptyDescription": "Inicjatywy odesłane z analizy na parking albo do archiwum pojawiają się tutaj razem z powodem, dla którego nie weszły.",
+      "columns": {
+        "initiative": "Inicjatywa",
+        "kindLabel": "Rozstrzygnięcie",
+        "reason": "Powód, dla którego nie weszła",
+        "returnCondition": "Warunek powrotu",
+        "decidedAt": "Zdecydowano"
+      }
+    },
+    "analysis": {
+      "title": "Analiza inicjatyw",
+      "scenario": "Opublikowany scenariusz portfela",
+      "context": "Migawka kontekstu organizacji",
+      "claims": "twierdzeń",
+      "run": "Uruchom analizę portfela",
+      "inputsUnavailable": "Opublikuj scenariusz portfela i migawkę kontekstu organizacji przed uruchomieniem analizy.",
+      "modelUnavailable": "Analiza portfela jest niedostępna, ponieważ nie skonfigurowano zatwierdzonego modelu.",
+      "empty": "Brak utrwalonych pozycji analizy",
+      "emptyDescription": "Uruchom zarządzaną analizę, aby utworzyć kolejkę przeglądu.",
+      "evidence": "Dowody",
+      "alternatives": "Alternatywy",
+      "missingData": "Brakujące dane",
+      "initiatives": "Inicjatywy",
+      "provenance": "Pochodzenie modelu",
+      "proposedDisposition": "Proponowane rozstrzygnięcie",
+      "proposedReturnCondition": "Proponowany warunek powrotu",
+      "disposition": "Rozstrzygnięcie",
+      "in": "Wchodzi",
+      "parking": "Odłożenie",
+      "archive": "Archiwum",
+      "reason": "Powód decyzji",
+      "returnCondition": "Warunek powrotu",
+      "dueDate": "Termin decyzji",
+      "decideItem": "Rozstrzygnij pozycję",
+      "decideSelected": "Rozstrzygnij wybrane pozycje",
+      "selectedDecisions": "Wybrane decyzje",
+      "decisionSaved": "Wybrane decyzje zostały zapisane.",
+      "decisionFailed": "Decyzja nie została zapisana.",
+      "authorityChecking": "Sprawdzanie autorytetu decyzyjnego…",
+      "authorityRequired": "Przed zapisem tej decyzji trzeba skonfigurować autorytet zatwierdzający.",
+      "conflict": "Inicjatywa zmieniła się. Odśwież analizę przed podjęciem decyzji.",
+      "openPlan": "Otwórz Plan",
+      "openCapacity": "Otwórz Obciążenie",
+      "unnamedInitiative": "Inicjatywa bez nazwy",
+      "kinds": {
+        "OBSERVATION": "Obserwacja",
+        "RECOMMENDATION": "Rekomendacja",
+        "DECISION": "Decyzja"
+      },
+      "criteria": {
+        "COVERAGE_GAP": "Luka pokrycia",
+        "OVERLAP": "Nakładanie się",
+        "PRIORITY": "Priorytet",
+        "NEW_VS_EXTENSION": "Nowa lub rozszerzenie",
+        "DECISION_HISTORY": "Historia decyzji"
+      },
+      "confidence": {
+        "HIGH": "Wysoka",
+        "MEDIUM": "Średnia",
+        "LOW": "Niska",
+        "UNKNOWN": "Nieznana"
+      },
+      "columns": {
+        "kindLabel": "Typ",
+        "criterionLabel": "Kryterium",
+        "title": "Pozycja analizy",
+        "confidenceLabel": "Pewność",
+        "source": "Źródło / pochodzenie"
+      }
+    },
+    "archiveScope": {
+      "label": "Zakres rejestru",
+      "current": "Bieżące",
+      "archive": "Archiwum"
+    },
+    "horizon": {
+      "label": "Horyzont",
+      "months": "{{count}} mies."
+    },
+    "schedule": {
+      "view": "Widok harmonogramu",
+      "calendar": "Kalendarz",
+      "gantt": "Gantt",
+      "weekOf": "Tydzień od {{date}}",
+      "unknown": "Harmonogram niedostępny",
+      "outsideHorizon": "Inicjatywy poza tym horyzontem: {{count}}."
     },
     "cards": {
       "noContent": "Brak opublikowanej treści tej karty. Wymagalność i gotowość wynikają z obowiązującego profilu.",

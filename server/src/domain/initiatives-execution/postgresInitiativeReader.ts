@@ -91,6 +91,24 @@ export interface PendingAnalysisDecisionReadModel {
   cardVersions: Record<string, number>;
 }
 
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-495] A2 (DEC-498 §1) — rejestr parkingu/archiwum.
+ * Zrodlem jest istniejacy agregat decyzji w `ie_aggregate_state`
+ * (`payload_json->'disposition'`), zapisywany przez `decidePortfolio`. Zadna nowa
+ * kolumna ani tabela nie jest potrzebna.
+ */
+export interface PortfolioDispositionReadModel {
+  decisionId: string;
+  initiativeId: string;
+  kind: 'IN' | 'PARKING' | 'ARCHIVE';
+  reason: string;
+  returnCondition: string | null;
+  actorId: string;
+  decidedAt: string;
+  analysisId: string | null;
+  projectId: string | null;
+}
+
 export interface PendingDefinitionRemediationReadModel {
   version: number;
   aggregateType: 'task' | 'decision';
@@ -2013,6 +2031,47 @@ export class PostgresInitiativeReader {
       decisionId: row.aggregate_id,
       ...row.payload_json,
     }));
+  }
+
+  /**
+   * Lista dyspozycji portfela (parking / archiwum) dla organizacji. Czyta
+   * wylacznie to, co czlowiek faktycznie zdecydowal — propozycja AI bez decyzji
+   * NIE trafia na te liste.
+   */
+  async listPortfolioDispositions(
+    organizationId: string,
+    kinds: Array<'IN' | 'PARKING' | 'ARCHIVE'>
+  ): Promise<PortfolioDispositionReadModel[]> {
+    if (kinds.length === 0) return [];
+    const result = await this.pool.query<{
+      aggregate_id: string;
+      payload_json: Record<string, unknown>;
+    }>(
+      `SELECT aggregate_id, payload_json
+         FROM ie_aggregate_state
+        WHERE organization_id = $1 AND aggregate_type = 'decision'
+          AND payload_json->'disposition'->>'kind' = ANY($2::text[])
+        ORDER BY (payload_json->'disposition'->>'decidedAt')::timestamptz DESC`,
+      [organizationId, kinds]
+    );
+    return result.rows.map((row) => {
+      const disposition = (row.payload_json.disposition ?? {}) as Record<string, unknown>;
+      const frozen = (disposition.frozenInput ?? {}) as Record<string, unknown>;
+      const initiative = (frozen.initiative ?? {}) as Record<string, unknown>;
+      return {
+        decisionId: row.aggregate_id,
+        initiativeId: String(row.payload_json.initiativeId ?? ''),
+        kind: disposition.kind as PortfolioDispositionReadModel['kind'],
+        reason: String(disposition.reason ?? ''),
+        returnCondition:
+          typeof disposition.returnCondition === 'string' ? disposition.returnCondition : null,
+        actorId: String(disposition.actorId ?? ''),
+        decidedAt: String(disposition.decidedAt ?? ''),
+        analysisId:
+          typeof (frozen.analysisId ?? null) === 'string' ? String(frozen.analysisId) : null,
+        projectId: typeof initiative.projectId === 'string' ? initiative.projectId : null,
+      };
+    });
   }
 
   async listPendingDefinitionRemediation(
