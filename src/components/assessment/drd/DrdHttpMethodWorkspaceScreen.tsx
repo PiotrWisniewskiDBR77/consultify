@@ -1241,7 +1241,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   // the last known session), 'offline' (queued writes, still show the last
   // known session so work is never blocked), or a transient 'loading' with a
   // session already known (handled by the shell's own `loading` prop below).
-  const sourceKind = state.status === 'ready' ? 'SERVER' : 'RECOVERY_DRAFT';
+  // P-P03: przejściowe `loading` PO ZAPISIE (runWrite -> refresh) to wciąż
+  // ostatni potwierdzony przez serwer obraz — plakietka „SZKIC ODZYSKIWANIA"
+  // przy każdym naciśnięciu klawisza była nieprawdą i wyglądała jak awaria.
+  const sourceKind =
+    state.status === 'ready' || (state.status === 'loading' && Boolean(state.session))
+      ? 'SERVER'
+      : 'RECOVERY_DRAFT';
 
   if (session.state === 'frozen' || session.state === 'closed') {
     return (
@@ -1386,7 +1392,25 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           onSaveStay={acknowledgeFailure}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          loading={state.status === 'loading' && Boolean(state.session)}
+          /**
+           * ★ P-P03 (pilotaż Pawła 14.09: „wpisanie odpowiedzi przeładowuje
+           * sesję i gubi postęp").
+           *
+           * ZMIERZONA PRZYCZYNA: `DrdHttpSessionRuntime.runWrite()` po KAŻDYM
+           * zapisie woła `refresh()`, a ten ustawia `status: 'loading'`. Przy
+           * `Boolean(state.session)` powłoka dostawała `loading`, a
+           * `MethodWorkspaceShell` zastępuje wtedy CAŁY warsztat napisem
+           * „Loading session…". Panel wywiadu jest odmontowywany, więc jego
+           * własny `activeSequenceIndex` wraca do zera — ekran „sam" cofa się
+           * na Krok 1 w środku pisania (zmierzone: 5 wygaszeń na jedną frazę
+           * przy 400 ms opóźnienia sieci).
+           *
+           * LEKARSTWO: pełnoekranowe „Loading session…" należy WYŁĄCZNIE do
+           * bootstrapu (brak sesji — obsłużony wcześniejszym returnem). Gdy
+           * sesja jest znana, warsztat zostaje zamontowany, a o trwającym
+           * zapisie mówi plakietka zapisu (`saveState`) — nic nie znika.
+           */
+          loading={state.status === 'loading' && !state.session}
           readOnly={!canWrite}
           // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5) —
           // see DrdMethodWorkspaceScreen.tsx's sibling comment: this
