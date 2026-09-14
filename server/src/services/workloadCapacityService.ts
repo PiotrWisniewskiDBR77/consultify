@@ -811,6 +811,24 @@ export interface ResourcePlan {
   }>;
 }
 
+export interface InitiativeWorkloadProposal {
+  proposalId: string;
+  taskId: string;
+  taskTitle: string;
+  initiativeId: string;
+  initiativeStatus: InitiativeStatusType;
+  weekStart: string;
+  fromUserId: string;
+  fromUserName: string;
+  toUserId: string;
+  toUserName: string;
+  proposedHours: number;
+  rule: 'RELIEVE_OVERLOAD_WITH_AVAILABLE_CAPACITY';
+  rationale: string;
+  requiresHumanApproval: true;
+  applied: false;
+}
+
 interface ResourcePlanPersonRow {
   user_id: string;
   name: string;
@@ -826,6 +844,7 @@ export async function getExecutionResourcePlan(
   options?: {
     weeks?: number;
     projectId?: string;
+    projectIds?: string[];
     initiativeStatuses?: InitiativeStatusType[];
     /** Include active organization members with zero scheduled demand. */
     includeAvailablePeople?: boolean;
@@ -850,18 +869,23 @@ export async function getExecutionResourcePlan(
     `LOWER(COALESCE(t.status, '')) NOT IN ${CLOSED_TASK_STATUSES}`,
   ];
   const taskParams: unknown[] = [orgId];
-  const projectId = String(options?.projectId || '').trim();
+  const projectIds = [
+    ...new Set(
+      (options?.projectIds?.length ? options.projectIds : [options?.projectId])
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    ),
+  ].slice(0, 100);
   const initiativeStatuses = (options?.initiativeStatuses || [])
     .filter((status): status is InitiativeStatusType =>
       Object.values(InitiativeStatus).includes(status as InitiativeStatusType)
     )
     .slice(0, 20);
-  if (projectId || initiativeStatuses.length > 0) {
-    const initiativeFilters = [
-      'i.id = t.initiative_id',
-      'i.organization_id = t.organization_id',
-    ];
-    if (projectId) initiativeFilters.push('i.project_id = ?');
+  if (projectIds.length > 0 || initiativeStatuses.length > 0) {
+    const initiativeFilters = ['i.id = t.initiative_id', 'i.organization_id = t.organization_id'];
+    if (projectIds.length > 0) {
+      initiativeFilters.push(`i.project_id IN (${projectIds.map(() => '?').join(',')})`);
+    }
     if (initiativeStatuses.length > 0) {
       initiativeFilters.push(
         `UPPER(COALESCE(i.status, '')) IN (${initiativeStatuses.map(() => '?').join(',')})`
@@ -873,7 +897,7 @@ export async function getExecutionResourcePlan(
           WHERE ${initiativeFilters.join('\n            AND ')}
        )`
     );
-    if (projectId) taskParams.push(projectId);
+    taskParams.push(...projectIds);
     taskParams.push(...initiativeStatuses);
   }
 
@@ -1055,6 +1079,127 @@ export async function getExecutionResourcePlan(
     }
   }
   return { asOf: new Date().toISOString(), weeks, rows, people };
+}
+
+/**
+ * DEC-486: read-only, rule-based AI advice for the planning window. It never
+ * mutates tasks or allocations. Only initiatives before the START gate can be
+ * considered, expressed through the canonical InitiativeStatus constants.
+ */
+export async function getInitiativeWorkloadProposals(
+  orgId: string,
+  options?: { weeks?: number; projectId?: string; initiativeStatuses?: InitiativeStatusType[] }
+): Promise<{ asOf: string; proposals: InitiativeWorkloadProposal[] }> {
+  const planningStatuses: InitiativeStatusType[] = [
+    InitiativeStatus.DRAFT,
+    InitiativeStatus.PENDING_APPROVAL,
+    InitiativeStatus.APPROVED,
+  ];
+  const requested = options?.initiativeStatuses?.length
+    ? options.initiativeStatuses.filter((status) => planningStatuses.includes(status))
+    : planningStatuses;
+  if (options?.initiativeStatuses?.length && requested.length === 0) {
+    return { asOf: new Date().toISOString(), proposals: [] };
+  }
+  const plan = await getExecutionResourcePlan(orgId, {
+    weeks: options?.weeks,
+    projectId: options?.projectId,
+    initiativeStatuses: requested,
+    includeAvailablePeople: true,
+  });
+  const overloaded = new Map(
+    plan.rows
+      .filter((row) => row.demandHours > row.supplyHours)
+      .map((row) => [`${row.userId}|${row.weekStart}`, row])
+  );
+  if (overloaded.size === 0) return { asOf: plan.asOf, proposals: [] };
+
+  const filters = [
+    't.organization_id = ?',
+    't.assignee_id IS NOT NULL',
+    't.due_date IS NOT NULL',
+    `LOWER(COALESCE(t.status, '')) NOT IN ${CLOSED_TASK_STATUSES}`,
+    'i.id = t.initiative_id',
+    'i.organization_id = t.organization_id',
+    `UPPER(COALESCE(i.status, '')) IN (${requested.map(() => '?').join(',')})`,
+  ];
+  const params: unknown[] = [orgId, ...requested];
+  if (options?.projectId) {
+    filters.push('i.project_id = ?');
+    params.push(options.projectId);
+  }
+  const tasks = await DbPromise.all<{
+    task_id: string;
+    task_title: string | null;
+    initiative_id: string;
+    initiative_status: InitiativeStatusType;
+    assignee_id: string;
+    estimated_hours: number | string | null;
+    actual_hours: number | string | null;
+    due_date: string | Date;
+  }>(
+    `SELECT t.id AS task_id,t.title AS task_title,t.initiative_id,
+            UPPER(i.status) AS initiative_status,t.assignee_id,
+            t.estimated_hours,t.actual_hours,t.due_date
+       FROM tasks t
+       JOIN initiatives i ON i.id=t.initiative_id AND i.organization_id=t.organization_id
+      WHERE ${filters.join('\n        AND ')}
+      ORDER BY t.due_date,t.id`,
+    params
+  );
+  const people = new Map(plan.people.map((person) => [person.userId, person]));
+  const mutableGap = new Map(
+    plan.rows.map((row) => [`${row.userId}|${row.weekStart}`, Math.max(row.gapHours, 0)])
+  );
+  const proposals: InitiativeWorkloadProposal[] = [];
+  for (const task of tasks) {
+    const due = task.due_date instanceof Date ? task.due_date : new Date(String(task.due_date));
+    if (Number.isNaN(due.getTime())) continue;
+    const weekStart = formatDate(getMonday(due));
+    const sourceKey = `${task.assignee_id}|${weekStart}`;
+    const source = overloaded.get(sourceKey);
+    if (!source) continue;
+    const remaining = Math.max(Number(task.estimated_hours) - Number(task.actual_hours || 0), 0);
+    const excess = Math.max(source.demandHours - source.supplyHours, 0);
+    const target = plan.rows
+      .filter(
+        (row) =>
+          row.weekStart === weekStart &&
+          row.userId !== task.assignee_id &&
+          row.utilizationPercent < 85 &&
+          (mutableGap.get(`${row.userId}|${weekStart}`) || 0) > 0
+      )
+      .sort(
+        (left, right) =>
+          (mutableGap.get(`${right.userId}|${weekStart}`) || 0) -
+          (mutableGap.get(`${left.userId}|${weekStart}`) || 0)
+      )[0];
+    if (!target) continue;
+    const targetKey = `${target.userId}|${weekStart}`;
+    const proposedHours = round1(Math.min(remaining, excess, mutableGap.get(targetKey) || 0));
+    if (proposedHours <= 0) continue;
+    mutableGap.set(targetKey, round1((mutableGap.get(targetKey) || 0) - proposedHours));
+    const from = people.get(String(task.assignee_id));
+    const to = people.get(target.userId);
+    proposals.push({
+      proposalId: `${task.task_id}:${target.userId}:${weekStart}`,
+      taskId: String(task.task_id),
+      taskTitle: String(task.task_title || task.task_id),
+      initiativeId: String(task.initiative_id),
+      initiativeStatus: task.initiative_status,
+      weekStart,
+      fromUserId: String(task.assignee_id),
+      fromUserName: from?.name || String(task.assignee_id),
+      toUserId: target.userId,
+      toUserName: to?.name || target.userId,
+      proposedHours,
+      rule: 'RELIEVE_OVERLOAD_WITH_AVAILABLE_CAPACITY',
+      rationale: `Move ${proposedHours} h from an overloaded plan to available capacity`,
+      requiresHumanApproval: true,
+      applied: false,
+    });
+  }
+  return { asOf: plan.asOf, proposals };
 }
 
 /**

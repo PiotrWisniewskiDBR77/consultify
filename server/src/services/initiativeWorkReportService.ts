@@ -9,6 +9,7 @@ export const INITIATIVE_WORK_REPORT_TEMPLATES = [
   'DECISION_BACKLOG',
   'DELIVERY_RISKS',
   'WEEKLY_TEAM_UPDATE',
+  'WORKLOAD_CAPACITY',
 ] as const;
 
 export type InitiativeWorkReportTemplate = (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number];
@@ -40,6 +41,24 @@ export interface InitiativeWorkReportContent {
     overdue: number;
     oldestDueAt: string | null;
   }>;
+  workload?: {
+    weeks: string[];
+    people: Array<{
+      userId: string;
+      name: string;
+      weeklyCapacityHours: number;
+      availabilityPercent: number;
+    }>;
+    rows: Array<{
+      userId: string;
+      weekStart: string;
+      demandHours: number;
+      supplyHours: number;
+      utilizationPercent: number;
+      capacityExceeded: boolean;
+    }>;
+    overloadedCount: number;
+  };
 }
 
 const safeText = (value: unknown, fallback: string) => {
@@ -84,6 +103,12 @@ export function selectInitiativeWorkReportSections(content: InitiativeWorkReport
         ),
         decisionDebtors: content.decisionDebtors,
       };
+    case 'WORKLOAD_CAPACITY':
+      return {
+        initiativeHeading: null,
+        initiatives: [],
+        decisionDebtors: [],
+      };
   }
 }
 
@@ -121,6 +146,27 @@ export async function renderInitiativeWorkReportPdf(
   doc.text(`Overdue decisions: ${content.summary.overdueDecisions}`);
   for (const [status, count] of Object.entries(content.summary.byStatus)) {
     doc.text(`${safeText(status, 'UNKNOWN')}: ${count}`);
+  }
+
+  if (content.templateId === 'WORKLOAD_CAPACITY' && content.workload) {
+    doc.moveDown(1.2);
+    doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Workload by person and week');
+    doc
+      .font(PDF_FONT.regular)
+      .fontSize(10)
+      .fillColor('#334155')
+      .text(`Overloaded person-weeks: ${content.workload.overloadedCount}`);
+    for (const person of content.workload.people) {
+      if (doc.y > 700) doc.addPage();
+      doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(person.name);
+      const cells = content.workload.rows
+        .filter((row) => row.userId === person.userId)
+        .map(
+          (row) =>
+            `${row.weekStart}: ${row.capacityExceeded ? 'NO CAPACITY' : `${row.utilizationPercent}%`} (${row.demandHours}h / ${row.supplyHours}h)`
+        );
+      doc.font(PDF_FONT.regular).fontSize(9).fillColor('#475569').text(cells.join(' · '));
+    }
   }
 
   const selected = selectInitiativeWorkReportSections(content);

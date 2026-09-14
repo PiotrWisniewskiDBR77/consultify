@@ -18,15 +18,18 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
   const foreignInitiativeId = randomUUID();
   const availableUserId = randomUUID();
   const zeroCapacityUserId = randomUUID();
+  const scopedTaskId = randomUUID();
   let sql: Client;
   let app: Express;
   let authorization: string;
+  let approverAuthorization: string;
 
   beforeAll(async () => {
     process.env.DB_TYPE = 'postgres';
     process.env.RUN_DB_TESTS = '1';
     process.env.MOCK_DB = 'false';
     process.env.ENABLE_INITIATIVES_WORKLOAD = 'true';
+    process.env.ENABLE_INITIATIVES_WORK_REPORT = 'true';
     const [{ default: config }, { ApiGateway }, { get: dbGet }] = await Promise.all([
       import('../../config/Config.js'),
       import('../../Gateway.js'),
@@ -58,14 +61,16 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     );
     await sql.query(
       `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
-       VALUES ($1,$2,$3,'ADMIN','ACTIVE',now())`,
-      [randomUUID(), organizationId, userId]
+       VALUES ($1,$2,$3,'ADMIN','ACTIVE',now()),($4,$2,$5,'ADMIN','ACTIVE',now())`,
+      [randomUUID(), organizationId, userId, randomUUID(), availableUserId]
     );
     expect(
-      (await sql.query(
-        'SELECT status FROM organization_members WHERE organization_id=$1 AND user_id=$2',
-        [organizationId, userId]
-      )).rows[0]?.status
+      (
+        await sql.query(
+          'SELECT status FROM organization_members WHERE organization_id=$1 AND user_id=$2',
+          [organizationId, userId]
+        )
+      ).rows[0]?.status
     ).toBe('ACTIVE');
     expect(
       await dbGet<{ status: string }>(
@@ -92,9 +97,16 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
               ($6,$2,$7,$8,'Excluded demand','todo',$5,10,current_date + 2,now(),now()),
               ($9,$2,$7,$4,'Canonical project wins','todo',$10,8,current_date + 2,now(),now())`,
       [
-        randomUUID(), organizationId, projectId, initiativeId, userId,
-        randomUUID(), foreignProjectId, foreignInitiativeId,
-        randomUUID(), zeroCapacityUserId,
+        scopedTaskId,
+        organizationId,
+        projectId,
+        initiativeId,
+        userId,
+        randomUUID(),
+        foreignProjectId,
+        foreignInitiativeId,
+        randomUUID(),
+        zeroCapacityUserId,
       ]
     );
 
@@ -109,6 +121,17 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
       config.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '30m' }
     )}`;
+    approverAuthorization = `Bearer ${jwt.sign(
+      {
+        id: availableUserId,
+        userId: availableUserId,
+        organizationId,
+        organization_id: organizationId,
+        role: 'ADMIN',
+      },
+      config.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '30m' }
+    )}`;
     app = express();
     app.use(express.json());
     ApiGateway.getInstance().initializeRoutes(app);
@@ -116,6 +139,7 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
 
   afterAll(async () => {
     if (!sql) return;
+    await sql.query('DELETE FROM ie_aggregate_state WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM tasks WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM initiatives WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM projects WHERE organization_id=$1', [organizationId]);
@@ -125,9 +149,13 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
       availableUserId,
       zeroCapacityUserId,
     ]);
-    await sql.query('DELETE FROM organizations WHERE id IN ($1,$2)', [organizationId, foreignOrganizationId]);
+    await sql.query('DELETE FROM organizations WHERE id IN ($1,$2)', [
+      organizationId,
+      foreignOrganizationId,
+    ]);
     await sql.end();
     delete process.env.ENABLE_INITIATIVES_WORKLOAD;
+    delete process.env.ENABLE_INITIATIVES_WORK_REPORT;
     delete process.env.RUN_DB_TESTS;
     delete process.env.MOCK_DB;
   });
@@ -140,7 +168,9 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.body.people).toHaveLength(3);
     expect(response.body.rows).toHaveLength(3);
-    expect(response.body.rows.find((row: { userId: string }) => row.userId === userId)).toMatchObject({
+    expect(
+      response.body.rows.find((row: { userId: string }) => row.userId === userId)
+    ).toMatchObject({
       userId,
       demandHours: 30,
       supplyHours: 20,
@@ -170,5 +200,158 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     expect(offResponse.status).toBe(404);
     expect(offResponse.body.code).toBe('INITIATIVES_WORKLOAD_DISABLED');
     process.env.ENABLE_INITIATIVES_WORKLOAD = 'true';
+  });
+
+  it('persists availability, proposes planning moves without mutation, and freezes a shared-engine workload report', async () => {
+    const capacity = await request(app)
+      .patch(`/api/users/${availableUserId}/capacity`)
+      .set('Authorization', approverAuthorization)
+      .send({ weeklyCapacityHours: 32, availabilityPercent: 50 });
+    expect(capacity.status, JSON.stringify(capacity.body)).toBe(200);
+    expect(capacity.body).toMatchObject({
+      userId: availableUserId,
+      weeklyCapacityHours: 32,
+      availabilityPercent: 50,
+    });
+    expect(
+      (
+        await sql.query(
+          'SELECT weekly_capacity_hours,availability_percent FROM users WHERE id=$1',
+          [availableUserId]
+        )
+      ).rows[0]
+    ).toMatchObject({ weekly_capacity_hours: '32.00', availability_percent: 50 });
+
+    const beforeAssignee = (
+      await sql.query('SELECT assignee_id FROM tasks WHERE id=$1', [scopedTaskId])
+    ).rows[0]?.assignee_id;
+    const proposal = await request(app)
+      .post('/api/initiatives/runtime-v1/workload-proposals')
+      .set('Authorization', authorization)
+      .send({ weeks: 1, projectId, initiativeStatuses: ['PENDING_APPROVAL'] });
+    expect(proposal.status, JSON.stringify(proposal.body)).toBe(200);
+    expect(proposal.body).toMatchObject({
+      mode: 'RULE_BASED_AI',
+      planningOnly: true,
+      applied: false,
+    });
+    expect(proposal.body.proposals.length).toBeGreaterThan(0);
+    expect(
+      (await sql.query('SELECT assignee_id FROM tasks WHERE id=$1', [scopedTaskId])).rows[0]
+        ?.assignee_id
+    ).toBe(beforeAssignee);
+
+    const definitionId = randomUUID();
+    const reportRunId = randomUUID();
+    const createDefinition = await request(app)
+      .post(`/api/initiatives/runtime-v1/report-definitions/${definitionId}`)
+      .set('Authorization', authorization)
+      .send({
+        name: 'Workload capacity',
+        purpose: 'Capacity planning review',
+        audience: ['capacity@example.test'],
+        cadence: 'ON_DEMAND',
+        scope: {
+          type: 'PROJECT',
+          refs: [`project:${projectId}`],
+          projectIds: [projectId],
+          generalBacklogAllowed: false,
+        },
+        outputSchema: { kind: 'initiative_workload_report', templateId: 'WORKLOAD_CAPACITY' },
+        sections: [{ sectionId: 'WORKLOAD', title: 'Workload', mandatory: true }],
+        sourceBindings: [
+          {
+            bindingId: 'workload',
+            sourceType: 'initiative_workload',
+            required: true,
+            scope: 'tenant',
+          },
+        ],
+        formulas: [],
+        units: ['hours'],
+        currencies: [],
+        windows: [{ windowId: 'horizon', duration: 'P8W', timezone: 'UTC' }],
+        access: { audienceRoles: ['ADMIN'], classification: 'INTERNAL' },
+        redaction: { rules: ['TENANT_BOUND'], defaultState: 'FULL' },
+        freshnessThresholdMinutes: 60,
+        confidenceThreshold: 'HIGH',
+        ownerId: userId,
+        approverId: availableUserId,
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+      });
+    expect(createDefinition.status, JSON.stringify(createDefinition.body)).toBe(201);
+    expect(
+      (
+        await request(app)
+          .post(`/api/initiatives/runtime-v1/report-definitions/${definitionId}/transitions`)
+          .set('Authorization', authorization)
+          .send({ action: 'VALIDATE', expectedVersion: 1, clientRequestId: randomUUID() })
+      ).status
+    ).toBe(200);
+    expect(
+      (
+        await request(app)
+          .post(`/api/initiatives/runtime-v1/report-definitions/${definitionId}/transitions`)
+          .set('Authorization', approverAuthorization)
+          .send({
+            action: 'PUBLISH',
+            rationale: 'Independent workload definition approval',
+            expectedVersion: 2,
+            clientRequestId: randomUUID(),
+          })
+      ).status
+    ).toBe(200);
+
+    const createRun = await request(app)
+      .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}`)
+      .set('Authorization', authorization)
+      .send({
+        definitionRef: { definitionId, version: 1 },
+        parentRunRef: null,
+        audience: ['capacity@example.test'],
+        scopeRefs: [`project:${projectId}`],
+        period: { start: '2026-09-14T00:00:00.000Z', end: '2026-11-09T00:00:00.000Z' },
+        asOf: '2026-09-14T09:00:00.000Z',
+        workReport: {
+          title: 'Workload capacity',
+          templateId: 'WORKLOAD_CAPACITY',
+          cadence: 'ON_DEMAND',
+          projectIds: [projectId],
+        },
+        sources: [],
+        ownerId: userId,
+        approverId: availableUserId,
+        expectedVersion: 0,
+        clientRequestId: randomUUID(),
+      });
+    expect(createRun.status, JSON.stringify(createRun.body)).toBe(201);
+    for (const [action, expectedVersion] of [
+      ['VALIDATE', 1],
+      ['FREEZE', 2],
+    ] as const) {
+      const transition = await request(app)
+        .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}/transitions`)
+        .set('Authorization', authorization)
+        .send({
+          action,
+          profile: 'initiative_work_report',
+          expectedVersion,
+          clientRequestId: randomUUID(),
+        });
+      expect(transition.status, JSON.stringify(transition.body)).toBe(200);
+    }
+    const stored = (
+      await sql.query(
+        `SELECT payload_json FROM ie_aggregate_state
+         WHERE organization_id=$1 AND aggregate_type='report_run' AND aggregate_id=$2`,
+        [organizationId, reportRunId]
+      )
+    ).rows[0]?.payload_json;
+    expect(stored).toMatchObject({
+      status: 'FROZEN',
+      workReport: { templateId: 'WORKLOAD_CAPACITY' },
+      frozenSnapshot: { workReport: { content: { workload: { overloadedCount: 2 } } } },
+    });
   });
 });
