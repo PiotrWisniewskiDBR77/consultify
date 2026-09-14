@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StandardPreview } from '@/components/standard/StandardPreview';
+import { initiativeStatusLabel } from '@/components/Initiatives/initiativeStatusLabels';
 import {
   StandardTable,
   type TableColumn,
@@ -351,8 +352,10 @@ export function WorkIntelligenceReport({
       id: 'kind',
       label: t('execution.reports.intelligence.columns.kind', 'Type'),
       sortable: true,
-      render: (row: TableRow) =>
-        trPair(t, KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]),
+      render: (row: TableRow) => {
+        const code = String(row.kind || 'UNKNOWN');
+        return trPair(t, KIND_LABEL_KEY[code] ?? [code, humanizeCode(code)]);
+      },
     },
     {
       id: 'status',
@@ -362,7 +365,7 @@ export function WorkIntelligenceReport({
         const code = String(row.status || 'UNKNOWN');
         return (
           <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
-            {t(`execution.workAnalysis.status.${code.toLowerCase()}`, humanizeCode(code))}
+            {initiativeStatusLabel(t, code)}
           </span>
         );
       },
@@ -474,7 +477,7 @@ export function WorkIntelligenceReport({
       render: (row: TableRow) => ((row.reasons as string[]) || []).map((reason) =>
         t(
           `execution.workAnalysis.reasons.${String(reason).toLowerCase()}`,
-          ATTENTION_REASON_FALLBACK[reason] ?? reason
+          ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
         )
       ).join(', '),
     },
@@ -609,10 +612,7 @@ export function WorkIntelligenceReport({
                         meta={{
                         pills: [
                           {
-                            label: t(
-                              `execution.workAnalysis.status.${row.status.toLowerCase()}`,
-                              humanizeCode(row.status)
-                            ),
+                            label: initiativeStatusLabel(t, row.status),
                             tone: row.status === 'BLOCKED' ? 'critical' : 'neutral',
                           },
                           {
