@@ -148,7 +148,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               {t('myWork.createProjectModal.budget', 'Budget (EUR)')}
               <input
                 type="number"
-                min="0"
+                min="0.01"
+                step="0.01"
                 className={`${inputClass} mt-1.5`}
                 value={budgetAmount}
                 onChange={(e) => setBudgetAmount(e.target.value)}
