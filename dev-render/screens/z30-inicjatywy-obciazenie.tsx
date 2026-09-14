@@ -20,7 +20,7 @@
  * popytem (capacityExceeded → „No capacity", krytyczne).
  *
  * Flaga `VITE_INITIATIVES_WORKLOAD` jest ODCZYTYWANA W BUDOWIE
- * (import.meta.env), więc harness NIE potrafi jej przełączyć przez URL —
+ * przez zmienne VITE_*, więc harness NIE potrafi jej przełączyć przez URL —
  * trzeba uruchomić serwer dev-render z tą zmienną env ustawioną (parytet OFF
  * = osobne uruchomienie serwera bez niej, patrz `z30-*-off` w SCREENS):
  *
@@ -301,7 +301,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
           toUserId: 'u-amber',
           toUserName: 'Marek Sikora',
           proposedHours: 8,
-          rationale: 'Move 8 h from an overloaded plan to available capacity',
+          reasonKey: 'initiatives.workload.proposalReason.relieveOverload',
+          params: { hours: 8 },
           requiresHumanApproval: true,
           applied: false,
         },
@@ -315,10 +316,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   ) {
     return json({ items: [{ definitionId: 'workload-definition' }] });
   }
-  if (
-    e234 &&
-    url.endsWith('/api/initiatives/runtime-v1/report-definitions/workload-definition')
-  ) {
+  if (e234 && url.endsWith('/api/initiatives/runtime-v1/report-definitions/workload-definition')) {
     return json({
       definitionId: 'workload-definition',
       versions: [

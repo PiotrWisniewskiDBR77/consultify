@@ -261,6 +261,11 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
       applied: false,
     });
     expect(proposal.body.proposals.length).toBeGreaterThan(0);
+    expect(proposal.body.proposals[0]).toMatchObject({
+      reasonKey: 'initiatives.workload.proposalReason.relieveOverload',
+      params: { hours: expect.any(Number) },
+    });
+    expect(proposal.body.proposals[0]).not.toHaveProperty('rationale');
     expect(
       proposal.body.proposals.some((item: { taskId: string }) => item.taskId === runningTaskId)
     ).toBe(false);
@@ -336,24 +341,24 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     ).toBe(200);
 
     const createRunPayload = {
-        definitionRef: { definitionId, version: 1 },
-        parentRunRef: null,
-        audience: ['capacity@example.test'],
-        scopeRefs: [`project:${projectId}`],
-        period: { start: '2026-09-14T00:00:00.000Z', end: '2026-11-09T00:00:00.000Z' },
-        asOf: '2026-09-14T09:00:00.000Z',
-        workReport: {
-          title: 'Workload capacity',
-          templateId: 'WORKLOAD_CAPACITY',
-          cadence: 'ON_DEMAND',
-          projectIds: [projectId],
-        },
-        sources: [],
-        ownerId: userId,
-        approverId: availableUserId,
-        expectedVersion: 0,
-        clientRequestId: randomUUID(),
-      };
+      definitionRef: { definitionId, version: 1 },
+      parentRunRef: null,
+      audience: ['capacity@example.test'],
+      scopeRefs: [`project:${projectId}`],
+      period: { start: '2026-09-14T00:00:00.000Z', end: '2026-11-09T00:00:00.000Z' },
+      asOf: '2026-09-14T09:00:00.000Z',
+      workReport: {
+        title: 'Workload capacity',
+        templateId: 'WORKLOAD_CAPACITY',
+        cadence: 'ON_DEMAND',
+        projectIds: [projectId],
+      },
+      sources: [],
+      ownerId: userId,
+      approverId: availableUserId,
+      expectedVersion: 0,
+      clientRequestId: randomUUID(),
+    };
     process.env.ENABLE_INITIATIVES_WORKLOAD = 'false';
     const disabledRun = await request(app)
       .post(`/api/initiatives/runtime-v1/report-runs/${randomUUID()}`)

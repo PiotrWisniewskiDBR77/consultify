@@ -51,6 +51,7 @@ interface WorkloadTableRow extends TableRow {
 interface ProposalTableRow extends InitiativeWorkloadProposal, TableRow {
   id: string;
   title: string;
+  reasonLabel: string;
 }
 
 export const workloadBand = (utilizationPercent: number): 'green' | 'amber' | 'red' => {
@@ -399,8 +400,12 @@ export const InitiativeWorkloadSurface: React.FC<{
         ...proposal,
         id: proposal.proposalId,
         title: proposal.taskTitle,
+        reasonLabel: t(proposal.reasonKey, {
+          defaultValue: 'Move {{hours}} h from an overloaded plan to available capacity',
+          ...proposal.params,
+        }),
       })),
-    [proposals]
+    [proposals, t]
   );
   const selectedProposal =
     proposalRows.find((proposal) => proposal.id === selectedProposalId) ?? null;
@@ -637,7 +642,7 @@ export const InitiativeWorkloadSurface: React.FC<{
                   ],
                 }}
                 details={{
-                  text: proposal.rationale,
+                  text: proposal.reasonLabel,
                   properties: [
                     {
                       id: 'move',
@@ -661,7 +666,7 @@ export const InitiativeWorkloadSurface: React.FC<{
                     );
                   },
                 }}
-                ai={{ hints: [proposal.rationale], disabled: false }}
+                ai={{ hints: [proposal.reasonLabel], disabled: false }}
                 relations={[
                   {
                     id: proposal.initiativeId,

@@ -115,7 +115,30 @@ const renderView = () =>
 
 describe('InitiativeWorkReportView — canon pass (RP1b)', () => {
   beforeEach(() => {
+    vi.unstubAllEnvs();
     vi.clearAllMocks();
+  });
+
+  it('hides the workload template when work reports are on but workload is off', async () => {
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
+    vi.stubEnv('VITE_INITIATIVES_WORKLOAD', 'false');
+    renderView();
+    await screen.findByText('Weekly team update — 8-14 Sep');
+    fireEvent.click(screen.getByTestId('work-report-creator-toggle'));
+
+    const template = screen.getByLabelText('Template') as HTMLSelectElement;
+    expect(within(template).queryByRole('option', { name: 'Workload capacity' })).toBeNull();
+  });
+
+  it('shows the workload template when both work reports and workload are on', async () => {
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
+    vi.stubEnv('VITE_INITIATIVES_WORKLOAD', 'true');
+    renderView();
+    await screen.findByText('Weekly team update — 8-14 Sep');
+    fireEvent.click(screen.getByTestId('work-report-creator-toggle'));
+
+    const template = screen.getByLabelText('Template') as HTMLSelectElement;
+    expect(within(template).getByRole('option', { name: 'Workload capacity' })).toBeTruthy();
   });
 
   it('shows translated status and cadence labels, not raw enum codes', async () => {
@@ -160,7 +183,9 @@ describe('InitiativeWorkReportView — canon pass (RP1b)', () => {
        nie ma ich wcale, dopóki nie otworzy się kebab. */
     expect(screen.queryByRole('button', { name: /^PDF$/ })).toBeNull();
 
-    const kebab = container.querySelector('[data-testid="row-actions-trigger"], button[aria-haspopup="menu"]');
+    const kebab = container.querySelector(
+      '[data-testid="row-actions-trigger"], button[aria-haspopup="menu"]'
+    );
     expect(kebab).toBeTruthy();
     fireEvent.click(kebab as Element);
 

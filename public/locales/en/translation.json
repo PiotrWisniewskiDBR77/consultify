@@ -11440,6 +11440,9 @@
       "proposalMove": "Suggested move",
       "proposalHours": "Hours",
       "proposalWeek": "Week",
+      "proposalReason": {
+        "relieveOverload": "Move {{hours}} h from an overloaded plan to available capacity"
+      },
       "noProposals": "No safe planning move was found.",
       "reportDefinition": "Published workload report definition",
       "noReportDefinition": "No compatible published definition",

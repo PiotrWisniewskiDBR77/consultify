@@ -23,6 +23,7 @@ import { SelectField } from '@/components/ui/primitives';
 import { readMemberId, readMemberLabel } from '@/hooks/useOrganizationMemberNames';
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
+import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
 import {
   createReportDefinition,
   createReportRun,
@@ -113,6 +114,7 @@ export function InitiativeWorkReportView({
   currentOrganizationId: string;
 }) {
   const { t, i18n } = useTranslation();
+  const workloadEnabled = isInitiativesWorkloadEnabled();
   const templates = useMemo(
     () =>
       [
@@ -121,9 +123,16 @@ export function InitiativeWorkReportView({
         ['DECISION_BACKLOG', t('initiatives.workReport.templates.decisions', 'Decision backlog')],
         ['DELIVERY_RISKS', t('initiatives.workReport.templates.risks', 'Delivery risks')],
         ['WEEKLY_TEAM_UPDATE', t('initiatives.workReport.templates.weekly', 'Weekly team update')],
-        ['WORKLOAD_CAPACITY', t('initiatives.workReport.templates.workload', 'Workload capacity')],
+        ...(workloadEnabled
+          ? ([
+              [
+                'WORKLOAD_CAPACITY',
+                t('initiatives.workReport.templates.workload', 'Workload capacity'),
+              ],
+            ] as Array<[TemplateId, string]>)
+          : []),
       ] as Array<[TemplateId, string]>,
-    [t]
+    [t, workloadEnabled]
   );
   const [definitions, setDefinitions] = useState<any[]>([]);
   const [definitionStates, setDefinitionStates] = useState<any[]>([]);
@@ -552,7 +561,10 @@ export function InitiativeWorkReportView({
           disabled: !reportRow.canDownload,
           note: reportRow.canDownload
             ? undefined
-            : t('initiatives.workReport.needsFrozenNote', 'The PDF appears once the run is frozen.'),
+            : t(
+                'initiatives.workReport.needsFrozenNote',
+                'The PDF appears once the run is frozen.'
+              ),
           onClick: () => void download(reportRow),
         },
         ...(reportRow.canApprove
@@ -768,7 +780,10 @@ export function InitiativeWorkReportView({
                   data-testid="work-report-preview-deliveries"
                 >
                   <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                    {t('initiatives.workReport.previewDeliveriesLabel', 'Recipients and deliveries')}
+                    {t(
+                      'initiatives.workReport.previewDeliveriesLabel',
+                      'Recipients and deliveries'
+                    )}
                   </h4>
                   {row.deliveries.length === 0 ? (
                     <p className="text-sm text-c-text-muted">
@@ -961,7 +976,10 @@ export function InitiativeWorkReportView({
             {definitionStates.some((definition) => definition.state === 'VALIDATED') && (
               <div className="rounded-xl border border-c-border p-4">
                 <h3 className="mb-2 font-semibold">
-                  {t('initiatives.workReport.awaitingDefinitions', 'Definitions awaiting publication')}
+                  {t(
+                    'initiatives.workReport.awaitingDefinitions',
+                    'Definitions awaiting publication'
+                  )}
                 </h3>
                 {definitionStates
                   .filter((definition) => definition.state === 'VALIDATED')

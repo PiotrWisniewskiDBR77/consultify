@@ -24,7 +24,8 @@ export interface InitiativeWorkloadProposal {
   toUserId: string;
   toUserName: string;
   proposedHours: number;
-  rationale: string;
+  reasonKey: 'initiatives.workload.proposalReason.relieveOverload';
+  params: { hours: number };
   requiresHumanApproval: true;
   applied: false;
 }

@@ -10660,6 +10660,9 @@
       "proposalMove": "Sugerowane przesunięcie",
       "proposalHours": "Godziny",
       "proposalWeek": "Tydzień",
+      "proposalReason": {
+        "relieveOverload": "Przenieś {{hours}} godz. z przeciążonego planu do dostępnych zasobów"
+      },
       "noProposals": "Nie znaleziono bezpiecznego przesunięcia w planie.",
       "reportDefinition": "Opublikowana definicja raportu obciążenia",
       "noReportDefinition": "Brak zgodnej opublikowanej definicji",

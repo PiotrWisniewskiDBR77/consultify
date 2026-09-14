@@ -824,7 +824,8 @@ export interface InitiativeWorkloadProposal {
   toUserName: string;
   proposedHours: number;
   rule: 'RELIEVE_OVERLOAD_WITH_AVAILABLE_CAPACITY';
-  rationale: string;
+  reasonKey: 'initiatives.workload.proposalReason.relieveOverload';
+  params: { hours: number };
   requiresHumanApproval: true;
   applied: false;
 }
@@ -1194,7 +1195,8 @@ export async function getInitiativeWorkloadProposals(
       toUserName: to?.name || target.userId,
       proposedHours,
       rule: 'RELIEVE_OVERLOAD_WITH_AVAILABLE_CAPACITY',
-      rationale: `Move ${proposedHours} h from an overloaded plan to available capacity`,
+      reasonKey: 'initiatives.workload.proposalReason.relieveOverload',
+      params: { hours: proposedHours },
       requiresHumanApproval: true,
       applied: false,
     });

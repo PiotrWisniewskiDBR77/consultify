@@ -2,6 +2,34 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
+const locale = vi.hoisted(() => ({ current: 'en' as 'en' | 'pl' }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: unknown, options?: Record<string, unknown>) => {
+      const params =
+        fallback && typeof fallback === 'object'
+          ? (fallback as Record<string, unknown>)
+          : options || {};
+      let text =
+        locale.current === 'pl' && key === 'initiatives.workload.proposalReason.relieveOverload'
+          ? 'Przenieś {{hours}} godz. z przeciążonego planu do dostępnych zasobów'
+          : typeof fallback === 'string'
+            ? fallback
+            : String(params.defaultValue ?? key);
+      for (const [name, value] of Object.entries(params)) {
+        text = text.replace(new RegExp(`{{${name}}}`, 'g'), String(value));
+      }
+      return text;
+    },
+    i18n: {
+      get language() {
+        return locale.current;
+      },
+    },
+  }),
+}));
+
 const mocks = vi.hoisted(() => ({
   readInitiativeWorkload: vi.fn(),
   updateInitiativeWorkloadAvailability: vi.fn(),
@@ -128,6 +156,7 @@ const response = {
 describe('InitiativeWorkloadSurface E1', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    locale.current = 'en';
     Object.values(mocks).forEach((mock) => mock.mockReset());
     mocks.readInitiativeWorkload.mockResolvedValue(response);
     mocks.updateInitiativeWorkloadAvailability.mockResolvedValue({
@@ -252,13 +281,14 @@ describe('InitiativeWorkloadSurface E1', () => {
           toUserId: 'anna',
           toUserName: 'Anna Adams',
           proposedHours: 8,
-          rationale: 'Rule',
+          reasonKey: 'initiatives.workload.proposalReason.relieveOverload',
+          params: { hours: 8 },
           requiresHumanApproval: true,
           applied: false,
         },
       ],
     });
-    renderSurface(1);
+    const english = renderSurface(1);
 
     const task = await screen.findByText('Prepare rollout');
     expect(screen.getByText('Ben Brown → Anna Adams')).toBeInTheDocument();
@@ -269,8 +299,45 @@ describe('InitiativeWorkloadSurface E1', () => {
     fireEvent.click(task);
     expect(await within(panel).findByText('Planning only')).toBeInTheDocument();
     expect(within(panel).getByText('Initiative status: Approved')).toBeInTheDocument();
-    expect(within(panel).getAllByText('Rule')).toHaveLength(2);
+    expect(
+      within(panel).getAllByText('Move 8 h from an overloaded plan to available capacity')
+    ).toHaveLength(2);
     expect(within(panel).queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
+
+    english.unmount();
+    mocks.proposeInitiativeWorkloadMoves.mockResolvedValueOnce({
+      applied: false,
+      planningOnly: true,
+      proposals: [
+        {
+          proposalId: 'task-1:anna:2026-09-14',
+          taskId: 'task-1',
+          taskTitle: 'Prepare rollout',
+          initiativeId: 'i1',
+          initiativeStatus: 'APPROVED',
+          weekStart: '2026-09-14',
+          fromUserId: 'ben',
+          fromUserName: 'Ben Brown',
+          toUserId: 'anna',
+          toUserName: 'Anna Adams',
+          proposedHours: 8,
+          reasonKey: 'initiatives.workload.proposalReason.relieveOverload',
+          params: { hours: 8 },
+          requiresHumanApproval: true,
+          applied: false,
+        },
+      ],
+    });
+    locale.current = 'pl';
+    renderSurface(1);
+    const polishTask = await screen.findByText('Prepare rollout');
+    fireEvent.click(polishTask);
+    const polishPanel = screen.getByTestId('workload-proposals-panel');
+    expect(
+      within(polishPanel).getAllByText(
+        'Przenieś 8 godz. z przeciążonego planu do dostępnych zasobów'
+      )
+    ).toHaveLength(2);
   });
 
   it('does not expose a dead Open action for a team-member workload preview', async () => {
