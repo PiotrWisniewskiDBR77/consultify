@@ -1,0 +1,20 @@
+CREATE TABLE
+CREATE INDEX
+psql:<stdin>:22: NOTICE:  relation "interview_answer_decision_commands" already exists, skipping
+psql:<stdin>:25: NOTICE:  relation "uq_interview_answer_decision_commands_request" already exists, skipping
+CREATE INDEX
+psql:<stdin>:29: NOTICE:  relation "uq_interview_answer_decision_commands_submission" already exists, skipping
+psql:<stdin>:CREATE INDEX
+32: NOTICE:  relation "uq_interview_answer_decision_commands_assignment_sequence" already exists, skipping
+psql:<stdin>:35: NOTICE:  relation "idx_interview_answer_decision_commands_assignment" already exists, skipping
+CREATE INDEX
+psql:<stdin>:78: NOTICE:  relation "interview_answer_decisions" already exists, skipping
+CREATE TABLE
+psql:<stdin>:81: NOTICE:  relation "uq_interview_answer_decisions_submission_ordinal" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:<stdin>:84: NOTICE:  relation "uq_interview_answer_decisions_submission_question_event" already exists, skipping
+CREATE INDEX
+psql:<stdin>:87: NOTICE:  relation "idx_interview_answer_decisions_assignment_submission" already exists, skipping
+psql:<stdin>:90: NOTICE:  relation "idx_interview_answer_decisions_question_projection" already exists, skipping
+CREATE INDEX

@@ -1,0 +1,224 @@
+[
+  {
+    "label": "sessions_list",
+    "method": "GET",
+    "path": "/interview/sessions",
+    "status": 200,
+    "payload": [
+      {
+        "id": "od5-session",
+        "organizationId": "od5-org",
+        "name": "September operating interview",
+        "ownerId": "od5-manager",
+        "status": "in_progress",
+        "templateVersion": 1,
+        "assignmentId": "od5-assignment",
+        "progress": {},
+        "totalQuestions": 3,
+        "answeredQuestions": 3,
+        "summaryFacts": [],
+        "summaryGaps": [],
+        "summaryConstraints": [],
+        "summaryPainPoints": [],
+        "runtimeModeDefault": "single_question",
+        "startedAt": "2026-09-14T03:54:00.021Z",
+        "completedAt": null,
+        "lastActivityAt": "2026-09-14T03:54:00.021Z"
+      }
+    ]
+  },
+  {
+    "label": "session_get",
+    "method": "GET",
+    "path": "/interview/sessions/od5-session",
+    "status": 200,
+    "payload": {
+      "id": "od5-session",
+      "organizationId": "od5-org",
+      "name": "September operating interview",
+      "ownerId": "od5-manager",
+      "status": "in_progress",
+      "templateVersion": 1,
+      "assignmentId": "od5-assignment",
+      "progress": {},
+      "totalQuestions": 3,
+      "answeredQuestions": 3,
+      "summaryFacts": [],
+      "summaryGaps": [],
+      "summaryConstraints": [],
+      "summaryPainPoints": [],
+      "runtimeModeDefault": "single_question",
+      "startedAt": "2026-09-14T03:54:00.021Z",
+      "completedAt": null,
+      "lastActivityAt": "2026-09-14T03:54:00.021Z"
+    }
+  },
+  {
+    "label": "assignment_review_access",
+    "method": "GET",
+    "path": "/interview/assignments/od5-assignment/review-access",
+    "status": 200,
+    "payload": {
+      "canReview": true,
+      "projectId": null
+    }
+  },
+  {
+    "label": "assignments_mine",
+    "method": "GET",
+    "path": "/interview/assignments",
+    "status": 403,
+    "payload": {
+      "error": "Permission denied",
+      "requiredAny": [
+        "INTERVIEW_ASSIGN_VIEW",
+        "INTERVIEW_ASSIGN_MANAGE"
+      ],
+      "code": "PERMISSION_DENIED"
+    }
+  },
+  {
+    "label": "answer_approvals_manager",
+    "method": "GET",
+    "path": "/interview/assignments/od5-assignment/answer-approvals",
+    "status": 404,
+    "payload": {
+      "status": "fail",
+      "error": {
+        "code": "API_ROUTE_NOT_FOUND",
+        "message": "The requested API endpoint does not exist.",
+        "timestamp": "2026-09-14T03:54:43.552Z"
+      },
+      "correlationId": "552f1d54-361f-4e92-9f0c-511252fcd251"
+    }
+  },
+  {
+    "label": "save_answer_q1",
+    "method": "PATCH",
+    "path": "/interview/questions/od5-q1",
+    "status": 428,
+    "payload": {
+      "error": "expectedUpdatedAt is required. Reload the answer and try again.",
+      "code": "ANSWER_PRECONDITION_REQUIRED"
+    }
+  },
+  {
+    "label": "submit",
+    "method": "POST",
+    "path": "/interview/assignments/od5-assignment/submit",
+    "status": 200,
+    "payload": {
+      "assignment": {
+        "id": "od5-assignment",
+        "organization_id": "od5-org",
+        "assignee_user_id": "od5-respondent",
+        "template_id": "template-od5",
+        "template_version": 1,
+        "process_ref": null,
+        "status": "submitted",
+        "session_id": "od5-session",
+        "task_id": null,
+        "due_at": null,
+        "started_at": null,
+        "submitted_at": "2026-09-14T08:54:43.578Z",
+        "sent_back_at": null,
+        "sent_back_reason": null,
+        "created_by": "od5-manager",
+        "created_at": "2026-09-14T08:54:00.023Z",
+        "updated_at": "2026-09-14T08:54:43.578Z",
+        "missing_items_json": null,
+        "ai_review_snapshot_json": null,
+        "ai_reviewed_at": null,
+        "review_decision_memory_json": null,
+        "archived_via_session": false,
+        "is_anonymous": false,
+        "archived_at": null,
+        "archived_by": null,
+        "escalate_to": null,
+        "escalated_at": null,
+        "escalation_count": 0,
+        "is_active": 1,
+        "is_team_assignment": 0,
+        "last_reminder_type": null,
+        "notes": null,
+        "priority": "medium",
+        "project_id": null,
+        "reminder_count": 0,
+        "reminder_sent_at": null,
+        "create_request_key": null,
+        "create_request_fingerprint": null,
+        "aiReview": null,
+        "aiReviewedAt": null,
+        "reviewDecisionMemory": []
+      },
+      "session": {
+        "id": "od5-session",
+        "organizationId": "od5-org",
+        "name": "September operating interview",
+        "ownerId": "od5-manager",
+        "status": "submitted",
+        "templateVersion": 1,
+        "assignmentId": "od5-assignment",
+        "progress": {
+          "strategy": 100
+        },
+        "totalQuestions": 3,
+        "answeredQuestions": 3,
+        "summaryFacts": [],
+        "summaryGaps": [],
+        "summaryConstraints": [],
+        "summaryPainPoints": [],
+        "runtimeModeDefault": "single_question",
+        "startedAt": "2026-09-14T03:54:00.021Z",
+        "completedAt": null,
+        "lastActivityAt": "2026-09-14T03:54:43.578Z"
+      },
+      "completenessPercent": 100,
+      "entersContext": false,
+      "aiReview": null
+    }
+  },
+  {
+    "label": "session_get_after",
+    "method": "GET",
+    "path": "/interview/sessions/od5-session",
+    "status": 200,
+    "payload": {
+      "id": "od5-session",
+      "organizationId": "od5-org",
+      "name": "September operating interview",
+      "ownerId": "od5-manager",
+      "status": "submitted",
+      "templateVersion": 1,
+      "assignmentId": "od5-assignment",
+      "progress": {
+        "strategy": 100
+      },
+      "totalQuestions": 3,
+      "answeredQuestions": 3,
+      "summaryFacts": [],
+      "summaryGaps": [],
+      "summaryConstraints": [],
+      "summaryPainPoints": [],
+      "runtimeModeDefault": "single_question",
+      "startedAt": "2026-09-14T03:54:00.021Z",
+      "completedAt": null,
+      "lastActivityAt": "2026-09-14T03:54:43.578Z"
+    }
+  },
+  {
+    "label": "answer_approvals_after",
+    "method": "GET",
+    "path": "/interview/assignments/od5-assignment/answer-approvals",
+    "status": 404,
+    "payload": {
+      "status": "fail",
+      "error": {
+        "code": "API_ROUTE_NOT_FOUND",
+        "message": "The requested API endpoint does not exist.",
+        "timestamp": "2026-09-14T03:54:50.721Z"
+      },
+      "correlationId": "c9e52e9b-3d5f-4825-a396-d751f57c685d"
+    }
+  }
+]

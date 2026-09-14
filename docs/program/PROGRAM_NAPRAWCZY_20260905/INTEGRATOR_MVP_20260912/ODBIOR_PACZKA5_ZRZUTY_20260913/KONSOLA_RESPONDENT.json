@@ -1,0 +1,13 @@
+{
+  "consoleErrors": [
+    "3-respondent-sees-reason: Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "3-respondent-sees-reason: [InterviewHub] Failed to load insights: InterviewCapabilityError: Interview insights capability failed (forbidden)\n    at classifyInterviewV8Failure (http://127.0.0.1:5321/src/components/Interview/int",
+    "3-respondent-sees-reason: Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "3-respondent-sees-reason: [InterviewHub] Failed to load insights: InterviewCapabilityError: Interview insights capability failed (forbidden)\n    at classifyInterviewV8Failure (http://127.0.0.1:5321/src/components/Interview/int"
+  ],
+  "pageErrors": [],
+  "httpErrors": [
+    "3-respondent-sees-reason: 403 /api/v8/interview/insights?scope=active",
+    "3-respondent-sees-reason: 403 /api/v8/interview/insights?scope=active"
+  ]
+}
