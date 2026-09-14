@@ -174,7 +174,7 @@ async function renderAtInterviewFocus(): Promise<{ storage: Storage }> {
 
   await screen.findByTestId('method-workspace-shell');
   await waitFor(() =>
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7')
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7')
   );
 
   // Scope every assertion below to the skip action — the seed above already

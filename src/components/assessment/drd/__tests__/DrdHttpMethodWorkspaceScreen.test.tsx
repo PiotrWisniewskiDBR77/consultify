@@ -319,7 +319,7 @@ describe('Interview Focus advances with real progress — regression for the foc
     // The fixture area (1A) has levels 1..7 — seedTo="interview" confirms 1
     // and 2, so the real blocker (first unconfirmed level) is 3. Before the
     // fix this screen ignored progression entirely and always showed level 1.
-    await waitFor(() => expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7'));
+    await waitFor(() => expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7'));
   });
 });
 

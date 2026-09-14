@@ -131,7 +131,7 @@ async function renderAtInterviewFocus(roles: string[] = ['owner', 'lead_assessor
   render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} seedTo="interview" />);
   await screen.findByTestId('method-workspace-shell');
   await waitFor(() =>
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7')
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7')
   );
 }
 
@@ -222,7 +222,7 @@ describe('(C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom', () => 
       expect(screen.getByTestId(pytaniePrzed!)).toHaveAttribute('data-answer-state', 'confirmed')
     );
 
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7');
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7');
     expect(screen.getByTestId(pytaniePrzed!)).toBeInTheDocument();
   });
 
@@ -231,12 +231,12 @@ describe('(C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom', () => 
 
     fireEvent.click(screen.getByRole('radio', { name: /Potwierdzone/ }));
     await waitFor(() => expect(hoisted.appendEvent).toHaveBeenCalled());
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7');
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7');
 
     fireEvent.click(screen.getByRole('button', { name: /^Dalej$/ }));
 
     await waitFor(() =>
-      expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 4 z 7')
+      expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 4 of 7')
     );
   });
 });

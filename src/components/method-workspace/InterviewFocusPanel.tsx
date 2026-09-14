@@ -137,7 +137,10 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           ))}
         </nav>
         <span className="shrink-0" data-testid="question-progress">
-          Pytanie {questionIndex + 1} z {questionTotal}
+          {t('methodWorkspace.focus.questionProgress', 'Question {{current}} of {{total}}', {
+            current: questionIndex + 1,
+            total: questionTotal,
+          })}
         </span>
       </div>
 

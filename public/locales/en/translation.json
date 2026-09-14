@@ -51116,6 +51116,7 @@
     "loading": "Loading session…",
     "exit": "Exit",
     "methodPack": "Method Pack {{version}}",
+    "sessionShort": "Session {{id}}",
     "saveNow": "Save now",
     "settings": "Settings",
     "moreOptions": "More options",
@@ -51273,6 +51274,7 @@
     "focus": {
       "noQuestions": "No questions to show in this area.",
       "questionPath": "Question path",
+      "questionProgress": "Question {{current}} of {{total}}",
       "multiStepHint": "This unit has {{count}} short steps. Only the current step stays open on screen.",
       "stepOf": "Step {{current}}/{{total}}",
       "openStep": "Open step {{number}}: {{wording}}",

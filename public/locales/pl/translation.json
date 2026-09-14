@@ -51494,6 +51494,7 @@
     "loading": "Ładowanie sesji…",
     "exit": "Wyjdź",
     "methodPack": "Method Pack {{version}}",
+    "sessionShort": "Sesja {{id}}",
     "saveNow": "Zapisz teraz",
     "settings": "Ustawienia",
     "moreOptions": "Więcej opcji",
@@ -51651,6 +51652,7 @@
     "focus": {
       "noQuestions": "Brak pytań do wyświetlenia w tym obszarze.",
       "questionPath": "Ścieżka pytania",
+      "questionProgress": "Pytanie {{current}} z {{total}}",
       "multiStepHint": "Ta jednostka ma {{count}} krótkie kroki. Na ekranie pozostaje otwarty tylko bieżący krok.",
       "stepOf": "Krok {{current}}/{{total}}",
       "openStep": "Otwórz krok {{number}}: {{wording}}",

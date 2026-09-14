@@ -260,7 +260,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-c-text">
-            {methodName} · Sesja {session.id.slice(0, 8)}
+            {methodName} · {t('methodWorkspace.sessionShort', 'Session {{id}}', { id: session.id.slice(0, 8) })}
           </p>
           <p className="truncate text-[11px] text-c-text-muted">
             {t('methodWorkspace.methodPack', 'Method Pack {{version}}', { version: packVersionLabel })}
@@ -378,7 +378,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             )}
             {/* Raw session UUID — technical detail, not something an
                 operator needs on first glance (the header already shows a
-                short, human-scannable "Sesja {id.slice(0,8)}"). */}
+                short, human-scannable "Session {id.slice(0,8)}"). */}
             <details className="mt-2">
               <summary className="cursor-pointer text-c-text-muted hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
                 {t('methodWorkspace.info.technicalDetails', 'Technical details')}

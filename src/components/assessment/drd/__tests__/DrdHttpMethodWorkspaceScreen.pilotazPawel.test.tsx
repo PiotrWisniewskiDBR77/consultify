@@ -135,7 +135,7 @@ async function renderAtInterviewFocus(): Promise<{ events: Zapisane }> {
   render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} seedTo="interview" />);
   await screen.findByTestId('method-workspace-shell');
   await waitFor(() =>
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7')
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7')
   );
   return { events };
 }
