@@ -252,6 +252,8 @@
     "check:jezyk": "node scripts/i18n/pomiar-jezyka.mjs",
     "check:jezyk:ci": "node scripts/i18n/pomiar-jezyka.mjs --baseline docs/program/JEZYK_EN_PL_20260908/baseline.json",
     "check:jezyk:staged": "node scripts/i18n/pomiar-jezyka.mjs --baseline docs/program/JEZYK_EN_PL_20260908/baseline.json --staged",
+    "check:jezyk:raport": "node scripts/i18n/pomiar-jezyka.mjs --report evidence/jezyk/POMIAR_PLIK_LINIA.txt",
+    "check:jezyk:baseline": "node scripts/i18n/pomiar-jezyka.mjs --json > docs/program/JEZYK_EN_PL_20260908/baseline.json",
     "check:colors": "node scripts/check-hardcoded-colors.cjs",
     "check:colors:update": "node scripts/check-hardcoded-colors.cjs --update",
     "check:colors:list": "node scripts/check-hardcoded-colors.cjs --list",

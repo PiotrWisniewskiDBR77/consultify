@@ -1,3 +1,13 @@
+/**
+ * @vitest-environment node
+ *
+ * Domyślnym środowiskiem w `vitest.config.ts` jest `jsdom`, a
+ * `environmentMatchGlobs` nie wymienia `scripts/**`. Pod jsdom vite serwuje ten
+ * plik przez `/@vite/client` i wywraca się na shebangu `#!/usr/bin/env node`
+ * z `pomiar-jezyka.mjs` (`RollupError: Parse failure: Expected ident`) — test
+ * był więc w `npm run test:unit` CZERWONY z powodu przyrządu, nie produktu.
+ * Ta dyrektywa przestawia środowisko per plik, bez ruszania wspólnej konfiguracji.
+ */
 // Testy funkcji klasyfikującej bramki językowej J0
 // (docs/program/JEZYK_EN_PL_20260908/J0_BRAMKA.md, PLAN.md §J0 pkt 4).
 //
