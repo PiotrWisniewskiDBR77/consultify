@@ -37,11 +37,17 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 vi.mock('@/components/standard/StandardTable', () => ({
-  StandardTable: ({ columns = [], data, onRowDoubleClick }: any) => (
+  StandardTable: ({ columns = [], data, onRowClick, onRowDoubleClick }: any) => (
     <div data-testid="standard-table">
       {data.map((row: any) => (
         <div key={row.id}>
-          <button type="button" onDoubleClick={() => onRowDoubleClick?.(row)}>{row.title}</button>
+          <button
+            type="button"
+            onClick={() => onRowClick?.(row)}
+            onDoubleClick={() => onRowDoubleClick?.(row)}
+          >
+            {row.title}
+          </button>
           {columns.map((column: any) => column.render
             ? <span key={column.id}>{column.render(row)}</span>
             : column.id !== 'title' && row[column.id] != null
@@ -285,6 +291,7 @@ describe('Work Intelligence report', () => {
 
     expect(await screen.findByText(/Blocked, Overdue/)).toBeInTheDocument();
     expect(screen.getAllByText('North plant').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Blocked commissioning' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delegate' }));
     await waitFor(() => expect(managerApi.executeManagerProblemAction).toHaveBeenCalledWith(
       'action-queue',
