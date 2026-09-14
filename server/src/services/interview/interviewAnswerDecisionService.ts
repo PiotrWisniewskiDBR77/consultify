@@ -7,6 +7,7 @@ import {
   deriveInterviewAnswerApprovalProgress,
   type InterviewAnswerApprovalDecision,
   type InterviewAnswerApprovalStage,
+  isInterviewAnswerApprovalEnvironmentEnabled,
   type ResolvedInterviewAnswerApprovalPolicy,
   resolveInterviewAnswerApprovalPolicy,
 } from './interviewAnswerApprovalPolicy.js';
@@ -96,6 +97,7 @@ export class InterviewAnswerDecisionCommandError extends Error {
   constructor(
     public readonly code:
       | 'COMMAND_INVALID'
+      | 'FEATURE_DISABLED'
       | 'IDEMPOTENCY_CONFLICT'
       | 'ASSIGNMENT_NOT_FOUND'
       | 'ASSIGNMENT_STATE_INVALID'
@@ -263,6 +265,7 @@ function answerSnapshot(
 }
 
 function frozenPolicyDocument(policy: {
+  enabled: boolean;
   mode: 'ai' | 'manager' | 'two_stage';
   configuredVersion: number | null;
 }): JsonObject {
@@ -270,6 +273,7 @@ function frozenPolicyDocument(policy: {
     interview: {
       answerApproval: {
         version: policy.configuredVersion ?? 1,
+        enabled: policy.enabled,
         mode: policy.mode,
       },
     },
@@ -473,6 +477,12 @@ function eventTypeFor(
 export async function applyInterviewAnswerDecisionCommand(
   input: ApplyInterviewAnswerDecisionCommandInput
 ): Promise<ApplyInterviewAnswerDecisionCommandResponse> {
+  if (!isInterviewAnswerApprovalEnvironmentEnabled()) {
+    throw new InterviewAnswerDecisionCommandError(
+      'FEATURE_DISABLED',
+      'Interview answer approval is disabled'
+    );
+  }
   assertCommandShape(input);
   const fingerprint = commandFingerprint(input);
   try {
@@ -671,6 +681,21 @@ export async function applyInterviewAnswerDecisionCommand(
           [input.organizationId]
         );
         policy = resolveInterviewAnswerApprovalPolicy(organizationPolicy?.policy);
+        if (
+          policy.compatibility === 'invalid_version' ||
+          policy.compatibility === 'unsupported_future_version'
+        ) {
+          throw new InterviewAnswerDecisionCommandError(
+            'POLICY_UNSUPPORTED',
+            'Interview answer approval policy version is not supported'
+          );
+        }
+        if (!policy.enabled) {
+          throw new InterviewAnswerDecisionCommandError(
+            'FEATURE_DISABLED',
+            'Interview answer approval is disabled for this organization'
+          );
+        }
       } else {
         let frozenPolicyJson: string | null = null;
         let frozenPolicy: ReturnType<typeof resolveInterviewAnswerApprovalPolicy> | null = null;
@@ -713,6 +738,7 @@ export async function applyInterviewAnswerDecisionCommand(
           );
           if (
             candidatePolicy.compatibility !== 'supported' ||
+            !candidatePolicy.enabled ||
             candidatePolicy.mode !== submitted.policy_mode ||
             candidatePolicy.configuredVersion !== Number(submitted.policy_version)
           ) {
@@ -939,6 +965,7 @@ export async function readInterviewAnswerApprovalProjection(input: {
   organizationId: string;
   assignmentId: string;
 }): Promise<InterviewAnswerApprovalProjection[]> {
+  if (!isInterviewAnswerApprovalEnvironmentEnabled()) return [];
   if (!nonBlank(input.organizationId) || !nonBlank(input.assignmentId)) {
     throw new InterviewAnswerDecisionCommandError(
       'COMMAND_INVALID',
@@ -988,6 +1015,7 @@ export async function readInterviewAnswerApprovalProjection(input: {
     const policy = resolveInterviewAnswerApprovalPolicy(latestSubmitted.policy_snapshot_json);
     if (
       policy.compatibility !== 'supported' ||
+      !policy.enabled ||
       policy.mode !== latestSubmitted.policy_mode ||
       policy.configuredVersion !== Number(latestSubmitted.policy_version)
     ) {

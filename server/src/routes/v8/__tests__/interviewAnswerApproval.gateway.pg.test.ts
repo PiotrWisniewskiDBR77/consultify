@@ -34,11 +34,14 @@ describe.skipIf(!REAL_DB)(
     const submissionId = `iaa-gateway-submission-${tag}`;
 
     beforeAll(async () => {
+    process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
       process.env.ENABLE_V8_GLOBAL = 'true';
       process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
       const target = new URL(DATABASE_URL);
       expect(target.hostname).toBe('127.0.0.1');
-      expect(target.pathname).toBe('/interview_staging_schema_clone_v3');
+      const configuredDatabaseName = process.env.INTERVIEW_APPROVAL_TEST_DATABASE?.trim();
+      expect(target.pathname).toMatch(/^\/[A-Za-z0-9_-]+$/);
+      if (configuredDatabaseName) expect(target.pathname).toBe(`/${configuredDatabaseName}`);
       const { Pool: PgPool } = await import('pg');
       pool = new PgPool({ connectionString: DATABASE_URL });
       await pool.query(`INSERT INTO organizations (id, name) VALUES ($1,'IAA gateway')`, [orgId]);
@@ -60,7 +63,7 @@ describe.skipIf(!REAL_DB)(
       await pool.query(
         `INSERT INTO organization_ai_policy (organization_id, policy)
        VALUES ($1,$2::jsonb)`,
-        [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, mode: 'manager' } } })]
+        [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } } })]
       );
       await pool.query(
         `INSERT INTO interview_sessions (id, organization_id, name, owner_id, status)
@@ -232,6 +235,41 @@ describe.skipIf(!REAL_DB)(
         latestDecision: 'approved',
         actor: null,
       });
+    });
+
+    it('exposes the legacy empty projection unless both rollout gates are on', async () => {
+      process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'false';
+      const envOff = await request(app)
+        .get(`/api/v8/interview/assignments/${assignmentId}/answer-approvals`)
+        .set('Authorization', `Bearer ${respondentToken}`);
+      expect(envOff.status, envOff.text).toBe(200);
+      expect(envOff.body.data).toEqual({ assignmentId, approvals: [] });
+
+      process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
+      await pool.query(
+        `UPDATE organization_ai_policy SET policy=$2::jsonb WHERE organization_id=$1`,
+        [
+          orgId,
+          JSON.stringify({
+            interview: { answerApproval: { version: 1, enabled: false, mode: 'manager' } },
+          }),
+        ]
+      );
+      const organizationOff = await request(app)
+        .get(`/api/v8/interview/assignments/${assignmentId}/answer-approvals`)
+        .set('Authorization', `Bearer ${respondentToken}`);
+      expect(organizationOff.status, organizationOff.text).toBe(200);
+      expect(organizationOff.body.data).toEqual({ assignmentId, approvals: [] });
+
+      await pool.query(
+        `UPDATE organization_ai_policy SET policy=$2::jsonb WHERE organization_id=$1`,
+        [
+          orgId,
+          JSON.stringify({
+            interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } },
+          }),
+        ]
+      );
     });
   }
 );
