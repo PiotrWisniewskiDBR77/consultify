@@ -8,6 +8,7 @@ import { installQueryFailureWebPerf } from '@/lib/installQueryFailureWebPerf';
 import { V8Provider } from '@/providers/V8Provider';
 
 import { VoiceConversationOverlay } from '../components/AIChat/VoiceConversationOverlay';
+import { ChunkUpdateBanner } from '../components/ChunkUpdateBanner';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
@@ -119,75 +120,87 @@ export const AppProviders: React.FC<AppProvidersProps> = React.memo(({ children 
     import.meta.env.VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES === 'true';
 
   return (
-    <ErrorBoundary>
-      <ThemeSync />
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <FeatureFlagsProvider
-            config={{ enableLocalOverrides: enableLocalFeatureFlagOverrides }}
-            showDevTools={false}
-          >
-            <AutoSaveProvider>
-              <TourProvider>
-                <HelpProvider>
-                  {enableHeavyProviders || isAuthInitializing ? (
-                    <AuthenticatedProviders>{children}</AuthenticatedProviders>
-                  ) : (
-                    children
-                  )}
-                  {/*
-                    Brand-anatomy defaults for every react-hot-toast call site
-                    (700+). Surfaces + text come from the canonical `c.*`
-                    semantic tokens (light/dark auto via CSS vars); severity
-                    icons use c-success / c-danger / c-accent. Presentation
-                    only — no delivery/dedup logic touched.
-                  */}
-                  <Toaster
-                    position="bottom-right"
-                    gutter={10}
-                    containerClassName="!z-toast"
-                    toastOptions={{
-                      duration: 4000,
-                      // Canonical semantic tokens (c.*) — resolved from CSS vars
-                      // in src/index.css (:root + .dark), so no hardcoded colors.
-                      style: {
-                        maxWidth: 'min(420px, calc(100vw - 2rem))',
-                        padding: '10px 14px',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        lineHeight: '1.4',
-                        background: 'var(--c-surface-raised)',
-                        color: 'var(--c-text)',
-                        border: '1px solid var(--c-border)',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.14)',
-                      },
-                      success: {
-                        iconTheme: {
-                          primary: 'var(--c-success)',
-                          secondary: 'var(--c-surface-raised)',
+    // Z-11 (2026-09-14): `ChunkUpdateBanner` is a TRUE sibling of
+    // `<ErrorBoundary>`, mounted outside it — a React error boundary
+    // replaces its entire `children` subtree with the fallback UI when it
+    // catches, so a banner placed *inside* `ErrorBoundary` would disappear
+    // exactly when it's needed (MainLayout's chunk failing lives inside
+    // this boundary). It listens for the global `CHUNK_UPDATE_EVENT` (fired
+    // by the `vite:preloadError` listener in index.tsx, and by
+    // `ErrorBoundary`/`RouteErrorBoundary` once they've already used their
+    // one automatic reload for this session).
+    <>
+      <ChunkUpdateBanner />
+      <ErrorBoundary>
+        <ThemeSync />
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <FeatureFlagsProvider
+              config={{ enableLocalOverrides: enableLocalFeatureFlagOverrides }}
+              showDevTools={false}
+            >
+              <AutoSaveProvider>
+                <TourProvider>
+                  <HelpProvider>
+                    {enableHeavyProviders || isAuthInitializing ? (
+                      <AuthenticatedProviders>{children}</AuthenticatedProviders>
+                    ) : (
+                      children
+                    )}
+                    {/*
+                      Brand-anatomy defaults for every react-hot-toast call site
+                      (700+). Surfaces + text come from the canonical `c.*`
+                      semantic tokens (light/dark auto via CSS vars); severity
+                      icons use c-success / c-danger / c-accent. Presentation
+                      only — no delivery/dedup logic touched.
+                    */}
+                    <Toaster
+                      position="bottom-right"
+                      gutter={10}
+                      containerClassName="!z-toast"
+                      toastOptions={{
+                        duration: 4000,
+                        // Canonical semantic tokens (c.*) — resolved from CSS vars
+                        // in src/index.css (:root + .dark), so no hardcoded colors.
+                        style: {
+                          maxWidth: 'min(420px, calc(100vw - 2rem))',
+                          padding: '10px 14px',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          lineHeight: '1.4',
+                          background: 'var(--c-surface-raised)',
+                          color: 'var(--c-text)',
+                          border: '1px solid var(--c-border)',
+                          boxShadow: '0 10px 40px rgba(0,0,0,0.14)',
                         },
-                      },
-                      error: {
-                        duration: 6000,
-                        iconTheme: {
-                          primary: 'var(--c-danger)',
-                          secondary: 'var(--c-surface-raised)',
+                        success: {
+                          iconTheme: {
+                            primary: 'var(--c-success)',
+                            secondary: 'var(--c-surface-raised)',
+                          },
                         },
-                      },
-                      loading: {
-                        iconTheme: {
-                          primary: 'var(--c-accent)',
-                          secondary: 'var(--c-surface-raised)',
+                        error: {
+                          duration: 6000,
+                          iconTheme: {
+                            primary: 'var(--c-danger)',
+                            secondary: 'var(--c-surface-raised)',
+                          },
                         },
-                      },
-                    }}
-                  />
-                </HelpProvider>
-              </TourProvider>
-            </AutoSaveProvider>
-          </FeatureFlagsProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
+                        loading: {
+                          iconTheme: {
+                            primary: 'var(--c-accent)',
+                            secondary: 'var(--c-surface-raised)',
+                          },
+                        },
+                      }}
+                    />
+                  </HelpProvider>
+                </TourProvider>
+              </AutoSaveProvider>
+            </FeatureFlagsProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </>
   );
 });

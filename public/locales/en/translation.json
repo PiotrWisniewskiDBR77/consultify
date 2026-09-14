@@ -335,6 +335,10 @@
     },
     "boundary": {
       "reportWithContext": "Report this error with full context"
+    },
+    "chunkUpdate": {
+      "message": "A new version of the app is available — refresh the page.",
+      "action": "Refresh"
     }
   },
   "transformationScenarios": {

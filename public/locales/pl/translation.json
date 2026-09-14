@@ -335,6 +335,10 @@
     },
     "boundary": {
       "reportWithContext": "Zgłoś ten błąd z pełnym kontekstem"
+    },
+    "chunkUpdate": {
+      "message": "Dostępna jest nowa wersja aplikacji — odśwież stronę.",
+      "action": "Odśwież"
     }
   },
   "transformationScenarios": {
