@@ -158,8 +158,12 @@ describe('„Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania',
     // Treść pytania trafia do promptu, którym otwiera się rozmowa — nie tylko
     // do metadanych, których czat nie czyta.
     expect(ctx.teresaPrompt).toContain(ctx.questionWording);
-    expect(ctx.teresaPrompt).toContain('poziom: 3');
-    expect(ctx.teresaPrompt).toContain(AREA_1A.namePL || AREA_1A.name);
+    // DEC-461: test i18n env defaults to English (tests/setup.ts), więc
+    // prompt Teresy idzie po angielsku — "level: 3" i angielska nazwa
+    // obszaru (namePL tylko gdy UI faktycznie jest po polsku, patrz
+    // `handleAskTeresa` w `DrdHttpMethodWorkspaceScreen.tsx`).
+    expect(ctx.teresaPrompt).toContain('level: 3');
+    expect(ctx.teresaPrompt).toContain(AREA_1A.name);
   });
 
   it('„Zapytaj Teresę" pod pomocą do pytania woła ten sam dok (jedna Teresa, nie drugi czat)', async () => {

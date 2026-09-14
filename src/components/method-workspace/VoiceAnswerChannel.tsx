@@ -66,7 +66,7 @@ export const VoiceAnswerChannel: React.FC<VoiceAnswerChannelProps> = ({
     settings: {
       inputMode: 'click-to-talk',
       sttProvider: browserStt ? 'web' : 'whisper',
-      language: (i18n.language || 'pl').split('-')[0],
+      language: (i18n.language || 'en').split('-')[0],
     },
   });
 
@@ -98,7 +98,11 @@ export const VoiceAnswerChannel: React.FC<VoiceAnswerChannelProps> = ({
         onClick={toggleListening}
         disabled={disabled}
         aria-pressed={state.isListening}
-        aria-label={state.isListening ? 'Zatrzymaj dyktowanie odpowiedzi' : 'Podyktuj odpowiedź'}
+        aria-label={
+          state.isListening
+            ? t('methodWorkspace.voice.stopDictationAriaLabel', 'Stop dictating the answer')
+            : t('methodWorkspace.voice.startDictationAriaLabel', 'Dictate the answer')
+        }
         className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50 disabled:cursor-not-allowed ${
           state.isListening
             ? 'border-c-info bg-c-info/10 text-c-info'
@@ -106,7 +110,11 @@ export const VoiceAnswerChannel: React.FC<VoiceAnswerChannelProps> = ({
         } ${className}`}
       >
         <Mic size={13} />
-        {state.isListening ? 'Słucham…' : state.isProcessing ? 'Przetwarzam…' : 'Podyktuj'}
+        {state.isListening
+          ? t('methodWorkspace.voice.listening', 'Listening…')
+          : state.isProcessing
+            ? t('methodWorkspace.voice.processing', 'Processing…')
+            : t('methodWorkspace.voice.dictate', 'Dictate')}
       </button>
       {state.error && !state.isListening && (
         <span

@@ -133,8 +133,11 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
     // w metodyce nie ma.
     return (
       <p className="text-sm text-c-text-secondary">
-        Macierzy tej osi nie da się narysować: struktura osi {axisNumber} nie występuje w metodyce
-        tej sesji.
+        {t('assessment.drd.ownerMatrix.axisNotFound', {
+          axisNumber,
+          defaultValue:
+            "This axis's matrix can't be drawn: axis {{axisNumber}} structure is not present in this session's methodology.",
+        })}
       </p>
     );
   }
@@ -158,7 +161,7 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
            dodatkowe słowo kosztuje siedem linijek wysokości i wypycha z kadru
            dolny pasek obszarów z chipami AS/TO — czyli dokładnie to, po czym
            właściciel poznaje swoją macierz. */
-        rowHint="Kliknij komórkę"
+        rowHint={t('assessment.drd.ownerMatrix.rowHint', 'Click a cell')}
         /* Siatka wypełnia wysokość zakładki i przewija się w środku, dzięki
            czemu `sticky bottom-0` paska obszarów faktycznie działa. */
         fillHeight={opcje.wypelnijWysokosc}
@@ -226,13 +229,17 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
       {selection && (
         <div
           role="dialog"
-          aria-label={`Szczegóły komórki: ${selection.unitId}, poziom ${selection.level}`}
+          aria-label={t('assessment.drd.ownerMatrix.cellDetailsAriaLabel', {
+            unitId: selection.unitId,
+            level: selection.level,
+            defaultValue: 'Cell details: {{unitId}}, level {{level}}',
+          })}
           data-testid="matrix-side-sheet"
           className="mt-2 rounded-xl border border-c-border bg-c-surface p-4"
         >
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-semibold text-c-text">
-              {selection.unitId} · Poziom {selection.level}
+              {selection.unitId} · {t('assessment.drd.ownerMatrix.levelLabel', 'Level')} {selection.level}
             </p>
             <button
               type="button"

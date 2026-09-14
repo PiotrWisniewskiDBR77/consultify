@@ -22,6 +22,7 @@
  * językiem metodyki. Polski obowiązuje w podpisach interfejsu.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { DRDMatrixGrid, type DRDEditorAnswers } from './DRDAssessmentEditor';
 
@@ -51,15 +52,6 @@ export function drdOdpowiedziZOutputu(
   return { areas };
 }
 
-/** Polska odmiana: 1 kolumna · 2-4 kolumny · 5+ kolumn (z wyjątkiem 12-14). */
-function polskaOdmianaKolumn(n: number): string {
-  if (n === 1) return 'kolumna';
-  const dziesiatki = n % 100;
-  const jednosci = n % 10;
-  if (jednosci >= 2 && jednosci <= 4 && !(dziesiatki >= 12 && dziesiatki <= 14)) return 'kolumny';
-  return 'kolumn';
-}
-
 export interface DRDMatrixReadOnlyProps {
   /** Numer osi metodyki (1..7) — `DRD_STRUCTURE[*].id`. */
   readonly axisNumber: number;
@@ -78,14 +70,18 @@ export const DRDMatrixReadOnly: React.FC<DRDMatrixReadOnlyProps> = ({
   fillHeight = false,
   columnMinPx = 150,
 }) => {
+  const { t } = useTranslation();
   const axis = DRD_STRUCTURE.find((a) => a.id === axisNumber);
   if (!axis) {
     // Bez zgadywania: nie rysujemy siatki udającej macierz osi, której
     // w przypiętej metodyce nie ma.
     return (
       <p className="text-sm text-c-text-secondary">
-        Macierzy tej osi nie da się narysować: struktura osi {axisNumber} nie występuje w metodyce
-        przypiętej do tego Outputu.
+        {t('assessment.drd.matrix.readOnly.axisNotFound', {
+          axisNumber,
+          defaultValue:
+            "This axis's matrix can't be drawn: axis {{axisNumber}} structure is not present in the methodology pinned to this Output.",
+        })}
       </p>
     );
   }
@@ -104,7 +100,13 @@ export const DRDMatrixReadOnly: React.FC<DRDMatrixReadOnlyProps> = ({
       onCellClick={() => {}}
       onAreaClick={() => {}}
       areaStripLabel="Area"
-      overflowHint={(n) => `Jeszcze ${n} ${polskaOdmianaKolumn(n)} po prawej — przewiń w bok.`}
+      overflowHint={(n) =>
+        t('assessment.drd.matrix.readOnly.overflowHint', {
+          count: n,
+          defaultValue: '{{count}} more column to the right — scroll to see it.',
+          defaultValue_other: '{{count}} more columns to the right — scroll to see them.',
+        })
+      }
     />
   );
 };
