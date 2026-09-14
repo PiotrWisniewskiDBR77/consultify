@@ -1,32 +1,132 @@
+/**
+ * W67 evidence harness. Every mode mounts the real product component; the
+ * harness supplies deterministic API rows only.
+ *
+ * Query: &module=n1|n2|n4. This file is copied unchanged into the exact-base
+ * worktree for BEFORE evidence, so only product code differs.
+ */
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
-import { countAuditCriteriaTree } from '@/components/Audit/method/tabs/AuditLibraryTab';
-import { countUnrepresentedStatuses } from '@/components/ReportsAndPresentations/statusCounts';
+import type { AuditPackSummary } from '@/components/Audit/method/auditsMethodApi';
+import { AuditLibraryTab } from '@/components/Audit/method/tabs/AuditLibraryTab';
+import { GovernedContextWorkspace } from '@/components/Organization/GovernedContextWorkspace';
+import { Api } from '@/services/api';
+import {
+  type GovernedClaim,
+  organizationGovernedContextApi,
+} from '@/services/organizationGovernedContextApi';
 
-const mode = new URLSearchParams(window.location.search).get('state') === 'before' ? 'before' : 'after';
-const statusCounts = { draft: 8, ready: 34, generated: 1 };
-const nestedCriteria: any[] = Array.from({ length: 3 }, (_, root) => ({
-  id: `root-${root}`, children: Array.from({ length: 2 }, (_, child) => ({ id: `child-${root}-${child}`, children: [] })),
+import Day267MaterialyHubZrzutyScreen from './day267-materialy-hub-zrzuty';
+
+const moduleKey = new URLSearchParams(window.location.search).get('module') || 'n1';
+
+const auditPack: AuditPackSummary = {
+  id: 'w67-audit-pack',
+  packKey: 'w67-audit-pack',
+  version: 1,
+  title: 'Operational control audit',
+  summary: 'Nine criteria across three control areas',
+  sourceId: 'w67-source',
+  sourceTitle: 'Operating standard',
+  sourceVersion: '1',
+  sourceType: 'INTERNAL_PROCEDURE',
+  verificationStatus: 'VERIFIED',
+  publicationStatus: 'published',
+  requiredRoles: [],
+  criteriaCount: 9,
+  updatedAt: '2026-09-14T12:00:00.000Z',
+  expertApprovedBy: 'expert-1',
+};
+
+const detailCriteria = Array.from({ length: 3 }, (_, index) => ({
+  id: `root-${index + 1}`,
+  parentId: null,
+  ordinal: index + 1,
+  refCode: `C${index + 1}`,
+  nodeKind: 'control_area',
+  title: `Control area ${index + 1}`,
+  mandatory: true,
 }));
-const other = countUnrepresentedStatuses(statusCounts, ['draft', 'ready']);
-const criteriaDetail = mode === 'before' ? nestedCriteria.length : countAuditCriteriaTree(nestedCriteria);
 
-function CounterCard({ code, title, children }: React.PropsWithChildren<{ code: string; title: string }>) {
-  return <section className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
-    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">{code}</div>
-    <h2 className="mt-1 text-lg font-semibold text-c-text">{title}</h2>
-    <div className="mt-4">{children}</div>
-  </section>;
+const claims: GovernedClaim[] = Array.from({ length: 200 }, (_, index) => ({
+  claimId: `claim-${index + 1}`,
+  itemId: `source-${index + 1}`,
+  claimPath: `profile.control_${index + 1}`,
+  value: `Governed value ${index + 1}`,
+  confidence: 0.9,
+  sourceType: 'document',
+  visibilityScope: 'organization',
+  reviewState: 'approved',
+  approved: true,
+  approvalSource: 'explicit_review',
+  decidedBy: 'owner-1',
+  decidedAt: '2026-09-14T12:00:00.000Z',
+  createdAt: '2026-09-14T11:00:00.000Z',
+}));
+
+function AuditEvidence(): React.ReactElement {
+  (Api as unknown as { get: (path: string) => Promise<unknown> }).get = async (path) => {
+    if (!path.startsWith('/audits/packs/')) throw new Error(`Unexpected evidence API path: ${path}`);
+    return {
+      data: {
+        success: true,
+        data: {
+          pack: {
+            ...auditPack,
+            purpose: 'Verify operating controls',
+            scope: 'Whole organization',
+            objectives: null,
+            auditType: 'compliance',
+            requiredCompetencies: [],
+            findingTaxonomy: [],
+            rightsStatus: 'licensed',
+            rightsNote: null,
+          },
+          criteria: detailCriteria,
+        },
+      },
+    };
+  };
+  return (
+    <MemoryRouter>
+      <div className="h-screen bg-c-app p-6 text-c-text" data-testid="w67-real-audit-module">
+        <AuditLibraryTab
+          packs={[auditPack]}
+          loading={false}
+          error={null}
+          onRetry={() => undefined}
+          isPolish={false}
+          onStartAudit={() => undefined}
+          startingPackId={null}
+          canManagePackLibrary
+          onApprovePackExpert={() => undefined}
+          onPublishPack={() => undefined}
+          pendingPackActionKey={null}
+        />
+      </div>
+    </MemoryRouter>
+  );
 }
-function Pill({ children }: React.PropsWithChildren) { return <span className="inline-flex h-8 items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-3 text-sm text-c-text">{children}</span>; }
 
-export default function D3CounterDriftW67Screen() {
-  return <main className="min-h-screen bg-c-app p-8 text-c-text" data-testid={`counter-drift-${mode}`}>
-    <header className="mb-6"><div className="text-xs font-semibold uppercase tracking-[0.18em] text-c-text-muted">D-3 · W67 · behavioral evidence</div><h1 className="mt-1 text-2xl font-semibold">Counter consistency — {mode === 'before' ? 'BEFORE' : 'AFTER'}</h1><p className="mt-2 text-sm text-c-text-secondary">Same measured fixtures; the after state exposes every denominator.</p></header>
-    <div className="grid gap-4 lg:grid-cols-3">
-      <CounterCard code="N1 · Materials / Presentations" title="Status categories"><div className="flex flex-wrap gap-2"><Pill>All 43</Pill><Pill>Draft 8</Pill><Pill>Ready 34</Pill>{mode === 'after' ? <Pill>Other statuses {other}</Pill> : null}</div><p className={`mt-3 text-sm font-medium ${mode === 'before' ? 'text-c-danger' : 'text-[var(--c-success)]'}`}>{mode === 'before' ? 'Visible categories add up to 42 of 43.' : '8 + 34 + 1 = 43. No status is hidden.'}</p></CounterCard>
-      <CounterCard code="N2 · Audits" title="Criteria count"><div className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-c-surface-raised p-3"><div className="text-xs text-c-text-muted">List</div><div className="mt-1 text-2xl font-semibold">9</div></div><div className="rounded-xl bg-c-surface-raised p-3"><div className="text-xs text-c-text-muted">Details</div><div className="mt-1 text-2xl font-semibold">{criteriaDetail}</div></div></div><p className={`mt-3 text-sm font-medium ${mode === 'before' ? 'text-c-danger' : 'text-[var(--c-success)]'}`}>{mode === 'before' ? 'Details counted only three root criteria.' : 'Details count the full nine-node criteria tree.'}</p></CounterCard>
-      <CounterCard code="N4 · Organization / Claims" title="Paged result"><div className="rounded-xl bg-c-surface-raised p-3"><div className="text-2xl font-semibold">Claims ({mode === 'before' ? 200 : 727})</div>{mode === 'after' ? <div className="mt-1 text-sm text-c-text-secondary">Showing 200 of 727</div> : null}</div><p className={`mt-3 text-sm font-medium ${mode === 'before' ? 'text-c-danger' : 'text-[var(--c-success)]'}`}>{mode === 'before' ? 'LIMIT 200 was presented as the total.' : 'Server total and visible page size are both explicit.'}</p></CounterCard>
+function ClaimsEvidence(): React.ReactElement {
+  const api = organizationGovernedContextApi as unknown as {
+    listClaims: () => Promise<GovernedClaim[]>;
+    listClaimsPage?: () => Promise<{ claims: GovernedClaim[]; total: number; limit: number }>;
+    listVersions: () => Promise<[]>;
+  };
+  api.listClaims = async () => claims;
+  api.listClaimsPage = async () => ({ claims, total: 727, limit: 200 });
+  api.listVersions = async () => [];
+  return (
+    <div className="min-h-screen bg-c-app p-6 text-c-text" data-testid="w67-real-claims-module">
+      <GovernedContextWorkspace isAdmin={false} />
     </div>
-  </main>;
+  );
+}
+
+export default function D3CounterDriftW67Screen(): React.ReactElement {
+  if (moduleKey === 'n2') return <AuditEvidence />;
+  if (moduleKey === 'n4') return <ClaimsEvidence />;
+  return <Day267MaterialyHubZrzutyScreen />;
 }

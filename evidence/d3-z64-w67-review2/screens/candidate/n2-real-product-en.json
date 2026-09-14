@@ -1,0 +1,6 @@
+{
+  "module": "n2",
+  "url": "http://127.0.0.1:4215/?screen=d3-counter-drift-w67&module=n2&lang=en&theme=light&uwagi=0",
+  "errors": [],
+  "text": "TITLE\n\t\nSOURCE\n\t\nVERSION\n\t\nSOURCE TYPE\n\t\nVERIFICATION\n\t\nPUBLICATION STATUS\n\t\nCRITERIA\n\t\nUPDATED\n\t\n\n\nOperational control audit\n\t\nOperating standard\n\t\nv1\n\t\nInternal procedure\n\t\nVerified\n\t\nPublished\n\t\n9\n\t\n14/09/2026\n\t\nOperational control audit\nSource type: Internal procedure\nVerification: Verified\nPublication: Published\nCompliance-audit basis: No\nDETAILS\nProperty\tValue\nPurpose\tVerify operating controls\nScope\tWhole organization\nSource\tOperating standard (v1)\nRights\tlicensed\nRequired roles\t—\nFinding taxonomy\tNo taxonomy defined\nCriteria count\t9\nStart audit"
+}
