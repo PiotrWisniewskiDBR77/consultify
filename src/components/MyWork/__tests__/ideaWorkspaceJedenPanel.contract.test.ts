@@ -63,9 +63,11 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
   it('Teresa jest ZAKŁADKĄ tego panelu, a globalny dok ustępuje na całej trasie warsztatu', () => {
     expect(inspektor).toContain('data-testid={`idea-panel-tab-${tab.id}`}');
     expect(workspace).toContain('const teresaCommands: ArtifactRailTeresaCommand[]');
-    expect(workspace).toContain('teresaCommands={teresaCommands}');
-    expect(workspace).toContain('onDiscussWithTeresa={handleTeresaDiscuss}');
+    expect(workspace).toContain('const teresaPanelNode = (');
+    expect(workspace).toContain("ustawZakladkePanelu('teresa')");
     expect(workspace).toContain("import('@/components/AIChat/UnifiedChatPanel')");
+    expect(workspace).not.toContain('teresaCommands={teresaCommands}');
+    expect(workspace).not.toContain('onDiscussWithTeresa={handleTeresaDiscuss}');
     const layout = fs.readFileSync(
       path.resolve(__dirname, '../../../layouts/MainLayout.tsx'),
       'utf8'
