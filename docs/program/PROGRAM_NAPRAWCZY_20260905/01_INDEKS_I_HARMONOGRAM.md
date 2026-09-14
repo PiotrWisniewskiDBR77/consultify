@@ -184,6 +184,49 @@ usunięte: `p1-raport`, `fala-a2`; `z29` (w toku — RP1b jeszcze aktywne).
 🔧 7 · ⬜ 26; FALA 2 = 41 etapów (0 ✅, 9 🧪, 7 🔧, 25 ⬜). Pełny wpis:
 `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, sekcja §5.
 
+**Paczka 5 v3 (Wywiad — zatwierdzanie odpowiedzi, Codex S1) — PRZYJĘTA i WDROŻONA na staging
+(push `19baa6d8bc`; run `34828181888` „failure" = timeout czekania na Railway „Timed out waiting
+for staging app deployment", wdrożenie realne: `/api/health` gitSha `19baa6d8bc`; tag
+`staging-deployed` NIE przesunięty (został `3e1363d01a`) — przy zamrożonym demo stan pożądany):
+linia `3e1363d01a` → merge `b677f46d11` (kandydat `c971ce6ef6`, 0 konfliktów) → HEAD
+`19baa6d8bc` (merge aktualnej linii z falą B3); tag cofnięcia `rollback-pre-paczka5v3-20260914` =
+`3e1363d01a`; delta test vs kod v2→v3: `git diff e1a2c2c160..c971ce6ef6 -- server/src src` PUSTY
+(poprawka wyłącznie w teście: własny mock `organization_ai_policy` + env w before/afterEach —
+uczciwa; plik testuje ścieżkę ON, OFF pokrywa sonda parytetu); testy: bloker 32/32 (na linii 2/14
+zastane), 12 plików unit 202/202 (powtórzone po scaleniu linii), RealPG 19/19 (zero skipped);
+migracja `20262170`: pusta baza 2× idempotentna; schemat stagingu 1818 tabel z zaszczepionym
+ledgerem sha256 (runner odmawia „UNTRUSTED LEDGER ROW" przy pustym) 1× stosuje/2× 0 pending;
+pułapka 919 potwierdzona = artefakt schema-only; zastane czerwienie: 46 plików importujących
+zmieniony kod — te same 3 na linii i kandydacie (`InsightCreatorModal.context-documents` 1F,
+`InterviewScoringRubric` 7F, `cardContractFlagFamily.day324` 1F), zero nowych; parytet OFF:
+2 serwery na jednej bazie PG18, 6 żądań (login/JWT/ApiGateway), 5/6 bajtowo identyczne (w tym
+mutujący POST submit sha `ab65ba26f8b3`), 6. = nowy GET `…/answer-approvals` 200 `{approvals:[]}`
+(tylko-do-odczytu); POST `answer-decisions` / `retry-ai` przy OFF → 404, 0 wierszy w nowych
+tabelach; bramka: tsc serwer 0, front 189 (=limit; sama paczka 188, +1 z fali B3), język OK,
+canon 349, artefakt 8-0-117, build OK (pułapka: pierwszy tsc frontu „0 błędów" = OOM przy
+równoległym vitest — powtórzony z heap 8 GB); migracja na stagingu: `/api/health/migrations`
+`disabled_by_operator`; SELECT: obie tabele istnieją, ledger success 09:41:48 UTC — zaaplikowała
+`preDeployCommand`; `schema_migrations` 1009 wierszy / 1133 plików (luka zastana, **Z-33** do
+wyjaśnienia); flaga `ENABLE_INTERVIEW_ANSWER_APPROVAL` nieustawiona (parametr org OFF) —
+włączenie po akcepcie właściciela na zrzutach ON (**Z-34**). Zrzuty
+`~/Developer/cto-codex/zrzuty-paczka5v3-20260914/` (OFF lokalnie na SHA stagingu — konto
+techniczne, storageState QA wygasły Z-20; ON = evidence Codexa). Codex: KANAL wpis 36 (slot S1
+wolny → follow-up `codex/interview-pilot-fixes-20260914`: XV/XVI/XVII).
+
+**Z-33 (14.09, nowe).** Luka `schema_migrations` na stagingu: 1009 wierszy zarejestrowanych vs
+1133 plików migracji w repo (zastana, nie wprowadzona paczką 5 v3) — do wyjaśnienia.
+
+**Z-34 (14.09, nowe).** Włączenie flagi `ENABLE_INTERVIEW_ANSWER_APPROVAL` (paczka 5 v3,
+zatwierdzanie odpowiedzi Wywiadu) — warunek: akcept właściciela na zrzutach ON (dziś OFF).
+
+**Z-2 (aktualizacja 14.09, po paczce 5 v3).** Integratory w toku: fala B4 push `94754c3b4d`
+w wdrożeniu, Q1 Obciążenie, S5 PMO E3, RP1b.
+
+**EWIDENCJA (uzupełnienie 14.09, po paczce 5 v3).** Paczka 5 (Wywiad) → **🧪 NA STAGINGU**
+`19baa6d8bc` (za flagą); Skrzynka: Z-33, Z-34 nowe. Liczniki „Duże pakiety Codexa" przeliczone:
+5/5 w toku → **1 na stagingu** (paczka 5 v3, za flagą), 4 pozostają w toku. Pełny wpis:
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, „Duże pakiety Codexa" (§0.1).
+
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
 (zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).

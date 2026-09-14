@@ -542,9 +542,10 @@ fali B3 `78086fb2c8`, wszystkie za flagami OFF), **8 w toku** (A4 DEC-499, B-E1 
 raportów, PMO E3, P6, H1e — gotowe do scalenia `1b9d467823` warunek DEC-507, RP1 — gotowe do
 odbioru CTO Codex S2 `4d8113fa46`, OB1 — gotowe do odbioru Codex Q1 `d27172ed3c`), **25 nie
 zaczętych**. Duże
-pakiety Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
-dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v2 ACCEPT `e1a2c2c160`
-w odbiorze CTO). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
+pakiety Codexa: **5/5 w toku, 1 na stagingu** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
+dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v3 PRZYJĘTA i
+WDROŻONA na staging `19baa6d8bc` za flagą `ENABLE_INTERVIEW_ANSWER_APPROVAL` OFF — patrz EWIDENCJA
+niżej). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
 13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B3 WDROŻONA na staging za flagami OFF —
 DEC-507; akcept wyglądu właściciela na zrzucie w powłoce (Z-27) = warunek włączenia flag).
 
@@ -822,6 +823,29 @@ kanonu, skazy Z-29) w toku pod tym samym wierszem RP1, nie liczony osobno. Skrzy
 rozliczone** (skazy przekazane do RP1b), **Z-31 nowy** (żywe doręczenie maila do właściciela —
 wymaga jego zgody, patrz sonda CTO wyżej). Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 10 ·
 🔧 7 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 41 etapów (0 ✅, 9 🧪, 7 🔧, 25 ⬜).
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po odbiorze paczki 5 v3).** Paczka 5 v3 (Wywiad —
+zatwierdzanie odpowiedzi, Codex S1) **PRZYJĘTA i WDROŻONA na staging** (push `19baa6d8bc`; run
+`34828181888` „failure" = tylko timeout czekania na Railway „Timed out waiting for staging app
+deployment", wdrożenie realne: `/api/health` gitSha `19baa6d8bc`; tag `staging-deployed` NIE
+przesunięty (został `3e1363d01a`) — przy zamrożonym demo stan pożądany). Linia `3e1363d01a` →
+merge `b677f46d11` (kandydat `c971ce6ef6`, 0 konfliktów) → HEAD `19baa6d8bc` (merge aktualnej
+linii z falą B3); tag cofnięcia `rollback-pre-paczka5v3-20260914` = `3e1363d01a`. Delta test vs
+kod v2→v3 (`git diff e1a2c2c160..c971ce6ef6 -- server/src src`) PUSTA — poprawka wyłącznie w
+teście (własny mock `organization_ai_policy` + env w before/afterEach, uczciwa; ścieżka ON
+testowana w pliku, OFF pokrywa sonda parytetu). Testy: bloker 32/32, 12 plików unit 202/202,
+RealPG 19/19 (zero skipped); migracja `20262170` pusta baza 2× idempotentna; pułapka 919
+potwierdzona jako artefakt schema-only; zastane czerwienie 46 plików bez zmian (3 na linii i
+kandydacie identyczne, zero nowych); parytet OFF: 5/6 żądań bajtowo identyczne, 6. = nowy
+tylko-do-odczytu GET `…/answer-approvals` 200 `{approvals:[]}`, `answer-decisions`/`retry-ai` przy
+OFF → 404, 0 wierszy w nowych tabelach. Bramka: tsc serwer 0, front 189 (limit; sama paczka 188,
++1 z fali B3), język OK, canon 349, artefakt 8-0-117, build OK. Flaga
+`ENABLE_INTERVIEW_ANSWER_APPROVAL` nieustawiona (OFF) — włączenie po akcepcie właściciela na
+zrzutach ON. Skrzynka: **Z-33 nowy** (luka `schema_migrations` 1009/1133, zastana, do
+wyjaśnienia), **Z-34 nowy** (akcept właściciela na zrzutach ON = warunek włączenia flagi).
+Pełny dowód (bramka, parytet, migracja): `docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`,
+wpis „Paczka 5 v3". Liczniki „Duże pakiety Codexa" przeliczone (§0.1): 5/5 w toku → **1 na
+stagingu** (paczka 5 v3), 4 pozostają w toku (F2-1, F2-2, F2-3, F2-E).
 
 ---
 
