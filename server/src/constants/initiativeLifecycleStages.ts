@@ -189,9 +189,29 @@ export function resolveInitiativeLifecycleStage(
   return LEGACY_TARGET_TO_STAGE[raw] ?? null;
 }
 
+/**
+ * H1d — DYSPOZYCJE BEZ ETAPU. Canon §5.3: odrzucenie/anulowanie to `disposition`,
+ * nie etap cyklu życia — w dwunastostopniowym łańcuchu DEC-490 nie ma dla nich
+ * miejsca. `LEGACY_TARGET_TO_STAGE` mapuje je (w parytecie z klientem) na etap
+ * `CLOSED`, co jest poprawne dla ODCZYTU, ale było fatalne dla ZAPISU: cel
+ * `REJECTED` przechodził przez `INITIATIVE_STAGE_TO_STATUS['CLOSED']` i lądował
+ * w kolumnie jako **CLOSED**, mimo że siedmiokodowy słownik P12 ma osobny kod
+ * `REJECTED`. Zmierzone na realnym Postgresie: przejście IN_EXECUTION→REJECTED
+ * zapisywało `status='CLOSED'` (test `p12IntC.statusWritePaths.pg.test.ts`
+ * czerwieniał na tym JESZCZE PRZED zmianami H1d).
+ *
+ * Ścieżka ZAPISU musi je więc rozstrzygać PRZED tabelą etapów. Etap zostaje
+ * `null` — inicjatywa odrzucona zachowuje w agregacie etap, na którym umarła;
+ * nadpisanie go `CLOSED` kłamałoby, że przeszła całą ścieżkę realizacji.
+ */
+const DISPOSITION_WRITE_TARGETS: Record<string, InitiativeStatusType> = {
+  REJECTED: InitiativeStatus.REJECTED,
+  CANCELLED: InitiativeStatus.REJECTED,
+};
+
 export interface InitiativeStageWriteTarget {
-  /** Etap silnika — prawda 12-stopniowa, ląduje w agregacie. */
-  stage: InitiativeLifecycleStage;
+  /** Etap silnika — prawda 12-stopniowa, ląduje w agregacie. `null` dla dyspozycji. */
+  stage: InitiativeLifecycleStage | null;
   /** Kod kolumny `initiatives.status` — prawda 7-kodowa, przechodzi CHECK P12. */
   status: InitiativeStatusType;
   /** Czy etap wymusza podniesienie flagi `archived`. */
@@ -206,6 +226,9 @@ export interface InitiativeStageWriteTarget {
 export function resolveInitiativeStageWriteTarget(
   value: string | null | undefined
 ): InitiativeStageWriteTarget | null {
+  // Dyspozycje NAJPIERW — patrz `DISPOSITION_WRITE_TARGETS`.
+  const disposition = DISPOSITION_WRITE_TARGETS[String(value ?? '').trim().toUpperCase()];
+  if (disposition) return { stage: null, status: disposition, archived: false };
   const stage = resolveInitiativeLifecycleStage(value);
   if (!stage) return null;
   return {

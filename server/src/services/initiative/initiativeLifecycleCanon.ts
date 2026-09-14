@@ -286,7 +286,7 @@ export function resolveInitiativeStageForRow(input: {
 export function coerceInitiativeStatusForWrite(
   candidate: string | unknown
 ):
-  | { ok: true; status: string; stage: InitiativeLifecycleStage; archived: boolean }
+  | { ok: true; status: string; stage: InitiativeLifecycleStage | null; archived: boolean }
   | { ok: false; code: 'UNKNOWN_STATUS'; message: string } {
   const raw = String(candidate ?? '')
     .trim()
