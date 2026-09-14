@@ -641,6 +641,32 @@ UUID/`SENDING` bez lease/MEMBER w pickerze; SMTP lokalny do E1, doręczenie na s
 przy odbiorze CTO — Wpis 29). S3 rebase. S4 freeze `a0c6770b35` na `88f1` — kolejka odbioru po S1.
 S5 migracja `20262190` PASS + zaakceptowana (Wpis 29), E3 trwa.
 
+**Odbiór paczki 5 v2 (Codex S1) — WSTRZYMANE, wraca (KANAL wpis 30) — 14.09.** Scalenie
+`8b6d3f2671` (`e1a2c2c160` na `21d7d27ecf`, 0 konfliktów) na
+`origin/backup/kandydat-paczka5v2-odbior-20260914`, worktree `wt/paczka5v2` zostawiony. D1–D4
+potwierdzone: `InterviewController.ts:3739`; `gateway.pg.test:44` env
+`INTERVIEW_APPROVAL_TEST_DATABASE`; `migration.test:10` `testPath`;
+`interviewAnswerApprovalPolicy.ts:30` `=== 'true'` + parametr org, oba wymagane. Parytet OFF: 11
+żądań przez realny ApiGateway+JWT+PG18, linia vs kandydat identyczne co do bajtu (addytywne: `code`
+w błędach, nowa trasa `GET …/answer-approvals` 200 `{approvals:[]}`). Smoke ON: ledger 1 wiersz;
+migracja `20262170` idempotentna (pusta 2×, schemat stagingu 2×). Bramka: tsc 0/188, canon 349,
+artefakt 8-0-117, build OK, 104+85 testów zielone. **BLOKER:**
+`tests/unit/backend/controllers/InterviewAssignmentsController.test.ts` (przepisany +958 linii)
+21 failed/11 passed (ON: 28/32); nieobjęty `FOCUSED_TESTS.json` Codexa (8 plików) — „62/62" nie
+obejmowało testów własnej funkcji; mieszane przyczyny (stała asercja `aiReview:null` vs defekt
+`retryAiAnswerApprovals` 404≠503, LLM wołany mimo asercji, autoryzacja/redakcja nieudowodnione).
+**Nowa reguła (wpis 30):** FOCUSED_TESTS = wszystkie pliki testowe z delty. D6/D7 zostają. Zastane:
+pełny ścisły łańcuch migracji na klonie schematu stagingu pada na 919 (ledger 225/915) — dyżur D-g.
+**Lekcja nadzorcy:** „focused tests" wykonawcy nie dowodzą jego własnej zmiany, jeśli lista nie
+pochodzi z delty — nowy kształt fałszywego „gotowe" (kandydat do pamięci).
+
+**Codex 14.09, 03:01–03:09.** S2 nowy freeze → final review **REQUEST_CHANGES** (drugi raz); S4/S5
+checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review). **Z-2:** H1d w toku
+(martwa bramka GO/NO-GO), po H1d integrator H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX`.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po odbiorze paczki 5 v2).** Paczka 5 (Wywiad) →
+**🔧 wraca** (wpis 30). S5 PMO E3 → **🔧 freeze E1**.
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
