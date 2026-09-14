@@ -1,9 +1,9 @@
 # Q1 P3 Obciążenie — E1 freeze
 
-Werdykt: **READY_FOR_INDEPENDENT_REVIEW — E1 ukończone, E2–E4 poza tym freeze.**
+Werdykt: **READY_FOR_INDEPENDENT_RE-REVIEW — E1 ukończone, trzy uwagi pierwszego review naprawione, E2–E4 poza tym freeze.**
 
-- Implementacja: `f463daac87dce9c8f1ef801a9a46b17d1d57d140`
-- Tree implementacji: `de7f6ae7d8287ff4819074fc0f66446ef56dd989`
+- Implementacja: `d27172ed3cca66c86a307daaa3b0663bff9e27b1`
+- Tree implementacji: `993aff02b6b3c05033c680d9f4e9e250702b4138`
 - Baza: `26b9d88309f1f174fc5450beb49d7b995383ea43` (`origin/integracja/20260911` po fetch)
 - Gałąź: `codex/obciazenie-inicjatyw-20260914`
 - Backup: `backup/codex/obciazenie-inicjatyw-20260914-20260914`
@@ -20,10 +20,14 @@ Werdykt: **READY_FOR_INDEPENDENT_REVIEW — E1 ukończone, E2–E4 poza tym free
 - Front `VITE_INITIATIVES_WORKLOAD` i serwer `ENABLE_INITIATIVES_WORKLOAD` mają domyślnie OFF. Przy OFF nowa trasa zwraca 404, a Hub renderuje poprzedni ekran.
 - EN+PL. Brak migracji i brak zmian przydziałów.
 
+## Zamknięcie uwag niezależnego review
+
+Pierwszy niezależny review SHA `c7c9bbd977` wydał `REQUEST_CHANGES`. Implementacja `d27172ed3c` zamyka wszystkie trzy uwagi: dodatni popyt przy zerowej dostępności ma jawny stan krytyczny `capacityExceeded` i czerwony token; filtr projektu korzysta z kanonicznego `initiatives.project_id`; niekanoniczny status daje HTTP 400 `INVALID_INITIATIVE_STATUS` zamiast poszerzać zapytanie. Dowody regresyjne są częścią zestawu 5 plików / 7 testów poniżej.
+
 ## Dowody
 
-- Wszystkie 5 zmienionych plików testowych, `--retry=0 --no-file-parallelism`: **5 plików, 6 testów PASS**.
-- ApiGateway + podpisany JWT + RealPG `127.0.0.1:5291`: **PASS**; wybrany projekt i `PENDING_APPROVAL` dają 30h/20h = 150%, obcy projekt jest wykluczony, aktywna osoba bez zadań daje 0%, OFF daje 404.
+- Wszystkie 5 zmienionych plików testowych, `--retry=0 --no-file-parallelism`: **5 plików, 7 testów PASS**.
+- ApiGateway + podpisany JWT + RealPG `127.0.0.1:5291`: **PASS**; wybrany projekt i `PENDING_APPROVAL` dają 30h/20h = 150%, obcy projekt jest wykluczony, aktywna osoba bez zadań daje 0%, dodatni popyt przy 0h dostępności jest krytyczny, niekanoniczny status daje 400, OFF daje 404.
 - `npx tsc -p server/tsconfig.json --noEmit --pretty false`: **PASS**.
 - Esbuild zmienionych plików: **PASS**.
 - Produkcyjny `vite build` z flagą ON i `NODE_OPTIONS=--max-old-space-size=8192`: **PASS**, 10 732 moduły. Pierwsza próba przy domyślnym heap 4GB zakończyła się OOM po transformacji; nie był to defekt źródła.
