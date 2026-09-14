@@ -1,0 +1,88 @@
+src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx: EXIT=0
+
+  ../../../../../tmp/w67-0.js  3.7mb ⚠️
+
+⚡ Done in 633ms
+
+src/components/Audit/method/tabs/AuditLibraryTab.tsx: EXIT=0
+
+  ../../../../../tmp/w67-1.js  2.7mb ⚠️
+
+⚡ Done in 182ms
+
+src/components/Organization/GovernedContextWorkspace.tsx: EXIT=0
+
+  ../../../../../tmp/w67-2.js  2.1mb ⚠️
+
+⚡ Done in 136ms
+
+src/services/organizationGovernedContextApi.ts: EXIT=0
+
+  ../../../../../tmp/w67-3.js  1.6mb ⚠️
+
+⚡ Done in 51ms
+
+server/src/routes/organization-context.routes.ts: EXIT=1
+✘ [ERROR] Could not resolve "tesseract.js"
+
+    server/src/services/ai/deckImageSafetyGates.ts:8:33:
+      8 │   const tesseract = await import('tesseract.js');
+        ╵                                  ~~~~~~~~~~~~~~
+
+  You can mark the path "tesseract.js" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle. You can also add ".catch()" here to handle this failure at run-time instead of bundle-time.
+
+✘ [ERROR] No loader is configured for ".node" files: node_modules/@sentry/node-cpu-profiler/lib/sentry_cpu_profiler-darwin-x64-147.node
+
+    node_modules/@sentry/node-cpu-profiler/lib/index.js:72:31:
+      72 │ ...      return require('./sentry_cpu_profiler-darwin-x64-147.node');
+         ╵                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".node" files: node_modules/@sentry/node-cpu-profiler/lib/sentry_cpu_profiler-darwin-arm64-108.node
+
+    node_modules/@sentry/node-cpu-profiler/lib/index.js:77:31:
+      77 │ ...    return require('./sentry_cpu_profiler-darwin-arm64-108.node');
+         ╵                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".node" files: node_modules/@sentry/node-cpu-profiler/lib/sentry_cpu_profiler-darwin-x64-127.node
+
+    node_modules/@sentry/node-cpu-profiler/lib/index.js:66:31:
+      66 │ ...      return require('./sentry_cpu_profiler-darwin-x64-127.node');
+         ╵                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".node" files: node_modules/@sentry/node-cpu-profiler/lib/sentry_cpu_profiler-darwin-arm64-127.node
+
+    node_modules/@sentry/node-cpu-profiler/lib/index.js:83:31:
+      83 │ ...    return require('./sentry_cpu_profiler-darwin-arm64-127.node');
+         ╵                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".node" files: node_modules/@sentry/node-cpu-profiler/lib/sentry_cpu_profiler-win32-x64-137.node
+
+    node_modules/@sentry/node-cpu-profiler/lib/index.js:105:31:
+      105 │ ...      return require('./sentry_cpu_profiler-win32-x64-137.node');
+          ╵                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+6 of 37 errors shown (disable the message limit with --log-limit=0)
+node:child_process:964
+    throw err;
+    ^
+
+Error: Command failed: /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/node_modules/@esbuild/darwin-arm64/bin/esbuild server/src/routes/organization-context.routes.ts --bundle --platform=node --format=esm --outfile=/tmp/w67-4.js --external:canvas --external:sharp
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at Object.execFileSync (node:child_process:961:15)
+    at Object.<anonymous> (/Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/node_modules/esbuild/bin/esbuild:222:28)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 18768,
+  stdout: null,
+  stderr: null
+}
+
+Node.js v24.12.0

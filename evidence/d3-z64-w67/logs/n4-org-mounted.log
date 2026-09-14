@@ -1,0 +1,23 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/Organization/__tests__/GovernedContextWorkspace.claimCount.test.tsx > GovernedContextWorkspace claim total > shows the server total and the visible page size instead of presenting LIMIT 200 as the total 310ms
+ ✓ src/components/Organization/__tests__/GovernedContextWorkspace.claimCount.test.tsx (1 test) 312ms
+     ✓ shows the server total and the visible page size instead of presenting LIMIT 200 as the total  310ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:20:02
+   Duration  1.30s (transform 284ms, setup 169ms, import 391ms, tests 312ms, environment 327ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:20:02
+   Duration  1.30s (transform 284ms, setup 169ms, import 391ms, tests 312ms, environment 327ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
