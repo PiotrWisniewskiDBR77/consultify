@@ -669,9 +669,7 @@ class ScheduledReportService {
               status: 'success' as const,
               details:
                 method === 'email'
-                  ? scheduleData.locale === 'pl'
-                    ? 'Zamrożony PDF został przyjęty przez skonfigurowanego dostawcę SMTP'
-                    : 'Frozen PDF accepted by configured SMTP provider'
+                  ? reportMessage(scheduleData.locale, 'scheduledReports.smtpAccepted')
                   : reportMessage(scheduleData.locale, 'scheduledReports.dashboard'),
               timestamp: new Date().toISOString(),
             }))

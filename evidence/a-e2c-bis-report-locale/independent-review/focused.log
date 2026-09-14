@@ -1,0 +1,101 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2c-bis-report-locale-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-e2c-bis-report-locale-20260914
+
+ ✓ tests/unit/deliverables/schedulerBundleBridge.test.ts > W6.1 — executeSchedule bridges to M17 bundle generator > wywołuje generateBundle z briefem z description 9ms
+ ✓ tests/unit/deliverables/schedulerBundleBridge.test.ts > W6.1 — executeSchedule bridges to M17 bundle generator > exportuje bundle i generuje ZIP 1ms
+ ✓ tests/unit/deliverables/schedulerBundleBridge.test.ts > W6.1 — executeSchedule bridges to M17 bundle generator > wysyła email z załącznikiem ZIP (base64) 1ms
+ ✓ tests/unit/deliverables/schedulerBundleBridge.test.ts > W6.1 — executeSchedule bridges to M17 bundle generator > brief za krótki → brak generateBundle (skip silently) 1ms
+ ✓ tests/unit/deliverables/schedulerBundleBridge.test.ts (4 tests) 15ms
+ ✓ tests/unit/deliverables/scheduledReportEmail.test.ts > W6.2 — deliverViaEmail un-stub > wysyła realnie przez wstrzyknięty emailService.send dla KAŻDEGO odbiorcy 6ms
+ ✓ tests/unit/deliverables/scheduledReportEmail.test.ts > W6.2 — deliverViaEmail un-stub > domyślny subject gdy nie podano 1ms
+ ✓ tests/unit/deliverables/scheduledReportEmail.test.ts > W6.2 — deliverViaEmail un-stub > brak odbiorców → nic nie wysyła (no throw) 0ms
+ ✓ tests/unit/deliverables/scheduledReportEmail.test.ts > W6.2 — deliverViaEmail un-stub > błąd wysyłki jednego odbiorcy nie wywraca reszty (fail-soft) 3ms
+ ✓ tests/unit/deliverables/scheduledReportEmail.test.ts (4 tests) 13ms
+stdout | server/src/routes/__tests__/executionReports.export.test.ts
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/__tests__/executionReports.export.test.ts
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/services/report/__tests__/reportLocale.test.ts > reportLocale — DEC-510 > uses the first valid job/user/org locale and falls back to English 101ms
+ ✓ server/src/services/report/__tests__/reportLocale.test.ts > reportLocale — DEC-510 > returns a stable key, params and one-locale value 1ms
+ ✓ server/src/services/report/__tests__/reportLocale.test.ts (2 tests) 104ms
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 15:37:50:3750 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/services/__tests__/scheduledReportService.locale.test.ts > scheduled report email locale > renders the Northwind delivery wholly in English 76ms
+ ✓ server/src/services/__tests__/scheduledReportService.locale.test.ts > scheduled report email locale > renders the same delivery wholly in Polish 1ms
+ ✓ server/src/services/__tests__/scheduledReportService.locale.test.ts (2 tests) 80ms
+ ✓ server/src/services/report/__tests__/reportLocale.resources.test.ts > report locale resources > publishes every server report message key as a non-empty EN and PL string 102ms
+ ✓ server/src/services/report/__tests__/reportLocale.resources.test.ts > report locale resources > keeps only natural product terms identical between EN and PL 0ms
+ ✓ server/src/services/report/__tests__/reportLocale.resources.test.ts (2 tests) 107ms
+stdout | server/src/routes/__tests__/executionReports.export.test.ts
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/__tests__/executionReports.export.test.ts
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/__tests__/executionReports.export.test.ts
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/routes/__tests__/executionReports.export.test.ts
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-14 15:37:52:3752 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > defaults OFF and rejects the runner before it reads or writes report state 4ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > persists CREATE→VALIDATE→FREEZE→APPROVE, retries a partial SMTP delivery, then PUBLISHes once 208ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > manual HTTP retry reuses the run receipt and never resends a successful recipient 46ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > keeps an active SENDING lease fenced, then safely reclaims it after timeout 2ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts (4 tests) 264ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts > 1.12-R4 — eksport raportu Realizacji przez UnifiedExportService > DOCX jest realnym plikiem OOXML i nie jest pusty 118ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts > 1.12-R4 — eksport raportu Realizacji przez UnifiedExportService > nagłówek dokumentu jest po polsku i niesie stan na, okres i RAG 21ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts > 1.12-R4 — eksport raportu Realizacji przez UnifiedExportService > encje HTML z sanitizera wejścia są odkodowane przed renderem 46ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts > 1.12-R4 — eksport raportu Realizacji przez UnifiedExportService > sekcja bez treści drukuje etykietę braku danych, a nie pusty nagłówek 2ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts > 1.12-R4 — eksport raportu Realizacji przez UnifiedExportService > PDF ma poprawną sygnaturę i realną objętość 225ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts > 1.12-R4 — eksport raportu Realizacji przez UnifiedExportService > renders the same snapshot in English without Polish framing 2ms
+ ✓ server/src/routes/__tests__/executionReports.export.test.ts (6 tests) 417ms
+
+ Test Files  7 passed (7)
+      Tests  24 passed (24)
+   Start at  15:37:49
+   Duration  4.18s (transform 5.30s, setup 1.91s, import 7.07s, tests 1.00s, environment 3.07s)
+
+
+ Test Files  7 passed (7)
+      Tests  24 passed (24)
+   Start at  15:37:49
+   Duration  4.18s (transform 5.30s, setup 1.91s, import 7.07s, tests 1.00s, environment 3.07s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2c-bis-report-locale-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-e2c-bis-report-locale-20260914/junit.xml

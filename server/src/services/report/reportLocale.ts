@@ -6,14 +6,16 @@ export interface ReportMessage {
 }
 
 const MESSAGES = {
-  'executionReports.status': { en: 'Status', pl: 'Status' },
-  'executionReports.level': { en: 'Report level', pl: 'Poziom raportu' },
-  'executionReports.period': { en: 'Period', pl: 'Okres' },
-  'executionReports.asOf': { en: 'Data as of', pl: 'Stan danych na' },
-  'executionReports.rag': { en: 'RAG assessment', pl: 'Ocena RAG' },
-  'executionReports.metric': { en: 'Metric', pl: 'Miernik' },
-  'executionReports.value': { en: 'Value', pl: 'Wartość' },
-  'executionReports.empty': {
+  // These labels live below `labels` because `status`, `level`, `rag`,
+  // `metric`, `value` and `empty` are already i18n namespaces in the client.
+  'executionReports.labels.status': { en: 'Status', pl: 'Status' },
+  'executionReports.labels.level': { en: 'Report level', pl: 'Poziom raportu' },
+  'executionReports.labels.period': { en: 'Period', pl: 'Okres' },
+  'executionReports.labels.asOf': { en: 'Data as of', pl: 'Stan danych na' },
+  'executionReports.labels.rag': { en: 'RAG assessment', pl: 'Ocena RAG' },
+  'executionReports.labels.metric': { en: 'Metric', pl: 'Miernik' },
+  'executionReports.labels.value': { en: 'Value', pl: 'Wartość' },
+  'executionReports.labels.empty': {
     en: 'No data is available for this period.',
     pl: 'Brak danych w tym okresie.',
   },
@@ -64,6 +66,10 @@ const MESSAGES = {
     en: 'Report available in dashboard',
     pl: 'Raport dostępny w panelu',
   },
+  'scheduledReports.smtpAccepted': {
+    en: 'Frozen PDF accepted by configured SMTP provider',
+    pl: 'Zamrożony PDF został przyjęty przez skonfigurowanego dostawcę SMTP',
+  },
   'scheduledReports.workReportText': {
     en: 'Consultify work report: {title}',
     pl: 'Raport z pracy Consultify: {title}',
@@ -75,6 +81,10 @@ const MESSAGES = {
 } as const;
 
 export type ReportMessageKey = keyof typeof MESSAGES;
+
+export const REPORT_MESSAGE_KEYS = Object.freeze(
+  Object.keys(MESSAGES) as ReportMessageKey[]
+);
 
 export function normalizeReportLocale(value: unknown): ReportLocale | null {
   if (typeof value !== 'string') return null;

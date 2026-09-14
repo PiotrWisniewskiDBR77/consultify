@@ -1,0 +1,21 @@
+merge_base 7ecfcf007bca01a64d350464edd85f53d7bc197e
+content_parent_of_freeze 3e06fadc1f36ad3fd7e4133c57beea8c1675a1b7
+scope_files 6
+scope
+- public/locales/en/translation.json
+- public/locales/pl/translation.json
+- server/src/routes/executionReports.routes.ts
+- server/src/services/report/__tests__/reportLocale.resources.test.ts
+- server/src/services/report/reportLocale.ts
+- server/src/services/scheduledReportService.ts
+migration_or_j3 []
+manifest_hash public/locales/en/translation.json fb7929b86a087cbba7bd459f200bbf26c855cbae29f4ad6348f459a00ace7101 PASS
+manifest_hash public/locales/pl/translation.json 303f99c8e9f01403835a8c9cebd004190afbbd234f0632e4e8bf3dbc52edac7b PASS
+manifest_hash server/src/routes/executionReports.routes.ts 8cb00176ff45cac7303828737e8ad0cdd5ebe6dab569b48adfe8995458c8df38 PASS
+manifest_hash server/src/services/report/__tests__/reportLocale.resources.test.ts bbd98fc5896d8dc52d23298dfbf1cadf6e27113f739e0ad3fcb88abc4f5a9829 PASS
+manifest_hash server/src/services/report/reportLocale.ts e53797d87276adebc9e760494391c51775abaa068147885c4ad1a73c85dc5caa PASS
+manifest_hash server/src/services/scheduledReportService.ts 5efe2ca4bbac055caba459c208210745fd730fb3f6c1c4cb70265b640c1f3609 PASS
+report_keys 37 37
+scheduled_ternary_present False
+smtp_dictionary_call_present True
+natural_identical_rationale Status=natural Polish product term; KPI and PMO=shared acronyms
