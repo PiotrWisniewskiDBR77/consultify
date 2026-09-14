@@ -36,6 +36,8 @@ import { MyProjects } from '../../src/components/MyWork/MyProjects';
 
 // ── Mock payloads ────────────────────────────────────────────────────────
 const CAPTURE_STATE = new URLSearchParams(window.location.search).get('state') || 'full';
+const CAPTURE_GATE_STATE =
+  new URLSearchParams(window.location.search).get('gateState') === 'passed' ? 'PASSED' : 'NOT_READY';
 
 const PROJECTS = CAPTURE_STATE === 'empty' ? [] : [
   {
@@ -146,7 +148,7 @@ const STAGE_GATE_CURRENT: Record<string, any> = {
   p1: {
     currentPhase: 'Assessment',
     gateType: 'DESIGN_GATE',
-    status: 'NOT_READY',
+    status: CAPTURE_GATE_STATE,
     nextGate: 'DESIGN_GATE',
     nextPhase: 'Initiatives',
     completionCriteria: [

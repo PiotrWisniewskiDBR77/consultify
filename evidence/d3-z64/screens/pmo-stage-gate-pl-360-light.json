@@ -1,0 +1,16 @@
+{
+  "url": "http://127.0.0.1:5290/?screen=z41-pmo-projekty&lang=pl&theme=light&state=full&gateState=passed&uwagi=0",
+  "viewport": {
+    "w": 360,
+    "h": 900,
+    "dark": false
+  },
+  "status": "Zatwierdzona",
+  "statusBox": {
+    "x": 203,
+    "y": 565,
+    "width": 97.734375,
+    "height": 16
+  },
+  "errors": []
+}
