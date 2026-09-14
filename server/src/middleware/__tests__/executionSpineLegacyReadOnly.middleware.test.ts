@@ -85,7 +85,6 @@ describe('execution spine legacy read-only boundary', () => {
     '/initiative-1/start-execution',
     '/initiative-1/block',
     '/initiative-1/unblock',
-    '/initiative-1/lifecycle-gate-decisions',
     '/initiative-1/apply-template',
     '/initiative-1/apply-blueprint',
   ])('denies the legacy Initiative execution writer %s', (path) => {
@@ -108,6 +107,16 @@ describe('execution spine legacy read-only boundary', () => {
     '/initiative-1/budget-items/item-1',
     '/initiative-1/gate-roles',
     '/initiative-1/move',
+    // FALA B / H1 (14.09): trzy podzasoby `lifecycle-*` wracaja na liste
+    // PRZEPUSZCZANYCH. Runtime-v1 nie ma dla nich zadnej komendy (0 trafien na
+    // `gate`/`lifecycle` w initiativesExecutionRuntime.routes.ts), a kanonicznym
+    // wlascicielem `initiative_lifecycle_gate_decisions` jest handler zamontowany
+    // wlasnie na tym routerze. Bramka stala PRZED jedynym writerem.
+    // MUTACJA: dopisz ktorykolwiek z nich z powrotem do
+    // LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS — ten test staje sie czerwony.
+    '/initiative-1/lifecycle-gate-decisions',
+    '/initiative-1/lifecycle-transition-proposals',
+    '/initiative-1/lifecycle-transition-executions',
   ])('przepuszcza %s — nie ma kanonicznego nastepcy, wiec 409 kasowalo funkcje', (path) => {
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
       const result = invokeInitiative(method, path);

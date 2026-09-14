@@ -176,6 +176,88 @@ export interface ExecutionBankRow {
   displayFinish: ExecutionBankEvidence<string> & {
     reference?: 'CURRENT_PLAN' | 'FORECAST' | 'ACTUAL';
   };
+  /**
+   * H2 (FALA B, 14.09) — ŚLAD PRZEKAZANIA inicjatywy do Realizacji.
+   *
+   * DEC-453 pkt b nazwał to „silnikiem bez kierownicy": inicjatywa jest
+   * zatwierdzana w jednym module i pojawia się w drugim, a nigdzie nie widać,
+   * CZY i KIEDY ją faktycznie przekazano. Pytanie właściciela brzmi: „czy
+   * widać i czy da się zmienić" — ta struktura odpowiada na pierwszą połowę.
+   *
+   * POMIAR 14.09 (kod, nie teza): dowód przekazania JEST już na froncie i nikt
+   * go nie renderował. `postgresInitiativeReader.listExecutionCases` czyta
+   * `handoffPackageId` + `acceptedAt` z `ie_aggregate_state`, trasa
+   * `GET /api/initiatives/runtime-v1/execution-cases` je oddaje, a
+   * `ExecutionBankCaseSource` ma oba pola od początku — używał ich WYŁĄCZNIE
+   * dowód baseline'u. Dlatego H2 nie potrzebuje ani migracji, ani nowej trasy.
+   *
+   * (Tabela `initiative_handoffs` — zapisywana przez `recordHandoff` przy
+   * KAŻDEJ zmianie statusu, `initiativeTransitionService.ts:1695` — to ślad
+   * AUDYTOWY granic stage'ów, nie to samo co przyjęcie paczki przekazania,
+   * które powołuje realizację. Bank pokazuje przyjęcie paczki, bo to ono
+   * decyduje o istnieniu bytu w Realizacji.)
+   */
+  handoff: ExecutionBankHandoff;
+}
+
+export type ExecutionBankHandoffStatus =
+  /** Paczka przyjęta i znamy datę — pełny ślad. */
+  | 'ACCEPTED'
+  /** Realizacja wskazuje paczkę, ale data przyjęcia nie dotarła. */
+  | 'LINKED_WITHOUT_DATE'
+  /** Brak jakiegokolwiek śladu przekazania. */
+  | 'ABSENT';
+
+export interface ExecutionBankHandoff {
+  status: ExecutionBankHandoffStatus;
+  acceptedAt: string | null;
+  packageId: string | null;
+  packageVersion: number | null;
+  /**
+   * SANITIZER (reguła z pamięci: rejestr wygrywa ze statusem wiersza).
+   * `true` gdy inicjatywa MA status wykonawczy, a śladu przekazania brak —
+   * wiersz zostaje WIDOCZNY z plakietką ostrzegawczą, nigdy ukryty.
+   */
+  missingForInExecution: boolean;
+}
+
+/**
+ * Statusy, w których brak przekazania jest SPRZECZNOŚCIĄ, a nie normalnym
+ * stanem. Słownik 7 (`IN_EXECUTION`) + stara nazwa frontowa (`EXECUTING`),
+ * bo oba warianty realnie chodzą po tym ekranie (patrz nota `STATUS_ALIASES`
+ * w `ExecutionHub.tsx`).
+ */
+export const EXECUTION_BANK_IN_EXECUTION_STATUSES: readonly string[] = [
+  'IN_EXECUTION',
+  'EXECUTING',
+];
+
+export function buildExecutionBankHandoff(
+  lifecycleStatus: string,
+  executionCase: {
+    handoffPackageId?: string | null;
+    handoffPackageVersion?: number | string | null;
+    acceptedAt?: string | null;
+  } | null
+): ExecutionBankHandoff {
+  const packageId = nonEmptyString(executionCase?.handoffPackageId ?? null);
+  const rawAcceptedAt = nonEmptyString(executionCase?.acceptedAt ?? null);
+  const acceptedAt =
+    rawAcceptedAt && Number.isFinite(Date.parse(rawAcceptedAt)) ? rawAcceptedAt : null;
+  const status: ExecutionBankHandoffStatus = acceptedAt
+    ? 'ACCEPTED'
+    : packageId
+      ? 'LINKED_WITHOUT_DATE'
+      : 'ABSENT';
+  return {
+    status,
+    acceptedAt,
+    packageId,
+    packageVersion: optionalFiniteNumber(executionCase?.handoffPackageVersion ?? null),
+    missingForInExecution:
+      status !== 'ACCEPTED' &&
+      EXECUTION_BANK_IN_EXECUTION_STATUSES.includes(String(lifecycleStatus || '').toUpperCase()),
+  };
 }
 
 export interface ExecutionBankFilter {
@@ -790,6 +872,10 @@ const buildRow = (
       'Unknown Initiative',
     description: initiative?.description ?? null,
     lifecycleStatus: initiative?.lifecycleStatus || 'UNKNOWN',
+    handoff: buildExecutionBankHandoff(
+      initiative?.lifecycleStatus || 'UNKNOWN',
+      executionCase
+    ),
     executionState: executionCase?.state || 'UNKNOWN',
     executionPhase: executionCase?.executionPhase ?? null,
     ownerId: executionCase?.executionManagerId ?? initiative?.ownerId ?? null,
