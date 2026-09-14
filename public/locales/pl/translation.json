@@ -10632,7 +10632,17 @@
       "CLOSED": "Zamknięta",
       "REJECTED": "Odrzucona",
       "ON_HOLD": "Wstrzymana",
-      "unknown": "Nieznany status"
+      "unknown": "Nieznany status",
+      "pendingReview": "Do przeglądu",
+      "promoted": "Wypromowana",
+      "planning": "Planowanie",
+      "scheduled": "Zaplanowana",
+      "executing": "W wykonaniu",
+      "blocked": "Zablokowana",
+      "done": "Zrobiona",
+      "tracking": "Śledzenie efektów",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana"
     },
     "statusDescription": {
       "PROPOSED": "Zgłoszona propozycja, czeka na przekształcenie w szkic",
@@ -14361,6 +14371,12 @@
         "proposer": "Zaproponował",
         "createdAt": "Data propozycji",
         "domain": "Obszar nadzoru"
+      },
+      "pmoDomain": {
+        "scheduleMilestones": "Harmonogram i kamienie milowe",
+        "resourceResponsibility": "Zasoby i odpowiedzialność",
+        "governanceDecisionMaking": "Decyzja nadzorcza",
+        "closure": "Zamknięcie"
       }
     }
   },

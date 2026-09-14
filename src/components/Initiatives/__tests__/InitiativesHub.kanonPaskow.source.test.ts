@@ -129,6 +129,24 @@ describe('Menu 3 · prawy slot', () => {
   });
 });
 
+describe('Menu 3 · pigułki rejestru nie przeciekają do skrzynki [H1f DEC-507]', () => {
+  it('`commandRowContent` (Wszystkie/Do zatwierdzenia/W realizacji) jest wyłączony dla `transitionInbox`', () => {
+    /*
+     * Zakładka „Do akceptacji" (`TransitionInboxSurface`) ma WŁASNY licznik
+     * w tabeli — pigułki rejestru cyklu życia z reszty Inicjatyw nie mają tu
+     * sensu (filtrują po statusie inicjatywy, nie po stanie propozycji).
+     * Mutacja: usuń `activeTab === 'transitionInbox'` z warunku wyłączeń
+     * `commandRowContent` → RED.
+     */
+    const start = hub.indexOf('commandRowContent={');
+    const koniec = hub.indexOf('commandRowRightContent={', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(koniec).toBeGreaterThan(start);
+    const blok = bezKomentarzy(hub.slice(start, koniec));
+    expect(blok).toContain("activeTab === 'transitionInbox'");
+  });
+});
+
 describe('Segment zakresu — wspólny SSOT z Realizacją', () => {
   it('bierze klasy z `MENU_2_SEGMENT_*`, nie z własnego zestawu', () => {
     // Mutacja: wpisz z powrotem lokalne `h-8 px-3 rounded-full border-slate-200/60` → RED.

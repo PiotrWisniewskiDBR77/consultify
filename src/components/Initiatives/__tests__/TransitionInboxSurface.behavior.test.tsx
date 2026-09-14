@@ -95,7 +95,12 @@ describe('H1b — skrzynka recenzenta przejść', () => {
   it('wiersz pokazuje przejście z→do, inicjatywę i proponującego', () => {
     mount([proposal()]);
     const row = screen.getByText('ERP rollout').closest('tr') as HTMLElement;
-    expect(within(row).getByText('APPROVED → SCHEDULED')).toBeTruthy();
+    /* [ODMROZENIE 05_INITIATIVES DEC-507] H1f: kanon §7.3 zakazuje surowych
+       kodów UPPER_SNAKE na ekranie — `APPROVED`/`SCHEDULED` renderują się
+       jako etykiety i18n (`initiativeStatusLabel`), kod surowy zostaje w
+       `title` (asercja niżej). */
+    expect(within(row).getByText('Approved → Scheduled')).toBeTruthy();
+    expect(within(row).getByTitle('APPROVED → SCHEDULED')).toBeTruthy();
     expect(within(row).getByText('Katarzyna Wójcik')).toBeTruthy();
   });
 

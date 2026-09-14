@@ -19,6 +19,7 @@
  * `StandardPreview` (6 bloków; akcje wyłącznie przez `StandardPreviewActions`,
  * moduł nie stylizuje przycisków). Zero własnej tabeli, zero `primary-*`.
  */
+import type { TFunction } from 'i18next';
 import { Check, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +34,35 @@ import {
   type TransitionProposal,
 } from '@/services/initiativeTransitionInboxApi';
 
+import { humanizeKey, initiativeStatusLabel } from './initiativeStatusLabels';
 import { InitiativeReasonDialog } from './lifecycle/InitiativeReasonDialog';
+
+/**
+ * Etykieta obszaru nadzoru PMO (`pmoDomain`) — CZTERY kody z
+ * `INITIATIVE_LIFECYCLE_GATE_DOMAINS` (server/src/services/initiative/
+ * initiativeLifecycleGateDecisionService.ts). Surowy kod zostaje w `title`
+ * (tooltip) — na ekranie tylko tłumaczenie (kanon §7.3: zero surowych kluczy
+ * UPPER_SNAKE w preview/tabeli).
+ */
+const pmoDomainLabel = (t: TFunction, raw: string): string => {
+  const key = raw.trim().toUpperCase();
+  const map: Record<string, string> = {
+    SCHEDULE_MILESTONES: t(
+      'initiatives.transitionInbox.pmoDomain.scheduleMilestones',
+      'Schedule & milestones'
+    ),
+    RESOURCE_RESPONSIBILITY: t(
+      'initiatives.transitionInbox.pmoDomain.resourceResponsibility',
+      'Resources & responsibility'
+    ),
+    GOVERNANCE_DECISION_MAKING: t(
+      'initiatives.transitionInbox.pmoDomain.governanceDecisionMaking',
+      'Governance decision'
+    ),
+    CLOSURE: t('initiatives.transitionInbox.pmoDomain.closure', 'Closure'),
+  };
+  return map[key] ?? humanizeKey(raw);
+};
 
 export interface TransitionInboxSurfaceProps {
   /**
@@ -109,11 +138,17 @@ export const TransitionInboxSurface: React.FC<TransitionInboxSurfaceProps> = ({
            (bez tego pola pisze generyczne „Record" — tak właśnie wyglądał
            pierwszy zrzut). Tytułem jest INICJATYWA, bo to jej etap się zmienia. */
         title: proposal.initiativeName || proposal.initiativeId,
-        transition: `${proposal.fromStatus} → ${proposal.toStatus}`,
+        /* Kanon §7.3: zero surowych kodów UPPER_SNAKE na ekranie — etykieta
+           tłumaczona przez `initiativeStatusLabel` (ta sama mapa co
+           `InitiativePreviewV3`), kod surowy zostaje w `transitionTitle`
+           (tooltip/`title`, nie znika — recenzent może go zweryfikować). */
+        transition: `${initiativeStatusLabel(t, proposal.fromStatus)} → ${initiativeStatusLabel(t, proposal.toStatus)}`,
+        transitionTitle: `${proposal.fromStatus} → ${proposal.toStatus}`,
+        domainLabel: pmoDomainLabel(t, proposal.pmoDomain),
         createdLabel: dateLabel(proposal.createdAt, i18n.language),
         statusText: statusLabel(proposal),
       })),
-    [proposals, i18n.language, statusLabel]
+    [proposals, i18n.language, statusLabel, t]
   );
 
   const selected = useMemo(
@@ -202,7 +237,7 @@ export const TransitionInboxSurface: React.FC<TransitionInboxSurfaceProps> = ({
                 {
                   id: 'transition',
                   label: t('initiatives.transitionInbox.columns.transition', 'Transition'),
-                  value: row.transition,
+                  value: <span title={row.transitionTitle}>{row.transition}</span>,
                 },
                 {
                   id: 'proposer',
@@ -217,7 +252,7 @@ export const TransitionInboxSurface: React.FC<TransitionInboxSurfaceProps> = ({
                 {
                   id: 'domain',
                   label: t('initiatives.transitionInbox.columns.domain', 'Governance area'),
-                  value: row.pmoDomain,
+                  value: <span title={row.pmoDomain}>{row.domainLabel}</span>,
                 },
               ],
             }}
@@ -257,6 +292,7 @@ export const TransitionInboxSurface: React.FC<TransitionInboxSurfaceProps> = ({
             {
               id: 'transition',
               label: t('initiatives.transitionInbox.columns.transition', 'Transition'),
+              render: (row: any) => <span title={row.transitionTitle}>{row.transition}</span>,
             },
             {
               id: 'proposerName',

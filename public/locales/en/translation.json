@@ -11412,7 +11412,17 @@
       "CLOSED": "Closed",
       "REJECTED": "Rejected",
       "ON_HOLD": "On hold",
-      "unknown": "Unknown status"
+      "unknown": "Unknown status",
+      "pendingReview": "Pending review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
     },
     "statusDescription": {
       "PROPOSED": "A submitted proposal, waiting to become a draft",
@@ -15133,6 +15143,12 @@
         "proposer": "Proposed by",
         "createdAt": "Proposed on",
         "domain": "Governance area"
+      },
+      "pmoDomain": {
+        "scheduleMilestones": "Schedule & milestones",
+        "resourceResponsibility": "Resources & responsibility",
+        "governanceDecisionMaking": "Governance decision",
+        "closure": "Closure"
       }
     }
   },
