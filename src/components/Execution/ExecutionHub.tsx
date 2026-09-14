@@ -14,6 +14,7 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ClipboardList,
   Clock,
   Copy,
@@ -60,6 +61,12 @@ import {
   StandardTable,
 } from '@/components/standard';
 import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+} from '@/components/ui/primitives/Dropdown';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { executionTypeLabel } from '@/labels/executionTypeLabels';
@@ -128,6 +135,7 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
+import { initiativeStatusLabel } from '../Initiatives/initiativeStatusLabels';
 import { type ExecutionSurfacePrimaryCta } from './canonicalMenu3';
 import { ExecutionActionCards } from './ExecutionActionCards';
 import {
@@ -215,6 +223,43 @@ const ExecutionInitiativeDocumentView = React.lazy(() =>
 );
 
 type ProjectTaskStatus = Task['status'];
+
+type ExecutionBankFilterOption = { value: string; label: string };
+
+const ExecutionBankFilterDropdown = ({
+  ariaLabel,
+  value,
+  options,
+  onValueChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  options: ExecutionBankFilterOption[];
+  onValueChange: (value: string) => void;
+}) => {
+  const selected = options.find((option) => option.value === value) ?? options[0];
+  return (
+    <Dropdown value={value} onValueChange={onValueChange}>
+      <DropdownTrigger asChild>
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          className="flex h-8 max-w-40 items-center rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          <span className="truncate">{selected?.label ?? '—'}</span>
+          <ChevronDown aria-hidden="true" className="ml-1 size-3 shrink-0" />
+        </button>
+      </DropdownTrigger>
+      <DropdownContent width="trigger">
+        {options.map((option) => (
+          <DropdownItem key={option.value} value={option.value}>
+            {option.label}
+          </DropdownItem>
+        ))}
+      </DropdownContent>
+    </Dropdown>
+  );
+};
 
 interface GovernedTimelineWarning {
   initiativeId: string;
@@ -2964,88 +3009,117 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) =>
         a.localeCompare(b)
       );
+    const projectNameById = new Map<string, string>();
+    for (const initiative of initiatives) {
+      const projectId = String(initiative.projectId || '').trim();
+      const projectName = String(
+        (initiative as any).projectName || (initiative as any).project?.name || ''
+      ).trim();
+      if (projectId && projectName) projectNameById.set(projectId, projectName);
+    }
+    for (const executionCase of executionCases) {
+      const projectId = String((executionCase as any).projectId || '').trim();
+      const projectTitle = String((executionCase as any).projectTitle || '').trim();
+      if (projectId && projectTitle && !projectNameById.has(projectId))
+        projectNameById.set(projectId, projectTitle);
+    }
+    const projects = unique(executionBankRowsAll.map((row) => row.projectId)).map((projectId) => ({
+      value: projectId,
+      label:
+        projectNameById.get(projectId) ??
+        t('execution.bank.filters.projectNameUnavailable', 'Project name unavailable'),
+    }));
+    const owners = unique(executionBankRowsAll.map((row) => row.ownerId)).map((ownerId) => {
+      const rowName = executionBankRowsAll.find(
+        (row) => row.ownerId === ownerId && Boolean(row.ownerName?.trim())
+      )?.ownerName;
+      const resolved = String(resolveOwnerName(ownerId) || '').trim();
+      return {
+        value: ownerId,
+        label:
+          rowName?.trim() ||
+          (resolved && resolved !== ownerId
+            ? resolved
+            : t('execution.bank.filters.ownerNameUnavailable', 'Owner name unavailable')),
+      };
+    });
     return {
-      projects: unique(executionBankRowsAll.map((row) => row.projectId)),
-      statuses: unique(executionBankRowsAll.map((row) => row.lifecycleStatus)),
-      owners: unique(executionBankRowsAll.map((row) => row.ownerId)),
-      priorities: unique(executionBankRowsAll.map((row) => row.priority)),
+      projects,
+      statuses: unique(executionBankRowsAll.map((row) => row.lifecycleStatus)).map((status) => ({
+        value: status,
+        label: initiativeStatusLabel(t, status),
+      })),
+      owners,
+      priorities: unique(executionBankRowsAll.map((row) => row.priority)).map((priority) => ({
+        value: priority,
+        label: t(
+          `execution.bank.filters.priority.${priority.toLowerCase()}`,
+          priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase()
+        ),
+      })),
       hasNoProject: executionBankRowsAll.some((row) => row.projectId === null),
       hasNoOwner: executionBankRowsAll.some((row) => row.ownerId === null),
     };
-  }, [executionBankRowsAll]);
+  }, [executionBankRowsAll, executionCases, initiatives, resolveOwnerName, t]);
 
   const executionBankFilterControls = fourButtonsEnabled ? (
     <div
       className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto"
       data-testid="execution-bank-filter-controls"
     >
-      <select
-        aria-label="Bank project filter"
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.projectAria', 'Bank project filter')}
         value={executionBankProjectFilter}
-        onChange={(event) => setExecutionBankProjectFilter(event.target.value)}
-        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
-      >
-        <option value="ALL">All projects</option>
-        {executionBankFilterOptions.hasNoProject ? (
-          <option value="NO_PROJECT">No project</option>
-        ) : null}
-        {executionBankFilterOptions.projects.map((projectId) => (
-          <option key={projectId} value={projectId}>
-            {projectId}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Bank status filter"
+        onValueChange={setExecutionBankProjectFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allProjects', 'All projects') },
+          ...(executionBankFilterOptions.hasNoProject
+            ? [{ value: 'NO_PROJECT', label: t('execution.bank.filters.noProject', 'No project') }]
+            : []),
+          ...executionBankFilterOptions.projects,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.statusAria', 'Bank status filter')}
         value={executionBankStatusFilter}
-        onChange={(event) => setExecutionBankStatusFilter(event.target.value)}
-        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
-      >
-        <option value="ALL">All statuses</option>
-        {executionBankFilterOptions.statuses.map((status) => (
-          <option key={status} value={status}>
-            {status}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Bank owner filter"
+        onValueChange={setExecutionBankStatusFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allStatuses', 'All statuses') },
+          ...executionBankFilterOptions.statuses,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.ownerAria', 'Bank owner filter')}
         value={executionBankOwnerFilter}
-        onChange={(event) => setExecutionBankOwnerFilter(event.target.value)}
-        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
-      >
-        <option value="ALL">All owners</option>
-        {executionBankFilterOptions.hasNoOwner ? <option value="NO_OWNER">No owner</option> : null}
-        {executionBankFilterOptions.owners.map((ownerId) => (
-          <option key={ownerId} value={ownerId}>
-            {ownerId}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Bank priority filter"
+        onValueChange={setExecutionBankOwnerFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allOwners', 'All owners') },
+          ...(executionBankFilterOptions.hasNoOwner
+            ? [{ value: 'NO_OWNER', label: t('execution.bank.filters.noOwner', 'No owner') }]
+            : []),
+          ...executionBankFilterOptions.owners,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.priorityAria', 'Bank priority filter')}
         value={executionBankPriorityFilter}
-        onChange={(event) => setExecutionBankPriorityFilter(event.target.value)}
-        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
-      >
-        <option value="ALL">All priorities</option>
-        {executionBankFilterOptions.priorities.map((priority) => (
-          <option key={priority} value={priority}>
-            {priority}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Bank time filter"
+        onValueChange={setExecutionBankPriorityFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allPriorities', 'All priorities') },
+          ...executionBankFilterOptions.priorities,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.timeAria', 'Bank time filter')}
         value={executionBankTimeFilter}
-        onChange={(event) => setExecutionBankTimeFilter(event.target.value)}
-        className="h-8 max-w-32 rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
-      >
-        <option value="ALL">Any time</option>
-        <option value="PAST_DUE">Past due</option>
-        <option value="NEXT_30">Next 30 days</option>
-        <option value="NEXT_90">Next 90 days</option>
-      </select>
+        onValueChange={setExecutionBankTimeFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.anyTime', 'Any time') },
+          { value: 'PAST_DUE', label: t('execution.bank.filters.pastDue', 'Past due') },
+          { value: 'NEXT_30', label: t('execution.bank.filters.next30', 'Next 30 days') },
+          { value: 'NEXT_90', label: t('execution.bank.filters.next90', 'Next 90 days') },
+        ]}
+      />
     </div>
   ) : null;
 
