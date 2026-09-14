@@ -6,11 +6,9 @@ import { getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 /** I01/I02 read-only preparation facts. Durable report runs belong to I06/IE07. */
 export function InitiativePreparationReadView({
   initiatives,
-  report = false,
   onOpen,
 }: {
   initiatives: PortfolioInitiative[];
-  report?: boolean;
   onOpen: (initiative: PortfolioInitiative) => void;
 }) {
   const { i18n, t } = useTranslation();
@@ -20,16 +18,10 @@ export function InitiativePreparationReadView({
   return (
     <section
       className="h-full overflow-auto p-4 space-y-4 text-c-text"
-      aria-label={report ? 'Preparation work report' : 'Preparation overview'}
+      aria-label="Preparation overview"
     >
       <h2 className="text-lg font-semibold">
-        {report
-          ? pl
-            ? 'Raport pracy nad przygotowaniem'
-            : 'Preparation work report'
-          : pl
-            ? 'Przegląd przygotowania'
-            : 'Preparation overview'}
+        {pl ? 'Przegląd przygotowania' : 'Preparation overview'}
       </h2>
       <p>
         {initiatives.length}{' '}
@@ -71,13 +63,6 @@ export function InitiativePreparationReadView({
           </li>
         ))}
       </ul>
-      {report && (
-        <p className="text-sm text-c-text-muted">
-          {pl
-            ? 'Ten widok nie tworzy utrwalonej wersji raportu ani wysyłki.'
-            : 'This view does not create a saved report version or delivery.'}
-        </p>
-      )}
     </section>
   );
 }
