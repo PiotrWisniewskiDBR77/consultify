@@ -5406,7 +5406,7 @@ export function createInitiativesExecutionRuntimeRouter(
         .map((entry) => ({
           ...entry.item,
           initiativeTitle: entry.initiative!.initiative.title,
-          projectId: projectIdOf(entry),
+          projectId: projectIdOf(entry.initiative!),
         }));
       res.json({ cases: visible });
     })
