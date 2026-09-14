@@ -1,0 +1,18 @@
+EXACT_CANDIDATE=e3cfa2ab2730a6003f8d94c8be892738b6762b24
+FILES=PlanScenarioSurface.tsx, PlanCard.tsx, PlanDependencyAnalysisPanel.tsx, initiativesExecutionRuntime.routes.ts
+
+  ../../../../../tmp/plan-v2-surface.js  72.7kb
+
+⚡ Done in 5ms
+
+  ../../../../../tmp/plan-v2-card.js  38.9kb
+
+⚡ Done in 4ms
+
+  ../../../../../tmp/plan-v2-panel.js  13.8kb
+
+⚡ Done in 2ms
+
+  ../../../../../tmp/plan-v2-route.js  346.3kb
+
+⚡ Done in 25ms

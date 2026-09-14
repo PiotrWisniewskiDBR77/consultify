@@ -37,6 +37,7 @@ import {
   writeInitiativeDependencies,
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
+import { isInitiativesPlanEnabled } from '@/utils/initiativesPlanFlag';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
 import { PlanCard } from './cards/PlanCard';
@@ -46,6 +47,12 @@ import type {
   PlanGenerationMode,
 } from './Generator/GeneratorPlanuModal';
 import { applyAcceptedPlanProposal } from './planProposalReview';
+import {
+  applyDependencyObservationReviews,
+  type ConditionalDependencySnapshot,
+  type DependencyObservation,
+  type ObservationReview,
+} from './planDependencyReview';
 
 interface WindowDraft {
   initiativeId: string;
@@ -56,6 +63,7 @@ interface WindowDraft {
   confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
   rationale: string;
   dependencySnapshot: string[];
+  conditionalDependencySnapshot?: ConditionalDependencySnapshot[];
   constraintSnapshot: Array<{ constraintId: string; state: 'KNOWN' | 'UNKNOWN'; detail: string }>;
   /** P15-K5: popyt na role w oknie (FTE) — wejscie arkusza okres x rola. */
   roleDemand?: Array<{ roleId: string; roleLabel: string; fte: number }>;
@@ -91,6 +99,17 @@ interface PlanAnalysisProposal {
   rationale: string;
   conflicts: string[];
   changes: Array<{ initiativeId: string; before: WindowDraft; after: WindowDraft }>;
+  analysisSource?: 'SOLVER' | 'AI';
+  dependencyObservations?: DependencyObservation[];
+  criticalPaths?: Array<{
+    pathId: string;
+    kind: 'ABSOLUTE' | 'CONDITIONAL';
+    initiativeIds: string[];
+    condition: string | null;
+    rationale: string;
+  }>;
+  analysisModel?: string | null;
+  acceptedDependencyObservations?: DependencyObservation[];
 }
 type PlanScenarioHistoryEntry = PlanScenario;
 /**
@@ -304,6 +323,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   onOpenCapacityAnalysis,
   onNewCapacityAnalysis,
 }) => {
+  const dependencyAnalysisEnabled = isInitiativesPlanEnabled();
   const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
@@ -1067,6 +1087,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         clientRequestId: crypto.randomUUID(),
         scenarioId: draft.scenarioId,
         inputAggregateVersion: updated.aggregateVersion,
+        ...(dependencyAnalysisEnabled ? { analysisKind: 'AI_DEPENDENCY' as const } : {}),
         useCapacity: input.mode !== 'DEPENDENCIES',
       })) as { response: PlanAnalysisProposal };
       setAnalysisProposal(result.response);
@@ -1090,6 +1111,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         clientRequestId: crypto.randomUUID(),
         scenarioId: draft.scenarioId,
         inputAggregateVersion: aggregateVersion,
+        ...(dependencyAnalysisEnabled ? { analysisKind: 'AI_DEPENDENCY' as const } : {}),
         useCapacity: mode !== 'DEPENDENCIES',
       })) as { response: PlanAnalysisProposal };
       setAnalysisProposal(result.response);
@@ -1100,21 +1122,59 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setAnalysisState('ERROR');
     }
   };
-  const reviewAnalysis = async (outcome: 'ACCEPT' | 'REJECT') => {
+  const reviewAnalysis = async (
+    outcome: 'ACCEPT' | 'REJECT',
+    observationReviews?: ObservationReview[]
+  ) => {
     if (!analysisProposal || !draft) return;
     setAnalysisState('LOADING');
     try {
+      let updatedDraft = draft;
+      let updatedAggregateVersion = aggregateVersion;
+      if (
+        outcome === 'ACCEPT' &&
+        analysisProposal.analysisSource === 'AI' &&
+        observationReviews
+      ) {
+        const nextWindows = applyDependencyObservationReviews(draft.windows, observationReviews);
+        for (const window of nextWindows) {
+          const before = draft.windows.find((item) => item.initiativeId === window.initiativeId);
+          if (
+            before &&
+            JSON.stringify(before.dependencySnapshot) !== JSON.stringify(window.dependencySnapshot)
+          ) {
+            const saved = await writeInitiativeDependencies(window.initiativeId, {
+              clientRequestId: crypto.randomUUID(),
+              dependsOn: window.dependencySnapshot,
+            });
+            window.dependencySnapshot = saved.dependsOn;
+          }
+        }
+        const persisted = (await writePlanScenario(draft.scenarioId, {
+          expectedVersion: aggregateVersion,
+          clientRequestId: crypto.randomUUID(),
+          operation: 'UPDATE',
+          portfolio: 'auto',
+          scenario: { ...draft, windows: nextWindows },
+        })) as { aggregateVersion: number; response: PlanScenario };
+        updatedDraft = persisted.response;
+        updatedAggregateVersion = persisted.aggregateVersion;
+        setDraft(persisted.response);
+        setAggregateVersion(persisted.aggregateVersion);
+        await refreshRegisterRows();
+        markSaved(persisted.response.scenarioId);
+      }
       const reviewed = (await reviewPlanAnalysisProposal(analysisProposal.proposalId, {
         expectedVersion: 1,
         clientRequestId: crypto.randomUUID(),
         outcome,
-        // Ślad decyzji w audycie — po polsku, jak reszta warstwy widocznej dla PMO.
         rationale:
           outcome === 'ACCEPT'
-            ? 'Człowiek zatwierdził propozycję dla edytowalnego szkicu planu.'
-            : 'Człowiek odrzucił propozycję; szkic planu pozostaje bez zmian.',
+            ? 'Human reviewer applied the accepted observations to the editable plan draft.'
+            : 'Human reviewer rejected the analysis; the plan draft remains unchanged.',
+        observationReviews,
       })) as { response?: PlanAnalysisProposal };
-      if (outcome === 'ACCEPT') {
+      if (outcome === 'ACCEPT' && analysisProposal.analysisSource !== 'AI') {
         // P15 §4.0 D5: „Zatwierdź" = UPDATE okien Z PROPOZYCJI na serwerze, nie
         // zmiana żyjąca w stanie Reacta. Pomiar 07.09: po ACCEPT plan w bazie
         // zostawał bez zmian, a karta i tak pokazywała „Zapisano".
@@ -1124,11 +1184,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           reviewed.response?.status
         );
         const updated = (await writePlanScenario(draft.scenarioId, {
-          expectedVersion: aggregateVersion,
+          expectedVersion: updatedAggregateVersion,
           clientRequestId: crypto.randomUUID(),
           operation: 'UPDATE',
           portfolio: 'auto',
-          scenario: { ...draft, windows },
+          scenario: { ...updatedDraft, windows },
         })) as { aggregateVersion: number; response: PlanScenario };
         setAggregateVersion(updated.aggregateVersion);
         setDraft(updated.response);
@@ -1514,10 +1574,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           proposalConflicts={analysisProposal?.conflicts ?? []}
           savedLabel={savedLabel}
           busy={analysisState === 'LOADING' || writeState === 'SAVING'}
+          dependencyAnalysisEnabled={dependencyAnalysisEnabled}
           onBack={() => setWorkspaceOpen(false)}
           onAnalyze={(mode) => void analyzePlan(mode)}
           onGenerate={(input) => void generatePlan(input)}
-          onReview={(outcome) => void reviewAnalysis(outcome)}
+          onReview={(outcome, reviews) => void reviewAnalysis(outcome, reviews)}
           onPublish={requestPublish}
           onAddInitiative={(initiativeId) => void addInitiativeToPlan(initiativeId)}
           onRemoveInitiative={(initiativeId) => void removeInitiativeFromPlan(initiativeId)}

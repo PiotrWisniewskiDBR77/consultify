@@ -39,6 +39,7 @@ import { z } from 'zod';
 import databaseConfig from '../../config/DatabaseConfig.js';
 import { isExecutionReportE4Enabled } from '../../config/executionReportE4Flag.js';
 import { isInitiativesWorkloadEnabled } from '../../config/FeatureFlags.js';
+import { isInitiativesPlanEnabled } from '../../config/initiativesPlanFlag.js';
 import { isInitiativesWorkReportEnabled } from '../../config/initiativesWorkReportFlag.js';
 import { InitiativeStatus, type InitiativeStatusType } from '../../constants/initiativeStatuses.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
@@ -169,6 +170,12 @@ import {
   createPlanAnalysisProposal,
   reviewPlanAnalysisProposal,
 } from '../../domain/initiatives-execution/planAnalysisProposal.js';
+import {
+  analyzePlanDependencies,
+  PlanDependencyAnalysisError,
+  type PlanDependencyAnalysisInput,
+  type PlanDependencyAnalysisResult,
+} from '../../services/ai/planDependencyAnalysisService.js';
 import {
   diffPlanScenarios,
   mutatePlanScenario,
@@ -644,6 +651,15 @@ const PlanScenarioSchema = z.object({
         confidence: z.enum(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']),
         rationale: z.string().min(1),
         dependencySnapshot: z.array(z.string()),
+        conditionalDependencySnapshot: z
+          .array(
+            z.object({
+              predecessorId: z.string().min(1),
+              condition: z.string().trim().min(1).max(2_000),
+              active: z.boolean(),
+            })
+          )
+          .optional(),
         constraintSnapshot: z.array(
           z.object({
             constraintId: z.string().min(1),
@@ -690,6 +706,7 @@ const PlanAnalysisCreateSchema = z.object({
   clientRequestId: z.string().min(1),
   scenarioId: z.string().min(1),
   inputAggregateVersion: z.number().int().min(1),
+  analysisKind: z.enum(['SOLVER', 'AI_DEPENDENCY']).optional().default('SOLVER'),
   useCapacity: z.boolean().optional().default(true),
   /** P15-K6: analiza wskazana wprost (wybór wariantu doradcy na planie v+1). */
   capacityScenarioId: z.string().min(1).optional(),
@@ -707,7 +724,28 @@ const PlanAnalysisReviewSchema = z.object({
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1),
   outcome: z.enum(['ACCEPT', 'REJECT']),
-  rationale: z.string().min(1),
+  rationale: z.string().trim().min(1),
+  observationReviews: z
+    .array(
+      z.object({
+        observationId: z.string().trim().min(1),
+        outcome: z.enum(['ACCEPTED', 'REJECTED']),
+        conditionActive: z.boolean().nullable(),
+        humanComment: z.string().trim().min(1).max(4_000),
+        finalObservation: z.object({
+          observationId: z.string().trim().min(1),
+          predecessorId: z.string().trim().min(1),
+          successorId: z.string().trim().min(1),
+          kind: z.enum(['ABSOLUTE', 'CONDITIONAL']),
+          condition: z.string().trim().min(1).max(2_000).nullable(),
+          rationale: z.string().trim().min(1).max(4_000),
+          evidenceRefs: z.array(z.string().trim().min(1)).min(1).max(12),
+          confidence: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+        }),
+      })
+    )
+    .max(500)
+    .optional(),
 });
 const CapacityRangeSchema = z.object({
   knowledgeState: z.enum(['KNOWN', 'ESTIMATED', 'UNKNOWN', 'UNCONFIRMED']),
@@ -1659,6 +1697,12 @@ export interface InitiativesExecutionRuntimeDependencies {
   sendWorkReportEmail?: typeof EmailService.send;
   renderWorkReportPdf?: typeof renderInitiativeWorkReportPdf;
   workReportNow?: () => Date;
+  /** Test seam + production adapter for DEC-497 P2 dependency analysis. */
+  analyzePlanDependencies?: (
+    input: PlanDependencyAnalysisInput
+  ) => Promise<PlanDependencyAnalysisResult>;
+  /** Default is fail-closed. The release flag must be explicitly true. */
+  planDependencyAnalysisEnabled?: () => boolean;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -4532,6 +4576,15 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
+      if (
+        parsed.data.scenario.windows.some(
+          (window) => (window.conditionalDependencySnapshot?.length ?? 0) > 0
+        ) &&
+        !deps.planDependencyAnalysisEnabled?.()
+      ) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       // P15-K2 (DEC-421), D1': portfel roboczy AUTOMATYCZNY. „Nowy plan" nie każe
       // PMO wpisywać identyfikatora scenariusza portfela — system zakłada/odświeża
       // portfel roboczy organizacji ze składu okien planu i wiąże plan z jego
@@ -4724,17 +4777,18 @@ export function createInitiativesExecutionRuntimeRouter(
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
       const parsed = PlanAnalysisCreateSchema.safeParse(req.body);
+      const scenarioId = firstParam(req.params.scenarioId);
       if (!actor) {
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      if (!parsed.success || parsed.data.scenarioId !== req.params.scenarioId) {
+      if (!parsed.success || parsed.data.scenarioId !== scenarioId) {
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
       const found = await deps.reader.findPlanScenario(
         actor.organizationId,
-        firstParam(req.params.scenarioId)
+        scenarioId
       );
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
@@ -4754,6 +4808,12 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         portfolio.scenario.scope.portfolioId
       );
+      if (parsed.data.analysisKind === 'AI_DEPENDENCY') {
+        if (!deps.planDependencyAnalysisEnabled?.()) {
+          res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+          return;
+        }
+      }
       /**
        * P15-K7 (DEC-421, §4.1 pkt 4): KONIEC CICHEJ DEGRADACJI.
        *
@@ -4791,25 +4851,68 @@ export function createInitiativesExecutionRuntimeRouter(
         });
         return;
       }
-      const result = await createPlanAnalysisProposal(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'plan_analysis_proposal',
-        aggregateId: firstParam(req.params.proposalId),
-        expectedVersion: 0,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId: `plan-analysis-${parsed.data.clientRequestId}`,
-        policyId: policy.policyId,
-        policyVersion: policy.version,
-        commandType: 'plan-analysis.create',
-        createIfMissing: true,
-        payload: {
-          scenarioId: parsed.data.scenarioId,
-          inputAggregateVersion: parsed.data.inputAggregateVersion,
-          capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
-          hints: parsed.data.hints,
-        },
-      });
+      let result;
+      try {
+        result = await createPlanAnalysisProposal(
+          deps.unitOfWork,
+          {
+            organizationId: actor.organizationId,
+            actorId: actor.userId,
+            aggregateType: 'plan_analysis_proposal',
+            aggregateId: firstParam(req.params.proposalId),
+            expectedVersion: 0,
+            clientRequestId: parsed.data.clientRequestId,
+            correlationId: `plan-analysis-${parsed.data.clientRequestId}`,
+            policyId: policy.policyId,
+            policyVersion: policy.version,
+            commandType: 'plan-analysis.create',
+            createIfMissing: true,
+            payload: {
+              scenarioId: parsed.data.scenarioId,
+              inputAggregateVersion: parsed.data.inputAggregateVersion,
+              capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
+              hints: parsed.data.hints,
+              analysisKind: parsed.data.analysisKind,
+            },
+          },
+          {
+            prepareDependencyAnalysis:
+              parsed.data.analysisKind === 'AI_DEPENDENCY'
+                ? async (sourceScenario) => {
+                    const periods = sourceScenario.periods;
+                    const initiatives = await deps.reader.listPlanDependencyAnalysisContext(
+                      actor.organizationId,
+                      sourceScenario.windows.map((window) => window.initiativeId)
+                    );
+                    if (initiatives.length !== sourceScenario.windows.length) {
+                      throw new MaterialCommandRuleError(
+                        'PLAN_ANALYSIS_CONTEXT_INCOMPLETE',
+                        409
+                      );
+                    }
+                    return (deps.analyzePlanDependencies ?? analyzePlanDependencies)({
+                      scenarioId: sourceScenario.scenarioId,
+                      scenarioVersion: sourceScenario.scenarioVersion,
+                      timezone: sourceScenario.timezone,
+                      horizon: {
+                        start: periods[0].start,
+                        end: periods[periods.length - 1].end,
+                      },
+                      initiatives,
+                    });
+                  }
+                : undefined,
+          }
+        );
+      } catch (error) {
+        if (error instanceof PlanDependencyAnalysisError) {
+          res.status(error.code === 'AI_UNAVAILABLE' ? 503 : 502).json({
+            error: { code: error.code },
+          });
+          return;
+        }
+        throw error;
+      }
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -4861,6 +4964,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
+      if (parsed.data.observationReviews && !deps.planDependencyAnalysisEnabled?.()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       const result = await reviewPlanAnalysisProposal(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -4872,7 +4979,11 @@ export function createInitiativesExecutionRuntimeRouter(
         policyId: 'plan-analysis-review',
         policyVersion: 1,
         commandType: 'plan-analysis.review',
-        payload: { outcome: parsed.data.outcome, rationale: parsed.data.rationale },
+        payload: {
+          outcome: parsed.data.outcome,
+          rationale: parsed.data.rationale,
+          observationReviews: parsed.data.observationReviews,
+        },
       });
       res.json(result);
     })
@@ -9220,6 +9331,8 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
       ? new DeterministicPortfolioConsultingModelGateway()
       : new ConfiguredPortfolioConsultingModelGateway(),
   },
+  analyzePlanDependencies,
+  planDependencyAnalysisEnabled: isInitiativesPlanEnabled,
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,

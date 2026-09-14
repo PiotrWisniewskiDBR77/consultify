@@ -3,12 +3,18 @@ import {
   type MaterialCommandEnvelope,
   type MaterialCommandResult,
   type MaterialCommandUnitOfWork,
+  MaterialCommandConflictError,
   MaterialCommandValidationError,
 } from './materialCommand.js';
 import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
 import { solvePlanScenario, type PlanSolverHint } from './planSolver.js';
 import { encodePlanSolverReason } from './planSolverReason.js';
+import type {
+  PlanCriticalPath,
+  PlanDependencyAnalysisResult,
+  PlanDependencyObservation,
+} from '../../services/ai/planDependencyAnalysisService.js';
 
 export interface PlanAnalysisProposal {
   proposalId: string;
@@ -20,11 +26,35 @@ export interface PlanAnalysisProposal {
   rationale: string;
   conflicts: string[];
   changes: Array<{ initiativeId: string; before: PlannedWindow; after: PlannedWindow }>;
+  analysisSource: 'SOLVER' | 'AI';
+  dependencyObservations: PlanDependencyObservation[];
+  criticalPaths: PlanCriticalPath[];
+  analysisModel: string | null;
+  analyzedAt: string | null;
   requestedBy: string;
   reviewedBy: string | null;
   reviewRationale: string | null;
   createdAt: string;
   reviewedAt: string | null;
+  observationReviews?: PlanDependencyObservationReview[];
+  acceptedDependencyObservations?: PlanDependencyObservation[];
+}
+
+export interface PlanDependencyObservationReview {
+  observationId: string;
+  outcome: 'ACCEPTED' | 'REJECTED';
+  conditionActive: boolean | null;
+  humanComment: string;
+  finalObservation: PlanDependencyObservation;
+}
+
+export interface PlanAnalysisProposalPreparation {
+  /**
+   * Deferred until executeMaterialCommand has rejected stale versions or
+   * returned a stored receipt. This prevents duplicate or stale commands from
+   * paying for an external analysis.
+   */
+  prepareDependencyAnalysis?: (scenario: PlanScenario) => Promise<PlanDependencyAnalysisResult>;
 }
 
 export async function createPlanAnalysisProposal(
@@ -35,7 +65,11 @@ export async function createPlanAnalysisProposal(
     capacityScenarioId?: string;
     /** P15-K6: przesunięcia z wybranego wariantu doradcy (patrz `PlanSolverHint`). */
     hints?: PlanSolverHint[];
-  }>
+    /** DEC-497 P2 E1: wynik LLM zweryfikowany względem dokładnego snapshotu planu. */
+    dependencyAnalysis?: PlanDependencyAnalysisResult;
+    analysisKind?: 'SOLVER' | 'AI_DEPENDENCY';
+  }>,
+  preparation: PlanAnalysisProposalPreparation = {}
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
     const source = await tx.getRelatedAggregateForUpdate<PlanScenario>(
@@ -43,10 +77,30 @@ export async function createPlanAnalysisProposal(
       'plan_scenario',
       envelope.payload.scenarioId
     );
-    if (!source || source.version !== envelope.payload.inputAggregateVersion)
+    if (!source)
       throw new MaterialCommandValidationError('Exact Plan Scenario input version required');
+    if (source.version !== envelope.payload.inputAggregateVersion)
+      throw new MaterialCommandConflictError(
+        'Plan input aggregate version conflict',
+        envelope.payload.inputAggregateVersion,
+        source.version
+      );
     if (source.payload.status !== 'DRAFT')
       throw new MaterialCommandValidationError('Analysis proposals may target only a DRAFT Plan');
+    const dependencyAnalysis =
+      envelope.payload.dependencyAnalysis ??
+      (envelope.payload.analysisKind === 'AI_DEPENDENCY'
+        ? await preparation.prepareDependencyAnalysis?.(source.payload)
+        : undefined);
+    if (envelope.payload.analysisKind === 'AI_DEPENDENCY' && !dependencyAnalysis)
+      throw new MaterialCommandValidationError('AI dependency analysis preparation required');
+    if (
+      dependencyAnalysis &&
+      dependencyAnalysis.inputScenarioVersion !== source.payload.scenarioVersion
+    )
+      throw new MaterialCommandValidationError(
+        'Exact AI dependency analysis input version required'
+      );
     const capacity = envelope.payload.capacityScenarioId
       ? await tx.getRelatedAggregateForUpdate<CapacityScenario>(
           envelope.organizationId,
@@ -126,6 +180,11 @@ export async function createPlanAnalysisProposal(
       rationale: encodePlanSolverReason({ code: 'ONE_FEASIBLE_PERIOD' }),
       conflicts: solved.conflicts,
       changes,
+      analysisSource: dependencyAnalysis ? 'AI' : 'SOLVER',
+      dependencyObservations: dependencyAnalysis?.observations ?? [],
+      criticalPaths: dependencyAnalysis?.criticalPaths ?? [],
+      analysisModel: dependencyAnalysis?.model ?? null,
+      analyzedAt: dependencyAnalysis?.analyzedAt ?? null,
       requestedBy: envelope.actorId,
       reviewedBy: null,
       reviewRationale: null,
@@ -144,7 +203,11 @@ export async function createPlanAnalysisProposal(
 
 export async function reviewPlanAnalysisProposal(
   uow: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<{ outcome: 'ACCEPT' | 'REJECT'; rationale: string }>
+  envelope: MaterialCommandEnvelope<{
+    outcome: 'ACCEPT' | 'REJECT';
+    rationale: string;
+    observationReviews?: PlanDependencyObservationReview[];
+  }>
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
     const current = await tx.getAggregatePayload<PlanAnalysisProposal>(
@@ -156,12 +219,54 @@ export async function reviewPlanAnalysisProposal(
       throw new MaterialCommandValidationError('Pending Plan analysis proposal required');
     if (!envelope.payload.rationale.trim())
       throw new MaterialCommandValidationError('Human review rationale required');
+    const reviews = envelope.payload.observationReviews ?? [];
+    if (current.analysisSource === 'AI' && envelope.payload.outcome === 'ACCEPT') {
+      const originalById = new Map(
+        current.dependencyObservations.map((observation) => [observation.observationId, observation])
+      );
+      if (
+        reviews.length !== current.dependencyObservations.length ||
+        new Set(reviews.map((review) => review.observationId)).size !== reviews.length
+      ) {
+        throw new MaterialCommandValidationError(
+          'Every AI dependency observation requires a human decision'
+        );
+      }
+      for (const review of reviews) {
+        const original = originalById.get(review.observationId);
+        const final = review.finalObservation;
+        if (
+          !original ||
+          final.observationId !== original.observationId ||
+          final.predecessorId !== original.predecessorId ||
+          final.successorId !== original.successorId ||
+          !review.humanComment.trim() ||
+          (final.kind === 'ABSOLUTE' && final.condition !== null) ||
+          (final.kind === 'ABSOLUTE' && review.conditionActive !== null) ||
+          (final.kind === 'CONDITIONAL' && !final.condition?.trim()) ||
+          (final.kind === 'CONDITIONAL' && typeof review.conditionActive !== 'boolean') ||
+          !final.rationale.trim()
+        ) {
+          throw new MaterialCommandValidationError(
+            'Invalid human review of AI dependency observation'
+          );
+        }
+      }
+    }
+    const acceptedDependencyObservations =
+      current.analysisSource === 'AI' && envelope.payload.outcome === 'ACCEPT'
+        ? reviews
+            .filter((review) => review.outcome === 'ACCEPTED')
+            .map((review) => review.finalObservation)
+        : [];
     const next: PlanAnalysisProposal = {
       ...current,
       status: envelope.payload.outcome === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED',
       reviewedBy: envelope.actorId,
       reviewRationale: envelope.payload.rationale,
       reviewedAt: new Date().toISOString(),
+      observationReviews: reviews,
+      acceptedDependencyObservations,
     };
     return {
       mutation: next,

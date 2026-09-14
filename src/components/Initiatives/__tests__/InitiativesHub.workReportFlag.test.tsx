@@ -111,6 +111,7 @@ async function mount(route = '/initiatives') {
 }
 
 beforeEach(() => {
+  // The established Plan destination is not release-gated; only its Wave 2 analysis is.
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
   getInitiative.mockReset();
@@ -119,6 +120,28 @@ beforeEach(() => {
   listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
   apiGet.mockReset();
   apiGet.mockResolvedValue({});
+});
+
+describe('Plan tab parity with VITE_INITIATIVES_PLAN OFF', () => {
+  it('flag OFF: preserves Plan and accepts its established direct deep link', async () => {
+    vi.stubEnv('VITE_INITIATIVES_PLAN', 'false');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
+    await mount('/initiatives?tab=plan');
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.getByRole('tab', { name: 'Plan' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Plan' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  });
+
+  it('flag ON: keeps Plan as the second Menu 2 destination', async () => {
+    vi.stubEnv('VITE_INITIATIVES_PLAN', 'true');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
+    await mount();
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.getByRole('tab', { name: 'Plan' })).toBeInTheDocument();
+  });
 });
 
 afterEach(() => {

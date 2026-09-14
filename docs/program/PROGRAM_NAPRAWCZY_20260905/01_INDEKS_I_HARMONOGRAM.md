@@ -414,7 +414,7 @@ WIZJA_INICJATYWY_4_PRZYCISKI_20260914.md + kanał `~/Developer/cto-codex/KANAL.m
 - **P2 — Plan** (`codex/plan-inicjatyw-20260914`): analiza AI (nie kreator) — obserwacje do akceptu
   pojedynczo/hurtem + komentarz zmieniający propozycję, ścieżki krytyczne bezwzględne/warunkowe,
   timeline 1/3/6/12 mies. (1,3 tygodniowo, 6,12 miesięcznie), kolor „w realizacji = zamrożone"
-  (ciemnogranatowy) na Gantcie kanonicznym z DEC-493. Flaga `VITE_INITIATIVES_PLAN_ANALYSIS`.
+  (ciemnogranatowy) na Gantcie kanonicznym z DEC-493. Flagi `VITE_INITIATIVES_PLAN` i `ENABLE_INITIATIVES_PLAN`.
 - **P3 — Obciążenie** (`codex/obciazenie-inicjatyw-20260914`): heat mapa per osoba/tydzień, progi
   jak Realizacja (`ExecutionWorkloadView.tsx:704`), deklaracja dostępności tygodniowej per osoba,
   AI proponuje przesunięcia WYŁĄCZNIE na etapie projektowania (zakaz zmiany przydziałów biegnących

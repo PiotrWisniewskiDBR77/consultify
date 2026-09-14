@@ -41,6 +41,12 @@ export interface InitiativeGanttProps {
   dependencies?: GanttDependency[];
   /** ScheduleItem.ids on the critical path → highlighted bars + connectors. */
   criticalPathIds?: string[];
+  /** Items already in execution are immutable and rendered in frozen dark navy. */
+  frozenItemIds?: string[];
+  /** Optional portfolio-plan horizon; keeps 1/3/6/12 month views stable even with sparse dates. */
+  rangeStart?: string;
+  rangeEnd?: string;
+  initialZoom?: GanttZoom;
 }
 
 type GanttZoom = 'day' | 'week' | 'month';
@@ -84,11 +90,15 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   onReschedule,
   dependencies,
   criticalPathIds,
+  frozenItemIds,
+  rangeStart,
+  rangeEnd,
+  initialZoom = 'week',
 }) => {
   const { t } = useTranslation();
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const [zoom, setZoom] = useState<GanttZoom>('week');
+  const [zoom, setZoom] = useState<GanttZoom>(initialZoom);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Local optimistic overrides: itemId → { s, e } in ms
@@ -97,6 +107,9 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   >(new Map());
 
   const criticalSet = useMemo(() => new Set(criticalPathIds || []), [criticalPathIds]);
+  const frozenSet = useMemo(() => new Set(frozenItemIds || []), [frozenItemIds]);
+
+  React.useEffect(() => setZoom(initialZoom), [initialZoom]);
 
   const statuses = useMemo(
     () =>
@@ -125,12 +138,14 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   const undated = useMemo(() => filtered.filter((i) => parse(i.start) == null), [filtered]);
 
   const range = useMemo(() => {
-    if (dated.length === 0) return null;
-    const min = startOfWeekMonday(Math.min(...dated.map((d) => d.s)));
-    const max = Math.max(...dated.map((d) => d.e));
+    const explicitStart = parse(rangeStart ?? null);
+    const explicitEnd = parse(rangeEnd ?? null);
+    if (dated.length === 0 && (explicitStart === null || explicitEnd === null)) return null;
+    const min = startOfWeekMonday(explicitStart ?? Math.min(...dated.map((d) => d.s)));
+    const max = explicitEnd ?? Math.max(...dated.map((d) => d.e));
     const weeks = Math.max(1, Math.ceil((max - min) / (7 * DAY_MS)) + 2);
     return { min, weeks };
-  }, [dated]);
+  }, [dated, rangeEnd, rangeStart]);
 
   const persist = useCallback(
     async (item: ScheduleItem, newS: number, newE: number) => {
@@ -392,7 +407,8 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             const left = pct(effS);
             const width = `${(Math.max(effE - effS, DAY_MS) / totalMs) * 100}%`;
             const saving = ov?.saving;
-            const canDrag = item.sourceKind === 'task' && Boolean(onReschedule);
+            const frozen = frozenSet.has(item.id);
+            const canDrag = item.sourceKind === 'task' && Boolean(onReschedule) && !frozen;
             const isCritical = criticalSet.has(item.id);
             return (
               <div
@@ -400,11 +416,13 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
                 className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
               >
                 <div
-                  className={`absolute top-1.5 h-5 rounded flex items-center px-1.5 transition-opacity ${TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${
+                  className={`absolute top-1.5 h-5 rounded flex items-center px-1.5 transition-opacity ${
+                    frozen ? 'bg-navy-900 dark:bg-navy-950 cursor-not-allowed' : TYPE_BAR[item.type]
+                  } ${saving ? 'opacity-60' : ''} ${
                     isCritical ? 'ring-2 ring-c-danger ring-offset-1 ring-offset-c-surface' : ''
                   }`}
                   style={{ left, width, minWidth: '8px' }}
-                  title={`${item.title}${isCritical ? ' • critical path' : ''}${saving ? ' (saving…)' : ''}`}
+                  title={`${item.title}${isCritical ? ' • critical path' : ''}${frozen ? ' • frozen in execution' : ''}${saving ? ' (saving…)' : ''}`}
                   onPointerDown={
                     canDrag ? (ev) => handlePointerDown(ev, item, effS, effE) : undefined
                   }
