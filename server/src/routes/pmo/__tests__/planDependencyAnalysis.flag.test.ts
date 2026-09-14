@@ -124,38 +124,91 @@ describe('DEC-497 P2 E1 — default-OFF dependency analysis gate', NO_RETRY, () 
     });
     expect(analyze).not.toHaveBeenCalled();
   });
+
+  it('lets a stored receipt win after the source Plan version advances', async () => {
+    const analyze = vi.fn();
+    const replay = {
+      status: 'REPLAYED' as const,
+      aggregateVersion: 1,
+      response: { proposalId: 'proposal-replay', analysisSource: 'AI' },
+      correlationId: 'plan-analysis-request-replay',
+      receiptId: 'request-replay',
+      readBackState: 'PENDING' as const,
+      readBackUrl: '/runtime-v1/command-receipts/request-replay/read-back',
+    };
+    const app = createPlanAnalysisRouteTestApp({
+      analyze,
+      enabled: true,
+      foundVersion: 4,
+      unitOfWork: { transaction: vi.fn().mockResolvedValue(replay) },
+    });
+
+    const response = await request(app)
+      .post('/plan-scenarios/plan-url/analysis-proposals/proposal-replay')
+      .send({
+        expectedVersion: 0,
+        clientRequestId: 'request-replay',
+        scenarioId: 'plan-url',
+        inputAggregateVersion: 3,
+        analysisKind: 'AI_DEPENDENCY',
+        useCapacity: false,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(replay);
+    expect(analyze).not.toHaveBeenCalled();
+  });
 });
 
 function createPlanAnalysisRouteTestApp(input: {
   analyze: ReturnType<typeof vi.fn>;
   enabled: boolean;
   foundVersion: number;
+  unitOfWork?: { transaction: ReturnType<typeof vi.fn> };
 }) {
+  const scenario = {
+    scenarioId: 'plan-url',
+    scenarioVersion: input.foundVersion,
+    status: 'DRAFT',
+    portfolioScenarioId: 'portfolio-flag',
+    portfolioScenarioVersion: 1,
+    timezone: 'Europe/Warsaw',
+    periods: [
+      {
+        periodId: 'W1',
+        start: '2026-09-14T00:00:00.000Z',
+        end: '2026-09-21T00:00:00.000Z',
+      },
+    ],
+    windows: [],
+    assumptions: [],
+    createdBy: 'owner-1',
+    updatedBy: 'owner-1',
+    publishedBy: null,
+    publishedAt: null,
+  };
   const reader = {
     findPlanScenario: vi.fn().mockResolvedValue({
       version: input.foundVersion,
-      scenario: {
-        scenarioId: 'plan-url',
-        scenarioVersion: 2,
-        status: 'DRAFT',
-        portfolioScenarioId: 'portfolio-flag',
-        portfolioScenarioVersion: 1,
-        timezone: 'Europe/Warsaw',
-        periods: [
-          {
-            periodId: 'W1',
-            start: '2026-09-14T00:00:00.000Z',
-            end: '2026-09-21T00:00:00.000Z',
-          },
-        ],
-        windows: [],
-      },
+      scenario,
     }),
     findPortfolioScenario: vi.fn().mockResolvedValue({
       scenario: { scope: { portfolioId: 'portfolio-scope' } },
     }),
     listPlanDependencyAnalysisContext: vi.fn().mockResolvedValue([]),
     listCapacityScenarios: vi.fn().mockResolvedValue([]),
+  };
+  const defaultUnitOfWork = {
+    transaction: vi.fn(async (work: (tx: Record<string, unknown>) => Promise<unknown>) =>
+      work({
+        findReceipt: vi.fn().mockResolvedValue(null),
+        getAggregatePayload: vi.fn().mockResolvedValue(null),
+        getAggregateVersion: vi.fn().mockResolvedValue(null),
+        getRelatedAggregateForUpdate: vi.fn().mockImplementation(async (_org, type) =>
+          type === 'plan_scenario' ? { version: input.foundVersion, payload: scenario } : null
+        ),
+      })
+    ),
   };
   const app = express();
   app.use(express.json());
@@ -165,7 +218,7 @@ function createPlanAnalysisRouteTestApp(input: {
   });
   app.use(
     createInitiativesExecutionRuntimeRouter({
-      unitOfWork: {} as any,
+      unitOfWork: (input.unitOfWork ?? defaultUnitOfWork) as any,
       reader: reader as any,
       authorize: async () => true,
       resolvePolicy: async () => ({ policyId: 'policy', version: 1 }) as any,
