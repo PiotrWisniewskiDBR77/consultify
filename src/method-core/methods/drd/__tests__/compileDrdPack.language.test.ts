@@ -1,0 +1,118 @@
+/**
+ * DEC-461 / fala J1 — the DRD pack compiles in the viewer's language.
+ *
+ * Premise this test defends: the curated EN corpus
+ * (`drdKnowledgeOverridesAxis*.en.ts`, `whyThisMatters.ts` `{en,pl}`) already
+ * existed and `getDRDKnowledge(areaId, level, 'en')` already served it — but
+ * `compileDrdPack()` called it with a hardcoded `'pl'`, set `whyItMatters`
+ * from `whyHint.pl`, named units from `area.namePL`, and declared
+ * `manifest.languages: ['pl']`. A library with no caller ("biblioteka bez
+ * wywołania"): an EN user read a Polish questionnaire. This file measures the
+ * wiring, not the translation.
+ */
+import { describe, expect, it } from 'vitest';
+
+import { compileDrdPack } from '../compileDrdPack';
+
+/** Any Polish diacritic. The cheapest honest detector of "this is Polish text". */
+const POLSKIE_ZNAKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
+
+describe('compileDrdPack — language is wired, not hardcoded', () => {
+  it('EN: unit names, question wording, whyItMatters and evidence carry no Polish characters', () => {
+    const { pack } = compileDrdPack('en');
+
+    expect(pack.units.filter((u) => POLSKIE_ZNAKI.test(u.name))).toEqual([]);
+    expect(pack.units.filter((u) => POLSKIE_ZNAKI.test(u.description))).toEqual([]);
+    expect(
+      pack.questions.filter((q) => POLSKIE_ZNAKI.test(q.canonicalWording)).map((q) => q.questionId)
+    ).toEqual([]);
+    expect(
+      pack.questions.filter((q) => POLSKIE_ZNAKI.test(q.whyItMatters)).map((q) => q.questionId)
+    ).toEqual([]);
+    expect(
+      pack.levels
+        .filter((l) => l.expectedEvidence.some((e) => POLSKIE_ZNAKI.test(e)))
+        .map((l) => `${l.unitId}#${l.level}`)
+    ).toEqual([]);
+  });
+
+  it('EN: the "Evidence:" label is stripped the same way the PL "Dowód:" label is', () => {
+    const { pack } = compileDrdPack('en');
+    const withLabel = pack.levels.filter((l) =>
+      l.expectedEvidence.some((e) => /^(Evidence|Dow[oó]d)\s*:/i.test(e))
+    );
+    expect(withLabel.map((l) => `${l.unitId}#${l.level}`)).toEqual([]);
+  });
+
+  it('PL: still the Polish corpus — no accidental flip to English', () => {
+    const { pack } = compileDrdPack('pl');
+
+    // Area names: 17 of 39 have Polish diacritics in `namePL`. The point is
+    // that SOME do — "0" here would mean PL silently fell through to EN.
+    expect(pack.units.filter((u) => POLSKIE_ZNAKI.test(u.name)).length).toBeGreaterThan(0);
+    // whyItMatters is the axis hint; all 7 PL hints carry diacritics, so every
+    // question must.
+    expect(pack.questions.every((q) => POLSKIE_ZNAKI.test(q.whyItMatters))).toBe(true);
+  });
+
+  it('PL and EN are the SAME structure — zero regression in shape or ids', () => {
+    const pl = compileDrdPack('pl').pack;
+    const en = compileDrdPack('en').pack;
+
+    expect(pl.units).toHaveLength(39);
+    expect(pl.levels).toHaveLength(233);
+    expect(pl.questions).toHaveLength(699);
+
+    expect(en.units.map((u) => u.unitId)).toEqual(pl.units.map((u) => u.unitId));
+    expect(en.levels.map((l) => `${l.unitId}#${l.level}`)).toEqual(
+      pl.levels.map((l) => `${l.unitId}#${l.level}`)
+    );
+    expect(en.questions.map((q) => q.questionId)).toEqual(pl.questions.map((q) => q.questionId));
+    expect(en.manifest.version).toBe(pl.manifest.version);
+    // Scoring must not depend on the label language.
+    expect(en.scoringFixtures).toEqual(pl.scoringFixtures);
+    expect(compileDrdPack('en').report.coverage).toEqual(compileDrdPack('pl').report.coverage);
+  });
+
+  it('the manifest declares both languages and names the one THIS result carries', () => {
+    expect(compileDrdPack('en').pack.manifest.languages).toEqual(['en', 'pl']);
+    expect(compileDrdPack('en').pack.manifest.compiledLanguage).toBe('en');
+    expect(compileDrdPack('pl').pack.manifest.compiledLanguage).toBe('pl');
+  });
+
+  it('EN is the default (DEC-461) — a bare call is not Polish', () => {
+    expect(compileDrdPack().pack.manifest.compiledLanguage).toBe('en');
+    expect(compileDrdPack().pack.units[0].name).toBe(compileDrdPack('en').pack.units[0].name);
+  });
+
+  it('the cache is PER LANGUAGE — asking for PL after EN does not hand back the EN pack', () => {
+    const en1 = compileDrdPack('en');
+    const pl1 = compileDrdPack('pl');
+    const en2 = compileDrdPack('en');
+    const pl2 = compileDrdPack('pl');
+
+    // Identity: same language -> same cached object (the cheapness the screens rely on).
+    expect(en2).toBe(en1);
+    expect(pl2).toBe(pl1);
+    // ...and the two languages are genuinely different objects with different content.
+    expect(en1).not.toBe(pl1);
+    expect(en1.pack.questions[0].canonicalWording).not.toBe(pl1.pack.questions[0].canonicalWording);
+  });
+
+  it('DOCUMENTED CONTENT GAP: level titles are NOT language-switched (drdStructure has one variant)', () => {
+    // Honest measurement, not a pass: `DRD_STRUCTURE.levels[].title` has no
+    // `titlePL`/EN pair, so axes 5 and 6 keep their Polish titles even in an
+    // EN compile. Pinning the number here means a future translation of
+    // drdStructure.ts trips this test instead of sliding by unnoticed.
+    const en = compileDrdPack('en').pack;
+    const polishTitles = en.levels.filter((l) => POLSKIE_ZNAKI.test(l.title));
+    expect(polishTitles).toHaveLength(25);
+    expect([...new Set(polishTitles.map((l) => l.unitId[0]))].sort()).toEqual(['5', '6']);
+    // The compiler must SAY so rather than quietly shipping it.
+    expect(
+      compileDrdPack('en').report.discrepancies.some((d) =>
+        d.includes('LEVEL TITLES/DESCRIPTIONS ARE NOT LANGUAGE-SWITCHED')
+      )
+    ).toBe(true);
+  });
+});

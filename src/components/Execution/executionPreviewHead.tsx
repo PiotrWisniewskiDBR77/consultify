@@ -27,10 +27,39 @@
  * mieszka w jednym pliku.
  *
  * ZDANIE NIE GINIE — WĘDRUJE. Sanitizer nie kasuje prozy wstawionej w
- * `stateLine`: przenosi ją do dopisku bloku „Co dalej" (ten sam zabieg, którym
- * `executionBankPreviewDeclaration.tsx` rozwiązał „następny krok bez wołacza").
- * Dzięki temu poprawka jest addytywna informacyjnie: blok 2 przestaje być
- * akapitem, a treść dalej jest na ekranie — tyle że w bloku, który o niej mówi.
+ * `stateLine`: przenosi ją do PROZY BLOKU 3 (`detailsNote`). Dzięki temu
+ * poprawka jest addytywna informacyjnie: blok 2 przestaje być akapitem, a
+ * treść dalej jest na ekranie — tyle że w bloku, który o niej mówi.
+ *
+ * ── U2 (DEC-491 §2.7, 14.09): DOKĄD DOKŁADNIE WĘDRUJE ──────────────────────
+ *
+ * K5-5 kierował prozę do bloku „Co dalej" (`whatsNext`) z pustą listą pozycji.
+ * Właściciel zobaczył na stagingu dokładnie to, co zgłosił jako U2: „«What's
+ * next» TEKSTOWE w podglądzie Decisions" — ramka z nagłówkiem WHAT'S NEXT, w
+ * środku zero przycisków, pod spodem szary dopisek 10 px.
+ *
+ * `TABLE_AND_PREVIEW_CANON.md` §7.3 pkt 4.4 + reguła strefy „Co dalej" (§7.3,
+ * akapit „Reguła strefy") mówią jednoznacznie: „Co dalej" to CREATE-STRIP —
+ * zwarty pasek przycisków tworzących artefakt innego modułu — i strefa jest
+ * obowiązkowa **wtedy i tylko wtedy, gdy encja ma zaimplementowaną konwersję**
+ * na taki artefakt; „Encja bez konwersji: strefa NIEOBECNA, nie pusta".
+ * Tabela zakładek w tej samej sekcji wymienia Decisions wprost: „✖ brak
+ * konwersji". Żaden wiersz Realizacji (decyzja, RAID, zadanie, raport, sygnał,
+ * interwencja) nie ma dziś handlera konwersji — więc strefa ma być nieobecna
+ * we wszystkich dziewięciu deklaracjach, nie tylko w Decisions.
+ *
+ * Ten sam zabieg przyjął już właściciel w banku Realizacji
+ * (`executionBankPreviewDeclaration.tsx`, K5-4): blok „Co dalej" usunięty,
+ * zdanie o następnym kroku doklejone jako OSTATNIE ZDANIE prozy bloku 3.
+ * Tutaj robi to `detailsNote`, a nie dziewięć kopii tej samej sklejki.
+ *
+ * DLACZEGO NIE „per Decisions": to jest pamięć „naprawa per-wywołanie
+ * odrasta". Defekt siedzi w budowniczym, więc naprawa siedzi w budowniczym;
+ * ekran deklaruje TREŚĆ (`nextStep`), a o KSZTAŁCIE decyduje jedno miejsce.
+ *
+ * KIEDY „Co dalej" WRÓCI: gdy encja Realizacji dostanie realny handler
+ * konwersji, ekran poda `createItems` — wtedy (i tylko wtedy) budowniczy
+ * wystawi `whatsNext` z paskiem przycisków, zgodnie z §7.3a.
  */
 import React from 'react';
 
@@ -38,6 +67,7 @@ import type {
   MetaPill,
   StandardPreviewMeta,
   StandardPreviewWhatsNext,
+  StandardPreviewWhatsNextItem,
 } from '@/components/standard/StandardPreview';
 
 /** Termin / data — prawa strona karty meta (kanon §7.3 pkt 2). */
@@ -58,15 +88,37 @@ export interface ExecutionPreviewHeadInput {
    * Proza trafia stąd do dopisku „Co dalej" — patrz `czyProza`.
    */
   stateLine?: string | null;
-  /** Blok „Co dalej" — zdanie o następnym kroku. */
+  /**
+   * Zdanie o następnym kroku. Wraca w `detailsNote` — ekran dokleja je do
+   * prozy bloku 3 (wzór: `executionBankPreviewDeclaration.tsx`). NIE tworzy
+   * bloku „Co dalej": ten jest create-stripem, nie akapitem (§7.3 pkt 4.4).
+   */
   nextStep?: string | null;
+  /**
+   * Create-strip bloku „Co dalej" — WYŁĄCZNIE realne konwersje na artefakt
+   * innego modułu (§7.3a). Pusta lista / brak ⇒ strefa NIEOBECNA (nie pusta).
+   * Dziś żaden ekran Realizacji tego nie podaje, bo żaden nie ma handlera
+   * konwersji; parametr istnieje, żeby powrót strefy nie wymagał kopiowania
+   * kształtu do dziewięciu deklaracji.
+   */
+  createItems?: StandardPreviewWhatsNextItem[];
   /** Nagłówek bloku „Co dalej" (domyślnie tłumaczenie `common.whatsNext`). */
   whatsNextLabel?: string;
 }
 
 export interface ExecutionPreviewHead {
   meta: StandardPreviewMeta;
+  /**
+   * „Co dalej" — obecne TYLKO przy realnym create-stripie (`createItems`).
+   * Bez konwersji strefa jest nieobecna, zgodnie z regułą strefy w §7.3.
+   */
   whatsNext?: StandardPreviewWhatsNext;
+  /**
+   * Proza wypchnięta z bloku 2 (`stateLine`) + `nextStep`, złożona w jedno
+   * zdanie do DOKLEJENIA na końcu `details.text`. `undefined` = nie ma czego
+   * doklejać.
+   */
+  detailsNote?: string;
 }
 
 /**
@@ -111,6 +163,7 @@ export function buildExecutionPreviewHead({
   term,
   stateLine,
   nextStep,
+  createItems,
   whatsNextLabel,
 }: ExecutionPreviewHeadInput): ExecutionPreviewHead {
   const dopiski: string[] = [];
@@ -134,16 +187,36 @@ export function buildExecutionPreviewHead({
     ...(stanKanoniczny ? { recommendation: stanKanoniczny } : {}),
   };
 
-  if (dopiski.length === 0) return { meta };
+  const detailsNote = dopiski.length > 0 ? dopiski.join(' ') : undefined;
+
+  /*
+   * Create-strip tylko wtedy, gdy ekran zadeklarował realne konwersje.
+   * `items: []` z dopiskiem to była właśnie ramka „What's next" bez przycisków
+   * — czyli U2.
+   */
+  const whatsNext: StandardPreviewWhatsNext | undefined =
+    createItems && createItems.length > 0
+      ? {
+          ...(whatsNextLabel ? { label: whatsNextLabel } : {}),
+          items: createItems,
+        }
+      : undefined;
 
   return {
     meta,
-    whatsNext: {
-      ...(whatsNextLabel ? { label: whatsNextLabel } : {}),
-      note: dopiski.join(' '),
-      items: [],
-    },
+    ...(whatsNext ? { whatsNext } : {}),
+    ...(detailsNote ? { detailsNote } : {}),
   };
+}
+
+/**
+ * Sklejka prozy bloku 3 — jedno miejsce, w którym opis encji spotyka się z
+ * dopiskiem z góry podglądu. Wzór 1:1 z `executionBankPreviewDeclaration.tsx`
+ * (`[summary, nextStep.note].filter(Boolean).join(' ')`), tyle że nazwany, bo
+ * powtarza się w dziewięciu deklaracjach Realizacji.
+ */
+export function zlozProzeBloku3(opis: string, dopisek?: string): string {
+  return [opis, dopisek].filter(Boolean).join(' ');
 }
 
 export default buildExecutionPreviewHead;

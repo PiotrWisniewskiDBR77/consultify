@@ -352,17 +352,25 @@ describe('F2-1 E1 Slice 3 Initiative consulting analysis', () => {
   it('shows rationale, evidence, confidence, alternatives, missing data and provenance in StandardPreview', async () => {
     renderView();
     fireEvent.click(await screen.findByRole('button', { name: 'Run portfolio analysis' }));
-    fireEvent.click((await screen.findByText('Resolve overlap.')).closest('tr')!);
+    const analysisTable = await screen.findByTestId('initiatives-analysis-table');
+    const primaryTable = within(analysisTable).getAllByRole('table')[0];
+    const recommendationRow = within(primaryTable)
+      .getAllByRole('row')
+      .find((row) => within(row).queryByText('Resolve overlap.'))!;
+    fireEvent.click(recommendationRow);
 
-    const preview = await screen.findByTestId('initiatives-analysis-preview');
-    await waitFor(() => {
-      expect(preview).toHaveTextContent('Low');
-      expect(preview).toHaveTextContent('problem · initiative:initiative-a:v4');
-      expect(preview).toHaveTextContent('Merge');
-      expect(preview).toHaveTextContent('Owner confirmation');
-      expect(preview).toHaveTextContent('provider-a · model-a · prompt-a');
-      expect(preview).toHaveTextContent('Initiative Alpha');
-    });
+    // The preview pane may replace its DOM node while the selected record is
+    // animated in. Query the live node on each poll instead of asserting on
+    // the detached element captured for the initial Decision preview.
+    await waitFor(() =>
+      expect(screen.getByTestId('initiatives-analysis-preview')).toHaveTextContent('Low')
+    );
+    const selectedPreview = screen.getByTestId('initiatives-analysis-preview');
+    expect(selectedPreview).toHaveTextContent('problem · initiative:initiative-a:v4');
+    expect(selectedPreview).toHaveTextContent('Merge');
+    expect(selectedPreview).toHaveTextContent('Owner confirmation');
+    expect(selectedPreview).toHaveTextContent('provider-a · model-a · prompt-a');
+    expect(selectedPreview).toHaveTextContent('Initiative Alpha');
   });
 
   it('applies a single DEC479 decision through request, decide and exact persisted readback', async () => {

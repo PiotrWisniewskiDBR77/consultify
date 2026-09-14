@@ -15,4 +15,5 @@ export {
   SettingsSelect,
   SettingsTextarea,
   SettingsToggle,
+  SettingsToggleControl,
 } from './SettingsSection';

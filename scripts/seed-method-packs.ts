@@ -69,7 +69,10 @@ async function main(): Promise<void> {
     throw new Error('Brakuje DATABASE_URL.');
   }
 
-  const { pack, report } = compileDrdPack();
+  // DEC-461: seedowanie zapisuje pakiet w języku WIODĄCYM produktu (EN).
+  // Wołane jawnie, żeby zmiana domyślnej wartości w kompilatorze nigdy nie
+  // przestawiła po cichu treści wpisywanej do bazy.
+  const { pack, report } = compileDrdPack('en');
   const { manifest } = pack;
 
   // Kompilator sam raportuje luki w pokryciu treścią. Jeżeli coś jest niepełne,

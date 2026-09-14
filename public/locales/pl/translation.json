@@ -8051,6 +8051,8 @@
       "appliedImprovedVersion": "Zastosowano ulepszoną wersję",
       "apply": "Zastosuj",
       "dismiss": "Odrzuć",
+      "removeAttachment": "Usuń załącznik",
+      "removeAttachmentConfirm": "Usunąć załącznik?",
       "removeFromTheEvidencePanel": "Usuń w panelu Dowody",
       "remove": "Usuń",
       "recording": "Nagranie",

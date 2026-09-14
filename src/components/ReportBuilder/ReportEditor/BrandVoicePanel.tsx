@@ -431,12 +431,17 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, description, checked, onCh
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
+      /*
+       * P-T06 (rodzeństwo): stan ON miał tor `bg-c-surface` (#ffffff) pod
+       * gałką `bg-c-surface` — w motywie jasnym pstryczek WŁĄCZONY był
+       * niewidoczny (kontrast 1,00:1). Kanon: ON = `--c-focus-solid`.
+       */
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-        checked ? 'bg-c-surface' : 'bg-c-border'
+        checked ? 'bg-c-focus-solid' : 'bg-c-border'
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 translate-y-0.5 transform rounded-full bg-c-surface shadow transition-transform ${
+        className={`pointer-events-none inline-block h-4 w-4 translate-y-0.5 transform rounded-full bg-white shadow transition-transform ${
           checked ? 'translate-x-4' : 'translate-x-0.5'
         }`}
       />

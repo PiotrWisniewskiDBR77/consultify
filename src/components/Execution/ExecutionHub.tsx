@@ -6365,7 +6365,7 @@ Please return:
                      * Pracy, Zarządzaniu ryzykiem i Raportach — góra podglądu
                      * nie ma już czterech różnych kształtów w jednym module.
                      */
-                    {...buildExecutionPreviewHead({
+                    meta={buildExecutionPreviewHead({
                       pills: [
                         {
                           label: raidTypeLabel(selectedSummaryRisk.type, isPolish),
@@ -6385,7 +6385,7 @@ Please return:
                           ? formatListDate(selectedSummaryRisk.dueDate)
                           : t('execution.governance.preview.noDueShort', 'No due date'),
                       },
-                    })}
+                    }).meta}
                     details={{
                       label: t('execution.governance.columns.type', 'Typ'),
                       text:

@@ -130,6 +130,9 @@ import './slowLocaleFetch';
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 const AccentSoftTokenFixScreen = React.lazy(() => import('./screens/accent-soft-token-fix'));
+const PT14PomyslyEtapKandydatScreen = React.lazy(
+  () => import('./screens/p-t14-pomysly-etap-kandydat')
+);
 const UiFoundationFocus01EvidenceScreen = React.lazy(
   () => import('./screens/ui-foundation-focus-01-evidence')
 );
@@ -349,6 +352,9 @@ const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
 const K5NaprawyRealizacjaScreen = React.lazy(() => import('./screens/k5-naprawy-realizacja'));
 const K5PreviewBankScreen = React.lazy(() => import('./screens/k5-preview-bank'));
 const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work'));
+const U2RealizacjaDecyzjeScreen = React.lazy(() => import('./screens/u2-realizacja-decyzje'));
+const Pt15WywiadZalacznikiScreen = React.lazy(() => import('./screens/pt15-wywiad-zalaczniki'));
+const Pt06UstawieniaSuwakiScreen = React.lazy(() => import('./screens/pt06-ustawienia-suwaki'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
@@ -1450,6 +1456,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
     render: () => <PreviewZakladkiScreen />,
   },
+  'p-t14-pomysly-etap-kandydat': {
+    label:
+      'P-T14 — Pomysły: etap zmieniany z wiersza (1 lista) + „Przejrzyj kandydaturę” z nazwanym wynikiem (PRZED/PO)',
+    render: () => <PT14PomyslyEtapKandydatScreen />,
+  },
   'accent-soft-token-fix': {
     label:
       'J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson',
@@ -2105,6 +2116,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5-5 — góra podglądów Realizacji (bloki 1–2) po wyrównaniu do kanonu: REALNY <ExecutionHub initialTab="work"> z zadaniem ZAMKNIĘTYM i OTWARTYM (osoba + termin); Menu 1 przełącza na Risk management i Reports. &lang=en&theme=light|dark',
     render: () => <K5PreviewWorkScreen />,
+  },
+  'pt06-ustawienia-suwaki': {
+    label:
+      'P-T06 (uwaga testera VI) — suwaki „Widoczności widgetów" w powłoce Ustawień (REALNY <AppearanceModule initialTab="dashboard">): cztery ON i trzy OFF na jednym zrzucie. &lang=en|pl&theme=light|dark',
+    render: () => <Pt06UstawieniaSuwakiScreen />,
+  },
+  'pt15-wywiad-zalaczniki': {
+    label:
+      'P-T15 (uwaga testera XV) — usuwanie załączników w panelu odpowiedzi Wywiadu (REALNY <InterviewWorkspace>, runtime single_question): kosz przy pliku i krzyżyk na miniaturze, dwustopniowe potwierdzenie. &lang=en|pl&theme=light|dark',
+    render: () => <Pt15WywiadZalacznikiScreen />,
+  },
+  'u2-realizacja-decyzje': {
+    label:
+      'U2 (DEC-491 §2.7) — podgląd DECYZJI w powłoce Realizacji (REALNY <ExecutionHub initialTab="control">) bez tekstowego „What\'s next": zdanie o następnym kroku stoi w prozie bloku 3, strefa „Co dalej" nieobecna (kanon §7.3 pkt 4.4). &lang=en|pl&theme=light|dark',
+    render: () => <U2RealizacjaDecyzjeScreen />,
   },
   'k5-naprawy-inicjatywy': {
     label:

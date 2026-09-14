@@ -12,7 +12,10 @@
  * Sprawdzane literalnie (TABLE_AND_PREVIEW_CANON §7.3 pkt 1–2):
  *   · blok 2 niesie STAN, nie prozę — zdanie wstawione do karty meta NIE
  *     renderuje się w niej (mutacja: wyłącz `czyProza` → test czerwony),
- *   · zdanie nie ginie: ląduje w dopisku bloku „Co dalej",
+ *   · zdanie nie ginie: ląduje w prozie bloku 3 (`detailsNote`) — U2 (DEC-491
+ *     §2.7): „Co dalej" to CREATE-STRIP, nie akapit; encja bez konwersji ma
+ *     tę strefę NIEOBECNĄ, nie pustą (TABLE_AND_PREVIEW_CANON §7.3 pkt 4.4 +
+ *     „Reguła strefy «Co dalej»"),
  *   · strefa terminu ma JEDNE klasy w całym module,
  *   · w całym podglądzie jest dokładnie jedno „Open" (nagłówek powłoki).
  */
@@ -25,6 +28,7 @@ import {
   buildExecutionPreviewHead,
   czyProza,
   EXECUTION_PREVIEW_TRAILING_CLASS,
+  zlozProzeBloku3,
 } from '../executionPreviewHead';
 
 vi.mock('react-i18next', () => ({
@@ -37,6 +41,13 @@ vi.mock('react-i18next', () => ({
 /** Zdanie, które właściciel widział w karcie meta podglądu zadania. */
 const ZDANIE_Z_ODBIORU = 'Check completeness and the next step.';
 
+const OPIS = 'Archive the evidence pack.';
+
+/**
+ * Montaż 1:1 z dziewięcioma deklaracjami Realizacji PO U2: `whatsNext` idzie z
+ * budowniczego (czyli dziś: nie ma go), a `detailsNote` dokleja się do prozy
+ * bloku 3 przez `zlozProzeBloku3` — tę samą funkcję, którą wołają ekrany.
+ */
 const podglad = (head: ReturnType<typeof buildExecutionPreviewHead>) =>
   render(
     <StandardPreview
@@ -45,12 +56,12 @@ const podglad = (head: ReturnType<typeof buildExecutionPreviewHead>) =>
       onOpenFull={() => undefined}
       meta={head.meta}
       whatsNext={head.whatsNext}
-      details={{ label: 'Work details', text: 'Archive the evidence pack.' }}
+      details={{ label: 'Work details', text: zlozProzeBloku3(OPIS, head.detailsNote) }}
     />
   );
 
 describe('K5-5 — góra podglądów Realizacji (bloki 1–2)', () => {
-  it('blok 2 NIE renderuje zdania — proza wędruje do dopisku „Co dalej"', () => {
+  it('blok 2 NIE renderuje zdania — proza wędruje do bloku 3', () => {
     const head = buildExecutionPreviewHead({
       pills: [{ label: 'Task', tone: 'neutral' }],
       term: { label: 'Due date', value: '26/08/2026' },
@@ -58,15 +69,52 @@ describe('K5-5 — góra podglądów Realizacji (bloki 1–2)', () => {
     });
 
     expect(head.meta.recommendation).toBeUndefined();
-    expect(head.whatsNext?.note).toContain(ZDANIE_Z_ODBIORU);
+    expect(head.detailsNote).toContain(ZDANIE_Z_ODBIORU);
 
     podglad(head);
     const meta = document.querySelector('[data-preview-block="meta"]');
     expect(meta).not.toBeNull();
     expect(meta?.textContent ?? '').not.toContain(ZDANIE_Z_ODBIORU);
-    expect(document.querySelector('[data-preview-block="whatsnext"]')?.textContent ?? '').toContain(
+    expect(document.querySelector('[data-preview-block="details"]')?.textContent ?? '').toContain(
       ZDANIE_Z_ODBIORU
     );
+  });
+
+  /*
+   * ── U2 (DEC-491 §2.7) ────────────────────────────────────────────────────
+   * Uwaga właściciela ze stagingu: „«What's next» tekstowe w podglądzie
+   * Decisions". Ramka z nagłówkiem i zerem przycisków jest tym, czego kanon
+   * zakazuje wprost: „Encja bez konwersji: strefa NIEOBECNA, nie pusta".
+   */
+  it('U2 — decyzja bez konwersji NIE dostaje ramki „Co dalej", a zdanie zostaje widoczne', () => {
+    const ZDANIE_DECYZJI = 'Overdue by 17 days — resolve or escalate.';
+    const head = buildExecutionPreviewHead({
+      pills: [{ label: 'Pending', tone: 'neutral' }],
+      term: { label: 'Needed by', value: '24/08/2026' },
+      nextStep: ZDANIE_DECYZJI,
+    });
+
+    expect(head.whatsNext).toBeUndefined();
+
+    podglad(head);
+    // Ramka nieobecna — nie „obecna i pusta".
+    expect(document.querySelector('[data-preview-block="whatsnext"]')).toBeNull();
+    // Zdanie nie zginęło: stoi jako ostatnie zdanie prozy bloku 3.
+    const tresc = document.querySelector('[data-preview-block="details"]')?.textContent ?? '';
+    expect(tresc).toContain(OPIS);
+    expect(tresc).toContain(ZDANIE_DECYZJI);
+  });
+
+  it('U2 — „Co dalej" wraca WYŁĄCZNIE przy realnym create-stripie', () => {
+    const head = buildExecutionPreviewHead({
+      pills: [{ label: 'Pending', tone: 'neutral' }],
+      nextStep: 'Resolve or escalate.',
+      createItems: [{ id: 'report', label: 'Create report', onClick: () => undefined }],
+    });
+
+    expect(head.whatsNext?.items).toHaveLength(1);
+    podglad(head);
+    expect(document.querySelector('[data-preview-block="whatsnext"]')).not.toBeNull();
   });
 
   it('krótka etykieta stanu ZOSTAJE w bloku 2 (to stan, nie proza)', () => {

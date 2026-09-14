@@ -76,7 +76,12 @@
  * version does not match the pinned version, lookups return `null` and the
  * caller falls back to the raw id — an honest degrade, not a mislabel.
  */
-import { compileDrdPack, DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
+import {
+  compileDrdPack,
+  DRD_METHOD_PACK_ID,
+  type DrdPackLanguage,
+} from '@/method-core/methods/drd/compileDrdPack';
+import { currentDrdPackLanguage } from '@/method-core/methods/drd/drdPackLanguage';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import i18n from 'i18next';
 
@@ -89,20 +94,30 @@ export interface DrdUnitLabel {
   readonly levelScale: readonly number[];
 }
 
-let cachedPack: ReturnType<typeof compileDrdPack>['pack'] | null = null;
-let cachedPackFailed = false;
+/**
+ * DEC-461 (fala J1): one cache slot PER LANGUAGE. A single `cachedPack` meant
+ * whichever language asked first was frozen in for the session.
+ */
+const cachedPackByLanguage = new Map<
+  DrdPackLanguage,
+  ReturnType<typeof compileDrdPack>['pack']
+>();
+const cachedPackFailedFor = new Set<DrdPackLanguage>();
 
-function getCompiledDrdPack(): ReturnType<typeof compileDrdPack>['pack'] | null {
-  if (cachedPackFailed) return null;
-  if (!cachedPack) {
-    try {
-      cachedPack = compileDrdPack().pack;
-    } catch {
-      cachedPackFailed = true;
-      return null;
-    }
+function getCompiledDrdPack(
+  lang: DrdPackLanguage = currentDrdPackLanguage()
+): ReturnType<typeof compileDrdPack>['pack'] | null {
+  if (cachedPackFailedFor.has(lang)) return null;
+  const hit = cachedPackByLanguage.get(lang);
+  if (hit) return hit;
+  try {
+    const compiled = compileDrdPack(lang).pack;
+    cachedPackByLanguage.set(lang, compiled);
+    return compiled;
+  } catch {
+    cachedPackFailedFor.add(lang);
+    return null;
   }
-  return cachedPack;
 }
 
 /** Axis id (`axis-${n}`) -> Polish axis name, from the same source the

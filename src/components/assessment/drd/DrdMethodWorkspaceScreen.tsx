@@ -45,9 +45,9 @@ import {
   evidenceStateFor,
   evidenceStrengthFor,
   getOutputUnitColumns,
-  pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
+import { useDrdPack } from './useDrdPack';
 import { DrdHttpMethodWorkspaceScreen } from './DrdHttpMethodWorkspaceScreen';
 import { DrdSourceIndicator } from './DrdSourceIndicator';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
@@ -209,6 +209,8 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
+  // DEC-461: see DrdHttpMethodWorkspaceScreen — the pack follows the viewer.
+  const pack = useDrdPack();
   const storage = storageProp ?? window.localStorage;
   const [tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -684,7 +686,11 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             },
           }}
           interviewProps={{
-            breadcrumb: [activeAxis.namePL || activeAxis.name, activeArea.namePL || activeArea.name, `Poziom ${focusLevel}`],
+            breadcrumb: [
+              nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish),
+              nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+              `${t('assessment.drd.level', 'Level')} ${focusLevel}`,
+            ],
             questions: interviewQuestions,
             questionIndex: focusLevel - 1,
             questionTotal: activeArea.levels.length,
@@ -783,7 +789,9 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             <div className="space-y-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">DRD report · axis {activeAxis.id}</p>
-                <h2 className="text-lg font-semibold text-c-text">{activeAxis.namePL || activeAxis.name}</h2>
+                <h2 className="text-lg font-semibold text-c-text">
+                  {nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish)}
+                </h2>
                 <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
                   {t(
                     'assessment.drd.legacy.workingChapter',
@@ -823,7 +831,9 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 {activeAxis.areas.map((area) => (
                   <article key={area.id} className="rounded-xl border border-c-border bg-c-surface p-4">
                     <p className="text-[11px] font-semibold text-c-text-muted">{area.id}</p>
-                    <h3 className="text-sm font-semibold text-c-text">{area.namePL || area.name}</h3>
+                    <h3 className="text-sm font-semibold text-c-text">
+                      {nazwaWJezyku(area.namePL, area.name, isPolish)}
+                    </h3>
                     <p className="mt-2 text-xs text-c-text-secondary">
                       {confirmedLevelsFor(events, area.id).length > 0
                         ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Komentarz ekspercki pozostaje roboczy do zatwierdzenia.`

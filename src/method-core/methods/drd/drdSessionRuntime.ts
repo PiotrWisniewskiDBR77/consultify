@@ -64,6 +64,7 @@ import {
 } from '@/method-core/outputs';
 
 import { compileDrdPack, DRD_METHOD_PACK_ID } from './compileDrdPack';
+import { currentDrdPackLanguage } from './drdPackLanguage';
 
 export const DRD_DEMO_SESSION_NOTICE =
   'Metodyka DRD jest w statusie „w przeglądzie" (methodology_review) — canStartSession() ' +
@@ -146,7 +147,10 @@ export interface CreateDrdDemoSessionInput {
 }
 
 export function createDrdDemoSession(input: CreateDrdDemoSessionInput): DrdSessionRuntime {
-  const { pack } = compileDrdPack();
+  // Only `pack.manifest.version` is read below — language-independent — but
+  // the call still goes through the viewer's language so this never becomes
+  // the one caller that warms the cache in the wrong language (DEC-461).
+  const { pack } = compileDrdPack(currentDrdPackLanguage());
   const storage = input.storage ?? window.localStorage;
   const now = nowIso();
   const session: MethodSession = {
