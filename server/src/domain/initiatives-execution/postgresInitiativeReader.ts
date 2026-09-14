@@ -13,6 +13,7 @@ import type {
   InitiativeWorkReportContent,
   InitiativeWorkReportTemplate,
 } from '../../services/initiativeWorkReportService.js';
+import { getExecutionResourcePlan } from '../../services/workloadCapacityService.js';
 
 export interface SourceProposalReadModel {
   id: string;
@@ -134,6 +135,74 @@ export class PostgresInitiativeReader {
     organizationId: string,
     input: { title: string; templateId: InitiativeWorkReportTemplate; projectIds: string[] }
   ): Promise<{ content: InitiativeWorkReportContent; sources: Array<Record<string, unknown>> }> {
+    if (input.templateId === 'WORKLOAD_CAPACITY') {
+      const plan = await getExecutionResourcePlan(organizationId, {
+        weeks: 8,
+        projectIds: input.projectIds,
+        includeAvailablePeople: true,
+      });
+      const generatedAt = new Date().toISOString();
+      const rows = plan.rows.map((row) => ({
+        userId: row.userId,
+        weekStart: row.weekStart,
+        demandHours: row.demandHours,
+        supplyHours: row.supplyHours,
+        utilizationPercent: row.utilizationPercent,
+        capacityExceeded: row.demandHours > 0 && row.supplyHours <= 0,
+      }));
+      return {
+        content: {
+          generatedAt,
+          title: input.title,
+          templateId: input.templateId,
+          projectIds: input.projectIds,
+          summary: {
+            initiatives: 0,
+            pendingDecisions: 0,
+            overdueDecisions: 0,
+            byStatus: {},
+          },
+          initiatives: [],
+          decisionDebtors: [],
+          workload: {
+            weeks: plan.weeks,
+            people: plan.people.map((person) => ({
+              userId: person.userId,
+              name: person.name,
+              weeklyCapacityHours: person.weeklyCapacityHours,
+              availabilityPercent: person.availabilityPercent,
+            })),
+            rows,
+            overloadedCount: rows.filter(
+              (row) => row.capacityExceeded || row.utilizationPercent > 100
+            ).length,
+          },
+        },
+        sources: [
+          {
+            sourceType: 'initiative_workload',
+            sourceId: input.projectIds.length
+              ? `projects:${input.projectIds.join(',')}`
+              : 'organization',
+            version: 1,
+            capturedAt: generatedAt,
+            freshness: 'CURRENT',
+            formula: 'demand_hours / available_capacity_hours',
+            unit: 'hours',
+            currency: null,
+            window: plan.weeks.length
+              ? {
+                  start: `${plan.weeks[0]}T00:00:00.000Z`,
+                  end: `${plan.weeks[plan.weeks.length - 1]}T23:59:59.999Z`,
+                }
+              : null,
+            confidence: 'HIGH',
+            accessState: 'FULL',
+            redactions: [],
+          },
+        ],
+      };
+    }
     const [initiativesResult, decisionsResult] = await Promise.all([
       this.pool.query<{
         aggregate_id: string;

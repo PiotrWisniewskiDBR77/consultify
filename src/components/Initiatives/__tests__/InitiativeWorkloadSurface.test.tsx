@@ -1,16 +1,33 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
-const { readInitiativeWorkload } = vi.hoisted(() => ({ readInitiativeWorkload: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  readInitiativeWorkload: vi.fn(),
+  updateInitiativeWorkloadAvailability: vi.fn(),
+  proposeInitiativeWorkloadMoves: vi.fn(),
+  listReportDefinitions: vi.fn(),
+  getReportDefinition: vi.fn(),
+  createReportRun: vi.fn(),
+  transitionReportRun: vi.fn(),
+}));
 
 vi.mock('@/services/initiatives/initiativeWorkloadApi', () => ({
-  readInitiativeWorkload,
+  readInitiativeWorkload: mocks.readInitiativeWorkload,
+  updateInitiativeWorkloadAvailability: mocks.updateInitiativeWorkloadAvailability,
+  proposeInitiativeWorkloadMoves: mocks.proposeInitiativeWorkloadMoves,
+}));
+
+vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
+  listReportDefinitions: mocks.listReportDefinitions,
+  getReportDefinition: mocks.getReportDefinition,
+  createReportRun: mocks.createReportRun,
+  transitionReportRun: mocks.transitionReportRun,
 }));
 
 import { InitiativeWorkloadSurface } from '../InitiativeWorkloadSurface';
 
-const renderSurface = () =>
+const renderSurface = (proposalRequestId = 0) =>
   render(
     <MemoryRouter initialEntries={['/initiatives?tab=capacity']}>
       <InitiativeWorkloadSurface
@@ -23,6 +40,8 @@ const renderSurface = () =>
             status: 'PENDING_APPROVAL',
           },
         ]}
+        currentUserId="anna"
+        proposalRequestId={proposalRequestId}
       />
     </MemoryRouter>
   );
@@ -108,8 +127,19 @@ const response = {
 
 describe('InitiativeWorkloadSurface E1', () => {
   beforeEach(() => {
-    readInitiativeWorkload.mockReset();
-    readInitiativeWorkload.mockResolvedValue(response);
+    vi.unstubAllEnvs();
+    Object.values(mocks).forEach((mock) => mock.mockReset());
+    mocks.readInitiativeWorkload.mockResolvedValue(response);
+    mocks.updateInitiativeWorkloadAvailability.mockResolvedValue({
+      userId: 'anna',
+      weeklyCapacityHours: 32,
+      availabilityPercent: 80,
+    });
+    mocks.proposeInitiativeWorkloadMoves.mockResolvedValue({
+      proposals: [],
+      applied: false,
+      planningOnly: true,
+    });
   });
 
   it('renders the exact green/amber/red workload bands per person and week', async () => {
@@ -131,7 +161,7 @@ describe('InitiativeWorkloadSurface E1', () => {
   });
 
   it('renders positive demand with zero capacity as a critical state', async () => {
-    readInitiativeWorkload.mockResolvedValueOnce({
+    mocks.readInitiativeWorkload.mockResolvedValueOnce({
       ...response,
       rows: [
         ...response.rows,
@@ -177,16 +207,119 @@ describe('InitiativeWorkloadSurface E1', () => {
     renderSurface();
     await screen.findByText('Anna Adams');
 
-    fireEvent.change(screen.getByLabelText('Project scope'), { target: { value: 'p1' } });
-    fireEvent.change(screen.getByLabelText('Initiative status'), {
-      target: { value: 'PENDING_APPROVAL' },
-    });
+    fireEvent.click(within(screen.getByTestId('workload-project-filter')).getByRole('button'));
+    fireEvent.click(screen.getByRole('option', { name: 'Apollo' }));
+    fireEvent.click(within(screen.getByTestId('workload-status-filter')).getByRole('button'));
+    fireEvent.click(screen.getByRole('option', { name: /pending/i }));
 
     await waitFor(() =>
-      expect(readInitiativeWorkload).toHaveBeenLastCalledWith(
+      expect(mocks.readInitiativeWorkload).toHaveBeenLastCalledWith(
         expect.objectContaining({ projectId: 'p1', initiativeStatuses: ['PENDING_APPROVAL'] }),
         expect.any(AbortSignal)
       )
     );
+  });
+
+  it('persists a selected person weekly availability through the profile writer', async () => {
+    renderSurface();
+    fireEvent.click(await screen.findByText('Anna Adams'));
+    fireEvent.change(screen.getByLabelText('Hours per week'), { target: { value: '32' } });
+    fireEvent.change(screen.getByLabelText('Availability percent'), { target: { value: '80' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save availability' }));
+
+    await waitFor(() =>
+      expect(mocks.updateInitiativeWorkloadAvailability).toHaveBeenCalledWith('anna', {
+        weeklyCapacityHours: 32,
+        availabilityPercent: 80,
+      })
+    );
+  });
+
+  it('shows planning-only AI proposals without applying a task mutation', async () => {
+    mocks.proposeInitiativeWorkloadMoves.mockResolvedValueOnce({
+      applied: false,
+      planningOnly: true,
+      proposals: [
+        {
+          proposalId: 'task-1:anna:2026-09-14',
+          taskId: 'task-1',
+          taskTitle: 'Prepare rollout',
+          initiativeId: 'i1',
+          initiativeStatus: 'APPROVED',
+          weekStart: '2026-09-14',
+          fromUserId: 'ben',
+          fromUserName: 'Ben Brown',
+          toUserId: 'anna',
+          toUserName: 'Anna Adams',
+          proposedHours: 8,
+          rationale: 'Rule',
+          requiresHumanApproval: true,
+          applied: false,
+        },
+      ],
+    });
+    renderSurface(1);
+
+    const task = await screen.findByText('Prepare rollout');
+    expect(screen.getByText('Ben Brown → Anna Adams')).toBeInTheDocument();
+    expect(screen.getByText(/do not change running assignments/i)).toBeInTheDocument();
+    const panel = screen.getByTestId('workload-proposals-panel');
+    expect(within(panel).getByRole('button', { name: 'Row actions' })).toBeInTheDocument();
+
+    fireEvent.click(task);
+    expect(await within(panel).findByText('Planning only')).toBeInTheDocument();
+    expect(within(panel).getByText('Initiative status: Approved')).toBeInTheDocument();
+    expect(within(panel).getAllByText('Rule')).toHaveLength(2);
+    expect(within(panel).queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
+  });
+
+  it('does not expose a dead Open action for a team-member workload preview', async () => {
+    renderSurface();
+    fireEvent.click(await screen.findByText('Anna Adams'));
+
+    expect((await screen.findAllByText('Weekly capacity')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
+  });
+
+  it('creates and freezes a workload run through the shared report engine', async () => {
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
+    mocks.listReportDefinitions.mockResolvedValue({ items: [{ definitionId: 'definition-1' }] });
+    mocks.getReportDefinition.mockResolvedValue({
+      definitionId: 'definition-1',
+      versions: [
+        {
+          definitionVersion: 3,
+          state: 'PUBLISHED',
+          ownerId: 'anna',
+          approverId: 'ben',
+          audience: ['lead@example.test'],
+          name: 'Weekly workload',
+          outputSchema: { kind: 'initiative_workload_report' },
+          sourceBindings: [{ sourceType: 'initiative_workload' }],
+        },
+      ],
+    });
+    mocks.createReportRun.mockResolvedValue({});
+    mocks.transitionReportRun.mockResolvedValue({});
+
+    renderSurface();
+
+    const generate = await screen.findByRole('button', { name: 'Generate workload report' });
+    await waitFor(() => expect(generate).toBeEnabled());
+    fireEvent.click(generate);
+
+    await waitFor(() => expect(mocks.createReportRun).toHaveBeenCalledTimes(1));
+    expect(mocks.createReportRun).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        definitionRef: { definitionId: 'definition-1', version: 3 },
+        workReport: expect.objectContaining({ templateId: 'WORKLOAD_CAPACITY' }),
+      })
+    );
+    expect(mocks.transitionReportRun.mock.calls.map(([, input]) => input.action)).toEqual([
+      'VALIDATE',
+      'FREEZE',
+    ]);
+    expect(await screen.findByText(/Report frozen for approval/)).toBeInTheDocument();
   });
 });
