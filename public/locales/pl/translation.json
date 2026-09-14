@@ -14591,6 +14591,31 @@
       "noExecutionCase": "Brak realizacji",
       "noExecutionCaseHint": "W toku, ale bez przekazania do realizacji — nie ma z czego raportować.",
       "lifecycleUnknownHint": "Powiązany rekord inicjatywy jest niedostępny",
+      "filters": {
+        "projectAria": "Filtr projektu w banku",
+        "statusAria": "Filtr statusu w banku",
+        "ownerAria": "Filtr właściciela w banku",
+        "priorityAria": "Filtr priorytetu w banku",
+        "timeAria": "Filtr terminu w banku",
+        "allProjects": "Wszystkie projekty",
+        "noProject": "Bez projektu",
+        "projectNameUnavailable": "Nazwa projektu niedostępna",
+        "allStatuses": "Wszystkie statusy",
+        "allOwners": "Wszyscy właściciele",
+        "noOwner": "Bez właściciela",
+        "ownerNameUnavailable": "Nazwa właściciela niedostępna",
+        "allPriorities": "Wszystkie priorytety",
+        "anyTime": "Dowolny termin",
+        "pastDue": "Po terminie",
+        "next30": "Najbliższe 30 dni",
+        "next90": "Najbliższe 90 dni",
+        "priority": {
+          "critical": "Krytyczny",
+          "high": "Wysoki",
+          "medium": "Średni",
+          "low": "Niski"
+        }
+      },
       "preview": {
         "reportingDate": "Data raportowania",
         "updatedAt": "Aktualizacja {{date}}",

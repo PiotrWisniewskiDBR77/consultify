@@ -15363,6 +15363,31 @@
       "noExecutionCase": "No execution case yet",
       "noExecutionCaseHint": "In execution, but not handed over yet — no execution case to report against.",
       "lifecycleUnknownHint": "Linked initiative record is not available",
+      "filters": {
+        "projectAria": "Bank project filter",
+        "statusAria": "Bank status filter",
+        "ownerAria": "Bank owner filter",
+        "priorityAria": "Bank priority filter",
+        "timeAria": "Bank time filter",
+        "allProjects": "All projects",
+        "noProject": "No project",
+        "projectNameUnavailable": "Project name unavailable",
+        "allStatuses": "All statuses",
+        "allOwners": "All owners",
+        "noOwner": "No owner",
+        "ownerNameUnavailable": "Owner name unavailable",
+        "allPriorities": "All priorities",
+        "anyTime": "Any time",
+        "pastDue": "Past due",
+        "next30": "Next 30 days",
+        "next90": "Next 90 days",
+        "priority": {
+          "critical": "Critical",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        }
+      },
       "preview": {
         "reportingDate": "Reporting date",
         "updatedAt": "Updated {{date}}",
