@@ -335,6 +335,10 @@
     },
     "boundary": {
       "reportWithContext": "Report this error with full context"
+    },
+    "chunkUpdate": {
+      "message": "A new version of the app is available — refresh the page.",
+      "action": "Refresh"
     }
   },
   "transformationScenarios": {
@@ -10223,6 +10227,17 @@
         "actorLabel": "Actor:",
         "reopenHeading": "Reopen — new revision",
         "reopenButton": "Reopen session (new revision)"
+      },
+      "output": {
+        "unitColumn": "Unit",
+        "currentColumn": "Current",
+        "targetColumn": "Target",
+        "gapColumn": "Gap"
+      },
+      "sourceIndicator": {
+        "server": "SERVER DATA",
+        "recoveryDraft": "RECOVERY DRAFT",
+        "demoLocal": "LOCAL DATA"
       }
     },
     "glossary": {
@@ -32436,7 +32451,8 @@
       "description": "Description",
       "descPlaceholder": "Describe the feature and how it would help you...",
       "impact": "Business Impact",
-      "submit": "Submit Feature Request"
+      "submit": "Submit Feature Request",
+      "intro": "Suggest an improvement or a new feature."
     },
     "floatingButton": {
       "ariaLabel": "Report a bug (Shift+Ctrl+B)",
@@ -32476,10 +32492,10 @@
     "quickPulse": "Quick feedback",
     "tabs": {
       "report": "Report",
-      "feature": "Feature"
+      "feature": "Idea / Feature"
     },
     "report": {
-      "intro": "Help us improve by reporting issues or sharing ideas."
+      "intro": "Help us improve by reporting a bug."
     },
     "type": {
       "bug": "Bug",
@@ -50910,7 +50926,14 @@
       "groupLabel": "Answer state",
       "naJustifyLabel": "Justify “Not applicable” (required)",
       "naJustifyPlaceholder": "Why does this question not apply in this case?",
-      "naConfirm": "Confirm “Not applicable”"
+      "naConfirm": "Confirm “Not applicable”",
+      "intro": "Say how far this level is met today — pick the one state that fits; you can add evidence below.",
+      "tooltipConfirmed": "Met today and you can point to proof.",
+      "tooltipPartial": "Partly met — some elements are in place.",
+      "tooltipNo": "Not met today.",
+      "tooltipDontKnow": "You cannot answer yet — this opens help instead of scoring.",
+      "tooltipNoEvidence": "You believe it is met but cannot show proof yet.",
+      "tooltipNotApplicable": "This level does not apply to your organisation (justification required)."
     },
     "resolution": {
       "assignQuestion": "Assign the question",

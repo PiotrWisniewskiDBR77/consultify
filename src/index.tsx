@@ -7,6 +7,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { bootstrapClientWebVitals } from './bootstrap/clientWebVitals';
+import { installChunkReloadGuard } from './bootstrap/installChunkReloadGuard';
 import { installDocumentLifecycleWebPerf } from './bootstrap/documentLifecycleWebPerf';
 import { RuntimeDiagnosticPanel } from './components/RuntimeDiagnosticPanel';
 import { installCsrfFetchInterceptor } from './services/csrfClient';
@@ -52,6 +53,14 @@ try {
 
 bootstrapClientWebVitals();
 installDocumentLifecycleWebPerf();
+
+// Z-11 (2026-09-14): must be installed before any lazy route/chunk import
+// runs, so a preload failure on the very first navigation is still caught.
+try {
+  installChunkReloadGuard();
+} catch (chunkReloadGuardError) {
+  console.warn('[index.tsx] Chunk reload guard bootstrap failed:', chunkReloadGuardError);
+}
 
 function initThemeClass(): void {
   // Initialize theme synchronously before React renders to prevent flicker

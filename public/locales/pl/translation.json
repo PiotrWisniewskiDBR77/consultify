@@ -335,6 +335,10 @@
     },
     "boundary": {
       "reportWithContext": "Zgłoś ten błąd z pełnym kontekstem"
+    },
+    "chunkUpdate": {
+      "message": "Dostępna jest nowa wersja aplikacji — odśwież stronę.",
+      "action": "Odśwież"
     }
   },
   "transformationScenarios": {
@@ -9374,6 +9378,17 @@
         "actorLabel": "Aktor:",
         "reopenHeading": "Reopen — nowa rewizja",
         "reopenButton": "Reopen sesji (nowa rewizja)"
+      },
+      "output": {
+        "unitColumn": "Jednostka",
+        "currentColumn": "Bieżący",
+        "targetColumn": "Docelowy",
+        "gapColumn": "Luka"
+      },
+      "sourceIndicator": {
+        "server": "DANE Z SERWERA",
+        "recoveryDraft": "SZKIC ODZYSKIWANIA",
+        "demoLocal": "DANE LOKALNE"
       }
     },
     "glossary": {
@@ -32561,10 +32576,10 @@
     "quickPulse": "Szybka opinia",
     "tabs": {
       "report": "Zgłoś",
-      "feature": "Funkcja"
+      "feature": "Pomysł / Funkcja"
     },
     "report": {
-      "intro": "Pomóż nam się poprawiać, zgłaszając problemy lub dzieląc się pomysłami."
+      "intro": "Pomóż nam się poprawiać, zgłaszając błąd."
     },
     "type": {
       "bug": "Błąd",
@@ -32637,7 +32652,8 @@
         "low": "Dobrze mieć",
         "medium": "Ważne",
         "high": "Krytyczne"
-      }
+      },
+      "intro": "Zaproponuj usprawnienie lub nową funkcję."
     },
     "panelContext": {
       "modules": {
@@ -51278,7 +51294,14 @@
       "groupLabel": "Stan odpowiedzi",
       "naJustifyLabel": "Uzasadnij „Nie dotyczy” (wymagane)",
       "naJustifyPlaceholder": "Dlaczego to pytanie nie ma zastosowania w tym przypadku?",
-      "naConfirm": "Potwierdź „Nie dotyczy”"
+      "naConfirm": "Potwierdź „Nie dotyczy”",
+      "intro": "Określ, w jakim stopniu ten poziom jest dziś spełniony — wybierz jeden pasujący stan; dowody możesz dodać poniżej.",
+      "tooltipConfirmed": "Spełnione dziś i możesz wskazać dowód.",
+      "tooltipPartial": "Częściowo — część elementów jest wdrożona.",
+      "tooltipNo": "Dziś niespełnione.",
+      "tooltipDontKnow": "Nie potrafisz jeszcze odpowiedzieć — otwiera pomoc zamiast oceny.",
+      "tooltipNoEvidence": "Uważasz, że spełnione, ale nie możesz jeszcze pokazać dowodu.",
+      "tooltipNotApplicable": "Ten poziom nie dotyczy Twojej organizacji (wymagane uzasadnienie)."
     },
     "resolution": {
       "assignQuestion": "Przypisz pytanie",

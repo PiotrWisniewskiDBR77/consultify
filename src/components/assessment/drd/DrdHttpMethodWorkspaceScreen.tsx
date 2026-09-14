@@ -84,7 +84,7 @@ import {
   evidenceEventsFor,
   evidenceStateFor,
   evidenceStrengthFor,
-  OUTPUT_UNIT_COLUMNS,
+  getOutputUnitColumns,
   pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
@@ -1929,7 +1929,7 @@ const FrozenOutputHttpView: React.FC<{
             <p>limitations: {output.limitations.join(' · ')}</p>
             <div className="rounded-lg border border-c-border-subtle">
               <StandardTable
-                columns={OUTPUT_UNIT_COLUMNS}
+                columns={getOutputUnitColumns(t)}
                 data={Object.keys(output.current).map((unitId) => ({
                   id: unitId,
                   unitId,
