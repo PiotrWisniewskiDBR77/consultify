@@ -1,9 +1,24 @@
-import { Download, Mail, RefreshCw } from 'lucide-react';
+/**
+ * „Raport z pracy" (P1) — lista przebiegów + kreator.
+ *
+ * KANON (przejazd RP1b, 14.09): lista to `StandardTable` OSADZONY w
+ * `TableWithPreviewLayout`, a pojedynczy przebieg otwiera się w
+ * `StandardPreview` (6 bloków). Do 14.09 klik w wiersz NIC nie robił —
+ * jedynym wyjściem były dwa przyciski w kolumnie „Akcje", a status doręczenia
+ * per adresat nie był widoczny NIGDZIE, mimo że silnik go trzyma
+ * (`reportRun.deliveryAttempts`) i `GET /report-runs` go zwraca.
+ *
+ * ZERO własnej tabeli, zero własnej stopki, zero `primary-*` (crimson).
+ * Etykiety statusów/kadencji: `workReportLabels.ts` (kanon §7.3 — żadnych
+ * surowych kodów UPPER_SNAKE na ekranie; surowy kod zostaje w `title`).
+ */
+import { CheckCircle2, FileText, Mail, RefreshCw } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable, type TableColumn } from '@/components/standard';
+import { StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { readMemberId, readMemberLabel } from '@/hooks/useOrganizationMemberNames';
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
@@ -20,6 +35,17 @@ import {
   transitionReportDefinition,
   transitionReportRun,
 } from '@/services/initiatives-execution/runtimeApi';
+
+import {
+  failedWorkReportDeliveryCount,
+  flattenWorkReportDeliveries,
+  workReportCadenceLabel,
+  workReportRecipientStatusLabel,
+  workReportRecipientStatusTone,
+  workReportRunStatusLabel,
+  workReportRunStatusTone,
+  workReportTemplateLabel,
+} from './workReportLabels';
 
 type TemplateId =
   | 'EXECUTIVE_SUMMARY'
@@ -103,6 +129,8 @@ export function InitiativeWorkReportView({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<ReportContent | null>(null);
+  /** Wiersz otwarty w `StandardPreview` (single-click) — skaza 1 przejazdu Z-29. */
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: '',
     recipients: '',
@@ -368,83 +396,153 @@ export function InitiativeWorkReportView({
     toast.success(t('initiatives.workReport.approved', 'Report approved.'));
     await load();
   };
+  const locale = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-US';
+  const dateTimeLabel = (value: unknown): string => {
+    const date = new Date(String(value ?? ''));
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString(locale);
+  };
+
+  /**
+   * Model wiersza LICZONY RAZ i współdzielony przez tabelę, kebab i podgląd —
+   * żeby kolumna Status, plakietka podglądu i etykieta pozycji kebaba nie
+   * mogły się rozjechać (dokładnie ten rozjazd był skazą 2 i 3).
+   */
+  const rows = useMemo(
+    () =>
+      runs.map((run) => {
+        const rawStatus = String(run.status ?? '');
+        const rawCadence = String(run.workReport?.cadence ?? 'ON_DEMAND');
+        const rawTemplate = String(run.workReport?.templateId ?? '');
+        const deliveries = flattenWorkReportDeliveries(run);
+        const projectIds: string[] = Array.isArray(run.workReport?.projectIds)
+          ? run.workReport.projectIds
+          : [];
+        return {
+          ...run,
+          id: String(run.reportRunId),
+          title: String(run.workReport?.title || run.reportRunId),
+          rawStatus,
+          rawCadence,
+          statusLabel: workReportRunStatusLabel(t, rawStatus),
+          statusTone: workReportRunStatusTone(rawStatus),
+          cadenceLabel: workReportCadenceLabel(t, rawCadence),
+          templateLabel: rawTemplate ? workReportTemplateLabel(t, rawTemplate) : '—',
+          rawTemplate,
+          updatedLabel: dateTimeLabel(run.updatedAt),
+          periodLabel:
+            run.period?.start && run.period?.end
+              ? `${dateTimeLabel(run.period.start)} – ${dateTimeLabel(run.period.end)}`
+              : '—',
+          scopeLabel: projectIds.length
+            ? t('initiatives.workReport.scopeProjects', 'Selected projects ({{count}})', {
+                count: projectIds.length,
+              })
+            : t('initiatives.workReport.scopeOrganization', 'Whole organization'),
+          deliveries,
+          failedCount: failedWorkReportDeliveryCount(deliveries),
+          canDownload: ['FROZEN', 'APPROVED', 'PUBLISHED'].includes(rawStatus),
+          canApprove: rawStatus === 'FROZEN' && run.approverId === currentUserId,
+          canDeliver:
+            ['APPROVED', 'PUBLISHED'].includes(rawStatus) && run.approverId === currentUserId,
+        };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [runs, t, locale, currentUserId]
+  );
+
+  type WorkReportRow = (typeof rows)[number];
+
+  const selectedRun = useMemo(
+    () => rows.find((row) => row.id === selectedRunId) ?? null,
+    [rows, selectedRunId]
+  );
+
+  /** Etykieta akcji wysyłki — „Wyślij" za pierwszym razem, „Ponów" po błędzie. */
+  const sendLabel = (row: WorkReportRow) =>
+    row.failedCount > 0
+      ? t('initiatives.workReport.retry', 'Retry delivery')
+      : t('initiatives.workReport.send', 'Send');
+
   const columns: TableColumn[] = [
     {
       id: 'title',
       label: t('initiatives.workReport.columns.title', 'Title'),
-      width: '260px',
-      render: (row) => (
-        <span className="font-semibold">
-          {String((row as any).workReport?.title || (row as any).reportRunId)}
-        </span>
-      ),
+      width: '280px',
+      sortable: true,
+      render: (row) => <span className="font-semibold">{String((row as any).title)}</span>,
     },
     {
-      id: 'status',
+      id: 'statusLabel',
       label: t('initiatives.workReport.columns.status', 'Status'),
-      width: '130px',
-      render: (row) => String((row as any).status),
+      width: '170px',
+      sortable: true,
+      /* Kod silnika zostaje w tooltipie — etykieta na ekranie, kod do weryfikacji. */
+      render: (row) => <span title={(row as any).rawStatus}>{(row as any).statusLabel}</span>,
     },
     {
-      id: 'cadence',
+      id: 'cadenceLabel',
       label: t('initiatives.workReport.columns.cadence', 'Cadence'),
-      width: '130px',
-      render: (row) => String((row as any).workReport?.cadence || 'ON_DEMAND'),
+      width: '140px',
+      sortable: true,
+      render: (row) => <span title={(row as any).rawCadence}>{(row as any).cadenceLabel}</span>,
     },
     {
-      id: 'updatedAt',
+      id: 'updatedLabel',
       label: t('initiatives.workReport.columns.updated', 'Updated'),
-      width: '180px',
-      render: (row) =>
-        new Date(String((row as any).updatedAt)).toLocaleString(
-          i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-US'
-        ),
-    },
-    {
-      id: 'actions',
-      label: t('common.actions', 'Actions'),
-      width: '210px',
-      render: (row) => {
-        const run = row as any;
-        return (
-          <div className="flex gap-2">
-            <button
-              className="rounded-full border border-c-border px-3 py-1 text-xs"
-              disabled={!['FROZEN', 'APPROVED', 'PUBLISHED'].includes(run.status)}
-              onClick={(event) => {
-                event.stopPropagation();
-                void download(run);
-              }}
-            >
-              <Download size={14} className="inline" />{' '}
-              {t('initiatives.workReport.download', 'PDF')}
-            </button>
-            {run.status === 'FROZEN' && run.approverId === currentUserId && (
-              <button
-                className="rounded-full border border-c-border px-3 py-1 text-xs"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void approve(run);
-                }}
-              >
-                {t('initiatives.workReport.approve', 'Approve')}
-              </button>
-            )}
-            <button
-              className="rounded-full border border-c-border px-3 py-1 text-xs disabled:opacity-50"
-              disabled={run.status !== 'APPROVED' || run.approverId !== currentUserId}
-              onClick={(event) => {
-                event.stopPropagation();
-                void deliver(run);
-              }}
-            >
-              <Mail size={14} className="inline" /> {t('initiatives.workReport.send', 'Send')}
-            </button>
-          </div>
-        );
-      },
+      width: '190px',
+      sortable: true,
     },
   ];
+
+  /**
+   * MUST #6 triady — kebab wiersza zamiast dwóch przycisków w komórce.
+   * Zawartość jest KONTEKSTOWA (blokada niesie powód w `note`), więc wiersz,
+   * którego nie wolno wysłać, mówi dlaczego, zamiast pokazywać wyszarzony
+   * przycisk bez wyjaśnienia.
+   */
+  const rowMenu = (row: any) => {
+    const reportRow = row as WorkReportRow;
+    return {
+      primary: [
+        {
+          id: 'pdf',
+          label: t('initiatives.workReport.openPdf', 'Open PDF'),
+          icon: FileText,
+          disabled: !reportRow.canDownload,
+          note: reportRow.canDownload
+            ? undefined
+            : t('initiatives.workReport.needsFrozenNote', 'The PDF appears once the run is frozen.'),
+          onClick: () => void download(reportRow),
+        },
+        ...(reportRow.canApprove
+          ? [
+              {
+                id: 'approve',
+                label: t('initiatives.workReport.approve', 'Approve'),
+                icon: CheckCircle2,
+                onClick: () => void approve(reportRow),
+              },
+            ]
+          : []),
+        {
+          id: 'deliver',
+          label: sendLabel(reportRow),
+          icon: Mail,
+          disabled: !reportRow.canDeliver,
+          note: reportRow.canDeliver
+            ? undefined
+            : t(
+                'initiatives.workReport.needsApproverNote',
+                'Only the named approver can approve and deliver this run.'
+              ),
+          onClick: () => void deliver(reportRow),
+        },
+      ],
+      universalHandlers: {
+        preview: () => setSelectedRunId(reportRow.id),
+      },
+    };
+  };
 
   return (
     <section
@@ -643,22 +741,207 @@ export function InitiativeWorkReportView({
             </p>
           </div>
         )}
-        <StandardTable
-          columns={columns}
-          data={runs.map((run) => ({ ...run, id: run.reportRunId }))}
-          loading={loading}
-          error={error}
-          onRetry={() => void load()}
-          persistKey="initiatives-work-report-runs-v1"
-          minTableWidth="columns"
-          empty={{
-            title: t('initiatives.workReport.empty', 'No work reports yet'),
-            description: t(
-              'initiatives.workReport.emptyDescription',
-              'Create the first report from current organization data.'
-            ),
-          }}
-        />
+        <TableWithPreviewLayout<WorkReportRow>
+          selectedId={selectedRunId}
+          selectedItem={selectedRun}
+          onSelect={setSelectedRunId}
+          itemIds={rows.map((row) => row.id)}
+          previewOpen={Boolean(selectedRun)}
+          /* Przebieg nie ma własnego ekranu — zamrożoną treścią JEST PDF.
+             Kanon FIX-1: powiedz to wprost zamiast milczeć o przycisku. */
+          openDisabledReason={t(
+            'initiatives.workReport.openDisabled',
+            'A report run has no screen of its own — the frozen content is the PDF.'
+          )}
+          renderPreview={(row) => (
+            <StandardPreview
+              embedded
+              title={row.title}
+              onClose={() => setSelectedRunId(null)}
+              openDisabledReason={t(
+                'initiatives.workReport.openDisabled',
+                'A report run has no screen of its own — the frozen content is the PDF.'
+              )}
+              meta={{
+                pills: [
+                  { label: row.statusLabel, tone: row.statusTone },
+                  { label: row.cadenceLabel, tone: 'neutral' },
+                  { label: row.templateLabel, tone: 'neutral' },
+                ],
+                trailing: row.updatedLabel,
+                recommendation:
+                  row.failedCount > 0
+                    ? t(
+                        'initiatives.workReport.retryHint',
+                        'Retry delivery to {{count}} recipient(s)',
+                        { count: row.failedCount }
+                      )
+                    : undefined,
+              }}
+              details={{
+                label: t('initiatives.workReport.previewWhy', 'Why this report'),
+                text: t(
+                  'initiatives.workReport.previewWhyText',
+                  'A frozen snapshot of initiative and decision data for the period below. The content cannot change after freezing — only the delivery status does.'
+                ),
+                propertyLabel: t('standardPreview.property', 'Property'),
+                valueLabel: t('standardPreview.value', 'Value'),
+                properties: [
+                  {
+                    id: 'template',
+                    label: t('initiatives.workReport.previewProperties.template', 'Template'),
+                    value: <span title={row.rawTemplate}>{row.templateLabel}</span>,
+                  },
+                  {
+                    id: 'cadence',
+                    label: t('initiatives.workReport.previewProperties.cadence', 'Cadence'),
+                    value: <span title={row.rawCadence}>{row.cadenceLabel}</span>,
+                  },
+                  {
+                    id: 'scope',
+                    label: t('initiatives.workReport.previewProperties.scope', 'Scope'),
+                    value: row.scopeLabel,
+                  },
+                  {
+                    id: 'approver',
+                    label: t('initiatives.workReport.previewProperties.approver', 'Approver'),
+                    value:
+                      members.find((member) => member.id === row.approverId)?.label ||
+                      String(row.approverId ?? '—'),
+                  },
+                  {
+                    id: 'period',
+                    label: t('initiatives.workReport.previewProperties.period', 'Period'),
+                    value: row.periodLabel,
+                  },
+                  {
+                    id: 'recipients',
+                    label: t('initiatives.workReport.previewProperties.recipients', 'Recipients'),
+                    value: String(row.deliveries.length),
+                  },
+                  {
+                    id: 'updated',
+                    label: t('initiatives.workReport.previewProperties.updated', 'Last change'),
+                    value: row.updatedLabel,
+                  },
+                ],
+              }}
+              actions={{
+                resolutions: row.canApprove
+                  ? [
+                      {
+                        id: 'approve',
+                        variant: 'positive',
+                        label: t('initiatives.workReport.approve', 'Approve'),
+                        icon: CheckCircle2,
+                        shortcut: 'A',
+                        onClick: () => void approve(row),
+                      },
+                    ]
+                  : undefined,
+                informational: [
+                  {
+                    id: 'pdf',
+                    variant: 'neutral',
+                    label: t('initiatives.workReport.openPdf', 'Open PDF'),
+                    icon: FileText,
+                    disabled: !row.canDownload,
+                    onClick: () => void download(row),
+                  },
+                  {
+                    id: 'deliver',
+                    variant: 'primary',
+                    label: sendLabel(row),
+                    icon: Mail,
+                    disabled: !row.canDeliver,
+                    onClick: () => void deliver(row),
+                  },
+                ],
+              }}
+            >
+              {/* Blok „Adresaci i doręczenia" — jedyne miejsce w produkcie,
+                  które pokazuje `deliveryAttempts` silnika. Bez tabeli status
+                  „Opublikowany" nie mówił, KTO faktycznie dostał raport. */}
+              <section
+                className="rounded-lg border border-c-border bg-c-surface p-3"
+                data-testid="work-report-preview-deliveries"
+              >
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {t('initiatives.workReport.previewDeliveriesLabel', 'Recipients and deliveries')}
+                </h4>
+                {row.deliveries.length === 0 ? (
+                  <p className="text-sm text-c-text-muted">
+                    {t(
+                      'initiatives.workReport.previewNoDeliveries',
+                      'No delivery has been attempted yet.'
+                    )}
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {row.deliveries.map((delivery) => {
+                      const tone = workReportRecipientStatusTone(delivery.status);
+                      return (
+                        <li
+                          key={delivery.address}
+                          className="border-t border-c-border-subtle pt-2 first:border-t-0 first:pt-0"
+                        >
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="min-w-0 truncate text-sm text-c-text">
+                              {delivery.address}
+                            </span>
+                            <span
+                              title={String(delivery.status)}
+                              className={
+                                'shrink-0 text-xs font-medium ' +
+                                (tone === 'success'
+                                  ? 'text-c-success'
+                                  : tone === 'danger'
+                                    ? 'text-c-danger'
+                                    : 'text-c-text-muted')
+                              }
+                            >
+                              {workReportRecipientStatusLabel(t, delivery.status)}
+                            </span>
+                          </div>
+                          <div className="mt-0.5 text-xs text-c-text-muted">
+                            {t('initiatives.workReport.previewDeliveryTime', 'Last attempt')}:{' '}
+                            {delivery.lastAttemptAt ? dateTimeLabel(delivery.lastAttemptAt) : '—'}
+                          </div>
+                          {delivery.lastError ? (
+                            <div className="mt-0.5 text-xs text-c-danger">
+                              {t('initiatives.workReport.previewDeliveryError', 'Error')}:{' '}
+                              {delivery.lastError}
+                            </div>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            </StandardPreview>
+          )}
+        >
+          <StandardTable
+            columns={columns}
+            data={rows as any}
+            loading={loading}
+            error={error}
+            onRetry={() => void load()}
+            persistKey="initiatives-work-report-runs-v1"
+            minTableWidth="columns"
+            selectedRowId={selectedRunId}
+            onRowClick={(row) => setSelectedRunId(String((row as any).id))}
+            rowMenu={rowMenu}
+            empty={{
+              title: t('initiatives.workReport.empty', 'No work reports yet'),
+              description: t(
+                'initiatives.workReport.emptyDescription',
+                'Create the first report from current organization data.'
+              ),
+            }}
+          />
+        </TableWithPreviewLayout>
       </div>
     </section>
   );
