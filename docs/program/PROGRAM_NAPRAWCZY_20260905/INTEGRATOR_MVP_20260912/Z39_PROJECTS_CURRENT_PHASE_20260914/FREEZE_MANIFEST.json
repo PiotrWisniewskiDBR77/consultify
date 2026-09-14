@@ -1,0 +1,29 @@
+{
+  "package": "Z-39 projects.current_phase strict-chain repair",
+  "decision": "DEC-508",
+  "baseSha": "1154ebd80950d5c7fdd2c2bb88c296e2c98ff35e",
+  "branch": "codex/a-c-z39-migration-20260914",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_WITH_KNOWN_STRICT_ONLY_S5_GAP",
+  "scope": {
+    "productChanges": 0,
+    "dataChanges": 0,
+    "migrations": 1,
+    "migration": "server/migrations/20262200_projects_current_phase.sql",
+    "migrationSha256": "903ce13036a6417dacd3c8cf30b4180f7bb5b0b9ac06cd1a4ff997aa413dc367"
+  },
+  "gates": {
+    "strictFreshPg18Pgvector": "PASS_917_OF_917",
+    "strictSecondRun": "PASS_0_PENDING",
+    "columnContract": "PASS_text_default_Context_nullable_YES",
+    "existingColumnDoubleRun": "PASS_no_error_sentinel_unchanged",
+    "s5RealPgCurrentEnvironment": "PASS_5_3_1_1",
+    "s5StrictMigrationsOnly": "HOLD_project_members.normalized_project_role_absent",
+    "currentPhaseSiblingFiles": "11_PASS_1_INHERITED_AUTH_FAILURE_1_ACCEPTANCE_PASS_WITH_ACCEPTANCE_CONFIG",
+    "serverTscBaseCandidate": "0_0",
+    "frontTscBaseCandidate": "177_177",
+    "selfHealParity": "PASS_TEXT_DEFAULT_Context_nullable",
+    "diffCheck": "PASS"
+  },
+  "evidenceDirectory": "evidence/z39",
+  "review": "NOT_RUN_STOP_BEFORE_INDEPENDENT_REVIEW"
+}
