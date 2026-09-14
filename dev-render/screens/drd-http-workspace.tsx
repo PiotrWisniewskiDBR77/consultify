@@ -31,6 +31,9 @@
  *   &view=interview|split|matrix    (initial MethodWorkspaceShell view mode)
  */
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 
 import { DrdHttpMethodWorkspaceScreen } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
 import type { DrdHttpDebugForcedState } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
@@ -40,6 +43,23 @@ import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
 installMethodCoreFakeServer();
+
+/**
+ * `?lag=<ms>` — sztuczne opoznienie odpowiedzi atrapy serwera. Staging ma
+ * realne 200-500 ms na `/api/method/**`; atrapa odpowiada natychmiast, wiec
+ * okno przejsciowego `status: 'loading'` po kazdym zapisie jest krotsze niz
+ * klatka i defekt „ekran przeladowuje sesje" (P-P03) bylby niewidoczny.
+ * Harness-only; produkcja nie zna tego parametru.
+ */
+const lagMs = Number(new URLSearchParams(window.location.search).get('lag') || 0);
+if (lagMs > 0) {
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.includes('/api/method')) await new Promise((r) => setTimeout(r, lagMs));
+    return realFetch(input, init);
+  };
+}
 
 const params = new URLSearchParams(window.location.search);
 const stage = params.get('stage') || 'fresh';
@@ -70,6 +90,9 @@ const forceState = stateParam ? FORCE_STATE_BY_PARAM[stateParam] : undefined;
 export function DrdHttpWorkspaceHarnessScreen(): React.ReactElement {
   return (
     <div style={{ height: '100vh', overflow: 'hidden' }}>
+      {/* Ekran wola useNavigate() (useOpenChatWithContext) — harness musi dac Router. */}
+      <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
+      <MemoryRouter initialEntries={['/assessment/drd/harness']}>
       <DrdHttpMethodWorkspaceScreen
         seedTo={seedTo}
         initialViewMode={view}
@@ -79,6 +102,8 @@ export function DrdHttpWorkspaceHarnessScreen(): React.ReactElement {
           console.log('[drd-http-workspace] onExit called');
         }}
       />
+      </MemoryRouter>
+      </FeatureFlagsProvider>
     </div>
   );
 }

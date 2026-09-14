@@ -10003,7 +10003,45 @@
         "overviewTitle": "Matrix overview",
         "overviewSubtitle": "Cell color = achieved maturity level. Click an axis to open it.",
         "levelRamp": "Level ramp",
-        "areasAssessed": "Areas assessed"
+        "areasAssessed": "Areas assessed",
+        "readOnly": {
+          "axisNotFound": "This axis's matrix can't be drawn: axis {{axisNumber}} structure is not present in the methodology pinned to this Output.",
+          "overflowHint_one": "{{count}} more column to the right — scroll to see it.",
+          "overflowHint_other": "{{count}} more columns to the right — scroll to see them."
+        }
+      },
+      "saveState": {
+        "label": {
+          "SERVER": "Server",
+          "SAVING": "Saving…",
+          "SAVED": "Saved",
+          "OFFLINE": "Offline",
+          "RECOVERY_DRAFT": "Local draft",
+          "CONFLICT": "Version conflict",
+          "RECONNECTING": "Reconnecting…",
+          "RECOVERED": "Recovered"
+        },
+        "description": {
+          "SERVER": "View matches the last confirmed server state.",
+          "SAVING": "Saving to the server.",
+          "SAVED": "The server just confirmed this save.",
+          "OFFLINE": "No connection to the server. Work is not lost — it is queued locally.",
+          "RECOVERY_DRAFT": "You have unsaved local changes, not yet confirmed by the server. This is NOT the source of truth.",
+          "CONFLICT": "The session changed on the server. Nothing was overwritten automatically — choose how to continue.",
+          "RECONNECTING": "Attempting to reconnect to the server.",
+          "RECOVERED": "Connection and data have been restored and confirmed by the server."
+        }
+      },
+      "teresaPrompt": {
+        "missingWording": "(question text unavailable)",
+        "compareLevels": "Explain the difference between level {{lower}}, {{level}} and {{upper}} for this unit.",
+        "askExamples": "Give concrete examples and evidence I should look for on this question.",
+        "askExplain": "Explain this question and suggest how to answer it reliably.",
+        "context": "Method: DRD (Digital Readiness Diagnostic), axis: {{axisName}}.",
+        "unitLine": "Unit: {{unitName}} ({{unitId}}), level: {{level}}.",
+        "questionLine": "Question: {{wording}}",
+        "currentAnswer": "My current answer: {{answer}}",
+        "currentAnswerEmpty": "My current answer: (still empty)"
       },
       "http": {
         "blockers": {
@@ -10173,7 +10211,11 @@
         "canonLabel": "Canon: "
       },
       "ownerMatrix": {
-        "closeCellDetails": "Close cell details"
+        "closeCellDetails": "Close cell details",
+        "axisNotFound": "This axis's matrix can't be drawn: axis {{axisNumber}} structure is not present in this session's methodology.",
+        "rowHint": "Click a cell",
+        "levelLabel": "Level",
+        "cellDetailsAriaLabel": "Cell details: {{unitId}}, level {{level}}"
       },
       "method": {
         "axisMatrixHeading": "Axis matrix",
@@ -14090,8 +14132,10 @@
       "label": "Scope",
       "active": "Active",
       "all": "All",
+      "archived": "Archived",
       "activeHint": "Draft → Pending approval → Approved → In execution",
-      "allHint": "Full lifecycle including Draft, Pending approval, Approved, In execution, On hold, Closed, Rejected"
+      "allHint": "Full lifecycle including Draft, Pending approval, Approved, In execution, On hold, Closed, Rejected",
+      "archivedHint": "Only archived initiatives — hidden by default, recalled on demand"
     },
     "charter": {
       "short": "Charter"
@@ -21038,7 +21082,8 @@
       "trialUpgradeHint": "Upgrade to a paid plan to unlock full features and remove limits.",
       "tokenLogReason": "Reason",
       "tokenLogWhen": "When",
-      "inviteIdNote": "* Note: For this release, please use User ID if Email lookup is not configured."
+      "inviteIdNote": "* Note: For this release, please use User ID if Email lookup is not configured.",
+      "duplicateName": "You already have an organization with this name."
     },
     "professionalProfile": {
       "companyName": "Company Name"
@@ -36236,7 +36281,10 @@
     "contextAssetSelector": {
       "loadingDocuments": "Loading documents...",
       "orgWideResearchModeSearches": "Org-wide research mode searches the full approved organization context. No specific\n          documents need to be selected."
-    }
+    },
+    "uploadNeedsProject": "This view has no project selected, so the file cannot be added to project documents. Upload it under “My documents”, or open the panel from a project.",
+    "uploadFailed": "Upload of “{{name}}” failed. The file was not saved.",
+    "uploadFailedWithReason": "Upload of “{{name}}” failed: {{reason}}"
   },
   "intelligence": {
     "analyzing": "Analyzing…",
@@ -50883,7 +50931,12 @@
     },
     "voice": {
       "unsupportedTooltip": "This browser does not provide speech recognition — use the keyboard or Teresa.",
-      "unsupported": "Speech is unavailable in this browser"
+      "unsupported": "Speech is unavailable in this browser",
+      "dictate": "Dictate",
+      "listening": "Listening…",
+      "processing": "Processing…",
+      "startDictationAriaLabel": "Dictate the answer",
+      "stopDictationAriaLabel": "Stop dictating the answer"
     },
     "teresa": {
       "statement": {

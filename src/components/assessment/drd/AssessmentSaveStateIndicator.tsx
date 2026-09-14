@@ -18,29 +18,32 @@
  */
 import { AlertTriangle, Check, CloudOff, Loader2, RefreshCw } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { AssessmentSaveIndicatorState } from '@/hooks/useAssessmentSaveIndicator';
 
-const LABEL: Record<AssessmentSaveIndicatorState, string> = {
-  SERVER: 'Serwer',
-  SAVING: 'Zapisywanie…',
-  SAVED: 'Zapisano',
+/** English defaults used as the i18n fallback — real copy lives under
+ * `assessment.drd.saveState.label.*` / `.description.*` (en + pl). */
+const LABEL_DEFAULT: Record<AssessmentSaveIndicatorState, string> = {
+  SERVER: 'Server',
+  SAVING: 'Saving…',
+  SAVED: 'Saved',
   OFFLINE: 'Offline',
-  RECOVERY_DRAFT: 'Lokalny szkic',
-  CONFLICT: 'Konflikt wersji',
-  RECONNECTING: 'Łączenie…',
-  RECOVERED: 'Przywrócono',
+  RECOVERY_DRAFT: 'Local draft',
+  CONFLICT: 'Version conflict',
+  RECONNECTING: 'Reconnecting…',
+  RECOVERED: 'Recovered',
 };
 
-const DESCRIPTION: Record<AssessmentSaveIndicatorState, string> = {
-  SERVER: 'Widok zgodny z ostatnim potwierdzonym stanem serwera.',
-  SAVING: 'Trwa zapis na serwerze.',
-  SAVED: 'Serwer właśnie potwierdził ten zapis.',
-  OFFLINE: 'Brak połączenia z serwerem. Praca nie ginie — jest kolejkowana lokalnie.',
-  RECOVERY_DRAFT: 'Masz niezapisane lokalne zmiany, jeszcze niepotwierdzone przez serwer. To NIE jest źródło prawdy.',
-  CONFLICT: 'Sesja zmieniła się na serwerze. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.',
-  RECONNECTING: 'Próba ponownego połączenia z serwerem w toku.',
-  RECOVERED: 'Połączenie i dane zostały przywrócone i potwierdzone przez serwer.',
+const DESCRIPTION_DEFAULT: Record<AssessmentSaveIndicatorState, string> = {
+  SERVER: 'View matches the last confirmed server state.',
+  SAVING: 'Saving to the server.',
+  SAVED: 'The server just confirmed this save.',
+  OFFLINE: 'No connection to the server. Work is not lost — it is queued locally.',
+  RECOVERY_DRAFT: 'You have unsaved local changes, not yet confirmed by the server. This is NOT the source of truth.',
+  CONFLICT: 'The session changed on the server. Nothing was overwritten automatically — choose how to continue.',
+  RECONNECTING: 'Attempting to reconnect to the server.',
+  RECOVERED: 'Connection and data have been restored and confirmed by the server.',
 };
 
 /** `c-warning` (not `c-danger`) for OFFLINE/RECOVERY_DRAFT — warning, not
@@ -75,16 +78,21 @@ export interface AssessmentSaveStateIndicatorProps {
   readonly detail?: string;
 }
 
-export const AssessmentSaveStateIndicator: React.FC<AssessmentSaveStateIndicatorProps> = ({ state, detail }) => (
-  <span
-    data-testid="assessment-save-state-indicator"
-    data-save-state={state}
-    title={detail ?? DESCRIPTION[state]}
-    className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus ${TONE[state]}`}
-  >
-    {ICON[state]}
-    {LABEL[state]}
-  </span>
-);
+export const AssessmentSaveStateIndicator: React.FC<AssessmentSaveStateIndicatorProps> = ({ state, detail }) => {
+  const { t } = useTranslation();
+  const label = t(`assessment.drd.saveState.label.${state}`, LABEL_DEFAULT[state]);
+  const description = t(`assessment.drd.saveState.description.${state}`, DESCRIPTION_DEFAULT[state]);
+  return (
+    <span
+      data-testid="assessment-save-state-indicator"
+      data-save-state={state}
+      title={detail ?? description}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus ${TONE[state]}`}
+    >
+      {ICON[state]}
+      {label}
+    </span>
+  );
+};
 
 export default AssessmentSaveStateIndicator;

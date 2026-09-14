@@ -46,6 +46,15 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
   const [userDocs, setUserDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  /**
+   * ★ P-P05 (pilotaż Pawła 14.09: „Document upload finishes silently but the
+   * file never appears"). Wynik wysyłki szedł WYŁĄCZNIE do `console.error` —
+   * człowiek nie dostawał ani potwierdzenia, ani powodu odmowy. Serwer
+   * odrzuca m.in. wysyłkę do zakładki „Dokumenty projektu" bez projektu
+   * (`DOCUMENTS_PROJECT_ID_REQUIRED`, 400) i przekroczony limit miejsca (429)
+   * — obie odpowiedzi ginęły w ciszy.
+   */
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [acknowledgingDocId, setAcknowledgingDocId] = useState<string | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['recent']));
@@ -91,6 +100,21 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setUploadError(null);
+
+    // Serwer odmówi (400 DOCUMENTS_PROJECT_ID_REQUIRED) — powiedz to od razu i
+    // wskaż wyjście, zamiast wysyłać plik w próżnię.
+    if (activeTab === 'project' && !projectId) {
+      setUploadError(
+        t(
+          'documents.uploadNeedsProject',
+          'This view has no project selected, so the file cannot be added to project documents. Upload it under “My documents”, or open the panel from a project.'
+        )
+      );
+      event.target.value = '';
+      return;
+    }
+
     setUploading(true);
     try {
       await Api.uploadDocumentToLibrary(file, {
@@ -100,8 +124,22 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
       await loadDocuments();
     } catch (error) {
       console.error('Upload error:', error);
+      const reason = error instanceof Error && error.message ? error.message : null;
+      setUploadError(
+        reason
+          ? t('documents.uploadFailedWithReason', 'Upload of “{{name}}” failed: {{reason}}', {
+              name: file.name,
+              reason,
+            })
+          : t('documents.uploadFailed', 'Upload of “{{name}}” failed. The file was not saved.', {
+              name: file.name,
+            })
+      );
     } finally {
       setUploading(false);
+      // Bez tego ponowny wybór TEGO SAMEGO pliku nie odpala `onChange`, więc
+      // po nieudanej próbie nie dałoby się spróbować jeszcze raz.
+      event.target.value = '';
     }
   };
 
@@ -345,6 +383,15 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
+          {uploadError && (
+            <p
+              role="alert"
+              data-testid="document-upload-error"
+              className="mt-2 rounded-lg border border-c-danger/40 bg-c-danger/10 px-2 py-1.5 text-[11px] text-c-danger"
+            >
+              {uploadError}
+            </p>
+          )}
           {hasProcessingDocuments && (
             <p className="mt-2 text-[10px] text-amber-600 dark:text-amber-400">
               {t(

@@ -230,6 +230,43 @@ export const canonicalInitiativeMatchesRegisterFilters = (
   return true;
 };
 
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-495] Statusy odcinane przez zakres „Aktywne".
+ * Ten sam zbior dla listy i dla licznikow — inaczej rozjezdza sie liczba z tabela.
+ */
+export const SCOPE_ACTIVE_EXCLUDED_STATUSES = new Set<string>(['CLOSED', 'REJECTED']);
+
+/**
+ * DEC-495 — o archiwum decyduje FLAGA `archived`, NIE status. Migracja P12
+ * (`20262103_p12_initiative_status_slownik.sql`) skasowala status 'ARCHIVED' ze
+ * slownika 12 etapow i przepisala go do kolumny, a
+ * `executeInitiativeTransition({ flagOperation: 'ARCHIVE' })` zapisuje
+ * `initiatives.archived = TRUE` zostawiajac status CLOSED/REJECTED. Filtr po
+ * statusie nie zlapalby ani jednego zarchiwizowanego wiersza.
+ */
+export const isArchivedInitiative = (initiative: { archived?: boolean | null }) =>
+  initiative.archived === true;
+
+/**
+ * Jedyne miejsce, w ktorym zakres rejestru decyduje o widocznosci wiersza —
+ * uzywane i przez liste, i przez licznik.
+ */
+export const rowMatchesRegisterScope = (
+  initiative: { archived?: boolean | null; status?: unknown },
+  scope: 'active' | 'all' | 'archived'
+) => {
+  const archived = isArchivedInitiative(initiative);
+  // „Archiwalne" to zbior rozlaczny z pozostalymi dwoma — archiwalny wiersz nie
+  // pokazuje sie ani w „Aktywne", ani w „Wszystkie" (wlasnie o to prosil
+  // wlasciciel: „z zalozenia ukryte, ale mozna przywolac").
+  if (scope === 'archived') return archived;
+  if (archived) return false;
+  if (scope === 'active' && SCOPE_ACTIVE_EXCLUDED_STATUSES.has(String(initiative.status))) {
+    return false;
+  }
+  return true;
+};
+
 /** Apply the canonical register identity/scope filter once for rows and counters. */
 export const filterCanonicalInitiativeRegisterScope = <
   T extends Pick<PortfolioInitiative, 'projectId' | 'priority'>,
@@ -454,6 +491,10 @@ export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
     // zapisywal on_hold, a rejestr nigdy nie dostawal `onHold` z wiersza legacy
     // (71/71 wierszy idzie ta sciezka) — pigulka nie umiala pokazac „Wstrzymana”.
     onHold: row.onHold === true,
+    // DEC-495: bez tego przewodu rejestr nie umie odroznic aktualnej inicjatywy
+    // od zarchiwizowanej — status po migracji P12 jest w obu wypadkach
+    // CLOSED/REJECTED, a flaga zostawala w odpowiedzi bez odbiorcy.
+    archived: row.archived === true,
     displayStatus: rawStatus || undefined,
     priority: (String(row.priority || 'MEDIUM').toUpperCase() ||
       'MEDIUM') as PortfolioInitiative['priority'],

@@ -19,6 +19,7 @@ import {
   invalidatePlatformSuperAdminCache,
   resolveBlockingOrgStatusValue,
 } from '../services/organizationSuspensionGuard.js';
+import { recordLoginHistory } from '../services/loginHistoryService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
 import { assertQuickAccessRuntimeEnabled } from '../services/auth/quickAccessPinService.js';
@@ -270,6 +271,17 @@ export const login = async (
     logger.info(`[Auth] Password valid: ${passwordIsValid}`);
     if (!passwordIsValid) {
       void recordFailedLogin(normalizedEmail, req.ip);
+      // T-XI: nieudana próba też jest historią logowania — ekran „Historia
+      // logowania" ma pokazywać, że ktoś próbował, nie tylko że wszedł.
+      void recordLoginHistory({
+        userId: user.id,
+        organizationId: user.organization_id,
+        email: user.email,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        status: 'failed',
+        failureReason: 'invalid_password',
+      });
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -571,6 +583,21 @@ export const login = async (
     );
 
     logger.info('[AuthController] Sending response with res.send');
+
+    // T-XI (tester Tomek, 2026-09-13): `login_history` miała komplet
+    // czytelników i ZERO pisarzy w realnym przepływie logowania — jedyny
+    // INSERT siedział w `POST /api/auth/login-history`, którego nikt nie
+    // woła. Ekran „Uwierzytelnianie i dostęp" pokazywał więc „Brak dostępnej
+    // historii logowania" po każdym przelogowaniu. Zapis idzie tu, wprost z
+    // kontrolera (nie przez HTTP do siebie) i jest fail-soft.
+    void recordLoginHistory({
+      userId: user.id,
+      organizationId: user.organization_id,
+      email: user.email,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      status: 'success',
+    });
 
     // The member is inside the organisation's MFA grace period: the login
     // PASSES (that is the whole point of a grace period) and the response
