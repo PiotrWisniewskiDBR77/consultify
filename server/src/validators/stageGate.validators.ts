@@ -26,6 +26,7 @@ export const GateStatusEnum = z.enum(['not_started', 'in_progress', 'passed', 'f
 // ==========================================
 
 export const PassGateSchema = z.object({
+  requestedBy: z.string().trim().min(1).max(200),
   notes: z.string().max(1000).optional(),
 });
 
