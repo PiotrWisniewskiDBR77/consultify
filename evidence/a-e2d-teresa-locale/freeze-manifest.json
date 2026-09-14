@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "package": "A/E W53-W55 E2d Teresa locale DEC-510",
+  "base": "08c1bb7a2614a84092b8c4ed52404df69dcfd907",
+  "contentCommit": "38d98f424eb0e3173541921daa9e5b4dcfc7877d",
+  "preRebaseContentCommit": "2c52e8caf373fbfcb8f8717228244e2f9240dadb",
+  "status": "READY_FOR_INDEPENDENT_REVIEW",
+  "migration": false,
+  "realPg": "NOT_REQUIRED_UNIT_DB_CONTRACT",
+  "tests": {
+    "focused": "58/58",
+    "serverTypeScript": {
+      "baseErrors": 1,
+      "candidateErrors": 0
+    }
+  },
+  "files": [
+    {
+      "path": "server/src/routes/ai.routes.ts",
+      "sha256": "5418618a75a82a81b072e57b7c4d6577700d8e0820360abb3c38738e444688a7",
+      "bytes": 404954
+    },
+    {
+      "path": "server/src/services/__tests__/presentationTemplateDraftService.test.ts",
+      "sha256": "05523187ae0e5b65a4adcb32ab39e9e63e472319179dd00758a5f54c24d19b8e",
+      "bytes": 9914
+    },
+    {
+      "path": "server/src/services/ai/AIPipeline.ts",
+      "sha256": "38eeba113a8b7b27ae052e55dfc583b9801d39ca1d5b63b2d0fe91960ae7acb6",
+      "bytes": 141588
+    },
+    {
+      "path": "server/src/services/ai/__tests__/languagePolicy.test.ts",
+      "sha256": "107e288d9290357756b3039256718110b58be023bafb1fb3fe1a346c080430d5",
+      "bytes": 9976
+    },
+    {
+      "path": "server/src/services/ai/languagePolicy.ts",
+      "sha256": "ec4a6068dbb3686978b696e566bcf4f814b5a2f664244ee78b9b5d7104465ccd",
+      "bytes": 10120
+    },
+    {
+      "path": "server/src/services/deckBriefContentPack.ts",
+      "sha256": "3843a833fce5dfcfdad65d4081c4ba39f53812b724130f46b280685bc8cee710",
+      "bytes": 11332
+    },
+    {
+      "path": "server/src/services/presentationLayoutDirectorService.ts",
+      "sha256": "bac097e7faac5c97aa6d07c6174cb285b2b63b45776de81eeef95ac01be90fb0",
+      "bytes": 29491
+    },
+    {
+      "path": "server/src/services/presentationLayoutVariantsService.ts",
+      "sha256": "c00ddb8ebf8bbbf7b03b2509e54f23bb0c4f86c42cc0e21e707b92a18e35c35b",
+      "bytes": 19052
+    },
+    {
+      "path": "server/src/services/presentationTemplateDraftService.ts",
+      "sha256": "17111f8aae9065bc1739fb114f6c2b46f1f620314eef063c6c83bacef3a5b830",
+      "bytes": 19278
+    },
+    {
+      "path": "server/src/types/custom.d.ts",
+      "sha256": "d120e237b898927d9426dc15dbe10367c1b4a45628b81ee4895e98d696417098",
+      "bytes": 1148
+    },
+    {
+      "path": "tests/integration/managementReports.titleLanguage.realdb.test.ts",
+      "sha256": "8387e01564c85e6b5d8f201a34ab0c520f67d9c239a099ead439870f2154dcea",
+      "bytes": 10429
+    },
+    {
+      "path": "tests/unit/deckBriefContentPack.test.ts",
+      "sha256": "39610fe551f57d560c76ff88307c9d4067155fd591f84d59a1d6acaae50606d4",
+      "bytes": 4700
+    },
+    {
+      "path": "tests/unit/deliverables/deckLayoutDirector.test.ts",
+      "sha256": "f5c5b726931fdc0774b2f169c2879dcb7655aaa95226d488056caaafac3640c4",
+      "bytes": 9811
+    },
+    {
+      "path": "tests/unit/deliverables/deckLayoutVariants.test.ts",
+      "sha256": "285e7788af123fb761768fac07d9a722f4dd6c79f87bef3af8a9e995a52f1ce4",
+      "bytes": 12805
+    }
+  ]
+}
