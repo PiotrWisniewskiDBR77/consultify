@@ -993,7 +993,13 @@ router.get(
             user.linkedin_id ||
             (profileFallbackPreferences.linkedinId as string | undefined) ||
             null,
-          phone: user.phone || null,
+          // T-III: `users.phone` nie istnieje w schemacie — telefon mieszka w
+          // zapasie `user_preferences['settings:profile-fallback']`, tak samo
+          // jak linkedinId/displayName/statusMessage poniżej. Bez tej gałęzi
+          // profil zawsze raportował phone = NULL i ekran Profilu meldował
+          // „changes were not confirmed by the server".
+          phone:
+            user.phone || (profileFallbackPreferences.phone as string | undefined) || null,
           timezone:
             user.timezone || (profileFallbackPreferences.timezone as string | undefined) || null,
           dateFormat:

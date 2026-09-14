@@ -341,8 +341,20 @@ export class UserController {
             jobTitle === null ? null : String(jobTitle || '').trim() || null;
         }
       }
+      // T-III (tester Tomek, 2026-09-13): `users` NIE MA kolumny `phone` —
+      // `addColumnUpdate` milczkiem nic wtedy nie robi, a `phone` był jedynym
+      // polem profilu BEZ zapisu zapasowego do `user_preferences`. Efekt:
+      // zapis samego telefonu kończył się 400 „No fields to update", a zapis
+      // imienia z telefonem — komunikatem „changes were not confirmed",
+      // bo `/api/auth/me` zawsze oddawał phone = NULL. Zapasowy zapis jest
+      // dokładnie taki sam jak dla linkedinId/displayName/pronouns poniżej,
+      // więc NIE wymaga migracji ani DDL na żywej bazie.
       if (phone !== undefined) {
         addColumnUpdate('phone', phone);
+        if (!userColumns.has('phone')) {
+          profilePreferenceFallback.phone =
+            phone === null ? null : String(phone || '').trim() || null;
+        }
       }
       if (avatarUrl !== undefined) {
         addColumnUpdate('avatar_url', avatarUrl);
