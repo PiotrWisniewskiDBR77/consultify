@@ -66,7 +66,7 @@ Work/Decyzje/Raporty, koniec zlewania DUE/STATUS). Demo: `0f0107b93c` 14:02 (po 
 
 **Raport bramki po scaleniu napraw Realizacji** (`BRAMKA_K5_scalenie_20260913.md`, mierzone
 NIEZALEŻNIE dwukrotnie z identycznym wynikiem): wszystkie bramki numeryczne zielone (tsc, kanon,
-język, build), ale **1 NOWA regresja testowa** (`ExecutionResources.wiszacaRealizacja.test.tsx` —
+język, build), ale **1 „nowa” czerwień, która okazała się FAŁSZYWA** (`ExecutionResources.wiszacaRealizacja.test.tsx` — artefakt dwóch agentów pomiarowych w jednym worktree; test uruchomiony 45× w spokoju = 6/6 zielony, mutacja czerwona; SPROSTOWANE przez CTO 13.09 —
 przechodzi na bazie `cf3fded7e4`, nie przechodzi po scaleniu) → werdykt bramki **CZERWONA**, mimo
 9 pozostałych czerwieni ZASTANYCH identycznych z bazą. **To zostaje otwarte dla następcy** (§3).
 
@@ -116,9 +116,9 @@ przebiegów. Rozliczenie notatek właściciela (K8): SPEC_FALA2 pokrycie **196/1
 | # | Co | Stan | Kto decyduje |
 |---|---|---|---|
 | 1 | Obraz „Wniosek (wzorzec) vs bank vs Inicjatywy" | wysłany właścicielowi, **czeka na Tak/Nie**; przy „Nie" → wyłączyć podgląd w Realizacji, NIE iterować | właściciel |
-| 2 | F2-E: migracja `organization_export_jobs`/`organization_export_parts` (pula 20262200–20262219) | Codex zgłosił `MIGRATION_REQUIRED`, czeka na zgodę CTO i rozstrzygnięcie semantyki (A: trwałe części per-capture / B: staging całego snapshotu) | CTO (następca) |
+| 2 | F2-E: migracja `organization_export_jobs`/`organization_export_parts` (pula 20262200–20262219) | Codex zgłosił `MIGRATION_REQUIRED (CTO 22:40: zgoda wydana wpisem 15 w KANAL.md — warunki jak dla 20262170)`, czeka na zgodę CTO i rozstrzygnięcie semantyki (A: trwałe części per-capture / B: staging całego snapshotu) | CTO (następca) |
 | 3 | Paczka 5 (Wywiad) | niezależny ACCEPT Codexa, **nie scalona ani nie wdrożona** przez CTO | CTO (następca) |
-| 4 | K5-gate regresja `ExecutionResources.wiszacaRealizacja.test.tsx` | NOWA regresja (nie zastana) po scaleniu napraw Realizacji, niezamknięta | CTO/agent Sonnet |
+| 4 | K5-gate regresja `ExecutionResources.wiszacaRealizacja.test.tsx` | FAŁSZYWA czerwień (równoległe agenty w jednym worktree; 45× zielony, mutacja RED) — ZAMKNIĘTE, do zapamiętania jako lekcja | CTO/agent Sonnet |
 | 5 | F2-2 (Realizacja 4 przyciski) | HOLD — `executionCaseVersion:null` renderuje `v—` zamiast opisowego braku danych | Codex (w naprawie) |
 | 6 | Poczta produkcji | zmienne SMTP zmienione, **wymaga restartu serwisu** żeby zadziałać — celowo niewykonane | CTO (następca) |
 | 7 | Pilotaż — zero aktywności do popołudnia | sprawdzić `feedback_items`, `users.last_login`, `created_at >= dziś` po tabelach biznesowych | następca, krok 1 |
