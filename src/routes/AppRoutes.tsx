@@ -1283,6 +1283,15 @@ export const AppRoutes: React.FC = () => {
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
 
+        {/* T-II (tester Tomek, 2026-09-13): mail powitalny linkuje do
+            `${appUrl}/help` (server/src/services/welcomeEmailService.ts:137,152),
+            a takiej trasy nie było — każdy nowy użytkownik dostawał 404 z
+            pierwszego maila, jaki widzi. Centrum pomocy mieszka pod `/docs`,
+            więc `/help` (i jego podścieżki) przekierowujemy tam zamiast
+            dublować widok. `replace` — 404 nie ma zostawać w historii. */}
+        <Route path="/help" element={<Navigate to="/docs" replace />} />
+        <Route path="/help/*" element={<Navigate to="/docs" replace />} />
+
         {/* Knowledge Base - Public Product KB */}
         <Route path="/knowledge-base" element={<KnowledgeBaseHomePage />} />
         <Route path="/knowledge-base/:categorySlug" element={<KnowledgeBaseCategoryPage />} />

@@ -178,6 +178,12 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   }
 
   const handleCreateOrganization = async () => {
+    // T-VIII (tester Tomek, 2026-09-13): przycisk był wyłączany przez
+    // `disabled={creatingOrg}`, ale wciśnięcie Enter w polu nazwy omijało tę
+    // blokadę — sam handler nie sprawdzał niczego, więc każde kolejne Enter
+    // wysyłało kolejne żądanie i fabrykowało bliźniaczą organizację.
+    // Blokada musi siedzieć W HANDLERZE, nie tylko w atrybucie przycisku.
+    if (creatingOrg) return;
     if (!newOrgName.trim()) {
       toast.error('Organization name is required');
       return;
@@ -190,7 +196,20 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       setNewOrgName('');
       await fetchOrganizations();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create organization');
+      // Serwer odsyła sam KOD (bramka językowa J0) — zdanie dla człowieka
+      // składa ekran, więc tester widzi komunikat w swoim języku zamiast
+      // surowego ORGANIZATION_NAME_DUPLICATE.
+      const code = String(error?.code || error?.message || '');
+      if (code.includes('ORGANIZATION_NAME_DUPLICATE')) {
+        toast.error(
+          t(
+            'settings.organization.duplicateName',
+            'You already have an organization with this name.'
+          )
+        );
+      } else {
+        toast.error(error.message || 'Failed to create organization');
+      }
     } finally {
       setCreatingOrg(false);
     }

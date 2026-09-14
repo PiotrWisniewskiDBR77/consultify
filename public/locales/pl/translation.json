@@ -20217,7 +20217,8 @@
       "trialUpgradeHint": "Przejdź na plan płatny, żeby odblokować pełne funkcje i znieść limity.",
       "tokenLogReason": "Powód",
       "tokenLogWhen": "Kiedy",
-      "inviteIdNote": "* Uwaga: w tym wydaniu użyj identyfikatora użytkownika, jeśli wyszukiwanie po adresie e-mail nie jest skonfigurowane."
+      "inviteIdNote": "* Uwaga: w tym wydaniu użyj identyfikatora użytkownika, jeśli wyszukiwanie po adresie e-mail nie jest skonfigurowane.",
+      "duplicateName": "Masz już organizację o tej nazwie."
     },
     "professionalProfile": {
       "companyName": "Nazwa firmy"

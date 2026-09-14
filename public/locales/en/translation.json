@@ -21038,7 +21038,8 @@
       "trialUpgradeHint": "Upgrade to a paid plan to unlock full features and remove limits.",
       "tokenLogReason": "Reason",
       "tokenLogWhen": "When",
-      "inviteIdNote": "* Note: For this release, please use User ID if Email lookup is not configured."
+      "inviteIdNote": "* Note: For this release, please use User ID if Email lookup is not configured.",
+      "duplicateName": "You already have an organization with this name."
     },
     "professionalProfile": {
       "companyName": "Company Name"
