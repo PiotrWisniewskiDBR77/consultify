@@ -1,0 +1,4 @@
+Uwaga Tomka IV — załączanie plików w czacie (lokalny runtime, po)
+
+INGEST            201 {"success":true,"docId":"7e81d531-2c59-4f1d-9f53-dff76057dba0","filename":"zalacznik.txt","mimeType":"text/plain","extractionStatus":"extracted","totalChunks":1,"embeddedChunks":0}
+PRZYPIECIE PLIKU  200 {"id":"b0d319e4-84ee-460f-b1d5-aaec21ed2f1c","message_id":"f7159437-3424-4a58-b18f-234fd1abbc36","conversation_id":"85a555ce-1355-4b97-ab4c-376fffb78acc","kind":"file","target_id":"7e81d531-2c59-4f1d-

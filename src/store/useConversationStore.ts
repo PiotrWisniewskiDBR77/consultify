@@ -110,8 +110,26 @@ function logConversationStabilityMarker(marker: string, details: Record<string, 
   console.info('[stability:conversation]', { marker, ...details });
 }
 
-function replaceChatRoute() {
+/**
+ * Sprząta ADRES po rozmowie, której nie ma — ale TYLKO wtedy, gdy adres na nią
+ * wskazuje.
+ *
+ * Uwaga Tomka XX (pilotaż 13.09): kliknięcie „Zapytaj Teresę" na ekranie DRD
+ * przenosiło testera na `/chat` z komunikatem o usuniętej rozmowie. Ta funkcja
+ * przepisywała adres na `/chat` BEZWARUNKOWO, więc martwy wskaźnik rozmowy
+ * wyrzucał użytkownika z ekranu, na którym pracował (DRD, Moja praca, Studio).
+ * Pomocnicy `isChatRootPath`/`getChatRouteConversationId` już istnieli — po
+ * prostu nikt ich tu nie podłączył.
+ */
+function replaceChatRoute(conversationId?: string) {
   if (typeof window === 'undefined') return;
+  const routeConversationId = getChatRouteConversationId();
+  const addressPointsAtConversation = conversationId
+    ? routeConversationId === conversationId
+    : routeConversationId !== null;
+  // Poza trasą czatu (DRD, Moja praca, Studio…) adres nie należy do rozmowy —
+  // nie wolno go ruszać. Na gołym `/chat` też nie ma czego przepisywać.
+  if (!addressPointsAtConversation || isChatRootPath()) return;
   try {
     window.history.replaceState(null, '', '/chat');
     window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
@@ -130,7 +148,7 @@ function quarantineMissingConversationPointer(conversationId: string, reason: st
     conversationId: normalized,
     reason,
   });
-  replaceChatRoute();
+  replaceChatRoute(normalized);
 }
 
 function applyMissingConversationState(state: ConversationState) {
@@ -1244,19 +1262,38 @@ export const useConversationStore = create<ConversationState>()(
           if (Array.isArray(msgAttachments) && msgAttachments.length > 0 && newMessage.id) {
             for (const att of msgAttachments) {
               try {
+                // ★ Uwaga Tomka IV (pilotaż 13.09): „Nie działa załączanie plików
+                // do Chata". Zmierzone na żywo 14.09: TEN wołacz dostawał 400
+                // „targetUrl: expected string, received null" przy KAŻDYM pliku,
+                // bo schemat serwera (AttachmentSchema) przyjmuje pola opcjonalne
+                // jako `string | undefined`, a my ślaliśmy jawne `null`. Błąd
+                // ginął w pustym `catch`, więc żaden załącznik nigdy nie został
+                // przypięty do wiadomości. Pola puste po prostu POMIJAMY.
+                const targetId = att.docId ? String(att.docId) : undefined;
+                const targetUrl = att.sourceUrl || att.url ? String(att.sourceUrl || att.url) : undefined;
+                const mime = att.mimeType ? String(att.mimeType) : undefined;
+                const sizeBytes =
+                  typeof att.size === 'number' && Number.isFinite(att.size) && att.size >= 0
+                    ? att.size
+                    : undefined;
                 await Api.post(
                   `/conversations/${conversationId}/messages/${newMessage.id}/attachments`,
                   {
                     kind: att.kind || 'file',
                     displayName: att.filename || att.name || 'attachment',
-                    targetId: att.docId || null,
-                    targetUrl: att.sourceUrl || att.url || null,
-                    mime: att.mimeType || null,
-                    sizeBytes: att.size || null,
+                    ...(targetId ? { targetId } : {}),
+                    ...(targetUrl ? { targetUrl } : {}),
+                    ...(mime ? { mime } : {}),
+                    ...(sizeBytes !== undefined ? { sizeBytes } : {}),
                   }
                 );
-              } catch {
-                // Non-blocking: attachment pointer persistence is best-effort
+              } catch (attachErr) {
+                // Wiązanie wskaźnika jest „best effort", ale CICHE połknięcie błędu
+                // ukrywało zerwany przewód przez cały pilotaż — zostawiamy ślad.
+                console.warn(
+                  '[ConversationStore] Nie udało się przypiąć załącznika do wiadomości:',
+                  attachErr
+                );
               }
             }
           }

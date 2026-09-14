@@ -1006,10 +1006,23 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
   return (
     <>
-      {/* Overlay Background */}
+      {/* Zasłona pod panelem historii.
+       *
+       * Uwaga Tomka X (pilotaż 13.09): „lewe okno boczne (manager historii
+       * chatów) zasłania tekst" (zrzut image7 — szuflada leży na akapicie
+       * odpowiedzi). PRZYCZYNA: zasłona miała `lg:hidden`, więc na monitorze
+       * (a Tomek testował w oknie ~1385 px) szuflada wjeżdżała na rozmowę BEZ
+       * żadnego przyciemnienia — tekst pod spodem zostawał w pełni czytelny i
+       * całość wyglądała jak zepsuty układ, a nie jak szuflada. Przy okazji na
+       * desktopie nie było czego kliknąć, żeby panel zamknąć.
+       *
+       * Zasłona działa teraz na każdej szerokości: oddziela szufladę od treści
+       * i daje kliknięcie „obok" jako wyjście.
+       */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 lg:hidden"
+          data-testid="chat-history-scrim"
+          className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40"
           onClick={toggleSidebar}
         />
       )}

@@ -1221,19 +1221,35 @@ html.reduce-motion.focus-style-animated :focus-visible {
  * (Piotr: the accent frame must wrap the whole conversation, not the input).
  * Applied to the message stream container while an AI turn is streaming.
  * ==========================================================================*/
+/* Ramka „Teresa pisze".
+ *
+ * Uwaga Tomka VII (pilotaż 13.09): „podświetlany obrys rozmowy z Chat nachodzi
+ * na tekst" (zrzut image3 — czerwona kreska przecina akapit odpowiedzi).
+ * Dwie usterki w jednym miejscu:
+ *  1. KOLOR — obrys szedł z `--c-accent` (crimson #85182F). Czerwień jest
+ *     zarezerwowana dla semantyki krytycznej, a „trwa pisanie" to stan
+ *     neutralny. Teraz neutralny `--c-border-strong`.
+ *  2. POŁOŻENIE — `::after { position: absolute; inset: 0 }` wewnątrz
+ *     PRZEWIJANEGO kontenera pozycjonuje się względem bloku treści, więc przy
+ *     przewijaniu ramka wjeżdżała na tekst. Wewnętrzny `box-shadow` na samym
+ *     kontenerze trzyma się widocznego prostokąta i nigdy nie leży na treści.
+ */
 .chat-streaming-frame {
   position: relative;
-}
-.chat-streaming-frame::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
   border-radius: 0.75rem;
-  border: 1.5px solid var(--c-accent, #85182f);
-  box-shadow: 0 0 0 1px var(--c-accent-soft, rgba(133, 24, 47, 0.14));
-  animation: chat-stream-pulse 1.5s ease-in-out infinite;
-  z-index: 5;
+  box-shadow: inset 0 0 0 1.5px var(--c-border-strong, #9aa6b5);
+  /* Pulsujemy SAM obrys, nie przezroczystość kontenera — inaczej razem z ramką
+     migotałby cały tekst rozmowy. */
+  animation: chat-stream-frame-pulse 1.5s ease-in-out infinite;
+}
+@keyframes chat-stream-frame-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1.5px var(--c-border-subtle, rgba(154, 166, 181, 0.35));
+  }
+  50% {
+    box-shadow: inset 0 0 0 1.5px var(--c-border-strong, #9aa6b5);
+  }
 }
 @keyframes chat-stream-pulse {
   0%,
@@ -1302,7 +1318,7 @@ html.reduce-motion .chat-composer-idle-pulse::before {
   opacity: 0.18;
 }
 /* reduce-motion: keep a static accent frame, drop the pulse */
-html.reduce-motion .chat-streaming-frame::after {
+html.reduce-motion .chat-streaming-frame {
   animation: none;
-  opacity: 0.6;
+  opacity: 1;
 }

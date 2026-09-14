@@ -22,7 +22,10 @@ import type { SidekickContextEventDetail } from '../components/MyWork/mindmap/ai
 import { getRouteFromAppView } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { trimPinnedEntityData } from '../store/teresaEntityContext';
-import { useConversationStore } from '../store/useConversationStore';
+import {
+  isConversationMarkedMissing,
+  useConversationStore,
+} from '../store/useConversationStore';
 
 export interface OpenChatOptions {
   /** Type of entity: initiative, task, assessment, decision, report, idea, etc. */
@@ -162,29 +165,58 @@ export function useOpenChatWithContext() {
         }
       }
 
+      // ★ Uwaga Tomka XX (pilotaż 13.09): DRD → „Zapytaj Teresę" pokazywało
+      // „Ta rozmowa nie istnieje lub została trwale usunięta". PRZYCZYNA
+      // (odtworzona na żywo 14.09): wskaźnik `teresa.lastActiveConversationId`
+      // z sessionStorage był brany NA WIARĘ. Gdy wskazywał rozmowę, której już
+      // nie ma (inna organizacja, usunięty wątek, wyczyszczona baza), szliśmy
+      // `setActiveConversation` → `GET /api/conversations/:id` → 404 → stan
+      // `not_found`, zamiast po prostu założyć nową rozmowę z kontekstem
+      // pytania. Dlatego wskaźnik z sessionStorage musi być ZWERYFIKOWANY, a
+      // nieudana reaktywacja MUSI spaść do ścieżki tworzenia nowej rozmowy.
       let reusableConversationId = activeConversationId;
       if (!reusableConversationId && options.reuseActiveConversation) {
         try {
-          reusableConversationId = window.sessionStorage.getItem('teresa.lastActiveConversationId');
+          const stored = window.sessionStorage.getItem('teresa.lastActiveConversationId');
+          reusableConversationId =
+            stored && !isConversationMarkedMissing(stored) ? stored : null;
         } catch {
           reusableConversationId = null;
         }
       }
 
       if ((alreadyHasContext || options.reuseActiveConversation) && reusableConversationId) {
+        let reusable = true;
         if (reusableConversationId !== activeConversationId) {
           setActiveConversation(reusableConversationId);
           await fetchConversation(reusableConversationId);
+          const after = useConversationStore.getState();
+          const state = after._activeConversationState;
+          reusable =
+            after.activeConversationId === reusableConversationId &&
+            (state === null || state === 'active');
         }
-        // Already in context — just update workspace context
-        setWorkspaceContext({
-          type: entityType as any,
-          entityId,
-          entityName: entityName || entityType,
-          entityData: contextData || {},
-        } as any);
-        pinEntityContext(reusableConversationId);
-        return reusableConversationId;
+
+        if (reusable) {
+          // Already in context — just update workspace context
+          setWorkspaceContext({
+            type: entityType as any,
+            entityId,
+            entityName: entityName || entityType,
+            entityData: contextData || {},
+          } as any);
+          pinEntityContext(reusableConversationId);
+          return reusableConversationId;
+        }
+
+        // Wskaźnik prowadził donikąd — sprzątamy go i zakładamy nową rozmowę
+        // niżej, zamiast zostawiać testera z komunikatem o usuniętym wątku.
+        try {
+          window.sessionStorage.removeItem('teresa.lastActiveConversationId');
+        } catch {
+          // brak sessionStorage nie może blokować otwarcia czatu
+        }
+        useConversationStore.getState().clearActiveChat();
       }
 
       // Create new conversation with entity context
