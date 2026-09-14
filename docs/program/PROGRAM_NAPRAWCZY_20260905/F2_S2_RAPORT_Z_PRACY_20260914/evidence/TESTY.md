@@ -18,6 +18,8 @@ Ostrzeżenia `act(...)` w istniejącym teście hubu nie wpływają na wynik 4/4 
 - `workReport.serverFlag.routes.test.ts --retry=0` — PASS 2/2: default OFF blokuje preview/schedule/PDF/deliver, ON wpuszcza wszystkie cztery trasy do właściwych handlerów;
 - `reportRun.workReportFlag.routes.test.ts --retry=0` — PASS 4/4: OFF zatrzymuje profilowane create/transition przed odczytem i zapisem, ON wykonuje create→VALIDATE, zwykły canonical reportRun działa przy OFF, a pominięcie profilu nie obchodzi bramki istniejącego Work reportu;
 - dziewięć skupionych plików testowych — PASS 31/31 (`--retry=0`);
+- po rebase na `61334b2c21`: skupione 31/31, RealPG reader 1/1, pełny lokalny SMTP/RealPG/dashboard 1/1, server type-check 0 i esbuild ekranu PASS;
+- kontrola Wpisu 31: w nowych liniach brak porównań `initiative.status` do martwych literałów `EXECUTING/SCHEDULED/DONE/BLOCKED/PLANNING/PROMOTED`; pojedyncze `status: 'BLOCKED'` jest wyłącznie daną fixture raportu, nie warunkiem sterującym.
 - skan tokenów c-\* tylko w zmienionych ekranach względem `src/index.css` — PASS, 9/9 tokenów istnieje;
 - zrzuty Vite/CUA: light 24 423 B, dark 24 732 B — wizualnie sprawdzone.
 
