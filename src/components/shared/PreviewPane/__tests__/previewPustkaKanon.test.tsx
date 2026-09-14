@@ -64,6 +64,19 @@ describe('P2 · meta bez wartości-śmieci', () => {
     expect(screen.queryByText('v—')).toBeNull();
   });
 
+  it('chip sklejony w jeden napis („Owner: —") też wypada', () => {
+    // Wzorzec zmierzony 13.09 w 7 plikach: `label: `${t('Owner')}: ${x || '—'}``.
+    // Mutacja: usunięcie `isLabelWithEmptyValue` z filtra — chip wraca.
+    render(
+      <PreviewMetaCard
+        pills={[{ label: 'Owner: —' }, { label: 'Last reviewed: n/a' }, { label: 'Owner: Lena' }]}
+      />
+    );
+    expect(screen.getByText('Owner: Lena')).toBeInTheDocument();
+    expect(screen.queryByText('Owner: —')).toBeNull();
+    expect(screen.queryByText('Last reviewed: n/a')).toBeNull();
+  });
+
   it('„Unknown" ZOSTAJE — to bywa realny stan słownika, a nie pustka', () => {
     // Świadoma granica reguły: kasowanie „Unknown" skłamałoby o rekordzie.
     render(<PreviewMetaCard pills={[{ label: 'Health', value: 'Unknown' }]} />);

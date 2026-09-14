@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Pencil, Sparkles } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
-import { isPlaceholderValue } from '../emptyValueCanon';
+import { isLabelWithEmptyValue, isPlaceholderValue } from '../emptyValueCanon';
 
 import { PreviewCompletenessRing } from './PreviewCompletenessRing';
 import { PREVIEW_META_PILL } from './previewStyles';
@@ -88,7 +88,9 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
    */
   const widocznePills = resolvedPills.filter((pill) => {
     if (pill.value !== undefined) return !isPlaceholderValue(pill.value);
-    return !isPlaceholderValue(pill.label);
+    if (isPlaceholderValue(pill.label)) return false;
+    // Chip sklejony w jeden napis („Owner: —") — patrz `isLabelWithEmptyValue`.
+    return !isLabelWithEmptyValue(pill.label);
   });
 
   /**
