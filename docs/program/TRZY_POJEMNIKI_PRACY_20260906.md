@@ -660,8 +660,12 @@ rekomenduje" + bank z pastylkami ryzyka.
 **Zawartość:** P1 (RP1·RP2·RP3) · Realizacja RA-E4a-d na TYM SAMYM silniku.
 **Uzasadnienie:** oba moduły potrzebują raportów; zbudowanie ich osobno to gwarantowany dług.
 Właściciel widział atrapę i powiedział „nie wiem, co to jest" — to najbardziej namacalna naprawa.
-**Warunek wejścia:** odpowiedź na **Q1** (poczta żywa albo akcept na PDF bez wysyłki).
-**Co zobaczy właściciel:** jeden obraz — raport z pracy jako jedna karta + realny plik PDF.
+**Warunek wejścia:** spełniony — poczta żywa od 14.09 02:30 UTC (restart SMTP Hostinger,
+`noreply@consultinity.ai`, 2/2 maile dostarczone); wysyłka mailem wchodzi do fali C w pełnym
+zakresie (RP1 i RA-E4d z realnym mailem, nie tylko ekran+PDF) — potwierdzenie właściciela 14.09
+(„1 drugi agent melduje ze zrobił").
+**Co zobaczy właściciel:** jeden obraz — raport z pracy jako jedna karta + realny plik PDF + mail
+doręczony.
 **Tag cofnięcia:** `demo-safe-<data>-falaC`.
 
 ### Fala D — plan i bieżąca praca
@@ -685,8 +689,9 @@ organizacja" bez błędu, więc PMO nie blokuje niczego, a wchodzi raz i podnosi
 **Co zobaczy właściciel:** jeden obraz — ta sama lista Inicjatyw przefiltrowana jednym projektem.
 
 ### Po fali F
-**P6 Agent-edytor klocków** (rekomendacja CTO: przed P5 — właściciel nazwał to „krytycznie ważnym
-elementem"), potem **P5 F2-7b kontrakty**. Spotkania pozostają OFF (DEC-483).
+**P5 ‖ P6 równolegle** — właściciel 14.09 („Oba :)"): **P6 Agent-edytor klocków** i **P5 F2-7b
+kontrakty** startują jednocześnie w dwóch slotach, nie sekwencyjnie (rekomendacja CTO „P6 przed
+P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 
 ---
 
@@ -745,6 +750,13 @@ PDF; wysyłka mailem dokładana osobno, po potwierdzeniu poczty stagingu — pom
 organizacja), Q4 TAK (słowa właściciela: „nie potrzebujemy wielu zakładek" — Zasoby/Rollout/
 Podsumowanie usuwamy po dowiezieniu Pracy i Raportów, fala D), Q5 czeka na właściciela (rekomendacja
 CTO: Agent z klockami przed kontraktami). Treść pytań niżej bez zmian — historia.
+
+**Potwierdzenie właściciela 14.09 (dosłownie): «pytanie 1 drugi agent melduje ze zrobił. jak nie
+to moze to zorbic bo ma dostpey. 2 TAK, 3 TAK, 4 TAK, 5 Oba :)»** — Q1: poczta stagingu DZIAŁA
+(restart 02:30 UTC, 2/2 maile) → wysyłka raportów mailem wchodzi do fali C bez odkładania (RP1,
+RA-E4d = pełne, z realnym mailem). Q2/Q3/Q4: TAK potwierdzone (bez zmian wobec odpowiedzi CTO
+powyżej). Q5: **Oba** równolegle po fali F — P6 Agent z klockami i P5 kontrakty w dwóch slotach,
+nie sekwencyjnie.
 
 **Q1 — Raport bez wysyłki.** Poczta żywa (DEC-471, dostęp do panelu Hostingera) nadal nie działa.
 Czy falę C odbieramy na **raporcie widocznym na ekranie + pliku PDF do pobrania**, a automatyczną

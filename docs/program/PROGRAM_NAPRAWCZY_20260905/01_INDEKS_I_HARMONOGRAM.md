@@ -10,7 +10,17 @@ scalona `d73ccb90a7`) → push/staging przez CTO 14.09.
 `b3e1cb3cf2`, XI historia logowania OK `221ec76e86`, II `/help` OK `1d768b7eea`; XII reset hasła
 w toku — mail nie dochodzi, konfiguracja `settings.smtp_*` nadpisuje env; V avatar — rekomendacja
 `STORAGE_DIR`, decyzja przy wdrożeniu, Z-9) i `integracja/kandydat-tomek-czat-20260914`
-(IX, XXI, IV, XXII, XIII, VII/X — stan nieaktualizowany w tym przebiegu). **Uzupełnienie:**
+(IX, XXI, IV, XXII, XIII, VII/X — stan nieaktualizowany w tym przebiegu). **Aktualizacja Z-2/DEC-496
+tomek-czat:** `integracja/kandydat-tomek-czat-20260914` HEAD `4cbb435fdd` ✔ — P-T09 nowa rozmowa
+naprawiona, P-T21 DRD „Zapytaj Teresę" naprawiony (dwie przyczyny), P-T04 załączniki naprawione
+(każdy plik dostawał 400, nigdy żaden nie trafiał do bazy), P-T07 obwódka crimson→neutral,
+P-T10 zasłona panelu naprawiona. **Otwarte z tej samej gałęzi:** P-T22 nie odtwarza się (martwy
+stan pozostały po P-T21) → retest po wdrożeniu; P-T13 kontekst Mind Map dociera do Teresy
+(flaga `ENABLE_TERESA_MINDMAP` ON), ale brakuje struktury aplikacji w prompcie systemowym →
+decyzja produktu (Z-13). **Nowy alarm (Z-14):** świeżo zarejestrowana organizacja → 404 na całym
+`/api/v8` — kształt „organizacja martwa od rejestracji" wraca; pomiar na org `tt2tt` Tomka na
+stagingu w toku. **Zastane czerwienie (baseline, bez zmian tą gałęzią):** `zapytajTerese` 2/5,
+`MainLayout.teresaSinglePanel` 1/1, `UnifiedChatPanel.przewodyChat` 6/6. **Uzupełnienie:**
 `pawel-wywiad` `4972cb5600` ✔ (P-P03/04/05 naprawione; flaga `drdHttpSourceOfTruthV1`
 `defaultValue:false` w kodzie, a na stagingu ON — do wyjaśnienia skąd, Z-12). Fala A cz. 2 w toku:
 `tomek-konto` + `archived-filter` + `drd-en` + `pawel-wywiad` + hotfix `AccessLimitService.ts`
@@ -40,8 +50,10 @@ obraz do pokazania: `plan-wdrozen-inicjatywy-realizacja-20260914.html`. Następn
 fala A (paczka 5, pilot-blokery, drobne, archived-filter, tomek-konto, tomek-czat, dwie uwagi
 DEC-491, SSOT granicy praca/ryzyko), potem start pakietów P1..P4 wg DEC-497.
 
-**Z-8 (14.09).** DEC-499 Q5 do właściciela: kolejność po fali F — najpierw Agent-edytor klocków
-(P6), potem kontrakty pracy konsultanta (P5)? Rekomendacja CTO: TAK, Agent przed kontraktami.
+**Z-8 (14.09) — ZAMKNIĘTE.** DEC-499 Q5 do właściciela: kolejność po fali F — najpierw Agent-edytor
+klocków (P6), potem kontrakty pracy konsultanta (P5)? Rekomendacja CTO: TAK, Agent przed
+kontraktami. **Rozstrzygnięcie właściciela 14.09: „Oba :)"** — P6 i P5 równolegle w dwóch slotach
+po fali F, nie sekwencyjnie.
 
 **Z-9 (14.09).** `STORAGE_DIR` avatary (P-T05, Tomek) — dysk kontenera potwierdzony jako przyczyna
 (`users.routes.ts:27` diskStorage, `storagePaths.ts:78` fallback cwd); ustawić wolumen Railway
@@ -60,6 +72,14 @@ chunku i/lub baner „nowa wersja, odśwież stronę".
 **Z-12 (14.09, DEC-500 / Z-2).** Flaga `drdHttpSourceOfTruthV1` ma `defaultValue:false` w kodzie,
 a na stagingu jest ON — do wyjaśnienia, skąd wzięło się to nadpisanie (zmierzone przy odbiorze
 `pawel-wywiad` `4972cb5600`).
+
+**Z-13 (14.09, Z-2 / tomek-czat).** P-T13: kontekst Mind Map dociera do Teresy (flaga
+`ENABLE_TERESA_MINDMAP` ON), ale brakuje struktury aplikacji w prompcie systemowym — decyzja
+produktu, nie defekt kodu; do rozstrzygnięcia z właścicielem.
+
+**Z-14 (14.09, Z-2 / tomek-czat).** Nowy alarm: świeżo zarejestrowana organizacja → 404 na całym
+`/api/v8` (kształt „organizacja martwa od rejestracji" wraca) — pomiar org `tt2tt` Tomka na
+stagingu w toku.
 
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
@@ -325,6 +345,14 @@ Q3 **TAK** — filtr projektami raz, w fali F; do tego czasu ekrany = cała orga
 po dowiezieniu Pracy i Raportów (W1, fala D). Q5 — **czeka na właściciela** (Agent z klockami przed
 kontraktami — rekomendacja CTO). Plan: `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` §5/§6
 zaktualizowane (L2 GOTOWE fala A, A4 przydzielone fala B, U1 domknięte).
+
+**Potwierdzenie właściciela 14.09 (dosłownie): «pytanie 1 drugi agent melduje ze zrobił. jak nie
+to moze to zorbic bo ma dostpey. 2 TAK, 3 TAK, 4 TAK, 5 Oba :)»** Rozstrzygnięcia: **Q1** — poczta
+stagingu DZIAŁA (restart 02:30 UTC, 2/2 maile wysłane) → wysyłka raportów mailem wchodzi do fali C
+bez odkładania (RP1, RA-E4d = pełne, z realnym mailem, nie tylko ekran+PDF). **Q2/Q3/Q4** —
+potwierdzone TAK (bez zmian wobec odpowiedzi CTO powyżej). **Q5** — **Oba** równolegle po fali F:
+P6 Agent z klockami i P5 kontrakty w dwóch slotach, nie sekwencyjnie. Skrzynka: **Z-8 zamknięte**
+(pytanie Q5 rozstrzygnięte przez właściciela — oba równolegle, nie kolejność).
 
 **Uzupełnienie DEC-496 (CTO, 14.09) — zgłoszenia Pawła P-P06…P-P13 (widget feedback, staging).**
 Zgłaszający: `pawel.mroczkowski@dbr77.com` (OWNER, org DBR77). Kontynuacja tabeli P-P01…P-P05;
