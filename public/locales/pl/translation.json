@@ -14117,7 +14117,25 @@
     },
     "fourButtonsWorkspace": {
       "list": "Lista inicjatyw",
-      "analysis": "Analiza inicjatyw"
+      "analysis": "Analiza inicjatyw",
+      "parking": "Parking"
+    },
+    "parking": {
+      "title": "Parking",
+      "returnCondition": "Warunek powrotu",
+      "noReturnCondition": "Nie podano",
+      "noFullView": "Wpis parkingu nie ma własnej strony — to powód, dla którego zapisano decyzję.",
+      "decidedBy": "Zdecydował",
+      "analysis": "Analiza",
+      "empty": "Nic nie jest zaparkowane",
+      "emptyDescription": "Inicjatywy odesłane z analizy na parking albo do archiwum pojawiają się tutaj razem z powodem, dla którego nie weszły.",
+      "columns": {
+        "initiative": "Inicjatywa",
+        "kindLabel": "Rozstrzygnięcie",
+        "reason": "Powód, dla którego nie weszła",
+        "returnCondition": "Warunek powrotu",
+        "decidedAt": "Zdecydowano"
+      }
     },
     "analysis": {
       "title": "Analiza inicjatyw",

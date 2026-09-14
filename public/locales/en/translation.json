@@ -14942,7 +14942,25 @@
     },
     "fourButtonsWorkspace": {
       "list": "Initiative list",
-      "analysis": "Initiative analysis"
+      "analysis": "Initiative analysis",
+      "parking": "Parking"
+    },
+    "parking": {
+      "title": "Parking",
+      "returnCondition": "Return condition",
+      "noReturnCondition": "Not stated",
+      "noFullView": "A parking entry has no page of its own — it is the reason a decision was recorded.",
+      "decidedBy": "Decided by",
+      "analysis": "Analysis",
+      "empty": "Nothing is parked",
+      "emptyDescription": "Initiatives sent to parking or archive from the analysis appear here with the reason they did not enter.",
+      "columns": {
+        "initiative": "Initiative",
+        "kindLabel": "Disposition",
+        "reason": "Reason it did not enter",
+        "returnCondition": "Return condition",
+        "decidedAt": "Decided"
+      }
     },
     "analysis": {
       "title": "Initiative analysis",

@@ -3516,6 +3516,39 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
 
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-495] A2 (DEC-498 §1): lista parkingu/archiwum.
+   * Za ta sama flaga serwerowa co analiza (domyslnie OFF => 404, parytet z linia).
+   */
+  router.get(
+    '/portfolio-dispositions',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!isPortfolioConsultingAnalysisEnabled()) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const requested = firstParam(req.query.kind as string | string[] | undefined);
+      const allowed = ['IN', 'PARKING', 'ARCHIVE'] as const;
+      // Nieznana dyspozycja to blad wejscia, nie „pusta lista" — cicha pustka
+      // wygladalaby jak „nic nie zaparkowano".
+      if (requested && !allowed.includes(requested as (typeof allowed)[number])) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const kinds = requested
+        ? [requested as (typeof allowed)[number]]
+        : (['PARKING', 'ARCHIVE'] as Array<(typeof allowed)[number]>);
+      res.json({
+        dispositions: await deps.reader.listPortfolioDispositions(actor.organizationId, kinds),
+      });
+    })
+  );
+
   router.post(
     '/portfolio-analyses',
     asyncHandler(async (req, res) => {

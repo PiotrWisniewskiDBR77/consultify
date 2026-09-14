@@ -124,6 +124,23 @@ const fixture = {
   },
 };
 
+// A2: rejestr parkingu — to sa DECYZJE CZLOWIEKA, wiec bierzemy dokladnie te
+// pozycje analizy, ktore proponowaly PARKING/ARCHIVE, i zapisujemy je w ksztalcie
+// zwracanym przez `/portfolio-dispositions` (powod + warunek powrotu + kto i kiedy).
+fixture.dispositions = items
+  .filter((item) => item.proposedDisposition && item.proposedDisposition.kind !== 'IN')
+  .map((item, index) => ({
+    decisionId: `portfolio-analysis:analysis-harness-1:${item.itemId}:${item.initiativeIds[0]}`,
+    initiativeId: item.initiativeIds[0],
+    kind: item.proposedDisposition.kind,
+    reason: item.proposedDisposition.reason,
+    returnCondition: item.proposedDisposition.returnCondition,
+    actorId: 'user-harness',
+    decidedAt: new Date(Date.parse(asOf) - index * 86_400_000).toISOString(),
+    analysisId: 'analysis-harness-1',
+    projectId: 'project-1',
+  }));
+
 const out = resolve(root, 'dev-render/mocks/f2PortfolioAnalysisFixture.json');
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, `${JSON.stringify(fixture, null, 2)}\n`);

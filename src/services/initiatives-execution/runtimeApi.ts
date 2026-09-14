@@ -1115,6 +1115,36 @@ export async function readPlanScenarioDiff(
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-495] A2: rejestr parkingu / archiwum. Za ta sama
+ * flaga serwerowa co analiza — przy OFF trasa zwraca 404, tak jak na linii.
+ */
+export interface PortfolioDispositionItem {
+  decisionId: string;
+  initiativeId: string;
+  kind: 'IN' | 'PARKING' | 'ARCHIVE';
+  reason: string;
+  returnCondition: string | null;
+  actorId: string;
+  decidedAt: string;
+  analysisId: string | null;
+  projectId: string | null;
+}
+
+export async function listPortfolioDispositions(
+  kind?: 'PARKING' | 'ARCHIVE',
+  signal?: AbortSignal
+): Promise<PortfolioDispositionItem[]> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/portfolio-dispositions${kind ? `?kind=${kind}` : ''}`,
+    { credentials: 'include', signal }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  const dispositions = (body as { dispositions?: unknown })?.dispositions;
+  return Array.isArray(dispositions) ? (dispositions as PortfolioDispositionItem[]) : [];
+}
+
 export async function listPortfolioScenarioRegister(signal?: AbortSignal) {
   const response = await fetch('/api/initiatives/runtime-v1/portfolio-scenarios', {
     credentials: 'include',
@@ -1536,9 +1566,7 @@ export async function listLegacyInitiatives(
   signalOrOptions?: AbortSignal | ListLegacyInitiativesOptions
 ): Promise<LegacyInitiativeApiRow[]> {
   const options: ListLegacyInitiativesOptions =
-    signalOrOptions instanceof AbortSignal
-      ? { signal: signalOrOptions }
-      : (signalOrOptions ?? {});
+    signalOrOptions instanceof AbortSignal ? { signal: signalOrOptions } : (signalOrOptions ?? {});
   const { signal, includeArchived } = options;
   const url = includeArchived ? '/api/initiatives?includeArchived=true' : '/api/initiatives';
   const response = await fetch(url, { credentials: 'include', signal });

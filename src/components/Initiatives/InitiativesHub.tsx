@@ -123,6 +123,7 @@ import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
 import { InitiativeConsultingAnalysisView } from './InitiativeConsultingAnalysisView';
+import { InitiativeParkingView } from './InitiativeParkingView';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -278,6 +279,10 @@ const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
 );
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
+  // A2 (DEC-498 §1): trzecia soczewka Menu 3 — lista parkingu — istnieje TYLKO
+  // przy fladze czterech przyciskow; przy OFF adres `?lens=parking` ma dawac
+  // dokladnie to, co dawal na linii (liste), a nie pusty ekran.
+  if (requested === 'parking' && FOUR_BUTTONS_ENABLED) return 'parking';
   return requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
     ? 'portfolioHealth'
     : ['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')
@@ -2082,6 +2087,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
+    if (initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'parking') {
+      return (
+        <InitiativeParkingView
+          scopeKey={initiativeFetchScopeKey}
+          initiativeName={(initiativeId) =>
+            allInitiatives.find((entry) => entry.id === initiativeId)?.name
+          }
+        />
+      );
+    }
+
     if (initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
       return (
         <InitiativeConsultingAnalysisView
@@ -2772,6 +2788,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           {
             id: 'analysis',
             label: t('initiatives.fourButtonsWorkspace.analysis', 'Initiative analysis'),
+          },
+          {
+            id: 'parking',
+            label: t('initiatives.fourButtonsWorkspace.parking', 'Parking'),
           },
         ]
       : [],

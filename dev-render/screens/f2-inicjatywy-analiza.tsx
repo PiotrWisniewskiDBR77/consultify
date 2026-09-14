@@ -71,6 +71,10 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   if (url.includes('/api/organization-context/governed/versions')) {
     return json({ versions: fixture.contextVersions });
   }
+  if (url.includes('/api/initiatives/runtime-v1/portfolio-dispositions')) {
+    // A2: rejestr parkingu/archiwum — DECYZJE CZLOWIEKA, nie propozycje AI.
+    return json({ dispositions: fixture.dispositions });
+  }
   if (url.includes('/api/initiatives/runtime-v1/portfolio-analyses')) {
     // POST (utworzenie) i GET (odczyt trwalego stanu) zwracaja ten sam,
     // zwalidowany serwerowo model odczytu.

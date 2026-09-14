@@ -849,5 +849,40 @@
       }
     ],
     "requestedBy": "user-harness"
-  }
+  },
+  "dispositions": [
+    {
+      "decisionId": "portfolio-analysis:analysis-harness-1:dec-initiative-2:initiative-2",
+      "initiativeId": "initiative-2",
+      "kind": "PARKING",
+      "reason": "Overlaps work already running, so a second Initiative would duplicate effort.",
+      "returnCondition": "Returns when the running work closes without covering this scope.",
+      "actorId": "user-harness",
+      "decidedAt": "2026-09-14T00:00:00.000Z",
+      "analysisId": "analysis-harness-1",
+      "projectId": "project-1"
+    },
+    {
+      "decisionId": "portfolio-analysis:analysis-harness-1:dec-initiative-3:initiative-3",
+      "initiativeId": "initiative-3",
+      "kind": "ARCHIVE",
+      "reason": "An earlier Decision already dispositioned this scope and nothing in the snapshot changed it.",
+      "returnCondition": "Returns when the frozen context shows the earlier blocking condition is gone.",
+      "actorId": "user-harness",
+      "decidedAt": "2026-09-13T00:00:00.000Z",
+      "analysisId": "analysis-harness-1",
+      "projectId": "project-1"
+    },
+    {
+      "decisionId": "portfolio-analysis:analysis-harness-1:dec-initiative-5:initiative-5",
+      "initiativeId": "initiative-5",
+      "kind": "PARKING",
+      "reason": "Overlaps work already running, so a second Initiative would duplicate effort.",
+      "returnCondition": "Returns when the running work closes without covering this scope.",
+      "actorId": "user-harness",
+      "decidedAt": "2026-09-12T00:00:00.000Z",
+      "analysisId": "analysis-harness-1",
+      "projectId": "project-1"
+    }
+  ]
 }

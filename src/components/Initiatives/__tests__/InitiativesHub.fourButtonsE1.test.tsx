@@ -184,7 +184,10 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
     },
   });
 
-  it('renders exactly two Menu 3 lenses as buttons and keeps project/current/archive in filters', async () => {
+  // A2 (DEC-498 §1) dolozylo TRZECIA soczewke Menu 3 — „Parking". Kanon TRIADY
+  // dopuszcza najwyzej 3 pigulki, wiec to jest gorna granica: kolejna pozycja
+  // musi isc do dropdownu Menu 2, nie do rzedu Menu 3.
+  it('renders exactly three Menu 3 lenses as buttons and keeps project/current/archive in filters', async () => {
     renderHubAt('/initiatives?lens=list');
     await screen.findByTestId('initiatives-hub');
 
@@ -195,9 +198,10 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
         .map((tab) => tab.textContent)
     ).toEqual(['Initiatives', 'Plan', 'Load']);
     const chips = screen.getAllByTestId(/^standard-chip-/);
-    expect(chips).toHaveLength(2);
+    expect(chips).toHaveLength(3);
     expect(screen.getByTestId('standard-chip-list')).toHaveTextContent('Initiative list');
     expect(screen.getByTestId('standard-chip-analysis')).toHaveTextContent('Initiative analysis');
+    expect(screen.getByTestId('standard-chip-parking')).toHaveTextContent('Parking');
     expect(screen.queryByRole('combobox', { name: 'Initiative workspace' })).toBeNull();
     expect(screen.getByTestId('initiatives-project-filter')).toBeInTheDocument();
     expect(screen.getByTestId('initiatives-archive-scope')).toBeInTheDocument();
