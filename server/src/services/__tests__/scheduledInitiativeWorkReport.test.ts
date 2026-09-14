@@ -70,7 +70,7 @@ describe('scheduled initiative work report bridge', () => {
         reportType: 'initiative_work_report',
         runtimeReport,
         frequency: 'weekly',
-        deliveryMethods: ['dashboard'],
+        deliveryMethods: ['email', 'dashboard'],
         deliveryConfig: { email: { recipients: runtimeReport.recipients } },
       },
       'org-1',
@@ -83,5 +83,9 @@ describe('scheduled initiative work report bridge', () => {
       expect.objectContaining({ organizationId: 'org-1', runtimeReport })
     );
     expect(execution).toMatchObject({ status: 'success', generatedReportId: 'runtime-run-1' });
+    expect(execution.deliveryResults).toEqual([
+      expect.objectContaining({ method: 'email', status: 'success' }),
+      expect.objectContaining({ method: 'dashboard', status: 'success' }),
+    ]);
   });
 });
