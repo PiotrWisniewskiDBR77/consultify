@@ -65,7 +65,7 @@ describe('Day 50 Assessment DOCX product download', () => {
   it('keeps the card information panel and narrows only the internal chapter rail', async () => {
     render(<AssessmentReportContractView sessionId="session-1" />);
 
-    await screen.findByRole('button', { name: 'Pobierz DOCX' });
+    await screen.findByRole('button', { name: 'Download DOCX' });
     expect(screen.getByRole('complementary')).toBeInTheDocument();
     expect(screen.getByTestId('assessment-report-layout')).toHaveStyle({
       '--ntype-left-panel-width': '6.5rem',
@@ -83,7 +83,7 @@ describe('Day 50 Assessment DOCX product download', () => {
       })
     );
     render(<AssessmentReportContractView sessionId="session-1" />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Pobierz DOCX' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Download DOCX' }));
 
     await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(
@@ -100,9 +100,9 @@ describe('Day 50 Assessment DOCX product download', () => {
       })
     );
     render(<AssessmentReportContractView sessionId="session-1" />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Pobierz DOCX' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Download DOCX' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Nie udało się pobrać DOCX — kod: SESSION_NOT_FOUND'
+      'The DOCX could not be downloaded — code: SESSION_NOT_FOUND'
     );
   });
 });
