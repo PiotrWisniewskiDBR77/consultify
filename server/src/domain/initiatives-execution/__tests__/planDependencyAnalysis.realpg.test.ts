@@ -2,7 +2,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import type { PlanDependencyAnalysisResult } from '../../../services/ai/planDependencyAnalysisService.js';
@@ -166,7 +166,8 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
         },
       ],
     };
-    const result = await createPlanAnalysisProposal(new PostgresMaterialCommandUnitOfWork(pool), {
+    const analyze = vi.fn().mockResolvedValue(dependencyAnalysis);
+    const command = {
       organizationId,
       actorId,
       aggregateType: 'plan_analysis_proposal',
@@ -181,8 +182,12 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
       payload: {
         scenarioId,
         inputAggregateVersion: 3,
-        dependencyAnalysis,
+        analysisKind: 'AI_DEPENDENCY' as const,
       },
+    };
+    const uow = new PostgresMaterialCommandUnitOfWork(pool);
+    const result = await createPlanAnalysisProposal(uow, command, {
+      prepareDependencyAnalysis: analyze,
     });
     expect(result.response.analysisSource).toBe('AI');
     expect(result.response.dependencyObservations.map((item) => item.kind)).toEqual([
@@ -202,5 +207,12 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
       foundationId,
       rolloutId,
     ]);
+
+    const replay = await createPlanAnalysisProposal(uow, command, {
+      prepareDependencyAnalysis: analyze,
+    });
+    expect(replay.status).toBe('REPLAYED');
+    expect(replay.response).toEqual(result.response);
+    expect(analyze).toHaveBeenCalledTimes(1);
   });
 });
