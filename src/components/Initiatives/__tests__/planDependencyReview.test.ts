@@ -16,17 +16,20 @@ const review = (
   observationId: string,
   predecessorId: string,
   successorId: string,
-  outcome: ObservationReview['outcome'] = 'ACCEPTED'
+  outcome: ObservationReview['outcome'] = 'ACCEPTED',
+  kind: ObservationReview['finalObservation']['kind'] = 'ABSOLUTE',
+  conditionActive: boolean | null = null
 ): ObservationReview => ({
   observationId,
   outcome,
+  conditionActive,
   humanComment: outcome === 'ACCEPTED' ? 'Confirmed after reviewing the delivery evidence.' : '',
   finalObservation: {
     observationId,
     predecessorId,
     successorId,
-    kind: 'ABSOLUTE',
-    condition: null,
+    kind,
+    condition: kind === 'CONDITIONAL' ? 'The rollout uses the production cohort.' : null,
     rationale: 'The predecessor produces the required input.',
     evidenceRefs: ['deliverables'],
     confidence: 'HIGH',
@@ -52,5 +55,37 @@ describe('applyDependencyObservationReviews', () => {
       [review('o1', 'B', 'C')]
     );
     expect(result.find((item) => item.initiativeId === 'C')?.dependencySnapshot).toEqual(['A', 'B']);
+  });
+
+  it('preserves conditional edges and hardens only a condition that is currently active', () => {
+    const result = applyDependencyObservationReviews(
+      [windowFor('C'), windowFor('A'), windowFor('B')],
+      [
+        review('inactive', 'A', 'B', 'ACCEPTED', 'CONDITIONAL', false),
+        review('active', 'B', 'C', 'ACCEPTED', 'CONDITIONAL', true),
+      ]
+    );
+
+    expect(result.map((item) => item.initiativeId)).toEqual(['A', 'B', 'C']);
+    expect(result.find((item) => item.initiativeId === 'B')).toMatchObject({
+      dependencySnapshot: [],
+      conditionalDependencySnapshot: [
+        {
+          predecessorId: 'A',
+          condition: 'The rollout uses the production cohort.',
+          active: false,
+        },
+      ],
+    });
+    expect(result.find((item) => item.initiativeId === 'C')).toMatchObject({
+      dependencySnapshot: [],
+      conditionalDependencySnapshot: [
+        {
+          predecessorId: 'B',
+          condition: 'The rollout uses the production cohort.',
+          active: true,
+        },
+      ],
+    });
   });
 });

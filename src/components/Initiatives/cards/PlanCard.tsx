@@ -15,7 +15,11 @@ import {
   PlanDependencyAnalysisPanel,
   type DependencyCriticalPath,
 } from '../PlanDependencyAnalysisPanel';
-import type { DependencyObservation, ObservationReview } from '../planDependencyReview';
+import type {
+  ConditionalDependencySnapshot,
+  DependencyObservation,
+  ObservationReview,
+} from '../planDependencyReview';
 import {
   GeneratorPlanuModal,
   type GeneratorInitiative,
@@ -33,6 +37,7 @@ export interface PlanCardWindow {
   latest: string | null;
   rationale: string;
   dependencySnapshot: string[];
+  conditionalDependencySnapshot?: ConditionalDependencySnapshot[];
   constraintSnapshot: Array<{ detail: string }>;
   /** P15-K5: popyt na role w oknie tej inicjatywy (FTE) — wejscie analizy obciazenia. */
   roleDemand?: RoleDemandLine[];
@@ -306,10 +311,17 @@ export function PlanCard({
   const ganttDependencies = useMemo(
     () =>
       scenario.windows.flatMap((window) =>
-        window.dependencySnapshot.map((predecessorId) => ({
-          fromId: predecessorId,
-          toId: window.initiativeId,
-        }))
+        [
+          ...window.dependencySnapshot,
+          ...(window.conditionalDependencySnapshot ?? [])
+            .filter((dependency) => dependency.active)
+            .map((dependency) => dependency.predecessorId),
+        ]
+          .filter((predecessorId, index, all) => all.indexOf(predecessorId) === index)
+          .map((predecessorId) => ({
+            fromId: predecessorId,
+            toId: window.initiativeId,
+          }))
       ),
     [scenario.windows]
   );

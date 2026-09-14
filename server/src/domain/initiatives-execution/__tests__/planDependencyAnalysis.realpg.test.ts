@@ -225,7 +225,8 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
         rationale: 'Reviewed both observations against the operating plan.',
         observationReviews: dependencyAnalysis.observations.map((observation, index) => ({
           observationId: observation.observationId,
-          outcome: index === 0 ? ('ACCEPTED' as const) : ('REJECTED' as const),
+          outcome: 'ACCEPTED' as const,
+          conditionActive: observation.kind === 'CONDITIONAL' ? false : null,
           humanComment:
             index === 0
               ? 'Confirmed: the governed source must be delivered first.'
@@ -241,7 +242,12 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
       },
     });
     expect(reviewed.response.acceptedDependencyObservations).toEqual([
-      expect.objectContaining({ observationId: 'absolute-source-before-rollout' }),
+      expect.objectContaining({ observationId: 'absolute-source-before-rollout', kind: 'ABSOLUTE' }),
+      expect.objectContaining({
+        observationId: 'conditional-training-window',
+        kind: 'CONDITIONAL',
+        condition: 'Only if the first rollout cohort trains on production data.',
+      }),
     ]);
     const reviewedStored = await pool.query<{ version: number; payload_json: Record<string, any> }>(
       `SELECT version,payload_json FROM ie_aggregate_state
@@ -250,7 +256,14 @@ describe('DEC-497 P2 E1 — real Plan snapshot → AI proposal → PostgreSQL re
     );
     expect(reviewedStored.rows[0].version).toBe(2);
     expect(reviewedStored.rows[0].payload_json.observationReviews).toHaveLength(2);
-    expect(reviewedStored.rows[0].payload_json.acceptedDependencyObservations).toHaveLength(1);
+    expect(reviewedStored.rows[0].payload_json.observationReviews[1]).toMatchObject({
+      conditionActive: false,
+      finalObservation: {
+        kind: 'CONDITIONAL',
+        condition: 'Only if the first rollout cohort trains on production data.',
+      },
+    });
+    expect(reviewedStored.rows[0].payload_json.acceptedDependencyObservations).toHaveLength(2);
 
     await pool.query(
       `UPDATE ie_aggregate_state

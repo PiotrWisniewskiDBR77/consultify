@@ -14721,6 +14721,7 @@
       "rationale": "AI rationale — edit it when your evidence changes the proposal",
       "dependencyType": "Dependency type",
       "condition": "Activation condition",
+      "conditionActive": "Condition currently applies",
       "humanComment": "Reviewer comment",
       "humanCommentPlaceholder": "Record why you approved, rejected or changed this observation",
       "noChangeComment": "Reviewed without changing the AI rationale.",

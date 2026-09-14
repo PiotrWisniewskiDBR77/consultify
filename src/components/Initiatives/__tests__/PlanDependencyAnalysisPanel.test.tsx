@@ -71,6 +71,7 @@ describe('PlanDependencyAnalysisPanel', () => {
     fireEvent.change(rationale, { target: { value: 'Reviewer-confirmed operating dependency.' } });
     const comments = screen.getAllByLabelText('initiatives.planAnalysis.humanComment');
     fireEvent.change(comments[0], { target: { value: 'Confirmed with the delivery owner.' } });
+    fireEvent.click(screen.getByLabelText('initiatives.planAnalysis.conditionActive'));
     fireEvent.click(screen.getByRole('button', { name: /initiatives.planAnalysis.applyAccepted:2/ }));
 
     expect(onReview).toHaveBeenCalledWith(
@@ -79,9 +80,19 @@ describe('PlanDependencyAnalysisPanel', () => {
         expect.objectContaining({
           observationId: 'obs-1',
           outcome: 'ACCEPTED',
+          conditionActive: null,
           humanComment: 'Confirmed with the delivery owner.',
           finalObservation: expect.objectContaining({
             rationale: 'Reviewer-confirmed operating dependency.',
+          }),
+        }),
+        expect.objectContaining({
+          observationId: 'obs-2',
+          outcome: 'ACCEPTED',
+          conditionActive: true,
+          finalObservation: expect.objectContaining({
+            kind: 'CONDITIONAL',
+            condition: 'When the production cohort is used.',
           }),
         }),
       ])

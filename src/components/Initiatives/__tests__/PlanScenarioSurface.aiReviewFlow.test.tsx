@@ -39,8 +39,16 @@ vi.mock('../cards/PlanCard', () => ({
               {
                 observationId: 'obs-a-b',
                 outcome: 'ACCEPTED',
+                conditionActive: null,
                 humanComment: 'Confirmed by the program owner.',
                 finalObservation: props.proposal.dependencyObservations[0],
+              },
+              {
+                observationId: 'obs-b-c-conditional',
+                outcome: 'ACCEPTED',
+                conditionActive: false,
+                humanComment: 'The production cohort is not selected.',
+                finalObservation: props.proposal.dependencyObservations[1],
               },
             ])
           }
@@ -57,6 +65,7 @@ import { PlanScenarioSurface } from '../PlanScenarioSurface';
 const windows = [
   { initiativeId: 'b', initiativeVersion: 1, earliest: null, target: null, latest: null, confidence: 'UNKNOWN', rationale: '', dependencySnapshot: [], constraintSnapshot: [] },
   { initiativeId: 'a', initiativeVersion: 1, earliest: null, target: null, latest: null, confidence: 'UNKNOWN', rationale: '', dependencySnapshot: [], constraintSnapshot: [] },
+  { initiativeId: 'c', initiativeVersion: 1, earliest: null, target: null, latest: null, confidence: 'UNKNOWN', rationale: '', dependencySnapshot: [], constraintSnapshot: [] },
 ];
 const scenario = {
   scenarioId: 'plan-ai', name: 'AI plan', scenarioVersion: 1, status: 'DRAFT',
@@ -68,17 +77,22 @@ const observation = {
   observationId: 'obs-a-b', predecessorId: 'a', successorId: 'b', kind: 'ABSOLUTE', condition: null,
   rationale: 'A provides B input.', evidenceRefs: ['deliverables'], confidence: 'HIGH',
 };
+const conditionalObservation = {
+  observationId: 'obs-b-c-conditional', predecessorId: 'b', successorId: 'c', kind: 'CONDITIONAL',
+  condition: 'The production cohort is selected.', rationale: 'C uses the production cohort.',
+  evidenceRefs: ['scopeIn'], confidence: 'MEDIUM',
+};
 
 describe('PlanScenarioSurface AI dependency review flow', () => {
   it('requests AI analysis and applies approved dependencies plus logical order through canonical writers', async () => {
     api.listPlanScenarioRegister.mockResolvedValue({ scenarios: [{ id: 'plan-ai', name: 'AI plan', state: 'DRAFT', version: 1, portfolioRef: { scenarioId: 'portfolio', scenarioVersion: 1 }, window: { earliest: null, latest: null }, updatedAt: '2026-09-14T00:00:00.000Z', timeBasis: { windowUnit: 'WEEK', timezone: 'Europe/Warsaw', periods: scenario.periods, knowledgeState: 'KNOWN' } }] });
     api.readPlanScenario.mockResolvedValue({ version: 1, scenario });
-    api.createPlanAnalysisProposal.mockResolvedValue({ response: { proposalId: 'proposal', inputAggregateVersion: 1, inputScenarioVersion: 1, status: 'PENDING_REVIEW', assumptions: [], rationale: '', conflicts: [], changes: [], analysisSource: 'AI', dependencyObservations: [observation], criticalPaths: [] } });
+    api.createPlanAnalysisProposal.mockResolvedValue({ response: { proposalId: 'proposal', inputAggregateVersion: 1, inputScenarioVersion: 1, status: 'PENDING_REVIEW', assumptions: [], rationale: '', conflicts: [], changes: [], analysisSource: 'AI', dependencyObservations: [observation, conditionalObservation], criticalPaths: [] } });
     api.writeInitiativeDependencies.mockResolvedValue({ dependsOn: ['a'] });
     api.writePlanScenario.mockImplementation(async (_id, command) => ({ aggregateVersion: 2, response: command.scenario }));
     api.reviewPlanAnalysisProposal.mockResolvedValue({ response: { status: 'ACCEPTED' } });
 
-    render(<MemoryRouter><PlanScenarioSurface activePreset="all" initiatives={[{ id: 'a', name: 'Foundation' }, { id: 'b', name: 'Rollout' }]} /></MemoryRouter>);
+    render(<MemoryRouter><PlanScenarioSurface activePreset="all" initiatives={[{ id: 'a', name: 'Foundation' }, { id: 'b', name: 'Rollout' }, { id: 'c', name: 'Training' }]} /></MemoryRouter>);
     const planLabels = await screen.findAllByText('AI plan');
     fireEvent.doubleClick(planLabels[0]);
     fireEvent.click(await screen.findByRole('button', { name: 'Run AI' }));
@@ -88,7 +102,18 @@ describe('PlanScenarioSurface AI dependency review flow', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Apply review' }));
     await waitFor(() => expect(api.reviewPlanAnalysisProposal).toHaveBeenCalled());
     expect(api.writeInitiativeDependencies).toHaveBeenCalledWith('b', expect.objectContaining({ dependsOn: ['a'] }));
-    expect(api.writePlanScenario.mock.calls.at(-1)?.[1].scenario.windows.map((item: any) => item.initiativeId)).toEqual(['a', 'b']);
+    expect(api.writeInitiativeDependencies).toHaveBeenCalledTimes(1);
+    expect(api.writePlanScenario.mock.calls.at(-1)?.[1].scenario.windows.map((item: any) => item.initiativeId)).toEqual(['a', 'b', 'c']);
+    expect(api.writePlanScenario.mock.calls.at(-1)?.[1].scenario.windows.find((item: any) => item.initiativeId === 'c')).toMatchObject({
+      dependencySnapshot: [],
+      conditionalDependencySnapshot: [
+        {
+          predecessorId: 'b',
+          condition: 'The production cohort is selected.',
+          active: false,
+        },
+      ],
+    });
     expect(api.reviewPlanAnalysisProposal.mock.calls[0][1].observationReviews[0]).toMatchObject({ outcome: 'ACCEPTED', humanComment: 'Confirmed by the program owner.' });
   });
 });

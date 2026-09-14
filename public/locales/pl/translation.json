@@ -13947,6 +13947,7 @@
       "rationale": "Uzasadnienie AI — zmień je, gdy Twoje dowody zmieniają propozycję",
       "dependencyType": "Rodzaj zależności",
       "condition": "Warunek uruchomienia",
+      "conditionActive": "Warunek jest obecnie spełniony",
       "humanComment": "Komentarz recenzenta",
       "humanCommentPlaceholder": "Zapisz, dlaczego zatwierdzasz, odrzucasz lub zmieniasz tę obserwację",
       "noChangeComment": "Sprawdzono bez zmiany uzasadnienia AI.",
