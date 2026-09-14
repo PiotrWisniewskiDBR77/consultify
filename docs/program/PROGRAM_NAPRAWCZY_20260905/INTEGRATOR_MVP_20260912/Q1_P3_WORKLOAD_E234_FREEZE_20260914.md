@@ -1,46 +1,40 @@
-# Q1 P3 Obciążenie — E2–E4 freeze (2026-09-14)
+# Q1 P3 Obciążenie — E2–E4 freeze R2 (2026-09-14)
 
-**Werdykt: READY FOR INDEPENDENT EXACT-SHA REVIEW.** Kandydat bazuje na linii `29d1db9f00` z Wpisu 42 i realizuje E2–E4 bez migracji oraz bez zapisu propozycji AI do zadań.
+**Werdykt autora: READY FOR INDEPENDENT EXACT-SHA REREVIEW.** Dwa blokery P1 i doprecyzowanie P2 z review `b29c6b679f334ec44f67859fa10a330345eefaf8` są zamknięte bez migracji oraz bez rozszerzenia zakresu.
 
-## Zakres
+## Zamknięcie HOLD
+
+- **P1 — prawdziwe akcje:** usunięto oba `onOpenFull={() => undefined}`. Podgląd osoby i efemerycznej propozycji planistycznej nie ma osobnego, kanonicznego obiektu docelowego, więc nagłówek uczciwie nie pokazuje aktywnego `Open`. Nie dodano fikcyjnej nawigacji.
+- **P1 — exact manifest:** finalny commit freeze dodaje samowyłączający się manifest `Q1_P3_WORKLOAD_E234_FREEZE_MANIFEST.json`. Manifest wiąże wszystkie pozostałe ścieżki delty względem bazy z rozmiarem i SHA-256 bloba oraz podaje content SHA i sumę evidence.
+- **P2 — jednoznaczny status:** pigułka propozycji pokazuje `Initiative status: Approved` / `Status inicjatywy: Zatwierdzona`, więc nie wygląda jak zatwierdzenie samej propozycji.
+
+## Zachowanie E2–E4
 
 - **E2 — dostępność:** zalogowany użytkownik edytuje własne godziny tygodniowe i procent dostępności przez istniejący profil `users.weekly_capacity_hours` / `users.availability_percent`.
 - **E3 — raport obciążenia:** adapter `WORKLOAD_CAPACITY` korzysta ze wspólnego silnika P1 `reportDefinition` / `reportRun`; przebieg dostaje zamrożony snapshot planu zasobów.
-- **E4 — propozycje:** odczyt wyłącznie dla kanonicznych etapów planowania `DRAFT`, `PENDING_APPROVAL`, `APPROVED`; odpowiedź ma `planningOnly: true` i `applied: false`. Test RealPG dowodzi, że inicjatywa `IN_EXECUTION` nie trafia do propozycji, a przydział zadania nie zmienia się.
-- UI pozostaje za domyślnie wyłączonymi flagami `VITE_INITIATIVES_WORKLOAD`, `ENABLE_INITIATIVES_WORKLOAD`, `VITE_INITIATIVES_WORK_REPORT` i `ENABLE_INITIATIVES_WORK_REPORT`.
-- Zachowano zmiany linii: `noCapacityShort`, `cellHintNoCapacity`, wyłączenie capacity w `commandRowContent`, `workReportLabels`, `initiativeStatusLabels` oraz rejestr dev-render.
+- **E4 — propozycje:** odczyt wyłącznie dla kanonicznych etapów planowania `DRAFT`, `PENDING_APPROVAL`, `APPROVED`; odpowiedź ma `planningOnly: true` i `applied: false`. RealPG dowodzi wykluczenia `IN_EXECUTION` i braku mutacji przydziału.
+- Flagi `VITE_INITIATIVES_WORKLOAD`, `ENABLE_INITIATIVES_WORKLOAD`, `VITE_INITIATIVES_WORK_REPORT` i `ENABLE_INITIATIVES_WORK_REPORT` pozostają strict opt-in/default OFF.
 
-## Bramka
+## Bramka R2
 
-- Pełna delta testów względem `29d1db9f00`: 4 pliki, **12/12 PASS**, `--retry=0`.
-- RealPG na `127.0.0.1:5291`: ApiGateway + JWT + PostgreSQL, **2/2 PASS** w `initiativeWorkload.gateway.pg.test.ts`.
+- Wszystkie 4 pliki testowe delty uruchomione osobno z `--retry=0`: **13/13 PASS**.
+- Test komponentu dowodzi braku aktywnego `Open` dla obu preview oraz etykiety `Initiative status: Approved`: **7/7 PASS**.
+- RealPG18 na `127.0.0.1:5291` przez ApiGateway + signed JWT + PostgreSQL: **2/2 PASS**.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit --pretty false`: **exit 0**.
-- Transpilacja esbuild wszystkich 15 zmienionych plików TS/TSX: **15/15 PASS**.
-- Detektor zduplikowanych kluczy JSON: EN **0**, PL **0**.
-- Produkcyjny build z flagami ON: **PASS**, 10 745 modułów, 43,27 s.
-- `git diff --check`: **PASS**; brak znaczników konfliktu w delcie.
-- Pełny root `tsc` pozostaje czerwony (`exit 2`) na odziedziczonych błędach poza deltą; nie przedstawiono go jako zielonego dowodu.
+- Esbuild per każdy plik TS/TSX delty: **15/15 PASS**. Dla wspólnego rejestru dev-render wyłączono z bundla dwa odziedziczone, brakujące lazy-importy poza Q1; sam wpis i ekran Q1 zostały zbudowane.
+- Detektor zduplikowanych kluczy JSON: EN **0**, PL **0**. `git diff --check`: **PASS**.
 
-## Dowód UI
+## Dowód UI R2
 
-Harness `dev-render/screens/z30-inicjatywy-obciazenie.tsx` montuje pełny `InitiativesHub`. Po usunięciu kolizji obcego receivera na porcie 4215 wykonano ponowny przejazd na własnym Vite: **7/7 zrzutów, browser errors 0**, łącznie **848 KiB**.
+Po zmianie wizualnej odświeżono siedem zrzutów pełnego `InitiativesHub` w `evidence/q1-p3-workload/e234-*`:
 
-- dostępność i StandardPreview: EN light/dark + PL light;
-- propozycje planistyczne: EN light/dark + PL light/dark;
-- widoczne: StandardModuleBar, StandardTable, StandardPreview, kebab wiersza, standardowe dropdowny, etykiety EN/PL oraz semantyczny kolor krytyczny tylko dla przeciążenia/braku pojemności.
+- propozycje: EN light/dark + PL light/dark;
+- dostępność: EN light/dark + PL light;
+- każdy przebieg ma pustą tablicę błędów przeglądarki;
+- zrzuty pokazują brak fałszywego `Open`, jednoznaczny status inicjatywy, StandardModuleBar, standardowe dropdowny, StandardTable, StandardPreview i row kebab.
 
-Pliki są w `evidence/q1-p3-workload/e234-*.jpg`; każdy ma pokwitowanie `.jpg.json` z URL-em, viewportem i pustą listą błędów.
+Evidence całego katalogu pakietu ma 810 464 B, a odświeżona macierz E2–E4 630 717 B; oba wyniki są poniżej 2 MiB.
 
-## Luka hooka znaczników konfliktu
+## Granice
 
-Commit `1f0d65f778` zawierał literalne `<<<<<<<`, ponieważ aktywny `core.hooksPath=.husky` uruchamia `.husky/pre-commit`, który **nie wywołuje** detektora z `scripts/git-tools/hooks/pre-commit`. Detektor istnieje w repozytorium, ale leży poza aktywną ścieżką hooków. Odzyskana delta została sprawdzona jawnie przed pierwszym commitem i ponownie przed freeze.
-
-## Łańcuch odzyskania
-
-- zły, historyczny WIP: `1f0d65f778` — nieużywany;
-- przeniesiony WIP przed rebase: `c10025ffb744dc82ccdb7b85e82fe8805128241a`;
-- immutable backup przed rebase: `backup/codex/obciazenie-inicjatyw-20260914-e234-prerebase-20260914`;
-- WIP po rebase: `1d769f39e706bcb0bd86f8db0f0ba5d3ba991cb0`;
-- immutable backup WIP po rebase: `backup/codex/obciazenie-inicjatyw-20260914-e234-rebased-wip-20260914`.
-
-Po commicie freeze dokument należy uzupełnić w meldunku o końcowy SHA i immutable ref `backup/codex/obciazenie-inicjatyw-20260914-e234-freeze-20260914`.
+Brak migracji, deployu, zmian Railway i pushy na chronione gałęzie. Autor zatrzymuje pakiet po commicie freeze. Exact content SHA i końcowy freeze SHA są publikowane w manifeście, backupie i meldunku `OD_CODEXA.md`.
