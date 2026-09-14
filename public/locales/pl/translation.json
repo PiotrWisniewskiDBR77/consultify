@@ -9383,6 +9383,10 @@
           "sourceTitle": "Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage.",
           "stateClosed": "Zamknięta",
           "stateFrozen": "Zamrożona",
+          "reportEmpty": {
+            "title": "Ta sesja nie ma jeszcze zamrożonego wyniku",
+            "description": "Sesja jest zamrożona na serwerze, ale nie znaleziono jej wyniku — raport powstaje z wyniku, nigdy z kopii lokalnej. Odśwież sesję albo wygeneruj raport, gdy wynik będzie dostępny."
+          },
           "unitLine": "Jednostka: {{name}}"
         },
         "generated": {
@@ -51499,7 +51503,8 @@
     "sessionShort": "Sesja {{id}}",
     "readOnly": {
       "banner": "Tylko do odczytu — nie jesteś uczestnikiem tej sesji",
-      "tooltip": "Tylko do odczytu — nie jesteś uczestnikiem tej sesji"
+      "tooltip": "Tylko do odczytu — nie jesteś uczestnikiem tej sesji",
+      "frozen": "Tylko do odczytu — sesja jest zamrożona; wynik już się nie zmienia"
     },
     "saveNow": "Zapisz teraz",
     "settings": "Ustawienia",

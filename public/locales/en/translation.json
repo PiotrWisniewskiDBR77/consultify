@@ -10179,6 +10179,10 @@
           "sourceTitle": "A frozen Output always comes from the server response, never from localStorage.",
           "stateClosed": "Closed",
           "stateFrozen": "Frozen",
+          "reportEmpty": {
+            "title": "There is no frozen result for this session yet",
+            "description": "The session is frozen on the server, but its Output has not been found — the report is built from the Output, never from a local copy. Refresh the session, or generate the report once the Output is available."
+          },
           "unitLine": "Unit: {{name}}"
         },
         "generated": {
@@ -51121,7 +51125,8 @@
     "sessionShort": "Session {{id}}",
     "readOnly": {
       "banner": "Read only — you are not a participant of this session",
-      "tooltip": "Read only — you are not a participant of this session"
+      "tooltip": "Read only — you are not a participant of this session",
+      "frozen": "Read only — the session is frozen; the result no longer changes"
     },
     "saveNow": "Save now",
     "settings": "Settings",

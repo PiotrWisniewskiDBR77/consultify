@@ -42,6 +42,7 @@ import { useTranslation } from 'react-i18next';
 import { nazwaWJezyku } from './drdNazwa';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import { EmptyState } from '@/components/shared/states';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
 import { StandardTable } from '@/components/standard/StandardTable';
@@ -95,6 +96,22 @@ import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
 const AssessmentReportContractView = React.lazy(() =>
   import('../report/AssessmentReportContractView').then((module) => ({
     default: module.AssessmentReportContractView,
+  }))
+);
+
+/**
+ * ★ FALA J2 — sesja ZAMROŻONA pokazuje PRODUKT, nie kontrakt.
+ *
+ * `AssessmentReportView` to KANONICZNY pojemnik dokumentu wyniku (ten sam,
+ * który stoi pod trasą `/assessment/outputs/:outputId/report` przez
+ * `AssessmentOutputReportRoute`): dostaje `outputId`, sam robi trzy GET-y
+ * (`reportApi.ts`) i sam rysuje `AssessmentReportDocument`. Tutaj jest
+ * WOŁANY, a nie kopiowany — żadnego drugiego pobierania ani drugiego
+ * rysunku raportu w tym pliku.
+ */
+const AssessmentOutputReportDocumentView = React.lazy(() =>
+  import('../report/AssessmentReportView').then((module) => ({
+    default: module.AssessmentReportView,
   }))
 );
 
@@ -477,6 +494,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const [bootError, setBootError] = useState<string | null>(null);
   const [skipWriteError, setSkipWriteError] = useState(false);
   const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>(initialViewMode ?? 'interview');
+  /**
+   * ★ FALA J2: sesja zamrożona/zamknięta OTWIERA SIĘ na zakładce „Raport".
+   * Jednorazowo (ref), więc użytkownik może natychmiast przejść na „Wywiad"
+   * albo „Macierz" (tylko-do-odczytu) i ekran go stamtąd nie wyrzuci. Gdy
+   * wołający podał `initialViewMode` — jego wola wygrywa.
+   */
+  const frozenViewModeAppliedRef = useRef(false);
   const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
   const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
   const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
@@ -677,6 +701,16 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const canWrite = (state?.roles ?? []).some((role) =>
     ['owner', 'lead_assessor', 'assessor', 'respondent', 'evidence_owner'].includes(role)
   );
+
+  // ★ FALA J2 — patrz `frozenViewModeAppliedRef` wyżej.
+  const sesjaZamrozona = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
+  useEffect(() => {
+    if (frozenViewModeAppliedRef.current) return;
+    if (initialViewMode) return;
+    if (!sesjaZamrozona) return;
+    frozenViewModeAppliedRef.current = true;
+    setViewMode('report');
+  }, [initialViewMode, sesjaZamrozona]);
 
   const {
     state: saveState,
@@ -1310,31 +1344,58 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       ? 'SERVER'
       : 'RECOVERY_DRAFT';
 
-  if (session.state === 'frozen' || session.state === 'closed') {
-    return (
+  /**
+   * ★ FALA J2 — „dramat właściciela": do 14.09 ten warunek był WCZESNYM
+   * RETURNEM na `FrozenOutputHttpView`, czyli sesja frozen/closed pokazywała
+   * surowy zrzut kontraktu (`AssessmentOutput (immutable, v1)`, `contentHash`,
+   * `scope`, `limitations`, tabela UNIT/CURRENT/TARGET/GAP) ZAMIAST produktu.
+   * To slice A6 z 13.08 (`0a4a0719f7`, „small, token-compliant, additive
+   * views") — widok dla programisty, a wychodził PRZED `MethodWorkspaceShell`,
+   * więc razem z nim znikały zakładki Wywiad · Macierz · Raport.
+   *
+   * Teraz sesja zamrożona ZOSTAJE w powłoce (te same zakładki, tylko do
+   * odczytu, z jawnym powodem „sesja jest zamrożona"), a domyślną zakładką
+   * jest „Raport" z kanonicznym dokumentem wyniku. Surowy widok NIE ZNIKA:
+   * mieszka pod „Szczegóły techniczne" w Ustawieniach powłoki, a pełny ekran
+   * (dla diagnostyki) wraca wyłącznie przez awaryjne `?ff_drdFrozenRaw=1`.
+   */
+  const isFrozen = session.state === 'frozen' || session.state === 'closed';
+  const surowyWidokZadany =
+    isFrozen &&
+    (() => {
+      try {
+        return new URLSearchParams(window.location.search).get('ff_drdFrozenRaw') === '1';
+      } catch {
+        return false;
+      }
+    })();
+
+  const wygenerujRaportZOutputu = () =>
+    canWrite
+      ? runtime?.generateReport({
+          title: t('assessment.drd.http.generated.reportTitle', 'DRD report'),
+          content: {
+            executiveSummary: t(
+              'assessment.drd.http.generated.reportSummary',
+              'DRD session — partial result.'
+            ),
+            participants: ['Piotr (Owner)', 'Anna (Approver)'],
+            strengths: [
+              t(
+                'assessment.drd.http.generated.reportStrength',
+                'The sales process has basic documentation.'
+              ),
+            ],
+          },
+        })
+      : undefined;
+
+  const frozenRawView = (embedded: boolean) => (
       <FrozenOutputHttpView
         state={state}
         sourceKind={sourceKind}
-        onGenerateReport={() =>
-          canWrite
-            ? runtime?.generateReport({
-                title: t('assessment.drd.http.generated.reportTitle', 'DRD report'),
-                content: {
-                  executiveSummary: t(
-                    'assessment.drd.http.generated.reportSummary',
-                    'DRD session — partial result.'
-                  ),
-                  participants: ['Piotr (Owner)', 'Anna (Approver)'],
-                  strengths: [
-                    t(
-                      'assessment.drd.http.generated.reportStrength',
-                      'The sales process has basic documentation.'
-                    ),
-                  ],
-                },
-              })
-            : undefined
-        }
+        embedded={embedded}
+        onGenerateReport={() => void wygenerujRaportZOutputu()}
         onGenerateInitiative={() =>
           canWrite
             ? runtime?.generateInitiativeDraft({
@@ -1358,8 +1419,58 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         readOnly={!canWrite}
         onExit={onExit ?? (() => {})}
       />
-    );
-  }
+  );
+
+  if (surowyWidokZadany) return frozenRawView(false);
+
+  /**
+   * Zakładka „Raport" dla sesji zamrożonej = KANONICZNY dokument wyniku
+   * (`AssessmentReportView` → `AssessmentReportDocument`), ten sam, który
+   * otwiera zakładka Outputs przez `/assessment/outputs/:outputId/report`.
+   * Bez outputu — kanoniczny stan pusty z uczciwym opisem i akcją, nigdy
+   * cisza ani udawany dokument.
+   */
+  const frozenReportContent = state.output ? (
+    <Suspense
+      fallback={
+        <div
+          className="m-6 h-24 animate-pulse rounded-xl border border-c-border-subtle bg-c-surface-raised"
+          aria-busy="true"
+        />
+      }
+    >
+      <AssessmentOutputReportDocumentView outputId={state.output.id} />
+    </Suspense>
+  ) : (
+    <EmptyState
+      variant="new"
+      icon={FileText}
+      title={t(
+        'assessment.drd.http.frozen.reportEmpty.title',
+        'There is no frozen result for this session yet'
+      )}
+      description={t(
+        'assessment.drd.http.frozen.reportEmpty.description',
+        'The session is frozen on the server, but its Output has not been found — the report is built from the Output, never from a local copy. Refresh the session, or generate the report once the Output is available.'
+      )}
+      primaryAction={
+        canWrite
+          ? {
+              label: t(
+                'assessment.drd.http.frozen.generateReport',
+                'Generate a report from the Output'
+              ),
+              onClick: () => void wygenerujRaportZOutputu(),
+              testId: 'drd-frozen-generate-report',
+            }
+          : undefined
+      }
+      secondaryAction={{
+        label: t('assessment.drd.http.error.retryInline', 'Try again'),
+        onClick: () => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve()),
+      }}
+    />
+  );
 
   const canSendToReview = canWrite && session.state === 'active';
   const canSendBack = canWrite && session.state === 'in_review';
@@ -1472,7 +1583,18 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
            * zapisie mówi plakietka zapisu (`saveState`) — nic nie znika.
            */
           loading={state.status === 'loading' && !state.session}
-          readOnly={!canWrite}
+          // ★ FALA J2: zamrożona sesja jest tylko do odczytu NIEZALEŻNIE od
+          // ról — serwer i tak odmówi zapisu, a ekran ma to napisać zanim
+          // ktoś zacznie pisać w pole, które nic nie przyjmie.
+          readOnly={!canWrite || isFrozen}
+          readOnlyReason={
+            isFrozen
+              ? t(
+                  'methodWorkspace.readOnly.frozen',
+                  'Read only — the session is frozen; the result no longer changes'
+                )
+              : undefined
+          }
           // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md #5) —
           // see DrdMethodWorkspaceScreen.tsx's sibling comment: this
           // duplicated the header's own status pill, no separate fact left
@@ -1622,7 +1744,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             ),
           }}
           reportContent={
-            assessmentReportEnabled ? (
+            isFrozen ? (
+              frozenReportContent
+            ) : assessmentReportEnabled ? (
               <Suspense
                 fallback={
                   <div
@@ -1727,6 +1851,21 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             )
           }
           documentSourceLabel={sourceKind}
+          /* ★ FALA J2: surowy zrzut kontraktu (Output/contentHash/scope/
+             limitations, snapshoty raportu i szkicu inicjatywy, „Otwórz
+             ponownie") nie jest usunięty — schodzi tam, gdzie jest jego
+             miejsce: pod „Szczegóły techniczne" w Ustawieniach. Nigdy jako
+             pierwszy ekran. */
+          settingsContent={
+            isFrozen ? (
+              <details data-testid="drd-frozen-technical-details" className="mt-1">
+                <summary className="cursor-pointer font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
+                  {t('methodWorkspace.info.technicalDetails', 'Technical details')}
+                </summary>
+                <div className="mt-2">{frozenRawView(true)}</div>
+              </details>
+            ) : undefined
+          }
           // 1.1-Z4 D3: `DrdSourceIndicator` now has a permanent home in this
           // screen's own header (added above, next to
           // `AssessmentSaveStateIndicator` — fix for finding (a)/(b)/(c)) —
@@ -1864,24 +2003,43 @@ const FrozenOutputHttpView: React.FC<{
   onGenerateInitiative: () => void;
   onExit: () => void;
   readOnly?: boolean;
-}> = ({ state, sourceKind, onGenerateReport, onGenerateInitiative, onExit, readOnly = false }) => {
+  /**
+   * ★ FALA J2: ten widok nie jest już PIERWSZYM ekranem sesji zamrożonej —
+   * mieszka pod „Szczegóły techniczne" w Ustawieniach powłoki. Osadzony nie
+   * bierze całej wysokości i nie dubluje wyjścia z sesji (powłoka ma własne
+   * „Wyjdź"); pełnoekranowo wraca wyłącznie przez `?ff_drdFrozenRaw=1`.
+   */
+  embedded?: boolean;
+}> = ({
+  state,
+  sourceKind,
+  onGenerateReport,
+  onGenerateInitiative,
+  onExit,
+  readOnly = false,
+  embedded = false,
+}) => {
   const { t } = useTranslation();
   const session = state.session!;
   const output = state.output;
 
   return (
     <div
-      className="flex h-full flex-col overflow-y-auto bg-c-bg p-6"
+      className={
+        embedded ? 'flex flex-col bg-c-surface' : 'flex h-full flex-col overflow-y-auto bg-c-bg p-6'
+      }
       data-testid="drd-http-frozen-output-view"
     >
       <div className="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onExit}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
-        >
-          <ArrowLeft size={13} /> {t('assessment.drd.http.frozen.exit', 'Leave')}
-        </button>
+        {embedded ? null : (
+          <button
+            type="button"
+            onClick={onExit}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+          >
+            <ArrowLeft size={13} /> {t('assessment.drd.http.frozen.exit', 'Leave')}
+          </button>
+        )}
         <h1 className="text-sm font-semibold text-c-text">
           {t('assessment.drd.http.frozen.heading', 'Session {{id}} — {{state}}', {
             id: session.id.slice(0, 8),

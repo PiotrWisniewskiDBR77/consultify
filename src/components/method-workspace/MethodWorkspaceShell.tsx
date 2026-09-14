@@ -109,6 +109,13 @@ export interface MethodWorkspaceShellProps {
   loading?: boolean;
   errorMessage?: string | null;
   readOnly?: boolean;
+  /**
+   * POWÓD tylko-do-odczytu, gdy jest inny niż domyślny („nie jesteś
+   * uczestnikiem sesji"). Sesja zamrożona/zamknięta jest tylko do odczytu
+   * z zupełnie innego powodu i musi to napisać wprost — patrz
+   * `DrdHttpMethodWorkspaceScreen` (fala J2).
+   */
+  readOnlyReason?: string;
 
   className?: string;
 }
@@ -171,6 +178,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   loading = false,
   errorMessage,
   readOnly = false,
+  readOnlyReason,
   className = '',
 }) => {
   const { t } = useTranslation();
@@ -498,10 +506,11 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         >
           <Eye size={13} aria-hidden="true" />
           <span>
-            {t(
-              'methodWorkspace.readOnly.banner',
-              'Read only — you are not a participant of this session'
-            )}
+            {readOnlyReason ??
+              t(
+                'methodWorkspace.readOnly.banner',
+                'Read only — you are not a participant of this session'
+              )}
           </span>
         </div>
       )}
