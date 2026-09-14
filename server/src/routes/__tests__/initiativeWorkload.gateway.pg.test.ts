@@ -8,9 +8,6 @@ import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import config from '../../config/Config.js';
-import { ApiGateway } from '../../Gateway.js';
-
 describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
   const organizationId = randomUUID();
   const foreignOrganizationId = randomUUID();
@@ -19,13 +16,21 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
   const foreignProjectId = randomUUID();
   const initiativeId = randomUUID();
   const foreignInitiativeId = randomUUID();
+  const availableUserId = randomUUID();
   let sql: Client;
   let app: Express;
   let authorization: string;
 
   beforeAll(async () => {
     process.env.DB_TYPE = 'postgres';
+    process.env.RUN_DB_TESTS = '1';
+    process.env.MOCK_DB = 'false';
     process.env.ENABLE_INITIATIVES_WORKLOAD = 'true';
+    const [{ default: config }, { ApiGateway }, { get: dbGet }] = await Promise.all([
+      import('../../config/Config.js'),
+      import('../../Gateway.js'),
+      import('../../utils/DbPromise.js'),
+    ]);
     sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
     await sql.connect();
     await sql.query(
@@ -37,8 +42,9 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     await sql.query(
       `INSERT INTO users
          (id,organization_id,email,password,first_name,last_name,role,status,weekly_capacity_hours,availability_percent,created_at)
-       VALUES ($1,$2,$3,'x','Anna','Capacity','ADMIN','active',20,100,now())`,
-      [userId, organizationId, `${userId}@example.test`]
+       VALUES ($1,$2,$3,'x','Anna','Capacity','ADMIN','active',20,100,now()),
+              ($4,$2,$5,'x','Ola','Available','USER','active',40,100,now())`,
+      [userId, organizationId, `${userId}@example.test`, availableUserId, `${availableUserId}@example.test`]
     );
     await sql.query(
       `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
@@ -51,6 +57,13 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
         [organizationId, userId]
       )).rows[0]?.status
     ).toBe('ACTIVE');
+    expect(
+      await dbGet<{ status: string }>(
+        'SELECT status FROM organization_members WHERE organization_id = ? AND user_id = ?',
+        [organizationId, userId],
+        { fallback: false }
+      )
+    ).toMatchObject({ status: 'ACTIVE' });
     await sql.query(
       `INSERT INTO projects (id,organization_id,name,status,created_at)
        VALUES ($1,$2,'Apollo','active',now()),($3,$2,'Other','active',now())`,
@@ -65,8 +78,8 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     await sql.query(
       `INSERT INTO tasks
          (id,organization_id,project_id,initiative_id,title,status,assignee_id,estimated_hours,due_date,created_at,updated_at)
-       VALUES ($1,$2,$3,$4,'Scoped demand','todo',$5,30,current_date,now(),now()),
-              ($6,$2,$7,$8,'Excluded demand','todo',$5,10,current_date,now(),now())`,
+       VALUES ($1,$2,$3,$4,'Scoped demand','todo',$5,30,current_date + 2,now(),now()),
+              ($6,$2,$7,$8,'Excluded demand','todo',$5,10,current_date + 2,now(),now())`,
       [
         randomUUID(), organizationId, projectId, initiativeId, userId,
         randomUUID(), foreignProjectId, foreignInitiativeId,
@@ -95,26 +108,31 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     await sql.query('DELETE FROM initiatives WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM projects WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM organization_members WHERE organization_id=$1', [organizationId]);
-    await sql.query('DELETE FROM users WHERE id=$1', [userId]);
+    await sql.query('DELETE FROM users WHERE id IN ($1,$2)', [userId, availableUserId]);
     await sql.query('DELETE FROM organizations WHERE id IN ($1,$2)', [organizationId, foreignOrganizationId]);
     await sql.end();
     delete process.env.ENABLE_INITIATIVES_WORKLOAD;
+    delete process.env.RUN_DB_TESTS;
+    delete process.env.MOCK_DB;
   });
 
   it('rejects an unauthenticated read and returns only the selected canonical project/status', async () => {
     const path = `/api/execution-control/capacity/initiative-workload?weeks=1&projectId=${projectId}&initiativeStatuses=PENDING_APPROVAL`;
-    expect((await request(app).get(path)).status).toBe(403);
+    expect((await request(app).get(path)).status).toBe(401);
 
     const response = await request(app).get(path).set('Authorization', authorization);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
-    expect(response.body.people).toHaveLength(1);
-    expect(response.body.rows).toHaveLength(1);
-    expect(response.body.rows[0]).toMatchObject({
+    expect(response.body.people).toHaveLength(2);
+    expect(response.body.rows).toHaveLength(2);
+    expect(response.body.rows.find((row: { userId: string }) => row.userId === userId)).toMatchObject({
       userId,
       demandHours: 30,
       supplyHours: 20,
       utilizationPercent: 150,
     });
+    expect(
+      response.body.rows.find((row: { userId: string }) => row.userId === availableUserId)
+    ).toMatchObject({ userId: availableUserId, demandHours: 0, utilizationPercent: 0 });
     expect(response.body.summary.overloadedCount).toBe(1);
 
     process.env.ENABLE_INITIATIVES_WORKLOAD = 'false';
