@@ -1,0 +1,93 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914
+
+ ✓ src/components/assessment/report/__tests__/reportCoverageGate.pawel.test.ts > bramkaPokryciaRaportu > brak pomiaru NIE tworzy blokady 86ms
+ ✓ src/components/assessment/report/__tests__/reportCoverageGate.pawel.test.ts > bramkaPokryciaRaportu > P-P12: sesja Pawła jest zablokowana i wskazuje osie z największymi brakami 2ms
+ ✓ src/components/assessment/report/__tests__/reportCoverageGate.pawel.test.ts > bramkaPokryciaRaportu > pokrycie wystarczające nie blokuje i nie wymienia osi 0ms
+ ✓ src/components/assessment/report/__tests__/reportCoverageGate.pawel.test.ts (3 tests) 91ms
+ ✓ src/components/assessment/report/__tests__/AssessmentReportView.test.tsx > AssessmentReportView > shows the honest "not frozen yet" state and performs ZERO fetches when outputId is null 80ms
+stderr | src/components/assessment/report/__tests__/AssessmentReportView.test.tsx > AssessmentReportView > shows "forbidden" on a 403
+[AssessmentReportView] failed to load report data MethodCoreApiError: forbidden
+    at /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/src/components/assessment/report/__tests__/AssessmentReportView.test.tsx:92:52
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 403,
+  body: {},
+  isNetworkError: false
+}
+
+stderr | src/components/assessment/report/__tests__/AssessmentReportView.test.tsx > AssessmentReportView > shows "forbidden" on a 403
+[AssessmentReportView] failed to load report data MethodCoreApiError: forbidden
+    at /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/src/components/assessment/report/__tests__/AssessmentReportView.test.tsx:92:52
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/codex-deps/20260914/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 403,
+  body: {},
+  isNetworkError: false
+}
+
+ ✓ src/components/assessment/report/__tests__/AssessmentReportView.test.tsx > AssessmentReportView > renders the document once the Output, session and approvals resolve 78ms
+ ✓ src/components/assessment/report/__tests__/AssessmentReportView.test.tsx > AssessmentReportView > shows "not found" when the Output fetch resolves null (404) 5ms
+ ✓ src/components/assessment/report/__tests__/AssessmentReportView.test.tsx > AssessmentReportView > shows "forbidden" on a 403 8ms
+ ✓ src/components/assessment/report/__tests__/AssessmentReportView.test.tsx (4 tests) 174ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx > AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON) > defaults to the Library tab and canonicalizes ?tab= on mount 44ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > shows a canonical Method Core DRD session and opens its canonical editor route 88ms
+ ✓ tests/components/assessment/AssessmentHub.processes-completion.test.tsx > AssessmentHub — Processes list reads server-derived completion (Codex fix #4, frontend half) > renders canonical DRD from Method Core and ignores a conflicting legacy completion row 88ms
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails
+[AssessmentHub] Core assessment load warning: Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails
+[AssessmentHub] Core assessment load warning: Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.
+
+ ✓ tests/components/assessment/AssessmentHub.processes-completion.test.tsx > AssessmentHub — Processes list reads server-derived completion (Codex fix #4, frontend half) > falls back to the raw snake_case completion_percent when camelCase is absent (non-DRD / DRD-without-areas-yet row shape) 31ms
+ ✓ tests/components/assessment/AssessmentHub.processes-completion.test.tsx > AssessmentHub — Processes list reads server-derived completion (Codex fix #4, frontend half) > regression guard: a legacy DRD row without completion never masquerades as canonical 33ms
+ ✓ tests/components/assessment/AssessmentHub.processes-completion.test.tsx (3 tests) 153ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps non-DRD legacy rows but never lets a legacy DRD id masquerade as canonical 29ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails 41ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > D-01: canonical DRD borrows name, score and confidence from its legacy twin (same projectId) 31ms
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD
+[AssessmentHub] Core assessment load warning: DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD
+[AssessmentHub] Core assessment load warning: DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.
+
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > D-01: keeps the id-based fallback label when no legacy twin shares the project 26ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD 14ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx (6 tests) 231ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx > AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON) > ?tab=processes opens the former "list" content (same table, same data) 164ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx > AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON) > legacy ?tab=list is compat-mapped to processes 38ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx > AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON) > clicking a tab updates the URL (?tab=) 84ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx > AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON) > a fresh mount with ?tab=reports starts on the Reports tab (refresh/back-forward) 35ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx > AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON) > renders all 5 tabs: Library, Processes, Insights, Reports, Initiatives 20ms
+ ✓ tests/components/assessment/AssessmentHub.five-surfaces.test.tsx (6 tests) 387ms
+
+ Test Files  5 passed (5)
+      Tests  22 passed (22)
+   Start at  15:13:26
+   Duration  3.41s (transform 5.02s, setup 907ms, import 7.98s, tests 1.04s, environment 3.19s)
+
+
+ Test Files  5 passed (5)
+      Tests  22 passed (22)
+   Start at  15:13:26
+   Duration  3.41s (transform 5.02s, setup 907ms, import 7.98s, tests 1.04s, environment 3.19s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/junit.xml

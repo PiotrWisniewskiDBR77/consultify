@@ -1,0 +1,236 @@
+{
+  "timestamp": "2026-09-14T20:14:40.450Z",
+  "baseSha": "4de31efbcb0c286cdcbdb0251b10a894db02848d",
+  "registration": {
+    "status": 200,
+    "email": "a-d2-pt19-mu1olumtfzh7@example.com",
+    "company": "A D2 P-T19 mu1olumtfzh7",
+    "organizationId": "4bd098bd-95b0-4495-90fe-c933cdf4c859",
+    "tokenIssued": true
+  },
+  "redirectPath": "/chat",
+  "v8Result": {
+    "status": 200,
+    "code": null,
+    "sessionCount": 0
+  },
+  "assessmentUi": {
+    "path": "/assessment",
+    "tabs": [
+      "Library",
+      "Processes",
+      "Insights",
+      "Reports",
+      "Initiatives"
+    ],
+    "hasV8Unavailable": false,
+    "bodyExcerpt": "LOCAL ? Help Center Feedback Documents 77 Skip to main content Assessment Data Model Pilot P-T19 PP Library Processes Insights Reports Initiatives METHODOLOGY AREA STATUS ACTIONS Advanced Digital Maturity Assessment ADMA Digital manufacturing Planned Start Capability Maturity Model Integration CMMI Process capability Planned Start Digital Readiness Diagnosis DRD Digital transformation Method core Start Lean 4.0 LEAN Lean and automation Planned Start Smart Industry Readiness Index SIRI Smart manu"
+  },
+  "apiResponses": [
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/assessment.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/my-work.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/client.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/index.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/admin.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/ai-core.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/chat.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/execution-control.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/planning.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/finance.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/kb.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/interview.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/multiplayer.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/partner.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/prompt-os.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/retrieval.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/results.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/sync.ts",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/admin/flags",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/assessment.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/my-work.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/client.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/index.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/admin.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/ai-core.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/chat.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/execution-control.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/finance.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/interview.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/kb.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/multiplayer.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/partner.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/planning.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/prompt-os.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/retrieval.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/sync.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/src/services/api/v8/results.ts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/admin/flags",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/assessment",
+      "status": 200
+    }
+  ]
+}

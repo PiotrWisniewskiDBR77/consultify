@@ -1,0 +1,67 @@
+P-T13 source measurements
+--- context bridge
+733:  workspaceContext?: WorkspaceContext | null;
+801:  workspaceContext: workspaceContextProp,
+901:  // tego miejsca w dół `workspaceContext` znaczy „kontekst efektywny" —
+908:  const workspaceContext = useMemo(
+910:      resolveTeresaWorkspaceContext(workspaceContextProp, teresaEntityContext, {
+914:    [workspaceContextProp, teresaEntityContext, activeConversationId, route.pathname]
+921:    projectId: workspaceContext?.projectId || undefined,
+923:      workspaceContext?.type === 'initiative' ? workspaceContext.entityId || undefined : undefined,
+2146:        projectId: (workspaceContext as any)?.projectId || undefined,
+2830:    const workspaceId = isUuidLike(workspaceContext?.entityId)
+2831:      ? workspaceContext.entityId
+2832:      : isUuidLike(workspaceContext?.projectId)
+2833:        ? workspaceContext.projectId
+2838:    const projectId = isUuidLike(workspaceContext?.projectId) ? workspaceContext.projectId : null;
+2855:    workspaceContext?.entityId,
+2856:    workspaceContext?.projectId,
+2873:    if (workspaceContext?.type === 'initiative') {
+2881:          entityId: workspaceContext.entityId ?? undefined,
+2886:    if (workspaceContext?.type === 'insight' || workspaceContext?.type === 'interview') {
+2933:    const projectId = workspaceContext?.projectId || undefined;
+2934:    const entityData = (workspaceContext as any)?.entityData || {};
+2978:            params: { kpiId, initiativeId: workspaceContext?.entityId || undefined },
+3000:    workspaceContext,
+3704:              const wsCtx = workspaceContext as
+4906:        typeof workspaceContext?.entityId === 'string' ? workspaceContext.entityId : '';
+4923:              ideaContext: { ideaId: teresaIdeaId, tool: teresaIdeaTool },
+4933:        projectId: workspaceContext?.projectId || null,
+4934:        screenContext: {
+4935:          screenId: workspaceContext?.view || workspaceContext?.type || null,
+4936:          currentScreen: workspaceContext?.type || null,
+4937:          selectedObjectId: workspaceContext?.entityId || null,
+4938:          selectedObjectType: workspaceContext?.type || null,
+4940:          page: (workspaceContext as any)?.entityData || null,
+4942:        workspaceContext,
+5197:      workspaceContext,
+5980:          screenContext: workspaceContext?.type,
+5983:          capability: workspaceContext?.type || 'chat',
+6000:    [displayMessages, workspaceContext, activeConversationId]
+6250:        workspaceContext,
+6252:        projectId: workspaceContext?.projectId || null,
+6253:        screenContext: {
+6254:          screenId: workspaceContext?.view || workspaceContext?.type || null,
+6255:          currentScreen: workspaceContext?.type || null,
+6256:          selectedObjectId: workspaceContext?.entityId || null,
+6257:          selectedObjectType: workspaceContext?.type || null,
+6259:          page: (workspaceContext as any)?.entityData || null,
+6375:    workspaceContext,
+7186:              workspaceContext={workspaceContext}
+7727:                  workspaceContext &&
+7728:                  workspaceContext.type !== 'empty' &&
+7729:                  workspaceContext.entityName
+7732:                        context: workspaceContext.entityName,
+7816:          projectId={workspaceContext?.projectId || null}
+7824:            (workspaceContext?.entityData?.tableContext as { baseId?: string } | undefined)
+7826:            workspaceContext?.entityId ||
+7832:            workspaceName: workspaceContext?.entityName || workspaceContext?.projectName,
+7833:            moduleName: workspaceContext?.type || undefined,
+--- prompt instruction
+2025:      '## ASSISTANT SURFACE: workspace_copilot',
+2037:     * ★ Z4 — OTWARTA REPREZENTACJA IDEI (naprawa 2026-07-24).
+2055:    const IDEA_TOOL_NAMES: Record<string, { pl: string; en: string }> = {
+2063:      ideaCtx && ideaToolKey && IDEA_TOOL_NAMES[ideaToolKey]
+2065:            '## OTWARTA REPREZENTACJA IDEI',
+2066:            `Użytkownik ma OTWARTĄ reprezentację: ${IDEA_TOOL_NAMES[ideaToolKey][isPolish ? 'pl' : 'en']} (\`${ideaToolKey}\`)${
+--- route registry references in AI services
