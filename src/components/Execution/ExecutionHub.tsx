@@ -920,6 +920,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
    * ───────────────────────────────────────────────────────────────────────
    */
   const executionRiskSignalEnabled = isExecutionFlagEnabled('execRiskSignal');
+  const executionHandoffTraceEnabled = isExecutionFlagEnabled('execHandoffTrace');
   const [executionRiskSignals, setExecutionRiskSignals] = useState<ReadonlyMap<
     string,
     ExecutionRiskSignal
@@ -5781,6 +5782,7 @@ Please return:
             resolveOwnerName,
             relations: sourceRelations,
             riskSignal: executionRiskSignals?.get(selectedBankRow.initiativeId) ?? null,
+            showHandoffTrace: executionHandoffTraceEnabled,
           })
         : null;
 
@@ -5912,6 +5914,7 @@ Please return:
                 rows={executionBankRows}
                 resolveOwnerName={resolveOwnerName}
                 riskSignals={executionRiskSignals ?? undefined}
+                showHandoffTrace={executionHandoffTraceEnabled}
                 view={bankView}
                 selected={
                   selectedBankRow

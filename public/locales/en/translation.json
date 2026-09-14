@@ -15025,10 +15025,13 @@
       },
       "handoff": {
         "accepted": "Handed over {{date}}",
-        "linkedNoDate": "Handed over (date unknown)",
+        "linkedNoDate": "Handed over — acceptance date unknown",
         "absent": "No handoff",
         "missingInExecution": "In execution without handoff",
-        "missingInExecutionHint": "The initiative reports an execution status, but no accepted handoff package backs it."
+        "missingInExecutionHint": "The initiative reports an execution status, but no accepted handoff package backs it.",
+        "missingShort": "Missing",
+        "linkedNoDateShort": "Date unknown",
+        "absentHint": "No handoff package has been accepted yet"
       }
     },
     "review": {
@@ -16903,7 +16906,8 @@
       },
       "axisSentence": "{{axis}}: {{verdict}} (index {{ratio}})",
       "axisSentenceUnknown": "{{axis}}: not measured — no baseline data",
-      "noSignal": "Risk axes have not been computed for this row"
+      "noSignal": "Risk axes have not been computed for this row",
+      "coverage": "{{measured}}/3"
     }
   },
   "benefits": {

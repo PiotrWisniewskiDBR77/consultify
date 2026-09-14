@@ -77,6 +77,8 @@ export interface ExecutionBankPreviewDeps {
    * wierszy ryzyka w tabeli faktów NIE MA (parytet z linią przy OFF).
    */
   riskSignal?: ExecutionRiskSignal | null;
+  /** H2 — patrz `showHandoffTrace` w `ExecutionBankViewsProps`. */
+  showHandoffTrace?: boolean;
 }
 
 export type ExecutionBankPreviewDeclaration = Pick<
@@ -130,6 +132,7 @@ export function buildExecutionBankPreviewDeclaration({
   resolveOwnerName,
   relations,
   riskSignal,
+  showHandoffTrace,
 }: ExecutionBankPreviewDeps): ExecutionBankPreviewDeclaration {
   const nextStep = resolveExecutionBankNextStep(row, t);
   const summary = buildExecutionBankSummary(row, t, {
@@ -226,23 +229,29 @@ export function buildExecutionBankPreviewDeclaration({
             ? `Linked · v${row.executionCaseVersion ?? '—'}`
             : t('execution.bank.preview.fact.caseMissing', 'Not linked yet'),
         },
-        {
-          /*
-           * H2 — przekazanie jako FAKT podglądu, nie tylko plakietka w tabeli.
-           * Stoi zaraz pod realizacją, bo odpowiada na to samo pytanie:
-           * skąd ten byt wziął się w Realizacji. Ta sama plakietka co w
-           * wierszu (jeden przekład stanu, nie dwa).
-           */
-          id: 'handoff',
-          label: t('execution.bank.preview.fact.handoff', 'Handoff'),
-          value: (
-            <ExecutionHandoffBadge
-              handoff={row.handoff}
-              formatDate={formatExecutionBankDate}
-              t={t}
-            />
-          ),
-        },
+        ...(showHandoffTrace
+          ? [
+              {
+                /*
+                 * H2 — przekazanie jako FAKT podglądu, nie tylko plakietka w
+                 * tabeli. Stoi zaraz pod realizacją, bo odpowiada na to samo
+                 * pytanie: skąd ten byt wziął się w Realizacji. Ta sama
+                 * plakietka co w wierszu (jeden przekład stanu, nie dwa).
+                 */
+                id: 'handoff',
+                label: t('execution.bank.preview.fact.handoff', 'Handoff'),
+                value: (
+                  <span className="flex justify-end">
+                    <ExecutionHandoffBadge
+                      handoff={row.handoff}
+                      formatDate={formatExecutionBankDate}
+                      t={t}
+                    />
+                  </span>
+                ),
+              },
+            ]
+          : []),
         {
           id: 'owner',
           label: t('execution.bank.preview.fact.owner', 'Owner'),
@@ -311,7 +320,14 @@ export function buildExecutionBankPreviewDeclaration({
           ? riskSignal.axes.map((axis) => ({
               id: `risk-${axis.id}`,
               label: executionRiskAxisLabel(axis.id, t),
-              value: <ExecutionRiskAxisPill axis={axis} t={t} />,
+              // Opakowanie, bo pastylka jest `flex` (musi się kurczyć w wąskiej
+              // komórce tabeli) — w tabeli faktów bez tego rozciągałaby się na
+              // całą szerokość kolumny wartości i czytała jak pasek, nie chip.
+              value: (
+                <span className="flex justify-end">
+                  <ExecutionRiskAxisPill axis={axis} t={t} />
+                </span>
+              ),
             }))
           : []),
       ],

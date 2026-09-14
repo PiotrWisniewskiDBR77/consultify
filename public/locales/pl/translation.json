@@ -14200,10 +14200,13 @@
       },
       "handoff": {
         "accepted": "Przekazana {{date}}",
-        "linkedNoDate": "Przekazana (data nieznana)",
+        "linkedNoDate": "Przekazana — data przyjęcia nieznana",
         "absent": "Bez przekazania",
         "missingInExecution": "W toku bez przekazania",
-        "missingInExecutionHint": "Inicjatywa ma status wykonawczy, ale nie stoi za nim przyjęta paczka przekazania."
+        "missingInExecutionHint": "Inicjatywa ma status wykonawczy, ale nie stoi za nim przyjęta paczka przekazania.",
+        "missingShort": "Brak",
+        "linkedNoDateShort": "Data nieznana",
+        "absentHint": "Nie przyjęto jeszcze żadnej paczki przekazania"
       }
     },
     "review": {
@@ -16080,7 +16083,8 @@
       },
       "axisSentence": "{{axis}}: {{verdict}} (wskaźnik {{ratio}})",
       "axisSentenceUnknown": "{{axis}}: nie zmierzono — brak danych bazowych",
-      "noSignal": "Osie ryzyka nie zostały policzone dla tego wiersza"
+      "noSignal": "Osie ryzyka nie zostały policzone dla tego wiersza",
+      "coverage": "{{measured}}/3"
     }
   },
   "benefits": {

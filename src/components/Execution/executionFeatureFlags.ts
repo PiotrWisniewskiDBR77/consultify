@@ -65,6 +65,17 @@ const FLAGS = {
     localStorage: 'ff.exec_risk_signal',
     env: 'VITE_EXEC_RISK_SIGNAL',
   },
+  // H2 (DEC-453 pkt b, FALA B 14.09) — kolumna „Handoff" w banku + fakt
+  // przekazania w podglądzie. Sama LOGIKA (`ExecutionBankRow.handoff`,
+  // sanitizer) jest bezwarunkowa — flaga zasłania wyłącznie WYGLĄD, bo
+  // reguła #9 zabrania wpuszczania na żywo ekranu, którego właściciel nie
+  // zaakceptował na czystym zrzucie. Default OFF ⇒ przy OFF tabela ma
+  // DOKŁADNIE te kolumny co linia.
+  execHandoffTrace: {
+    query: 'ff_execHandoffTrace',
+    localStorage: 'ff.exec_handoff_trace',
+    env: 'VITE_EXEC_HANDOFF_TRACE',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -140,7 +151,12 @@ export function isExecutionFlagEnabled(
   // B-E0: `execRiskSignal` stoi w tej samej linii obrony. WAŻNE — ten `return`
   // jest PO odczycie query/localStorage/env, więc `?ff_execRiskSignal=1`
   // (i zrzut odbiorowy) dalej działa; wyłączony jest tylko DOMYŚLNY stan.
-  if (flag === 'execReportsIntelligence' || flag === 'execRiskSignal') return false;
+  if (
+    flag === 'execReportsIntelligence' ||
+    flag === 'execRiskSignal' ||
+    flag === 'execHandoffTrace'
+  )
+    return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).

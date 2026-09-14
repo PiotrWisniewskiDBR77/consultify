@@ -39,7 +39,17 @@ import type {
   ExecutionRiskSignal,
 } from './executionRiskSignal';
 
-type RiskT = (key: string, defaultValue: string, vars?: Record<string, unknown>) => string;
+/**
+ * Ten sam kształt co `ExecutionBankPreviewT` i `BankT` — `Record<string,
+ * string | number>`, nie `unknown`. i18next i tak przyjmie więcej, ale
+ * rozjazd typu zmuszałby każdego wołacza do rzutowania, a rzutowanie jest
+ * miejscem, w którym ginie prawdziwy błąd.
+ */
+type RiskT = (
+  key: string,
+  defaultValue: string,
+  vars?: Record<string, string | number>
+) => string;
 
 const TONE_BY_LEVEL: Record<string, string> = {
   '0': 'border-c-success/30 bg-c-success/10 text-c-success',
@@ -114,7 +124,7 @@ export const ExecutionRiskAxisPill: React.FC<{ axis: ExecutionRiskAxis; t: RiskT
     <span
       data-testid={`execution-risk-axis-${axis.id}`}
       data-risk-level={String(axis.level)}
-      className={`inline-flex min-w-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] font-semibold ${executionRiskToneClass(axis.level)}`}
+      className={`flex min-w-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-1.5 py-0.5 text-[11px] font-semibold ${executionRiskToneClass(axis.level)}`}
       title={sentence}
       aria-label={sentence}
     >
@@ -125,9 +135,27 @@ export const ExecutionRiskAxisPill: React.FC<{ axis: ExecutionRiskAxis; t: RiskT
 };
 
 /**
- * Trzy pastylki w komórce tabeli. Brak sygnału (flaga ON, ale raport nie zna
- * tej inicjatywy) to MYŚLNIK z powodem w podpowiedzi — kanon C7, nie pusta
- * komórka i nie udawana zieleń.
+ * KOMÓRKA „RISK" = JEDNA PASTYLKA AGREGATU, nie trzy osie.
+ *
+ * POMIAR (harness `fala-b-bank-realizacji`, 1600 px, dwa zrzuty 14.09):
+ *  · próba 1 — trzy pastylki `flex-wrap`: łamały się na trzy linie i wychodziły
+ *    poza komórkę na sąsiednią kolumnę,
+ *  · próba 2 — siatka 3 × 1 z `width: 300px`: tabela Banku ma PIĘTNAŚCIE kolumn
+ *    i jest szersza niż obszar, więc każda kolumna wtórna siada na PODŁODZE
+ *    swojego `dataType` (`status` = 130 px) — deklarowane 300 px nie ma
+ *    znaczenia (ta sama mechanika, którą opisuje nota szerokości w
+ *    `ExecutionBankViews`). Efekt: z każdej pastylki zostawała SAMA IKONA,
+ *    czyli DEC-487 („zawsze kolor + tekst + ikona") byłby spełniony wyłącznie
+ *    na papierze.
+ *
+ * DECYZJA: w wierszu stoi agregat (najgorsza ze zmierzonych osi) — kolor +
+ * TEKST + ikona mieszczą się w 130 px tak samo jak chip „In execution" obok.
+ * Trzy osie osobno żyją w PODGLĄDZIE, gdzie jest na nie miejsce. To ta sama
+ * decyzja, którą K5-4 podjęło dla postępu i zdrowia: wiersz niesie stan,
+ * podgląd niesie rozbiór.
+ *
+ * Gdy nie wszystkie osie dało się zmierzyć, pastylka mówi to wprost („2/3"),
+ * zamiast udawać pełny pomiar.
  */
 export const ExecutionRiskCell: React.FC<{ signal: ExecutionRiskSignal | null; t: RiskT }> = ({
   signal,
@@ -141,11 +169,27 @@ export const ExecutionRiskCell: React.FC<{ signal: ExecutionRiskSignal | null; t
       </span>
     );
   }
+  const Icon = ICONS[signal.worstIconId];
+  // Podpowiedź niesie PEŁNY rozbiór — nic nie ginie przez agregację.
+  const sentence = signal.axes.map((axis) => executionRiskAxisSentence(axis, t)).join(' · ');
+  const coverage =
+    signal.measuredAxes < 3
+      ? t('execution.risk.coverage', '{{measured}}/3', { measured: signal.measuredAxes })
+      : null;
   return (
-    <span className="flex min-w-0 flex-wrap items-center gap-1">
-      {signal.axes.map((axis) => (
-        <ExecutionRiskAxisPill key={axis.id} axis={axis} t={t} />
-      ))}
+    <span
+      data-testid="execution-risk-aggregate"
+      data-risk-level={String(signal.worst)}
+      data-risk-measured={String(signal.measuredAxes)}
+      className={`flex min-w-0 items-center gap-0.5 overflow-hidden rounded-full border px-1.5 py-0.5 text-[11px] font-semibold ${executionRiskToneClass(signal.worst)}`}
+      title={sentence}
+      aria-label={sentence}
+    >
+      <Icon size={12} className="shrink-0" />
+      <span className="truncate">{executionRiskLevelLabel(signal.worst, t)}</span>
+      {coverage ? (
+        <span className="shrink-0 text-[10px] font-normal opacity-80">{coverage}</span>
+      ) : null}
     </span>
   );
 };
@@ -165,15 +209,24 @@ export const ExecutionHandoffBadge: React.FC<{
   t: RiskT;
 }> = ({ handoff, formatDate, t }) => {
   if (handoff.status === 'ACCEPTED' && handoff.acceptedAt) {
-    const label = t('execution.bank.handoff.accepted', 'Handed over {{date}}', {
+    /*
+     * K5-R3 w tej kolumnie: nagłówek mówi już „Handoff", więc komórka niesie
+     * SAMĄ DATĘ, a pełne zdanie („Handed over 2 Apr 2026") idzie w podpowiedź.
+     * Powód zmierzony: przy podłodze 130 px (kolumna wtórna siada na podłogę
+     * typu `status`) zdanie ucinało się na „Handed over…", czyli komórka
+     * gubiła JEDYNĄ niosącą informację — datę.
+     */
+    const sentence = t('execution.bank.handoff.accepted', 'Handed over {{date}}', {
       date: formatDate(handoff.acceptedAt),
     });
+    const label = formatDate(handoff.acceptedAt);
     return (
       <span
         data-testid="execution-bank-handoff"
         data-handoff-status="ACCEPTED"
-        className="inline-flex min-w-0 items-center gap-1 text-xs text-c-text-secondary"
-        title={label}
+        className="flex min-w-0 items-center gap-1 overflow-hidden text-xs text-c-text-secondary"
+        title={sentence}
+        aria-label={sentence}
       >
         <Handshake size={12} className="shrink-0" />
         <span className="truncate">{label}</span>
@@ -181,7 +234,8 @@ export const ExecutionHandoffBadge: React.FC<{
     );
   }
   if (handoff.missingForInExecution) {
-    const label = t('execution.bank.handoff.missingInExecution', 'In execution without handoff');
+    // Krótkie słowo w komórce, całe zdanie w podpowiedzi — jak wyżej.
+    const label = t('execution.bank.handoff.missingShort', 'Missing');
     const hint = t(
       'execution.bank.handoff.missingInExecutionHint',
       'The initiative reports an execution status, but no accepted handoff package backs it.'
@@ -190,7 +244,7 @@ export const ExecutionHandoffBadge: React.FC<{
       <span
         data-testid="execution-bank-handoff"
         data-handoff-status="MISSING"
-        className="inline-flex min-w-0 items-center gap-1 rounded-full border border-c-warning/40 bg-c-warning/10 px-1.5 py-0.5 text-[11px] font-semibold text-c-warning"
+        className="flex min-w-0 items-center gap-1 overflow-hidden rounded-full border border-c-warning/40 bg-c-warning/10 px-1.5 py-0.5 text-[11px] font-semibold text-c-warning"
         title={hint}
         aria-label={hint}
       >
@@ -201,14 +255,19 @@ export const ExecutionHandoffBadge: React.FC<{
   }
   const label =
     handoff.status === 'LINKED_WITHOUT_DATE'
-      ? t('execution.bank.handoff.linkedNoDate', 'Handed over (date unknown)')
+      ? t('execution.bank.handoff.linkedNoDateShort', 'Date unknown')
       : t('execution.bank.handoff.absent', 'No handoff');
+  const hint =
+    handoff.status === 'LINKED_WITHOUT_DATE'
+      ? t('execution.bank.handoff.linkedNoDate', 'Handed over — acceptance date unknown')
+      : t('execution.bank.handoff.absentHint', 'No handoff package has been accepted yet');
   return (
     <span
       data-testid="execution-bank-handoff"
       data-handoff-status={handoff.status}
-      className="inline-flex min-w-0 items-center gap-1 text-xs text-c-text-muted"
-      title={label}
+      className="flex min-w-0 items-center gap-1 overflow-hidden text-xs text-c-text-muted"
+      title={hint}
+      aria-label={hint}
     >
       <Handshake size={12} className="shrink-0" />
       <span className="truncate">{label}</span>
