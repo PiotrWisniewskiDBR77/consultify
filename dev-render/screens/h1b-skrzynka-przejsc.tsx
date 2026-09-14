@@ -16,6 +16,16 @@
  *   &case=empty                    — pusty stan skrzynki („nic do zatwierdzenia")
  *   &case=off                      — PARYTET: flaga `VITE_TRANSITION_INBOX`
  *                                    wyłączona, czyli ekranu nie ma wcale
+ *   &case=po-akcepcie              — H1c: stan PO zatwierdzeniu i wykonaniu
+ *                                    przejścia „Warehouse automation pilot"
+ *
+ * H1c (DEC-506) — skąd wariant `po-akcepcie`: skrzynka czyta
+ * `listTransitionProposals('pending')`, więc propozycja, która została
+ * zatwierdzona I WYKONANA, przestaje być `pending` i wypada z listy. Do H1b
+ * ten stan był nieosiągalny — wykonanie kończyło się 409 `UNKNOWN_TARGET_STATUS`
+ * (rozjazd słowników), więc wiersz zostawał w skrzynce na zawsze. Ten wariant
+ * pokazuje stan, który dopiero teraz jest prawdziwy: po przejściu zostaje
+ * wyłącznie to, co nadal czeka na decyzję.
  */
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -84,12 +94,18 @@ const H1bSkrzynkaPrzejscScreen: React.FC = () => {
     );
   }
 
+  /* H1c: po zatwierdzeniu i wykonaniu przejścia dla „Warehouse automation
+     pilot" (cel EXECUTING) jego propozycja nie jest już `pending` — w skrzynce
+     zostaje tylko wiersz, który nadal czeka na decyzję. */
+  const rows =
+    variant === 'empty' ? [] : variant === 'po-akcepcie' ? [ROWS[0]] : ROWS;
+
   /* `TableWithPreviewLayout` czyta adres (`useJedenPanel` → `useLocation`),
      więc potrzebuje routera — w aplikacji daje go powłoka. */
   return (
     <MemoryRouter initialEntries={['/initiatives?tab=transitionInbox']}>
       <div className="h-screen bg-c-surface p-4">
-        <TransitionInboxSurface proposalsOverride={variant === 'empty' ? [] : ROWS} />
+        <TransitionInboxSurface proposalsOverride={rows} />
       </div>
     </MemoryRouter>
   );

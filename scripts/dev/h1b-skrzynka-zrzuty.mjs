@@ -27,6 +27,11 @@ const SHOTS = [
   ['05-pusta-jasny', 'empty', 'light', 0],
   ['06-off-jasny', 'off', 'light', 0],
   ['07-off-ciemny', 'off', 'dark', 0],
+  // H1c (DEC-506): stan PO zatwierdzeniu i wykonaniu przejścia — wiersz
+  // wypada z „pending". Do H1b ten zrzut był niemożliwy do zrobienia
+  // uczciwie, bo wykonanie kończyło się 409 i nic nie wypadało.
+  ['08-po-akcepcie-jasny', 'po-akcepcie', 'light', 1],
+  ['09-po-akcepcie-ciemny', 'po-akcepcie', 'dark', 1],
 ];
 
 mkdirSync(OUT, { recursive: true });
@@ -56,6 +61,10 @@ for (const [name, variant, theme, expectRows, openPreview] of SHOTS) {
   const rows = await page.evaluate(() => document.querySelectorAll('table tbody tr').length);
   if (expectRows > 0 && rows < expectRows)
     errors.push(`${name}: oczekiwano >=${expectRows} wierszy, jest ${rows}`);
+  // H1c: „po akcepcie" ma pokazać UBYTEK wiersza, nie tę samą listę — gdyby
+  // wierszy było tyle co przed, zrzut kłamałby o tym, że coś się wydarzyło.
+  if (variant === 'po-akcepcie' && rows !== 1)
+    errors.push(`${name}: po akcepcie ma zostac DOKLADNIE 1 wiersz, jest ${rows}`);
   const bg = await page.evaluate(() =>
     getComputedStyle(document.body).backgroundColor || getComputedStyle(document.documentElement).backgroundColor
   );
