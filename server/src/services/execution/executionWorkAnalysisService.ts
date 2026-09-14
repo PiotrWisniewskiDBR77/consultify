@@ -24,6 +24,19 @@ export interface ExecutionWorkAnalysisGeneration {
   payload: Record<string, unknown>;
 }
 
+function persistedGeneration(row: any): ExecutionWorkAnalysisGeneration {
+  return {
+    id: String(row.id),
+    created: false,
+    period: {
+      start: new Date(row.periodStart).toISOString(),
+      end: new Date(row.periodEnd).toISOString(),
+    },
+    asOf: new Date(row.asOf).toISOString(),
+    payload: typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload,
+  };
+}
+
 function mondayUtc(input: Date): Date {
   const date = new Date(input);
   date.setUTCHours(0, 0, 0, 0);
@@ -81,13 +94,7 @@ export async function generateExecutionWorkAnalysis(args: {
     [id, args.organizationId]
   )) as any;
   if (existing) {
-    return {
-      id: String(existing.id),
-      created: false,
-      period: { start: new Date(existing.periodStart).toISOString(), end: new Date(existing.periodEnd).toISOString() },
-      asOf: new Date(existing.asOf).toISOString(),
-      payload: typeof existing.payload === 'string' ? JSON.parse(existing.payload) : existing.payload,
-    };
+    return persistedGeneration(existing);
   }
 
   const rows = (await dbAll(
@@ -185,22 +192,26 @@ export async function generateExecutionWorkAnalysis(args: {
     ],
   };
 
-  await dbRun(
+  const insert = await dbRun(
     `INSERT INTO execution_report_snapshots
        (id, organization_id, definition_key, level, title, period_start, period_end, as_of,
         status, rag, payload, created_by, created_by_name)
      VALUES (?, ?, 'weekly-exec', 'PMO', ?, ?, ?, ?, 'DRAFT', ?, ?::jsonb, ?, ?)
      ON CONFLICT (id) DO NOTHING`,
-    [id, args.organizationId, payload.title, startIso, endIso, payload.asOf, payload.rag, JSON.stringify(payload), args.actorId ?? null, args.actorName ?? 'Consultify scheduler']
+    [id, args.organizationId, payload.title, startIso, endIso, payload.asOf, payload.rag, JSON.stringify(payload), args.actorId ?? null, args.actorName ?? 'Consultify scheduler'],
+    { fallback: false }
   );
   // DbPromise retains compatibility with legacy call sites by logging some
   // database failures. This generator must prove durability before reporting
   // success, because its receipt is later used as the weekly cadence record.
-  const persisted = await dbGet(
-    `SELECT id FROM execution_report_snapshots WHERE id = ? AND organization_id = ?`,
+  const persisted = (await dbGet(
+    `SELECT id, period_start AS "periodStart", period_end AS "periodEnd", as_of AS "asOf", payload
+       FROM execution_report_snapshots
+      WHERE id = ? AND organization_id = ?`,
     [id, args.organizationId]
-  );
+  )) as any;
   if (!persisted) throw new Error(`Execution work analysis ${id} was not persisted`);
+  if (insert.changes !== 1) return persistedGeneration(persisted);
   return { id, created: true, period: payload.period, asOf: payload.asOf, payload };
 }
 
