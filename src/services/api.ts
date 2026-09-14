@@ -3653,6 +3653,34 @@ export const Api = {
     return handleResponse(res, 'Failed to update project communication settings');
   },
 
+  getProjectCurrentStageGate: async (projectId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/stage-gates/${projectId}/current`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch the current project stage gate');
+  },
+
+  getProjectStageGateHistory: async (projectId: string): Promise<any[]> => {
+    const res = await fetchWithRetry(`${API_URL}/stage-gates/${projectId}/history`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(res, 'Failed to fetch project stage-gate history');
+    return Array.isArray(data) ? data : [];
+  },
+
+  passProjectStageGate: async (
+    projectId: string,
+    gateType: string,
+    notes?: string
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/stage-gates/${projectId}/pass/${gateType}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ notes: notes || undefined }),
+    });
+    return handleResponse(res, 'Failed to pass the project stage gate');
+  },
+
   /**
    * Zwornik D3 — assign/unassign a project to a program (`projects.program_id`,
    * migration 916). Backend: `pmo/projects.routes.ts` PUT /:id/program.

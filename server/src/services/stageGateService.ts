@@ -12,7 +12,8 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { AppError } from '../types/index.js';
 import * as DbPromise from '../utils/DbPromise.js';
-import { normalizeApplicationRole } from '../utils/roleNormalization.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
+import { normalizeProjectRole } from '../utils/roleNormalization.js';
 
 // ==========================================
 // TYPES
@@ -203,19 +204,19 @@ async function evaluateCriterion(projectId: string, field: string): Promise<bool
     case 'assessmentComplete':
       return await checkAssessmentComplete(projectId);
     case 'gapAnalysisReviewed':
-      return true; // Placeholder - would check review flag
+      return await checkGapAnalysisReviewed(projectId);
     case 'hasInitiatives':
       return (await countInitiatives(projectId)) > 0;
     case 'allInitiativesOwned':
       return await checkAllInitiativesHaveOwners(projectId);
     case 'prioritiesSet':
-      return true; // Placeholder
+      return await checkInitiativePriorities(projectId);
     case 'roadmapBaselined':
       return await checkRoadmapBaselined(projectId);
     case 'allAssignedToWaves':
       return await checkAllInWaves(projectId);
     case 'noDependencyConflicts':
-      return true; // Placeholder - would check dependency graph
+      return await checkNoDependencyConflicts(projectId);
     case 'allInitiativesClosed':
       return await checkAllInitiativesClosed(projectId);
     case 'noBlockingDecisions':
@@ -280,6 +281,22 @@ async function checkAssessmentComplete(projectId: string): Promise<boolean> {
   }
 }
 
+async function checkGapAnalysisReviewed(projectId: string): Promise<boolean> {
+  try {
+    const row = await DbPromise.get<{ cnt: number }>(
+      db,
+      `SELECT COUNT(*) AS cnt
+         FROM assessment_report_reviews arr
+         JOIN maturity_assessments ma ON ma.id = arr.assessment_id
+        WHERE ma.project_id = ? AND LOWER(arr.status) = 'approved'`,
+      [projectId]
+    );
+    return Number(row?.cnt ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function countInitiatives(projectId: string): Promise<number> {
   try {
     const row = await DbPromise.get<{ cnt: number }>(
@@ -306,14 +323,30 @@ async function checkAllInitiativesHaveOwners(projectId: string): Promise<boolean
   }
 }
 
+async function checkInitiativePriorities(projectId: string): Promise<boolean> {
+  try {
+    const row = await DbPromise.get<{ cnt: number }>(
+      db,
+      `SELECT COUNT(*) AS cnt
+         FROM initiatives
+        WHERE project_id = ?
+          AND (priority IS NULL OR TRIM(priority) = '' OR COALESCE(priority_order, 0) <= 0)`,
+      [projectId]
+    );
+    return row ? Number(row.cnt) === 0 : false;
+  } catch {
+    return false;
+  }
+}
+
 async function checkRoadmapBaselined(projectId: string): Promise<boolean> {
   try {
     const row = await DbPromise.get<{ cnt: number }>(
       db,
-      `SELECT COUNT(*) as cnt FROM roadmap_waves WHERE project_id = ? AND is_baselined = 1`,
+      `SELECT COUNT(*) AS cnt FROM plan_baselines WHERE project_id = ?`,
       [projectId]
     );
-    return row ? row.cnt > 0 : false;
+    return row ? Number(row.cnt) > 0 : false;
   } catch {
     return false;
   }
@@ -323,10 +356,45 @@ async function checkAllInWaves(projectId: string): Promise<boolean> {
   try {
     const row = await DbPromise.get<{ cnt: number }>(
       db,
-      `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND (wave_id IS NULL OR wave_id = '')`,
+      `SELECT COUNT(*) AS cnt
+         FROM initiatives i
+        WHERE i.project_id = ?
+          AND (
+            i.planned_start_date IS NULL OR i.planned_end_date IS NULL OR
+            NOT EXISTS (
+              SELECT 1 FROM roadmap_waves rw
+               WHERE rw.project_id = i.project_id
+                 AND NULLIF(rw.start_date, '')::date <= i.planned_start_date::date
+                 AND NULLIF(rw.end_date, '')::date >= i.planned_end_date::date
+            )
+          )`,
       [projectId]
     );
-    return row ? row.cnt === 0 : false;
+    return row ? Number(row.cnt) === 0 : false;
+  } catch {
+    return false;
+  }
+}
+
+async function checkNoDependencyConflicts(projectId: string): Promise<boolean> {
+  try {
+    const row = await DbPromise.get<{ cnt: number }>(
+      db,
+      `SELECT COUNT(*) AS cnt
+         FROM initiative_dependencies d
+        WHERE d.project_id = ?
+          AND (
+            d.from_initiative_id = d.to_initiative_id OR
+            EXISTS (
+              SELECT 1 FROM initiative_dependencies reverse_dependency
+               WHERE reverse_dependency.project_id = d.project_id
+                 AND reverse_dependency.from_initiative_id = d.to_initiative_id
+                 AND reverse_dependency.to_initiative_id = d.from_initiative_id
+            )
+          )`,
+      [projectId]
+    );
+    return row ? Number(row.cnt) === 0 : false;
   } catch {
     return false;
   }
@@ -358,7 +426,7 @@ async function checkNoBlockingDecisions(projectId: string): Promise<boolean> {
     );
     return row ? row.cnt === 0 : true;
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -380,7 +448,12 @@ async function countKPIs(projectId: string): Promise<number> {
  * transitions (PMO / sponsor / admin band). The pilot-restricted USER/GUEST band
  * is never permitted to record a passage.
  */
-const STAGE_GATE_FORBIDDEN_ROLE_BANDS = new Set(['USER', 'GUEST']);
+const STAGE_GATE_APPROVER_ROLES = new Set([
+  'PROJECT_SPONSOR',
+  'PROJECT_LEADER',
+  'STEERING_COMMITTEE',
+  'PMO',
+]);
 
 export class StageGateForbiddenError extends Error {
   readonly code = 'STAGE_GATE_ROLE_FORBIDDEN';
@@ -394,33 +467,44 @@ export class StageGateForbiddenError extends Error {
 /**
  * Record gate passage.
  *
- * M13 SECURITY: when `actorRole` is provided, a pilot-restricted (USER/GUEST)
- * role is rejected fail-closed before any write. This is defense-in-depth behind
- * the controller's `manage_stage_gates` capability check, so a direct service
- * call cannot bypass governance. `actorRole` is optional to preserve existing
- * callers/tests; omit it only for trusted internal callers.
+ * The actor's project role is read from `project_members` inside the same
+ * transaction as the receipt and phase update. Application-level wildcards do
+ * not grant a stage-gate decision without a project governance role.
  */
 export async function passGate(
   projectId: string,
   gateType: GateType,
   userId: string,
   notes?: string,
-  actorRole?: string | null
-): Promise<GatePassageResult> {
-  if (
-    actorRole != null &&
-    STAGE_GATE_FORBIDDEN_ROLE_BANDS.has(normalizeApplicationRole(actorRole))
-  ) {
-    throw new StageGateForbiddenError();
+  _actorRole?: string | null,
+  governance?: {
+    organizationId: string;
+    decisionId?: string | null;
+    policyId?: string | null;
+    policyVersion?: number | null;
+    quorumId?: string | null;
+    quorumVersion?: number | null;
+    quorumReceiptId?: string | null;
   }
-
+): Promise<GatePassageResult> {
   const id = uuidv4();
   const gateKey = Object.keys(GATE_MAP).find((k) => GATE_MAP[k] === gateType);
   const fromPhase = gateKey?.split('_')[0] as Phase | undefined;
   const toPhase = gateKey?.split('_')[1] as Phase | undefined;
 
-  const sql = `INSERT INTO stage_gates (id, project_id, gate_type, from_phase, to_phase, status, approved_by, approved_at, notes)
-                 VALUES (?, ?, ?, ?, ?, 'PASSED', ?, CURRENT_TIMESTAMP, ?)`;
+  if (!governance?.organizationId) {
+    throw new AppError(
+      500,
+      'Organization context is required to record a project stage gate',
+      'STAGE_GATE_ORGANIZATION_REQUIRED'
+    );
+  }
+
+  const sql = `INSERT INTO stage_gates
+                 (id, organization_id, project_id, gate_type, from_phase, to_phase, status,
+                  decision_id, policy_id, policy_version, quorum_id, quorum_version,
+                  quorum_receipt_id, requested_by, approved_by, approved_at, notes)
+               VALUES (?, ?, ?, ?, ?, ?, 'PASSED', ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`;
 
   // M13 SECURITY (fix/inbox-failopen-stagegates-20260828, commit 2):
   // DbPromise.run() defaults to `fallback: true`, which resolves
@@ -435,37 +519,95 @@ export async function passGate(
   // written and no phase transition happened. `fallback: false` makes this
   // call REJECT on a DB error instead, so it propagates through the
   // controller's asyncHandler to the global error handler as an honest 5xx.
-  let insertResult: DbPromise.RunResult;
   try {
-    insertResult = await DbPromise.run(
-      db,
-      sql,
-      [id, projectId, gateType, fromPhase, toPhase, userId, notes || null],
-      { fallback: false }
-    );
+    await queryHelpers.withPgTransaction(async (client) => {
+      const projectResult = await client.query<{ current_phase?: Phase }>(
+        `SELECT current_phase FROM projects
+          WHERE id = ? AND organization_id = ?
+          FOR UPDATE`,
+        [projectId, governance.organizationId]
+      );
+      const project = projectResult.rows[0];
+      if (!project) {
+        throw new AppError(404, 'Project not found', 'PROJECT_NOT_FOUND');
+      }
+      const currentPhase = project.current_phase || 'Context';
+      if (!fromPhase || !toPhase || currentPhase !== fromPhase) {
+        throw new AppError(
+          409,
+          'Stage gate does not match the current project phase',
+          'STAGE_GATE_PHASE_CONFLICT'
+        );
+      }
+
+      const membershipResult = await client.query<{
+        project_role?: string | null;
+        normalized_project_role?: string | null;
+      }>(
+        `SELECT project_role, normalized_project_role
+           FROM project_members
+          WHERE project_id = ? AND user_id = ?
+          LIMIT 1`,
+        [projectId, userId]
+      );
+      const membership = membershipResult.rows[0];
+      const projectRole = normalizeProjectRole(
+        membership?.normalized_project_role || membership?.project_role
+      );
+      if (!projectRole || !STAGE_GATE_APPROVER_ROLES.has(projectRole)) {
+        throw new StageGateForbiddenError();
+      }
+
+      const evaluation = await evaluateGate(projectId, gateType);
+      if (evaluation.status !== 'READY') {
+        throw new AppError(409, 'Stage gate is not ready', 'STAGE_GATE_NOT_READY');
+      }
+
+      const insertResult = await DbPromise.run(
+        db,
+        sql,
+        [
+          id,
+          governance.organizationId,
+          projectId,
+          gateType,
+          fromPhase,
+          toPhase,
+          governance.decisionId ?? null,
+          governance.policyId ?? null,
+          governance.policyVersion ?? null,
+          governance.quorumId ?? null,
+          governance.quorumVersion ?? null,
+          governance.quorumReceiptId ?? null,
+          userId,
+          userId,
+          notes || null,
+        ],
+        { fallback: false }
+      );
+      if (!insertResult.success) {
+        throw new Error('stage gate insert returned no success');
+      }
+
+      const updateResult = await DbPromise.run(
+        db,
+        `UPDATE projects SET current_phase = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND organization_id = ? AND COALESCE(current_phase, 'Context') = ?`,
+        [toPhase, projectId, governance.organizationId, fromPhase],
+        { fallback: false }
+      );
+      if (!updateResult.success || updateResult.changes !== 1) {
+        throw new Error('project phase update did not affect exactly one row');
+      }
+    });
   } catch (err) {
+    if (err instanceof AppError || err instanceof StageGateForbiddenError) throw err;
     throw new AppError(
       500,
       'Failed to record stage gate passage due to a database error',
       'STAGE_GATE_WRITE_FAILED'
     );
   }
-  if (!insertResult.success) {
-    throw new AppError(
-      500,
-      'Failed to record stage gate passage due to a database error',
-      'STAGE_GATE_WRITE_FAILED'
-    );
-  }
-
-  // Update project phase
-  if (toPhase) {
-    await DbPromise.run(db, `UPDATE projects SET current_phase = ? WHERE id = ?`, [
-      toPhase,
-      projectId,
-    ]);
-  }
-
   return {
     id,
     gateType,
