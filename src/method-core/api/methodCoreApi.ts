@@ -377,6 +377,23 @@ export async function listSessions(params: ListSessionsParams = {}): Promise<Lis
   return { sessions, total: typeof body.total === 'number' ? body.total : null };
 }
 
+/**
+ * Z-55 (fala D3, 2026-09-14) — TRWALE usuwa sesję metodyczną.
+ *
+ * Do 2026-09-14 kebab „Delete" na liście Procesów wołał trasę LEGACY
+ * (`DELETE /api/assessment-workflow-v2/:id`), która szuka wiersza w tabeli
+ * `assessments`; kanoniczne wiersze DRD mają `id` z `method_sessions`, więc
+ * trasa zwracała 404 i nic się nie działo. To jest wołacz właściwej trasy.
+ *
+ * Rzuca przy 403 (nie właściciel ani OWNER/ADMIN) i 404 — wołający ma pokazać
+ * błąd, nie zielony toast.
+ */
+export async function deleteSession(sessionId: string): Promise<{ deleted: true; id: string }> {
+  return handle<{ deleted: true; id: string }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'DELETE', headers: getHeaders() })
+  );
+}
+
 export async function listEvents(sessionId: string): Promise<MethodEvent[]> {
   const res = await handle<{ events: MethodEvent[] }>(
     fetchWithRetry(`${BASE}/sessions/${sessionId}/events`, { method: 'GET', headers: getHeaders() })

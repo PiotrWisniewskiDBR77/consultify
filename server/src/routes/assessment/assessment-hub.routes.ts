@@ -466,6 +466,37 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     const organizationId = requireRequestOrganizationId(req, res);
     if (!organizationId) return;
 
+    // Z-55 (fala D3, 2026-09-14) — TA TRASA KŁAMAŁA.
+    //
+    // Do 2026-09-14 leciał tu goły `DELETE ... WHERE id = ? AND organization_id = ?`
+    // i BEZWARUNKOWE `res.json({ success: true })`. Nieistniejące id, cudza
+    // organizacja, id kanonicznej sesji DRD (te żyją w `method_sessions`, nie w
+    // `assessments`) — każdy z tych przypadków kasował ZERO wierszy i meldował
+    // sukces. Ekran pokazywał zielony toast, a wiersz zostawał.
+    //
+    // DLACZEGO SELECT, A NIE LICZBA SKASOWANYCH WIERSZY: warstwa `db.run` w tym
+    // repozytorium raportuje `changes` niewiarygodnie (atrapa zwraca 1 dla
+    // każdego UPDATE/DELETE niezależnie od WHERE), więc rowcount nie jest tu
+    // dowodem. Sprawdzenie istnienia PRZED kasowaniem jest deterministyczne.
+    const existing = await new Promise<{ id: string } | undefined>((resolve, reject) => {
+      db.get(
+        `SELECT id FROM assessments WHERE id = ? AND organization_id = ?`,
+        [id, organizationId],
+        (err: Error | null, row: { id: string } | undefined) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!existing) {
+      // Sam KOD, bez zdania — bramka jezykowa J0 (DEC-461) liczy kazde nowe
+      // zdanie z serwera do UI, po polsku i po angielsku. Tekst dla czlowieka
+      // nalezy do klienta, ktory ma i18n; serwer podaje kod.
+      res.status(404).json({ code: 'ASSESSMENT_HUB_ASSESSMENT_NOT_FOUND' });
+      return;
+    }
+
     await new Promise<void>((resolve, reject) => {
       db.run(
         `DELETE FROM assessments WHERE id = ? AND organization_id = ?`,
@@ -477,7 +508,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    res.json({ success: true });
+    res.json({ success: true, id });
   } catch (err: any) {
     logger.error('[AssessmentHub] Error deleting assessment', {
       err: err,

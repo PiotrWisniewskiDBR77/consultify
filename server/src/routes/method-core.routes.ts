@@ -1133,6 +1133,56 @@ router.delete(
 );
 
 // ---------------------------------------------------------------------------
+// DELETE /api/method/sessions/:id — Z-55 (fala D3, 2026-09-14)
+//
+// PREMISA ZMIERZONA na 08c1bb7a26: tej trasy NIE BYŁO. Kebab „Delete" na
+// liście Procesów (AssessmentHub.tsx:1543) wołał
+// `DELETE /api/assessment-workflow-v2/:id`, który szuka wiersza w LEGACY
+// tabeli `assessments` (AssessmentController.ts:2120). Kanoniczne wiersze DRD
+// biorą `id` z `method_sessions` (AssessmentHub.tsx:303-345), więc SELECT nie
+// trafiał i użytkownik dostawał 404 „Assessment not found" — kebab „nic nie
+// robił". Równolegle `DELETE /api/assessments/:id` zwracał `{ success: true }`
+// bez patrzenia na liczbę skasowanych wierszy (naprawione osobno).
+//
+// UPRAWNIENIE: właściciel sesji albo ACTIVE OWNER/ADMIN organizacji —
+// egzekwowane w `MethodSessionService.deleteSession`, nie tutaj.
+// ---------------------------------------------------------------------------
+
+router.delete(
+  '/sessions/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    // Te same 404/403 co każda inna trasa sesji: nieistniejąca -> 404,
+    // cudza organizacja -> 403. Bez tego kasowanie byłoby jedyną trasą w
+    // tym routerze bez bramki dzierżawcy.
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+
+    const result = await sessionService.deleteSession({
+      organizationId,
+      sessionId: session.id,
+      actorUserId,
+    });
+
+    if (!result.ok) {
+      if (result.reason === 'forbidden') {
+        // Sam KOD, bez zdania dla czlowieka — bramka jezykowa J0 (DEC-461)
+        // liczy kazde nowe zdanie z serwera do UI. Tresc tlumaczy klient.
+        res.status(403).json({ code: 'METHOD_SESSION_DELETE_FORBIDDEN' });
+        return;
+      }
+      res.status(404).json({ code: 'METHOD_SESSION_NOT_FOUND' });
+      return;
+    }
+
+    res.status(200).json({ deleted: true, id: session.id });
+  })
+);
+
+// ---------------------------------------------------------------------------
 // GET /api/method/sessions/:id/events — read history
 // ---------------------------------------------------------------------------
 

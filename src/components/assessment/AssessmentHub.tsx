@@ -58,8 +58,10 @@ import {
   statusChipTone,
   type StatusTone,
 } from '@/components/ui/primitives/chips';
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import {
+  deleteSession as deleteMethodSession,
   listSessions as listMethodSessions,
   type MethodSessionListItem,
 } from '@/method-core/api/methodCoreApi';
@@ -477,6 +479,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // truth). OFF = today's exact behavior — see resolveFiveSurfacesTabFromUrl
   // and the effect below, both no-ops when this is false.
   const fiveSurfacesEnabled = isEnabled('assessmentFiveSurfacesV1');
+  // Z-55 (fala D3, 2026-09-14) — kanoniczny dialog potwierdzenia zamiast
+  // `window.confirm` (natywne okno przeglądarki łamie kanon i nie da się go
+  // zobaczyć na zrzucie ani przetestować w powłoce).
+  const { dialog: confirmDialogNode, confirm: askConfirm } = useConfirmDialog();
+
   // State
   const [activeTab, setActiveTabState] = useState<ModuleTab>(() => {
     if (initialTab) return initialTab;
@@ -1533,14 +1540,31 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             : activeTab === 'reports'
               ? 'report'
               : 'assessment';
-        if (
-          !window.confirm(`Are you sure you want to delete this ${docType}? This cannot be undone.`)
-        )
-          return;
+        const confirmed = await askConfirm({
+          title: t('assessment.delete.confirmTitle', 'Delete this {{docType}}?', { docType }),
+          description: t(
+            'assessment.delete.confirmDescription',
+            'This cannot be undone. The record and its history are removed permanently.'
+          ),
+          confirmLabel: t('common.delete', 'Delete'),
+          variant: 'danger',
+        });
+        if (!confirmed) return;
         const toastId = toast.loading(`Deleting ${docType}...`);
         try {
           if (docType === 'assessment') {
-            await Api.delete(`/assessment-workflow-v2/${row.id}`);
+            // Z-55 — PRZEWÓD ZMIERZONY 2026-09-14 na 08c1bb7a26:
+            // kanoniczne wiersze DRD biorą `id` z `method_sessions`
+            // (methodSessionToAssessment wyżej ustawia `source: 'method-core'`),
+            // a `DELETE /api/assessment-workflow-v2/:id` szuka wiersza w LEGACY
+            // tabeli `assessments` — SELECT nie trafiał, trasa zwracała 404
+            // „Assessment not found" i kebab „nic nie robił". Wiersze legacy
+            // zostają na starej trasie (tam ten SELECT trafia).
+            if ((row as any).source === 'method-core') {
+              await deleteMethodSession(String(row.id));
+            } else {
+              await Api.delete(`/assessment-workflow-v2/${row.id}`);
+            }
           } else if (docType === 'report') {
             await Api.delete(`/assessment-reports/${row.id}`);
           } else if (docType === 'initiative') {
@@ -1581,7 +1605,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         handleOpenDocument(row);
       }
     },
-    [handleOpenDocument, activeTab, refreshData, navigate]
+    [handleOpenDocument, activeTab, refreshData, navigate, askConfirm, t]
   );
 
   // Transform API data to display format — each tab uses its own status mapper
@@ -1632,6 +1656,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             // przez router; snake_case przychodzi surowo z `SELECT *` i jest
             // fallbackiem dla backendu bez tej linii.
             businessUnit: rawItem.businessUnit ?? rawItem.business_unit ?? null,
+            // Z-55 (fala D3, 2026-09-14): projekcja GUBIŁA `source`, które
+            // `methodSessionToAssessment` ustawia na 'method-core'. Bez tego
+            // pola wiersz w kebabie jest nie do odróżnienia od wiersza LEGACY
+            // i kasowanie leci na trasę, która szuka go w tabeli `assessments`
+            // (i nie znajduje). To jest jedyny znacznik pochodzenia wiersza,
+            // jaki dociera do `handleRowAction`.
+            source: (item as unknown as { source?: string }).source,
           };
         });
         if (frameworkFilter) {
@@ -3130,6 +3161,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           overlays — the reported "preview paints across the whole screen"
           bug) are gone. Both tabs now use the same docked StandardTable +
           StandardPreview aside as 'list' — see renderContent() above. */}
+
+      {/* Z-55 — kanoniczny dialog potwierdzenia usunięcia. Renderuje się
+          dopiero po `askConfirm(...)`; zastąpił `window.confirm`. */}
+      {confirmDialogNode}
     </>
   );
 };

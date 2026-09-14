@@ -47,6 +47,7 @@
  */
 
 import * as DbPromise from '../utils/DbPromise.js';
+import { withPgTransaction } from '../utils/queryHelpers.js';
 import { computeContentHash, genId, nowIso, runOrThrow } from './db.js';
 import type { MethodEventStore } from './MethodEventStore.js';
 import {
@@ -271,6 +272,22 @@ export interface PackReadinessLookup {
     methodPackVersion: string
   ): Promise<{ canStart: boolean } | null>;
 }
+
+/**
+ * Z-55 (fala D3, 2026-09-14) — wynik usuwania sesji metodycznej.
+ *
+ * Zamknięta unia zamiast rzucania wyjątkiem: trasa HTTP ma zamienić `reason`
+ * na kod stanu 404/403 i NIE MA prawa udać sukcesu, gdy nic nie zniknęło.
+ * To jest cała treść defektu Z-55: `DELETE /api/assessments/:id`
+ * (assessment-hub.routes.ts:462) zwracał `{ success: true }` bez sprawdzenia
+ * liczby skasowanych wierszy, a kebab listy Procesów wołał
+ * `DELETE /api/assessment-workflow-v2/:id`, który szuka wiersza w LEGACY
+ * tabeli `assessments` — kanoniczne wiersze DRD żyją w `method_sessions`,
+ * więc SELECT nigdy nie trafiał i wiersz zostawał na ekranie.
+ */
+export type DeleteSessionResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly reason: 'not_found' | 'forbidden' };
 
 export class MethodSessionService {
   constructor(
@@ -615,6 +632,63 @@ export class MethodSessionService {
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
   }
 
+  /**
+   * Z-55 — TRWALE usuwa sesję metodyczną wraz z jej dziennikiem zdarzeń.
+   *
+   * DLACZEGO TWARDY DELETE, A NIE SOFT-DELETE: zmierzone na
+   * server/migrations/20260813_method_core_1_kernel.sql:55-70 —
+   * `method_sessions` NIE MA kolumny `deleted_at` ani `status`. Jedyna kolumna
+   * cyklu życia to `state` z twardym CHECK-iem na zamkniętym zbiorze stanów
+   * kontraktu (`draft|prepared|active|in_review|frozen|closed|archived`);
+   * dopisanie do niej stanu „deleted" byłoby zmianą ZAMROŻONEGO kontraktu
+   * maszyny stanów, a nie usunięciem. Kto chce zachować ślad, ma `archived`
+   * przez `transition()` — to inna operacja i inne uprawnienie.
+   *
+   * KASKADA: `method_events.session_id` ma FK `ON DELETE CASCADE`
+   * (kernel.sql:104), podobnie 12 innych tabel podrzędnych. Mimo to kasuję
+   * `method_events` JAWNIE w tej samej transakcji: FK bywają nieegzekwowane w
+   * środowiskach zastępczych, a „dziennik przeżył sesję" jest gorszym stanem
+   * niż porażka. Kolejność: dzieci → rodzic.
+   *
+   * UPRAWNIENIE: właściciel sesji (`owner_user_id`) albo ACTIVE OWNER/ADMIN
+   * organizacji. Obcy aktor dostaje `forbidden`, obca organizacja
+   * `not_found` (nie zdradzamy istnienia cudzej sesji).
+   */
+  async deleteSession(input: {
+    organizationId: string;
+    sessionId: string;
+    actorUserId: string;
+  }): Promise<DeleteSessionResult> {
+    const row = await this.getSessionRow(input.sessionId);
+    if (!row || row.organization_id !== input.organizationId) {
+      return { ok: false, reason: 'not_found' };
+    }
+
+    const isOwner = row.owner_user_id === input.actorUserId;
+    const isOrgAdmin =
+      isOwner || (await this.isSameTenantActiveOrgOwnerOrAdmin(input.organizationId, input.actorUserId));
+    if (!isOwner && !isOrgAdmin) {
+      return { ok: false, reason: 'forbidden' };
+    }
+
+    const deleted = await withPgTransaction(async (client) => {
+      await client.query(`DELETE FROM method_events WHERE session_id = ? AND organization_id = ?`, [
+        input.sessionId,
+        input.organizationId,
+      ]);
+      const result = await client.query(
+        `DELETE FROM method_sessions WHERE id = ? AND organization_id = ?`,
+        [input.sessionId, input.organizationId]
+      );
+      return result.rowCount;
+    });
+
+    // Zero skasowanych wierszy to NIE sukces — dokładnie ten kształt kłamstwa
+    // naprawiamy w Z-55.
+    if (!deleted) return { ok: false, reason: 'not_found' };
+    return { ok: true };
+  }
+
   async transition(request: MethodTransitionRequest): Promise<TransitionResult> {
     const session = await this.getSessionRow(request.sessionId);
     if (!session) {
@@ -808,6 +882,32 @@ export class MethodSessionService {
       return row?.language ?? null;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Z-55 — ACTIVE OWNER **albo** ADMIN organizacji. Osobny od
+   * `isSameTenantActiveOrganizationOwner` celowo: tamten jest wąską furtką
+   * wyłącznie dla `frozen` (MVP-OWNER-FREEZE) i nie wolno mu po cichu urosnąć
+   * o ADMIN-a przy okazji innej pozycji.
+   */
+  private async isSameTenantActiveOrgOwnerOrAdmin(
+    organizationId: string,
+    userId: string
+  ): Promise<boolean> {
+    try {
+      const row = await DbPromise.get<{ role?: string | null; status?: string | null }>(
+        `SELECT role, status FROM organization_members
+          WHERE organization_id = ? AND user_id = ?
+          LIMIT 1`,
+        [organizationId, userId]
+      );
+      if (!row) return false;
+      if (String(row.status ?? '').toUpperCase() !== 'ACTIVE') return false;
+      const role = String(row.role ?? '').toUpperCase();
+      return role === 'OWNER' || role === 'ADMIN';
+    } catch {
+      return false;
     }
   }
 
