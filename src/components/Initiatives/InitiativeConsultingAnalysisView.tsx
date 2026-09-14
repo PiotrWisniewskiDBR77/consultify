@@ -568,6 +568,32 @@ export function InitiativeConsultingAnalysisView({
                         label: t('initiatives.analysis.initiatives', 'Initiatives'),
                         value: row.item.initiativeIds.map(initiativeLabel).join(', ') || '—',
                       },
+                      // A2: „dlaczego" dla parkingu i archiwum. Propozycja byla
+                      // utrwalana, ale niewidoczna — decydent nie mial jej skad
+                      // przeczytac przed podjeciem decyzji.
+                      ...(row.item.proposedDisposition
+                        ? [
+                            {
+                              id: 'proposedDisposition',
+                              label: t(
+                                'initiatives.analysis.proposedDisposition',
+                                'Proposed disposition'
+                              ),
+                              value: `${t(
+                                `initiatives.analysis.${row.item.proposedDisposition.kind.toLowerCase()}`,
+                                row.item.proposedDisposition.kind
+                              )} — ${row.item.proposedDisposition.reason}`,
+                            },
+                            {
+                              id: 'proposedReturnCondition',
+                              label: t(
+                                'initiatives.analysis.proposedReturnCondition',
+                                'Return condition proposed'
+                              ),
+                              value: row.item.proposedDisposition.returnCondition ?? '—',
+                            },
+                          ]
+                        : []),
                       {
                         id: 'provenance',
                         label: t('initiatives.analysis.provenance', 'Model provenance'),

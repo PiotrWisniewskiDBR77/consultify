@@ -14959,6 +14959,8 @@
       "missingData": "Missing data",
       "initiatives": "Initiatives",
       "provenance": "Model provenance",
+      "proposedDisposition": "Proposed disposition",
+      "proposedReturnCondition": "Return condition proposed",
       "disposition": "Disposition",
       "in": "In",
       "parking": "Parking",
