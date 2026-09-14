@@ -63,8 +63,7 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
     const onOpen = vi.fn();
     const props = {
       rows,
-      enhanced: true,
-      selected: { id: 'initiative-b', initiativeId: 'initiative-b' },
+      selected: { initiativeId: 'initiative-b', executionCaseId: 'case-b' },
       calendarWindow: buildExecutionCalendarWindow('2028-01-31', 3),
       onSelect,
       onOpen,
