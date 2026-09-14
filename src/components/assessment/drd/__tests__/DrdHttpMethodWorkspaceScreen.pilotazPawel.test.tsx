@@ -151,6 +151,58 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+describe('P-P04 — autozapis szkicu nie cofa wybranego stanu odpowiedzi', () => {
+  it('po wpisaniu tekstu i wyborze „Potwierdzone" szkic dopisuje CONFIRMED, nie „partial"', async () => {
+    const { events } = await renderAtInterviewFocus();
+
+    const karta = screen
+      .getByTestId('interview-focus-panel')
+      .querySelector('[data-testid^="question-card-"]')!;
+    const questionId = karta.getAttribute('data-testid')!.replace('question-card-', '');
+
+    // 1. człowiek pisze odpowiedź (uzbraja debounce autozapisu, 800 ms)
+    // dwa uderzenia w klawiaturę, jak przy realnym pisaniu: `markDirty()`
+    // zamraża `save` z POPRZEDNIEGO renderu, więc dopiero drugie ma w
+    // domknięciu niepusty szkic (to samo zamrożenie stoi za P-P04).
+    const pole = () =>
+      screen.getByTestId('interview-focus-panel').querySelector('textarea')! as HTMLTextAreaElement;
+    fireEvent.change(pole(), { target: { value: 'Budżet kontrolujemy' } });
+    fireEvent.change(pole(), { target: { value: 'Budżet kontrolujemy w systemie na bieżąco.' } });
+    // eslint-disable-next-line no-console
+    console.log('SAVE-STATE PO ZMIANIE', document.querySelector('[data-testid="assessment-save-state-indicator"]')?.getAttribute('data-save-state'));
+    // eslint-disable-next-line no-console
+    console.log('PO SAMYM PISANIU', JSON.stringify(events.map((e) => e.type)));
+    // 2. i ZARAZ wybiera stan — zanim debounce zdąży wystrzelić
+    fireEvent.click(screen.getByRole('radio', { name: /Confirmed|Potwierdzone/ }));
+
+    await waitFor(() =>
+      expect(
+        odpowiedziPytania(events, questionId).some((e) => e.type === 'ANSWER_CONFIRMED')
+      ).toBe(true)
+    );
+
+    // 3. debounce dochodzi PO wyborze — kiedyś dopisywał tu „partial"
+    await waitFor(
+      () =>
+        expect(
+          odpowiedziPytania(events, questionId).some((e) => e.type === 'ANSWER_DRAFTED')
+        ).toBe(true),
+      { timeout: 4000 }
+    );
+
+    const ostatnia = odpowiedziPytania(events, questionId).at(-1)!;
+    expect(ostatnia.payload.answerState).toBe('confirmed');
+
+    // ...i pigułka na ekranie zostaje na „Potwierdzone"
+    await waitFor(() =>
+      expect(screen.getByTestId(`question-card-${questionId}`)).toHaveAttribute(
+        'data-answer-state',
+        'confirmed'
+      )
+    );
+  }, 15000);
+});
+
 describe('P-P03 — zapis nie wygasza warsztatu („Loading session…")', () => {
   it('w trakcie odświeżania po zapisie panel wywiadu zostaje na ekranie', async () => {
     const { events } = await renderAtInterviewFocus();

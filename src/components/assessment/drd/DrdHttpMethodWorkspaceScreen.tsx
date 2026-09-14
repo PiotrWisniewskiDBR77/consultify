@@ -71,7 +71,7 @@ import {
   DrdHttpSessionRuntime,
   type DrdHttpRuntimeState,
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
-import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
+import type { MethodEvent, MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { useAppStore } from '@/store/useAppStore';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
@@ -498,6 +498,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * zmienia się tylko to, KTÓRY poziom pokazujemy człowiekowi.
    */
   const [pinnedFocus, setPinnedFocus] = useState<{ unitId: string; level: number } | null>(null);
+  /**
+   * Stan odpowiedzi wybrany ręcznie w TEJ sesji przeglądarki (P-P04) oraz
+   * ostatnia lista zdarzeń — oba jako refy, bo debounce autozapisu trzyma
+   * domknięcie z renderu sprzed wyboru (patrz komentarz przy `save`).
+   */
+  const chosenAnswerStateRef = useRef<Record<string, InterviewFocusQuestion['answerState']>>({});
+  const eventsRef = useRef<readonly MethodEvent[]>([]);
   /** Panel „Analizuj" z „Pracuj z AI" — ocena gotowości sesji, zero zapisu. */
   const [analizaOtwarta, setAnalizaOtwarta] = useState(false);
   // True for the duration of an explicit reconciliation call (refresh() from
@@ -599,6 +606,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const runtime = runtimeRef.current;
 
   const events = state?.events ?? [];
+  eventsRef.current = events;
   const pendingPreviews = state?.previews ?? [];
   const pendingPreviewUnitLevels = useMemo(() => {
     const set = new Set<string>();
@@ -684,12 +692,30 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       );
       if (!entry) return { ok: true };
       const [questionId, text] = entry;
+      // ★ P-P04 (pilotaż Pawła 14.09: „zmieniam Partially na Confirmed i po
+      // sekundzie wraca na Partially").
+      //
+      // ZMIERZONA PRZYCZYNA: autozapis szkicu wysyłał ZAWSZE
+      // `answerState: 'partial'`, a `questionAnswerState()` bierze OSTATNIE
+      // zdarzenie odpowiedzi dla pytania. Kliknięcie stanu zapisywało
+      // `ANSWER_CONFIRMED(confirmed)`, ale uzbrojony wcześniej debounce (800 ms)
+      // dopisywał po nim `ANSWER_DRAFTED(partial)` — pigułka wracała na
+      // „Częściowo", mimo że człowiek wybrał co innego.
+      //
+      // LEKARSTWO: szkic NIE decyduje o stanie odpowiedzi — przenosi stan już
+      // wybrany. Czytamy go z refów (`chosenAnswerStateRef` / `eventsRef`), bo
+      // `markDirty()` zamraża `save` z renderu sprzed wyboru — odczyt ze stałej
+      // domknięcia dawałby znów „partial".
+      const currentState =
+        chosenAnswerStateRef.current[questionId] ??
+        questionAnswerState(eventsRef.current, questionId).state ??
+        'partial';
       try {
         await runtime.recordAnswer({
           unitId: activeArea.id,
           level: focusLevelFallback,
           questionId,
-          answerState: 'partial',
+          answerState: currentState,
           text,
           draft: true,
         });
@@ -729,6 +755,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       // Przypnij poziom ZANIM zdarzenie wróci — inaczej przeliczony
       // `blockedAtLevel` zdążyłby podmienić pytanie pod palcem.
       setPinnedFocus({ unitId: activeArea.id, level: focusLevelFallback });
+      // P-P04: zapamiętaj wybór NATYCHMIAST, żeby autozapis szkicu (debounce
+      // ze starego domknięcia) go nie cofnął, zanim zdarzenie wróci z serwera.
+      chosenAnswerStateRef.current[questionId] = answerState;
       await runtime.recordAnswer({
         unitId: activeArea.id,
         level: focusLevelFallback,
