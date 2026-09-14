@@ -168,7 +168,9 @@ describe('InitiativeWorkloadSurface E1', () => {
 
     const cell = await screen.findByTestId('workload-zero-capacity-2026-09-14');
     expect(cell).toHaveAttribute('data-workload-band', 'red');
-    expect(cell).toHaveTextContent('No capacity');
+    expect(cell).toHaveTextContent('None');
+    expect(cell).toHaveAttribute('title', expect.stringContaining('No capacity'));
+    expect(cell).toHaveAttribute('aria-label', expect.stringContaining('No capacity'));
   });
 
   it('passes project and initiative status filters to the governed server read', async () => {

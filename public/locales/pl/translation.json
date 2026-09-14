@@ -10624,8 +10624,8 @@
     "workload": {
       "aria": "Obciążenie inicjatyw",
       "person": "Członek zespołu",
-      "capacity": "Dostępność tygodniowa",
-      "availability": "Dostępność",
+      "capacity": "Dostępność (h/tydz.)",
+      "availability": "Dostępność (%)",
       "projectScope": "Zakres projektu",
       "allProjects": "Wszystkie projekty",
       "initiativeStatus": "Status inicjatywy",
@@ -10640,7 +10640,9 @@
       "profile": "Profil osoby",
       "default": "Polityka domyślna",
       "cellHint": "{{demand}} h popytu / {{supply}} h dostępności",
-      "noCapacity": "Brak dostępności"
+      "cellHintNoCapacity": "{{label}}: {{demand}} h popytu / {{supply}} h dostępności",
+      "noCapacity": "Brak dostępności",
+      "noCapacityShort": "Brak"
     },
     "register": {
       "archiveLocked": "Zmiany cyklu życia i archiwizacja są wykonywane w kontrolowanym procesie."
