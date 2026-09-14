@@ -15716,7 +15716,9 @@
         "conditionally_confirmed": "Potwierdzone warunkowo",
         "declined": "Odrzucone",
         "ended": "Zakończone"
-      }
+      },
+      "caseFallbackName": "Realizacja · {{short}}",
+      "caseNotRespondingSuffix": " — nie odpowiada"
     },
     "governance": {
       "columns": {

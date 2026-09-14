@@ -99,14 +99,27 @@ export interface PreviewAISchema<T> {
 }
 
 /**
- * Blok 5 — Relations. OBOWIĄZKOWY jako blok, także gdy relacji nie ma —
- * wtedy renderuje kanoniczne `No relations` (§6, REPAIR_MASTER_PLAN R03:
- * „Relations zawsze jako blok, także empty state").
+ * Blok 5 — Relations.
+ *
+ * ── BLOK BEZ POWIĄZAŃ = UKRYTY (K5-7, 2026-09-13) ─────────────────────────
+ * Wcześniejsza reguła R03 („Relations zawsze jako blok, także empty state")
+ * była lokalnym ustaleniem sprzed TRIADY i jest z nią sprzeczna. Kanon
+ * (TRIADA §A7, TABLE_AND_PREVIEW_CANON §7.0): „Blok bez danych = UKRYTY, nie
+ * pusty box". Odbiór właściciela na `cf3fded7e4` pokazał sześć podglądów z tą
+ * samą pustą ramką „Relations / No relations" — czytaną jako „coś się nie
+ * załadowało", nie jako „nie ma powiązań". Renderem rządzi
+ * `PreviewRelations.tsx` (`showEmpty`, domyślnie `false`).
  */
 export interface PreviewRelationsSchema<T> {
   items: (record: T) => Array<{ id: string; label: string; type: string }>;
-  /** Kanoniczny tekst pustego stanu. Nie wolno pominąć bloku. */
-  emptyLabel: string;
+  /**
+   * Tekst pustego stanu — OPCJONALNY, bo domyślnie pustego stanu nie widać.
+   * Deklaruje go wyłącznie ekran, który świadomie włącza `showEmpty` i musi
+   * powiedzieć „sprawdziliśmy, powiązań nie ma" (np. panel audytowy).
+   * Zadeklarowany, ale pusty, dalej jest błędem — patrz
+   * `PREVIEW_RELATIONS_NO_EMPTY_LABEL` w `validators.ts`.
+   */
+  emptyLabel?: string;
 }
 
 /** Blok 6 — Actions: siatka 2 kolumny, maks. 3 rzędy, maks. 6 akcji (§6). */

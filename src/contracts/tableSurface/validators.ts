@@ -466,13 +466,16 @@ export function validatePreviewSchema<T>(schema: PreviewSchema<T>, record: T): V
   // — Details —
   violations.push(...validatePreviewDetails(schema, record));
 
-  // — Relations: blok obowiązkowy także pusty —
-  if (!schema.relations.emptyLabel.trim()) {
+  // — Relations: blok bez powiązań jest UKRYTY (TRIADA §A7, CANON §7.0) —
+  // Dlatego `emptyLabel` NIE jest wymagany: domyślnie nie ma go gdzie pokazać.
+  // Ekran, który świadomie włącza `showEmpty`, deklaruje go u siebie — i wtedy
+  // pusty napis jest defektem, bo zostawia widoczną ramkę bez treści.
+  if (schema.relations.emptyLabel !== undefined && !schema.relations.emptyLabel.trim()) {
     violations.push(
       v(
         'PREVIEW_RELATIONS_NO_EMPTY_LABEL',
-        'Relations must declare a canonical empty label ("No relations"); the block ' +
-          'renders even with zero relations.',
+        'Relations declares an empty label that is blank; either drop it (the block ' +
+          'stays hidden with zero relations) or give it real text for `showEmpty`.',
         'contract §6 Relations',
         'relations.emptyLabel'
       )

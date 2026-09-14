@@ -16522,7 +16522,9 @@
         "conditionally_confirmed": "Conditionally confirmed",
         "declined": "Declined",
         "ended": "Ended"
-      }
+      },
+      "caseFallbackName": "Delivery · {{short}}",
+      "caseNotRespondingSuffix": " — not responding"
     },
     "governance": {
       "columns": {
