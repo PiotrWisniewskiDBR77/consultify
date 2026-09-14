@@ -3345,18 +3345,32 @@ export const ExecutionControlSurface = ({
                       glowa.detailsNote
                     ),
                     properties: [
-                      { id: 'project', label: 'Projekt', value: row.signal.projectId ?? 'UNKNOWN' },
-                      { id: 'fingerprint', label: 'Fingerprint', value: row.signal.fingerprint },
+                      {
+                        id: 'project',
+                        label: t('execution.signals.field.project', 'Project'),
+                        value: row.signal.projectId ?? 'UNKNOWN',
+                      },
+                      {
+                        id: 'fingerprint',
+                        label: t('execution.signals.field.fingerprint', 'Fingerprint'),
+                        value: row.signal.fingerprint,
+                      },
                       {
                         id: 'occurrences',
                         label: t('execution.signals.occurrences', 'Occurrences'),
                         value: String(row.occurrences),
                       },
-                      { id: 'updated', label: 'Aktualizacja', value: row.updatedAt },
+                      {
+                        id: 'updated',
+                        label: t('common.updated', 'Updated'),
+                        value: row.updatedAt,
+                      },
                     ],
                   }}
                   relations={[
-                    { label: `Project ${row.signal.projectId ?? 'UNKNOWN'}` },
+                    {
+                      label: `${t('execution.signals.field.project', 'Project')} ${row.signal.projectId ?? 'UNKNOWN'}`,
+                    },
                     ...Object.entries(row.signal.sourceVersions ?? {}).map(([key, value]) => ({
                       label: `${key} v${value}`,
                     })),
@@ -3487,7 +3501,7 @@ export const ExecutionControlSurface = ({
               onClose={() => setSelectedId(null)}
               meta={glowa.meta}
               details={{
-                label: 'Uzasadnienie i skutek',
+                label: t('execution.intervention.rationaleAndImpact', 'Rationale and impact'),
                 text: zlozProzeBloku3(
                   r.source.hypotheses?.join(', ') || 'UNKNOWN',
                   glowa.detailsNote
@@ -3503,11 +3517,15 @@ export const ExecutionControlSurface = ({
                     label: t('execution.intervention.approver', 'Approver'),
                     value: r.authority || 'UNKNOWN',
                   },
-                  { id: 'sla', label: 'Termin weryfikacji', value: r.slaAt || 'UNKNOWN' },
+                  {
+                    id: 'sla',
+                    label: t('execution.intervention.field.sla', 'Decision deadline'),
+                    value: r.slaAt || 'UNKNOWN',
+                  },
                   {
                     id: 'unknowns',
-                    label: 'Niewiadome',
-                    value: r.source.unknowns?.join(', ') || 'Brak',
+                    label: t('execution.intervention.field.unknowns', 'Unknowns'),
+                    value: r.source.unknowns?.join(', ') || t('common.noneValue', 'None'),
                   },
                 ],
               }}

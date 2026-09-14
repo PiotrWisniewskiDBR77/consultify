@@ -878,6 +878,7 @@
     "sending": "Wysyłanie...",
     "exportCSV": "Eksportuj CSV",
     "pending": "Oczekujące",
+    "noneValue": "Brak",
     "notAvailable": "Niedostępne",
     "months": "miesięcy",
     "count": "Liczba",
@@ -16787,6 +16788,8 @@
         "interventionFailed": "Nie udało się utworzyć wniosku o przesunięcie."
       },
       "field": {
+        "fingerprint": "Odcisk sygnału",
+        "project": "Projekt",
         "occurredAt": "Czas wystąpienia",
         "ruleId": "Reguła wykrycia",
         "severity": "Ważność",
@@ -16831,6 +16834,7 @@
       "applyCommand": "Zastosowanie zatwierdzonej komendy",
       "applyConfirmed": "Zastosuj potwierdzoną komendę",
       "approveOption": "Zatwierdź wariant",
+      "rationaleAndImpact": "Uzasadnienie i skutek",
       "approver": "Zatwierdzający",
       "composer": "Projekt interwencji",
       "effectiveClosed": "Skuteczna · zamknięta",

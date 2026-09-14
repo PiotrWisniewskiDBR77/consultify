@@ -2883,6 +2883,7 @@
     "sending": "Sending...",
     "exportCSV": "Export CSV",
     "pending": "Pending",
+    "noneValue": "None",
     "notAvailable": "Not available",
     "months": "months",
     "count": "Count",
@@ -17536,6 +17537,8 @@
         "interventionFailed": "The re-baseline request could not be created."
       },
       "field": {
+        "fingerprint": "Fingerprint",
+        "project": "Project",
         "occurredAt": "Occurred at",
         "ruleId": "Detection rule",
         "severity": "Severity",
@@ -17580,6 +17583,7 @@
       "applyCommand": "Applying the approved command",
       "applyConfirmed": "Apply the confirmed command",
       "approveOption": "Approve option",
+      "rationaleAndImpact": "Rationale and impact",
       "approver": "Approver",
       "composer": "Intervention draft",
       "effectiveClosed": "Effective · closed",
