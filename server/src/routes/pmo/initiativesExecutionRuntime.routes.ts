@@ -37,6 +37,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import databaseConfig from '../../config/DatabaseConfig.js';
+import { isExecutionReportE4Enabled } from '../../config/executionReportE4Flag.js';
 import { isInitiativesWorkReportEnabled } from '../../config/initiativesWorkReportFlag.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
 import { adoptChatDraftInitiative } from '../../domain/initiatives-execution/adoptChatDraftInitiative.js';
@@ -239,7 +240,9 @@ import {
 } from '../../services/effectiveAccessService.js';
 import { ControlKpiReadModel } from '../../services/executionControl/controlKpiReadModel.js';
 import logger from '../../utils/Logger.js';
+import { get as dbGet } from '../../utils/DbPromise.js';
 import EmailService from '../../services/emailService.js';
+import { renderExecutionReportPdf } from '../../services/executionReportProfileService.js';
 import {
   INITIATIVE_WORK_REPORT_TEMPLATES,
   renderInitiativeWorkReportPdf,
@@ -1262,10 +1265,15 @@ const ReportDraftSchema = z
     asOf: z.string().datetime(),
     workReport: z
       .object({
+        profile: z
+          .enum(['initiative_work_report', 'execution_report'])
+          .default('initiative_work_report'),
         title: z.string().min(1).max(180),
-        templateId: z.enum(INITIATIVE_WORK_REPORT_TEMPLATES),
+        templateId: z.string().min(1).max(100),
         cadence: z.enum(['ON_DEMAND', 'WEEKLY', 'MONTHLY']),
         projectIds: z.array(z.string().min(1)).max(100).default([]),
+        detailLevel: z.enum(['EXECUTIVE', 'MANAGEMENT', 'DETAILED']).optional(),
+        snapshotId: z.string().uuid().optional(),
       })
       .nullable()
       .default(null),
@@ -1282,6 +1290,60 @@ const ReportDraftSchema = z
       });
     }
   });
+
+export async function captureExecutionReportSnapshot(
+  organizationId: string,
+  input: {
+    templateId: string;
+    detailLevel?: 'EXECUTIVE' | 'MANAGEMENT' | 'DETAILED';
+    snapshotId?: string;
+  }
+): Promise<{ content: Record<string, unknown>; sources: Array<Record<string, unknown>> } | null> {
+  if (!input.snapshotId || !input.detailLevel) return null;
+  const row = (await dbGet(
+    `SELECT id, definition_key AS "definitionKey", payload, as_of AS "asOf"
+       FROM execution_report_snapshots
+      WHERE id = ? AND organization_id = ?`,
+    [input.snapshotId, organizationId]
+  )) as any;
+  if (!row || row.definitionKey !== input.templateId) return null;
+  const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+  const sections = Array.isArray(payload?.sections) ? payload.sections : [];
+  const sectionLimit =
+    input.detailLevel === 'EXECUTIVE'
+      ? 2
+      : input.detailLevel === 'MANAGEMENT'
+        ? 5
+        : sections.length;
+  const selectedSections = sections.slice(0, sectionLimit);
+  const kpiSection = sections.find((section: any) => section?.id === 'canonical-kpi-results');
+  if (kpiSection && !selectedSections.includes(kpiSection)) selectedSections.push(kpiSection);
+  const content = {
+    ...payload,
+    detailLevel: input.detailLevel,
+    sections: selectedSections,
+  };
+  const capturedAt = new Date(row.asOf ?? Date.now()).toISOString();
+  return {
+    content,
+    sources: [
+      {
+        sourceType: 'execution_report_snapshot',
+        sourceId: String(row.id),
+        version: 1,
+        capturedAt,
+        freshness: 'CURRENT',
+        formula: 'server snapshot + initiative KPI latest measurement',
+        unit: null,
+        currency: null,
+        window: null,
+        confidence: 'HIGH',
+        accessState: 'FULL',
+        redactions: [],
+      },
+    ],
+  };
+}
 const ReportDefinitionContentSchema = z.object({
   name: z.string().min(1),
   purpose: z.string().min(1),
@@ -1372,7 +1434,7 @@ const ReportDefinitionTransitionSchema = z.discriminatedUnion('action', [
 const ReportTransitionBase = z.object({
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1),
-  profile: z.literal('initiative_work_report').optional(),
+  profile: z.enum(['initiative_work_report', 'execution_report']).optional(),
 });
 const ReportTransitionSchema = z.discriminatedUnion('action', [
   ReportTransitionBase.extend({ action: z.literal('VALIDATE') }),
@@ -1421,6 +1483,11 @@ const InitiativeWorkReportScheduleSchema = z.object({
   approverId: z.string().min(1),
   recipients: z.array(z.string().trim().email()).min(1).max(50),
   timezone: z.string().min(1).default('UTC'),
+});
+const ExecutionReportScheduleSchema = InitiativeWorkReportScheduleSchema.extend({
+  templateId: z.string().trim().min(1).max(100),
+  detailLevel: z.enum(['EXECUTIVE', 'MANAGEMENT', 'DETAILED']),
+  snapshotId: z.string().uuid(),
 });
 const AcceptanceCommandSchema = z
   .object({ expectedVersion: z.number().int().min(0), clientRequestId: z.string().min(1) })
@@ -7313,7 +7380,12 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, ...payload } = parsed.data;
-      if (payload.workReport && !isInitiativesWorkReportEnabled()) {
+      const reportProfile = payload.workReport?.profile ?? 'initiative_work_report';
+      if (
+        payload.workReport &&
+        ((reportProfile === 'initiative_work_report' && !isInitiativesWorkReportEnabled()) ||
+          (reportProfile === 'execution_report' && !isExecutionReportE4Enabled()))
+      ) {
         res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
@@ -7324,9 +7396,12 @@ export function createInitiativesExecutionRuntimeRouter(
       let trustedAsOf = payload.asOf;
       let trustedSources = payload.sources;
       let trustedWorkReport: {
+        profile?: 'initiative_work_report' | 'execution_report';
         title: string;
         templateId: string;
         cadence: 'ON_DEMAND' | 'WEEKLY' | 'MONTHLY';
+        detailLevel?: 'EXECUTIVE' | 'MANAGEMENT' | 'DETAILED';
+        snapshotId?: string;
         content: Record<string, unknown>;
       } | null = null;
       if (payload.workReport) {
@@ -7354,21 +7429,41 @@ export function createInitiativesExecutionRuntimeRouter(
           res.status(409).json({ error: { code: 'PUBLISHED_DEFINITION_REQUIRED' } });
           return;
         }
-        const captured = await deps.reader.buildInitiativeWorkReport(actor.organizationId, {
-          title: payload.workReport.title,
-          templateId: payload.workReport.templateId,
-          projectIds: payload.workReport.projectIds,
-        });
+        if (
+          reportProfile === 'initiative_work_report' &&
+          !INITIATIVE_WORK_REPORT_TEMPLATES.includes(payload.workReport.templateId as any)
+        ) {
+          res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+          return;
+        }
+        const captured =
+          reportProfile === 'execution_report'
+            ? await captureExecutionReportSnapshot(actor.organizationId, payload.workReport)
+            : await deps.reader.buildInitiativeWorkReport(actor.organizationId, {
+                title: payload.workReport.title,
+                templateId: payload.workReport
+                  .templateId as (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number],
+                projectIds: payload.workReport.projectIds,
+              });
+        if (!captured) {
+          res.status(404).json({ error: { code: 'EXECUTION_REPORT_SNAPSHOT_NOT_FOUND' } });
+          return;
+        }
         if (captured.sources.length === 0) {
           res.status(409).json({ error: { code: 'REPORT_SOURCES_REQUIRED' } });
           return;
         }
-        trustedAsOf = captured.content.generatedAt;
+        trustedAsOf = String(
+          (captured.content as any).generatedAt ?? (captured.content as any).asOf ?? payload.asOf
+        );
         trustedSources = captured.sources as any;
         trustedWorkReport = {
+          profile: reportProfile,
           title: payload.workReport.title,
           templateId: payload.workReport.templateId,
           cadence: payload.workReport.cadence,
+          detailLevel: payload.workReport.detailLevel,
+          snapshotId: payload.workReport.snapshotId,
           content: captured.content as unknown as Record<string, unknown>,
         };
       }
@@ -7416,7 +7511,10 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, profile, ...payload } = parsed.data;
-      if (profile === 'initiative_work_report' && !isInitiativesWorkReportEnabled()) {
+      if (
+        (profile === 'initiative_work_report' && !isInitiativesWorkReportEnabled()) ||
+        (profile === 'execution_report' && !isExecutionReportE4Enabled())
+      ) {
         res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
@@ -7428,7 +7526,12 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      if (run.workReport && !isInitiativesWorkReportEnabled()) {
+      const runProfile = run.workReport?.profile ?? 'initiative_work_report';
+      if (
+        run.workReport &&
+        ((runProfile === 'initiative_work_report' && !isInitiativesWorkReportEnabled()) ||
+          (runProfile === 'execution_report' && !isExecutionReportE4Enabled()))
+      ) {
         res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
@@ -7708,6 +7811,182 @@ export function createInitiativesExecutionRuntimeRouter(
           pending: delivery.pending,
           delivered: delivery.delivered,
           receiptId: `manual-delivery-${reportRunId}`,
+        });
+        return;
+      }
+      res.json(delivery);
+    })
+  );
+  router.get(
+    '/execution-reports/:reportRunId/pdf',
+    requireOrgRole('admin'),
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor || !isExecutionReportE4Enabled()) {
+        res
+          .status(actor ? 404 : 401)
+          .json({ error: { code: actor ? 'FEATURE_DISABLED' : 'AUTH_REQUIRED' } });
+        return;
+      }
+      const reportRunId = firstParam(req.params.reportRunId);
+      const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
+        (item: any) => item.reportRunId === reportRunId
+      ) as any;
+      const report = run?.frozenSnapshot?.workReport;
+      if (!run || !(await canViewAggregate(actor, 'report_run', reportRunId))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      if (
+        report?.profile !== 'execution_report' ||
+        !['FROZEN', 'APPROVED', 'PUBLISHED'].includes(run.status) ||
+        !report.content
+      ) {
+        res.status(409).json({ error: { code: 'REPORT_NOT_FROZEN' } });
+        return;
+      }
+      const pdf = await renderExecutionReportPdf(report.content);
+      res
+        .status(200)
+        .setHeader('Content-Type', 'application/pdf')
+        .setHeader(
+          'Content-Disposition',
+          `attachment; filename="execution-report-${reportRunId}.pdf"`
+        )
+        .send(pdf);
+    })
+  );
+  router.post(
+    '/execution-reports/schedules',
+    requireOrgRole('admin'),
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = ExecutionReportScheduleSchema.safeParse(req.body);
+      if (!actor || !isExecutionReportE4Enabled()) {
+        res
+          .status(actor ? 404 : 401)
+          .json({ error: { code: actor ? 'FEATURE_DISABLED' : 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success || parsed.data.ownerId !== actor.userId) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      if (
+        parsed.data.projectIds.length > 0 &&
+        !(await authorizeProjects(actor, parsed.data.projectIds, 'initiative.view'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const definition = await deps.reader.findReportDefinition(
+        actor.organizationId,
+        parsed.data.definitionId
+      );
+      const published = (definition as any)?.versions?.some(
+        (version: any) =>
+          version.definitionVersion === parsed.data.definitionVersion &&
+          version.state === 'PUBLISHED' &&
+          version.ownerId === actor.userId &&
+          version.approverId === parsed.data.approverId
+      );
+      if (!published) {
+        res.status(409).json({ error: { code: 'PUBLISHED_DEFINITION_REQUIRED' } });
+        return;
+      }
+      if (
+        !(await captureExecutionReportSnapshot(actor.organizationId, {
+          templateId: parsed.data.templateId,
+          detailLevel: parsed.data.detailLevel,
+          snapshotId: parsed.data.snapshotId,
+        }))
+      ) {
+        res.status(404).json({ error: { code: 'EXECUTION_REPORT_SNAPSHOT_NOT_FOUND' } });
+        return;
+      }
+      const { scheduledReportService } = await import('../../services/scheduledReportService.js');
+      const recipients = normalizeInitiativeWorkReportRecipients(parsed.data.recipients);
+      const schedule = await scheduledReportService.createSchedule(
+        {
+          name: parsed.data.title,
+          reportType: 'execution_report',
+          frequency: parsed.data.cadence === 'WEEKLY' ? 'weekly' : 'monthly',
+          timezone: parsed.data.timezone,
+          deliveryMethods: ['email', 'dashboard'],
+          deliveryConfig: {
+            email: { recipients, includeAttachment: true, attachmentFormat: 'pdf' },
+          },
+          scopeType: parsed.data.projectIds.length ? 'project' : 'organization',
+          scopeId: parsed.data.projectIds.length === 1 ? parsed.data.projectIds[0] : undefined,
+          runtimeReport: {
+            profile: 'execution_report',
+            definitionId: parsed.data.definitionId,
+            definitionVersion: parsed.data.definitionVersion,
+            templateId: parsed.data.templateId,
+            title: parsed.data.title,
+            projectIds: parsed.data.projectIds,
+            ownerId: parsed.data.ownerId,
+            approverId: parsed.data.approverId,
+            recipients,
+            cadence: parsed.data.cadence,
+            detailLevel: parsed.data.detailLevel,
+            snapshotId: parsed.data.snapshotId,
+          },
+        },
+        actor.organizationId,
+        actor.userId
+      );
+      res.status(201).json({ schedule });
+    })
+  );
+  router.post(
+    '/execution-reports/:reportRunId/deliver',
+    requireOrgRole('admin'),
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = InitiativeWorkReportDeliverySchema.safeParse(req.body);
+      if (!actor || !isExecutionReportE4Enabled()) {
+        res
+          .status(actor ? 404 : 401)
+          .json({ error: { code: actor ? 'FEATURE_DISABLED' : 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const reportRunId = firstParam(req.params.reportRunId);
+      const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
+        (item: any) => item.reportRunId === reportRunId
+      ) as any;
+      if (!run || run.workReport?.profile !== 'execution_report') {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const delivery = await deliverInitiativeWorkReport(
+        {
+          organizationId: actor.organizationId,
+          reportRunId,
+          approverId: actor.userId,
+          expectedVersion: parsed.data.expectedVersion,
+          receiptId: `execution-delivery-${reportRunId}`,
+          recipients: parsed.data.recipients,
+        },
+        {
+          unitOfWork: deps.unitOfWork,
+          reader: deps.reader,
+          sendEmail: deps.sendWorkReportEmail,
+          renderPdf: renderExecutionReportPdf as any,
+          now: deps.workReportNow,
+        }
+      );
+      if (!delivery.published) {
+        res.status(502).json({
+          error: { code: 'EMAIL_DELIVERY_FAILED' },
+          failed: delivery.failed,
+          pending: delivery.pending,
+          delivered: delivery.delivered,
+          receiptId: `execution-delivery-${reportRunId}`,
         });
         return;
       }
@@ -9141,6 +9420,7 @@ export async function runScheduledInitiativeWorkReport(
     id: string;
     organizationId: string;
     runtimeReport?: {
+      profile?: 'initiative_work_report' | 'execution_report';
       definitionId: string;
       definitionVersion: number;
       templateId: string;
@@ -9150,6 +9430,8 @@ export async function runScheduledInitiativeWorkReport(
       approverId: string;
       recipients: string[];
       cadence: 'WEEKLY' | 'MONTHLY';
+      detailLevel?: 'EXECUTIVE' | 'MANAGEMENT' | 'DETAILED';
+      snapshotId?: string;
     };
   },
   dependencies: InitiativeWorkReportDeliveryDependencies & {
@@ -9159,11 +9441,24 @@ export async function runScheduledInitiativeWorkReport(
     >;
   } = runtimeDependencies
 ): Promise<string> {
-  if (!isInitiativesWorkReportEnabled()) {
-    throw new Error('INITIATIVES_WORK_REPORT_DISABLED');
-  }
   const spec = schedule.runtimeReport;
-  if (!spec || !INITIATIVE_WORK_REPORT_TEMPLATES.includes(spec.templateId as any)) {
+  const profile = spec?.profile ?? 'initiative_work_report';
+  if (
+    (profile === 'initiative_work_report' && !isInitiativesWorkReportEnabled()) ||
+    (profile === 'execution_report' && !isExecutionReportE4Enabled())
+  ) {
+    throw new Error(
+      profile === 'execution_report'
+        ? 'EXECUTION_REPORT_E4_DISABLED'
+        : 'INITIATIVES_WORK_REPORT_DISABLED'
+    );
+  }
+  if (
+    !spec ||
+    (profile === 'initiative_work_report' &&
+      !INITIATIVE_WORK_REPORT_TEMPLATES.includes(spec.templateId as any)) ||
+    (profile === 'execution_report' && (!spec.snapshotId || !spec.detailLevel))
+  ) {
     throw new Error('INITIATIVE_WORK_REPORT_SCHEDULE_INVALID');
   }
   const definition = (await dependencies.reader.findReportDefinition(
@@ -9180,11 +9475,15 @@ export async function runScheduledInitiativeWorkReport(
   if (!publishedDefinition || spec.ownerId === spec.approverId) {
     throw new Error('INITIATIVE_WORK_REPORT_PUBLISHED_DEFINITION_REQUIRED');
   }
-  const captured = await dependencies.reader.buildInitiativeWorkReport(schedule.organizationId, {
-    title: spec.title,
-    templateId: spec.templateId as (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number],
-    projectIds: spec.projectIds,
-  });
+  const captured =
+    profile === 'execution_report'
+      ? await captureExecutionReportSnapshot(schedule.organizationId, spec)
+      : await dependencies.reader.buildInitiativeWorkReport(schedule.organizationId, {
+          title: spec.title,
+          templateId: spec.templateId as (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number],
+          projectIds: spec.projectIds,
+        });
+  if (!captured) throw new Error('EXECUTION_REPORT_SNAPSHOT_NOT_FOUND');
   if (captured.sources.length === 0) throw new Error('INITIATIVE_WORK_REPORT_NO_SOURCES');
   const now = new Date();
   const start = new Date(now);
@@ -9233,14 +9532,22 @@ export async function runScheduledInitiativeWorkReport(
           ? spec.projectIds.map((id) => `project:${id}`)
           : ['organization'],
         period: { start: start.toISOString(), end: now.toISOString() },
-        asOf: captured.content.generatedAt,
+        asOf: String(
+          (captured.content as any).generatedAt ??
+            (captured.content as any).asOf ??
+            captured.sources[0]?.capturedAt ??
+            now.toISOString()
+        ),
         sources: captured.sources as any,
         ownerId: spec.ownerId,
         approverId: spec.approverId,
         workReport: {
+          profile,
           title: spec.title,
           templateId: spec.templateId,
           cadence: spec.cadence,
+          detailLevel: spec.detailLevel,
+          snapshotId: spec.snapshotId,
           content: captured.content as unknown as Record<string, unknown>,
         },
       },
@@ -9296,7 +9603,9 @@ export async function runScheduledInitiativeWorkReport(
       receiptId,
       recipients: spec.recipients,
     },
-    dependencies
+    profile === 'execution_report'
+      ? { ...dependencies, renderPdf: renderExecutionReportPdf as any }
+      : dependencies
   );
   if (!delivery.published) throw new Error('INITIATIVE_WORK_REPORT_EMAIL_RETRY_REQUIRED');
   return reportRunId;

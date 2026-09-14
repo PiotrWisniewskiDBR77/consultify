@@ -37,6 +37,7 @@ export interface ReportSchedule {
   templateId?: string;
   reportType: string;
   runtimeReport?: {
+    profile?: 'initiative_work_report' | 'execution_report';
     definitionId: string;
     definitionVersion: number;
     templateId: string;
@@ -46,6 +47,8 @@ export interface ReportSchedule {
     approverId: string;
     recipients: string[];
     cadence: 'WEEKLY' | 'MONTHLY';
+    detailLevel?: 'EXECUTIVE' | 'MANAGEMENT' | 'DETAILED';
+    snapshotId?: string;
   };
   // Source data
   sourceAssessmentId?: string;
@@ -526,7 +529,10 @@ class ScheduledReportService {
       let initiativeWorkReportDelivered = false;
 
       // W6.1 — bridge do generatora M17 gdy deliverableType === 'bundle'.
-      if (scheduleData.reportType === 'initiative_work_report' && scheduleData.runtimeReport) {
+      if (
+        ['initiative_work_report', 'execution_report'].includes(scheduleData.reportType) &&
+        scheduleData.runtimeReport
+      ) {
         const runtime = await import('../routes/pmo/initiativesExecutionRuntime.routes.js');
         reportId = await runtime.runScheduledInitiativeWorkReport(scheduleData);
         initiativeWorkReportDelivered = true;

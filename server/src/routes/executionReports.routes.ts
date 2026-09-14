@@ -23,6 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { isExecutionReportE4Enabled } from '../config/executionReportE4Flag.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -126,7 +127,10 @@ const formatDatePl = (iso: string) => {
 };
 
 /** Ucieczka znaku `|`, żeby komórka nie rozbiła tabeli markdown. */
-const cell = (value: string) => String(value ?? '').replace(/\|/g, '\\|').replace(/\n+/g, ' ');
+const cell = (value: string) =>
+  String(value ?? '')
+    .replace(/\|/g, '\\|')
+    .replace(/\n+/g, ' ');
 
 /**
  * Migawka → markdown. Jedno źródło dla DOCX i PDF: `UnifiedExportService` renderuje
@@ -227,7 +231,8 @@ export function decodeSnapshotEntities<T>(value: T): T {
     }
     return current as unknown as T;
   }
-  if (Array.isArray(value)) return value.map((item) => decodeSnapshotEntities(item)) as unknown as T;
+  if (Array.isArray(value))
+    return value.map((item) => decodeSnapshotEntities(item)) as unknown as T;
   // Daty z pg wracają jako `Date`. Bez tego wyjątku rekurencja zamieniała je w `{}`
   // i rejestr pokazywał „UNKNOWN – UNKNOWN" w kolumnie Okres (zmierzone na zrzucie 02).
   if (value instanceof Date) return value;
@@ -254,6 +259,71 @@ const rowToDto = (row: any) => ({
   createdByName: row.createdByName,
   publishedAt: row.publishedAt,
 });
+
+async function withCanonicalKpiResults(
+  organizationId: string,
+  snapshot: ExecutionReportSnapshotPayload
+): Promise<ExecutionReportSnapshotPayload> {
+  if (!isExecutionReportE4Enabled()) return snapshot;
+  const kpis = (await dbAll(
+    `SELECT k.id, k.name, k.target_value AS "targetValue", k.unit,
+            i.title AS "initiativeTitle", latest.value AS "actualValue",
+            latest.measured_at AS "measuredAt"
+       FROM initiative_kpis k
+       JOIN initiatives i ON i.id = k.initiative_id
+       LEFT JOIN LATERAL (
+         SELECT m.value, m.measured_at
+           FROM kpi_measurements m
+          WHERE m.kpi_id = k.id
+          ORDER BY m.measured_at DESC
+          LIMIT 1
+       ) latest ON TRUE
+      WHERE i.organization_id = ?
+      ORDER BY i.title, k.sort_order, k.name`,
+    [organizationId]
+  )) as any[];
+  const resultRows = kpis.map((kpi) => ({
+    initiative: String(kpi.initiativeTitle ?? '—'),
+    kpi: String(kpi.name ?? '—'),
+    actual:
+      kpi.actualValue == null
+        ? 'Not measured'
+        : `${kpi.actualValue}${kpi.unit ? ` ${kpi.unit}` : ''}`,
+    target:
+      kpi.targetValue == null ? 'No target' : `${kpi.targetValue}${kpi.unit ? ` ${kpi.unit}` : ''}`,
+    measuredAt: kpi.measuredAt ? new Date(kpi.measuredAt).toISOString() : '—',
+  }));
+  return {
+    ...snapshot,
+    metrics: [
+      ...snapshot.metrics,
+      {
+        id: 'canonical-kpi-results',
+        label: 'KPI results',
+        value: String(resultRows.length),
+        tone: 'NEUTRAL',
+      },
+    ],
+    sections: [
+      ...snapshot.sections,
+      {
+        id: 'canonical-kpi-results',
+        title: 'KPI results',
+        table: {
+          columns: [
+            { id: 'initiative', label: 'Initiative' },
+            { id: 'kpi', label: 'KPI' },
+            { id: 'actual', label: 'Result' },
+            { id: 'target', label: 'Target' },
+            { id: 'measuredAt', label: 'Measured at' },
+          ],
+          rows: resultRows,
+        },
+        empty: 'No KPI results have been recorded for initiatives in this organization.',
+      },
+    ],
+  };
+}
 
 /** GET /api/execution-reports/definitions — katalog z poziomem i znacznikiem MVP. */
 router.get(
@@ -367,7 +437,7 @@ router.post(
       res.status(400).json({ error: 'VALIDATION_FAILED', code: 'SNAPSHOT_INVALID' });
       return;
     }
-    const snapshot = parsed.data;
+    const snapshot = await withCanonicalKpiResults(orgId, parsed.data);
     const meta = EXECUTION_REPORT_CATALOG[snapshot.definitionKey];
     if (!meta) {
       res.status(400).json({ error: 'UNKNOWN_DEFINITION' });
@@ -383,9 +453,10 @@ router.post(
     // którego nasze tokeny nie niosą — `splitDisplayName` daje wtedy zastępcze „User"
     // i taki podpis trafiłby na dokument raportu (zmierzone 06.09 na pierwszej migawce).
     const authorRow = req.user?.id
-      ? ((await dbGet(`SELECT first_name AS "firstName", last_name AS "lastName" FROM users WHERE id = ?`, [
-          req.user.id,
-        ])) as any)
+      ? ((await dbGet(
+          `SELECT first_name AS "firstName", last_name AS "lastName" FROM users WHERE id = ?`,
+          [req.user.id]
+        )) as any)
       : null;
     const authorName =
       [authorRow?.firstName, authorRow?.lastName].filter(Boolean).join(' ').trim() ||
@@ -503,7 +574,9 @@ const exportSnapshot = (format: 'docx' | 'pdf') =>
         format,
         error: (error as Error)?.message,
       });
-      res.status(500).json({ error: 'EXPORT_FAILED', code: `EXPORT_${format.toUpperCase()}_FAILED` });
+      res
+        .status(500)
+        .json({ error: 'EXPORT_FAILED', code: `EXPORT_${format.toUpperCase()}_FAILED` });
     }
   });
 

@@ -51602,6 +51602,32 @@
     }
   },
   "executionReports": {
+    "e4": {
+      "title": "Raporty Realizacji",
+      "created": "Raport Realizacji zamrożono do zatwierdzenia.",
+      "delivered": "Raport został wysłany.",
+      "approve": "Zatwierdź",
+      "send": "Wyślij e-mailem",
+      "downloadPdf": "Pobierz PDF",
+      "noSources": "Brak źródeł dowodowych",
+      "empty": "Nie ma jeszcze raportów Realizacji",
+      "emptyHint": "Utwórz pierwszy nadzorowany raport z bieżących danych Realizacji i wyników KPI.",
+      "detail": {
+        "label": "Szczegółowość",
+        "executive": "Zarządczy",
+        "management": "Menedżerski",
+        "detailed": "Szczegółowy"
+      },
+      "cadence": { "on_demand": "Na żądanie", "weekly": "Co tydzień", "monthly": "Co miesiąc" },
+      "fields": {
+        "title": "Tytuł raportu",
+        "recipients": "Adresaci",
+        "template": "Szablon",
+        "definition": "Definicja nadzorowana",
+        "approver": "Zatwierdzający"
+      },
+      "errors": { "required": "Uzupełnij tytuł, adresatów, szablon, definicję i zatwierdzającego." }
+    },
     "definitionsHeading": "Szablony raportów",
     "definitionsHelp": "Cztery szablony — po jednym na poziom raportowania — generują raport. Użyj menu wiersza („Wygeneruj raport\"), żeby zbudować migawkę; pozostałe są widoczne i wchodzą w Fali 2.",
     "subtitle": "Zamrożona migawka danych realizacji",

@@ -34,9 +34,13 @@ export interface ReportRun {
   asOf: string;
   /** Immutable, human-readable work-report payload captured from tenant data. */
   workReport: {
+    /** One lifecycle, multiple report profiles. Missing means the original P1 profile. */
+    profile?: 'initiative_work_report' | 'execution_report';
     title: string;
     templateId: string;
     cadence: 'ON_DEMAND' | 'WEEKLY' | 'MONTHLY';
+    detailLevel?: 'EXECUTIVE' | 'MANAGEMENT' | 'DETAILED';
+    snapshotId?: string;
     content: Record<string, unknown>;
   } | null;
   sources: ReportSource[];

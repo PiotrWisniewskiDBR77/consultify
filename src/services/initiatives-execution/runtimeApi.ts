@@ -2058,6 +2058,27 @@ export function deliverInitiativeWorkReport(reportRunId: string, command: unknow
     command
   );
 }
+export async function downloadExecutionReportProfilePdf(reportRunId: string): Promise<Blob> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/execution-reports/${encodeURIComponent(reportRunId)}/pdf`,
+    { credentials: 'include' }
+  );
+  if (!response.ok) {
+    const body = await readJson(response);
+    throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  }
+  return response.blob();
+}
+export function deliverExecutionReportProfile(reportRunId: string, command: unknown) {
+  return allocationRequest(
+    `/execution-reports/${encodeURIComponent(reportRunId)}/deliver`,
+    'POST',
+    command
+  );
+}
+export function createExecutionReportSchedule(command: unknown) {
+  return allocationRequest('/execution-reports/schedules', 'POST', command);
+}
 export function requestDeliveryAcceptance(id: string, command: unknown) {
   return allocationRequest(
     `/delivery-acceptances/${encodeURIComponent(id)}/request`,
