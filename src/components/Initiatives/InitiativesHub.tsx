@@ -3094,10 +3094,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         filterControls={rightControls}
         commandRowContent={
+          /* Pigułki rejestru cyklu życia (Wszystkie / Do zatwierdzenia /
+             W realizacji) filtrują INICJATYWY po statusie. Zakładki, które nie
+             pokazują rejestru, dostają `undefined` — inaczej pasek obiecuje
+             filtr, który nic nie robi. `workReport` dołączony 14.09 (skaza 5
+             przejazdu Z-29): jego listą są PRZEBIEGI raportu, nie inicjatywy. */
           activeTab === 'plan' ||
           activeTab === 'capacity' ||
           activeTab === 'portfolioHealth' ||
-          activeTab === 'transitionInbox'
+          activeTab === 'transitionInbox' ||
+          activeTab === 'workReport'
             ? undefined
             : isBulkMode
               ? bulkBarContent
@@ -3109,7 +3115,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
            tu jeszcze „Pokaż panel" (`useStandardPanelControls`), więc oba
            przełączniki stoją w tym samym miejscu co w Mojej Pracy. */
         commandRowRightContent={
-          activeTab === 'plan' || activeTab === 'capacity' || activeTab === 'portfolioHealth'
+          activeTab === 'plan' ||
+          activeTab === 'capacity' ||
+          activeTab === 'portfolioHealth' ||
+          activeTab === 'workReport'
             ? undefined
             : isBulkMode
               ? undefined
