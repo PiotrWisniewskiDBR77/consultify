@@ -723,7 +723,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'z30-inicjatywy-obciazenie': {
     label:
-      'Z-30 (14.09) — REALNY <InitiativesHub> W CAŁOŚCI (Menu 1/2/3) z zakładką „Obciążenie" (heatmapa Q1 P3, InitiativeWorkloadSurface) — wymaga serwera uruchomionego z VITE_INITIATIVES_WORKLOAD=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/execution-control/capacity/initiative-workload: 4 osoby × 8 tygodni (70/90/120% + 1 krytyczna „No capacity"). &tab=capacity &openPreview=1 &lang=pl|en &theme=light|dark',
+      'Z-30 (14.09) — REALNY <InitiativesHub> W CAŁOŚCI (Menu 1/2/3) z zakładką „Obciążenie" (heatmapa Q1 P3, InitiativeWorkloadSurface) — wymaga serwera uruchomionego z VITE_INITIATIVES_WORKLOAD=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/execution-control/capacity/initiative-workload: 4 osoby × 8 tygodni (70/90/120% + 1 krytyczna „No capacity"). &tab=capacity &openPreview=1 &e234=1 &openProposals=1 &lang=pl|en &theme=light|dark',
     render: () => <Z30InicjatywyObciazenieScreen />,
   },
   'h1b-skrzynka-przejsc': {

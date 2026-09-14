@@ -207,11 +207,136 @@ const json = (body: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
+const params = new URLSearchParams(window.location.search);
+const e234 = params.get('e234') === '1';
 const originalFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = String(input);
+  const path = new URL(url, window.location.origin).pathname;
+  if (path === '/api/organizations/current') {
+    return json({
+      organizations: [
+        {
+          id: 'org-dbr77-demo',
+          name: 'DBR77 Demo',
+          role: 'OWNER',
+          access_type: 'OWNER',
+          is_current: true,
+        },
+      ],
+    });
+  }
+  if (/^\/api\/organizations\/[^/]+\/members$/.test(path)) {
+    return json([
+      {
+        userId: 'user-piotr-demo',
+        name: 'Piotr Wiśniewski',
+        email: 'piotr@example.test',
+        role: 'OWNER',
+        status: 'active',
+        joinedAt: '2026-08-01T08:00:00.000Z',
+      },
+    ]);
+  }
+  if (path === '/api/users') {
+    return json({
+      users: [
+        {
+          id: 'user-piotr-demo',
+          firstName: 'Piotr',
+          lastName: 'Wiśniewski',
+          email: 'piotr@example.test',
+          role: 'ADMIN',
+        },
+      ],
+      total: 1,
+    });
+  }
+  if (path === '/api/v8/planning/pending-decisions') {
+    return json({ pendingDecisionChains: [] });
+  }
+  if (path === '/api/v8/admin/flags') {
+    return json({ flags: [] });
+  }
   if (url.includes('/api/execution-control/capacity/initiative-workload')) {
+    if (e234) {
+      return json({
+        ...WORKLOAD_RESPONSE,
+        people: PEOPLE.map((person) =>
+          person.userId === 'u-green'
+            ? { ...person, userId: 'user-piotr-demo', name: 'Piotr Wiśniewski' }
+            : person
+        ),
+        rows: ROWS.map((row) =>
+          row.userId === 'u-green'
+            ? { ...row, userId: 'user-piotr-demo', name: 'Piotr Wiśniewski' }
+            : row
+        ),
+      });
+    }
     return json(WORKLOAD_RESPONSE);
+  }
+  if (e234 && url.includes('/api/users/user-piotr-demo/capacity')) {
+    return json({
+      userId: 'user-piotr-demo',
+      weeklyCapacityHours: 36,
+      availabilityPercent: 90,
+    });
+  }
+  if (e234 && url.includes('/api/initiatives/runtime-v1/workload-proposals')) {
+    return json({
+      mode: 'RULE_BASED_AI',
+      planningOnly: true,
+      applied: false,
+      proposals: [
+        {
+          proposalId: 'task-plan-1:u-amber:2026-09-14',
+          taskId: 'task-plan-1',
+          taskTitle: 'Prepare ERP pilot plan',
+          initiativeId: 'ini-1',
+          initiativeStatus: 'APPROVED',
+          weekStart: '2026-09-14',
+          fromUserId: 'u-red',
+          fromUserName: 'Ewa Lis',
+          toUserId: 'u-amber',
+          toUserName: 'Marek Sikora',
+          proposedHours: 8,
+          rationale: 'Move 8 h from an overloaded plan to available capacity',
+          requiresHumanApproval: true,
+          applied: false,
+        },
+      ],
+    });
+  }
+  if (
+    e234 &&
+    url.endsWith('/api/initiatives/runtime-v1/report-definitions') &&
+    (!init?.method || init.method === 'GET')
+  ) {
+    return json({ items: [{ definitionId: 'workload-definition' }] });
+  }
+  if (
+    e234 &&
+    url.endsWith('/api/initiatives/runtime-v1/report-definitions/workload-definition')
+  ) {
+    return json({
+      definitionId: 'workload-definition',
+      versions: [
+        {
+          definitionVersion: 1,
+          state: 'PUBLISHED',
+          ownerId: 'user-piotr-demo',
+          approverId: 'user-approver-demo',
+          audience: ['pmo@example.test'],
+          name: 'Weekly workload review',
+          outputSchema: { kind: 'initiative_workload_report' },
+          sourceBindings: [{ sourceType: 'initiative_workload' }],
+        },
+      ],
+    });
+  }
+  if (e234 && url.includes('/api/initiatives/runtime-v1/report-runs/')) {
+    return json({ aggregateVersion: 3 });
   }
   if (url.includes('/api/initiatives/lifecycle-transition-proposals')) {
     return json({ proposals: [] });
@@ -231,8 +356,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   return originalFetch(input, init);
 };
 
-const params = new URLSearchParams(window.location.search);
 const openPreview = params.get('openPreview') === '1';
+const openProposals = params.get('openProposals') === '1';
 
 export default function Z30InicjatywyObciazenieScreen(): React.ReactElement {
   useEffect(() => {
@@ -245,6 +370,24 @@ export default function Z30InicjatywyObciazenieScreen(): React.ReactElement {
       if (row instanceof HTMLElement) row.click();
     }, 500);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!openProposals) return;
+    const proposalTimer = window.setTimeout(() => {
+      const trigger = Array.from(document.querySelectorAll('button')).find((button) =>
+        /Propose plan moves|Zaproponuj przesunięcia planu/i.test(button.textContent || '')
+      );
+      if (trigger instanceof HTMLElement) trigger.click();
+    }, 650);
+    const previewTimer = window.setTimeout(() => {
+      const row = document.querySelector('[data-testid="workload-proposals-panel"] tbody tr');
+      if (row instanceof HTMLElement) row.click();
+    }, 1100);
+    return () => {
+      window.clearTimeout(proposalTimer);
+      window.clearTimeout(previewTimer);
+    };
   }, []);
 
   return (

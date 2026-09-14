@@ -260,8 +260,56 @@ describe('InitiativeWorkloadSurface E1', () => {
     });
     renderSurface(1);
 
-    expect(await screen.findByText('Prepare rollout')).toBeInTheDocument();
+    const task = await screen.findByText('Prepare rollout');
     expect(screen.getByText('Ben Brown → Anna Adams')).toBeInTheDocument();
     expect(screen.getByText(/do not change running assignments/i)).toBeInTheDocument();
+    const panel = screen.getByTestId('workload-proposals-panel');
+    expect(within(panel).getByRole('button', { name: 'Row actions' })).toBeInTheDocument();
+
+    fireEvent.click(task);
+    expect(await within(panel).findByText('Planning only')).toBeInTheDocument();
+    expect(within(panel).getAllByText('Rule')).toHaveLength(2);
+  });
+
+  it('creates and freezes a workload run through the shared report engine', async () => {
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
+    mocks.listReportDefinitions.mockResolvedValue({ items: [{ definitionId: 'definition-1' }] });
+    mocks.getReportDefinition.mockResolvedValue({
+      definitionId: 'definition-1',
+      versions: [
+        {
+          definitionVersion: 3,
+          state: 'PUBLISHED',
+          ownerId: 'anna',
+          approverId: 'ben',
+          audience: ['lead@example.test'],
+          name: 'Weekly workload',
+          outputSchema: { kind: 'initiative_workload_report' },
+          sourceBindings: [{ sourceType: 'initiative_workload' }],
+        },
+      ],
+    });
+    mocks.createReportRun.mockResolvedValue({});
+    mocks.transitionReportRun.mockResolvedValue({});
+
+    renderSurface();
+
+    const generate = await screen.findByRole('button', { name: 'Generate workload report' });
+    await waitFor(() => expect(generate).toBeEnabled());
+    fireEvent.click(generate);
+
+    await waitFor(() => expect(mocks.createReportRun).toHaveBeenCalledTimes(1));
+    expect(mocks.createReportRun).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        definitionRef: { definitionId: 'definition-1', version: 3 },
+        workReport: expect.objectContaining({ templateId: 'WORKLOAD_CAPACITY' }),
+      })
+    );
+    expect(mocks.transitionReportRun.mock.calls.map(([, input]) => input.action)).toEqual([
+      'VALIDATE',
+      'FREEZE',
+    ]);
+    expect(await screen.findByText(/Report frozen for approval/)).toBeInTheDocument();
   });
 });

@@ -16,9 +16,11 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
   const foreignProjectId = randomUUID();
   const initiativeId = randomUUID();
   const foreignInitiativeId = randomUUID();
+  const runningInitiativeId = randomUUID();
   const availableUserId = randomUUID();
   const zeroCapacityUserId = randomUUID();
   const scopedTaskId = randomUUID();
+  const runningTaskId = randomUUID();
   let sql: Client;
   let app: Express;
   let authorization: string;
@@ -87,15 +89,24 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     await sql.query(
       `INSERT INTO initiatives (id,organization_id,project_id,name,status,created_at,updated_at)
        VALUES ($1,$2,$3,'Apollo initiative','PENDING_APPROVAL',now(),now()),
-              ($4,$2,$5,'Other initiative','APPROVED',now(),now())`,
-      [initiativeId, organizationId, projectId, foreignInitiativeId, foreignProjectId]
+              ($4,$2,$5,'Other initiative','APPROVED',now(),now()),
+              ($6,$2,$3,'Running initiative','IN_EXECUTION',now(),now())`,
+      [
+        initiativeId,
+        organizationId,
+        projectId,
+        foreignInitiativeId,
+        foreignProjectId,
+        runningInitiativeId,
+      ]
     );
     await sql.query(
       `INSERT INTO tasks
          (id,organization_id,project_id,initiative_id,title,status,assignee_id,estimated_hours,due_date,created_at,updated_at)
        VALUES ($1,$2,$3,$4,'Scoped demand','todo',$5,30,current_date + 2,now(),now()),
               ($6,$2,$7,$8,'Excluded demand','todo',$5,10,current_date + 2,now(),now()),
-              ($9,$2,$7,$4,'Canonical project wins','todo',$10,8,current_date + 2,now(),now())`,
+              ($9,$2,$7,$4,'Canonical project wins','todo',$10,8,current_date + 2,now(),now()),
+              ($11,$2,$3,$12,'Running demand','todo',$5,12,current_date + 2,now(),now())`,
       [
         scopedTaskId,
         organizationId,
@@ -107,6 +118,8 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
         foreignInitiativeId,
         randomUUID(),
         zeroCapacityUserId,
+        runningTaskId,
+        runningInitiativeId,
       ]
     );
 
@@ -203,6 +216,15 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
   });
 
   it('persists availability, proposes planning moves without mutation, and freezes a shared-engine workload report', async () => {
+    process.env.ENABLE_INITIATIVES_WORKLOAD = 'false';
+    const disabledProposal = await request(app)
+      .post('/api/initiatives/runtime-v1/workload-proposals')
+      .set('Authorization', authorization)
+      .send({ weeks: 1, projectId });
+    expect(disabledProposal.status).toBe(404);
+    expect(disabledProposal.body.error?.code).toBe('FEATURE_DISABLED');
+    process.env.ENABLE_INITIATIVES_WORKLOAD = 'true';
+
     const capacity = await request(app)
       .patch(`/api/users/${availableUserId}/capacity`)
       .set('Authorization', approverAuthorization)
@@ -225,6 +247,9 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     const beforeAssignee = (
       await sql.query('SELECT assignee_id FROM tasks WHERE id=$1', [scopedTaskId])
     ).rows[0]?.assignee_id;
+    const beforeRunningAssignee = (
+      await sql.query('SELECT assignee_id FROM tasks WHERE id=$1', [runningTaskId])
+    ).rows[0]?.assignee_id;
     const proposal = await request(app)
       .post('/api/initiatives/runtime-v1/workload-proposals')
       .set('Authorization', authorization)
@@ -237,9 +262,16 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     });
     expect(proposal.body.proposals.length).toBeGreaterThan(0);
     expect(
+      proposal.body.proposals.some((item: { taskId: string }) => item.taskId === runningTaskId)
+    ).toBe(false);
+    expect(
       (await sql.query('SELECT assignee_id FROM tasks WHERE id=$1', [scopedTaskId])).rows[0]
         ?.assignee_id
     ).toBe(beforeAssignee);
+    expect(
+      (await sql.query('SELECT assignee_id FROM tasks WHERE id=$1', [runningTaskId])).rows[0]
+        ?.assignee_id
+    ).toBe(beforeRunningAssignee);
 
     const definitionId = randomUUID();
     const reportRunId = randomUUID();
@@ -303,10 +335,7 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
       ).status
     ).toBe(200);
 
-    const createRun = await request(app)
-      .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}`)
-      .set('Authorization', authorization)
-      .send({
+    const createRunPayload = {
         definitionRef: { definitionId, version: 1 },
         parentRunRef: null,
         audience: ['capacity@example.test'],
@@ -324,7 +353,20 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
         approverId: availableUserId,
         expectedVersion: 0,
         clientRequestId: randomUUID(),
-      });
+      };
+    process.env.ENABLE_INITIATIVES_WORKLOAD = 'false';
+    const disabledRun = await request(app)
+      .post(`/api/initiatives/runtime-v1/report-runs/${randomUUID()}`)
+      .set('Authorization', authorization)
+      .send(createRunPayload);
+    expect(disabledRun.status).toBe(404);
+    expect(disabledRun.body.error?.code).toBe('FEATURE_DISABLED');
+    process.env.ENABLE_INITIATIVES_WORKLOAD = 'true';
+
+    const createRun = await request(app)
+      .post(`/api/initiatives/runtime-v1/report-runs/${reportRunId}`)
+      .set('Authorization', authorization)
+      .send({ ...createRunPayload, clientRequestId: randomUUID() });
     expect(createRun.status, JSON.stringify(createRun.body)).toBe(201);
     for (const [action, expectedVersion] of [
       ['VALIDATE', 1],

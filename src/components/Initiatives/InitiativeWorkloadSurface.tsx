@@ -48,6 +48,11 @@ interface WorkloadTableRow extends TableRow {
   cells: Record<string, InitiativeWorkloadRow | undefined>;
 }
 
+interface ProposalTableRow extends InitiativeWorkloadProposal, TableRow {
+  id: string;
+  title: string;
+}
+
 export const workloadBand = (utilizationPercent: number): 'green' | 'amber' | 'red' => {
   if (utilizationPercent < 85) return 'green';
   if (utilizationPercent <= 100) return 'amber';
@@ -104,6 +109,7 @@ export const InitiativeWorkloadSurface: React.FC<{
   const [capacityDraft, setCapacityDraft] = useState({ hours: 40, percent: 100 });
   const [savingCapacity, setSavingCapacity] = useState(false);
   const [proposals, setProposals] = useState<InitiativeWorkloadProposal[]>([]);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
   const [definitions, setDefinitions] = useState<WorkloadDefinition[]>([]);
   const [definitionRef, setDefinitionRef] = useState('');
@@ -387,6 +393,26 @@ export const InitiativeWorkloadSurface: React.FC<{
     ],
     [t]
   );
+  const proposalRows = useMemo<ProposalTableRow[]>(
+    () =>
+      proposals.map((proposal) => ({
+        ...proposal,
+        id: proposal.proposalId,
+        title: proposal.taskTitle,
+      })),
+    [proposals]
+  );
+  const selectedProposal =
+    proposalRows.find((proposal) => proposal.id === selectedProposalId) ?? null;
+  const proposalRowMenu = (row: TableRow): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'preview',
+        label: t('common.preview', 'Preview'),
+        onClick: () => setSelectedProposalId(String(row.id)),
+      },
+    ],
+  });
   const workloadRowMenu = (row: TableRow): StandardRowMenu => ({
     primary: [
       {
@@ -495,7 +521,7 @@ export const InitiativeWorkloadSurface: React.FC<{
               capacityDraft.percent < 0 ||
               capacityDraft.percent > 100
             }
-            className="inline-flex h-9 items-center gap-2 rounded-full bg-c-text px-3 text-sm font-semibold text-c-bg focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-c-border-strong bg-c-surface-raised px-3 text-sm font-semibold text-c-text focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
           >
             <Save size={15} />
             {savingCapacity
@@ -566,7 +592,10 @@ export const InitiativeWorkloadSurface: React.FC<{
       </div>
 
       {proposals.length > 0 && (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+        <div
+          className="min-h-72 rounded-lg border border-c-border-subtle bg-c-surface p-3"
+          data-testid="workload-proposals-panel"
+        >
           <div className="mb-2 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-c-text">
@@ -580,12 +609,87 @@ export const InitiativeWorkloadSurface: React.FC<{
               </p>
             </div>
           </div>
-          <StandardTable
-            columns={proposalColumns}
-            data={proposals.map((proposal) => ({ ...proposal, id: proposal.proposalId }))}
-            persistKey="initiatives.workload.proposals.v1"
-            emptyMessage={t('initiatives.workload.noProposals', 'No safe planning move was found.')}
-          />
+          <TableWithPreviewLayout<ProposalTableRow>
+            selectedId={selectedProposalId}
+            selectedItem={selectedProposal}
+            onSelect={setSelectedProposalId}
+            onOpenFull={() => undefined}
+            itemIds={proposalRows.map((proposal) => proposal.id)}
+            getItemById={(id) => proposalRows.find((proposal) => proposal.id === id) ?? null}
+            previewOpen={Boolean(selectedProposal)}
+            renderPreview={(proposal) => (
+              <StandardPreview
+                embedded
+                title={proposal.taskTitle}
+                onClose={() => setSelectedProposalId(null)}
+                meta={{
+                  pills: [
+                    {
+                      label: initiativeStatusLabel(t, proposal.initiativeStatus),
+                      tone: 'neutral',
+                    },
+                    {
+                      label: t('initiatives.workload.proposalPlanningOnly', 'Planning only'),
+                      tone: 'info',
+                    },
+                  ],
+                }}
+                details={{
+                  text: proposal.rationale,
+                  properties: [
+                    {
+                      id: 'move',
+                      label: t('initiatives.workload.proposalMove', 'Suggested move'),
+                      value: `${proposal.fromUserName} → ${proposal.toUserName}`,
+                    },
+                    {
+                      id: 'hours',
+                      label: t('initiatives.workload.proposalHours', 'Hours'),
+                      value: `${proposal.proposedHours} h`,
+                    },
+                    {
+                      id: 'week',
+                      label: t('initiatives.workload.proposalWeek', 'Week'),
+                      value: proposal.weekStart,
+                    },
+                  ],
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(
+                      `${proposal.taskTitle}: ${proposal.fromUserName} → ${proposal.toUserName}, ${proposal.proposedHours} h`
+                    );
+                  },
+                }}
+                ai={{ hints: [proposal.rationale], disabled: false }}
+                relations={[
+                  {
+                    id: proposal.initiativeId,
+                    label: t('initiatives.workload.proposalInitiative', 'Initiative'),
+                    type: 'initiative',
+                  },
+                ]}
+                whatsNext={{
+                  items: [],
+                  note: t(
+                    'initiatives.workload.proposalsDisclaimer',
+                    'Suggestions require human approval and do not change running assignments.'
+                  ),
+                }}
+              />
+            )}
+          >
+            <StandardTable
+              columns={proposalColumns}
+              data={proposalRows}
+              selectedRowId={selectedProposalId}
+              onRowClick={(row) => setSelectedProposalId(String(row.id))}
+              rowMenu={proposalRowMenu}
+              persistKey="initiatives.workload.proposals.v1"
+              emptyMessage={t(
+                'initiatives.workload.noProposals',
+                'No safe planning move was found.'
+              )}
+            />
+          </TableWithPreviewLayout>
         </div>
       )}
 
