@@ -1,0 +1,11 @@
+{
+  "package": "F2-3 PMO E1",
+  "branch": "codex/f2-3-pmo-20260913",
+  "baseSha": "bc40d5327c6cf133f8cfd2b0e68a5295fb782189",
+  "scope": "review-and-ssot-only",
+  "files": [
+    {"path": "docs/ssot/PMO_METODYKA_SSOT.md", "sha256": "6db83db60f95655ebdc7e872bdc67342c2f2463937283bb92689691fb36d76d5"},
+    {"path": "evidence/f2-3-pmo/e1/STATUS_MEASUREMENT.txt", "sha256": "acf7cb387cbdf191bc6166ce9b13611892cc0a7c05b66b3b801eda2134da8d78"},
+    {"path": "evidence/f2-3-pmo/e1/SOURCE_REACHABILITY_AUDIT.txt", "sha256": "3d0eb0b4b7087177d4ee2c575a1b43ea22eaa5f398fc2bb7d4fc564e137868a4"}
+  ]
+}
