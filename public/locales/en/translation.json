@@ -51117,6 +51117,10 @@
     "exit": "Exit",
     "methodPack": "Method Pack {{version}}",
     "sessionShort": "Session {{id}}",
+    "readOnly": {
+      "banner": "Read only — you are not a participant of this session",
+      "tooltip": "Read only — you are not a participant of this session"
+    },
     "saveNow": "Save now",
     "settings": "Settings",
     "moreOptions": "More options",

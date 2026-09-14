@@ -79,6 +79,14 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  /**
+   * Z-54 (fala D3, 2026-09-14) — podpowiedź „dlaczego to nieaktywne".
+   * Sam wygaszony przycisk nie niesie powodu; ta sama treść co plakietka
+   * w powłoce, żeby użytkownik dostał odpowiedź tam, gdzie klika.
+   */
+  const readOnlyHint = readOnly
+    ? t('methodWorkspace.readOnly.tooltip', 'Read only — you are not a participant of this session')
+    : undefined;
   const EVIDENCE_LABEL = useMemo(() => etykietyDowodu(t), [t]);
   const [skipReasonCode, setSkipReasonCode] = useState<DrdSkipReasonCode | ''>('');
   const [skipping, setSkipping] = useState(false);
@@ -234,6 +242,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                 id={`answer-${q.question.questionId}`}
                 value={q.answerText}
                 disabled={readOnly}
+                title={readOnlyHint}
                 onChange={(e) => onAnswerChange(q.question.questionId, e.target.value)}
                 rows={6}
                 className="min-h-[9.5rem] flex-1 rounded-lg border border-c-border bg-c-surface p-3 text-base leading-relaxed text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -248,6 +257,9 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             </div>
           </div>
 
+          {/* Z-54: `title` na opakowaniu, bo przeglądarka nie pokazuje
+              tooltipa z wyłączonego <button> w środku. */}
+          <span title={readOnlyHint} className="contents">
           <AnswerStateControl
             disabled={readOnly}
             value={q.answerState}
@@ -255,6 +267,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             resolutionData={{ ...resolutionData, questionId: q.question.questionId }}
             onResolutionAction={(action) => onResolutionAction(q.question.questionId, action)}
           />
+          </span>
 
           {/* Evidence drop zone */}
           <div
@@ -370,6 +383,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           type="button"
           onClick={onSave}
           disabled={readOnly}
+          title={readOnlyHint}
           className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border px-3.5 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           {t('common.save', 'Save')}
@@ -402,6 +416,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             type="button"
             onClick={() => setSkipping(true)}
             disabled={readOnly}
+            title={readOnlyHint}
             className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <SkipForward size={13} />

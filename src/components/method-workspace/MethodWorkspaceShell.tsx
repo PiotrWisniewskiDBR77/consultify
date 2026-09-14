@@ -26,6 +26,7 @@
  */
 import {
   AlertTriangle,
+  Eye,
   LayoutGrid,
   LogOut,
   MessageSquareText,
@@ -478,6 +479,30 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Z-54 (fala D3, 2026-09-14) — POWÓD tylko-do-odczytu, nie sam skutek.
+          PREMISA ZMIERZONA na 08c1bb7a26: `GET /api/method/sessions/:id` dla
+          cudzej sesji zwraca `roles: []`, więc DrdHttpMethodWorkspaceScreen
+          liczy `canWrite === false` (linia 677) i podaje tu `readOnly`.
+          Skutek był widoczny — wszystkie pstryczki i „Save" wygaszone — ale
+          NIGDZIE nie było napisane DLACZEGO, więc ekran wyglądał na zepsuty.
+          Ton NEUTRALNY (c-surface-raised / c-text-secondary), nie crimson:
+          brak uprawnienia do zapisu to stan normalny, nie awaria. */}
+      {readOnly && (
+        <div
+          role="status"
+          data-testid="method-workspace-readonly-banner"
+          className="flex items-center gap-2 border-b border-c-border bg-c-surface-raised px-4 py-2 text-xs text-c-text-secondary"
+        >
+          <Eye size={13} aria-hidden="true" />
+          <span>
+            {t(
+              'methodWorkspace.readOnly.banner',
+              'Read only — you are not a participant of this session'
+            )}
+          </span>
         </div>
       )}
 

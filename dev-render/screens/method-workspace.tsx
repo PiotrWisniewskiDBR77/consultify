@@ -34,6 +34,10 @@ import type {
 const params = new URLSearchParams(window.location.search);
 const view = (params.get('view') || 'interview') as MethodWorkspaceViewMode;
 const state = params.get('state') || 'default';
+/** Z-54 (fala D3, 2026-09-14): &readOnly=1 odtwarza stan cudzej sesji
+ *  (`GET /api/method/sessions/:id` -> `roles: []` -> canWrite === false),
+ *  żeby dało się ZOBACZYĆ plakietkę powodu w REALNEJ powłoce, nie w atrapie. */
+const readOnly = params.get('readOnly') === '1';
 
 // ── Mock data ────────────────────────────────────────────────────────────
 
@@ -312,6 +316,7 @@ function Screen(): React.ReactElement {
           onLetMeWorkManually: () => setMode('guided_manual'),
           mode,
         }}
+        readOnly={readOnly}
         matrixProps={{
           rows: MATRIX_ROWS,
           levels: [1, 2, 3, 4, 5],

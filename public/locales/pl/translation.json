@@ -51495,6 +51495,10 @@
     "exit": "Wyjdź",
     "methodPack": "Method Pack {{version}}",
     "sessionShort": "Sesja {{id}}",
+    "readOnly": {
+      "banner": "Tylko do odczytu — nie jesteś uczestnikiem tej sesji",
+      "tooltip": "Tylko do odczytu — nie jesteś uczestnikiem tej sesji"
+    },
     "saveNow": "Zapisz teraz",
     "settings": "Ustawienia",
     "moreOptions": "Więcej opcji",
