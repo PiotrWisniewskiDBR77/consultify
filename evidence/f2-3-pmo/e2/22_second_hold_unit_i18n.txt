@@ -1,0 +1,22 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/f2-3-pmo-20260913
+
+ ✓ src/components/MyWork/__tests__/MyProjects.pmoE2.contract.test.ts > F2-3 E2 MyProjects contract > uses the standard list shell for both projects and members 34ms
+ ✓ src/components/MyWork/__tests__/MyProjects.pmoE2.contract.test.ts > F2-3 E2 MyProjects contract > exposes project creation, role descriptions, responsibility matrix and communication configuration 1ms
+ ✓ src/components/MyWork/__tests__/MyProjects.pmoE2.contract.test.ts > F2-3 E2 MyProjects contract > renders explicit permission and unassigned-role states without raw role/action formatting 1ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > uses the five PMBOK-lite roles selected by DEC-488 with explicit permissions 47ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > keeps capacity per person and derives responsibility, communication and acceptance inputs from project roles 1ms
+ ✓ server/src/domain/pmo/__tests__/projectOperatingModel.test.ts > F2-3 E2 project operating model > produces different approval inputs for different team compositions 0ms
+ ✓ src/routes/__tests__/pmoProjectsFeatureRoute.test.ts > F2-3 E2 Projects route feature flag > reads VITE_PMO_PROJECTS in one Vite expression and defaults to OFF 30ms
+ ✓ src/routes/__tests__/pmoProjectsFeatureRoute.test.ts > F2-3 E2 Projects route feature flag > keeps /projects redirecting to /my-work when OFF and mounts MyProjects when ON 0ms
+ ✓ src/routes/__tests__/pmoProjectsFeatureRoute.test.ts > F2-3 E2 Projects route feature flag > does not create a new main-menu entry for PMO 0ms
+ ✓ src/components/MyWork/__tests__/ProjectRolePermissionCopy.i18n.test.tsx > F2-3 E2 role permission localized behavior > renders human permission copy without raw slugs in en 39ms
+ ✓ src/components/MyWork/__tests__/ProjectRolePermissionCopy.i18n.test.tsx > F2-3 E2 role permission localized behavior > renders selectors, assignments, responsibilities and approval inputs without technical identifiers in en 73ms
+ ✓ src/components/MyWork/__tests__/ProjectRolePermissionCopy.i18n.test.tsx > F2-3 E2 role permission localized behavior > renders human permission copy without raw slugs in pl 15ms
+ ✓ src/components/MyWork/__tests__/ProjectRolePermissionCopy.i18n.test.tsx > F2-3 E2 role permission localized behavior > renders selectors, assignments, responsibilities and approval inputs without technical identifiers in pl 12ms
+
+ Test Files  4 passed (4)
+      Tests  13 passed (13)
+   Start at  20:26:15
+   Duration  665ms (transform 322ms, setup 430ms, import 145ms, tests 262ms, environment 1.08s)
+

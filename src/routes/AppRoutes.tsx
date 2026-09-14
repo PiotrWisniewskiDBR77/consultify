@@ -452,10 +452,9 @@ const ProjectIntelligenceView = lazyWithRetry(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
-// 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — the
-// `/projects` route (Zwornik #78, stakeholder registry + finance rollup)
-// now redirects to `/my-work` below; `MyProjects` lazy import removed here,
-// component kept under src/components/MyWork/MyProjects.tsx, unimported.
+const MyProjects = lazyWithRetry(() =>
+  import('@/components/MyWork/MyProjects').then((m) => ({ default: m.MyProjects }))
+);
 
 // Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
 const InterviewHub = lazyWithRetry(() =>
@@ -1059,6 +1058,8 @@ export const AppRoutes: React.FC = () => {
   // `MeetingHub`/`MeetingObjectPage`, bez `BetaGate` (pełna niewidzialność,
   // bez wyjątku dla adminów). Z ON: zero zmian względem obecnego zachowania.
   const meetingsEnabled = isMeetingsModuleEnabled();
+  // F2-3 E2: explicit opt-in. An absent or malformed value is OFF.
+  const pmoProjectsEnabled = import.meta.env.VITE_PMO_PROJECTS === 'true';
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -1716,13 +1717,20 @@ export const AppRoutes: React.FC = () => {
         />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
-        {/* 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) —
-            `/projects` (Zwornik #78: stakeholder registry + finance rollup)
-            and its My Work tab deep link both retire to the My Work root;
-            `MyProjects.tsx` stays in the tree, just unreachable from nav. */}
-        <Route path={ROUTES.PROJECTS} element={<Navigate to="/my-work" replace />} />
-        <Route path="/my-work/projects" element={<Navigate to="/my-work" replace />} />
-        <Route path="/my-work/projects/*" element={<Navigate to="/my-work" replace />} />
+        <Route
+          path={ROUTES.PROJECTS}
+          element={
+            pmoProjectsEnabled ? (
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork'), t('myWork.projects.projects', 'Projects')]}>
+                <RouteErrorBoundary><MyProjects /></RouteErrorBoundary>
+              </MainLayout>
+            ) : (
+              <Navigate to="/my-work" replace />
+            )
+          }
+        />
+        <Route path="/my-work/projects" element={pmoProjectsEnabled ? <Navigate to={ROUTES.PROJECTS} replace /> : <Navigate to="/my-work" replace />} />
+        <Route path="/my-work/projects/*" element={pmoProjectsEnabled ? <Navigate to={ROUTES.PROJECTS} replace /> : <Navigate to="/my-work" replace />} />
 
         {/* Client Vault (HP-22, Harvey-Parity) — VLT-004 (relokacja
             2026-07-23): the surface moved from its own route into the My
