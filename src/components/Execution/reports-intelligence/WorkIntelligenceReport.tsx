@@ -715,8 +715,8 @@ export function WorkIntelligenceReport({
                                   ),
                           },
                         ],
-                        propertyLabel: t('common.property', 'Property'),
-                        valueLabel: t('common.value', 'Value'),
+                        propertyLabel: t('standardPreview.property', 'Property'),
+                        valueLabel: t('standardPreview.value', 'Value'),
                         onCopy: () => void navigator.clipboard?.writeText(row.title),
                       }}
                         relations={
