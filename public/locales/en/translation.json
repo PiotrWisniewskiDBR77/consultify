@@ -16067,6 +16067,92 @@
         "missingShort": "Missing",
         "linkedNoDateShort": "Date unknown",
         "absentHint": "No handoff package has been accepted yet"
+      },
+      "unknown": {
+        "GENERIC": "Data unavailable",
+        "INITIATIVE_MISSING": "Initiative details unavailable",
+        "PROGRESS_MISSING": "Progress not reported",
+        "PROGRESS_INVALID": "Progress value is invalid",
+        "BASELINE_MISSING": "Baseline not set",
+        "BASELINE_INVALID": "Baseline date is invalid",
+        "CURRENT_PLAN_MISSING": "Current plan not set",
+        "CURRENT_PLAN_INVALID": "Current plan date is invalid",
+        "FORECAST_MISSING": "Forecast not available",
+        "FORECAST_INVALID": "Forecast date is invalid",
+        "FORECAST_OBSERVATION_MISSING": "Forecast observation date missing",
+        "FORECAST_OBSERVATION_INVALID": "Forecast observation date is invalid",
+        "FORECAST_AFTER_AS_OF": "Forecast is newer than the reporting date",
+        "VALUE_CLEARED": "Not scheduled",
+        "ACTUAL_MISSING": "Actual date not reported",
+        "ACTUAL_INVALID": "Actual date is invalid",
+        "CONFIDENCE_MISSING": "Confidence not reported",
+        "HEALTH_MISSING": "Health not reported",
+        "UPDATED_AT_MISSING": "Update time unavailable",
+        "UPDATED_AT_INVALID": "Update time is invalid"
+      },
+      "invalidDate": "Invalid date",
+      "caseLinked": "Execution Case linked",
+      "caseMissing": "No execution case yet",
+      "horizonAria": "Execution Bank horizon",
+      "reportingDate": "Reporting date",
+      "weeklyScale": "weekly scale",
+      "monthlyScale": "monthly scale",
+      "initiativeSchedule": "Initiative schedule",
+      "track": "Track",
+      "timelineAria": "Timeline from {{from}} to {{to}}",
+      "column": {
+        "initiative": "Initiative",
+        "initiativeCase": "Initiative / Case",
+        "lifecycle": "Lifecycle",
+        "handoff": "Handoff",
+        "risk": "Risk",
+        "executionPhase": "Execution phase",
+        "owner": "Owner",
+        "deliveryProfile": "Delivery profile",
+        "progress": "Progress",
+        "baselineFinish": "Baseline finish",
+        "forecastFinish": "Forecast finish",
+        "variance": "Variance",
+        "health": "Health",
+        "blockers": "Blockers",
+        "pendingDecisions": "Pending decisions",
+        "constraint": "Constraint",
+        "nextAction": "Next action",
+        "updated": "Updated"
+      },
+      "rowMenu": {
+        "open": "Open"
+      },
+      "lifecycle": {
+        "DRAFT": "Draft",
+        "PENDING_APPROVAL": "Pending approval",
+        "APPROVED": "Approved",
+        "IN_EXECUTION": "In execution",
+        "CLOSED": "Closed",
+        "REJECTED": "Rejected",
+        "ARCHIVED": "Archived",
+        "CANCELLED": "Cancelled",
+        "ON_HOLD": "On hold"
+      },
+      "executionState": {
+        "ACTIVE": "Active",
+        "PAUSED": "Paused",
+        "CLOSING": "Closing",
+        "CLOSED": "Closed"
+      },
+      "health": {
+        "GREEN": "On track",
+        "AMBER": "At risk",
+        "AT_RISK": "At risk",
+        "RED": "Critical",
+        "CRITICAL": "Critical"
+      },
+      "gantt": {
+        "baseline": "Baseline",
+        "currentPlan": "Current plan",
+        "forecast": "Forecast",
+        "actual": "Actual",
+        "trackAria": "{{track}} timeline for {{name}}"
       }
     },
     "review": {
@@ -16337,12 +16423,99 @@
       },
       "ai": {
         "suggest": "AI — How to manage this?",
-        "analyzing": "AI is analyzing your data…"
+        "analyzing": "AI is analyzing your data…",
+        "stepOwner": "Owner",
+        "stepTimeframe": "Timeframe",
+        "stepOutcome": "Outcome",
+        "confidence": "AI Confidence",
+        "expectedOutcome": "Expected outcome",
+        "cost": "Cost",
+        "suggestedOwner": "Suggested owner",
+        "defer": "Defer",
+        "approve": "Approve",
+        "diagnosis": "Diagnosis",
+        "recommendation": "Recommendation",
+        "actionSteps": "Action Steps",
+        "reasoning": "Reasoning",
+        "alternativeApproach": "Alternative Approach",
+        "executiveSummary": "Executive Summary",
+        "topPriority": "Top Priority",
+        "itemsCount": "{{count}} items",
+        "summary": "Summary",
+        "noActionContext": "No additional action context available for this lane yet.",
+        "confidenceShort": "Confidence",
+        "refreshed": "Refreshed",
+        "suggestedActions": "Suggested Actions",
+        "apply": "Apply",
+        "expectedImpact": "Expected Impact",
+        "blastRadius": "Blast radius",
+        "timeline": "Timeline",
+        "executionFollowUp": "Execution Follow-up",
+        "focusSummary": "Focus Summary",
+        "focusFallback": "Use this workspace to address the most relevant subset of current execution problems.",
+        "focusList": "Focus List",
+        "recommendedMoves": "Recommended Moves",
+        "analysisFailed": "Workspace analysis failed. Please try again."
       },
       "v8Degraded": "Manager cockpit requires V8",
       "noMatchingItems": "No matching items in this focus area right now.",
       "triageLead": "AI Triage — cluster and prioritize problems",
-      "actionPlanLead": "Action Plan — operational moves and follow-up"
+      "actionPlanLead": "Action Plan — operational moves and follow-up",
+      "preview": {
+        "owner": "Owner",
+        "deadline": "Deadline",
+        "daysOverdue": "{{count}} days overdue",
+        "inDays": "In {{count}} days",
+        "dueToday": "Due today",
+        "impact": "Impact",
+        "downstreamAffected": "{{count}} downstream affected"
+      },
+      "triage": "AI Triage",
+      "actionPlan": "Action Plan",
+      "cockpitName": "Manager Cockpit",
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Info"
+      },
+      "mode": {
+        "recommend": {
+          "title": "AI Recommendation",
+          "subtitle": "Single-problem guidance with practical next steps."
+        },
+        "triage": {
+          "title": "AI Triage",
+          "subtitle": "What requires attention first and why."
+        },
+        "action-plan": {
+          "title": "Action Plan",
+          "subtitle": "Operational moves, decisions, and execution follow-up."
+        },
+        "due-soon": {
+          "title": "Due Soon",
+          "subtitle": "Items that are about to turn into active execution issues."
+        },
+        "decision-pack": {
+          "title": "Decision Pack",
+          "subtitle": "Fast-track decisions and approvals that block flow."
+        },
+        "recovery-plan": {
+          "title": "Recovery Plan",
+          "subtitle": "Recover blocked work with concrete unblock scenarios."
+        },
+        "watchlist": {
+          "title": "Watchlist",
+          "subtitle": "Early warnings worth monitoring before they become critical."
+        },
+        "rebalance": {
+          "title": "Rebalance",
+          "subtitle": "Reduce overload and restore a workable distribution of tasks."
+        },
+        "ownership-fix": {
+          "title": "Ownership Fix",
+          "subtitle": "Close owner, sponsor, dates, and accountability gaps."
+        }
+      }
     },
     "managementTable": {
       "lane": "Lane",
@@ -16473,7 +16646,8 @@
         "add": "Add benefit",
         "empty": "No benefits registered — add the first one (handoff to Results/M15).",
         "loadFailed": "Could not load the benefits register",
-        "title": "Benefits register (handoff M14→M15)"
+        "title": "Benefits register (handoff M14→M15)",
+        "handoffBadge": "handoff M14"
       },
       "cutover": {
         "create": "Create cutover runbook",
@@ -16493,7 +16667,9 @@
           "skipped": "skipped",
           "failed": "failed"
         },
-        "stepCount": "{{count}} steps"
+        "stepCount": "{{count}} steps",
+        "title": "Cutover runbook + rollback",
+        "rollbackBadge": "ROLLBACK"
       },
       "permissionHint": "Check the MANAGE_ROLLOUT permission.",
       "permissionHintShort": "Check your permissions.",
@@ -16709,6 +16885,22 @@
           "openCount": "Open report tabs",
           "export": "Export"
         }
+      },
+      "aria": {
+        "executionReports": "Execution Reports",
+        "reportDefinitions": "Report Definitions",
+        "reportDefinitionWorkbench": "Report Definition Workbench",
+        "reportDefinitionID": "Report Definition ID",
+        "reportDefinitionContractJSON": "Report Definition contract JSON",
+        "reportDefinitionProjectIDs": "Report Definition project IDs",
+        "allowGeneralBacklogScope": "Allow General Backlog scope",
+        "reportDefinitionPublishRationale": "Report Definition publish rationale",
+        "reportrunWorkbench": "ReportRun Workbench",
+        "reportrunPublishedDefinitionVersion": "ReportRun published Definition version",
+        "reportrunAudience": "ReportRun audience",
+        "reportrunScopeRefs": "ReportRun scope refs",
+        "reportApprovalRationale": "Report approval rationale",
+        "reportFollowUpExecutionCaseId": "Report follow-up executionCaseId"
       }
     },
     "tasks": {
@@ -17423,7 +17615,18 @@
       },
       "loadFailed": "Could not load the control register.",
       "loading": "Loading the decisions and risks register…",
-      "title": "Decisions and risks"
+      "title": "Decisions and risks",
+      "aria": {
+        "interventionSignalWorkbench": "Intervention Signal Workbench",
+        "managementSignalKind": "Management signal kind",
+        "interventionWorkbench": "Intervention Workbench",
+        "interventionSelectedOption": "Intervention selected option",
+        "interventionRationale": "Intervention rationale",
+        "governedPlanResequence": "Governed Plan resequence",
+        "governedComparison": "Governed comparison",
+        "interventionVerificationOutcome": "Intervention verification outcome",
+        "interventionVerificationEvidence": "Intervention verification evidence"
+      }
     },
     "work": {
       "columns": {
@@ -17561,6 +17764,18 @@
       "delete": {
         "title": "Delete task",
         "message": "Delete \"{{title}}\"? This action cannot be undone."
+      },
+      "aria": {
+        "executionCaseForWork": "Execution Case for work",
+        "executionWork": "Execution Work",
+        "executionWorkItemWorkspace": "Execution Work item workspace",
+        "executionMilestones": "Execution Milestones",
+        "executionWorkbench": "Execution Workbench"
+      },
+      "decision": {
+        "approved": "APPROVED",
+        "conditionallyApproved": "CONDITIONALLY_APPROVED",
+        "returned": "RETURNED"
       }
     },
     "resources": {
@@ -17684,7 +17899,17 @@
         "ended": "Ended"
       },
       "caseFallbackName": "Delivery · {{short}}",
-      "caseNotRespondingSuffix": " — not responding"
+      "caseNotRespondingSuffix": " — not responding",
+      "aria": {
+        "executionCaseForResources": "Execution Case for resources",
+        "executionResources": "Execution Resources",
+        "operationalAllocationWorkspace": "Operational Allocation workspace",
+        "operationalAllocationWorkbench": "Operational Allocation Workbench",
+        "operationalAllocationProposalJSON": "Operational Allocation proposal JSON",
+        "allocationRationale": "Allocation rationale",
+        "allocationConditions": "Allocation conditions"
+      },
+      "evidenceMissing": "EVIDENCE_MISSING — activation remains blocked."
     },
     "governance": {
       "columns": {
@@ -17989,7 +18214,19 @@
       "valueType": "Value type"
     },
     "workload": {
-      "noAllocations": "No allocations this period"
+      "noAllocations": "No allocations this period",
+      "allocatedPct": "{{pct}}% allocated",
+      "close": "Close",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "emptyTitle": "No resource allocations found",
+      "emptyHint": "Assign owners to initiatives to see workload",
+      "teamMember": "Team Member",
+      "teamAverage": "Team Average",
+      "load": "Load",
+      "low": "Low",
+      "medium": "Medium",
+      "overallocated": "Overallocated"
     },
     "list": {
       "deleteDisabledNote": "Only draft or rejected initiatives can be deleted. Cancel this initiative through its lifecycle first."
@@ -18011,6 +18248,123 @@
       "axisSentenceUnknown": "{{axis}}: not measured — no baseline data",
       "noSignal": "Risk axes have not been computed for this row",
       "coverage": "{{measured}}/3"
+    },
+    "actionCards": {
+      "aria": "Execution action cards"
+    },
+    "report": {
+      "spec": {
+        "scope": "Scope",
+        "mandatorySections": "Mandatory Sections",
+        "expectedFollowUps": "Expected Follow-up Actions",
+        "dataQuality": "Data Quality"
+      },
+      "section": {
+        "dataSources": "Data Sources",
+        "aiReadout": "AI Executive Readout",
+        "ragLogic": "RAG / Confidence Logic",
+        "keyMetrics": "Key Metrics",
+        "sections": "Sections",
+        "followUps": "Follow-Up Actions",
+        "qualityFlags": "Data Quality Flags"
+      },
+      "noData": "No data",
+      "noInsights": "No insights generated.",
+      "dataQualityPosture": "Data quality posture",
+      "freshness": "Freshness",
+      "confidence": "Confidence",
+      "missingBaseline": "Missing baseline",
+      "missingEstimate": "Missing estimate",
+      "issue": {
+        "blocked": "Blocked",
+        "missingDates": "Missing dates",
+        "overdueTasks": "Overdue tasks",
+        "decisionDebt": "Decision debt",
+        "onTrack": "On track"
+      },
+      "portfolio": "Portfolio",
+      "meta": {
+        "status": "Status",
+        "audience": "Audience",
+        "cadence": "Cadence",
+        "scope": "Scope"
+      },
+      "header": {
+        "metric": "Metric",
+        "value": "Value",
+        "action": "Action",
+        "actual": "Actual",
+        "ageSeverity": "Age / Severity",
+        "age": "Age",
+        "allocated": "Allocated",
+        "blocked": "Blocked",
+        "bucket": "Bucket",
+        "capacity": "Capacity",
+        "category": "Category",
+        "conf": "Conf.",
+        "count": "Count",
+        "decisionAlert": "Decision / Alert",
+        "decisionDebt": "Decision debt",
+        "decision": "Decision",
+        "decisionsOverdue": "Decisions overdue",
+        "decisions": "Decisions",
+        "delaySignals": "Delay signals",
+        "drift": "Drift",
+        "dueLte4w": "Due ≤ 4w",
+        "due": "Due",
+        "examples": "Examples",
+        "free": "Free",
+        "gap": "Gap",
+        "health": "Health",
+        "highRisks": "High risks",
+        "initiativePerson": "Initiative / Person",
+        "initiative": "Initiative",
+        "issue": "Issue",
+        "mainIssue": "Main issue",
+        "milestone": "Milestone",
+        "nextMilestone": "Next milestone",
+        "openTasks": "Open tasks",
+        "overdueTasks": "Overdue tasks",
+        "overdue": "Overdue",
+        "overload": "Overload",
+        "owner": "Owner",
+        "pendingDecisions": "Pending decisions",
+        "pending": "Pending",
+        "person": "Person",
+        "planned": "Planned",
+        "priority": "Priority",
+        "progress": "Progress",
+        "reason": "Reason",
+        "severity": "Severity",
+        "signal": "Signal",
+        "status": "Status",
+        "target": "Target",
+        "taskMilestone": "Task / Milestone",
+        "task": "Task",
+        "tasksDueSoon": "Tasks due soon",
+        "tasksOverdue": "Tasks overdue",
+        "tasksWarnOpen": "Tasks ⚠/open",
+        "tasks": "Tasks",
+        "type": "Type",
+        "variance": "Variance",
+        "warnings": "Warnings",
+        "week": "Week",
+        "whyNow": "Why now"
+      }
+    },
+    "navigation": {
+      "summaryDisabled": {
+        "title": "Dashboard unavailable",
+        "body": "The dashboard is disabled in this environment. Reports remain available."
+      },
+      "unknown": {
+        "title": "Navigation target unavailable",
+        "body": "This saved view is not available. The execution bank is shown."
+      },
+      "unsupported": {
+        "title": "Item type unavailable",
+        "body": "This item type cannot be opened in Execution."
+      }
     }
   },
   "benefits": {

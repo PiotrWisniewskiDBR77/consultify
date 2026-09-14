@@ -24,24 +24,27 @@ interface ProblemPreviewProps {
 
 const SEVERITY_COLORS: Record<
   ProblemSeverity,
-  { bg: string; text: string; border: string; label: string }
+  { bg: string; text: string; border: string; labelKey: string; label: string }
 > = {
   critical: {
     bg: 'bg-danger-50 dark:bg-danger-900/20',
     text: 'text-danger-700 dark:text-danger-400',
     border: 'border-danger-200 dark:border-danger-800/40',
+    labelKey: 'execution.manager.severity.critical',
     label: 'Critical',
   },
   warning: {
     bg: 'bg-amber-50 dark:bg-amber-900/20',
     text: 'text-amber-700 dark:text-amber-400',
     border: 'border-amber-200 dark:border-amber-800/40',
+    labelKey: 'execution.manager.severity.warning',
     label: 'Warning',
   },
   info: {
     bg: 'bg-blue-50 dark:bg-blue-900/20',
     text: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-200 dark:border-blue-800/40',
+    labelKey: 'execution.manager.severity.info',
     label: 'Info',
   },
 };
@@ -101,7 +104,7 @@ export function ProblemPreview({
             <span
               className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded ${sev.bg} ${sev.text} border ${sev.border}`}
             >
-              {sev.label}
+              {t(sev.labelKey, sev.label)}
             </span>
             <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 dark:bg-navy-800 text-c-text-secondary">
               {typeLabel}
@@ -153,31 +156,46 @@ export function ProblemPreview({
             {t('manager.preview.details', 'Details')}
           </h4>
           <div className="divide-y divide-c-border-subtle border border-c-border-subtle rounded-lg p-3">
-            {problem.ownerName && <DetailRow label="Owner" value={problem.ownerName} />}
+            {problem.ownerName && (
+              <DetailRow
+                label={t('execution.manager.preview.owner', 'Owner')}
+                value={problem.ownerName}
+              />
+            )}
             {problem.daysOverdue !== null && (
               <DetailRow
-                label="Deadline"
+                label={t('execution.manager.preview.deadline', 'Deadline')}
                 value={
                   problem.daysOverdue > 0 ? (
                     <span className="text-danger-600 dark:text-danger-400 font-medium">
-                      {problem.daysOverdue} days overdue
+                      {t('execution.manager.preview.daysOverdue', '{{count}} days overdue', {
+                        count: problem.daysOverdue,
+                      })}
                     </span>
                   ) : problem.daysOverdue < 0 ? (
                     <span className="text-c-text-muted">
-                      In {Math.abs(problem.daysOverdue)} days
+                      {t('execution.manager.preview.inDays', 'In {{count}} days', {
+                        count: Math.abs(problem.daysOverdue),
+                      })}
                     </span>
                   ) : (
-                    <span className="text-amber-600 dark:text-amber-400">Due today</span>
+                    <span className="text-amber-600 dark:text-amber-400">
+                      {t('execution.manager.preview.dueToday', 'Due today')}
+                    </span>
                   )
                 }
               />
             )}
             <DetailRow
-              label="Impact"
+              label={t('execution.manager.preview.impact', 'Impact')}
               value={
                 problem.impactCount > 0 ? (
                   <span className="text-amber-600 dark:text-amber-400 font-medium">
-                    {problem.impactCount} downstream affected
+                    {t(
+                      'execution.manager.preview.downstreamAffected',
+                      '{{count}} downstream affected',
+                      { count: problem.impactCount }
+                    )}
                   </span>
                 ) : (
                   '—'

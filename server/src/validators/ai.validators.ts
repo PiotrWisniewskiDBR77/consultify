@@ -89,6 +89,9 @@ export const ChatConfirmRequestSchema = z.object({
       return validLangs.includes(mappedBase) ? mappedBase : 'en';
     })
     .optional(),
+  // DEC-511: front oznacza JAWNY wybor jezyka przez uzytkownika (selektor w czacie).
+  // Bez tej flagi `language` jest traktowany jak jezyk WATKU i ustepuje `users.language`.
+  languageExplicit: z.boolean().optional(),
   conversationId: z.string().optional(),
 });
 
@@ -174,6 +177,9 @@ export const ChatStreamRequestSchema = z.object({
       return validLangs.includes(mappedBase) ? mappedBase : 'en';
     })
     .optional(),
+  // DEC-511: front oznacza JAWNY wybor jezyka przez uzytkownika (selektor w czacie).
+  // Bez tej flagi `language` jest traktowany jak jezyk WATKU i ustepuje `users.language`.
+  languageExplicit: z.boolean().optional(),
   conversationId: z.preprocess(
     (v) => (v === null || v === '' ? undefined : v),
     z.string().min(1).optional()

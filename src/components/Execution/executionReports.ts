@@ -1,3 +1,5 @@
+import i18n from 'i18next';
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 import { AlertTriangle, CheckCircle2, type LucideIcon } from 'lucide-react';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -346,52 +348,54 @@ export function buildReportMarkdown(report: ReportDef, rag: string): string {
 
   lines.push(`# ${report.title}`);
   lines.push('');
-  lines.push(`**Status:** ${ragLabel.toUpperCase()}  `);
-  lines.push(`**Audience:** ${report.audience}  `);
-  lines.push(`**Cadence:** ${report.cadence}  `);
-  lines.push(`**Scope:** ${report.scope}`);
+  lines.push(`**${tlumaczPozaHookiem('execution.report.meta.status', 'Status')}:** ${ragLabel.toUpperCase()}  `);
+  lines.push(`**${tlumaczPozaHookiem('execution.report.meta.audience', 'Audience')}:** ${report.audience}  `);
+  lines.push(`**${tlumaczPozaHookiem('execution.report.meta.cadence', 'Cadence')}:** ${report.cadence}  `);
+  lines.push(`**${tlumaczPozaHookiem('execution.report.meta.scope', 'Scope')}:** ${report.scope}`);
   lines.push('');
 
   if ((report.aiExecutiveReadout ?? []).length > 0) {
-    lines.push('## AI Executive Readout');
+    lines.push(`## ${tlumaczPozaHookiem('execution.report.section.aiReadout', 'AI Executive Readout')}`);
     lines.push('');
     report.aiExecutiveReadout.forEach((l) => lines.push(`- ${l}`));
     lines.push('');
   }
 
   if ((report.highlights ?? []).length > 0) {
-    lines.push('## Key Metrics');
+    lines.push(`## ${tlumaczPozaHookiem('execution.report.section.keyMetrics', 'Key Metrics')}`);
     lines.push('');
-    lines.push('| Metric | Value |');
+    lines.push(
+      `| ${tlumaczPozaHookiem('execution.report.header.metric', 'Metric')} | ${tlumaczPozaHookiem('execution.report.header.value', 'Value')} |`
+    );
     lines.push('|--------|-------|');
     report.highlights.forEach((h) => lines.push(`| ${h.label} | ${h.value} |`));
     lines.push('');
   }
 
-  lines.push('## Sections');
+  lines.push(`## ${tlumaczPozaHookiem('execution.report.section.sections', 'Sections')}`);
   lines.push('');
   report.sections.forEach((s, i) => lines.push(`${i + 1}. ${s}`));
   lines.push('');
 
-  lines.push('## Data Sources');
+  lines.push(`## ${tlumaczPozaHookiem('execution.report.section.dataSources', 'Data Sources')}`);
   lines.push('');
   report.dataSources.forEach((ds) => lines.push(`- ${ds}`));
   lines.push('');
 
-  lines.push('## RAG / Confidence Logic');
+  lines.push(`## ${tlumaczPozaHookiem('execution.report.section.ragLogic', 'RAG / Confidence Logic')}`);
   lines.push('');
   lines.push(report.ragLogic);
   lines.push('');
 
   if ((report.followUpActions ?? []).length > 0) {
-    lines.push('## Follow-Up Actions');
+    lines.push(`## ${tlumaczPozaHookiem('execution.report.section.followUps', 'Follow-Up Actions')}`);
     lines.push('');
     report.followUpActions.forEach((a) => lines.push(`- [ ] ${a}`));
     lines.push('');
   }
 
   if ((report.degradedFlags ?? []).length > 0) {
-    lines.push('## Data Quality Flags');
+    lines.push(`## ${tlumaczPozaHookiem('execution.report.section.qualityFlags', 'Data Quality Flags')}`);
     lines.push('');
     report.degradedFlags.forEach((f) => lines.push(`⚠ ${f}`));
     lines.push('');
@@ -435,7 +439,7 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
   const readout =
     (report.aiExecutiveReadout ?? []).length > 0
       ? section(
-          'AI Executive Readout',
+          tlumaczPozaHookiem('execution.report.section.aiReadout', 'AI Executive Readout'),
           `<ul>${report.aiExecutiveReadout.map((l) => `<li>${escHtml(l)}</li>`).join('')}</ul>`
         )
       : '';
@@ -443,8 +447,8 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
   const metrics =
     (report.highlights ?? []).length > 0
       ? section(
-          'Key Metrics',
-          `<table class="tbl"><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody>${report.highlights
+          tlumaczPozaHookiem('execution.report.section.keyMetrics', 'Key Metrics'),
+          `<table class="tbl"><thead><tr><th>${escHtml(tlumaczPozaHookiem('execution.report.header.metric', 'Metric'))}</th><th class="num">${escHtml(tlumaczPozaHookiem('execution.report.header.value', 'Value'))}</th></tr></thead><tbody>${report.highlights
             .map(
               (h) => `<tr><td>${escHtml(h.label)}</td><td class="num">${escHtml(h.value)}</td></tr>`
             )
@@ -453,21 +457,21 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
       : '';
 
   const sections = section(
-    'Sections',
+    tlumaczPozaHookiem('execution.report.section.sections', 'Sections'),
     `<ol>${report.sections.map((s) => `<li>${escHtml(s)}</li>`).join('')}</ol>`
   );
 
   const dataSources = section(
-    'Data Sources',
+    tlumaczPozaHookiem('execution.report.section.dataSources', 'Data Sources'),
     `<ul>${report.dataSources.map((ds) => `<li>${escHtml(ds)}</li>`).join('')}</ul>`
   );
 
-  const ragLogic = section('RAG / Confidence Logic', `<p>${escHtml(report.ragLogic)}</p>`);
+  const ragLogic = section(tlumaczPozaHookiem('execution.report.section.ragLogic', 'RAG / Confidence Logic'), `<p>${escHtml(report.ragLogic)}</p>`);
 
   const followUps =
     (report.followUpActions ?? []).length > 0
       ? section(
-          'Follow-Up Actions',
+          tlumaczPozaHookiem('execution.report.section.followUps', 'Follow-Up Actions'),
           `<ul class="checks">${report.followUpActions
             .map((a) => `<li>${escHtml(a)}</li>`)
             .join('')}</ul>`
@@ -477,7 +481,7 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
   const flags =
     (report.degradedFlags ?? []).length > 0
       ? section(
-          'Data Quality Flags',
+          tlumaczPozaHookiem('execution.report.section.qualityFlags', 'Data Quality Flags'),
           `<ul class="flags">${report.degradedFlags
             .map((f) => `<li>${escHtml(f)}</li>`)
             .join('')}</ul>`
@@ -513,7 +517,7 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
   `;
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escHtml(i18n.language || 'en')}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -524,9 +528,9 @@ export function buildReportHtml(report: ReportDef, rag: string): string {
 <div class="page">
   <h1>${escHtml(report.title)}</h1>
   <div class="status">${escHtml(String(ragLabel).toUpperCase())}</div>
-  <p class="meta"><strong>Audience:</strong> ${escHtml(report.audience)}</p>
-  <p class="meta"><strong>Cadence:</strong> ${escHtml(report.cadence)}</p>
-  <p class="meta"><strong>Scope:</strong> ${escHtml(report.scope)}</p>
+  <p class="meta"><strong>${escHtml(tlumaczPozaHookiem('execution.report.meta.audience', 'Audience'))}:</strong> ${escHtml(report.audience)}</p>
+  <p class="meta"><strong>${escHtml(tlumaczPozaHookiem('execution.report.meta.cadence', 'Cadence'))}:</strong> ${escHtml(report.cadence)}</p>
+  <p class="meta"><strong>${escHtml(tlumaczPozaHookiem('execution.report.meta.scope', 'Scope'))}:</strong> ${escHtml(report.scope)}</p>
   ${readout}
   ${metrics}
   ${sections}

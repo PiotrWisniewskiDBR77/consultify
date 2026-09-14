@@ -657,7 +657,7 @@ export const ExecutionResourcesSurface = ({
     onRegisterFilterControl(
       <div className={MENU_2_FILTERS_ROW}>
         <select
-          aria-label="Execution Case for resources"
+          aria-label={t('execution.resources.aria.executionCaseForResources', 'Execution Case for resources')}
           value={caseId}
           onChange={(e) => {
             const nextCaseId = e.target.value;
@@ -809,7 +809,7 @@ export const ExecutionResourcesSurface = ({
       </div>
     );
   return (
-    <section aria-label="Execution Resources" className="flex h-full min-h-0 flex-col p-4">
+    <section aria-label={t('execution.resources.aria.executionResources', 'Execution Resources')} className="flex h-full min-h-0 flex-col p-4">
       {/*
        * Stan ładowania MUSI się renderować. Do 2026-09-05 ta powierzchnia miała
        * gałęzie wyłącznie dla `state === 'READY'`, więc dopóki dane się nie
@@ -1449,7 +1449,7 @@ export const ExecutionResourcesSurface = ({
       )}
       {showWorkspace && selected && (
         <section
-          aria-label="Operational Allocation workspace"
+          aria-label={t('execution.resources.aria.operationalAllocationWorkspace', 'Operational Allocation workspace')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="flex items-center justify-between">
@@ -1488,7 +1488,7 @@ export const ExecutionResourcesSurface = ({
       )}
       {showProposal && caseId && (
         <section
-          aria-label="Operational Allocation Workbench"
+          aria-label={t('execution.resources.aria.operationalAllocationWorkbench', 'Operational Allocation Workbench')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -1512,7 +1512,7 @@ export const ExecutionResourcesSurface = ({
               {t('execution.resources.advancedData', 'Advanced data')}
             </summary>
             <textarea
-              aria-label="Operational Allocation proposal JSON"
+              aria-label={t('execution.resources.aria.operationalAllocationProposalJSON', 'Operational Allocation proposal JSON')}
               className="min-h-40 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
               value={json}
               onChange={(e) => setJson(e.target.value)}
@@ -1533,12 +1533,12 @@ export const ExecutionResourcesSurface = ({
             </div>
           )}
           <textarea
-            aria-label="Allocation rationale"
+            aria-label={t('execution.resources.aria.allocationRationale', 'Allocation rationale')}
             value={rationale}
             onChange={(e) => setRationale(e.target.value)}
           />
           <textarea
-            aria-label="Allocation conditions"
+            aria-label={t('execution.resources.aria.allocationConditions', 'Allocation conditions')}
             value={conditions}
             onChange={(e) => setConditions(e.target.value)}
           />
@@ -1569,7 +1569,12 @@ export const ExecutionResourcesSurface = ({
             ))}
           </div>
           {assessment?.state === 'EVIDENCE_MISSING' && (
-            <p role="alert">EVIDENCE_MISSING — activation remains blocked.</p>
+            <p role="alert">
+              {t(
+                'execution.resources.evidenceMissing',
+                'EVIDENCE_MISSING — activation remains blocked.'
+              )}
+            </p>
           )}
         </section>
       )}

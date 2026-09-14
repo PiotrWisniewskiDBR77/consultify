@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
@@ -113,7 +114,11 @@ const MODE_SUBTITLES: Record<ManagementWorkspaceMode, string> = {
   'ownership-fix': 'Close owner, sponsor, dates, and accountability gaps.',
 };
 
-function normalizeErrorMessage(err: unknown) {
+function normalizeErrorMessage(err: unknown, translate: TFunction) {
+  const zapasowy = translate(
+    'execution.manager.ai.analysisFailed',
+    'Workspace analysis failed. Please try again.'
+  );
   if (typeof err === 'string') return err;
   if (err && typeof err === 'object') {
     const maybeMessage = (err as { message?: unknown }).message;
@@ -121,13 +126,15 @@ function normalizeErrorMessage(err: unknown) {
     try {
       return JSON.stringify(err);
     } catch {
-      return 'Workspace analysis failed. Please try again.';
+      return zapasowy;
     }
   }
-  return 'Workspace analysis failed. Please try again.';
+  return zapasowy;
 }
 
-const StepCard: React.FC<{ step: V8AiStep }> = ({ step }) => (
+const StepCard: React.FC<{ step: V8AiStep }> = ({ step }) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex gap-3 rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
       {step.order}
@@ -136,18 +143,22 @@ const StepCard: React.FC<{ step: V8AiStep }> = ({ step }) => (
       <p className="text-[12px] font-medium text-slate-900 dark:text-white">{step.action}</p>
       <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-500 dark:text-slate-400">
         <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 dark:bg-navy-800">
-          Owner: {step.owner}
+          {t('execution.manager.ai.stepOwner', 'Owner')}: {step.owner}
         </span>
         <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 dark:bg-navy-800">
-          Timeframe: {step.timeframe}
+          {t('execution.manager.ai.stepTimeframe', 'Timeframe')}: {step.timeframe}
         </span>
       </div>
-      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Outcome: {step.outcome}</p>
+      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+        {t('execution.manager.ai.stepOutcome', 'Outcome')}: {step.outcome}
+      </p>
     </div>
   </div>
-);
+  );
+};
 
 const ConfidenceBadge: React.FC<{ value: number }> = ({ value }) => {
+  const { t } = useTranslation();
   const color =
     value >= 75
       ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
@@ -158,7 +169,7 @@ const ConfidenceBadge: React.FC<{ value: number }> = ({ value }) => {
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${color}`}
     >
-      AI Confidence: {value}%
+      {t('execution.manager.ai.confidence', 'AI Confidence')}: {value}%
     </span>
   );
 };
@@ -280,9 +291,11 @@ const SuggestionCard: React.FC<{
   busy = false,
   onApprove,
   onDefer,
-  approveLabel = 'Approve',
+  approveLabel,
   disabledReason,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <div className="rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
     <div className="mb-2 flex flex-wrap items-center gap-2">
       <span className="text-[12px] font-semibold text-slate-900 dark:text-white">
@@ -308,12 +321,14 @@ const SuggestionCard: React.FC<{
       {suggestion.reason}
     </p>
     <div className="mt-2 rounded bg-slate-50 px-2.5 py-2 text-[11px] text-slate-600 dark:bg-white/[0.03] dark:text-slate-300">
-      Expected outcome: {suggestion.expectedOutcome}
+      {t('execution.manager.ai.expectedOutcome', 'Expected outcome')}: {suggestion.expectedOutcome}
     </div>
     <div className="mt-2 flex items-center justify-between gap-2">
       <span className="text-[10px] text-slate-600 dark:text-slate-500">
-        Cost: {suggestion.cost}
-        {suggestion.recommendedOwner ? ` | Suggested owner: ${suggestion.recommendedOwner}` : ''}
+        {t('execution.manager.ai.cost', 'Cost')}: {suggestion.cost}
+        {suggestion.recommendedOwner
+          ? ` | ${t('execution.manager.ai.suggestedOwner', 'Suggested owner')}: ${suggestion.recommendedOwner}`
+          : ''}
       </span>
       <div className="flex items-center gap-1.5">
         {onDefer ? (
@@ -324,7 +339,7 @@ const SuggestionCard: React.FC<{
             title={disabledReason}
             className="rounded-full border border-slate-200/70 px-2.5 py-1 text-[10px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.03]"
           >
-            Defer
+            {t('execution.manager.ai.defer', 'Defer')}
           </button>
         ) : null}
         {onApprove ? (
@@ -335,7 +350,7 @@ const SuggestionCard: React.FC<{
             title={disabledReason}
             className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-500/15 disabled:opacity-40 disabled:cursor-not-allowed dark:text-blue-200"
           >
-            {approveLabel}
+            {approveLabel ?? t('execution.manager.ai.approve', 'Approve')}
           </button>
         ) : null}
       </div>
@@ -344,7 +359,8 @@ const SuggestionCard: React.FC<{
       <p className="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400">{disabledReason}</p>
     ) : null}
   </div>
-);
+  );
+};
 
 function getWorkspaceRows(mode: ManagementWorkspaceMode, rows: ManagerProblemRow[]) {
   switch (mode) {
@@ -408,15 +424,20 @@ function getWorkspaceRows(mode: ManagementWorkspaceMode, rows: ManagerProblemRow
   }
 }
 
-const RecommendView: React.FC<{ data: V8AiRecommendation }> = ({ data }) => (
+const RecommendView: React.FC<{ data: V8AiRecommendation }> = ({ data }) => {
+  const { t } = useTranslation();
+  return (
   <div className="space-y-0">
-    <CollapsibleSection title="Diagnosis">
+    <CollapsibleSection title={t('execution.manager.ai.diagnosis', 'Diagnosis')}>
       <p className="text-[12px] leading-relaxed text-slate-700 dark:text-slate-300">
         {data.diagnosis}
       </p>
     </CollapsibleSection>
 
-    <CollapsibleSection title="Recommendation" badge={<ConfidenceBadge value={data.confidence} />}>
+    <CollapsibleSection
+      title={t('execution.manager.ai.recommendation', 'Recommendation')}
+      badge={<ConfidenceBadge value={data.confidence} />}
+    >
       <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-800/40 dark:bg-blue-900/10">
         <p className="text-[12px] font-medium leading-relaxed text-blue-800 dark:text-blue-300">
           {data.recommendation}
@@ -424,7 +445,7 @@ const RecommendView: React.FC<{ data: V8AiRecommendation }> = ({ data }) => (
       </div>
     </CollapsibleSection>
 
-    <CollapsibleSection title="Action Steps">
+    <CollapsibleSection title={t('execution.manager.ai.actionSteps', 'Action Steps')}>
       <div className="space-y-2">
         {data.steps.map((step) => (
           <StepCard key={step.order} step={step} />
@@ -432,34 +453,40 @@ const RecommendView: React.FC<{ data: V8AiRecommendation }> = ({ data }) => (
       </div>
     </CollapsibleSection>
 
-    <CollapsibleSection title="Reasoning">
+    <CollapsibleSection title={t('execution.manager.ai.reasoning', 'Reasoning')}>
       <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-400">
         {data.reasoning}
       </p>
     </CollapsibleSection>
 
-    <CollapsibleSection title="Alternative Approach" defaultOpen={false}>
+    <CollapsibleSection
+      title={t('execution.manager.ai.alternativeApproach', 'Alternative Approach')}
+      defaultOpen={false}
+    >
       <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-400">
         {data.alternativeApproach}
       </p>
     </CollapsibleSection>
   </div>
-);
+  );
+};
 
 const TriageView: React.FC<{
   data: V8AiTriageResult;
   onSelectProblem?: (problemId: string) => void;
-}> = ({ data, onSelectProblem }) => (
+}> = ({ data, onSelectProblem }) => {
+  const { t } = useTranslation();
+  return (
   <div className="space-y-0">
-    <CollapsibleSection title="Executive Summary">
+    <CollapsibleSection title={t('execution.manager.ai.executiveSummary', 'Executive Summary')}>
       <SummaryCallout severity="critical">{data.executiveSummary}</SummaryCallout>
     </CollapsibleSection>
 
     <CollapsibleSection
-      title="Top Priority"
+      title={t('execution.manager.ai.topPriority', 'Top Priority')}
       badge={
         <span className="rounded-full bg-danger-100 px-2 py-0.5 text-[10px] font-semibold text-danger-700 dark:bg-danger-900/20 dark:text-danger-400">
-          {data.topPriority.length} items
+          {t('execution.manager.ai.itemsCount', '{{count}} items', { count: data.topPriority.length })}
         </span>
       }
     >
@@ -506,7 +533,8 @@ const TriageView: React.FC<{
       </div>
     </CollapsibleSection>
   </div>
-);
+  );
+};
 
 const ActionPlanView: React.FC<{
   analysis: V8LaneAnalysisResponse;
@@ -522,6 +550,7 @@ const ActionPlanView: React.FC<{
   onDeferSuggestion,
   suggestionActionsDisabledReason,
 }) => {
+  const { t } = useTranslation();
   const decisionsBySuggestion = useMemo(
     () =>
       analysis.decisions.reduce((map, decision) => {
@@ -536,22 +565,25 @@ const ActionPlanView: React.FC<{
   return (
     <div className="space-y-0">
       <CollapsibleSection
-        title="Summary"
+        title={t('execution.manager.ai.summary', 'Summary')}
         badge={<SeverityBadge severity={analysis.severity === 'ok' ? 'info' : analysis.severity} />}
       >
         <SummaryCallout severity={analysis.severity === 'ok' ? 'info' : analysis.severity}>
           {analysis.insights[0]?.interpretation ||
             analysis.observations[0]?.metric ||
-            'No additional action context available for this lane yet.'}
+            t(
+              'execution.manager.ai.noActionContext',
+              'No additional action context available for this lane yet.'
+            )}
         </SummaryCallout>
         <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-          Confidence: {analysis.confidence} | Refreshed:{' '}
-          {formatListDateTime(analysis.lastRefreshed)}
+          {t('execution.manager.ai.confidenceShort', 'Confidence')}: {analysis.confidence} |{' '}
+          {t('execution.manager.ai.refreshed', 'Refreshed')}: {formatListDateTime(analysis.lastRefreshed)}
         </p>
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Suggested Actions"
+        title={t('execution.manager.ai.suggestedActions', 'Suggested Actions')}
         badge={
           <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
             {analysis.suggestions.length}
@@ -565,7 +597,7 @@ const ActionPlanView: React.FC<{
               suggestion={suggestion}
               decisionState={decisionsBySuggestion.get(suggestion.id)}
               busy={busySuggestionId === suggestion.id}
-              approveLabel="Apply"
+              approveLabel={t('execution.manager.ai.apply', 'Apply')}
               onApprove={() => onApproveSuggestion(suggestion.id)}
               onDefer={() => onDeferSuggestion(suggestion.id)}
               disabledReason={suggestionActionsDisabledReason}
@@ -576,7 +608,7 @@ const ActionPlanView: React.FC<{
 
       {analysis.effects.length > 0 && (
         <CollapsibleSection
-          title="Expected Impact"
+          title={t('execution.manager.ai.expectedImpact', 'Expected Impact')}
           badge={
             <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
               {analysis.effects.length}
@@ -593,9 +625,13 @@ const ActionPlanView: React.FC<{
                   {effect.consequence}
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  Blast radius: {effect.blastRadius}
-                  {effect.timelineImpact ? ` | Timeline: ${effect.timelineImpact}` : ''}
-                  {effect.costImpact ? ` | Cost: ${effect.costImpact}` : ''}
+                  {t('execution.manager.ai.blastRadius', 'Blast radius')}: {effect.blastRadius}
+                  {effect.timelineImpact
+                    ? ` | ${t('execution.manager.ai.timeline', 'Timeline')}: ${effect.timelineImpact}`
+                    : ''}
+                  {effect.costImpact
+                    ? ` | ${t('execution.manager.ai.cost', 'Cost')}: ${effect.costImpact}`
+                    : ''}
                 </p>
               </div>
             ))}
@@ -605,7 +641,7 @@ const ActionPlanView: React.FC<{
 
       {analysis.executionPlan.length > 0 && (
         <CollapsibleSection
-          title="Execution Follow-up"
+          title={t('execution.manager.ai.executionFollowUp', 'Execution Follow-up')}
           badge={
             <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
               {analysis.executionPlan.length}
@@ -661,12 +697,13 @@ const FocusWorkspaceView: React.FC<{
   analysis: V8LaneAnalysisResponse | null;
   onSelectProblem?: (problemId: string) => void;
 }> = ({ mode, rows, analysis, onSelectProblem }) => {
+  const { t } = useTranslation();
   const focusRows = getWorkspaceRows(mode, rows);
 
   return (
     <div className="space-y-0">
       <CollapsibleSection
-        title="Focus Summary"
+        title={t('execution.manager.ai.focusSummary', 'Focus Summary')}
         badge={
           <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
             {focusRows.length}
@@ -676,20 +713,29 @@ const FocusWorkspaceView: React.FC<{
         <SummaryCallout severity={analysis?.severity === 'critical' ? 'critical' : 'warning'}>
           {analysis?.insights[0]?.interpretation ||
             analysis?.observations[0]?.metric ||
-            'Use this workspace to address the most relevant subset of current execution problems.'}
+            t(
+              'execution.manager.ai.focusFallback',
+              'Use this workspace to address the most relevant subset of current execution problems.'
+            )}
         </SummaryCallout>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Focus List" defaultOpen>
+      <CollapsibleSection title={t('execution.manager.ai.focusList', 'Focus List')} defaultOpen>
         <FocusList
           rows={focusRows}
-          emptyText="{t('execution.manager.noMatchingItems', 'No matching items in this focus area right now.')}"
+          emptyText={t(
+            'execution.manager.noMatchingItems',
+            'No matching items in this focus area right now.'
+          )}
           onSelectProblem={onSelectProblem}
         />
       </CollapsibleSection>
 
       {analysis?.suggestions?.length ? (
-        <CollapsibleSection title="Recommended Moves" defaultOpen={false}>
+        <CollapsibleSection
+          title={t('execution.manager.ai.recommendedMoves', 'Recommended Moves')}
+          defaultOpen={false}
+        >
           <div className="space-y-2">
             {analysis.suggestions.slice(0, 6).map((suggestion) => (
               <div
@@ -763,7 +809,7 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
         setTriageData(null);
       }
     } catch (err) {
-      setError(normalizeErrorMessage(err));
+      setError(normalizeErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
@@ -788,7 +834,7 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
         await V8ExecutionControlApi.submitLaneDecision(laneId, { suggestionId, state });
         await fetchData();
       } catch (err) {
-        setError(normalizeErrorMessage(err));
+        setError(normalizeErrorMessage(err, t));
       } finally {
         setBusySuggestionId(null);
       }
@@ -824,9 +870,11 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            {MODE_TITLES[mode]}
+            {t(`execution.manager.mode.${mode}.title`, MODE_TITLES[mode])}
           </h2>
-          <p className="text-[10px] text-slate-600 dark:text-slate-500">{MODE_SUBTITLES[mode]}</p>
+          <p className="text-[10px] text-slate-600 dark:text-slate-500">
+            {t(`execution.manager.mode.${mode}.subtitle`, MODE_SUBTITLES[mode])}
+          </p>
         </div>
         <button
           type="button"

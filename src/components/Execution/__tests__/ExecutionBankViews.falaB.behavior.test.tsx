@@ -21,7 +21,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { buildExecutionBankRows } from '../executionBankModel';
-import { ExecutionBankViews } from '../ExecutionBankViews';
+import { ExecutionBankViews, formatExecutionBankDate } from '../ExecutionBankViews';
 import { buildExecutionRiskSignalMap } from '../executionRiskSignal';
 
 vi.mock('react-i18next', () => ({
@@ -134,7 +134,9 @@ describe('Bank Realizacji — FALA B przy flagach ON', () => {
       .getAllByTestId('execution-bank-handoff')
       .find((badge) => badge.getAttribute('data-handoff-status') === 'ACCEPTED');
     expect(accepted).toBeTruthy();
-    expect(within(accepted!).getByText(/Apr 2, 2026/)).toBeTruthy();
+    // DEC-510: zapis daty idzie za locale konta, nie za przybitym `'en'`.
+    // Oczekiwanie liczy TEN SAM formater co produkt — data nadal konkretna.
+    expect(within(accepted!).getByText(formatExecutionBankDate('2026-04-02'))).toBeTruthy();
     expect(accepted?.getAttribute('title')).toContain('Handed over');
   });
 });

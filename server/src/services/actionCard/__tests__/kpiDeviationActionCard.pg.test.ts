@@ -52,18 +52,23 @@ describe.skipIf(!enabled)('P7K część B — karta działania z odchylenia KPI 
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    for (const [org, owner, nazwisko] of [
-      [orgA, ownerA, 'Kowalska'],
-      [orgB, ownerB, 'Nowak'],
+    /* [ODMROZENIE 04_ASSESSMENT DEC-510] G1 / S1.3 — organizacja A jest
+       POLSKA, organizacja B ANGIELSKA. To nie jest ozdobnik testu: pomiar
+       14.09 pokazał 30 z 30 kart po polsku w org ANGIELSKIEJ, więc język
+       karty jest teraz częścią dowodu mechaniki, nie osobną kosmetyką. */
+    for (const [org, owner, nazwisko, jezyk] of [
+      [orgA, ownerA, 'Kowalska', 'pl'],
+      [orgB, ownerB, 'Nowak', 'en'],
     ] as const) {
       await pool.query(
-        `INSERT INTO organizations(id,name,plan,status) VALUES($1,$2,'enterprise','active')`,
-        [org, `P7K ${org}`]
+        `INSERT INTO organizations(id,name,plan,status,default_language)
+         VALUES($1,$2,'enterprise','active',$3)`,
+        [org, `P7K ${org}`, jezyk]
       );
       await pool.query(
-        `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status)
-         VALUES($1,$2,$3,'unused','Test',$4,'OWNER','active')`,
-        [owner, org, `${owner}@p7kb.local`, nazwisko]
+        `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,language)
+         VALUES($1,$2,$3,'unused','Test',$4,'OWNER','active',$5)`,
+        [owner, org, `${owner}@p7kb.local`, nazwisko, jezyk]
       );
     }
     mod = await import('../kpiDeviationActionCard.js');
@@ -100,7 +105,15 @@ describe.skipIf(!enabled)('P7K część B — karta działania z odchylenia KPI 
     const pierwsze = await mod.ensureActionCardForKpiDeviation(wejscie);
     expect(pierwsze.created).toBe(true);
     expect(pierwsze.card?.status).toBe('OPEN');
+    // Org A = polska ⇒ karta po polsku, dokładnie jak przed naprawą.
     expect(pierwsze.card?.problem).toContain('Odchylenie: WIELKOŚĆ SPRZEDAŻY NETTO 03.2026');
+    /* G1 / S1.3: `action_text` PRZESTAJE BYĆ PUSTE. Mutacja: przywróć
+       `actionText: ''` w `ensureActionCardForKpiDeviation` ⇒ ten blok pada. */
+    expect(pierwsze.card?.actionText ?? '').not.toBe('');
+    expect(pierwsze.card?.actionText).toContain('niedobór');
+    expect(pierwsze.card?.actionText).toContain('zapisz działanie naprawcze z terminem');
+    // GŁÓWNA PRZYCZYNA zostaje pusta — to nadal pole człowieka (§2.4).
+    expect(pierwsze.card?.rootCause ?? '').toBe('');
     // §2.4: odpowiedzialność to NAZWISKO, nigdy identyfikator.
     expect(pierwsze.card?.ownerName).toBe('Test Kowalska');
     expect(pierwsze.card?.dueDate).toBe('2026-04-14');
@@ -159,6 +172,13 @@ describe.skipIf(!enabled)('P7K część B — karta działania z odchylenia KPI 
     expect(wynikB.created).toBe(true);
     expect(wynikB.card?.organizationId).toBe(orgB);
     expect(wynikB.card?.ownerName).toBe('Test Nowak');
+    /* G1 / S1.3 — org B jest ANGIELSKA, więc TA SAMA mechanika oddaje kartę
+       po angielsku, z niepustym opisem działania. Mutacja: zaszyj z powrotem
+       polski literał problemu ⇒ ten blok pada. */
+    expect(wynikB.card?.problem).toContain('Deviation: WIELKOŚĆ SPRZEDAŻY NETTO 03.2026');
+    expect(wynikB.card?.problem).toContain('is outside the limit');
+    expect(wynikB.card?.actionText).toContain('shortfall');
+    expect(wynikB.card?.actionText).toContain('record a corrective action with a deadline');
 
     expect(await licznik(orgA)).toBe(1);
     expect(await licznik(orgB)).toBe(1);

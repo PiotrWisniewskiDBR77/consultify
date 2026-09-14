@@ -1,0 +1,6 @@
+light | 01-ostatni-krok | Pytanie 7 z 7 | 1A-L7-Q1 | Procesy Cyfrowe/Procesy Sprzedaży/Poziom 7
+light | 02-po-potwierdzeniu | Pytanie 7 z 7 | 1A-L7-Q1 | Procesy Cyfrowe/Procesy Sprzedaży/Poziom 7
+light | 03-po-next | Pytanie 1 z 7 | 1B-L1-Q1 | Procesy Cyfrowe/Procesy Marketingowe/Poziom 1
+dark | 01-ostatni-krok | Pytanie 7 z 7 | 1A-L7-Q1 | Procesy Cyfrowe/Procesy Sprzedaży/Poziom 7
+dark | 02-po-potwierdzeniu | Pytanie 7 z 7 | 1A-L7-Q1 | Procesy Cyfrowe/Procesy Sprzedaży/Poziom 7
+dark | 03-po-next | Pytanie 1 z 7 | 1B-L1-Q1 | Procesy Cyfrowe/Procesy Marketingowe/Poziom 1
