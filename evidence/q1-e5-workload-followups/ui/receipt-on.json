@@ -1,0 +1,86 @@
+{
+  "capturedAt": "2026-09-14T15:19:18.821Z",
+  "totalErrors": 0,
+  "receipt": [
+    {
+      "name": "work-report-workload-on-en-light",
+      "url": "http://127.0.0.1:4217/?screen=z29-inicjatywy-raport-pracy&lang=en&theme=light",
+      "lang": "en",
+      "theme": "light",
+      "workloadExpected": true,
+      "workloadOption": true,
+      "selectedValue": "WORKLOAD_CAPACITY",
+      "errors": []
+    },
+    {
+      "name": "workload-reason-en-light",
+      "url": "http://127.0.0.1:4217/?screen=z30-inicjatywy-obciazenie&lang=en&theme=light&tab=capacity&e234=1&openProposals=1",
+      "lang": "en",
+      "theme": "light",
+      "workloadExpected": true,
+      "workloadOption": null,
+      "selectedValue": null,
+      "errors": []
+    },
+    {
+      "name": "work-report-workload-on-en-dark",
+      "url": "http://127.0.0.1:4217/?screen=z29-inicjatywy-raport-pracy&lang=en&theme=dark",
+      "lang": "en",
+      "theme": "dark",
+      "workloadExpected": true,
+      "workloadOption": true,
+      "selectedValue": "WORKLOAD_CAPACITY",
+      "errors": []
+    },
+    {
+      "name": "workload-reason-en-dark",
+      "url": "http://127.0.0.1:4217/?screen=z30-inicjatywy-obciazenie&lang=en&theme=dark&tab=capacity&e234=1&openProposals=1",
+      "lang": "en",
+      "theme": "dark",
+      "workloadExpected": true,
+      "workloadOption": null,
+      "selectedValue": null,
+      "errors": []
+    },
+    {
+      "name": "work-report-workload-on-pl-light",
+      "url": "http://127.0.0.1:4217/?screen=z29-inicjatywy-raport-pracy&lang=pl&theme=light",
+      "lang": "pl",
+      "theme": "light",
+      "workloadExpected": true,
+      "workloadOption": true,
+      "selectedValue": "WORKLOAD_CAPACITY",
+      "errors": []
+    },
+    {
+      "name": "workload-reason-pl-light",
+      "url": "http://127.0.0.1:4217/?screen=z30-inicjatywy-obciazenie&lang=pl&theme=light&tab=capacity&e234=1&openProposals=1",
+      "lang": "pl",
+      "theme": "light",
+      "workloadExpected": true,
+      "workloadOption": null,
+      "selectedValue": null,
+      "errors": []
+    },
+    {
+      "name": "work-report-workload-on-pl-dark",
+      "url": "http://127.0.0.1:4217/?screen=z29-inicjatywy-raport-pracy&lang=pl&theme=dark",
+      "lang": "pl",
+      "theme": "dark",
+      "workloadExpected": true,
+      "workloadOption": true,
+      "selectedValue": "WORKLOAD_CAPACITY",
+      "errors": []
+    },
+    {
+      "name": "workload-reason-pl-dark",
+      "url": "http://127.0.0.1:4217/?screen=z30-inicjatywy-obciazenie&lang=pl&theme=dark&tab=capacity&e234=1&openProposals=1",
+      "lang": "pl",
+      "theme": "dark",
+      "workloadExpected": true,
+      "workloadOption": null,
+      "selectedValue": null,
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-09-14T15:18:42.232Z",
+  "totalErrors": 0,
+  "receipt": [
+    {
+      "name": "work-report-workload-off-en-light",
+      "url": "http://127.0.0.1:4216/?screen=z29-inicjatywy-raport-pracy&lang=en&theme=light",
+      "lang": "en",
+      "theme": "light",
+      "workloadExpected": false,
+      "workloadOption": false,
+      "selectedValue": null,
+      "errors": []
+    },
+    {
+      "name": "work-report-workload-off-en-dark",
+      "url": "http://127.0.0.1:4216/?screen=z29-inicjatywy-raport-pracy&lang=en&theme=dark",
+      "lang": "en",
+      "theme": "dark",
+      "workloadExpected": false,
+      "workloadOption": false,
+      "selectedValue": null,
+      "errors": []
+    },
+    {
+      "name": "work-report-workload-off-pl-light",
+      "url": "http://127.0.0.1:4216/?screen=z29-inicjatywy-raport-pracy&lang=pl&theme=light",
+      "lang": "pl",
+      "theme": "light",
+      "workloadExpected": false,
+      "workloadOption": false,
+      "selectedValue": null,
+      "errors": []
+    },
+    {
+      "name": "work-report-workload-off-pl-dark",
+      "url": "http://127.0.0.1:4216/?screen=z29-inicjatywy-raport-pracy&lang=pl&theme=dark",
+      "lang": "pl",
+      "theme": "dark",
+      "workloadExpected": false,
+      "workloadOption": false,
+      "selectedValue": null,
+      "errors": []
+    }
+  ]
+}
