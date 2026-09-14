@@ -1,0 +1,27 @@
+F2-3 PMO E1 source reachability audit
+Base: bc40d5327c6cf133f8cfd2b0e68a5295fb782189
+
+Commands and exact conclusions:
+
+1. rg -n "ProjectTeamBoard" src -g '*.{ts,tsx}'
+   Matches: 3, all in src/components/Projects/ProjectTeamBoard.tsx (interface,
+   component declaration, default export). Importer/render matches outside file: 0.
+
+2. rg -n "DefinitionDecisionQueue" src -g '*.{ts,tsx}'
+   Matches: component declaration plus one owner test asserting the name is absent.
+   Production importer/render matches outside component file: 0.
+
+3. rg -n "RACIMatrix" src -g '*.{ts,tsx}'
+   The PMO component is only defined and re-exported by src/components/PMO/index.ts.
+   Production importer/render matches for that component: 0. A separate AI artifact
+   renderer has its own RACIMatrixRenderer and is not the PMO project matrix.
+
+4. rg -n "notification-settings|ProjectNotification" src -g '*.{ts,tsx}'
+   Project-scoped /projects/:id/notification-settings consumers: 0. The live
+   src/components/MyWork/NotificationSettings.tsx calls global /notification-settings.
+
+5. rg -n "WorkCenter" src -g '*.{ts,tsx}'
+   Production importer/render matches outside its own file: 0. A comment in
+   DecisionsPanel names it but does not import it.
+
+Verdict: these surfaces are reusable source material, not reachable product behavior.
