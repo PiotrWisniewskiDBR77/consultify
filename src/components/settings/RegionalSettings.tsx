@@ -23,6 +23,7 @@ import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface RegionalSettingsProps {
   currentUser: User;
@@ -203,7 +204,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
         minute: '2-digit',
         hour12: preferences.timeFormat === '12h',
       };
-      return new Date().toLocaleTimeString(undefined, options);
+      return new Date().toLocaleTimeString(localeListy(), options);
     } catch {
       return '--:--';
     }
