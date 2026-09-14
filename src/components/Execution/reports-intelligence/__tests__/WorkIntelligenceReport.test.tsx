@@ -190,6 +190,55 @@ describe('Work Intelligence report', () => {
     expect(screen.getByTestId('standard-table')).toHaveTextContent('Healthy record');
   });
 
+  it('shows the three real work windows and narrows the canonical register', async () => {
+    api.listExecutionCases.mockResolvedValue({
+      cases: [
+        {
+          executionCaseId: 'case-1',
+          initiativeId: 'initiative-1',
+          projectId: 'project-1',
+          projectTitle: 'North plant',
+        },
+      ],
+    });
+    api.readExecutionWork.mockResolvedValue({
+      tasks: [
+        {
+          taskId: 'next-week-task',
+          title: 'Prepare the weekly gate',
+          status: 'OPEN',
+          priority: 'HIGH',
+          dueAt: '2026-08-26T12:00:00.000Z',
+        },
+        {
+          taskId: 'next-month-task',
+          title: 'Close the monthly dependency',
+          status: 'OPEN',
+          priority: 'MEDIUM',
+          dueAt: '2026-09-10T12:00:00.000Z',
+        },
+      ],
+      decisions: [],
+    });
+    api.readExecutionMilestones.mockResolvedValue({ items: [] });
+
+    render(<WorkIntelligenceReport analysisEnabled />);
+
+    const week = await screen.findByLabelText('Week of');
+    fireEvent.change(week, { target: { value: '2026-08-24' } });
+
+    expect(screen.getByRole('button', { name: /Previous week/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Next week/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Next month/ })).toBeInTheDocument();
+    expect(screen.getByTestId('standard-table')).toHaveTextContent('Prepare the weekly gate');
+    expect(screen.getByTestId('standard-table')).not.toHaveTextContent(
+      'Close the monthly dependency'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Next month/ }));
+    expect(screen.getByTestId('standard-table')).toHaveTextContent('Close the monthly dependency');
+  });
+
   it('renders an honest empty state when runtime returns no cases', async () => {
     api.listExecutionCases.mockResolvedValue({ cases: [] });
 

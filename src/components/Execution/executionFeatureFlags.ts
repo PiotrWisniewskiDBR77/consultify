@@ -81,6 +81,11 @@ const FLAGS = {
     localStorage: 'ff.exec_handoff_trace',
     env: 'VITE_EXEC_HANDOFF_TRACE',
   },
+  workAnalysis: {
+    query: 'ff_executionWorkAnalysis',
+    localStorage: 'ff.exec_work_analysis',
+    env: 'VITE_EXECUTION_WORK_ANALYSIS',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -160,7 +165,8 @@ export function isExecutionFlagEnabled(
     flag === 'fourButtons' ||
     flag === 'execReportsIntelligence' ||
     flag === 'execRiskSignal' ||
-    flag === 'execHandoffTrace'
+    flag === 'execHandoffTrace' ||
+    flag === 'workAnalysis'
   )
     return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/

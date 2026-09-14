@@ -2582,9 +2582,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const execReportsIntelligenceEnabled = isExecutionFlagEnabled('execReportsIntelligence');
+  const workAnalysisEnabled = isExecutionFlagEnabled('workAnalysis');
 
   const openWorkIntelligenceReport = useCallback(() => {
-    if (!execReportsIntelligenceEnabled) return;
+    if (!execReportsIntelligenceEnabled && !workAnalysisEnabled) return;
     const docId = 'execution-intelligence:work';
     const doc: OpenDocument = {
       id: docId,
@@ -2597,7 +2598,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       current.some((item) => item.id === docId) ? current : [...current, doc]
     );
     setActiveDocumentId(docId);
-  }, [execReportsIntelligenceEnabled, t]);
+  }, [execReportsIntelligenceEnabled, t, workAnalysisEnabled]);
 
   const openResourcesIntelligenceReport = useCallback(() => {
     if (!execReportsIntelligenceEnabled) return;
@@ -5783,8 +5784,16 @@ Please return:
     // Otherwise a canonical Initiative deep link can update the URL correctly
     // while the `list` branch below still masks the document with the table.
     if (activeDocumentId) {
-      if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:work') {
-        return <WorkIntelligenceReport onOpenDocument={handleOpenWorkDocument} />;
+      if (
+        (execReportsIntelligenceEnabled || workAnalysisEnabled) &&
+        activeDocumentId === 'execution-intelligence:work'
+      ) {
+        return (
+          <WorkIntelligenceReport
+            analysisEnabled={workAnalysisEnabled}
+            onOpenDocument={handleOpenWorkDocument}
+          />
+        );
       }
       if (
         execReportsIntelligenceEnabled &&
@@ -6507,7 +6516,7 @@ Please return:
               ...preset,
               count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
             })),
-            ...(execReportsIntelligenceEnabled && activeTab === 'work'
+            ...((execReportsIntelligenceEnabled || workAnalysisEnabled) && activeTab === 'work'
               ? [
                   {
                     id: 'work-intelligence-report',

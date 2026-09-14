@@ -5468,7 +5468,11 @@ export function createInitiativesExecutionRuntimeRouter(
         // (ExecutionReportsSurface.tsx) used to render the raw
         // executionCaseId — the initiative name was already loaded here
         // for the authorize() check above, just never sent to the client.
-        .map((entry) => ({ ...entry.item, initiativeTitle: entry.initiative!.initiative.title }));
+        .map((entry) => ({
+          ...entry.item,
+          initiativeTitle: entry.initiative!.initiative.title,
+          projectId: projectIdOf(entry),
+        }));
       res.json({ cases: visible });
     })
   );
