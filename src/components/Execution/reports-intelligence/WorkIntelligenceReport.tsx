@@ -50,10 +50,16 @@ type State =
 
 type ManagerProblemBinding = V8ManagerProblemRow & { laneId: string };
 
-const arrayAt = (payload: unknown, key: string): any[] => {
+const arrayAt = (payload: unknown, key: string): Array<Record<string, unknown>> => {
   if (!payload || typeof payload !== 'object') return [];
   const value = (payload as Record<string, unknown>)[key];
   return Array.isArray(value) ? value : [];
+};
+
+/** Keep compatibility with the legacy ApiGateway `{ data }` envelope. */
+const unwrapApiPayload = <T extends object>(response: T): T => {
+  const candidate = response as T & { data?: unknown };
+  return candidate.data && typeof candidate.data === 'object' ? (candidate.data as T) : response;
 };
 
 const sections = [
@@ -192,15 +198,14 @@ export function WorkIntelligenceReport({
     let active = true;
     void (async () => {
       try {
-        const casesPayload = (await listExecutionCases()) as Record<string, unknown>;
-        const cases = arrayAt(casesPayload, 'cases');
+        const { cases } = await listExecutionCases();
         const results = await Promise.allSettled(
-          cases.map(async (executionCase: any) => {
+          cases.map(async (executionCase) => {
             const caseId = String(executionCase.executionCaseId);
-            const [work, milestones] = (await Promise.all([
+            const [work, milestones] = await Promise.all([
               readExecutionWork(caseId),
               readExecutionMilestones(caseId),
-            ])) as any[];
+            ]);
             const common = {
               executionCaseId: caseId,
               initiativeId: String(executionCase.initiativeId || ''),
@@ -211,7 +216,7 @@ export function WorkIntelligenceReport({
                   ? String(executionCase.projectId)
                   : null,
             };
-            const tasks: WorkReportItem[] = arrayAt(work, 'tasks').map((item: any) => ({
+            const tasks: WorkReportItem[] = arrayAt(work, 'tasks').map((item) => ({
               ...common,
               id: String(item.taskId),
               title: String(item.title || item.taskId),
@@ -227,7 +232,7 @@ export function WorkIntelligenceReport({
               definitionOfDone: item.definitionOfDone ? String(item.definitionOfDone) : null,
               sourceVersion: Number.isFinite(Number(item.version)) ? Number(item.version) : null,
             }));
-            const decisions: WorkReportItem[] = arrayAt(work, 'decisions').map((item: any) => ({
+            const decisions: WorkReportItem[] = arrayAt(work, 'decisions').map((item) => ({
               ...common,
               id: String(item.decisionId),
               title: String(item.title || item.decisionId),
@@ -244,7 +249,7 @@ export function WorkIntelligenceReport({
               sourceVersion: Number.isFinite(Number(item.version)) ? Number(item.version) : null,
             }));
             const milestoneItems: WorkReportItem[] = arrayAt(milestones, 'items').map(
-              (item: any) => ({
+              (item) => ({
                 ...common,
                 id: String(item.milestoneId),
                 title: String(item.title || item.milestoneId),
@@ -280,8 +285,7 @@ export function WorkIntelligenceReport({
           const problemResults = await Promise.allSettled(
             lanes.map(async (laneId) => {
               const response = await V8ExecutionControlApi.getManagerProblems(laneId);
-              const data = (response as any)?.data || response;
-              return ((data?.problems || []) as V8ManagerProblemRow[]).map((problem) => ({
+              return unwrapApiPayload(response).problems.map((problem) => ({
                 ...problem,
                 laneId,
               }));
@@ -460,8 +464,10 @@ export function WorkIntelligenceReport({
         { problemId: binding.id, actionId },
         row.projectId ?? undefined
       );
-      const result = (response as any)?.data || response;
-      setActionMessage(String(result?.message || t('execution.workAnalysis.actionDone', 'Management action completed.')));
+      const result = unwrapApiPayload(response);
+      setActionMessage(
+        result.message || t('execution.workAnalysis.actionDone', 'Management action completed.')
+      );
     } catch (error) {
       setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.actionFailed', 'Management action failed.'));
     } finally {
@@ -598,7 +604,7 @@ export function WorkIntelligenceReport({
                 <div className="min-w-0 flex-1">
                   <StandardTable
                     columns={attentionColumns}
-                    data={attentionRows as any}
+                    data={attentionRows}
                     density="compact"
                     selectedRowId={selectedAttentionId}
                     onRowClick={(row) => setSelectedAttentionId(String(row.id))}
@@ -989,9 +995,7 @@ export function WorkIntelligenceReport({
           ) : (
             <StandardTable
               columns={columns}
-              data={
-                (analysisEnabled ? (selectedAnalysisWindow?.items ?? []) : registerItems) as any
-              }
+              data={analysisEnabled ? (selectedAnalysisWindow?.items ?? []) : registerItems}
               density="compact"
               empty={{
                 title: t(

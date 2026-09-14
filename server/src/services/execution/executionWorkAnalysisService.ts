@@ -24,7 +24,15 @@ export interface ExecutionWorkAnalysisGeneration {
   payload: Record<string, unknown>;
 }
 
-function persistedGeneration(row: any): ExecutionWorkAnalysisGeneration {
+interface PersistedGenerationRow {
+  id: string;
+  periodStart: string | Date;
+  periodEnd: string | Date;
+  asOf: string | Date;
+  payload: string | Record<string, unknown>;
+}
+
+function persistedGeneration(row: PersistedGenerationRow): ExecutionWorkAnalysisGeneration {
   return {
     id: String(row.id),
     created: false,
@@ -87,17 +95,17 @@ export async function generateExecutionWorkAnalysis(args: {
   const endIso = end.toISOString();
   const id = deterministicUuid(args.organizationId, startIso);
 
-  const existing = (await dbGet(
+  const existing = await dbGet<PersistedGenerationRow>(
     `SELECT id, period_start AS "periodStart", period_end AS "periodEnd", as_of AS "asOf", payload
        FROM execution_report_snapshots
       WHERE id = ? AND organization_id = ?`,
     [id, args.organizationId]
-  )) as any;
+  );
   if (existing) {
     return persistedGeneration(existing);
   }
 
-  const rows = (await dbAll(
+  const rows = await dbAll<WorkRow>(
     `SELECT work.aggregate_type, work.aggregate_id, work.version, work.payload_json,
             ec.payload_json->>'initiativeId' AS initiative_id,
             initiative.payload_json->>'projectId' AS project_id,
@@ -118,7 +126,7 @@ export async function generateExecutionWorkAnalysis(args: {
         AND work.aggregate_type IN ('execution_task','execution_decision','execution_milestone')
       ORDER BY work.aggregate_type, work.aggregate_id`,
     [args.organizationId]
-  )) as WorkRow[];
+  );
   const items = rows.map(workItem);
   const inWindow = (value: string | null, from: Date, to: Date) => {
     const timestamp = value ? Date.parse(value) : Number.NaN;
@@ -204,12 +212,12 @@ export async function generateExecutionWorkAnalysis(args: {
   // DbPromise retains compatibility with legacy call sites by logging some
   // database failures. This generator must prove durability before reporting
   // success, because its receipt is later used as the weekly cadence record.
-  const persisted = (await dbGet(
+  const persisted = await dbGet<PersistedGenerationRow>(
     `SELECT id, period_start AS "periodStart", period_end AS "periodEnd", as_of AS "asOf", payload
        FROM execution_report_snapshots
       WHERE id = ? AND organization_id = ?`,
     [id, args.organizationId]
-  )) as any;
+  );
   if (!persisted) throw new Error(`Execution work analysis ${id} was not persisted`);
   if (insert.changes !== 1) return persistedGeneration(persisted);
   return { id, created: true, period: payload.period, asOf: payload.asOf, payload };

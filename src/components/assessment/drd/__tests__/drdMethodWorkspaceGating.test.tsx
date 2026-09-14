@@ -1,8 +1,9 @@
 /**
  * @vitest-environment jsdom
  *
- * A6 vertical slice — checkpoint test requirement 1: "flaga OFF -> stara
- * ścieżka bez zmian; flaga ON -> MethodWorkspaceShell".
+ * J2 cutover: every mounted DRD session uses the server-authoritative HTTP
+ * workspace. The historical flag prop is retained only for source compatibility
+ * and cannot select the removed local writer.
  *
  * `AssessmentSessionEditorView` is a 2700+ line view wired to a live store
  * and several API modules — mounting it in a unit test would require
@@ -11,15 +12,8 @@
  *  1. `shouldMountDrdMethodWorkspace` is the EXACT boolean the view's real
  *     early-return branches on (see AssessmentSessionEditorView.tsx) —
  *     tested directly, exhaustively.
- *  2. `DrdMethodWorkspaceScreen` (what that branch renders when true) is
- *     mounted directly here and asserted to render the REAL
- *     `MethodWorkspaceShell` (data-testid="method-workspace-shell"), proving
- *     the ON path genuinely reaches A5's shell, not a stand-in.
- *
- * The OFF path's "legacy editor untouched" claim is a structural one: the
- * early return sits BEFORE `renderEditor()`/`DRDForm`/`DRDAssessmentEditor`/
- * `DRDMatrixSession` are ever referenced (see the view's source) — when the
- * gate is false, none of this file's code runs at all.
+ *  2. `DrdMethodWorkspaceScreen` is mounted with both historical prop values;
+ *     both must reach the HTTP component.
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -51,20 +45,6 @@ beforeEach(() => {
   featureGate.enabled = false;
 });
 
-function makeMemoryStorage(): Storage {
-  const store = new Map<string, string>();
-  return {
-    getItem: (k) => (store.has(k) ? store.get(k)! : null),
-    setItem: (k, v) => void store.set(k, v),
-    removeItem: (k) => void store.delete(k),
-    clear: () => store.clear(),
-    key: (i) => [...store.keys()][i] ?? null,
-    get length() {
-      return store.size;
-    },
-  } as Storage;
-}
-
 describe('shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag', () => {
   it('true for DRD when the historical flag is enabled', () => {
     expect(shouldMountDrdMethodWorkspace('drd', true)).toBe(true);
@@ -83,24 +63,9 @@ describe('shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless 
   });
 });
 
-describe('DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell', () => {
-  it('renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component', () => {
-    const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
-    expect(screen.getByTestId('method-workspace-shell')).toBeInTheDocument();
-  });
-
-  it('shows the explicit demo-bypass banner (never a silent override of pack readiness)', () => {
-    const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
-    expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocument();
-  });
-
-  it('uses the application provider decision instead of an isolated bare-hook default', () => {
-    featureGate.enabled = true;
-    render(<DrdMethodWorkspaceScreen storage={makeMemoryStorage()} />);
-
+describe('DrdMethodWorkspaceScreen uses the sole HTTP runtime', () => {
+  it.each([true, false])('ignores retired forceHttpSourceOfTruth=%s', (retiredValue) => {
+    render(<DrdMethodWorkspaceScreen forceHttpSourceOfTruth={retiredValue} />);
     expect(screen.getByTestId('drd-http-provider-path')).toBeInTheDocument();
-    expect(screen.queryByText(/SESJA DEMONSTRACYJNA/i)).not.toBeInTheDocument();
   });
 });
