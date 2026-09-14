@@ -10,7 +10,7 @@ Verdict: **PASS for the local E1 contract; external provider success is NOT_PROV
 - Invented initiative IDs, self-links, duplicate edges, cycles, unsupported critical paths, and unknown evidence fields fail closed.
 - The real PostgreSQL reader is tenant-scoped and loads only initiatives and dependency edges inside the requested plan.
 - The result persists in the existing versioned `plan_analysis_proposal` aggregate and is read back from PostgreSQL.
-- With `VITE_INITIATIVES_PLAN_ANALYSIS` unset or false, the API returns `FEATURE_DISABLED`, does not call AI, and does not write a proposal.
+- With `VITE_INITIATIVES_PLAN` unset or false, the API returns `FEATURE_DISABLED`, does not call AI, and does not write a proposal.
 - Existing requests retain `analysisKind=SOLVER`, preserving the default-OFF parity line.
 - A body `scenarioId` different from the normalized URL identifier is rejected before Plan lookup or AI.
 - After receipt lookup, a fresh stale `inputAggregateVersion` is rejected against the locked source Plan before AI.
