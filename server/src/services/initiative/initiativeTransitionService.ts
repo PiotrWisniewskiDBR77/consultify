@@ -54,7 +54,9 @@ import {
   coerceInitiativeStatusForWrite,
   hasInitiativeStatusSchemaDrift,
   normalizeInitiativeDbStatusForRead,
+  resolveInitiativeStageForRow,
 } from './initiativeLifecycleCanon.js';
+import { resolveInitiativeLifecycleStage } from '../../constants/initiativeLifecycleStages.js';
 import { recordHandoff as recordStageHandoff } from './stageHandoffService.js';
 import {
   evaluateInitiativeAuthorOnly,
@@ -548,15 +550,37 @@ export async function executeInitiativeTransition(
       // makes /unblock fail cleanly on a non-BLOCKED initiative instead of silently
       // acting as if it were /start-execution.
       if (params.expectedCurrentStatus) {
+        // H1c / DEC-506 — CZWARTE miejsce tego samego rozjazdu słowników.
+        // `expectedCurrentStatus` przychodzi z adaptera przejść cyklu życia
+        // pisanego ETAPAMI silnika (SCHEDULED · EXECUTING · PROMOTED), a
+        // `currentStatus` to kod kolumny (7, P12). Surowe `!==` znaczyło
+        // „wymaga SCHEDULED, a jest APPROVED" dla inicjatywy, która JEST na
+        // etapie SCHEDULED — bo etap SCHEDULED zapisuje się w kolumnie
+        // właśnie jako APPROVED. Porównujemy więc ETAP z ETAPEM: agregat
+        // silnika jest prawdą pierwszą, kolumna zapasem.
         const expected = normalizeStatus(params.expectedCurrentStatus);
-        if (currentStatus !== expected) {
+        const expectedStage = resolveInitiativeLifecycleStage(expected);
+        const aggregateStage = (
+          await client.query<{ lifecycle_state: string | null }>(
+            `SELECT payload_json->>'lifecycleState' AS lifecycle_state
+               FROM ie_aggregate_state
+              WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
+            [orgId, id]
+          ).catch(() => ({ rows: [] as Array<{ lifecycle_state: string | null }> }))
+        ).rows[0]?.lifecycle_state;
+        const currentStage = resolveInitiativeStageForRow({
+          aggregateLifecycleState: aggregateStage ?? null,
+          dbStatus: currentStatus,
+        });
+        if (!expectedStage || currentStage !== expectedStage) {
           return {
             kind: 'error',
             statusCode: 400,
             body: {
-              error: `This action requires the initiative to be ${expected}, but it is ${currentStatus}`,
+              error: `This action requires the initiative to be ${expected}, but it is ${currentStage ?? currentStatus}`,
               rule: 'UNEXPECTED_CURRENT_STATUS',
               from: currentStatus,
+              fromStage: currentStage,
               expected,
               to: nextStatus,
             },

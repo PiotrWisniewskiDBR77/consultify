@@ -1,0 +1,31 @@
+[H1c][SELECT PRZED] {"status":"APPROVED","stage":"SCHEDULED","handoffs":"1"}
+[H1c][SELECT PRZED] {"status":"APPROVED","stage":"SCHEDULED","handoffs":"1"}
+[H1c][SELECT PO] {"status":"IN_EXECUTION","stage":"IN_EXECUTION"}
+[H1c][SELECT PO] {"status":"IN_EXECUTION","stage":"IN_EXECUTION"}
+[H1c][SELECT HANDOFF] {"from_status":"APPROVED","to_status":"IN_EXECUTION"}
+[H1c][SELECT HANDOFF] {"from_status":"APPROVED","to_status":"IN_EXECUTION"}
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+
+--- KONTEKST DOWODU (H1c / DEC-506, 14.09) ---
+Baza: lokalny Postgres (pgvector/pgvector:pg18) na 127.0.0.1:6500/h1c,
+schemat po strict `server/scripts/migrate.postgres.ts` (EXIT=0), CHECK potwierdzony:
+  initiatives_status_check_p12 = CHECK (status IN
+    ('PROPOSED','DRAFT','PENDING_APPROVAL','APPROVED','IN_EXECUTION','CLOSED','REJECTED'))
+NIGDY nie użyto URL-a stagingu/demo.
+
+Łańcuch: proposeEarlyInitiativeTransition(target=EXECUTING)
+      -> reviewProposalScope(decision=approved) [recenzja A05]
+      -> executeApprovedEarlyInitiativeTransition
+Wynik SELECT-em PO akcji (nie zwrotką funkcji): kolumna APPROVED -> IN_EXECUTION,
+etap silnika w ie_aggregate_state SCHEDULED -> IN_EXECUTION, initiative_handoffs
++1 wiersz (APPROVED -> IN_EXECUTION).
+
+STAN PRZED NAPRAWĄ (ten sam test, HEAD f46b402e1f — trzy z czterech miejsc naprawione):
+  initiative_transition_denied:{"error":"This action requires the initiative to be
+  SCHEDULED, but it is APPROVED","rule":"UNEXPECTED_CURRENT_STATUS",...}
+czyli CZWARTE miejsce rozjazdu (guard expectedCurrentStatus) — naprawione w commicie
+z tym testem. Na HEAD b0a4513130 (przed H1c) łańcuch kończył się 409
+UNKNOWN_TARGET_STATUS jeszcze wcześniej.
