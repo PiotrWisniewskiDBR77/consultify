@@ -1,46 +1,46 @@
 {
-  "verdict": "PASS_AFTER_HOST_RECOVERY",
-  "tests": [
-    {
-      "file": "server/src/services/interview/__tests__/interviewAnswerApprovalPolicy.test.ts",
-      "log": "POLICY_UNIT.log",
-      "exitCode": 0
-    },
-    {
-      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionService.test.ts",
-      "log": "DECISION_UNIT.log",
-      "exitCode": 0
-    },
-    {
-      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionMigration.test.ts",
-      "log": "MIGRATION_CONTRACT.log",
-      "exitCode": 0
-    },
-    {
-      "file": "src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts",
-      "log": "OWNER_SQL_CONTRACT.log",
-      "exitCode": 0
-    },
-    {
-      "file": "tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx",
-      "log": "ORG_POLICY_UI.log",
-      "exitCode": 0
-    },
-    {
-      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts",
-      "log": "DECISION_REALPG.log",
-      "exitCode": 0
-    },
-    {
-      "file": "server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts",
-      "log": "RACE_REALPG.log",
-      "exitCode": 0
-    },
-    {
-      "file": "server/src/routes/v8/__tests__/interviewAnswerApproval.gateway.pg.test.ts",
-      "log": "GATEWAY_JWT_REALPG.log",
-      "exitCode": 0,
-      "status": "PASS_4_OF_4_AFTER_HOST_RECOVERY"
-    }
-  ]
+  "verdict": "PASS_ALL_DELTA_TEST_FILES_POST_REBASE",
+  "baseSha": "21d7d27ecf8aa5f70def36ff52b1db14854e1eaf",
+  "headBeforeEvidenceRefresh": "f111c927ff2a7a01b5edf07bebad9acec83bb158",
+  "selectionRule": "Every test file in git diff base...HEAD; FOCUSED_TESTS.json itself excluded.",
+  "testFileCount": 15,
+  "unitAndComponent": {
+    "files": [
+      "server/src/routes/v8/__tests__/interview.routes.test.ts",
+      "server/src/services/interview/__tests__/interviewAnswerApprovalPolicy.test.ts",
+      "server/src/services/interview/__tests__/interviewAnswerDecisionMigration.test.ts",
+      "server/src/services/interview/__tests__/interviewAnswerDecisionService.test.ts",
+      "src/components/Interview/__tests__/InterviewApprovalLifecycle.ownerContract.test.ts",
+      "src/components/Interview/__tests__/InterviewHub.assignmentReview.behavior.test.tsx",
+      "src/components/Interview/__tests__/InterviewSingleQuestionRuntime.ownerBehavior.test.tsx",
+      "src/components/Interview/__tests__/InterviewWorkspace.managerReview.behavior.test.tsx",
+      "src/services/__tests__/api.getSystemHealth.guarded.test.ts",
+      "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts",
+      "tests/unit/services/v8-interview-api.test.ts",
+      "tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx"
+    ],
+    "result": "12 files / 202 tests PASS",
+    "retry": 0
+  },
+  "realPostgres": {
+    "files": [
+      "server/src/routes/v8/__tests__/interviewAnswerApproval.gateway.pg.test.ts",
+      "server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts",
+      "server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts"
+    ],
+    "result": "3 files / 19 tests PASS",
+    "gatewayTests": "4/4 included",
+    "database": "consultify_s1_v2",
+    "host": "127.0.0.1",
+    "port": 6454,
+    "retry": 0
+  },
+  "returnedControllerFile": {
+    "file": "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts",
+    "result": "32/32 PASS",
+    "proof": [
+      "organization policy query has a dedicated mock and no longer consumes assignment fixtures",
+      "ENABLE_INTERVIEW_ANSWER_APPROVAL=true is scoped and restored after each test"
+    ]
+  }
 }
