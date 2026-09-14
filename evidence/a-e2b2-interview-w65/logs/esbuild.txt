@@ -1,0 +1,15 @@
+npx esbuild src/components/Interview/InterviewHub.tsx --bundle --platform=browser --external:* --outfile=/tmp/a-e2b2-w64/esbuild-0.js
+
+  ../../../../../tmp/a-e2b2-w64/esbuild-0.js  406.9kb
+
+⚡ Done in 20ms
+npx esbuild src/components/Interview/InterviewSessionPreview.tsx --bundle --platform=browser --external:* --outfile=/tmp/a-e2b2-w64/esbuild-1.js
+
+  ../../../../../tmp/a-e2b2-w64/esbuild-1.js  6.8kb
+
+⚡ Done in 2ms
+npx esbuild src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx --bundle --platform=node --external:* --outfile=/tmp/a-e2b2-w64/esbuild-2.js
+
+  ../../../../../tmp/a-e2b2-w64/esbuild-2.js  10.3kb
+
+⚡ Done in 2ms

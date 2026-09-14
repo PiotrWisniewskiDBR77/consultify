@@ -1,0 +1,66 @@
+[
+  {
+    "lang": "en",
+    "theme": "light",
+    "url": "http://127.0.0.1:4214/?screen=interview-sessions-status&lang=en&theme=light",
+    "file": "evidence/a-e2b2-interview-w65/interview-sessions-en-light.jpg",
+    "errors": [],
+    "expected": [
+      "PROGRESS",
+      "Property",
+      "Value",
+      "Summarize",
+      "Risks",
+      "Next steps"
+    ],
+    "previewOpen": true
+  },
+  {
+    "lang": "en",
+    "theme": "dark",
+    "url": "http://127.0.0.1:4214/?screen=interview-sessions-status&lang=en&theme=dark",
+    "file": "evidence/a-e2b2-interview-w65/interview-sessions-en-dark.jpg",
+    "errors": [],
+    "expected": [
+      "PROGRESS",
+      "Property",
+      "Value",
+      "Summarize",
+      "Risks",
+      "Next steps"
+    ],
+    "previewOpen": true
+  },
+  {
+    "lang": "pl",
+    "theme": "light",
+    "url": "http://127.0.0.1:4214/?screen=interview-sessions-status&lang=pl&theme=light",
+    "file": "evidence/a-e2b2-interview-w65/interview-sessions-pl-light.jpg",
+    "errors": [],
+    "expected": [
+      "PRZEBIEG",
+      "Właściwość",
+      "Wartość",
+      "Podsumuj",
+      "Ryzyka",
+      "Następne kroki"
+    ],
+    "previewOpen": true
+  },
+  {
+    "lang": "pl",
+    "theme": "dark",
+    "url": "http://127.0.0.1:4214/?screen=interview-sessions-status&lang=pl&theme=dark",
+    "file": "evidence/a-e2b2-interview-w65/interview-sessions-pl-dark.jpg",
+    "errors": [],
+    "expected": [
+      "PRZEBIEG",
+      "Właściwość",
+      "Wartość",
+      "Podsumuj",
+      "Ryzyka",
+      "Następne kroki"
+    ],
+    "previewOpen": true
+  }
+]
