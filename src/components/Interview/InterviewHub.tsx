@@ -121,7 +121,7 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
+import { formatListDate, formatListDateTime, localeListy } from '@/utils/listDateFormat';
 import {
   formatPresentationCount,
   knownPresentation,
@@ -563,7 +563,12 @@ function getTemplateStatusChip(
 
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const isPolish = i18n.language?.startsWith('pl');
+  const isPolish = i18n.resolvedLanguage?.startsWith('pl') ?? i18n.language?.startsWith('pl');
+  const previewAiHints = [
+    t('interview.hub.previewAiHints.summarize'),
+    t('interview.hub.previewAiHints.risks'),
+    t('interview.hub.previewAiHints.nextSteps'),
+  ];
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
@@ -7129,9 +7134,7 @@ Return ONLY the answer text (no markdown fences).`;
               const workflowStatus = getSessionWorkflowStatus(s);
               const canRunAi = ['approved', 'completed'].includes(workflowStatus);
               const linkedAssignment = getManagedAssignmentForSession(s);
-              const aiHints = isPolish
-                ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-                : ['Summarize', 'Risks', 'Next steps'];
+              const aiHints = previewAiHints;
               const hintToType: Record<string, InsightPromptType> = {
                 Podsumuj: 'summary',
                 Summarize: 'summary',
@@ -7394,7 +7397,7 @@ Return ONLY the answer text (no markdown fences).`;
                   t('interview.hub.linkedSession', 'Linked session')
                 : '—';
             const dateStr = item.createdAt
-              ? new Date(item.createdAt).toLocaleDateString(undefined, {
+              ? new Date(item.createdAt).toLocaleDateString(localeListy(), {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
@@ -7408,7 +7411,7 @@ Return ONLY the answer text (no markdown fences).`;
               if (!createdAt || Number.isNaN(createdAt.getTime())) return null;
               const diffMs = Date.now() - createdAt.getTime();
               const diffMin = Math.round(diffMs / 60000);
-              const rtf = new Intl.RelativeTimeFormat(isPolish ? 'pl' : 'en', { numeric: 'auto' });
+              const rtf = new Intl.RelativeTimeFormat(localeListy(), { numeric: 'auto' });
               if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
               const diffH = Math.round(diffMin / 60);
               if (Math.abs(diffH) < 48) return rtf.format(-diffH, 'hour');
@@ -7440,17 +7443,11 @@ Return ONLY the answer text (no markdown fences).`;
             const sc = statusConfig[status] || statusConfig.completed;
             const typeConfig = getInsightTypeConfig(type);
 
-            const aiSuggestions = isPolish
-              ? [
-                  { id: 'summarize', label: 'Podsumuj' },
-                  { id: 'risks', label: 'Wypisz ryzyka' },
-                  { id: 'next', label: 'Następne kroki' },
-                ]
-              : [
-                  { id: 'summarize', label: 'Summarize' },
-                  { id: 'risks', label: 'Extract risks' },
-                  { id: 'next', label: 'Next steps' },
-                ];
+            const aiSuggestions = [
+              { id: 'summarize', label: t('interview.hub.previewAiHints.summarize') },
+              { id: 'risks', label: t('interview.hub.previewAiHints.extractRisks') },
+              { id: 'next', label: t('interview.hub.previewAiHints.nextSteps') },
+            ];
 
             const buildAiPrompt = (kind: string) => {
               const base = `Title: ${item.title}\n\nContent:\n${detailsText || '—'}`;
@@ -7703,9 +7700,7 @@ Return ONLY the answer text (no markdown fences).`;
         const src = item.sourceId ? insights.find((i) => i.id === item.sourceId) : null;
         const dateStr =
           item.updatedAt || item.createdAt
-            ? new Date(item.updatedAt || item.createdAt || '').toLocaleDateString(
-                t('interview.hub.enUs')
-              )
+            ? new Date(item.updatedAt || item.createdAt || '').toLocaleDateString(localeListy())
             : '—';
         const promoted = isInitiativePromoted(item.status);
         return (
@@ -7861,7 +7856,7 @@ Return ONLY the answer text (no markdown fences).`;
                   relations.push({
                     label: `${t('interview.hub.updated')}: ${new Date(
                       item.updatedAt || item.createdAt || ''
-                    ).toLocaleDateString(t('interview.hub.enUs', 'en-US'))}`,
+                    ).toLocaleDateString(localeListy())}`,
                     tone: 'text-slate-600 dark:text-slate-300',
                   });
 
@@ -7917,10 +7912,7 @@ Return ONLY the answer text (no markdown fences).`;
                           .replace(/^#\s.+$/m, '')
                           .trim();
                         const dateStr = initiative.createdAt
-                          ? new Date(initiative.createdAt).toLocaleDateString(
-                              t('interview.hub.enUs'),
-                              { month: 'short', day: 'numeric' }
-                            )
+                          ? new Date(initiative.createdAt).toLocaleDateString(localeListy(), { month: 'short', day: 'numeric' })
                           : '—';
                         const src = initiative.sourceId
                           ? insights.find((i) => i.id === initiative.sourceId)
@@ -8127,9 +8119,7 @@ Return ONLY the answer text (no markdown fences).`;
                         render: (row: InterviewInitiativeDraft) =>
                           row.updatedAt || row.createdAt ? (
                             <span className="text-xs text-c-text-muted">
-                              {new Date(row.updatedAt || row.createdAt || '').toLocaleDateString(
-                                t('interview.hub.enUs')
-                              )}
+                              {new Date(row.updatedAt || row.createdAt || '').toLocaleDateString(localeListy())}
                             </span>
                           ) : (
                             <span className="text-xs text-c-text-muted">—</span>
@@ -8722,9 +8712,7 @@ Return ONLY the answer text (no markdown fences).`;
                       },
                     }}
                     ai={{
-                      hints: isPolish
-                        ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-                        : ['Summarize', 'Risks', 'Next steps'],
+                      hints: previewAiHints,
                       disabled: true,
                       disabledTooltip: t('interview.hub.comingSoon'),
                     }}
@@ -8842,11 +8830,7 @@ Return ONLY the answer text (no markdown fences).`;
                   <InterviewAssignmentPreviewFooter
                     assignment={a}
                     isPolish={isPolish}
-                    aiHints={
-                      isPolish
-                        ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-                        : ['Summarize', 'Risks', 'Next steps']
-                    }
+                    aiHints={previewAiHints}
                     aiText={previewAiText}
                     aiError={previewAiError}
                     aiMenuOpen={previewAiMenuOpen}
@@ -9042,11 +9026,7 @@ Return ONLY the answer text (no markdown fences).`;
                   <InterviewAssignmentPreviewFooter
                     assignment={a}
                     isPolish={isPolish}
-                    aiHints={
-                      isPolish
-                        ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-                        : ['Summarize', 'Risks', 'Next steps']
-                    }
+                    aiHints={previewAiHints}
                     aiText={previewAiText}
                     aiError={previewAiError}
                     aiMenuOpen={previewAiMenuOpen}
