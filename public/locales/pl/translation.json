@@ -9374,6 +9374,17 @@
         "actorLabel": "Aktor:",
         "reopenHeading": "Reopen — nowa rewizja",
         "reopenButton": "Reopen sesji (nowa rewizja)"
+      },
+      "output": {
+        "unitColumn": "Jednostka",
+        "currentColumn": "Bieżący",
+        "targetColumn": "Docelowy",
+        "gapColumn": "Luka"
+      },
+      "sourceIndicator": {
+        "server": "DANE Z SERWERA",
+        "recoveryDraft": "SZKIC ODZYSKIWANIA",
+        "demoLocal": "DANE LOKALNE"
       }
     },
     "glossary": {
