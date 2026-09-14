@@ -1,0 +1,11 @@
+
+> consultinity@0.0.1 db:migrate:strict
+> DB_TYPE=postgres tsx server/scripts/migrate.postgres.ts
+
+2026-09-14 12:57:21:5721 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 12:57:21:5721 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 12:57:21:5721 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 12:57:21:5721 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 12:57:21:5721 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 0
+✅ Postgres migrations complete
