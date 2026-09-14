@@ -38,6 +38,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { DelegationModal } from './shared/DelegationModal';
+import { localeListy } from '@/utils/listDateFormat';
 
 export type DecisionPreviewMode = 'my' | 'requests_pending' | 'all';
 
@@ -84,7 +85,7 @@ const formatShortDate = (iso?: string | null) => {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(localeListy(), { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
 const defaultRationaleFor = (status: 'approved' | 'rejected') =>

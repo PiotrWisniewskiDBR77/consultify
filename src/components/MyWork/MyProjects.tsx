@@ -48,7 +48,7 @@ import { Api } from '@/services/api';
 import { type EffectiveStakeholder, StakeholderApi } from '@/services/api/stakeholders.api';
 import { ROUTES } from '@/routes/routeConfig';
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
-import { formatListDate } from '@/utils/listDateFormat';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 
@@ -210,9 +210,9 @@ const formatDate = (dateStr?: string) => formatListDate(dateStr, '—');
 const formatMoney = (n: number | null | undefined, currency: string) => {
   const v = Number(n) || 0;
   try {
-    return v.toLocaleString(undefined, { style: 'currency', currency, maximumFractionDigits: 0 });
+    return v.toLocaleString(localeListy(), { style: 'currency', currency, maximumFractionDigits: 0 });
   } catch {
-    return `${v.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${currency}`;
+    return `${v.toLocaleString(localeListy(), { maximumFractionDigits: 0 })} ${currency}`;
   }
 };
 
