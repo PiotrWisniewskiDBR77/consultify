@@ -32561,10 +32561,10 @@
     "quickPulse": "Szybka opinia",
     "tabs": {
       "report": "Zgłoś",
-      "feature": "Funkcja"
+      "feature": "Pomysł / Funkcja"
     },
     "report": {
-      "intro": "Pomóż nam się poprawiać, zgłaszając problemy lub dzieląc się pomysłami."
+      "intro": "Pomóż nam się poprawiać, zgłaszając błąd."
     },
     "type": {
       "bug": "Błąd",
@@ -32637,7 +32637,8 @@
         "low": "Dobrze mieć",
         "medium": "Ważne",
         "high": "Krytyczne"
-      }
+      },
+      "intro": "Zaproponuj usprawnienie lub nową funkcję."
     },
     "panelContext": {
       "modules": {
