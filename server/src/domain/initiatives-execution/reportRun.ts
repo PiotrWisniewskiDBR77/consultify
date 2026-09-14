@@ -32,6 +32,13 @@ export interface ReportRun {
   scopeRefs: string[];
   period: { start: string; end: string };
   asOf: string;
+  /** Immutable, human-readable work-report payload captured from tenant data. */
+  workReport: {
+    title: string;
+    templateId: string;
+    cadence: 'ON_DEMAND' | 'WEEKLY' | 'MONTHLY';
+    content: Record<string, unknown>;
+  } | null;
   sources: ReportSource[];
   ownerId: string;
   approverId: string;
@@ -73,7 +80,7 @@ type Draft = Pick<
   | 'sources'
   | 'ownerId'
   | 'approverId'
->;
+> & { workReport?: ReportRun['workReport'] };
 async function exactDefinition(
   tx: any,
   org: string,
@@ -114,6 +121,7 @@ export async function createReportRun(
     const now = new Date().toISOString(),
       run: ReportRun = {
         ...p,
+        workReport: p.workReport ?? null,
         reportRunId: envelope.aggregateId,
         tenantId: envelope.organizationId,
         status: 'DRAFT',
@@ -214,6 +222,7 @@ export async function transitionReportRun(
         scopeRefs: r.scopeRefs,
         period: r.period,
         asOf: r.asOf,
+        workReport: r.workReport,
         sources: r.sources,
       };
       const hash = reportContentHash(snapshot);

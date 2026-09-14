@@ -2034,6 +2034,30 @@ export function listReportDefinitions() {
 export function listReportRuns() {
   return allocationRequest('/report-runs', 'GET');
 }
+export function previewInitiativeWorkReport(command: unknown) {
+  return allocationRequest('/work-reports/preview', 'POST', command);
+}
+export function scheduleInitiativeWorkReport(command: unknown) {
+  return allocationRequest('/work-reports/schedules', 'POST', command);
+}
+export async function downloadInitiativeWorkReportPdf(reportRunId: string): Promise<Blob> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/work-reports/${encodeURIComponent(reportRunId)}/pdf`,
+    { credentials: 'include' }
+  );
+  if (!response.ok) {
+    const body = await readJson(response);
+    throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  }
+  return response.blob();
+}
+export function deliverInitiativeWorkReport(reportRunId: string, command: unknown) {
+  return allocationRequest(
+    `/work-reports/${encodeURIComponent(reportRunId)}/deliver`,
+    'POST',
+    command
+  );
+}
 export function requestDeliveryAcceptance(id: string, command: unknown) {
   return allocationRequest(
     `/delivery-acceptances/${encodeURIComponent(id)}/request`,
