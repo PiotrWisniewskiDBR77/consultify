@@ -1,0 +1,68 @@
+{
+  "viewport": {
+    "left": 62,
+    "right": 318,
+    "width": 256
+  },
+  "clientWidth": 254,
+  "scrollWidth": 254,
+  "rows": [
+    {
+      "left": 63,
+      "right": 317,
+      "width": 254
+    },
+    {
+      "left": 63,
+      "right": 317,
+      "width": 254
+    },
+    {
+      "left": 63,
+      "right": 317,
+      "width": 254
+    },
+    {
+      "left": 63,
+      "right": 317,
+      "width": 254
+    },
+    {
+      "left": 63,
+      "right": 317,
+      "width": 254
+    }
+  ],
+  "statuses": [
+    {
+      "left": 183,
+      "right": 280.46875,
+      "width": 97.46875
+    },
+    {
+      "left": 183,
+      "right": 280.46875,
+      "width": 97.46875
+    },
+    {
+      "left": 183,
+      "right": 281.046875,
+      "width": 98.046875
+    },
+    {
+      "left": 183,
+      "right": 281.046875,
+      "width": 98.046875
+    },
+    {
+      "left": 183,
+      "right": 281.046875,
+      "width": 98.046875
+    }
+  ],
+  "status": {
+    "left": 183,
+    "right": 280.46875,
+    "width": 97.46875
+  }
+}

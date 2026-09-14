@@ -1,0 +1,31 @@
+D-3 review-fix validation transcript — 2026-09-14
+
+PASS exit=0
+npx vitest run src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx --retry=0
+Result: 4 passed / 4
+Raw: project-stage-gates-unit-final.log
+
+PASS exit=0
+E2E_BASE_URL=http://127.0.0.1:4215 E2E_USE_WEB_SERVER=false npx playwright test tests/e2e/project-stage-gates-mobile-geometry.spec.ts --project=chromium --workers=1 --retries=0
+Result: 1 passed / 1; live Chromium bounding boxes and overflow
+Raw: project-stage-gates-browser-geometry-final.log
+
+STOP exit=1
+npx vitest run <five My Work test files touched by 7e2e2f62d8> --retry=0
+Result: 24 passed / 1 failed; ideaWorkspaceJedenPanel expects the two reverted product props
+Raw: mywork-test-only-after-product-revert.log
+
+PASS exit=0
+npx tsc -p server/tsconfig.json --noEmit
+Result: no diagnostics
+Raw: server-tsc.log
+
+NOT_GREEN exit=1
+npx tsc --noEmit
+Result: Node heap out of memory near 4 GiB after 94 s; not a TypeScript diagnostic result
+Raw: front-tsc.log
+
+PASS exit=0
+npx esbuild src/components/MyWork/ProjectStageGatesPanel.tsx --bundle --platform=browser --format=esm ...
+Result: 14.9kb bundle in 6ms
+Raw: project-stage-gates-esbuild.log

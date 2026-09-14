@@ -15,7 +15,17 @@
 
 Pierwsza próba mechanicznej synchronizacji została zachowana w historii jako `d539d76e7f`, a następnie audytowalnie odwrócona commitem `f924fd8266`; nie użyto resetu ani przepisywania historii. Stare lustro serwera deklaruje `TransitionAuthority = 'process_role' | 'organization_owner'`, eksportuje je i rozszerza nim `TransitionResult`. `MethodSessionService` jest realnym konsumentem tego typu. Kanoniczne `src` tej deklaracji nie ma, natomiast ma `compiledLanguage?: string`, którego stare lustro `methodPack` nie ma. Po odwróceniu zmiany server TypeScript wrócił do 0 błędów, a `contractMirrorDrift` celowo pozostaje **4 FAIL / 3 PASS** bez osłabienia testu.
 
-Bezpieczny wariant wymaga decyzji właściciela: wprowadzić `TransitionAuthority` do kontraktu kanonicznego `src`, następnie wygenerować wszystkie lustra i dodać testy konsumenta oraz zgodności typu. Do tej decyzji paczka nie integruje zmiany kontraktu.
+Do decyzji właściciela są dwa bezpieczne warianty. Paczka nie wdraża żadnego z nich i nie osłabia `contractMirrorDrift`.
+
+**Wariant A — jeden kanoniczny kontrakt.** Dodać `TransitionAuthority` do kanonicznego `src/method-core/contracts/session.ts`, zachować `compiledLanguage` w kanonicznym `methodPack.ts`, następnie wygenerować oba lustra serwerowe z kanonu. Odbiór musi zawierać testy konsumentów: `MethodSessionService` dla obu wartości authority, kompilator DRD dla `compiledLanguage` EN/PL oraz zielony, bajtowy `contractMirrorDrift`. Ryzyko: publiczny kontrakt klienta świadomie rozszerza się o typ używany dziś przez serwer, więc wymaga przeglądu kompatybilności wszystkich importerów.
+
+**Wariant B — osobna authority serwera.** Przenieść `TransitionAuthority` i serwerowe rozszerzenie `TransitionResult` do osobnego kontraktu w `server/src/method-core`, którego nie udajemy lustrzanym kontraktem publicznym. Następnie zsynchronizować publiczne lustra `session.ts`, `methodPack.ts` i `index.ts` z kanonicznym `src`, w tym `compiledLanguage`. Odbiór musi zawierać test `MethodSessionService` importujący wyłącznie kontrakt authority serwera, test braku eksportu authority z publicznego `index.ts`, test kompilatora DRD EN/PL oraz zielony `contractMirrorDrift`. Ryzyko: zmienia się ścieżka importu konsumenta serwerowego, ale granica publiczne/serwerowe pozostaje jednoznaczna.
+
+Rekomendacja techniczna: **B**, bo `TransitionAuthority` opisuje obecnie autoryzację wykonania po stronie serwera, a nie przenośny model sesji dla klienta. Właściciel musi jednak zatwierdzić granicę kontraktu przed kodem.
+
+## STOP — W66 My Work test-only
+
+Commit `196873e69b` audytowalnie cofa wyłącznie dwie produktowe linie `IdeaMapWorkspace.tsx` dodane w `7e2e2f62d8`, dzięki czemu finalny produktowy diff My Work wraca do bazy poza zatwierdzonym `ProjectStageGatesPanel`. Uruchomienie pięciu plików testowych dotkniętych przez `7e2e2f62d8` daje **24 PASS / 1 FAIL**. Czerwony `ideaWorkspaceJedenPanel.contract.test.ts` nadal wymaga `teresaCommands={teresaCommands}` i `onDiscussWithTeresa={handleTeresaDiscuss}`, czyli dokładnie cofniętych dwóch linii produktu. Zgodnie z poleceniem review nie wymyślono kolejnej poprawki testu ani produktu; surowy wynik jest w `evidence/d3-review-fixes/raw/mywork-test-only-after-product-revert.log` i wymaga rozstrzygnięcia CTO, czy zachować produktową integrację Teresy, czy skorygować odziedziczony test.
 
 ## Tożsamość i dowody po rebase W66
 
