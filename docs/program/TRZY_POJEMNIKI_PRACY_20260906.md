@@ -847,6 +847,30 @@ Pełny dowód (bramka, parytet, migracja): `docs/program/PROGRAM_NAPRAWCZY_20260
 wpis „Paczka 5 v3". Liczniki „Duże pakiety Codexa" przeliczone (§0.1): 5/5 w toku → **1 na
 stagingu** (paczka 5 v3), 4 pozostają w toku (F2-1, F2-2, F2-3, F2-E).
 
+**Fala B4 — H1e + H1f (skrzynka v2) WDROŻONA na staging (14.09, push `94754c3b4d`; run
+`34829819090` „failure" = 12-min timeout czekania na Railway, wdrożenie realne: health gitSha
+`94754c3b4d`; tag `staging-deployed` celowo na `3e1363d01a`).** Linia `19baa6d8bc` → merge H1e
+`afc6f19cc0` (8 plików, 0 konfliktów) → merge Z-27 `fedc288ea3` (12 plików, 0 konfliktów) → merge
+linii `94754c3b4d`; delta 18 plików. Wykrywacz duplikatów kluczy en 0 / pl 0 (lokalnie i na
+plikach serwowanych przez staging). Tag cofnięcia `rollback-pre-fala-b4-20260914` = `19baa6d8bc`.
+Bramka: tsc serwer 0, front 189 (=linia; jedyny błąd w plikach fali TS2493 w
+`TransitionInboxSurface.behavior.test` zastany), język OK, canon 349, artefakt
+8/8-0/0-117/117, build 36,7 s, testy 5 plików 26/26 (`i18nTrescPolska` z wykrywaczem,
+`preflight.h1e`, `TransitionInboxSurface.behavior`, `kanonPaskow.source`,
+`closureWorkIncomplete`). Parytet OFF na żywym chunku `InitiativesHub-Va9_D_GT.js`:
+`initiatives.tabs.transitionInbox` 0, komponent skrzynki 0, `transitionInbox` 1 = martwa gałąź w
+`commandRowContent` (nieosiągalna przy OFF), kontrola pozytywna capacity 1. Klucze i18n na
+serwowanych plikach: `initiatives.status.scheduled` = Scheduled/Zaplanowana,
+`lifecycle.blocked.CLOSURE_WORK_INCOMPLETE` en+pl. Warunek włączenia skrzynki + bramki GO
+(DEC-507) po stronie kodu **SPEŁNIONY**: `VITE_TRANSITION_INBOX` + `ENABLE_LIFECYCLE_GO_GATE`
+razem, po akcepcie właściciela na zrzucie skrzynki (v2, wysłany). Pułapka: tsc bez heap 8 GB =
+OOM = fałszywe „0". KANAŁ wpis 37 (baza `94754c3b4d` do rebase S3/S4; wykrywacz duplikatów =
+reguła; `initiativeStatusLabels.ts` jedyne źródło etykiet). Worktree usunięte: `fala-b4`,
+`paczka5v3`, `z29`, `p1-raport`, `fala-a2`, `z27`, `h1e`. Dysk ~28 GiB. **EWIDENCJA:** §5 H1e,
+H1f → **🧪 NA STAGINGU `94754c3b4d`** (za flagą); Q1 Obciążenie, S5 PMO E3, RP1b pozostają
+integratory w toku (Z-2). Liczniki §5 przeliczone: 46 etapów (+1 H1f) — ✅ 2 · 🧪 12 · 🔧 6 ·
+⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 42 etapy (0 ✅, 11 🧪, 6 🔧, 25 ⬜).
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -1161,7 +1185,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `78086fb2c8` | 14.09 |
 | Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B3 | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🧪 NA STAGINGU | `78086fb2c8` | 14.09 |
 | Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B3 | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🧪 NA STAGINGU (flaga `ENABLE_LIFECYCLE_GO_GATE` OFF, DEC-507) | `78086fb2c8` | 14.09 |
-| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🔧 GOTOWE DO SCALENIA | `1b9d467823` | 14.09 |
+| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🧪 NA STAGINGU (za flagą; warunek włączenia DEC-507 spełniony po stronie kodu, czeka akcept właściciela) | `94754c3b4d` | 14.09 |
+| Realizacja | przewód | H1f poprawki skrzynki v2 po oku CTO (pigułki Menu 3 wyłączone dla `transitionInbox` w `commandRowContent`, surowe kody przejść/obszaru → etykiety i18n przez `initiativeStatusLabels.ts` wydzielone z `InitiativePreviewV3`, 9 brakujących kluczy `initiatives.status.*` dołożonych) | Sonnet | H1b, Z-27 | B4 | zrzuty jasny+ciemny lista/podgląd/OFF (`~/Developer/cto-codex/zrzuty-z27-skrzynka-20260914/v2/`) wysłane właścicielowi | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `94754c3b4d` | 14.09 |
 | Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | ⬜ NIE ZACZĘTE (dyżur wydany, nienaprawione) | KANAL wpis 31 | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
@@ -1172,12 +1197,14 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (45 etapów; 14.09 noc: RP1 ODEBRANY i WDROŻONY na staging `3e1363d01a` za flagą
-(RP1b przejazd kanonu w toku po skazach Z-29), OB1 → gotowe do odbioru `d27172ed3c`; RP1
-przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU, H1e zostaje 🔧 z adnotacją „gotowe do
-scalenia"):** ✅ 2 · 🧪 10 · 🔧 7 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (46 etapów; 14.09 noc: fala B4 — H1e + H1f (skrzynka v2) WDROŻONA na staging
+`94754c3b4d` za flagą; H1e przechodzi 🔧 GOTOWE DO SCALENIA → 🧪 NA STAGINGU, nowy wiersz H1f
+(skrzynka v2, Z-27 rozliczone) dołożony wprost 🧪 NA STAGINGU; RP1 ODEBRANY i WDROŻONY na staging
+`3e1363d01a` za flagą (RP1b przejazd kanonu w toku po skazach Z-29), OB1 → gotowe do odbioru
+`d27172ed3c`; RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU):** ✅ 2 · 🧪 12 · 🔧 6 ·
+⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**41 etapów to FALA 2** (0 ✅, 9 🧪, 7 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**42 etapy to FALA 2** (0 ✅, 11 🧪, 6 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
