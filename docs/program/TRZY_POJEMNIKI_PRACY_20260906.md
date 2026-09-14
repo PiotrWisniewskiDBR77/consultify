@@ -900,6 +900,53 @@ wyjaśnienia — **Z-37**). Flagi: `VITE_INITIATIVES_WORKLOAD` + `ENABLE_INITIAT
 sprawdzenia w kosmetyce), **Z-37**; Z-2: integratory w toku: S5 PMO E3, RP1b, kosmetyka Q1;
 worktree usunięte: `fala-b4`, `q1-obciazenie`.
 
+**RP1b — przejazd kanonu Raportu z pracy GOTOWY (14.09, Opus, gałąź
+`integracja/kandydat-p1-kanon-20260914`, HEAD `e9d5592f3f`, kopia `backup/p1-kanon-20260914`;
+baza `94754c3b4d`).** 6 commitów: harness z29 cherry-pick `3e2b8c5e25`; `workReportLabels.ts`
+`718d611350`; StandardPreview 6 bloków + kebab wiersza `30a8965e2b`; SelectField zamiast
+natywnych `<select>` + kreator zwinięty pod listą + przycisk „Nowy raport" `6f61834304`; pigułki
+Menu 3 wyłączone dla workReport (`InitiativesHub.tsx:3097/:3112`) `333e254c83`; poprawki po
+zrzutach `e9d5592f3f` (ucięty status w kolumnie — FilterableTable + własny render, łamana pigułka
+szablonu, nagłówek „Raporty z pracy"). Serwer nietknięty (`deliveryAttempts` już był w
+`GET /report-runs`). 29 testów zielonych (mutacje RED). Bramka: canon 349, artefakt 8-0-117,
+front tsc 189. Zrzuty `~/Developer/cto-codex/zrzuty-p1-kanon-20260914/` (14, jasny+ciemny, w
+powłoce; podgląd z doręczeniami per adresat) — wysłany właścicielowi, czeka Tak/Nie.
+„What's-next" pominięte świadomie (kanon §7.3a: tylko dla źródła cross-module); kreator jako
+modal = osobna decyzja, nie ta gałąź. 13 błędów konsoli harnessu = szum atrapy (obecne też przy
+OFF, nie regresja tej gałęzi). → integrator fala C1 (`wt/fala-c1`) w toku. **EWIDENCJA:** RP1 →
+**🔧 gotowe do scalenia `e9d5592f3f`** (fala C1).
+
+**Q1 kosmetyka (14.09, Sonnet, gałąź `integracja/kandydat-q1-kosmetyka-20260914`, HEAD
+`a427ef7af9`, kopia `backup/q1-kosmetyka-20260914`).** Premisa CTO nieaktualna
+(`commandRowContent` wyłączał capacity dopiero od `c7faa68b0d`) — dodany test-strażnik
+`06ba9fba5f`. REALNY przeciek: `canonicalMenu3Definitions.capacity` (Drafts/Published/With gaps)
++ dropdown „Status" renderowane bezwarunkowo nad heatmapą → gated `INITIATIVES_WORKLOAD_ENABLED`
+(`28fc516145`; `InitiativesHub.tsx:2856-2896, :3018`; 3 testy mutation-killed). Harness
+`dev-render/screens/z30-inicjatywy-obciazenie.tsx` + skrypty ON/OFF (`a427ef7af9`). Zrzuty v2 (7)
+`~/Developer/cto-codex/zrzuty-q1-obciazenie-20260914/v2/`: heatmapa EN jasny/ciemny czysta, klik
+wiersza → StandardPreview osoby (Z-36 NIE DOTYCZY — podgląd działa; komórki tygodni bąbelkują do
+wiersza), PL: pigułka „Brak dostępności" ucięta w kolumnach tygodni + mylące nagłówki
+„Dostępność tygodniowa"/„Dostępność" (`pl/translation.json:10627-10628,10643`) → **Z-38 nowy**
+(dyżur i18n/UI). OFF = linia, bez regresji. Efekt uboczny: niecommitowane wpisy w
+`~/Developer/Consultify/.claude/launch.json` + 2 skrypty `scripts/dev/z30-*` (do wglądu
+właściciela, nie scalać bez przeglądu). → integrator fala C2 (`wt/fala-c2`) w toku. **EWIDENCJA:**
+OB1 kosmetyka → **gotowe do scalenia `a427ef7af9`** (fala C2).
+
+**Z-2 (aktualizacja 14.09, po RP1b/Q1 kosmetyce).** S5 PMO E3 push `7332fa2a6f` w wdrożeniu
+(integrator `wt/s5-pmo`, raport w toku); fala C1 (RP1b) i fala C2 (Q1 kosmetyka) w toku. Codex: S4
+F2-2 E2 `READY_FOR_EXACT_SHA_REVIEW` (05:14) → **HOLD** po exact-SHA review (05:22) — nadal
+pracuje. KANAŁ wpisy 37–38 (baza `94754c3b4d`→`257e851d94`, ostrzeżenie o znacznikach konfliktu w
+worktree Q1 Codexa — **Z-37**, bez zmian). Worktree usunięte: `q1-obciazenie`, `p1-kanon`,
+`q1-kosmetyka` (integratory fali C1/C2 w toku, sprzątanie po scaleniu). Dysk ~30 GiB.
+
+**EWIDENCJA (uzupełnienie 14.09, RP1b + Q1 kosmetyka).** §5: RP1 → **🔧 gotowe do scalenia
+`e9d5592f3f`** (fala C1, tekst wiersza dopisany „RP1b przejazd kanonu GOTOWY"); OB1 → **🧪 NA
+STAGINGU `257e851d94`** (za flagą; kosmetyka gotowa do scalenia `a427ef7af9`, fala C2). Skrzynka:
+**Z-36 ROZLICZONE** (podgląd StandardPreview osoby działa, potwierdzone w kosmetyce v2 —
+zamknięte); **Z-38 nowy** (pigułka „Brak dostępności" ucięta + mylące nagłówki PL, dyżur
+i18n/UI). Liczniki §5 bez zmiany stanu (RP1b/kosmetyka są przejazdami wewnątrz istniejących
+wierszy RP1/OB1, nie osobnymi etapami) — przeliczyć ponownie po scaleniu fal C1/C2.
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -1189,11 +1236,11 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
-| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą) | `257e851d94` | 14.09 |
+| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą; kosmetyka gotowa do scalenia `a427ef7af9`, fala C2) | `257e851d94` | 14.09 |
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu w toku po Z-29) | `3e1363d01a` | 14.09 |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu GOTOWY, gotowe do scalenia `e9d5592f3f`, fala C1) | `3e1363d01a` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
