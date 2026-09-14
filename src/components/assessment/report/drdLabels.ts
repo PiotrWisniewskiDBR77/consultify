@@ -295,13 +295,23 @@ const PL_DIACRITICS = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
  * większość opisów z polskimi diakrytykami → oś przetłumaczona. Zmierzone
  * 2026-08-30: oś 5 = 27/30, oś 6 = 26/30, pozostałe = 0/25..0/63.
  */
-function levelCorpusLanguage(axis: (typeof DRD_STRUCTURE)[number]): DrdSourceLanguage {
+function levelCorpusLanguage(
+  axis: (typeof DRD_STRUCTURE)[number],
+  /**
+   * ★ FALA J3: przy interfejsie EN liczymy język TEGO, CO ZOBACZY CZYTELNIK,
+   * czyli wariantu `titleEN`/`descriptionEN` tam, gdzie istnieje. Bez tego
+   * przetłumaczona oś 5 dalej dostawałaby znacznik „polski oryginał".
+   */
+  poAngielsku = !interfejsPoPolsku()
+): DrdSourceLanguage {
   let total = 0;
   let polish = 0;
   for (const area of axis.areas) {
     for (const level of area.levels) {
       total += 1;
-      if (PL_DIACRITICS.test(level.description || level.title || '')) polish += 1;
+      const opis = (poAngielsku && level.descriptionEN) || level.description;
+      const tytul = (poAngielsku && level.titleEN) || level.title;
+      if (PL_DIACRITICS.test(opis || tytul || '')) polish += 1;
     }
   }
   if (total === 0) return 'en';
@@ -375,11 +385,14 @@ function sharedLevelLadderOf(
 ): readonly { level: number; title: string }[] | null {
   const first = axis.areas[0];
   if (!first) return null;
+  const poAngielsku = !interfejsPoPolsku();
+  const tytul = (l: { title: string; titleEN?: string }): string =>
+    (poAngielsku && l.titleEN) || l.title;
   const signature = (a: (typeof axis.areas)[number]): string =>
-    a.levels.map((l) => `${l.level}:${l.title}`).join('|');
+    a.levels.map((l) => `${l.level}:${tytul(l)}`).join('|');
   const base = signature(first);
   if (!axis.areas.every((a) => signature(a) === base)) return null;
-  return first.levels.map((l) => ({ level: l.level, title: l.title }));
+  return first.levels.map((l) => ({ level: l.level, title: tytul(l) }));
 }
 
 export interface DrdLevelNarrative {
@@ -417,11 +430,19 @@ export function resolveDrdLevelNarrative(
     if (!area) continue;
     const found = area.levels.find((l) => l.level === level);
     if (!found) return null;
+    // ★ FALA J3 (2026-09-14): osie 5 i 6 mają od dziś wariant angielski
+    // (`titleEN`/`descriptionEN`). Brak wariantu → tekst źródłowy i uczciwy
+    // znacznik języka, dokładnie jak przed zmianą.
+    const poAngielsku = !interfejsPoPolsku();
+    const title = (poAngielsku && found.titleEN) || found.title;
+    const description = (poAngielsku && found.descriptionEN) || found.description;
     return {
       level: found.level,
-      title: found.title,
-      description: found.description,
-      sourceLanguage: levelCorpusLanguage(axis),
+      title,
+      description,
+      sourceLanguage: PL_DIACRITICS.test(description || title || '')
+        ? 'pl'
+        : levelCorpusLanguage(axis, poAngielsku),
     };
   }
   return null;

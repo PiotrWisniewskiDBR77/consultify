@@ -67,13 +67,21 @@ export function czyTerminToPlaceholder(term: string): boolean {
  */
 export function etykietyPoziomowZMetodyki(
   areas: DRDArea[],
-  levelCount: number
+  levelCount: number,
+  /**
+   * ★ FALA J3 (2026-09-14): tytuły poziomów osi 5 i 6 są w korpusie POLSKIE
+   * i mają od dziś wariant `titleEN`. Bez tego wiersze macierzy zostawały
+   * na koncie EN po polsku („WSPIERAJĄCY"), choć obszary obok były już
+   * angielskie. Domyślnie język interfejsu — test może podać go wprost.
+   */
+  poPolsku: boolean = interfejsPoPolsku()
 ): Record<number, string> {
   const out: Record<number, string> = {};
   for (let level = 1; level <= levelCount; level++) {
     const licznik = new Map<string, number>();
     for (const area of areas) {
-      const tytul = area.levels?.find((l) => l.level === level)?.title?.trim();
+      const poziom = area.levels?.find((l) => l.level === level);
+      const tytul = ((!poPolsku && poziom?.titleEN) || poziom?.title)?.trim();
       if (tytul) licznik.set(tytul, (licznik.get(tytul) ?? 0) + 1);
     }
     let best = '';

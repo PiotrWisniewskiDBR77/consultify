@@ -296,8 +296,11 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
         const level: MethodLevel = {
           unitId: area.id,
           level: lvl.level,
-          title: lvl.title,
-          canonicalDefinition: lvl.description,
+          // ★ FALA J3 (2026-09-14): wariant EN istnieje TYLKO tam, gdzie
+          // korpus jest polski (osie 5 i 6). Brak wariantu → zostaje tekst
+          // źródłowy, dokładnie jak przed zmianą — nie zmyślamy tłumaczenia.
+          title: (lang === 'en' && lvl.titleEN) || lvl.title,
+          canonicalDefinition: (lang === 'en' && lvl.descriptionEN) || lvl.description,
           requiredAttributes: [],
           distinctionFromPrevious: '',
           distinctionFromNext: '',
@@ -447,11 +450,14 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
       '(verified against ASSESSMENT_KB_DRD.md, which itself flags the old "34 areas" comment as ' +
       'wrong). MethodAdapter has no pathway hook, so it is NOT wired into this pack — flagging ' +
       'instead of silently picking one model.',
-    'LEVEL TITLES/DESCRIPTIONS ARE NOT LANGUAGE-SWITCHED: `DRD_STRUCTURE` carries exactly ONE ' +
-      'variant per level (`title`/`description`, no `titlePL`), so a compile with lang="en" still ' +
-      'emits the Polish level titles that the corpus happens to hold for axes 5 and 6 (measured ' +
-      '2026-08-30: 11 + 14 Polish titles, 27 + 26 Polish descriptions out of 233). This is a CONTENT ' +
-      'gap in drdStructure.ts, not a wiring gap here — translating it needs the methodology owner.',
+    'LEVEL TITLES/DESCRIPTIONS FOR AXES 5 AND 6 ARE A TRANSLATION AWAITING THE METHODOLOGY ' +
+      "OWNER'S SIGN-OFF: the corpus for those two axes was written in Polish (measured 2026-08-30: " +
+      '11 + 14 Polish titles, 27 + 26 Polish descriptions out of 233). Since 2026-09-14 (wave J3) ' +
+      '`DRD_STRUCTURE` carries an English variant per level (`titleEN`/`descriptionEN`, the same ' +
+      'pattern as `name`/`namePL`) and a compile with lang="en" emits it, so an English report no ' +
+      'longer prints Polish level titles. The English wording is a working translation, NOT owner-' +
+      'approved content — see D2_TYTULY_POZIOMOW_EN.md. Levels with no EN variant keep the source ' +
+      'text (there are none on axes 1-4/7, whose corpus is English already).',
   ];
 
   const readinessRationale =

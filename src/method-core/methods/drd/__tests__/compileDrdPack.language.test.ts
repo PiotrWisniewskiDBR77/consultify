@@ -99,19 +99,43 @@ describe('compileDrdPack — language is wired, not hardcoded', () => {
     expect(en1.pack.questions[0].canonicalWording).not.toBe(pl1.pack.questions[0].canonicalWording);
   });
 
-  it('DOCUMENTED CONTENT GAP: level titles are NOT language-switched (drdStructure has one variant)', () => {
-    // Honest measurement, not a pass: `DRD_STRUCTURE.levels[].title` has no
-    // `titlePL`/EN pair, so axes 5 and 6 keep their Polish titles even in an
-    // EN compile. Pinning the number here means a future translation of
-    // drdStructure.ts trips this test instead of sliding by unnoticed.
+  /**
+   * ★ FALA J3 (2026-09-14) — TEN SAM LICZNIK, ZAMKNIĘTY.
+   * Poprzednia wersja tego bloku przypinała liczbę 25 („tyle polskich tytułów
+   * poziomów przechodzi do kompilacji EN") jako UCZCIWY POMIAR LUKI. Luka
+   * została zamknięta wariantem `titleEN`/`descriptionEN` w `DRD_STRUCTURE`,
+   * więc licznik schodzi do ZERA — i zostaje przypięty na zero, żeby usunięcie
+   * albo pominięcie wariantu wywróciło ten test, zamiast po cichu wrócić.
+   *
+   * Dowód mutacyjny: skasuj `titleEN` z dowolnego poziomu osi 5/6 → pierwsza
+   * asercja pokazuje ten poziom; cofnij `(lang === 'en' && lvl.titleEN)`
+   * w kompilatorze → wraca 25 i 60.
+   */
+  it('EN: ani jeden tytuł/opis poziomu nie zostaje po polsku (było 25 tytułów, 53 opisy)', () => {
     const en = compileDrdPack('en').pack;
-    const polishTitles = en.levels.filter((l) => POLSKIE_ZNAKI.test(l.title));
-    expect(polishTitles).toHaveLength(25);
-    expect([...new Set(polishTitles.map((l) => l.unitId[0]))].sort()).toEqual(['5', '6']);
-    // The compiler must SAY so rather than quietly shipping it.
+
+    expect(en.levels.filter((l) => POLSKIE_ZNAKI.test(l.title)).map((l) => `${l.unitId}#${l.level}`)).toEqual([]);
+    expect(
+      en.levels
+        .filter((l) => POLSKIE_ZNAKI.test(l.canonicalDefinition))
+        .map((l) => `${l.unitId}#${l.level}`)
+    ).toEqual([]);
+    // Przesłanka: to naprawdę osie 5 i 6 dostały wariant, a nie „zniknęły"
+    // z kompilacji — 60 poziomów, po 30 na oś.
+    expect(en.levels.filter((l) => l.unitId.startsWith('5') || l.unitId.startsWith('6'))).toHaveLength(60);
+  });
+
+  it('PL: ten sam kompilat zostaje przy polskim oryginale osi 5 i 6', () => {
+    const pl = compileDrdPack('pl').pack;
+    const polskie = pl.levels.filter((l) => POLSKIE_ZNAKI.test(l.title));
+    expect(polskie).toHaveLength(25);
+    expect([...new Set(polskie.map((l) => l.unitId[0]))].sort()).toEqual(['5', '6']);
+  });
+
+  it('kompilator MÓWI, że angielski wariant osi 5/6 czeka na akcept właściciela metodyki', () => {
     expect(
       compileDrdPack('en').report.discrepancies.some((d) =>
-        d.includes('LEVEL TITLES/DESCRIPTIONS ARE NOT LANGUAGE-SWITCHED')
+        d.includes("AWAITING THE METHODOLOGY OWNER'S SIGN-OFF")
       )
     ).toBe(true);
   });

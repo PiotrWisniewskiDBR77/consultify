@@ -276,8 +276,15 @@ describe('AssessmentReportDocument', () => {
         data={buildData({ current: { '6C': 5 }, target: { '6C': 6 }, gap: { '6C': 1 }, findings: [] })}
       />
     );
-    expect(screen.getByText(/Current level 5 — Monitoring i detekcja/)).toBeTruthy();
-    expect(screen.getByText(/Target level 6 — Weryfikacja tożsamości/)).toBeTruthy();
+    // ★ FALA J3 (2026-09-14): oś 6 ma od dziś wariant angielski poziomu
+    // (`titleEN`), a harness renderuje po angielsku — więc karta obszaru
+    // pisze „Monitoring and Detection", nie „Monitoring i detekcja". Sedno
+    // testu (poziom Z TEGO obszaru, nie z `areas[0]`) jest nietknięte:
+    // 6A poziom 5 to „HR in the Strategy", 6C poziom 5 to „Monitoring and
+    // Detection" — gdyby resolver sięgnął po `areas[0]`, wypisałby to pierwsze.
+    expect(screen.getByText(/Current level 5 — Monitoring and Detection/)).toBeTruthy();
+    expect(screen.getByText(/Target level 6 — Identity Verification/)).toBeTruthy();
+    expect(screen.queryByText(/HR in the Strategy/)).toBeNull();
     expect(screen.queryByText(/HR w strategii/)).toBeNull();
   });
 
