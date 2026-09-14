@@ -691,6 +691,55 @@ pochodzą z zalogowanej sesji; odświeżyć `storageState` albo włączyć `test
 **Z-21** (nowa) — `docker system prune -af --volumes` w ENOSPC skasował wolumeny sieroce
 `fizzup`/`selix`; do wiadomości właściciela.
 
+**Fala B2 — Inicjatywy E1 WDROŻONA na staging (14.09, run `34817397120`, success).** Linia
+`9e9a5f94e7` → `90059a1054`: merge `7e0891ccae` kandydata `1c811a8b19` + poprawki parytetu
+`86e246ab54` (przy OFF „Analysis" z Menu 2 wracał do tabeli — przywrócone; pstryczek
+Current/Archive w slocie filtrów łamał kanon pasków — wyciągnięty, nowy test
+`InitiativesHub.kanonPaskow`); flaga `VITE_INITIATIVES_FOUR_BUTTONS` OFF; parytet z żywego chunku
+(fourButtonsWorkspace 0, workReport 0, gantt 0, portfolio-analyses 0); tag cofnięcia
+`rollback-pre-fala-b2-20260914` = `9e9a5f94e7`; bramka tsc 0/188, język OK, canon 349, artefakt
+8-0-117, 50+32 testów zielone. Nowy czerwony przepuszczony jako dług:
+`InitiativeConsultingAnalysisView.behavior.test` „shows rationale…" — zależność kolejnościowa w
+pliku testu (3/3 czerwony w pliku, 3/3 zielony w izolacji), widok za flagą OFF → **Z-22** (do
+autora/Codex dyżur D-i). Zrzuty `~/Developer/cto-codex/zrzuty-fala-b2-20260914/`. Włączenie ON =
+`railway variables --set VITE_INITIATIVES_FOUR_BUTTONS=true` + redeploy ~9 min (po akcepcie
+właściciela na zrzutach); **UWAGA**: na stagingu brama deterministyczna wyłączona
+(`NODE_ENV=production`) → „Run portfolio analysis" idzie realnym modelem (OpenRouter).
+
+**Fala B1 — Realizacja E1 WDROŻONA na staging (14.09, run `34818029950`, success).** Kandydat
+`942748423c` → merge `d6cfc1cd27` → po wejściu B2 ponowny merge `88f1a1994d` (wdrożony), zero
+konfliktów, 21 nowych kluczy i18n; dowód H1 lokalnie: `proposals` → 400 walidacja / 409
+domenowe, `executions` → 403 `approved_review_required`, `raid` → 409 bramki (kontrola: linia
+dawała 409 bramki na wszystkim); wiersza w `initiative_lifecycle_gate_decisions` brak — writer
+wymaga `transformation_cases`/`plans`/`artifact_links` + rola PROJECT_SPONSOR/STEERING_COMMITTEE
+(→ **H1b** w toku: skrzynka recenzenta, gałąź `integracja/kandydat-h1b-skrzynka-20260914`);
+parytet OFF: `GET runtime-v1/execution-cases` identyczne; na żywym stagingu kolumny Banku bez
+Risk/Handoff; tag cofnięcia `rollback-pre-fala-b1-20260914` = `90059a1054`; bramka tsc 0/188,
+język 3250, canon 349, artefakt 8-0-117, 83 testy zielone; zastane 9 czerwonych w
+`src/components/Execution/__tests__` (`ExecutionRuntimeSpine.contract` ×2,
+`ExecutionWorkSurface.edycjaWierszem` ×6, `ownerNames` ×1) identyczne na linii. Zrzuty
+`~/Developer/cto-codex/zrzuty-fala-b1-20260914/` (01–06 ON lokalnie, 07 staging OFF). Flagi:
+`VITE_EXEC_RISK_SIGNAL`, `VITE_EXEC_HANDOFF_TRACE`.
+
+**DEC-505 (14.09) — Fala B zamknięta po stronie kodu 14.09; akcept wyglądu właściciela = warunek
+włączenia flag na stagingu.** Staging `88f1a1994d` = fala A cz.1–4 + fala B (Inicjatywy A1/A2,
+Realizacja H1/H2/B-E0) za flagami OFF; demo `90833bc94a` = DEC-503 (bez zmian). Następne: H1b (w
+toku), fala C = P1 (Codex S2, `REQUEST_CHANGES` w naprawie) + RA-E4 (Codex Q2), fala D = P2
+(Codex S3, re-review) + Praca (Codex S4, po rebase na fali B), PMO E3 (S5, migracja `20262190`
+zgoda wpis 27).
+
+**EWIDENCJA (uzupełnienie 14.09 noc).** A1, A2 → **🧪 NA STAGINGU `90059a1054`** (za flagą); H1,
+H2, B-E0 → **🧪 NA STAGINGU `88f1a1994d`** (za flagą); H1b 🔧. Licznik FALA 2 przeliczony: 0 ✅,
+5 🧪, 5 🔧, 27 ⬜ (etapy §5 w 🧪). Artefakt statusu `_STATUS_3_FILARY.html` do aktualizacji: STAN NA
+(teraz UTC; staging `88f1a1994d`), liczniki, wiersze, „co blokuje": akcept wyglądu fali B
+(właściciel), kopie 32 GB (Z-19), wolumen (Z-9). Codex pracuje: S1–S5, migracja PMO zgoda.
+
+**Skrzynka 14.09 (uzupełnienie 2).** **Z-22** (nowa) —
+`InitiativeConsultingAnalysisView.behavior.test` „shows rationale…" czerwony w pliku (zależność
+kolejnościowa), zielony w izolacji; widok za flagą OFF; dług do dyżuru Codexa D-i. **Z-2 (14.09,
+aktualizacja)** — fala B (Inicjatywy E1 + Realizacja E1) WDROŻONA na staging za flagami OFF
+(`90059a1054` → `88f1a1994d`); H1b (skrzynka recenzenta) w toku.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)

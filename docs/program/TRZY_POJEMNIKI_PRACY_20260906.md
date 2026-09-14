@@ -450,9 +450,10 @@ nie opcja.
 
 ## EWIDENCJA POSTĘPU — stan na 14.09.2026
 
-**Zmierzone 14.09 ~06:30 UTC → zaktualizowane 14.09 wieczór (fala A cz. 4 wdrożona):** staging
-`54f07e0ccd` (tag `staging-deployed`, fala A cz. 4, run `34814866980`, success), demo
-`90833bc94adb` — **fala A nadal nie na demo**, demo zamrożone do domknięcia stagingu (DEC-503).
+**Zmierzone 14.09 ~06:30 UTC → zaktualizowane 14.09 noc (fala B zamknięta po stronie kodu,
+DEC-505):** staging `88f1a1994d` (fala A cz.1–4 + fala B2 Inicjatywy `90059a1054` + fala B1
+Realizacja, run `34817397120`/`34818029950`, oba success), demo `90833bc94adb` — **fala A i fala B
+nadal nie na demo**, demo zamrożone do domknięcia stagingu (DEC-503).
 Źródła pomiaru: `curl .../api/health` (oba środowiska), `git merge-base --is-ancestor <SHA> HEAD`
 na `~/Developer/wt/rejestr-0914` dla każdego SHA cytowanego w tym pliku i w `OD_CODEXA.md`, tabele
 P-T01…P-T22 / P-P01…P-P15 wyżej w rejestrze — przeliczone wiersz po wierszu (metoda: „na stagingu”
@@ -467,27 +468,53 @@ auto-odświeżenie → **🧪 NA STAGINGU**. Dowody: `~/Developer/cto-codex/zrzu
 (harness + i18n z żywego builda; sesja QA wygasła — zrzuty nie z zalogowanej sesji stagingu,
 **Z-20**: odświeżyć `storageState` QA lub włączyć `test-support` na stagingu).
 
-**Fala B — Inicjatywy E1 gotowa do scalenia (Opus, 14.09):**
-`integracja/kandydat-fala-b-inicjatywy-20260914` HEAD `1c811a8b19` (kopia
-`backup/fala-b-inicjatywy-20260914`) — **A1 Analiza portfela** (StandardTable/Preview, 5 kryteriów
-Coverage gap · Overlap · Priority · New or extension · Decision history, „dlaczego" w podglądzie)
-+ **A2 Parking** (IN/PARKING/ARCHIVE z powodem i warunkiem powrotu, propozycja AI widoczna) →
-**gotowe do scalenia**. Zero migracji, flaga `VITE_INITIATIVES_FOUR_BUTTONS` OFF. HOLD-y Codexa
+**Fala B2 — Inicjatywy E1 WDROŻONA na staging (14.09, run `34817397120`, success).** Linia
+`9e9a5f94e7` → `90059a1054`: merge `7e0891ccae` kandydata `1c811a8b19` (kopia
+`backup/fala-b-inicjatywy-20260914`) + poprawki parytetu `86e246ab54` (przy OFF „Analysis" z
+Menu 2 wracał do tabeli — przywrócone; pstryczek Current/Archive w slocie filtrów łamał kanon
+pasków — wyciągnięty, nowy test `InitiativesHub.kanonPaskow`) — **A1 Analiza portfela**
+(StandardTable/Preview, 5 kryteriów Coverage gap · Overlap · Priority · New or extension ·
+Decision history, „dlaczego" w podglądzie) + **A2 Parking** (IN/PARKING/ARCHIVE z powodem i
+warunkiem powrotu, propozycja AI widoczna) → **🧪 NA STAGINGU**. Zero migracji, flaga
+`VITE_INITIATIVES_FOUR_BUTTONS` OFF; parytet z żywego chunku (fourButtonsWorkspace 0, workReport 0,
+gantt 0, portfolio-analyses 0). Tag cofnięcia `rollback-pre-fala-b2-20260914` = `9e9a5f94e7`.
+Bramka: tsc 0/188, język OK, canon 349, artefakt 8-0-117, 50+32 testów zielone. HOLD-y Codexa
 zamknięte: „migracja 919 BLOCKED" = artefakt przyrządu (ZAMKNIĘTY); „real model
 EVIDENCE_MISSING" — brama deterministyczna wystarcza na testy, model AI nadal nieudowodniony;
 „PMO authority PARTIAL" → **DEC-504 (CTO, 14.09): zostaje fail-closed**
-(`initiative.review` + `canReview && canSelfApprove`, bez fallbacku OWNER/ADMIN). Zastane: 4
-czerwone `initiativeLifecycleCanon`/`forbiddenTransitions`, chwiejny
-`InitiativeConsultingAnalysisView.behavior.test`. Zrzuty wysłane właścicielowi 14.09 (Tak/Nie na
-wygląd, w toku).
+(`initiative.review` + `canReview && canSelfApprove`, bez fallbacku OWNER/ADMIN). Nowy czerwony
+przepuszczony jako dług: `InitiativeConsultingAnalysisView.behavior.test` „shows rationale…" —
+zależność kolejnościowa w pliku testu (3/3 czerwony w pliku, 3/3 zielony w izolacji), widok za
+flagą OFF → **Z-22** (do autora/Codex dyżur D-i). Dowody:
+`~/Developer/cto-codex/zrzuty-fala-b2-20260914/`. Włączenie ON =
+`railway variables --set VITE_INITIATIVES_FOUR_BUTTONS=true` + redeploy ~9 min (po akcepcie
+właściciela na zrzutach); **UWAGA**: na stagingu brama deterministyczna wyłączona
+(`NODE_ENV=production`) → „Run portfolio analysis" idzie realnym modelem (OpenRouter).
 
-**Fala B — Realizacja E1 gotowa (Opus, 14.09, bez zmian tym wpisem):**
-`integracja/kandydat-fala-b-realizacja-20260914` HEAD `942748423c` (kopia
-`backup/fala-b-realizacja-20260914`, baza `b7d27ccc30` → wymaga rebase na linię ≥`54f07e0ccd`
-przed scaleniem) — H1 `75304fbb7a` + H2+B-E0 `2e20c10d26` → **gotowe do scalenia**, integrator w
-toku. Front H1 NIE zbudowany → nowy etap **H1b** (patrz §5). **Codex:** wpis 22 w `KANAL.md`
-(podział pracy) czeka na wklejenie przez właściciela; wpisy 23/24/25 (zgoda migracja B + czystka,
-kolejka Q1–Q5/dyżury D-a..D-f, restart Dockera/Colimy) potwierdzone.
+**Fala B1 — Realizacja E1 WDROŻONA na staging (14.09, run `34818029950`, success).** Kandydat
+`942748423c` (kopia `backup/fala-b-realizacja-20260914`) → merge `d6cfc1cd27` → po wejściu B2
+ponowny merge `88f1a1994d` (wdrożony), zero konfliktów, 21 nowych kluczy i18n — H1 `75304fbb7a` +
+H2+B-E0 `2e20c10d26` → **🧪 NA STAGINGU**. Dowód H1 lokalnie: `proposals` → 400 walidacja / 409
+domenowe, `executions` → 403 `approved_review_required`, `raid` → 409 bramki (kontrola: linia
+dawała 409 bramki na wszystkim). Wiersza w `initiative_lifecycle_gate_decisions` brak — writer
+wymaga `transformation_cases`/`plans`/`artifact_links` + rola PROJECT_SPONSOR/STEERING_COMMITTEE
+(→ **H1b** w toku: skrzynka recenzenta, gałąź `integracja/kandydat-h1b-skrzynka-20260914`, patrz
+§5). Parytet OFF: `GET runtime-v1/execution-cases` identyczne; na żywym stagingu kolumny Banku bez
+Risk/Handoff. Tag cofnięcia `rollback-pre-fala-b1-20260914` = `90059a1054`. Bramka: tsc 0/188,
+język 3250, canon 349, artefakt 8-0-117, 83 testy zielone; zastane 9 czerwonych w
+`src/components/Execution/__tests__` (`ExecutionRuntimeSpine.contract` ×2,
+`ExecutionWorkSurface.edycjaWierszem` ×6, `ownerNames` ×1) identyczne na linii. Dowody:
+`~/Developer/cto-codex/zrzuty-fala-b1-20260914/` (01–06 ON lokalnie, 07 staging OFF). Flagi:
+`VITE_EXEC_RISK_SIGNAL`, `VITE_EXEC_HANDOFF_TRACE`. **Codex:** wpis 22 w `KANAL.md` (podział
+pracy) czeka na wklejenie przez właściciela; wpisy 23/24/25 (zgoda migracja B + czystka, kolejka
+Q1–Q5/dyżury D-a..D-f, restart Dockera/Colimy) potwierdzone.
+
+**DEC-505 (14.09) — Fala B zamknięta po stronie kodu; akcept wyglądu właściciela = warunek
+włączenia flag na stagingu.** Staging `88f1a1994d` = fala A cz.1–4 + fala B (Inicjatywy A1/A2,
+Realizacja H1/H2/B-E0) za flagami OFF; demo `90833bc94a` bez zmian (DEC-503). Następne: H1b (w
+toku), fala C = P1 (Codex S2, `REQUEST_CHANGES` w naprawie) + RA-E4 (Codex Q2), fala D = P2
+(Codex S3, re-review) + Praca (Codex S4, po rebase na fali B), PMO E3 (S5, migracja `20262190` —
+zgoda wpis 27).
 
 **Incydent Docker/Colima 14.09.** Silnik kontenerów = **Colima**, nie Docker Desktop; ENOSPC
 uszkodził `containerd` (`meta.db` + content store), 4 kontenery umarły same. Naprawa: `colima
@@ -509,17 +536,17 @@ MVP zgłoszenia    [████████████████████
 ```
 
 **Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **37**
-(+1 = H1b, wydzielony z H1 14.09). Z tego: 0 zaakceptowanych, 0 na stagingu, **9 w toku** (24%,
-w tym H1/H2/B-E0 fali B — Realizacja E1 — gotowe do scalenia `942748423c`, rebase na linię
-≥`54f07e0ccd` przed scaleniem), **28 nie zaczętych**. Duże pakiety Codexa: **5/5 w toku, 0
-scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie scalone, F2-E
-non-migration ACCEPT/pełne E1 HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6 (DEC-497):
-**0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5** zamknięte
-(żadna nie ma jeszcze partii akceptu właściciela; fala B Inicjatywy A1/A2 i fala B Realizacja
-H1/H2/B-E0 obie gotowe do scalenia, żadna jeszcze nie scalona).
+(+1 = H1b, wydzielony z H1 14.09). Z tego: 0 zaakceptowanych, **5 na stagingu** (14%, A1+A2 fali
+B2 Inicjatywy `90059a1054` + H1/H2/B-E0 fali B1 Realizacja `88f1a1994d`, wszystkie za flagami
+OFF), **5 w toku** (A4 DEC-499, B-E1 F2-2, silnik raportów, PMO E3, P6), **27 nie zaczętych** (w
+tym H1b, nowy etap wydzielony z H1). Duże pakiety Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD,
+F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1
+HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w
+`OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B WDROŻONA na staging za
+flagami OFF — DEC-505; akcept wyglądu właściciela = warunek włączenia flag).
 
 ```
-Fala2 etapy §5    [█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 9/37 w toku (24%)
+Fala2 etapy §5    [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5/37 na stagingu (14%)
 Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0/6 przyjęte
 ```
 
@@ -554,9 +581,13 @@ bez zmian**.
 - **Z-19** — kopie sierpniowe 32 GB, czeka decyzja właściciela o usunięciu. **Z-9** — wolumen
   `STORAGE_DIR`, czeka decyzja właściciela. **Z-20** (nowa) — sesja QA na stagingu wygasła, zrzuty
   fali A4 do powtórki po zalogowaniu. **Z-21** (nowa) — wolumeny sieroce skasowane w ENOSPC
-  (`fizzup`/`selix`), do wiadomości właściciela.
-- **Decyzja właściciela w toku** — Tak/Nie na wygląd fali B Inicjatywy (A1/A2), zrzuty wysłane
-  14.09.
+  (`fizzup`/`selix`), do wiadomości właściciela. **Z-22** (nowa) —
+  `InitiativeConsultingAnalysisView.behavior.test` „shows rationale…" czerwony w pliku
+  (zależność kolejnościowa), zielony w izolacji; widok za flagą OFF, dług do dyżuru
+  Codexa D-i.
+- **Decyzja właściciela w toku (DEC-505)** — Tak/Nie na wygląd fali B (Inicjatywy A1/A2 +
+  Realizacja H1/H2/B-E0), oba pakiety WDROŻONE na staging za flagami OFF; akcept właściciela na
+  zrzutach = warunek `railway variables --set ...=true` + redeploy.
 
 ---
 
@@ -837,8 +868,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Lista | L1 rdzeń (lista/kanban/kalendarz/Gantt) | — | — | — | TAK 13.09 (DEC-481) | ✅ ZAAKCEPTOWANE | DEC-481 | 13.09 |
 | Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | agent CTO | — | A | lista z pstryczkiem ON/OFF | 🧪 NA STAGINGU | `574eb6e20c` | 14.09 |
 | Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | 🔧 W TOKU (F2-1, HOLD E1) | `cc1c23b139` | 13.09 |
-| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | 🧪 NA STAGINGU (flaga OFF) | `90059a1054` | 14.09 |
+| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | 🧪 NA STAGINGU (flaga OFF) | `90059a1054` | 14.09 |
 | Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | 🔧 W TOKU (przydzielone) | DEC-499 | 14.09 |
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ⬜ NIE ZACZĘTE (atrapa) | — | — |
@@ -851,7 +882,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ⬜ NIE ZACZĘTE (atrapa za flagą OFF) | `VITE_INITIATIVES_WORK_REPORT` | — |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
-| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🔧 gotowe do scalenia (`942748423c`) | `2e20c10d26` | 14.09 |
+| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🔧 W TOKU (scoped ACCEPT, pełne HOLD) | `4d381f6811` | 13.09 |
 | Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | ⬜ NIE ZACZĘTE | — | — |
@@ -864,8 +895,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Raporty | RA-E4c rezultaty z KPI | Codex F2-2 | A4 | C | sekcja rezultatów | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | ⬜ NIE ZACZĘTE | — | — |
-| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🔧 gotowe do scalenia (`942748423c`) | `75304fbb7a` | 14.09 |
-| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🔧 gotowe do scalenia (`942748423c`) | `2e20c10d26` | 14.09 |
+| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
+| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta | Opus | H1 | B | ekran recenzji z prowenencją, nie 409 | ⬜ NIE ZACZĘTE (nowy etap, wydzielony z H1 14.09) | — | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
@@ -876,9 +907,9 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (41 etapów, +1 = H1b dołożone 14.09):** ✅ 2 · 🧪 1 · 🔧 9 · ⬜ 29 · 👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (41 etapów, +1 = H1b dołożone 14.09):** ✅ 2 · 🧪 6 · 🔧 5 · ⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**37 etapów to FALA 2** (0 ✅, 0 🧪, 9 🔧, 28 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**37 etapów to FALA 2** (0 ✅, 5 🧪, 5 🔧, 27 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
