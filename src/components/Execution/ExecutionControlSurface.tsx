@@ -76,7 +76,7 @@ import {
   executionReviewRoleLabel,
   executionReviewSignals,
 } from './executionLocalReviewData';
-import { buildExecutionPreviewHead } from './executionPreviewHead';
+import { buildExecutionPreviewHead, zlozProzeBloku3 } from './executionPreviewHead';
 import {
   decisionDaysOverdue,
   filterInFlightInitiatives,
@@ -2709,16 +2709,17 @@ export const ExecutionControlSurface = ({
               title={row.title}
               onClose={() => setSelectedGovernanceId(null)}
               meta={glowa.meta}
-              whatsNext={glowa.whatsNext}
               details={{
                 label:
                   row.kind === 'DECISION'
                     ? t('execution.decisions.preview.label', 'Decision')
                     : t('execution.governance.preview.raidLabel', 'RAID item'),
-                text:
+                text: zlozProzeBloku3(
                   row.source?.description ||
-                  row.source?.recommendation ||
-                  t('execution.governance.preview.noDescription', 'No additional description.'),
+                    row.source?.recommendation ||
+                    t('execution.governance.preview.noDescription', 'No additional description.'),
+                  glowa.detailsNote
+                ),
                 properties:
                   row.kind === 'DECISION'
                     ? [
@@ -3052,13 +3053,14 @@ export const ExecutionControlSurface = ({
                 title={row.entityName}
                 onClose={() => setSelectedDelayId(null)}
                 meta={glowa.meta}
-                whatsNext={glowa.whatsNext}
                 details={{
                   label: t('execution.signals.preview.label', 'Delay signal'),
-                  text:
+                  text: zlozProzeBloku3(
                     row.entityType === 'INITIATIVE'
                       ? t('execution.signals.preview.initiative', 'The signal concerns an initiative.')
                       : t('execution.signals.preview.task', 'The signal concerns a task.'),
+                    glowa.detailsNote
+                  ),
                   properties: [
                     {
                       id: 'kind',
@@ -3336,10 +3338,12 @@ export const ExecutionControlSurface = ({
                   title={row.title}
                   onClose={() => setSelectedSignalId(null)}
                   meta={glowa.meta}
-                  whatsNext={glowa.whatsNext}
                   details={{
                     label: t('execution.signals.singleTitle', 'Management signal'),
-                    text: `${row.signal.sourceType}:${row.signal.sourceId}`,
+                    text: zlozProzeBloku3(
+                      `${row.signal.sourceType}:${row.signal.sourceId}`,
+                      glowa.detailsNote
+                    ),
                     properties: [
                       { id: 'project', label: 'Projekt', value: row.signal.projectId ?? 'UNKNOWN' },
                       { id: 'fingerprint', label: 'Fingerprint', value: row.signal.fingerprint },
@@ -3482,10 +3486,12 @@ export const ExecutionControlSurface = ({
               title={r.title}
               onClose={() => setSelectedId(null)}
               meta={glowa.meta}
-              whatsNext={glowa.whatsNext}
               details={{
                 label: 'Uzasadnienie i skutek',
-                text: r.source.hypotheses?.join(', ') || 'UNKNOWN',
+                text: zlozProzeBloku3(
+                  r.source.hypotheses?.join(', ') || 'UNKNOWN',
+                  glowa.detailsNote
+                ),
                 properties: [
                   {
                     id: 'owner',

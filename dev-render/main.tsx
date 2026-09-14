@@ -349,6 +349,7 @@ const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
 const K5NaprawyRealizacjaScreen = React.lazy(() => import('./screens/k5-naprawy-realizacja'));
 const K5PreviewBankScreen = React.lazy(() => import('./screens/k5-preview-bank'));
 const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work'));
+const U2RealizacjaDecyzjeScreen = React.lazy(() => import('./screens/u2-realizacja-decyzje'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
@@ -2105,6 +2106,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5-5 — góra podglądów Realizacji (bloki 1–2) po wyrównaniu do kanonu: REALNY <ExecutionHub initialTab="work"> z zadaniem ZAMKNIĘTYM i OTWARTYM (osoba + termin); Menu 1 przełącza na Risk management i Reports. &lang=en&theme=light|dark',
     render: () => <K5PreviewWorkScreen />,
+  },
+  'u2-realizacja-decyzje': {
+    label:
+      'U2 (DEC-491 §2.7) — podgląd DECYZJI w powłoce Realizacji (REALNY <ExecutionHub initialTab="control">) bez tekstowego „What\'s next": zdanie o następnym kroku stoi w prozie bloku 3, strefa „Co dalej" nieobecna (kanon §7.3 pkt 4.4). &lang=en|pl&theme=light|dark',
+    render: () => <U2RealizacjaDecyzjeScreen />,
   },
   'k5-naprawy-inicjatywy': {
     label:
