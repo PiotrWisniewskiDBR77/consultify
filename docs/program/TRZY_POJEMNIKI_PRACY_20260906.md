@@ -871,6 +871,35 @@ H1f → **🧪 NA STAGINGU `94754c3b4d`** (za flagą); Q1 Obciążenie, S5 PMO E
 integratory w toku (Z-2). Liczniki §5 przeliczone: 46 etapów (+1 H1f) — ✅ 2 · 🧪 12 · 🔧 6 ·
 ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 42 etapy (0 ✅, 11 🧪, 6 🔧, 25 ⬜).
 
+**Q1 P3 Obciążenie E1 (Codex) — ODEBRANE i WDROŻONE na staging (14.09; push `257e851d94`; run
+`34831157717` „failure" = timeout workflow, Railway SUCCESS 10:05 UTC; health ok; klucze
+`initiatives.workload.*` na żywych `/locales`; tag `staging-deployed` nadal `3e1363d01a`).**
+Linia `19baa6d8bc` → `94754c3b4d` → `093ec35248` w trakcie; merge kopii Codexa `bdf4321105` =
+`336ee8dd72`; merge linii `60687a8e32`, `257e851d94`. Tag cofnięcia
+`rollback-pre-q1-obciazenie-20260914` = `94754c3b4d`. Konflikt `InitiativesHub.tsx` (2 hunki) —
+zachowana struktura flag linii + `INITIATIVES_WORKLOAD_ENABLED`; Menu 3 nienaruszone (P3 podmienia
+środek zakładki capacity; kanonPaskow 10/10); wykrywacz duplikatów 0 (19+19 kluczy Q1); testy
+delty 5 plików/7 PASS + 14 z linii; zastane: `executionResourcePlan.test.ts` 6/10 czerwone na
+linii. Sonda progów CTO: 70% zielony, 90% bursztyn, 120% czerwony, 0 h + popyt →
+`capacityExceeded` krytyczny; filtr po `initiatives.project_id` mimo sprzecznego
+`tasks.project_id`; PLANNING → 400; serwer OFF → 404; parytet OFF: bundle bez
+`VITE_INITIATIVES_WORKLOAD` → false statycznie, capacity = `CapacityScenarioSurface` jak linia.
+Bramka: tsc 0/189, canon 349, artefakt 8-0-117, język OK, build OK. Zrzuty
+`~/Developer/cto-codex/zrzuty-q1-obciazenie-20260914/` W POWŁOCE (Menu 1 Initiatives · Plan ·
+Load); braki: podgląd StandardPreview, PL, stan krytyczny; chipy Menu 3 rejestru przeciekają do
+„Load" → kosmetyka Q1 (Sonnet, gałąź `integracja/kandydat-q1-kosmetyka-20260914`, w toku).
+**Znaleziska:** (a) **Z-35** — tag `staging-deployed` = `3e1363d01a` od 4 wdrożeń, krok „Record
+successful staging SHA" skipped po timeoucie workflow (12 min); przed promocją na demo tag musi
+wskazywać realny SHA stagingu (przesunięcie tagu = decyzja CTO przy promocji; nigdy force na
+gałęzie); do rozważenia: podnieść timeout czekania w `railway-deploy.yml` (dyżur). (b) lokalny
+worktree Codexa `1f0d65f778` ma ZACOMMITOWANE znaczniki konfliktu w `InitiativesHub.tsx` — Codex
+ostrzeżony (KANAL wpis 38: reset na `257e851d94`; luka w hooku `check-conflict-markers` do
+wyjaśnienia — **Z-37**). Flagi: `VITE_INITIATIVES_WORKLOAD` + `ENABLE_INITIATIVES_WORKLOAD` OFF.
+**EWIDENCJA:** OB1 → **🧪 NA STAGINGU `257e851d94`** (za flagą); liczniki §5 przeliczone niżej
+(`TRZY_POJEMNIKI_PRACY_20260906.md` §5). Skrzynka: **Z-35**, **Z-36** (podgląd w heatmapie — do
+sprawdzenia w kosmetyce), **Z-37**; Z-2: integratory w toku: S5 PMO E3, RP1b, kosmetyka Q1;
+worktree usunięte: `fala-b4`, `q1-obciazenie`.
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -1160,7 +1189,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
-| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🔧 GOTOWE DO ODBIORU (Codex Q1 E1 ACCEPT) | `d27172ed3c` | 14.09 |
+| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą) | `257e851d94` | 14.09 |
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
@@ -1197,14 +1226,15 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (46 etapów; 14.09 noc: fala B4 — H1e + H1f (skrzynka v2) WDROŻONA na staging
-`94754c3b4d` za flagą; H1e przechodzi 🔧 GOTOWE DO SCALENIA → 🧪 NA STAGINGU, nowy wiersz H1f
-(skrzynka v2, Z-27 rozliczone) dołożony wprost 🧪 NA STAGINGU; RP1 ODEBRANY i WDROŻONY na staging
-`3e1363d01a` za flagą (RP1b przejazd kanonu w toku po skazach Z-29), OB1 → gotowe do odbioru
-`d27172ed3c`; RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU):** ✅ 2 · 🧪 12 · 🔧 6 ·
+**Liczniki §5 (46 etapów; 14.09 noc: Q1 P3 Obciążenie E1 (Codex) ODEBRANE i WDROŻONE na staging
+`257e851d94` za flagą; OB1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU; fala B4 — H1e + H1f
+(skrzynka v2) WDROŻONA na staging `94754c3b4d` za flagą; H1e przechodzi 🔧 GOTOWE DO SCALENIA →
+🧪 NA STAGINGU, nowy wiersz H1f (skrzynka v2, Z-27 rozliczone) dołożony wprost 🧪 NA STAGINGU; RP1
+ODEBRANY i WDROŻONY na staging `3e1363d01a` za flagą (RP1b przejazd kanonu w toku po skazach
+Z-29); RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU):** ✅ 2 · 🧪 13 · 🔧 5 ·
 ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**42 etapy to FALA 2** (0 ✅, 11 🧪, 6 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**42 etapy to FALA 2** (0 ✅, 12 🧪, 5 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 

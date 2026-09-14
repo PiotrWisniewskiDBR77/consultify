@@ -1014,6 +1014,36 @@ przed pokazaniem właścicielowi). Liczniki §5 przeliczone niżej (`TRZY_POJEMN
 §2). Co blokuje: akcept wyglądu fali B na czystym zrzucie w powłoce (Z-27), H1e (warunek włączenia
 DEC-507), kopie 32 GB (Z-19), wolumen (Z-9), Z-25/Z-26 (decyzje właściciela nierozstrzygnięte).
 
+**Q1 P3 Obciążenie E1 (Codex) — ODEBRANE i WDROŻONE na staging (push `257e851d94`; run
+`34831157717` „failure" = timeout workflow, Railway SUCCESS 10:05 UTC; health ok; klucze
+`initiatives.workload.*` na żywych `/locales`; tag `staging-deployed` nadal `3e1363d01a`).**
+Linia `19baa6d8bc` → `94754c3b4d` → `093ec35248` w trakcie; merge kopii Codexa `bdf4321105` =
+`336ee8dd72`; merge linii `60687a8e32`, `257e851d94`. Tag cofnięcia
+`rollback-pre-q1-obciazenie-20260914` = `94754c3b4d`. Konflikt `InitiativesHub.tsx` (2 hunki) —
+zachowana struktura flag linii + `INITIATIVES_WORKLOAD_ENABLED`; Menu 3 nienaruszone (P3
+podmienia środek zakładki capacity; kanonPaskow 10/10); wykrywacz duplikatów 0 (19+19 kluczy Q1);
+testy delty 5 plików/7 PASS + 14 z linii; zastane: `executionResourcePlan.test.ts` 6/10 czerwone
+na linii. Sonda progów CTO: 70% zielony, 90% bursztyn, 120% czerwony, 0 h + popyt →
+`capacityExceeded` krytyczny; filtr po `initiatives.project_id` mimo sprzecznego
+`tasks.project_id`; PLANNING → 400; serwer OFF → 404; parytet OFF: bundle bez
+`VITE_INITIATIVES_WORKLOAD` → false statycznie, capacity = `CapacityScenarioSurface` jak linia.
+Bramka: tsc 0/189, canon 349, artefakt 8-0-117, język OK, build OK. Zrzuty
+`~/Developer/cto-codex/zrzuty-q1-obciazenie-20260914/` W POWŁOCE (Menu 1 Initiatives · Plan ·
+Load); braki: podgląd StandardPreview, PL, stan krytyczny; chipy Menu 3 rejestru przeciekają do
+„Load" → kosmetyka Q1 (Sonnet, gałąź `integracja/kandydat-q1-kosmetyka-20260914`, w toku).
+**Znaleziska:** (a) **Z-35** — tag `staging-deployed` = `3e1363d01a` od 4 wdrożeń, krok „Record
+successful staging SHA" skipped po timeoucie workflow (12 min); przed promocją na demo tag musi
+wskazywać realny SHA stagingu (przesunięcie tagu = decyzja CTO przy promocji; nigdy force na
+gałęzie); do rozważenia: podnieść timeout czekania w `railway-deploy.yml` (dyżur). (b) lokalny
+worktree Codexa `1f0d65f778` ma ZACOMMITOWANE znaczniki konfliktu w `InitiativesHub.tsx` — Codex
+ostrzeżony (KANAL wpis 38: reset na `257e851d94`; luka w hooku `check-conflict-markers` do
+wyjaśnienia — **Z-37**). Flagi: `VITE_INITIATIVES_WORKLOAD` + `ENABLE_INITIATIVES_WORKLOAD` OFF.
+**EWIDENCJA:** OB1 → **🧪 NA STAGINGU `257e851d94`** (za flagą); liczniki §5 przeliczone
+(`TRZY_POJEMNIKI_PRACY_20260906.md` §5): 46 etapów — ✅ 2 · 🧪 13 · 🔧 5 · ⬜ 26 · 👁 0 · 🚀 0 ·
+⛔ 0. Skrzynka: **Z-35**, **Z-36** (podgląd w heatmapie — do sprawdzenia w kosmetyce), **Z-37**;
+Z-2: integratory w toku: S5 PMO E3, RP1b, kosmetyka Q1; worktree usunięte: `fala-b4`,
+`q1-obciazenie`.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
