@@ -1,0 +1,104 @@
+D-1 independent source checks
+freeze/base:
+2a80b6016d8efb55ef776751809533992da453a9
+4de31efbcb0c286cdcbdb0251b10a894db02848d
+scope forbidden paths (expected empty):
+new any additions (expected empty):
+DocumentCardMenu5 callers:
+src/components/Reports/Management/ManagementReportsView.tsx:106:  return <div className="h-full min-h-0"><StandardArtifactShell karta="management-report" klasa="L" header={{ title: report.title, onTitleChange: () => undefined, titleReadOnly: true, artifactType: 'document' as any, artifactId: report.id, onSave: () => undefined, saveState: 'saved', onClose: onBack, statusLabel: report.status, statusTone: report.status === 'APPROVED' || report.status === 'FINAL' ? 'approved' : 'draft' }} primaryAction={{ intentionallyNone: true, reason: t('reports.management.panel.primaryActionReason', 'Export and sharing live in the Actions section.') }} sections={sections} rightPanel={rightPanel} activeSection={activeSection} onSectionChange={setActiveSection} densityMode="n" onDensityModeChange={() => undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={activeSection} onSectionChange={setActiveSection} readMode ai={{ onAnalizuj: () => toast(t('reports.management.panel.reanalyzeBlocked', 'This report holds the analysis from the moment it was generated; a fresh analysis needs a new report.')), kontekstArtefaktu: { title: report.title, status: report.status, type: 'management-report' }, moznaEdytowac: false, powodTylkoOdczyt: t('reports.management.panel.readOnlyReason', 'the report is generator output and has no fields to fill in') }} />} panelAriaLabel={t('reports.management.panel.ariaLabel', 'Management report details')} /></div>;
+src/components/Execution/ExecutionReportDocument.tsx:33:  return <div data-testid="execution-report-document" className="h-full min-h-0">{error?<p role="alert" className="m-3 rounded-lg border border-c-danger/50 bg-c-danger/10 p-3 text-sm">{error}</p>:null}<StandardArtifactShell karta="execution-report" klasa="L" header={{title:run.title,onTitleChange:()=>undefined,titleReadOnly:true,artifactType:'document' as any,artifactId:run.id,onSave:()=>undefined,saveState:'saved',onClose:onBack,statusLabel:run.status==='PUBLISHED'?t('executionReports.status.published', 'Published'):t('executionReports.status.draft', 'Draft'),statusTone:run.status==='PUBLISHED'?'approved':'draft'}} primaryAction={{intentionallyNone:true,reason:t('executionReports.doc.publishInActions', 'Publishing is available in the Actions section.')}} sections={sections} rightPanel={rightPanel} activeSection={safeActiveSection} onSectionChange={setActiveSection} densityMode="n" onDensityModeChange={()=>undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={safeActiveSection} onSectionChange={setActiveSection} readMode={readMode} onReadModeChange={run.status==='DRAFT'?setReadMode:undefined} ai={{onAnalizuj:()=>setError(t('executionReports.doc.aiUnavailable', 'AI analysis is not available for a frozen report snapshot.')),kontekstArtefaktu:{title:run.title,status:run.status,type:'execution-report'},moznaEdytowac:false,powodTylkoOdczyt:t('executionReports.doc.readOnlyReason', 'the report is a frozen snapshot; AI cannot add to its content')}}/>} panelAriaLabel={t('executionReports.doc.panelAria', 'Execution report details')}/></div>;
+src/components/Initiatives/cards/CapacityAnalysisCard.tsx:527:        <DocumentCardMenu5
+src/components/Initiatives/cards/PlanCard.tsx:870:        <DocumentCardMenu5
+src/components/standard/__tests__/DocumentCardMenu5.locale.test.tsx:24:    <DocumentCardMenu5
+src/components/standard/DocumentCardMenu5.tsx:24:export const DocumentCardMenu5: React.FC<DocumentCardMenu5Props> = ({
+legacy symbol (expected empty):
+product DRD route:
+116:export function shouldMountDrdMethodWorkspace(
+380:  const mountDrdMethodWorkspace = shouldMountDrdMethodWorkspace(
+1756:      <DrdMethodWorkspaceScreen
+unitName hash path:
+function buildHashableOutputContent(input: FreezeOutputInput, outputVersion: number): unknown {
+  return {
+    module: input.module,
+    methodPackId: input.methodPackId,
+    methodPackVersion: input.methodPackVersion,
+    scope: input.scope,
+    snapshotId: input.snapshotId,
+    current: input.current,
+    target: input.target,
+    gap: input.gap,
+    aggregation: input.aggregation,
+    limitations: [...input.limitations].sort((a, b) => a.localeCompare(b)),
+    findings: sortByKey(
+      input.findings.map((f) => ({
+        ...f,
+        currentLevel: roundScore(f.currentLevel),
+        targetLevel: roundScore(f.targetLevel),
+        gap: roundScore(f.gap),
+        supportingEvidence: sortByKey(f.supportingEvidence, 'evidenceId'),
+        contradictingEvidence: sortByKey(f.contradictingEvidence, 'evidenceId'),
+        sourceLocators: [...(f.sourceLocators ?? [])].sort((a, b) => a.localeCompare(b)),
+      })),
+      'unitId'
+    ),
+    prioritisationResult: input.prioritisationResult,
+    outputVersion,
+  };
+    if (reasons.length > 0) {
+      throw new OutputValidationError(`AssessmentOutput rejected: ${reasons.join('; ')}`, reasons);
+    }
+
+    const outputVersion = input.revisionOfOutputId
+      ? (await this.mustGetRow(input.revisionOfOutputId)).output_version + 1
+      : 1;
+
+    const contentHash = computeContentHash(buildHashableOutputContent(input, outputVersion));
+
+    const id = genId();
+    const now = nowIso();
+    const lineageJson = JSON.stringify({
+      sourceSessionId: input.sessionId,
+      sourceRevisionOfSessionId: input.sourceRevisionOfSessionId ?? null,
+    });
+
+    await runOrThrow(
+      `INSERT INTO method_outputs
+         (id, organization_id, session_id, snapshot_id, module, method_pack_id,
+          method_pack_version, output_version, revision_of_output_id, scope,
+          current_json, target_json, gap_json, aggregation_json, visual_model_json,
+          evidence_completeness_json, limitations_json, prioritisation_json,
+          lineage_json, content_hash, created_at, frozen_at, demo_bypass_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.organizationId,
+        input.sessionId,
+        input.snapshotId,
+        input.module,
+        input.methodPackId,
+        input.methodPackVersion,
+        outputVersion,
+        input.revisionOfOutputId ?? null,
+        input.scope,
+        JSON.stringify(input.current),
+        JSON.stringify(input.target),
+        JSON.stringify(input.gap),
+        JSON.stringify(input.aggregation),
+        JSON.stringify(input.visualModel),
+        JSON.stringify(input.evidenceCompleteness),
+
+    // A finding requires >= 1 supporting evidence item (validateFreezeInput) —
+    // units the respondent touched but never evidenced are surfaced in
+    // `evidenceCompleteness`, not as a (rejected) zero-evidence finding.
+    if (u.evidence.length === 0) continue;
+
+    findings.push({
+      unitId: u.unitId,
+      unitName: u.unitId,
+      currentLevel: u.currentLevel,
+      targetLevel: u.targetLevel,
+      gap: gap[u.unitId],
+      supportingEvidence: u.evidence,
+      contradictingEvidence: [],
+      businessMeaning:
+diff-check:
