@@ -2131,14 +2131,6 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
 
-  router.use(['/planning', '/plan-scenarios', '/plan-analysis-proposals'], (_req, res, next) => {
-    if (!isInitiativesPlanEnabled()) {
-      res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
-      return;
-    }
-    next();
-  });
-
   router.get(
     '/source-proposals',
     asyncHandler(async (req, res) => {
@@ -4584,6 +4576,15 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
+      if (
+        parsed.data.scenario.windows.some(
+          (window) => (window.conditionalDependencySnapshot?.length ?? 0) > 0
+        ) &&
+        !deps.planDependencyAnalysisEnabled?.()
+      ) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       // P15-K2 (DEC-421), D1': portfel roboczy AUTOMATYCZNY. „Nowy plan" nie każe
       // PMO wpisywać identyfikatora scenariusza portfela — system zakłada/odświeża
       // portfel roboczy organizacji ze składu okien planu i wiąże plan z jego
@@ -4961,6 +4962,10 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       if (!parsed.success) {
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      if (parsed.data.observationReviews && !deps.planDependencyAnalysisEnabled?.()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
       const result = await reviewPlanAnalysisProposal(deps.unitOfWork, {

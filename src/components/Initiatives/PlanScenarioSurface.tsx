@@ -37,6 +37,7 @@ import {
   writeInitiativeDependencies,
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
+import { isInitiativesPlanEnabled } from '@/utils/initiativesPlanFlag';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
 import { PlanCard } from './cards/PlanCard';
@@ -322,6 +323,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   onOpenCapacityAnalysis,
   onNewCapacityAnalysis,
 }) => {
+  const dependencyAnalysisEnabled = isInitiativesPlanEnabled();
   const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
@@ -1084,9 +1086,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         expectedVersion: 0,
         clientRequestId: crypto.randomUUID(),
         scenarioId: draft.scenarioId,
-         inputAggregateVersion: updated.aggregateVersion,
-         analysisKind: 'AI_DEPENDENCY',
-         useCapacity: input.mode !== 'DEPENDENCIES',
+        inputAggregateVersion: updated.aggregateVersion,
+        ...(dependencyAnalysisEnabled ? { analysisKind: 'AI_DEPENDENCY' as const } : {}),
+        useCapacity: input.mode !== 'DEPENDENCIES',
       })) as { response: PlanAnalysisProposal };
       setAnalysisProposal(result.response);
       setAnalysisState('IDLE');
@@ -1108,9 +1110,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         expectedVersion: 0,
         clientRequestId: crypto.randomUUID(),
         scenarioId: draft.scenarioId,
-         inputAggregateVersion: aggregateVersion,
-         analysisKind: 'AI_DEPENDENCY',
-         useCapacity: mode !== 'DEPENDENCIES',
+        inputAggregateVersion: aggregateVersion,
+        ...(dependencyAnalysisEnabled ? { analysisKind: 'AI_DEPENDENCY' as const } : {}),
+        useCapacity: mode !== 'DEPENDENCIES',
       })) as { response: PlanAnalysisProposal };
       setAnalysisProposal(result.response);
       setAnalysisState('IDLE');
@@ -1572,6 +1574,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           proposalConflicts={analysisProposal?.conflicts ?? []}
           savedLabel={savedLabel}
           busy={analysisState === 'LOADING' || writeState === 'SAVING'}
+          dependencyAnalysisEnabled={dependencyAnalysisEnabled}
           onBack={() => setWorkspaceOpen(false)}
           onAnalyze={(mode) => void analyzePlan(mode)}
           onGenerate={(input) => void generatePlan(input)}

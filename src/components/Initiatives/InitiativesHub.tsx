@@ -80,7 +80,6 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
-import { isInitiativesPlanEnabled } from '@/utils/initiativesPlanFlag';
 import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
@@ -290,8 +289,9 @@ const TRANSITION_INBOX_ENABLED = import.meta.env.VITE_TRANSITION_INBOX === 'true
    istniejacej zakladki `capacity` (zero nowych soczewek w Menu 3 — kanon 3 pigulek).
    Flaga domyslnie OFF: przy OFF `capacity` renderuje CapacityScenarioSurface jak na linii. */
 const INITIATIVES_WORKLOAD_ENABLED = isInitiativesWorkloadEnabled();
-const BASE_CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   'list',
+  'plan',
   'capacity',
   ...(WORK_REPORT_ENABLED ? (['workReport'] as ModuleTab[]) : []),
   ...(TRANSITION_INBOX_ENABLED ? (['transitionInbox'] as ModuleTab[]) : []),
@@ -310,7 +310,6 @@ const resolvePreparationLens = (params: URLSearchParams) => {
 };
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
-  const planEnabled = isInitiativesPlanEnabled();
   const initiativesFourButtonsEnabled = isInitiativesFourButtonsEnabled();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -325,10 +324,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_INITIATIVES_VIEW_MODE);
   const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
     const requestedTab = searchParams.get('tab') as ModuleTab | null;
-    const tabIsAvailable = (tab: ModuleTab) =>
-      (tab === 'plan' && planEnabled) || BASE_CANONICAL_INITIATIVES_TABS.has(tab);
-    if (requestedTab && tabIsAvailable(requestedTab)) return requestedTab;
-    return tabIsAvailable(initialTab) ? initialTab : 'list';
+    return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
   const [preparationLens, setPreparationLens] = useState(() =>
     resolvePreparationLens(searchParams)
@@ -952,15 +948,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.list', 'Initiatives'),
         icon: <List size={16} />,
       },
-      ...(planEnabled
-        ? [
-            {
-              id: 'plan' as ModuleTab,
-              label: t('initiatives.tabs.plan', 'Plan'),
-              icon: <CalendarClock size={16} />,
-            },
-          ]
-        : []),
+      {
+        id: 'plan' as ModuleTab,
+        label: t('initiatives.tabs.plan', 'Plan'),
+        icon: <CalendarClock size={16} />,
+      },
       {
         id: 'capacity' as ModuleTab,
         label: t('initiatives.tabs.capacity', 'Load'),
@@ -985,16 +977,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           ]
         : []),
     ],
-    [planEnabled, t]
+    [t]
   );
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab') as ModuleTab | null;
-    const requestedTabIsAvailable =
-      requestedTab &&
-      (BASE_CANONICAL_INITIATIVES_TABS.has(requestedTab) ||
-        (requestedTab === 'plan' && planEnabled));
-    if (!requestedTab || requestedTabIsAvailable) return;
+    if (!requestedTab || CANONICAL_INITIATIVES_TABS.has(requestedTab)) return;
     const next = new URLSearchParams(searchParams);
     next.delete('tab');
     if (['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requestedTab)) {
@@ -1007,7 +995,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
     setActiveTab('list');
     setSearchParams(next, { replace: true });
-  }, [planEnabled, searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
   // ============================================
   // HANDLERS
@@ -1623,17 +1611,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         'tab'
       ) as ModuleTab | null;
       const nextTab =
-        requestedTab &&
-        (BASE_CANONICAL_INITIATIVES_TABS.has(requestedTab) ||
-          (requestedTab === 'plan' && planEnabled))
-          ? requestedTab
-          : 'list';
+        requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : 'list';
       setActiveTab(nextTab);
       setActiveDocumentId(null);
     };
     window.addEventListener('popstate', syncTabFromHistory);
     return () => window.removeEventListener('popstate', syncTabFromHistory);
-  }, [planEnabled, setActiveDocumentId]);
+  }, [setActiveDocumentId]);
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -1984,7 +1968,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (activeTab === 'transitionInbox' && TRANSITION_INBOX_ENABLED) {
       return <TransitionInboxSurface />;
     }
-    if (activeTab === 'plan' && planEnabled) {
+    if (activeTab === 'plan') {
       return (
         <PlanScenarioSurface
           demoMode={allowDemoData}
@@ -2029,7 +2013,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           createRequestId={capacityCreateRequestId}
           createPlanId={capacityCreatePlanId}
           onCreateRequestConsumed={resetCapacityCreateRequest}
-          onOpenPlan={planEnabled ? () => setActiveTab('plan') : undefined}
+          onOpenPlan={() => setActiveTab('plan')}
         />
       );
     if (activeTab === 'list' && preparationLens === 'portfolioHealth' && !activeDocumentId) {
@@ -2159,7 +2143,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <InitiativeConsultingAnalysisView
           scopeKey={initiativeFetchScopeKey}
           authorityId={currentUserId ?? ''}
-          onNavigatePlan={planEnabled ? () => setActiveTab('plan') : undefined}
+          onNavigatePlan={() => setActiveTab('plan')}
           onNavigateCapacity={() => setActiveTab('capacity')}
         />
       );

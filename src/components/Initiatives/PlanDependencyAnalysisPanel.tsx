@@ -1,5 +1,13 @@
+import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+} from '@/components/ui/primitives/Dropdown';
 
 import type { DependencyObservation, ObservationReview } from './planDependencyReview';
 
@@ -178,26 +186,43 @@ export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
                 </label>
                 {editable && proposal.status === 'PENDING_REVIEW' && (
                   <div className="mt-2 grid gap-2 md:grid-cols-2">
-                    <label className="text-xs text-c-text-muted">
-                      {t('initiatives.planAnalysis.dependencyType')}
-                      <select
-                        className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2 text-sm"
+                    <div className="text-xs text-c-text-muted">
+                      <span>{t('initiatives.planAnalysis.dependencyType')}</span>
+                      <Dropdown
                         value={draft?.kind ?? observation.kind}
-                        onChange={(event) =>
+                        onValueChange={(value) =>
                           patch(observation.observationId, {
-                            kind: event.target.value as Draft['kind'],
-                            condition: event.target.value === 'ABSOLUTE' ? '' : draft?.condition ?? '',
+                            kind: value as Draft['kind'],
+                            condition: value === 'ABSOLUTE' ? '' : draft?.condition ?? '',
                             conditionActive:
-                              event.target.value === 'ABSOLUTE'
-                                ? false
-                                : (draft?.conditionActive ?? false),
+                              value === 'ABSOLUTE' ? false : (draft?.conditionActive ?? false),
                           })
                         }
                       >
-                        <option value="ABSOLUTE">{t('initiatives.planAnalysis.kind.ABSOLUTE')}</option>
-                        <option value="CONDITIONAL">{t('initiatives.planAnalysis.kind.CONDITIONAL')}</option>
-                      </select>
-                    </label>
+                        <DropdownTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={t('initiatives.planAnalysis.dependencyType')}
+                            className="mt-1 flex h-9 w-full items-center justify-between rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            <span>
+                              {t(
+                                `initiatives.planAnalysis.kind.${draft?.kind ?? observation.kind}`
+                              )}
+                            </span>
+                            <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+                          </button>
+                        </DropdownTrigger>
+                        <DropdownContent width="trigger">
+                          <DropdownItem value="ABSOLUTE">
+                            {t('initiatives.planAnalysis.kind.ABSOLUTE')}
+                          </DropdownItem>
+                          <DropdownItem value="CONDITIONAL">
+                            {t('initiatives.planAnalysis.kind.CONDITIONAL')}
+                          </DropdownItem>
+                        </DropdownContent>
+                      </Dropdown>
+                    </div>
                     {(draft?.kind ?? observation.kind) === 'CONDITIONAL' && (
                       <div className="text-xs text-c-text-muted">
                         <label>
