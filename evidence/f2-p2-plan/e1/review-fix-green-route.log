@@ -1,0 +1,48 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 01:59:44:5944 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:59:45:5945 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 01:59:45:5945 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 01:59:45:5945 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:59:45:5945 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 01:59:45:5945 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 01:59:45:5945 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > does not call AI or write a proposal when the flag is OFF 26ms
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a body scenario that differs from the URL before AI 4ms
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI 4ms
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts (3 tests) 36ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  01:59:44
+   Duration  1.04s (transform 539ms, setup 107ms, import 813ms, tests 36ms, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  01:59:44
+   Duration  1.04s (transform 539ms, setup 107ms, import 813ms, tests 36ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml

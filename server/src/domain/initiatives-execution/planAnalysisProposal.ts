@@ -37,6 +37,15 @@ export interface PlanAnalysisProposal {
   reviewedAt: string | null;
 }
 
+export interface PlanAnalysisProposalPreparation {
+  /**
+   * Deferred until executeMaterialCommand has rejected stale versions or
+   * returned a stored receipt. This prevents duplicate or stale commands from
+   * paying for an external analysis.
+   */
+  prepareDependencyAnalysis?: (scenario: PlanScenario) => Promise<PlanDependencyAnalysisResult>;
+}
+
 export async function createPlanAnalysisProposal(
   uow: MaterialCommandUnitOfWork,
   envelope: MaterialCommandEnvelope<{
@@ -47,7 +56,10 @@ export async function createPlanAnalysisProposal(
     hints?: PlanSolverHint[];
     /** DEC-497 P2 E1: wynik LLM zweryfikowany względem dokładnego snapshotu planu. */
     dependencyAnalysis?: PlanDependencyAnalysisResult;
+    analysisKind?: 'SOLVER' | 'AI_DEPENDENCY';
   }>
+  ,
+  preparation: PlanAnalysisProposalPreparation = {}
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
     const source = await tx.getRelatedAggregateForUpdate<PlanScenario>(
@@ -59,9 +71,16 @@ export async function createPlanAnalysisProposal(
       throw new MaterialCommandValidationError('Exact Plan Scenario input version required');
     if (source.payload.status !== 'DRAFT')
       throw new MaterialCommandValidationError('Analysis proposals may target only a DRAFT Plan');
+    const dependencyAnalysis =
+      envelope.payload.dependencyAnalysis ??
+      (envelope.payload.analysisKind === 'AI_DEPENDENCY'
+        ? await preparation.prepareDependencyAnalysis?.(source.payload)
+        : undefined);
+    if (envelope.payload.analysisKind === 'AI_DEPENDENCY' && !dependencyAnalysis)
+      throw new MaterialCommandValidationError('AI dependency analysis preparation required');
     if (
-      envelope.payload.dependencyAnalysis &&
-      envelope.payload.dependencyAnalysis.inputScenarioVersion !== source.payload.scenarioVersion
+      dependencyAnalysis &&
+      dependencyAnalysis.inputScenarioVersion !== source.payload.scenarioVersion
     )
       throw new MaterialCommandValidationError(
         'Exact AI dependency analysis input version required'
@@ -145,11 +164,11 @@ export async function createPlanAnalysisProposal(
       rationale: encodePlanSolverReason({ code: 'ONE_FEASIBLE_PERIOD' }),
       conflicts: solved.conflicts,
       changes,
-      analysisSource: envelope.payload.dependencyAnalysis ? 'AI' : 'SOLVER',
-      dependencyObservations: envelope.payload.dependencyAnalysis?.observations ?? [],
-      criticalPaths: envelope.payload.dependencyAnalysis?.criticalPaths ?? [],
-      analysisModel: envelope.payload.dependencyAnalysis?.model ?? null,
-      analyzedAt: envelope.payload.dependencyAnalysis?.analyzedAt ?? null,
+      analysisSource: dependencyAnalysis ? 'AI' : 'SOLVER',
+      dependencyObservations: dependencyAnalysis?.observations ?? [],
+      criticalPaths: dependencyAnalysis?.criticalPaths ?? [],
+      analysisModel: dependencyAnalysis?.model ?? null,
+      analyzedAt: dependencyAnalysis?.analyzedAt ?? null,
       requestedBy: envelope.actorId,
       reviewedBy: null,
       reviewRationale: null,
