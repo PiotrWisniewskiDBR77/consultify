@@ -138,8 +138,18 @@ export const IdeaCornerActions: React.FC<{
   onTogglePanel: () => void;
   panelLabel: string;
 }> = ({ panelOpen, onTogglePanel, panelLabel }) => {
-  const cls =
-    'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-c-border-subtle px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
+  // ★ F4 (zgłoszenie właściciela 15.09): „Panel" i „Work with AI" stały obok
+  // siebie w DWÓCH różnych kształtach (pigułka `rounded-full` obok
+  // `rounded-lg`) i w dwóch kolorach (neutralny obok fioletu `c-ai`) — stąd
+  // „wieśniacko". Teraz oba mają DOKŁADNIE tę samą bazę co pasek kart
+  // (`NModeMenu2.BTN_BASE`: h-8 · px-2.5 · rounded-lg · text-xs), a „Panel"
+  // jako toggle niesie NEUTRALNY stan aktywny (wypełnienie `c-surface-raised`
+  // + mocniejsza ramka) — zero akcentu kolorystycznego, fokus `c-focus`.
+  const base =
+    'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
+  const cls = panelOpen
+    ? `${base} border-c-border bg-c-surface-raised text-c-text`
+    : `${base} border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text`;
   return (
     <div className="flex flex-shrink-0 items-center gap-1.5" data-testid="idea-corner-actions">
       <button

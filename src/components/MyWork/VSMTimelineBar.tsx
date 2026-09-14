@@ -18,12 +18,28 @@ interface VSMTimelineBarProps {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Fala F3 (15.09): pasek pokazywal „Lead Time: NaN d" przy poprawnym „VA 1.1 d"
+ * i „PCE 0.0 %". Zrodlo: pola VSM (Qty/C-T) sa commitowane z InlineField jako
+ * TEKST — `emitFieldChange` (VSMNodeComponent.tsx:169) zapisuje wartosc
+ * nieliczbowa („5 pcs", „~200") bez zmiany, mimo deklaracji `inventory?: number`.
+ * Takie dane wpadaly do arytmetyki (`'5 pcs' * 0.5` → NaN) albo wracaly wprost
+ * z galezi `typeof raw === 'number'` dla literalnego NaN. Dlatego KAZDE wejscie
+ * przechodzi teraz przez jeden konwerter, ktory zwraca wylacznie liczbe skonczona.
+ */
+function toFiniteNumber(raw: unknown): number {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+  if (typeof raw !== 'string') return 0;
+  const num = parseFloat(raw.trim());
+  return Number.isFinite(num) ? num : 0;
+}
+
 function parseDuration(raw: string | number | undefined): number {
   if (raw == null) return 0;
-  if (typeof raw === 'number') return raw;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
   const trimmed = raw.trim().toLowerCase();
-  const num = parseFloat(trimmed);
-  if (isNaN(num)) return 0;
+  const num = toFiniteNumber(trimmed);
+  if (num === 0) return 0;
   if (trimmed.endsWith('d')) return num * 480;
   if (trimmed.endsWith('h')) return num * 60;
   if (trimmed.endsWith('s')) return num;
@@ -31,15 +47,18 @@ function parseDuration(raw: string | number | undefined): number {
 }
 
 function formatMinutes(mins: number): string {
-  if (mins <= 0) return '0 min';
+  // Ostatnia bramka: nawet gdyby ktos w przyszlosci wpuscil tu NaN/Infinity,
+  // uzytkownik ma zobaczyc „0 min", nigdy „NaN d".
+  if (!Number.isFinite(mins) || mins <= 0) return '0 min';
   if (mins < 60) return `${Math.round(mins)} min`;
   if (mins < 480) return `${(mins / 60).toFixed(1)} h`;
   return `${(mins / 480).toFixed(1)} d`;
 }
 
-function estimateWaitTime(inventoryQty: number | undefined): number {
-  if (!inventoryQty || inventoryQty <= 0) return 0;
-  return inventoryQty * 0.5;
+function estimateWaitTime(inventoryQty: unknown): number {
+  const qty = toFiniteNumber(inventoryQty);
+  if (qty <= 0) return 0;
+  return qty * 0.5;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -67,6 +86,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes }) => {
 
     const leadTime = vaTime + waitTime;
     const pce = leadTime > 0 ? (vaTime / leadTime) * 100 : 0;
+
 
     return { vaTime, waitTime, leadTime, pce };
   }, [nodes]);

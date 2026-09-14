@@ -42239,6 +42239,10 @@
     "increaseBudget": "Increase Budget"
   },
   "mindmap": {
+    "pracujZAI": {
+      "opisAktywneCentrum": "Proposals for the active canvas will appear for your approval.",
+      "opisCalyPomysl": "Proposals for the whole idea will appear for your approval."
+    },
     "nodeModel": {
       "myIdea": "My idea",
       "clickToEdit": "Click to edit"
