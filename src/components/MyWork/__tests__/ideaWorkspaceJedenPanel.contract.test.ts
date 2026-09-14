@@ -62,7 +62,9 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
 
   it('Teresa jest ZAKŁADKĄ tego panelu, a globalny dok ustępuje na całej trasie warsztatu', () => {
     expect(inspektor).toContain('data-testid={`idea-panel-tab-${tab.id}`}');
-    expect(workspace).toContain('teresaContent={teresaPanelNode}');
+    expect(workspace).toContain('const teresaCommands: ArtifactRailTeresaCommand[]');
+    expect(workspace).toContain('teresaCommands={teresaCommands}');
+    expect(workspace).toContain('onDiscussWithTeresa={handleTeresaDiscuss}');
     expect(workspace).toContain("import('@/components/AIChat/UnifiedChatPanel')");
     const layout = fs.readFileSync(
       path.resolve(__dirname, '../../../layouts/MainLayout.tsx'),
@@ -82,10 +84,9 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
     expect(workspace).toContain('const poprzedniStanCzatu = useRef<boolean>(isChatCollapsed);');
     // „Omów z Teresą" przełącza zakładkę JAWNIE — inaczej przy już otwartym
     // czacie żadne przejście stanu by nie zaszło i przycisk byłby martwy.
-    // 1.1-N2 (DEC-409): trzecie wywołanie to przycisk „AI" w rogu warsztatu
-    // (`IdeaCornerActions`) — jedyne wejście AI w rogu po zdjęciu pigułki
-    // „Teresa" (krok 1) i chipa statusu (krok 2).
-    expect(workspace.match(/ustawZakladkePanelu\('teresa'\)/g)).toHaveLength(3);
+    // Po kanonizacji rogu `PracujZAI` przejął wejście AI. Dwa jawne
+    // przełączenia zostają w akcjach „Omów z Teresą" panelu obiektu.
+    expect(workspace.match(/ustawZakladkePanelu\('teresa'\)/g)).toHaveLength(2);
   });
 
   it('nad płótnem nie pływają karty analizy, a paleta stoi po lewej', () => {
