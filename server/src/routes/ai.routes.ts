@@ -4531,13 +4531,26 @@ router.post(
 
         // Fallback: if RAG returned no chunks (e.g. embedding failure, query mismatch),
         // load raw chunks directly from DB to ensure the AI always sees attachment content.
-        if (!attachmentChunksInjected && governedAttachmentDocIds.length > 0) {
+        //
+        // ★ Uwaga Tomka IV (pilotaż 13.09) — Teresa odpowiada „nie mam dostępu do
+        // załączników". PUŁAPKA „zamknięte przez wygaszenie": ten bezpiecznik
+        // chodził po `governedAttachmentDocIds`, czyli po WYNIKU rządzonego
+        // pobierania. Gdy `ContextRetrievalService.retrieveContext` rzucił (catch
+        // wyżej tylko loguje) albo odsiał dokument jako „not ready", lista była
+        // pusta — i bezpiecznik, który miał ratować sytuację, milczał razem z nim.
+        // Wtedy do promptu nie trafia ANI JEDEN fragment pliku i Teresa mówi
+        // prawdę: nie dostała załącznika. Zapytanie niżej i tak filtruje po
+        // `organization_id` oraz statusie dokumentu, więc oparcie awaryjnej
+        // ścieżki o ŻĄDANE id nie omija kontroli dostępu do cudzej organizacji.
+        const attachmentDocIdsForFallback =
+          governedAttachmentDocIds.length > 0 ? governedAttachmentDocIds : attachmentDocIds;
+        if (!attachmentChunksInjected && attachmentDocIdsForFallback.length > 0) {
           try {
             const organizationIdForAttachmentFallback = req.organizationId || '';
             if (!organizationIdForAttachmentFallback) {
               throw new Error('organization_id_required_for_attachment_fallback');
             }
-            const placeholders = governedAttachmentDocIds.map(() => '?').join(',');
+            const placeholders = attachmentDocIdsForFallback.map(() => '?').join(',');
             const rows = await dbAll(
               `SELECT c.content, d.filename
                FROM knowledge_chunks c
@@ -4547,7 +4560,7 @@ router.post(
                  AND (d.status IS NULL OR d.status IN ('ready', 'indexed'))
                ORDER BY c.chunk_index ASC
                LIMIT 10`,
-              [...governedAttachmentDocIds, organizationIdForAttachmentFallback],
+              [...attachmentDocIdsForFallback, organizationIdForAttachmentFallback],
               { fallback: true } as any
             );
 

@@ -2221,14 +2221,31 @@ async function findExistingAttachment(params: {
   );
 }
 
+// Uwaga Tomka IV (pilotaż 13.09) — „Nie działa załączanie plików do Chata".
+// Klient (useConversationStore) wysyłał brakujące pola jako jawny `null`, a te
+// pola były `optional()` (czyli `string | undefined`), więc KAŻDE przypięcie
+// pliku kończyło się 400. Klient już nie śle `null`, ale schemat musi to
+// tolerować, bo starsze wersje frontu (przeglądarki testerów) nadal śle.
+const nullableOptionalString = (schema: z.ZodString) =>
+  schema
+    .nullish()
+    .transform((value) => (value == null || value === '' ? undefined : value))
+    .optional();
+
 const AttachmentSchema = z.object({
   kind: z.enum(['file', 'link', 'artifact', 'snapshot', 'reference']),
-  targetId: z.string().max(500).optional(),
-  targetUrl: z.string().url().max(2000).optional(),
+  targetId: nullableOptionalString(z.string().max(500)),
+  targetUrl: nullableOptionalString(z.string().url().max(2000)),
   displayName: z.string().min(1).max(500),
-  mime: z.string().max(200).optional(),
-  sizeBytes: z.number().int().nonnegative().optional(),
-  provenancePointer: z.string().max(500).optional(),
+  mime: nullableOptionalString(z.string().max(200)),
+  sizeBytes: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullish()
+    .transform((value) => (value == null ? undefined : value))
+    .optional(),
+  provenancePointer: nullableOptionalString(z.string().max(500)),
 });
 
 // POST /:id/messages/:messageId/attachments — Add attachment pointer to a message

@@ -1,0 +1,4 @@
+Uwaga Tomka IV — załączanie plików w czacie (lokalny runtime, przed)
+
+INGEST            201 {"success":true,"docId":"b253f072-87a0-43d6-9b24-21ad3871ff5f","filename":"zalacznik.txt","mimeType":"text/plain","extractionStatus":"extracted","totalChunks":1,"embeddedChunks":0}
+PRZYPIECIE PLIKU  400 {"error":"Invalid input: expected string, received null","details":[{"field":"targetUrl","message":"Invalid input: expected string, received null","code":"invalid_type"}]}
