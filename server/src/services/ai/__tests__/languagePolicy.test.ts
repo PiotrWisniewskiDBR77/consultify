@@ -17,17 +17,17 @@ import {
   resolveAiLanguage,
   resolveAiLanguageForRequest,
   resolveAiLanguageFromRequest,
+  resolveLocale,
+  withResolvedLocaleInstruction,
 } from '../languagePolicy.js';
 
 describe('languagePolicy — domyślka', () => {
-  it('domyślnym językiem Teresy jest polski (ZASADY_AI_TERESA_SSOT §8 J1)', () => {
-    // MUTACJA: DEFAULT_AI_LANGUAGE = 'en' → ten test pada.
-    expect(DEFAULT_AI_LANGUAGE).toBe('pl');
+  it('domyślnym językiem AI jest angielski (DEC-510)', () => {
+    expect(DEFAULT_AI_LANGUAGE).toBe('en');
   });
 
-  it('brak jakiejkolwiek wskazówki → pl, nie en', () => {
-    // MUTACJA: `return DEFAULT_AI_LANGUAGE` → `return 'en'` w resolveAiLanguage → pada.
-    expect(resolveAiLanguage(undefined, null, '')).toBe('pl');
+  it('brak jakiejkolwiek wskazówki → en', () => {
+    expect(resolveAiLanguage(undefined, null, '')).toBe('en');
   });
 
   it('pierwszy sensowny kandydat wygrywa nad późniejszymi', () => {
@@ -76,6 +76,27 @@ describe('languagePolicy — instrukcja dla modelu (mutacja promptu)', () => {
     expect(instruction).toContain('Polish');
   });
 
+  it('końcowa instrukcja jest ostatnia, idempotentna i niezależna od języka pytania', () => {
+    const english = withResolvedLocaleInstruction('System prompt', 'en');
+    const repeated = withResolvedLocaleInstruction(english, 'en');
+    expect(english).toBe(repeated);
+    expect(english).toMatch(/Answer in en\.$/);
+    expect(
+      [
+        { role: 'system', content: english },
+        { role: 'user', content: 'Czy możesz pomóc?' },
+      ][0].content
+    ).toMatch(/Answer in en\.$/);
+    expect(withResolvedLocaleInstruction('System prompt', 'pl')).toMatch(/Answer in pl\.$/);
+
+    const withLaterAddon = withResolvedLocaleInstruction(`${english}\n\nDeep research addon`, 'en');
+    expect(withLaterAddon).toContain('Deep research addon');
+    expect(withLaterAddon.indexOf('Deep research addon')).toBeLessThan(
+      withLaterAddon.indexOf('[FINAL RESPONSE LANGUAGE]')
+    );
+    expect(withLaterAddon).toMatch(/Answer in en\.$/);
+  });
+
   it('instrukcja jest bezwarunkowa — mówi wprost, że język pytania nie ma znaczenia', () => {
     // MUTACJA: skasowanie zdania "Even if the user writes their message in a different
     // language" → pada. To ono broni przed odpowiadaniem w języku pytania.
@@ -87,7 +108,9 @@ describe('languagePolicy — instrukcja dla modelu (mutacja promptu)', () => {
   it('zabrania meta-odpowiedzi typu „I operate in English"', () => {
     // To dokładnie ta odpowiedź, którą zmierzono na stanowisku 05.09.
     const instruction = buildLanguageInstruction('pl');
-    expect(instruction).toMatch(/Never answer with a meta-remark about which\s+language you operate in/i);
+    expect(instruction).toMatch(
+      /Never answer with a meta-remark about which\s+language you operate in/i
+    );
   });
 
   it('każdy wspierany język ma własną, niepustą etykietę', () => {
@@ -124,64 +147,95 @@ describe('languagePolicy — rozstrzyganie z żądania', () => {
     ).toBe('de');
   });
 
-  it('BEZ NICZEGO → polski (to jest naprawiony defekt: było angielskie)', () => {
-    // MUTACJA: przywrócenie w routach `(language || "en")` → pada test integracyjny,
-    // a tutaj pada ta asercja, jeśli ktoś zmieni domyślkę SSOT.
-    expect(resolveAiLanguageFromRequest({ body: {}, headers: {} })).toBe('pl');
-    expect(resolveAiLanguageFromRequest(null)).toBe('pl');
+  it('BEZ NICZEGO → angielski (DEC-510)', () => {
+    expect(resolveAiLanguageFromRequest({ body: {}, headers: {} })).toBe('en');
+    expect(resolveAiLanguageFromRequest(null)).toBe('en');
   });
 
   it('czyta Accept-Language także przez req.get() (Express)', () => {
     expect(
-      resolveAiLanguageFromRequest({ body: {}, get: (n: string) => (n === 'Accept-Language' ? 'pl' : undefined) })
+      resolveAiLanguageFromRequest({
+        body: {},
+        get: (n: string) => (n === 'Accept-Language' ? 'pl' : undefined),
+      })
     ).toBe('pl');
   });
 });
 
-describe('languagePolicy — dociąganie users.language z bazy', () => {
+describe('languagePolicy — kanoniczny resolver locale', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.doUnmock('../../../utils/DbPromise.js');
   });
 
-  it('gdy żądanie nic nie mówi, pyta users.language', async () => {
-    const get = vi.fn().mockResolvedValue({ language: 'pl' });
+  it('users.language wygrywa nad legacy users.locale i organizacją', async () => {
+    const get = vi.fn().mockResolvedValue({ language: 'pl', locale: 'de', organization_id: 'o1' });
     vi.doMock('../../../utils/DbPromise.js', () => ({ get, all: vi.fn() }));
     const mod = await import('../languagePolicy.js');
-    const lang = await mod.resolveAiLanguageForRequest({
+    const req: any = {
       body: {},
       headers: { 'accept-language': 'en-US' },
       userId: 'u1',
-    });
-    expect(get).toHaveBeenCalledWith('SELECT language FROM users WHERE id = ?', ['u1']);
+    };
+    const lang = await mod.resolveLocale(req);
+    expect(get.mock.calls[0][0]).toContain("to_jsonb(u)->>'language'");
+    expect(get.mock.calls[0][0]).toContain("to_jsonb(u)->>'locale'");
     expect(lang).toBe('pl');
+    expect(req.resolvedLocale).toBe('pl');
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('legacy users.locale wygrywa nad organizations.default_language', async () => {
+    const get = vi.fn().mockResolvedValue({ language: null, locale: 'de', organization_id: 'o1' });
+    vi.doMock('../../../utils/DbPromise.js', () => ({ get, all: vi.fn() }));
+    const mod = await import('../languagePolicy.js');
+    await expect(mod.resolveLocale({ body: {}, userId: 'u1' } as any)).resolves.toBe('de');
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('organizations.default_language jest używany po pustych polach użytkownika', async () => {
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({ language: null, locale: null, organization_id: 'o1' })
+      .mockResolvedValueOnce({ default_language: 'pl' });
+    vi.doMock('../../../utils/DbPromise.js', () => ({ get, all: vi.fn() }));
+    const mod = await import('../languagePolicy.js');
+    const req: any = { body: {}, userId: 'u1' };
+    await expect(mod.resolveLocale(req)).resolves.toBe('pl');
+    expect(get.mock.calls[1][0]).toContain('organizations');
+    expect(req.resolvedLocale).toBe('pl');
   });
 
   it('nie pyta bazy, gdy język podano wprost w żądaniu (ścieżka gorąca)', async () => {
     const get = vi.fn();
     vi.doMock('../../../utils/DbPromise.js', () => ({ get, all: vi.fn() }));
     const mod = await import('../languagePolicy.js');
-    const lang = await mod.resolveAiLanguageForRequest({ body: { language: 'en' }, userId: 'u1' });
+    const req: any = { body: { language: 'en' }, userId: 'u1' };
+    const lang = await mod.resolveLocale(req);
     expect(get).not.toHaveBeenCalled();
     expect(lang).toBe('en');
+    expect(req.resolvedLocale).toBe('en');
   });
 
-  it('błąd bazy nie wywraca czatu — fail-safe jest polski', async () => {
+  it('błąd bazy nie wywraca czatu — fail-safe jest angielski', async () => {
     const get = vi.fn().mockRejectedValue(new Error('db down'));
     vi.doMock('../../../utils/DbPromise.js', () => ({ get, all: vi.fn() }));
     const mod = await import('../languagePolicy.js');
-    await expect(
-      mod.resolveAiLanguageForRequest({ body: {}, headers: {}, userId: 'u1' })
-    ).resolves.toBe('pl');
+    await expect(mod.resolveLocale({ body: {}, headers: {}, userId: 'u1' } as any)).resolves.toBe(
+      'en'
+    );
   });
 
-  it('pusta kolumna language nie blokuje Accept-Language', async () => {
-    const get = vi.fn().mockResolvedValue({ language: null });
+  it('Accept-Language nie wyprzedza kanonicznego fallbacku organizacji', async () => {
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({ language: null, locale: null, organization_id: 'o1' })
+      .mockResolvedValueOnce({ default_language: 'pl' });
     vi.doMock('../../../utils/DbPromise.js', () => ({ get, all: vi.fn() }));
     const mod = await import('../languagePolicy.js');
     await expect(
-      mod.resolveAiLanguageForRequest({ body: {}, headers: { 'accept-language': 'de' }, userId: 'u1' })
-    ).resolves.toBe('de');
+      mod.resolveLocale({ body: {}, headers: { 'accept-language': 'de' }, userId: 'u1' } as any)
+    ).resolves.toBe('pl');
   });
 });
 

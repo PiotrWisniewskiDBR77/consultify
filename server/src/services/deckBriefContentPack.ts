@@ -22,6 +22,7 @@
  */
 
 import logger from '../utils/Logger.js';
+import { withResolvedLocaleInstruction } from './ai/languagePolicy.js';
 import { generateChatResponse } from './aiService.js';
 
 /** Model tier — 'standard' rozwiązywany przez LLMConfigService (jak Word). */
@@ -251,7 +252,7 @@ export async function generateDeckBriefContentPack(
 
   try {
     const response = await generateChatResponse({
-      systemPrompt: buildSystemPrompt(input),
+      systemPrompt: withResolvedLocaleInstruction(buildSystemPrompt(input), input.language),
       messages: [
         {
           role: 'user',

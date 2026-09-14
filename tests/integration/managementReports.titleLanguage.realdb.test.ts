@@ -297,7 +297,7 @@ describe('1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Pos
   });
 
   itDB(
-    'PORTFOLIO_HEALTH — brak language w body/nagłówkach → domyślnie polski (SSOT: DEFAULT_AI_LANGUAGE = pl)',
+    'PORTFOLIO_HEALTH — brak language w body/nagłówkach → domyślnie angielski (DEC-510)',
     async (h) => {
       const app = buildApp();
       const token = makeE2EToken(h.userId, h.organizationId);
@@ -307,7 +307,7 @@ describe('1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Pos
         .send({ reportType: 'PORTFOLIO_HEALTH', scope: 'ORGANIZATION' });
 
       expect(res.status).toBe(200);
-      expect(res.body.report.title).toBe('Raport kondycji portfela');
+      expect(res.body.report.title).toBe('Portfolio Health Report');
     }
   );
 });

@@ -146,6 +146,7 @@ describe('presentationLayoutVariantsService (B2)', () => {
     expect(result.tierUsed).toBe('PREMIUM');
     expect(result.fallbackUsed).toBe(false);
     expect(result.variants).toHaveLength(3);
+    expect(llmCall.mock.calls[0][0].systemPrompt).toMatch(/Answer in en\.$/);
 
     // Quality gate: distinct palettes.
     const palettes = result.variants.map((v) => v.plans[0].paletteId);

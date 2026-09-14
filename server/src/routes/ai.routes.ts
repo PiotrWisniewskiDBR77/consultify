@@ -40,9 +40,9 @@ import {
 // `(language || 'en')`, przez co wołacz bez `body.language` dostawał angielski.
 import {
   AI_LANGUAGE_LABELS,
-  buildLanguageInstruction,
-  resolveAiLanguageForRequest,
   resolveAiLanguageFromRequest,
+  resolveLocale,
+  withResolvedLocaleInstruction,
 } from '../services/ai/languagePolicy.js';
 import {
   mapProviderError,
@@ -1456,9 +1456,9 @@ router.post(
     if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // Language instruction — ten sam SSOT co /chat/stream (services/ai/languagePolicy.ts).
-    const langCode = resolveAiLanguageFromRequest(req, language);
+    const langCode = await resolveLocale(req, language);
     const langName = AI_LANGUAGE_LABELS[langCode];
-    const languageInstruction = `\n\n${buildLanguageInstruction(langCode)}\n`;
+    const languageInstruction = `\n\n${withResolvedLocaleInstruction('', langCode)}\n`;
 
     // Confirm schema (structured output)
     // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
@@ -1695,11 +1695,10 @@ router.post(
       responseStyle,
     } = body;
 
-    // SSOT jezyka (services/ai/languagePolicy.ts): jawny wybor z zadania -> profil
-    // uzytkownika (`users.language`) -> `Accept-Language` -> `pl`. Wczesniej bylo tu
-    // `(language || 'en')`, wiec kazdy wolacz bez `body.language` (useIndependentAI,
-    // AICommandPrompt, useCanvasAIStream, wywolania API spoza UI) dostawal angielski.
-    const language = await resolveAiLanguageForRequest(req, bodyLanguage);
+    // DEC-510 SSOT: explicit request override, then users.language -> legacy
+    // users.locale -> organizations.default_language -> en. Resolver also stores
+    // the decision on req.resolvedLocale for downstream prompt builders.
+    const language = await resolveLocale(req, bodyLanguage);
 
     // Security: prevent user-controlled arbitrary endpoints on production by default.
     // Local inference is expected to be loopback-only unless explicitly allowed.
@@ -1957,7 +1956,7 @@ router.post(
     const langName = AI_LANGUAGE_LABELS[language];
     const isPolish = langCode === 'pl';
     const startTime = Date.now();
-    const languageInstruction = `\n\n${buildLanguageInstruction(language)}\n`;
+    const languageInstruction = `\n\n${withResolvedLocaleInstruction('', language)}\n`;
     const canvasContextPacket =
       (context as any)?.canvasContextPacket &&
       typeof (context as any).canvasContextPacket === 'object'

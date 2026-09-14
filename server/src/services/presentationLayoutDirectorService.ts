@@ -22,6 +22,7 @@
  */
 
 import logger from '../utils/Logger.js';
+import { withResolvedLocaleInstruction } from './ai/languagePolicy.js';
 import {
   DELIVERABLE_GENERATION_PURPOSE,
   deliverableModelConfig,
@@ -606,7 +607,7 @@ async function planViaLlm(
   const result = await (llmService as any).call({
     type: 'structured',
     modelConfig: deliverableModelConfig(), // env DELIVERABLE_LLM_* → cheaper model; else PREMIUM tier
-    systemPrompt,
+    systemPrompt: withResolvedLocaleInstruction(systemPrompt, meta?.language),
     messages: [{ role: 'user', content: userPrompt }],
     schema: OutputSchema,
     maxTokens: 1500,
