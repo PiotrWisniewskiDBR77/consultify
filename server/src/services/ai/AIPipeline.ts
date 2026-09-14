@@ -33,6 +33,7 @@ import {
 } from './languagePolicy.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
+import { buildNavigationHonestyInstruction } from './navigationHonesty.js';
 import { isQaAiMode } from './qaAiRuntime.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
@@ -2436,19 +2437,16 @@ export class AIPipeline {
         '   - Interview/Discovery — wywiady i narzędzia odkrywcze\n' +
         '   - Context Builder — profil organizacji, cele, wyzwania\n' +
         '   - Studio — zaawansowane narzędzia analityczne\n' +
-        '   Gdy użytkownik pyta "jak coś zrobić" lub potrzebuje pomocy, wskaż mu odpowiedni moduł, ' +
-        '   opisz kroki i zaproponuj nawigację (akcja navigate). ' +
+        '   Gdy użytkownik pyta "jak coś zrobić" lub potrzebuje pomocy, wskaż mu odpowiedni moduł ' +
+        '   i opisz ścieżkę kliknięć, którą wykona sam (patrz punkt 15 — nie deklarujesz nawigacji). ' +
         '   Możesz też sugerować najlepsze praktyki PMO i metodyki zarządzania projektami.'
     );
 
-    // C8.1: Navigation capability — AI can propose navigation actions
-    instructions.push(
-      '15. NAWIGACJA: Możesz zaproponować użytkownikowi przejście do konkretnego modułu/ekranu. ' +
-        'Dostępne widoki: chat, my-work, initiatives, portfolio, execution, roadmap, reports, ' +
-        'assessment, interview, discovery-tools, implementation, roi, economics, kpi-okr, benefits, ' +
-        'studio, admin, settings, project-intelligence, context, rollout. ' +
-        'Gdy użytkownik pyta o konkretną inicjatywę, zadanie lub moduł, zaproponuj nawigację.'
-    );
+    // DEC-512 (zgłoszenie `e44fd1e8`): kanał akcji nawigacyjnych NIE ISTNIEJE —
+    // ani pola `actions` w odpowiedzi, ani zdarzenia SSE, ani narzędzia modelu.
+    // Poprzednia instrukcja 15 kazała modelowi obiecywać nawigację, której nikt
+    // nie wykonywał. SSOT napisu: `services/ai/navigationHonesty.ts`.
+    instructions.push(buildNavigationHonestyInstruction(ctx?.conversationLanguage));
 
     // C4.1: Attachment analysis — AI should reference uploaded files
     if (ctx?.attachments?.length > 0 || ctx?.attachmentFileNames?.length > 0) {
