@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import { ExternalLink } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,7 @@ import {
 } from '@/components/standard';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { memberNameOrUnknown, type MemberNameResolver } from '@/hooks/useOrganizationMemberNames';
+import { localeListy } from '@/utils/listDateFormat';
 
 import type {
   ExecutionBankHorizonMonths,
@@ -94,11 +96,21 @@ const UNKNOWN_LABELS: Record<string, string> = {
   UPDATED_AT_INVALID: 'Update time is invalid',
 };
 
-const unknownLabel = (reason: string) => UNKNOWN_LABELS[reason] ?? 'Data unavailable';
+/**
+ * DEC-510 (fala E2b-Exec): etykieta „brak danych" szła na ekran po angielsku
+ * niezależnie od języka konta. Mapa zostaje SSOT-em wartości domyślnej (EN),
+ * a widoczny tekst bierze się z klucza `execution.bank.unknown.<POWÓD>`.
+ * `i18n.t`, nie hook — to helper modułowy wołany także spoza komponentu
+ * (`executionBankPreviewDeclaration`, `ExecutionHub`).
+ */
+const unknownLabel = (reason: string) =>
+  UNKNOWN_LABELS[reason]
+    ? i18n.t(`execution.bank.unknown.${reason}`, UNKNOWN_LABELS[reason])
+    : i18n.t('execution.bank.unknown.GENERIC', 'Data unavailable');
 const readableDate = (value: string) => {
   const parsed = new Date(value.length === 10 ? `${value}T00:00:00.000Z` : value);
-  if (!Number.isFinite(parsed.getTime())) return 'Invalid date';
-  return new Intl.DateTimeFormat('en', {
+  if (!Number.isFinite(parsed.getTime())) return i18n.t('execution.bank.invalidDate', 'Invalid date');
+  return new Intl.DateTimeFormat(localeListy(), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -108,7 +120,9 @@ const readableDate = (value: string) => {
 export const describeExecutionBankUnknown = unknownLabel;
 export const formatExecutionBankDate = readableDate;
 const caseAvailabilityLabel = (row: ExecutionBankRow) =>
-  row.executionCaseId ? 'Execution Case linked' : 'No execution case yet';
+  row.executionCaseId
+    ? i18n.t('execution.bank.caseLinked', 'Execution Case linked')
+    : i18n.t('execution.bank.caseMissing', 'No execution case yet');
 
 const temporalClass = 'text-xs tabular-nums text-c-text-secondary';
 
@@ -795,7 +809,10 @@ const HorizonControls = ({
   calendarWindow,
   onHorizonChange,
 }: Pick<ExecutionBankViewsProps, 'calendarWindow' | 'onHorizonChange'>) => (
-  <div className="flex items-center gap-1 px-4 py-2" aria-label="Execution Bank horizon">
+  <div
+    className="flex items-center gap-1 px-4 py-2"
+    aria-label={i18n.t('execution.bank.horizonAria', 'Execution Bank horizon')}
+  >
     {([1, 3, 6, 12] as const).map((months) => (
       <button
         key={months}
@@ -808,8 +825,11 @@ const HorizonControls = ({
       </button>
     ))}
     <span className="ml-2 text-[11px] text-c-text-muted">
-      Reporting date {readableDate(calendarWindow.asOf)} ·{' '}
-      {calendarWindow.resolution === 'WEEK' ? 'weekly scale' : 'monthly scale'}
+      {i18n.t('execution.bank.reportingDate', 'Reporting date')}{' '}
+      {readableDate(calendarWindow.asOf)} ·{' '}
+      {calendarWindow.resolution === 'WEEK'
+        ? i18n.t('execution.bank.weeklyScale', 'weekly scale')
+        : i18n.t('execution.bank.monthlyScale', 'monthly scale')}
     </span>
   </div>
 );
@@ -1083,13 +1103,15 @@ const BankGantt = ({
     <div className="min-w-[980px] px-4 pb-4">
       <div className="grid grid-cols-[220px_minmax(730px,1fr)] gap-3 items-end border-b border-c-border-subtle pb-2">
         <span className="text-[11px] font-semibold uppercase text-c-text-muted">
-          Initiative schedule
+          {i18n.t('execution.bank.initiativeSchedule', 'Initiative schedule')}
         </span>
         <div
           className="grid grid-cols-[110px_minmax(620px,1fr)] items-center gap-2"
           data-testid="execution-bank-gantt-axis-layout"
         >
-          <span className="text-[10px] font-medium text-c-text-secondary">Track</span>
+          <span className="text-[10px] font-medium text-c-text-secondary">
+            {i18n.t('execution.bank.track', 'Track')}
+          </span>
           <div className="relative min-w-0">
             <svg
               viewBox={`0 0 ${GANTT_WIDTH} 36`}
@@ -1097,7 +1119,10 @@ const BankGantt = ({
               data-testid="execution-bank-gantt-axis"
               data-window-start={calendarWindow.start}
               data-window-end={calendarWindow.endExclusive}
-              aria-label={`Timeline from ${readableDate(calendarWindow.start)} to ${readableDate(calendarWindow.endExclusive)}`}
+              aria-label={i18n.t('execution.bank.timelineAria', 'Timeline from {{from}} to {{to}}', {
+                from: readableDate(calendarWindow.start),
+                to: readableDate(calendarWindow.endExclusive),
+              })}
             >
               {calendarWindow.buckets.map((bucket) => {
                 const x = ganttPosition(bucket.start, calendarWindow) ?? 0;
@@ -1110,7 +1135,7 @@ const BankGantt = ({
             </svg>
             {calendarWindow.buckets.map((bucket) => {
               const x = ganttPosition(bucket.start, calendarWindow) ?? 0;
-              const label = new Intl.DateTimeFormat('en', {
+              const label = new Intl.DateTimeFormat(localeListy(), {
                 month: 'short',
                 ...(calendarWindow.resolution === 'WEEK' ? { day: 'numeric' as const } : {}),
                 timeZone: 'UTC',

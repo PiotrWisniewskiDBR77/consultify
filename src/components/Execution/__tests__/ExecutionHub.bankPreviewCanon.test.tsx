@@ -41,6 +41,7 @@ import type {
   ExecutionBankUnknownReason,
 } from '../executionBankModel';
 import { buildExecutionBankPreviewDeclaration } from '../executionBankPreviewDeclaration';
+import { formatExecutionBankDate } from '../ExecutionBankViews';
 
 // Powłoka kanonu woła `useTranslation()` po własne napisy (Relations, „Close",
 // licznik słów). Zwracamy fallback — tak jak robią to testy rdzenia podglądu.
@@ -237,9 +238,14 @@ describe('K5-4 — podgląd banku Realizacji 1:1 jak Inicjatywy', () => {
     expect(within(meta).queryByText(/^Progress/)).toBeNull();
     expect(within(meta).queryByText('At risk')).toBeNull();
     // Długa etykieta „Reporting date" wypychała chipy — zostaje sama data.
-    expect(within(meta).queryByText(/Reporting date\s+Sep/)).toBeNull();
-    expect(within(meta).getByText('Sep 13, 2026')).toBeInTheDocument();
-    expect(within(meta).getByText('Updated Sep 10, 2026')).toBeInTheDocument();
+    // DEC-510: data idzie przez locale konta (`localeListy`), nie przez
+    // przybite `Intl.DateTimeFormat('en')`. Asercja liczy oczekiwany zapis tym
+    // samym formaterem co produkt — nadal sprawdza KONKRETNĄ datę, nie regex.
+    const dataRaportu = formatExecutionBankDate('2026-09-13');
+    const dataAktualizacji = formatExecutionBankDate('2026-09-10T00:00:00.000Z');
+    expect(within(meta).queryByText(new RegExp(`Reporting date\\s+${dataRaportu}`))).toBeNull();
+    expect(within(meta).getByText(dataRaportu)).toBeInTheDocument();
+    expect(within(meta).getByText(`Updated ${dataAktualizacji}`)).toBeInTheDocument();
 
     const details = blok(container, 'details')!;
     expect(within(details).getByText('Progress')).toBeInTheDocument();
