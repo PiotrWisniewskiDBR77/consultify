@@ -154,8 +154,38 @@ const resetVoiceBackoff = (type: 'config' | 'event') => {
   persistVoiceBackoff();
 };
 
+/**
+ * ── TELEMETRIA GŁOSU MILCZY, GDY GŁOSU NIE MA (D1, 2026-09-13) ────────────
+ *
+ * ZMIERZONY DEFEKT: wejście na bank Realizacji albo Wywiad → Insights
+ * (konto OWNER DBR77) zostawiało w konsoli czerwone `403` z
+ * `POST /api/v10/teresa/voice-event`. Na tych ekranach nie ma głosu w ogóle —
+ * jedyne zdarzenie, jakie tam padało, to `voice_unavailable` wysyłane zaraz po
+ * odpowiedzi `GET /voice-config` z `enabled:false`.
+ *
+ * PRZYCZYNA STRUKTURALNA, nie środowiskowa: to zdarzenie odsyłało serwerowi
+ * JEGO WŁASNĄ odpowiedź sprzed milisekundy. `voice-config` policzył
+ * `enabled:false` razem z `unavailableReason` i to on jest źródłem prawdy o
+ * dostępności głosu w organizacji — POST z tą samą informacją nie wnosił nic
+ * obserwowalnego, a kosztował zapis mutujący na każdym ekranie i u każdego
+ * użytkownika. Sama trasa (`routes/v10/teresa.routes.ts:100`) stoi wyłącznie
+ * na `verifyToken`, więc przyjmuje zdarzenie od dowolnego zalogowanego członka
+ * organizacji — 403 przychodziło z bramek globalnych stojących przed nią.
+ * Dlatego naprawa jest po stronie klienta i jest odporna na to, KTÓRA bramka
+ * odmówiła: zdarzenia nie ma, więc nie ma odmowy ani wpisu w konsoli.
+ *
+ * KANON: telemetria głosu leci dopiero wtedy, gdy SERWER potwierdził, że głos
+ * jest dla tej organizacji włączony. Gdy głosu nie ma — klient milczy
+ * (fail-silent), bo serwer i tak już wie. Zdarzenia przebiegu sesji
+ * (`voice_start_attempt`, `voice_started`, `voice_error`, `voice_stopped`,
+ * fallbacki) zachowują się bez zmian — mogą paść wyłącznie wtedy, gdy głos był
+ * dostępny, więc bramka ich nie dotyka.
+ */
+let voiceTelemetryAllowed = false;
+
 function postTeresaVoiceEvent(payload: Record<string, unknown>) {
   hydrateVoiceBackoff();
+  if (!voiceTelemetryAllowed) return;
   if (!hasStoredAuthToken()) return;
   if (Date.now() < voiceEventBlockedUntil) return;
 
@@ -307,9 +337,14 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
             typeof data?.persona === 'string' && data.persona.trim() ? data.persona.trim() : null,
           tone: typeof data?.tone === 'string' && data.tone.trim() ? data.tone.trim() : null,
         });
+        // Bramka telemetrii (patrz nota przy `voiceTelemetryAllowed`): serwer
+        // dopiero co powiedział, czy głos w tej organizacji istnieje. Decyzję
+        // „wysyłać czy milczeć" podejmuje WYŁĄCZNIE `postTeresaVoiceEvent` —
+        // jedno miejsce, żeby drugi warunek tutaj nie mógł się z nim rozjechać.
+        voiceTelemetryAllowed = data?.enabled === true;
         postTeresaVoiceEvent({
-          eventName: data?.enabled === true ? 'voice_config_loaded' : 'voice_unavailable',
-          status: data?.enabled === true ? 'idle' : 'error',
+          eventName: 'voice_config_loaded',
+          status: 'idle',
           unavailableReason:
             typeof data?.unavailableReason === 'string' ? data.unavailableReason : undefined,
         });
@@ -322,11 +357,9 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
           unavailableReason:
             'Voice is unavailable because server-side voice config failed to load.',
         });
-        postTeresaVoiceEvent({
-          eventName: 'voice_unavailable',
-          status: 'error',
-          unavailableReason: 'voice_config_load_failed',
-        });
+        // Config się nie wczytał, więc głosu nie ma — a kanał, którym mielibyśmy
+        // o tym donieść, jest tym samym kanałem, który właśnie zawiódł. Cisza.
+        voiceTelemetryAllowed = false;
       });
 
     return () => {
