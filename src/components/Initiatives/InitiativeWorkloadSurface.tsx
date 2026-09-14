@@ -9,11 +9,13 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
-import { readInitiativeWorkload } from '@/services/initiatives/initiativeWorkloadApi';
+import {
+  readInitiativeWorkload,
+  type InitiativeWorkloadResponse,
+  type InitiativeWorkloadRow,
+} from '@/services/initiatives/initiativeWorkloadApi';
 import type {
   ResourcePlanPerson,
-  ResourcePlanResponse,
-  ResourcePlanRow,
 } from '@/services/execution/resourcePlanApi';
 import { getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 import {
@@ -36,7 +38,7 @@ interface WorkloadTableRow extends TableRow {
   weeklyCapacityHours: number;
   availabilityPercent: number;
   supplySource: 'PROFIL' | 'DOMYSLNA';
-  cells: Record<string, ResourcePlanRow | undefined>;
+  cells: Record<string, InitiativeWorkloadRow | undefined>;
 }
 
 export const workloadBand = (utilizationPercent: number): 'green' | 'amber' | 'red' => {
@@ -51,7 +53,7 @@ const bandClass: Record<ReturnType<typeof workloadBand>, string> = {
   red: 'border-c-danger/30 bg-c-danger/10 text-c-danger',
 };
 
-const toTableRow = (person: ResourcePlanPerson, rows: ResourcePlanRow[]): WorkloadTableRow => ({
+const toTableRow = (person: ResourcePlanPerson, rows: InitiativeWorkloadRow[]): WorkloadTableRow => ({
   id: person.userId,
   title: person.name,
   description: person.role || undefined,
@@ -72,7 +74,7 @@ export const InitiativeWorkloadSurface: React.FC<{ initiatives: InitiativeScopeR
   const [initiativeStatus, setInitiativeStatus] = useState('');
   const [weeks, setWeeks] = useState(8);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [result, setResult] = useState<ResourcePlanResponse | null>(null);
+  const [result, setResult] = useState<InitiativeWorkloadResponse | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -163,7 +165,7 @@ export const InitiativeWorkloadSurface: React.FC<{ initiatives: InitiativeScopeR
             const row = rawRow as WorkloadTableRow;
             const cell = row.cells[weekStart];
             const percent = cell?.utilizationPercent ?? 0;
-            const band = workloadBand(percent);
+            const band = cell?.capacityExceeded ? 'red' : workloadBand(percent);
             return (
               <span
                 data-testid={`workload-${row.id}-${weekStart}`}
@@ -175,7 +177,9 @@ export const InitiativeWorkloadSurface: React.FC<{ initiatives: InitiativeScopeR
                 })}
                 className={`inline-flex min-w-14 items-center justify-end rounded-md border px-2 py-1 text-xs font-semibold ${bandClass[band]}`}
               >
-                {percent}%
+                {cell?.capacityExceeded
+                  ? t('initiatives.workload.noCapacity', 'No capacity')
+                  : `${percent}%`}
               </span>
             );
           },

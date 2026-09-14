@@ -17,6 +17,7 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
   const initiativeId = randomUUID();
   const foreignInitiativeId = randomUUID();
   const availableUserId = randomUUID();
+  const zeroCapacityUserId = randomUUID();
   let sql: Client;
   let app: Express;
   let authorization: string;
@@ -43,8 +44,17 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
       `INSERT INTO users
          (id,organization_id,email,password,first_name,last_name,role,status,weekly_capacity_hours,availability_percent,created_at)
        VALUES ($1,$2,$3,'x','Anna','Capacity','ADMIN','active',20,100,now()),
-              ($4,$2,$5,'x','Ola','Available','USER','active',40,100,now())`,
-      [userId, organizationId, `${userId}@example.test`, availableUserId, `${availableUserId}@example.test`]
+              ($4,$2,$5,'x','Ola','Available','USER','active',40,100,now()),
+              ($6,$2,$7,'x','Zen','Zero','USER','active',0,100,now())`,
+      [
+        userId,
+        organizationId,
+        `${userId}@example.test`,
+        availableUserId,
+        `${availableUserId}@example.test`,
+        zeroCapacityUserId,
+        `${zeroCapacityUserId}@example.test`,
+      ]
     );
     await sql.query(
       `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
@@ -79,10 +89,12 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
       `INSERT INTO tasks
          (id,organization_id,project_id,initiative_id,title,status,assignee_id,estimated_hours,due_date,created_at,updated_at)
        VALUES ($1,$2,$3,$4,'Scoped demand','todo',$5,30,current_date + 2,now(),now()),
-              ($6,$2,$7,$8,'Excluded demand','todo',$5,10,current_date + 2,now(),now())`,
+              ($6,$2,$7,$8,'Excluded demand','todo',$5,10,current_date + 2,now(),now()),
+              ($9,$2,$7,$4,'Canonical project wins','todo',$10,8,current_date + 2,now(),now())`,
       [
         randomUUID(), organizationId, projectId, initiativeId, userId,
         randomUUID(), foreignProjectId, foreignInitiativeId,
+        randomUUID(), zeroCapacityUserId,
       ]
     );
 
@@ -108,7 +120,11 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     await sql.query('DELETE FROM initiatives WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM projects WHERE organization_id=$1', [organizationId]);
     await sql.query('DELETE FROM organization_members WHERE organization_id=$1', [organizationId]);
-    await sql.query('DELETE FROM users WHERE id IN ($1,$2)', [userId, availableUserId]);
+    await sql.query('DELETE FROM users WHERE id IN ($1,$2,$3)', [
+      userId,
+      availableUserId,
+      zeroCapacityUserId,
+    ]);
     await sql.query('DELETE FROM organizations WHERE id IN ($1,$2)', [organizationId, foreignOrganizationId]);
     await sql.end();
     delete process.env.ENABLE_INITIATIVES_WORKLOAD;
@@ -122,8 +138,8 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
 
     const response = await request(app).get(path).set('Authorization', authorization);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
-    expect(response.body.people).toHaveLength(2);
-    expect(response.body.rows).toHaveLength(2);
+    expect(response.body.people).toHaveLength(3);
+    expect(response.body.rows).toHaveLength(3);
     expect(response.body.rows.find((row: { userId: string }) => row.userId === userId)).toMatchObject({
       userId,
       demandHours: 30,
@@ -133,7 +149,21 @@ describe('Q1 P3 workload through ApiGateway/JWT/RealPG', { retry: 0 }, () => {
     expect(
       response.body.rows.find((row: { userId: string }) => row.userId === availableUserId)
     ).toMatchObject({ userId: availableUserId, demandHours: 0, utilizationPercent: 0 });
-    expect(response.body.summary.overloadedCount).toBe(1);
+    expect(
+      response.body.rows.find((row: { userId: string }) => row.userId === zeroCapacityUserId)
+    ).toMatchObject({
+      userId: zeroCapacityUserId,
+      demandHours: 8,
+      supplyHours: 0,
+      capacityExceeded: true,
+    });
+    expect(response.body.summary.overloadedCount).toBe(2);
+
+    const invalidStatus = await request(app)
+      .get(`/api/execution-control/capacity/initiative-workload?initiativeStatuses=PLANNING`)
+      .set('Authorization', authorization);
+    expect(invalidStatus.status).toBe(400);
+    expect(invalidStatus.body.code).toBe('INVALID_INITIATIVE_STATUS');
 
     process.env.ENABLE_INITIATIVES_WORKLOAD = 'false';
     const offResponse = await request(app).get(path).set('Authorization', authorization);

@@ -851,24 +851,29 @@ export async function getExecutionResourcePlan(
   ];
   const taskParams: unknown[] = [orgId];
   const projectId = String(options?.projectId || '').trim();
-  if (projectId) {
-    taskFilters.push('t.project_id = ?');
-    taskParams.push(projectId);
-  }
   const initiativeStatuses = (options?.initiativeStatuses || [])
     .filter((status): status is InitiativeStatusType =>
       Object.values(InitiativeStatus).includes(status as InitiativeStatusType)
     )
     .slice(0, 20);
-  if (initiativeStatuses.length > 0) {
+  if (projectId || initiativeStatuses.length > 0) {
+    const initiativeFilters = [
+      'i.id = t.initiative_id',
+      'i.organization_id = t.organization_id',
+    ];
+    if (projectId) initiativeFilters.push('i.project_id = ?');
+    if (initiativeStatuses.length > 0) {
+      initiativeFilters.push(
+        `UPPER(COALESCE(i.status, '')) IN (${initiativeStatuses.map(() => '?').join(',')})`
+      );
+    }
     taskFilters.push(
       `EXISTS (
          SELECT 1 FROM initiatives i
-          WHERE i.id = t.initiative_id
-            AND i.organization_id = t.organization_id
-            AND UPPER(COALESCE(i.status, '')) IN (${initiativeStatuses.map(() => '?').join(',')})
+          WHERE ${initiativeFilters.join('\n            AND ')}
        )`
     );
+    if (projectId) taskParams.push(projectId);
     taskParams.push(...initiativeStatuses);
   }
 

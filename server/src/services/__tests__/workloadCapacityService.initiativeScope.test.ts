@@ -23,7 +23,8 @@ describe('getExecutionResourcePlan initiative scope', () => {
     });
 
     const [sql, params] = dbAll.mock.calls[0];
-    expect(sql).toContain('project_id = ?');
+    expect(sql).toContain('i.project_id = ?');
+    expect(sql).not.toContain('t.project_id = ?');
     expect(sql).toContain('FROM initiatives');
     expect(sql).toContain('UPPER(COALESCE(i.status');
     expect(params).toEqual(['org-1', 'project-1', 'PENDING_APPROVAL', 'APPROVED']);

@@ -10500,7 +10500,8 @@
       "source": "Źródło dostępności",
       "profile": "Profil osoby",
       "default": "Polityka domyślna",
-      "cellHint": "{{demand}} h popytu / {{supply}} h dostępności"
+      "cellHint": "{{demand}} h popytu / {{supply}} h dostępności",
+      "noCapacity": "Brak dostępności"
     },
     "register": {
       "archiveLocked": "Zmiany cyklu życia i archiwizacja są wykonywane w kontrolowanym procesie."

@@ -11280,7 +11280,8 @@
       "source": "Capacity source",
       "profile": "Person profile",
       "default": "Default policy",
-      "cellHint": "{{demand}} h demand / {{supply}} h capacity"
+      "cellHint": "{{demand}} h demand / {{supply}} h capacity",
+      "noCapacity": "No capacity"
     },
     "register": {
       "archiveLocked": "Lifecycle changes and archiving run through a controlled process."
