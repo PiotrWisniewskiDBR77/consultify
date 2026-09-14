@@ -15,6 +15,8 @@ import { Pool, type PoolConfig } from 'pg';
 import { z } from 'zod';
 
 import databaseConfig from '../config/DatabaseConfig.js';
+import { isInitiativesWorkloadEnabled } from '../config/FeatureFlags.js';
+import { InitiativeStatus, type InitiativeStatusType } from '../constants/initiativeStatuses.js';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgRole } from '../middleware/rbac.middleware.js';
@@ -1080,6 +1082,68 @@ router.get(
  * podpiecie kafla nalezy do wlasciciela pliku Kokpitu — ta trasa go NIE dotyka.
  */
 router.get(
+  '/capacity/initiative-workload',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('user'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!isInitiativesWorkloadEnabled()) {
+      return res.status(404).json({ error: 'Not found', code: 'INITIATIVES_WORKLOAD_DISABLED' });
+    }
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const weeks = Number(req.query.weeks);
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+    const rawInitiativeStatuses: string[] =
+      typeof req.query.initiativeStatuses === 'string'
+        ? req.query.initiativeStatuses.split(',').map((status: string) => status.trim())
+        : [];
+    const initiativeStatuses = rawInitiativeStatuses.filter(
+      (status: string): status is InitiativeStatusType =>
+        Object.values(InitiativeStatus).includes(status as InitiativeStatusType)
+    );
+    if (initiativeStatuses.length !== rawInitiativeStatuses.length) {
+      return res.status(400).json({
+        error: 'Invalid initiative status',
+        code: 'INVALID_INITIATIVE_STATUS',
+      });
+    }
+    const plan = await getExecutionResourcePlan(orgId, {
+      weeks: Number.isFinite(weeks) ? weeks : undefined,
+      projectId: projectId || undefined,
+      initiativeStatuses,
+      includeAvailablePeople: true,
+    });
+    const totalDemand = plan.rows.reduce((sum, row) => sum + row.demandHours, 0);
+    const totalSupply = plan.rows.reduce((sum, row) => sum + row.supplyHours, 0);
+    const rows = plan.rows.map((row) => ({
+      ...row,
+      capacityExceeded: row.demandHours > 0 && row.supplyHours <= 0,
+    }));
+    return res.json({
+      ...plan,
+      rows,
+      summary: {
+        peopleCount: plan.people.length,
+        demandHours: Math.round(totalDemand * 10) / 10,
+        supplyHours: Math.round(totalSupply * 10) / 10,
+        gapHours: Math.round((totalSupply - totalDemand) * 10) / 10,
+        utilizationPercent: totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
+        overloadedCount: rows.filter(
+          (row) => row.capacityExceeded || row.utilizationPercent > 100
+        ).length,
+        peopleWithoutProfileSupply: plan.people.filter(
+          (person) => person.supplySource === 'DOMYSLNA'
+        ).length,
+        backlogHoursTotal:
+          Math.round(plan.people.reduce((sum, person) => sum + person.backlogHours, 0) * 10) / 10,
+        backlogPeople: plan.people.filter((person) => person.backlogHours > 0).length,
+      },
+    });
+  })
+);
+
+router.get(
   '/capacity/resource-plan',
   verifyToken,
   isAuthenticated,
@@ -1101,8 +1165,7 @@ router.get(
         supplyHours: Math.round(totalSupply * 10) / 10,
         gapHours: Math.round((totalSupply - totalDemand) * 10) / 10,
         // NULL, nie 0 — „nie wiemy" nie jest tym samym co „nikt nic nie robi".
-        utilizationPercent:
-          totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
+        utilizationPercent: totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
         // Liczy PRZECIAZONE TYGODNIE (wiersze osoba x tydzien), nie osoby —
         // pasek Zasobow nazywa to wprost „przeciążonych tygodni". Od P16-R1
         // liczy sie z NOWEGO popytu (bez zaleglosci doliczanej do tygodnia 1).

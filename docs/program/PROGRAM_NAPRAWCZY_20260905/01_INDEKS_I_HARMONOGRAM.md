@@ -136,6 +136,97 @@ kolejka odbioru (KANAL wpis 33: S1 v3 → P1 → Q1 → S4 → S5 → S3). Wpisy
 (`wt/p1-raport`), fala B4 = H1e + Z-27 (`wt/fala-b4`). Worktree usunięte: `fala-a2`, `fala-b3`,
 `h1b`, `paczka5v2`. Dysk ~25 GiB.
 
+**P1 Raport z pracy — ODEBRANY i WDROŻONY na staging (14.09, run `34826961239`, success).**
+Linia `78086fb2c8` → `3e1363d01a` (kandydat `4d8113fa46` + docs `7724358c0b`, merge `fa3893df45`;
+jeden konflikt `InitiativesHub.tsx` — zakładka `workReport` pod nową flagą
+`WORK_REPORT_ENABLED`, nie `FOUR_BUTTONS`; `?lens=parking` bez zmian; Menu 3 czyste). Tag
+cofnięcia `rollback-pre-p1-raport-20260914` = `78086fb2c8`. 11/11 plików testów delty 33/33.
+Własna sonda CTO: runner → PDF (`work-report-3a588c6f….pdf`, 24 773 B, 2 strony, PDFKit) →
+MailHog (Message-ID `work-report-scheduled-delivery-…`) → PG (`PUBLISHED`, odbiorcy `DELIVERED`,
+`contentHash`) + ścieżka porażki bez SMTP (`APPROVED`/`FAILED`, `EMAIL_DELIVERY_FAILED`, receipty
+puste) — publikacja bez doręczenia nie przechodzi. Parytet OFF: flagi
+`ENABLE_INITIATIVES_WORK_REPORT` (6 wołaczy, nie fantom) i `VITE_INITIATIVES_WORK_REPORT`
+nieustawione; pełny spider 872 chunków żywego stagingu = 0 trafień kreatora. Autoryzacja: MEMBER
+403 na create/transitions/przebieg. Bramka: tsc 0/189, język OK, canon 349, artefakt 8-0-117,
+build OK. Żywy SMTP stagingu nietknięty (doręczenie na skrzynkę właściciela — po jego zgodzie,
+**Z-31**). Zrzuty Codexa bez powłoki (goły `<main>`) → **Z-29**. Szczegóły:
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, „P1 Raport z pracy — ODEBRANY i WDROŻONY".
+
+**Z-29 (14.09, nowe) — zrzuty P1 w powłoce.** Sonnet, gałąź
+`integracja/kandydat-z29-zrzuty-20260914`, HEAD `fb79dd4190`, kopia `backup/z29-zrzuty-20260914`;
+harness `dev-render/screens/z29-inicjatywy-raport-pracy.tsx`. Zrzuty w
+`~/Developer/cto-codex/zrzuty-z29-raport-pracy-20260914/` (lista, kreator, przebieg, OFF;
+jasny+ciemny). SKAZY poniżej kanonu w `InitiativeWorkReportView.tsx` (review Codexa oglądał samą
+powierzchnię): brak `StandardPreview` przebiegu, surowe kody enum w tabeli, 2 przyciski zamiast
+kebaba, natywne `<select>`, kreator jako blok nad tabelą, przeciek pigułek Menu 3 → etap **RP1b
+przejazd kanonu** (Opus, gałąź `integracja/kandydat-p1-kanon-20260914`, w toku). KANAŁ wpis 35 =
+reguła dla Codexa: każdy ekran przed freeze = StandardTable+StandardPreview+StandardModuleBar,
+etykiety i18n, kebab, zrzut w powłoce. **ROZLICZONE** (skazy przekazane do RP1b). Lekcja
+nadzorcy: „review powierzchni ≠ odbiór ekranu".
+
+**Z-31 (14.09, nowe).** Żywe doręczenie raportu z pracy mailem na skrzynkę właściciela — wymaga
+jego zgody przed uruchomieniem na żywym SMTP stagingu (sonda CTO powyżej użyła MailHog, nie
+żywej skrzynki).
+
+**Codex 14.09, 04:30–04:44.** S5 PMO E3 R3 **ACCEPT** → kolejka odbioru po Q1. S4 F2-2 E2
+rereview **HOLD** → poprawki zamrożone (04:44). KANAŁ wpisy 34 (P1 na linii, Q2 start, rebase
+S3/S4), 35 (reguła StandardTable/Preview/ModuleBar przed freeze, patrz Z-29).
+
+**Z-2 (aktualizacja 14.09, noc — druga fala integratorów).** Cztery równoległe: paczka 5 v3
+(push `19baa6d8bc` — run `34828181888` krok „Deploy app to staging" **FAILURE**, ale health
+stagingu = `19baa6d8bc`, tag `staging-deployed` został `3e1363d01a` — znany kształt „timeout
+workflow nie przesuwa tagu"; wyjaśnienie w raporcie integratora), fala B4 (H1e + Z-27), Q1
+Obciążenie, RP1b (przejazd kanonu). Dysk: 8,7 → ~26 GiB po czystce (z27, h1e, Caches). Worktree
+usunięte: `p1-raport`, `fala-a2`; `z29` (w toku — RP1b jeszcze aktywne).
+
+**EWIDENCJA (uzupełnienie 14.09).** RP1 → **🧪 NA STAGINGU** `3e1363d01a` (za flagą) + RP1b
+**🔧** w toku; Z-29 rozliczone; Z-31 nowy. Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 10 ·
+🔧 7 · ⬜ 26; FALA 2 = 41 etapów (0 ✅, 9 🧪, 7 🔧, 25 ⬜). Pełny wpis:
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, sekcja §5.
+
+**Paczka 5 v3 (Wywiad — zatwierdzanie odpowiedzi, Codex S1) — PRZYJĘTA i WDROŻONA na staging
+(push `19baa6d8bc`; run `34828181888` „failure" = timeout czekania na Railway „Timed out waiting
+for staging app deployment", wdrożenie realne: `/api/health` gitSha `19baa6d8bc`; tag
+`staging-deployed` NIE przesunięty (został `3e1363d01a`) — przy zamrożonym demo stan pożądany):
+linia `3e1363d01a` → merge `b677f46d11` (kandydat `c971ce6ef6`, 0 konfliktów) → HEAD
+`19baa6d8bc` (merge aktualnej linii z falą B3); tag cofnięcia `rollback-pre-paczka5v3-20260914` =
+`3e1363d01a`; delta test vs kod v2→v3: `git diff e1a2c2c160..c971ce6ef6 -- server/src src` PUSTY
+(poprawka wyłącznie w teście: własny mock `organization_ai_policy` + env w before/afterEach —
+uczciwa; plik testuje ścieżkę ON, OFF pokrywa sonda parytetu); testy: bloker 32/32 (na linii 2/14
+zastane), 12 plików unit 202/202 (powtórzone po scaleniu linii), RealPG 19/19 (zero skipped);
+migracja `20262170`: pusta baza 2× idempotentna; schemat stagingu 1818 tabel z zaszczepionym
+ledgerem sha256 (runner odmawia „UNTRUSTED LEDGER ROW" przy pustym) 1× stosuje/2× 0 pending;
+pułapka 919 potwierdzona = artefakt schema-only; zastane czerwienie: 46 plików importujących
+zmieniony kod — te same 3 na linii i kandydacie (`InsightCreatorModal.context-documents` 1F,
+`InterviewScoringRubric` 7F, `cardContractFlagFamily.day324` 1F), zero nowych; parytet OFF:
+2 serwery na jednej bazie PG18, 6 żądań (login/JWT/ApiGateway), 5/6 bajtowo identyczne (w tym
+mutujący POST submit sha `ab65ba26f8b3`), 6. = nowy GET `…/answer-approvals` 200 `{approvals:[]}`
+(tylko-do-odczytu); POST `answer-decisions` / `retry-ai` przy OFF → 404, 0 wierszy w nowych
+tabelach; bramka: tsc serwer 0, front 189 (=limit; sama paczka 188, +1 z fali B3), język OK,
+canon 349, artefakt 8-0-117, build OK (pułapka: pierwszy tsc frontu „0 błędów" = OOM przy
+równoległym vitest — powtórzony z heap 8 GB); migracja na stagingu: `/api/health/migrations`
+`disabled_by_operator`; SELECT: obie tabele istnieją, ledger success 09:41:48 UTC — zaaplikowała
+`preDeployCommand`; `schema_migrations` 1009 wierszy / 1133 plików (luka zastana, **Z-33** do
+wyjaśnienia); flaga `ENABLE_INTERVIEW_ANSWER_APPROVAL` nieustawiona (parametr org OFF) —
+włączenie po akcepcie właściciela na zrzutach ON (**Z-34**). Zrzuty
+`~/Developer/cto-codex/zrzuty-paczka5v3-20260914/` (OFF lokalnie na SHA stagingu — konto
+techniczne, storageState QA wygasły Z-20; ON = evidence Codexa). Codex: KANAL wpis 36 (slot S1
+wolny → follow-up `codex/interview-pilot-fixes-20260914`: XV/XVI/XVII).
+
+**Z-33 (14.09, nowe).** Luka `schema_migrations` na stagingu: 1009 wierszy zarejestrowanych vs
+1133 plików migracji w repo (zastana, nie wprowadzona paczką 5 v3) — do wyjaśnienia.
+
+**Z-34 (14.09, nowe).** Włączenie flagi `ENABLE_INTERVIEW_ANSWER_APPROVAL` (paczka 5 v3,
+zatwierdzanie odpowiedzi Wywiadu) — warunek: akcept właściciela na zrzutach ON (dziś OFF).
+
+**Z-2 (aktualizacja 14.09, po paczce 5 v3).** Integratory w toku: fala B4 push `94754c3b4d`
+w wdrożeniu, Q1 Obciążenie, S5 PMO E3, RP1b.
+
+**EWIDENCJA (uzupełnienie 14.09, po paczce 5 v3).** Paczka 5 (Wywiad) → **🧪 NA STAGINGU**
+`19baa6d8bc` (za flagą); Skrzynka: Z-33, Z-34 nowe. Liczniki „Duże pakiety Codexa" przeliczone:
+5/5 w toku → **1 na stagingu** (paczka 5 v3, za flagą), 4 pozostają w toku. Pełny wpis:
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, „Duże pakiety Codexa" (§0.1).
+
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
 (zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).
@@ -1572,6 +1663,7 @@ zmian właściciel jeszcze nie widział. Do wykonania po jego przeglądzie, nie 
 | **ZAMKNIĘCIE SESJI 12.09 — trwałe zabezpieczenie pracy + przekazanie** | `PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_NOC.md`; kopie `origin/backup/*-2026091[23]` | **WYKONANE** | 13.09 01:0x | **17 gałęzi Codexa zabezpieczonych kopiami na serwerze** (11 nowych wypchniętych tej nocy: rc2 `d7e713fd5f`, rc1 `c4c67a677e`, execution-bank `6919823003`, ie01-initiative-journey `ea59dd1fba`, initiative-card-split `69dbb5b746`, closed-autosave `4fe3e7d8ff`, w05-ai-evaluation, w17-deck-autosave, c6-export-contract, odbior-paczek, zatwierdzanie-inicjatyw `590915fc89`; 6 miało kopie z 12.09 i były aktualne). Pomiar zamykający: staging = demo = `60051310d7` (bez zmian od 12.09 00:20), linia = `76a57ebab8` drzewo czyste, 37 tagów cofnięcia, dysk 35 GB. **Czterech robotników nadzorcy zatrzymanych rano NIE zostawiło pracy** — katalogi i gałęzie nie istnieją (sprawdzone, nie założone) | **Codex pracuje sam, bez przeklejania** — nowe gałęzie rdzenia powstały po DEC-476 (IE01 ścieżka inicjatywy, rozbicie karty, Bank realizacji, zapis automatyczny). NIE używa nazw plików z moich instrukcji: brak `98_KANDYDAT.md` i `98_AUDYT_LUKI.md`; jego raporty są w `INTEGRATOR_MVP_20260912/` (30+ dokumentów) i `IE01_*`. Blokery wdrożenia z jego własnych raportów: C6 HOLD z 6 znaleziskami (2 krytyczne: eksport poza organizację, obejście ochrony prawnej), Wywiad 4 luki UI, front type-check bez zamknięcia, budowa frontu wymaga 8 GiB. **Dwa moje skrypty skłamały tej nocy** (tablica asocjacyjna zsh → 5 fałszywych „marker nie jest przodkiem"; dwukropek po zmiennej w cudzysłowie jako modyfikator zsh → 11 fałszywych „BŁĄD kopii") — oba obalone ręcznym powtórzeniem jednego przypadku |
 | **NOC 13.09 — praca Codexa zmierzona i zabezpieczona** | kandydat `codex/integrator-mvp-20260912-rc2` = `5de710ff46`; 42 kopie na `origin/backup/*` | **ZMIERZONE / ZABEZPIECZONE** | 13.09 06:5x | 00:45→06:45 bez przerwy: **14 nowych gałęzi**, rc2 `d7e713fd5f`→`5de710ff46` (+68 commitów); bilans wobec linii: **147 commitów, 118 plików kodu, zero migracji**. Trzy tory: **(1) rdzeń Realizacji** — prognoza i punkt odniesienia, 7 gałęzi (`execution-forecast-editor`, `native-forecast`, `cleared-forecast` z rozróżnieniem „wyczyszczone" od „brak", `canonical-forecast`, `native-baseline`, `unavailable-counts`, `bank-evidence`+`bank-views`); **(2) tor W17 Materiały/prezentacje**, 6 gałęzi (etykiety EN, przywracanie tytułu ze zrzutu, przesuwanie slajdów, czytelność trybu prezentacji, odnośnik notatnika, nazwa przycisku historii) — **POZA RDZENIEM wg DEC-476**, do rozstrzygnięcia przed scaleniem; **(3) C6** — gałąź `c6-delete-approved-out` + 13 dokumentów przeglądu | **C6 nadal HOLD**: wg własnego audytu Codexa przyjęty fragment eksportu to jedna uprawniona część częściowego eksportu, nie kompletny eksport ani dowód uprawnień; następne zadanie nazwane **C6-DEL-OFF** (punkt fizycznego usuwania superadmina ma zwracać deterministyczną odmowę BEZ pobierania klienta bazy). **S2.7 pojemnika 2 otwarte → pilotaż nie startuje.** Dobra praktyka do wykorzystania przy odbiorze: `E1B_EVIDENCE_FINAL_FREEZE_20260913T090000Z.md` — 14 plików z sumami SHA256, zamrożone do niezależnego przeglądu. Staging i demo przez całą noc `60051310d7` |
 | **13.09 RANO — ZAMROŻENIE KANDYDATA, SCALENIE, DEC-477, NOWY TRYB (Fable zarządza agentami, Codex → fala 2)** | kandydat `codex/integrator-mvp-20260912-rc2` = `5de710ff46` zamrożony jako tag `kandydat-mvp-20260913`; scalony `integracja/kandydat-20260913` = `cfea70de8a`; kopie `origin/backup/kandydat-rc2-5de710ff46-20260913`, `origin/backup/integracja-kandydat-cfea70de8a-20260913` | **ZAMROŻONE / SCALONE, CZEKA NA BRAMKĘ (K2/K3)** | 13.09 ~07:00 CDT | Pomiar 13.09 rano: staging = demo nadal `60051310d7` (nic z 11–13.09 nie wdrożone); rc2 = 147 commitów nad linią, 207 plików kodu, 0 migracji. Po patch-id zmierzone: wszystkie 6 gałęzi nocnych W17 ORAZ C6-DEL-OFF (`a90fa4f115`) już SĄ w rc2 — premisa przekazania nocnego „W17 poza kandydatem" była FAŁSZYWA. Poza rc2 zostają tylko `codex/c6-export-contract-20260912` (+19, HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1, DEC-474 → fala 2). Dysk zmierzony 13.09: **1,3 GB wolne**, nie 35 GB z wpisu poprzedniej nocy. **DEC-477** (mandat właściciela 09.09+13.09): poprawki W17 zostają w kandydacie — wycięcie oznaczałoby przebudowę 147 commitów; ujawnione właścicielowi wprost | **NOWY TRYB PRACY** (słowa właściciela 13.09): „Fable nigdy nie koduje ani nie pisze instrukcji — planuje i zarządza agentami Opus/Sonnet"; „Ty zarządzasz agentami w Claude bezpośrednio i dajesz mi duże prompty dla pełnej przebudowy poszczególnych dużych zadań do Codexa"; „Ty samodzielnie domykasz MVP, a Codex powoli bierze się za duże taski fali 2". Codex NIE widział skrzynki Z-1..Z-3 (jego baza była 11 commitów za linią) — dowodu parytetu flag OFF brak, robi go teraz agent nadzorcy (K3). Pełna tabela zleceń K1–K9 w skrzynce na górze tego rejestru |
+| **Fala B4 — H1e + H1f (skrzynka v2) WDROŻONA na staging** | push `94754c3b4d`; linia `19baa6d8bc` → merge H1e `afc6f19cc0` (8 plików, 0 konfliktów) → merge Z-27 `fedc288ea3` (12 plików, 0 konfliktów) → merge linii `94754c3b4d`; delta 18 plików | **WDROŻONE** (run `34829819090` „failure" = 12-min timeout czekania na Railway, wdrożenie realne: health gitSha `94754c3b4d`; tag `staging-deployed` celowo na `3e1363d01a`) | 14.09 | wykrywacz duplikatów kluczy en 0 / pl 0 (lokalnie i na plikach serwowanych przez staging); tag cofnięcia `rollback-pre-fala-b4-20260914` = `19baa6d8bc`; bramka: tsc serwer 0, front 189 (=linia; jedyny błąd w plikach fali TS2493 w TransitionInboxSurface.behavior.test zastany), język OK, canon 349, artefakt 8/8-0/0-117/117, build 36,7 s, testy 5 plików 26/26 (i18nTrescPolska z wykrywaczem, preflight.h1e, TransitionInboxSurface.behavior, kanonPaskow.source, closureWorkIncomplete); parytet OFF na żywym chunku InitiativesHub-Va9_D_GT.js: `initiatives.tabs.transitionInbox` 0, komponent skrzynki 0, `transitionInbox` 1 = martwa gałąź w commandRowContent (nieosiągalna przy OFF), kontrola pozytywna capacity 1; klucze i18n na serwowanych plikach: initiatives.status.scheduled = Scheduled/Zaplanowana, lifecycle.blocked.CLOSURE_WORK_INCOMPLETE en+pl | Warunek włączenia skrzynki + bramki GO (DEC-507) po stronie kodu SPEŁNIONY: `VITE_TRANSITION_INBOX` + `ENABLE_LIFECYCLE_GO_GATE` razem, po akcepcie właściciela na zrzucie skrzynki (v2, wysłany). Pułapka: tsc bez heap 8 GB = OOM = fałszywe „0". KANAL wpis 37 (baza `94754c3b4d` do rebase S3/S4; wykrywacz duplikatów = reguła; `initiativeStatusLabels.ts` jedyne źródło etykiet). Worktree usunięte: fala-b4, paczka5v3, z29, p1-raport, fala-a2, z27, h1e. Dysk ~28 GiB. |
 
 
 ## Integrator MVP — aktualizacja 12.09.2026

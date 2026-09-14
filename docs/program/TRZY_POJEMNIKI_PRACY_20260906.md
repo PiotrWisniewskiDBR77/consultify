@@ -542,9 +542,10 @@ fali B3 `78086fb2c8`, wszystkie za flagami OFF), **8 w toku** (A4 DEC-499, B-E1 
 raportów, PMO E3, P6, H1e — gotowe do scalenia `1b9d467823` warunek DEC-507, RP1 — gotowe do
 odbioru CTO Codex S2 `4d8113fa46`, OB1 — gotowe do odbioru Codex Q1 `d27172ed3c`), **25 nie
 zaczętych**. Duże
-pakiety Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
-dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v2 ACCEPT `e1a2c2c160`
-w odbiorze CTO). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
+pakiety Codexa: **5/5 w toku, 1 na stagingu** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
+dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v3 PRZYJĘTA i
+WDROŻONA na staging `19baa6d8bc` za flagą `ENABLE_INTERVIEW_ANSWER_APPROVAL` OFF — patrz EWIDENCJA
+niżej). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
 13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B3 WDROŻONA na staging za flagami OFF —
 DEC-507; akcept wyglądu właściciela na zrzucie w powłoce (Z-27) = warunek włączenia flag).
 
@@ -771,6 +772,104 @@ RP1 → **🔧 gotowe do odbioru CTO** (Codex S2 FINAL ACCEPT `4d8113fa46`); OB1
 odbioru** (Codex Q1 E1 ACCEPT `d27172ed3c`). Skrzynka: Z-27 rozliczone, **Z-28** nowy (etykieta
 rodzaju żeńskiego „Zatwierdzona"). Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 9 · 🔧 8 ·
 ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 41 etapów (0 ✅, 8 🧪, 8 🔧, 25 ⬜).
+
+**P1 Raport z pracy — ODEBRANY i WDROŻONY na staging (14.09, CTO, run `34826961239`, success).**
+Linia `78086fb2c8` → `3e1363d01a` (kandydat `4d8113fa46` + docs `7724358c0b`, merge `fa3893df45`;
+jeden konflikt `InitiativesHub.tsx` — zakładka `workReport` rozstrzygnięta pod nową flagą
+`WORK_REPORT_ENABLED`, nie pod `FOUR_BUTTONS`; `?lens=parking` bez zmian; Menu 3 czyste). Tag
+cofnięcia `rollback-pre-p1-raport-20260914` = `78086fb2c8`. 11/11 plików testów delty 33/33.
+Własna sonda CTO (nie tylko dowód Codexa): runner → PDF (`work-report-3a588c6f….pdf`, 24 773 B,
+2 strony, PDFKit) → MailHog (Message-ID `work-report-scheduled-delivery-…`) → PG (`PUBLISHED`,
+odbiorcy `DELIVERED`, `contentHash`) + osobno ścieżka porażki bez SMTP (`APPROVED`/`FAILED`,
+`EMAIL_DELIVERY_FAILED`, receipty puste) — **publikacja bez doręczenia nie przechodzi sondy**.
+Parytet flag OFF potwierdzony: `ENABLE_INITIATIVES_WORK_REPORT` (6 wołaczy w kodzie, nie fantom)
+i `VITE_INITIATIVES_WORK_REPORT` nieustawione; pełny spider 872 chunków żywego stagingu = 0
+trafień kreatora. Autoryzacja: MEMBER dostaje 403 na create/transitions/przebieg. Bramka: tsc
+0/189, język bez wzrostu, kanon 349, artefakt 8-0-117, build OK. Żywy SMTP stagingu nietknięty tą
+sondą (doręczenie na żywą skrzynkę właściciela wymaga jego zgody — patrz **Z-31**). Zrzuty
+Codexa z odbioru wcześniejszego (S2 FINAL ACCEPT) były gołym `<main>` bez powłoki Menu 1/2/3 —
+przekazane do **Z-29**.
+
+**Z-29 zrzuty P1 w powłoce (Sonnet, gałąź `integracja/kandydat-z29-zrzuty-20260914`, HEAD
+`fb79dd4190`, kopia `backup/z29-zrzuty-20260914`; harness
+`dev-render/screens/z29-inicjatywy-raport-pracy.tsx`).** Zrzuty w
+`~/Developer/cto-codex/zrzuty-z29-raport-pracy-20260914/` (lista, kreator, przebieg, OFF;
+jasny+ciemny). **SKAZY poniżej kanonu** (zmierzone w kodzie `InitiativeWorkReportView.tsx`; review
+Codexa oglądał samą powierzchnię komponentu, nie montaż w Hub): brak `StandardPreview` przebiegu
+(klik w wiersz nic nie robi — brak statusu doręczeń/PDF w podglądzie), surowe kody enum
+`PUBLISHED`/`WEEKLY`/`ON_DEMAND` w tabeli zamiast etykiet, 2 przyciski zamiast kebaba, natywne
+`<select>`, kreator jako blok nad tabelą zamiast modala/panelu, przeciek pigułek Menu 3 do
+zakładki. **Etap RP1b „przejazd kanonu"** (Opus, gałąź `integracja/kandydat-p1-kanon-20260914`,
+w toku) naprawia powyższe. KANAŁ wpis 35 (reguła dla Codexa): każdy ekran przed freeze =
+`StandardTable`+`StandardPreview`+`StandardModuleBar`, etykiety i18n, kebab, zrzut w powłoce.
+**Lekcja nadzorcy (kandydat do pamięci):** „review powierzchni ≠ odbiór ekranu" — Codex i CTO
+oglądali komponent bez powłoki; dopiero montaż całego Hub pokazał brak podglądu.
+
+**Codex 14.09, 04:30–04:44.** S5 PMO E3 R3 **ACCEPT** → kolejka odbioru po Q1. S4 F2-2 E2
+rereview **HOLD** → poprawki zamrożone (04:44). KANAŁ wpis 34 (P1 na linii, Q2 start, rebase
+S3/S4), wpis 35 (reguła StandardTable/Preview/ModuleBar przed freeze, patrz Z-29 wyżej).
+
+**Z-2 (aktualizacja 14.09, integratory w toku — druga fala).** Cztery równoległe: paczka 5 v3
+(push `19baa6d8bc` — run `34828181888` krok „Deploy app to staging" **FAILURE**, ale health
+stagingu = `19baa6d8bc`, tag `staging-deployed` został `3e1363d01a` — znany kształt „timeout
+workflow nie przesuwa tagu"; wyjaśnienie w raporcie integratora), fala B4 (H1e + Z-27), Q1
+Obciążenie, RP1b (przejazd kanonu). Dysk: 8,7 → ~26 GiB po czystce (z27, h1e, Caches). Worktree
+usunięte: `p1-raport`, `fala-a2`; `z29` (w toku — RP1b jeszcze aktywne).
+
+**EWIDENCJA (uzupełnienie 14.09, po P1 odbiorze/Z-29/RP1b).** §5: RP1 →
+**🧪 NA STAGINGU `3e1363d01a`** (za flagą `ENABLE_INITIATIVES_WORK_REPORT`/
+`VITE_INITIATIVES_WORK_REPORT` OFF), 🔧 GOTOWE DO ODBIORU CTO → 🧪 NA STAGINGU; **RP1b** (przejazd
+kanonu, skazy Z-29) w toku pod tym samym wierszem RP1, nie liczony osobno. Skrzynka: **Z-29
+rozliczone** (skazy przekazane do RP1b), **Z-31 nowy** (żywe doręczenie maila do właściciela —
+wymaga jego zgody, patrz sonda CTO wyżej). Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 10 ·
+🔧 7 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 41 etapów (0 ✅, 9 🧪, 7 🔧, 25 ⬜).
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po odbiorze paczki 5 v3).** Paczka 5 v3 (Wywiad —
+zatwierdzanie odpowiedzi, Codex S1) **PRZYJĘTA i WDROŻONA na staging** (push `19baa6d8bc`; run
+`34828181888` „failure" = tylko timeout czekania na Railway „Timed out waiting for staging app
+deployment", wdrożenie realne: `/api/health` gitSha `19baa6d8bc`; tag `staging-deployed` NIE
+przesunięty (został `3e1363d01a`) — przy zamrożonym demo stan pożądany). Linia `3e1363d01a` →
+merge `b677f46d11` (kandydat `c971ce6ef6`, 0 konfliktów) → HEAD `19baa6d8bc` (merge aktualnej
+linii z falą B3); tag cofnięcia `rollback-pre-paczka5v3-20260914` = `3e1363d01a`. Delta test vs
+kod v2→v3 (`git diff e1a2c2c160..c971ce6ef6 -- server/src src`) PUSTA — poprawka wyłącznie w
+teście (własny mock `organization_ai_policy` + env w before/afterEach, uczciwa; ścieżka ON
+testowana w pliku, OFF pokrywa sonda parytetu). Testy: bloker 32/32, 12 plików unit 202/202,
+RealPG 19/19 (zero skipped); migracja `20262170` pusta baza 2× idempotentna; pułapka 919
+potwierdzona jako artefakt schema-only; zastane czerwienie 46 plików bez zmian (3 na linii i
+kandydacie identyczne, zero nowych); parytet OFF: 5/6 żądań bajtowo identyczne, 6. = nowy
+tylko-do-odczytu GET `…/answer-approvals` 200 `{approvals:[]}`, `answer-decisions`/`retry-ai` przy
+OFF → 404, 0 wierszy w nowych tabelach. Bramka: tsc serwer 0, front 189 (limit; sama paczka 188,
++1 z fali B3), język OK, canon 349, artefakt 8-0-117, build OK. Flaga
+`ENABLE_INTERVIEW_ANSWER_APPROVAL` nieustawiona (OFF) — włączenie po akcepcie właściciela na
+zrzutach ON. Skrzynka: **Z-33 nowy** (luka `schema_migrations` 1009/1133, zastana, do
+wyjaśnienia), **Z-34 nowy** (akcept właściciela na zrzutach ON = warunek włączenia flagi).
+Pełny dowód (bramka, parytet, migracja): `docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`,
+wpis „Paczka 5 v3". Liczniki „Duże pakiety Codexa" przeliczone (§0.1): 5/5 w toku → **1 na
+stagingu** (paczka 5 v3), 4 pozostają w toku (F2-1, F2-2, F2-3, F2-E).
+
+**Fala B4 — H1e + H1f (skrzynka v2) WDROŻONA na staging (14.09, push `94754c3b4d`; run
+`34829819090` „failure" = 12-min timeout czekania na Railway, wdrożenie realne: health gitSha
+`94754c3b4d`; tag `staging-deployed` celowo na `3e1363d01a`).** Linia `19baa6d8bc` → merge H1e
+`afc6f19cc0` (8 plików, 0 konfliktów) → merge Z-27 `fedc288ea3` (12 plików, 0 konfliktów) → merge
+linii `94754c3b4d`; delta 18 plików. Wykrywacz duplikatów kluczy en 0 / pl 0 (lokalnie i na
+plikach serwowanych przez staging). Tag cofnięcia `rollback-pre-fala-b4-20260914` = `19baa6d8bc`.
+Bramka: tsc serwer 0, front 189 (=linia; jedyny błąd w plikach fali TS2493 w
+`TransitionInboxSurface.behavior.test` zastany), język OK, canon 349, artefakt
+8/8-0/0-117/117, build 36,7 s, testy 5 plików 26/26 (`i18nTrescPolska` z wykrywaczem,
+`preflight.h1e`, `TransitionInboxSurface.behavior`, `kanonPaskow.source`,
+`closureWorkIncomplete`). Parytet OFF na żywym chunku `InitiativesHub-Va9_D_GT.js`:
+`initiatives.tabs.transitionInbox` 0, komponent skrzynki 0, `transitionInbox` 1 = martwa gałąź w
+`commandRowContent` (nieosiągalna przy OFF), kontrola pozytywna capacity 1. Klucze i18n na
+serwowanych plikach: `initiatives.status.scheduled` = Scheduled/Zaplanowana,
+`lifecycle.blocked.CLOSURE_WORK_INCOMPLETE` en+pl. Warunek włączenia skrzynki + bramki GO
+(DEC-507) po stronie kodu **SPEŁNIONY**: `VITE_TRANSITION_INBOX` + `ENABLE_LIFECYCLE_GO_GATE`
+razem, po akcepcie właściciela na zrzucie skrzynki (v2, wysłany). Pułapka: tsc bez heap 8 GB =
+OOM = fałszywe „0". KANAŁ wpis 37 (baza `94754c3b4d` do rebase S3/S4; wykrywacz duplikatów =
+reguła; `initiativeStatusLabels.ts` jedyne źródło etykiet). Worktree usunięte: `fala-b4`,
+`paczka5v3`, `z29`, `p1-raport`, `fala-a2`, `z27`, `h1e`. Dysk ~28 GiB. **EWIDENCJA:** §5 H1e,
+H1f → **🧪 NA STAGINGU `94754c3b4d`** (za flagą); Q1 Obciążenie, S5 PMO E3, RP1b pozostają
+integratory w toku (Z-2). Liczniki §5 przeliczone: 46 etapów (+1 H1f) — ✅ 2 · 🧪 12 · 🔧 6 ·
+⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 42 etapy (0 ✅, 11 🧪, 6 🔧, 25 ⬜).
 
 ---
 
@@ -1065,7 +1164,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🔧 GOTOWE DO ODBIORU CTO (Codex S2 FINAL ACCEPT) | `4d8113fa46` | 14.09 |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu w toku po Z-29) | `3e1363d01a` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
@@ -1086,7 +1185,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `78086fb2c8` | 14.09 |
 | Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B3 | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🧪 NA STAGINGU | `78086fb2c8` | 14.09 |
 | Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B3 | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🧪 NA STAGINGU (flaga `ENABLE_LIFECYCLE_GO_GATE` OFF, DEC-507) | `78086fb2c8` | 14.09 |
-| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🔧 GOTOWE DO SCALENIA | `1b9d467823` | 14.09 |
+| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🧪 NA STAGINGU (za flagą; warunek włączenia DEC-507 spełniony po stronie kodu, czeka akcept właściciela) | `94754c3b4d` | 14.09 |
+| Realizacja | przewód | H1f poprawki skrzynki v2 po oku CTO (pigułki Menu 3 wyłączone dla `transitionInbox` w `commandRowContent`, surowe kody przejść/obszaru → etykiety i18n przez `initiativeStatusLabels.ts` wydzielone z `InitiativePreviewV3`, 9 brakujących kluczy `initiatives.status.*` dołożonych) | Sonnet | H1b, Z-27 | B4 | zrzuty jasny+ciemny lista/podgląd/OFF (`~/Developer/cto-codex/zrzuty-z27-skrzynka-20260914/v2/`) wysłane właścicielowi | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `94754c3b4d` | 14.09 |
 | Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | ⬜ NIE ZACZĘTE (dyżur wydany, nienaprawione) | KANAL wpis 31 | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
@@ -1097,12 +1197,14 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (45 etapów; 14.09 wieczór: H1e → gotowe do scalenia `1b9d467823`, RP1 → gotowe do
-odbioru CTO `4d8113fa46`, OB1 → gotowe do odbioru `d27172ed3c`; RP1/OB1 przechodzą
-⬜ NIE ZACZĘTE → 🔧 W TOKU, H1e zostaje 🔧 z adnotacją „gotowe do scalenia"):** ✅ 2 · 🧪 9 ·
-🔧 8 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (46 etapów; 14.09 noc: fala B4 — H1e + H1f (skrzynka v2) WDROŻONA na staging
+`94754c3b4d` za flagą; H1e przechodzi 🔧 GOTOWE DO SCALENIA → 🧪 NA STAGINGU, nowy wiersz H1f
+(skrzynka v2, Z-27 rozliczone) dołożony wprost 🧪 NA STAGINGU; RP1 ODEBRANY i WDROŻONY na staging
+`3e1363d01a` za flagą (RP1b przejazd kanonu w toku po skazach Z-29), OB1 → gotowe do odbioru
+`d27172ed3c`; RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU):** ✅ 2 · 🧪 12 · 🔧 6 ·
+⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**41 etapów to FALA 2** (0 ✅, 8 🧪, 8 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**42 etapy to FALA 2** (0 ✅, 11 🧪, 6 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
