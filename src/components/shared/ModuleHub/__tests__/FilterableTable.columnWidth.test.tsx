@@ -159,4 +159,23 @@ describe('FilterableTable — podłogi szerokości P2', () => {
   ] as const)('%s: columnFit nie schodzi poniżej floora typu', (_screen, column, floor) => {
     expect(getColumnFitFloor(column)).toBe(floor);
   });
+
+  /**
+   * K5-7 (2026-09-13) — druga połowa tej samej reguły. Podłoga typu obowiązuje
+   * tylko wtedy, gdy moduł typ ZADEKLAROWAŁ. Kolumna bez `dataType` (a takich
+   * jest w aplikacji większość) dostawała dotąd podłogę `text` = 140 px, przez
+   * co jedenaście kolumn rejestru Inicjatyw siadało na tej samej szerokości —
+   * to właśnie widział właściciel jako „kolumny dzielone po równo".
+   *
+   * DOWÓD MUTACYJNY: przywrócenie `getColumnTypeFloor(column)` w
+   * `getColumnFitFloor` daje 140 px i wywraca oba poniższe przypadki.
+   */
+  it('kolumna BEZ zadeklarowanego typu ma podłogę nagłówka, nie 140 px', () => {
+    expect(getColumnFitFloor({ id: 'nextAction', label: 'NASTĘPNE DZIAŁANIE' })).toBe(90);
+    expect(getColumnFitFloor({ id: 'nextAction', label: 'NASTĘPNE DZIAŁANIE' }, 121)).toBe(121);
+  });
+
+  it('kolumna tytułowa zachowuje swoją podłogę bez względu na typ', () => {
+    expect(getColumnFitFloor({ id: 'name', label: 'INICJATYWA' })).toBe(200);
+  });
 });

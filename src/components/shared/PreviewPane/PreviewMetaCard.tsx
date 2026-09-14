@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Pencil, Sparkles } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
+import { isLabelWithEmptyValue, isPlaceholderValue } from '../emptyValueCanon';
+
 import { PreviewCompletenessRing } from './PreviewCompletenessRing';
 import { PREVIEW_META_PILL } from './previewStyles';
 
@@ -63,6 +65,47 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
 
   const closeEditor = useCallback(() => setEditingIdx(null), []);
 
+  /**
+   * ── META BEZ WARTOŚCI-ŚMIECI (K5-7, 2026-09-13) ──────────────────────────
+   *
+   * ODCHYLENIE P2 (odbiór właściciela, staging `cf3fded7e4`): pasek meta
+   * pokazywał „Draft · Unknown · v—" i „Pending · None" — chipy, które nie
+   * niosą stanu, tylko ślad po polu, którego nie ma. Kanon §7.3 pkt 2: meta
+   * to STAN, nie treść; chip bez wartości nie jest stanem.
+   *
+   * Reguła (celowo wąska, żeby nie skłamać o danych):
+   *  · chip `label: value` z pustą wartością („—", „v—", „n/a", `null`) —
+   *    wypada, bo pokazuje etykietę pola bez pomiaru;
+   *  · chip SAMOTNY (bez `value`), którego etykieta jest samą pustką —
+   *    wypada;
+   *  · chip `Status: Unknown` ZOSTAJE — „Unknown" bywa realnym stanem
+   *    słownika i kasowanie go byłoby kłamstwem o rekordzie (dlatego
+   *    `isPlaceholderValue` świadomie NIE zna słowa „Unknown").
+   *
+   * Robione TU, a nie w każdym ekranie: te same cztery formy pustki wracały
+   * w Inicjatywach, Planie, Load i banku Realizacji — czyli w czterech
+   * miejscach naraz, z czterech różnych formatterów.
+   */
+  const widocznePills = resolvedPills.filter((pill) => {
+    if (pill.value !== undefined) return !isPlaceholderValue(pill.value);
+    if (isPlaceholderValue(pill.label)) return false;
+    // Chip sklejony w jeden napis („Owner: —") — patrz `isLabelWithEmptyValue`.
+    return !isLabelWithEmptyValue(pill.label);
+  });
+
+  /**
+   * Karta meta bez ANI JEDNEGO widocznego elementu = pusty box, czyli ten sam
+   * defekt co pusty blok Relations (P1). Blok bez danych jest ukryty.
+   */
+  const maCokolwiek =
+    widocznePills.length > 0 ||
+    !!title ||
+    !!trailing ||
+    !!completeness ||
+    !!suggestion ||
+    !!children;
+  if (!maCokolwiek) return null;
+
   return (
     <div
       data-preview-block="meta"
@@ -78,7 +121,7 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
       ) : null}
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-          {resolvedPills.map((pill, idx) => {
+          {widocznePills.map((pill, idx) => {
             const Icon = pill.icon;
             const isClickable = !!(pill.onClick || pill.renderEditor);
             const Tag = isClickable ? 'button' : 'span';

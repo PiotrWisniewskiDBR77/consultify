@@ -273,9 +273,12 @@ export function buildExecutionBankPreviewDeclaration({
       onCopy: () => void navigator.clipboard?.writeText(`${row.name} — ${progressLabel}`),
     },
 
-    /* Blok 5 — Relations (źródło inicjatywy). Renderowany ZAWSZE, także pusty
-       („No relations") — dokładnie jak w Inicjatywach, gdzie `relationForRow`
-       również zwraca pustą listę dla wiersza bez źródła. */
+    /* Blok 5 — Relations (źródło inicjatywy).
+       SCALENIE 2026-09-13: deklaracja podaje SAMĄ LISTĘ i nic nie wie o pustce.
+       Blok bez danych jest UKRYTY (TRIADA §A7) — robi to `PreviewRelations`
+       w komponencie wspólnym, jednakowo dla banku Realizacji, Inicjatyw, Planu,
+       Load, Work i Risk. Wcześniejszy komentarz mówił tu „renderowany ZAWSZE,
+       także pusty" — to opis stanu sprzed partii A i przestał być prawdą. */
     relations,
   };
 }

@@ -56,7 +56,23 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
          * teraz naturalna wysokosc (`flex flex-col`, bez `h-full`/`overflow-hidden`)
          * — rodzic przewija WSZYSTKO, wlacznie z ostatnim blokiem.
          */
-        embedded ? 'flex flex-col' : 'h-full flex flex-col overflow-hidden',
+        /**
+         * ── SUFIT WYSOKOŚCI PANELU (K5-7, 2026-09-13) ──────────────────────
+         *
+         * ODCHYLENIE P5 (odbiór właściciela, staging `cf3fded7e4`, bank
+         * Realizacji): panel podglądu nie był ograniczony wysokością okna —
+         * rósł z treścią, więc stopka z akcjami wyjeżdżała poza ekran i
+         * jedyną drogą do niej było przewinięcie CAŁEJ strony.
+         *
+         * PRZYCZYNA, której nie widać per ekran: `h-full` działa tylko wtedy,
+         * gdy RODZIC ma policzoną wysokość. Ekran, który wstawia podgląd do
+         * kontenera bez wysokości (a takich jest większość poza
+         * `TableWithPreviewLayout`), dostaje panel rosnący w nieskończoność.
+         * `max-h-[100dvh]` jest sufitem NIEZALEŻNYM od rodzica — panel nigdy
+         * nie będzie wyższy niż okno, więc `overflow-y-auto` treści ma się
+         * o co oprzeć w KAŻDYM wołaniu, nie tylko w kanonicznym layoucie.
+         */
+        embedded ? 'flex flex-col' : 'h-full max-h-[100dvh] flex flex-col overflow-hidden',
         embedded ? '' : 'rounded-xl border border-slate-200/70 dark:border-white/[0.06]',
         embedded ? '' : 'bg-white/70 dark:bg-navy-900/70',
         embedded ? '' : 'backdrop-blur',
@@ -112,7 +128,16 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
       ) : null}
 
       <div
-        className={[embedded ? 'flex-1' : 'flex-1 overflow-y-auto p-4', bodyClassName].join(' ')}
+        /**
+         * `min-h-0` — bez tego `flex-1` w kolumnie flex ma `min-height: auto`,
+         * czyli PODŁOGĘ równą wysokości treści: kontener rósł zamiast
+         * przewijać, a `overflow-y-auto` nigdy się nie odpalało. To druga
+         * połowa defektu P5 i dotyczy każdego podglądu w aplikacji.
+         */
+        className={[
+          embedded ? 'flex-1' : 'flex-1 min-h-0 overflow-y-auto p-4',
+          bodyClassName,
+        ].join(' ')}
         // axe `scrollable-region-focusable`: a scrollable container needs to
         // be reachable by keyboard even when its content happens to hold no
         // focusable elements of its own (e.g. a text-only report summary).

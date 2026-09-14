@@ -211,14 +211,25 @@ export const createInitiativeRegisterColumns = (
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
         const status = row.status as InitiativeStatus;
+        /*
+         * K5-7 (2026-09-13): etykieta statusu w WŁASNYM spanie z `truncate`.
+         * Do 13.09 tekst siedział wprost we `flexie`, więc przy ciasnej kolumnie
+         * („Pending approval" w 105 px) ZAWIJAŁ się na dwie linie i rozpychał
+         * wiersz ponad zamrożone 56 px — odchylenie T1 z odbioru właściciela.
+         * `text-overflow` nie działa na anonimowym elemencie flexa, dlatego
+         * potrzebny jest jawny span.
+         */
         return h(
           'span',
           {
-            className: 'inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary',
+            className:
+              'inline-flex min-w-0 max-w-full items-center gap-1.5 text-xs font-medium text-c-text-secondary',
+            title: undefined,
           },
           h('span', {
             className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status), row.onHold)}`,
           }),
+          h('span', { className: 'truncate' },
           // Odbior nocny 08.09: wstrzymana inicjatywa ma miec SLOWO, nie tylko kolor kropki.
           row.onHold === true
             ? (t ?? ((_key: string, fallback?: string) => fallback ?? _key))(
@@ -228,6 +239,7 @@ export const createInitiativeRegisterColumns = (
             : row.canonicalLifecyclePresentation && isKnownEnumValue('initiativeLifecycle', String(row.displayStatus))
               ? enumLabel('initiativeLifecycle', String(row.displayStatus), t ?? ((_key, fallback) => fallback || _key))
               : getLocalizedStatusLabel(status, t ?? ((key) => key))
+          )
         );
       },
     },
@@ -308,15 +320,20 @@ export const createInitiativeRegisterColumns = (
           String((row as { nextActionKey?: string }).nextActionKey || '').trim() ||
           nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).actionKey;
         if (isKnownEnumValue('initiativeNextAction', kod)) {
+          const etykieta = enumLabel('initiativeNextAction', kod, tr);
           return h(
             'span',
-            { className: 'text-xs font-medium text-c-text' },
-            enumLabel('initiativeNextAction', kod, tr)
+            { className: 'block truncate text-xs font-medium text-c-text', title: etykieta },
+            etykieta
           );
         }
         // Starszy nadawca przysłał gotowe zdanie — pokazujemy je, ale to dług.
         const zServera = String(row.nextAction || '').trim();
-        return h('span', { className: 'text-xs font-medium text-c-text' }, zServera || '—');
+        return h(
+          'span',
+          { className: 'block truncate text-xs font-medium text-c-text', title: zServera },
+          zServera || '—'
+        );
       },
     },
     {
@@ -342,7 +359,7 @@ export const createInitiativeRegisterColumns = (
           ),
           h(
             'span',
-            { className: 'text-c-text-secondary' },
+            { className: 'block truncate text-c-text-secondary' },
             // Zakaz sklejania enumu ze zdaniem (zasada 6): etykieta „Confidence"
             // i wartosc to DWA osobne klucze, oba tlumaczone.
             `${tr('initiatives.columns.confidence', 'Confidence')}: ${enumLabel(

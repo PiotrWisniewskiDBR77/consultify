@@ -40,6 +40,26 @@ export interface PreviewRelationsProps {
   emptyLabel?: string;
   /** When true and items > 5, groups by RelationItem.type */
   groupByType?: boolean;
+  /**
+   * ── BLOK BEZ DANYCH = UKRYTY (K5-7, 2026-09-13) ──────────────────────────
+   *
+   * ODCHYLENIE P1 (odbiór właściciela, staging `cf3fded7e4`): na KAŻDYM
+   * podglądzie — Inicjatywy, Plan, Load, bank Realizacji, Work, Risk —
+   * stała pusta ramka „Relations / No relations". Sześć ekranów, jeden
+   * obraz pustego pudełka; użytkownik czyta to jako „coś się nie
+   * załadowało", nie jako „nie ma powiązań".
+   *
+   * KANON (TRIADA §A7, TABLE_AND_PREVIEW_CANON §7.0): „Blok bez danych =
+   * UKRYTY, nie pusty box; kolejność obecnych bloków się nie zmienia".
+   * Wcześniejsza reguła R03 („Relations zawsze jako blok, także empty
+   * state") była lokalnym ustaleniem sprzed TRIADY i z nią sprzeczna —
+   * rozstrzygnięte na rzecz TRIADY, bo to ona jest nadrzędna dla anatomii.
+   *
+   * `showEmpty` zostaje jako JAWNE wyjście dla ekranu, który naprawdę musi
+   * powiedzieć „sprawdziliśmy, powiązań nie ma" (np. panel audytowy).
+   * Domyślnie: ukryte — żeby nowy ekran nie odtworzył pustego pudełka.
+   */
+  showEmpty?: boolean;
 }
 
 const HOVER_DELAY = 300;
@@ -140,8 +160,12 @@ export const PreviewRelations: React.FC<PreviewRelationsProps> = ({
   title,
   emptyLabel,
   groupByType,
+  showEmpty = false,
 }) => {
   const { t } = useTranslation();
+
+  // Blok bez danych nie renderuje się wcale — patrz nota przy `showEmpty`.
+  if (!items.length && !showEmpty) return null;
 
   let content: React.ReactNode;
 

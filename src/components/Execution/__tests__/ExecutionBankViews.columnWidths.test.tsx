@@ -143,6 +143,7 @@ describe('Kanon: kolumna główna z DEKLARACJI, nie z magicznego id', () => {
         columns={[
           { id: 'caseName', label: 'Case', primary: true, width: '80px' },
           { id: 'other', label: 'Other', width: '80px' },
+          { id: 'proza', label: 'Proza', dataType: 'text', width: '80px' },
         ]}
         data={[{ id: 'r1' }]}
         activeFilters={[]}
@@ -151,9 +152,15 @@ describe('Kanon: kolumna główna z DEKLARACJI, nie z magicznego id', () => {
       />
     );
 
-    // 200 px = FIT_MIN_PRIMARY_COLUMN_WIDTH; 140 px = podłoga typu `text`.
+    // 200 px = FIT_MIN_PRIMARY_COLUMN_WIDTH — kolumna główna z DEKLARACJI.
     expect(headerWidth(container, 'caseName')).toBe(200);
-    expect(headerWidth(container, 'other')).toBe(140);
+    // 140 px = podłoga typu `text`, ale TYLKO gdy ekran typ ZADEKLAROWAŁ
+    // (scalenie K5-7 2026-09-13: kolumna bez `dataType` siada na ZMIERZONEJ
+    // podłodze nagłówka, żeby nie rozpychać tabeli poza obszar — patrz nota
+    // przy `getColumnFitFloor`). Istotne jest jedno: kolumna wtórna NIE
+    // dostaje podłogi kolumny głównej.
+    expect(headerWidth(container, 'proza')).toBe(140);
+    expect(headerWidth(container, 'other')).toBeLessThan(200);
   });
 
   it('primary: false odbiera rolę główną nawet kolumnie o id "title"', () => {
@@ -167,7 +174,10 @@ describe('Kanon: kolumna główna z DEKLARACJI, nie z magicznego id', () => {
     // To ta sama podłoga, której kolumna główna NIE przekracza w dół, gdy
     // tabela się nie mieści (`columnFit`, gałąź `budget < floorTotal`).
     expect(getColumnFitFloor({ id: 'initiativeCase', label: 'x', primary: true })).toBe(200);
-    expect(getColumnFitFloor({ id: 'initiativeCase', label: 'x' })).toBe(140);
+    // Bez deklaracji roli: podłoga typu, gdy typ ZADEKLAROWANY (140 px dla
+    // `text`), a bez typu — podłoga minimalna 90 px (scalenie K5-7).
+    expect(getColumnFitFloor({ id: 'initiativeCase', label: 'x', dataType: 'text' })).toBe(140);
+    expect(getColumnFitFloor({ id: 'initiativeCase', label: 'x' })).toBe(90);
   });
 });
 

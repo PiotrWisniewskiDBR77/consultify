@@ -22,8 +22,17 @@ import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/Col
 import { Tooltip } from '@/components/ui/primitives/Tooltip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
+import { EMPTY_DASH, isPlaceholderValue } from '../emptyValueCanon';
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
+import {
+  cellCanClip,
+  type ColumnContentMeasure,
+  COLUMN_MAX_WIDTH_BY_DATA_TYPE,
+  distributeColumnSurplus,
+  measureColumnContent,
+  type SurplusColumn,
+} from './columnWidthCanon';
 import { TableSettingsPopover } from './TableSettingsPopover';
 import { localeListy } from '../../../utils/listDateFormat';
 
@@ -352,10 +361,46 @@ const HEADER_TRACKING_PX = 0.55;
 export const FIT_MIN_COLUMN_WIDTH = COLUMN_MIN_WIDTH_BY_DATA_TYPE.number;
 export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 200;
 
+/**
+ * ── PODŁOGA DOPASOWANIA: TYP TYLKO GDY ZADEKLAROWANY (K5-7, 2026-09-13) ─────
+ *
+ * Do 2026-09-13 podłoga dopasowania brała `getColumnTypeFloor`, który kolumnie
+ * BEZ `dataType` przypisywał typ `text`, czyli 140 px. Kolumn bez `dataType`
+ * jest w aplikacji zdecydowana większość (deklaruje go 22 pliki), więc w
+ * praktyce KAŻDA kolumna dostawała tę samą podłogę 140 px — i to jest
+ * mechanizm, który właściciel zobaczył jako „kolumny tabel dzielone po równo".
+ * Zmierzone na rejestrze Inicjatyw (1440×900, zrzut PRZED): jedenaście kolumn
+ * po 140 px + tytuł 220 px = 1713 px przy obszarze 1398 px, więc trzy ostatnie
+ * chowały się pod przypiętą kolumną akcji („PLANNED WINDO", „DAYS OVERI").
+ *
+ * Reguła po naprawie:
+ *  · kolumna z ZADEKLAROWANYM `dataType` — podłoga typu jak dotąd (to jest
+ *    świadomy pomiar autora ekranu, nie przypadek),
+ *  · kolumna BEZ typu — podłoga = ZMIERZONY NAGŁÓWEK (`configuredFloor`),
+ *    czyli tyle, ile naprawdę trzeba, żeby nagłówek był czytelny; treść
+ *    skraca się wielokropkiem, zamiast rozpychać tabelę poza ekran,
+ *  · kolumna tytułowa — `FIT_MIN_PRIMARY_COLUMN_WIDTH` bez zmian.
+ *
+ * `getColumnTypeFloor` NIE znika: dalej jest podłogą RĘCZNEGO resize'u
+ * (`ColumnConfig.minWidth`), gdzie chroni użytkownika przed zwężeniem kolumny
+ * do niczego. To dwie różne podłogi i sklejenie ich było przyczyną defektu.
+ */
 export const getColumnFitFloor = (column: TableColumn, configuredFloor?: number): number =>
   Math.max(
-    getColumnTypeFloor(column),
-    isPrimaryColumn(column) ? FIT_MIN_PRIMARY_COLUMN_WIDTH : FIT_MIN_COLUMN_WIDTH,
+    /*
+     * SCALENIE 2026-09-13: rozstrzygnięcie „to kolumna główna" idzie przez
+     * `isPrimaryColumn` (deklaracja `primary` z zachowaniem starej heurystyki
+     * `id`), a NIE przez sam napis `id` — inaczej bank Realizacji
+     * (`id: 'initiativeCase'`) znów dostałby podłogę zwykłego tekstu. Reszta
+     * drabinki jest z partii K5-7: typ TYLKO gdy zadeklarowany.
+     */
+    isPrimaryColumn(column)
+      ? FIT_MIN_PRIMARY_COLUMN_WIDTH
+      : column.type === 'select'
+        ? 90
+        : column.dataType
+          ? COLUMN_MIN_WIDTH_BY_DATA_TYPE[column.dataType]
+          : FIT_MIN_COLUMN_WIDTH,
     configuredFloor ?? 0
   );
 
@@ -442,6 +487,30 @@ export const obliczScrollDoKolumny = (
 export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-ellipsis';
 
 /**
+ * ── SUFIT DWÓCH LINII DLA TEKSTU KOMÓRKI (K5-7, 2026-09-13) ────────────────
+ *
+ * `CELL_TEXT_CLAMP_CLASS` chroni przed rozdarciem wyrazu, ale NIE ogranicza
+ * liczby linii — tekst szerszy niż kolumna zawija się dowolnie długo. Zmierzone
+ * 13.09 na zakładce Plan (`k5-naprawy-inicjatywy`, 1440×900): kolumna HORYZONT
+ * („Aug 31, 2026 – Mar 31, 2027") łamała się na CZTERY linie i wiersz rósł
+ * z kanonicznych 56 px do 150 px — to jest „długie teksty łamane na 3–4 linie"
+ * ze zgłoszenia właściciela.
+ *
+ * Kanon §3.4: wiersz ma DWIE linie (tytuł + opis) i stałą wysokość. Dlatego
+ * treść komórki dostaje `line-clamp-2` — dwie linie i wielokropek. Nagłówki
+ * zostają na `CELL_TEXT_CLAMP_CLASS` (są jednolinijkowe i siedzą we flexie
+ * z ikoną sortowania, gdzie `-webkit-box` zmieniłby wyrównanie).
+ */
+/*
+ * BEZ `block`: `line-clamp-2` samo ustawia `display:-webkit-box`, a utility
+ * `.block` stoi w wygenerowanym arkuszu PÓŹNIEJ i o tej samej specyficzności,
+ * więc nadpisywało display na `block` i klamra NIE DZIAŁAŁA (zmierzone
+ * `getComputedStyle`: display=block przy -webkit-line-clamp=2). Klasa, która
+ * jest w kodzie, ale nie działa, jest gorsza od jej braku — wygląda na naprawę.
+ */
+export const CELL_TEXT_CLAMP_2_CLASS = 'break-normal line-clamp-2';
+
+/**
  * WARSTWA DLA TREŚCI RENDEROWANEJ PRZEZ MODUŁ JAKO ELEMENTY (2026-09-02).
  *
  * Dlaczego istnieje: `CELL_TEXT_CLAMP_CLASS` chroni tylko GOŁY tekst zwrócony
@@ -466,6 +535,23 @@ export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-el
  * spanie), łamanie w połowie wyrazu — nie jest i nie może być.
  */
 export const CELL_ELEMENT_WRAP_CLASS = 'min-w-0 break-normal';
+
+/**
+ * Wariant OGRANICZAJĄCY dla komórek, z których nic nie może wyskoczyć
+ * (`cellCanClip`): najwyżej DWIE linie i wielokropek na końcu drugiej.
+ *
+ * Dlaczego `line-clamp-2`, a nie `truncate`: próba z jedną linią
+ * (`[&>*]:truncate`, zmierzona 2026-09-13 na `k5-naprawy-inicjatywy`) ucinała
+ * „In executio", „Pending ap", „Monitor the ex" TWARDO, BEZ wielokropka —
+ * bo moduły renderują treść w `span`ach INLINE, a `text-overflow` nie działa
+ * na elemencie inline; ellipsis nie miał się gdzie pojawić. Zamiana zawijania
+ * na ucięcie w połowie wyrazu to ten sam defekt, tylko inaczej ubrany.
+ *
+ * `line-clamp-2` trzyma kanoniczne „2 linie" (§3.4: tytuł + opis to wariant
+ * DOMYŚLNY wiersza) i daje wielokropek, a przy tym gwarantuje SUFIT wysokości
+ * wiersza — czyli to, czego brakowało, gdy tekst rozlewał się na 3–4 linie.
+ */
+export const CELL_ELEMENT_CLAMP_CLASS = 'min-w-0 break-normal line-clamp-2';
 
 /**
  * Dymek POKAZYWANY WYŁĄCZNIE PRZY PRZEPEŁNIENIU (`scrollWidth > clientWidth`).
@@ -512,10 +598,16 @@ export const OverflowTooltip: React.FC<{
   );
 };
 
-// True when a regular cell value should render as an em-dash placeholder
-// (null / undefined / empty-or-whitespace string).
-const isEmptyCell = (value: unknown): boolean =>
-  value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+/**
+ * True when a regular cell value should render as an em-dash placeholder.
+ *
+ * K5-7 (2026-09-13): rozszerzone z „null/undefined/pusty string" na KANONICZNĄ
+ * pustkę (`isPlaceholderValue`) — bo odchylenie T2 z odbioru właściciela to
+ * była pustka w czterech przebraniach naraz („—", „-", „n/a", „v—"), każde
+ * z innego formattera. Jedna forma pustki jest regułą kanonu (§0 pkt 12),
+ * więc mieszka w jednym miejscu, nie w każdym `render` ekranu.
+ */
+const isEmptyCell = (value: unknown): boolean => isPlaceholderValue(value);
 
 // KOSMETYKA RAPORT_B #10: `OverflowTooltip` w komórkach bez `column.render`
 // dostawał `content={String(row[column.id])}`, chronione tylko przez
@@ -1031,7 +1123,17 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     return Number.isFinite(n) && n > 0 ? n : fallback;
   }, []);
 
-  const defaultColumnConfigs = useMemo<ColumnConfig[]>(() => {
+  /**
+   * ── ZMIERZONA PODŁOGA NAGŁÓWKA, OSOBNO (K5-7, 2026-09-13) ─────────────────
+   *
+   * Ta sama liczba była dotąd liczona WEWNĄTRZ `defaultColumnConfigs` i od razu
+   * sklejana z podłogą typu (`Math.max(getColumnTypeFloor(c), …)`), więc na
+   * zewnątrz wychodziło zawsze ≥140 px i nie dało się odróżnić „tyle zajmuje
+   * nagłówek" od „tyle wynosi podłoga ręcznego resize'u". Dopasowanie
+   * (`columnFit`) potrzebuje TEJ PIERWSZEJ — i to zlepienie było powodem, dla
+   * którego każda kolumna siadała na 140 px („dzielone po równo").
+   */
+  const headerFloors = useMemo<Record<string, number>>(() => {
     let measureContext: CanvasRenderingContext2D | null = null;
     try {
       if (typeof document !== 'undefined') {
@@ -1041,10 +1143,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     } catch {
       measureContext = null;
     }
-
-    return columns.map((c, idx) => {
+    const map: Record<string, number> = {};
+    for (const c of columns) {
       const measuredLabelWidth = measureContext?.measureText(c.label.toUpperCase()).width;
-      const measuredHeaderFloor =
+      map[c.id] =
         typeof measuredLabelWidth === 'number' &&
         Number.isFinite(measuredLabelWidth) &&
         measuredLabelWidth > 0
@@ -1070,7 +1172,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 (c.filterable ? HEADER_FILTER_BUDGET_PX : 0)
             )
           : 0;
-      const floor = Math.max(getColumnTypeFloor(c), measuredHeaderFloor);
+    }
+    return map;
+  }, [columns]);
+
+  const defaultColumnConfigs = useMemo<ColumnConfig[]>(() => {
+    return columns.map((c, idx) => {
+      const floor = Math.max(getColumnTypeFloor(c), headerFloors[c.id] ?? 0);
       return {
         id: c.id,
         label: c.label,
@@ -1085,7 +1193,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         required: isPrimaryColumn(c),
       };
     });
-  }, [columns, parsePx]);
+  }, [columns, headerFloors, parsePx]);
 
   // Merge persisted layout onto the column defaults (V-B).
   const mergePersisted = useCallback(
@@ -1119,6 +1227,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
     () => mergePersisted(defaultColumnConfigs).widths
   );
+
+  /**
+   * Kolumny ruszone RĘCZNIE w tej sesji — wyłączone z dociskania do treści
+   * i z rozdziału luzu (`columnFit`). Bez tego uchwyt resize „nie działałby":
+   * pomiar treści cofałby każde poszerzenie w tej samej klatce.
+   */
+  const manualWidthIdsRef = useRef<Set<string>>(new Set());
 
   // Keep column settings in sync when columns change (e.g., tab switch),
   // re-applying any persisted layout.
@@ -1249,19 +1364,93 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
    * BRAK ZMIANY dla list, które już się mieszczą: `scale === 1`, wartości
    * `width` identyczne co do piksela jak przed zmianą.
    */
+  /**
+   * ── POMIAR TREŚCI KOLUMNY (K5-7, 2026-09-13) ──────────────────────────────
+   *
+   * Kanon §3.3 każe kolumnie mieć jawne min/max — ale ekran deklaruje jedną
+   * liczbę „na oko" i nigdy nie wie, czy w kolumnie stoi „—" czy zdanie.
+   * Dlatego szerokość potrzebną liczymy TU, z tego, co kolumna naprawdę
+   * renderuje (`column.render` wywołany na próbce wierszy, tekst rozbity na
+   * linie — patrz `columnWidthCanon.cellTextLines`).
+   *
+   * ŚWIADOMIE poza `defaultColumnConfigs`: tamten memo zasila STAN
+   * (`columnConfigs`/`columnWidths`) i jego zmiana kasuje ręczny resize
+   * użytkownika. Pomiar treści jest warstwą RENDERU (jak `columnFit`), więc
+   * model logiczny zostaje nietknięty.
+   */
+  const contentMeasure = useMemo<Record<string, ColumnContentMeasure>>(() => {
+    let ctx: CanvasRenderingContext2D | null = null;
+    try {
+      if (typeof document !== 'undefined') {
+        ctx = document.createElement('canvas').getContext('2d');
+        // Komórki są `text-sm`/`text-xs`; 13 px to średnia, po której pomiar
+        // nie zawyża kolumny drobnego tekstu ani nie zaniża tytułu.
+        if (ctx) ctx.font = '13px Inter, system-ui, sans-serif';
+      }
+    } catch {
+      ctx = null;
+    }
+    const measure = (text: string): number =>
+      ctx ? ctx.measureText(text).width : text.length * 7;
+    return measureColumnContent({ columns: visibleColumns, rows: data, measure });
+  }, [visibleColumns, data]);
+
   const columnFit = useMemo<{ widths: Record<string, number>; scale: number }>(() => {
     const declared = visibleColumns.map((c) => {
-      const width = columnWidths[c.id] ?? parsePx(c.width, 140);
+      const zadeklarowana = columnWidths[c.id] ?? parsePx(c.width, 140);
+      // SCALENIE 2026-09-13: rola kolumny głównej z DEKLARACJI (`primary`),
+      // stare `id` tylko jako domyślka — patrz `isPrimaryColumn`.
       const isPrimary = isPrimaryColumn(c);
-      const configuredFloor = columnConfigs.find((config) => config.id === c.id)?.minWidth;
+      const floorRaw = getColumnFitFloor(c, headerFloors[c.id] ?? 0);
+      const pomiar = contentMeasure[c.id];
+      const manual = manualWidthIdsRef.current.has(c.id);
+      /**
+       * DOCIŚNIĘCIE DO TREŚCI (nigdy ponad to, co ekran zadeklarował).
+       * Kolumna dostaje `min(zadeklarowana, potrzeba treści)`, ale nie mniej
+       * niż podłoga nagłówka — więc nagłówek nie może zostać ucięty, a
+       * kolumna z samymi „—" oddaje swoje 150 px kolumnie prozy. Kolumna
+       * ruszona ręcznie przez użytkownika jest z tego wyłączona: jego resize
+       * jest decyzją, nie brakiem pomiaru.
+       */
+      const sufitTypu = pomiar ? COLUMN_MAX_WIDTH_BY_DATA_TYPE[pomiar.dataType] : Infinity;
+      const potrzeba = pomiar && pomiar.width > 0 ? Math.min(pomiar.width, sufitTypu) : 0;
+      /**
+       * Dociskamy do treści, ale NIGDY poniżej podłogi dopasowania (nagłówek
+       * + podłoga typu, gdy typ zadeklarowano) i NIGDY ponad to, co
+       * zadeklarował ekran. Patrz nota przy `getColumnFitFloor`.
+       */
+      /*
+       * SCALENIE 2026-09-13 — KOLUMNA GŁÓWNA NIE JEST DOCISKANA W DÓŁ.
+       *
+       * Docisk do treści ma ODBIERAĆ szerokość kolumnom, które jej nie
+       * potrzebują (kolumna samych „—"), a nie kolumnie, która jest po to,
+       * żeby być szeroka. Pomiar treści jest przy tym NAJMNIEJ pewny właśnie
+       * dla tytułu: tam komórka jest drzewem elementów (dymek `content`,
+       * podlinijka, ikony), a nie gołym tekstem — a każde niedoszacowanie
+       * ląduje dokładnie w miejscu skargi właściciela. Zmierzone: bank
+       * Realizacji deklaruje tytuł 300 px, po dociśnięciu wychodziło 200 px,
+       * czyli ten sam obraz „pierwsza kolumna beznadziejna", tylko wywołany
+       * innym mechanizmem (test `ExecutionBankViews.columnWidths`).
+       *
+       * Tytuł zostaje więc na szerokości ZADEKLAROWANEJ i dalej zbiera luz
+       * (`distributeColumnSurplus`) oraz siada na `dlaTytulu` przy
+       * przepełnieniu — tam, gdzie o mieszczenie się naprawdę chodzi.
+       */
+      const width =
+        manual || c.type === 'select' || isPrimary || potrzeba <= 0
+          ? zadeklarowana
+          : Math.max(Math.min(zadeklarowana, potrzeba), Math.min(zadeklarowana, floorRaw));
       return {
         id: c.id,
         isSelect: c.type === 'select',
         isPrimary,
         width,
+        want: pomiar ? pomiar.width : 0,
+        dataType: pomiar?.dataType ?? 'text',
+        manual,
         // Kolumna węższa niż podłoga zostaje na swojej szerokości — podłoga
         // nigdy nie ROZPYCHA, tylko ogranicza kurczenie.
-        floor: Math.min(width, getColumnFitFloor(c, configuredFloor)),
+        floor: Math.min(width, floorRaw),
       };
     });
     const widths: Record<string, number> = {};
@@ -1270,7 +1459,29 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     const actionsWidth = hideRowActions ? 0 : ROW_ACTIONS_COLUMN_WIDTH;
     const natural = declared.reduce((sum, c) => sum + c.width, 0) + actionsWidth;
     const available = Math.max(horizontalViewportWidth, effectiveMinTableWidth ?? 0);
-    if (horizontalViewportWidth <= 0 || available <= 0 || natural <= available) {
+    if (horizontalViewportWidth <= 0 || available <= 0) {
+      return { widths, scale: 1 };
+    }
+    if (natural <= available) {
+      /**
+       * ── LUZ ODDAJEMY KOLUMNIE TYTUŁOWEJ, NIE „PO RÓWNO" ───────────────────
+       *
+       * ODCHYLENIE T1 (odbiór właściciela 13.09): „kolumny tabel dzielone po
+       * równo" — kolumna z samymi „—" tak samo szeroka jak tytuł. To NIE było
+       * niczyją deklaracją: `<table class="w-full table-fixed">` przy sumie
+       * kolumn MNIEJSZEJ niż kontener rozdziela nadmiar sam, proporcjonalnie
+       * do zadeklarowanych szerokości. Żaden ekran tego nie widział w swoim
+       * kodzie, więc naprawa per-ekran nie miała czego naprawiać.
+       *
+       * Rozdajemy luz TU (tytuł → proza → waga 2:1) i oddajemy przeglądarce
+       * szerokości sumujące się DOKŁADNIE do obszaru: nie zostaje jej nic do
+       * „równego podziału". Kolumny `status`/`date`/`number`/`owner` nie rosną.
+       */
+      const rozdane = distributeColumnSurplus(
+        declared.filter((c) => !c.isSelect) as SurplusColumn[],
+        available - natural
+      );
+      for (const [id, w] of Object.entries(rozdane)) widths[id] = w;
       return { widths, scale: 1 };
     }
 
@@ -1346,11 +1557,46 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         if (c.isPrimary) continue;
         widths[c.id] = Math.min(c.floor, c.width);
       }
+      /**
+       * K5-7 (2026-09-13) — DOMKNIĘCIE tej gałęzi: kolumna pierwotna zostaje
+       * szeroka, ale nie SZERSZA niż to, co po podłogach pozostałych kolumn
+       * realnie zostało w obszarze. Bez tego domknięcia rejestr Inicjatyw
+       * wychodził 1420 px przy obszarze 1398 px — 22 px nadmiaru, czyli ogon
+       * ostatniej kolumny znów pod przypiętym kebabem. Dolna granica to
+       * `FIT_MIN_PRIMARY_COLUMN_WIDTH`: poniżej niej tytuł rozdziera się
+       * w połowie wyrazu (regresja dyżuru 193, zrzut w evidence/grafika/193-*),
+       * więc lepszy 1–2 px nadmiaru niż rozdarty tytuł.
+       *
+       * ── SCALENIE 2026-09-13: TYTUŁ ODDAJE TYLKO TYLE, ILE KUPUJE ZMIESZCZENIE ──
+       *
+       * Domknięcie w pierwotnej postaci (`max(200, min(width, dlaTytulu))`)
+       * ściskało tytuł DO 200 px także wtedy, gdy same podłogi kolumn wtórnych
+       * przekraczały budżet — a wtedy `dlaTytulu` jest UJEMNE i zejście do
+       * 200 px nie mieści tabeli ani o piksel. Zmierzone w harnessie
+       * (`?screen=k5-preview-bank`, 1440×900): obszar 1376 px, podłogi kolumn
+       * wtórnych 1389 px; tytuł schodził 300 → 200 px, a tabela i tak zostawała
+       * przepełniona (1669 px). Czysta strata: dokładnie ta kolumna, o której
+       * właściciel napisał „przez to ta pierwsza jest beznadziejna".
+       *
+       * Reguła po scaleniu — tytuł ustępuje TYLKO gdy ustąpienie daje
+       * zmieszczenie (`dlaTytulu >= FIT_MIN_PRIMARY_COLUMN_WIDTH`; wtedy suma
+       * wychodzi DOKŁADNIE na obszar, bo `dlaTytulu = budżet − podłogi reszty`).
+       * Gdy nie daje — tytuł zostaje na swojej szerokości, bo nadmiar i tak
+       * będzie, a wąski tytuł byłby drugim defektem obok pierwszego.
+       */
+      const primary = pool.find((c) => c.isPrimary);
+      if (primary) {
+        const podlogiReszty = pool
+          .filter((c) => !c.isPrimary)
+          .reduce((sum, c) => sum + Math.min(c.floor, c.width), 0);
+        const dlaTytulu = budget - podlogiReszty;
+        widths[primary.id] =
+          dlaTytulu >= FIT_MIN_PRIMARY_COLUMN_WIDTH
+            ? Math.min(primary.width, dlaTytulu)
+            : primary.width;
+      }
       const naturalPool = pool.reduce((sum, c) => sum + c.width, 0);
-      const flooredPool = pool.reduce(
-        (sum, c) => sum + (c.isPrimary ? c.width : Math.min(c.floor, c.width)),
-        0
-      );
+      const flooredPool = pool.reduce((sum, c) => sum + widths[c.id], 0);
       const floorScale = naturalPool > 0 ? flooredPool / naturalPool : 1;
       return { widths, scale: floorScale > 0 && floorScale < 1 ? floorScale : 1 };
     }
@@ -1381,7 +1627,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   }, [
     visibleColumns,
     columnWidths,
-    columnConfigs,
+    headerFloors,
+    contentMeasure,
     parsePx,
     hideRowActions,
     horizontalViewportWidth,
@@ -1561,6 +1808,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
    */
   const handleColumnResize = useCallback(
     (columnId: string, newWidth: number) => {
+      // Resize RĘCZNY wyłącza kolumnę z dociskania do treści (`columnFit`):
+      // decyzja użytkownika wygrywa z pomiarem, inaczej uchwyt „nie działa".
+      manualWidthIdsRef.current.add(columnId);
       const byId = new Map(columnConfigs.map((c) => [c.id, c]));
       const cfg = byId.get(columnId);
       const idx = visibleColumns.findIndex((c) => c.id === columnId);
@@ -1587,6 +1837,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       const requestedNextWidth = nextWidth - requestedDelta;
       const clampedNextWidth = Math.max(nextMin, Math.min(nextMax, requestedNextWidth));
       const appliedDelta = nextWidth - clampedNextWidth;
+      // Zero-sum rusza TAKŻE sąsiada — on też przestaje być „mierzony".
+      manualWidthIdsRef.current.add(nextCol.id);
       const applied: Record<string, number> = {
         ...columnWidths,
         [columnId]: currentWidth + appliedDelta,
@@ -1601,6 +1853,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   );
 
   const resetColumns = useCallback(() => {
+    // „Reset kolumn" oddaje szerokości z powrotem pomiarowi treści.
+    manualWidthIdsRef.current.clear();
     setColumnConfigs(defaultColumnConfigs);
     setColumnWidths(() => {
       const widths: Record<string, number> = {};
@@ -2225,14 +2479,33 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           />
                         ) : column.render ? (
                           renderedIsPlainText ? (
+                            /*
+                             * TYPOGRAFIA WIERSZA (K5-7, 2026-09-13): `render`
+                             * zwracajacy GOLY tekst nie dostawal zadnej klasy,
+                             * wiec dziedziczyl 16 px — a kolumna bez `render`
+                             * renderowala 14 px (`text-sm`). Ta sama tabela
+                             * miala wiec dwa rozmiary pisma w sasiednich
+                             * kolumnach (zmierzone na zakladce Plan: wysokosc
+                             * linii 24 px vs 20 px), co lamie kanon §3.4 i przy
+                             * okazji rozpychalo wiersz. Goly tekst dostaje
+                             * kanoniczna typografie wiersza.
+                             */
                             <OverflowTooltip
-                              className={CELL_TEXT_CLAMP_CLASS}
+                              className={`text-sm text-slate-700 dark:text-slate-200 ${CELL_TEXT_CLAMP_2_CLASS}`}
                               content={toTooltipSafeString(rendered)}
                             >
                               {rendered}
                             </OverflowTooltip>
                           ) : (
-                            <div className={CELL_ELEMENT_WRAP_CLASS}>{rendered}</div>
+                            <div
+                              className={
+                                cellCanClip(rendered)
+                                  ? CELL_ELEMENT_CLAMP_CLASS
+                                  : CELL_ELEMENT_WRAP_CLASS
+                              }
+                            >
+                              {rendered}
+                            </div>
                           )
                         ) : column.id === 'status' ? (
                           <EntityStatusChip status={row.status} />
@@ -2243,19 +2516,22 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             {formatRelativeTime(row.updatedAt)}
                           </span>
                         ) : isEmptyCell(row[column.id]) ? (
-                          <span className="text-sm text-slate-400">—</span>
+                          /* Jedna forma pustki w calej aplikacji (kanon §0 pkt 12). */
+                          <span className="text-sm text-slate-400">{EMPTY_DASH}</span>
                         ) : (
                           <div className="min-w-0">
                             <OverflowTooltip
                               className={[
                                 'text-sm text-slate-700 dark:text-slate-200',
-                                // `title`/`name` mają WŁASNY, ostrzejszy kanon:
-                                // jedna linia + wielokropek (`truncate`). Reszta
-                                // kolumn zawija na spacji i skraca dopiero wyraz
-                                // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
+                                // Kolumna GŁÓWNA (deklaracja `primary`, stare
+                                // `title`/`name` jako domyślka) ma WŁASNY,
+                                // ostrzejszy kanon: jedna linia + wielokropek
+                                // (`truncate`). Reszta kolumn zawija na spacji,
+                                // ale NIE DŁUŻEJ NIŻ DWIE LINIE (K5-7 — patrz
+                                // CELL_TEXT_CLAMP_2_CLASS).
                                 isPrimaryColumn(column)
                                   ? 'block truncate'
-                                  : CELL_TEXT_CLAMP_CLASS,
+                                  : CELL_TEXT_CLAMP_2_CLASS,
                               ].join(' ')}
                               content={toTooltipSafeString(row[column.id])}
                             >

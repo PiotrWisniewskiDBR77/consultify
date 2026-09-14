@@ -114,11 +114,17 @@ export const CanonicalInitiativeRegister = ({
             tone: 'neutral',
           },
         ],
-        trailing: (
+        /*
+         * K5-7 / P2: wersja pokazuje sie TYLKO gdy istnieje. Do 13.09 rekord bez
+         * `canonicalVersion` renderowal „v—" — chip, ktory nie niesie stanu,
+         * tylko slad po polu, ktorego nie ma (odchylenie P2 z odbioru
+         * wlasciciela: „Draft · Unknown · v—").
+         */
+        trailing: initiative.canonicalVersion ? (
           <span className="text-[11px] font-semibold text-c-text-secondary">
-            v{String(initiative.canonicalVersion || '—')}
+            v{String(initiative.canonicalVersion)}
           </span>
-        ),
+        ) : undefined,
         // J17: kod -> zdanie w jezyku interfejsu; zdanie z danych to dlug.
         recommendation: isKnownEnumValue(
           'initiativeNextAction',
@@ -129,7 +135,7 @@ export const CanonicalInitiativeRegister = ({
               (initiative as { nextActionKey?: string }).nextActionKey,
               t
             )
-          : String(initiative.nextAction || '—'),
+          : String(initiative.nextAction || '').trim() || undefined,
       }}
       details={{
         label: t('initiatives.canonical.contextLabel', 'Initiative context'),
@@ -157,10 +163,15 @@ export const CanonicalInitiativeRegister = ({
           {
             id: 'impact',
             label: t('initiatives.columns.expectedImpact', 'Expected impact'),
+            /*
+             * K5-7 / T2: brak pomiaru to „—", nie slowo „Unknown". „Unknown"
+             * zostaje wylacznie tam, gdzie jest realnym stanem slownika
+             * (np. `initiativeHealthState`), a nie zaslepka po pustym polu.
+             */
             value:
               initiative.expectedImpact && String(initiative.expectedImpact) !== 'UNKNOWN'
                 ? String(initiative.expectedImpact)
-                : t('enums.unknown', 'Unknown'),
+                : '—',
           },
           {
             id: 'window',
@@ -177,20 +188,7 @@ export const CanonicalInitiativeRegister = ({
           void navigator.clipboard?.writeText(`${initiative.name} — ${initiative.status}`),
       }}
       relations={relationForRow?.(initiative) || []}
-    >
-      {/*
-        Łańcuch zarządzania (DEC-424/DEC-453): JEDYNE miejsce w rejestrze
-        Inicjatyw, gdzie zmienia się etap. Rola decyduje o widoczności przycisku,
-        warunek — o jego aktywności (powód obok), powód wymagany — o oknie.
-        Kebab wiersza NIE dubluje tych akcji (doktryna gęstości §1).
-      */}
-      <InitiativeLifecycleActions
-        initiativeId={initiative.id}
-        density="full"
-        heading={t('initiatives.lifecycle.heading', 'Initiative stage')}
-        className="mt-4"
-      />
-    </StandardPreview>
+    />
   );
 
   return (
@@ -207,21 +205,33 @@ export const CanonicalInitiativeRegister = ({
       renderPreview={renderPreview}
       previewOpen={previewOpen}
       renderPreviewFooter={(initiative) => (
-        <PreviewActionBar
-          rows={[
-            {
-              columns: 2,
-              buttons: [
-                {
-                  label: t('common.copyLink', 'Copy link'),
-                  icon: Copy,
-                  colorScheme: 'neutral',
-                  onClick: () => void navigator.clipboard?.writeText(initiative.id),
-                },
-              ],
-            },
-          ]}
-        />
+        /*
+         * K5-7 / P4 (odchylenie z odbioru wlasciciela): lancuch zarzadzania stal
+         * w CIELE podgladu jako wlasna sekcja „INITIATIVE STAGE" z naglowkiem
+         * i akapitem ostrzezenia pod wylaczonym przyciskiem — czyli siodmy blok
+         * poza szescioma z kanonu (TRIADA A7). Akcja zmieniajaca stan rekordu
+         * nalezy do BLOKU 6 (akcje), a powod niedostepnosci do dymka przycisku
+         * (§7.3b), nie do osobnego akapitu. Przyciski `InitiativeLifecycleActions`
+         * sa juz pillami `h-8 rounded-full` z `title={disabledReason}`.
+         */
+        <div className="space-y-2.5">
+          <PreviewActionBar
+            rows={[
+              {
+                columns: 2,
+                buttons: [
+                  {
+                    label: t('common.copyLink', 'Copy link'),
+                    icon: Copy,
+                    colorScheme: 'neutral',
+                    onClick: () => void navigator.clipboard?.writeText(initiative.id),
+                  },
+                ],
+              },
+            ]}
+          />
+          <InitiativeLifecycleActions initiativeId={initiative.id} density="compact" />
+        </div>
       )}
     >
       <StandardTable

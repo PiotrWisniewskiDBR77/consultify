@@ -1,0 +1,31 @@
+{
+  "co": "Scalenie partii kanonu A/B/C (szerokosci kolumn, pustka, podglad) z linia kandydata (kolumna glowna `primary`).",
+  "jak": "node evidence/k5-scalenie-sweep/pomiar.mjs <url> --w=1440 [--click=...]  (harness dev-render, port 5319, 1440x900, jasny)",
+  "baza": "f7cce34c5c",
+  "scalenie": "integracja/kandydat-scalenie-sweep-20260913",
+  "ekrany": {
+    "k5-preview-bank": {
+      "kolumnyDomyslne": 12,
+      "przed": { "kontener": 1376, "tabela": 1769, "nadmiar": 393, "tytul": 300, "wiersze": [65, 56, 57] },
+      "po": { "kontener": 1376, "tabela": 1769, "nadmiar": 393, "tytul": 300, "wiersze": [65, 56, 57] },
+      "tytulVsNajwezszaLiczbowa": "300 vs blockerCount 97 — 3,1x"
+    },
+    "k5-preview-work": {
+      "przed": { "kontener": 1366, "tabela": 1366, "nadmiar": 0, "tytul": 306, "wiersze": [57, 57, 73] },
+      "po": { "kontener": 1366, "tabela": 1366, "nadmiar": 0, "tytul": 439, "wiersze": [57, 57, 57] }
+    },
+    "inicjatywy-lista": {
+      "przed": { "kolumny": 11, "kontener": 1398, "tabela": 1765, "nadmiar": 367, "tytul": 220, "wiersze": [61, 73, 73] },
+      "po": { "kolumny": 8, "kontener": 1398, "tabela": 1398, "nadmiar": 0, "tytul": 246, "wiersze": [61, 61, 61] }
+    },
+    "inicjatywy-lista-podglad": {
+      "przed": { "kontener": 989, "tabela": 1765, "nadmiar": 776 },
+      "po": { "kontener": 989, "tabela": 1248, "nadmiar": 259 },
+      "uwaga": "Nadmiar NIE schodzi do zera: same zmierzone podlogi naglowkow 7 kolumn wtornych to 948 px przy budzecie 909 px (obszar 989 minus przypieta kolumna akcji 80). Zerowy nadmiar przy otwartym podgladzie wymagalby ucinania NAGLOWKOW albo schowania kolejnych kolumn — decyzja produktowa, nie szerokosciowa."
+    }
+  },
+  "bledyKonsoli": 0,
+  "aside": { "inicjatywy-lista-podglad": 1, "k5-preview-bank-podglad": 1 },
+  "pustychBlokowRelations": 0,
+  "przewijanieStrony": false
+}

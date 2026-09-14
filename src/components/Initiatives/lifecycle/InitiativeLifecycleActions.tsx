@@ -151,7 +151,24 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
     );
   }
 
-  const blocked = actions.filter((action) => action.disabled && action.disabledReason);
+  /**
+   * K5-7 (2026-09-13) — POWÓD NIEDOSTĘPNOŚCI: DYMEK, NIE AKAPIT.
+   *
+   * Odchylenie P4 z odbioru właściciela (staging `cf3fded7e4`): w podglądzie
+   * Inicjatyw stała sekcja „INITIATIVE STAGE · Submit for approval (wyłączony)
+   * · The card is incomplete — add description, owner and scope" — nagłówek
+   * plus akapit ostrzeżenia, czyli siódmy blok poza sześcioma z kanonu
+   * (TRIADA §A7). Kanon §7.3b: wyłączony przycisk niesie powód w DYMKU.
+   *
+   * `full` (pełna karta artefaktu) zostaje bez zmian — tam jest miejsce na
+   * jawną listę powodów i to ona daje `aria-describedby`. `compact` (podgląd)
+   * ma sam pill z `title`, więc `aria-describedby` nie może wskazywać na
+   * element, którego nie ma.
+   */
+  const blocked =
+    density === 'full'
+      ? actions.filter((action) => action.disabled && action.disabledReason)
+      : [];
 
   return (
     <div className={['space-y-2', className || ''].join(' ')} data-testid="initiative-lifecycle-actions">
@@ -165,7 +182,16 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
             data-gate={action.gate || ''}
             disabled={action.disabled || pendingActionId !== null}
             title={action.disabled ? action.disabledReason : undefined}
-            aria-describedby={action.disabled ? `${action.id}-reason` : undefined}
+            aria-describedby={
+              action.disabled && blocked.some((blokada) => blokada.id === action.id)
+                ? `${action.id}-reason`
+                : undefined
+            }
+            aria-label={
+              action.disabled && action.disabledReason
+                ? `${action.label} — ${action.disabledReason}`
+                : undefined
+            }
             onClick={() => onClick(action)}
             className={[buttonBase, variantClass(action.variant)].join(' ')}
           >
