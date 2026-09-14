@@ -459,9 +459,18 @@ liczy się tylko wtedy, gdy SHA naprawy jest przodkiem `b7d27ccc30`, nie gdy ga�
 „scalona do swojej kopii”/„gotowa”); wynik zgodny z licznikiem niżej (18/35), bez korekty.
 
 **Cz. 4 gotowa do scalenia (kolejka po cz. 3):** `drd-output-en` `744394e45e` (Z-15, DRD Output EN
-nadal po polsku), `answer-state-hints` `1efa59275f` 🔧 (w toku). **Fala B 🔧 (dwie gałęzie Opus,
-równolegle):** `integracja/kandydat-fala-b-inicjatywy-20260914` (A1+A2), `integracja/kandydat-fala-b-realizacja-20260914`
-(H1+H2+B-E0). **Codex:** wpis 22 w `KANAL.md` (podział pracy) czeka na wklejenie przez właściciela.
+nadal po polsku), `answer-state-hints` `1efa59275f` 🔧 (w toku). **Fala B — Realizacja E1 gotowa
+(Opus, 14.09):** `integracja/kandydat-fala-b-realizacja-20260914` HEAD `942748423c` (kopia
+`backup/fala-b-realizacja-20260914`, baza `b7d27ccc30` → wymaga rebase na linię ≥`54f07e0ccd`
+przed scaleniem) — H1 `75304fbb7a` (wyjątek w `executionSpineLegacyReadOnly` dla 3 tras
+lifecycle-*; test na realnej bramce 54/54, mutacja 19 czerwonych) + H2+B-E0 `2e20c10d26`
+(`ExecutionBankRow.handoff` ACCEPTED/LINKED_WITHOUT_DATE/ABSENT + sanitizer;
+`executionRiskSignal` progi 0,95/0,85/0,70, UNKNOWN nigdy zielony; flagi
+`VITE_EXEC_RISK_SIGNAL`/`VITE_EXEC_HANDOFF_TRACE` default OFF) → **gotowe do scalenia**. Front
+H1 NIE zbudowany — wymaga prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) i
+skrzynki recenzenta → nowy etap **H1b** (patrz §5). `integracja/kandydat-fala-b-inicjatywy-20260914`
+(A1+A2) bez zmian tym wpisem. **Codex:** wpis 22 w `KANAL.md` (podział pracy) czeka na wklejenie
+przez właściciela.
 
 **Licznik MVP (pojemnik 1).** Rdzeń: **2/2** filarów zaakceptowane (Inicjatywy DEC-481, Realizacja
 DEC-494). Pilotaż: **5** kont, aktywni dziś Paweł + Justyna, Tomek testował 10–11.09 (gmail).
@@ -474,15 +483,18 @@ MVP rdzeń        [████████████████████�
 MVP zgłoszenia    [███████████████████████████░░░░░░░░░░░░░░░░░░░░░░░] 18/35 na stagingu (51%)
 ```
 
-**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **36**.
-Z tego: 0 zaakceptowanych, 0 na stagingu, **8 w toku** (22%), **28 nie zaczętych**. Duże pakiety
-Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie
-scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6
-(DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5**
-zamknięte (żadna nie ma jeszcze partii akceptu właściciela).
+**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **37**
+(+1 = H1b, wydzielony z H1 14.09). Z tego: 0 zaakceptowanych, 0 na stagingu, **9 w toku** (24%,
+w tym H1/H2/B-E0 fali B — Realizacja E1 — gotowe do scalenia `942748423c`, rebase na linię
+≥`54f07e0ccd` przed scaleniem), **28 nie zaczętych**. Duże pakiety Codexa: **5/5 w toku, 0
+scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie scalone, F2-E
+non-migration ACCEPT/pełne E1 HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6 (DEC-497):
+**0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5** zamknięte
+(żadna nie ma jeszcze partii akceptu właściciela; fala B Realizacja gotowa do scalenia, nie
+scalona).
 
 ```
-Fala2 etapy §5    [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 8/36 w toku (22%)
+Fala2 etapy §5    [█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 9/37 w toku (24%)
 Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0/6 przyjęte
 ```
 
@@ -801,7 +813,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ⬜ NIE ZACZĘTE (atrapa za flagą OFF) | `VITE_INITIATIVES_WORK_REPORT` | — |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
-| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Codex F2-2 + prototyp CTO | DEC-487 | B | bank z pastylkami ryzyka | ⬜ NIE ZACZĘTE (serwis jest, bez UI) | `threeAxisReportService` | — |
+| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🔧 gotowe do scalenia (`942748423c`) | `2e20c10d26` | 14.09 |
 | Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🔧 W TOKU (scoped ACCEPT, pełne HOLD) | `4d381f6811` | 13.09 |
 | Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | ⬜ NIE ZACZĘTE | — | — |
@@ -814,8 +826,9 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Raporty | RA-E4c rezultaty z KPI | Codex F2-2 | A4 | C | sekcja rezultatów | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | ⬜ NIE ZACZĘTE | — | — |
-| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🔧 W TOKU (przydzielone) | — | — |
-| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🔧 W TOKU (przydzielone) | — | — |
+| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🔧 gotowe do scalenia (`942748423c`) | `75304fbb7a` | 14.09 |
+| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🔧 gotowe do scalenia (`942748423c`) | `2e20c10d26` | 14.09 |
+| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta | Opus | H1 | B | ekran recenzji z prowenencją, nie 409 | ⬜ NIE ZACZĘTE (nowy etap, wydzielony z H1 14.09) | — | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
@@ -825,9 +838,9 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (40 etapów):** ✅ 2 · 🧪 1 · 🔧 8 · ⬜ 29 · 👁 0 · 🚀 0 · ⛔ 0. Z tego do **MVP** (rdzeń +
-pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe **36 etapów to FALA 2** (0 ✅, 0 🧪,
-8 🔧, 28 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**Liczniki §5 (41 etapów, +1 = H1b dołożone 14.09):** ✅ 2 · 🧪 1 · 🔧 9 · ⬜ 29 · 👁 0 · 🚀 0 · ⛔ 0.
+Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
+**37 etapów to FALA 2** (0 ✅, 0 🧪, 9 🔧, 28 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 

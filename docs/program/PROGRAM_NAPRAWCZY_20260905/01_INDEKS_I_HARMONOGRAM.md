@@ -2,7 +2,8 @@
 # ★ AKTUALNE ZLECENIA (stan 14.09.2026, rano — CTO Fable, sesja 14.09)
 
 **Z-1 (14.09).** Odbiór paczki 5 (raport Szampana, gałąź `integracja/kandydat-paczka5-20260913`
-scalona `d73ccb90a7`) → push/staging przez CTO 14.09.
+scalona `d73ccb90a7`) → push/staging przez CTO 14.09. **WSTRZYMANE do DEC-503** — promocja na
+demo zamrożona (patrz DEC-503 niżej); odbiór na stagingu może trwać, push/deploy na demo nie.
 
 **Z-2 (14.09, zaktualizowane).** Blokery Tomka (DEC-496, 🔴): dwie gałęzie Opus od `0de4dc9c66` —
 `integracja/kandydat-tomek-konto-20260914` (HEAD `6660d7ba86`, kopia
@@ -582,6 +583,45 @@ worktree Codexa `codex-wt/*` 57 GB (5 nowych torów po ~3,9 GB każdy). Bundle z
 nieusunięty: `Consultify-safety-checkpoints` 20 GB + `consultify-cleanup-recovery-20260815` 12 GB +
 `canonical` 7 GB — decyzja właściciela o usunięciu (Z-19). Codex dostał polecenie czystki
 (KANAL wpis 23). CTO kasuje worktree po każdym scaleniu.
+
+**DEC-503 (14.09) — Demo zamrożone do domknięcia stagingu (słowa właściciela 14.09, dosłownie:
+„da demo nic jeszcze nie wysyłąmy i tam nic nie naprawiamy. dokonczymy staging i wtedy zrobimy
+przeniesienie na demo.").** Żadnych wdrożeń kodu ani napraw danych na demo do decyzji o
+przeniesieniu. **Wyjątek historyczny** (przed decyzją, rano 14.09): 2 naprawy danych na demo z
+rollbackiem — `organization_limits.ai_roles_enabled_json` 2 wiersze (DEC-500) i
+`assessment_reports` `staging-dbr77-assessment-report` FINAL→ARCHIVED; właściciel poinformowany,
+rollbacki w `~/Developer/cto-codex/higiena-dbr77-20260913/`
+(`demo-org-limits-rollback-20260914.sql`, `rollback-DEMO-20260914.sql`). Skrzynka: **Z-1** (promocja
+demo) → **WSTRZYMANE do DEC-503**.
+
+**Incydent 14.09 ~07:30 UTC — dysk 0 B.** Sprzątanie worktree kopiowało cały zacommitowany
+katalog `evidence/` zamiast 3 plików → ENOSPC; Docker Desktop: I/O error na containerd `meta.db`
+przy `image prune`/`rm`; 9 kontenerów żyje (3 nowe Codexa `cx-s1-v2-pg`/`cx-s2-work-report-pg`/
+`cx-s3-plan-pg`, `fbi-pg`, `fbr-pg`, `cx-f23-pg`, `cx-f2e-pg`, `s14-pg`, `cx-codex6-pg`); diagnoza w
+toku, restart Dockera tylko w oknie uzgodnionym z Codexem. Po sprzątaniu **26 GiB**. Lekcja:
+`cp -R <dir>/evidence` = 2,5 GB zacommitowanego `evidence` — kopiuj tylko `git status --porcelain`
+(nowe pliki). Codex dostał wpisy 23 (czystka `codex-wt`, max 6 worktree, `evidence` ≤2 MB) i 24
+(kolejka Q1–Q5 + dyżury D-a..D-f, STOP nowych worktree do meldunku o dysku).
+
+**Fala B — Realizacja E1 gotowa (Opus, gałąź `integracja/kandydat-fala-b-realizacja-20260914`,
+HEAD `942748423c`, kopia `backup/fala-b-realizacja-20260914`, baza `b7d27ccc30` → wymaga rebase na
+linię ≥`54f07e0ccd`).** H1 `75304fbb7a` (wyjątek w `executionSpineLegacyReadOnly` dla 3 tras
+lifecycle-*; test na realnej bramce 54/54, mutacja 19 czerwonych); H2+B-E0 `2e20c10d26`
+(`ExecutionBankRow.handoff` ACCEPTED/LINKED_WITHOUT_DATE/ABSENT + sanitizer; `executionRiskSignal`
+progi 0,95/0,85/0,70, UNKNOWN nigdy zielony; flagi `VITE_EXEC_RISK_SIGNAL` i
+`VITE_EXEC_HANDOFF_TRACE` default OFF; agregat w wierszu, 3 osie w podglądzie — blok 3);
+`942748423c` poprawki po zrzutach (3 defekty złapane przez harness). Premisy obalone:
+`initiative_handoffs` NIE była martwa (`recordHandoff` w `initiativeTransitionService.ts:1695` —
+brakowało odczytu), `threeAxisReportService` MA trasę `GET /api/report-builder/program-3axis/live`
+(brakowało konsumenta), 409 z listy `LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS` na fałszywej
+przesłance „nikt nie woła". Decyzje: front H1 NIE zbudowany (wymaga prowenencji maszynowej
+`sourceDigest`/`a05ApprovalReceiptRef`; potrzebny `GET lifecycle-transition-proposals` + skrzynka
+recenzenta → nowy etap **H1b** w planie); zastane 8 czerwonych testów Execution
+(`ExecutionRuntimeSpine.contract`, `ExecutionWorkSurface.edycjaWierszem`) identyczne na bazie;
+dowód HTTP H1 niezrobiony (ENOSPC) → integrator fali B. Znalezisko: prototyp Codexa F2-2 używa
+nieistniejącego tokena `bg-c-surface-muted` (no-op) — do wiadomości Codexa (wpis 25). TRZY_POJEMNIKI
+ewidencja zaktualizowana: H1 🔧, H2 🔧, B-E0 🔧 → „gotowe do scalenia `942748423c`"; dodany wiersz
+H1b (`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` §5).
 
 ---
 
