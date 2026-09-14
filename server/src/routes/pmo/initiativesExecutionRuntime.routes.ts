@@ -4764,13 +4764,6 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      if (parsed.data.inputAggregateVersion !== found.version) {
-        throw new MaterialCommandConflictError(
-          'Plan input aggregate version conflict',
-          parsed.data.inputAggregateVersion,
-          found.version
-        );
-      }
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         portfolio.scenario.scope.portfolioId
@@ -4845,22 +4838,22 @@ export function createInitiativesExecutionRuntimeRouter(
           {
             prepareDependencyAnalysis:
               parsed.data.analysisKind === 'AI_DEPENDENCY'
-                ? async () => {
-                    const periods = found.scenario.periods;
+                ? async (sourceScenario) => {
+                    const periods = sourceScenario.periods;
                     const initiatives = await deps.reader.listPlanDependencyAnalysisContext(
                       actor.organizationId,
-                      found.scenario.windows.map((window) => window.initiativeId)
+                      sourceScenario.windows.map((window) => window.initiativeId)
                     );
-                    if (initiatives.length !== found.scenario.windows.length) {
+                    if (initiatives.length !== sourceScenario.windows.length) {
                       throw new MaterialCommandRuleError(
                         'PLAN_ANALYSIS_CONTEXT_INCOMPLETE',
                         409
                       );
                     }
                     return (deps.analyzePlanDependencies ?? analyzePlanDependencies)({
-                      scenarioId: found.scenario.scenarioId,
-                      scenarioVersion: found.scenario.scenarioVersion,
-                      timezone: found.scenario.timezone,
+                      scenarioId: sourceScenario.scenarioId,
+                      scenarioVersion: sourceScenario.scenarioVersion,
+                      timezone: sourceScenario.timezone,
                       horizon: {
                         start: periods[0].start,
                         end: periods[periods.length - 1].end,
