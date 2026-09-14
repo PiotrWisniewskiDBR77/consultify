@@ -35,6 +35,13 @@ import {
 } from '../../domain/initiatives-execution/capacityRoleSheet.js';
 import { getRoleWeeklySupply } from '../../services/workloadCapacityService.js';
 import {
+  ConfiguredPortfolioConsultingModelGateway,
+  isPortfolioConsultingAnalysisEnabled,
+  PortfolioAnalysisRuntimeError,
+  type PortfolioAnalysisSnapshotBuilder,
+  PostgresPortfolioConsultingAnalysisRuntimeService,
+} from '../../services/initiative/portfolioConsultingAnalysisRuntimeService.js';
+import {
   decideClosureCase,
   requestClosureCase,
 } from '../../domain/initiatives-execution/closureDecision.js';
@@ -135,6 +142,13 @@ import {
   mutatePortfolioScenario,
   type PortfolioScenario,
 } from '../../domain/initiatives-execution/portfolioScenario.js';
+import {
+  capturePortfolioConsultingAnalysis,
+  runCapturedPortfolioConsultingAnalysis,
+  type PortfolioConsultingAnalysisContextReader,
+  type PortfolioConsultingAnalysisReader,
+  type PortfolioConsultingModelGateway,
+} from '../../domain/initiatives-execution/portfolioConsultingAnalysis.js';
 import {
   type EffectiveGovernancePolicy,
   PostgresGovernancePolicyResolver,
@@ -513,6 +527,19 @@ const PortfolioDecideSchema = z.object({
   conditions: z.array(z.string().min(1)).default([]),
   mergeTargetInitiativeId: z.string().min(1).nullable().default(null),
   governanceQuorumRef: GovernanceQuorumRefSchema.optional(),
+  disposition: z
+    .object({
+      kind: z.enum(['IN', 'PARKING', 'ARCHIVE']),
+      reason: z.string().trim().min(1),
+      returnCondition: z.string().trim().min(1).nullable(),
+      inputSnapshot: z.object({
+        analysisId: z.string().trim().min(1),
+        analysisVersion: z.number().int().positive(),
+        itemId: z.string().trim().min(1),
+        asOf: z.string().datetime(),
+      }),
+    })
+    .optional(),
 });
 const PlanScenarioSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -1333,6 +1360,18 @@ const GateSignoffSchema = z.object({
   rationale: z.string().min(1),
 });
 
+const PortfolioConsultingAnalysisCaptureSchema = z
+  .object({
+    analysisId: z.string().trim().min(1).max(255),
+    scenarioId: z.string().trim().min(1).max(255),
+    contextSnapshotId: z.string().trim().min(1).max(255),
+    contextVersion: z.number().int().min(1),
+    expectedVersion: z.literal(0),
+    clientRequestId: z.string().trim().min(1).max(220),
+    rubricVersion: z.string().trim().min(1).max(255),
+  })
+  .strict();
+
 const CreateDefinitionRemediationSchema = z.object({
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1).max(255),
@@ -1425,6 +1464,15 @@ export type RuntimeAuthorizeObject = (
   wlasciciele: ReadonlyArray<string | null | undefined>
 ) => Promise<boolean>;
 
+type PortfolioAnalysisRuntimeDependencies = {
+  buildSnapshot: PortfolioAnalysisSnapshotBuilder['buildSnapshot'];
+  reader: PortfolioConsultingAnalysisReader;
+  contextReader: PortfolioConsultingAnalysisContextReader;
+  gateway: PortfolioConsultingModelGateway;
+  capture?: typeof capturePortfolioConsultingAnalysis;
+  run?: typeof runCapturedPortfolioConsultingAnalysis;
+};
+
 export interface InitiativesExecutionRuntimeDependencies {
   unitOfWork: PostgresMaterialCommandUnitOfWork;
   reader: PostgresInitiativeReader;
@@ -1442,6 +1490,7 @@ export interface InitiativesExecutionRuntimeDependencies {
   ) => Promise<EffectiveGovernancePolicy>;
   controlKpis?: ControlKpiReadModel;
   asOfVersions?: PostgresAsOfVersionReader;
+  portfolioAnalysis?: PortfolioAnalysisRuntimeDependencies;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -1470,6 +1519,15 @@ function asyncHandler(handler: (req: Request, res: Response, next: NextFunction)
 function firstParam(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? '';
   return value ?? '';
+}
+
+function portfolioAnalysisProjectId(analysis: {
+  snapshot: { portfolio: { facts: Record<string, unknown> } };
+}): string | null {
+  const scope = analysis.snapshot.portfolio.facts.scope;
+  if (!scope || typeof scope !== 'object' || Array.isArray(scope)) return null;
+  const portfolioId = (scope as Record<string, unknown>).portfolioId;
+  return typeof portfolioId === 'string' && portfolioId.trim() ? portfolioId : null;
 }
 
 /** Sufit zbiorczego odczytu realizacji (`GET /execution-cases/bulk`). */
@@ -3328,6 +3386,133 @@ export function createInitiativesExecutionRuntimeRouter(
   );
 
   router.post(
+    '/portfolio-analyses',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const runtime = deps.portfolioAnalysis;
+      if (!runtime || !isPortfolioConsultingAnalysisEnabled()) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const parsed = PortfolioConsultingAnalysisCaptureSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const scenario = await deps.reader.findPortfolioScenario(
+        actor.organizationId,
+        parsed.data.scenarioId
+      );
+      if (
+        !scenario ||
+        !(await deps.authorize(actor, scenario.scenario.scope.portfolioId, 'initiative.review'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const existing = await runtime.reader.find(actor.organizationId, parsed.data.analysisId);
+      const existingProjectId = existing ? portfolioAnalysisProjectId(existing.analysis) : null;
+      if (
+        existing &&
+        (!existingProjectId ||
+          !(await deps.authorize(actor, existingProjectId, 'initiative.review')))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      if (
+        existing &&
+        (existing.analysis.rubricVersion !== parsed.data.rubricVersion ||
+          existing.analysis.snapshot.portfolio.scenarioId !== parsed.data.scenarioId ||
+          existing.analysis.snapshot.organizationContext.snapshotId !==
+            parsed.data.contextSnapshotId ||
+          existing.analysis.snapshot.organizationContext.version !== parsed.data.contextVersion)
+      ) {
+        throw new PortfolioAnalysisRuntimeError('PORTFOLIO_ANALYSIS_REQUEST_CONFLICT', 409);
+      }
+      const snapshot =
+        existing?.analysis.snapshot ??
+        (await runtime.buildSnapshot({
+          organizationId: actor.organizationId,
+          scenarioId: parsed.data.scenarioId,
+          contextSnapshotId: parsed.data.contextSnapshotId,
+          contextVersion: parsed.data.contextVersion,
+        }));
+      const policy = await deps.resolvePolicy(
+        actor.organizationId,
+        scenario.scenario.scope.portfolioId
+      );
+      const correlationId =
+        req.header('X-Correlation-ID') ?? `portfolio-analysis-${parsed.data.clientRequestId}`;
+      const capture = await (runtime.capture ?? capturePortfolioConsultingAnalysis)(
+        deps.unitOfWork,
+        {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          aggregateType: 'portfolio_analysis',
+          aggregateId: parsed.data.analysisId,
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId,
+          correlationId,
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+          commandType: 'portfolio.analysis.capture',
+          createIfMissing: true,
+          payload: { rubricVersion: parsed.data.rubricVersion, snapshot },
+        },
+        runtime.contextReader
+      );
+      const analysis = await (runtime.run ?? runCapturedPortfolioConsultingAnalysis)({
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        analysisId: parsed.data.analysisId,
+        clientRequestId: `${parsed.data.clientRequestId}:finalize`,
+        correlationId,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        reader: runtime.reader,
+        contextReader: runtime.contextReader,
+        gateway: runtime.gateway,
+        uow: deps.unitOfWork,
+      });
+      res.status(capture.status === 'APPLIED' ? 201 : 200).json({
+        capture: { status: capture.status, aggregateVersion: capture.aggregateVersion },
+        analysis,
+      });
+    })
+  );
+
+  router.get(
+    '/portfolio-analyses/:analysisId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const runtime = deps.portfolioAnalysis;
+      if (!runtime || !isPortfolioConsultingAnalysisEnabled()) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const found = await runtime.reader.find(
+        actor.organizationId,
+        firstParam(req.params.analysisId)
+      );
+      const projectId = found ? portfolioAnalysisProjectId(found.analysis) : null;
+      if (!found || !projectId || !(await deps.authorize(actor, projectId, 'initiative.view'))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      res.json(found);
+    })
+  );
+
+  router.post(
     '/portfolio-scenarios/:scenarioId',
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
@@ -3599,6 +3784,7 @@ export function createInitiativesExecutionRuntimeRouter(
           conditions: parsed.data.conditions,
           mergeTargetInitiativeId: parsed.data.mergeTargetInitiativeId,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          disposition: parsed.data.disposition,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -7935,6 +8121,10 @@ export function createInitiativesExecutionRuntimeRouter(
   );
 
   router.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if (error instanceof PortfolioAnalysisRuntimeError) {
+      res.status(error.httpStatus).json({ error: { code: error.code } });
+      return;
+    }
     // P15-K1 (DEC-421): naruszenie NAZWANEJ reguly domenowej wraca z kodem reguly,
     // zeby ekran mial co pokazac. 500 zostaje wylacznie dla realnych awarii.
     if (error instanceof MaterialCommandRuleError) {
@@ -8001,11 +8191,22 @@ export function createInitiativesExecutionRuntimeRouter(
 }
 
 const runtimePool = new Pool(databaseConfig.postgres as PoolConfig | undefined);
+const runtimeInitiativeReader = new PostgresInitiativeReader(runtimePool);
+const runtimePortfolioAnalysis = new PostgresPortfolioConsultingAnalysisRuntimeService(
+  runtimePool,
+  runtimeInitiativeReader
+);
 const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
   unitOfWork: new PostgresMaterialCommandUnitOfWork(runtimePool),
-  reader: new PostgresInitiativeReader(runtimePool),
+  reader: runtimeInitiativeReader,
   controlKpis: new ControlKpiReadModel(runtimePool),
   asOfVersions: new PostgresAsOfVersionReader(runtimePool),
+  portfolioAnalysis: {
+    buildSnapshot: (input) => runtimePortfolioAnalysis.buildSnapshot(input),
+    reader: runtimePortfolioAnalysis,
+    contextReader: runtimePortfolioAnalysis,
+    gateway: new ConfiguredPortfolioConsultingModelGateway(),
+  },
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,
