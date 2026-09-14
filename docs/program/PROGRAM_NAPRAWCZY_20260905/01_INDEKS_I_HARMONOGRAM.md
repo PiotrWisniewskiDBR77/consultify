@@ -623,6 +623,69 @@ nieistniejącego tokena `bg-c-surface-muted` (no-op) — do wiadomości Codexa (
 ewidencja zaktualizowana: H1 🔧, H2 🔧, B-E0 🔧 → „gotowe do scalenia `942748423c`"; dodany wiersz
 H1b (`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` §5).
 
+**Fala A cz. 4 — WDROŻONA na staging (14.09, run `34814866980`, success).** Linia `13070169a4` →
+`54f07e0ccd`: merge `drd-output-en` `bcfbe94a42` + `answer-state-hints` `7a19c38ab6` + `pawel-0539`
+`40bf4d9441` + `chunk-reload` `54f07e0ccd`; 0 konfliktów, `translation.json` zweryfikowane
+parserem duplikatów. Tag cofnięcia `rollback-pre-fala-a4-20260914` = `13070169a4`;
+`staging-deployed` = `54f07e0ccd`. Bramka: tsc 0/188, język bez spadków, canon 349, artefakt
+8-0-117, build OK, 25 plików testów zielone, zastane czerwienie identyczne jak przed falą. Dowody:
+`~/Developer/cto-codex/zrzuty-fala-a4-20260914/` (harness na scalonym kodzie + i18n z żywego
+builda; **UWAGA** — sesja QA wygasła, zrzuty NIE pochodzą z zalogowanej sesji stagingu, **Z-20**:
+odświeżyć `storageState` QA albo włączyć `test-support` na stagingu). P-P02 DRD EN, P-P08/09
+etykiety, P-P14 dyktowanie, P-P15 widget (decyzja CTO Report = tylko Bug), Z-11 auto-odświeżenie →
+**🧪 NA STAGINGU `54f07e0ccd`**. Licznik pilotażu przeliczony: **23/37** (metoda: SHA naprawy
+przodkiem `54f07e0ccd` przez `git merge-base --is-ancestor`; wcześniej 18/35, +5 pozycji
+przeklasyfikowanych do 🧪 + baza rozszerzona z 35 do 37 pozycjami P-P14/P-P15). Rozbicie pełne w
+`TRZY_POJEMNIKI_PRACY_20260906.md` §EWIDENCJA.
+
+**DEC-504 (14.09) — Fala B Inicjatywy: autorytet PMO zostaje fail-closed.** Na pytanie Codexa
+(HOLD „PMO authority PARTIAL") CTO decyduje: zostaje reguła fail-closed —
+`initiative.review` + `canReview && canSelfApprove`, **bez** fallbacku na role OWNER/ADMIN. Brak
+uprawnienia = brak akcji, nie milcząca eskalacja do roli administracyjnej.
+
+**Fala B — Inicjatywy E1 gotowa do scalenia (Opus, gałąź
+`integracja/kandydat-fala-b-inicjatywy-20260914`, HEAD `1c811a8b19`, kopia
+`backup/fala-b-inicjatywy-20260914`).** 5 commitów. **A1 Analiza portfela** — StandardTable +
+StandardPreview, 5 kryteriów obowiązkowych (Coverage gap · Overlap · Priority · New or extension ·
+Decision history), karta „dlaczego" widoczna w podglądzie. **A2 Parking** — dyspozycja
+IN/PARKING/ARCHIVE z powodem i warunkiem powrotu, propozycja AI widoczna, lista parkingu = 3.
+soczewka Menu 3 = górna granica kanonu TRIADY. Zero migracji. Flaga
+`VITE_INITIATIVES_FOUR_BUTTONS` OFF, parytet OFF-zrzut 04. HOLD-y Codexa rozstrzygnięte:
+„migracja 919 BLOCKED" = artefakt przyrządu (schema-only dump bez `schema_migrations`; strict
+migrate od pustej bazy przechodzi OK) — **ZAMKNIĘTY**; „real model EVIDENCE_MISSING" —
+deterministyczna brama `PORTFOLIO_ANALYSIS_DETERMINISTIC_MODEL` (OFF, zablokowana w production)
+wystarcza na testy, jakość realnego modelu AI nadal nieudowodniona (brak kluczy LLM); „PMO
+authority PARTIAL" → **DEC-504 wyżej**. Zastane: 4 czerwone
+`initiativeLifecycleCanon`/`forbiddenTransitions`, chwiejny
+`InitiativeConsultingAnalysisView.behavior.test` (1/3 na kodzie Codexa). Dług: migracja 919
+`SELECT *` → jawna lista kolumn (dla harnessów; dyżur Codexa D-g); prototyp Codexa F2-2 używa
+nieistniejącego tokena `bg-c-surface-muted`. Zrzuty wysłane właścicielowi 14.09 (Tak/Nie na
+wygląd, decyzja w toku). TRZY_POJEMNIKI ewidencja zaktualizowana: A1/A2 🔧 → „gotowe do scalenia
+`1c811a8b19`"; integrator fali B w toku.
+
+**Incydent Docker/Colima 14.09 — uzupełnienie.** Silnik kontenerów to **Colima**, nie Docker
+Desktop: po ENOSPC uszkodzone `containerd` `meta.db` i content store, kontenery umierały same
+(`fbi-pg`, `fbr-pg`, `cx-s1`, `cx-s3`). Naprawa CTO: `colima stop` → `colima start` ~01:54 czasu
+lokalnego, potem `docker start` na 9 bazach → 9/9 `pg_isready`. Codex uprzedzony wpisem 25. Nowa
+reguła: kontenery PG startować z `--restart unless-stopped`. Dodatkowo: agent fali B Inicjatywy w
+ENOSPC odpalił `docker system prune -af --volumes` — żywe kontenery przeżyły, ale zatrzymane
+kontenery i wolumeny sieroce zostały skasowane (w tym `fizzup`/`selix`, **Z-21**, do wiadomości
+właściciela), i odtworzył ucięty do 0 B `public/locales/en/translation.json` z HEAD. Pamięć
+nadzorcy: `enospc-psuje-containerd-colima`. Dysk po naprawie: ~45 GiB wolne.
+
+**Codex 14.09 — dalsze wpisy.** Wpis 23 (zgoda na migrację wariant B + polecenie czystki), wpis 24
+(kolejka Q1–Q5, dyżury D-a..D-f), wpis 25 (restart Dockera/Colimy, uprzedzenie Codexa). Meldunki:
+01:23 start pięciu torów S1–S5, 01:51 tor S3 (P2 Plan) zamrożony na etapie E1, 01:56 review
+`REQUEST_CHANGES` (Codex pracuje dalej nad poprawkami). **Fala B1 Realizacja** — integrator w toku
+(rebase na linię ≥`54f07e0ccd` przed scaleniem, patrz wpis H1/H2/B-E0 wyżej).
+
+**Skrzynka 14.09 (uzupełnienie).** **Z-1** nadal wstrzymane (DEC-503, demo zamrożone). **Z-19**
+kopie sierpniowe 32 GB — czeka na decyzję właściciela o usunięciu. **Z-9** wolumen `STORAGE_DIR` —
+czeka na decyzję właściciela. **Z-20** (nowa) — sesja QA na stagingu wygasła, zrzuty fali A4 nie
+pochodzą z zalogowanej sesji; odświeżyć `storageState` albo włączyć `test-support` na stagingu.
+**Z-21** (nowa) — `docker system prune -af --volumes` w ENOSPC skasował wolumeny sieroce
+`fizzup`/`selix`; do wiadomości właściciela.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
