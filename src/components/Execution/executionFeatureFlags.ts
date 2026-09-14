@@ -23,6 +23,11 @@ import { type DemoAcceptanceProfileSource } from '@/utils/demoAcceptanceProfile'
 type FlagKeys = { query: string; localStorage: string; env: string };
 
 const FLAGS = {
+  fourButtons: {
+    query: 'ff_executionFourButtons',
+    localStorage: 'ff.exec_four_buttons',
+    env: 'VITE_EXECUTION_FOUR_BUTTONS',
+  },
   ganttBaseline: {
     query: 'ff_ganttBaseline',
     localStorage: 'ff.exec_gantt_baseline',
@@ -86,7 +91,7 @@ function readLocalStorage(key: string): boolean | null {
 
 function readEnv(key: string): boolean {
   try {
-    const env = (import.meta.env as unknown as Record<string, string>);
+    const env = import.meta.env as unknown as Record<string, string>;
     return parseFlag(env?.[key]) === true;
   } catch {
     return false;
@@ -125,7 +130,7 @@ export function isExecutionFlagEnabled(
   //     (evidence/1-12-r4/05-menu3-chipy-flaga-on.png).
   // Warunek zdjęcia tej linii: przepiąć te cztery raporty na realne dane (pakiet R1)
   // ALBO zrobić ich własny czysty zrzut i dostać akcept właściciela.
-  if (flag === 'execReportsIntelligence') return false;
+  if (flag === 'fourButtons' || flag === 'execReportsIntelligence') return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).
