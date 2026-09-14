@@ -26,6 +26,7 @@ type PolicyFormState = {
   requireLocalForDataClasses: string;
   allowedDataClasses: string;
   operatingMode: string;
+  answerApprovalEnabled: boolean;
   answerApprovalMode: AnswerApprovalMode;
 };
 
@@ -52,6 +53,7 @@ const EMPTY_FORM: PolicyFormState = {
   requireLocalForDataClasses: '',
   allowedDataClasses: '',
   operatingMode: 'standard',
+  answerApprovalEnabled: false,
   answerApprovalMode: 'manager',
 };
 
@@ -61,12 +63,13 @@ const readAnswerApprovalPolicy = (
   policy: Record<string, unknown>
 ): {
   mode: AnswerApprovalMode;
+  enabled: boolean;
   unsupported: boolean;
 } => {
   const interview = isRecord(policy.interview) ? policy.interview : null;
   const answerApproval =
     interview && isRecord(interview.answerApproval) ? interview.answerApproval : null;
-  if (!answerApproval) return { mode: 'manager', unsupported: false };
+  if (!answerApproval) return { enabled: false, mode: 'manager', unsupported: false };
   const version = answerApproval.version;
   const mode = answerApproval.mode;
   if (
@@ -74,9 +77,13 @@ const readAnswerApprovalPolicy = (
     typeof mode !== 'string' ||
     !ANSWER_APPROVAL_MODES.includes(mode as AnswerApprovalMode)
   ) {
-    return { mode: 'manager', unsupported: true };
+    return { enabled: false, mode: 'manager', unsupported: true };
   }
-  return { mode: mode as AnswerApprovalMode, unsupported: false };
+  return {
+    enabled: answerApproval.enabled === true,
+    mode: mode as AnswerApprovalMode,
+    unsupported: answerApproval.enabled !== undefined && typeof answerApproval.enabled !== 'boolean',
+  };
 };
 
 const toCsv = (value: unknown) =>
@@ -327,6 +334,7 @@ export const OrgAIPolicyTab: React.FC = () => {
       requireLocalForDataClasses: toCsv(policyObj?.require_local_for_data_classes),
       allowedDataClasses: toCsv(policyObj?.allowed_data_classes),
       operatingMode: String(policyObj?.operating_mode || 'standard'),
+      answerApprovalEnabled: answerApproval.enabled,
       answerApprovalMode: answerApproval.mode,
     });
     setAnswerApprovalPolicyUnsupported(answerApproval.unsupported);
@@ -357,6 +365,7 @@ export const OrgAIPolicyTab: React.FC = () => {
       answerApproval: {
         ...currentAnswerApproval,
         version: 1,
+        enabled: nextForm.answerApprovalEnabled,
         mode: nextForm.answerApprovalMode,
       },
     };
@@ -621,6 +630,21 @@ export const OrgAIPolicyTab: React.FC = () => {
               <option value="approved">approved</option>
               <option value="published">published</option>
             </select>
+          </div>
+          <div>
+            <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-navy-700 dark:bg-navy-900 dark:text-white">
+              <input
+                type="checkbox"
+                checked={form.answerApprovalEnabled}
+                onChange={(event) =>
+                  updateForm({ answerApprovalEnabled: event.target.checked })
+                }
+                disabled={!hasLoadedPolicy || !!policyLoadError || answerApprovalPolicyUnsupported}
+              />
+              <span>
+                {t('interview.answerApproval.policy.enabledLabel', 'Enable answer approval')}
+              </span>
+            </label>
           </div>
           <div>
             <label

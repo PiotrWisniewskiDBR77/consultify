@@ -48,7 +48,7 @@ const database = vi.hoisted(() => ({
     template_version: 4,
   } as Record<string, unknown> | null,
   policy: {
-    interview: { answerApproval: { version: 1, mode: 'manager' } },
+    interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } },
   } as unknown,
   questions: [] as Array<Record<string, unknown> & { id: string; updated_at: Date }>,
   evidence: [] as Array<Record<string, unknown> & { id: string; question_id: string }>,
@@ -121,7 +121,7 @@ const decisionInput = (
 
 async function submit(policyMode: 'ai' | 'manager' | 'two_stage' = 'manager') {
   database.policy = {
-    interview: { answerApproval: { version: 1, mode: policyMode } },
+    interview: { answerApproval: { version: 1, enabled: true, mode: policyMode } },
   };
   const response = await applyInterviewAnswerDecisionCommand(submissionInput());
   if (database.assignment) database.assignment.status = 'submitted';
@@ -130,6 +130,7 @@ async function submit(policyMode: 'ai' | 'manager' | 'two_stage' = 'manager') {
 
 describe('Interview answer decision service', () => {
   beforeEach(() => {
+    process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
     database.assignment = {
       id: 'assignment-1',
       session_id: 'session-1',
@@ -138,7 +139,7 @@ describe('Interview answer decision service', () => {
       template_version: 4,
     };
     database.policy = {
-      interview: { answerApproval: { version: 1, mode: 'manager' } },
+      interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } },
     };
     database.questions = [question('question-a', 0), question('question-b', 1)];
     database.evidence = [];
@@ -234,6 +235,24 @@ describe('Interview answer decision service', () => {
       return { changes: 1 };
     });
     mocks.withPgTransaction.mockClear();
+  });
+
+  it('requires both the environment and organization gates before any approval write', async () => {
+    delete process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL;
+    await expect(applyInterviewAnswerDecisionCommand(submissionInput())).rejects.toMatchObject({
+      code: 'FEATURE_DISABLED',
+    });
+    expect(mocks.queryRun).not.toHaveBeenCalled();
+
+    process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
+    database.policy = {
+      interview: { answerApproval: { version: 1, enabled: false, mode: 'manager' } },
+    };
+    await expect(applyInterviewAnswerDecisionCommand(submissionInput())).rejects.toMatchObject({
+      code: 'FEATURE_DISABLED',
+    });
+    expect(database.commands).toHaveLength(0);
+    expect(database.decisions).toHaveLength(0);
   });
 
   it('derives a complete answered denominator and records stable ordinals without SELECT star', async () => {
@@ -362,7 +381,7 @@ describe('Interview answer decision service', () => {
 
   it('uses the frozen submission policy after organization policy changes', async () => {
     await submit('two_stage');
-    database.policy = { interview: { answerApproval: { version: 1, mode: 'manager' } } };
+    database.policy = { interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } } };
 
     await expect(
       applyInterviewAnswerDecisionCommand(

@@ -26,6 +26,10 @@ import {
   readInterviewAnswerApprovalProjection,
 } from '../services/interview/interviewAnswerDecisionService.js';
 import {
+  isInterviewAnswerApprovalEnvironmentEnabled,
+  resolveInterviewAnswerApprovalPolicy,
+} from '../services/interview/interviewAnswerApprovalPolicy.js';
+import {
   isTruthyFlag,
   isTruthyFlagSql,
   LEGACY_FLAG_FALSE,
@@ -1981,6 +1985,7 @@ async function assertReturnedAnswerMayChange(input: {
   sessionAssignmentId: string | null;
   linkedAssignments: LockedInterviewMutationAssignment[];
 }): Promise<void> {
+  if (!(await isInterviewAnswerApprovalActive(input.organizationId))) return;
   const canonicalAssignment = input.sessionAssignmentId
     ? input.linkedAssignments.find(
         (assignment) =>
@@ -2028,6 +2033,15 @@ async function assertReturnedAnswerMayChange(input: {
       'INTERVIEW_ANSWER_REVISION_NOT_RETURNED'
     );
   }
+}
+
+async function isInterviewAnswerApprovalActive(organizationId: string): Promise<boolean> {
+  if (!isInterviewAnswerApprovalEnvironmentEnabled()) return false;
+  const row = await queryHelpers.queryOne<{ policy: unknown }>(
+    `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
+    [organizationId]
+  );
+  return resolveInterviewAnswerApprovalPolicy(row?.policy).enabled;
 }
 
 // Template response builders (Interview templates library)
@@ -3474,6 +3488,353 @@ function filterInsightBySectionIds(
   return { filtered, matched, markdown: mdParts.join('\n\n') };
 }
 
+async function submitAssignmentLegacy(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const user = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentAiReviewColumns();
+    await ensureInterviewQuestionV6Columns();
+
+    // Team submission is allowed only for the primary assignee OR team lead (member role=lead).
+    let assignment: any = null;
+    try {
+      assignment = await queryHelpers.queryOne(
+        `SELECT a.*
+         FROM interview_assignments a
+         LEFT JOIN interview_assignment_members m
+           ON m.assignment_id = a.id AND m.user_id = ? AND m.role = 'lead'
+         LEFT JOIN interview_sessions s
+           ON s.id = a.session_id
+         WHERE a.id = ?
+           AND a.organization_id = ?
+           AND (
+             a.assignee_user_id = ?
+             OR m.id IS NOT NULL
+             OR a.created_by = ?
+             OR s.owner_id = ?
+           )`,
+        [user.id, id, user.organizationId, user.id, user.id, user.id]
+      );
+    } catch {
+      // Back-compat: environments without `interview_assignment_members`.
+      assignment = await queryHelpers.queryOne(
+        `SELECT a.*
+         FROM interview_assignments a
+         LEFT JOIN interview_sessions s ON s.id = a.session_id
+         WHERE a.id = ?
+           AND a.organization_id = ?
+           AND (
+             a.assignee_user_id = ?
+             OR a.created_by = ?
+             OR s.owner_id = ?
+           )`,
+        [id, user.organizationId, user.id, user.id, user.id]
+      );
+    }
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    const submitGate = evaluateGatePolicy({
+      action: 'SUBMIT_INTERVIEW',
+      contextType: 'interview_assignment',
+      user,
+      context: { assignment },
+    });
+    if (!submitGate.allow) {
+      const gateError = submitGate as {
+        allow: false;
+        error: string;
+        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
+      };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
+      return;
+    }
+
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [(assignment as any).session_id, user.organizationId, user.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    // Recalculate progress from actual question data to avoid stale counters
+    const sessionId = (assignment as any).session_id;
+    await InterviewController.updateSessionProgress(sessionId);
+    const freshSession = await queryHelpers.queryOne(
+      `SELECT answered_questions, total_questions FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    const answered = Number((freshSession as any)?.answered_questions || 0);
+    const total = Number((freshSession as any)?.total_questions || 0);
+    const completenessRatio = calcCompletenessRatio(answered, total);
+    const completenessPercent = Math.round(completenessRatio * 100);
+    const now = new Date().toISOString();
+
+    // An ambiguous network retry after a successful submit is a read, not a
+    // second transition. Return the already-submitted state without appending
+    // another answer snapshot or notifying the reviewer twice. Concurrent first
+    // submits are serialized by the conditional UPDATE inside the transaction.
+    if (canonicalStatusToken((assignment as any).status) === 'submitted') {
+      const persistedAiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
+      res.json({
+        assignment: {
+          ...(assignment as any),
+          aiReview: persistedAiReview,
+          aiReviewedAt: (assignment as any)?.ai_reviewed_at || null,
+          reviewDecisionMemory: parseReviewDecisionMemory(
+            (assignment as any)?.review_decision_memory_json
+          ),
+        },
+        session: buildSessionResponse({
+          ...(sessionRow as any),
+          answered_questions: answered,
+          total_questions: total,
+        }),
+        completenessPercent,
+        entersContext: false,
+        aiReview: persistedAiReview,
+        idempotentReplay: true,
+      });
+      return;
+    }
+
+    // ── L-07 / SPEC_13 §5.1 — hard submit floor (objective insufficiency) ──
+    // Compute the AI review BEFORE flipping status so we can block an objectively
+    // insufficient submission. The hard floor is deterministic + objective only:
+    //   (a) required questions with no answer, OR
+    //   (b) AI overall verdict 'empty' / 'insufficient' (e.g. nothing answered).
+    // This is a HARD gate with NO "submit anyway" escape (SPEC §5.1/§5.2) — the
+    // draft stays editable (status unchanged) so the respondent can fix and retry.
+    // Soft quality (needs_improvement / short answers) is NOT blocked here; it is
+    // escalated to the sender via score + recommendations (HITL).
+    const submitQuestions = await queryHelpers.queryAll(
+      `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
+              status, answer_text, context_note, confidence_score
+       FROM interview_questions
+       WHERE session_id = ? AND organization_id = ?
+       ORDER BY sort_order`,
+      [sessionId, user.organizationId]
+    );
+
+    const requiredMissing = (submitQuestions as any[]).filter((q) => {
+      const isRequired = Boolean(q.is_required);
+      const hasAnswer =
+        String(q.status || '') === 'answered' && String(q.answer_text || '').trim().length > 0;
+      return isRequired && !hasAnswer;
+    });
+
+    let aiReview: InterviewAiReviewSnapshot | null = null;
+    try {
+      aiReview = await evaluateInterviewSessionAnswers({
+        session: { id: sessionId, name: (sessionRow as any)?.name || 'Interview session' },
+        questions: submitQuestions as any[],
+        language: req.body?.language,
+      });
+      // OFF means byte-for-byte legacy response/storage shape; model provenance
+      // belongs to the gated per-answer approval contract.
+      delete (aiReview as unknown as { modelProvenance?: unknown }).modelProvenance;
+    } catch (error) {
+      // AI eval is best-effort: if it fails we still enforce the deterministic
+      // required-missing floor, but we never block on a missing AI signal.
+      logger.warn('[InterviewController] Failed to generate AI review on submit', error);
+    }
+
+    // The AI hard-floor only applies when there are questions to answer. A
+    // session with zero questions is a template/config artifact, not a respondent
+    // failure — don't trap the respondent on it (the deterministic required-missing
+    // check still governs the real "answered nothing" case).
+    const aiVerdict = aiReview?.overallVerdict;
+    const aiHardFloorBreached =
+      (submitQuestions as any[]).length > 0 &&
+      (aiVerdict === 'empty' || aiVerdict === 'insufficient');
+    const objectiveFloorBreached = requiredMissing.length > 0 || aiHardFloorBreached;
+
+    if (objectiveFloorBreached) {
+      const blockedItems: InterviewMissingItem[] = [
+        ...requiredMissing.map((q: any) => ({
+          key: `required_${q.id}`,
+          label: String(q.question_text || 'Required question')
+            .trim()
+            .slice(0, 160),
+          questionId: String(q.id),
+        })),
+        ...((aiReview?.weakAnswerMap || [])
+          .filter((w) => w.verdict === 'insufficient' || w.verdict === 'unanswered')
+          .map((w) => ({
+            key: w.key,
+            label: w.label,
+            questionId: w.questionId,
+          })) as InterviewMissingItem[]),
+      ];
+      // Deduplicate by questionId (a required-missing item may also surface in the AI map).
+      const seenQ = new Set<string>();
+      const dedupedBlockedItems = blockedItems.filter((item) => {
+        const qid = item.questionId || item.key;
+        if (seenQ.has(qid)) return false;
+        seenQ.add(qid);
+        return true;
+      });
+
+      res.status(422).json({
+        error:
+          requiredMissing.length > 0
+            ? 'Cannot submit: required questions are unanswered'
+            : 'Cannot submit: answers are insufficient',
+        code: 'OBJECTIVE_INSUFFICIENCY',
+        reason: requiredMissing.length > 0 ? 'required_missing' : 'ai_insufficient',
+        blockedItems: dedupedBlockedItems,
+        requiredMissingCount: requiredMissing.length,
+        aiReview,
+        completenessPercent,
+      });
+      return;
+    }
+
+    const newAssignmentStatus = 'submitted';
+
+    // INT-05 / INT-APPROVAL-OWN-001 — snapshot + assignment + session + task
+    // + AI review are one fail-closed lifecycle transition.
+    await ensureInterviewAnswerHistoryTable();
+    const assignmentColumns = await getTableColumns('interview_assignments');
+    const supportsMissingItems = assignmentColumns.has('missing_items_json');
+    let updatedAssignment: any;
+    let updatedSession: any;
+    try {
+      const result = await queryHelpers.withPgTransaction(async () => {
+        await snapshotInterviewAnswers({
+          organizationId: user.organizationId,
+          assignmentId: id,
+          sessionId,
+          reason: 'submission',
+          savedAt: now,
+          savedBy: user.id,
+          ensureTable: false,
+        });
+
+        const transition = supportsMissingItems
+          ? await queryHelpers.queryRun(
+              `UPDATE interview_assignments
+               SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, missing_items_json = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
+               WHERE id = ? AND status IN ('in_progress', 'sent_back')`,
+              [newAssignmentStatus, now, now, id]
+            )
+          : await queryHelpers.queryRun(
+              `UPDATE interview_assignments
+               SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
+               WHERE id = ? AND status IN ('in_progress', 'sent_back')`,
+              [newAssignmentStatus, now, now, id]
+            );
+        if (transition.changes !== 1) throw new Error('INTERVIEW_SUBMIT_STATE_CONFLICT');
+
+        const sessionTransition = await queryHelpers.queryRun(
+          `UPDATE interview_sessions SET status = 'submitted', updated_at = ?, last_activity_at = ? WHERE id = ?`,
+          [now, now, sessionId]
+        );
+        if (sessionTransition.changes !== 1) throw new Error('INTERVIEW_SUBMIT_SESSION_MISSING');
+
+        if ((assignment as any).task_id) {
+          const taskTransition = await queryHelpers.queryRun(
+            `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
+            ['in_progress', completenessPercent, now, (assignment as any).task_id]
+          );
+          if (taskTransition.changes !== 1) throw new Error('INTERVIEW_SUBMIT_TASK_MISSING');
+        }
+
+        if (aiReview) {
+          await queryHelpers.queryRun(
+            `UPDATE interview_assignments
+             SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
+             WHERE id = ?`,
+            [JSON.stringify(aiReview), now, now, id]
+          );
+        }
+
+        return {
+          updatedAssignment: await queryHelpers.queryOne(
+            `SELECT * FROM interview_assignments WHERE id = ?`,
+            [id]
+          ),
+          updatedSession: await queryHelpers.queryOne(
+            `SELECT * FROM interview_sessions WHERE id = ?`,
+            [sessionId]
+          ),
+        };
+      });
+      updatedAssignment = result.updatedAssignment;
+      updatedSession = result.updatedSession;
+    } catch (error) {
+      logger.error('[InterviewController] Failed atomic interview submission', error);
+      res.status(500).json({
+        error: 'Submission could not be safely persisted. Please retry.',
+        code: 'SUBMISSION_ATOMIC_PERSISTENCE_FAILED',
+      });
+      return;
+    }
+
+    // Notify the assignment creator (manager/reviewer) that review is needed.
+    // Z-06 / SPEC_13 §5 — carry the AI score + top recommendation so the sender
+    // sees the assessment in the notification, not just a generic "submitted".
+    try {
+      const createdBy = (assignment as any).created_by;
+      if (createdBy) {
+        // #48a — overallScore is the rubric's 1-5 scale; map to 0-100 (1 -> 0%,
+        // 5 -> 100%) the same way as the InterviewHub aiScore column.
+        const scorePct =
+          typeof aiReview?.overallScore === 'number'
+            ? Math.round(Math.max(0, Math.min(1, (aiReview.overallScore - 1) / 4)) * 100)
+            : null;
+        const topRecommendation = (aiReview?.recommendations || []).find((r) => r && r.trim());
+        const scorePart = scorePct !== null ? `AI quality score: ${scorePct}/100. ` : '';
+        const recPart = topRecommendation ? `Top note: ${topRecommendation.trim()}` : '';
+        const body =
+          `An interview assignment has been submitted and is awaiting your review. ${scorePart}${recPart}`.trim();
+        await notificationService.send({
+          userId: createdBy,
+          organizationId: user.organizationId,
+          type: 'interview_submitted',
+          title:
+            scorePct !== null
+              ? `Interview submitted (AI score ${scorePct}/100)`
+              : 'Interview submitted for review',
+          body,
+          entityType: 'interview_assignment',
+          entityId: id,
+          actionUrl: `/interview?assignmentId=${id}&scope=managed`,
+          priority: 'high',
+          actorId: user.id,
+        });
+      }
+    } catch (e) {
+      logger.warn('[InterviewController] Failed to send interview_submitted notification', e);
+    }
+
+    res.json({
+      assignment: {
+        ...(updatedAssignment as any),
+        aiReview:
+          aiReview || parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+        aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(
+          (updatedAssignment as any)?.review_decision_memory_json
+        ),
+      },
+      session: buildSessionResponse(updatedSession),
+      completenessPercent,
+      entersContext: false,
+      aiReview:
+        aiReview || parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+    });
+}
+
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -4554,6 +4915,10 @@ export const InterviewController = {
 
   submitAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    if (!(await isInterviewAnswerApprovalActive(user.organizationId))) {
+      await submitAssignmentLegacy(req, res);
+      return;
+    }
     const { id } = req.params;
     await ensureInterviewAssignmentAiReviewColumns();
     await ensureInterviewQuestionV6Columns();
@@ -5037,6 +5402,10 @@ export const InterviewController = {
 
   getAnswerApprovals: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    if (!(await isInterviewAnswerApprovalActive(user.organizationId))) {
+      res.json({ assignmentId: req.params.id, approvals: [] });
+      return;
+    }
     const { id } = req.params;
     const assignment = await queryHelpers.queryOne<{
       id: string;
@@ -5077,6 +5446,10 @@ export const InterviewController = {
 
   retryAiAnswerApprovals: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    if (!(await isInterviewAnswerApprovalActive(user.organizationId))) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
     const { id } = req.params;
     const parsed = retryAiAnswerApprovalBodySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -5295,6 +5668,10 @@ export const InterviewController = {
 
   decideAnswerApprovals: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const reviewer = requireUser(req);
+    if (!(await isInterviewAnswerApprovalActive(reviewer.organizationId))) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
     const { id } = req.params;
     const parsed = answerDecisionBodySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -5490,10 +5867,12 @@ export const InterviewController = {
         expectedSessionId: reviewAccess.sessionId,
         expectedProjectId: reviewAccess.projectId,
       });
-      const answerApprovals = await readInterviewAnswerApprovalProjection({
-        organizationId: admin.organizationId,
-        assignmentId: id,
-      });
+      const answerApprovals = (await isInterviewAnswerApprovalActive(admin.organizationId))
+        ? await readInterviewAnswerApprovalProjection({
+            organizationId: admin.organizationId,
+            assignmentId: id,
+          })
+        : [];
       if (answerApprovals.length > 0) {
         throw new AppError(
           'Use per-answer decisions for an assignment governed by answer approval policy',
@@ -5763,13 +6142,17 @@ export const InterviewController = {
         expectedSessionId: reviewAccess.sessionId,
         expectedProjectId: reviewAccess.projectId,
       });
-      const answerApprovals = await readInterviewAnswerApprovalProjection({
-        organizationId: reviewer.organizationId,
-        assignmentId: id,
-      });
+      const answerApprovalActive = await isInterviewAnswerApprovalActive(reviewer.organizationId);
+      const answerApprovals = answerApprovalActive
+        ? await readInterviewAnswerApprovalProjection({
+            organizationId: reviewer.organizationId,
+            assignmentId: id,
+          })
+        : [];
       if (
-        answerApprovals.length === 0 ||
-        answerApprovals.some((approval) => approval.status !== 'stages_complete')
+        answerApprovalActive &&
+        (answerApprovals.length === 0 ||
+          answerApprovals.some((approval) => approval.status !== 'stages_complete'))
       ) {
         throw new AppError(
           'Every submitted answer must complete its frozen approval policy',
