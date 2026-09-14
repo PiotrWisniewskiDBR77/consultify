@@ -1,9 +1,36 @@
-import { assertConfiguredProfileAuthority, definitionApprovalEnabled, definitionAuthorities, mountDefinitionApprovalReads } from './definitionApprovalAdapter.js';
-import { StaffingFieldsSchema, StaffingNotFoundError, staffingAggregateType, writeStaffing, type StaffingMutation } from '../../domain/initiatives-execution/staffingPlans.js';
-import { GateRolesSchema, GateRolesNotFoundError, replaceGateRoles } from '../../domain/initiatives-execution/gateRoles.js';
-import { ResourceFieldsSchema, ResourceNotFoundError, writeResource } from '../../domain/initiatives-execution/resources.js';
-import { MilestoneFieldsSchema, MilestoneNotFoundError, writeMilestone } from '../../domain/initiatives-execution/milestones.js';
-import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeBudgetItem } from '../../domain/initiatives-execution/budgetItems.js';
+import {
+  assertConfiguredProfileAuthority,
+  definitionApprovalEnabled,
+  definitionAuthorities,
+  mountDefinitionApprovalReads,
+} from './definitionApprovalAdapter.js';
+import {
+  StaffingFieldsSchema,
+  StaffingNotFoundError,
+  staffingAggregateType,
+  writeStaffing,
+  type StaffingMutation,
+} from '../../domain/initiatives-execution/staffingPlans.js';
+import {
+  GateRolesSchema,
+  GateRolesNotFoundError,
+  replaceGateRoles,
+} from '../../domain/initiatives-execution/gateRoles.js';
+import {
+  ResourceFieldsSchema,
+  ResourceNotFoundError,
+  writeResource,
+} from '../../domain/initiatives-execution/resources.js';
+import {
+  MilestoneFieldsSchema,
+  MilestoneNotFoundError,
+  writeMilestone,
+} from '../../domain/initiatives-execution/milestones.js';
+import {
+  BudgetItemFieldsSchema,
+  BudgetItemNotFoundError,
+  writeBudgetItem,
+} from '../../domain/initiatives-execution/budgetItems.js';
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { Pool, type PoolConfig } from 'pg';
 import { z } from 'zod';
@@ -29,10 +56,7 @@ import {
 } from '../../domain/initiatives-execution/capacityOptions.js';
 import { mutateCapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
 import type { CapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
-import {
-  buildRoleSheet,
-  roleSlug,
-} from '../../domain/initiatives-execution/capacityRoleSheet.js';
+import { buildRoleSheet, roleSlug } from '../../domain/initiatives-execution/capacityRoleSheet.js';
 import { getRoleWeeklySupply } from '../../services/workloadCapacityService.js';
 import {
   ConfiguredPortfolioConsultingModelGateway,
@@ -42,10 +66,18 @@ import {
   PostgresPortfolioConsultingAnalysisRuntimeService,
 } from '../../services/initiative/portfolioConsultingAnalysisRuntimeService.js';
 import {
+  DeterministicPortfolioConsultingModelGateway,
+  isDeterministicPortfolioAnalysisModelEnabled,
+} from '../../services/initiative/deterministicPortfolioConsultingModelGateway.js';
+import {
   decideClosureCase,
   requestClosureCase,
 } from '../../domain/initiatives-execution/closureDecision.js';
-import { configureInitiativeCards, configuredCardProfile, type ConfiguredCardProfile } from '../../domain/initiatives-execution/configureInitiativeCards.js';
+import {
+  configureInitiativeCards,
+  configuredCardProfile,
+  type ConfiguredCardProfile,
+} from '../../domain/initiatives-execution/configureInitiativeCards.js';
 import { createDefinitionRemediationWork } from '../../domain/initiatives-execution/createDefinitionRemediationWork.js';
 import { decideSourceProposal } from '../../domain/initiatives-execution/decideSourceProposal.js';
 import {
@@ -376,7 +408,13 @@ const ReviewCardSchema = z.object({
 });
 
 const ConfigureCardsSchema = z.object({
-  profile: z.object({ templateId: z.string().min(1).max(255), version: z.number().int().positive(), contentHash: z.string().regex(/^[a-f0-9]{64}$/) }).optional(),
+  profile: z
+    .object({
+      templateId: z.string().min(1).max(255),
+      version: z.number().int().positive(),
+      contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+    })
+    .optional(),
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1).max(255),
   registryVersion: z.literal(1),
@@ -1596,9 +1634,12 @@ export function createInitiativesExecutionRuntimeRouter(
     znaleziona: { initiative: { projectId: string; initiativeOwnerId?: string | null } }
   ): Promise<boolean> =>
     deps.authorizeInitiativeObject
-      ? deps.authorizeInitiativeObject(actor, znaleziona.initiative.projectId, 'initiative.update', [
-          znaleziona.initiative.initiativeOwnerId,
-        ])
+      ? deps.authorizeInitiativeObject(
+          actor,
+          znaleziona.initiative.projectId,
+          'initiative.update',
+          [znaleziona.initiative.initiativeOwnerId]
+        )
       : deps.authorize(actor, znaleziona.initiative.projectId, 'initiative.update');
 
   const projectsForInitiative = async (actor: RuntimeActor, initiativeId: unknown) =>
@@ -2437,37 +2478,92 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         firstParam(req.params.initiativeId)
       );
-      res.json({ initiativeVersion: found.version, registryVersion: 1, cards, profile: ((found.initiative as typeof found.initiative & { cardSelection?: { profile?: ConfiguredCardProfile } }).cardSelection)?.profile ?? null });
+      res.json({
+        initiativeVersion: found.version,
+        registryVersion: 1,
+        cards,
+        profile:
+          (
+            found.initiative as typeof found.initiative & {
+              cardSelection?: { profile?: ConfiguredCardProfile };
+            }
+          ).cardSelection?.profile ?? null,
+      });
     })
   );
 
-  router.get('/initiatives/:initiativeId/card-profile-preview', asyncHandler(async (req, res) => {
-    const actor = actorFromRequest(req);
-    if (!actor) { res.status(401).json({ error: { code: 'AUTH_REQUIRED' } }); return; }
-    const id = firstParam(req.params.initiativeId);
-    const found = await deps.reader.findById(actor.organizationId, id);
-    if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
-      res.status(404).json({ error: { code: 'NOT_FOUND' } }); return;
-    }
-    const templateId = String(req.query.templateId || '').trim();
-    if (!templateId) { res.status(400).json({ error: { code: 'TEMPLATE_ID_REQUIRED' } }); return; }
-    const template = await deps.unitOfWork.transaction(async tx => {
-      if (!tx.getInitiativeTemplateForShare) throw new MaterialCommandRuleError('CARD_PROFILE_ADAPTER_UNAVAILABLE', 409);
-      return tx.getInitiativeTemplateForShare({ organizationId: actor.organizationId, templateId });
-    });
-    if (!template) { res.status(404).json({ error: { code: 'NOT_FOUND' } }); return; }
-    const profile = configuredCardProfile(template);
-    const selection = await deps.reader.listInitiativeCardSelection(actor.organizationId, id);
-    const published = await deps.reader.listLatestInitiativeCards(actor.organizationId, id);
-    res.json({ initiativeId: id, initiativeVersion: found.version, profile, impact: {
-      newlyRequired: profile.cards.filter(card => card.requiredness === 'REQUIRED' && !selection.some(old => old.cardKey === card.cardKey && old.requiredness === 'REQUIRED')).map(card => card.cardKey),
-      omitted: profile.cards.filter(card => !card.included).map(card => card.cardKey),
-      preservedContent: published.map(card => ({ cardKey: card.cardKey, cardVersion: card.cardVersion })),
-      unresolvedReviews: published.filter(card => card.reviewState !== 'ACCEPTED').map(card => card.cardKey),
-      waiverRequired: selection.filter(old => old.requiredness === 'REQUIRED' && profile.cards.some(card => card.cardKey === old.cardKey && (!card.included || card.requiredness !== 'REQUIRED'))).map(card => card.cardKey),
-      readinessAfterChange: 'REQUIRES_REEVALUATION',
-    } });
-  }));
+  router.get(
+    '/initiatives/:initiativeId/card-profile-preview',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const id = firstParam(req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, id);
+      if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const templateId = String(req.query.templateId || '').trim();
+      if (!templateId) {
+        res.status(400).json({ error: { code: 'TEMPLATE_ID_REQUIRED' } });
+        return;
+      }
+      const template = await deps.unitOfWork.transaction(async (tx) => {
+        if (!tx.getInitiativeTemplateForShare)
+          throw new MaterialCommandRuleError('CARD_PROFILE_ADAPTER_UNAVAILABLE', 409);
+        return tx.getInitiativeTemplateForShare({
+          organizationId: actor.organizationId,
+          templateId,
+        });
+      });
+      if (!template) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const profile = configuredCardProfile(template);
+      const selection = await deps.reader.listInitiativeCardSelection(actor.organizationId, id);
+      const published = await deps.reader.listLatestInitiativeCards(actor.organizationId, id);
+      res.json({
+        initiativeId: id,
+        initiativeVersion: found.version,
+        profile,
+        impact: {
+          newlyRequired: profile.cards
+            .filter(
+              (card) =>
+                card.requiredness === 'REQUIRED' &&
+                !selection.some(
+                  (old) => old.cardKey === card.cardKey && old.requiredness === 'REQUIRED'
+                )
+            )
+            .map((card) => card.cardKey),
+          omitted: profile.cards.filter((card) => !card.included).map((card) => card.cardKey),
+          preservedContent: published.map((card) => ({
+            cardKey: card.cardKey,
+            cardVersion: card.cardVersion,
+          })),
+          unresolvedReviews: published
+            .filter((card) => card.reviewState !== 'ACCEPTED')
+            .map((card) => card.cardKey),
+          waiverRequired: selection
+            .filter(
+              (old) =>
+                old.requiredness === 'REQUIRED' &&
+                profile.cards.some(
+                  (card) =>
+                    card.cardKey === old.cardKey &&
+                    (!card.included || card.requiredness !== 'REQUIRED')
+                )
+            )
+            .map((card) => card.cardKey),
+          readinessAfterChange: 'REQUIRES_REEVALUATION',
+        },
+      });
+    })
+  );
 
   router.post(
     '/initiatives/:initiativeId/card-selection',
@@ -2498,34 +2594,41 @@ export function createInitiativesExecutionRuntimeRouter(
         found.initiative.projectId,
         firstParam(req.params.initiativeId)
       );
-      const result = await configureInitiativeCards(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'initiative',
-        aggregateId: firstParam(req.params.initiativeId),
-        expectedVersion: parsed.data.expectedVersion,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId:
-          String(
-            (req as RuntimeRequest).correlationId || req.header('X-Correlation-ID') || ''
-          ).trim() || `card-selection-${parsed.data.clientRequestId}`,
-        policyId: policy.policyId,
-        policyVersion: policy.version,
-        commandType: 'initiative.cards.configure',
-        payload: {
-          registryVersion: parsed.data.registryVersion,
-          ...(parsed.data.profile ? { profile: parsed.data.profile } : {}),
-          cards: parsed.data.cards.map((card) => ({
-            ...card,
-            waiverDecisionId: card.waiverDecisionId ?? null,
-          })),
+      const result = await configureInitiativeCards(
+        deps.unitOfWork,
+        {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          aggregateType: 'initiative',
+          aggregateId: firstParam(req.params.initiativeId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId,
+          correlationId:
+            String(
+              (req as RuntimeRequest).correlationId || req.header('X-Correlation-ID') || ''
+            ).trim() || `card-selection-${parsed.data.clientRequestId}`,
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+          commandType: 'initiative.cards.configure',
+          payload: {
+            registryVersion: parsed.data.registryVersion,
+            ...(parsed.data.profile ? { profile: parsed.data.profile } : {}),
+            cards: parsed.data.cards.map((card) => ({
+              ...card,
+              waiverDecisionId: card.waiverDecisionId ?? null,
+            })),
+          },
         },
-      }, async (current) => {
-        const allowed = deps.authorizeInitiativeObject
-          ? await deps.authorizeInitiativeObject(actor, current.projectId, 'initiative.update', [String(current.initiativeOwnerId || '')])
-          : await deps.authorize(actor, current.projectId, 'initiative.update');
-        if (!allowed) throw new MaterialCommandRuleError('CARD_PROFILE_AUTHORITY_REQUIRED', 403);
-      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
+        async (current) => {
+          const allowed = deps.authorizeInitiativeObject
+            ? await deps.authorizeInitiativeObject(actor, current.projectId, 'initiative.update', [
+                String(current.initiativeOwnerId || ''),
+              ])
+            : await deps.authorize(actor, current.projectId, 'initiative.update');
+          if (!allowed) throw new MaterialCommandRuleError('CARD_PROFILE_AUTHORITY_REQUIRED', 403);
+        },
+        (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile)
+      );
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2626,8 +2729,7 @@ export function createInitiativesExecutionRuntimeRouter(
         executionWrites: {
           forecast: {
             available: forecastAvailable,
-            canonicalCommand:
-              'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/forecast',
+            canonicalCommand: 'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/forecast',
             ...forecastDenial,
             legacyDenialAt: 'BRAMKA_LEGACY',
             legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
@@ -2748,15 +2850,32 @@ export function createInitiativesExecutionRuntimeRouter(
         cards,
         Boolean(source?.sourceType && source.sourceId && source.sourceVersion > 0),
         sourceFreshness,
-        ((found.initiative as typeof found.initiative & { cardSelection?: { profile?: ConfiguredCardProfile } }).cardSelection)?.profile
+        (
+          found.initiative as typeof found.initiative & {
+            cardSelection?: { profile?: ConfiguredCardProfile };
+          }
+        ).cardSelection?.profile
       );
-      const configuredProfile=((found.initiative as typeof found.initiative & {cardSelection?: {profile?:ConfiguredCardProfile}}).cardSelection)?.profile;
-      if(configuredProfile){
-        try { await assertConfiguredProfileAuthority(deps,actor,found.initiative,configuredProfile); }
-        catch(error){
-          if(!(error instanceof MaterialCommandRuleError))throw error;
-          readiness.readiness='BLOCKED';
-          readiness.findings.push({findingId:'definition:gates-approvals:PROFILE_AUTHORITY_STALE',cardKey:'gates-approvals',severity:'BLOCKER',rule:'PROFILE_AUTHORITY_STALE',evidenceRefs:[],message:'The configured policy or reviewer authority is no longer current. Reconfigure and review the affected cards.'});
+      const configuredProfile = (
+        found.initiative as typeof found.initiative & {
+          cardSelection?: { profile?: ConfiguredCardProfile };
+        }
+      ).cardSelection?.profile;
+      if (configuredProfile) {
+        try {
+          await assertConfiguredProfileAuthority(deps, actor, found.initiative, configuredProfile);
+        } catch (error) {
+          if (!(error instanceof MaterialCommandRuleError)) throw error;
+          readiness.readiness = 'BLOCKED';
+          readiness.findings.push({
+            findingId: 'definition:gates-approvals:PROFILE_AUTHORITY_STALE',
+            cardKey: 'gates-approvals',
+            severity: 'BLOCKER',
+            rule: 'PROFILE_AUTHORITY_STALE',
+            evidenceRefs: [],
+            message:
+              'The configured policy or reviewer authority is no longer current. Reconfigure and review the affected cards.',
+          });
         }
       }
       res.json({
@@ -2918,28 +3037,32 @@ export function createInitiativesExecutionRuntimeRouter(
         found.initiative.projectId,
         firstParam(req.params.initiativeId)
       );
-      const result = await reviewInitiativeCard(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'initiative',
-        aggregateId: firstParam(req.params.initiativeId),
-        expectedVersion: parsed.data.expectedVersion,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId:
-          String(
-            (req as RuntimeRequest).correlationId || req.header('X-Correlation-ID') || ''
-          ).trim() || `card-review-${parsed.data.clientRequestId}`,
-        policyId: policy.policyId,
-        policyVersion: policy.version,
-        commandType: 'initiative.card.review',
-        payload: {
-          cardKey: firstParam(req.params.cardKey),
-          expectedCardVersion: parsed.data.expectedCardVersion,
-          outcome: parsed.data.outcome,
-          rationale: parsed.data.rationale,
-          selfApprovalAllowed: Boolean(policy.config.selfApproval),
+      const result = await reviewInitiativeCard(
+        deps.unitOfWork,
+        {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          aggregateType: 'initiative',
+          aggregateId: firstParam(req.params.initiativeId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId,
+          correlationId:
+            String(
+              (req as RuntimeRequest).correlationId || req.header('X-Correlation-ID') || ''
+            ).trim() || `card-review-${parsed.data.clientRequestId}`,
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+          commandType: 'initiative.card.review',
+          payload: {
+            cardKey: firstParam(req.params.cardKey),
+            expectedCardVersion: parsed.data.expectedCardVersion,
+            outcome: parsed.data.outcome,
+            rationale: parsed.data.rationale,
+            selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          },
         },
-      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
+        (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile)
+      );
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -2993,25 +3116,29 @@ export function createInitiativesExecutionRuntimeRouter(
           return;
         }
       }
-      const result = await requestDefinitionDecision(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'initiative',
-        aggregateId: firstParam(req.params.initiativeId),
-        expectedVersion: parsed.data.expectedVersion,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId: `definition-request-${parsed.data.clientRequestId}`,
-        policyId: policy.policyId,
-        policyVersion: policy.version,
-        commandType: 'initiative.definition.request',
-        payload: {
-          decisionId: parsed.data.decisionId,
-          authorityId: parsed.data.authorityId,
-          dueAt: parsed.data.dueAt,
-          selfApprovalAllowed: Boolean(policy.config.selfApproval),
-          ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
+      const result = await requestDefinitionDecision(
+        deps.unitOfWork,
+        {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          aggregateType: 'initiative',
+          aggregateId: firstParam(req.params.initiativeId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId,
+          correlationId: `definition-request-${parsed.data.clientRequestId}`,
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+          commandType: 'initiative.definition.request',
+          payload: {
+            decisionId: parsed.data.decisionId,
+            authorityId: parsed.data.authorityId,
+            dueAt: parsed.data.dueAt,
+            selfApprovalAllowed: Boolean(policy.config.selfApproval),
+            ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
+          },
         },
-      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
+        (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile)
+      );
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -3066,27 +3193,31 @@ export function createInitiativesExecutionRuntimeRouter(
           return;
         }
       }
-      const result = await decideDefinition(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'initiative',
-        aggregateId: firstParam(req.params.initiativeId),
-        expectedVersion: parsed.data.expectedVersion,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId: `definition-decision-${parsed.data.clientRequestId}`,
-        policyId: policy.policyId,
-        policyVersion: policy.version,
-        commandType: 'initiative.definition.decide',
-        payload: {
-          governanceQuorumRequired: Boolean(policy.config.enforceGateGovernance),
-          governanceQuorumRef: parsed.data.governanceQuorumRef,
-          decisionId: parsed.data.decisionId,
-          outcome: parsed.data.outcome,
-          rationale: parsed.data.rationale,
-          selfApprovalAllowed: Boolean(policy.config.selfApproval),
-          ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
+      const result = await decideDefinition(
+        deps.unitOfWork,
+        {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          aggregateType: 'initiative',
+          aggregateId: firstParam(req.params.initiativeId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId,
+          correlationId: `definition-decision-${parsed.data.clientRequestId}`,
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+          commandType: 'initiative.definition.decide',
+          payload: {
+            governanceQuorumRequired: Boolean(policy.config.enforceGateGovernance),
+            governanceQuorumRef: parsed.data.governanceQuorumRef,
+            decisionId: parsed.data.decisionId,
+            outcome: parsed.data.outcome,
+            rationale: parsed.data.rationale,
+            selfApprovalAllowed: Boolean(policy.config.selfApproval),
+            ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
+          },
         },
-      }, (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile));
+        (current, profile) => assertConfiguredProfileAuthority(deps, actor, current, profile)
+      );
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
   );
@@ -3815,8 +3946,7 @@ export function createInitiativesExecutionRuntimeRouter(
    * skład NADPISUJE każdy zapis planu z `portfolio: 'auto'`. Nazwa niesie datę
    * stanu, bo portfel jest migawką „co było zatwierdzone, gdy PMO planowało".
    */
-  const workingPortfolioId = (organizationId: string) =>
-    `portfolio-${organizationId}-roboczy`;
+  const workingPortfolioId = (organizationId: string) => `portfolio-${organizationId}-roboczy`;
   const workingPortfolioName = (asOf: Date) =>
     `Portfel roboczy — zatwierdzone inicjatywy, stan z ${asOf.toISOString().slice(0, 10)}`;
   const membershipFingerprint = (
@@ -3987,10 +4117,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      const projectScope = planningProjectScope(
-        moduleInitiative.projectId,
-        actor.organizationId
-      );
+      const projectScope = planningProjectScope(moduleInitiative.projectId, actor.organizationId);
       if (!(await deps.authorize(actor, projectScope, 'initiative.update'))) {
         res.status(403).json({ error: { code: 'INITIATIVE_UPDATE_FORBIDDEN' } });
         return;
@@ -4095,7 +4222,10 @@ export function createInitiativesExecutionRuntimeRouter(
         !(await deps.reader.findModuleInitiativeForPlanning(actor.organizationId, dependencyId))
       ) {
         res.status(400).json({
-          error: { code: 'DEPENDENCY_INITIATIVE_NOT_FOUND', rule: 'DEPENDENCY_INITIATIVE_NOT_FOUND' },
+          error: {
+            code: 'DEPENDENCY_INITIATIVE_NOT_FOUND',
+            rule: 'DEPENDENCY_INITIATIVE_NOT_FOUND',
+          },
           code: 'DEPENDENCY_INITIATIVE_NOT_FOUND',
           rule: 'DEPENDENCY_INITIATIVE_NOT_FOUND',
         });
@@ -4107,7 +4237,11 @@ export function createInitiativesExecutionRuntimeRouter(
     );
     if (cycle) {
       res.status(400).json({
-        error: { code: INITIATIVE_DEPENDENCY_CYCLE_RULE, rule: INITIATIVE_DEPENDENCY_CYCLE_RULE, path: cycle },
+        error: {
+          code: INITIATIVE_DEPENDENCY_CYCLE_RULE,
+          rule: INITIATIVE_DEPENDENCY_CYCLE_RULE,
+          path: cycle,
+        },
         code: INITIATIVE_DEPENDENCY_CYCLE_RULE,
         rule: INITIATIVE_DEPENDENCY_CYCLE_RULE,
         path: cycle,
@@ -4192,7 +4326,10 @@ export function createInitiativesExecutionRuntimeRouter(
         parsed.data.portfolio === 'auto' ||
         !requestedPortfolioId ||
         requestedPortfolioId === workingPortfolioId(actor.organizationId);
-      if (autoPortfolio && !(await deps.authorize(actor, actor.organizationId, 'initiative.update'))) {
+      if (
+        autoPortfolio &&
+        !(await deps.authorize(actor, actor.organizationId, 'initiative.update'))
+      ) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
@@ -6066,8 +6203,7 @@ export function createInitiativesExecutionRuntimeRouter(
         aggregateId: initiativeId,
         expectedVersion,
         clientRequestId,
-        correlationId:
-          req.header('X-Correlation-ID') || `initiative-forecast-${clientRequestId}`,
+        correlationId: req.header('X-Correlation-ID') || `initiative-forecast-${clientRequestId}`,
         policyId: policy.policyId,
         policyVersion: policy.version,
         commandType: 'initiative.forecast.update',
@@ -6201,38 +6337,54 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
   for (const [method, operation] of [
-    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+    ['post', 'create'],
+    ['patch', 'update'],
+    ['delete', 'delete'],
   ] as const) {
     router[method](
       '/initiatives/:initiativeId/budget-items/:itemId',
       asyncHandler(async (req, res) => {
         const actor = actorFromRequest(req);
         if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
-        const parsed = z.object({
-          expectedVersion: z.number().int().nonnegative(),
-          clientRequestId: z.string().min(1).max(240),
-          fields: BudgetItemFieldsSchema.default({}),
-        }).safeParse(req.body);
-        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const parsed = z
+          .object({
+            expectedVersion: z.number().int().nonnegative(),
+            clientRequestId: z.string().min(1).max(240),
+            fields: BudgetItemFieldsSchema.default({}),
+          })
+          .safeParse(req.body);
+        if (!parsed.success)
+          return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         const initiativeId = firstParam(req.params.initiativeId);
-        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
-        const allowed = projectIds.length > 0
-          ? await authorizeProjects(actor, projectIds, 'initiative.update')
-          : await deps.authorize(actor, '', 'initiative.update');
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+          actor.organizationId,
+          'initiative',
+          initiativeId
+        );
+        const allowed =
+          projectIds.length > 0
+            ? await authorizeProjects(actor, projectIds, 'initiative.update')
+            : await deps.authorize(actor, '', 'initiative.update');
         if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
         let result;
         try {
           result = await writeBudgetItem(deps.unitOfWork, {
-          organizationId: actor.organizationId, actorId: actor.userId,
-          aggregateType: 'initiative_budget_item', aggregateId: firstParam(req.params.itemId),
-          expectedVersion: parsed.data.expectedVersion,
-          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
-          policyId: 'execution-control', policyVersion: 1,
-          commandType: `initiative-budget-item.${operation}`, createIfMissing: true,
-          payload: { initiativeId, operation, fields: parsed.data.fields },
-        });
+            organizationId: actor.organizationId,
+            actorId: actor.userId,
+            aggregateType: 'initiative_budget_item',
+            aggregateId: firstParam(req.params.itemId),
+            expectedVersion: parsed.data.expectedVersion,
+            clientRequestId: parsed.data.clientRequestId,
+            correlationId: parsed.data.clientRequestId,
+            policyId: 'execution-control',
+            policyVersion: 1,
+            commandType: `initiative-budget-item.${operation}`,
+            createIfMissing: true,
+            payload: { initiativeId, operation, fields: parsed.data.fields },
+          });
         } catch (error) {
-          if (error instanceof BudgetItemNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          if (error instanceof BudgetItemNotFoundError)
+            return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
           throw error;
         }
         res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -6240,38 +6392,54 @@ export function createInitiativesExecutionRuntimeRouter(
     );
   }
   for (const [method, operation] of [
-    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+    ['post', 'create'],
+    ['patch', 'update'],
+    ['delete', 'delete'],
   ] as const) {
     router[method](
       '/initiatives/:initiativeId/resources/:itemId',
       asyncHandler(async (req, res) => {
         const actor = actorFromRequest(req);
         if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
-        const parsed = z.object({
-          expectedVersion: z.number().int().nonnegative(),
-          clientRequestId: z.string().min(1).max(240),
-          fields: ResourceFieldsSchema.default({}),
-        }).safeParse(req.body);
-        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const parsed = z
+          .object({
+            expectedVersion: z.number().int().nonnegative(),
+            clientRequestId: z.string().min(1).max(240),
+            fields: ResourceFieldsSchema.default({}),
+          })
+          .safeParse(req.body);
+        if (!parsed.success)
+          return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         const initiativeId = firstParam(req.params.initiativeId);
-        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
-        const allowed = projectIds.length > 0
-          ? await authorizeProjects(actor, projectIds, 'initiative.update')
-          : await deps.authorize(actor, '', 'initiative.update');
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+          actor.organizationId,
+          'initiative',
+          initiativeId
+        );
+        const allowed =
+          projectIds.length > 0
+            ? await authorizeProjects(actor, projectIds, 'initiative.update')
+            : await deps.authorize(actor, '', 'initiative.update');
         if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
         let result;
         try {
           result = await writeResource(deps.unitOfWork, {
-          organizationId: actor.organizationId, actorId: actor.userId,
-          aggregateType: 'initiative_resource', aggregateId: firstParam(req.params.itemId),
-          expectedVersion: parsed.data.expectedVersion,
-          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
-          policyId: 'execution-control', policyVersion: 1,
-          commandType: `initiative-resource.${operation}`, createIfMissing: true,
-          payload: { initiativeId, operation, fields: parsed.data.fields },
-        });
+            organizationId: actor.organizationId,
+            actorId: actor.userId,
+            aggregateType: 'initiative_resource',
+            aggregateId: firstParam(req.params.itemId),
+            expectedVersion: parsed.data.expectedVersion,
+            clientRequestId: parsed.data.clientRequestId,
+            correlationId: parsed.data.clientRequestId,
+            policyId: 'execution-control',
+            policyVersion: 1,
+            commandType: `initiative-resource.${operation}`,
+            createIfMissing: true,
+            payload: { initiativeId, operation, fields: parsed.data.fields },
+          });
         } catch (error) {
-          if (error instanceof ResourceNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          if (error instanceof ResourceNotFoundError)
+            return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
           throw error;
         }
         res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -6279,85 +6447,173 @@ export function createInitiativesExecutionRuntimeRouter(
     );
   }
   for (const [method, operation] of [
-    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+    ['post', 'create'],
+    ['patch', 'update'],
+    ['delete', 'delete'],
   ] as const) {
     router[method](
       '/initiatives/:initiativeId/milestones/:itemId',
       asyncHandler(async (req, res) => {
         const actor = actorFromRequest(req);
         if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
-        const parsed = z.object({
-          expectedVersion: z.number().int().nonnegative(),
-          clientRequestId: z.string().min(1).max(240),
-          fields: MilestoneFieldsSchema.default({}),
-        }).safeParse(req.body);
-        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const parsed = z
+          .object({
+            expectedVersion: z.number().int().nonnegative(),
+            clientRequestId: z.string().min(1).max(240),
+            fields: MilestoneFieldsSchema.default({}),
+          })
+          .safeParse(req.body);
+        if (!parsed.success)
+          return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         const initiativeId = firstParam(req.params.initiativeId);
-        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
-        const allowed = projectIds.length > 0
-          ? await authorizeProjects(actor, projectIds, 'initiative.update')
-          : await deps.authorize(actor, '', 'initiative.update');
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+          actor.organizationId,
+          'initiative',
+          initiativeId
+        );
+        const allowed =
+          projectIds.length > 0
+            ? await authorizeProjects(actor, projectIds, 'initiative.update')
+            : await deps.authorize(actor, '', 'initiative.update');
         if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
         let result;
         try {
           result = await writeMilestone(deps.unitOfWork, {
-          organizationId: actor.organizationId, actorId: actor.userId,
-          aggregateType: 'initiative_milestone', aggregateId: firstParam(req.params.itemId),
-          expectedVersion: parsed.data.expectedVersion,
-          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
-          policyId: 'execution-control', policyVersion: 1,
-          commandType: `initiative-milestone.${operation}`, createIfMissing: true,
-          payload: { initiativeId, operation, fields: parsed.data.fields },
-        });
+            organizationId: actor.organizationId,
+            actorId: actor.userId,
+            aggregateType: 'initiative_milestone',
+            aggregateId: firstParam(req.params.itemId),
+            expectedVersion: parsed.data.expectedVersion,
+            clientRequestId: parsed.data.clientRequestId,
+            correlationId: parsed.data.clientRequestId,
+            policyId: 'execution-control',
+            policyVersion: 1,
+            commandType: `initiative-milestone.${operation}`,
+            createIfMissing: true,
+            payload: { initiativeId, operation, fields: parsed.data.fields },
+          });
         } catch (error) {
-          if (error instanceof MilestoneNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          if (error instanceof MilestoneNotFoundError)
+            return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
           throw error;
         }
         res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
       })
     );
   }
-  for(const [method,kind,operation,path] of [
-    ['post','plan','create','/initiatives/:initiativeId/staffing-plans/:planId'],
-    ['patch','plan','update','/initiatives/:initiativeId/staffing-plans/:planId'],
-    ['delete','plan','delete','/initiatives/:initiativeId/staffing-plans/:planId'],
-    ['post','role','create','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
-    ['patch','role','update','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
-    ['delete','role','delete','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
-    ['post','capacity','sync','/initiatives/:initiativeId/staffing-plans/:planId/sync-capacity'],
-  ] as const){
-    router[method](path,asyncHandler(async(req,res)=>{
-      const actor=actorFromRequest(req);if(!actor)return void res.status(401).json({error:{code:'AUTH_REQUIRED'}});
-      const parsed=StaffingFieldsSchema.extend({expectedVersion:z.number().int().nonnegative(),clientRequestId:z.string().min(1).max(240)}).safeParse(req.body);
-      if(!parsed.success)return void res.status(400).json({error:{code:'VALIDATION_FAILED'}});
-      const initiativeId=firstParam(req.params.initiativeId),planId=firstParam(req.params.planId),itemId=kind==='capacity'?initiativeId:kind==='plan'?planId:firstParam(req.params.roleId);
-      const projects=await deps.reader.resolveProjectIdsForAggregate(actor.organizationId,'initiative',initiativeId);
-      const allowed=projects.length>0?await authorizeProjects(actor,projects,'initiative.update'):await deps.authorize(actor,'','initiative.update');
-      if(!allowed)return void res.status(404).json({error:{code:'NOT_FOUND'}});
-      const {expectedVersion,clientRequestId,...fields}=parsed.data;
-      try{
-        const result=await writeStaffing(deps.unitOfWork,{organizationId:actor.organizationId,actorId:actor.userId,aggregateType:staffingAggregateType(kind),aggregateId:itemId,expectedVersion,clientRequestId,correlationId:clientRequestId,policyId:'execution-control',policyVersion:1,commandType:`staffing-${kind}.${operation}`,createIfMissing:true,payload:{initiativeId,planId,kind,operation,fields}});
-        res.status(operation==='create'&&result.status==='APPLIED'?201:200).json(result);
-      }catch(error){if(error instanceof StaffingNotFoundError)return void res.status(404).json({error:{code:'NOT_FOUND'}});throw error;}
-    }));
+  for (const [method, kind, operation, path] of [
+    ['post', 'plan', 'create', '/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['patch', 'plan', 'update', '/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['delete', 'plan', 'delete', '/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['post', 'role', 'create', '/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['patch', 'role', 'update', '/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['delete', 'role', 'delete', '/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['post', 'capacity', 'sync', '/initiatives/:initiativeId/staffing-plans/:planId/sync-capacity'],
+  ] as const) {
+    router[method](
+      path,
+      asyncHandler(async (req, res) => {
+        const actor = actorFromRequest(req);
+        if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        const parsed = StaffingFieldsSchema.extend({
+          expectedVersion: z.number().int().nonnegative(),
+          clientRequestId: z.string().min(1).max(240),
+        }).safeParse(req.body);
+        if (!parsed.success)
+          return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const initiativeId = firstParam(req.params.initiativeId),
+          planId = firstParam(req.params.planId),
+          itemId =
+            kind === 'capacity'
+              ? initiativeId
+              : kind === 'plan'
+                ? planId
+                : firstParam(req.params.roleId);
+        const projects = await deps.reader.resolveProjectIdsForAggregate(
+          actor.organizationId,
+          'initiative',
+          initiativeId
+        );
+        const allowed =
+          projects.length > 0
+            ? await authorizeProjects(actor, projects, 'initiative.update')
+            : await deps.authorize(actor, '', 'initiative.update');
+        if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        const { expectedVersion, clientRequestId, ...fields } = parsed.data;
+        try {
+          const result = await writeStaffing(deps.unitOfWork, {
+            organizationId: actor.organizationId,
+            actorId: actor.userId,
+            aggregateType: staffingAggregateType(kind),
+            aggregateId: itemId,
+            expectedVersion,
+            clientRequestId,
+            correlationId: clientRequestId,
+            policyId: 'execution-control',
+            policyVersion: 1,
+            commandType: `staffing-${kind}.${operation}`,
+            createIfMissing: true,
+            payload: { initiativeId, planId, kind, operation, fields },
+          });
+          res
+            .status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200)
+            .json(result);
+        } catch (error) {
+          if (error instanceof StaffingNotFoundError)
+            return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+          throw error;
+        }
+      })
+    );
   }
-  router.put('/initiatives/:initiativeId/gate-roles',asyncHandler(async(req,res)=>{
-    const actor=actorFromRequest(req);
-    if(!actor)return void res.status(401).json({error:{code:'AUTH_REQUIRED'}});
-    const parsed=z.object({expectedVersion:z.number().int().nonnegative(),clientRequestId:z.string().min(1).max(240),roles:GateRolesSchema}).safeParse(req.body);
-    if(!parsed.success)return void res.status(400).json({error:{code:'VALIDATION_FAILED'}});
-    const initiativeId=firstParam(req.params.initiativeId);
-    const projects=await deps.reader.resolveProjectIdsForAggregate(actor.organizationId,'initiative',initiativeId);
-    const allowed=projects.length>0?await authorizeProjects(actor,projects,'initiative.update'):await deps.authorize(actor,'','initiative.update');
-    if(!allowed)return void res.status(404).json({error:{code:'NOT_FOUND'}});
-    try {
-      const result=await replaceGateRoles(deps.unitOfWork,{organizationId:actor.organizationId,actorId:actor.userId,aggregateType:'initiative_gate_role_profile',aggregateId:initiativeId,expectedVersion:parsed.data.expectedVersion,clientRequestId:parsed.data.clientRequestId,correlationId:parsed.data.clientRequestId,policyId:'execution-control',policyVersion:1,commandType:'initiative-gate-roles.replace',createIfMissing:true,payload:{initiativeId,roles:parsed.data.roles}});
-      res.json(result);
-    }catch(error){
-      if(error instanceof GateRolesNotFoundError)return void res.status(404).json({error:{code:'NOT_FOUND'}});
-      throw error;
-    }
-  }));
+  router.put(
+    '/initiatives/:initiativeId/gate-roles',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const parsed = z
+        .object({
+          expectedVersion: z.number().int().nonnegative(),
+          clientRequestId: z.string().min(1).max(240),
+          roles: GateRolesSchema,
+        })
+        .safeParse(req.body);
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projects = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      const allowed =
+        projects.length > 0
+          ? await authorizeProjects(actor, projects, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+      if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      try {
+        const result = await replaceGateRoles(deps.unitOfWork, {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          aggregateType: 'initiative_gate_role_profile',
+          aggregateId: initiativeId,
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId,
+          correlationId: parsed.data.clientRequestId,
+          policyId: 'execution-control',
+          policyVersion: 1,
+          commandType: 'initiative-gate-roles.replace',
+          createIfMissing: true,
+          payload: { initiativeId, roles: parsed.data.roles },
+        });
+        res.json(result);
+      } catch (error) {
+        if (error instanceof GateRolesNotFoundError)
+          return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        throw error;
+      }
+    })
+  );
   router.post(
     '/initiatives/:initiativeId/raid-items/:raidItemId',
     asyncHandler(async (req, res) => {
@@ -8205,7 +8461,13 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
     buildSnapshot: (input) => runtimePortfolioAnalysis.buildSnapshot(input),
     reader: runtimePortfolioAnalysis,
     contextReader: runtimePortfolioAnalysis,
-    gateway: new ConfiguredPortfolioConsultingModelGateway(),
+    // [ODMROZENIE 05_INITIATIVES DEC-495] F2-1 E1: brama realnego modelu jest
+    // domyslna. Deterministyczna wchodzi WYLACZNIE przy jawnej zmiennej
+    // PORTFOLIO_ANALYSIS_DETERMINISTIC_MODEL=true i nigdy w produkcji — istnieje
+    // po to, zeby ekran dalo sie obejrzec i przetestowac bez kluczy LLM.
+    gateway: isDeterministicPortfolioAnalysisModelEnabled()
+      ? new DeterministicPortfolioConsultingModelGateway()
+      : new ConfiguredPortfolioConsultingModelGateway(),
   },
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
