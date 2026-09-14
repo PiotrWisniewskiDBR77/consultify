@@ -22039,6 +22039,218 @@
       "unavailableDescription": "Analityka produktywności osobistej nie jest jeszcze podłączona do trwałego źródła danych.",
       "loadError": "Nie udało się wczytać analityki osobistej",
       "unavailableTitle": "Analityka osobista niedostępna"
+    },
+    "proactivitySelector": {
+      "header": "Proaktywność AI",
+      "subtitle": "Jak AI powinna się z Tobą komunikować?",
+      "orgLimit": "Limit organizacji",
+      "modeHeading": "Tryb: {{title}}",
+      "mode": {
+        "reactive": {
+          "title": "Reaktywny",
+          "shortDescription": "AI czeka na Twoje pytania",
+          "longDescription": "AI milczy, dopóki nie zapytasz. Idealne dla doświadczonych użytkowników, którzy wolą pracować samodzielnie."
+        },
+        "balanced": {
+          "title": "Zrównoważony",
+          "shortDescription": "AI podpowiada, gdy to pomocne",
+          "longDescription": "AI podpowiada, gdy wykryje, że może się to przydać, ale czeka na Twoją inicjatywę w ważniejszych sprawach."
+        },
+        "proactive": {
+          "title": "Proaktywny",
+          "shortDescription": "AI aktywnie wspiera",
+          "longDescription": "AI aktywnie monitoruje Twoją pracę i samodzielnie proponuje pomoc, inicjując rozmowy o potencjalnych problemach."
+        }
+      },
+      "behavior": {
+        "autoSuggest": "Automatyczne podpowiedzi",
+        "nudges": "Proaktywne przypomnienia",
+        "contextualHints": "Podpowiedzi kontekstowe",
+        "initiateConversation": "Inicjowanie rozmów"
+      }
+    },
+    "modelSelector": {
+      "status": {
+        "degraded": "Ograniczona sprawność"
+      },
+      "header": "Modele AI",
+      "clearSelection": "Wyczyść wybór",
+      "hideModel": "Ukryj model",
+      "showModel": "Pokaż model",
+      "emptyTitle": "Brak dostępnych modeli",
+      "emptyBody": "Skontaktuj się z administratorem, aby włączyć modele AI"
+    },
+    "auditLogViewer": {
+      "valueYes": "Tak",
+      "valueNo": "Nie",
+      "header": "Dziennik zmian ustawień",
+      "entriesCount": "{{count}} wpisów",
+      "exportCsv": "Eksportuj CSV",
+      "refresh": "Odśwież",
+      "searchPlaceholder": "Szukaj w ustawieniach...",
+      "levelAll": "Wszystkie poziomy",
+      "levelAdmin": "Administrator",
+      "levelUser": "Użytkownik",
+      "emptyState": "Nie znaleziono wpisów w dzienniku"
+    },
+    "cookieConsentBanner": {
+      "title": "Używamy plików cookie",
+      "body": "Używamy plików cookie, aby poprawić Twoje wrażenia, analizować ruch i personalizować treści. Możesz dostosować swoje preferencje lub zaakceptować wszystkie pliki cookie.",
+      "learnMore": "Dowiedz się więcej",
+      "customize": "Dostosuj",
+      "necessaryOnly": "Tylko niezbędne",
+      "acceptAll": "Akceptuj wszystkie",
+      "savePreferences": "Zapisz preferencje",
+      "category": {
+        "required": "Wymagane",
+        "necessary": {
+          "title": "Bezwzględnie konieczne",
+          "description": "Niezbędne do działania platformy. Nie można ich wyłączyć."
+        },
+        "functional": {
+          "title": "Funkcjonalne",
+          "description": "Zapamiętują Twoje preferencje, takie jak motyw i język."
+        },
+        "analytics": {
+          "title": "Analityczne",
+          "description": "Pomagają nam zrozumieć, jak korzystasz z platformy, aby ją ulepszać."
+        },
+        "marketing": {
+          "title": "Marketingowe",
+          "description": "Służą do spersonalizowanej reklamy. Obecnie nieużywane."
+        }
+      }
+    },
+    "toolVideoModal": {
+      "videoUnavailableTitle": "Wideo niedostępne",
+      "videoUnavailableBody": "Przygotowujemy szczegółowy przewodnik po tym narzędziu. W międzyczasie wypróbuj je samodzielnie!",
+      "tryItFree": "Wypróbuj za darmo",
+      "maybeLater": "Może później"
+    },
+    "welcomeView": {
+      "videoUnsupported": "Twoja przeglądarka nie obsługuje znacznika wideo."
+    },
+    "inviteUserModal": {
+      "seatAddFailed": "Nie udało się dodać miejsca. Spróbuj ponownie lub skontaktuj się z pomocą techniczną.",
+      "sendFailed": "Nie udało się wysłać zaproszenia. Spróbuj ponownie lub skontaktuj się z pomocą techniczną.",
+      "invalidEmail": "Podaj prawidłowy adres e-mail",
+      "selectProject": "Wybierz projekt",
+      "enableAutoSeat": "Włącz opcję „Dodaj miejsce automatycznie”, aby kontynuować, lub skontaktuj się z administratorem w celu zmiany planu.",
+      "header": "Zaproś użytkownika",
+      "seatsFull": "Organizacja osiągnęła maksymalną liczbę miejsc.",
+      "seatsUsed": "Wykorzystano {{used}}/{{max}} miejsc.",
+      "seatsAddPrompt": "Dodaj miejsce za {{price}} USD/miesiąc, aby kontynuować.",
+      "autoAddSeat": "Dodawaj miejsce automatycznie",
+      "autoAddSeatBilling": "Do Twojego rozliczenia zostanie doliczone +{{price}} {{currency}}/miesiąc",
+      "errorCode": "Kod: {{code}}",
+      "emailLabel": "Adres e-mail *",
+      "invitationType": "Rodzaj zaproszenia",
+      "invitationTypeOrg": "Organizacja",
+      "invitationTypeProject": "Projekt",
+      "projectLabel": "Projekt *",
+      "selectProjectOption": "Wybierz projekt",
+      "accountType": "Typ konta",
+      "roleUser": "Użytkownik",
+      "roleAdmin": "Administrator",
+      "roleUserHint": "Może przeglądać przypisane projekty i w nich uczestniczyć",
+      "roleAdminHint": "Może zarządzać ustawieniami organizacji i użytkownikami",
+      "projectRole": "Rola w projekcie",
+      "projectRoleExecutive": "Sponsor / kierownictwo projektu",
+      "projectRoleManager": "Kierownik projektu",
+      "projectRoleTeamLead": "Lider zespołu",
+      "projectRoleTeamMember": "Członek zespołu",
+      "projectRoleStakeholder": "Interesariusz / obserwator",
+      "projectRoleExecutiveHint": "Nadzór strategiczny i sponsoring",
+      "projectRoleManagerHint": "Pełna odpowiedzialność za zarządzanie projektem",
+      "projectRoleTeamLeadHint": "Prowadzi obszar prac lub zespół w ramach projektu",
+      "projectRoleTeamMemberHint": "Realizuje zadania i współtworzy rezultaty",
+      "projectRoleStakeholderHint": "Dostęp tylko do podglądu postępu projektu",
+      "previewHeader": "Podgląd zaproszenia",
+      "previewInvitedWith": "zostanie zaproszony(-a) z",
+      "previewAccountType": "typem konta",
+      "previewAnd": "i",
+      "previewProjectRole": "rolą w projekcie",
+      "previewExpiry": "Zaproszenie wygaśnie za 7 dni.",
+      "cancel": "Anuluj",
+      "addingSeat": "Dodawanie miejsca...",
+      "sending": "Wysyłanie...",
+      "addSeatAndInvite": "Dodaj miejsce i zaproś",
+      "sendInvitation": "Wyślij zaproszenie"
+    },
+    "enterpriseOnboardingWizard": {
+      "processing": "Przetwarzanie...",
+      "step1": {
+        "title": "Rozpocznij wniosek partnerski",
+        "stepName": "Umowa partnerska",
+        "termsIntro": "Korzystając z Consultify, akceptujesz naszą umowę o świadczenie usług dla firm...",
+        "termsBullet1": "Usługi profesjonalne i narzędzia doradcze oparte na AI",
+        "termsBullet2": "Przetwarzanie danych zgodne z przepisami o prywatności (zgodność z RODO)",
+        "termsBullet3": "Warunki subskrypcji i zasady rozliczeń",
+        "privacyIntro": "Szanujemy Twoją prywatność i chronimy Twoje dane...",
+        "privacyBullet1": "Zbieramy wyłącznie niezbędne informacje biznesowe",
+        "privacyBullet2": "Twoje dane są szyfrowane i bezpieczne",
+        "privacyBullet3": "Masz kontrolę nad swoimi danymi - możesz je usunąć w każdej chwili"
+      },
+      "step2": {
+        "title": "Wybierz swoją ścieżkę partnerską",
+        "stepName": "Ścieżka partnerska",
+        "mostPopular": "Najpopularniejszy",
+        "continueWith": "Kontynuuj z planem",
+        "selectedPlanFallback": "Wybrany plan"
+      },
+      "step3": {
+        "title": "Gotowość do wypłat i rozliczeń",
+        "stepName": "Gotowość do wypłat",
+        "placeholderTitle": "Konfiguracja wypłat i rozliczeń",
+        "placeholderNote": "Automatyczna konfiguracja wypłat zostanie rozbudowana w kolejnym wdrożeniu",
+        "continueLater": "Kontynuuj i dokończ później",
+        "contactPartnerTeam": "Skontaktuj się z zespołem partnerskim"
+      },
+      "step4": {
+        "title": "Wniosek partnerski zakończony",
+        "goToWorkspace": "Przejdź do przestrzeni roboczej"
+      }
+    },
+    "onboardingWizard": {
+      "toast": {
+        "fillRequired": "Uzupełnij wymagane pola",
+        "rateLimited": "Zbyt wiele żądań. Poczekaj przed ponowną próbą.",
+        "contextSavedNoPlan": "Twój profil został zapisany, a asystent AI jest już odblokowany. Sugerowany plan nie jest jeszcze dostępny.",
+        "saveContextFailed": "Nie udało się zapisać profilu. Spróbuj ponownie.",
+        "consultantCannotAccept": "Konsultanci nie mogą akceptować planów. Skontaktuj się z administratorem.",
+        "planAccepted": "Plan zaakceptowany! Utworzono inicjatywy.",
+        "planAlreadyAccepted": "Ten plan został już zaakceptowany.",
+        "acceptPlanFailed": "Nie udało się zaakceptować planu"
+      },
+      "step1": {
+        "title": "Przyspieszmy Twój sukces.",
+        "subtitle": "Opowiedz nam trochę o swojej sytuacji, a nasza AI zbuduje dla Ciebie spersonalizowany plan „Pierwszej wartości”.",
+        "roleLabel": "Twoja rola",
+        "rolePlaceholder": "np. Kierownik programu, CTO",
+        "industryLabel": "Branża",
+        "industryPlaceholder": "np. Fintech, Produkcja",
+        "challengeLabel": "Największe wyzwanie w tej chwili",
+        "challengePlaceholder": "np. Terminy się przesuwają, komunikacja w zespole jest rozproszona...",
+        "urgencyLabel": "Poziom pilności",
+        "goalLabel": "Kluczowy cel („sukces”)",
+        "goalPlaceholder": "np. Uruchomienie w Q1, redukcja błędów o 50%",
+        "generateButton": "Wygeneruj moją strategię"
+      },
+      "step2": {
+        "title": "Analizujemy Twój kontekst...",
+        "subtitle": "Tworzymy plan działań o dużym wpływie dla roli {{role}} w branży {{industry}}..."
+      },
+      "step3": {
+        "recommendedStrategy": "Zalecana strategia",
+        "strategicRoadmap": "Mapa drogowa strategii",
+        "valueAdd": "Wartość dodana: {{value}}",
+        "suggestedInitiatives": "Sugerowane inicjatywy",
+        "suggestedInitiativesHint": "Wybierz inicjatywy, które chcesz od razu uruchomić w platformie.",
+        "readOnlyMode": "Tryb tylko do odczytu",
+        "acceptAndStart": "Zaakceptuj i rozpocznij realizację",
+        "consultantViewOnly": "Podgląd jako konsultant — nie można tworzyć inicjatyw.",
+        "addsInitiatives": "Dodaje {{count}} inicjatyw do Twojej przestrzeni roboczej."
+      }
     }
   },
   "showcase": {

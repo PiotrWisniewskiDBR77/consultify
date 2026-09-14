@@ -22856,6 +22856,218 @@
       "unavailableDescription": "Personal productivity analytics are not connected to a persisted analytics source yet.",
       "loadError": "Failed to load personal analytics",
       "unavailableTitle": "Personal analytics unavailable"
+    },
+    "proactivitySelector": {
+      "header": "AI Proactivity",
+      "subtitle": "How should AI interact with you?",
+      "orgLimit": "Org limit",
+      "modeHeading": "{{title}} Mode",
+      "mode": {
+        "reactive": {
+          "title": "Reactive",
+          "shortDescription": "AI waits for your questions",
+          "longDescription": "The AI remains silent until you ask. Perfect for experienced users who prefer to work independently."
+        },
+        "balanced": {
+          "title": "Balanced",
+          "shortDescription": "AI suggests when helpful",
+          "longDescription": "The AI provides suggestions when it detects you might benefit, but waits for you to initiate major interactions."
+        },
+        "proactive": {
+          "title": "Proactive",
+          "shortDescription": "AI actively assists",
+          "longDescription": "The AI actively monitors your work and proactively offers assistance, starting conversations about potential issues."
+        }
+      },
+      "behavior": {
+        "autoSuggest": "Auto-suggestions",
+        "nudges": "Proactive nudges",
+        "contextualHints": "Contextual hints",
+        "initiateConversation": "Start conversations"
+      }
+    },
+    "modelSelector": {
+      "status": {
+        "degraded": "Degraded"
+      },
+      "header": "AI Models",
+      "clearSelection": "Clear selection",
+      "hideModel": "Hide model",
+      "showModel": "Show model",
+      "emptyTitle": "No models available",
+      "emptyBody": "Contact your administrator to enable AI models"
+    },
+    "auditLogViewer": {
+      "valueYes": "Yes",
+      "valueNo": "No",
+      "header": "Settings Audit Log",
+      "entriesCount": "{{count}} entries",
+      "exportCsv": "Export CSV",
+      "refresh": "Refresh",
+      "searchPlaceholder": "Search settings...",
+      "levelAll": "All levels",
+      "levelAdmin": "Admin",
+      "levelUser": "User",
+      "emptyState": "No audit entries found"
+    },
+    "cookieConsentBanner": {
+      "title": "We use cookies",
+      "body": "We use cookies to enhance your experience, analyze traffic, and personalize content. You can customize your preferences or accept all cookies.",
+      "learnMore": "Learn more",
+      "customize": "Customize",
+      "necessaryOnly": "Necessary Only",
+      "acceptAll": "Accept All",
+      "savePreferences": "Save Preferences",
+      "category": {
+        "required": "Required",
+        "necessary": {
+          "title": "Strictly Necessary",
+          "description": "Essential for the platform to function. Cannot be disabled."
+        },
+        "functional": {
+          "title": "Functional",
+          "description": "Remember your preferences like theme and language."
+        },
+        "analytics": {
+          "title": "Analytics",
+          "description": "Help us understand how you use the platform to improve it."
+        },
+        "marketing": {
+          "title": "Marketing",
+          "description": "Used for personalized advertising. Currently not in use."
+        }
+      }
+    },
+    "toolVideoModal": {
+      "videoUnavailableTitle": "Video not available",
+      "videoUnavailableBody": "We're preparing an in-depth walkthrough of this tool. In the meantime, try it yourself!",
+      "tryItFree": "Try It Free",
+      "maybeLater": "Maybe Later"
+    },
+    "welcomeView": {
+      "videoUnsupported": "Your browser does not support the video tag."
+    },
+    "inviteUserModal": {
+      "seatAddFailed": "Could not add a seat. Try again or contact support.",
+      "sendFailed": "Could not send invitation. Try again or contact support.",
+      "invalidEmail": "Please enter a valid email address",
+      "selectProject": "Please select a project",
+      "enableAutoSeat": "Please enable \"Add seat automatically\" to proceed, or contact your administrator to upgrade your plan.",
+      "header": "Invite User",
+      "seatsFull": "Organization has reached maximum seats.",
+      "seatsUsed": "{{used}}/{{max}} seats used.",
+      "seatsAddPrompt": "Add a seat for ${{price}}/month to continue.",
+      "autoAddSeat": "Add seat automatically",
+      "autoAddSeatBilling": "+${{price}}/{{currency}}/month will be added to your billing",
+      "errorCode": "Code: {{code}}",
+      "emailLabel": "Email Address *",
+      "invitationType": "Invitation Type",
+      "invitationTypeOrg": "Organization",
+      "invitationTypeProject": "Project",
+      "projectLabel": "Project *",
+      "selectProjectOption": "Select a project",
+      "accountType": "Account Type",
+      "roleUser": "User",
+      "roleAdmin": "Admin",
+      "roleUserHint": "Can view and contribute to assigned projects",
+      "roleAdminHint": "Can manage organization settings and users",
+      "projectRole": "Project Role",
+      "projectRoleExecutive": "Project Executive / Sponsor",
+      "projectRoleManager": "Project Manager",
+      "projectRoleTeamLead": "Team Lead",
+      "projectRoleTeamMember": "Team Member",
+      "projectRoleStakeholder": "Stakeholder / Viewer",
+      "projectRoleExecutiveHint": "Strategic oversight and sponsorship",
+      "projectRoleManagerHint": "Full project management responsibilities",
+      "projectRoleTeamLeadHint": "Leads a workstream or team within the project",
+      "projectRoleTeamMemberHint": "Executes tasks and contributes to deliverables",
+      "projectRoleStakeholderHint": "View-only access to project progress",
+      "previewHeader": "Invitation Preview",
+      "previewInvitedWith": "will be invited with",
+      "previewAccountType": "account type",
+      "previewAnd": "and",
+      "previewProjectRole": "project role",
+      "previewExpiry": "The invitation will expire in 7 days.",
+      "cancel": "Cancel",
+      "addingSeat": "Adding Seat...",
+      "sending": "Sending...",
+      "addSeatAndInvite": "Add Seat & Invite",
+      "sendInvitation": "Send Invitation"
+    },
+    "enterpriseOnboardingWizard": {
+      "processing": "Processing...",
+      "step1": {
+        "title": "Start your partner application",
+        "stepName": "Partner agreement",
+        "termsIntro": "By using Consultify, you agree to our enterprise service agreement...",
+        "termsBullet1": "Professional services and AI-powered consulting tools",
+        "termsBullet2": "Data processing and privacy compliance (GDPR compliant)",
+        "termsBullet3": "Subscription terms and billing policies",
+        "privacyIntro": "We respect your privacy and protect your data...",
+        "privacyBullet1": "We collect only necessary business information",
+        "privacyBullet2": "Your data is encrypted and secure",
+        "privacyBullet3": "You control your data - delete anytime"
+      },
+      "step2": {
+        "title": "Choose your partner track",
+        "stepName": "Partner track",
+        "mostPopular": "Most Popular",
+        "continueWith": "Continue with",
+        "selectedPlanFallback": "Selected Plan"
+      },
+      "step3": {
+        "title": "Payout and billing readiness",
+        "stepName": "Payout readiness",
+        "placeholderTitle": "Payout and billing setup",
+        "placeholderNote": "Automated payout setup can be expanded in the next rollout",
+        "continueLater": "Continue and finish later",
+        "contactPartnerTeam": "Contact partner team"
+      },
+      "step4": {
+        "title": "Partner application completed",
+        "goToWorkspace": "Go to workspace"
+      }
+    },
+    "onboardingWizard": {
+      "toast": {
+        "fillRequired": "Please fill in the required fields",
+        "rateLimited": "Too many requests. Please wait before regenerating.",
+        "contextSavedNoPlan": "Your profile is saved and the AI assistant is unlocked. The suggested plan is not available yet.",
+        "saveContextFailed": "Failed to save your profile. Please try again.",
+        "consultantCannotAccept": "Consultants cannot accept plans. Contact an Admin.",
+        "planAccepted": "Plan Accepted! Initiatives created.",
+        "planAlreadyAccepted": "This plan has already been accepted.",
+        "acceptPlanFailed": "Failed to accept plan"
+      },
+      "step1": {
+        "title": "Let's fast-track your success.",
+        "subtitle": "Tell us a bit about your situation, and our AI will build a custom \"First Value\" plan for you.",
+        "roleLabel": "Your Role",
+        "rolePlaceholder": "e.g. Program Manager, CTO",
+        "industryLabel": "Industry",
+        "industryPlaceholder": "e.g. Fintech, Manufacturing",
+        "challengeLabel": "Biggest Challenge Right Now",
+        "challengePlaceholder": "e.g. Deadlines are slipping, team communication is siloed...",
+        "urgencyLabel": "Urgency Level",
+        "goalLabel": "Key Goal (The \"Win\")",
+        "goalPlaceholder": "e.g. Launch in Q1, Reduce bugs by 50%",
+        "generateButton": "Generate My Strategy"
+      },
+      "step2": {
+        "title": "Analyzing your context...",
+        "subtitle": "Designing a high-impact intervention plan for {{role}} in {{industry}}..."
+      },
+      "step3": {
+        "recommendedStrategy": "Recommended Strategy",
+        "strategicRoadmap": "Strategic Roadmap",
+        "valueAdd": "Value Add: {{value}}",
+        "suggestedInitiatives": "Suggested Initiatives",
+        "suggestedInitiativesHint": "Select the initiatives you want to launch immediately in the platform.",
+        "readOnlyMode": "Read-Only Mode",
+        "acceptAndStart": "Accept & Start Execution",
+        "consultantViewOnly": "Viewing as Consultant — cannot create initiatives.",
+        "addsInitiatives": "Adds {{count}} initiatives to your workspace."
+      }
     }
   },
   "showcase": {
