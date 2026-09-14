@@ -15499,6 +15499,22 @@
       "empty": "Brak inicjatyw o wysokim ryzyku — wszystko w normie.",
       "suggestedActions": "Sugerowane działania"
     },
+    "workAnalysis": {
+      "label": "Tygodniowa analiza zarządcza",
+      "title": "Praca w trzech oknach czasu",
+      "weekOf": "Tydzień od",
+      "completed": "Wykonane",
+      "attention": "Wymaga uwagi przełożonego",
+      "windows": {
+        "previousWeek": "Miniony tydzień",
+        "nextWeek": "Nadchodzący tydzień",
+        "nextMonth": "Nadchodzący miesiąc"
+      },
+      "columns": {
+        "project": "Projekt",
+        "priority": "Priorytet"
+      }
+    },
     "control": {
       "columns": {
         "title": "Interwencja",

@@ -182,6 +182,8 @@ export interface RuntimeExecutionCaseSummary {
   executionCaseId: string;
   initiativeId?: string;
   initiativeTitle?: string | null;
+  projectId?: string | null;
+  projectTitle?: string | null;
   version?: number;
   state?: string;
   executionManagerId?: string;
@@ -1397,9 +1399,7 @@ export async function listLegacyInitiatives(
   signalOrOptions?: AbortSignal | ListLegacyInitiativesOptions
 ): Promise<LegacyInitiativeApiRow[]> {
   const options: ListLegacyInitiativesOptions =
-    signalOrOptions instanceof AbortSignal
-      ? { signal: signalOrOptions }
-      : (signalOrOptions ?? {});
+    signalOrOptions instanceof AbortSignal ? { signal: signalOrOptions } : (signalOrOptions ?? {});
   const { signal, includeArchived } = options;
   const url = includeArchived ? '/api/initiatives?includeArchived=true' : '/api/initiatives';
   const response = await fetch(url, { credentials: 'include', signal });
