@@ -1,0 +1,132 @@
+
+Running 2 tests using 1 worker
+
+(node:16803) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16803) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/assessment/asm-ui-canon-library.spec.ts:15:3 › ASM-UI-CANON mounted Library and cold reopen › Library lists exact identity/version, opens read-only, cold reopens and remains responsive/accessible (24.1s)
+(node:22595) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22595) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 [chromium] › tests/e2e/assessment/asm-ui-canon-library.spec.ts:85:3 › ASM-UI-CANON mounted Library and cold reopen › foreign tenant is denied or concealed and transport loss is mounted fail-closed with retry (25.0s)
+
+
+  1) [chromium] › tests/e2e/assessment/asm-ui-canon-library.spec.ts:15:3 › ASM-UI-CANON mounted Library and cold reopen › Library lists exact identity/version, opens read-only, cold reopens and remains responsive/accessible 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('row').filter({ hasText: 'f21161d0-2ecd-40d6-92c2-ea72201d824b' })
+    Expected substring: [32m"2.0.0-methodpack.1"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for getByRole('row').filter({ hasText: 'f21161d0-2ecd-40d6-92c2-ea72201d824b' })[22m
+
+
+      35 |     await readerPage.goto('/assessment?tab=library');
+      36 |     const sessionRow = readerPage.getByRole('row').filter({ hasText: sessionId });
+    > 37 |     await expect(sessionRow).toContainText('2.0.0-methodpack.1');
+         |                              ^
+      38 |     await expect(sessionRow).toContainText('v1');
+      39 |     await sessionRow.getByRole('button', { name: /Open|Otwórz/ }).click();
+      40 |     await expect(readerPage).toHaveURL(new RegExp(`/assessment/drd/${sessionId}$`));
+        at /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/tests/e2e/assessment/asm-ui-canon-library.spec.ts:37:30
+
+    Error: cleanup asm-ui-1789416728392: 500 {"status":"error","correlationId":"40b20c1f-3a5a-4c56-aa9c-78575640b0ec","error":{"code":"DATABASE_ERROR","message":"Nie udało się odczytać danych. Spróbuj ponownie lub zgłoś identyfikator korelacji.","timestamp":"2026-09-14T20:12:32.495Z"}}
+
+       at assessment/_helpers/assessmentUiTechnicalFixture.ts:201
+
+      199 |       data: { runId },
+      200 |     });
+    > 201 |     if (!response.ok()) throw new Error(`cleanup ${runId}: ${response.status()} ${await response.text()}`);
+          |                               ^
+      202 |   }
+      203 | }
+      204 |
+        at cleanup (/Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/tests/e2e/assessment/_helpers/assessmentUiTechnicalFixture.ts:201:31)
+        at /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/tests/e2e/assessment/asm-ui-canon-library.spec.ts:18:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-811f4-mains-responsive-accessible-chromium/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-811f4-mains-responsive-accessible-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/assessment-asm-ui-canon-li-811f4-mains-responsive-accessible-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-811f4-mains-responsive-accessible-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/assessment-asm-ui-canon-li-811f4-mains-responsive-accessible-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/e2e/assessment/asm-ui-canon-library.spec.ts:85:3 › ASM-UI-CANON mounted Library and cold reopen › foreign tenant is denied or concealed and transport loss is mounted fail-closed with retry 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('drd-http-error-view')
+    Expected pattern: [32m/Brak połączenia|Offline/i[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('drd-http-error-view')[22m
+
+
+      87 |     await offlinePage.route(`**/api/method/sessions/${sessionId}`, (route) => route.abort('internetdisconnected'));
+      88 |     await offlinePage.goto(`/assessment/drd/${sessionId}`);
+    > 89 |     await expect(offlinePage.getByTestId('drd-http-error-view')).toContainText(/Brak połączenia|Offline/i);
+         |                                                                  ^
+      90 |     await expect(offlinePage.getByTestId('error-retry')).toBeEnabled();
+      91 |     await expect(offlinePage.getByTestId('method-workspace-shell')).toHaveCount(0);
+      92 |
+        at /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/tests/e2e/assessment/asm-ui-canon-library.spec.ts:89:66
+
+    Error: cleanup asm-stale-1789416754471: 500 {"status":"error","correlationId":"bd9b985f-ad7d-4c94-9bcc-bf21c3ec69ba","error":{"code":"DATABASE_ERROR","message":"Nie udało się odczytać danych. Spróbuj ponownie lub zgłoś identyfikator korelacji.","timestamp":"2026-09-14T20:12:59.464Z"}}
+
+       at assessment/_helpers/assessmentUiTechnicalFixture.ts:201
+
+      199 |       data: { runId },
+      200 |     });
+    > 201 |     if (!response.ok()) throw new Error(`cleanup ${runId}: ${response.status()} ${await response.text()}`);
+          |                               ^
+      202 |   }
+      203 | }
+      204 |
+        at cleanup (/Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/tests/e2e/assessment/_helpers/assessmentUiTechnicalFixture.ts:201:31)
+        at /Users/piotrwisniewski/Developer/codex-wt/a-d-d2-pilot-20260914/tests/e2e/assessment/asm-ui-canon-library.spec.ts:18:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-bc8c2-nted-fail-closed-with-retry-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-bc8c2-nted-fail-closed-with-retry-chromium/test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-bc8c2-nted-fail-closed-with-retry-chromium/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/assessment-asm-ui-canon-li-bc8c2-nted-fail-closed-with-retry-chromium/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/assessment-asm-ui-canon-li-bc8c2-nted-fail-closed-with-retry-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/assessment-asm-ui-canon-li-bc8c2-nted-fail-closed-with-retry-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › tests/e2e/assessment/asm-ui-canon-library.spec.ts:15:3 › ASM-UI-CANON mounted Library and cold reopen › Library lists exact identity/version, opens read-only, cold reopens and remains responsive/accessible 
+    [chromium] › tests/e2e/assessment/asm-ui-canon-library.spec.ts:85:3 › ASM-UI-CANON mounted Library and cold reopen › foreign tenant is denied or concealed and transport loss is mounted fail-closed with retry 
