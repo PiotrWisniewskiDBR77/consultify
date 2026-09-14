@@ -147,6 +147,29 @@ describe('Menu 3 · pigułki rejestru nie przeciekają do skrzynki [H1f DEC-507]
   });
 });
 
+describe('Menu 3 · pigułki rejestru nie przeciekają do Obciążenia [Q1 P3 DEC-495]', () => {
+  it('`commandRowContent` wyłącza `capacity` BEZWARUNKOWO — nie tylko gdy heatmapa (`INITIATIVES_WORKLOAD_ENABLED`) jest ON', () => {
+    /*
+     * Zakładka „Obciążenie" ma DWA archetypy pod jedną flagą:
+     *   OFF → `CapacityScenarioSurface` (scenariusze mocy z linii, własny Menu 3),
+     *   ON  → `InitiativeWorkloadSurface` (heatmapa Q1, własna legenda/siatka).
+     * Żaden z nich nie używa pigułek rejestru (Wszystkie/Do zatwierdzenia/
+     * W realizacji) — filtrują po statusie inicjatywy, nie po obu archetypach.
+     * Wyłączenie musi więc obowiązywać w OBU stanach flagi, nie tylko przy ON.
+     * Mutacja: dopisz `&& INITIATIVES_WORKLOAD_ENABLED` obok `capacity` w tym
+     * warunku (chipy wróciłyby przy OFF, na linii scenariuszy mocy) → RED.
+     */
+    const start = hub.indexOf('commandRowContent={');
+    const koniec = hub.indexOf('commandRowRightContent={', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(koniec).toBeGreaterThan(start);
+    const blok = bezKomentarzy(hub.slice(start, koniec));
+    expect(blok).toContain("activeTab === 'capacity'");
+    expect(blok).not.toContain("'capacity' && INITIATIVES_WORKLOAD_ENABLED");
+    expect(blok).not.toContain("INITIATIVES_WORKLOAD_ENABLED && activeTab === 'capacity'");
+  });
+});
+
 describe('Segment zakresu — wspólny SSOT z Realizacją', () => {
   it('bierze klasy z `MENU_2_SEGMENT_*`, nie z własnego zestawu', () => {
     // Mutacja: wpisz z powrotem lokalne `h-8 px-3 rounded-full border-slate-200/60` → RED.
