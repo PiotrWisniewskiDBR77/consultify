@@ -1106,6 +1106,7 @@ router.get(
       weeks: Number.isFinite(weeks) ? weeks : undefined,
       projectId: projectId || undefined,
       initiativeStatuses,
+      includeAvailablePeople: true,
     });
     const totalDemand = plan.rows.reduce((sum, row) => sum + row.demandHours, 0);
     const totalSupply = plan.rows.reduce((sum, row) => sum + row.supplyHours, 0);

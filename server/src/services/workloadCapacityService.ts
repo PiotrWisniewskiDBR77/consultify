@@ -823,7 +823,13 @@ const CLOSED_TASK_STATUSES = "('done','completed','validated','cancelled')";
 
 export async function getExecutionResourcePlan(
   orgId: string,
-  options?: { weeks?: number; projectId?: string; initiativeStatuses?: InitiativeStatusType[] }
+  options?: {
+    weeks?: number;
+    projectId?: string;
+    initiativeStatuses?: InitiativeStatusType[];
+    /** Include active organization members with zero scheduled demand. */
+    includeAvailablePeople?: boolean;
+  }
 ): Promise<ResourcePlan> {
   const weekCount = Math.min(26, Math.max(1, Number(options?.weeks) || 8));
   const now = new Date();
@@ -883,31 +889,37 @@ export async function getExecutionResourcePlan(
       WHERE ${taskFilters.join('\n        AND ')}`,
     taskParams
   );
-  const userIds = [...new Set(taskRows.map((row) => String(row.user_id)))];
-  if (userIds.length === 0) return { asOf: new Date().toISOString(), weeks, rows: [], people: [] };
+  const assignedUserIds = [...new Set(taskRows.map((row) => String(row.user_id)))];
+  if (assignedUserIds.length === 0 && !options?.includeAvailablePeople) {
+    return { asOf: new Date().toISOString(), weeks, rows: [], people: [] };
+  }
 
-  const placeholders = userIds.map(() => '?').join(',');
+  const placeholders = assignedUserIds.map(() => '?').join(',');
   // Kolumny etatu przyszly migracja 20262103. Na bazie, ktora jej jeszcze nie
   // ma (starszy zrzut, atrapa testowa), NIE udajemy ze podaz jest zerowa —
   // czytamy sama tozsamosc i podstawiamy polityke 40 h x 100 %.
   let personRows: ResourcePlanPersonRow[] = [];
   const identitySql = `SELECT u.id AS user_id, ${displayNameSql('u', 'u.id')} AS name,`;
+  const identityWhere = options?.includeAvailablePeople
+    ? `u.organization_id = ? AND COALESCE(u.is_active, 1) = 1`
+    : `u.organization_id = ? AND u.id IN (${placeholders})`;
+  const identityParams = options?.includeAvailablePeople ? [orgId] : [orgId, ...assignedUserIds];
   try {
     personRows = await DbPromise.all<ResourcePlanPersonRow>(
       `${identitySql}
               COALESCE(u.job_title, u.title) AS role,
               u.weekly_capacity_hours, u.availability_percent
          FROM users u
-        WHERE u.organization_id = ? AND u.id IN (${placeholders})`,
-      [orgId, ...userIds]
+        WHERE ${identityWhere}`,
+      identityParams
     );
   } catch (err) {
     logIfNotSilenceableMissingRelation('getExecutionResourcePlan: profile columns', err, { orgId });
     personRows = (
       await DbPromise.all<{ user_id: string; name: string }>(
         `${identitySql} '' AS role FROM users u
-          WHERE u.organization_id = ? AND u.id IN (${placeholders})`,
-        [orgId, ...userIds]
+          WHERE ${identityWhere}`,
+        identityParams
       )
     ).map((row) => ({
       ...row,
@@ -916,6 +928,7 @@ export async function getExecutionResourcePlan(
       availability_percent: null,
     }));
   }
+  const userIds = personRows.map((row) => String(row.user_id));
   const byId = new Map(personRows.map((row) => [String(row.user_id), row]));
 
   const weekSet = new Set(weeks);
