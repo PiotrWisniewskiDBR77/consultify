@@ -259,8 +259,18 @@ describe.sequential('F2-3 E2 projects operating model through ApiGateway + RealP
     );
     expect(model.body.approvalInputs.roleBindings).toEqual(
       expect.arrayContaining([
-        { roleKey: 'GATE_AUTHORITY', principalId: ownerId },
-        { roleKey: 'GATE_AUTHORITY', principalId: leaderId },
+        expect.objectContaining({
+          roleKey: 'GATE_REQUESTER',
+          bindingType: 'REQUESTER',
+          projectRoleKey: 'PROJECT_LEADER',
+          principalId: ownerId,
+        }),
+        expect.objectContaining({
+          roleKey: 'GATE_REQUESTER',
+          bindingType: 'REQUESTER',
+          projectRoleKey: 'PROJECT_LEADER',
+          principalId: leaderId,
+        }),
       ])
     );
     expect(model.body.missingRequiredRoles).toContain('PROJECT_SPONSOR');

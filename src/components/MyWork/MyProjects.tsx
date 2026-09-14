@@ -120,7 +120,14 @@ interface ProjectOperatingModel {
   }>;
   capacity: Array<{ userId: string; name: string; allocationPercent: number; roleKey: string }>;
   communication: Array<{ trigger: string; recipientIds: string[] }>;
-  approvalInputs: { roleBindings: Array<{ roleKey: string; principalId: string }> };
+  approvalInputs: {
+    roleBindings: Array<{
+      roleKey: string;
+      bindingType: 'REVIEWER' | 'REQUESTER';
+      projectRoleKey: string;
+      principalId: string;
+    }>;
+  };
   missingRequiredRoles: string[];
   permissions: { canManageTeam: boolean; canManageCommunication: boolean };
 }
@@ -1819,7 +1826,14 @@ export const MyProjects: React.FC = () => {
                     </ul>
                 </div>
 
-                <ProjectStageGatesPanel projectId={previewProject.id} />
+                <ProjectStageGatesPanel
+                  projectId={previewProject.id}
+                  requesterId={
+                    operatingModel?.approvalInputs.roleBindings.find(
+                      (binding) => binding.bindingType === 'REQUESTER'
+                    )?.principalId
+                  }
+                />
 
                 {/* ── Zwornik (#78): Zadania — zadania projektu ─────────────── */}
                 <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
