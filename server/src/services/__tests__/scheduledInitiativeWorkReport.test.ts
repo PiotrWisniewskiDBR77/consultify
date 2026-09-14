@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   MaterialCommandTransaction,
@@ -169,6 +169,35 @@ const schedule = {
 };
 
 describe('scheduled initiative work report canonical lifecycle', () => {
+  const savedFlag = process.env.ENABLE_INITIATIVES_WORK_REPORT;
+
+  beforeEach(() => {
+    process.env.ENABLE_INITIATIVES_WORK_REPORT = 'true';
+  });
+
+  afterEach(() => {
+    if (savedFlag === undefined) delete process.env.ENABLE_INITIATIVES_WORK_REPORT;
+    else process.env.ENABLE_INITIATIVES_WORK_REPORT = savedFlag;
+  });
+
+  it('defaults OFF and rejects the runner before it reads or writes report state', async () => {
+    delete process.env.ENABLE_INITIATIVES_WORK_REPORT;
+    const runtime = createMemoryRuntime();
+    const reader = {
+      ...runtime.reader,
+      findReportDefinition: vi.fn(runtime.reader.findReportDefinition),
+    };
+    await expect(
+      runScheduledInitiativeWorkReport(schedule, {
+        unitOfWork: runtime.unitOfWork as any,
+        reader: reader as any,
+        sendEmail: vi.fn(),
+      })
+    ).rejects.toThrow('INITIATIVES_WORK_REPORT_DISABLED');
+    expect(reader.findReportDefinition).not.toHaveBeenCalled();
+    expect(await runtime.reader.listReportRuns('org-1')).toEqual([]);
+  });
+
   it('persists CREATE→VALIDATE→FREEZE→APPROVE, retries a partial SMTP delivery, then PUBLISHes once', async () => {
     const runtime = createMemoryRuntime();
     const attempts = new Map<string, number>();

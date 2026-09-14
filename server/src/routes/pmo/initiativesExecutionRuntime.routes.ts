@@ -37,6 +37,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import databaseConfig from '../../config/DatabaseConfig.js';
+import { isInitiativesWorkReportEnabled } from '../../config/initiativesWorkReportFlag.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
 import { adoptChatDraftInitiative } from '../../domain/initiatives-execution/adoptChatDraftInitiative.js';
 import {
@@ -1600,6 +1601,18 @@ function asyncHandler(handler: (req: Request, res: Response, next: NextFunction)
   return (req: Request, res: Response, next: NextFunction) => {
     handler(req, res, next).catch(next);
   };
+}
+
+function requireInitiativesWorkReportEnabled(
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!isInitiativesWorkReportEnabled()) {
+    res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+    return;
+  }
+  next();
 }
 
 // Express 5 types req.params/req.query values as `string | string[]` (repeated query/param keys
@@ -7506,6 +7519,7 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/work-reports/preview',
+    requireInitiativesWorkReportEnabled,
     requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
@@ -7530,6 +7544,7 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/work-reports/schedules',
+    requireInitiativesWorkReportEnabled,
     requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
@@ -7602,6 +7617,7 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.get(
     '/work-reports/:reportRunId/pdf',
+    requireInitiativesWorkReportEnabled,
     requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
@@ -7634,6 +7650,7 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/work-reports/:reportRunId/deliver',
+    requireInitiativesWorkReportEnabled,
     requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req);
@@ -9129,6 +9146,9 @@ export async function runScheduledInitiativeWorkReport(
     >;
   } = runtimeDependencies
 ): Promise<string> {
+  if (!isInitiativesWorkReportEnabled()) {
+    throw new Error('INITIATIVES_WORK_REPORT_DISABLED');
+  }
   const spec = schedule.runtimeReport;
   if (!spec || !INITIATIVE_WORK_REPORT_TEMPLATES.includes(spec.templateId as any)) {
     throw new Error('INITIATIVE_WORK_REPORT_SCHEDULE_INVALID');

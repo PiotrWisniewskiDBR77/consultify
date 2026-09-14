@@ -2,7 +2,7 @@
 
 ## Werdykt
 
-Kod E1 po pierwszym niezależnym przeglądzie i sześciu poprawkach jest gotowy do ponownego przeglądu na aktualnej linii. Funkcja pozostaje domyślnie wyłączona przez `VITE_INITIATIVES_WORK_REPORT`; nie wykonano wdrożenia ani operacji na stagingu.
+Kod E1 po finalnym przeglądzie i poprawkach jest gotowy do ponownego przeglądu na aktualnej linii. Funkcja pozostaje domyślnie wyłączona po obu stronach: przez `VITE_INITIATIVES_WORK_REPORT` w UI oraz `ENABLE_INITIATIVES_WORK_REPORT` na serwerze. Nie wykonano wdrożenia ani operacji na stagingu.
 
 ## Zakres dostawy
 
@@ -15,6 +15,8 @@ Kod E1 po pierwszym niezależnym przeglądzie i sześciu poprawkach jest gotowy 
 - harmonogram wykorzystuje istniejące `report_schedules.config_json`, deterministyczny identyfikator okresu, zamraża i zatwierdza raport, utrwala stan dostawy każdego odbiorcy, wysyła rzeczywisty PDF przez SMTP i publikuje receipt dopiero po sukcesie wszystkich odbiorców;
 - usunięto atrapę `report={true}`; listę przebiegów renderuje `StandardTable`;
 - jeśli PMO nie dostarcza bieżącego projektu, zakres degraduje się do `All initiatives`.
+
+Przy serwerowej fladze OFF wszystkie cztery dedykowane trasy `/work-reports/*`, łącznie z odczytem PDF, zwracają `FEATURE_DISABLED`, a runner okresowy kończy pracę przed pierwszym odczytem lub zapisem. Współdzielone, kanoniczne odczyty `reportDefinition` i `reportRun` pozostają dostępne dla innych konsumentów istniejącego silnika raportów.
 
 ## Migracja
 

@@ -148,6 +148,16 @@ describe('Work report tab gated by VITE_INITIATIVES_WORK_REPORT', () => {
     expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
   });
 
+  it('evaluates the parking deep link with both flags OFF and keeps the canonical Menu 3 unchanged', async () => {
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
+    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+    await mount('/initiatives?lens=parking');
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
+    expect(screen.queryByTestId('standard-chip-parking')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^standard-chip-/)).toHaveLength(0);
+  });
+
   it('flag ON: shows 4 Menu 2 buttons including Work report, and the tab opens the read-view', async () => {
     vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
     await mount();
