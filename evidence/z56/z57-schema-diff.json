@@ -1,0 +1,8232 @@
+{
+  "staging_columns": 23621,
+  "fresh_918_columns": 23416,
+  "staging_only": [
+    [
+      "public",
+      "api_logs",
+      "api_key_id"
+    ],
+    [
+      "public",
+      "api_logs",
+      "cost"
+    ],
+    [
+      "public",
+      "api_logs",
+      "tokens_used"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "added_at"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "added_by"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "auto_join"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "domain"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "id"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "organization_id"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "verification_method"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "verification_token"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "verified"
+    ],
+    [
+      "public",
+      "approved_domains",
+      "verified_at"
+    ],
+    [
+      "public",
+      "audits",
+      "auditor"
+    ],
+    [
+      "public",
+      "audits",
+      "completed_date"
+    ],
+    [
+      "public",
+      "audits",
+      "scheduled_date"
+    ],
+    [
+      "public",
+      "audits",
+      "score"
+    ],
+    [
+      "public",
+      "audits",
+      "type"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "amount"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "category"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "description"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "id"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "metadata"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "organization_id"
+    ],
+    [
+      "public",
+      "budget_expenses",
+      "recorded_at"
+    ],
+    [
+      "public",
+      "conversation_messages",
+      "version"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "action_type"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "created_at"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "executed_at"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "id"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "organization_id"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "playbook_id"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "result_json"
+    ],
+    [
+      "public",
+      "customer_success_actions",
+      "status"
+    ],
+    [
+      "public",
+      "customer_success_playbooks",
+      "created_by"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "created_at"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "currency"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "end_date"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "id"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "label"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "organization_id"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "period_type"
+    ],
+    [
+      "public",
+      "finance_periods",
+      "start_date"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "analysis_id"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "approved_at"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "approved_by"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "business_implication"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "classification"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "confidence"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "created_at"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "created_by"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "evidence_json"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "finding_key"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "generated_by"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "id"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "interpretation"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "management_question"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "observation"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "organization_id"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "rank"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "required_data"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "status"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "title"
+    ],
+    [
+      "public",
+      "financial_analysis_findings",
+      "updated_at"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "benchmark_json"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "coverage_pct"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "formula"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "formula_description"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "formula_description_pl"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "missing_lines"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "ratio_name_pl"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "ratio_status"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "source_pack_id"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "source_statement_ids"
+    ],
+    [
+      "public",
+      "financial_analysis_ratios",
+      "unit"
+    ],
+    [
+      "public",
+      "financial_statement_values",
+      "dimension_key"
+    ],
+    [
+      "public",
+      "financial_statement_values",
+      "period_id"
+    ],
+    [
+      "public",
+      "financial_statement_values",
+      "period_label"
+    ],
+    [
+      "public",
+      "financial_statement_values",
+      "presentation_view"
+    ],
+    [
+      "public",
+      "imported_reports",
+      "initiatives_created"
+    ],
+    [
+      "public",
+      "imported_reports",
+      "initiatives_target_ids"
+    ],
+    [
+      "public",
+      "initiatives",
+      "kill_criteria"
+    ],
+    [
+      "public",
+      "initiatives",
+      "resource_tools"
+    ],
+    [
+      "public",
+      "initiatives",
+      "section_completions"
+    ],
+    [
+      "public",
+      "initiatives",
+      "tags"
+    ],
+    [
+      "public",
+      "initiatives",
+      "target_state"
+    ],
+    [
+      "public",
+      "integration_api_keys",
+      "updated_at"
+    ],
+    [
+      "public",
+      "integration_providers",
+      "updated_at"
+    ],
+    [
+      "public",
+      "kpi_scorecards",
+      "owner_user_id"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "billing_address"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "contract_type"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "external_invoice_ref"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "is_manual_override"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "managed_by_user_id"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "notes"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "payment_method_brand"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "payment_method_last4"
+    ],
+    [
+      "public",
+      "organization_billing",
+      "renewal_at"
+    ],
+    [
+      "public",
+      "organizations",
+      "onboarding_accept_idempotency_key"
+    ],
+    [
+      "public",
+      "organizations",
+      "trial_extension_count"
+    ],
+    [
+      "public",
+      "organizations",
+      "trial_warning_sent_at"
+    ],
+    [
+      "public",
+      "projects",
+      "assessment_count"
+    ],
+    [
+      "public",
+      "projects",
+      "document_count"
+    ],
+    [
+      "public",
+      "projects",
+      "goal"
+    ],
+    [
+      "public",
+      "projects",
+      "health"
+    ],
+    [
+      "public",
+      "projects",
+      "initiative_count"
+    ],
+    [
+      "public",
+      "projects",
+      "member_count"
+    ],
+    [
+      "public",
+      "projects",
+      "progress_pct"
+    ],
+    [
+      "public",
+      "scim_group_mappings",
+      "last_synced_at"
+    ],
+    [
+      "public",
+      "scim_group_mappings",
+      "project_id"
+    ],
+    [
+      "public",
+      "scim_group_mappings",
+      "updated_at"
+    ],
+    [
+      "public",
+      "subscription_plans",
+      "stripe_price_id"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "billing_cycle"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "cancel_at_period_end"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "canceled_at"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "created_at"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "current_period_end"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "current_period_start"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "id"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "metadata"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "organization_id"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "plan_id"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "status"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "trial_end"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "trial_start"
+    ],
+    [
+      "public",
+      "subscriptions",
+      "updated_at"
+    ],
+    [
+      "public",
+      "tp_migration_history",
+      "checksum"
+    ],
+    [
+      "public",
+      "tp_migration_history",
+      "duration_ms"
+    ],
+    [
+      "public",
+      "tp_migration_history",
+      "executed_at"
+    ],
+    [
+      "public",
+      "tp_migration_history",
+      "filename"
+    ],
+    [
+      "public",
+      "tp_migration_history",
+      "id"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "ai_requests_per_day"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "api_rate_limit_per_hour"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "created_at"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "max_concurrent_jobs"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "storage_quota_mb"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "updated_at"
+    ],
+    [
+      "public",
+      "user_quotas",
+      "user_id"
+    ],
+    [
+      "public",
+      "users",
+      "mfa_backup_codes"
+    ],
+    [
+      "public",
+      "users",
+      "mfa_enabled"
+    ],
+    [
+      "public",
+      "users",
+      "mfa_recovery_email"
+    ],
+    [
+      "public",
+      "users",
+      "mfa_secret"
+    ],
+    [
+      "public",
+      "users",
+      "mfa_verified_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_decisions",
+      "ai_generated_sections"
+    ],
+    [
+      "public",
+      "z139_backup_919_decisions",
+      "escalated_to"
+    ],
+    [
+      "public",
+      "z139_backup_919_decisions",
+      "idempotency_key"
+    ],
+    [
+      "public",
+      "z139_backup_919_decisions",
+      "playbook_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_decisions",
+      "required_fields_status"
+    ],
+    [
+      "public",
+      "z139_backup_919_decisions",
+      "workflow_status"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "amber_threshold_abs"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "amber_threshold_pct"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "archived_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "archived_by"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "baseline_value"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "category"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "current_definition_version"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "current_value"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "direction"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "organization_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "owner_user_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "red_threshold_abs"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "red_threshold_pct"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "threshold_mode"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiative_kpis",
+      "visibility"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "actual_end_date"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "ai_generated"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "ai_generated_sections"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "allocated_capacity_fte"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "blocked_reason"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "category"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "confidence_level"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "created_from"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "created_from_plan_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "effort"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "estimated_budget"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "execution_started_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "forecast_end_date"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "forecast_start_date"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "impact"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "kill_criteria"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "planned_end_date"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "planned_start_date"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "priority"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "progress"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "resource_tools"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "risk_level"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "source_assessment_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "source_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "source_report_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "source_type"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "tags"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "target_state"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "timeline"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "value_driver"
+    ],
+    [
+      "public",
+      "z139_backup_919_initiatives",
+      "value_timing"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "archived_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "archived_by"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "assumptions"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "category"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "confidence_score"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "counterpoints"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "evidence_links"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "evidence_map_json"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "executive_summary"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "inference_run_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "insight_category"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "issues_json"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "missing_data_json"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "opportunities_json"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "section_completions"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "section_overrides"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "session_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "signals_json"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "structured_content"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "themes_json"
+    ],
+    [
+      "public",
+      "z139_backup_919_interview_insights",
+      "unknowns"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "effort_estimate_hours"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "is_milestone"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "last_acceptance_notified_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "last_blocked_notified_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "last_overdue_notified_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "last_unassigned_notified_at"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "milestone_target_date"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "notify_on_acceptance"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "notify_on_blocked"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "notify_on_overdue"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "notify_on_unassigned"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "required_skills"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "source_id"
+    ],
+    [
+      "public",
+      "z139_backup_919_tasks",
+      "source_type"
+    ],
+    [
+      "public",
+      "z139_backup_919_work_canvas_drafts",
+      "blocks_json"
+    ],
+    [
+      "public",
+      "z139_backup_t5_notebook_pages_title",
+      "backed_up_at"
+    ],
+    [
+      "public",
+      "z139_backup_t5_notebook_pages_title",
+      "id"
+    ],
+    [
+      "public",
+      "z139_backup_t5_notebook_pages_title",
+      "old_value"
+    ]
+  ],
+  "fresh_only": [
+    [
+      "public",
+      "admin_approval_requests",
+      "approver_id"
+    ],
+    [
+      "public",
+      "admin_approval_workflows",
+      "organization_id"
+    ],
+    [
+      "public",
+      "admin_approval_workflows",
+      "status"
+    ],
+    [
+      "public",
+      "admin_approval_workflows",
+      "workflow_type"
+    ],
+    [
+      "public",
+      "ai_conversations",
+      "conversation_id"
+    ],
+    [
+      "public",
+      "ai_conversations",
+      "messages"
+    ],
+    [
+      "public",
+      "ai_conversations",
+      "metadata"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "allowed_models"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "disable_reason"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "emergency_disable"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "feature_key"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "max_tokens_per_req"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "min_role"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "requires_approval"
+    ],
+    [
+      "public",
+      "ai_feature_control",
+      "updated_at"
+    ],
+    [
+      "public",
+      "ai_organization_memory",
+      "updated_at"
+    ],
+    [
+      "public",
+      "ai_project_memory",
+      "memory_key"
+    ],
+    [
+      "public",
+      "ai_project_memory",
+      "memory_value"
+    ],
+    [
+      "public",
+      "ai_project_memory",
+      "updated_at"
+    ],
+    [
+      "public",
+      "api_logs",
+      "ip_address"
+    ],
+    [
+      "public",
+      "feedback_items",
+      "attachments_json"
+    ],
+    [
+      "public",
+      "feedback_items",
+      "category"
+    ],
+    [
+      "public",
+      "feedback_items",
+      "screenshots_json"
+    ],
+    [
+      "public",
+      "feedback_items",
+      "user_impact"
+    ],
+    [
+      "public",
+      "feedback_items",
+      "votes_count"
+    ],
+    [
+      "public",
+      "llm_logs",
+      "completion_tokens"
+    ],
+    [
+      "public",
+      "llm_logs",
+      "organization_id"
+    ],
+    [
+      "public",
+      "llm_logs",
+      "prompt_tokens"
+    ],
+    [
+      "public",
+      "settings",
+      "description"
+    ]
+  ],
+  "contract_differences": [
+    {
+      "column": [
+        "public",
+        "access_code_usage",
+        "used_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "access_codes",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "access_codes",
+        "expires_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "activity_logs",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "admin_approval_requests",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ],
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "admin_approval_workflows",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ],
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "admin_approval_workflows",
+        "name"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_conversations",
+        "id"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          "(gen_random_uuid())::text",
+          "nextval('ai_conversations_id_seq'::regclass)"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_conversations",
+        "organization_id"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "character_maximum_length": [
+          null,
+          255
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_conversations",
+        "title"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "character_maximum_length": [
+          null,
+          255
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_conversations",
+        "user_id"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ],
+        "character_maximum_length": [
+          null,
+          255
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_feature_control",
+        "id"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          "(gen_random_uuid())::text",
+          "nextval('ai_feature_control_id_seq'::regclass)"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_organization_memory",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ],
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_organization_memory",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          "(gen_random_uuid())::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_organization_memory",
+        "memory_key"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_organization_memory",
+        "organization_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_partial_responses",
+        "content"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_partial_responses",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ],
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_partial_responses",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          "(gen_random_uuid())::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_partial_responses",
+        "session_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_partial_responses",
+        "user_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_project_memory",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ],
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_project_memory",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          "(gen_random_uuid())::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "ai_project_memory",
+        "project_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "api_logs",
+        "endpoint"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "api_logs",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "assessment_initiative_batches",
+        "initiatives_count"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "assessment_initiative_batches",
+        "methodology_id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'impact-feasibility'::text"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "assessment_initiative_batches",
+        "organization_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "assessment_reports",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "assessment_reports",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "assessment_reports",
+        "utilized_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "audits",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "now()"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "audits",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "audits",
+        "name"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "audits",
+        "status"
+      ],
+      "differences": {
+        "column_default": [
+          "'planned'::text",
+          "'draft'::text"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "chat_projects",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "communication_plan_items",
+        "plan_id"
+      ],
+      "differences": {
+        "data_type": [
+          "uuid",
+          "text"
+        ],
+        "udt_name": [
+          "uuid",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "communication_plans",
+        "id"
+      ],
+      "differences": {
+        "data_type": [
+          "uuid",
+          "text"
+        ],
+        "udt_name": [
+          "uuid",
+          "text"
+        ],
+        "column_default": [
+          "gen_random_uuid()",
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversation_messages",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "now()"
+        ],
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversation_messages",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversation_messages",
+        "message_type"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "column_default": [
+          "'text'::text",
+          "'text'::character varying"
+        ],
+        "character_maximum_length": [
+          null,
+          20
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversation_messages",
+        "metadata"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "jsonb"
+        ],
+        "udt_name": [
+          "text",
+          "jsonb"
+        ],
+        "column_default": [
+          "'{}'::text",
+          "'{}'::jsonb"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversation_messages",
+        "model_used"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "character_maximum_length": [
+          null,
+          100
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversation_messages",
+        "role"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "character_maximum_length": [
+          null,
+          10
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "now()"
+        ],
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "language"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "column_default": [
+          "'en'::text",
+          "'en'::character varying"
+        ],
+        "character_maximum_length": [
+          null,
+          10
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "last_message_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "last_message_preview"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "character_maximum_length": [
+          null,
+          200
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "pmo_context"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "jsonb"
+        ],
+        "udt_name": [
+          "text",
+          "jsonb"
+        ],
+        "column_default": [
+          "'{}'::text",
+          "'{}'::jsonb"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "tags"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "jsonb"
+        ],
+        "udt_name": [
+          "text",
+          "jsonb"
+        ],
+        "column_default": [
+          "'[]'::text",
+          "'[]'::jsonb"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "title"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "column_default": [
+          "''::text",
+          "''::character varying"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ],
+        "character_maximum_length": [
+          null,
+          255
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "title_source"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "column_default": [
+          null,
+          "'auto'::character varying"
+        ],
+        "character_maximum_length": [
+          null,
+          20
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "conversations",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "now()"
+        ],
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "custom_statuses",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "customer_playbook_actions",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "replace((gen_random_uuid())::text, '-'::text, ''::text)"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "customer_playbook_actions",
+        "playbook_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "customer_success_playbooks",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "replace((gen_random_uuid())::text, '-'::text, ''::text)"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "created_at"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "detected_framework"
+      ],
+      "differences": {
+        "column_default": [
+          "'DRD'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "document_metadata_json"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "extracted_data_json"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "extraction_details_json"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "mapped_data_json"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "source_format"
+      ],
+      "differences": {
+        "column_default": [
+          "'pdf'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "status"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "imported_reports",
+        "updated_at"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiative_gate_roles",
+        "assigned_at"
+      ],
+      "differences": {
+        "column_default": [
+          "'2026-03-03 18:30:00.011505+00'::timestamp with time zone",
+          "'2026-09-14 17:56:59.421912+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiative_history",
+        "changed_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ],
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiative_milestones",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiative_milestones",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiative_resources",
+        "role"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'member'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiative_templates",
+        "template_data"
+      ],
+      "differences": {
+        "column_default": [
+          "'{}'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "end_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "pilot_end_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "planned_end_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "planned_start_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "priority"
+      ],
+      "differences": {
+        "column_default": [
+          "'medium'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "problem_statement"
+      ],
+      "differences": {
+        "column_default": [
+          "''::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "start_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "initiatives",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "integration_providers",
+        "auth_type"
+      ],
+      "differences": {
+        "column_default": [
+          "'oauth2'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "integration_providers",
+        "category"
+      ],
+      "differences": {
+        "column_default": [
+          "'other'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "integration_providers",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "integration_providers",
+        "oauth_config"
+      ],
+      "differences": {
+        "column_default": [
+          "'{}'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "integration_providers",
+        "webhook_config"
+      ],
+      "differences": {
+        "column_default": [
+          "'{}'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "integrations",
+        "connected_by"
+      ],
+      "differences": {
+        "column_default": [
+          "'system'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "due_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "sent_back_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "started_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "submitted_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_assignments",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_insight_findings",
+        "readback_status"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_library_templates",
+        "status"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'draft'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "interview_library_templates",
+        "visibility"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'org'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "knowledge_chunks",
+        "metadata"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "knowledge_docs",
+        "chunk_count"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "knowledge_docs",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "knowledge_docs",
+        "file_size_bytes"
+      ],
+      "differences": {
+        "data_type": [
+          "integer",
+          "bigint"
+        ],
+        "udt_name": [
+          "int4",
+          "int8"
+        ],
+        "numeric_precision": [
+          32,
+          64
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "knowledge_docs",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecard_items",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecard_items",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecard_items",
+        "sort_order"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecards",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecards",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecards",
+        "status"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "kpi_scorecards",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_logs",
+        "cost"
+      ],
+      "differences": {
+        "data_type": [
+          "real",
+          "numeric"
+        ],
+        "udt_name": [
+          "float4",
+          "numeric"
+        ],
+        "numeric_precision": [
+          24,
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_logs",
+        "id"
+      ],
+      "differences": {
+        "data_type": [
+          "bigint",
+          "text"
+        ],
+        "udt_name": [
+          "int8",
+          "text"
+        ],
+        "column_default": [
+          "nextval('llm_logs_id_seq'::regclass)",
+          "(gen_random_uuid())::text"
+        ],
+        "numeric_precision": [
+          64,
+          null
+        ],
+        "numeric_scale": [
+          0,
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_logs",
+        "timestamp"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_logs",
+        "tokens_in"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "0"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_logs",
+        "tokens_out"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "0"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_providers",
+        "name"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_providers",
+        "provider"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_providers",
+        "tier"
+      ],
+      "differences": {
+        "column_default": [
+          "'STANDARD'::text",
+          "'standard'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_providers",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ],
+        "column_default": [
+          null,
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_tier_assignments",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "llm_tier_assignments",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "meeting_follow_ups",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "(now())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "meeting_follow_ups",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "(now())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "meetings",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "(now())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "meetings",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "(now())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notebook_page_versions",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notification_activity_log",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "'2026-03-03 18:29:59.729241+00'::timestamp with time zone",
+          "'2026-09-14 17:56:59.411059+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notification_comments",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "'2026-03-03 18:29:59.729241+00'::timestamp with time zone",
+          "'2026-09-14 17:56:59.411059+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notification_comments",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "'2026-03-03 18:29:59.729241+00'::timestamp with time zone",
+          "'2026-09-14 17:56:59.411059+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notifications",
+        "dismissed_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notifications",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notifications",
+        "metadata"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "notifications",
+        "priority"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'normal'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organization_billing",
+        "access_expires_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organization_billing",
+        "billing_rail"
+      ],
+      "differences": {
+        "column_default": [
+          "'stripe_subscription'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organization_billing",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organization_billing",
+        "grace_until"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organization_billing",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organization_provider_settings",
+        "is_enabled"
+      ],
+      "differences": {
+        "data_type": [
+          "integer",
+          "boolean"
+        ],
+        "udt_name": [
+          "int4",
+          "bool"
+        ],
+        "column_default": [
+          "1",
+          "true"
+        ],
+        "numeric_precision": [
+          32,
+          null
+        ],
+        "numeric_scale": [
+          0,
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "billing_status"
+      ],
+      "differences": {
+        "column_default": [
+          "'PENDING'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "industry"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'General'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "trial_expires_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "trial_started_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ],
+        "column_default": [
+          null,
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "organizations",
+        "valid_until"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_program_ledger",
+        "amount"
+      ],
+      "differences": {
+        "data_type": [
+          "real",
+          "numeric"
+        ],
+        "udt_name": [
+          "float4",
+          "numeric"
+        ],
+        "numeric_precision": [
+          24,
+          18
+        ],
+        "numeric_scale": [
+          null,
+          4
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_program_ledger",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_program_ledger",
+        "occurred_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_program_ledger",
+        "recorded_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_program_runtime",
+        "last_transition_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_program_runtime",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_users",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "now()"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_users",
+        "id"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "uuid"
+        ],
+        "udt_name": [
+          "text",
+          "uuid"
+        ],
+        "column_default": [
+          "(gen_random_uuid())::text",
+          "gen_random_uuid()"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_users",
+        "role"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "column_default": [
+          "'consultant'::text",
+          "'member'::character varying"
+        ],
+        "character_maximum_length": [
+          null,
+          50
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_users",
+        "status"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "character varying"
+        ],
+        "udt_name": [
+          "text",
+          "varchar"
+        ],
+        "column_default": [
+          "'active'::text",
+          "'active'::character varying"
+        ],
+        "character_maximum_length": [
+          null,
+          50
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "partner_users",
+        "user_id"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "uuid"
+        ],
+        "udt_name": [
+          "text",
+          "uuid"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "consultant_profile"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "end_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "engagement_type"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "is_invoked"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "start_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "project_members",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "projects",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "projects",
+        "name"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "projects",
+        "organization_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "projects",
+        "start_date"
+      ],
+      "differences": {
+        "data_type": [
+          "date",
+          "text"
+        ],
+        "udt_name": [
+          "date",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "projects",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "raid_items",
+        "created_at"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "raid_items",
+        "mitigation_status"
+      ],
+      "differences": {
+        "column_default": [
+          "'OPEN'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "raid_items",
+        "updated_at"
+      ],
+      "differences": {
+        "is_nullable": [
+          "NO",
+          "YES"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "refresh_tokens",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "refresh_tokens",
+        "expires_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "refresh_tokens",
+        "last_used_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "refresh_tokens",
+        "revoked_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "refresh_tokens",
+        "token_family"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_builder_reports",
+        "confidentiality"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'internal'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_builder_reports",
+        "data_level"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'balanced'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_builder_reports",
+        "density"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'standard'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_builder_reports",
+        "report_type_v3"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'custom'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_builder_sections",
+        "is_refreshable"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          null,
+          "0"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_exports",
+        "download_count"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_exports",
+        "exported_at"
+      ],
+      "differences": {
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          null
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_exports",
+        "file_path"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_exports",
+        "file_size"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "0"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "report_exports",
+        "language"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "revoked_tokens",
+        "expires_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "revoked_tokens",
+        "revoked_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "role_change_audit_events",
+        "actor_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "role_change_audit_events",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ],
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "role_change_audit_events",
+        "organization_id"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "schedule_executions",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ],
+        "column_default": [
+          null,
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "scim_group_mappings",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          "(gen_random_uuid())::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "security_incidents",
+        "incident_type"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "security_incidents",
+        "severity"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "security_incidents",
+        "status"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "security_settings",
+        "ip_whitelist"
+      ],
+      "differences": {
+        "column_default": [
+          "'[]'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "security_settings",
+        "session_timeout_minutes"
+      ],
+      "differences": {
+        "column_default": [
+          "30",
+          "480"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "security_settings",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text)"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "sessions",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "settings",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "status_reports",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ],
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "(now())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "status_reports",
+        "created_by"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "status_reports",
+        "overall_status"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "status_reports",
+        "period_type"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "status_reports",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "CURRENT_TIMESTAMP",
+          "(now())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "billing_model"
+      ],
+      "differences": {
+        "is_nullable": [
+          "YES",
+          "NO"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "currency"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'USD'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "features"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'[]'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "limits"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "price_yearly"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "trial_days"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          null,
+          "0"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "subscription_plans",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ],
+        "column_default": [
+          null,
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "system_prompts",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "task_dependencies",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "task_dependencies",
+        "dependency_type"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'FS'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "task_dependencies",
+        "lag_days"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          null,
+          "0"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "acceptance_criteria"
+      ],
+      "differences": {
+        "column_default": [
+          "''::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "assignees"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'[]'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "attachments"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'[]'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "blocked_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "blocking_issues"
+      ],
+      "differences": {
+        "column_default": [
+          "''::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "budget_allocated"
+      ],
+      "differences": {
+        "column_default": [
+          "0",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "budget_spent"
+      ],
+      "differences": {
+        "column_default": [
+          "0",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "checklist"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'[]'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "completed_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "due_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "last_escalated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "progress"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          null,
+          "0"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "requires_acceptance"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "boolean"
+        ],
+        "udt_name": [
+          "text",
+          "bool"
+        ],
+        "column_default": [
+          null,
+          "false"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "risk_rating"
+      ],
+      "differences": {
+        "column_default": [
+          "'low'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "sla_due_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "sla_hours"
+      ],
+      "differences": {
+        "column_default": [
+          "24",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "source"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'manual'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "started_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "step_phase"
+      ],
+      "differences": {
+        "column_default": [
+          "'design'::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "tags"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'[]'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "task_type"
+      ],
+      "differences": {
+        "column_default": [
+          "'execution'::text",
+          "'task'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "weight"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          null,
+          "1"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tasks",
+        "why"
+      ],
+      "differences": {
+        "column_default": [
+          "''::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "team_members",
+        "joined_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "teams",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "tools",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp with time zone",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "timestamptz",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "trusted_devices",
+        "trusted_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ],
+        "column_default": [
+          null,
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "usage_counters",
+        "counter_date"
+      ],
+      "differences": {
+        "column_default": [
+          "(CURRENT_DATE)::text",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "usage_records",
+        "quantity"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "numeric"
+        ],
+        "udt_name": [
+          "text",
+          "numeric"
+        ],
+        "column_default": [
+          null,
+          "0"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "user_sessions",
+        "last_activity_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          null
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "date_format"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'YYYY-MM-DD'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "extended_preferences"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'{}'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "is_active"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "column_default": [
+          null,
+          "1"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "last_login"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "last_login_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp without time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamp"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "time_format"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'HH:mm'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "timezone"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'UTC'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "users",
+        "token_reset_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_action_proposals",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.884961+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_admin_rebind_records",
+        "audit_timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.955394+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_admin_surface_ownership",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_admin_surface_ownership",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_ai_proposal_visibility",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.018366+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_ai_proposal_visibility",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.018366+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_anna_lp_configs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_anna_lp_configs",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_artifact_access_grants",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.084514+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_artifact_origin_links",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.084514+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_artifact_run_audit_log",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.241201+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_artifact_runs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.081368+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_artifact_runs",
+        "started_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.081368+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_artifact_runs",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.081368+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_audit_entries",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.052686+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_business_object_sync_states",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_business_object_sync_states",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_canary_configs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.969347+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_canonical_object_states",
+        "last_updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.936646+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_chat_action_proposals",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.860308+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_chat_execution_handoffs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.860308+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_cloud_linked_source_refreshes",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.902184+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_collaboration_events",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.864268+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_collaboration_rooms",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.864268+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_concurrency_strategies",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_concurrency_strategies",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_conflict_records",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_conflict_resolutions",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connection_credentials",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.955394+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connection_credentials",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.955394+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connector_auth_states",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connector_auth_states",
+        "transitioned_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connector_fleet_health",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connector_fleet_health",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connector_packages",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_connector_packages",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_consumer_tool_policies",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_consumer_tool_policies",
+        "effective_from"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_consumer_tool_policies",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_context_snapshots",
+        "captured_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.878885+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_context_snapshots",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.878885+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_coordinated_publishes",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.977103+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_cross_initiative_dependencies",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.948365+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_cross_initiative_dependencies",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.948365+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_dead_letter_records",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_dead_letter_records",
+        "dead_lettered_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_dead_letter_records",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_decision_chains",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.948365+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_decision_chains",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.948365+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_degraded_conditions",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.04222+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_demo_trial_configs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_demo_trial_configs",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_deviation_records",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_emergency_pauses",
+        "paused_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_eval_gates",
+        "evaluated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.969347+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_execution_runs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.884961+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_execution_runs",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.884961+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_execution_signals",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.895865+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_executive_review_packs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_executive_review_packs",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_facilitation_sessions",
+        "started_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.928189+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_feature_flags",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.091084+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_finance_locked_states",
+        "locked_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.977103+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_governance_sensitive_fields",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_governance_sensitive_fields",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_health_signals",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.04222+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_home_block_maturity",
+        "last_audited_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.936646+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_inbox_materializations",
+        "materialized_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.936646+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_initiative_decompositions",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.948365+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_initiative_decompositions",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.948365+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_initiative_economics_linkages",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.902184+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_initiative_economics_linkages",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.902184+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_initiative_entrypoints",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.015172+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_initiative_materializations",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.015172+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_kpi_definitions",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_kpi_definitions",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_kpi_finance_reconciliations",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_kpi_finance_reconciliations",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_kpi_next_actions",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.108629+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_kpi_signals",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.108629+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_landing_page_sections",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_landing_page_sections",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_lock_records",
+        "acquired_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_memory_promotion_requests",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.918223+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_notification_records",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_notification_records",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_notification_triggers",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.87033+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_output_ai_governance",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.995728+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_output_ai_governance",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.995728+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_output_artifacts",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.992031+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_output_artifacts",
+        "last_transition_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.992031+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_output_recalls",
+        "recalled_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.977103+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_platform_seam_registry",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.928189+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_promotion_gates",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.902184+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_prompt_presets",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.969347+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_prompt_presets",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.969347+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_provenance_ledger",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.04222+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_provider_depth_profiles",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_provider_depth_profiles",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.959818+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_provider_health",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_provider_health",
+        "last_checked_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_provider_health",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_publish_records",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.977103+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_publish_records",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.977103+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_radar_triage_signals",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.155432+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_radar_triage_signals",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.155432+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_rebaseline_proposals",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.895865+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_recurring_output_programs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.995728+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_refresh_timing_policies",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.955394+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_refresh_timing_policies",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.955394+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_release_bundles",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.969347+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_replay_requests",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_replay_requests",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_resource_type_mappings",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.928189+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_restore_requests",
+        "requested_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.052686+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_results_handoff_events",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.895865+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_retrieval_requests",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.911391+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_retrieval_traces",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.911391+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_retry_policies",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_retry_policies",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_review_gates",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.977103+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_roi_realization_entries",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.000539+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_rollback_records",
+        "rolled_back_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.969347+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_room_memberships",
+        "joined_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.864268+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_room_presence",
+        "connected_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.864268+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_room_presence",
+        "last_heartbeat"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.864268+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_run_state_transitions",
+        "transitioned_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.884961+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_schema_drift_events",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_schema_drift_events",
+        "detected_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.984349+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_shadow_comparisons",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.095891+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_shared_tools_registry",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_shared_tools_registry",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_signal_aggregations",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.895865+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_source_materialization_records",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.011337+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_source_materialization_records",
+        "promoted_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.011337+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_superadmin_domains",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_superadmin_domains",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_superadmin_surfaces",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_superadmin_surfaces",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.921966+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_support_notes",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_support_traces",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.04222+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_surface_presence",
+        "last_heartbeat"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.928189+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_synced_source_refs",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.011337+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_template_families",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.995728+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tenant_connector_installations",
+        "installed_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.941666+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_action_governance",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_catalog",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_catalog",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_collaboration_adapters",
+        "registered_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.018366+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_collaboration_adapters",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.018366+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_event_registry",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.928189+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_invocation_log",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_invocation_traces",
+        "timestamp"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.024118+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_readiness_audits",
+        "audited_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.018366+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_session_governance",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tool_session_governance",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tools_v8_bridging_contracts",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_tools_v8_bridging_contracts",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.034853+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_unreconciled_delta_escalations",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.902184+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_version_snapshots",
+        "captured_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.052686+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "v8_working_memory_entries",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:00.918223+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "value_capture_gates",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.517393+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "value_capture_gates",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "'2026-09-14 17:57:01.517393+00'::timestamp with time zone"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_worker_conversations",
+        "started_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_worker_insights",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_worker_knowledge_assignments",
+        "assigned_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_worker_messages",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_worker_profiles",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_workers",
+        "created_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "virtual_workers",
+        "updated_at"
+      ],
+      "differences": {
+        "column_default": [
+          "now()",
+          "CURRENT_TIMESTAMP"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "webhooks",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "webhooks",
+        "events"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "'[]'::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "webhooks",
+        "secret"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "''::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "webhooks",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "workstreams",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "workstreams",
+        "id"
+      ],
+      "differences": {
+        "column_default": [
+          null,
+          "(gen_random_uuid())::text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "workstreams",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_initiatives",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_initiatives",
+        "end_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_initiatives",
+        "pilot_end_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_initiatives",
+        "start_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_initiatives",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "blocked_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "completed_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "created_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "due_date"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "last_escalated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "progress"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "requires_acceptance"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "boolean"
+        ],
+        "udt_name": [
+          "text",
+          "bool"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "sla_due_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "text"
+        ],
+        "udt_name": [
+          "timestamp",
+          "text"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "started_at"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "text",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "updated_at"
+      ],
+      "differences": {
+        "data_type": [
+          "timestamp without time zone",
+          "timestamp with time zone"
+        ],
+        "udt_name": [
+          "timestamp",
+          "timestamptz"
+        ]
+      }
+    },
+    {
+      "column": [
+        "public",
+        "z139_backup_919_tasks",
+        "weight"
+      ],
+      "differences": {
+        "data_type": [
+          "text",
+          "integer"
+        ],
+        "udt_name": [
+          "text",
+          "int4"
+        ],
+        "numeric_precision": [
+          null,
+          32
+        ],
+        "numeric_scale": [
+          null,
+          0
+        ]
+      }
+    }
+  ]
+}
