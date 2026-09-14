@@ -1,0 +1,188 @@
+{
+  "policy": {
+    "futureTop": {
+      "preserved": "yes"
+    },
+    "interview": {
+      "answerApproval": {
+        "mode": "manager",
+        "version": 1,
+        "futureModeKey": "keep-me"
+      },
+      "futureInterviewKey": {
+        "preserved": 42
+      }
+    },
+    "operating_mode": "standard"
+  },
+  "session": {
+    "id": "iaa-ui-v4-20260913-session",
+    "status": "submitted",
+    "owner_id": "iaa-ui-v4-20260913-respondent",
+    "assignment_id": "iaa-ui-v4-20260913-assignment",
+    "organization_id": "iaa-ui-v4-20260913-org",
+    "last_activity_at": "2026-09-13T23:50:31.531+00:00"
+  },
+  "commands": [
+    {
+      "status": "applied",
+      "created_at": "2026-09-13T23:47:06.123+00:00",
+      "command_type": "submit",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "client_request_id": "iaa-ui-v4-20260913-submit-reset2",
+      "assignment_sequence": 1,
+      "expected_answer_count": 2
+    },
+    {
+      "status": "applied",
+      "created_at": "2026-09-13T23:47:10.204+00:00",
+      "command_type": "decide",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "client_request_id": "568addc6-fd92-44aa-a116-4b983d775c69",
+      "assignment_sequence": 2,
+      "expected_answer_count": 1
+    },
+    {
+      "status": "applied",
+      "created_at": "2026-09-13T23:47:10.287+00:00",
+      "command_type": "decide",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "client_request_id": "9ca36e65-d0d1-4836-ad4e-fdd8b26a41fb",
+      "assignment_sequence": 3,
+      "expected_answer_count": 1
+    },
+    {
+      "status": "applied",
+      "created_at": "2026-09-13T23:50:31.916+00:00",
+      "command_type": "submit",
+      "submission_id": "6b9a90b0-ceaa-4e4b-9a13-22dcc05a134c",
+      "client_request_id": "legacy-submit:iaa-ui-v4-20260913-assignment:Sun Sep 13 2026 18:47:10 GMT-0500 (Central Daylight Time)",
+      "assignment_sequence": 4,
+      "expected_answer_count": 1
+    }
+  ],
+  "decisions": [
+    {
+      "id": "421213bc-79ef-4ca1-b51f-190faccd916d",
+      "stage": null,
+      "reason": null,
+      "ordinal": 1,
+      "actor_id": "iaa-ui-v4-20260913-respondent",
+      "decision": null,
+      "actor_type": "human",
+      "created_at": "2026-09-13T23:47:06.123+00:00",
+      "event_type": "submitted",
+      "question_id": "iaa-ui-v4-20260913-q1",
+      "answer_digest": "8968146d87ed7a5a214aa0863c143643887322d48e5777200164f3c273ea1f41",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "answer_updated_at": "2026-09-13T23:43:38.193+00:00"
+    },
+    {
+      "id": "dd67c81a-9acf-41f6-a007-404173e5050e",
+      "stage": null,
+      "reason": null,
+      "ordinal": 2,
+      "actor_id": "iaa-ui-v4-20260913-respondent",
+      "decision": null,
+      "actor_type": "human",
+      "created_at": "2026-09-13T23:47:06.123+00:00",
+      "event_type": "submitted",
+      "question_id": "iaa-ui-v4-20260913-q2",
+      "answer_digest": "ca185e0db4e532a841c1ef37e2b1483f57c926fe44cb4fc9dc21ffd95a6e7df7",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "answer_updated_at": "2026-09-13T23:43:38.194+00:00"
+    },
+    {
+      "id": "212c8c46-7ac2-4765-a80e-8ec85b4c2387",
+      "stage": "manager",
+      "reason": null,
+      "ordinal": 3,
+      "actor_id": "iaa-ui-v4-20260913-manager",
+      "decision": "approved",
+      "actor_type": "human",
+      "created_at": "2026-09-13T23:47:10.204+00:00",
+      "event_type": "manager_approved",
+      "question_id": "iaa-ui-v4-20260913-q1",
+      "answer_digest": "8968146d87ed7a5a214aa0863c143643887322d48e5777200164f3c273ea1f41",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "answer_updated_at": "2026-09-13T23:43:38.193+00:00"
+    },
+    {
+      "id": "eddb70da-2d72-4920-be94-fca16caa0549",
+      "stage": "manager",
+      "reason": "Provide the validated source date before final approval.",
+      "ordinal": 4,
+      "actor_id": "iaa-ui-v4-20260913-manager",
+      "decision": "sent_back",
+      "actor_type": "human",
+      "created_at": "2026-09-13T23:47:10.287+00:00",
+      "event_type": "manager_sent_back",
+      "question_id": "iaa-ui-v4-20260913-q2",
+      "answer_digest": "ca185e0db4e532a841c1ef37e2b1483f57c926fe44cb4fc9dc21ffd95a6e7df7",
+      "submission_id": "iaa-ui-v4-20260913-submission-1",
+      "answer_updated_at": "2026-09-13T23:43:38.194+00:00"
+    },
+    {
+      "id": "f0ac9282-42b7-4d41-96c8-894bbb0b3f28",
+      "stage": null,
+      "reason": null,
+      "ordinal": 1,
+      "actor_id": "iaa-ui-v4-20260913-respondent",
+      "decision": null,
+      "actor_type": "human",
+      "created_at": "2026-09-13T23:50:31.916+00:00",
+      "event_type": "submitted",
+      "question_id": "iaa-ui-v4-20260913-q2",
+      "answer_digest": "93c8f8399320e95a0e50b54eea112defad91fa14521546539eddac126fe33b7f",
+      "submission_id": "6b9a90b0-ceaa-4e4b-9a13-22dcc05a134c",
+      "answer_updated_at": "2026-09-13T23:49:09.966+00:00"
+    }
+  ],
+  "questions": [
+    {
+      "id": "iaa-ui-v4-20260913-q1",
+      "status": "answered",
+      "updated_at": "2026-09-13T23:43:38.193612+00:00",
+      "answer_text": "Cycle time is 14 days in the September sample."
+    },
+    {
+      "id": "iaa-ui-v4-20260913-q2",
+      "status": "answered",
+      "updated_at": "2026-09-13T23:49:09.966+00:00",
+      "answer_text": "The corrected result includes the validated source date: 2026-09-13."
+    }
+  ],
+  "assignment": {
+    "id": "iaa-ui-v4-20260913-assignment",
+    "status": "submitted",
+    "session_id": "iaa-ui-v4-20260913-session",
+    "updated_at": "2026-09-13T23:50:31.531+00:00",
+    "submitted_at": "2026-09-13T23:50:31.531+00:00",
+    "organization_id": "iaa-ui-v4-20260913-org",
+    "assignee_user_id": "iaa-ui-v4-20260913-respondent"
+  },
+  "policyVersions": [
+    {
+      "id": "1bb9f07f-171d-4173-b676-7b7c7b43dea4",
+      "policy": {
+        "futureTop": {
+          "preserved": "yes"
+        },
+        "interview": {
+          "answerApproval": {
+            "mode": "two_stage",
+            "version": 1,
+            "futureModeKey": "keep-me"
+          },
+          "futureInterviewKey": {
+            "preserved": 42
+          }
+        },
+        "operating_mode": "standard"
+      },
+      "status": "draft",
+      "changed_by": "iaa-ui-v4-20260913-superadmin",
+      "created_at": "2026-09-13T23:51:55.062935"
+    }
+  ]
+}

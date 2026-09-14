@@ -1,0 +1,4 @@
+dump_sha256=bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78
+before_public_tables=1809
+after_public_tables=1811
+readback={"commands" : true, "decisions" : true, "assignment_sequence" : "integer", "migration_status" : "success"}

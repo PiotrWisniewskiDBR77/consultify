@@ -8340,7 +8340,33 @@
       "proposeChangesPreviewNotice": "Proposed changes will appear in a preview to approve.",
       "generateWholeTemplatePreviewNotice": "A draft of the whole template will appear before saving."
     },
+    "answerApproval": {
+      "policy": {
+        "modeLabel": "Answer approval mode",
+        "modeAi": "AI",
+        "modeManager": "Manager",
+        "modeTwoStage": "Two-stage",
+        "unsupportedVersion": "Unsupported answer approval policy version"
+      }
+    },
     "workspace": {
+      "answerApprovalPanel": "Answer approval",
+      "answerApprovalQuestion": "Interview answer",
+      "answerApprovalStatus": {
+        "pending": "Pending approval",
+        "stages_complete": "Approved",
+        "sent_back": "Sent back for correction"
+      },
+      "answerApprovalsUnavailable": "Answer approval status is unavailable. Try again.",
+      "answerApproved": "Answer approved.",
+      "answerDecisionConflict": "This answer changed. Refresh it before deciding.",
+      "answerDecisionFailed": "The answer decision could not be saved. Try again.",
+      "answerDecisionReason": "Reason for sending this answer back",
+      "answerSentBack": "Answer sent back for correction.",
+      "approveAnswer": "Approve answer",
+      "loadingAnswerApprovals": "Loading answer approval status…",
+      "retryAiAnswerReview": "Retry AI review",
+      "sendBackAnswer": "Send answer back",
       "clarifyKeyAnswers": "Clarify key answers",
       "readyForApproval": "Ready for approval",
       "needsImprovement": "Needs improvement",
@@ -8379,6 +8405,7 @@
       "interviewCompleted": "Interview completed!",
       "requiredAnswer": "Required answer",
       "cannotSubmitCompleteTheRequired": "Cannot submit: complete the required answers.",
+      "aiAnswerReviewUnavailable": "AI answer review is temporarily unavailable. Try again.",
       "failedToSubmit": "Failed to submit",
       "interviewSentBackForRevision": "Interview sent back for revision.",
       "failedToSendBack": "Failed to send back.",
