@@ -1533,6 +1533,46 @@ defekty produktowe Library/offline)**. Liczniki §5 i pilotaż: przeliczenie pe�
 kolejnej sesji (brak narzędzia pomiaru na żywo w tym przekazaniu); z tego przekazania wynika:
 P-T19 PASS lokalnie, P-P11 PARTIAL, Z-48/Z-56/Z-58/Z-59/Z-60 zamknięte, Z-62/Z-63/Z-64 nowe.
 
+**EWIDENCJA (uzupełnienie 14.09 noc 3, po S5 E3b/E2c-bis/E2a-bis, Z-65, Northwind v2).** Staging:
+`5810afe184` → rejestr `5ded11a336` → **S5 E3b `56dba2ebd4`** (PMO zasada czworga oczu Z-24: 403
+`SEPARATION_OF_DUTIES_REQUIRED` `stageGateService.ts:581-587`, role recenzent SPONSOR/STEERING vs
+wykonawca PMO/LEADER z `bindingType` `projectOperatingModel.ts:141-161`, autoryzacja przed
+odczytem, i18n faz „Context → Assessment"/„Kontekst → Ocena"; RealPG 12/12; **Z-24 i Z-40
+zamknięte**; etap §5 PMO E3b → 🧪) → **E2c-bis `4de33d4824`** (37 kluczy `reportLocale.ts` w obu
+locale, ternar usunięty; dług z E2c zamknięty) → **E2a-bis `34888b0445`** (licencja method-pack
+EN/PL w obu lustrach; 25 tytułów = superseded przez J3) = staging health = tag. Tagi
+`rollback-pre-{s5e3b,e2cbis,e2abis}-20260914`. **Wszystkie tory Codexa z Wpisów 39–63 zamknięte**;
+nowa baza `34888b0445`; Codex: E2b-2 (+ projekt Z-63 STOP) i D-3.
+
+**Z-65 nowa (P1, regresja własna).**
+`src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx` czerwony na linii
+(„expected 300 ≤ 285") — identycznie na `5810afe184`; hipoteza CTO: D-1(g) min-width kolumny
+statusu 130→160 (Z-48) koliduje ze strażnikiem Z-43 (kolumny bramek 140/130, próg 285) — do D-3
+jako P1, oba warunki jednocześnie.
+
+**Zastane do D-3 (dopisane).** Pusty stan Projektów PL „…w module Initiatives…"; klucz
+`approvalRoles.GATE_AUTHORITY` bez producenta po `PROJECT_LEADER → GATE_REQUESTER`;
+`contractMirrorDrift` 4 (lustra `contracts/session.ts`, `methodPack.ts`, `index.ts`).
+
+**Northwind po J3 re-zasiany**: sesja `a9c8f477-8d8f-4d31-804d-a39700de4b0a`, output
+`566e5de3-…`, unitName EN 39/39, 0 PL w outputcie, ownerName/actorName „Irina Lebedjuk";
+`381966f5` usunięta (snapshoty `northwind-seed-exec-20260914/v2/`); zrzuty v2 wysłane
+właścicielowi (0 PL fragmentów w EN). Otwarte: Z-63 (nazwa sesji), puste kolumny BUSINESS UNIT/
+SCORE/CONFIDENCE listy (dopisz do Z-63).
+
+**Pułapki testowe (Z-51 uzupełnienie).** `executionReportE4.gateway.smtp` wymaga PUSTEJ bazy
+`consultify_q2` (zmigrowana → „5 skipped"); e3bramki `ENABLE_V8_GLOBAL=true`; frontowe suity nie
+znoszą `MOCK_DB=false`.
+
+**Z-2 (aktualizacja 14.09 noc 3, po S5 E3b/E2c-bis/E2a-bis, Z-65, Northwind v2).** Linia =
+`34888b0445` (E2a-bis, licencja method-pack EN/PL); **staging = linia** (health+tag potwierdzone
+per kolejne kandydaty S5 E3b/E2c-bis/E2a-bis). §5: wiersz **S5 E3b** → 🧪 NA STAGINGU
+`56dba2ebd4` (Z-24/Z-40 zamknięte). Liczniki §5: ✅ 3 · 🧪 18 · 🔧 6 · ⬜ 20 → **✅ 3 · 🧪 19 · 🔧 6
+· ⬜ 19** (47 etapów); pilotaż bez zmian (32/37). Skrzynka: **Z-24 zamknięte (S5 E3b)**, **Z-40
+zamknięte (S5 E3b)**, **Z-65 nowa (P1, regresja kolumn `ProjectStageGatesPanel`, do D-3)**.
+Wszystkie tory Codexa Wpisów 39–63 zamknięte; Codex przechodzi do E2b-2 (+ projekt Z-63 STOP) i
+D-3.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
