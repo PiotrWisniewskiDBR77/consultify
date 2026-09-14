@@ -525,13 +525,20 @@ Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░�
 
 **Zgłoszenia pilotażu 37 — rozbicie (P-T01…22 Tomek + P-P01…15 Paweł):**
 
+**Zaktualizowane 14.09 wieczór (dokumentalista, rozliczenie wierszy P-T po SHA-przodkach `54f07e0ccd`):**
+same liczby ✅/23 (P-T02/03/08/11 były już liczone tu, tekst wiersza w tabeli był tylko nieaktualny —
+poprawiony), ⛔/⚪-zamknięte/🔧 rozdzielone precyzyjniej; suma nadal 37, licznik nagłówkowy **23/37
+bez zmian**.
+
 | Kategoria | Liczba | Przykłady |
 |---|---|---|
 | ✅ naprawione, 🧪 na stagingu | 23 | P-T02/03/04/07/08/09/10/11/21, P-P01/02/03/04/05/06/07/08/09/10/12/13/14/15 |
-| 🔧 naprawione, czekają na retest/scalenie | 1 | P-T22 (retest po wdrożeniu) |
-| ⚪ nie jest defektem / wiedza użytkownika | 2 | P-T19, P-T20 (duplikat) |
+| 🔧 naprawione danymi/kodem, czekają na retest/scalenie | 4 | P-T17, P-T19, P-T20 (Z-14: flagi v8 org `tt2tt` naprawione danymi 14.09), P-T22 (retest po wdrożeniu cz. 3) |
+| ⚪ nie jest defektem / wiedza użytkownika | 1 | P-T18 (ctrl+click, SPA) |
 | ⚪ czeka na decyzję właściciela | 2 | P-T01 (adres wsparcia, Z-5), P-T13 (kontekst Teresy, Z-13) |
-| 🔴 otwarte | 9 | P-T05, P-T06, P-T12, P-T14, P-T15, P-T16, P-T17, P-T18, P-P11 |
+| ⛔ zablokowane (infrastruktura) | 1 | P-T05 (avatar, wolumen Railway, Z-9) |
+| ⚪ zamknięte (infrastruktura, nie defekt) | 1 | P-T12 (reset hasła — SMTP po restarcie 02:30 UTC działa 2/2) |
+| 🔴 otwarte | 5 | P-T06 (kandydat dyżuru Codexa D-h), P-T14, P-T15, P-T16, P-P11 |
 
 **Co blokuje (14.09):**
 - **Codex milczy** w `OD_CODEXA.md` od 22:29 13.09 — Wpis 17 (DEC-497, pakiety P1–P6) czeka na

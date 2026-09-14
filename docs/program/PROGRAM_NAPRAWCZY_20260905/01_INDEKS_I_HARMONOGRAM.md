@@ -220,29 +220,31 @@ Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_
 | Nr | Moduł | Uwaga (skrót) | Typ | Właściciel naprawy | Stan |
 |---|---|---|---|---|---|
 | P-T01 (I) | Mail powitalny | Adres wsparcia `support@consultify.com` — domena `.com` nie istnieje | ⚪ decyzja | właściciel | Z-5 |
-| P-T02 (II) | Mail powitalny | Stopka „Warsaw, Poland” do zweryfikowania (PL/US); link `/help` z maila 404 | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
-| P-T03 (III) | Profil | Nie można zmienić i zapisać danych (imię, telefon) | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T02 (II) | Mail powitalny | Stopka „Warsaw, Poland” do zweryfikowania (PL/US); link `/help` z maila 404 | 🔴 bloker (konto) | Opus `tomek-konto` | 🧪 na stagingu `06335d6e9d` (fala A cz. 2, `1d768b7eea`); stopka „Warsaw, Poland” — ⚪ decyzja właściciela (Z-5, razem z adresem wsparcia) |
+| P-T03 (III) | Profil | Nie można zmienić i zapisać danych (imię, telefon) | 🔴 bloker (konto) | Opus `tomek-konto` | 🧪 na stagingu `06335d6e9d` (`3373e714e6`; brak kolumny `phone` → zapas w `user_preferences`) |
 | P-T04 (IV) | Chat | Załączniki nie działają — brak dostępu do treści pliku | 🔴 bloker (czat) | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
-| P-T05 (V) | Profil | Zdjęcie profilowe wgrywa się, następnego dnia nie wczytuje | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
-| P-T06 (VI) | Ustawienia/dashboard | Suwaki „Widoczności widgetów” niewidoczne w trybie jasnym gdy OFF | ⚪ kosmetyka | — | NIEROZLICZONE — brak w Podziale CTO, do przydziału |
+| P-T05 (V) | Profil | Zdjęcie profilowe wgrywa się, następnego dnia nie wczytuje | 🔴 bloker (konto) | Opus `tomek-konto` | ⛔ zablokowane — wymaga wolumenu Railway (Z-9, czeka właściciel); kod nie zmieniany |
+| P-T06 (VI) | Ustawienia/dashboard | Suwaki „Widoczności widgetów” niewidoczne w trybie jasnym gdy OFF | ⚪ kosmetyka | — | 🔴 otwarte — kandydat do dyżuru Codexa (D-h, wpis 24) |
 | P-T07 (VII) | Chat | Obrys zaznaczonej rozmowy nachodzi na tekst | ⚪ kosmetyka | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
-| P-T08 (VIII) | Organizacje | Kilka kliknięć „utwórz” tworzy duplikaty organizacji o tej samej nazwie | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
+| P-T08 (VIII) | Organizacje | Kilka kliknięć „utwórz” tworzy duplikaty organizacji o tej samej nazwie | 🔴 bloker (konto) | Opus `tomek-konto` | 🧪 na stagingu `06335d6e9d` (`b3e1cb3cf2`, 409 + blokada) |
 | P-T09 (IX) | Chat | Nowa rozmowa przeskakuje do ostatniego czatu zamiast otworzyć nowe okno | 🔴 bloker (czat) | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
 | P-T10 (X) | Chat | Lewy panel historii zasłania tekst | ⚪ kosmetyka | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
-| P-T11 (XI) | Ustawienia/auth-access | Historia logowania nieprawdziwa/nie odświeża się po przelogowaniu | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
-| P-T12 (XII) | Odzyskiwanie hasła | Link resetu nie dochodzi mailem; stare hasło nadal działa; brak opcji telefon/mail przy resecie | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
-| P-T13 (XIII) | Moja Praca / Mind Map | Teresa nie pomaga w nawigacji po środowisku | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T11 (XI) | Ustawienia/auth-access | Historia logowania nieprawdziwa/nie odświeża się po przelogowaniu | 🔴 bloker (konto) | Opus `tomek-konto` | 🧪 na stagingu `06335d6e9d` (`221ec76e86`, `loginHistoryService` z `AuthController.login`) |
+| P-T12 (XII) | Odzyskiwanie hasła | Link resetu nie dochodzi mailem; stare hasło nadal działa; brak opcji telefon/mail przy resecie | 🔴 bloker (konto) | Opus `tomek-konto` | ⚪ zamknięte — infrastruktura (SMTP po restarcie 02:30 UTC działa 2/2; „stare hasło działa” = skutek braku maila, `revokeAllUserTokens` działa — test RealPG); retest przez Tomka |
+| P-T13 (XIII) | Moja Praca / Mind Map | Teresa nie pomaga w nawigacji po środowisku | 🔴 bloker (czat) | Opus `tomek-czat` | ⚪ decyzja produktu (Z-13) — przewód istnieje (`ENABLE_TERESA_MINDMAP` ON), brakuje struktury aplikacji w prompcie |
 | P-T14 (XIV) | Moja Praca | Status/priorytet 2 kliknięcia; nazwa nie synchronizuje paneli; „Przejrzyj kandydaturę” nic nie robi; zakładka „próba 1” przenosi na inną kartę; nadmiar UI w Proces Flow | 🟠 rdzeń | Codex | wpis 16 |
 | P-T15 (XV) | Wywiad | Brak możliwości usuwania dodanych załączników | 🟠 rdzeń | Codex | wpis 16 |
 | P-T16 (XVI) | Wywiad | Odpowiedź AI niespójna na bełkot (raz odrzucona, raz zamieniona w zmyślony akapit) | 🟠 rdzeń | Codex | wpis 16 |
-| P-T17 (XVII) | Kreator wniosków AI | „Nie udało się wczytać dokumentów kontekstowych” mimo 1 przeprowadzonego wywiadu | 🟠 rdzeń | Codex | wpis 16 |
-| P-T18 (XVIII) | Nawigacja | Nie można otwierać przycisków jako nowe karty przeglądarki | ⚪ kosmetyka | — | NIEROZLICZONE — brak w Podziale CTO, do przydziału |
-| P-T19 (XIX) | Onboarding/organizacja | Błąd przy tworzeniu zakładu mimo że organizacja się tworzy; nie można wyjść z panelu | ⚪ wiedza użytkownika | — | zamknięte (informacja) |
-| P-T20 (XX) | DRD ocena | „Zapytaj Teresę” → „Ta rozmowa nie istnieje” | ⚪ duplikat | — | duplikat §3 #16 First Value plan |
+| P-T17 (XVII) | Kreator wniosków AI | „Nie udało się wczytać dokumentów kontekstowych” mimo 1 przeprowadzonego wywiadu | 🟠 rdzeń / ⚪ flaga | Codex (wpis 16) | 🔧 retest — Z-14: brakujące flagi v8 org `tt2tt` Tomka naprawione danymi 14.09; do potwierdzenia czy pokrywa się z zadaniem Codexa wpis 16 |
+| P-T18 (XVIII) | Nawigacja | Nie można otwierać przycisków jako nowe karty przeglądarki | ⚪ kosmetyka | — | ⚪ wiedza użytkownika (SPA, ctrl+click) — zamknięte (informacja) |
+| P-T19 (XIX) | Onboarding/organizacja | Błąd przy tworzeniu zakładu mimo że organizacja się tworzy; nie można wyjść z panelu | ⚪ wiedza użytkownika / flaga | — | 🔧 retest — Z-14: brakujące flagi v8 org `tt2tt` Tomka naprawione danymi 14.09 |
+| P-T20 (XX) | DRD ocena | „Zapytaj Teresę” → „Ta rozmowa nie istnieje” | ⚪ duplikat / flaga | — | 🔧 retest — Z-14: brakujące flagi v8 org `tt2tt` Tomka naprawione danymi 14.09; nadal duplikat §3 #16 First Value plan |
 | P-T21 (XXI) | DRD ocena | Problemy z dodawaniem plików; przycisk potwierdzenia nie działa; okno czatu bez zamknięcia | 🔴 bloker (czat) | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
-| P-T22 (XXII) | DRD ocena | Potwierdzenie/zamknięcie odpowiedzi nie działa (ciąg dalszy XXI) | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T22 (XXII) | DRD ocena | Potwierdzenie/zamknięcie odpowiedzi nie działa (ciąg dalszy XXI) | 🔴 bloker (czat) | Opus `tomek-czat` | 🔧 retest po wdrożeniu cz. 3 (martwy stan z P-T21 usunięty) |
 
 Podział: 🔴 blokery → dwie gałęzie Opus od linii `0de4dc9c66`: `integracja/kandydat-tomek-konto-20260914` (XII reset hasła, III profil, VIII duplikaty org, V avatar, XI historia logowania, II /help) i `integracja/kandydat-tomek-czat-20260914` (IX nowa rozmowa, XXI DRD Teresa regresja, IV załączniki, XXII DRD potwierdzenie/zamknięcie, XIII kontekst Mind Map, VII/X kosmetyka). 🟠 rdzeń Wywiad/Moja Praca (XV usuwanie załącznika, XVI niespójność AI na bełkot, XVII Kreator wniosków kontekst, XIV Moja Praca) → Codex (KANAL.md wpis 16). ⚪ XX = duplikat §3 #16 First Value plan; XIX ctrl+click i „aktywne sesje” = wiedza użytkownika (zamknięte informacją, nie naprawą); I adres wsparcia = decyzja właściciela (trzy domeny w kodzie: .com/.app/.ai, Z-5). Znacznik commitów napraw: `DEC-496`.
+
+**Uwaga dokumentalisty (14.09 wieczór, przy rozliczeniu tabeli powyżej).** Ten akapit (pisany 14.09 rano) przypisuje ctrl+click do XIX, a Z-14 rozliczone (niżej) przypisuje „tryb demo” do P-T18 — oba nie zgadzają się z tabelą P-T01…P-T22 powyżej, gdzie ctrl+click = P-T18 (Nawigacja) i „błąd przy tworzeniu zakładu” = P-T19 (Onboarding). Rozliczenie stanu 14.09 wieczór trzyma się TABELI jako źródła prawdy (numeracja P-Txx jest w niej ciągła i jednoznaczna); rozjazd w tym i w Z-14 akapicie zostaje odnotowany, nie cichcem poprawiony — do weryfikacji z oryginalnym docx Tomka przy najbliższej okazji.
 
 **Uzupełnienie DEC-496 (CTO, 14.09) — zgłoszenia Pawła (widget feedback, staging).**
 Zgłaszający: `pawel.mroczkowski@dbr77.com`. Tabela P-P01…P-P05 (nr | czas UTC | waga | opis | stan):
@@ -674,7 +676,10 @@ właściciela), i odtworzył ucięty do 0 B `public/locales/en/translation.json`
 nadzorcy: `enospc-psuje-containerd-colima`. Dysk po naprawie: ~45 GiB wolne.
 
 **Codex 14.09 — dalsze wpisy.** Wpis 23 (zgoda na migrację wariant B + polecenie czystki), wpis 24
-(kolejka Q1–Q5, dyżury D-a..D-f), wpis 25 (restart Dockera/Colimy, uprzedzenie Codexa). Meldunki:
+(kolejka Q1–Q5, dyżury D-a..D-f, **+D-h nowy 14.09 wieczór**: P-T06 suwaki „Widoczności widgetów”
+niewidoczne w trybie jasnym gdy OFF — kosmetyka, nadal NIEROZLICZONE w Podziale CTO, kandydat do
+dyżuru Codexa; sam `KANAL.md` nie ruszany tym wpisem, dopisać przy najbliższym przekazaniu), wpis 25
+(restart Dockera/Colimy, uprzedzenie Codexa). Meldunki:
 01:23 start pięciu torów S1–S5, 01:51 tor S3 (P2 Plan) zamrożony na etapie E1, 01:56 review
 `REQUEST_CHANGES` (Codex pracuje dalej nad poprawkami). **Fala B1 Realizacja** — integrator w toku
 (rebase na linię ≥`54f07e0ccd` przed scaleniem, patrz wpis H1/H2/B-E0 wyżej).
