@@ -60,6 +60,7 @@ import {
 import { getHeaders } from '@/services/api/baseClient';
 
 import { idOcenyZWierszaZastanego } from '../assessmentOutputProjection';
+import { tozsamoscDokumentuRaportu } from './reportDocumentIdentity';
 
 import { StandardTable, type TableColumn, type TableRow } from '../../standard/StandardTable';
 import { StatusChip } from '../../ui/primitives/chips';
@@ -633,6 +634,18 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   // — to jest klucz, którym trasy eksportu adresują ocenę.
   const idOceny = zZapisuSesji ? idOcenyZWierszaZastanego(output.id) : null;
   const narrative = data.narrative ?? null;
+  // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P10 — patrz `reportDocumentIdentity.ts`.
+  const tozsamosc = useMemo(
+    () =>
+      tozsamoscDokumentuRaportu({
+        reportName: narrative?.reportName ?? null,
+        reportStatus: narrative?.reportStatus ?? null,
+        scope: output.scope,
+        methodPackId: output.methodPackId,
+        methodPackVersion: output.methodPackVersion,
+      }),
+    [narrative?.reportName, narrative?.reportStatus, output.scope, output.methodPackId, output.methodPackVersion]
+  );
 
   const latestApproval = useMemo(() => {
     const approved = approvals.filter((a) => a.decision === 'approved');
@@ -961,12 +974,27 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
               {t('assessment.report.title', 'Maturity assessment report')}
             </p>
-            <h1 className="mt-1 text-lg font-semibold text-c-text">
-              {output.methodPackId.toUpperCase()} · {output.methodPackVersion}
-            </h1>
-            <p className="mt-1 text-xs text-c-text-secondary">{output.scope}</p>
+            {/* [ODMROZENIE 04_ASSESSMENT DEC-496] P-P10 — dokument mówi wprost,
+                KTÓRY raport użytkownik otworzył i z KTÓREJ oceny on powstał.
+                Pełne uzasadnienie i pomiar: `reportDocumentIdentity.ts`. */}
+            <h1 className="mt-1 text-lg font-semibold text-c-text">{tozsamosc.title}</h1>
+            {tozsamosc.subtitle ? (
+              <p className="mt-1 text-xs text-c-text-secondary">{tozsamosc.subtitle}</p>
+            ) : null}
+            {tozsamosc.sourceAssessmentName ? (
+              <p className="mt-1 text-xs text-c-text-secondary">
+                {tozsamosc.subtitle
+                  ? t('assessment.report.sourceAssessment', 'Source assessment: {{name}}', {
+                      name: tozsamosc.sourceAssessmentName,
+                    })
+                  : tozsamosc.sourceAssessmentName}
+              </p>
+            ) : null}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            {tozsamosc.reportStatusLabel ? (
+              <StatusChip label={tozsamosc.reportStatusLabel} tone="neutral" />
+            ) : null}
             <StatusChip label={lifecycleLabel} tone={lifecycleTone} />
             {output.demoBypassActive ? (
               <StatusChip label={t('assessment.report.demoMode', 'Demo mode')} tone="warning" />

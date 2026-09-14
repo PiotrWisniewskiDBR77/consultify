@@ -511,7 +511,17 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
   // (buildActionTargetPayload in artifacts.routes.ts). Before this fix,
   // 'native_artifact' had no case here at all, so every Document-Studio-made
   // document silently vanished from Documents/All (mapped to `null` → filtered).
-  if (runtime === 'report' || runtime === 'native_artifact') {
+  // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P13 (`56c2cc19`, pilotaż 2026-09-14):
+  // „I created assesments reports, but they are not avalibel in Materials/
+  // Documents". Zmierzone: `assessment_report` to PIĄTY runtime rodziny
+  // dokumentów, a ta funkcja znała cztery — wiersz wracał jako `null`
+  // i wypadał z listy przed jakimkolwiek filtrem. Dokładnie ta sama klasa
+  // błędu, co poprawka P0.2 dla `native_artifact` opisana niżej; różnica jest
+  // tylko w tym, KTÓRY runtime brakował. `mapArtifactReport` jest
+  // runtime-agnostyczne (czyta pola generyczne rejestru), a otwieranie
+  // i eksport i tak idą per wiersz przez `governance.openPath`/`exportPath`,
+  // które serwer ustawia per runtime (buildActionTargetPayload).
+  if (runtime === 'report' || runtime === 'native_artifact' || runtime === 'assessment_report') {
     const r = mapArtifactReport(raw);
     return {
       kind: 'document',

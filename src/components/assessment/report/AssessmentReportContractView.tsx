@@ -30,6 +30,7 @@ import { isAssessmentDocxEnabled } from '@/utils/assessmentDocxFlag';
 import { getHeaders } from '@/services/api/baseClient';
 
 import { SKIP_REASON_LABELS } from '../../method-workspace/skipReasonCodes';
+import { bramkaPokryciaRaportu } from './reportCoverageGate';
 import { DRDMatrixReadOnly, drdOdpowiedziZOutputu } from '../drd/DRDMatrixReadOnly';
 
 export interface AssessmentReportContractViewProps {
@@ -364,7 +365,15 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
   }
   if (!contract) return null;
 
+  // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 (`b7ac5351`) — patrz
+  // `reportCoverageGate.ts` i `server/src/services/assessment/
+  // assessmentReportCoverage.ts`.
+  const isPolish = i18n.language?.toLowerCase().startsWith('pl') ?? false;
+  const bramka = bramkaPokryciaRaportu(contract.coverage);
+  const pobranieZablokowane = Boolean(bramka?.blocked);
+
   const downloadDocx = async () => {
+    if (pobranieZablokowane) return;
     setDownloadState({ kind: 'loading' });
     try {
       const headers = getHeaders();
@@ -391,7 +400,18 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
       setDownloadState({ kind: 'idle' });
     } catch (error) {
       const code = error instanceof Error ? error.message : 'UNKNOWN_ERROR';
-      setDownloadState({ kind: 'error', message: `Nie udało się pobrać DOCX — kod: ${code}` });
+      // Ten sam kod, którym trasa odmawia wydania pliku przy zbyt małym
+      // pokryciu — użytkownik ma dostać zdanie, nie skrót.
+      const message =
+        code === 'ASSESSMENT_REPORT_INSUFFICIENT_COVERAGE'
+          ? t(
+              'assessment.reportView.coverage.blocked',
+              'The report cannot be generated yet — the assessment is not complete enough.'
+            )
+          : t('assessment.reportView.download.error', 'The DOCX could not be downloaded — code: {{code}}', {
+              code,
+            });
+      setDownloadState({ kind: 'error', message });
     }
   };
 
@@ -430,16 +450,74 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
               <button
                 type="button"
                 onClick={() => void downloadDocx()}
-                disabled={downloadState.kind === 'loading'}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-wait disabled:opacity-60"
+                disabled={downloadState.kind === 'loading' || pobranieZablokowane}
+                aria-describedby={pobranieZablokowane ? 'assessment-report-coverage-gate' : undefined}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {downloadState.kind === 'loading' ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
                   <Download className="h-4 w-4" aria-hidden="true" />
                 )}
-                {downloadState.kind === 'loading' ? 'Pobieranie DOCX…' : 'Pobierz DOCX'}
+                {downloadState.kind === 'loading'
+                  ? t('assessment.reportView.download.busy', 'Downloading DOCX…')
+                  : t('assessment.reportView.download.docx', 'Download DOCX')}
               </button>
+              {bramka && pobranieZablokowane ? (
+                /* Bez crimsona: to nie jest błąd użytkownika ani stan
+                   krytyczny, tylko „jeszcze nie teraz" — neutralna ramka
+                   i wyciszony tekst, zgodnie z CLAUDE.md UI pkt 3. */
+                <div
+                  id="assessment-report-coverage-gate"
+                  role="status"
+                  className="space-y-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary"
+                >
+                  <p className="font-semibold text-c-text">
+                    {t(
+                      'assessment.reportView.coverage.title',
+                      'Not enough answers to issue a report'
+                    )}
+                  </p>
+                  <p>
+                    {t(
+                      'assessment.reportView.coverage.summary',
+                      '{{answered}} of {{total}} areas answered ({{percent}}%). At least {{min}}% is required.',
+                      {
+                        answered: bramka.answeredAreas,
+                        total: bramka.totalAreas,
+                        percent: bramka.percent,
+                        min: bramka.minPercent,
+                      }
+                    )}
+                  </p>
+                  {bramka.topMissingAxes.length > 0 ? (
+                    <ul className="list-disc space-y-0.5 pl-4">
+                      {bramka.topMissingAxes.map((os) => (
+                        <li key={os.axisId}>
+                          {t(
+                            'assessment.reportView.coverage.axisMissing',
+                            '{{axis}} — {{missing}} of {{total}} areas still empty',
+                            {
+                              axis: isPolish ? (os.axisNamePL ?? os.axisName) : os.axisName,
+                              missing: os.missing,
+                              total: os.totalAreas,
+                            }
+                          )}
+                        </li>
+                      ))}
+                      {bramka.moreMissingAxes > 0 ? (
+                        <li>
+                          {t(
+                            'assessment.reportView.coverage.moreAxes',
+                            'and {{count}} more axes with empty areas',
+                            { count: bramka.moreMissingAxes }
+                          )}
+                        </li>
+                      ) : null}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
               {downloadState.kind === 'error' ? (
                 <p role="alert" className="text-xs text-c-danger">
                   {downloadState.message}

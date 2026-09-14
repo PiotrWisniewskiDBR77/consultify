@@ -19,6 +19,7 @@
  * DRD.
  */
 import DRD_STRUCTURE from '../../data/drdStructure.js';
+import type { AssessmentReportCoverage } from './assessmentReportCoverage.js';
 import type { MethodFindingRecord } from '../../method-core/outputs/MethodOutputService.js';
 import {
   composeAreaNarrative,
@@ -53,6 +54,12 @@ export interface ReportContractInput {
   readonly assessmentUpdatedAt?: string | null;
   readonly methodVersion: string;
   readonly sourceKind: ReportContractSourceKind;
+  /** [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 — ile obszarów metodyki ma
+   * potwierdzoną odpowiedź. Przepuszczane BEZ ZMIAN: składacz niczego tu nie
+   * liczy, tylko niesie pomiar dalej do ekranu i do bramki eksportu. Pole
+   * opcjonalne, bo magazyn zastany (`assessmentLegacyReportContractService`)
+   * nie ma zdarzeń `ANSWER_CONFIRMED` i nic o pokryciu nie wie. */
+  readonly coverage?: AssessmentReportCoverage | null;
   /** Język STAŁYCH napisów raportu (nagłówki, etykiety, okładka) — DEC-461:
    * domyślnie `en`, `pl` tylko na jawne żądanie. Treść narracyjna
    * (`executiveSummary`, komentarze obszarów…) NIE jest tym objęta — pisze ją
@@ -137,6 +144,7 @@ export function composeReportContract(input: ReportContractInput) {
     assessmentUpdatedAt: input.assessmentUpdatedAt ?? null,
     methodVersion: input.methodVersion,
     sourceKind: input.sourceKind,
+    coverage: input.coverage ?? null,
     language: input.language ?? 'pl',
     sessionLabel: input.sessionLabel,
     businessProfile: input.businessProfile,

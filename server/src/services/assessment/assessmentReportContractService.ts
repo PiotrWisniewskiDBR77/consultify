@@ -1,6 +1,7 @@
 import { methodOutputService } from '../../method-core/outputs/index.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { composeReportContract } from './assessmentReportContractComposer.js';
+import { computeAssessmentReportCoverage } from './assessmentReportCoverage.js';
 import {
   AssessmentSkipReasonError,
   assessmentSkipReasonService,
@@ -187,6 +188,23 @@ export class AssessmentReportContractService {
       answerSpan?.ended_at ?? null
     );
 
+    // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 — ile obszarów metodyki ma
+    // POTWIERDZONĄ odpowiedź. Liczymy obszary (`unit_id`), nie zdarzenia:
+    // sesja Pawła miała 10 zdarzeń o jednym obszarze. Ta sama arytmetyka, co
+    // licznik „x/39 units answered" w warsztacie DRD — patrz
+    // `assessmentReportCoverage.ts`.
+    const answeredUnitRows = await DbPromise.all<{ unit_id: string | null }>(
+      `SELECT DISTINCT unit_id
+       FROM method_events
+       WHERE organization_id = ? AND session_id = ? AND type = 'ANSWER_CONFIRMED'
+         AND unit_id IS NOT NULL`,
+      [organizationId, sessionId],
+      { fallback: false }
+    );
+    const coverage = computeAssessmentReportCoverage(
+      (answeredUnitRows ?? []).map((row) => row.unit_id)
+    );
+
     const outputs = await methodOutputService.listOutputsBySession(organizationId, sessionId);
     const output = outputId
       ? await methodOutputService.getOutput(organizationId, outputId)
@@ -215,6 +233,7 @@ export class AssessmentReportContractService {
       generatedAt: output?.frozenAt ?? session.created_at,
       methodVersion: output?.methodPackVersion ?? session.method_pack_version,
       sourceKind: 'method-core',
+      coverage,
       sessionLabel: {
         displayName: project?.name ?? null,
         source: project ? ('project' as const) : null,
