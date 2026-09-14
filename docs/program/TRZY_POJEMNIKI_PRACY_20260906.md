@@ -635,6 +635,35 @@ reguła H16/INI-005 nie działa; `execution_started_at`/`review_requested_at` ni
 `'PLANNING'`, grep po skasowanym SQL, `ARCHIVED` poza macierzą). **EWIDENCJA:** H1b
 🔧→**gotowe do scalenia `119ad9af3f`**; dodane wiersze H1c (gotowe) i H1d (🔧).
 
+**H1d — martwa bramka GO/NO-GO naprawiona (14.09, Opus, gałąź
+`integracja/kandydat-h1b-skrzynka-20260914`, HEAD `36b83f3e04`, kopia
+`backup/h1b-skrzynka-20260914`).** **Dowód martwoty:** CHECK P12
+(`PROPOSED`/`DRAFT`/`PENDING_APPROVAL`/`APPROVED`/`IN_EXECUTION`/`CLOSED`/`REJECTED`) vs stare
+predykaty legacy `'SCHEDULED'`/`'EXECUTING'`/`'DONE'`/`'PROMOTED'`/`'PLANNING'`/`'BLOCKED'` →
+COUNT=0 na każdym z sześciu (`evidence/h1b-20260914/h1d-realpg-dowod.txt`). **Naprawy w
+`initiativeTransitionService.ts`:** bramki kluczowane przez `gate` z
+`INITIATIVE_TRANSITION_MATRIX` (APPROVE/START/COMPLETE); START bez aktualnej decyzji GO
+(najwyższa zatwierdzona niewygasła wersja w `initiative_lifecycle_gate_decisions`, `pmo_domain`
+`GOVERNANCE_DECISION_MAKING`) → 409 `GATE_DECISION_REQUIRED`; stemple
+`execution_started_at`/`done_at`/`cancelled_at` na kodach P12; usunięte martwe przejścia
+PROMOTED→PLANNING, APPROVED→SCHEDULED (właściciel: `scheduleDecision.ts`), BLOCKED/TRACKING
+(flaga `on_hold`/etap); cron `initiativeAutoStartJob.ts:96` selektor poprawiony na kolumnę
+`APPROVED` + etap `SCHEDULED` (był `scanned=0` zawsze). **Wymóg decyzji CLOSURE przy domknięciu
+NIE przywrócony** — `initiativeClosureService` jej nie zapisuje, co dałoby 409 na każdym ludzkim
+domknięciu. **Zastany defekt naprawiony przy okazji:**
+`resolveInitiativeStageWriteTarget('REJECTED')` zapisywało `CLOSED`. **Testy** RealPG
+`h1d-start-execution-go-gate.pg.test.ts` 3/3 (A RED→GREEN, B z decyzją, C cron); regresja
+4 failed/191 → 3 failed/194 (zastane, bez zmian tą gałęzią). **Sanitizer**
+`scripts/dev/h1d-sanitizer-inexecution-bez-lancucha-go.sql` (raport, zero zapisu).
+**NIENAPRAWIONE — dyżur Codexa D-j (KANAL wpis 31):** ten sam kształt martwych porównań w
+`ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`,
+`resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169`. **Długi:**
+`review_requested_at`/`approved_at` nie istnieją po strict migrate (**Z-25**: stempel prośby o
+recenzję wymaga migracji — decyzja właściciela później); bramka `RESOURCE_RESPONSIBILITY` bez
+kodu (**Z-26**, decyzja właściciela); okno `tracking_*` bez właściciela; testy H1c/H1d tylko na
+bazie jednorazowej (wyzwalacz niezmienności do zapamiętania). **EWIDENCJA:** H1d
+🔧→**gotowe do scalenia `36b83f3e04`**; dodany wiersz D-j (Codex, dyżur — nienaprawione).
+
 **Codex 14.09, 02:40–02:46 (KANAL Wpisy 28–29).** S1 paczka 5 v2 **ACCEPT** (`e1a2c2c160`) →
 odbiór CTO w toku (integrator paczka5v2 → staging, flaga OFF). S2 **REQUEST_CHANGES** (P1: receipt
 UUID/`SENDING` bez lease/MEMBER w pickerze; SMTP lokalny do E1, doręczenie na skrzynkę stagingu
@@ -661,11 +690,21 @@ pełny ścisły łańcuch migracji na klonie schematu stagingu pada na 919 (ledg
 pochodzi z delty — nowy kształt fałszywego „gotowe" (kandydat do pamięci).
 
 **Codex 14.09, 03:01–03:09.** S2 nowy freeze → final review **REQUEST_CHANGES** (drugi raz); S4/S5
-checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review). **Z-2:** H1d w toku
-(martwa bramka GO/NO-GO), po H1d integrator H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX`.
+checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review).
+
+**Z-2 (aktualizacja, H1d gotowe).** H1d gotowe do scalenia `36b83f3e04` (martwa bramka GO/NO-GO
+naprawiona). Integrator fali B3 w toku: H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX`
+OFF; bramka GO ewentualnie za osobną flagą serwera `ENABLE_LIFECYCLE_GO_GATE`, jeśli UI nie ma
+dziś sposobu zapisu decyzji GO — decyzja w raporcie integratora.
 
 **EWIDENCJA (uzupełnienie 14.09 noc, po odbiorze paczki 5 v2).** Paczka 5 (Wywiad) →
 **🔧 wraca** (wpis 30). S5 PMO E3 → **🔧 freeze E1**.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po H1d).** §2 przewód: **H1d 🔧 →
+„gotowe do scalenia `36b83f3e04`"**; dodany wiersz **D-j** (Codex, dyżur — 4 rodziny martwych
+porównań poza `initiativeTransitionService`, nienaprawione, KANAL wpis 31). Liczniki §5
+przeliczone: 44 etapy (+1 D-j) — ✅ 2 · 🧪 6 · 🔧 8 · ⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 40
+etapów (0 ✅, 5 🧪, 8 🔧, 27 ⬜).
 
 ---
 
@@ -980,7 +1019,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B | ekran recenzji z prowenencją, nie 409 | 🔧 GOTOWE DO SCALENIA | `119ad9af3f` | 14.09 |
 | Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🔧 GOTOWE DO SCALENIA | `119ad9af3f` | 14.09 |
-| Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🔧 W TOKU | `integracja/kandydat-h1b-skrzynka-20260914` | 14.09 |
+| Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🔧 **GOTOWE DO SCALENIA** `36b83f3e04` | `integracja/kandydat-h1b-skrzynka-20260914`, kopia `backup/h1b-skrzynka-20260914` | 14.09 |
+| Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | ⬜ NIE ZACZĘTE (dyżur wydany, nienaprawione) | KANAL wpis 31 | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
@@ -990,10 +1030,11 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (43 etapy, +2 = H1c/H1d dołożone 14.09 obok H1b; H1b przechodzi ⬜→🔧
-„gotowe do scalenia" `119ad9af3f`):** ✅ 2 · 🧪 6 · 🔧 8 · ⬜ 27 · 👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (44 etapy, +1 = D-j dyżur Codexa dołożony 14.09 obok H1c/H1d/H1b; H1d przechodzi
+🔧 W TOKU→🔧 „gotowe do scalenia" `36b83f3e04`, ikona bez zmiany):** ✅ 2 · 🧪 6 · 🔧 8 · ⬜ 28 ·
+👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**39 etapów to FALA 2** (0 ✅, 5 🧪, 8 🔧, 26 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**40 etapów to FALA 2** (0 ✅, 5 🧪, 8 🔧, 27 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 

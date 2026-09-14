@@ -782,6 +782,35 @@ w `services/initiative` (fikstura `'PLANNING'`, grep po skasowanym SQL, `ARCHIVE
 **EWIDENCJA (uzupełnienie 14.09 noc, po H1b/H1c).** H1b: 🔧→**gotowe do scalenia `119ad9af3f`**.
 Dodane wiersze: H1c (gotowe), H1d (🔧). Skrzynka: Z-23, Z-24.
 
+**H1d — martwa bramka GO/NO-GO naprawiona (14.09, Opus, gałąź
+`integracja/kandydat-h1b-skrzynka-20260914`, HEAD `36b83f3e04`, kopia
+`backup/h1b-skrzynka-20260914`).** Dowód martwoty: CHECK P12 vs COUNT=0 dla starych predykatów
+`'SCHEDULED'`/`'EXECUTING'`/`'DONE'`/`'PROMOTED'`/`'PLANNING'`/`'BLOCKED'`
+(`evidence/h1b-20260914/h1d-realpg-dowod.txt`). Naprawy w `initiativeTransitionService.ts`:
+bramki kluczowane `gate` z `INITIATIVE_TRANSITION_MATRIX` (APPROVE/START/COMPLETE); START bez
+aktualnej decyzji GO (najwyższa zatwierdzona niewygasła wersja w
+`initiative_lifecycle_gate_decisions`, `pmo_domain` `GOVERNANCE_DECISION_MAKING`) → 409
+`GATE_DECISION_REQUIRED`; stemple `execution_started_at`/`done_at`/`cancelled_at` na kodach P12;
+usunięte martwe przejścia PROMOTED→PLANNING, APPROVED→SCHEDULED (właściciel: `scheduleDecision.ts`),
+BLOCKED/TRACKING (flaga `on_hold`/etap); cron `initiativeAutoStartJob.ts:96` selektor = kolumna
+`APPROVED` + etap `SCHEDULED` (był `scanned=0` zawsze). Wymóg decyzji CLOSURE przy domknięciu NIE
+przywrócony (`initiativeClosureService` jej nie zapisuje — dałoby 409 na każdym ludzkim
+domknięciu). Zastany defekt naprawiony: `resolveInitiativeStageWriteTarget('REJECTED')` zapisywało
+`CLOSED`. Testy RealPG `h1d-start-execution-go-gate.pg.test.ts` 3/3 (A RED→GREEN, B z decyzją,
+C cron); regresja 4 failed/191 → 3 failed/194 (zastane). Sanitizer
+`scripts/dev/h1d-sanitizer-inexecution-bez-lancucha-go.sql` (raport, zero zapisu). **NIENAPRAWIONE**
+(dyżur Codexa D-j, KANAL wpis 31): `ExecutionReportCron.ts:26`,
+`transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`,
+`planningPortfolioReadService.ts:1037/1047/1124/1169`. Długi: `review_requested_at`/`approved_at`
+nie istnieją po strict migrate (**Z-25**: stempel prośby o recenzję wymaga migracji — decyzja
+później); bramka `RESOURCE_RESPONSIBILITY` bez kodu (**Z-26**, decyzja właściciela); okno
+`tracking_*` bez właściciela; testy H1c/H1d tylko na bazie jednorazowej (wyzwalacz
+niezmienności).
+
+**Z-2 (integrator fali B3, w toku).** H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX` OFF;
+bramka GO ewentualnie za flagą serwera `ENABLE_LIFECYCLE_GO_GATE`, jeśli UI nie ma sposobu zapisu
+decyzji GO — decyzja w raporcie integratora.
+
 **Codex 14.09, 02:40–02:46 (KANAL Wpisy 28–29).** S1 paczka 5 v2 **ACCEPT** (`e1a2c2c160`) →
 odbiór CTO w toku (integrator paczka5v2 → staging, flaga OFF). S2 **REQUEST_CHANGES** (P1: receipt
 UUID/`SENDING` bez lease/MEMBER w pickerze; SMTP lokalny do E1, doręczenie na skrzynkę stagingu
@@ -808,11 +837,17 @@ pełny ścisły łańcuch migracji na klonie schematu stagingu pada na 919 (ledg
 pochodzi z delty — nowy kształt fałszywego „gotowe" (kandydat do pamięci).
 
 **Codex 14.09, 03:01–03:09.** S2 nowy freeze → final review **REQUEST_CHANGES** (drugi raz); S4/S5
-checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review). **Z-2:** H1d w toku
-(martwa bramka GO/NO-GO), po H1d integrator H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX`.
+checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review).
 
 **EWIDENCJA (uzupełnienie 14.09 noc, po odbiorze paczki 5 v2).** Paczka 5 (Wywiad) →
 **🔧 wraca** (wpis 30). S5 PMO E3 → **🔧 freeze E1**.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po H1d).** H1d 🔧 → **gotowe do scalenia `36b83f3e04`**;
+dodany wiersz D-j (Codex, dyżur — 4 rodziny martwych porównań, nienaprawione, KANAL wpis 31).
+Liczniki §5 (`TRZY_POJEMNIKI_PRACY_20260906.md`) przeliczone: 44 etapy (+1) — ✅ 2 · 🧪 6 · 🔧 8 ·
+⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 40 etapów (0 ✅, 5 🧪, 8 🔧, 27 ⬜). Co blokuje: Z-25/Z-26
+(decyzje właściciela — migracja stempla recenzji, bramka RESOURCE_RESPONSIBILITY), integrator
+fali B3 w drodze (Z-2).
 
 ---
 
