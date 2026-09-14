@@ -543,6 +543,29 @@ naprawione gałęzią `pawel-0539` w falę A cz. 4; P-P15 nie jest defektem — 
 produktu. Razem Paweł ma **15 zgłoszeń**; licznik pilotażu ogółem (wszyscy zgłaszający,
 14.09) — **37**.
 
+**Uzupełnienie DEC-512/Z-67 (CTO, 15.09 noc) — triaż 24 zgłoszeń Pawła (13–14.09, widget
+„Opinie”, `feedback_items`), P-P16…P-P24.** 15 z 24 rozliczonych jako P-P01…P-P15 (wyżej); **9
+nowych** oznaczeniami N1…N9 z pliku `cto-codex/feedback-triaz-20260914/TRIAZ.md`, zapisane tu jako
+P-P16…P-P24:
+
+| Nr | (N) | Waga | Moduł | Opis | Stan |
+|---|---|---|---|---|---|
+| P-P16 | N1 | MEDIUM | Materials | Licznik Materiałów 43 ≠ 8+34 (rozjazd sumy vs podkategorie) | do Codexa D-3 „liczniki” (wpis 67) |
+| P-P17 | N2 | MEDIUM | Audits | Licznik Audytów pokazuje 9, realnie 3 | do Codexa D-3 „liczniki” (wpis 67) |
+| P-P18 | N3 | HIGH | Assessment (SWOT) | „AI Draft” SWOT 0% — generowanie nie startuje | **blokuje** → fala F1 CTO w toku |
+| P-P19 | N4 | MEDIUM | Claims | Licznik Claims 727 vs realnie 200 | do Codexa D-3 „liczniki” (wpis 67) |
+| P-P20 | N5 | LOW | Wywiad | Licznik „pytanie 1/7” po polsku mimo wątku EN | retest CTO w toku |
+| P-P21 | N6 | LOW | Wywiad | Licznik kroków niespójny | retest CTO w toku |
+| P-P22 | N7 | — | — | Żart (nie defekt) | zamknięte bez akcji |
+| P-P23 | N8 | HIGH | AI chat (Teresa) | Teresa deklaruje wykonanie akcji, akcja nie ma skutku | **blokuje** → fala F1 CTO w toku |
+| P-P24 | N9 | HIGH | AI chat (Teresa) | Odpowiedź w DE przy wątku EN→PL/EN | **blokuje** → fala F1 CTO w toku; decyzja CTO: `users.language` ma pierwszeństwo przed językiem wątku, dozwolone tylko `{en,pl}` |
+
+N3/N8/N9 = blokujące, fala **F1 CTO** w toku. N5/N6 = retest CTO w toku (niżej waga niż blokujące).
+N1/N2/N4 = do Codexa D-3 „liczniki” (razem z `contractMirrorDrift`, Z-64, asercjami PL — patrz
+Z-67 i podział E2b niżej). N7 = żart, zamknięte bez akcji. Razem Paweł ma **24 zgłoszenia** (15 +
+9); licznik pilotażu ogółem: mianownik przeliczony z 37 → **46** (37 + 9 P-P16…24); wdrożone/🧪 bez
+zmian tą nocą — **32/46** + 1 zamknięte bez akcji (P-P22/N7).
+
 **Fala A cz. 1 — WDROŻONA na staging 14.09 04:31 UTC.**
 Linia `c3ac90ca73` → `005ead2ece` (merge drobne `8a445ba920` + pilot-blokery `005ead2ece`), run
 `34806390242` headSha zgodny, `/api/health` = `005ead2ece`, tag `staging-deployed` = `005ead2ece`,
@@ -1572,6 +1595,35 @@ per kolejne kandydaty S5 E3b/E2c-bis/E2a-bis). §5: wiersz **S5 E3b** → 🧪 N
 zamknięte (S5 E3b)**, **Z-65 nowa (P1, regresja kolumn `ProjectStageGatesPanel`, do D-3)**.
 Wszystkie tory Codexa Wpisów 39–63 zamknięte; Codex przechodzi do E2b-2 (+ projekt Z-63 STOP) i
 D-3.
+
+**Z-66 nowa (fala E2f, CTO, DEC-510 pkt E2f, 15.09 noc).** `ef6cc4380f` — bramka
+`scripts/i18n/pomiar-jezyka.mjs` rozszerzona o warstwy serwer/prompty/DRD z baseline
+(`docs/program/JEZYK_EN_PL_20260908/baseline.json`, `_meta.sha=59a8c44c04`) i ratchetem per
+suma/moduł w `check:jezyk:ci` (`--staged` per plik, pełny skan przy `public/locales/**` i
+źródłach DRD); dopisane `--report`, `check:jezyk:raport`, `check:jezyk:baseline`; mapa
+`docs/ui-standards/MAPA_JEZYKA.md`; testy 22/22. **Nowy dług z tej fali:** K8spl 91, K8sen 825 (do
+przesiania), K9pPL 33, K9pMIX 0, **K9pBRAK 77** (pliki systemowego promptu bez
+`withResolvedLocaleInstruction` — przyczyna klasy N9, patrz Z-67/P-P24), K10dPL 0 (DRD EN czyste,
+ratchet), K10dROZ 2. Bez zmian: K3a 0, K4en 869, K4pl 22, K7 271. Naprawa przyrządu: testy
+`scripts/i18n/__tests__` dostawały jsdom → dodane `@vitest-environment node` (test J0 był czerwony
+przez przyrząd — kształt „przyrząd kłamie”).
+
+**Z-67 nowa (triaż zgłoszeń Pawła, CTO, 15.09 noc).** 24 zgłoszenia Pawła (13–14.09, widget
+„Opinie”, `feedback_items`) — 15 rozliczone jako P-P01…P-P15, **9 nowych zapisane jako
+P-P16…P-P24** (tabela wyżej, sekcja „Uzupełnienie DEC-512/Z-67”): N3 SWOT „AI Draft” 0%
+(P-P18, blokuje), N8 Teresa deklaruje akcję bez skutku (P-P23, blokuje), N9 EN→DE odpowiedź
+(P-P24, blokuje; decyzja CTO: `users.language` przed językiem wątku, tylko `{en,pl}`) → **fala F1
+CTO w toku**; N5 „pytanie 1/7” PL przy EN (P-P20), N6 licznik kroków (P-P21) → retest CTO w toku;
+N1 Materials 43≠8+34 (P-P16), N2 Audits 9 vs 3 (P-P17), N4 Claims 727 vs 200 (P-P19) → Codex D-3
+„liczniki” (wpis 67); N7 żart (P-P22) zamknięte bez akcji. Plik
+`cto-codex/feedback-triaz-20260914/TRIAZ.md`. Liczniki §5/pilotaż: mianownik 37 → **46**
+zgłoszeń, **32 wdrożone + 1 zamknięte bez akcji** (P-P22).
+
+**Z-68 nowa (podział E2b, CTO, 15.09 noc, wpis 66).** CTO: Execution (E2b-Exec, w toku),
+Settings/Admin/MyWork (E2b-Settings, w toku), scripts. Codex: Interview/Initiatives/Chat
+(E2b-2) + D-3 (Z-65 P1 `ProjectStageGatesPanel`, liczniki N1/N2/N4 z Z-67, `contractMirrorDrift`,
+Z-64, asercje PL) + E2d-bis (77 plików promptów bez `withResolvedLocaleInstruction`, K9pBRAK z
+Z-66, wpis 68). Pomiar 16 kryteriów v2 w toku (CTO).
 
 ---
 
