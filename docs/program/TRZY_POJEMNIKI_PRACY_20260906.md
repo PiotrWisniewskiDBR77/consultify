@@ -947,6 +947,14 @@ zamknięte); **Z-38 nowy** (pigułka „Brak dostępności" ucięta + mylące na
 i18n/UI). Liczniki §5 bez zmiany stanu (RP1b/kosmetyka są przejazdami wewnątrz istniejących
 wierszy RP1/OB1, nie osobnymi etapami) — przeliczyć ponownie po scaleniu fal C1/C2.
 
+**EWIDENCJA (uzupełnienie 14.09, S5 PMO E3).** „PMO E3 projekty w UI" (§3 fundamenty / §5 wiersz
+PMO) → **🧪 NA STAGINGU `7332fa2a6f`** (za flagą `VITE_PMO_PROJECTS`); dodaj wiersz **S5 E3b**
+(⬜ Codex — czworo oczu `passGate`, Z-24). Liczniki §5 przeliczone. Skrzynka: **Z-39** (schemat
+poza migracjami — `projects.current_phase` brak w migracjach, obecny na stagingu), **Z-40**
+(surowe podpisy faz PMO → i18n), **Z-41** (zrzuty PMO po polsku — DEC-461 EN-first) nowe; **Z-24**
+→ „w S5 E3b" (nie zamknięte, przeniesione do zadania Codexa); Z-2: fala C1 (RP1b) i C2 (Q1
+kosmetyka) w wdrożeniu. Flagi na stagingu: dopisz `VITE_PMO_PROJECTS` OFF.
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -1113,9 +1121,12 @@ z aliasami przekierowującymi przez jeden cykl wdrożenia. **Warunek: pytanie Q4
    **Zakaz budowy drugiego generatora w którymkolwiek z pakietów P2/P3/F2-2.**
 2. **Poczta żywa.** `server/src/services/emailService.ts` istnieje; DEC-471 (dostęp do panelu
    Hostingera) **nadal otwarte** — to twardy warunek RP1 i RA-E4d. Patrz **Q1**.
-3. **PMO (F2-3).** E1/E2 dostarczone; **E3 (projekty w interfejsie) warunkuje** filtr projektami
-   (L3, RP2 „per projekt"), deklarację dostępności per osoba (OB2 docelowo) i role do macierzy
-   DEC-485. Do czasu PMO wszystkie ekrany **degradują się do „cała organizacja" bez błędu**.
+3. **PMO (F2-3).** E1/E2/E3 dostarczone i **🧪 NA STAGINGU `7332fa2a6f`** (za flagą
+   `VITE_PMO_PROJECTS`, 14.09) — warunkuje filtr projektami (L3, RP2 „per projekt"), deklarację
+   dostępności per osoba (OB2 docelowo) i role do macierzy DEC-485. Do czasu akceptu właściciela
+   na zrzucie i włączenia flagi wszystkie ekrany **nadal degradują się do „cała organizacja" bez
+   błędu**. Dług: **S5 E3b** (czworo oczu `passGate` — Z-24), Z-39 (schemat poza migracjami),
+   Z-40 (i18n podpisów faz).
 4. **Gantt kanoniczny.** DEC-493: kandydat `src/components/Initiatives/gantt/InitiativeGantt.tsx`
    **po pomiarze** zależności i ścieżki krytycznej. Używają: PL3, B-E1, P6. Zakaz piątego Gantta.
 5. **Silnik zatwierdzeń.** DEC-489: **rozszerzenie istniejącego** (bramki, poziomy, quorum,
@@ -1268,7 +1279,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
 | Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | 🔧 W TOKU (części istnieją) | `report-builder.routes.ts` | — |
-| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🔧 W TOKU (E1+E2 dostarczone, nie scalone) | `ba25e56459`+`7d20679630` | 13.09 |
+| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga `VITE_PMO_PROJECTS` OFF) | `7332fa2a6f` | 14.09 |
+| Wspólne | — | S5 E3b PMO czworo oczu `passGate` (Z-24: `requested_by`≠`approved_by`, ciało 403) | Codex | S5 PMO E3, Z-24 | F | 403 z komunikatem, brak samo-zatwierdzenia | ⬜ NIE ZACZĘTE (wydane, KANAŁ wpis 39) | — | 14.09 |
 | Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | ⬜ NIE ZACZĘTE (kandydat wskazany) | `InitiativeGantt.tsx` | — |
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
@@ -1278,10 +1290,13 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 (skrzynka v2) WDROŻONA na staging `94754c3b4d` za flagą; H1e przechodzi 🔧 GOTOWE DO SCALENIA →
 🧪 NA STAGINGU, nowy wiersz H1f (skrzynka v2, Z-27 rozliczone) dołożony wprost 🧪 NA STAGINGU; RP1
 ODEBRANY i WDROŻONY na staging `3e1363d01a` za flagą (RP1b przejazd kanonu w toku po skazach
-Z-29); RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU):** ✅ 2 · 🧪 13 · 🔧 5 ·
-⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
+Z-29); RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU; **47 etapów po 14.09 wieczór: S5 PMO
+E3 ODEBRANE i WDROŻONE na staging `7332fa2a6f` za flagą, PMO E3 przechodzi 🔧 W TOKU →
+🧪 NA STAGINGU, nowy wiersz S5 E3b (czworo oczu `passGate`, Z-24) dołożony wprost ⬜ NIE
+ZACZĘTE**):** ✅ 2 · 🧪 14 · 🔧 4 ·
+⬜ 27 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**42 etapy to FALA 2** (0 ✅, 12 🧪, 5 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**43 etapy to FALA 2** (0 ✅, 13 🧪, 4 🔧, 26 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
