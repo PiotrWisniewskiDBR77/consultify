@@ -67,6 +67,15 @@ interface InterviewSingleQuestionRuntimeProps {
     category?: InterviewCategory,
     questionId?: string
   ) => Promise<InterviewEvidence | void>;
+  /**
+   * P-T15 (Wywiad, uwaga testera XV „brak mozliwosci usuwania dodanych
+   * zalacznikow"): usuniecie zalacznika przypietego do odpowiedzi.
+   *
+   * Opcjonalny CELOWO — bez niego kosz sie NIE RENDERUJE (a nie: renderuje
+   * sie martwy). Do 14.09 oba przyciski stały w DOM z `disabled` na sztywno,
+   * wiec tester widzial kosz, klikal i nic sie nie dzialo.
+   */
+  onDeleteEvidence?: (evidenceId: string) => Promise<void>;
   onSubmitSession: () => Promise<void>;
   onSaveAndExit?: () => void;
   sessionName?: string;
@@ -195,6 +204,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   onUploadFile,
   onAddLink,
   onAddVoiceEvidence,
+  onDeleteEvidence,
   onSubmitSession,
   onSaveAndExit,
   sessionName,
@@ -250,6 +260,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const [liveInterim, setLiveInterim] = useState('');
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  /**
+   * P-T15 — dwustopniowe usuwanie zalacznika. Trzymamy ID pozycji, dla ktorej
+   * kosz zamienil sie w pytanie „Usunac?", zeby JEDNO klikniecie nigdy nie
+   * skasowalo dowodu (to jest ta „potwierdzenie" ze zlecenia — bez modala,
+   * bo panel odpowiedzi nie ma wlasnego, a `window.confirm` nie jest
+   * tlumaczony ani testowalny w DOM).
+   */
+  const [evidenceToRemoveId, setEvidenceToRemoveId] = useState<string | null>(null);
+  const [isRemovingEvidence, setIsRemovingEvidence] = useState(false);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [guidanceSeen, setGuidanceSeen] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(false);
@@ -607,6 +626,33 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     previousQuestion,
     readOnly,
   ]);
+
+  /**
+   * P-T15 — realne usuniecie zalacznika. UPRAWNIENIA IDENTYCZNE JAK PRZY
+   * DODAWANIU: ten sam `readOnly` (czyli `isQuestionReadOnly(pytanie)` albo
+   * `workspaceReadOnly`), ktory blokuje `uploadAttachments`. Serwer i tak
+   * sprawdza wlasciciela sesji (`InterviewController.deleteEvidence` → 403
+   * INTERVIEW_SESSION_FORBIDDEN) i organizacje (404 poza organizacja).
+   */
+  const mozliwoscUsuwaniaZalacznika = Boolean(onDeleteEvidence) && !readOnly;
+
+  const usunZalacznik = useCallback(
+    async (evidenceId: string) => {
+      if (!onDeleteEvidence || readOnly) return;
+      setIsRemovingEvidence(true);
+      try {
+        await onDeleteEvidence(evidenceId);
+        setEvidenceToRemoveId(null);
+      } catch {
+        // Komunikat bledu nalezy do warstwy, ktora wola API (workspace pokazuje
+        // `interview.workspace.failedToDelete`); tu tylko nie chowamy pytania,
+        // zeby uzytkownik widzial, ze nic sie nie stalo.
+      } finally {
+        setIsRemovingEvidence(false);
+      }
+    },
+    [onDeleteEvidence, readOnly]
+  );
 
   const handleFilePicked = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -2428,17 +2474,48 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   alt={item.title || item.name}
                                   className="w-full h-full object-cover"
                                 />
-                                <button
-                                  type="button"
-                                  disabled
-                                  title={t(
-                                    'interview.singleQuestionRuntime.removeFromTheEvidencePanel'
-                                  )}
-                                  className="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/50 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity cursor-not-allowed"
-                                  aria-label={t('interview.singleQuestionRuntime.remove')}
-                                >
-                                  <X size={11} />
-                                </button>
+                                {mozliwoscUsuwaniaZalacznika ? (
+                                  evidenceToRemoveId === item.id ? (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/70 px-1 text-center">
+                                      <span className="text-[9px] font-medium text-white">
+                                        {t(
+                                          'interview.singleQuestionRuntime.removeAttachmentConfirm',
+                                          'Remove attachment?'
+                                        )}
+                                      </span>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          disabled={isRemovingEvidence}
+                                          onClick={() => void usunZalacznik(item.id)}
+                                          className="rounded-full bg-c-danger px-1.5 py-0.5 text-[9px] font-semibold text-white disabled:opacity-60"
+                                        >
+                                          {t('interview.singleQuestionRuntime.remove')}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEvidenceToRemoveId(null)}
+                                          className="rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-medium text-white"
+                                        >
+                                          {t('common.cancel', 'Cancel')}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setEvidenceToRemoveId(item.id)}
+                                      title={t(
+                                        'interview.singleQuestionRuntime.removeAttachment',
+                                        'Remove attachment'
+                                      )}
+                                      className="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/50 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-c-danger"
+                                      aria-label={t('interview.singleQuestionRuntime.remove')}
+                                    >
+                                      <X size={11} />
+                                    </button>
+                                  )
+                                ) : null}
                               </div>
                             );
                           }
@@ -2456,17 +2533,46 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                     : t('interview.singleQuestionRuntime.attachment')
                                 )}
                               </span>
-                              <button
-                                type="button"
-                                disabled
-                                title={t(
-                                  'interview.singleQuestionRuntime.removeFromTheEvidencePanel'
-                                )}
-                                className="inline-flex items-center justify-center text-c-text-muted cursor-not-allowed"
-                                aria-label={t('interview.singleQuestionRuntime.remove')}
-                              >
-                                <Trash2 size={11} />
-                              </button>
+                              {mozliwoscUsuwaniaZalacznika ? (
+                                evidenceToRemoveId === item.id ? (
+                                  <span className="inline-flex items-center gap-1">
+                                    <span className="text-[10px] text-c-text-muted">
+                                      {t(
+                                        'interview.singleQuestionRuntime.removeAttachmentConfirm',
+                                        'Remove attachment?'
+                                      )}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      disabled={isRemovingEvidence}
+                                      onClick={() => void usunZalacznik(item.id)}
+                                      className="rounded-full bg-c-danger px-1.5 py-0.5 text-[10px] font-semibold text-white disabled:opacity-60"
+                                    >
+                                      {t('interview.singleQuestionRuntime.remove')}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEvidenceToRemoveId(null)}
+                                      className="rounded-full border border-c-border px-1.5 py-0.5 text-[10px] text-c-text-secondary"
+                                    >
+                                      {t('common.cancel', 'Cancel')}
+                                    </button>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEvidenceToRemoveId(item.id)}
+                                    title={t(
+                                      'interview.singleQuestionRuntime.removeAttachment',
+                                      'Remove attachment'
+                                    )}
+                                    className="inline-flex items-center justify-center rounded text-c-text-muted transition-colors hover:text-c-danger"
+                                    aria-label={t('interview.singleQuestionRuntime.remove')}
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                )
+                              ) : null}
                             </span>
                           );
                         })}
