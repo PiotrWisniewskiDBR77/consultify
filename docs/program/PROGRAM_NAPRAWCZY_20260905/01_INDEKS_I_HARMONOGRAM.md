@@ -1207,6 +1207,53 @@ Skrzynka: **Z-43 → w C4 (na linii)**, **Z-44 nowa (rozliczona — reguła zapi
 (otwarta — u Codexa)**, **Z-46 nowa (otwarta — czeka na właściciela/Codex)**, **Z-47 nowa
 (dług drobny, otwarta)**.
 
+**Q1 P3 Obciążenie E2–E4 — PRZYJĘTE i WDROŻONE na staging (14.09, push `174f371a13`; health
+potwierdzony 13:3x UTC, tag `staging-deployed` przesunięty ręcznie po weryfikacji — Z-35).**
+Odbiór CTO: parytet OFF (6 bramek `InitiativesHub` + 404 `FEATURE_DISABLED`), kanon w powłoce
+(usunięty natywny `<select>`, Menu 3 = 0 pigułek), zrzuty w realnym `InitiativesHub`, RealPG 2/2
+(`planningOnly`, `applied:false`), rodzeństwo 67 plików — 0 nowych regresji; tag cofnięcia
+`rollback-pre-q1e234-20260914`. **EWIDENCJA:** OB2/OB3/OB4 → **🧪 NA STAGINGU `174f371a13`** (za
+flagą; przechodzą ⬜ NIE ZACZĘTE → 🧪 NA STAGINGU). Drobne do Codexa Q1 E5 (wpis 44): opcja
+`WORKLOAD_CAPACITY` w `InitiativeWorkReportView.tsx:124` bez bramki flagi; angielski literał
+uzasadnienia `workloadCapacityService.ts:1197`; fałszywy alarm hooka na komentarzu z30.
+
+**Q2 E4 Raporty Realizacji — HOLD → naprawa CTO → PRZYJĘTE na linię `eba9d72ad9` (14.09).**
+Poprawka `7ca474282f`: warianty akcji podglądu `positive`/`neutral` z unii `PreviewActionVariant`
+zamiast `accept`/`secondary`; pusty stan `actionLabel/onAction` → przycisk „New report" (było
+„zbudowane, niepodłączone" — 11. kształt); „Report template" przeniesiony z Menu 3 do dropdownu
+Menu 2 → 3 pigułki; test canon 1 → 4 przypadki; front tsc 195 → 189. Odbiór: parytet OFF
+(`executionReportE4Flag.ts` strict, 3 trasy 404), kanon tabel (StandardTable/StandardPreview w
+`TableWithPreviewLayout`), RealPG 5/5 (PDF/SMTP/receipt), rodzeństwo addytywne. Zrzuty
+`~/Developer/cto-codex/zrzuty-q2-raporty-20260914/` (5: PL-light, pusty EN-light, EN-light,
+EN-dark, PL-dark) obejrzane przez CTO. **EWIDENCJA:** RA-E4a/RA-E4b/RA-E4d → **🔧 na linii
+`eba9d72ad9`** (wdrożenie na staging w toku, patrz Z-49). Lekcja do Z-45 (rozszerzenie): próg tsc
+mierzony liczbowo względem bazy; nowy komponent = zrzut stanu pustego i ≥3 wierszy.
+
+**Z-48 nowa, drobna, tor D (14.09).** `StandardTable` ucina polskie etykiety statusu
+(„Zatwierdz…") przy domyślnej szerokości kolumny — widoczne w Raportach Realizacji (PL); naprawa
+w kanonie (min szerokość kolumny statusu z pigułką), nie per ekran — ten sam wzorzec co Z-43
+w PMO.
+
+**Z-49 nowa, procedura (14.09).** `/api/health.gitSha` bierze się z `APP_BUILD_SHA`, którą
+ustawia tylko workflow (28. kształt); przy wdrożeniu samym pushem (Z-44) health kłamie →
+procedura: `railway variables -e staging -s consultify --set APP_BUILD_SHA=<sha> --skip-deploys`
+PRZED pushem na `staging`, potem push, potem po health przesunąć tag `staging-deployed`. Dziś:
+`174f371a13` wymagało redeployu (zmienna ustawiona po fakcie), `eba9d72ad9` poszło poprawnie.
+
+**Z-50 nowa (14.09).** Integrator Opus utknął po merge (watchdog 600 s) — praca była
+zacommitowana, dokończył drugi agent; reguła: integrator commituje po każdym etapie (poprawka /
+merge / bramka), meldunek częściowy do pliku dowodów.
+
+**Codex A wpis (08:08 CDT, 14.09).** S4 fix-identity — 2 z 3 plików zielone, rozszerzona bramka;
+B/C/D nadal nieuruchomione przez właściciela (S3 Plan stoi od ~5 h).
+
+**Z-2 (aktualizacja 14.09, po Q1 E2–E4/Q2 E4/Z-48/Z-49/Z-50).** Q1 P3 Obciążenie E2–E4
+**WDROŻONA** na staging `174f371a13`; Q2 E4 Raporty Realizacji **PRZYJĘTA** na linię
+`eba9d72ad9`, wdrożenie na staging w toku (tag cofnięcia `rollback-pre-q2-staging-20260914`).
+S4 = nadal **HOLD CTO** (Z-45, Codex A: 2/3 plików zielone, B/C/D wstrzymane u właściciela).
+Skrzynka: **Z-48 nowa (drobna, tor D)**, **Z-49 nowa (procedura, zapisana)**, **Z-50 nowa
+(zamknięta — reguła commit-per-etap zapisana)**.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)

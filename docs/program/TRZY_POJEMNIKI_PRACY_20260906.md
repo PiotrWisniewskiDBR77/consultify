@@ -1274,9 +1274,9 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą; Z-38 heatmapa PL WDROŻONA, fala C3) | `7722319dfc` | 14.09 |
-| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
+| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA) | `174f371a13` | 14.09 |
+| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA) | `174f371a13` | 14.09 |
+| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | 🧪 NA STAGINGU (za flagą; Q1 P3 Obciążenie E2–E4 PRZYJĘTA i WDROŻONA) | `174f371a13` | 14.09 |
 | Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu WDROŻONA na staging `6dfb338ba0`, fala C1) | `6dfb338ba0` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
@@ -1289,10 +1289,10 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | Ryzyko | R-E3b generator obserwacji i grubych zmian | Codex F2-2 | R-E3a, B-E0 | E | lista obserwacji | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Ryzyko | R-E3c artefakt N, 4 karty | Codex F2-2 | ARTIFACT_ANATOMY | E | artefakt z 4 kartami | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Ryzyko | R-E3d realne wdrożenie zmiany + powiadomienie | Codex F2-2 | powiadomienia | E | plan „przed/po" + skrzynka adresata | ⬜ NIE ZACZĘTE | — | — |
-| Realizacja | Raporty | RA-E4a kadencja i wzorce | Codex F2-2 | silnik P1 | C | kreator raportu | ⬜ NIE ZACZĘTE (migracja jest) | `20262104_execution_report_snapshots.sql` | — |
-| Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Raporty | RA-E4a kadencja i wzorce | Codex F2-2 | silnik P1 | C | kreator raportu | 🔧 na linii (Q2 E4 PRZYJĘTA po naprawie CTO `7ca474282f`; wdrożenie na staging w toku) | `eba9d72ad9` | 14.09 |
+| Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | 🔧 na linii (Q2 E4 PRZYJĘTA po naprawie CTO `7ca474282f`; wdrożenie na staging w toku) | `eba9d72ad9` | 14.09 |
 | Realizacja | Raporty | RA-E4c rezultaty z KPI | Codex F2-2 | A4 | C | sekcja rezultatów | ⬜ NIE ZACZĘTE | — | — |
-| Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | ⬜ NIE ZACZĘTE | — | — |
+| Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | 🔧 na linii (Q2 E4 PRZYJĘTA po naprawie CTO `7ca474282f`; RealPG 5/5 PDF/SMTP/receipt; wdrożenie na staging w toku) | `eba9d72ad9` | 14.09 |
 | Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `78086fb2c8` | 14.09 |
@@ -1319,10 +1319,14 @@ ODEBRANY i WDROŻONY na staging `3e1363d01a` za flagą (RP1b przejazd kanonu w t
 Z-29); RP1 przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU; **47 etapów po 14.09 wieczór: S5 PMO
 E3 ODEBRANE i WDROŻONE na staging `7332fa2a6f` za flagą, PMO E3 przechodzi 🔧 W TOKU →
 🧪 NA STAGINGU, nowy wiersz S5 E3b (czworo oczu `passGate`, Z-24) dołożony wprost ⬜ NIE
-ZACZĘTE**):** ✅ 2 · 🧪 14 · 🔧 4 ·
-⬜ 27 · 👁 0 · 🚀 0 · ⛔ 0.
+ZACZĘTE**; **14.09 noc, po Q1 E2–E4/Q2 E4: Q1 P3 Obciążenie E2–E4 (Codex) PRZYJĘTA i WDROŻONA na
+staging `174f371a13` za flagą — OB2/OB3/OB4 przechodzą ⬜ NIE ZACZĘTE → 🧪 NA STAGINGU (3 etapy);
+Q2 E4 Raporty Realizacji HOLD → naprawa CTO `7ca474282f` → PRZYJĘTA na linię `eba9d72ad9` —
+RA-E4a/RA-E4b/RA-E4d przechodzą ⬜ NIE ZACZĘTE → 🔧 na linii, wdrożenie na staging w toku (3
+etapy)**):** ✅ 2 · 🧪 17 · 🔧 7 ·
+⬜ 21 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**43 etapy to FALA 2** (0 ✅, 13 🧪, 4 🔧, 26 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**43 etapy to FALA 2** (0 ✅, 16 🧪, 7 🔧, 20 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
@@ -1467,3 +1471,35 @@ już 🧪 NA STAGINGU przed falą C3/C4 (dopisane tylko SHA/gałęzie), B-E1 by�
 doprecyzowany, nie zmieniony). Skrzynka: **Z-43 → w C4 (na linii, nie na stagingu)**, **Z-44
 nowa (rozliczona)**, **Z-45 nowa (otwarta, u Codexa)**, **Z-46 nowa (otwarta)**, **Z-47 nowa
 (dług drobny, otwarta)**.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po Q1 E2–E4/Q2 E4/Z-48/Z-49/Z-50).** §5: **OB2/OB3/OB4** →
+Q1 P3 Obciążenie E2–E4 (Codex) **PRZYJĘTA i WDROŻONA** na staging `174f371a13` za flagą (health
+potwierdzony 13:3x UTC, tag `staging-deployed` przesunięty ręcznie po weryfikacji — Z-35; parytet
+OFF 6 bramek `InitiativesHub` + 404 `FEATURE_DISABLED`, kanon bez natywnego `<select>`, Menu 3 =
+0 pigułek, RealPG 2/2 `planningOnly`/`applied:false`, rodzeństwo 67 plików — 0 nowych regresji;
+tag cofnięcia `rollback-pre-q1e234-20260914`) — stan przechodzi ⬜ NIE ZACZĘTE → **🧪 NA STAGINGU**
+(3 etapy). Drobne do Codexa Q1 E5: `WORKLOAD_CAPACITY` w `InitiativeWorkReportView.tsx:124` bez
+bramki flagi, angielski literał `workloadCapacityService.ts:1197`, fałszywy alarm hooka na
+komentarzu z30. **RA-E4a/RA-E4b/RA-E4d** → Q2 E4 Raporty Realizacji HOLD → naprawa CTO
+`7ca474282f` (warianty akcji podglądu `positive`/`neutral` z unii `PreviewActionVariant` zamiast
+`accept`/`secondary`; pusty stan → przycisk „New report"; „Report template" z Menu 3 do dropdownu
+Menu 2; test canon 1 → 4 przypadki; tsc 195 → 189) → **PRZYJĘTA** na linię `eba9d72ad9` (parytet
+OFF `executionReportE4Flag.ts` strict + 3 trasy 404, kanon StandardTable/StandardPreview w
+`TableWithPreviewLayout`, RealPG 5/5 PDF/SMTP/receipt, rodzeństwo addytywne; zrzuty
+`~/Developer/cto-codex/zrzuty-q2-raporty-20260914/` — 5 obejrzane przez CTO; tag cofnięcia
+`rollback-pre-q2-staging-20260914`) — stan przechodzi ⬜ NIE ZACZĘTE → **🔧 na linii**, wdrożenie
+na staging w toku (3 etapy). **Z-48** (drobna, tor D): `StandardTable` ucina polskie etykiety
+statusu przy domyślnej szerokości kolumny (Raporty Realizacji PL) — ten sam wzorzec co Z-43 w
+PMO, naprawa w kanonie. **Z-49** (procedura): `APP_BUILD_SHA` musi być ustawiona przed pushem na
+`staging` (`--skip-deploys`), inaczej `/api/health.gitSha` kłamie (28. kształt) — `174f371a13`
+wymagało redeployu, `eba9d72ad9` poszło poprawnie. **Z-50** (zamknięta): integrator Opus utknął
+po merge (watchdog 600 s), praca była zacommitowana, dokończył drugi agent — reguła commit-per-
+etap zapisana. S4 (Codex A, 08:08 CDT): 2/3 plików zielone, rozszerzona bramka; B/C/D nadal
+wstrzymane u właściciela (bez zmiany stanu B-E1, nadal 🔧 W TOKU / HOLD CTO).
+
+**Liczniki §5 — po Q1 E2–E4/Q2 E4 (14.09 noc):** ✅ 2 · 🧪 17 · 🔧 7 · ⬜ 21 · 👁 0 · 🚀 0 · ⛔ 0
+(47 etapów). Zmiana wobec poprzedniego przeliczenia: 🧪 14→17 (+3: OB2/OB3/OB4), 🔧 4→7
+(+3: RA-E4a/RA-E4b/RA-E4d), ⬜ 27→21 (−6). Skrzynka: **Z-43 → w C4 (na linii, nie na
+stagingu)**, **Z-44 rozliczona**, **Z-45 otwarta (u Codexa)**, **Z-46 otwarta**, **Z-47 dług
+drobny (otwarta)**, **Z-48 nowa (drobna, tor D, otwarta)**, **Z-49 nowa (procedura, zapisana)**,
+**Z-50 nowa (zamknięta — reguła zapisana)**.
