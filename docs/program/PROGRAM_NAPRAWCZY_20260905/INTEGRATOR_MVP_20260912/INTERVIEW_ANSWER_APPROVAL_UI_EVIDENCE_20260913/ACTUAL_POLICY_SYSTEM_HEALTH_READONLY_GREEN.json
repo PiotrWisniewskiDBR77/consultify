@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "capturedAt": "2026-09-13T18:29:04.962Z",
+  "sourceCommit": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "indexSha256": "a750855dbc3caa7669e9d5463518c3cdc935395cae6def34a01cf42b9028efab",
+  "fixture": {
+    "orgId": "iaa-ui-20260913175715-06ce0b08-org"
+  },
+  "mode": "two_stage",
+  "businessWrites": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/system-health/detailed"
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy"
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy/history"
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "httpErrors": []
+}

@@ -13011,7 +13011,11 @@ export const Api = {
   },
   // System
   getSystemHealth: async () => {
-    return getCachedJson(`${API_URL}/system-health`, 30_000, 'Failed to fetch system health');
+    return getCachedJson(
+      `${API_URL}/system-health/detailed`,
+      30_000,
+      'Failed to fetch system health',
+    );
   },
   getRecognitionSchedule: async (id: string) => {
     const res = await fetchWithRetry(`${API_URL}/revenue/revenue-recognition/${id}/schedule`, {

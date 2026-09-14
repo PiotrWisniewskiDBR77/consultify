@@ -1,0 +1,1 @@
+{"policy" : {"futureTop": {"preserved": "yes"}, "interview": {"answerApproval": {"mode": "two_stage", "version": 1, "futureModeKey": "keep-me"}, "futureInterviewKey": {"preserved": 42}}, "operating_mode": "standard"}, "versionCount" : 2, "publishedCount" : 1}

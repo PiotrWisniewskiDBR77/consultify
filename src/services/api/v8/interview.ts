@@ -684,7 +684,13 @@ export const V8InterviewApi = {
       decision: 'approved' | 'sent_back';
       reason?: string | null;
     }
-  ) => v8Post(`/interview/assignments/${encodeURIComponent(id)}/answer-decisions`, payload),
+  ) =>
+    v8Post<{
+      assignmentId: string;
+      submissionId: string;
+      idempotentReplay: boolean;
+      approvals: V8InterviewAnswerApproval[];
+    }>(`/interview/assignments/${encodeURIComponent(id)}/answer-decisions`, payload),
 
   remindAssignment: (id: string) =>
     v8Post(`/interview/assignments/${encodeURIComponent(id)}/remind`, {}),

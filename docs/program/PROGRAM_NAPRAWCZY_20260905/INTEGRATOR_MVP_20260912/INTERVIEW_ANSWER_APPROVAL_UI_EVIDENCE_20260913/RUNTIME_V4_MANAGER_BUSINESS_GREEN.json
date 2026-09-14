@@ -1,0 +1,601 @@
+{
+  "pageErrors": [],
+  "consoleErrors": [],
+  "httpErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/settings/preferences/accessibility",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/csrf-token",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/admin/flags",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/feature-flags/runtime",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "body": {
+        "eventName": "voice_stopped",
+        "status": "idle"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai-settings/user",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v10/teresa/voice-config",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "body": {
+        "eventName": "voice_unavailable",
+        "status": "error",
+        "unavailableReason": "server_missing_gemini_live_key"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/demo/status",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/mfa/status",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/providers/health",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/personal-tasks",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/pmo/projects/my-memberships",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/access/effective",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/insights",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/templates",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/decisions",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/tasks",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/my",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/managed",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/overdue",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions/iaa-ui-v4-20260913-session",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions/iaa-ui-v4-20260913-session",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/questions",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/notes",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/evidence",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/context",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/summary",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/my",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/linked-items",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/review-access",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-approvals",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions/iaa-ui-v4-20260913-session",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/assignments/iaa-ui-v4-20260913-assignment",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/questions",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/notes",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/evidence",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/context",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/summary",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/my",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/linked-items",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/assignments/iaa-ui-v4-20260913-assignment",
+      "body": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/assignments/iaa-ui-v4-20260913-assignment/answer-history",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-decisions",
+      "body": {
+        "submissionId": "iaa-ui-v4-20260913-submission-1",
+        "clientRequestId": "568addc6-fd92-44aa-a116-4b983d775c69",
+        "answers": [
+          {
+            "questionId": "iaa-ui-v4-20260913-q1",
+            "expectedAnswerUpdatedAt": "2026-09-13T23:43:38.193Z"
+          }
+        ],
+        "decision": "approved"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-approvals",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-decisions",
+      "body": {
+        "submissionId": "iaa-ui-v4-20260913-submission-1",
+        "clientRequestId": "9ca36e65-d0d1-4836-ad4e-fdd8b26a41fb",
+        "answers": [
+          {
+            "questionId": "iaa-ui-v4-20260913-q2",
+            "expectedAnswerUpdatedAt": "2026-09-13T23:43:38.194Z"
+          }
+        ],
+        "decision": "sent_back",
+        "reason": "Provide the validated source date before final approval."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-approvals",
+      "body": null
+    }
+  ],
+  "responses": [
+    {
+      "method": "GET",
+      "path": "/api/settings/preferences/accessibility",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/csrf-token",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/admin/flags",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/feature-flags/runtime",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai-settings/user",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v10/teresa/voice-config",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v10/teresa/voice-event",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organization-context",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/providers/health",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/current",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/access/effective",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mfa/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/pmo/projects/my-memberships",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/personal-tasks",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/demo/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/decisions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/insights",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-work/tasks",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/my",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/templates",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/overdue",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/managed",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/initiatives",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions/iaa-ui-v4-20260913-session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions/iaa-ui-v4-20260913-session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/summary",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/my",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/evidence",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/notes",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/questions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/context",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/linked-items",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/sessions/iaa-ui-v4-20260913-session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/assignments/iaa-ui-v4-20260913-assignment",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/review-access",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/questions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/evidence",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/notes",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/my",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-approvals",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/summary",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/sessions/iaa-ui-v4-20260913-session/linked-items",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/context",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/assignments/iaa-ui-v4-20260913-assignment",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/interview/assignments/iaa-ui-v4-20260913-assignment/answer-history",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-decisions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-approvals",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-decisions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v8/interview/assignments/iaa-ui-v4-20260913-assignment/answer-approvals",
+      "status": 200
+    }
+  ],
+  "status": "PASS",
+  "capturedAt": "2026-09-13T23:47:10.402Z",
+  "sourceCommit": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "indexSha256": "49299c4447ca620a049bee24de302e9df163513ec234f16708b438bca0d590d9",
+  "fixture": {
+    "orgId": "iaa-ui-v4-20260913-org",
+    "assignmentId": "iaa-ui-v4-20260913-assignment",
+    "sessionId": "iaa-ui-v4-20260913-session"
+  },
+  "business": {
+    "approveStatus": 200,
+    "sendBackStatus": 200,
+    "reason": "Provide the validated source date before final approval."
+  }
+}

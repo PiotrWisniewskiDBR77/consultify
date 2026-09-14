@@ -1,0 +1,15 @@
+
+> consultinity@0.0.1 check:ui
+> bash scripts/check-triada.sh --all && bash scripts/check-gestosc.sh && bash scripts/check-artefakt.sh && bash scripts/check-list-canon.sh --all
+
+✓ check-triada --all: brak NOWYCH naruszeń crimson (sprawdzono plików: 4023; naruszeń 2456, baseline 3251 — dług nie rośnie)
+  ↓ Dług SPADŁ o 795. Zatwierdź spadek: scripts/check-triada.sh --update
+✓ check-gestosc: brak regresji mechanicznych (sprawdzono plików: 11)
+✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie 8, baseline 8 — dług nie rośnie)
+• karty N (SPEC-N §5B): R1 ostrzeżeń 2 · R2+R3 aktualnie 0 / baseline 0 (dług istniejący, ratchet nie rośnie — nie blokuje; szczegóły: --report)
+• danger-* poza kontekstem błędu (P6 §5 krok 7): 117 / baseline 117 (RAPORT — nie blokuje; szczegóły: --report)
+• Huby list z legacy menu (renderują listę, brak importu StandardModuleBar — R2b): 1 z 7 *Hub.tsx
+✓ check-list-canon: brak NOWYCH naruszeń kanonu tabel (pełny skan repo: 158 plików; naruszeń 322, baseline 357 — dług nie rośnie)
+  ↓ Dług SPADŁ o 35. Zatwierdź spadek: scripts/check-list-canon.sh --update
+
+EXIT_CODE=0

@@ -218,8 +218,73 @@ describe('OrgAIPolicyTab honest workflows', () => {
     fireEvent.click(screen.getByRole('button', { name: /Save draft/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Org AI policy save was not confirmed by the server')).toBeInTheDocument();
+      expect(
+        screen.getByText('Org AI policy save was not confirmed by the server')
+      ).toBeInTheDocument();
     });
     expect(toast.success).not.toHaveBeenCalledWith('Draft saved');
+  });
+
+  it('configures per-answer approval without dropping unrelated or future policy keys', async () => {
+    vi.mocked(Api.getOrgLLMPolicy).mockResolvedValue({
+      ...policyResponse,
+      policy: {
+        ...policyResponse.policy,
+        policy: {
+          ...policyResponse.policy.policy,
+          future_policy_key: { keep: true },
+          interview: { future_interview_key: 'keep' },
+        },
+      },
+    });
+    vi.mocked(Api.updateOrgLLMPolicy).mockResolvedValue({ success: true });
+
+    render(<OrgAIPolicyTab />);
+    await waitForOrganizationSelection();
+    fireEvent.click(screen.getByRole('button', { name: /Load/i }));
+
+    const mode = await screen.findByRole('combobox', { name: 'Answer approval mode' });
+    expect(mode).toHaveValue('manager');
+    expect(screen.getByRole('option', { name: 'AI' })).toHaveValue('ai');
+    expect(screen.getByRole('option', { name: 'Manager' })).toHaveValue('manager');
+    expect(screen.getByRole('option', { name: 'Two-stage' })).toHaveValue('two_stage');
+    fireEvent.change(mode, { target: { value: 'two_stage' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save draft/i }));
+
+    await waitFor(() => {
+      expect(Api.updateOrgLLMPolicy).toHaveBeenCalledWith(
+        'org-1',
+        expect.objectContaining({
+          future_policy_key: { keep: true },
+          interview: {
+            future_interview_key: 'keep',
+            answerApproval: { version: 1, mode: 'two_stage' },
+          },
+        }),
+        expect.objectContaining({ mode: 'draft' })
+      );
+    });
+  });
+
+  it('shows an unsupported future answer-approval policy without rewriting it', async () => {
+    vi.mocked(Api.getOrgLLMPolicy).mockResolvedValue({
+      ...policyResponse,
+      policy: {
+        ...policyResponse.policy,
+        policy: {
+          ...policyResponse.policy.policy,
+          interview: { answerApproval: { version: 9, mode: 'ai', future: 'keep' } },
+        },
+      },
+    });
+
+    render(<OrgAIPolicyTab />);
+    await waitForOrganizationSelection();
+    fireEvent.click(screen.getByRole('button', { name: /Load/i }));
+
+    expect(await screen.findByText('Unsupported answer approval policy version')).toBeVisible();
+    expect(screen.getByRole('combobox', { name: 'Answer approval mode' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /Save draft/i }));
+    expect(Api.updateOrgLLMPolicy).not.toHaveBeenCalled();
   });
 });
