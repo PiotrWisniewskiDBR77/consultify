@@ -374,3 +374,395 @@ odbiór wzrokowy nadzorcy przed pokazaniem właścicielowi (zakaz masowego włą
 **Kolejność:** paczka 1 (K2 → K3 → K4 → K5 → S1.14–S1.16) → paczka 2 (K6, pilotaż 2 tygodnie na
 stagingu) → paczka 3 równolegle u Codexa od dziś (K9, zaczynając od PMO i Agenta jako fundamentu pod
 pozostałe programy).
+
+---
+
+# PLAN WDROŻEŃ INICJATYWY + REALIZACJA — 14.09.2026 (DEC-498)
+
+> Polecenie właściciela (14.09, dosłownie): *„A ty musisz dokładnie dopiać cały plan dla wzsystkich
+> wdrozen w narzeziach inicjatywy oraz wdrozenie"*. „Wdrożenie" = moduł **Realizacja (Execution)**.
+> Ten plan nie zmienia żadnej decyzji właściciela — składa DEC-453, DEC-469…476, DEC-481…497
+> i SPEC_FALA2 w jedną oś wykonania: per przycisk, per etap, z falami wdrożeń.
+> Wiążące źródła treści: `docs/program/FALA2/SPEC_FALA2_20260912.md` (moduł Inicjatywy l.195-320,
+> Realizacja l.316-379) i `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_20260914.md`.
+> Przydział pakietów Codexa P1-P6: DEC-497.
+
+## §0 Zasady wdrożeń — jedna oś dla KAŻDEGO etapu w tym planie
+
+Każdy etap (a nie każdy pakiet, nie każdy moduł) przechodzi tę samą ścieżkę, bez skrótów:
+
+1. **Gałąź** od aktualnej linii integracyjnej (dziś `integracja/20260911` = `c3ac90ca73`; pakiety
+   Codexa P1-P6 na bazie `c3ac90ca73` wg DEC-497), worktree izolowany, commit-per-krok.
+2. **Bramka lite** u wykonawcy: `scripts/check-list-canon.sh` (listy) i `check-artefakt.sh`
+   (artefakty N), tsc serwera, esbuild per plik. Zakaz pełnego vitest u robotników.
+3. **Freeze + niezależny przegląd** (inny agent niż autor) — bez tego dostawa nie wchodzi do odbioru.
+4. **Staging za flagą OFF.** Flaga zawsze domyślnie wyłączona (DEC-492f, DEC-495f).
+   Zakaz masowego włączania: jedna flaga naraz (CLAUDE.md §9).
+5. **Zrzut jasny + ciemny robi AGENT, nie właściciel** (CLAUDE.md §7 — właściciel nigdy nie jest
+   pierwszym testerem wizualnym). Motyw przełączany przez zustand, nie `prefers-color-scheme`.
+6. **CTO ogląda zrzuty** i odrzuca wszystko, co nie przechodzi TRIADA_KANON (listy) /
+   ARTIFACT_ANATOMY §18.1 (artefakty), zanim cokolwiek trafi do właściciela.
+7. **Właściciel: Tak/Nie na JEDNYM obrazie**, jedno zdanie opisu. Nic więcej od niego nie wymagamy.
+8. **Flaga ON na stagingu** → pilotaż (Tomasz, Justyna, Katarzyna, Irina, Paweł) → dopiero potem
+   **demo**: `gh workflow run railway-deploy.yml --ref staging -f environment=demo -f confirm_demo=yes`.
+9. **Tag cofnięcia przed każdą promocją**: `demo-safe-<data>-<nazwa>` = stan sprzed wdrożenia.
+   Dramat wizualny → flaga OFF natychmiast; zły deploy → Railway rollback / `git revert`.
+
+**Kto co robi (bez wyjątków):**
+
+| Rola | Zakres | Czego NIE robi |
+|---|---|---|
+| **Codex** (pakiety P1-P6, F2-1/2/3/E) | duże pakiety mechaniki i ekranów fali 2, etapami E1..En, STOP po E1 | nie pushuje na staging/demo/Londyn/integrację, nie pisze migracji bez zgody CTO w kanale |
+| **Opus** (agenci CTO) | naprawy punktowe, przewody (409, handoff), trudny kod, konflikty scaleń | nie prowadzi dużych pakietów (to Codex, DEC-497) |
+| **Sonnet** (agenci CTO) | zrzuty jasny+ciemny, SSOT/dokumenty, higiena danych, rejestry | nie dotyka kodu produktowego bez zlecenia |
+| **CTO (Fable)** | scalanie, push, workflow, tagi, rejestr, KANAL — **jedyny** | nie koduje (DEC z 13.09) |
+| **Właściciel** | Tak/Nie na jednym obrazie; decyzje kierunku produktu | nie testuje, nie odkrywa zepsucia, nie włącza flag |
+
+**Kryterium „gotowe" = 5 punktów bramki MVP (DEC-400)**, powtarzane przy KAŻDYM etapie:
+(1) jeden obraz wystarcza do oceny; (2) nic na ekranie nie kłamie (zero atrap, zero „v—"/„Unknown");
+(3) dane prawdziwe z żywej bazy, nie seed; (4) obie wersje motywu poprawne; (5) zero czerwieni
+`primary-*` poza semantyką krytyczną.
+
+---
+
+## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
+
+Menu 2 = **Inicjatywy · Plan · Obciążenie · Raport z pracy**. Menu 3 Inicjatyw = **Lista · Analiza**
+(DEC-495a). Zasada nadrzędna: wszystkie inicjatywy w jednym miejscu, filtry statusami +
+Archiwum/Aktualne + (docelowo) projektami.
+
+### 1.1 Przycisk 1 — Inicjatywy, Menu 3 „Lista"
+
+**Stan dziś: JEST na żywo** (staging = demo `90833bc94a`, DEC-481/492/494). Lista, kanban po
+statusie, kalendarz, Gantt; kolumny z typami; podgląd 6 bloków. Plik: `src/components/Initiatives/InitiativesHub.tsx`.
+
+| Etap | Co widać na ekranie | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept właściciela | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **L1** rdzeń list/kanban/kalendarz/Gantt | ZROBIONE | — | DEC-481 | brak (na żywo) | nie | — | zamknięte | TAK 13.09 | 0 | — |
+| **L2** filtr Archiwum/Aktualne jako **przełącznik** (nie rozwijana) | pstryczek w Menu 2, archiwalne domyślnie ukryte, da się przywołać | `archived_at` / status archiwalny czytany, nie zmieniany | zrzut jasny+ciemny, test: archiwalna niewidoczna → po przełączeniu widoczna | `VITE_INITIATIVES_PORTFOLIO_ANALYSIS` | nie | — | Codex **P4 E3** | obraz listy z pstryczkiem ON/OFF | 1 | mylenie z filtrem statusu |
+| **L3** filtr **projektami** | rozwijana „Projekt" obok statusów; brak PMO = „wszystkie projekty" bez błędu | nie | zrzut + test degradacji bez PMO | ta sama | nie | **F2-3 PMO E3** | Codex P4 po PMO | obraz listy przefiltrowanej jednym projektem | 1 | twarde sprzężenie z PMO = zakleszczenie (dlatego degradacja) |
+
+### 1.2 Przycisk 1 — Inicjatywy, Menu 3 „Analiza"
+
+**Stan dziś: CZĘŚCIOWO** — tylko ten przycisk jest realnie budowany (F2-1 `cc1c23b139`), pełne E1 na
+HOLD (real model EVIDENCE_MISSING, PMO authority PARTIAL, migracja 919 BLOCKED). Pakiet **P4**
+przejmuje i kończy (DEC-497, STOP-meldunek przed startem, żeby nie powstały dwie wersje ekranu).
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **A1** przycisk „Analiza portfela inicjatyw" + 5 kryteriów obowiązkowych (pokrycie obszaru · nakładanie się · priorytety · duplikaty vs realizowane · historia doświadczeń) | tabela analizy z wierszem per inicjatywa i werdyktem per kryterium; karta „dlaczego AI tak rekomenduje" | przebieg analizy + uzasadnienia (trwałe, nie w pamięci) | RealPG, zrzuty jasny+ciemny tabeli i karty uzasadnienia | `VITE_INITIATIVES_PORTFOLIO_ANALYSIS` | **TAK** (pula `20262330-20262339`, STOP przed napisaniem) | brak twardej | Codex **P4 E1** | jeden obraz: tabela analizy + otwarta karta „dlaczego" | 3-4 | AI rekomenduje bez uzasadnienia = natychmiastowe „Nie" |
+| **A2** decyzja: zatwierdzona → do Planu/Obciążenia; niezatwierdzona → **parking z powodem** albo archiwum „no Done" | dwa przyciski decyzji, pole powodu obowiązkowe, lista parkingu | powód + warunek ponownego zaproponowania | test: inicjatywa z parkingu NIE wraca w kolejnej analizie; po usunięciu przeszkody WRACA (trigger, nie plakietka) | ta sama | TAK (jw.) | — | Codex **P4 E2** | obraz parkingu z powodami | 2-3 | „no Done" jako sama plakietka = kształt fałszywego gotowe |
+| **A3** karty N: zawsze-widoczne vs dodawane; **wycena kart** + zatwierdzenie uprawnionego | karta N inicjatywy wg ARTIFACT_ANATOMY, część kart zwinięta, wycena widoczna, przycisk zatwierdzenia zależny od uprawnienia | wycena + zatwierdzenie z autorem i czasem | zrzuty artefaktu (DoD §18.1), test odmowy dla nieuprawnionego | ta sama | TAK (jw.) | silnik zatwierdzeń (DEC-489 — rozszerzenie istniejącego) | Codex **P4 E3** | obraz karty N z wyceną i przyciskiem zatwierdzenia | 3 | budowa nowego silnika zatwierdzeń zamiast rozszerzenia = naruszenie DEC-489 |
+| **A4** **zbieranie KPI na etapie inicjatywy** (wymóg wiążący ze SPEC „MODUŁ REALIZACJA / R.4”) | karta KPI w inicjatywie: KPI podpowiadane przez AI, zatwierdzane przez właściciela/admina/komitet | definicje KPI powiązane z inicjatywą | test: KPI zatwierdzone w Inicjatywach widoczne w Realizacji/Raportach | ta sama | TAK (jw.) | R.4 Raporty (konsument) | Codex P4 — **PYTANIE Q2** (P4 czy osobny pakiet) | obraz karty KPI z podpowiedzią AI | 2-3 | **dziś NIEPRZYDZIELONE nikomu** — bez tego nie będzie śledzenia efektów |
+
+### 1.3 Przycisk 2 — Plan
+
+**Stan dziś: ATRAPA.** `src/components/Initiatives/PlanScenarioSurface.tsx` (podłączony
+w `InitiativesHub.tsx:1848`) — to reużyty scenariusz, nie analiza kolejności z notatki właściciela.
+Właściciel wprost: *„nie robiłbym kreatora tylko analizę"*.
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **PL1** silnik: współzależności merytoryczne, ścieżki krytyczne **bezwzględne i warunkowe**, kontrakt następstwa | — (mechanika) | wynik analizy trwale, jeśli pomiar wykaże potrzebę | test: analiza rozróżnia ścieżkę bezwzględną od warunkowej na realnych danych | `VITE_INITIATIVES_PLAN_ANALYSIS` | prawdopodobnie NIE (pula `20262310-20262319` w rezerwie) | — | Codex **P2 E1** | — (bez ekranu nie pokazujemy) | 3-4 | „kolejność" udająca „ścieżkę krytyczną" |
+| **PL2** UI akceptu obserwacji AI: pojedynczo / hurtem / **komentarz zmieniający propozycję** | lista obserwacji, przy każdej trzy akcje; komentarz przelicza układ | akcept/odrzucenie/komentarz per obserwacja, z autorem | zrzuty jasny+ciemny; test: komentarz ZMIENIA propozycję (nie tylko notuje) | ta sama | jw. | — | Codex **P2 E2** | obraz listy obserwacji z jedną zaakceptowaną i jedną skomentowaną | 3 | komentarz jako notatka = nie spełnia słów właściciela |
+| **PL3** oś czasu 1/3/6/12 mies. (1 i 3 tygodniowo, 6 i 12 miesięcznie) + **kolor „w realizacji = zamrożone"** (ciemnogranatowy, niezmienialny) | kalendarz z Ganttem tygodniowym, inicjatywy w statusach, zamrożone wizualnie odróżnione | nie | zrzuty 4 horyzontów × 2 motywy; test: próba przesunięcia zamrożonej = blokada | ta sama | nie | **Gantt kanoniczny** `src/components/Initiatives/gantt/InitiativeGantt.tsx` (DEC-493, po pomiarze) | Codex **P2 E3** | obraz osi czasu 3 mies. z jedną pozycją zamrożoną | 3 | zbudowanie **piątego** Gantta zamiast adopcji kanonicznego |
+
+### 1.4 Przycisk 3 — Obciążenie
+
+**Stan dziś: ATRAPA.** `src/components/Initiatives/CapacityScenarioSurface.tsx`
+(`InitiativesHub.tsx:1875`). Analiza finansowa obciążenia jest **poza zakresem** — właściciel sam ją
+odrzucił (*„nie da się zrobić bez kompletnego modelowania finansowego"*), czeka na moduł Finanse.
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **OB1** heat mapa per osoba × tydzień, widok „w projekcie" i „we wszystkich projektach", przełączalna po statusach | siatka osoby×tygodnie, progi **<85 zielony / 85-100 bursztyn / >100 czerwony** (wzór `ExecutionWorkloadView.tsx`) | nie (czyta) | zrzuty jasny+ciemny z realnym >100% i <85% | `VITE_INITIATIVES_WORKLOAD` | nie | — | Codex **P3 E1** | obraz heat mapy z jednym czerwonym tygodniem | 3 | czerwień >100% to **semantyka krytyczna** — dozwolona, ale reszta ekranu neutralna |
+| **OB2** deklaracja dostępności tygodniowej per osoba (wpisuje człowiek, nie wylicza system) | pole „ile mojego czasu tygodniowo idzie na projekty" | deklaracja per osoba/tydzień | test: zmiana deklaracji przelicza heat mapę | ta sama | **TAK** (pula `20262320-20262329`) | PMO (docelowo źródło osób) | Codex **P3 E2** | obraz formularza + przeliczonej mapy | 2 | wyliczanie zamiast deklaracji = sprzeczne z DEC-480 |
+| **OB3** generator raportów obciążenia: wzorce, kto wywołuje, kto uwzględniany; forma kalendarzowa (linie=osoby, projekty/inicjatywy w stosach) | kreator + wygenerowany wykres kalendarzowy | definicje raportów + przebiegi | zrzuty raportu; reużycie wspólnego silnika z §3 | ta sama | TAK (jw.) | **silnik raportów P1** | Codex **P3 E3** | obraz raportu obciążenia zespołu | 3 | drugi silnik raportów obok P1 |
+| **OB4** AI proponuje przesunięcia — **wyłącznie na etapie projektowania** | lista propozycji AI do zatwierdzenia; po zatwierdzeniu zmienia przypisania | zmiany przypisań tylko dla nieuruchomionych | **test negatywny obowiązkowy**: próba zmiany biegnącego przydziału z TEGO ekranu = zablokowana (DEC-495e; w Realizacji wolno — DEC-486) | ta sama | TAK (jw.) | OB1-OB3 | Codex **P3 E4** | obraz propozycji AI + komunikat blokady na biegnącym | 3-4 | pomylenie zakazu z Realizacją = złamanie DEC-486/495e |
+
+### 1.5 Przycisk 4 — Raport z pracy
+
+**Stan dziś: ATRAPA, schowana za flagą.** `InitiativePreparationReadView` z `report={true}`
+(`InitiativesHub.tsx:2001`), za `VITE_INITIATIVES_FOUR_BUTTONS` (OFF) — właściciel na żywo 13.09:
+*„nie wiem, co to jest"*. Komponent ma być **zastąpiony, nie rozbudowany**.
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **RP1** kreator raportu: tytuł, adresaci, na żądanie/okresowo, **5 szablonów startowych**; PDF + wysyłka | kreator 4 kroków, podgląd raportu jako jedna wystandaryzowana karta, przycisk „Pobierz PDF" i „Wyślij" | definicje raportów, harmonogram, log wysyłek | **PDF z realnych danych załączony do dowodu** + nagłówki maila w skrzynce testowej (nie sam log) | `VITE_INITIATIVES_WORK_REPORT` | **TAK** (pula `20262300-20262309`) | **poczta żywa** (DEC-471 — patrz Q1); silnik `reportDefinition`/`reportRun`, PDF przez istniejący `pdfkit` w `report-builder.routes.ts` | Codex **P1 E1** | obraz raportu + realny plik PDF | 4-5 | „wysłane" wg logu ≠ dostarczone (kształt fałszywego gotowe) |
+| **RP2** treść: **kto zalega z jakimi działaniami / na czyje decyzje czekamy**; filtrowanie i grupowanie projektami | sekcja „oczekujące decyzje" z nazwiskiem i czasem oczekiwania | nie | test: zaległa decyzja pojawia się z właściwą osobą | ta sama | nie | PMO dla „per projekt" (degraduje się do „cała organizacja") | Codex **P1 E2** | obraz raportu z sekcją zaległości | 2-3 | pusta sekcja przy realnych zaległościach |
+| **RP3** usunięcie atrapy `InitiativePreparationReadView` (`report={true}`) | stara zakładka znika | nie | grep: zero wołaczy starego komponentu | ta sama | nie | RP1-RP2 | Codex **P1 E3** | — (higiena, bez odrębnego obrazu) | 0,5 | budowa OBOK atrapy zamiast zastąpienia |
+
+---
+
+## §2 REALIZACJA — Bank · Praca · Ryzyko · Raporty + przewód z Inicjatyw
+
+**Zweryfikowane 14.09:** Menu 2 Realizacji ma już cztery funkcje w wiążącej kolejności —
+`src/components/Execution/executionModuleTabs.ts`: `['list','work','control','reports']` =
+Bank realizacji · Praca · Zarządzanie ryzykiem · Raporty. Stare powierzchnie
+(`resources`, `summary`, `rollout`) żyją jako **deep-linki**, nie jako przyciski Menu 2.
+
+Zasada nadrzędna właściciela: Realizacja to **ta sama inicjatywa w innej fazie życia**, nie drugi
+rekord. Przejście ma być automatyczne i bezszwowe, z zachowaną tożsamością, historią i kartami N.
+
+### 2.1 Bank realizacji
+
+**Stan dziś: CZĘŚCIOWO** — scoped E0/E1 ACCEPT (F2-2), bank na `TableWithPreviewLayout`, typy kolumn,
+3 kolumny wtórne schowane. **Luka: graficzna sygnalizacja ryzyka.**
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **B-E0** sygnalizacja ryzyka: **trzy osie × cztery poziomy** (termin · zakres/postęp · zasoby), **zawsze kolor + tekst + ikona**, szary „brak danych" tylko gdy wszystkie osie puste; pastylka = najwyższy zmierzony poziom (DEC-487, DEC-493) | kolumna/pastylka w banku + w podglądzie | nie (czyta) | zrzuty jasny+ciemny 4 poziomów; test: szary tylko przy pustych wszystkich osiach | `VITE_EXECUTION_RISK_SIGNAL` (nowa, OFF) | nie | **prototyp CTO do akceptu PRZED kodem** (DEC-487); backend częściowo istnieje: `server/src/services/execution/threeAxisReportService.ts` — **zbudowany, dziś bez konsumenta w `src/components/Execution`** | Codex **F2-2** + prototyp CTO | obraz banku z 3-4 wierszami na różnych poziomach | 3 | sam kolor bez tekstu = niedostępne i sprzeczne z DEC-487; budowa nowego liczenia zamiast podpięcia istniejącego serwisu |
+| **B-E1** pozycja na osi czasu inicjatywy + filtry/widoki (tabela/kanban/kalendarz/Gantt) | „gdzie jesteśmy" na pasku czasu w wierszu | nie | zrzuty 4 widoków | ta sama | nie | Gantt kanoniczny | Codex F2-2 | obraz banku z widokiem Gantta | 2 | czwarty widok jako bespoke grid (złamanie kanonu, krach 07-12) |
+
+### 2.2 Praca
+
+**Stan dziś: NIEDOSTARCZONE.** Serwis akcji przełożonego istnieje —
+`server/src/services/v8/managerActionExecutionService.ts` (uwaga: **nie** w `server/src/services/`,
+jak podawał inwentarz), wołany z `server/src/routes/v8/execution-control.routes.ts`.
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **P-E2a** generator analizy realizacji w **trzech oknach czasu**: ostatni tydzień · nadchodzący tydzień · nadchodzący miesiąc; zadania i decyzje z podziałem na priorytety i projekty; sekcja „na co zwrócić szczególną uwagę" | raport-analiza w trzech blokach | przebieg analizy | zrzuty jasny+ciemny; test: analiza dla wskazanego tygodnia ≠ dla bieżącego | `VITE_EXECUTION_WORK_ANALYSIS` (OFF) | prawdopodobnie nie | silnik raportów z §3 | Codex **F2-2** | obraz analizy tygodnia | 4 | statyczny wykaz udający analizę |
+| **P-E2b** generuje się **sam na początek tygodnia** albo na żądanie dla wskazanego tygodnia | przełącznik „automatycznie / dla tygodnia X" | harmonogram | test kadencji na żywej bazie | ta sama | TAK, jeśli harmonogram trwały | wspólny harmonogram z RP1 | Codex F2-2 | — (część obrazu P-E2a) | 1-2 | drugi harmonogram obok raportowego |
+| **P-E2c** akcje przełożonego w ramach projektu: **eskalacja · delegacja · zmiana przypisanych zasobów** (w Realizacji zmiana przydziałów DOZWOLONA — DEC-486) | trzy akcje przy zadaniu/decyzji, wg macierzy poziomów decyzji (DEC-485) | realna zmiana przypisania + ślad kto/kiedy | test: zmiana przydziału z Realizacji przechodzi, ta sama próba z ekranu Obciążenia = blokada | ta sama | nie | `managerActionExecutionService` (istnieje), macierz DEC-485 | Codex F2-2 | obraz akcji + wynik po zmianie | 3 | ciche awarie `.catch(() => {})` — przyczyna DEC-453 |
+
+### 2.3 Zarządzanie ryzykiem
+
+**Stan dziś: NIEROZPOCZĘTE.**
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **R-E3a** **SSOT granicy „codzienna praca" vs „zarządzanie ryzykiem"** — spisanie DEC-485 (trzy poziomy decyzji: zadanie/członek · inicjatywa/PM · baza odniesienia/komitet) do `docs/ssot/GRANICA_PRACA_RYZYKO.md` | — (dokument) | — | plik istnieje i jest cytowany w zleceniu Codexa | brak | nie | DEC-485 (już rozstrzygnięte) | **Sonnet** | — | 0,5 | **ZWERYFIKOWANE: pliku DZIŚ NIE MA** — SPEC ma tu „[DO ROZSTRZYGNIĘCIA]", choć decyzja zapadła |
+| **R-E3b** generator: lista obserwacji + propozycje grubych zmian (założenia strategiczne/operacyjne) | ekran analizy ryzyka z listą obserwacji | przebieg | zrzuty jasny+ciemny | `VITE_EXECUTION_RISK_MGMT` (OFF) | TAK (prawdopodobnie: ryzyka, decyzje, powiadomienia) | R-E3a, B-E0 | Codex **F2-2** | obraz listy obserwacji | 3 | mieszanie z codzienną pracą (dlatego R-E3a pierwsze) |
+| **R-E3c** **artefakt N — cztery karty**: (1) opis sytuacji i zagrożeń, (2) lista działań, (3) analiza skutków, (4) lista poinformowanych osób | karta N wg ARTIFACT_ANATOMY, archetyp C/Rekord | karty trwale | zrzuty artefaktu, DoD §18.1 | ta sama | TAK | ARTIFACT_ANATOMY | Codex F2-2 | obraz artefaktu ryzyka z 4 kartami | 3 | powłoka z własnym kebabem/panelem zamiast `ArtifactRightPanel` |
+| **R-E3d** **realne wdrożenie decyzji**: nowe plany, nowe przypisania, nowy harmonogram **ORAZ** realne powiadomienie zaangażowanych — obie części wiążące | po zatwierdzeniu widać zmieniony plan i listę powiadomionych | zmiany + wysłane powiadomienia | test: zatwierdzenie zmienia PLAN (nie tylko plakietkę) i generuje powiadomienie u adresata | ta sama | TAK | poczta / powiadomienia w aplikacji | Codex F2-2 | obraz „przed/po" planu + skrzynka adresata | 3-4 | **najgroźniejszy punkt planu**: plakietka zamiast zmiany = dokładnie to, co właściciel wyklucza wprost |
+
+### 2.4 Raporty
+
+**Stan dziś: NIEROZPOCZĘTE** (menu istnieje, pusty stan „New report"/„Report templates" wdrożony
+13.09). Migracja `server/migrations/20262104_execution_report_snapshots.sql` **istnieje** —
+potwierdzone.
+
+| Etap | Co widać | Co zapisuje baza | Dowód | Flaga | Migracja | Zależność | Wykonawca | Akcept | Dni | Ryzyko |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **RA-E4a** kadencja: raport na czas albo na wezwanie, wg wzorców | kreator wzorca + harmonogram | definicje + snapshoty (`execution_report_snapshots` już jest) | test kadencji | `VITE_EXECUTION_REPORTS` (OFF) | częściowo gotowa | **wspólny silnik z P1** | Codex **F2-2** (reużywa P1) | obraz kreatora | 2 | drugi silnik raportów |
+| **RA-E4b** **trzy poziomy szczegółowości** (organizacja · projekt · inicjatywa), forma tabelaryczno-opisowa z kalendarzem, grafika lekka | przełącznik poziomu w jednym raporcie | nie | zrzuty 3 poziomów × 2 motywy | ta sama | nie | — | Codex F2-2 | obraz raportu na poziomie projektu | 2-3 | trzy różne raporty zamiast jednego z przełącznikiem |
+| **RA-E4c** treść: **ile pasków i inicjatyw zrealizowano i jakie są rezultaty** — rezultaty czytane z KPI zebranych w Inicjatywach (A4) | sekcja rezultatów z wartościami KPI | nie | test: KPI zatwierdzone w Inicjatywach widoczne tutaj | ta sama | nie | **§1.2 A4** | Codex F2-2 | obraz sekcji rezultatów | 2 | brak A4 = sekcja pusta na zawsze |
+| **RA-E4d** doręczenie (PDF + wysyłka do listy osób) | przyciski „PDF"/„Wyślij" | log wysyłek | PDF + nagłówki maila | ta sama | nie | **poczta żywa (Q1)**, P1 E1 | Codex F2-2 | — (część obrazu RA-E4a) | 1 | jak RP1 |
+
+### 2.5 PRZEWÓD Inicjatywa → Realizacja (osobny etap, nie „przy okazji")
+
+To jest **dług z DEC-453** — właściciel cofnął odbiór obu modułów, bo zapisy nie działały, a część
+awarii była połykana w ciszy (`.catch(() => {})`).
+
+| Etap | Co jest dziś (zweryfikowane 14.09) | Co ma być | Dowód | Wykonawca | Dni | Ryzyko |
+|---|---|---|---|---|---|---|
+| **H1** bramka 409 | `POST /:id/lifecycle-gate-decisions` **zbudowany** (`server/src/routes/pmo/initiatives.routes.ts:3939`), ale `executionSpineLegacyReadOnly.middleware.ts:85` zwraca 409; **zero wołaczy we froncie** (grep `src/` = 0 trafień poza komentarzem w `ExecutionControlSurface.tsx:1676`) | albo trasa kanoniczna Runtime-v1 z realnym wołaczem, albo świadome usunięcie martwej trasy — **nie zostawiamy zbudowanego bez przewodu** | test: klik w UI → 2xx w sieci, nie 409; zero `.catch(() => {})` na ścieżce | **Opus** | 2 | „naprawa" przez zdjęcie middleware = otwarcie wycofanych zapisów |
+| **H2** `initiative_handoffs` | tabela tworzona migracją `server/migrations/20260626_initiative_handoffs.sql`, **zero wołaczy produkcyjnych** (trafienia tylko w fixture'ach testowych i evidence) | realny zapis przy przejściu Inicjatywa→Realizacja i realny odczyt historii w Realizacji — **ta sama tożsamość, nie drugi rekord** | test end-to-end: zatwierdzenie w Inicjatywach → ten sam artefakt widoczny w Banku z historią i kartami N | **Opus** | 3 | tworzenie kopii rekordu zamiast zmiany fazy życia = sprzeczne ze SPEC |
+
+### 2.6 Wygaszenie starych powierzchni
+
+`resources` · `summary` · `rollout` żyją jako deep-linki (`EXECUTION_SUBVIEW_DEEP_LINK_IDS`).
+SPEC mówi wprost: Praca **zastępuje** Zasoby i Pracę; Ryzyko **zastępuje** Sterowanie oraz Decyzje
+i ryzyka; Raporty **zastępują** Raporty oraz Wdrożenie i zamknięcie.
+**Etap W1** (Codex F2-2, 1 dzień): po akcepcie Praca + Raporty usuwamy deep-linki i komponenty,
+z aliasami przekierowującymi przez jeden cykl wdrożenia. **Warunek: pytanie Q4.**
+
+### 2.7 Dwie otwarte uwagi z DEC-491 (8 uwag, 6 zamkniętych)
+
+| Uwaga | Stan | Naprawa | Wykonawca | Fala |
+|---|---|---|---|---|
+| Puste ramki **Relations** w podglądach | `PreviewRelations` już ukrywa pusty blok (przejazd kanonu 13.09), ale **kontrakt `relations.emptyLabel` w `tableSurface/validators.ts:470` pozostaje nierozstrzygnięty** — kanon TRIADA §A7 (blok bez danych = ukryty) wygrał, walidator nadal wymaga etykiety | usunąć wymóg etykiety z walidatora albo uczynić go opcjonalnym; strażnik R5 zostaje | **Sonnet** | **A** |
+| „What's next" tekstowe w podglądzie **Decisions** | otwarte (bank naprawiony, Decisions nie) | zdanie luzem → „Co dalej" w meta wg kanonu podglądu (6 bloków) | **Sonnet** | **A** |
+
+---
+
+## §3 Wspólne fundamenty — co musi powstać raz, dla obu modułów
+
+1. **Silnik raportów (jeden, nie pięć).** Buduje **P1 E1**; reużywają: Obciążenie OB3,
+   Realizacja RA-E4a/d, Praca P-E2b. Baza istnieje: `server/src/routes/report-builder.routes.ts`
+   (z `pdfkit` i `docx`), `server/src/domain/initiatives-execution/reportRun.ts`,
+   `server/src/routes/executionReports.routes.ts`, `server/src/services/report/reportContract.ts`.
+   **Zakaz budowy drugiego generatora w którymkolwiek z pakietów P2/P3/F2-2.**
+2. **Poczta żywa.** `server/src/services/emailService.ts` istnieje; DEC-471 (dostęp do panelu
+   Hostingera) **nadal otwarte** — to twardy warunek RP1 i RA-E4d. Patrz **Q1**.
+3. **PMO (F2-3).** E1/E2 dostarczone; **E3 (projekty w interfejsie) warunkuje** filtr projektami
+   (L3, RP2 „per projekt"), deklarację dostępności per osoba (OB2 docelowo) i role do macierzy
+   DEC-485. Do czasu PMO wszystkie ekrany **degradują się do „cała organizacja" bez błędu**.
+4. **Gantt kanoniczny.** DEC-493: kandydat `src/components/Initiatives/gantt/InitiativeGantt.tsx`
+   **po pomiarze** zależności i ścieżki krytycznej. Używają: PL3, B-E1, P6. Zakaz piątego Gantta.
+5. **Silnik zatwierdzeń.** DEC-489: **rozszerzenie istniejącego** (bramki, poziomy, quorum,
+   delegacje), role z PMO jako źródło. Używają: A3, R-E3d, A4.
+6. **Macierz poziomów decyzji (DEC-485).** Do SSOT w R-E3a, potem cytowana przez P-E2c i R-E3.
+7. **F2-7b kontrakty pracy konsultanta (P5).** 19 paczek; przecina jakość kart N (A3). Po fali F.
+8. **Agent — edytor przepływu (P6).** Po fali F; używa Gantta kanonicznego i PMO.
+
+```mermaid
+graph LR
+  POCZTA["Poczta zywa (DEC-471)"] --> P1["P1 Raport z pracy"]
+  SILNIK["Silnik raportow (buduje P1)"] --> OB3["Obciazenie OB3"]
+  P1 --> SILNIK
+  SILNIK --> RA4["Realizacja Raporty E4"]
+  SILNIK --> PE2["Realizacja Praca E2"]
+  PMO["PMO F2-3 E3 projekty w UI"] --> L3["Inicjatywy filtr projektami"]
+  PMO --> OB2["Obciazenie deklaracja dostepnosci"]
+  PMO --> DEC485["Macierz decyzji DEC-485"]
+  DEC485 --> PE2
+  DEC485 --> RE3["Realizacja Ryzyko E3"]
+  GANTT["Gantt kanoniczny InitiativeGantt"] --> PL3["Plan os czasu"]
+  GANTT --> BE1["Bank pozycja na osi"]
+  GANTT --> P6["P6 Agent klocki"]
+  A4["Inicjatywy A4 zbieranie KPI"] --> RA4
+  A1["P4 Analiza portfela"] --> A2["P4 Parking z powodem"]
+  A2 --> PL1["P2 Plan silnik"]
+  PL1 --> OB1["P3 Heat mapa"]
+  H1["Przewod H1 bramka 409"] --> H2["Przewod H2 handoff"]
+  H2 --> BE0["Bank E0 sygnalizacja ryzyka"]
+  BE0 --> RE3
+  SSOT["SSOT granica praca/ryzyko"] --> RE3
+  ZATW["Silnik zatwierdzen DEC-489"] --> A3["P4 Karty N + wycena"]
+  ZATW --> RE3
+  PMO --> P6
+  P5["P5 Kontrakty KP"] --> A3
+```
+
+---
+
+## §4 Harmonogram — sześć fal, jedna po drugiej
+
+Zasada: **fala = jedna partia akceptu właściciela**, nie jeden dzień. Wewnątrz fali flagi włączamy
+**pojedynczo**, nigdy hurtem (CLAUDE.md §9). Każda fala kończy się tagiem cofnięcia i promocją demo.
+
+### Fala A — porządki i pilotaż (dziś/jutro)
+**Zawartość:** paczka 5 (Wywiad, `d73ccb90a7`, odbiór) · pilot-blokery (`6b73ee95bd`, bezpiecznik LLM
+po circuit breakerze 03:42 UTC) · drobne (`b9164136fa`) · `archived-filter` · `drd-en` ·
+`tomek-konto` · `tomek-czat` · `pawel-wywiad` · dwie uwagi DEC-491 (§2.7) · SSOT granicy R-E3a.
+**Uzasadnienie:** pilotaż jest dziś zablokowany (Tomasz 0 logowań w organizacji, reset hasła nie
+działa, czat gubi rozmowy). Bez tego kolejne fale trafiają w środowisko, którego nikt nie używa.
+**Co zobaczy właściciel:** jeden obraz — lista 22 uwag Tomka ze stanem „naprawione/otwarte".
+**Tag cofnięcia:** `demo-safe-20260914-falaA`.
+**Gotowe gdy:** 5 punktów bramki MVP + zero otwartych 🔴 blokerów z DEC-496.
+
+### Fala B — decyzja o portfelu i widoczne ryzyko
+**Zawartość:** P4 (A1·A2·A3, ewent. A4 wg Q2) · Realizacja B-E0 (sygnalizacja ryzyka, prototyp CTO
+przed kodem) · przewód H1+H2 · L2 (pstryczek Archiwum).
+**Uzasadnienie:** to jest „prawdziwa praca" wg właściciela i zamyka dług DEC-453 (przewód).
+Ryzyko w Banku podpina istniejący `threeAxisReportService` — najwyższy stosunek wartości do kosztu.
+**Co zobaczy właściciel:** jeden obraz — tabela analizy portfela z otwartą kartą „dlaczego AI to
+rekomenduje" + bank z pastylkami ryzyka.
+**Tag cofnięcia:** `demo-safe-<data>-falaB`.
+**Gotowe gdy:** 5 punktów bramki + parking realnie wstrzymuje ponowną propozycję + klik w UI daje
+2xx zamiast 409.
+
+### Fala C — raporty na jednym silniku
+**Zawartość:** P1 (RP1·RP2·RP3) · Realizacja RA-E4a-d na TYM SAMYM silniku.
+**Uzasadnienie:** oba moduły potrzebują raportów; zbudowanie ich osobno to gwarantowany dług.
+Właściciel widział atrapę i powiedział „nie wiem, co to jest" — to najbardziej namacalna naprawa.
+**Warunek wejścia:** odpowiedź na **Q1** (poczta żywa albo akcept na PDF bez wysyłki).
+**Co zobaczy właściciel:** jeden obraz — raport z pracy jako jedna karta + realny plik PDF.
+**Tag cofnięcia:** `demo-safe-<data>-falaC`.
+
+### Fala D — plan i bieżąca praca
+**Zawartość:** P2 (PL1·PL2·PL3) · Realizacja P-E2a/b/c · adopcja Gantta kanonicznego · W1 (Q4).
+**Uzasadnienie:** Plan porządkuje kolejność, Praca obsługuje tydzień — obie opierają się o tę samą
+oś czasu, więc adopcja Gantta kanonicznego dzieje się raz.
+**Co zobaczy właściciel:** jeden obraz — oś czasu 3 miesięcy z pozycją zamrożoną na ciemnogranatowo.
+**Tag cofnięcia:** `demo-safe-<data>-falaD`.
+
+### Fala E — obciążenie i ryzyko projektu
+**Zawartość:** P3 (OB1·OB2·OB3·OB4) · Realizacja R-E3b/c/d.
+**Uzasadnienie:** Obciążenie wymaga kolejności z fali D („gdy mamy kolejność i przypisane zasoby").
+Ryzyko wymaga sygnalizacji z fali B i granicy z fali A.
+**Co zobaczy właściciel:** jeden obraz — heat mapa zespołu z czerwonym tygodniem + artefakt ryzyka.
+**Tag cofnięcia:** `demo-safe-<data>-falaE`.
+
+### Fala F — PMO w interfejsie i domknięcie filtrów
+**Zawartość:** F2-3 E3 (projekty w UI) · L3 filtr projektami · RP2 „per projekt" · OB2 źródło osób.
+**Uzasadnienie:** świadomie ostatnia — wszystkie wcześniejsze ekrany degradują się do „cała
+organizacja" bez błędu, więc PMO nie blokuje niczego, a wchodzi raz i podnosi wszystkie naraz.
+**Co zobaczy właściciel:** jeden obraz — ta sama lista Inicjatyw przefiltrowana jednym projektem.
+
+### Po fali F
+**P6 Agent-edytor klocków** (rekomendacja CTO: przed P5 — właściciel nazwał to „krytycznie ważnym
+elementem"), potem **P5 F2-7b kontrakty**. Spotkania pozostają OFF (DEC-483).
+
+---
+
+## §5 Tabela zbiorcza
+
+| Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | Stan dziś |
+|---|---|---|---|---|---|---|---|
+| Inicjatywy | Lista | L1 rdzeń (lista/kanban/kalendarz/Gantt) | — | — | — | TAK 13.09 (DEC-481) | **JEST** |
+| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | Codex P4 | — | B | lista z pstryczkiem ON/OFF | ATRAPA |
+| Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | BRAK |
+| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | CZĘŚCIOWO (F2-1 HOLD) |
+| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | BRAK |
+| Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | BRAK |
+| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 (Q2) | RA-E4c | B | karta KPI z podpowiedzią AI | **NIEPRZYDZIELONE** |
+| Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ATRAPA (`PlanScenarioSurface`) |
+| Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ATRAPA |
+| Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ATRAPA |
+| Inicjatywy | Obciążenie | OB1 heat mapa per osoba/tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | ATRAPA (`CapacityScenarioSurface`) |
+| Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | BRAK |
+| Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | BRAK |
+| Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | BRAK |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ATRAPA za flagą |
+| Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | BRAK |
+| Inicjatywy | Raport z pracy | RP3 usunięcie atrapy | Codex P1 | RP1-2 | C | — (higiena) | ATRAPA żyje |
+| Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Codex F2-2 + prototyp CTO | DEC-487 | B | bank z pastylkami ryzyka | **LUKA** (serwis jest, bez UI) |
+| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt | B | bank w widoku Gantta | CZĘŚCIOWO (scoped ACCEPT) |
+| Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | BRAK |
+| Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | BRAK |
+| Realizacja | Praca | P-E2c eskalacja/delegacja/zmiana zasobów | Codex F2-2 | DEC-485/486 | D | akcja + wynik po zmianie | serwis jest, bez ekranu |
+| Realizacja | Ryzyko | R-E3a SSOT granicy praca/ryzyko | Sonnet | DEC-485 | A | — (dokument) | **PLIKU NIE MA** |
+| Realizacja | Ryzyko | R-E3b generator obserwacji i grubych zmian | Codex F2-2 | R-E3a, B-E0 | E | lista obserwacji | BRAK |
+| Realizacja | Ryzyko | R-E3c artefakt N, 4 karty | Codex F2-2 | ARTIFACT_ANATOMY | E | artefakt z 4 kartami | BRAK |
+| Realizacja | Ryzyko | R-E3d realne wdrożenie zmiany + powiadomienie | Codex F2-2 | powiadomienia | E | plan „przed/po" + skrzynka adresata | BRAK |
+| Realizacja | Raporty | RA-E4a kadencja i wzorce | Codex F2-2 | silnik P1 | C | kreator raportu | BRAK (migracja jest) |
+| Realizacja | Raporty | RA-E4b trzy poziomy szczegółowości | Codex F2-2 | — | C | raport na poziomie projektu | BRAK |
+| Realizacja | Raporty | RA-E4c rezultaty z KPI | Codex F2-2 | **A4** | C | sekcja rezultatów | BRAK |
+| Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | BRAK |
+| Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | zbudowane, bez przewodu |
+| Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | tabela bez wołaczy |
+| Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | deep-linki żyją |
+| Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | otwarte |
+| Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | otwarte |
+| Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | części istnieją |
+| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | E1/E2 dostarczone |
+| Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | kandydat wskazany |
+| Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | w kolejce |
+| Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | prototyp CTO |
+
+---
+
+## §6 Pięć pytań do właściciela (Tak/Nie) — i założenia, które CTO bierze na siebie
+
+**Q1 — Raport bez wysyłki.** Poczta żywa (DEC-471, dostęp do panelu Hostingera) nadal nie działa.
+Czy falę C odbieramy na **raporcie widocznym na ekranie + pliku PDF do pobrania**, a automatyczną
+wysyłkę mailem dokładamy osobno, gdy poczta ruszy? **Tak = fala C nie czeka. Nie = fala C stoi.**
+
+**Q2 — Zbieranie KPI.** SPEC wymaga wprost narzędzia zbierania KPI **już na etapie inicjatywy**
+(bez tego Raporty Realizacji nigdy nie pokażą rezultatów), ale dziś to **nie jest przydzielone
+nikomu**. Czy wchodzi do pakietu P4 w fali B (czyli razem z kartami N)? **Tak/Nie.**
+
+**Q3 — Filtr projektami czeka na PMO.** Do czasu PMO wszystkie ekrany pokazują **całą organizację**,
+bez rozwijanej „Projekt" i bez komunikatu o błędzie. Czy zgoda, żeby filtr projektami wszedł raz,
+na końcu (fala F), zamiast blokować fale B-E? **Tak/Nie.**
+
+**Q4 — Wygaszenie starych ekranów Realizacji.** Po dowiezieniu Pracy i Raportów usuwamy Zasoby,
+Rollout i Podsumowanie **całkowicie** (dziś żyją jako ukryte linki). Czy zgoda na usunięcie,
+czy zostawiamy je dostępne jeszcze przez czas pilotażu? **Tak = usuwamy.**
+
+**Q5 — Kolejność po fali F.** Rekomendacja CTO: **najpierw Agent-edytor klocków (P6)**, potem
+kontrakty pracy konsultanta (P5) — bo Agenta nazwał Pan „krytycznie ważnym elementem", a kontrakty
+mogą poczekać bez szkody. **Tak/Nie.**
+
+### Założenia rozstrzygnięte przez CTO na mandacie (bez pytania właściciela)
+1. Fale A-F w podanej kolejności; wewnątrz fali flagi włączane pojedynczo.
+2. Silnik raportów budowany **raz** w P1; P2/P3/F2-2 go reużywają — zakaz drugiego generatora.
+3. Gantt kanoniczny = `InitiativeGantt.tsx` po pomiarze (DEC-493), zakaz piątego Gantta.
+4. Przewód (H1/H2) to **osobny etap z własnym dowodem**, nie praca „przy okazji" pakietu.
+5. Prototyp sygnalizacji ryzyka (B-E0) powstaje po stronie CTO **przed** kodem Codexa (DEC-487).
+6. Granica praca/ryzyko nie jest pytaniem — DEC-485 ją rozstrzygnął; brakuje tylko zapisania do SSOT.
+7. Analiza finansowa obciążenia pozostaje poza falą 2 (słowo właściciela), czeka na Finanse.
+8. Spotkania pozostają OFF (DEC-483); Agent-klocki mogą być budowane równolegle za flagą OFF (DEC-493).

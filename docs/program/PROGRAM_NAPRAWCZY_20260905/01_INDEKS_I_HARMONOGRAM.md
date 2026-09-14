@@ -22,6 +22,16 @@ tez duzymi projektami na codex (…) smiało mozemy mu dać duze zadania z Fala 
 pakietów P1..P6 (P1 Raport z pracy, P2 Plan, P3 Obciążenie, P4 Analiza portfela+parking, P5 F2-7b
 kontrakty, P6 Agent-edytor przepływu), KANAL.md Wpis 17. Patrz sekcja 14.09.2026, DEC-497.
 
+**Z-7 (14.09).** DEC-498 — kompletny plan wdrożeń Inicjatywy + Realizacja (polecenie właściciela
+14.09). Plan: `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, sekcja „PLAN WDROŻEŃ INICJATYWY +
+REALIZACJA — 14.09.2026 (DEC-498)" (linie 380-768) — per przycisk, per etap, sześć fal wdrożeń
+(A naprawy pilotażu → B portfel + ryzyko + przewód → C raporty → D plan + praca → E obciążenie +
+ryzyko → F PMO/filtry). **Do właściciela: pięć pytań Tak/Nie (Q1 raport bez wysyłki, Q2 zbieranie
+KPI do P4, Q3 filtr projektami na końcu, Q4 wygaszenie starych ekranów Realizacji, Q5 P6 przed P5)** —
+obraz do pokazania: `plan-wdrozen-inicjatywy-realizacja-20260914.html`. Następne kroki CTO:
+fala A (paczka 5, pilot-blokery, drobne, archived-filter, tomek-konto, tomek-czat, dwie uwagi
+DEC-491, SSOT granicy praca/ryzyko), potem start pakietów P1..P4 wg DEC-497.
+
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
 (zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).
@@ -108,7 +118,7 @@ kandydata wchodzą tylko naprawy czerwonej bramki i tylko przez integratora. (2)
 i `zatwierdzanie-inicjatyw` zostają na osobnych gałęziach → fala 2. (3) Codex usuwa własne worktree
 gałęzi już scalonych do rc2 (dysk pełny). (4) Codex dostaje duże zadania fali 2 promptami od właściciela.
 
-**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-477**. Następna wolna: DEC-478.
+**Numery decyzji bierzemy z rejestru, nie wymyślamy.** Ostatnia użyta: **DEC-498**. Następna wolna: DEC-499.
 Znaczniki odmrożenia muszą wskazywać moduł z `docs/program/MVP_FINAL_ZAMROZONE.json` — Finanse nie są
 tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
@@ -204,6 +214,44 @@ ARTIFACT_ANATOMY dla kart N). STOP po E1 każdego pakietu = meldunek w OD_CODEXA
 dopiero po OK CTO w kanale. Znaczniki commitów: `[ODMROZENIE INICJATYWY DEC-497]` (P1-P4),
 `[ODMROZENIE KONTRAKTY DEC-497]` (P5), `[ODMROZENIE AGENT DEC-497]` (P6). Pełna treść dla Codexa:
 `~/Developer/cto-codex/KANAL.md`, Wpis 17.
+
+**DEC-498 (CTO na polecenie właściciela, 14.09) — Kompletny plan wdrożeń Inicjatywy + Realizacja.**
+Polecenie właściciela dosłownie (14.09): „A ty musisz dokładnie dopiać cały plan dla wzsystkich
+wdrozen w narzeziach inicjatywy oraz wdrozenie" („wdrożenie" = moduł Realizacja/Execution).
+**Plan: `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, sekcja „PLAN WDROŻEŃ INICJATYWY +
+REALIZACJA — 14.09.2026 (DEC-498)" (linie 380-768).** Nie powstał nowy plik planu — żyją dwa
+dokumenty (TRZY_POJEMNIKI = co zostało, ten rejestr = co się wydarzyło + skrzynka).
+Plan nie zmienia żadnej decyzji właściciela; składa DEC-453, DEC-469…476, DEC-481…497 i SPEC_FALA2
+w jedną oś: §0 zasady wdrożeń (9 kroków, kto co robi, 5 punktów bramki MVP), §1 Inicjatywy per
+przycisk (Lista L1-L3 · Analiza A1-A4 · Plan PL1-PL3 · Obciążenie OB1-OB4 · Raport z pracy RP1-RP3),
+§2 Realizacja per przycisk (Bank B-E0/E1 · Praca P-E2a/b/c · Ryzyko R-E3a…d · Raporty RA-E4a…d),
+osobny etap „przewód" H1/H2 (bramka 409 + `initiative_handoffs`), wygaszenie starych powierzchni W1,
+dwie otwarte uwagi DEC-491; §3 wspólne fundamenty + diagram zależności; §4 sześć fal wdrożeń
+(A naprawy pilotażu → B portfel + sygnalizacja ryzyka + przewód → C raporty na jednym silniku →
+D plan + praca → E obciążenie + ryzyko → F PMO i filtry projektami; potem P6, P5); §5 tabela
+zbiorcza 40 wierszy (moduł | przycisk | etap | wykonawca | zależność | fala | akcept | stan dziś);
+§6 pięć pytań do właściciela + osiem założeń rozstrzygniętych na mandacie CTO.
+**Pięć pytań do właściciela (Tak/Nie):** Q1 — czy fala C (raporty) może być odebrana na raporcie
+na ekranie + pliku PDF, bez automatycznej wysyłki mailem (poczta żywa, DEC-471, nadal nie działa)?
+Q2 — czy zbieranie KPI na etapie inicjatywy (wymóg wiążący SPEC R.4, **dziś nieprzydzielone
+nikomu**) wchodzi do pakietu P4 w fali B? Q3 — czy filtr projektami może wejść raz, na końcu
+(fala F, po PMO), a do tego czasu ekrany pokazują całą organizację bez błędu? Q4 — czy po dowiezieniu
+Pracy i Raportów usuwamy stare powierzchnie Realizacji (Zasoby/Rollout/Podsumowanie) całkowicie?
+Q5 — czy po fali F idzie najpierw Agent-edytor klocków (P6), a dopiero potem kontrakty (P5)?
+**Zweryfikowane grepem przed zapisaniem planu (obalone/sprostowane twierdzenia inwentarza):**
+(1) `docs/ssot/GRANICA_PRACA_RYZYKO.md` **NIE ISTNIEJE** — granicę rozstrzygnął DEC-485, brakuje
+tylko zapisu do SSOT (etap R-E3a, fala A, Sonnet); (2) `managerActionExecutionService.ts` leży
+w `server/src/services/v8/`, nie w `server/src/services/` — inwentarz podawał złą ścieżkę;
+(3) sygnalizacja ryzyka **nie jest pustym polem** — `server/src/services/execution/threeAxisReportService.ts`
+istnieje i liczy trzy osie, ale nie ma ani jednego konsumenta w `src/components/Execution`
+(kształt „zbudowane, ale niepodłączone") — B-E0 podpina, nie buduje od zera;
+(4) `initiative_handoffs` ma migrację `20260626_initiative_handoffs.sql`, a wszystkie trafienia
+w repo to fixture'y testowe i evidence — zero wołaczy produkcyjnych (potwierdza DEC-453);
+(5) `POST /:id/lifecycle-gate-decisions` istnieje (`routes/pmo/initiatives.routes.ts:3939`),
+middleware `executionSpineLegacyReadOnly.middleware.ts:85` zwraca 409, front ma zero wołaczy —
+potwierdzone; (6) Menu 2 Realizacji = Bank/Praca/Ryzyko/Raporty **potwierdzone**
+(`src/components/Execution/executionModuleTabs.ts`), stare powierzchnie żyją jako deep-linki;
+(7) migracja `20262104_execution_report_snapshots.sql` **istnieje** — potwierdzone.
 
 ---
 
