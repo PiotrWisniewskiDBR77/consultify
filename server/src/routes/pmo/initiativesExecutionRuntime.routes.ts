@@ -7562,6 +7562,7 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { scheduledReportService } = await import('../../services/scheduledReportService.js');
+      const recipients = normalizeInitiativeWorkReportRecipients(parsed.data.recipients);
       const schedule = await scheduledReportService.createSchedule(
         {
           name: parsed.data.title,
@@ -7571,7 +7572,7 @@ export function createInitiativesExecutionRuntimeRouter(
           deliveryMethods: ['email', 'dashboard'],
           deliveryConfig: {
             email: {
-              recipients: parsed.data.recipients,
+              recipients,
               includeAttachment: true,
               attachmentFormat: 'pdf',
             },
@@ -7586,7 +7587,7 @@ export function createInitiativesExecutionRuntimeRouter(
             projectIds: parsed.data.projectIds,
             ownerId: parsed.data.ownerId,
             approverId: parsed.data.approverId,
-            recipients: parsed.data.recipients,
+            recipients,
             cadence: parsed.data.cadence,
           },
         },
@@ -7650,91 +7651,28 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
-      const priorReceipt = run.distributionReceipts?.find(
-        (receipt: any) => receipt.receiptId === parsed.data.clientRequestId
-      );
-      if (run.status === 'PUBLISHED' && priorReceipt) {
-        res.json({
-          result: { status: 'IDEMPOTENT_REPLAY' },
-          delivered: parsed.data.recipients,
-          distributedAt: priorReceipt.distributedAt,
-        });
-        return;
-      }
-      if (
-        run.status !== 'APPROVED' ||
-        run.approverId !== actor.userId ||
-        !run.frozenSnapshot?.workReport?.content
-      ) {
-        res.status(409).json({ error: { code: 'REPORT_APPROVAL_REQUIRED' } });
-        return;
-      }
-      const requestedAudience = [...parsed.data.recipients].sort();
-      const frozenAudience = [
-        ...(Array.isArray(run.frozenSnapshot.audience)
-          ? run.frozenSnapshot.audience.map(String)
-          : []),
-      ].sort();
-      if (
-        requestedAudience.length !== frozenAudience.length ||
-        requestedAudience.some((recipient, index) => recipient !== frozenAudience[index])
-      ) {
-        res.status(409).json({ error: { code: 'REPORT_AUDIENCE_MISMATCH' } });
-        return;
-      }
-      const content = run.frozenSnapshot.workReport.content as InitiativeWorkReportContent;
-      const pdf = await renderInitiativeWorkReportPdf(content);
-      // Reserve the immutable distribution receipt before contacting SMTP. A
-      // version conflict therefore sends nothing, and a retry with the same
-      // clientRequestId resolves through the receipt above without duplicating mail.
-      const distributedAt = new Date().toISOString();
-      const result = await transitionReportRun(deps.unitOfWork, {
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        aggregateType: 'report_run',
-        aggregateId: reportRunId,
-        expectedVersion: parsed.data.expectedVersion,
-        clientRequestId: parsed.data.clientRequestId,
-        correlationId: `work-report-delivery-${parsed.data.clientRequestId}`,
-        policyId: 'report-run',
-        policyVersion: 1,
-        commandType: 'report-run.transition',
-        payload: {
-          action: 'PUBLISH',
-          distribution: {
-            receiptId: parsed.data.clientRequestId,
-            audience: parsed.data.recipients.join(','),
-            distributedAt,
-          },
+      const delivery = await deliverInitiativeWorkReport(
+        {
+          organizationId: actor.organizationId,
+          reportRunId,
+          approverId: actor.userId,
+          expectedVersion: parsed.data.expectedVersion,
+          receiptId: parsed.data.clientRequestId,
+          recipients: parsed.data.recipients,
         },
-      });
-      const failed: string[] = [];
-      for (const recipient of parsed.data.recipients) {
-        const accepted = await EmailService.send({
-          to: recipient,
-          subject: content.title,
-          text: `Consultify work report: ${content.title}`,
-          html: `<p>Consultify work report: <strong>${content.title.replace(/[<>&"']/g, '')}</strong></p>`,
-          requireDelivery: true,
-          attachments: [
-            {
-              filename: `work-report-${reportRunId}.pdf`,
-              content: pdf,
-              contentType: 'application/pdf',
-            },
-          ],
-        });
-        if (!accepted) failed.push(recipient);
-      }
-      if (failed.length > 0) {
+        { unitOfWork: deps.unitOfWork, reader: deps.reader }
+      );
+      if (!delivery.published) {
         res.status(502).json({
           error: { code: 'EMAIL_DELIVERY_FAILED' },
-          failed,
+          failed: delivery.failed,
+          pending: delivery.pending,
+          delivered: delivery.delivered,
           receiptId: parsed.data.clientRequestId,
         });
         return;
       }
-      res.json({ result, delivered: parsed.data.recipients, distributedAt });
+      res.json(delivery);
     })
   );
   router.get(
@@ -8921,26 +8859,259 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
   },
 };
 
-export async function runScheduledInitiativeWorkReport(schedule: {
-  id: string;
-  organizationId: string;
-  runtimeReport?: {
-    definitionId: string;
-    definitionVersion: number;
-    templateId: string;
-    title: string;
-    projectIds: string[];
-    ownerId: string;
+export function normalizeInitiativeWorkReportRecipients(recipients: string[]): string[] {
+  return [
+    ...new Set(recipients.map((recipient) => recipient.trim().toLowerCase()).filter(Boolean)),
+  ].sort();
+}
+
+type InitiativeWorkReportDeliveryDependencies = {
+  unitOfWork: InitiativesExecutionRuntimeDependencies['unitOfWork'];
+  reader: Pick<PostgresInitiativeReader, 'listReportRuns'>;
+  sendEmail?: typeof EmailService.send;
+  renderPdf?: typeof renderInitiativeWorkReportPdf;
+  now?: () => Date;
+};
+
+export async function deliverInitiativeWorkReport(
+  input: {
+    organizationId: string;
+    reportRunId: string;
     approverId: string;
+    expectedVersion: number;
+    receiptId: string;
     recipients: string[];
-    cadence: 'WEEKLY' | 'MONTHLY';
+  },
+  deps: InitiativeWorkReportDeliveryDependencies
+): Promise<{
+  published: boolean;
+  status: 'PUBLISHED' | 'RETRY_REQUIRED' | 'DELIVERY_IN_PROGRESS';
+  delivered: string[];
+  failed: string[];
+  pending: string[];
+  distributedAt: string | null;
+}> {
+  const recipients = normalizeInitiativeWorkReportRecipients(input.recipients);
+  if (recipients.length === 0) throw new Error('INITIATIVE_WORK_REPORT_AUDIENCE_REQUIRED');
+  const readRun = async () =>
+    (await deps.reader.listReportRuns(input.organizationId)).find(
+      (item: any) => item.reportRunId === input.reportRunId
+    ) as any;
+  let run = await readRun();
+  const frozenAudience = normalizeInitiativeWorkReportRecipients(
+    Array.isArray(run?.frozenSnapshot?.audience) ? run.frozenSnapshot.audience.map(String) : []
+  );
+  if (
+    recipients.length !== frozenAudience.length ||
+    recipients.some((recipient, index) => recipient !== frozenAudience[index])
+  )
+    throw new Error('INITIATIVE_WORK_REPORT_AUDIENCE_MISMATCH');
+  if (run?.approverId !== input.approverId || !run?.frozenSnapshot?.workReport?.content)
+    throw new Error('INITIATIVE_WORK_REPORT_APPROVAL_REQUIRED');
+
+  const publishedReceipt = run.distributionReceipts?.find(
+    (receipt: any) => receipt.receiptId === input.receiptId
+  );
+  if (run.status === 'PUBLISHED' && publishedReceipt) {
+    return {
+      published: true,
+      status: 'PUBLISHED',
+      delivered: recipients,
+      failed: [],
+      pending: [],
+      distributedAt: publishedReceipt.distributedAt,
+    };
+  }
+  if (run.status !== 'APPROVED') throw new Error('INITIATIVE_WORK_REPORT_APPROVAL_REQUIRED');
+
+  let attempt = (run.deliveryAttempts ?? []).find(
+    (item: any) => item.receiptId === input.receiptId
+  );
+  if (attempt) {
+    const attemptAudience = normalizeInitiativeWorkReportRecipients(attempt.audience ?? []);
+    if (
+      attemptAudience.length !== recipients.length ||
+      attemptAudience.some((recipient, index) => recipient !== recipients[index])
+    )
+      throw new Error('INITIATIVE_WORK_REPORT_RECEIPT_CONFLICT');
+  } else {
+    const startedAt = (deps.now?.() ?? new Date()).toISOString();
+    const begun = await transitionReportRun(deps.unitOfWork, {
+      organizationId: input.organizationId,
+      actorId: input.approverId,
+      aggregateType: 'report_run',
+      aggregateId: input.reportRunId,
+      expectedVersion: input.expectedVersion,
+      clientRequestId: `delivery-begin-${input.receiptId}`,
+      correlationId: `work-report-delivery-${input.receiptId}`,
+      policyId: 'report-run',
+      policyVersion: 1,
+      commandType: 'report-run.transition',
+      payload: {
+        action: 'BEGIN_DELIVERY',
+        receiptId: input.receiptId,
+        audience: recipients,
+        startedAt,
+      },
+    });
+    run = begun.response;
+    attempt = run.deliveryAttempts.find((item: any) => item.receiptId === input.receiptId);
+  }
+
+  const content = run.frozenSnapshot.workReport.content as InitiativeWorkReportContent;
+  const pdf = await (deps.renderPdf ?? renderInitiativeWorkReportPdf)(content);
+  const sendEmail = deps.sendEmail ?? EmailService.send.bind(EmailService);
+  let aggregateVersion = Number(run.version ?? 0) || Number((await readRun())?.version ?? 0);
+  if (!aggregateVersion) aggregateVersion = input.expectedVersion + (attempt ? 1 : 0);
+
+  for (const recipientState of attempt.recipients as Array<any>) {
+    if (recipientState.status === 'DELIVERED' || recipientState.status === 'SENDING') continue;
+    const attemptedAt = (deps.now?.() ?? new Date()).toISOString();
+    const attemptNumber = Number(recipientState.attempts ?? 0) + 1;
+    const recipientKey = createHash('sha256')
+      .update(recipientState.address)
+      .digest('hex')
+      .slice(0, 12);
+    const claimed = await transitionReportRun(deps.unitOfWork, {
+      organizationId: input.organizationId,
+      actorId: input.approverId,
+      aggregateType: 'report_run',
+      aggregateId: input.reportRunId,
+      expectedVersion: aggregateVersion,
+      clientRequestId: `delivery-claim-${input.receiptId}-${recipientKey}-${attemptNumber}`,
+      correlationId: `work-report-delivery-${input.receiptId}`,
+      policyId: 'report-run',
+      policyVersion: 1,
+      commandType: 'report-run.transition',
+      payload: {
+        action: 'CLAIM_RECIPIENT',
+        receiptId: input.receiptId,
+        recipient: recipientState.address,
+        attemptedAt,
+      },
+    });
+    aggregateVersion = claimed.aggregateVersion;
+    let accepted = false;
+    let deliveryError: string | undefined;
+    try {
+      accepted = await sendEmail({
+        to: recipientState.address,
+        subject: content.title,
+        text: `Consultify work report: ${content.title}`,
+        html: `<p>Consultify work report: <strong>${content.title.replace(/[<>&"']/g, '')}</strong></p>`,
+        requireDelivery: true,
+        attachments: [
+          {
+            filename: `work-report-${input.reportRunId}.pdf`,
+            content: pdf,
+            contentType: 'application/pdf',
+          },
+        ],
+      });
+    } catch (error) {
+      deliveryError = error instanceof Error ? error.message : 'EMAIL_DELIVERY_FAILED';
+    }
+    const outcome = accepted ? 'DELIVERED' : 'FAILED';
+    const recorded = await transitionReportRun(deps.unitOfWork, {
+      organizationId: input.organizationId,
+      actorId: input.approverId,
+      aggregateType: 'report_run',
+      aggregateId: input.reportRunId,
+      expectedVersion: aggregateVersion,
+      clientRequestId: `delivery-record-${input.receiptId}-${recipientKey}-${attemptNumber}-${outcome.toLowerCase()}`,
+      correlationId: `work-report-delivery-${input.receiptId}`,
+      policyId: 'report-run',
+      policyVersion: 1,
+      commandType: 'report-run.transition',
+      payload: {
+        action: 'RECORD_RECIPIENT',
+        receiptId: input.receiptId,
+        recipient: recipientState.address,
+        outcome,
+        attemptedAt,
+        error: accepted ? undefined : deliveryError || 'EMAIL_DELIVERY_FAILED',
+      },
+    });
+    aggregateVersion = recorded.aggregateVersion;
+  }
+
+  run = await readRun();
+  attempt = (run.deliveryAttempts ?? []).find((item: any) => item.receiptId === input.receiptId);
+  const delivered = attempt.recipients
+    .filter((recipient: any) => recipient.status === 'DELIVERED')
+    .map((recipient: any) => recipient.address);
+  const failed = attempt.recipients
+    .filter((recipient: any) => recipient.status === 'FAILED')
+    .map((recipient: any) => recipient.address);
+  const pending = attempt.recipients
+    .filter((recipient: any) => !['DELIVERED', 'FAILED'].includes(recipient.status))
+    .map((recipient: any) => recipient.address);
+  if (failed.length || pending.length) {
+    return {
+      published: false,
+      status: pending.length ? 'DELIVERY_IN_PROGRESS' : 'RETRY_REQUIRED',
+      delivered,
+      failed,
+      pending,
+      distributedAt: null,
+    };
+  }
+
+  const distributedAt = (deps.now?.() ?? new Date()).toISOString();
+  await transitionReportRun(deps.unitOfWork, {
+    organizationId: input.organizationId,
+    actorId: input.approverId,
+    aggregateType: 'report_run',
+    aggregateId: input.reportRunId,
+    expectedVersion: Number(run.version ?? aggregateVersion),
+    clientRequestId: `delivery-publish-${input.receiptId}`,
+    correlationId: `work-report-delivery-${input.receiptId}`,
+    policyId: 'report-run',
+    policyVersion: 1,
+    commandType: 'report-run.transition',
+    payload: {
+      action: 'PUBLISH',
+      distribution: { receiptId: input.receiptId, audience: recipients.join(','), distributedAt },
+    },
+  });
+  return {
+    published: true,
+    status: 'PUBLISHED',
+    delivered,
+    failed: [],
+    pending: [],
+    distributedAt,
   };
-}): Promise<string> {
+}
+
+export async function runScheduledInitiativeWorkReport(
+  schedule: {
+    id: string;
+    organizationId: string;
+    runtimeReport?: {
+      definitionId: string;
+      definitionVersion: number;
+      templateId: string;
+      title: string;
+      projectIds: string[];
+      ownerId: string;
+      approverId: string;
+      recipients: string[];
+      cadence: 'WEEKLY' | 'MONTHLY';
+    };
+  },
+  dependencies: InitiativeWorkReportDeliveryDependencies & {
+    reader: Pick<
+      PostgresInitiativeReader,
+      'findReportDefinition' | 'buildInitiativeWorkReport' | 'listReportRuns'
+    >;
+  } = runtimeDependencies
+): Promise<string> {
   const spec = schedule.runtimeReport;
   if (!spec || !INITIATIVE_WORK_REPORT_TEMPLATES.includes(spec.templateId as any)) {
     throw new Error('INITIATIVE_WORK_REPORT_SCHEDULE_INVALID');
   }
-  const definition = (await runtimeDependencies.reader.findReportDefinition(
+  const definition = (await dependencies.reader.findReportDefinition(
     schedule.organizationId,
     spec.definitionId
   )) as any;
@@ -8954,14 +9125,11 @@ export async function runScheduledInitiativeWorkReport(schedule: {
   if (!publishedDefinition || spec.ownerId === spec.approverId) {
     throw new Error('INITIATIVE_WORK_REPORT_PUBLISHED_DEFINITION_REQUIRED');
   }
-  const captured = await runtimeDependencies.reader.buildInitiativeWorkReport(
-    schedule.organizationId,
-    {
-      title: spec.title,
-      templateId: spec.templateId as (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number],
-      projectIds: spec.projectIds,
-    }
-  );
+  const captured = await dependencies.reader.buildInitiativeWorkReport(schedule.organizationId, {
+    title: spec.title,
+    templateId: spec.templateId as (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number],
+    projectIds: spec.projectIds,
+  });
   if (captured.sources.length === 0) throw new Error('INITIATIVE_WORK_REPORT_NO_SOURCES');
   const now = new Date();
   const start = new Date(now);
@@ -8979,7 +9147,7 @@ export async function runScheduledInitiativeWorkReport(schedule: {
     .update(`${schedule.organizationId}:${schedule.id}:${spec.cadence}:${periodKey}`)
     .digest('hex');
   const reportRunId = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-a${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
-  const existing = (await runtimeDependencies.reader.listReportRuns(schedule.organizationId)).find(
+  const existing = (await dependencies.reader.listReportRuns(schedule.organizationId)).find(
     (item: any) => item.reportRunId === reportRunId
   ) as any;
   if (existing?.status === 'PUBLISHED') return reportRunId;
@@ -8994,7 +9162,8 @@ export async function runScheduledInitiativeWorkReport(schedule: {
   let status = existing?.status as string | undefined;
   let version = Number(existing?.version ?? 0);
   if (!existing) {
-    await createReportRun(runtimeDependencies.unitOfWork, {
+    const normalizedRecipients = normalizeInitiativeWorkReportRecipients(spec.recipients);
+    await createReportRun(dependencies.unitOfWork, {
       ...envelope,
       expectedVersion: 0,
       clientRequestId: `scheduled-create-${reportRunId}`,
@@ -9004,7 +9173,7 @@ export async function runScheduledInitiativeWorkReport(schedule: {
       payload: {
         definitionRef: { definitionId: spec.definitionId, version: spec.definitionVersion },
         parentRunRef: null,
-        audience: spec.recipients,
+        audience: normalizedRecipients,
         scopeRefs: spec.projectIds.length
           ? spec.projectIds.map((id) => `project:${id}`)
           : ['organization'],
@@ -9025,7 +9194,7 @@ export async function runScheduledInitiativeWorkReport(schedule: {
     version = 1;
   }
   if (status === 'DRAFT') {
-    await transitionReportRun(runtimeDependencies.unitOfWork, {
+    await transitionReportRun(dependencies.unitOfWork, {
       ...envelope,
       expectedVersion: version,
       clientRequestId: `scheduled-validate-${reportRunId}`,
@@ -9037,7 +9206,7 @@ export async function runScheduledInitiativeWorkReport(schedule: {
     version += 1;
   }
   if (status === 'VALIDATED') {
-    await transitionReportRun(runtimeDependencies.unitOfWork, {
+    await transitionReportRun(dependencies.unitOfWork, {
       ...envelope,
       expectedVersion: version,
       clientRequestId: `scheduled-freeze-${reportRunId}`,
@@ -9049,7 +9218,7 @@ export async function runScheduledInitiativeWorkReport(schedule: {
     version += 1;
   }
   if (status === 'FROZEN') {
-    await transitionReportRun(runtimeDependencies.unitOfWork, {
+    await transitionReportRun(dependencies.unitOfWork, {
       ...envelope,
       actorId: spec.approverId,
       expectedVersion: version,
@@ -9063,46 +9232,18 @@ export async function runScheduledInitiativeWorkReport(schedule: {
   }
   if (status !== 'APPROVED') throw new Error('INITIATIVE_WORK_REPORT_STATE_INVALID');
   const receiptId = `scheduled-delivery-${reportRunId}`;
-  await transitionReportRun(runtimeDependencies.unitOfWork, {
-    ...envelope,
-    actorId: spec.approverId,
-    expectedVersion: version,
-    clientRequestId: receiptId,
-    correlationId: `scheduled-work-report-${reportRunId}-publish`,
-    commandType: 'report-run.transition',
-    payload: {
-      action: 'PUBLISH',
-      distribution: {
-        receiptId,
-        audience: spec.recipients.join(','),
-        distributedAt: now.toISOString(),
-      },
+  const delivery = await deliverInitiativeWorkReport(
+    {
+      organizationId: schedule.organizationId,
+      reportRunId,
+      approverId: spec.approverId,
+      expectedVersion: version,
+      receiptId,
+      recipients: spec.recipients,
     },
-  });
-  const publishedRun = (
-    await runtimeDependencies.reader.listReportRuns(schedule.organizationId)
-  ).find((item: any) => item.reportRunId === reportRunId) as any;
-  const deliveryContent = publishedRun?.frozenSnapshot?.workReport
-    ?.content as InitiativeWorkReportContent;
-  if (!deliveryContent) throw new Error('INITIATIVE_WORK_REPORT_FROZEN_CONTENT_MISSING');
-  const pdf = await renderInitiativeWorkReportPdf(deliveryContent);
-  for (const recipient of spec.recipients) {
-    const accepted = await EmailService.send({
-      to: recipient,
-      subject: deliveryContent.title,
-      text: `Consultify work report: ${deliveryContent.title}`,
-      html: `<p>Consultify work report: <strong>${deliveryContent.title.replace(/[<>&"']/g, '')}</strong></p>`,
-      requireDelivery: true,
-      attachments: [
-        {
-          filename: `work-report-${reportRunId}.pdf`,
-          content: pdf,
-          contentType: 'application/pdf',
-        },
-      ],
-    });
-    if (!accepted) throw new Error('INITIATIVE_WORK_REPORT_EMAIL_FAILED');
-  }
+    dependencies
+  );
+  if (!delivery.published) throw new Error('INITIATIVE_WORK_REPORT_EMAIL_RETRY_REQUIRED');
   return reportRunId;
 }
 
