@@ -21,11 +21,35 @@ vi.mock('react-i18next', () => ({
 
 const rows = buildExecutionBankRows(
   [
-    { id: 'initiative-a', name: 'Alpha', lifecycleStatus: 'IN_EXECUTION', progress: null, baselineStartDate: '2028-01-10', baselineEndDate: '2028-02-10', currentPlanStartDate: '2028-01-20', currentPlanEndDate: '2028-03-20' },
-    { id: 'initiative-b', name: 'Beta', lifecycleStatus: 'SCHEDULED', progress: null, currentPlanEndDate: 'invalid' },
+    {
+      id: 'initiative-a',
+      name: 'Alpha',
+      lifecycleStatus: 'IN_EXECUTION',
+      progress: null,
+      baselineStartDate: '2028-01-10',
+      baselineEndDate: '2028-02-10',
+      currentPlanStartDate: '2028-01-20',
+      currentPlanEndDate: '2028-03-20',
+    },
+    {
+      id: 'initiative-b',
+      name: 'Beta',
+      lifecycleStatus: 'SCHEDULED',
+      progress: null,
+      currentPlanEndDate: 'invalid',
+    },
   ],
   [
-    { executionCaseId: 'case-a', initiativeId: 'initiative-a', version: 4, state: 'ACTIVE', forecastStartDate: '2028-01-25', forecastEndDate: '2028-03-01', forecastObservedAt: '2028-01-15T00:00:00Z', health: 'AT_RISK' },
+    {
+      executionCaseId: 'case-a',
+      initiativeId: 'initiative-a',
+      version: 4,
+      state: 'ACTIVE',
+      forecastStartDate: '2028-01-25',
+      forecastEndDate: '2028-03-01',
+      forecastObservedAt: '2028-01-15T00:00:00Z',
+      health: 'AT_RISK',
+    },
     { executionCaseId: 'case-b', initiativeId: 'initiative-b', version: 2, state: 'ACTIVE' },
   ],
   { asOf: '2028-01-31' }
@@ -39,7 +63,8 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
     const onOpen = vi.fn();
     const props = {
       rows,
-      selected: { initiativeId: 'initiative-b', executionCaseId: 'case-b' },
+      enhanced: true,
+      selected: { id: 'initiative-b', initiativeId: 'initiative-b' },
       calendarWindow: buildExecutionCalendarWindow('2028-01-31', 3),
       onSelect,
       onOpen,
@@ -50,56 +75,61 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
     const identities = (renderer: 'table' | 'kanban' | 'calendar' | 'gantt') =>
       screen
         .getAllByTestId(new RegExp(`^execution-bank-${renderer}-item-`))
-        .map((node) => [
-          node.getAttribute('data-initiative-id'),
-          node.getAttribute('data-execution-case-id'),
-        ]);
-    const expected = [
-      ['initiative-a', 'case-a'],
-      ['initiative-b', 'case-b'],
-    ];
+        .map((node) => node.getAttribute('data-initiative-id'));
+    const expected = ['initiative-a', 'initiative-b'];
     expect(identities('table')).toEqual(expected);
     fireEvent.click(screen.getByText('Alpha'));
-    expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ executionCaseId: 'case-a' }));
+    expect(onSelect).toHaveBeenLastCalledWith(
+      expect.objectContaining({ executionCaseId: 'case-a' })
+    );
 
     rerender(<ExecutionBankViews {...props} view="kanban" />);
     expect(identities('kanban')).toEqual(expected);
-    expect(screen.getByTestId('standard-kanban-card-case-a')).toHaveAttribute('draggable', 'false');
-    fireEvent.click(screen.getByTestId('standard-kanban-card-case-a'));
-    expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ executionCaseId: 'case-a' }));
+    expect(screen.getByTestId('standard-kanban-card-initiative-a')).toHaveAttribute(
+      'draggable',
+      'false'
+    );
+    fireEvent.click(screen.getByTestId('standard-kanban-card-initiative-a'));
+    expect(onSelect).toHaveBeenLastCalledWith(
+      expect.objectContaining({ executionCaseId: 'case-a' })
+    );
 
     rerender(<ExecutionBankViews {...props} view="calendar" />);
     expect(identities('calendar')).toEqual(expected);
     expect(screen.getByTestId('execution-bank-unscheduled')).toHaveTextContent('Beta');
-    fireEvent.click(screen.getByTestId('execution-bank-calendar-item-case-a'));
-    expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ executionCaseId: 'case-a' }));
+    fireEvent.click(screen.getByTestId('execution-bank-calendar-item-initiative-a'));
+    expect(onSelect).toHaveBeenLastCalledWith(
+      expect.objectContaining({ executionCaseId: 'case-a' })
+    );
 
     rerender(<ExecutionBankViews {...props} view="gantt" />);
     expect(identities('gantt')).toEqual(expected);
-    fireEvent.click(screen.getByTestId('execution-bank-gantt-item-case-a'));
-    expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ executionCaseId: 'case-a' }));
-    expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('20 days · forecast');
-    expect(screen.getByTestId('execution-bank-gantt-bar-baseline-case-a')).toHaveAttribute(
+    fireEvent.click(screen.getByTestId('execution-bank-gantt-item-initiative-a'));
+    expect(onSelect).toHaveBeenLastCalledWith(
+      expect.objectContaining({ executionCaseId: 'case-a' })
+    );
+    expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent(
+      '20 days · forecast'
+    );
+    expect(screen.getByTestId('execution-bank-gantt-bar-baseline-initiative-a')).toHaveAttribute(
       'data-start',
       '2028-01-10'
     );
-    expect(screen.getByTestId('execution-bank-gantt-bar-current-plan-case-a')).toHaveAttribute(
-      'data-end',
-      '2028-03-20'
-    );
-    expect(screen.getByTestId('execution-bank-gantt-bar-forecast-case-a')).toHaveAttribute(
+    expect(
+      screen.getByTestId('execution-bank-gantt-bar-current-plan-initiative-a')
+    ).toHaveAttribute('data-end', '2028-03-20');
+    expect(screen.getByTestId('execution-bank-gantt-bar-forecast-initiative-a')).toHaveAttribute(
       'data-end',
       '2028-03-01'
     );
-    expect(screen.getByTestId('execution-bank-gantt-track-actual-case-a')).toHaveAttribute(
+    expect(screen.getByTestId('execution-bank-gantt-track-actual-initiative-a')).toHaveAttribute(
       'data-geometry',
       'unknown'
     );
-    expect(screen.getByTestId('execution-bank-gantt-track-current-plan-case-b')).toHaveAttribute(
-      'data-geometry',
-      'unknown'
-    );
-    const unknownRow = screen.getByTestId('execution-bank-gantt-item-case-b');
+    expect(
+      screen.getByTestId('execution-bank-gantt-track-current-plan-initiative-b')
+    ).toHaveAttribute('data-geometry', 'unknown');
+    const unknownRow = screen.getByTestId('execution-bank-gantt-item-initiative-b');
     expect(unknownRow.querySelector('[data-testid^="execution-bank-gantt-bar-"]')).toBeNull();
     expect(unknownRow.querySelector('[data-testid^="execution-bank-gantt-marker-"]')).toBeNull();
     expect(onOpen).not.toHaveBeenCalled();
@@ -122,10 +152,10 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
       />
     );
     const threeMonthX = Number(
-      screen.getByTestId('execution-bank-gantt-bar-forecast-case-a').getAttribute('x')
+      screen.getByTestId('execution-bank-gantt-bar-forecast-initiative-a').getAttribute('x')
     );
     const axisLayout = screen.getByTestId('execution-bank-gantt-axis-layout');
-    const trackLayout = screen.getByTestId('execution-bank-gantt-track-forecast-case-a');
+    const trackLayout = screen.getByTestId('execution-bank-gantt-track-forecast-initiative-a');
     expect(axisLayout).toHaveClass('grid-cols-[110px_minmax(620px,1fr)]', 'gap-2');
     expect(trackLayout).toHaveClass('grid-cols-[110px_minmax(620px,1fr)]', 'gap-2');
     const axisWidth = screen
@@ -141,7 +171,7 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
       />
     );
     const sixMonthX = Number(
-      screen.getByTestId('execution-bank-gantt-bar-forecast-case-a').getAttribute('x')
+      screen.getByTestId('execution-bank-gantt-bar-forecast-initiative-a').getAttribute('x')
     );
     expect(threeMonthX).toBeGreaterThan(sixMonthX);
     expect(screen.getByTestId('execution-bank-gantt-axis')).toHaveAttribute(
@@ -165,7 +195,8 @@ describe('E1b ExecutionBankViews mounted behavior', () => {
         onDrilldownMonth={onDrilldownMonth}
       />
     );
-    for (const label of ['1m', '3m', '6m', '12m']) expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    for (const label of ['1m', '3m', '6m', '12m'])
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
     expect(screen.getByText(/Reporting date Jan 31, 2028/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '12m' }));
     expect(onHorizonChange).toHaveBeenCalledWith(12);
