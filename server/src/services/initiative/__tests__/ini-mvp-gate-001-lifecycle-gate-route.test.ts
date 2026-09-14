@@ -38,13 +38,14 @@
  *    `InitiativeLifecycleGateDecisionError`/`INITIATIVE_LIFECYCLE_GATE_
  *    DOMAINS` stay real so `instanceof` checks and the Zod enum are genuine.
  *
- * This is a bounded handler-contract test. The production router now places
- * the legacy surface behind `requireCanonicalInitiativeExecutionWriter`, so
- * mounted writes correctly return `409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED`.
- * That cutover is proved by the middleware's own regression suite; here the
- * middleware is bypassed deliberately so the retained compatibility handler's
- * validation, auth derivation and error mapping stay testable without making
- * a false mounted-reachability claim.
+ * FALA B / H1 (2026-09-14) — ten plik dowodzi teraz TAKZE OSIAGALNOSCI.
+ * Wczesniej `requireCanonicalInitiativeExecutionWriter` byl tu podmieniony na
+ * stub, a naglowek mowil wprost: „mounted writes correctly return 409". To
+ * znaczylo, ze kanoniczny wlasciciel tabeli
+ * `initiative_lifecycle_gate_decisions` mial pelne pokrycie kontraktu i ZERO
+ * osiagalnosci w produkcji — nie dalo sie dolozyc do niego wolacza. Bramka
+ * przestala obejmowac trzy podzasoby `lifecycle-*` (patrz nota w middleware),
+ * a stub zniknal: ponizsze testy jada przez REALNA bramke.
  *
  * Router double-mount: `server/src/Gateway.ts` mounts the SAME
  * `initiativesRoutes` router at both `/api/initiatives` (line 657) and
@@ -111,9 +112,13 @@ vi.mock('../../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
 }));
 
-vi.mock('../../../middleware/executionSpineLegacyReadOnly.middleware.js', () => ({
-  requireCanonicalInitiativeExecutionWriter: (_req: any, _res: any, next: () => void) => next(),
-}));
+// FALA B / H1 (14.09): `middleware/executionSpineLegacyReadOnly.middleware.js`
+// jest DELIBERATNIE NIE-MOCKOWANY. Do 14.09 stal tu stub przepuszczajacy
+// wszystko, a naglowek pliku przyznawal wprost, ze zamontowane zapisy w
+// produkcji odpowiadaja 409 — czyli caly ten plik dowodzil kontraktu handlera,
+// ktorego w produkcji NIE DA SIE DOSIEGNAC. Teraz kazdy POST ponizej przechodzi
+// przez REALNA bramke na REALNYM routerze produkcyjnym: gdy `lifecycle-*`
+// wroci na liste wycofanych, wszystkie te testy zmieniaja sie w 409 i czerwienieja.
 
 // `middleware/validation.middleware.js` is DELIBERATELY NOT mocked — see
 // file-header note (1).

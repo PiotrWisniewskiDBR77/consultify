@@ -39,6 +39,12 @@ import type { MetaPill, RelationItem, StandardPreviewProps } from '@/components/
 import type { MemberNameResolver } from '@/hooks/useOrganizationMemberNames';
 
 import type { ExecutionBankEvidence, ExecutionBankRow } from './executionBankModel';
+import type { ExecutionRiskSignal } from './executionRiskSignal';
+import {
+  ExecutionHandoffBadge,
+  ExecutionRiskAxisPill,
+  executionRiskAxisLabel,
+} from './executionRiskSignalView';
 import {
   buildExecutionBankSummary,
   type ExecutionBankPreviewT,
@@ -65,6 +71,14 @@ export interface ExecutionBankPreviewDeps {
   progressLabel: string;
   resolveOwnerName?: MemberNameResolver;
   relations: RelationItem[];
+  /**
+   * B-E0 — sygnał 3 osi dla TEJ inicjatywy. `null`/`undefined` = flaga
+   * `VITE_EXEC_RISK_SIGNAL` wyłączona albo raport nie zna wiersza; wtedy
+   * wierszy ryzyka w tabeli faktów NIE MA (parytet z linią przy OFF).
+   */
+  riskSignal?: ExecutionRiskSignal | null;
+  /** H2 — patrz `showHandoffTrace` w `ExecutionBankViewsProps`. */
+  showHandoffTrace?: boolean;
 }
 
 export type ExecutionBankPreviewDeclaration = Pick<
@@ -117,6 +131,8 @@ export function buildExecutionBankPreviewDeclaration({
   progressLabel,
   resolveOwnerName,
   relations,
+  riskSignal,
+  showHandoffTrace,
 }: ExecutionBankPreviewDeps): ExecutionBankPreviewDeclaration {
   const nextStep = resolveExecutionBankNextStep(row, t);
   const summary = buildExecutionBankSummary(row, t, {
@@ -213,6 +229,29 @@ export function buildExecutionBankPreviewDeclaration({
             ? `Linked · v${row.executionCaseVersion ?? '—'}`
             : t('execution.bank.preview.fact.caseMissing', 'Not linked yet'),
         },
+        ...(showHandoffTrace
+          ? [
+              {
+                /*
+                 * H2 — przekazanie jako FAKT podglądu, nie tylko plakietka w
+                 * tabeli. Stoi zaraz pod realizacją, bo odpowiada na to samo
+                 * pytanie: skąd ten byt wziął się w Realizacji. Ta sama
+                 * plakietka co w wierszu (jeden przekład stanu, nie dwa).
+                 */
+                id: 'handoff',
+                label: t('execution.bank.preview.fact.handoff', 'Handoff'),
+                value: (
+                  <span className="flex justify-end">
+                    <ExecutionHandoffBadge
+                      handoff={row.handoff}
+                      formatDate={formatExecutionBankDate}
+                      t={t}
+                    />
+                  </span>
+                ),
+              },
+            ]
+          : []),
         {
           id: 'owner',
           label: t('execution.bank.preview.fact.owner', 'Owner'),
@@ -269,6 +308,28 @@ export function buildExecutionBankPreviewDeclaration({
           value: formatExecutionBankVariance(row, t),
           mono: true,
         },
+        /*
+         * B-E0 — BLOK RYZYKA. Kanon podglądu ma SZEŚĆ bloków i nie wolno
+         * dostawić siódmego, więc trzy osie wchodzą jako trzy wiersze TABELI
+         * FAKTÓW bloku 3 — tam, gdzie mieszka reszta zmierzonych wartości
+         * (dokładnie ta sama decyzja, którą K5-4 podjęło dla postępu i
+         * zdrowia, sprowadzając je z karty meta). Każdy wiersz = kolor +
+         * tekst + ikona, z pełnym zdaniem w podpowiedzi.
+         */
+        ...(riskSignal
+          ? riskSignal.axes.map((axis) => ({
+              id: `risk-${axis.id}`,
+              label: executionRiskAxisLabel(axis.id, t),
+              // Opakowanie, bo pastylka jest `flex` (musi się kurczyć w wąskiej
+              // komórce tabeli) — w tabeli faktów bez tego rozciągałaby się na
+              // całą szerokość kolumny wartości i czytała jak pasek, nie chip.
+              value: (
+                <span className="flex justify-end">
+                  <ExecutionRiskAxisPill axis={axis} t={t} />
+                </span>
+              ),
+            }))
+          : []),
       ],
       onCopy: () => void navigator.clipboard?.writeText(`${row.name} — ${progressLabel}`),
     },

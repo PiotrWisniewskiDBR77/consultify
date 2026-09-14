@@ -145,6 +145,11 @@ import { buildExecutionPreviewHead } from './executionPreviewHead';
 import { describeExecutionBankUnknown, ExecutionBankViews } from './ExecutionBankViews';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import {
+  buildExecutionRiskSignalMap,
+  type ExecutionRiskReportRowSource,
+  type ExecutionRiskSignal,
+} from './executionRiskSignal';
 import { ExecutionManagementView, type ManagerLaneState } from './ExecutionManagementView';
 import { executionFunctionLabel, executionModuleTabIds } from './executionModuleTabs';
 import {
@@ -896,6 +901,64 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const initRetryRef = React.useRef(0);
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
   const [executionCases, setExecutionCases] = useState<ExecutionBankCaseSource[]>([]);
+  /*
+   * ───────────────────────────────────────────────────────────────────────
+   * B-E0 (DEC-487) — SYGNALIZACJA RYZYKA REALIZACJI.
+   *
+   * POMIAR 14.09 (kod, nie teza): `threeAxisReportService` liczy trzy osie od
+   * migracji 913, a `GET /api/report-builder/program-3axis/live` wystawia je
+   * od naprawy „Faza2 gap #2". Konsumentów w `src/components/Execution` było
+   * ZERO — „zbudowane, niepodłączone". Dlatego to podłączenie NIE dokłada
+   * trasy ani migracji: bierze istniejący read-model.
+   *
+   * Trasa jest fail-soft po stronie serwera (`available:false`, nie 500), więc
+   * tutaj wystarczy potraktować każdy nieudany odczyt jak „brak sygnału" —
+   * wiersze pokażą jawne „Not measured", nigdy udawaną zieleń.
+   *
+   * Zapytanie leci WYŁĄCZNIE przy włączonej fladze — przy OFF nie ma ani
+   * kolumny, ani żądania HTTP, czyli parytet z linią jest też wydajnościowy.
+   * ───────────────────────────────────────────────────────────────────────
+   */
+  const executionRiskSignalEnabled = isExecutionFlagEnabled('execRiskSignal');
+  const executionHandoffTraceEnabled = isExecutionFlagEnabled('execHandoffTrace');
+  const [executionRiskSignals, setExecutionRiskSignals] = useState<ReadonlyMap<
+    string,
+    ExecutionRiskSignal
+  > | null>(null);
+  useEffect(() => {
+    if (!executionRiskSignalEnabled) {
+      setExecutionRiskSignals(null);
+      return;
+    }
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch('/api/report-builder/program-3axis/live', {
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          setExecutionRiskSignals(new Map());
+          return;
+        }
+        const body = (await response.json()) as {
+          available?: boolean;
+          report?: { rows?: ExecutionRiskReportRowSource[] } | null;
+        };
+        setExecutionRiskSignals(
+          body?.available === false || !body?.report
+            ? new Map()
+            : buildExecutionRiskSignalMap(body.report.rows ?? [])
+        );
+      } catch (error) {
+        if ((error as { name?: string })?.name === 'AbortError') return;
+        // Brak pomiaru NIE JEST wynikiem: pusta mapa znaczy „nie zmierzono",
+        // a komórka powie to wprost. Nie udajemy, że ryzyka nie ma.
+        setExecutionRiskSignals(new Map());
+      }
+    })();
+    return () => controller.abort();
+  }, [executionRiskSignalEnabled]);
   const [isLoading, setIsLoading] = useState(true);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
   const [initiativesLoadErrorCode, setInitiativesLoadErrorCode] = useState<string | null>(null);
@@ -5718,6 +5781,8 @@ Please return:
             progressLabel,
             resolveOwnerName,
             relations: sourceRelations,
+            riskSignal: executionRiskSignals?.get(selectedBankRow.initiativeId) ?? null,
+            showHandoffTrace: executionHandoffTraceEnabled,
           })
         : null;
 
@@ -5848,6 +5913,8 @@ Please return:
               <ExecutionBankViews
                 rows={executionBankRows}
                 resolveOwnerName={resolveOwnerName}
+                riskSignals={executionRiskSignals ?? undefined}
+                showHandoffTrace={executionHandoffTraceEnabled}
                 view={bankView}
                 selected={
                   selectedBankRow
