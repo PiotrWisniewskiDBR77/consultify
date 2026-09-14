@@ -162,7 +162,11 @@ export function WorkIntelligenceReport({
               executionCaseId: caseId,
               initiativeId: String(executionCase.initiativeId || ''),
               projectId: executionCase.projectId ? String(executionCase.projectId) : null,
-              projectTitle: executionCase.projectTitle ? String(executionCase.projectTitle) : null,
+              projectTitle: executionCase.projectTitle
+                ? String(executionCase.projectTitle)
+                : executionCase.projectId
+                  ? String(executionCase.projectId)
+                  : null,
             };
             const tasks: WorkReportItem[] = arrayAt(work, 'tasks').map((item: any) => ({
               ...common,
