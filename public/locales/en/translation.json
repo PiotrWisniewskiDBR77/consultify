@@ -14550,6 +14550,7 @@
         "GATE_DECISION_REQUIRED": "A current GO decision from the committee is missing.",
         "HANDOFF_AND_START_DATE_REQUIRED": "An accepted handoff and a start date are required.",
         "OPEN_WORK_BLOCKS_CLOSURE": "Open tasks or unresolved decisions block closure.",
+        "CLOSURE_WORK_INCOMPLETE": "Close the remaining tasks and milestones before completing the initiative.",
         "GATE_BLOCKED": "Gate readiness not met — complete: {{items}}.",
         "AUTHOR_ONLY": "Only the initiative author or an organization admin can submit a draft for approval.",
         "INVALID_TRANSITION": "This transition does not exist for the current status.",

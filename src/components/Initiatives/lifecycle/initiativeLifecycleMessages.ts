@@ -40,6 +40,14 @@ export const INITIATIVE_RULE_MESSAGE_KEYS: Record<string, { key: string; pl: str
     key: 'initiatives.lifecycle.blocked.OPEN_WORK_BLOCKS_CLOSURE',
     pl: 'Closure is blocked by open tasks or undecided decisions.',
   },
+  // H1e: COMPLETE (IN_EXECUTION→CLOSED) za flagą `ENABLE_LIFECYCLE_GO_GATE`
+  // (H1d) liczy też otwarte kamienie milowe i odmawia tym kodem — patrz
+  // `initiativeTransitionService.ts` przy `gate === GateType.COMPLETE`.
+  // Bez tego wpisu użytkownik dostawał surowy angielski komunikat serwera.
+  CLOSURE_WORK_INCOMPLETE: {
+    key: 'initiatives.lifecycle.blocked.CLOSURE_WORK_INCOMPLETE',
+    pl: 'Close the remaining tasks and milestones before completing the initiative.',
+  },
   GATE_BLOCKED: {
     key: 'initiatives.lifecycle.blocked.GATE_BLOCKED',
     pl: 'Gate readiness not met — complete: {{items}}.',

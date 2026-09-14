@@ -13725,6 +13725,7 @@
         "GATE_DECISION_REQUIRED": "Brakuje aktualnej decyzji GO komitetu.",
         "HANDOFF_AND_START_DATE_REQUIRED": "Wymagany przyjęty handoff i termin startu realizacji.",
         "OPEN_WORK_BLOCKS_CLOSURE": "Zamknięcie blokują otwarte zadania lub nierozstrzygnięte decyzje.",
+        "CLOSURE_WORK_INCOMPLETE": "Zamknij pozostałe zadania i kamienie milowe, zanim zakończysz inicjatywę.",
         "GATE_BLOCKED": "Bramka gotowości niespełniona — uzupełnij: {{items}}.",
         "AUTHOR_ONLY": "Tylko autor lub administrator może przesłać szkic do zatwierdzenia.",
         "INVALID_TRANSITION": "To przejście nie istnieje dla bieżącego statusu.",
