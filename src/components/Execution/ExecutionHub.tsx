@@ -3853,7 +3853,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // 1.12-R1b (3): `status === 'BLOCKED'` wprost przestaje wystarczać po
     // migracji P12 (Codex, w toku) — `isBlockedInitiative` rozpoznaje OBA
     // słowniki (BLOCKED wprost; IN_EXECUTION/EXECUTING + on_hold).
-    const blocked = dashboardBaseInitiatives.filter((i) => isBlockedInitiative(i as any));
+    const blocked = dashboardBaseInitiatives.filter((i) => isBlockedInitiative(i));
     const missingDates = dashboardBaseInitiatives.filter(
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );
@@ -3902,7 +3902,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // idą do osobnego licznika „brak dat" (metodyka A1 pkt 8: szary to luka
     // danych, nie zieleń). Silnik workstreamów, jeśli COKOLWIEK zwróci,
     // nadal ma pierwszeństwo — jest bogatszy niż same daty.
-    const dateOnTime = onTimeFromInitiatives(dashboardBaseInitiatives as any);
+    const dateOnTime = onTimeFromInitiatives(dashboardBaseInitiatives);
     const totalInit = wsTotal || dateOnTime.totalInitiatives;
     const onTrack = wsTotal ? wsOnTrack : dateOnTime.onTrackCount;
     const delayed = wsTotal ? wsDelayed : dateOnTime.delayedCount;
