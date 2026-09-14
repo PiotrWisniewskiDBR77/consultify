@@ -1,6 +1,10 @@
 <!-- SKRZYNKA: aktualne zlecenia. Nadzorca dopisuje tu; wykonawca czyta to PIERWSZE. -->
 # ★ AKTUALNE ZLECENIA (stan 13.09.2026, rano — integrator Fable)
 
+**Z-0 (13.09 ~22:00).** Punkt startu następcy:
+`docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
+(zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).
+
 Ta sekcja jest na górze rejestru celowo: to jedyne miejsce, w którym stoją **obowiązujące** zlecenia.
 Historia jest niżej, w tabeli. Plany w innych plikach są historyczne i nie obowiązują.
 
