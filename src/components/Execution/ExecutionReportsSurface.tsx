@@ -1171,7 +1171,7 @@ export const ExecutionReportsSurface = ({
       </div>
     );
   return (
-    <section aria-label="Execution Reports" className="flex h-full min-h-0 flex-col p-4">
+    <section aria-label={t('execution.reports.aria.executionReports', 'Execution Reports')} className="flex h-full min-h-0 flex-col p-4">
       {wizardOpen && (
         <section
           aria-label={t('executionReports.wizard.title', 'New report')}
@@ -1254,7 +1254,7 @@ export const ExecutionReportsSurface = ({
         <p role="status">{t('executionReports.loading', 'Loading reports…')}</p>
       )}
       {registerMode === 'DEFINITIONS' && (
-        <section aria-label="Report Definitions" className="mt-4 flex min-h-0 flex-1 flex-col">
+        <section aria-label={t('execution.reports.aria.reportDefinitions', 'Report Definitions')} className="mt-4 flex min-h-0 flex-1 flex-col">
           <h3 className="font-semibold">
             {t('executionReports.definitionsHeading', 'Report templates')}
           </h3>
@@ -1514,7 +1514,7 @@ export const ExecutionReportsSurface = ({
           </div>
           {showDefinitionEditor && (
             <section
-              aria-label="Report Definition Workbench"
+              aria-label={t('execution.reports.aria.reportDefinitionWorkbench', 'Report Definition Workbench')}
               className="mt-3 rounded border border-c-border p-4"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -1528,7 +1528,7 @@ export const ExecutionReportsSurface = ({
               <label className="text-xs">
                 {t('executionReports.technicalName', 'Technical name')}
                 <input
-                  aria-label="Report Definition ID"
+                  aria-label={t('execution.reports.aria.reportDefinitionID', 'Report Definition ID')}
                   value={definitionId}
                   onChange={(event) => setDefinitionId(event.target.value)}
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -1582,7 +1582,7 @@ export const ExecutionReportsSurface = ({
                 <label className="mt-2 block text-xs">
                   {t('executionReports.contractSources', 'Sources, formulas and access contract')}
                   <textarea
-                    aria-label="Report Definition contract JSON"
+                    aria-label={t('execution.reports.aria.reportDefinitionContractJSON', 'Report Definition contract JSON')}
                     value={definitionJson}
                     onChange={(event) => setDefinitionJson(event.target.value)}
                     className="block min-h-40 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
@@ -1595,7 +1595,7 @@ export const ExecutionReportsSurface = ({
                   'Allowed projects (one identifier per line)'
                 )}
                 <textarea
-                  aria-label="Report Definition project IDs"
+                  aria-label={t('execution.reports.aria.reportDefinitionProjectIDs', 'Report Definition project IDs')}
                   value={scopeProjectIds}
                   onChange={(event) => setScopeProjectIds(event.target.value)}
                   className="block min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
@@ -1603,7 +1603,7 @@ export const ExecutionReportsSurface = ({
               </label>
               <label className="mt-2 flex items-center gap-2 text-xs">
                 <input
-                  aria-label="Allow General Backlog scope"
+                  aria-label={t('execution.reports.aria.allowGeneralBacklogScope', 'Allow General Backlog scope')}
                   type="checkbox"
                   checked={generalBacklogAllowed}
                   onChange={(event) => setGeneralBacklogAllowed(event.target.checked)}
@@ -1621,7 +1621,7 @@ export const ExecutionReportsSurface = ({
               <label className="mt-2 block text-xs">
                 {t('executionReports.approvalRationale', 'Independent approval rationale')}
                 <textarea
-                  aria-label="Report Definition publish rationale"
+                  aria-label={t('execution.reports.aria.reportDefinitionPublishRationale', 'Report Definition publish rationale')}
                   value={definitionRationale}
                   onChange={(event) => setDefinitionRationale(event.target.value)}
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -1906,7 +1906,7 @@ export const ExecutionReportsSurface = ({
       )}
       {registerMode === 'RUNS' && showRunEditor && (
         <section
-          aria-label="ReportRun Workbench"
+          aria-label={t('execution.reports.aria.reportrunWorkbench', 'ReportRun Workbench')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -1927,7 +1927,7 @@ export const ExecutionReportsSurface = ({
               <label className="mb-2 block text-xs">
                 {t('executionReports.publishedDefinition', 'Published report definition')}
                 <select
-                  aria-label="ReportRun published Definition version"
+                  aria-label={t('execution.reports.aria.reportrunPublishedDefinitionVersion', 'ReportRun published Definition version')}
                   value={publishedDefinitionRef}
                   onChange={(event) => setPublishedDefinitionRef(event.target.value)}
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -1981,7 +1981,7 @@ export const ExecutionReportsSurface = ({
                 <label className="text-xs sm:col-span-2">
                   {t('executionReports.audienceLines', 'Audience — one group per line')}
                   <textarea
-                    aria-label="ReportRun audience"
+                    aria-label={t('execution.reports.aria.reportrunAudience', 'ReportRun audience')}
                     value={runDraft.audience}
                     onChange={(event) =>
                       setRunDraft((current) => ({ ...current, audience: event.target.value }))
@@ -1992,7 +1992,7 @@ export const ExecutionReportsSurface = ({
                 <label className="text-xs sm:col-span-2 xl:col-span-1">
                   {t('executionReports.scopeLines', 'Scope — one reference per line')}
                   <textarea
-                    aria-label="ReportRun scope refs"
+                    aria-label={t('execution.reports.aria.reportrunScopeRefs', 'ReportRun scope refs')}
                     value={runDraft.scopeRefs}
                     onChange={(event) =>
                       setRunDraft((current) => ({ ...current, scopeRefs: event.target.value }))
@@ -2039,7 +2039,7 @@ export const ExecutionReportsSurface = ({
                   {t('executionReports.action.freeze', 'Freeze snapshot')}
                 </button>
                 <textarea
-                  aria-label="Report approval rationale"
+                  aria-label={t('execution.reports.aria.reportApprovalRationale', 'Report approval rationale')}
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   className="min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
@@ -2086,7 +2086,7 @@ export const ExecutionReportsSurface = ({
                 {followUpLabels(t)[k] ?? k}
                 {k === 'executionCaseId' ? (
                   <select
-                    aria-label="Report follow-up executionCaseId"
+                    aria-label={t('execution.reports.aria.reportFollowUpExecutionCaseId', 'Report follow-up executionCaseId')}
                     value={followUp.executionCaseId}
                     onChange={(e) =>
                       setFollowUp((v) => ({ ...v, executionCaseId: e.target.value }))

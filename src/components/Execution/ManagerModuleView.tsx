@@ -306,20 +306,20 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
           onClick={toggleAiTriage}
           disabled={loading || rows.length === 0}
           className={getMenu3AiButtonClass(workspaceMode === 'triage')}
-          title="{t('execution.manager.triageLead', 'AI Triage — cluster and prioritize problems')}"
+          title={t('execution.manager.triageLead', 'AI Triage — cluster and prioritize problems')}
         >
           <Layers size={12} />
-          AI Triage
+          {t('execution.manager.triage', 'AI Triage')}
         </button>
         <button
           type="button"
           onClick={toggleActionPlan}
           disabled={loading || rows.length === 0}
           className={getMenu3AiButtonClass(workspaceMode === 'action-plan')}
-          title="{t('execution.manager.actionPlanLead', 'Action Plan — operational moves and follow-up')}"
+          title={t('execution.manager.actionPlanLead', 'Action Plan — operational moves and follow-up')}
         >
           <Sparkles size={12} />
-          Action Plan
+          {t('execution.manager.actionPlan', 'Action Plan')}
         </button>
         <button
           type="button"
@@ -345,10 +345,11 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
     toggleAiTriage,
     toggleThirdWorkspace,
     workspaceMode,
+    t,
   ]);
 
   return (
-    <V8UnavailableBanner moduleName="Manager Cockpit">
+    <V8UnavailableBanner moduleName={t('execution.manager.cockpitName', 'Manager Cockpit')}>
       <div className="h-full flex flex-col bg-c-bg overflow-hidden">
         {/* ─── Body: Table + Preview ─── */}
         <div className="flex-1 flex overflow-hidden">

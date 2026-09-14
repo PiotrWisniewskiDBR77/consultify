@@ -99,7 +99,7 @@ import { listExecutionCases } from '@/services/initiatives-execution/runtimeApi'
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
-import { formatListDate } from '@/utils/listDateFormat';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
@@ -1129,7 +1129,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
       if (v === null || v === undefined || !Number.isFinite(Number(v))) return '—';
       try {
-        return new Intl.NumberFormat(undefined, opts).format(Number(v));
+        // DEC-510: `undefined` bierze locale PRZEGLĄDARKI, nie języka konta —
+        // ten sam rekord miał inny separator tysięcy niż sąsiedni ekran.
+        return new Intl.NumberFormat(localeListy(), opts).format(Number(v));
       } catch {
         return String(v);
       }
@@ -5570,7 +5572,7 @@ Please return:
             {/* Scope */}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                Scope
+                {t('execution.report.spec.scope', 'Scope')}
               </div>
               <p className="text-xs text-c-text-secondary leading-relaxed">{report.scope}</p>
             </div>
@@ -5578,7 +5580,7 @@ Please return:
             {/* Data sources */}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                Data Sources
+                {t('execution.report.section.dataSources', 'Data Sources')}
               </div>
               <div className="flex flex-wrap gap-1">
                 {report.dataSources.map((ds) => (
@@ -5594,7 +5596,7 @@ Please return:
 
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                AI Executive Readout
+                {t('execution.report.section.aiReadout', 'AI Executive Readout')}
               </div>
               <div className="space-y-1.5">
                 {report.aiExecutiveReadout.slice(0, 3).map((line) => (
@@ -5611,7 +5613,7 @@ Please return:
             {/* Mandatory sections */}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                Mandatory Sections
+                {t('execution.report.spec.mandatorySections', 'Mandatory Sections')}
               </div>
               <ol className="space-y-0.5 list-decimal list-inside">
                 {report.sections.map((s) => (
@@ -5625,7 +5627,7 @@ Please return:
             {/* RAG logic */}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                RAG / Confidence Logic
+                {t('execution.report.section.ragLogic', 'RAG / Confidence Logic')}
               </div>
               <p className="text-[11px] text-c-text-muted leading-relaxed">{report.ragLogic}</p>
             </div>
@@ -5633,7 +5635,7 @@ Please return:
             {/* Follow-up actions */}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                Expected Follow-up Actions
+                {t('execution.report.spec.expectedFollowUps', 'Expected Follow-up Actions')}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {report.followUpActions.map((a) => (
@@ -5649,7 +5651,7 @@ Please return:
 
             <div>
               <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1 font-medium">
-                Data Quality
+                {t('execution.report.spec.dataQuality', 'Data Quality')}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 <span className="inline-block px-2 py-0.5 rounded-full bg-c-surface-raised text-[10px] text-c-text-muted">

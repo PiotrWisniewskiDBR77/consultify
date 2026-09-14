@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import i18n from 'i18next';
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 import { useTranslation } from 'react-i18next';
 import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
@@ -34,7 +34,7 @@ import {
  * są module-scope (poza komponentem), więc tłumaczenie idzie przez instancję
  * `i18next`, tak samo jak w `src/utils/listDateFormat.ts`.
  */
-const tr = (klucz: string, domyslny: string): string => i18n.t(klucz, domyslny) as string;
+const tr = (klucz: string, domyslny: string): string => tlumaczPozaHookiem(klucz, domyslny) as string;
 
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -230,6 +230,84 @@ const Section: React.FC<{
   );
 };
 
+/**
+ * DEC-510 (fala E2b-Exec) — NAGŁÓWKI TABEL RAPORTU idą przez i18n w JEDNYM
+ * miejscu, nie w 34 tablicach wywołań.
+ *
+ * Powód takiej formy: `DataTable` dostaje `headers` jako zwykłe napisy z 34
+ * różnych sekcji raportu. Gdyby każde wywołanie wołało `t()` osobno, ten sam
+ * nagłówek („Initiative", „Owner", „Due") miałby kilkanaście kluczy i pierwszy
+ * rozjazd tłumaczenia byłby kwestią tygodni. Tu literał angielski jest
+ * WARTOŚCIĄ DOMYŚLNĄ i zarazem kluczem wyszukiwania — nieznany napis
+ * przechodzi bez zmian, więc nowa sekcja nigdy nie pokaże surowego klucza.
+ */
+const HEADER_KEYS: Record<string, string> = {
+  Action: 'action',
+  Actual: 'actual',
+  'Age / Severity': 'ageSeverity',
+  Age: 'age',
+  Allocated: 'allocated',
+  Blocked: 'blocked',
+  Bucket: 'bucket',
+  Capacity: 'capacity',
+  Category: 'category',
+  'Conf.': 'conf',
+  Count: 'count',
+  'Decision / Alert': 'decisionAlert',
+  'Decision debt': 'decisionDebt',
+  Decision: 'decision',
+  'Decisions overdue': 'decisionsOverdue',
+  Decisions: 'decisions',
+  'Delay signals': 'delaySignals',
+  Drift: 'drift',
+  'Due ≤ 4w': 'dueLte4w',
+  Due: 'due',
+  Examples: 'examples',
+  Free: 'free',
+  Gap: 'gap',
+  Health: 'health',
+  'High risks': 'highRisks',
+  'Initiative / Person': 'initiativePerson',
+  Initiative: 'initiative',
+  Issue: 'issue',
+  'Main issue': 'mainIssue',
+  Milestone: 'milestone',
+  'Next milestone': 'nextMilestone',
+  'Open tasks': 'openTasks',
+  'Overdue tasks': 'overdueTasks',
+  Overdue: 'overdue',
+  Overload: 'overload',
+  Owner: 'owner',
+  'Pending decisions': 'pendingDecisions',
+  Pending: 'pending',
+  Person: 'person',
+  Planned: 'planned',
+  Priority: 'priority',
+  Progress: 'progress',
+  Reason: 'reason',
+  Severity: 'severity',
+  Signal: 'signal',
+  Status: 'status',
+  Target: 'target',
+  'Task / Milestone': 'taskMilestone',
+  Task: 'task',
+  'Tasks due soon': 'tasksDueSoon',
+  'Tasks overdue': 'tasksOverdue',
+  'Tasks ⚠/open': 'tasksWarnOpen',
+  Tasks: 'tasks',
+  Type: 'type',
+  Value: 'value',
+  Variance: 'variance',
+  Warnings: 'warnings',
+  Week: 'week',
+  'Why now': 'whyNow',
+};
+
+const naglowekRaportu = (etykieta: string) => {
+  const klucz = HEADER_KEYS[etykieta];
+  return klucz ? tlumaczPozaHookiem(`execution.report.header.${klucz}`, etykieta) : etykieta;
+};
+
 /* ── Data table (glass) ─────────────────────────────────────────────────── */
 
 // §27-exempt: document-layout — report renderer accepts JSX node arrays (ALink, IssueTag, etc.)
@@ -237,7 +315,7 @@ const DataTable: React.FC<{
   headers: string[];
   rows: React.ReactNode[][];
   emptyText?: string;
-}> = ({ headers, rows, emptyText = 'No data' }) => (
+}> = ({ headers, rows, emptyText }) => (
   <div className="overflow-hidden rounded-lg border border-slate-200/60 dark:border-white/[0.05]">
     <table className="w-full text-xs">
       <thead>
@@ -247,7 +325,7 @@ const DataTable: React.FC<{
               key={h}
               className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500"
             >
-              {h}
+              {naglowekRaportu(h)}
             </th>
           ))}
         </tr>
@@ -259,7 +337,7 @@ const DataTable: React.FC<{
               colSpan={headers.length}
               className="px-3 py-6 text-center text-[11px] text-slate-600 dark:text-slate-500"
             >
-              {emptyText}
+              {emptyText ?? tlumaczPozaHookiem('execution.report.noData', 'No data')}
             </td>
           </tr>
         ) : (
@@ -285,12 +363,12 @@ const DataTable: React.FC<{
 
 const AiInsightStrip: React.FC<{ items: string[]; emptyText?: string }> = ({
   items,
-  emptyText = 'No insights generated.',
+  emptyText,
 }) => (
   <div className="space-y-1.5">
     {items.length === 0 ? (
       <div className="rounded-lg border border-dashed border-slate-300/60 px-3 py-3 text-[11px] text-slate-600 dark:border-white/[0.06] dark:text-slate-500">
-        {emptyText}
+        {emptyText ?? tlumaczPozaHookiem('execution.report.noInsights', 'No insights generated.')}
       </div>
     ) : (
       items.map((item, idx) => (
@@ -346,14 +424,14 @@ const QualityFooter: React.FC<{ report: ReportDef }> = ({ report }) => {
   return (
     <div className="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-navy-900/40">
       <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-        Data quality posture
+        {tlumaczPozaHookiem('execution.report.dataQualityPosture', 'Data quality posture')}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {[
-          `Freshness: ${dq.freshnessLabel ?? '—'}`,
-          `Confidence: ${dq.confidence ?? '—'}`,
-          `Missing baseline: ${dq.missingBaselineCount ?? 0}`,
-          `Missing estimate: ${dq.missingEstimateCount ?? 0}`,
+          `${tlumaczPozaHookiem('execution.report.freshness', 'Freshness')}: ${dq.freshnessLabel ?? '—'}`,
+          `${tlumaczPozaHookiem('execution.report.confidence', 'Confidence')}: ${dq.confidence ?? '—'}`,
+          `${tlumaczPozaHookiem('execution.report.missingBaseline', 'Missing baseline')}: ${dq.missingBaselineCount ?? 0}`,
+          `${tlumaczPozaHookiem('execution.report.missingEstimate', 'Missing estimate')}: ${dq.missingEstimateCount ?? 0}`,
         ].map((tag) => (
           <span
             key={tag}
@@ -564,30 +642,30 @@ const IssueTag: React.FC<{ row: InitiativeRow }> = ({ row }) => {
   if (row.blocked)
     return (
       <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-medium text-danger-400">
-        {row.blockedReason || 'Blocked'}
+        {row.blockedReason || tlumaczPozaHookiem('execution.report.issue.blocked', 'Blocked')}
       </span>
     );
   if (row.missingDates)
     return (
       <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-        Missing dates
+        {tlumaczPozaHookiem('execution.report.issue.missingDates', 'Missing dates')}
       </span>
     );
   if (row.overdueTasks > 0)
     return (
       <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-        Overdue tasks
+        {tlumaczPozaHookiem('execution.report.issue.overdueTasks', 'Overdue tasks')}
       </span>
     );
   if (row.overdueDecisions > 0)
     return (
       <span className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-400">
-        Decision debt
+        {tlumaczPozaHookiem('execution.report.issue.decisionDebt', 'Decision debt')}
       </span>
     );
   return (
     <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-      On track
+      {tlumaczPozaHookiem('execution.report.issue.onTrack', 'On track')}
     </span>
   );
 };
@@ -1049,7 +1127,7 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
               .slice(0, 4)
               .map((a) => [
                 a.message,
-                'Portfolio',
+                tlumaczPozaHookiem('execution.report.portfolio', 'Portfolio'),
                 <span className={severityText(a.severity)}>{a.severity}</span>,
               ]),
           ]}
@@ -1326,7 +1404,11 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
             <ALink id={r.id} type="initiative" nav={nav}>
               {r.name}
             </ALink>,
-            r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+            r.blocked ? (
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
+            ) : (
+              tlumaczPozaHookiem('common.no', 'No')
+            ),
             <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
               {r.overdueDecisions}
@@ -1440,7 +1522,11 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
             <span className={r.overdueDecisions > 0 ? 'text-danger-400' : ''}>
               {r.overdueDecisions}
             </span>,
-            r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+            r.blocked ? (
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
+            ) : (
+              tlumaczPozaHookiem('common.no', 'No')
+            ),
           ])}
           emptyText={tr("executionReports.doc.empty.noInitiativesWaitingOnDecisions", "No initiatives waiting on decisions.")}
         />
@@ -1519,7 +1605,11 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
             .slice(0, 8)
             .map((r) => [
               r.name,
-              r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+              r.blocked ? (
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
+            ) : (
+              tlumaczPozaHookiem('common.no', 'No')
+            ),
               <span className={r.overdueTasks > 0 ? 'text-danger-400' : ''}>{r.overdueTasks}</span>,
               formatDate(data.nextMilestones.find((m) => m.initiativeId === r.id)?.targetDate),
             ])}
@@ -1556,7 +1646,11 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
               {r.name}
             </ALink>,
             <ConfBadge score={r.confidence} />,
-            r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
+            r.blocked ? (
+              <span className="text-danger-400">{tlumaczPozaHookiem('common.yes', 'Yes')}</span>
+            ) : (
+              tlumaczPozaHookiem('common.no', 'No')
+            ),
             <span className={r.highRiskCount > 0 ? 'text-danger-400' : ''}>{r.highRiskCount}</span>,
             <span className={r.overdueDecisions > 0 ? 'text-amber-400' : ''}>
               {r.overdueDecisions}
@@ -1577,7 +1671,7 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
               .slice(0, 4)
               .map((a) => [
                 a.message,
-                'Portfolio',
+                tlumaczPozaHookiem('execution.report.portfolio', 'Portfolio'),
                 <span className={severityText(a.severity)}>{a.severity}</span>,
               ]),
             ...data.riskSignals

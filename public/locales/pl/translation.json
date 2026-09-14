@@ -14766,6 +14766,92 @@
         "missingShort": "Brak",
         "linkedNoDateShort": "Data nieznana",
         "absentHint": "Nie przyjęto jeszcze żadnej paczki przekazania"
+      },
+      "unknown": {
+        "GENERIC": "Dane niedostępne",
+        "INITIATIVE_MISSING": "Szczegóły inicjatywy niedostępne",
+        "PROGRESS_MISSING": "Postęp nieraportowany",
+        "PROGRESS_INVALID": "Wartość postępu nieprawidłowa",
+        "BASELINE_MISSING": "Brak bazy odniesienia",
+        "BASELINE_INVALID": "Data bazy odniesienia nieprawidłowa",
+        "CURRENT_PLAN_MISSING": "Brak planu bieżącego",
+        "CURRENT_PLAN_INVALID": "Data planu bieżącego nieprawidłowa",
+        "FORECAST_MISSING": "Prognoza niedostępna",
+        "FORECAST_INVALID": "Data prognozy nieprawidłowa",
+        "FORECAST_OBSERVATION_MISSING": "Brak daty obserwacji prognozy",
+        "FORECAST_OBSERVATION_INVALID": "Data obserwacji prognozy nieprawidłowa",
+        "FORECAST_AFTER_AS_OF": "Prognoza jest nowsza niż data raportowa",
+        "VALUE_CLEARED": "Nie zaplanowano",
+        "ACTUAL_MISSING": "Data wykonania nieraportowana",
+        "ACTUAL_INVALID": "Data wykonania nieprawidłowa",
+        "CONFIDENCE_MISSING": "Pewność nieraportowana",
+        "HEALTH_MISSING": "Kondycja nieraportowana",
+        "UPDATED_AT_MISSING": "Czas aktualizacji niedostępny",
+        "UPDATED_AT_INVALID": "Czas aktualizacji nieprawidłowy"
+      },
+      "invalidDate": "Data nieprawidłowa",
+      "caseLinked": "Realizacja powiązana",
+      "caseMissing": "Brak powiązanej realizacji",
+      "horizonAria": "Horyzont banku realizacji",
+      "reportingDate": "Data raportowa",
+      "weeklyScale": "skala tygodniowa",
+      "monthlyScale": "skala miesięczna",
+      "initiativeSchedule": "Harmonogram inicjatyw",
+      "track": "Ścieżka",
+      "timelineAria": "Oś czasu od {{from}} do {{to}}",
+      "column": {
+        "initiative": "Inicjatywa",
+        "initiativeCase": "Inicjatywa / realizacja",
+        "lifecycle": "Cykl życia",
+        "handoff": "Przekazanie",
+        "risk": "Ryzyko",
+        "executionPhase": "Faza realizacji",
+        "owner": "Właściciel",
+        "deliveryProfile": "Profil dostarczania",
+        "progress": "Postęp",
+        "baselineFinish": "Koniec wg bazy",
+        "forecastFinish": "Koniec wg prognozy",
+        "variance": "Odchylenie",
+        "health": "Kondycja",
+        "blockers": "Blokery",
+        "pendingDecisions": "Decyzje oczekujące",
+        "constraint": "Ograniczenie",
+        "nextAction": "Następne działanie",
+        "updated": "Aktualizacja"
+      },
+      "rowMenu": {
+        "open": "Otwórz"
+      },
+      "lifecycle": {
+        "DRAFT": "Szkic",
+        "PENDING_APPROVAL": "Oczekuje na zatwierdzenie",
+        "APPROVED": "Zatwierdzona",
+        "IN_EXECUTION": "W realizacji",
+        "CLOSED": "Zamknięta",
+        "REJECTED": "Odrzucona",
+        "ARCHIVED": "Zarchiwizowana",
+        "CANCELLED": "Anulowana",
+        "ON_HOLD": "Wstrzymana"
+      },
+      "executionState": {
+        "ACTIVE": "Aktywna",
+        "PAUSED": "Wstrzymana",
+        "CLOSING": "W zamykaniu",
+        "CLOSED": "Zamknięta"
+      },
+      "health": {
+        "GREEN": "Zgodnie z planem",
+        "AMBER": "Zagrożona",
+        "AT_RISK": "Zagrożona",
+        "RED": "Krytyczna",
+        "CRITICAL": "Krytyczna"
+      },
+      "gantt": {
+        "baseline": "Baza odniesienia",
+        "currentPlan": "Plan bieżący",
+        "forecast": "Prognoza",
+        "actual": "Wykonanie",
+        "trackAria": "Oś czasu „{{track}}” dla: {{name}}"
       }
     },
     "review": {
@@ -15029,12 +15115,99 @@
       },
       "ai": {
         "suggest": "AI — jak tym zarządzić?",
-        "analyzing": "AI analizuje Twoje dane…"
+        "analyzing": "AI analizuje Twoje dane…",
+        "stepOwner": "Właściciel",
+        "stepTimeframe": "Horyzont czasowy",
+        "stepOutcome": "Rezultat",
+        "confidence": "Pewność AI",
+        "expectedOutcome": "Oczekiwany rezultat",
+        "cost": "Koszt",
+        "suggestedOwner": "Proponowany właściciel",
+        "defer": "Odłóż",
+        "approve": "Zatwierdź",
+        "diagnosis": "Diagnoza",
+        "recommendation": "Rekomendacja",
+        "actionSteps": "Kroki działania",
+        "reasoning": "Uzasadnienie",
+        "alternativeApproach": "Podejście alternatywne",
+        "executiveSummary": "Podsumowanie zarządcze",
+        "topPriority": "Najwyższy priorytet",
+        "itemsCount": "{{count}} pozycji",
+        "summary": "Podsumowanie",
+        "noActionContext": "Brak dodatkowego kontekstu działań dla tego toru.",
+        "confidenceShort": "Pewność",
+        "refreshed": "Odświeżono",
+        "suggestedActions": "Proponowane działania",
+        "apply": "Zastosuj",
+        "expectedImpact": "Oczekiwany wpływ",
+        "blastRadius": "Zasięg oddziaływania",
+        "timeline": "Harmonogram",
+        "executionFollowUp": "Działania następcze w realizacji",
+        "focusSummary": "Podsumowanie obszaru",
+        "focusFallback": "Ta przestrzeń robocza służy do zajęcia się najistotniejszym wycinkiem bieżących problemów realizacji.",
+        "focusList": "Lista obszaru",
+        "recommendedMoves": "Rekomendowane ruchy",
+        "analysisFailed": "Analiza przestrzeni roboczej nie powiodła się. Spróbuj ponownie."
       },
       "v8Degraded": "Kokpit menedżera wymaga V8",
       "noMatchingItems": "W tym obszarze nie ma teraz pasujących pozycji.",
       "triageLead": "Triaż AI — grupowanie i priorytetyzacja problemów",
-      "actionPlanLead": "Plan działania — ruchy operacyjne i kroki następcze"
+      "actionPlanLead": "Plan działania — ruchy operacyjne i kroki następcze",
+      "preview": {
+        "owner": "Właściciel",
+        "deadline": "Termin",
+        "daysOverdue": "{{count}} dni po terminie",
+        "inDays": "Za {{count}} dni",
+        "dueToday": "Termin dzisiaj",
+        "impact": "Wpływ",
+        "downstreamAffected": "{{count}} elementów zależnych dotkniętych"
+      },
+      "triage": "Triaż AI",
+      "actionPlan": "Plan działań",
+      "cockpitName": "Kokpit kierownika",
+      "severity": {
+        "critical": "Krytyczny",
+        "warning": "Ostrzeżenie",
+        "info": "Informacja"
+      },
+      "mode": {
+        "recommend": {
+          "title": "Rekomendacja AI",
+          "subtitle": "Wskazówki do jednego problemu wraz z praktycznymi krokami."
+        },
+        "triage": {
+          "title": "Triaż AI",
+          "subtitle": "Co wymaga uwagi w pierwszej kolejności i dlaczego."
+        },
+        "action-plan": {
+          "title": "Plan działań",
+          "subtitle": "Ruchy operacyjne, decyzje i działania następcze w realizacji."
+        },
+        "due-soon": {
+          "title": "Zbliżający się termin",
+          "subtitle": "Pozycje, które lada moment staną się czynnymi problemami realizacji."
+        },
+        "decision-pack": {
+          "title": "Pakiet decyzyjny",
+          "subtitle": "Przyspieszenie decyzji i zatwierdzeń, które blokują przepływ pracy."
+        },
+        "recovery-plan": {
+          "title": "Plan naprawczy",
+          "subtitle": "Odblokowanie wstrzymanych prac przez konkretne scenariusze odblokowania."
+        },
+        "watchlist": {
+          "title": "Lista obserwacyjna",
+          "subtitle": "Wczesne ostrzeżenia warte obserwacji, zanim staną się krytyczne."
+        },
+        "rebalance": {
+          "title": "Przebalansowanie",
+          "subtitle": "Zmniejszenie przeciążenia i przywrócenie wykonalnego rozkładu zadań."
+        },
+        "ownership-fix": {
+          "title": "Uzupełnienie odpowiedzialności",
+          "subtitle": "Domknięcie luk we właścicielstwie, sponsorze, datach i odpowiedzialności."
+        }
+      }
     },
     "managementTable": {
       "lane": "Tor",
@@ -15165,7 +15338,8 @@
         "add": "Dodaj korzyść",
         "empty": "Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).",
         "loadFailed": "Nie udało się wczytać rejestru korzyści",
-        "title": "Rejestr korzyści (handoff M14→M15)"
+        "title": "Rejestr korzyści (handoff M14→M15)",
+        "handoffBadge": "przekazanie M14"
       },
       "cutover": {
         "create": "Utwórz runbook cutover",
@@ -15185,7 +15359,9 @@
           "skipped": "pominięte",
           "failed": "nieudane"
         },
-        "stepCount": "{{count}} kroków"
+        "stepCount": "{{count}} kroków",
+        "title": "Runbook przełączenia i wycofania",
+        "rollbackBadge": "WYCOFANIE"
       },
       "permissionHint": "Sprawdź uprawnienia MANAGE_ROLLOUT.",
       "permissionHintShort": "Sprawdź uprawnienia.",
@@ -15401,6 +15577,22 @@
           "openCount": "Otwarte zakładki raportów",
           "export": "Eksport"
         }
+      },
+      "aria": {
+        "executionReports": "Raporty realizacji",
+        "reportDefinitions": "Definicje raportów",
+        "reportDefinitionWorkbench": "Warsztat definicji raportu",
+        "reportDefinitionID": "Identyfikator definicji raportu",
+        "reportDefinitionContractJSON": "Kontrakt JSON definicji raportu",
+        "reportDefinitionProjectIDs": "Identyfikatory projektów definicji raportu",
+        "allowGeneralBacklogScope": "Zezwól na zakres backlogu ogólnego",
+        "reportDefinitionPublishRationale": "Uzasadnienie publikacji definicji raportu",
+        "reportrunWorkbench": "Warsztat przebiegu raportu",
+        "reportrunPublishedDefinitionVersion": "Opublikowana wersja definicji przebiegu raportu",
+        "reportrunAudience": "Odbiorca przebiegu raportu",
+        "reportrunScopeRefs": "Odniesienia zakresu przebiegu raportu",
+        "reportApprovalRationale": "Uzasadnienie zatwierdzenia raportu",
+        "reportFollowUpExecutionCaseId": "Identyfikator realizacji działania następczego raportu"
       }
     },
     "tasks": {
@@ -16143,7 +16335,18 @@
       },
       "loadFailed": "Nie udało się załadować rejestru sterowania.",
       "loading": "Ładowanie rejestru decyzji i ryzyk…",
-      "title": "Decyzje i ryzyka"
+      "title": "Decyzje i ryzyka",
+      "aria": {
+        "interventionSignalWorkbench": "Warsztat sygnału interwencji",
+        "managementSignalKind": "Rodzaj sygnału zarządczego",
+        "interventionWorkbench": "Warsztat interwencji",
+        "interventionSelectedOption": "Wybrany wariant interwencji",
+        "interventionRationale": "Uzasadnienie interwencji",
+        "governedPlanResequence": "Przesekwencjonowanie planu nadzorowanego",
+        "governedComparison": "Porównanie nadzorowane",
+        "interventionVerificationOutcome": "Wynik weryfikacji interwencji",
+        "interventionVerificationEvidence": "Dowód weryfikacji interwencji"
+      }
     },
     "work": {
       "columns": {
@@ -16281,6 +16484,18 @@
       "delete": {
         "title": "Usuń zadanie",
         "message": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
+      },
+      "aria": {
+        "executionCaseForWork": "Realizacja dla pracy",
+        "executionWork": "Praca realizacji",
+        "executionWorkItemWorkspace": "Przestrzeń pozycji pracy realizacji",
+        "executionMilestones": "Kamienie milowe realizacji",
+        "executionWorkbench": "Warsztat realizacji"
+      },
+      "decision": {
+        "approved": "ZATWIERDZONE",
+        "conditionallyApproved": "ZATWIERDZONE WARUNKOWO",
+        "returned": "ZWRÓCONE"
       }
     },
     "resources": {
@@ -16404,7 +16619,17 @@
         "ended": "Zakończone"
       },
       "caseFallbackName": "Realizacja · {{short}}",
-      "caseNotRespondingSuffix": " — nie odpowiada"
+      "caseNotRespondingSuffix": " — nie odpowiada",
+      "aria": {
+        "executionCaseForResources": "Realizacja dla zasobów",
+        "executionResources": "Zasoby realizacji",
+        "operationalAllocationWorkspace": "Przestrzeń przydziału operacyjnego",
+        "operationalAllocationWorkbench": "Warsztat przydziału operacyjnego",
+        "operationalAllocationProposalJSON": "Propozycja przydziału operacyjnego (JSON)",
+        "allocationRationale": "Uzasadnienie przydziału",
+        "allocationConditions": "Warunki przydziału"
+      },
+      "evidenceMissing": "EVIDENCE_MISSING — aktywacja pozostaje zablokowana."
     },
     "governance": {
       "columns": {
@@ -16690,7 +16915,19 @@
       "pickResequenceOption": "Wybierz dokładną opcję zmiany kolejności"
     },
     "workload": {
-      "noAllocations": "Brak przydziałów w tym okresie"
+      "noAllocations": "Brak przydziałów w tym okresie",
+      "allocatedPct": "{{pct}}% obciążenia",
+      "close": "Zamknij",
+      "weekly": "Tygodniowo",
+      "monthly": "Miesięcznie",
+      "emptyTitle": "Nie znaleziono przydziałów zasobów",
+      "emptyHint": "Przypisz właścicieli do inicjatyw, aby zobaczyć obciążenie",
+      "teamMember": "Członek zespołu",
+      "teamAverage": "Średnia zespołu",
+      "load": "Obciążenie",
+      "low": "Niskie",
+      "medium": "Średnie",
+      "overallocated": "Przeciążony"
     },
     "list": {
       "deleteDisabledNote": "Usunąć można tylko inicjatywę w statusie „Szkic” lub „Odrzucona”. Tę inicjatywę trzeba najpierw anulować w cyklu życia."
@@ -16712,6 +16949,123 @@
       "axisSentenceUnknown": "{{axis}}: nie zmierzono — brak danych bazowych",
       "noSignal": "Osie ryzyka nie zostały policzone dla tego wiersza",
       "coverage": "{{measured}}/3"
+    },
+    "actionCards": {
+      "aria": "Karty działań realizacji"
+    },
+    "report": {
+      "spec": {
+        "scope": "Zakres",
+        "mandatorySections": "Sekcje obowiązkowe",
+        "expectedFollowUps": "Oczekiwane działania następcze",
+        "dataQuality": "Jakość danych"
+      },
+      "section": {
+        "dataSources": "Źródła danych",
+        "aiReadout": "Omówienie zarządcze AI",
+        "ragLogic": "Logika RAG / pewności",
+        "keyMetrics": "Kluczowe miary",
+        "sections": "Sekcje",
+        "followUps": "Działania następcze",
+        "qualityFlags": "Zastrzeżenia do jakości danych"
+      },
+      "noData": "Brak danych",
+      "noInsights": "Nie wygenerowano wniosków.",
+      "dataQualityPosture": "Stan jakości danych",
+      "freshness": "Aktualność",
+      "confidence": "Pewność",
+      "missingBaseline": "Brak bazy odniesienia",
+      "missingEstimate": "Brak szacunku",
+      "issue": {
+        "blocked": "Zablokowane",
+        "missingDates": "Brak dat",
+        "overdueTasks": "Zadania po terminie",
+        "decisionDebt": "Dług decyzyjny",
+        "onTrack": "Zgodnie z planem"
+      },
+      "portfolio": "Portfel",
+      "meta": {
+        "status": "Status",
+        "audience": "Odbiorca",
+        "cadence": "Częstotliwość",
+        "scope": "Zakres"
+      },
+      "header": {
+        "metric": "Miara",
+        "value": "Wartość",
+        "action": "Działanie",
+        "actual": "Wykonanie",
+        "ageSeverity": "Wiek / waga",
+        "age": "Wiek",
+        "allocated": "Przydzielone",
+        "blocked": "Zablokowane",
+        "bucket": "Przedział",
+        "capacity": "Dostępność",
+        "category": "Kategoria",
+        "conf": "Pewn.",
+        "count": "Liczba",
+        "decisionAlert": "Decyzja / alert",
+        "decisionDebt": "Dług decyzyjny",
+        "decision": "Decyzja",
+        "decisionsOverdue": "Decyzje po terminie",
+        "decisions": "Decyzje",
+        "delaySignals": "Sygnały opóźnień",
+        "drift": "Odchylenie",
+        "dueLte4w": "Termin ≤ 4 tyg.",
+        "due": "Termin",
+        "examples": "Przykłady",
+        "free": "Wolne",
+        "gap": "Luka",
+        "health": "Kondycja",
+        "highRisks": "Ryzyka wysokie",
+        "initiativePerson": "Inicjatywa / osoba",
+        "initiative": "Inicjatywa",
+        "issue": "Problem",
+        "mainIssue": "Główny problem",
+        "milestone": "Kamień milowy",
+        "nextMilestone": "Następny kamień milowy",
+        "openTasks": "Zadania otwarte",
+        "overdueTasks": "Zadania po terminie",
+        "overdue": "Po terminie",
+        "overload": "Przeciążenie",
+        "owner": "Właściciel",
+        "pendingDecisions": "Decyzje oczekujące",
+        "pending": "Oczekujące",
+        "person": "Osoba",
+        "planned": "Plan",
+        "priority": "Priorytet",
+        "progress": "Postęp",
+        "reason": "Powód",
+        "severity": "Waga",
+        "signal": "Sygnał",
+        "status": "Status",
+        "target": "Cel",
+        "taskMilestone": "Zadanie / kamień milowy",
+        "task": "Zadanie",
+        "tasksDueSoon": "Zadania z bliskim terminem",
+        "tasksOverdue": "Zadania po terminie",
+        "tasksWarnOpen": "Zadania ⚠/otwarte",
+        "tasks": "Zadania",
+        "type": "Typ",
+        "variance": "Odchylenie",
+        "warnings": "Ostrzeżenia",
+        "week": "Tydzień",
+        "whyNow": "Dlaczego teraz"
+      }
+    },
+    "navigation": {
+      "summaryDisabled": {
+        "title": "Pulpit niedostępny",
+        "body": "Pulpit jest wyłączony w tym środowisku. Raporty pozostają dostępne."
+      },
+      "unknown": {
+        "title": "Cel nawigacji niedostępny",
+        "body": "Ten zapisany widok jest niedostępny. Pokazano bank realizacji."
+      },
+      "unsupported": {
+        "title": "Typ pozycji niedostępny",
+        "body": "Tego typu pozycji nie da się otworzyć w Realizacji."
+      }
     }
   },
   "benefits": {
@@ -52114,7 +52468,9 @@
         "definition": "Definicja nadzorowana",
         "approver": "Zatwierdzający"
       },
-      "errors": { "required": "Uzupełnij tytuł, adresatów, szablon, definicję i zatwierdzającego." }
+      "errors": {
+        "required": "Uzupełnij tytuł, adresatów, szablon, definicję i zatwierdzającego."
+      }
     },
     "definitionsHeading": "Szablony raportów",
     "definitionsHelp": "Cztery szablony — po jednym na poziom raportowania — generują raport. Użyj menu wiersza („Wygeneruj raport\"), żeby zbudować migawkę; pozostałe są widoczne i wchodzą w Fali 2.",

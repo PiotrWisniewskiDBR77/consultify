@@ -59,6 +59,34 @@ export interface ReportI18nShape {
   purposeAppendix: string;
   axisSummaryCaption: string;
 
+  /**
+   * [ODMROZENIE 04_ASSESSMENT DEC-510] G1 / S1.4 — PODPIS POD MATRYCĄ.
+   *
+   * To JEDYNE zdanie prozy `assessmentNarrativeComposer.ts`, które trafia do
+   * dokumentu ZAWSZE, niezależnie od tego, czy ocena ma policzalne luki
+   * (pozostałe sekcje narracyjne zwracają wtedy `null` i renderer drukuje
+   * placeholder ze słownika). Dlatego — i tylko dlatego — ten jeden podpis
+   * dostaje wariant EN tutaj, a nie razem z resztą narracji (patrz nagłówek
+   * pliku: proza silnika to osobna, większa decyzja produktowa).
+   *
+   * Pomiar S1.4 na żywym raporcie Northwind: 92 polskie diakrytyki w DOCX,
+   * z tego 91 = 7 × ten podpis, 1 = okładkowe „340 osób”.
+   *
+   * Wariant `pl` jest kopią 1:1 poprzedniego literału z kompozytora —
+   * polski raport nie zmienia ani jednego znaku.
+   */
+  matrixCaptionSentence: (params: {
+    totalAreas: number;
+    axisId: number;
+    maxLevel: number;
+    sourceKind: 'method-core' | 'legacy';
+    frozenDate: string;
+  }) => string;
+
+  /** Okładkowe „Zatrudnienie”: 340 osób / 340 employees. Liczebnik polski ma
+   * własną odmianę (1 osoba / 2 osoby / 5 osób), angielski tylko l.mn. */
+  coverEmploymentValue: (count: number) => string;
+
   radarTitle: string;
   radarSeriesCurrent: string;
   radarSeriesTarget: string;
@@ -221,6 +249,16 @@ const pl: ReportI18nShape = {
   purposeSynthesis: 'SYNTEZA',
   purposeAppendix: 'ZAŁĄCZNIK',
   axisSummaryCaption: 'Zestawienie siedmiu osi DRD.',
+  matrixCaptionSentence: ({ totalAreas, axisId, maxLevel, sourceKind, frozenDate }) =>
+    `Tabela obejmuje ${totalAreas} obszarów osi ${axisId}. Kolumny poziomów pokazują skalę od 1 do ${maxLevel}; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem są dane ${sourceKind === 'legacy' ? 'zapisanej oceny' : 'zamrożonego Outputu'} z dnia ${frozenDate}.`,
+  coverEmploymentValue: (count) => {
+    const abs = Math.abs(Math.trunc(count));
+    if (abs === 1) return '1 osoba';
+    const mod10 = abs % 10;
+    const mod100 = abs % 100;
+    const plural = mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14) ? 'osoby' : 'osób';
+    return `${abs} ${plural}`;
+  },
 
   radarTitle: 'Profil dojrzałości DRD',
   radarSeriesCurrent: 'Poziom obecny · stan oceny',
@@ -389,6 +427,12 @@ const en: ReportI18nShape = {
   purposeSynthesis: 'SYNTHESIS',
   purposeAppendix: 'APPENDIX',
   axisSummaryCaption: 'Summary of the seven DRD axes.',
+  matrixCaptionSentence: ({ totalAreas, axisId, maxLevel, sourceKind, frozenDate }) =>
+    `The table covers ${totalAreas} areas of axis ${axisId}. The level columns show the scale from 1 to ${maxLevel}; Gap is the difference between the target level and the current level, and Priority follows from the size of the gap. The data comes from the ${sourceKind === 'legacy' ? 'recorded assessment' : 'frozen methodology core output'} of ${frozenDate}.`,
+  coverEmploymentValue: (count) => {
+    const abs = Math.abs(Math.trunc(count));
+    return abs === 1 ? '1 employee' : `${abs} employees`;
+  },
 
   radarTitle: 'DRD Maturity Profile',
   radarSeriesCurrent: 'Current level · assessment state',

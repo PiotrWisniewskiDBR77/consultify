@@ -485,7 +485,28 @@ async function route(
       revisionOfSessionId: null,
     };
     sessions.set(id, session);
-    eventsBySession.set(id, []);
+    eventsBySession.set(
+      id,
+      pendingConfirmedLevels.flatMap(({ unitId, levels }) =>
+        levels.map((level) => ({
+          id: genId('evt'),
+          type: 'ANSWER_CONFIRMED',
+          organizationId: session.organizationId,
+          sessionId: id,
+          unitId,
+          level,
+          actorKind: 'human',
+          actorUserId: USER_ID,
+          methodPackVersion: session.methodPackVersion,
+          occurredAt: nowIso(),
+          payload: {
+            questionId: `${unitId}-L${level}-Q1`,
+            answerState: 'confirmed',
+            text: 'Odpowiedź potwierdzona (zasiew harnessu).',
+          },
+        }))
+      )
+    );
     return record(json({ session, idempotentReplay: false, demoBypassActive: !!body.demoBypass }));
   }
 
@@ -833,12 +854,22 @@ async function route(
 
 let installed = false;
 let forceNextCreateError = false;
+const pendingConfirmedLevels: Array<{ unitId: string; levels: number[] }> = [];
 
 /** TEST/HARNESS ONLY — makes the NEXT `POST /sessions` fail with a 500, so
  * `?state=error` can show `DrdHttpMethodWorkspaceScreen`'s real bootError
  * path (`ErrorRetryView`) instead of a state the component fakes itself. */
 export function forceNextSessionCreateError(): void {
   forceNextCreateError = true;
+}
+
+/** TEST/HARNESS ONLY — poziomy POTWIERDZONE zaszczepione w chwili tworzenia
+ * sesji, zanim komponent cokolwiek zapisze. Jedyna droga, żeby pokazać
+ * jednostkę odpowiedzianą w 100 % (P-P21): `seedTo` komponentu potwierdza
+ * najwyżej dwa pierwsze poziomy. Kształt zdarzenia jest DOKŁADNIE taki, jaki
+ * zwraca `POST /events` — czyta go ten sam `confirmedLevelsFor`. */
+export function seedConfirmedLevels(unitId: string, levels: readonly number[]): void {
+  pendingConfirmedLevels.push({ unitId, levels: [...levels] });
 }
 
 export function installMethodCoreFakeServer(): void {
@@ -897,4 +928,5 @@ export function resetMethodCoreFakeServer(): void {
   presentationSnapshots.clear();
   initiativeDrafts.clear();
   lineageBySession.clear();
+  pendingConfirmedLevels.length = 0;
 }

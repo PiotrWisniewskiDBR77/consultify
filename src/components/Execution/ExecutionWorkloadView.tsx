@@ -273,7 +273,12 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{person.userName}</h3>
             <p className="text-sm text-slate-600">
-              {periodLabel} — <span className={textColor}>{totalPercentage}% allocated</span>
+              {periodLabel} —{' '}
+              <span className={textColor}>
+                {t('execution.workload.allocatedPct', '{{pct}}% allocated', {
+                  pct: totalPercentage,
+                })}
+              </span>
             </p>
           </div>
         </div>
@@ -320,7 +325,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
           onClick={onClose}
           className="w-full mt-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         >
-          Close
+          {t('execution.workload.close', 'Close')}
         </button>
       </div>
     </div>
@@ -526,7 +531,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 }`}
               >
                 <LayoutGrid size={12} />
-                Weekly
+                {t('execution.workload.weekly', 'Weekly')}
               </button>
               <button
                 onClick={() => setViewMode('monthly')}
@@ -537,7 +542,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 }`}
               >
                 <CalendarDays size={12} />
-                Monthly
+                {t('execution.workload.monthly', 'Monthly')}
               </button>
             </div>
 
@@ -583,9 +588,14 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
             <div className="text-center">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No resource allocations found</p>
+              <p className="text-sm">
+                {t('execution.workload.emptyTitle', 'No resource allocations found')}
+              </p>
               <p className="text-xs text-slate-500 mt-1">
-                Assign owners to initiatives to see workload
+                {t(
+                  'execution.workload.emptyHint',
+                  'Assign owners to initiatives to see workload'
+                )}
               </p>
             </div>
           </div>
@@ -595,7 +605,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             <div className="sticky top-0 z-10 flex bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
               <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
                 <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Team Member
+                  {t('execution.workload.teamMember', 'Team Member')}
                 </span>
               </div>
               {periods.map((period) => (
@@ -668,7 +678,9 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             {/* Totals Row */}
             <div className="flex bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700">
               <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
-                <span className="text-sm font-semibold text-slate-600">Team Average</span>
+                <span className="text-sm font-semibold text-slate-600">
+                  {t('execution.workload.teamAverage', 'Team Average')}
+                </span>
               </div>
               {periods.map((period) => {
                 const avgAllocation = periodTotals.get(period.key) || 0;
@@ -691,7 +703,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
       {/* D5.2: Enhanced Legend with heatmap scale */}
       <div className="shrink-0 px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         <div className="flex items-center gap-4 text-xs flex-wrap">
-          <span className="text-slate-600 font-medium">Load:</span>
+          <span className="text-slate-600 font-medium">{t('execution.workload.load', 'Load')}:</span>
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-0.5">
               {[
@@ -714,15 +726,21 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-3 rounded-sm bg-emerald-500/35" />
-              <span className="text-slate-500 dark:text-slate-400">Low</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('execution.workload.low', 'Low')}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-3 rounded-sm bg-amber-500/45" />
-              <span className="text-slate-500 dark:text-slate-400">Medium</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('execution.workload.medium', 'Medium')}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-3 rounded-sm bg-danger-500/50" />
-              <span className="text-slate-500 dark:text-slate-400">Overallocated</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('execution.workload.overallocated', 'Overallocated')}
+              </span>
             </div>
           </div>
           {maxAllocation > 100 && (

@@ -3188,7 +3188,7 @@ export const ExecutionControlSurface = ({
       */}
       {showInterventionForm && (
         <section
-          aria-label="Intervention Signal Workbench"
+          aria-label={t('execution.control.aria.interventionSignalWorkbench', 'Intervention Signal Workbench')}
           className="mt-4 flex min-h-0 flex-1 flex-col"
         >
           <h3 className="font-semibold">
@@ -3206,7 +3206,7 @@ export const ExecutionControlSurface = ({
                 <label className="text-xs">
                   {t('execution.signals.kindLabel', 'Signal kind')}
                   <select
-                    aria-label="Management signal kind"
+                    aria-label={t('execution.control.aria.managementSignalKind', 'Management signal kind')}
                     value={signalForm.kind}
                     onChange={(event) => {
                       const kind = event.target.value;
@@ -3578,7 +3578,7 @@ export const ExecutionControlSurface = ({
       )}
       {interventionComposerOpen && (
         <section
-          aria-label="Intervention Workbench"
+          aria-label={t('execution.control.aria.interventionWorkbench', 'Intervention Workbench')}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="flex items-center justify-between gap-3">
@@ -3684,12 +3684,12 @@ export const ExecutionControlSurface = ({
                   {t('execution.intervention.requestDecision', 'Request a decision')}
                 </button>
                 <input
-                  aria-label="Intervention selected option"
+                  aria-label={t('execution.control.aria.interventionSelectedOption', 'Intervention selected option')}
                   value={selectedOption}
                   onChange={(e) => setSelectedOption(e.target.value)}
                 />
                 <textarea
-                  aria-label="Intervention rationale"
+                  aria-label={t('execution.control.aria.interventionRationale', 'Intervention rationale')}
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                 />
@@ -3741,7 +3741,7 @@ export const ExecutionControlSurface = ({
             </div>
             {governedPlanOpen && (
               <section
-                aria-label="Governed Plan resequence"
+                aria-label={t('execution.control.aria.governedPlanResequence', 'Governed Plan resequence')}
                 className="mt-3 rounded border border-c-border p-3"
               >
                 <h4 className="font-medium">
@@ -3756,7 +3756,7 @@ export const ExecutionControlSurface = ({
                 <label className="block text-xs">
                   {t('execution.plan.selectedComparison', 'Selected capacity comparison')}
                   <select
-                    aria-label="Governed comparison"
+                    aria-label={t('execution.control.aria.governedComparison', 'Governed comparison')}
                     value={governed.comparisonId}
                     onChange={(e) =>
                       setGoverned((v) => ({
@@ -3826,7 +3826,7 @@ export const ExecutionControlSurface = ({
             </h4>
             <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[220px_1fr_auto]">
               <select
-                aria-label="Intervention verification outcome"
+                aria-label={t('execution.control.aria.interventionVerificationOutcome', 'Intervention verification outcome')}
                 value={verifyOutcome}
                 onChange={(e) => setVerifyOutcome(e.target.value)}
                 className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -3838,7 +3838,7 @@ export const ExecutionControlSurface = ({
                 ))}
               </select>
               <textarea
-                aria-label="Intervention verification evidence"
+                aria-label={t('execution.control.aria.interventionVerificationEvidence', 'Intervention verification evidence')}
                 value={verificationEvidence}
                 onChange={(e) => setVerificationEvidence(e.target.value)}
                 className="min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
