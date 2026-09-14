@@ -91,6 +91,17 @@ gałęzi już scalonych do rc2 (dysk pełny). (4) Codex dostaje duże zadania fa
 Znaczniki odmrożenia muszą wskazywać moduł z `docs/program/MVP_FINAL_ZAMROZONE.json` — Finanse nie są
 tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
+## 14.09.2026
+
+**DEC-495 (CTO na mandacie, 14.09) — Wizja Inicjatyw 4 przyciski, doprecyzowanie właściciela 14.09.**
+Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_20260914.md`.
+(a) Potwierdza DEC-492/493 i SPEC_FALA2: Menu 2 = Inicjatywy / Plan / Obciążenie / Raport z pracy; Menu 3 Inicjatyw = Lista + Analiza. Stan kodu: realnie budowany tylko przycisk 1 (Analiza portfela, F2-1 `cc1c23b139`); Plan/Obciążenie reużywają `PlanScenarioSurface`/`CapacityScenarioSurface`; Raport z pracy = atrapa (`report={true}` na `InitiativePreparationReadView`).
+(b) Wchodzi do F2-1 jako kolejne etapy, w tej kolejności: **E2** = Raport z pracy prawdziwy (kreator: tytuł, adresaci, na żądanie/okresowo, 5 szablonów; PDF + wysyłka mailem na silniku `reportDefinition`/`reportRun` — dziś tylko JSON); **E3** = parking odrzuconych z powodem + ponowne proponowanie gdy przeszkoda ustąpi, karty N zawsze-widoczne vs dodawane, wycena kart + zatwierdzenie uprawnionego, filtr Arch/actual jako przełącznik; **E4** = heat mapa Obciążenia w Inicjatywach per osoba/tydzień, progi identyczne z Realizacją (<85 zielony / 85–100 bursztyn / >100 czerwony, wzór `ExecutionWorkloadView.tsx:704`).
+(c) Zależne od F2-3 PMO (nie w F2-1): filtr projektami, „kto zalega” per projekt, deklaracja dostępności tygodniowej per osoba; analiza finansowa obciążenia — po Finansach.
+(d) Kryteria analizy portfela: 5 właściciela obowiązkowe (pokrycie obszaru, nakładanie się, priorytety, duplikaty vs realizowane, historia doświadczeń); Codex może rozszerzać własną wiedzą consultingową bez osobnego akceptu per kryterium.
+(e) Doprecyzowanie DEC-486: zakaz zmiany biegnących przydziałów dotyczy WYŁĄCZNIE ekranu Obciążenia; Realizacja zmienia przydziały.
+(f) Każdy etap wchodzi za flagą OFF i po akcepcie właściciela na zrzucie (DEC-492 bez zmian).
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
