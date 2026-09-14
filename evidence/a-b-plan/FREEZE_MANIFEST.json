@@ -42,14 +42,56 @@
       "result": "PASS"
     },
     "holdRepairFocused": {
-      "files": 5,
-      "tests": 18,
-      "result": "PASS",
-      "red": "inactive conditional flattened into dependencySnapshot",
+      "nonDb": {
+        "files": 4,
+        "tests": 14,
+        "result": "PASS",
+        "inventory": [
+          {
+            "path": "src/components/Initiatives/__tests__/planDependencyReview.test.ts",
+            "tests": 3
+          },
+          {
+            "path": "src/components/Initiatives/__tests__/PlanDependencyAnalysisPanel.test.tsx",
+            "tests": 1
+          },
+          {
+            "path": "src/components/Initiatives/__tests__/PlanScenarioSurface.aiReviewFlow.test.tsx",
+            "tests": 1
+          },
+          {
+            "path": "server/src/domain/initiatives-execution/__tests__/planSolver.test.ts",
+            "tests": 9
+          }
+        ]
+      },
+      "realPg": {
+        "files": 1,
+        "tests": 1,
+        "result": "PASS",
+        "inventory": [
+          {
+            "path": "server/src/domain/initiatives-execution/__tests__/planDependencyAnalysis.realpg.test.ts",
+            "tests": 1
+          }
+        ]
+      },
+      "total": {
+        "files": 5,
+        "tests": 15,
+        "result": "PASS"
+      },
+      "redArtifact": {
+        "exactParent": "8a2a58930effe2002ee30b1bc0cebc2c1908ff51",
+        "path": "evidence/a-b-plan/conditional-dependency-red.log",
+        "command": "npx --no-install vitest run src/components/Initiatives/__tests__/conditionalDependency.red-proof.test.ts --retry=0",
+        "exitCode": 1,
+        "result": "EXPECTED_RED",
+        "failure": "inactive CONDITIONAL produced hard dependencySnapshot edge A; expected no hard edge"
+      },
       "green": "inactive retained without hard edge; active enforced by solver"
     }
   },
-  "evidenceBytes": 847179,
   "screenshots": [
     {
       "path": "evidence/a-b-plan/en-dark-empty.jpg",
@@ -113,5 +155,85 @@
     }
   ],
   "reviewStatus": "FROZEN_AWAITING_INDEPENDENT_REVIEW",
-  "holdRepair": "ABSOLUTE stays hard; CONDITIONAL retains condition and active state; solver uses only active conditional edges"
+  "holdRepair": "ABSOLUTE stays hard; CONDITIONAL retains condition and active state; solver uses only active conditional edges",
+  "artifactInventory": [
+    {
+      "path": "evidence/a-b-plan/conditional-dependency-green.log",
+      "bytes": 3951,
+      "sha256": "988c72321f0ec554e20bf673b83b35e031ef740ab601b89521dbd8181a7118a8"
+    },
+    {
+      "path": "evidence/a-b-plan/conditional-dependency-realpg-green.log",
+      "bytes": 2458,
+      "sha256": "44af21b434a8b0a78903295a7a79a682a8fcff48ee58fb709c92dbaf94af5824"
+    },
+    {
+      "path": "evidence/a-b-plan/conditional-dependency-red.log",
+      "bytes": 2422,
+      "sha256": "46d602789ab7f2cd7fe2fc62e58c1581280a337532d8043d15a4ef4dd4cd2187"
+    },
+    {
+      "path": "evidence/a-b-plan/en-dark-empty.jpg",
+      "bytes": 30142,
+      "sha256": "14e458faa2c52af2e1a57028c18f47826fc611cf2308189bcde44f85372c1c3c"
+    },
+    {
+      "path": "evidence/a-b-plan/en-dark-full.jpg",
+      "bytes": 86691,
+      "sha256": "51c51726b08ffd691569ea80df3f8781008ed5bb2999a25f5f9b3a0533d4766d"
+    },
+    {
+      "path": "evidence/a-b-plan/en-dark-timeline.jpg",
+      "bytes": 86125,
+      "sha256": "5cb2a86d90460b1b29de4188b5554fd19531d448444275415237e0d96e1889a2"
+    },
+    {
+      "path": "evidence/a-b-plan/en-light-empty.jpg",
+      "bytes": 31472,
+      "sha256": "d8c77121209e8807f7b0cde325e7199eb9f32dc4bacefb81090228e27d3153ce"
+    },
+    {
+      "path": "evidence/a-b-plan/en-light-full.jpg",
+      "bytes": 88167,
+      "sha256": "af65e32ee1865e135064c44bb43969bbed290389729182b8a5973f74adbdaa74"
+    },
+    {
+      "path": "evidence/a-b-plan/en-light-timeline.jpg",
+      "bytes": 91184,
+      "sha256": "e1ff28fa08a082190e3dbc8fd15639ddc835e9690aac99068119fb19c1abb7dc"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-dark-empty.jpg",
+      "bytes": 31794,
+      "sha256": "0760c32f6fddfec8c892ed42d159fdd90cb80d034951c2ddf203022ed36c39c1"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-dark-full.jpg",
+      "bytes": 91401,
+      "sha256": "2ffcfd54c21970aff72f715aceae97040e8952baa00b4d40114f6292d2d6864d"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-dark-timeline.jpg",
+      "bytes": 89843,
+      "sha256": "248ba8c270400035a40a0c24f31b602e131b769e8fdfdcc7c65ee82f24e48450"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-light-empty.jpg",
+      "bytes": 33161,
+      "sha256": "89b55b716d005834c971def4701819911c3755f59307e4b9293c7436be321ee2"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-light-full.jpg",
+      "bytes": 92418,
+      "sha256": "4b3a376950187e0912bc1afedba004c2164058f0816721f83744f4b39bc5e9b2"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-light-timeline.jpg",
+      "bytes": 94781,
+      "sha256": "c05241fe8255943e9a39bbad5b53ef40b5936329b21ca7f7df3351b4618e54d3"
+    }
+  ],
+  "artifactBytesExcludingManifestAndChecksum": 856010,
+  "artifactFilesExcludingManifestAndChecksum": 15,
+  "screenshotBytes": 847179
 }
