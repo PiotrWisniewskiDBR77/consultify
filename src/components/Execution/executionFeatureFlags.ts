@@ -23,6 +23,11 @@ import { type DemoAcceptanceProfileSource } from '@/utils/demoAcceptanceProfile'
 type FlagKeys = { query: string; localStorage: string; env: string };
 
 const FLAGS = {
+  fourButtons: {
+    query: 'ff_executionFourButtons',
+    localStorage: 'ff.exec_four_buttons',
+    env: 'VITE_EXECUTION_FOUR_BUTTONS',
+  },
   ganttBaseline: {
     query: 'ff_ganttBaseline',
     localStorage: 'ff.exec_gantt_baseline',
@@ -76,6 +81,11 @@ const FLAGS = {
     localStorage: 'ff.exec_handoff_trace',
     env: 'VITE_EXEC_HANDOFF_TRACE',
   },
+  workAnalysis: {
+    query: 'ff_executionWorkAnalysis',
+    localStorage: 'ff.exec_work_analysis',
+    env: 'VITE_EXECUTION_WORK_ANALYSIS',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -108,7 +118,7 @@ function readLocalStorage(key: string): boolean | null {
 
 function readEnv(key: string): boolean {
   try {
-    const env = (import.meta.env as unknown as Record<string, string>);
+    const env = import.meta.env as unknown as Record<string, string>;
     return parseFlag(env?.[key]) === true;
   } catch {
     return false;
@@ -152,9 +162,11 @@ export function isExecutionFlagEnabled(
   // jest PO odczycie query/localStorage/env, więc `?ff_execRiskSignal=1`
   // (i zrzut odbiorowy) dalej działa; wyłączony jest tylko DOMYŚLNY stan.
   if (
+    flag === 'fourButtons' ||
     flag === 'execReportsIntelligence' ||
     flag === 'execRiskSignal' ||
-    flag === 'execHandoffTrace'
+    flag === 'execHandoffTrace' ||
+    flag === 'workAnalysis'
   )
     return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/

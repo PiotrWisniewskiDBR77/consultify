@@ -15366,6 +15366,31 @@
       "noExecutionCase": "No execution case yet",
       "noExecutionCaseHint": "In execution, but not handed over yet — no execution case to report against.",
       "lifecycleUnknownHint": "Linked initiative record is not available",
+      "filters": {
+        "projectAria": "Bank project filter",
+        "statusAria": "Bank status filter",
+        "ownerAria": "Bank owner filter",
+        "priorityAria": "Bank priority filter",
+        "timeAria": "Bank time filter",
+        "allProjects": "All projects",
+        "noProject": "No project",
+        "projectNameUnavailable": "Project name unavailable",
+        "allStatuses": "All statuses",
+        "allOwners": "All owners",
+        "noOwner": "No owner",
+        "ownerNameUnavailable": "Owner name unavailable",
+        "allPriorities": "All priorities",
+        "anyTime": "Any time",
+        "pastDue": "Past due",
+        "next30": "Next 30 days",
+        "next90": "Next 90 days",
+        "priority": {
+          "critical": "Critical",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        }
+      },
       "preview": {
         "reportingDate": "Reporting date",
         "updatedAt": "Updated {{date}}",
@@ -15374,6 +15399,7 @@
         "fact": {
           "case": "Execution case",
           "caseMissing": "Not linked yet",
+          "caseVersionMissing": "Linked · version not reported",
           "owner": "Owner",
           "phase": "Execution phase",
           "progress": "Progress",
@@ -16683,6 +16709,74 @@
       "loading": "Loading prediction…",
       "empty": "No high-risk initiatives — everything on track.",
       "suggestedActions": "Suggested actions"
+    },
+    "workAnalysis": {
+      "label": "Weekly management analysis",
+      "title": "Work across three time windows",
+      "weekOf": "Week of",
+      "completed": "Completed",
+      "attention": "Requires management attention",
+      "generate": "Generate for this week",
+      "generateFailed": "The analysis could not be generated.",
+      "savedReceipt": "Saved report {{id}} · {{state}}",
+      "savedNew": "created",
+      "savedExisting": "already generated",
+      "noAttention": "No records require management attention",
+      "actionDone": "Management action completed.",
+      "actionFailed": "Management action failed.",
+      "actions": {
+        "escalate": "Escalate",
+        "delegate": "Delegate",
+        "resources": "Change resources",
+        "running": "Working…"
+      },
+      "reasons": {
+        "blocked": "Blocked",
+        "overdue": "Overdue",
+        "unassigned": "Unassigned",
+        "no_due_date": "No due date"
+      },
+      "status": {
+        "open": "Open",
+        "todo": "To do",
+        "in_progress": "In progress",
+        "in_execution": "In execution",
+        "pending": "Pending",
+        "blocked": "Blocked",
+        "done": "Done",
+        "completed": "Completed",
+        "decided": "Decided",
+        "approved": "Approved",
+        "unknown": "Unknown"
+      },
+      "priority": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low",
+        "unset": "Not set"
+      },
+      "preview": {
+        "openDisabled": "Use the source record action to open this work item.",
+        "details": "Work details",
+        "noDefinition": "No definition of done has been recorded.",
+        "noDueDate": "No due date",
+        "noProject": "No project assigned",
+        "noOwner": "No owner assigned",
+        "openSource": "Open source record"
+      },
+      "windows": {
+        "previousWeek": "Previous week",
+        "nextWeek": "Next week",
+        "nextMonth": "Next month"
+      },
+      "columns": {
+        "record": "Attention record",
+        "reason": "Reason",
+        "actions": "Manager actions",
+        "project": "Project",
+        "priority": "Priority"
+      }
     },
     "control": {
       "columns": {

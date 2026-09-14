@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "status": "FROZEN_AFTER_NULL_VERSION_P2_FIX_FOR_THIRD_INDEPENDENT_REVIEW_NO_COMMIT",
+  "baseSha": "c1e8fba7c219232177fe7aff21040de872858f64",
+  "headSha": "0c27c5e92a42c3c62d2f0014412f007c84636961",
+  "branch": "codex/realizacja-cztery-przyciski-20260913",
+  "preRebaseCheckpointSha": "901d35da7f411f1d5eb1a00da9d9ffb980cfd550",
+  "independentRereviewInputSha": "cb782447889f195d447119ddee0f6ef7be1a5aeb553ec82406aa7c09935cd805",
+  "generatedAt": "2026-09-13T20:39:30-05:00",
+  "fileCount": 63,
+  "files": [
+    {
+      "path": "dev-render/execution-risk-signal-e0-main.tsx",
+      "bytes": 470,
+      "sha256": "c90231b890e157b9ba6e5d4b003bb5c14ea1fecb269295070892af2766498bce"
+    },
+    {
+      "path": "dev-render/execution-risk-signal-e0.html",
+      "bytes": 352,
+      "sha256": "b849180aa0ed7da306ddf5f31b7942ace8d006478a440d24b77edf88a56eed76"
+    },
+    {
+      "path": "dev-render/main.tsx",
+      "bytes": 155571,
+      "sha256": "1094dbac5331f37b414f0f62e63f2a79f8f462bc874366ec27b7bf8b41b6da67"
+    },
+    {
+      "path": "dev-render/screens/execution-risk-signal-e0.tsx",
+      "bytes": 7145,
+      "sha256": "c6be0e12c801ee96f8b16b62579d008b804819b260ad70988a3fc668d5fb2b4a"
+    },
+    {
+      "path": "dev-render/vite.execution-risk-signal-e0.config.ts",
+      "bytes": 526,
+      "sha256": "86445b0887380695fe4fcd8ee92dd06c63f349b36691ca331577012fa9572458"
+    },
+    {
+      "path": "docs/program/FALA2/F2_2_E0_E1_AUDIT_20260913.md",
+      "bytes": 10634,
+      "sha256": "84bcdd4926f7a42276aa3c50b926f11a5d33ee098de25fbf644319c4a3243d6f"
+    },
+    {
+      "path": "docs/program/FALA2/F2_2_E0_E1_CHECKPOINT_20260913.md",
+      "bytes": 5837,
+      "sha256": "26897b3395047b45a065ac3dc99da44af80b7c0663bc8c263570ace93236f44d"
+    },
+    {
+      "path": "docs/ssot/SYGNALIZACJA_RYZYKA_REALIZACJI.md",
+      "bytes": 6016,
+      "sha256": "38e604e05598dc0343c68484cb14eb8af864f1ab6709d401a07494591a599ea2"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/audit/01-initial-red.log",
+      "bytes": 13444,
+      "sha256": "b605cc35e7c1fd6a3ba0dc9bababf4466d04a3ca16ad47e2a48ca4e4ebcf5820"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/audit/02-red-after-bank-slice.log",
+      "bytes": 6628,
+      "sha256": "6b1c4b121c85c847d4b487c223706ce4b5f056bc69b9a770509bc0e0e2f1b953"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/audit/coverage-29-initial.json",
+      "bytes": 2281,
+      "sha256": "d5674b372c1a76537c8c47bbb28cf3e569f41a8dfe0a78c72abdcc33f15d8905"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/01-focused-behavior.log",
+      "bytes": 98615,
+      "sha256": "41a8b949334499374b6e8b3910bbb65b6e25e689af7ef7367d7e22b5d7017fe7"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/02-focused-behavior-green.log",
+      "bytes": 5138,
+      "sha256": "2c991f5b5a8013f346be43961186a56eb0d69aefe3fba52fefd60e982717eec0"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/03-focused-behavior-green.log",
+      "bytes": 4257,
+      "sha256": "4f59ce2b1f3a813807cd315f982cbee345b5f6f320f9cc724c477955450a91db"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/04-controlled-red.log",
+      "bytes": 6627,
+      "sha256": "a39542d0ad0d81508da7b384363c529600974c874366f021b699363a113b322d"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/05-typecheck.log",
+      "bytes": 123504,
+      "sha256": "7d9b4e963ab4e4718d273d32714b832bce4261cabcb6cb4e88502fc58433e895"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/06-focused-flagged-green.log",
+      "bytes": 4257,
+      "sha256": "3654bb701b3bcbe6e038cfeba8f19a032927d78b62f563e63a04e8d687dee528"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/07-focused-final-green.log",
+      "bytes": 4437,
+      "sha256": "f2642c0e8ae98255a41fe7a40cb68c14c38ad7059f68d169d6cf4dd0df75bb1d"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/08-typecheck-final.log",
+      "bytes": 123504,
+      "sha256": "436d4d4e83dca75a58040ddac68f6c645bd3efea96cf4723a48adf734bdf36ef"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/09-focused-final-green.log",
+      "bytes": 4437,
+      "sha256": "5ea83e3d5e642c5b9e29a7ee5f1963b39e3bd5e277285a9c624189cff79c5bb4"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/10-independent-review-fixes-red.log",
+      "bytes": 35048,
+      "sha256": "8e10be507bc0ea4388f795bc667f5887707220683e0216d8c30b9d156ddfed6e"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/11-independent-review-fixes-green.log",
+      "bytes": 5798,
+      "sha256": "35a9b3e87d8250de8eb57849b2476fc29bf737e7418a308aaf52d885b8ec9225"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/12-controlled-red-after-review-fixes.log",
+      "bytes": 13044,
+      "sha256": "0beaaf2944db7715bad1e0b2062f271c5a61e2664c44bbf4d550c95d367e88f1"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/13-typecheck-after-review-fixes.log",
+      "bytes": 123504,
+      "sha256": "1c14255b7077ac4e5b6825cba514e8edfdb1f4b7c3f5684ea6236b947d364f61"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/14-rebase-list-canon.log",
+      "bytes": 325,
+      "sha256": "d4f6647a54207f27786b48a4003e63c6214706d23f734054df4573bf2b646403"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/15-rebase-focused.log",
+      "bytes": 117697,
+      "sha256": "977a2164567685975c61926195919dcba137029dd67eaaec8bb0e07c0b11938e"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/16-rebase-focused-green-attempt.log",
+      "bytes": 163910,
+      "sha256": "135dade84e2df1e580da8f2789e20095b45b45f78ab1810a051bfe9358d07afb"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/17-rebase-focused-green.log",
+      "bytes": 11028,
+      "sha256": "fb1ff390429344875f39da608d5161528b9a46dff73f550ba1df35944b1e5a70"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/18-rebase-focused-green.log",
+      "bytes": 30684,
+      "sha256": "428e60459dc775ef46a283cc1038cd06d0b373c863a9a4bce2ab5622689b184e"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/19-rebase-focused-green.log",
+      "bytes": 5798,
+      "sha256": "7c5c4ba9f86024863d0733213c15cff9389fc1636621c006a4e21a3d8d5956a5"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/20-rebase-controlled-red.log",
+      "bytes": 13044,
+      "sha256": "4c48d5fb2995b166294bb91d7816e6713059d9c6e7146d0c52596f424c944449"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/21-rebase-typecheck.log",
+      "bytes": 123504,
+      "sha256": "7443f5ed8167ac184a43976e67a3f4428dfbdfbbcfce31debc96db03c672db11"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/22-rebase-precommit-hook.log",
+      "bytes": 7672,
+      "sha256": "62efed0e0a1e5e61d0cf5f4941650344ed8126e6977173d6b8542630330c0da9"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/23-null-version-boundary-red.log",
+      "bytes": 34379,
+      "sha256": "596c49f1171dc4ace66bee358b3f26683a6ec4896f847743cef7ec484d8bc64b"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/24-null-version-focused-green.log",
+      "bytes": 7940,
+      "sha256": "5b26439465324ee32035382ac4d22df0240dd9c6db246e894c177d0fd5898a94"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/25-null-version-list-canon.log",
+      "bytes": 325,
+      "sha256": "d4f6647a54207f27786b48a4003e63c6214706d23f734054df4573bf2b646403"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/26-null-version-typecheck.log",
+      "bytes": 123504,
+      "sha256": "7443f5ed8167ac184a43976e67a3f4428dfbdfbbcfce31debc96db03c672db11"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/27-null-version-controlled-red.log",
+      "bytes": 13046,
+      "sha256": "f4a71bd55a2eaae77229e398372b1f273adc30ab92f847531733eaa343d9902e"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/INDEPENDENT_REREVIEW_POST_REBASE.md",
+      "bytes": 4509,
+      "sha256": "cb782447889f195d447119ddee0f6ef7be1a5aeb553ec82406aa7c09935cd805"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/INDEPENDENT_REVIEW.md",
+      "bytes": 5305,
+      "sha256": "a25bf7f6fa6a988abb2947ca255f3bfc1bbecb909ad58098574b47a6830a9ca4"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0-e1/coverage-29-checkpoint.json",
+      "bytes": 3853,
+      "sha256": "d4e7957867cf8313b0504430699a9277d9fa0818e55dcfa00c656232b4a0ab1c"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/01-dev-render-build.log",
+      "bytes": 1216,
+      "sha256": "c63fe42d8e3204f636e9bcbecef57897d82c6c4429619986b5af8aec6785d745"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/02-isolated-dev-render-build.log",
+      "bytes": 120672,
+      "sha256": "ed5aa9a1608a0e2e17e510858d4d686ce25c6b2f0e271b206e8d0d79a10a4f4f"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/03-browser-receipt.md",
+      "bytes": 1129,
+      "sha256": "e8dcb5baa56336b9e50b4e466001c911c2e233646c9c281b654af05b103433b9"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/build/assets/execution-risk-signal-e0-B5LPyjAD.js",
+      "bytes": 204231,
+      "sha256": "e6bc5a685b87e4b1ef258d36321c6ea8adce3b181ba151e1b291e9be4bcd904e"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/build/assets/execution-risk-signal-e0-l3RUld35.css",
+      "bytes": 715949,
+      "sha256": "1875dcf7e2f689a759d6ea15ad5e3eae88e05c9f6b5d7d7f6678787b160a7bcf"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/build/execution-risk-signal-e0.html",
+      "bytes": 467,
+      "sha256": "9c6f544e7d12acbb8c59aa3da0ae0ba847cd965eab92aac5a06c27ecbcc243dc"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/risk-signal-e0-dark-1440x900.png",
+      "bytes": 146554,
+      "sha256": "85a9713f2dd25d2fc73d997725807aa418f900f54f2da21af4898501b1234f40"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e0/risk-signal-e0-light-1440x900.png",
+      "bytes": 145325,
+      "sha256": "0de99e84b39f4e85013e0a19ff22ef6c9ad06cf1605e170edb7651b7f319ff43"
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "bytes": 2223738,
+      "sha256": "7ce83244ac1bc96d7e6895d7b18ba5c0517c1935d215de7facc9c649a2c072ef"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "bytes": 2376905,
+      "sha256": "c47a86bf189d676ee7f63336bf8dd13bdfb142d9c89c170547471f3e14e0752d"
+    },
+    {
+      "path": "src/components/Execution/ExecutionBankViews.tsx",
+      "bytes": 42145,
+      "sha256": "918cbe9e65368996d6a87890f9b00ea2d0f83ab9ee55611a24ad2849aecb369a"
+    },
+    {
+      "path": "src/components/Execution/ExecutionHub.tsx",
+      "bytes": 267052,
+      "sha256": "dc8ffa7bbfb5ef64be3a860fe6ffdb7e0a45e5b0767c68c53609110f473644b0"
+    },
+    {
+      "path": "src/components/Execution/__tests__/ExecutionHub.bankPreviewCanon.test.tsx",
+      "bytes": 15581,
+      "sha256": "a73d6482a83138788bebb004af4382eecdd064d47959a7847f5a4d7693223486"
+    },
+    {
+      "path": "src/components/Execution/__tests__/executionBankModel.test.ts",
+      "bytes": 10897,
+      "sha256": "f9cd6c4b46d29d1c268e2b8cbb74a13e85ea7ea830be0e811621f3213b493f33"
+    },
+    {
+      "path": "src/components/Execution/__tests__/f2-2-entry-contract.red.test.ts",
+      "bytes": 1714,
+      "sha256": "cab299ca14337f3a0b46c68924de1c6bd1cbfe89b35bb5845a1d2ed6760c923a"
+    },
+    {
+      "path": "src/components/Execution/executionBankModel.ts",
+      "bytes": 37728,
+      "sha256": "1ab1699c8ba9e06e2d5dba550381870a4e74280ac2bbbc09b8426aa3ce4f18af"
+    },
+    {
+      "path": "src/components/Execution/executionBankPreviewDeclaration.tsx",
+      "bytes": 12596,
+      "sha256": "fa509d1d802881dc8de5885c83b3a7b27b8c6901c2ed02d219bc717927d83eb1"
+    },
+    {
+      "path": "src/components/Execution/executionFeatureFlags.ts",
+      "bytes": 6202,
+      "sha256": "740cabd6fc49f660aa5f9d1c132802dfbd4177ced521e4afe24f6ca29b3495ef"
+    },
+    {
+      "path": "src/components/standard/StandardPreview.tsx",
+      "bytes": 21268,
+      "sha256": "9cf96178e7db2caa8884be7e5483d9fdf6bdfdb5fae1b692e46788a9e9708177"
+    },
+    {
+      "path": "tests/components/Execution/ExecutionBankViews.behavior.test.tsx",
+      "bytes": 7541,
+      "sha256": "1e0f9d250cda772b325e1f6f58708c2a5fe5877c2dcdd2f34d2ce342d423ef6b"
+    },
+    {
+      "path": "tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx",
+      "bytes": 20438,
+      "sha256": "6094c36a2abc85b6ede0ecd77e630b543c471bdf950ec86edb8845905c8a6987"
+    },
+    {
+      "path": "tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx",
+      "bytes": 16962,
+      "sha256": "2e116fd10d5768a06c9d1e0562b05b14f6ff251b1d7233b191575e72dd14a0fb"
+    }
+  ],
+  "rebase": {
+    "target": "c1e8fba7c2",
+    "conflicts": [
+      "dev-render/main.tsx",
+      "src/components/Execution/ExecutionBankViews.tsx",
+      "src/components/Execution/ExecutionHub.tsx"
+    ],
+    "canon": "dataType/primary + TableWithPreviewLayout + canonical StandardPreview relations handling"
+  },
+  "verification": {
+    "nullVersionBoundaryRed": "8/9 PASS; expected failure proves Linked · v— before fix",
+    "focusedBehavior": "32/32 PASS, 5/5 files, retry=0",
+    "controlledRed": "2/4 PASS; FULL_29_OF_29 and riskSignalLevels remain RED",
+    "typecheck": "189 inherited errors; <= CTO baseline 192; 0 hits in null-version fix files",
+    "listCanon": "PASS; 349 violations equals baseline 349",
+    "translationsJson": "PASS en+pl",
+    "migrationFilesChanged": 0,
+    "driftAtFreeze": 0
+  },
+  "openGates": [
+    "OWNER_E0_VARIANT_LETTER",
+    "RISK_SIGNAL_PRODUCTION_NOT_STARTED",
+    "SIXTH_RISK_FILTER_NOT_STARTED",
+    "ARTIFACT_8c073b0a_EVIDENCE_MISSING",
+    "THIRD_INDEPENDENT_REREVIEW_PENDING",
+    "FULL_29_OF_29_PENDING"
+  ]
+}

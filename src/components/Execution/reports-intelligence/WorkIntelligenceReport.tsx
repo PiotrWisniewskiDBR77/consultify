@@ -1,16 +1,39 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard/StandardTable';
+import { StandardPreview } from '@/components/standard/StandardPreview';
+import { initiativeStatusLabel } from '@/components/Initiatives/initiativeStatusLabels';
+import {
+  memberNameOrUnknown,
+  type MemberNameResolver,
+} from '@/hooks/useOrganizationMemberNames';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import {
   listExecutionCases,
   readExecutionMilestones,
   readExecutionWork,
 } from '@/services/initiatives-execution/runtimeApi';
+import {
+  V8ExecutionControlApi,
+  type V8ManagerProblemRow,
+} from '@/services/api/v8/execution-control';
+import { generateExecutionWorkAnalysis } from '@/services/executionReports/executionReportsApi';
 
 import { buildWorkReportModel, type WorkReportItem } from './workReportModel';
+import {
+  buildExecutionWorkAnalysis,
+  type ExecutionWorkAnalysis,
+  type ExecutionWorkAnalysisItem,
+  type WorkAnalysisWindow,
+} from './workAnalysisModel';
 
 interface Props {
+  analysisEnabled?: boolean;
+  resolveOwnerName?: MemberNameResolver;
   onOpenDocument?: (row: {
     id: string;
     title: string;
@@ -24,6 +47,8 @@ type State =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'ready'; items: WorkReportItem[]; failedCases: number; syncedAt: string };
+
+type ManagerProblemBinding = V8ManagerProblemRow & { laneId: string };
 
 const arrayAt = (payload: unknown, key: string): any[] => {
   if (!payload || typeof payload !== 'object') return [];
@@ -74,7 +99,8 @@ const SECTION_SHELL_CLASS = 'rounded-xl border border-c-border bg-c-surface-rais
 // tle); amber: literal #8a4517 w light (5.64:1), dark zostaje bo juz przechodzi.
 const SEVERITY_BADGE_CLASS: Record<string, string> = {
   red: 'bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-danger-700 dark:text-danger-300',
-  amber: 'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-[#8a4517] dark:text-c-warning',
+  amber:
+    'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-[#8a4517] dark:text-c-warning',
   neutral: 'bg-c-surface-raised text-c-text-secondary',
   unknown: 'bg-c-surface-raised text-c-text-muted',
 };
@@ -101,7 +127,10 @@ const REASON_LABEL_KEY: Record<string, [string, string]> = {
     'No objective-mapping API available',
   ],
 };
-const EPISTEMIC_LABEL_KEY: Record<'fact' | 'recommendation' | 'unknown' | 'calculated', [string, string]> = {
+const EPISTEMIC_LABEL_KEY: Record<
+  'fact' | 'recommendation' | 'unknown' | 'calculated',
+  [string, string]
+> = {
   fact: ['execution.reports.intelligence.epistemic.fact', 'FACT'],
   recommendation: ['execution.reports.intelligence.epistemic.recommendation', 'RECOMMENDATION'],
   unknown: ['execution.reports.intelligence.epistemic.unknown', 'UNKNOWN'],
@@ -118,11 +147,46 @@ const KIND_LABEL_KEY: Record<string, [string, string]> = {
   DECISION: ['execution.reports.intelligence.kinds.decision', 'Decision'],
   MILESTONE: ['execution.reports.intelligence.kinds.milestone', 'Milestone'],
 };
+const ATTENTION_REASON_FALLBACK: Record<string, string> = {
+  BLOCKED: 'Blocked',
+  OVERDUE: 'Overdue',
+  UNASSIGNED: 'Unassigned',
+  NO_DUE_DATE: 'No due date',
+};
 
-export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactElement {
+const humanizeCode = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/^\p{L}/u, (letter) => letter.toUpperCase());
+
+const badgeClass = (value: string): string => {
+  const normalized = value.toUpperCase();
+  if (['DONE', 'COMPLETED', 'DECIDED', 'APPROVED'].includes(normalized))
+    return 'bg-c-success/10 text-c-success';
+  if (['BLOCKED', 'OVERDUE', 'CRITICAL'].includes(normalized))
+    return 'bg-c-danger/10 text-danger-700 dark:text-danger-300';
+  if (['HIGH', 'IN_PROGRESS', 'IN_EXECUTION', 'PENDING'].includes(normalized))
+    return 'bg-c-warning/10 text-[#8a4517] dark:text-c-warning';
+  return 'bg-c-surface-subtle text-c-text-secondary';
+};
+
+export function WorkIntelligenceReport({
+  analysisEnabled = false,
+  resolveOwnerName,
+  onOpenDocument,
+}: Props): React.ReactElement {
   const { t, i18n } = useTranslation();
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [drilldownId, setDrilldownId] = useState<string | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState(() => new Date().toISOString().slice(0, 10));
+  const [selectedWindow, setSelectedWindow] =
+    useState<keyof ExecutionWorkAnalysis['windows']>('nextWeek');
+  const [managerProblems, setManagerProblems] = useState<ManagerProblemBinding[]>([]);
+  const [generation, setGeneration] = useState<{ id: string; created: boolean; asOf: string } | null>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [selectedAttentionId, setSelectedAttentionId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -140,6 +204,12 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             const common = {
               executionCaseId: caseId,
               initiativeId: String(executionCase.initiativeId || ''),
+              projectId: executionCase.projectId ? String(executionCase.projectId) : null,
+              projectTitle: executionCase.projectTitle
+                ? String(executionCase.projectTitle)
+                : executionCase.projectId
+                  ? String(executionCase.projectId)
+                  : null,
             };
             const tasks: WorkReportItem[] = arrayAt(work, 'tasks').map((item: any) => ({
               ...common,
@@ -147,8 +217,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
               title: String(item.title || item.taskId),
               kind: 'TASK',
               status: String(item.status || 'UNKNOWN'),
+              priority: item.priority ? String(item.priority) : null,
               ownerId: item.assigneeId ? String(item.assigneeId) : null,
               dueAt: item.dueAt ? String(item.dueAt) : null,
+              completedAt: item.completedAt ? String(item.completedAt) : null,
               slaAt: item.slaAt ? String(item.slaAt) : null,
               dependencies: Array.isArray(item.dependencies) ? item.dependencies : [],
               evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
@@ -161,8 +233,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
               title: String(item.title || item.decisionId),
               kind: 'DECISION',
               status: String(item.status || 'UNKNOWN'),
+              priority: item.priority ? String(item.priority) : null,
               ownerId: item.authorityId ? String(item.authorityId) : null,
               dueAt: item.dueAt ? String(item.dueAt) : null,
+              completedAt: item.decidedAt ? String(item.decidedAt) : null,
               slaAt: item.slaAt ? String(item.slaAt) : null,
               dependencies: Array.isArray(item.dependencies) ? item.dependencies : [],
               evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
@@ -176,8 +250,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                 title: String(item.title || item.milestoneId),
                 kind: 'MILESTONE',
                 status: String(item.status || 'UNKNOWN'),
+                priority: item.priority ? String(item.priority) : null,
                 ownerId: item.ownerId ? String(item.ownerId) : null,
                 dueAt: item.targetAt ? String(item.targetAt) : null,
+                completedAt: item.completedAt ? String(item.completedAt) : null,
                 slaAt: null,
                 dependencies: [],
                 evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
@@ -199,6 +275,24 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           failedCases: results.length - fulfilled.length,
           syncedAt: new Date().toISOString(),
         });
+        if (analysisEnabled) {
+          const lanes = ['action-queue', 'blockers', 'workload'];
+          const problemResults = await Promise.allSettled(
+            lanes.map(async (laneId) => {
+              const response = await V8ExecutionControlApi.getManagerProblems(laneId);
+              const data = (response as any)?.data || response;
+              return ((data?.problems || []) as V8ManagerProblemRow[]).map((problem) => ({
+                ...problem,
+                laneId,
+              }));
+            })
+          );
+          if (active) {
+            setManagerProblems(
+              problemResults.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
+            );
+          }
+        }
       } catch (error) {
         if (active)
           setState({
@@ -210,12 +304,22 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
     return () => {
       active = false;
     };
-  }, []);
+  }, [analysisEnabled]);
 
   const model = useMemo(
     () =>
       state.kind === 'ready' ? buildWorkReportModel(state.items, new Date(state.syncedAt)) : null,
     [state]
+  );
+  const analysis = useMemo(
+    () =>
+      state.kind === 'ready' && analysisEnabled
+        ? buildExecutionWorkAnalysis(
+            state.items as ExecutionWorkAnalysisItem[],
+            new Date(`${selectedWeek}T12:00:00.000Z`)
+          )
+        : null,
+    [analysisEnabled, selectedWeek, state]
   );
   const selectedMetric = model?.metrics.find((metric) => metric.id === drilldownId) ?? null;
   const registerItems = selectedMetric ? selectedMetric.drilldown : (model?.items ?? []);
@@ -224,26 +328,64 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       id: 'title',
       label: t('execution.reports.intelligence.columns.title', 'Record'),
       sortable: true,
+      primary: true,
+      dataType: 'text',
     },
+    ...(analysisEnabled
+      ? [
+          {
+            id: 'projectTitle',
+            label: t('execution.workAnalysis.columns.project', 'Project'),
+            sortable: true,
+            dataType: 'text' as const,
+          },
+          {
+            id: 'priority',
+            label: t('execution.workAnalysis.columns.priority', 'Priority'),
+            sortable: true,
+            render: (row: TableRow) => {
+              const code = String(row.priority || 'UNSET');
+              return (
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
+                  {t(`execution.workAnalysis.priority.${code.toLowerCase()}`, humanizeCode(code))}
+                </span>
+              );
+            },
+          },
+        ]
+      : []),
     {
       id: 'kind',
       label: t('execution.reports.intelligence.columns.kind', 'Type'),
       sortable: true,
-      render: (row: TableRow) =>
-        trPair(
-          t,
-          KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]
-        ),
+      render: (row: TableRow) => {
+        const code = String(row.kind || 'UNKNOWN');
+        return trPair(t, KIND_LABEL_KEY[code] ?? [code, humanizeCode(code)]);
+      },
     },
     {
       id: 'status',
       label: t('execution.reports.intelligence.columns.status', 'Status'),
       sortable: true,
+      render: (row: TableRow) => {
+        const code = String(row.status || 'UNKNOWN');
+        return (
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
+            {initiativeStatusLabel(t, code)}
+          </span>
+        );
+      },
     },
     {
       id: 'ownerId',
       label: t('execution.reports.intelligence.columns.owner', 'Owner'),
       sortable: true,
+      render: (row: TableRow) =>
+        memberNameOrUnknown(
+          resolveOwnerName,
+          String(row.ownerId || ''),
+          i18n.language.startsWith('pl')
+        ),
     },
     { id: 'dueAt', label: t('execution.reports.intelligence.columns.due', 'Due'), sortable: true },
     {
@@ -272,6 +414,100 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       </div>
     );
 
+  const windowEntries: Array<{
+    id: keyof ExecutionWorkAnalysis['windows'];
+    label: string;
+    value: WorkAnalysisWindow;
+  }> = analysis
+    ? [
+        {
+          id: 'previousWeek',
+          label: t('execution.workAnalysis.windows.previousWeek', 'Previous week'),
+          value: analysis.windows.previousWeek,
+        },
+        {
+          id: 'nextWeek',
+          label: t('execution.workAnalysis.windows.nextWeek', 'Next week'),
+          value: analysis.windows.nextWeek,
+        },
+        {
+          id: 'nextMonth',
+          label: t('execution.workAnalysis.windows.nextMonth', 'Next month'),
+          value: analysis.windows.nextMonth,
+        },
+      ]
+    : [];
+  const selectedAnalysisWindow = analysis?.windows[selectedWindow] ?? null;
+  const attentionRows = (analysis?.attention ?? []).map(({ item, reasons }) => ({
+    ...item,
+    reasons,
+    managerBindings: managerProblems.filter((problem) => problem.sourceEntityId === item.id),
+  }));
+  const runManagerAction = async (
+    row: (typeof attentionRows)[number],
+    actionId: 'escalate' | 'reassign' | 'set_capacity'
+  ) => {
+    const binding = row.managerBindings.find((problem) =>
+      problem.actions.some((action) => action.id === actionId)
+    );
+    if (!binding) return;
+    const key = `${binding.id}:${actionId}`;
+    setBusyAction(key);
+    setActionMessage(null);
+    try {
+      const response = await V8ExecutionControlApi.executeManagerProblemAction(
+        binding.laneId,
+        { problemId: binding.id, actionId },
+        row.projectId ?? undefined
+      );
+      const result = (response as any)?.data || response;
+      setActionMessage(String(result?.message || t('execution.workAnalysis.actionDone', 'Management action completed.')));
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.actionFailed', 'Management action failed.'));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+  const managerActionsFor = (row: (typeof attentionRows)[number]) =>
+    ([
+      ['escalate', t('execution.workAnalysis.actions.escalate', 'Escalate')],
+      ['reassign', t('execution.workAnalysis.actions.delegate', 'Delegate')],
+      ['set_capacity', t('execution.workAnalysis.actions.resources', 'Change resources')],
+    ] as const).flatMap(([actionId, label]) => {
+      const binding = row.managerBindings.find((problem) =>
+        problem.actions.some((action) => action.id === actionId)
+      );
+      return binding ? [{ actionId, label, binding }] : [];
+    });
+  const selectedAttentionRow =
+    attentionRows.find((row) => row.id === selectedAttentionId) ?? null;
+  const canOpenSourceRecord = (row: (typeof attentionRows)[number]) =>
+    (row.kind === 'TASK' || row.kind === 'DECISION') && Boolean(onOpenDocument);
+  const openSourceRecord = (row: (typeof attentionRows)[number]) => {
+    if (!canOpenSourceRecord(row) || !onOpenDocument) return;
+    onOpenDocument({
+      id: row.id,
+      title: row.title,
+      kind: row.kind as 'TASK' | 'DECISION',
+      status: row.status,
+      executionCaseId: row.executionCaseId,
+    });
+  };
+  const attentionColumns: TableColumn[] = [
+    { id: 'title', label: t('execution.workAnalysis.columns.record', 'Attention record'), primary: true, dataType: 'text' },
+    {
+      id: 'reasons',
+      label: t('execution.workAnalysis.columns.reason', 'Reason'),
+      render: (row: TableRow) => ((row.reasons as string[]) || []).map((reason) =>
+        t(
+          `execution.workAnalysis.reasons.${String(reason).toLowerCase()}`,
+          ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
+        )
+      ).join(', '),
+    },
+    { id: 'projectTitle', label: t('execution.workAnalysis.columns.project', 'Project'), dataType: 'text' },
+  ];
+
   return (
     <main
       className="min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"
@@ -286,6 +522,247 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.workTitle', 'Work Intelligence Report')}
           </h1>
         </header>
+
+        {analysis ? (
+          <section aria-labelledby="work-analysis-title" className={SECTION_SHELL_CLASS}>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {t('execution.workAnalysis.label', 'Weekly management analysis')}
+                </p>
+                <h2 id="work-analysis-title" className="font-semibold">
+                  {t('execution.workAnalysis.title', 'Work across three time windows')}
+                </h2>
+              </div>
+              <label className="text-sm text-c-text-secondary">
+                {t('execution.workAnalysis.weekOf', 'Week of')}
+                <input
+                  aria-label={t('execution.workAnalysis.weekOf', 'Week of')}
+                  className="ml-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-c-text"
+                  type="date"
+                  value={selectedWeek}
+                  onChange={(event) => setSelectedWeek(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void (async () => {
+                  setActionMessage(null);
+                  try {
+                    const result = await generateExecutionWorkAnalysis(selectedWeek);
+                    setGeneration({ id: result.id, created: result.created, asOf: result.asOf });
+                  } catch (error) {
+                    setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.generateFailed', 'The analysis could not be generated.'));
+                  }
+                })()}
+                className="rounded-lg border border-c-border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                {t('execution.workAnalysis.generate', 'Generate for this week')}
+              </button>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {windowEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  aria-pressed={selectedWindow === entry.id}
+                  onClick={() => setSelectedWindow(entry.id)}
+                  className="rounded-xl border border-c-border bg-c-surface p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  <span className="block text-sm font-semibold">{entry.label}</span>
+                  <strong className="mt-1 block text-2xl">{entry.value.items.length}</strong>
+                  <span className="text-xs text-c-text-muted">
+                    {t('execution.workAnalysis.completed', 'Completed')}:{' '}
+                    {entry.value.completed.numerator}/{entry.value.completed.denominator}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-sm text-c-text-secondary">
+              {t('execution.workAnalysis.attention', 'Requires management attention')}:{' '}
+              <strong>{analysis.attention.length}</strong>
+            </p>
+            {generation ? (
+              <p className="mt-2 text-xs text-c-text-muted" data-testid="work-analysis-receipt">
+                {t('execution.workAnalysis.savedReceipt', 'Saved report {{id}} · {{state}}', {
+                  id: generation.id,
+                  state: generation.created
+                    ? t('execution.workAnalysis.savedNew', 'created')
+                    : t('execution.workAnalysis.savedExisting', 'already generated'),
+                })}
+              </p>
+            ) : null}
+            {actionMessage ? <p role="status" className="mt-2 text-sm text-c-text-secondary">{actionMessage}</p> : null}
+            <div className="mt-3 min-h-[360px]">
+              <div className="flex min-h-0 gap-3">
+                <div className="min-w-0 flex-1">
+                  <StandardTable
+                    columns={attentionColumns}
+                    data={attentionRows as any}
+                    density="compact"
+                    selectedRowId={selectedAttentionId}
+                    onRowClick={(row) => setSelectedAttentionId(String(row.id))}
+                    rowMenu={(tableRow) => {
+                      const row = tableRow as unknown as (typeof attentionRows)[number];
+                      return {
+                        primary: [
+                          ...(canOpenSourceRecord(row)
+                            ? [
+                                {
+                                  id: 'open-source',
+                                  label: t(
+                                    'execution.workAnalysis.preview.openSource',
+                                    'Open source record'
+                                  ),
+                                  onClick: () => openSourceRecord(row),
+                                },
+                              ]
+                            : []),
+                          ...managerActionsFor(row).map(({ actionId, label }) => ({
+                            id: actionId,
+                            label,
+                            onClick: () => void runManagerAction(row, actionId),
+                            disabled: busyAction !== null,
+                          })),
+                        ],
+                        universalHandlers: {
+                          preview: () => setSelectedAttentionId(row.id),
+                        },
+                        // Runtime work rows expose no edit/archive/delete mutation.
+                        // Those capabilities remain N/D instead of becoming dead placeholders.
+                      };
+                    }}
+                    empty={{ title: t('execution.workAnalysis.noAttention', 'No records require management attention') }}
+                  />
+                </div>
+                {selectedAttentionRow ? (() => {
+                  const row = selectedAttentionRow;
+                  const actions = managerActionsFor(selectedAttentionRow);
+                  const canOpen = canOpenSourceRecord(row);
+                  return (
+                    <aside className="w-[min(420px,42%)] shrink-0 overflow-hidden rounded-xl border border-c-border bg-c-surface">
+                      <StandardPreview
+                        title={row.title}
+                        onClose={() => setSelectedAttentionId(null)}
+                        onOpenFull={canOpen ? () => openSourceRecord(row) : undefined}
+                        openDisabledReason={
+                          canOpen
+                            ? undefined
+                            : t(
+                                'execution.workAnalysis.preview.openDisabled',
+                                'This work item has no available source route.'
+                              )
+                        }
+                        meta={{
+                        pills: [
+                          {
+                            label: initiativeStatusLabel(t, row.status),
+                            tone: row.status === 'BLOCKED' ? 'danger' : 'neutral',
+                          },
+                          {
+                            label: trPair(
+                              t,
+                              KIND_LABEL_KEY[row.kind] ?? [row.kind, humanizeCode(row.kind)]
+                            ),
+                            tone: 'neutral',
+                          },
+                        ],
+                        trailing: row.dueAt
+                          ? new Date(row.dueAt).toLocaleDateString(i18n.language)
+                          : t('execution.workAnalysis.preview.noDueDate', 'No due date'),
+                      }}
+                        details={{
+                        label: t('execution.workAnalysis.preview.details', 'Work details'),
+                        text:
+                          row.definitionOfDone ||
+                          t(
+                            'execution.workAnalysis.preview.noDefinition',
+                            'No definition of done has been recorded.'
+                          ),
+                        properties: [
+                          {
+                            id: 'reason',
+                            label: t('execution.workAnalysis.columns.reason', 'Reason'),
+                            value: row.reasons
+                              .map((reason) =>
+                                t(
+                                  `execution.workAnalysis.reasons.${reason.toLowerCase()}`,
+                                  ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
+                                )
+                              )
+                              .join(', '),
+                          },
+                          {
+                            id: 'project',
+                            label: t('execution.workAnalysis.columns.project', 'Project'),
+                            value:
+                              row.projectTitle ||
+                              t('execution.workAnalysis.preview.noProject', 'No project assigned'),
+                          },
+                          {
+                            id: 'owner',
+                            label: t('execution.reports.intelligence.columns.owner', 'Owner'),
+                            value:
+                              row.ownerId
+                                ? memberNameOrUnknown(
+                                    resolveOwnerName,
+                                    row.ownerId,
+                                    i18n.language.startsWith('pl')
+                                  )
+                                : t(
+                                    'execution.workAnalysis.preview.noOwner',
+                                    'No owner assigned'
+                                  ),
+                          },
+                        ],
+                        propertyLabel: t('common.property', 'Property'),
+                        valueLabel: t('common.value', 'Value'),
+                        onCopy: () => void navigator.clipboard?.writeText(row.title),
+                      }}
+                        relations={
+                        row.projectTitle
+                          ? [
+                              {
+                                id: row.projectId ?? undefined,
+                                label: row.projectTitle,
+                                type: 'project',
+                              },
+                            ]
+                          : []
+                      }
+                        actions={{
+                        informational: actions.map(({ actionId, label, binding }) => ({
+                          id: actionId,
+                          variant: actionId === 'escalate' ? 'warning' : 'neutral',
+                          label:
+                            busyAction === `${binding.id}:${actionId}`
+                              ? t('execution.workAnalysis.actions.running', 'Working…')
+                              : label,
+                          disabled: busyAction !== null,
+                          onClick: () => void runManagerAction(row, actionId),
+                        })),
+                      }}
+                        whatsNext={{
+                        items: [
+                          {
+                            id: 'open-source',
+                            label: t(
+                              'execution.workAnalysis.preview.openSource',
+                              'Open source record'
+                            ),
+                            disabled: !canOpen,
+                            onClick: () => openSourceRecord(row),
+                          },
+                        ],
+                      }}
+                      />
+                    </aside>
+                  );
+                })() : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section
           data-section-order={sections[0]}
@@ -310,10 +787,12 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                   under the trust strip, instead of a raw ISO string here and
                   the same instant repeated (also as raw ISO) on every one of
                   the eight KPI cards below. */}
-              <dd>{new Date(state.syncedAt).toLocaleString(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}</dd>
+              <dd>
+                {new Date(state.syncedAt).toLocaleString(i18n.language, {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </dd>
             </div>
             <div>
               <dt className="text-c-text-muted">
@@ -435,8 +914,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.stake', 'What is at stake')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.NO_API_BSC)} ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} · {trPair(t, REASON_LABEL_KEY.NO_API_BSC)} ·{' '}
             {t(
               'execution.reports.intelligence.operationalOnly',
               'Objective mappings are unavailable; this remains an operational report, not a strategy report.'
@@ -460,8 +938,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.trend', 'How the system is changing')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.NO_API_HISTORY)}
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} · {trPair(t, REASON_LABEL_KEY.NO_API_HISTORY)}
           </p>
         </section>
         <section data-section-order={sections[7]} className={SECTION_SHELL_CLASS}>
@@ -492,12 +969,17 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                 className="rounded-lg border border-c-border px-3 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               >
                 {t('execution.reports.intelligence.showAllRecords', 'Show all records')} (
-                {t(`execution.reports.intelligence.metrics.${selectedMetric.id}`, selectedMetric.id)}{' '}
+                {t(
+                  `execution.reports.intelligence.metrics.${selectedMetric.id}`,
+                  selectedMetric.id
+                )}{' '}
                 → {model.items.length})
               </button>
             ) : null}
           </div>
-          {state.items.length === 0 ? (
+          {(
+            analysisEnabled ? selectedAnalysisWindow?.items.length === 0 : state.items.length === 0
+          ) ? (
             <p className="mt-2 text-sm text-c-text-muted">
               {t(
                 'execution.reports.intelligence.workEmpty',
@@ -507,7 +989,9 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           ) : (
             <StandardTable
               columns={columns}
-              data={registerItems as any}
+              data={
+                (analysisEnabled ? (selectedAnalysisWindow?.items ?? []) : registerItems) as any
+              }
               density="compact"
               empty={{
                 title: t(

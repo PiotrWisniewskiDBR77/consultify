@@ -345,4 +345,13 @@ describe('K5-4 — podgląd banku Realizacji 1:1 jak Inicjatywy', () => {
       within(blok(bezPostepu, 'details')!).getByText(/Report progress on the execution case/)
     ).toBeInTheDocument();
   });
+
+  it('(9) powiązana realizacja bez wersji pokazuje opisowy brak danych bez prefiksu „v"', () => {
+    const { container } = renderPodglad(rowWithCase({ executionCaseVersion: null }));
+    const details = blok(container, 'details')!;
+
+    expect(within(details).getByText('Linked · version not reported')).toBeInTheDocument();
+    expect(within(details).queryByText('Linked · v—')).toBeNull();
+    expect(details).not.toHaveTextContent('v—');
+  });
 });

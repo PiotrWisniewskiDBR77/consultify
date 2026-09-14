@@ -5,7 +5,7 @@
 vi.unmock('react-router-dom');
 
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 
@@ -14,34 +14,95 @@ const { mutationFetch, getInitiatives, initiatives, executionCases } = vi.hoiste
   getInitiatives: vi.fn(),
   initiatives: [
     {
-      id: 'initiative-a', name: 'Alpha', description: 'Forecast case', status: 'IN_EXECUTION',
-      priority: 'High', progress: null, baselineStartDate: '2028-01-10', baselineEndDate: '2028-02-10',
-      plannedStartDate: '2028-01-20', plannedEndDate: '2028-03-20', actualEndDate: null, updatedAt: '2028-01-20T10:00:00Z',
+      id: 'initiative-a',
+      name: 'Alpha',
+      description: 'Forecast case',
+      status: 'IN_EXECUTION',
+      projectId: 'project-one',
+      priority: 'High',
+      progress: null,
+      baselineStartDate: '2028-01-10',
+      baselineEndDate: '2028-02-10',
+      plannedStartDate: '2028-01-20',
+      plannedEndDate: '2028-03-20',
+      actualEndDate: null,
+      updatedAt: '2028-01-20T10:00:00Z',
     },
     {
-      id: 'initiative-b', name: 'Beta', description: 'Unknown schedule', status: 'IN_EXECUTION',
-      priority: 'Medium', progress: null, baselineEndDate: null,
-      plannedEndDate: 'not-a-date', actualEndDate: null, updatedAt: '2028-01-19T10:00:00Z',
+      id: 'initiative-b',
+      name: 'Beta',
+      description: 'Unknown schedule',
+      status: 'IN_EXECUTION',
+      projectId: null,
+      priority: 'Medium',
+      progress: null,
+      baselineEndDate: null,
+      plannedEndDate: 'not-a-date',
+      actualEndDate: null,
+      updatedAt: '2028-01-19T10:00:00Z',
     },
     {
-      id: 'initiative-c', name: 'Gamma', description: 'Closed case', status: 'CLOSED',
-      priority: 'Low', progress: 100, baselineStartDate: '2028-02-01', baselineEndDate: '2028-02-28',
-      plannedStartDate: '2028-02-01', plannedEndDate: '2028-03-10', actualStartDate: '2028-02-02', actualEndDate: '2028-02-29', updatedAt: '2028-01-18T10:00:00Z',
+      id: 'initiative-c',
+      name: 'Gamma',
+      description: 'Closed case',
+      status: 'CLOSED',
+      projectId: 'project-two',
+      priority: 'Low',
+      progress: 100,
+      baselineStartDate: '2028-02-01',
+      baselineEndDate: '2028-02-28',
+      plannedStartDate: '2028-02-01',
+      plannedEndDate: '2028-03-10',
+      actualStartDate: '2028-02-02',
+      actualEndDate: '2028-02-29',
+      updatedAt: '2028-01-18T10:00:00Z',
     },
     {
-      id: 'initiative-d', name: 'Delta', description: 'Initiative without a case', status: 'APPROVED',
-      priority: 'Medium', progress: null, baselineEndDate: null,
-      plannedEndDate: null, actualEndDate: null, updatedAt: '2028-01-17T10:00:00Z',
+      id: 'initiative-d',
+      name: 'Delta',
+      description: 'Initiative without a case',
+      status: 'APPROVED',
+      projectId: 'project-one',
+      priority: 'Medium',
+      progress: null,
+      baselineEndDate: null,
+      plannedEndDate: null,
+      actualEndDate: null,
+      updatedAt: '2028-01-17T10:00:00Z',
     },
   ],
   executionCases: [
     {
-      executionCaseId: 'case-a', initiativeId: 'initiative-a', version: 4, state: 'ACTIVE',
-      executionPhase: 'DELIVERY', deliveryProfile: 'STANDARD', forecastStartDate: '2028-01-25', forecastEndDate: '2028-03-01',
-      forecastObservedAt: '2028-01-15T12:00:00Z', forecastSource: 'execution-case',
+      executionCaseId: 'case-a',
+      initiativeId: 'initiative-a',
+      projectId: 'project-one',
+      projectTitle: 'North plant',
+      version: 4,
+      state: 'ACTIVE',
+      executionManagerId: 'owner-one',
+      executionPhase: 'DELIVERY',
+      deliveryProfile: 'STANDARD',
+      forecastStartDate: '2028-01-25',
+      forecastEndDate: '2028-03-01',
+      forecastObservedAt: '2028-01-15T12:00:00Z',
+      forecastSource: 'execution-case',
     },
-    { executionCaseId: 'case-b', initiativeId: 'initiative-b', version: 2, state: 'ACTIVE' },
-    { executionCaseId: 'case-c', initiativeId: 'initiative-c', version: 7, state: 'CLOSED' },
+    {
+      executionCaseId: 'case-b',
+      initiativeId: 'initiative-b',
+      version: 2,
+      state: 'ACTIVE',
+      executionManagerId: 'owner-two',
+    },
+    {
+      executionCaseId: 'case-c',
+      initiativeId: 'initiative-c',
+      projectId: 'project-two',
+      projectTitle: 'South plant',
+      version: 7,
+      state: 'CLOSED',
+      executionManagerId: 'owner-one',
+    },
   ],
 }));
 
@@ -55,7 +116,7 @@ vi.mock('react-i18next', () => {
 vi.mock('@/i18n', () => ({ default: {} }));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/components/Execution/executionFeatureFlags', () => ({
-  isExecutionFlagEnabled: () => false,
+  isExecutionFlagEnabled: (flag: string) => flag === 'fourButtons',
 }));
 vi.mock('@/store/useAppStore', () => {
   const state = {
@@ -65,7 +126,9 @@ vi.mock('@/store/useAppStore', () => {
     toggleChatCollapse: vi.fn(),
     isChatCollapsed: false,
   };
-  return { useAppStore: (selector?: (value: any) => unknown) => (selector ? selector(state) : state) };
+  return {
+    useAppStore: (selector?: (value: any) => unknown) => (selector ? selector(state) : state),
+  };
 });
 vi.mock('@/store/useConversationStore', () => ({
   useConversationStore: (selector: (state: any) => unknown) => selector({ addMessage: vi.fn() }),
@@ -75,10 +138,19 @@ vi.mock('@/store/useInitiativeRefreshStore', () => ({
 }));
 vi.mock('@/hooks/useOpenChatWithContext', () => ({ useOpenChatWithContext: () => vi.fn() }));
 vi.mock('@/hooks/useOrganizationMemberNames', () => ({
-  useOrganizationMemberNames: () => (id: string) => id,
+  useOrganizationMemberNames: () => (id: string) =>
+    ({ 'owner-one': 'Marek Nowak', 'owner-two': 'Anna Kowalska' } as Record<string, string>)[id] ??
+    null,
+  memberNameOrUnknown: (resolver: ((id: string) => string) | undefined, id: string) =>
+    resolver?.(id) ?? 'Unknown user',
 }));
 vi.mock('@/components/shared/PreviewPane/useJedenPanel', () => ({
-  useJedenPanel: () => ({ zamkniety: true, dokOtwarty: false, otworz: vi.fn(), pokazPanel: vi.fn() }),
+  useJedenPanel: () => ({
+    zamkniety: false,
+    dokOtwarty: false,
+    otworz: vi.fn(),
+    pokazPanel: vi.fn(),
+  }),
 }));
 vi.mock('@/components/shared/PreviewPane/JedenPrawyPanel', () => ({
   JedenPrawyPanel: ({ rekord }: { rekord?: React.ReactNode }) => <>{rekord}</>,
@@ -93,12 +165,18 @@ vi.mock('@/components/shared/embeddedModuleChatHost', () => ({
 
 vi.mock('@/services/api', () => ({
   API_URL: 'http://example.test/api',
-  clearGlobalTransportFailure: vi.fn(), getHeaders: () => ({}), resetAuthLoopGuard: vi.fn(),
+  clearGlobalTransportFailure: vi.fn(),
+  getHeaders: () => ({}),
+  resetAuthLoopGuard: vi.fn(),
   shouldAllowDemoData: () => false,
   Api: {
-    getInitiatives, getTasks: vi.fn(async () => []),
-    raidList: vi.fn(async () => []), get: vi.fn(async () => []),
-    post: mutationFetch, put: mutationFetch, delete: mutationFetch,
+    getInitiatives,
+    getTasks: vi.fn(async () => []),
+    raidList: vi.fn(async () => []),
+    get: vi.fn(async () => []),
+    post: mutationFetch,
+    put: mutationFetch,
+    delete: mutationFetch,
   },
 }));
 vi.mock('@/services/api/v8/execution-control', () => ({
@@ -121,34 +199,43 @@ vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
 }));
 vi.mock('@/services/executionWriteTruth', () => ({ refreshExecutionWriteTruth: vi.fn() }));
 vi.mock('@/services/funnelAnalytics', () => ({ trackFunnelEvent: vi.fn() }));
-vi.mock('@/components/Execution/ExecutionActionCards', () => ({ ExecutionActionCards: () => null }));
-vi.mock('@/components/Execution/ExecutionWorkSurface', () => ({ ExecutionWorkSurface: () => null }));
-vi.mock('@/components/Execution/ExecutionResourcesSurface', () => ({ ExecutionResourcesSurface: () => null }));
-vi.mock('@/components/Execution/ExecutionControlSurface', () => ({ ExecutionControlSurface: () => null }));
-vi.mock('@/components/Execution/ExecutionReportsSurface', () => ({ ExecutionReportsSurface: () => null }));
+vi.mock('@/components/Execution/ExecutionActionCards', () => ({
+  ExecutionActionCards: () => null,
+}));
+vi.mock('@/components/Execution/ExecutionWorkSurface', () => ({
+  ExecutionWorkSurface: () => null,
+}));
+vi.mock('@/components/Execution/ExecutionResourcesSurface', () => ({
+  ExecutionResourcesSurface: () => null,
+}));
+vi.mock('@/components/Execution/ExecutionControlSurface', () => ({
+  ExecutionControlSurface: () => null,
+}));
+vi.mock('@/components/Execution/ExecutionReportsSurface', () => ({
+  ExecutionReportsSurface: () => null,
+}));
 vi.mock('@/components/Execution/ExecutionSummaryOneLook', () => ({ default: () => null }));
 vi.mock('@/components/Execution/RolloutTab', () => ({ RolloutTab: () => null }));
-vi.mock('@/components/Initiatives/InitiativeDocumentView', () => ({ InitiativeDocumentView: () => null }));
-vi.mock('@/components/Initiatives/InitiativeCompactPanel', () => ({ InitiativeCompactPanel: () => null }));
+vi.mock('@/components/Initiatives/InitiativeDocumentView', () => ({
+  InitiativeDocumentView: () => null,
+}));
+vi.mock('@/components/Initiatives/InitiativeCompactPanel', () => ({
+  InitiativeCompactPanel: () => null,
+}));
 vi.mock('@/components/Reports/Wizard', () => ({ ReportGeneratorWizard: () => null }));
 
 import { ExecutionHub } from '@/components/Execution/ExecutionHub';
 
-const visiblePairs = (renderer: 'table' | 'kanban' | 'calendar' | 'gantt') =>
+const visibleInitiativeIds = (renderer: 'table' | 'kanban' | 'calendar' | 'gantt') =>
   screen
     .getAllByTestId(new RegExp(`^execution-bank-${renderer}-item-`))
-    .map((node) => [
-      node.getAttribute('data-initiative-id'),
-      node.getAttribute('data-execution-case-id'),
-    ]);
+    .map((node) => node.getAttribute('data-initiative-id'));
 
-const expectSamePairs = (
+const expectSameInitiatives = (
   renderer: 'table' | 'kanban' | 'calendar' | 'gantt',
-  expected: Array<Array<string | null>>
+  expected: string[]
 ) => {
-  expect(visiblePairs(renderer).map((pair) => pair.join('/')).sort()).toEqual(
-    expected.map((pair) => pair.join('/')).sort()
-  );
+  expect(visibleInitiativeIds(renderer).sort()).toEqual(expected.sort());
 };
 
 const LocationProbe = () => {
@@ -162,8 +249,12 @@ const HistoryControls = () => {
   const navigate = useNavigate();
   return (
     <>
-      <button type="button" onClick={() => navigate(-1)}>←</button>
-      <button type="button" onClick={() => navigate(1)}>→</button>
+      <button type="button" onClick={() => navigate(-1)}>
+        ←
+      </button>
+      <button type="button" onClick={() => navigate(1)}>
+        →
+      </button>
     </>
   );
 };
@@ -173,69 +264,150 @@ describe('E1b Execution Bank views', () => {
     mutationFetch.mockClear();
     getInitiatives.mockReset().mockResolvedValue(initiatives);
     localStorage.clear();
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }))
+    );
   });
-  afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
-  it('E1b Bank renders one ordered native Initiative/Execution Case set across table, kanban, calendar and gantt without writes', async () => {
-    render(<MemoryRouter initialEntries={['/execution?tab=list&view=table&asOf=2028-01-31']}><ExecutionHub /></MemoryRouter>);
+  it('E1b Bank renders one ordered Initiative set across table, kanban, calendar and gantt without writes', async () => {
+    render(
+      <MemoryRouter initialEntries={['/execution?tab=list&view=table&asOf=2028-01-31']}>
+        <ExecutionHub />
+      </MemoryRouter>
+    );
 
     await screen.findByText('Alpha');
     fireEvent.click(screen.getByRole('radio', { name: 'All' }));
-    const expected = [
-      ['initiative-a', 'case-a'],
-      ['initiative-c', 'case-c'],
-      ['initiative-b', 'case-b'],
-      ['initiative-d', null],
-    ];
-    expect(visiblePairs('table')).toEqual(expected);
+    const expected = ['initiative-a', 'initiative-c', 'initiative-b', 'initiative-d'];
+    expect(visibleInitiativeIds('table')).toEqual(expected);
 
     fireEvent.click(screen.getByTestId('view-mode-kanban'));
-    await waitFor(() => expectSamePairs('kanban', expected));
-    fireEvent.click(screen.getByTestId('standard-kanban-card-case-b'));
-    expect(screen.getByTestId('execution-bank-preview')).toHaveAttribute('data-execution-case-id', 'case-b');
-    expect(screen.getByTestId('execution-bank-progress')).toHaveTextContent('Progress not reported');
+    await waitFor(() => expectSameInitiatives('kanban', expected));
+    fireEvent.click(screen.getByTestId('standard-kanban-card-initiative-b'));
+    const preview = screen.getByTestId('execution-bank-preview');
+    expect(preview).toHaveAttribute('data-initiative-id', 'initiative-b');
+    expect(preview).not.toHaveAttribute('data-execution-case-id');
+    expect(
+      screen.queryByText(/Execution Case linked|No Execution Case linked/)
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('execution-bank-progress')).toHaveTextContent(
+      'Progress not reported'
+    );
     expect(screen.queryByText(/PROGRESS_MISSING/)).not.toBeInTheDocument();
     expect(screen.queryByText(/2028-01-31T00:00:00\.000Z/)).not.toBeInTheDocument();
+    expect(within(preview).queryByText(/^UNKNOWN$/)).not.toBeInTheDocument();
+    expect(within(preview).queryByText(/^—$/)).not.toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByText('Owner')).toBeInTheDocument();
+    expect(screen.getByText('Execution phase')).toBeInTheDocument();
+    expect(document.querySelector('[data-preview-block="relations"]')).toBeNull();
 
     fireEvent.click(screen.getByTestId('view-mode-calendar'));
-    await waitFor(() => expectSamePairs('calendar', expected));
+    await waitFor(() => expectSameInitiatives('calendar', expected));
     expect(screen.getByTestId('execution-bank-unscheduled')).toHaveTextContent('Beta');
 
     fireEvent.click(screen.getByTestId('view-mode-timeline'));
-    await waitFor(() => expectSamePairs('gantt', expected));
+    await waitFor(() => expectSameInitiatives('gantt', expected));
     expect(screen.getByTestId('execution-bank-gantt-axis')).toHaveAttribute(
       'data-window-end',
       '2028-04-01'
     );
-    expect(screen.getByTestId('execution-bank-gantt-bar-forecast-case-a')).toHaveAttribute(
+    expect(screen.getByTestId('execution-bank-gantt-bar-forecast-initiative-a')).toHaveAttribute(
       'data-end',
       '2028-03-01'
     );
-    expect(screen.getByTestId('execution-bank-gantt-bar-actual-case-c')).toHaveAttribute(
+    expect(screen.getByTestId('execution-bank-gantt-bar-actual-initiative-c')).toHaveAttribute(
       'data-end',
       '2028-02-29'
     );
-    expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('20 days');
-    expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('forecast');
-    expect(screen.getByTestId('execution-bank-variance-case-c')).toHaveTextContent('1 day');
-    expect(screen.getByTestId('execution-bank-variance-case-c')).toHaveTextContent('actual');
+    expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent('20 days');
+    expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent(
+      'forecast'
+    );
+    expect(screen.getByTestId('execution-bank-variance-initiative-c')).toHaveTextContent('1 day');
+    expect(screen.getByTestId('execution-bank-variance-initiative-c')).toHaveTextContent('actual');
+    expect(mutationFetch).not.toHaveBeenCalled();
+  });
+
+  it('wires five reachable Bank filters to the same set used by every view, including no-project', async () => {
+    render(
+      <MemoryRouter initialEntries={['/execution?tab=list&view=table&asOf=2028-01-31']}>
+        <ExecutionHub />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Alpha');
+    fireEvent.click(screen.getByRole('radio', { name: 'All' }));
+    const project = screen.getByRole('button', { name: 'Bank project filter' });
+    const status = screen.getByRole('button', { name: 'Bank status filter' });
+    const owner = screen.getByRole('button', { name: 'Bank owner filter' });
+    const priority = screen.getByRole('button', { name: 'Bank priority filter' });
+    const time = screen.getByRole('button', { name: 'Bank time filter' });
+    expect(screen.getByTestId('execution-bank-filter-controls').querySelector('select')).toBeNull();
+
+    fireEvent.click(project);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'No project' }));
+    await waitFor(() => expect(visibleInitiativeIds('table')).toEqual(['initiative-b']));
+    fireEvent.click(screen.getByTestId('view-mode-kanban'));
+    await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-b']));
+
+    fireEvent.click(project);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All projects' }));
+    fireEvent.click(status);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Closed' }));
+    await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-c']));
+
+    fireEvent.click(status);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All statuses' }));
+    fireEvent.click(owner);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Marek Nowak' }));
+    await waitFor(() =>
+      expect(visibleInitiativeIds('kanban').sort()).toEqual(['initiative-a', 'initiative-c'])
+    );
+
+    fireEvent.click(owner);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All owners' }));
+    fireEvent.click(priority);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'High' }));
+    await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-a']));
+
+    fireEvent.click(priority);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'All priorities' }));
+    fireEvent.click(time);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Next 30 days' }));
+    await waitFor(() => expect(visibleInitiativeIds('kanban')).toEqual(['initiative-c']));
     expect(mutationFetch).not.toHaveBeenCalled();
   });
 
   it('hydrates the requested Bank view and native selection from a cold query and keeps selection when the view changes', async () => {
     render(
-      <MemoryRouter initialEntries={['/execution?tab=list&view=calendar&selection=case-b&asOf=2028-01-31']}>
+      <MemoryRouter
+        initialEntries={['/execution?tab=list&view=calendar&selection=case-b&asOf=2028-01-31']}
+      >
         <ExecutionHub />
       </MemoryRouter>
     );
 
     expect(await screen.findByTestId('execution-bank-view-calendar')).toBeInTheDocument();
-    expect(await screen.findByTestId('execution-bank-preview')).toHaveAttribute('data-execution-case-id', 'case-b');
+    expect(await screen.findByTestId('execution-bank-preview')).toHaveAttribute(
+      'data-initiative-id',
+      'initiative-b'
+    );
+    expect(screen.getByTestId('execution-bank-preview')).not.toHaveAttribute(
+      'data-execution-case-id'
+    );
     expect(screen.getByTestId('execution-bank-unscheduled')).toHaveTextContent('Beta');
     fireEvent.click(screen.getByTestId('view-mode-timeline'));
     expect(await screen.findByTestId('execution-bank-view-gantt')).toBeInTheDocument();
-    expect(screen.getByTestId('execution-bank-preview')).toHaveAttribute('data-execution-case-id', 'case-b');
+    expect(screen.getByTestId('execution-bank-preview')).toHaveAttribute(
+      'data-initiative-id',
+      'initiative-b'
+    );
     expect(mutationFetch).not.toHaveBeenCalled();
   });
 
@@ -260,7 +432,7 @@ describe('E1b Execution Bank views', () => {
     await waitFor(() => {
       const query = screen.getByTestId('e1b-location').textContent ?? '';
       expect(new URLSearchParams(query.split('?')[1]?.split('#')[0] ?? '').get('selection')).toBe(
-        'initiative:initiative-d'
+        'initiative-d'
       );
     });
 
@@ -354,7 +526,7 @@ describe('E1b Execution Bank views', () => {
         includeExecutionEvidence: true,
       })
     );
-    expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('29 days');
+    expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent('29 days');
 
     fireEvent.click(screen.getByRole('button', { name: '←' }));
     await waitFor(() =>
@@ -364,7 +536,9 @@ describe('E1b Execution Bank views', () => {
       })
     );
     await waitFor(() =>
-      expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('20 days')
+      expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent(
+        '20 days'
+      )
     );
 
     fireEvent.click(screen.getByRole('button', { name: '←' }));
@@ -380,11 +554,15 @@ describe('E1b Execution Bank views', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '→' }));
     await waitFor(() =>
-      expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('20 days')
+      expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent(
+        '20 days'
+      )
     );
     fireEvent.click(screen.getByRole('button', { name: '→' }));
     await waitFor(() =>
-      expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('29 days')
+      expect(screen.getByTestId('execution-bank-variance-initiative-a')).toHaveTextContent(
+        '29 days'
+      )
     );
   });
 });

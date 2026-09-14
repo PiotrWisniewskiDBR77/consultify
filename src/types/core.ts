@@ -2664,6 +2664,8 @@ export interface InitiativeVersion {
 export interface FullInitiative {
   id: string;
   projectId: string; // Added to resolve type error
+  projectName?: string;
+  project?: { id?: string; name?: string };
   name: string;
   description?: string;
   axis: AxisId;

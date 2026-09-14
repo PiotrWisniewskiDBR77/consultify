@@ -14,6 +14,7 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ClipboardList,
   Clock,
   Copy,
@@ -60,6 +61,12 @@ import {
   StandardTable,
 } from '@/components/standard';
 import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+} from '@/components/ui/primitives/Dropdown';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { executionTypeLabel } from '@/labels/executionTypeLabels';
@@ -128,6 +135,7 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
+import { initiativeStatusLabel } from '../Initiatives/initiativeStatusLabels';
 import { type ExecutionSurfacePrimaryCta } from './canonicalMenu3';
 import { ExecutionActionCards } from './ExecutionActionCards';
 import {
@@ -216,6 +224,43 @@ const ExecutionInitiativeDocumentView = React.lazy(() =>
 );
 
 type ProjectTaskStatus = Task['status'];
+
+type ExecutionBankFilterOption = { value: string; label: string };
+
+const ExecutionBankFilterDropdown = ({
+  ariaLabel,
+  value,
+  options,
+  onValueChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  options: ExecutionBankFilterOption[];
+  onValueChange: (value: string) => void;
+}) => {
+  const selected = options.find((option) => option.value === value) ?? options[0];
+  return (
+    <Dropdown value={value} onValueChange={onValueChange}>
+      <DropdownTrigger asChild>
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          className="flex h-8 max-w-40 items-center rounded-md border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          <span className="truncate">{selected?.label ?? '—'}</span>
+          <ChevronDown aria-hidden="true" className="ml-1 size-3 shrink-0" />
+        </button>
+      </DropdownTrigger>
+      <DropdownContent width="trigger">
+        {options.map((option) => (
+          <DropdownItem key={option.value} value={option.value}>
+            {option.label}
+          </DropdownItem>
+        ))}
+      </DropdownContent>
+    </Dropdown>
+  );
+};
 
 interface GovernedTimelineWarning {
   initiativeId: string;
@@ -440,6 +485,7 @@ const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [InitiativeStatus.IN_EXECU
 // src/labels/executionTypeLabels.ts (patrz oba miejsca użycia niżej).
 
 interface ExecutionDecision {
+  [key: string]: unknown;
   id: string;
   title: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED';
@@ -747,6 +793,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // czytają ją SYNCHRONICZNIE w renderze, więc deklaracja niżej = ReferenceError
   // (TDZ). Stała stoi więc na samej górze stanu, nad wszystkimi czytelnikami.
   const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+  const fourButtonsEnabled = isExecutionFlagEnabled('fourButtons');
   const [executionBankAsOf, setExecutionBankAsOf] = useState(() => {
     const requested = searchParams.get('asOf');
     return requested && Number.isFinite(Date.parse(requested))
@@ -792,6 +839,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   // Active/All toggle (consistent with InitiativesHub)
   const [scope, setScope] = useState<'active' | 'all'>('active');
+  const [executionBankProjectFilter, setExecutionBankProjectFilter] = useState('ALL');
+  const [executionBankStatusFilter, setExecutionBankStatusFilter] = useState('ALL');
+  const [executionBankOwnerFilter, setExecutionBankOwnerFilter] = useState('ALL');
+  const [executionBankPriorityFilter, setExecutionBankPriorityFilter] = useState('ALL');
+  const [executionBankTimeFilter, setExecutionBankTimeFilter] = useState('ALL');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [managerCommandRowContent, setManagerCommandRowContent] = useState<React.ReactNode>(null);
@@ -2081,7 +2133,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const stats = useMemo(
     () => ({
       executing: statusCounts[InitiativeStatus.IN_EXECUTION] ?? 0,
-      blocked: initiatives.filter((initiative) => initiative.onHold === true).length,
+      blocked: initiatives.filter((initiative) => isBlockedInitiative(initiative)).length,
     }),
     [initiatives, statusCounts]
   );
@@ -2111,7 +2163,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
     ) => {
       if (attention === 'blocked') {
-        return initiative.onHold === true;
+        return isBlockedInitiative(initiative);
       }
       if (attention === 'missing_dates') {
         return !initiative.plannedStartDate || !initiative.plannedEndDate;
@@ -2226,6 +2278,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             name: initiative.name,
             description: initiative.description,
             lifecycleStatus: String(initiative.status),
+            projectId: initiative.projectId ?? null,
+            priority: initiative.priority ?? null,
             ownerId:
               owner?.id ??
               (initiative as any).ownerExecutionId ??
@@ -2250,13 +2304,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           };
         }),
         executionCases,
-        { asOf: executionBankAsOf }
+        { asOf: executionBankAsOf, identityMode: fourButtonsEnabled ? 'INITIATIVE' : 'LEGACY' }
       ),
-    [executionBankAsOf, executionCases, initiatives]
+    [executionBankAsOf, executionCases, fourButtonsEnabled, initiatives]
   );
 
   const executionBankRowsBeforePreset = useMemo(() => {
-    const statusFilters = activeStatusFilter ? [activeStatusFilter] : undefined;
+    const statusFilters =
+      executionBankStatusFilter !== 'ALL'
+        ? [executionBankStatusFilter]
+        : activeStatusFilter
+          ? [activeStatusFilter]
+          : undefined;
     const dataIssues = summaryFilters.flatMap((filter) => {
       if (filter.column !== 'data') return [];
       if (filter.value === 'missing_baseline') return ['MISSING_BASELINE' as const];
@@ -2299,9 +2358,44 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return filterExecutionBankRows(scoped, {
       search: searchQuery,
       lifecycleStatuses: statusFilters,
+      projectIds:
+        executionBankProjectFilter === 'ALL'
+          ? undefined
+          : [executionBankProjectFilter === 'NO_PROJECT' ? null : executionBankProjectFilter],
+      ownerIds:
+        executionBankOwnerFilter === 'ALL'
+          ? undefined
+          : [executionBankOwnerFilter === 'NO_OWNER' ? 'UNKNOWN' : executionBankOwnerFilter],
+      priorities: executionBankPriorityFilter === 'ALL' ? undefined : [executionBankPriorityFilter],
+      timeWindow:
+        executionBankTimeFilter === 'ALL'
+          ? undefined
+          : executionBankTimeFilter === 'PAST_DUE'
+            ? { endExclusive: executionBankAsOf.slice(0, 10) }
+            : {
+                start: executionBankAsOf.slice(0, 10),
+                endExclusive: new Date(
+                  Date.parse(executionBankAsOf) +
+                    (executionBankTimeFilter === 'NEXT_30' ? 30 : 90) * 86_400_000
+                )
+                  .toISOString()
+                  .slice(0, 10),
+              },
       dataIssues: dataIssues.length ? dataIssues : undefined,
     });
-  }, [activeStatusFilter, executionBankRowsAll, scope, searchQuery, summaryFilters]);
+  }, [
+    activeStatusFilter,
+    executionBankAsOf,
+    executionBankOwnerFilter,
+    executionBankPriorityFilter,
+    executionBankProjectFilter,
+    executionBankRowsAll,
+    executionBankStatusFilter,
+    executionBankTimeFilter,
+    scope,
+    searchQuery,
+    summaryFilters,
+  ]);
 
   const executionBankRows = useMemo(() => {
     const preset =
@@ -2535,9 +2629,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const execReportsIntelligenceEnabled = isExecutionFlagEnabled('execReportsIntelligence');
+  const workAnalysisEnabled = isExecutionFlagEnabled('workAnalysis');
 
   const openWorkIntelligenceReport = useCallback(() => {
-    if (!execReportsIntelligenceEnabled) return;
+    if (!execReportsIntelligenceEnabled && !workAnalysisEnabled) return;
     const docId = 'execution-intelligence:work';
     const doc: OpenDocument = {
       id: docId,
@@ -2550,7 +2645,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       current.some((item) => item.id === docId) ? current : [...current, doc]
     );
     setActiveDocumentId(docId);
-  }, [execReportsIntelligenceEnabled, t]);
+  }, [execReportsIntelligenceEnabled, t, workAnalysisEnabled]);
 
   const openResourcesIntelligenceReport = useCallback(() => {
     if (!execReportsIntelligenceEnabled) return;
@@ -2911,6 +3006,125 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
+  const executionBankFilterOptions = useMemo(() => {
+    const unique = (values: Array<string | null>) =>
+      [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) =>
+        a.localeCompare(b)
+      );
+    const projectNameById = new Map<string, string>();
+    for (const initiative of initiatives) {
+      const projectId = String(initiative.projectId || '').trim();
+      const projectName = String(
+        initiative.projectName || initiative.project?.name || ''
+      ).trim();
+      if (projectId && projectName) projectNameById.set(projectId, projectName);
+    }
+    for (const executionCase of executionCases) {
+      const projectId = String(executionCase.projectId || '').trim();
+      const projectTitle = String(executionCase.projectTitle || '').trim();
+      if (projectId && projectTitle && !projectNameById.has(projectId))
+        projectNameById.set(projectId, projectTitle);
+    }
+    const projects = unique(executionBankRowsAll.map((row) => row.projectId)).map((projectId) => ({
+      value: projectId,
+      label:
+        projectNameById.get(projectId) ??
+        t('execution.bank.filters.projectNameUnavailable', 'Project name unavailable'),
+    }));
+    const owners = unique(executionBankRowsAll.map((row) => row.ownerId)).map((ownerId) => {
+      const rowName = executionBankRowsAll.find(
+        (row) => row.ownerId === ownerId && Boolean(row.ownerName?.trim())
+      )?.ownerName;
+      const resolved = String(resolveOwnerName(ownerId) || '').trim();
+      return {
+        value: ownerId,
+        label:
+          rowName?.trim() ||
+          (resolved && resolved !== ownerId
+            ? resolved
+            : t('execution.bank.filters.ownerNameUnavailable', 'Owner name unavailable')),
+      };
+    });
+    return {
+      projects,
+      statuses: unique(executionBankRowsAll.map((row) => row.lifecycleStatus)).map((status) => ({
+        value: status,
+        label: initiativeStatusLabel(t, status),
+      })),
+      owners,
+      priorities: unique(executionBankRowsAll.map((row) => row.priority)).map((priority) => ({
+        value: priority,
+        label: t(
+          `execution.bank.filters.priority.${priority.toLowerCase()}`,
+          priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase()
+        ),
+      })),
+      hasNoProject: executionBankRowsAll.some((row) => row.projectId === null),
+      hasNoOwner: executionBankRowsAll.some((row) => row.ownerId === null),
+    };
+  }, [executionBankRowsAll, executionCases, initiatives, resolveOwnerName, t]);
+
+  const executionBankFilterControls = fourButtonsEnabled ? (
+    <div
+      className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto"
+      data-testid="execution-bank-filter-controls"
+    >
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.projectAria', 'Bank project filter')}
+        value={executionBankProjectFilter}
+        onValueChange={setExecutionBankProjectFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allProjects', 'All projects') },
+          ...(executionBankFilterOptions.hasNoProject
+            ? [{ value: 'NO_PROJECT', label: t('execution.bank.filters.noProject', 'No project') }]
+            : []),
+          ...executionBankFilterOptions.projects,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.statusAria', 'Bank status filter')}
+        value={executionBankStatusFilter}
+        onValueChange={setExecutionBankStatusFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allStatuses', 'All statuses') },
+          ...executionBankFilterOptions.statuses,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.ownerAria', 'Bank owner filter')}
+        value={executionBankOwnerFilter}
+        onValueChange={setExecutionBankOwnerFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allOwners', 'All owners') },
+          ...(executionBankFilterOptions.hasNoOwner
+            ? [{ value: 'NO_OWNER', label: t('execution.bank.filters.noOwner', 'No owner') }]
+            : []),
+          ...executionBankFilterOptions.owners,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.priorityAria', 'Bank priority filter')}
+        value={executionBankPriorityFilter}
+        onValueChange={setExecutionBankPriorityFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.allPriorities', 'All priorities') },
+          ...executionBankFilterOptions.priorities,
+        ]}
+      />
+      <ExecutionBankFilterDropdown
+        ariaLabel={t('execution.bank.filters.timeAria', 'Bank time filter')}
+        value={executionBankTimeFilter}
+        onValueChange={setExecutionBankTimeFilter}
+        options={[
+          { value: 'ALL', label: t('execution.bank.filters.anyTime', 'Any time') },
+          { value: 'PAST_DUE', label: t('execution.bank.filters.pastDue', 'Past due') },
+          { value: 'NEXT_30', label: t('execution.bank.filters.next30', 'Next 30 days') },
+          { value: 'NEXT_90', label: t('execution.bank.filters.next90', 'Next 90 days') },
+        ]}
+      />
+    </div>
+  ) : null;
+
   const rightControls = useMemo(() => {
     const showScope = activeTab === 'list';
 
@@ -2948,9 +3162,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return <div className="flex min-w-0 items-center gap-2">{surfaceControl}</div>;
     }
 
-    return <div className="flex min-w-0 items-center gap-2">{scopeToggle}</div>;
+    return (
+      <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
+        {scopeToggle}
+        {executionBankFilterControls}
+      </div>
+    );
   }, [
     activeTab,
+    executionBankFilterControls,
     scopeToggle,
     workFilterControl,
     resourcesFilterControl,
@@ -3092,7 +3312,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         name: row.name,
         status:
           row.status === InitiativeStatus.IN_EXECUTION
-            ? 'IN_EXECUTION'
+            ? 'EXECUTING'
             : row.status === InitiativeStatus.CLOSED
               ? 'DONE'
               : 'DRAFT',
@@ -3147,7 +3367,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         name: row.title,
         status:
           row.status === 'IN_EXECUTION'
-            ? 'IN_EXECUTION'
+            ? 'EXECUTING'
             : ['COMPLETED', 'DECIDED', 'APPROVED'].includes(row.status)
               ? 'DONE'
               : 'DRAFT',
@@ -5640,8 +5860,17 @@ Please return:
     // Otherwise a canonical Initiative deep link can update the URL correctly
     // while the `list` branch below still masks the document with the table.
     if (activeDocumentId) {
-      if (execReportsIntelligenceEnabled && activeDocumentId === 'execution-intelligence:work') {
-        return <WorkIntelligenceReport onOpenDocument={handleOpenWorkDocument} />;
+      if (
+        (execReportsIntelligenceEnabled || workAnalysisEnabled) &&
+        activeDocumentId === 'execution-intelligence:work'
+      ) {
+        return (
+          <WorkIntelligenceReport
+            analysisEnabled={workAnalysisEnabled}
+            resolveOwnerName={resolveOwnerName}
+            onOpenDocument={handleOpenWorkDocument}
+          />
+        );
       }
       if (
         execReportsIntelligenceEnabled &&
@@ -5869,7 +6098,9 @@ Please return:
                   <div
                     data-testid="execution-bank-preview"
                     data-initiative-id={row.initiativeId}
-                    data-execution-case-id={row.executionCaseId ?? undefined}
+                    data-execution-case-id={
+                      row.id === row.initiativeId ? undefined : (row.executionCaseId ?? undefined)
+                    }
                     className="sr-only"
                   >
                     <span data-testid="execution-bank-progress">{progressLabel}</span>
@@ -6392,7 +6623,7 @@ Please return:
                 ...preset,
                 count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
               })),
-            ...(execReportsIntelligenceEnabled && activeTab === 'work'
+            ...((execReportsIntelligenceEnabled || workAnalysisEnabled) && activeTab === 'work'
               ? [
                   {
                     id: 'work-intelligence-report',

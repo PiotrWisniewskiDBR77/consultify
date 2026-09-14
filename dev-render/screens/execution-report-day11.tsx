@@ -1,10 +1,15 @@
 import React from 'react';
 
+import { ExecutionHub } from '../../src/components/Execution/ExecutionHub';
 import { ExecutionReportsSurface } from '../../src/components/Execution/ExecutionReportsSurface';
 import { ControlLoopReport } from '../../src/components/Execution/reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from '../../src/components/Execution/reports-intelligence/ResourcesCapacityReport';
 import { UnifiedExecutionReportGenerator } from '../../src/components/Execution/reports-intelligence/UnifiedExecutionReportGenerator';
 import { WorkIntelligenceReport } from '../../src/components/Execution/reports-intelligence/WorkIntelligenceReport';
+import { AppProviders } from '../../src/providers/AppProviders';
+import { seedRealisticSession } from '../mocks/seedStore';
+
+seedRealisticSession();
 
 const response = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), {
@@ -13,9 +18,19 @@ const response = (value: unknown, status = 200) =>
   });
 
 const installFixtureTransport = (state: string) => {
-  globalThis.fetch = (async (input: RequestInfo | URL) => {
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (state === 'error') return response({ error: 'Controlled dev-render failure' }, 503);
+    if (/\/api\/tasks(?:\?|$)/.test(url)) return response([]);
+    if (/\/api\/initiatives(?:\?|$)/.test(url)) return response([]);
+    if (/\/api\/organizations\/[^/]+\/members(?:\?|$)/.test(url))
+      return response([
+        { id: 'anna', firstName: 'Anna', lastName: 'Kowalska' },
+        { id: 'marek', firstName: 'Marek', lastName: 'Nowak' },
+        { id: 'board', firstName: 'Steering', lastName: 'Board' },
+      ]);
+    if (/\/api\/tasks\/workflow-config(?:\?|$)/.test(url))
+      return response({ statuses: ['todo', 'in_progress', 'blocked', 'done'], transitions: {} });
     if (url.includes('/report-definitions/def-weekly'))
       return response({
         definitionId: 'def-weekly',
@@ -49,6 +64,9 @@ const installFixtureTransport = (state: string) => {
                 },
               ],
       });
+    if (url.endsWith('/api/execution-reports/definitions'))
+      return response({ definitions: [] });
+    if (url.endsWith('/api/execution-reports/runs')) return response({ items: [] });
     if (url.includes('/execution-cases/case-1/work'))
       return response({
         tasks:
@@ -56,26 +74,55 @@ const installFixtureTransport = (state: string) => {
             ? []
             : [
                 {
-                  taskId: 'task-overdue',
-                  title: 'Close supplier readiness gap',
-                  status: 'BLOCKED',
+                  taskId: 'task-previous-1',
+                  title: 'Close prior supplier gap',
+                  status: 'DONE',
                   assigneeId: 'anna',
-                  dueAt: '2026-08-20T12:00:00Z',
-                  slaAt: '2026-08-21T12:00:00Z',
+                  dueAt: '2026-09-08T12:00:00Z',
+                  completedAt: '2026-09-08T15:00:00Z',
+                  slaAt: '2026-09-08T16:00:00Z',
                   dependencies: ['decision-1'],
                   evidenceRefs: ['ev-1'],
                   definitionOfDone: 'Acceptance evidence',
                   version: 4,
                 },
                 {
-                  taskId: 'task-undated',
-                  title: 'Confirm rollout support',
-                  status: 'OPEN',
+                  taskId: 'task-previous-2',
+                  title: 'Complete prior safety review',
+                  status: 'DONE',
                   assigneeId: 'marek',
-                  dueAt: null,
+                  dueAt: '2026-09-09T12:00:00Z',
+                  completedAt: '2026-09-09T14:00:00Z',
                   evidenceRefs: [],
                   version: 2,
                 },
+                {
+                  taskId: 'task-previous-3',
+                  title: 'Sign prior readiness checklist',
+                  status: 'DONE',
+                  assigneeId: 'anna',
+                  dueAt: '2026-09-10T12:00:00Z',
+                  completedAt: '2026-09-10T13:00:00Z',
+                  evidenceRefs: ['ev-3'],
+                  version: 1,
+                },
+                ...[
+                  ['task-next-1', 'Close supplier readiness gap', '2026-09-15T12:00:00Z', 'BLOCKED'],
+                  ['task-next-2', 'Confirm rollout support', '2026-09-16T12:00:00Z', 'OPEN'],
+                  ['task-next-3', 'Validate operator training', '2026-09-17T12:00:00Z', 'OPEN'],
+                  ['task-month-1', 'Prepare scale-up decision', '2026-09-25T12:00:00Z', 'OPEN'],
+                  ['task-month-2', 'Complete benefits review', '2026-10-01T12:00:00Z', 'OPEN'],
+                  ['task-month-3', 'Approve phase-two scope', '2026-10-10T12:00:00Z', 'OPEN'],
+                ].map(([taskId, title, dueAt, status], index) => ({
+                  taskId,
+                  title,
+                  status,
+                  priority: index === 0 ? 'HIGH' : index < 3 ? 'MEDIUM' : 'LOW',
+                  assigneeId: index % 2 === 0 ? 'anna' : 'marek',
+                  dueAt,
+                  evidenceRefs: [],
+                  version: 1,
+                })),
               ],
         decisions:
           state === 'empty'
@@ -116,6 +163,45 @@ const installFixtureTransport = (state: string) => {
                 },
               ],
       });
+    if (url.includes('/api/v8/execution-control/manager/lanes/')) {
+      if (url.includes('/problem-actions/execute') && init?.method === 'POST') {
+        return response({ data: { success: true, message: 'Task delegated.', changedCount: 1 } });
+      }
+      const lane = url.includes('/action-queue/') ? 'action-queue' : url.includes('/blockers/') ? 'blockers' : 'workload';
+      return response({
+        data: {
+          problems: lane === 'action-queue' && state !== 'empty' ? [{
+            id: 'aq-task-blocked-task-next-1',
+            severity: 'critical',
+            problemType: 'overdue_task',
+            title: 'Close supplier readiness gap',
+            rootCause: 'Blocked and overdue',
+            sourceEntityType: 'TASK',
+            sourceEntityId: 'task-next-1',
+            sourceEntityName: 'Close supplier readiness gap',
+            ownerId: 'anna',
+            ownerName: 'Anna Kowalska',
+            daysOverdue: 25,
+            impactCount: 1,
+            affectedEntities: [],
+            actions: [
+              { id: 'escalate', label: 'Escalate' },
+              { id: 'reassign', label: 'Reassign' },
+              { id: 'set_capacity', label: 'Set capacity' },
+            ],
+            meta: {},
+          }] : [],
+          count: lane === 'action-queue' && state !== 'empty' ? 1 : 0,
+        },
+      });
+    }
+    if (url.endsWith('/api/execution-reports/work-analysis/generate') && init?.method === 'POST')
+      return response({
+        id: '1bf4228a-010f-4a00-a6c8-5aaac567d3a2',
+        created: true,
+        asOf: '2026-09-14T05:00:00.000Z',
+        period: { start: '2026-09-14T00:00:00.000Z', end: '2026-09-21T00:00:00.000Z' },
+      }, 201);
     if (url.endsWith('/execution-cases'))
       return response({
         cases:
@@ -126,6 +212,8 @@ const installFixtureTransport = (state: string) => {
                   executionCaseId: 'case-1',
                   initiativeId: 'initiative-1',
                   initiativeTitle: 'Factory AI rollout',
+                  projectId: 'project-north-plant',
+                  projectTitle: 'North plant transformation',
                 },
               ],
       });
@@ -176,6 +264,15 @@ export function ExecutionReportDay11Screen(): React.ReactElement {
   const state = params.get('state') || 'ready';
   document.documentElement.classList.toggle('dark', params.get('theme') === 'dark');
   installFixtureTransport(state);
+  if (report === 'work-shell') {
+    return (
+      <AppProviders>
+        <div className="h-screen bg-c-surface text-c-text">
+          <ExecutionHub initialTab={'work' as never} />
+        </div>
+      </AppProviders>
+    );
+  }
   return (
     /*
      * HARNESS-ONLY FIX (2026-09-02, pomiar --wysokosc): `min-h-screen`
@@ -188,7 +285,7 @@ export function ExecutionReportDay11Screen(): React.ReactElement {
      * zmian w ExecutionReportsSurface.tsx.
      */
     <div className="h-screen bg-c-surface p-4 text-c-text">
-      {report === 'work' ? <WorkIntelligenceReport /> : null}
+      {report === 'work' ? <WorkIntelligenceReport analysisEnabled /> : null}
       {report === 'resources' ? <ResourcesCapacityReport /> : null}
       {report === 'control' ? <ControlLoopReport /> : null}
       {report === 'generator' ? <UnifiedExecutionReportGenerator /> : null}

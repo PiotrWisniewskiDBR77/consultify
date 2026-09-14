@@ -617,6 +617,7 @@ const Z29InicjatywyRaportPracyScreen = React.lazy(
 );
 const P2bInicjatywyEmptyScreen = React.lazy(() => import('./screens/p2b-inicjatywy-empty'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
+const ExecutionRiskSignalE0Screen = React.lazy(() => import('./screens/execution-risk-signal-e0'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-execution-i18n')
@@ -736,6 +737,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'H1b — Inicjatywy → „Do akceptacji" (REALNY <TransitionInboxSurface>: StandardTable + StandardPreview): skrzynka recenzenta przejść cyklu życia. &case=empty|off &lang=pl|en &theme=light|dark',
     render: () => <H1bSkrzynkaPrzejscScreen />,
+  },
+  'execution-risk-signal-e0': {
+    label:
+      'F2-2 E0 — sygnalizacja ryzyka Realizacji: trzy warianty zgodne z DEC-487/493; artefakt CTO 8c073b0a EVIDENCE_MISSING',
+    render: () => <ExecutionRiskSignalE0Screen />,
   },
   's114b-narzedzia': {
     label:

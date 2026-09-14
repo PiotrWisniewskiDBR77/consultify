@@ -75,6 +75,8 @@ export interface ExecutionBankInitiativeSource {
   name: string;
   description?: string | null;
   lifecycleStatus?: string | null;
+  projectId?: string | null;
+  priority?: string | null;
   ownerId?: string | null;
   ownerName?: string | null;
   progress?: number | null;
@@ -119,6 +121,8 @@ export interface ExecutionBankCaseSource {
   executionCaseId: string;
   initiativeId: string;
   initiativeTitle?: string | null;
+  projectId?: string | null;
+  projectTitle?: string | null;
   version?: number | string | null;
   state?: string | null;
   executionPhase?: string | null;
@@ -151,6 +155,8 @@ export interface ExecutionBankRow {
   name: string;
   description: string | null;
   lifecycleStatus: string;
+  projectId: string | null;
+  priority: string | null;
   executionState: string;
   executionPhase: string | null;
   ownerId: string | null;
@@ -266,6 +272,11 @@ export interface ExecutionBankFilter {
   executionStates?: readonly string[];
   executionPhases?: readonly string[];
   ownerIds?: readonly string[];
+  /** `null` is the explicit bucket for inherited initiatives without a project (DEC-469). */
+  projectIds?: readonly (string | null)[];
+  priorities?: readonly string[];
+  /** Half-open ISO date window applied to the best evidenced finish date. */
+  timeWindow?: { start?: string; endExclusive?: string };
   health?: readonly string[];
   dataIssues?: readonly ('MISSING_BASELINE' | 'MISSING_FORECAST' | 'UNKNOWN_PROGRESS')[];
   preset?:
@@ -684,7 +695,8 @@ const optionalFiniteNumber = (value: number | string | null | undefined): number
 const buildRow = (
   initiative: ExecutionBankInitiativeSource | undefined,
   executionCase: ExecutionBankCaseSource | null,
-  asOf: string
+  asOf: string,
+  identityMode: 'INITIATIVE' | 'LEGACY'
 ): ExecutionBankRow => {
   const baseline = baselineEvidence(initiative, executionCase, asOf);
   const baselineStart = baseline.start;
@@ -861,7 +873,13 @@ const buildRow = (
             );
 
   return {
-    id: executionCase?.executionCaseId ?? `initiative:${initiative?.id ?? 'missing'}`,
+    // The Execution Case is an implementation shadow. Bank identity is always
+    // the Initiative identity visible to the user (F2-2 R0.3).
+    id:
+      identityMode === 'INITIATIVE'
+        ? (executionCase?.initiativeId ?? initiative?.id ?? 'missing-initiative')
+        : (executionCase?.executionCaseId ??
+          (initiative?.id ? `initiative:${initiative.id}` : 'missing-initiative')),
     initiativeId: executionCase?.initiativeId ?? initiative?.id ?? '',
     executionCaseId: executionCase?.executionCaseId ?? null,
     executionCaseVersion: optionalFiniteNumber(executionCase?.version),
@@ -876,6 +894,8 @@ const buildRow = (
       initiative?.lifecycleStatus || 'UNKNOWN',
       executionCase
     ),
+    projectId: initiative?.projectId?.trim() || null,
+    priority: initiative?.priority?.trim() || null,
     executionState: executionCase?.state || 'UNKNOWN',
     executionPhase: executionCase?.executionPhase ?? null,
     ownerId: executionCase?.executionManagerId ?? initiative?.ownerId ?? null,
@@ -914,23 +934,43 @@ const healthRank = (row: ExecutionBankRow): number => {
 export function buildExecutionBankRows(
   initiatives: readonly ExecutionBankInitiativeSource[],
   executionCases: readonly ExecutionBankCaseSource[],
-  options: { asOf: string }
+  options: { asOf: string; identityMode?: 'INITIATIVE' | 'LEGACY' }
 ): ExecutionBankRow[] {
   const asOf = controlledAsOf(options.asOf);
+  const identityMode = options.identityMode ?? 'LEGACY';
   const initiativesById = new Map(initiatives.map((initiative) => [initiative.id, initiative]));
   const validCases = executionCases.filter(
     (executionCase) => executionCase.executionCaseId && executionCase.initiativeId
   );
+  const casesByInitiative = new Map<string, ExecutionBankCaseSource>();
+  for (const executionCase of validCases) {
+    const current = casesByInitiative.get(executionCase.initiativeId);
+    const currentVersion = optionalFiniteNumber(current?.version) ?? -1;
+    const candidateVersion = optionalFiniteNumber(executionCase.version) ?? -1;
+    const currentUpdatedAt = Date.parse(current?.updatedAt ?? '') || 0;
+    const candidateUpdatedAt = Date.parse(executionCase.updatedAt ?? '') || 0;
+    if (
+      !current ||
+      candidateVersion > currentVersion ||
+      (candidateVersion === currentVersion && candidateUpdatedAt > currentUpdatedAt) ||
+      (candidateVersion === currentVersion &&
+        candidateUpdatedAt === currentUpdatedAt &&
+        executionCase.executionCaseId.localeCompare(current.executionCaseId) > 0)
+    ) {
+      casesByInitiative.set(executionCase.initiativeId, executionCase);
+    }
+  }
+  const visibleCases = identityMode === 'INITIATIVE' ? [...casesByInitiative.values()] : validCases;
   const initiativeIdsWithCases = new Set(
-    validCases.map((executionCase) => executionCase.initiativeId)
+    visibleCases.map((executionCase) => executionCase.initiativeId)
   );
   return [
-    ...validCases.map((executionCase) =>
-      buildRow(initiativesById.get(executionCase.initiativeId), executionCase, asOf)
+    ...visibleCases.map((executionCase) =>
+      buildRow(initiativesById.get(executionCase.initiativeId), executionCase, asOf, identityMode)
     ),
     ...initiatives
       .filter((initiative) => !initiativeIdsWithCases.has(initiative.id))
-      .map((initiative) => buildRow(initiative, null, asOf)),
+      .map((initiative) => buildRow(initiative, null, asOf, identityMode)),
   ].sort((a, b) => {
     const health = healthRank(b) - healthRank(a);
     if (health) return health;
@@ -972,6 +1012,22 @@ export function filterExecutionBankRows(
       return false;
     if (filter.ownerIds?.length && !filter.ownerIds.includes(row.ownerId ?? 'UNKNOWN'))
       return false;
+    if (filter.projectIds?.length && !filter.projectIds.includes(row.projectId)) return false;
+    if (
+      filter.priorities?.length &&
+      !filter.priorities.some(
+        (priority) =>
+          priority.toLocaleUpperCase() === (row.priority ?? 'UNKNOWN').toLocaleUpperCase()
+      )
+    )
+      return false;
+    if (filter.timeWindow) {
+      if (row.displayFinish.status !== 'KNOWN') return false;
+      const finish = row.displayFinish.value.slice(0, 10);
+      if (filter.timeWindow.start && finish < filter.timeWindow.start.slice(0, 10)) return false;
+      if (filter.timeWindow.endExclusive && finish >= filter.timeWindow.endExclusive.slice(0, 10))
+        return false;
+    }
     if (
       filter.health?.length &&
       !filter.health.includes(row.health.status === 'KNOWN' ? row.health.value : 'UNKNOWN')

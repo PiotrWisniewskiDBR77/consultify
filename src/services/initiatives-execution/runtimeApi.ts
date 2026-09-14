@@ -182,6 +182,8 @@ export interface RuntimeExecutionCaseSummary {
   executionCaseId: string;
   initiativeId?: string;
   initiativeTitle?: string | null;
+  projectId?: string | null;
+  projectTitle?: string | null;
   version?: number;
   state?: string;
   executionManagerId?: string;
