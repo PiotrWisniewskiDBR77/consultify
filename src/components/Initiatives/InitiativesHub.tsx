@@ -2109,7 +2109,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
     }
 
-    if (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED) {
+    // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
+    // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
+    if (
+      (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') ||
+      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
+    ) {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}
@@ -2427,6 +2432,36 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ten sam kod klas co bliźniaczy pstryczek w Realizacji. Do 08.09.2026 oba
   // moduły miały własne warianty tego samego elementu (h-8 vs h-9, inne
   // obwódki i inne tło aktywnego) — właściciel nazwał to chaosem menu.
+  // KANON PASKÓW §A2: slot filtrów Menu 2 deklaruje kontrolki, nie rysuje ich
+  // — pstryczek F2-1 mieszka w osobnej zmiennej, tak samo jak `scopeToggle`.
+  const fourButtonsScopeToggle = (
+    <div
+      className={MENU_2_SEGMENT_GROUP}
+      role="radiogroup"
+      aria-label={t('initiatives.archiveScope.label', 'Register scope')}
+      data-testid="initiatives-archive-scope"
+    >
+      {(['current', 'archive'] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={fourButtonsArchiveScope === value}
+          onClick={() => setFourButtonsArchiveScope(value)}
+          className={
+            fourButtonsArchiveScope === value
+              ? MENU_2_SEGMENT_ITEM_ACTIVE
+              : MENU_2_SEGMENT_ITEM_INACTIVE
+          }
+        >
+          {value === 'current'
+            ? t('initiatives.archiveScope.current', 'Current')
+            : t('initiatives.archiveScope.archive', 'Archive')}
+        </button>
+      ))}
+    </div>
+  );
+
   const scopeToggle = (
     <div
       className={MENU_2_SEGMENT_GROUP}
@@ -2905,35 +2940,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }}
             data-testid="initiatives-lifecycle-dropdown"
           />
-          {initiativesFourButtonsEnabled ? (
-            <div
-              className={MENU_2_SEGMENT_GROUP}
-              role="radiogroup"
-              aria-label={t('initiatives.archiveScope.label', 'Register scope')}
-              data-testid="initiatives-archive-scope"
-            >
-              {(['current', 'archive'] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={fourButtonsArchiveScope === value}
-                  onClick={() => setFourButtonsArchiveScope(value)}
-                  className={
-                    fourButtonsArchiveScope === value
-                      ? MENU_2_SEGMENT_ITEM_ACTIVE
-                      : MENU_2_SEGMENT_ITEM_INACTIVE
-                  }
-                >
-                  {value === 'current'
-                    ? t('initiatives.archiveScope.current', 'Current')
-                    : t('initiatives.archiveScope.archive', 'Archive')}
-                </button>
-              ))}
-            </div>
-          ) : (
-            scopeToggle
-          )}
+          {initiativesFourButtonsEnabled ? fourButtonsScopeToggle : scopeToggle}
         </>
       )}
       {activeTab === 'plan' && (
