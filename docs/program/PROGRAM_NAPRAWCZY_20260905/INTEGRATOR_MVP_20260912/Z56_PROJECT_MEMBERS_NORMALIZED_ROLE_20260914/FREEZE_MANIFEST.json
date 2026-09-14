@@ -1,0 +1,37 @@
+{
+  "package": "Z-56 project_members.normalized_project_role strict-chain repair",
+  "decision": "DEC-511",
+  "lineBaseSha": "08c1bb7a2614a84092b8c4ed52404df69dcfd907",
+  "acceptedPredecessor": "Z-39 / DEC-508 cherry-picked as cdc4b1b431",
+  "contentSha": "b7c6b3015a",
+  "branch": "codex/a-c-z56-normalized-role-20260914",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW",
+  "scope": {
+    "productChanges": 0,
+    "dataChanges": 0,
+    "migrations": 1,
+    "migration": "server/migrations/20262210_project_members_normalized_project_role.sql",
+    "migrationSha256": "b51b8f40e196990844dd248416e0ffb8e8339b883b1f04263a083bc9a1f4b067"
+  },
+  "gates": {
+    "stagingContract": "PASS_text_no_default_nullable_YES_read_only",
+    "selfHealParity": "PASS_TEXT_no_default_nullable_no_backfill_no_trigger",
+    "strictFreshPg18Pgvector": "PASS_918_OF_918",
+    "strictSecondRun": "PASS_0_PENDING",
+    "existingColumnDoubleRun": "PASS_2_runs_contract_unchanged",
+    "s5RealPgStrictOnly": "PASS_5_3_1_1_zero_skip",
+    "serverTscBaseCandidate": "0_0_source_ts_tree_identical",
+    "diffCheck": "PASS"
+  },
+  "z57Measurement": {
+    "stagingColumns": 23621,
+    "fresh918Columns": 23416,
+    "stagingOnly": 234,
+    "freshOnly": 29,
+    "contractDifferences": 455,
+    "action": "REPORT_ONLY"
+  },
+  "evidenceDirectory": "evidence/z56",
+  "evidenceHashes": "evidence/z56/evidence-hashes.json",
+  "review": "NOT_RUN_STOP_BEFORE_INDEPENDENT_REVIEW"
+}
