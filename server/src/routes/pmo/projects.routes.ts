@@ -181,6 +181,7 @@ router.post(
   '/:id/members',
   requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
     shadow: true,
+    enforceMode: 'enforce',
   }),
   ProjectController.addProjectMember
 );
@@ -193,6 +194,7 @@ router.patch(
   '/:id/members/:userId',
   requireAnyProjectCapability(['project.team.manage', 'project.team.update'], undefined, {
     shadow: true,
+    enforceMode: 'enforce',
   }),
   ProjectController.updateProjectMember
 );
@@ -269,6 +271,9 @@ router.delete(
  */
 router.get('/:id/notification-settings', ProjectController.getNotificationSettings);
 
+/** GET /api/pmo/projects/:id/operating-model — E2 read model. */
+router.get('/:id/operating-model', ProjectController.getProjectOperatingModel);
+
 /**
  * PUT /api/projects/:id/notification-settings
  * Update notification settings for project
@@ -277,6 +282,7 @@ router.put(
   '/:id/notification-settings',
   requireAnyProjectCapability(['project.settings.manage', 'project.settings.update'], undefined, {
     shadow: true,
+    enforceMode: 'enforce',
   }),
   validateBody(ProjectNotificationSettingsSchema),
   ProjectController.updateNotificationSettings

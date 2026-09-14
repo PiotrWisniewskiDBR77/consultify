@@ -1,0 +1,12 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/f2-3-pmo-20260913
+
+ ✓ src/components/MyWork/__tests__/CreateProjectModal.submitBehavior.test.tsx > F2-3 E2 CreateProjectModal native form behavior > Cancel closes a valid form without creating a project 179ms
+ ✓ src/components/MyWork/__tests__/CreateProjectModal.submitBehavior.test.tsx > F2-3 E2 CreateProjectModal native form behavior > the X button closes a valid form without creating a project 110ms
+ ✓ src/components/MyWork/__tests__/CreateProjectModal.submitBehavior.test.tsx > F2-3 E2 CreateProjectModal native form behavior > Submit creates exactly one project and returns the saved record 91ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:14:26
+   Duration  948ms (transform 78ms, setup 93ms, import 130ms, tests 382ms, environment 257ms)
+
