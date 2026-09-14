@@ -110,8 +110,26 @@ function logConversationStabilityMarker(marker: string, details: Record<string, 
   console.info('[stability:conversation]', { marker, ...details });
 }
 
-function replaceChatRoute() {
+/**
+ * Sprząta ADRES po rozmowie, której nie ma — ale TYLKO wtedy, gdy adres na nią
+ * wskazuje.
+ *
+ * Uwaga Tomka XX (pilotaż 13.09): kliknięcie „Zapytaj Teresę" na ekranie DRD
+ * przenosiło testera na `/chat` z komunikatem o usuniętej rozmowie. Ta funkcja
+ * przepisywała adres na `/chat` BEZWARUNKOWO, więc martwy wskaźnik rozmowy
+ * wyrzucał użytkownika z ekranu, na którym pracował (DRD, Moja praca, Studio).
+ * Pomocnicy `isChatRootPath`/`getChatRouteConversationId` już istnieli — po
+ * prostu nikt ich tu nie podłączył.
+ */
+function replaceChatRoute(conversationId?: string) {
   if (typeof window === 'undefined') return;
+  const routeConversationId = getChatRouteConversationId();
+  const addressPointsAtConversation = conversationId
+    ? routeConversationId === conversationId
+    : routeConversationId !== null;
+  // Poza trasą czatu (DRD, Moja praca, Studio…) adres nie należy do rozmowy —
+  // nie wolno go ruszać. Na gołym `/chat` też nie ma czego przepisywać.
+  if (!addressPointsAtConversation || isChatRootPath()) return;
   try {
     window.history.replaceState(null, '', '/chat');
     window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
@@ -130,7 +148,7 @@ function quarantineMissingConversationPointer(conversationId: string, reason: st
     conversationId: normalized,
     reason,
   });
-  replaceChatRoute();
+  replaceChatRoute(normalized);
 }
 
 function applyMissingConversationState(state: ConversationState) {
