@@ -15,7 +15,8 @@
  */
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import i18n from 'i18next';
 
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { DrdMethodWorkspaceScreen } from '../DrdMethodWorkspaceScreen';
@@ -52,6 +53,13 @@ function poziomyKolumny(areaId: string): number[] {
 }
 
 describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one', () => {
+  // DEC-461 (14.09): nawigator idzie teraz za językiem interfejsu, a domyślnym
+  // jest angielski. Ten plik klika osie/obszary PO POLSKU (`namePL`) i pilnuje
+  // SKAL POZIOMÓW, nie języka — więc ustawia język jawnie zamiast zgadywać.
+  beforeAll(async () => {
+    await i18n.changeLanguage('pl');
+  });
+
   it('axis 1 (area 1A) renders levels 1..7; switching to axis 7 renders 1..5', () => {
     const storage = makeMemoryStorage();
     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="matrix" initialViewMode="matrix" />);

@@ -48,6 +48,7 @@ import {
 } from './DRDAssessmentEditor';
 import { drdOdpowiedziZOutputu } from './DRDMatrixReadOnly';
 import { nazwaWJezyku } from './drdNazwa';
+import { useDrdPackLanguage } from './useDrdPack';
 
 import type { MatrixCellState, MatrixRow, MatrixSelection } from '@/components/method-workspace/types';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
@@ -100,7 +101,10 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
   renderSideSheet,
   className = '',
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  // DEC-461: axis caption language from the real i18next singleton — see
+  // useDrdPack.ts for why NOT `useTranslation().i18n` (mocked in tests).
+  const jezyk = useDrdPackLanguage();
   const podpisUkrytychKolumn = usePodpisUkrytychKolumn();
   /**
    * „Przestronny" i „Pełny ekran" żyją TU, a nie w ekranie sesji: to ustawienia
@@ -144,7 +148,7 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
   }
 
   // DEC-461: axis caption in the viewer's language (was unconditionally PL).
-  const nazwaOsi = nazwaWJezyku(axis.namePL, axis.name, (i18n.language || '').toLowerCase().startsWith('pl'));
+  const nazwaOsi = nazwaWJezyku(axis.namePL, axis.name, jezyk === 'pl');
 
   /**
    * Siatka + otoczka. `siatka(fill)` jest jedną definicją używaną w zakładce

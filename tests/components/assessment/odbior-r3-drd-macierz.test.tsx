@@ -17,7 +17,8 @@
  */
 import { render, screen, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import i18n from 'i18next';
 
 import { DrdOwnerMatrixPanel } from '../../../src/components/assessment/drd/DrdOwnerMatrixPanel';
 import type { MatrixCellState, MatrixRow } from '../../../src/components/method-workspace/types';
@@ -47,6 +48,14 @@ const WIERSZE: readonly MatrixRow[] = [
 ];
 
 describe('05-ocena · drd-macierz-oceny — macierz dostaje otoczkę z obrazu', () => {
+  // DEC-461 (14.09): produkt prowadzi po ANGIELSKU, więc nazwa osi w otoczce
+  // idzie za językiem interfejsu. Ten odbiór odtwarza POLSKI obraz
+  // zatwierdzony przez właściciela 05.09 — ustawiamy ten język jawnie,
+  // zamiast polegać na domyślnym (co właśnie przestało być polskim).
+  beforeAll(async () => {
+    await i18n.changeLanguage('pl');
+  });
+
   it('rysuje nagłówek, AS-IS/TO-BE, „Przestronny", „Pełny ekran" i cztery kafle', () => {
     render(
       <DrdOwnerMatrixPanel
