@@ -1102,6 +1102,12 @@ router.get(
       (status: string): status is InitiativeStatusType =>
         Object.values(InitiativeStatus).includes(status as InitiativeStatusType)
     );
+    if (initiativeStatuses.length !== rawInitiativeStatuses.length) {
+      return res.status(400).json({
+        error: 'Invalid initiative status',
+        code: 'INVALID_INITIATIVE_STATUS',
+      });
+    }
     const plan = await getExecutionResourcePlan(orgId, {
       weeks: Number.isFinite(weeks) ? weeks : undefined,
       projectId: projectId || undefined,
@@ -1110,15 +1116,22 @@ router.get(
     });
     const totalDemand = plan.rows.reduce((sum, row) => sum + row.demandHours, 0);
     const totalSupply = plan.rows.reduce((sum, row) => sum + row.supplyHours, 0);
+    const rows = plan.rows.map((row) => ({
+      ...row,
+      capacityExceeded: row.demandHours > 0 && row.supplyHours <= 0,
+    }));
     return res.json({
       ...plan,
+      rows,
       summary: {
         peopleCount: plan.people.length,
         demandHours: Math.round(totalDemand * 10) / 10,
         supplyHours: Math.round(totalSupply * 10) / 10,
         gapHours: Math.round((totalSupply - totalDemand) * 10) / 10,
         utilizationPercent: totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
-        overloadedCount: plan.rows.filter((row) => row.utilizationPercent > 100).length,
+        overloadedCount: rows.filter(
+          (row) => row.capacityExceeded || row.utilizationPercent > 100
+        ).length,
         peopleWithoutProfileSupply: plan.people.filter(
           (person) => person.supplySource === 'DOMYSLNA'
         ).length,

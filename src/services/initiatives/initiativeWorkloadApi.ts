@@ -1,5 +1,10 @@
 import { getHeaders } from '@/services/apiUtils';
-import type { ResourcePlanResponse } from '@/services/execution/resourcePlanApi';
+import type { ResourcePlanResponse, ResourcePlanRow } from '@/services/execution/resourcePlanApi';
+
+export type InitiativeWorkloadRow = ResourcePlanRow & { capacityExceeded?: boolean };
+export type InitiativeWorkloadResponse = Omit<ResourcePlanResponse, 'rows'> & {
+  rows: InitiativeWorkloadRow[];
+};
 
 export interface InitiativeWorkloadQuery {
   weeks?: number;
@@ -10,7 +15,7 @@ export interface InitiativeWorkloadQuery {
 export async function readInitiativeWorkload(
   query: InitiativeWorkloadQuery,
   signal?: AbortSignal
-): Promise<ResourcePlanResponse> {
+): Promise<InitiativeWorkloadResponse> {
   const params = new URLSearchParams({ weeks: String(query.weeks || 8) });
   if (query.projectId) params.set('projectId', query.projectId);
   if (query.initiativeStatuses?.length) {
@@ -21,5 +26,5 @@ export async function readInitiativeWorkload(
     signal,
   });
   if (!response.ok) throw new Error(`initiative-workload ${response.status}`);
-  return (await response.json()) as ResourcePlanResponse;
+  return (await response.json()) as InitiativeWorkloadResponse;
 }

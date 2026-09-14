@@ -130,6 +130,47 @@ describe('InitiativeWorkloadSurface E1', () => {
     );
   });
 
+  it('renders positive demand with zero capacity as a critical state', async () => {
+    readInitiativeWorkload.mockResolvedValueOnce({
+      ...response,
+      rows: [
+        ...response.rows,
+        {
+          userId: 'zero-capacity',
+          name: 'Zero Capacity',
+          role: 'Analyst',
+          weekStart: '2026-09-14',
+          demandHours: 8,
+          supplyHours: 0,
+          utilizationPercent: 0,
+          capacityExceeded: true,
+          gapHours: -8,
+          backlogHours: 0,
+          taskCount: 1,
+          supplySource: 'PROFIL',
+        },
+      ],
+      people: [
+        ...response.people,
+        {
+          userId: 'zero-capacity',
+          name: 'Zero Capacity',
+          role: 'Analyst',
+          weeklyCapacityHours: 0,
+          availabilityPercent: 100,
+          supplySource: 'PROFIL',
+          backlogHours: 0,
+          unscheduledHours: 0,
+        },
+      ],
+    });
+    renderSurface();
+
+    const cell = await screen.findByTestId('workload-zero-capacity-2026-09-14');
+    expect(cell).toHaveAttribute('data-workload-band', 'red');
+    expect(cell).toHaveTextContent('No capacity');
+  });
+
   it('passes project and initiative status filters to the governed server read', async () => {
     renderSurface();
     await screen.findByText('Anna Adams');
