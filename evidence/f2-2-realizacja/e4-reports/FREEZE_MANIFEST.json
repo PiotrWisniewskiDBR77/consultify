@@ -1,7 +1,7 @@
 {
   "package": "Q2 F2-2 E4 Execution reports",
   "base": "29d1db9f00793dab6aeac5f68656200cddf9e529",
-  "candidate": "d89bd146c17c8469827b9984e857976975c9e819",
+  "candidate": "5cc74e7a5ed4f420e1eb7f61fe84fc18196f7d6c",
   "files": [
     {
       "path": "dev-render/main.tsx",
@@ -22,6 +22,11 @@
       "path": "evidence/f2-2-realizacja/e4-reports/light.png",
       "bytes": 65773,
       "sha256": "cb951027abdd8bf4fa2de62a78f8f8a025c8e8723fb0689623640fe434ebf1cb"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e4-reports/en-dark.png",
+      "bytes": 66595,
+      "sha256": "afbe7f1c0fce5f5407b94b6b9756fa059e9cf21772ea8b78b64dff707daaab43"
     },
     {
       "path": "public/locales/en/translation.json",
@@ -104,6 +109,6 @@
       "sha256": "4a0cb52dea767aa378714699baee9758a19faa8417046bf37e1894c14b6c1e2f"
     }
   ],
-  "fileCount": 20,
-  "evidenceBytes": 136957
+  "fileCount": 21,
+  "evidenceBytes": 203552
 }
