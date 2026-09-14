@@ -753,9 +753,9 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'low', label: 'low' },
-          { value: 'medium', label: 'medium' },
-          { value: 'high', label: 'high' },
+          { value: 'low', label: t('execution.rollout.level.low', 'low') },
+          { value: 'medium', label: t('execution.rollout.level.medium', 'medium') },
+          { value: 'high', label: t('execution.rollout.level.high', 'high') },
         ],
         render: (row: any) => (
           <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
@@ -770,9 +770,9 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'low', label: 'low' },
-          { value: 'medium', label: 'medium' },
-          { value: 'high', label: 'high' },
+          { value: 'low', label: t('execution.rollout.level.low', 'low') },
+          { value: 'medium', label: t('execution.rollout.level.medium', 'medium') },
+          { value: 'high', label: t('execution.rollout.level.high', 'high') },
         ],
         render: (row: any) => (
           <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
@@ -943,9 +943,9 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
         width: '160px',
         filterable: true,
         filterOptions: [
-          { value: 'Handover', label: 'Handover' },
-          { value: 'Sign-off', label: 'Sign-off' },
-          { value: 'Closure', label: 'Closure' },
+          { value: 'Handover', label: t('execution.rollout.closure.category.handover', 'Handover') },
+          { value: 'Sign-off', label: t('execution.rollout.closure.category.signOff', 'Sign-off') },
+          { value: 'Closure', label: t('execution.rollout.closure.category.closure', 'Closure') },
         ],
       },
     ],

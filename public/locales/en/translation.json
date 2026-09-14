@@ -9242,7 +9242,7 @@
       "exportHint": "Export this context to enrich your Tools or Assessment"
     }
   },
-"assessment": {
+  "assessment": {
     "maturityMatrix": {
       "progress": "{{completed}} of {{total}} areas evaluated",
       "complete": "Complete assessment",
@@ -15623,6 +15623,10 @@
         "forecast": "Forecast",
         "actual": "Actual",
         "trackAria": "{{track}} timeline for {{name}}"
+      },
+      "empty": {
+        "title": "No initiatives",
+        "description": "Initiatives in this scope will appear here."
       }
     },
     "review": {
@@ -15869,7 +15873,12 @@
       "actionFailed": "Action failed",
       "actionWritesDisabledReason": "Saving is moving to the canonical execution registry — in progress",
       "preset": {
-        "peopleChange": "People & Change"
+        "peopleChange": "People & Change",
+        "actionQueue": "Action Queue",
+        "decisions": "Decisions",
+        "blockers": "Blockers",
+        "risk": "Risk",
+        "workload": "Workload"
       },
       "tile": {
         "actionQueue": "Action Queue",
@@ -15985,6 +15994,28 @@
           "title": "Ownership Fix",
           "subtitle": "Close owner, sponsor, dates, and accountability gaps."
         }
+      },
+      "metric": {
+        "items": "Items",
+        "critical": "Critical",
+        "issues": "Issues",
+        "blocked": "Blocked",
+        "risks": "Risks",
+        "gaps": "Gaps"
+      },
+      "workspace": {
+        "dueSoon": "Due Soon",
+        "dueSoonTitle": "Due Soon — items about to become active issues",
+        "decisionPack": "Decision Pack",
+        "decisionPackTitle": "Decision Pack — resolve approvals and blockers faster",
+        "recoveryPlan": "Recovery Plan",
+        "recoveryPlanTitle": "Recovery Plan — unblock and recover delivery flow",
+        "watchlist": "Watchlist",
+        "watchlistTitle": "Watchlist — monitor early warning signals",
+        "rebalance": "Rebalance",
+        "rebalanceTitle": "Rebalance — reduce overload and restore capacity balance",
+        "ownershipFix": "Ownership Fix",
+        "ownershipFixTitle": "Ownership Fix — close accountability and governance gaps"
       }
     },
     "managementTable": {
@@ -16095,7 +16126,12 @@
           "body": "Closure outcomes (value delivered, ROI, KPI deltas) are not yet synced to the Results module. This hand-off is a preview for this release; automatic sync to Results will be enabled in an upcoming phase."
         },
         "derivedNote": "Derived from completed initiatives — PMI/PRINCE2 handover, sign-off and closure actions. Add an item to maintain your own checklist.",
-        "editTitle": "Edit closure item"
+        "editTitle": "Edit closure item",
+        "category": {
+          "handover": "Handover",
+          "signOff": "Sign-off",
+          "closure": "Closure"
+        }
       },
       "addClosureItem": "Add Item",
       "addKpi": "Add KPI",
@@ -16158,6 +16194,11 @@
       "trend": {
         "none": "No measurements — the trend appears after two",
         "one": "One measurement — the trend starts at the second"
+      },
+      "level": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high"
       }
     },
     "reporting": {
@@ -17246,7 +17287,8 @@
         "approved": "APPROVED",
         "conditionallyApproved": "CONDITIONALLY_APPROVED",
         "returned": "RETURNED"
-      }
+      },
+      "updateTask": "Update task"
     },
     "resources": {
       "columns": {
@@ -17838,6 +17880,13 @@
         "title": "Item type unavailable",
         "body": "This item type cannot be opened in Execution."
       }
+    },
+    "kpi": {
+      "plannedEnd": "Planned end",
+      "initiativesExecuting": "Initiatives executing",
+      "initiativesBlocked": "Initiatives blocked",
+      "overdueTasks": "Overdue tasks",
+      "pendingDecisions": "Pending decisions"
     }
   },
   "benefits": {
