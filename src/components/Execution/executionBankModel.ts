@@ -121,6 +121,8 @@ export interface ExecutionBankCaseSource {
   executionCaseId: string;
   initiativeId: string;
   initiativeTitle?: string | null;
+  projectId?: string | null;
+  projectTitle?: string | null;
   version?: number | string | null;
   state?: string | null;
   executionPhase?: string | null;

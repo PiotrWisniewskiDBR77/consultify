@@ -2133,7 +2133,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const stats = useMemo(
     () => ({
       executing: statusCounts[InitiativeStatus.IN_EXECUTION] ?? 0,
-      blocked: initiatives.filter((initiative) => isBlockedInitiative(initiative as any)).length,
+      blocked: initiatives.filter((initiative) => isBlockedInitiative(initiative)).length,
     }),
     [initiatives, statusCounts]
   );
@@ -2163,7 +2163,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
     ) => {
       if (attention === 'blocked') {
-        return isBlockedInitiative(initiative as any);
+        return isBlockedInitiative(initiative);
       }
       if (attention === 'missing_dates') {
         return !initiative.plannedStartDate || !initiative.plannedEndDate;
@@ -2278,8 +2278,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             name: initiative.name,
             description: initiative.description,
             lifecycleStatus: String(initiative.status),
-            projectId: (initiative as any).projectId ?? null,
-            priority: (initiative as any).priority ?? null,
+            projectId: initiative.projectId ?? null,
+            priority: initiative.priority ?? null,
             ownerId:
               owner?.id ??
               (initiative as any).ownerExecutionId ??
@@ -3015,13 +3015,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     for (const initiative of initiatives) {
       const projectId = String(initiative.projectId || '').trim();
       const projectName = String(
-        (initiative as any).projectName || (initiative as any).project?.name || ''
+        initiative.projectName || initiative.project?.name || ''
       ).trim();
       if (projectId && projectName) projectNameById.set(projectId, projectName);
     }
     for (const executionCase of executionCases) {
-      const projectId = String((executionCase as any).projectId || '').trim();
-      const projectTitle = String((executionCase as any).projectTitle || '').trim();
+      const projectId = String(executionCase.projectId || '').trim();
+      const projectTitle = String(executionCase.projectTitle || '').trim();
       if (projectId && projectTitle && !projectNameById.has(projectId))
         projectNameById.set(projectId, projectTitle);
     }
