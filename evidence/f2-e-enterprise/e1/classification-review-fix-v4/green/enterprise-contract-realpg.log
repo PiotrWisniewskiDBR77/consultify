@@ -1,0 +1,12 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/enterprise-trust-pack-20260913
+
+ ✓ server/src/services/__tests__/organizationExportEnterprise.realpg.test.ts > F2-E exact full-schema runtime contract on staging-schema PostgreSQL > contains one exact policy per live public/v8 relation and no UNRESOLVED category 161ms
+ ✓ server/src/services/__tests__/organizationExportEnterprise.realpg.test.ts > F2-E exact full-schema runtime contract on staging-schema PostgreSQL > exports an empty synthetic tenant without querying excluded material or leaking another tenant 3056ms
+ ✓ server/src/services/__tests__/organizationExportEnterprise.realpg.test.ts > F2-E exact full-schema runtime contract on staging-schema PostgreSQL > keeps non-empty public and v8 physical mirrors separate and tenant scoped 1649ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:36:22
+   Duration  6.43s (transform 574ms, setup 102ms, import 796ms, tests 5.03s, environment 377ms)
+

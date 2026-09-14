@@ -1,0 +1,17 @@
+RED_OK public.artifact_handoff_proposals.state lifecycle-export-removal
+RED_OK public.artifact_lineage_operation_claims.state lifecycle-export-removal
+RED_OK public.chat_target_mapping_receipts.state lifecycle-export-removal
+RED_OK public.lane_decisions.state lifecycle-export-removal
+RED_OK public.method_sessions.state lifecycle-export-removal
+RED_OK public.myw_agent_materialization_proposals.state lifecycle-export-removal
+RED_OK public.partner_organizations.state lifecycle-export-removal
+RED_OK public.teresa_proposals.state lifecycle-export-removal
+RED_OK public.v8_ai_suggestions.state lifecycle-export-removal
+RED_OK public.v8_execution_runs.state lifecycle-export-removal
+RED_OK public.v8_lane_decisions.state lifecycle-export-removal
+RED_OK public.v8_notification_records.state lifecycle-export-removal
+RED_OK public.v8_workspace_sessions.state lifecycle-export-removal
+RED_OK public.ownership_transfers stale-writer-line-440
+RED_OK v8.v8_feature_flags cross-schema-writer-evidence
+RED_OK public.v8_feature_flags cross-schema-writer-evidence
+MUTATION_GREEN expected-red=16 observed-red=16

@@ -4,12 +4,13 @@ import { ORGANIZATION_EXPORT_INTERVIEW_TABLES } from './organizationExportInterv
 import type { InterviewExportKind } from './organizationExportInterviewPrivacy.js';
 import { ORGANIZATION_EXPORT_TASK_TABLES } from './organizationExportTaskContract.js';
 import { ORGANIZATION_EXPORT_MVP_TABLES } from './organizationExportMvpContract.js';
+import { ORGANIZATION_EXPORT_ENTERPRISE_TABLES } from './organizationExportEnterpriseContract.generated.js';
 
 /** Explicit export authorization. Catalog discovery never grants permission. */
 export interface OrganizationExportTableContract {
   schema: 'public' | 'v8';
   table: string;
-  category: 'EXPORT' | 'EXCLUDE_SECURITY' | 'UNRESOLVED';
+  category: 'EXPORT' | 'EXCLUDE_SECURITY' | 'DERIVED' | 'UNRESOLVED';
   columnTypes: Record<string, string>;
   primaryKey: string[];
   foreignKeys: Array<{
@@ -30,15 +31,25 @@ export interface OrganizationExportTableContract {
     childColumn: string;
     parentColumn: string;
   };
+  ownerPath?: Array<{
+    column: string;
+    parentSchema: string;
+    parentTable: string;
+    parentColumn: string;
+  }>;
+  ownerPathTerminalColumn?: string;
+  derivedFrom?:
+    | { kind: 'TABLES'; tables: string[] }
+    | { kind: 'REBUILD_PROCEDURE'; sourcePath: string; procedure: string };
   counterpartyColumns: string[];
   projection: string[];
   excludedColumns: string[];
   source: string;
 }
-export const ORGANIZATION_EXPORT_POLICY_VERSION = 'tenant-export-contract-v9-20260912';
+export const ORGANIZATION_EXPORT_POLICY_VERSION = 'tenant-export-contract-v10-20260913';
 // Original inventory: 1802 public +121 v8; 1 EXPORT /4 EXCLUDE_SECURITY /1918 UNRESOLVED.
 // Unlisted relations remain UNRESOLVED; a new migration cannot silently authorize export.
-export const ORGANIZATION_EXPORT_TABLES: readonly OrganizationExportTableContract[] = [
+const ORGANIZATION_EXPORT_BASE_TABLES: readonly OrganizationExportTableContract[] = [
   ...ORGANIZATION_EXPORT_MVP_TABLES,
   ...ORGANIZATION_EXPORT_INTERVIEW_TABLES,
   ...ORGANIZATION_EXPORT_CANONICAL_TABLES,
@@ -202,3 +213,31 @@ export const ORGANIZATION_EXPORT_TABLES: readonly OrganizationExportTableContrac
     })
   ),
 ];
+
+const baseByIdentity = new Map(
+  ORGANIZATION_EXPORT_BASE_TABLES.map((entry) => [`${entry.schema}.${entry.table}`, entry])
+);
+
+/**
+ * The generated E1 policy owns exact live structure. Existing family contracts
+ * overlay their reviewed privacy projectors and narrower projections, while
+ * live columns/keys/edges remain pinned to the bf580f staging-schema snapshot.
+ */
+export const ORGANIZATION_EXPORT_TABLES: readonly OrganizationExportTableContract[] =
+  ORGANIZATION_EXPORT_ENTERPRISE_TABLES.map((live) => {
+    const reviewed = baseByIdentity.get(`${live.schema}.${live.table}`);
+    if (!reviewed) return live;
+    const liveColumns = new Set(Object.keys(live.columnTypes));
+    const projection = reviewed.projection.filter((column) => liveColumns.has(column));
+    return {
+      ...live,
+      ...reviewed,
+      category: live.category,
+      columnTypes: live.columnTypes,
+      primaryKey: live.primaryKey,
+      foreignKeys: live.foreignKeys,
+      projection,
+      excludedColumns: [...liveColumns].filter((column) => !projection.includes(column)),
+      source: `${reviewed.source}; E1 live structure ${live.source}`,
+    };
+  });

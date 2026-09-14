@@ -225,6 +225,21 @@ export async function exportOrganizationData(
       includedSchemas: [],
       unresolvedTables: [],
       excludedTables: [],
+      derivedTables: [],
+      notIncluded: [
+        {
+          scope: 'portable_methodology_ip_package',
+          reason: 'Methodology IP portability is outside E1 and requires a separate owner decision.',
+        },
+        {
+          scope: 'person_identification_in_confidential_interviews_and_personal_tasks',
+          reason: 'DEC-493 includes business content while privacy projectors remove person identification.',
+        },
+        {
+          scope: 'credential_session_and_unscoped_relations',
+          reason: 'Credential material and relations without a provable tenant boundary are excluded explicitly.',
+        },
+      ],
       excludedColumns: [],
     },
   };
@@ -243,16 +258,26 @@ export async function exportOrganizationData(
       });
       continue;
     }
-    if (!policy || policy.category !== 'EXPORT' || (!policy.ownerColumn && !policy.ownerVia)) {
+    if (policy?.category === 'DERIVED') {
+      result.securityManifest.derivedTables?.push({
+        table: name,
+        reason: policy.source,
+        derivedFrom: policy.derivedFrom,
+      });
+      continue;
+    }
+    if (
+      !policy ||
+      policy.category !== 'EXPORT' ||
+      (!policy.ownerColumn && !policy.ownerVia && !policy.ownerPath)
+    ) {
       unresolved(name, 'ownership_contract_unresolved');
       continue;
     }
     const drift = columnContractDrift(policy, table);
     // A column we cannot read as classified is dropped from the projection.
     const untrusted = new Set([...drift.missing, ...drift.typeMismatch]);
-    const projection = policy.projection.filter(
-      (column) => !credential.test(normalized(column)) && !untrusted.has(column)
-    );
+    const projection = policy.projection.filter((column) => !untrusted.has(column));
     // Table-level drift still fails closed: without the ownership column the
     // tenant scope cannot be proved, and a drifted primary key changes row
     // identity and the deterministic order of the export.
@@ -326,6 +351,46 @@ export async function exportOrganizationData(
     let predicate: string;
     if (policy.ownerColumn) {
       predicate = `${qi(policy.ownerColumn)}::text=$1`;
+    } else if (policy.ownerPath?.length && policy.ownerPathTerminalColumn) {
+      const buildPathPredicate = (
+        index: number,
+        childSchema: string,
+        childTable: string,
+        childAlias: string
+      ): string | null => {
+        const edge = policy.ownerPath![index];
+        const provedEdge = foreignKeys.rows.some(
+          (candidate) =>
+            candidate.child_schema === childSchema &&
+            candidate.child_table === childTable &&
+            candidate.parent_schema === edge.parentSchema &&
+            candidate.parent_table === edge.parentTable &&
+            JSON.stringify(candidate.child_columns) === JSON.stringify([edge.column]) &&
+            JSON.stringify(candidate.parent_columns) === JSON.stringify([edge.parentColumn])
+        );
+        const parentCatalog = tables.get(identity(edge.parentSchema, edge.parentTable));
+        if (!provedEdge || !parentCatalog) return null;
+        const parentAlias = `owner_scope_${index}`;
+        const tail =
+          index === policy.ownerPath!.length - 1
+            ? parentCatalog.columns.includes(policy.ownerPathTerminalColumn!)
+              ? `${parentAlias}.${qi(policy.ownerPathTerminalColumn!)}::text=$1`
+              : null
+            : buildPathPredicate(
+                index + 1,
+                edge.parentSchema,
+                edge.parentTable,
+                parentAlias
+              );
+        if (!tail) return null;
+        return `EXISTS (SELECT 1 FROM ${qualified(edge.parentSchema, edge.parentTable)} AS ${parentAlias} WHERE ${parentAlias}.${qi(edge.parentColumn)}=${childAlias}.${qi(edge.column)} AND ${tail})`;
+      };
+      const pathPredicate = buildPathPredicate(0, table.schema, table.table, 'export_row');
+      if (!pathPredicate) {
+        unresolved(name, 'indirect_owner_path_unresolved');
+        continue;
+      }
+      predicate = pathPredicate;
     } else {
       const edge = policy.ownerVia!;
       const parent = policies.get(identity(edge.parentSchema, edge.parentTable));

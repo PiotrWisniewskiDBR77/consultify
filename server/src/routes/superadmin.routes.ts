@@ -11,6 +11,9 @@ import { withOrganizationExportSnapshot } from '../services/organizationExportSn
  */
 
 import { randomUUID } from 'crypto';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { type NextFunction, Response, Router } from 'express';
 
 import SuperAdminController from '../controllers/SuperAdminController.js';
@@ -36,6 +39,7 @@ import {
   organizationExportToCsv,
   RESERVED_ORGANIZATION_IDS,
 } from '../services/organizationLifecycleService.js';
+import { writeOrganizationExportArchive } from '../services/organizationExportArchiveService.js';
 import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { acquirePgClient } from '../database/PostgresDatabase.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -750,20 +754,45 @@ router.get(
     if ((RESERVED_ORGANIZATION_IDS as readonly string[]).includes(id)) {
       return res.status(400).json({ code: 'ORG_ID_RESERVED' });
     }
-    const format = req.query.format === 'csv' ? 'csv' : 'json';
+    const format = req.query.format === 'zip' ? 'zip' : req.query.format === 'csv' ? 'csv' : 'json';
     const client = await acquirePgClient();
     try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'organization_export_requested',
+        resourceType: 'organization_data',
+        resourceId: id,
+        metadata: { scope: 'full_e1' },
+      });
       const result = await withOrganizationExportSnapshot(client, id, (snapshot) =>
         exportOrganizationData(snapshot, id, undefined, { actorId: req.user?.id })
       );
       await req.emitAuditEvent?.({
         actorType: 'USER',
-        action: 'export',
+        action: 'organization_export_downloaded',
         resourceType: 'organization_data',
         resourceId: id,
-        metadata: { format, totalRows: result.totalRows, tables: Object.keys(result.tables) },
+        metadata: {
+          format,
+          totalRows: result.totalRows,
+          tableCount: Object.keys(result.tables).length,
+          asOf: result.exportedAt,
+          scope: 'full_e1',
+          complete: result.securityManifest.complete,
+        },
       });
       const dateStamp = new Date().toISOString().split('T')[0];
+      if (format === 'zip') {
+        const archivePath = path.join(os.tmpdir(), `organization-export-${id}-${randomUUID()}.zip`);
+        await writeOrganizationExportArchive(result, archivePath);
+        return res.download(
+          archivePath,
+          `organization-export-${id}-${dateStamp}.zip`,
+          async () => {
+            await fs.rm(archivePath, { force: true });
+          }
+        );
+      }
       if (format === 'csv') {
         const csv = organizationExportToCsv(result);
         res.setHeader('Content-Type', 'text/csv');

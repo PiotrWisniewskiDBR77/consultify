@@ -1,0 +1,27 @@
+ORGANIZATION_EXPORT_CLASSIFICATION_RED tables=1930/1930 errors=3860
+public._migration_518_done: unresolved or invalid classification UNRESOLVED
+public._migration_518_done: missing reviewed family
+public._v8_flag_backup_20260710: unresolved or invalid classification UNRESOLVED
+public._v8_flag_backup_20260710: missing reviewed family
+public._z139_repair_backup_20260710: unresolved or invalid classification UNRESOLVED
+public._z139_repair_backup_20260710: missing reviewed family
+public.access_code_usage: unresolved or invalid classification UNRESOLVED
+public.access_code_usage: missing reviewed family
+public.access_codes: unresolved or invalid classification UNRESOLVED
+public.access_codes: missing reviewed family
+public.access_requests: unresolved or invalid classification UNRESOLVED
+public.access_requests: missing reviewed family
+public.account_deletion_request_receipts: unresolved or invalid classification UNRESOLVED
+public.account_deletion_request_receipts: missing reviewed family
+public.account_deletion_requests: unresolved or invalid classification UNRESOLVED
+public.account_deletion_requests: missing reviewed family
+public.action_cards: unresolved or invalid classification UNRESOLVED
+public.action_cards: missing reviewed family
+public.active_sessions: unresolved or invalid classification UNRESOLVED
+public.active_sessions: missing reviewed family
+public.activity_logs: unresolved or invalid classification UNRESOLVED
+public.activity_logs: missing reviewed family
+public.adkar_assessments: unresolved or invalid classification UNRESOLVED
+public.adkar_assessments: missing reviewed family
+public.admin_approval_requests: unresolved or invalid classification UNRESOLVED
+... 3835 more

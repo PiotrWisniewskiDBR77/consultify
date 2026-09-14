@@ -1,0 +1,20 @@
+✔ accepts an acyclic DERIVED chain that terminates in an EXPORT table (1.32875ms)
+✔ accepts an explicit repository rebuild procedure (0.146417ms)
+✔ rejects metadata counts that do not match the rows (0.148292ms)
+✔ rejects an unresolved newly discovered relation even when declared counts lie (0.158459ms)
+✔ rejects free text, missing, self, security and cyclic DERIVED sources (0.191375ms)
+✔ rejects vague or unsafe rebuild procedure pointers (0.119083ms)
+✔ rejects mutation removing exact interview and webhook exclusions (0.463292ms)
+✔ rejects structural-only generic export evidence (0.084833ms)
+✔ required-exclusions policy makes code_hash and every DEC-493 identity mutation RED (1.099584ms)
+✔ semantic evidence rejects comments and accepts the same exact executable SQL (1.680042ms)
+✔ unqualified public writer cannot authorize a same-named v8 physical relation (0.998041ms)
+✔ exact lifecycle-state policy rejects exclusion and incomplete coverage mutations (0.168458ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.402542

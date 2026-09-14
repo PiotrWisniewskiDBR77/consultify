@@ -1,0 +1,340 @@
+{
+  "checkpoint": "F2-E E1 schema-aware semantic-evidence HOLD remediation",
+  "supersedesFreezeSha256": "88b0733e7ed5062ce014cb87a663748791be6794d4013c55b34466ae6a94e34d",
+  "baseCommit": "0f0107b93c051b3ced9d3aafce740b36ac457f61",
+  "schemaSnapshotSha256": "bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78",
+  "counts": {
+    "public": 1809,
+    "v8": 121,
+    "total": 1930,
+    "EXPORT": 1379,
+    "EXCLUDE_SECURITY": 550,
+    "DERIVED": 1,
+    "UNRESOLVED": 0
+  },
+  "holdRemediation": {
+    "schemaAwareEvidence": {
+      "physicalNameCollisions": 119,
+      "unqualifiedSqlAuthority": "public only",
+      "v8QualifiedEvidenceRelations": 2,
+      "v8UnqualifiedEvidenceRelations": 0
+    },
+    "v8Policies": {
+      "EXPORT": [
+        "v8.v8_feature_flags",
+        "v8.v8_shadow_comparisons"
+      ],
+      "EXCLUDE_SECURITY": 119,
+      "DERIVED": 0
+    },
+    "actualMutationChecks": {
+      "lifecycleStateExpectedRed": 13,
+      "lifecycleStateObservedRed": 13,
+      "staleWriterLineExpectedRed": 1,
+      "staleWriterLineObservedRed": 1,
+      "crossSchemaEvidenceExpectedRed": 2,
+      "crossSchemaEvidenceObservedRed": 2
+    },
+    "businessLifecycleState": {
+      "exactTables": 13,
+      "projected": 13,
+      "excluded": 0
+    }
+  },
+  "qualifiedChecks": {
+    "frozenInputSelfRerun": "GREEN 1930/1930",
+    "semanticIndexUnit": "2/2 PASS",
+    "verifierUnit": "12/12 PASS",
+    "materializerUnit": "3/3 PASS",
+    "runtimeUnit": "93/93 PASS",
+    "serverTypecheck": "PASS",
+    "realPostgres": "3/3 PASS including non-empty distinct public/v8 mirror rows and cross-tenant negatives on cx-f2e-pg:6456",
+    "runtimeSchemaParity": "v8 EXPORT 2; v8 EXCLUDE_SECURITY 119; lifecycle state 13/13 projected"
+  },
+  "verdict": "REREVIEW_REQUIRED_E1_NOT_COMPLETE",
+  "openE1Gates": [
+    "independent rereview",
+    "true streaming and bounded memory",
+    "progress and resume",
+    "five-family UI/API proof",
+    "real route audit proof",
+    "C6 R1-R6 closure"
+  ],
+  "files": [
+    {
+      "path": "docs/program/FALA2/F2_E_E1_EXPORT_BASELINE_AUDIT_20260913.md",
+      "bytes": 7350,
+      "sha256": "76ebd58fa969eea9f2651377d950afdbc59d46f08cda849be4913de3a1a1b127"
+    },
+    {
+      "path": "docs/ssot/ORGANIZATION_EXPORT_CLASSIFICATION_RULES.md",
+      "bytes": 6284,
+      "sha256": "719e896d1dae34930d14338399474b7b0d3adc742dedf91847e5bd63e6888c87"
+    },
+    {
+      "path": "docs/ssot/organization-export-classification-approved-base.e1.json",
+      "bytes": 12530,
+      "sha256": "ed16780b850b235323d9f9c2a0a2575d07a530c4c9125dbba2f2a5e4fe843c8d"
+    },
+    {
+      "path": "docs/ssot/organization-export-classification-decisions.e1-wip.json",
+      "bytes": 12868610,
+      "sha256": "c4e5f0961f028834cc866e9f6d28395ac7dc57157ad879dc04b816743897188d"
+    },
+    {
+      "path": "docs/ssot/organization-export-classification.e1.csv",
+      "bytes": 892232,
+      "sha256": "96ca026815b9975b1548ebbac70fd7ad9a732fb2ce90b065eebd18c84bb61336"
+    },
+    {
+      "path": "docs/ssot/organization-export-explicit-semantic-overrides.e1.json",
+      "bytes": 3107,
+      "sha256": "9320ac3a69a849dfa334731df388be32bcde94e15d63889de67f07a76933cf7a"
+    },
+    {
+      "path": "docs/ssot/organization-export-required-column-exclusions.e1.json",
+      "bytes": 21824,
+      "sha256": "4bc5c4c234ecc261a7a4e3b608487fce27dd1a13445e79ff7c09c80edad26e80"
+    },
+    {
+      "path": "docs/ssot/organization-export-required-lifecycle-state-exports.e1.json",
+      "bytes": 1629,
+      "sha256": "97c22dccc15d9229d8baefbfe6ce50ea02bec2973174915213b93d2683c79b67"
+    },
+    {
+      "path": "docs/ssot/organization-export-semantic-source-index.e1.json",
+      "bytes": 1692500,
+      "sha256": "975d62f6b522ed1ba035f01dd1a085a67f4adbbbce57df784fa93dd8301746e4"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/SHA256SUMS",
+      "bytes": 931,
+      "sha256": "c33e24c9d1bcf1da75a9e567c304411ad37bf726285fcc12ba5806184d5b23a9"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/base-contract-classified-tables.json",
+      "bytes": 4770,
+      "sha256": "02e824ed0a727ae8b2d998078b4d3c8c5d7de418ae9656c12c9f91471ab4d22e"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/classification-guard-instrument-green.log",
+      "bytes": 51,
+      "sha256": "a987b03a39ee7a63cddd562390727adf6e90620f6e36697d23153560c815d983"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/classification-guard-red.log",
+      "bytes": 1702,
+      "sha256": "d9db317717f2f327823b191d9b14d72cb1f4cf6cb76bef5cd60661faabfd8442"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/generator-determinism.log",
+      "bytes": 161,
+      "sha256": "4e96df96629cbb05307c1e7bc53b1ef7077b6a227f749caf3cc5e0b10122e40e"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/live-columns.tsv",
+      "bytes": 1329462,
+      "sha256": "cf37ea8aa1a25c466bd64631c2166543ec1db5e92779e1974bcc2a6170528dae"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/live-foreign-keys.tsv",
+      "bytes": 138627,
+      "sha256": "4958a28b40bd4e2f181c96228b851b17e5f6a7da2a6884300cc607d88cb07b82"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/live-primary-keys.tsv",
+      "bytes": 69276,
+      "sha256": "adc94d6e489e150144ceaad2765801fb703665bf6fddb6e3e1293807fb098e48"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/live-schema-counts.tsv",
+      "bytes": 184,
+      "sha256": "a6aeb0a8988036188623eb3101c2140ca9e7a74b773c6726eaac01f844fcdaad"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/live-table-columns.tsv",
+      "bytes": 364438,
+      "sha256": "d22fbbee4be7ca2a61fa41f5f16abc0b0aaede0e8d34a7fb1fecf221bca72de8"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/sha256-verification.log",
+      "bytes": 311,
+      "sha256": "03bcbcb2eaaef38c190a44096973239cd4ed4b93284a62618838810bf3235e91"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/baseline/staging-schema-inventory.json",
+      "bytes": 4357378,
+      "sha256": "36a5353283f7dae2b3e6486fd56390fcd116378a91a65d43c2f0f4682a2dc378"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/classification-complete.json",
+      "bytes": 16504386,
+      "sha256": "7af66c7b60b4200b2d61ddce560a72a7a793c7585a50ea43436e9712b379489b"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/actual-schema-lifecycle-mutations.log",
+      "bytes": 1100,
+      "sha256": "4b7dc9146e2860704f419385bba024da2bab86395ed76c59716f44cbf8d5aef9"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/enterprise-contract-realpg.log",
+      "bytes": 986,
+      "sha256": "3131cf2621a0c06b256d7231fee9da92b9cf56162cb205e6386aa2f77f1971b3"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/frozen-input-self-rerun.log",
+      "bytes": 51,
+      "sha256": "a987b03a39ee7a63cddd562390727adf6e90620f6e36697d23153560c815d983"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/inventory-build.log",
+      "bytes": 80,
+      "sha256": "f69b82cd7d72f2d3fa0d4469c3de46c95eb6e30a23d38dbea7fea6a6223ce10f"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/materializer-unit.log",
+      "bytes": 101,
+      "sha256": "921b60a7fd52e978fbb551cacd29df2d6708879400278e1fcc70fceeb0c6f8e0"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/materializer.log",
+      "bytes": 71,
+      "sha256": "0fe886f6f468894a32303ec328a477e67a4f09435a5be0cba1794704d9250285"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/runtime-contract-generation.log",
+      "bytes": 44,
+      "sha256": "c5df785b54b9e739f9934623a7c7a2df402d2121ce7b1b26334f888b3a563f65"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/runtime-schema-lifecycle-parity.log",
+      "bytes": 87,
+      "sha256": "0ab49273185bee7b1e36593bcf416cf0a56ea1a363a2eaf72c12ea8d759fad39"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/runtime-unit.log",
+      "bytes": 18621,
+      "sha256": "8ad4a6f2f4c8137848c6cbd8fca2b1228c418a9caba2efef49541f1adb0e3014"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/schema-collision-audit.json",
+      "bytes": 2210,
+      "sha256": "057c4d90178a948c68f43574687bba00c6364452162afaae1c391a5451506f95"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/semantic-index-build.log",
+      "bytes": 34,
+      "sha256": "d0aa760e195ec3144d5fd39483ae38f83b114929d639692fabf8465c7751be1c"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/semantic-index-unit.log",
+      "bytes": 100,
+      "sha256": "5ccd76e8fb90bd81172f8cfe3eeec8a591d9d1ab0396345fccbed1630ed7bc50"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/server-tsc.log",
+      "bytes": 9,
+      "sha256": "08a37328d6e51ce41316a57df98b53c3d70700cc4e9d146b0bae3e91a763b930"
+    },
+    {
+      "path": "evidence/f2-e-enterprise/e1/classification-review-fix-v4/green/verifier-unit.log",
+      "bytes": 1117,
+      "sha256": "22de17a28a68a3d88d7a375341f07428b851dc09865c288d77fc04802ecba153"
+    },
+    {
+      "path": "scripts/enterprise/__tests__/build-organization-export-semantic-index.test.py",
+      "bytes": 1746,
+      "sha256": "ed1fd12d71512c3446966ca75a1b142eee3c85255cfbaf46f2e90e899c7c8103"
+    },
+    {
+      "path": "scripts/enterprise/__tests__/materialize-organization-export-classification.test.py",
+      "bytes": 5919,
+      "sha256": "b627304406c1158a6d1b69012b8e218ddaa9082660e2ab39330d186d4e163c2b"
+    },
+    {
+      "path": "scripts/enterprise/__tests__/verify-organization-export-classification.test.mjs",
+      "bytes": 15353,
+      "sha256": "e9c6699367f14c531f6dd87a5363fba8e31c95b2e4aa62b2fddce0c991a04e74"
+    },
+    {
+      "path": "scripts/enterprise/build-organization-export-inventory.py",
+      "bytes": 7294,
+      "sha256": "92a39c3dff6833fb3add1c12b4d7633c490f69a44a1d1c1533feb3026556e46e"
+    },
+    {
+      "path": "scripts/enterprise/build-organization-export-semantic-index.py",
+      "bytes": 5885,
+      "sha256": "5f990975dd1a2b2d3434c14da3119b7fea8528db19c02ae3e9b6fd49abd8b1dd"
+    },
+    {
+      "path": "scripts/enterprise/generate-organization-export-enterprise-contract.py",
+      "bytes": 4665,
+      "sha256": "ad88a260eabacbf74b4665d20d1fcb8c03dd665057541483a4804b025836d84c"
+    },
+    {
+      "path": "scripts/enterprise/materialize-organization-export-classification.py",
+      "bytes": 21362,
+      "sha256": "feb8ed4ff30da1b6ec3a36bd7607afa494a2a65e31b12bf85bc2faf89b9d038e"
+    },
+    {
+      "path": "scripts/enterprise/verify-e1-writer-and-lifecycle-mutations.mjs",
+      "bytes": 3536,
+      "sha256": "ccca276cae4c894e603b59f547990c9a7ccb2af11b5a58bafb3fd3782107138c"
+    },
+    {
+      "path": "scripts/enterprise/verify-organization-export-classification.mjs",
+      "bytes": 17290,
+      "sha256": "61687a6080fbe3566641744b2cad3a1323d0ac2298e8fc3359e089325f6101d8"
+    },
+    {
+      "path": "server/src/routes/organization/__tests__/ownershipExportPermission.test.ts",
+      "bytes": 1966,
+      "sha256": "4c91047c48f15c08e230cd01712abd319f1720f2c723b36d4f54251cbb0183bb"
+    },
+    {
+      "path": "server/src/routes/organization/ownership.routes.ts",
+      "bytes": 20468,
+      "sha256": "e8105dc12f6923d2d8f702679acadaa47281ce522f08ebd3f797611ac69cacd5"
+    },
+    {
+      "path": "server/src/routes/superadmin.routes.ts",
+      "bytes": 171442,
+      "sha256": "8c27640beca063c1abd49f6373ff586ca995813263176900f23e2944c5da71c1"
+    },
+    {
+      "path": "server/src/services/__tests__/organizationExportArchiveService.test.ts",
+      "bytes": 2370,
+      "sha256": "4594469b313fe76bfd4f089e239ae7d7db6a7ce5662645347e6655ffeca225b8"
+    },
+    {
+      "path": "server/src/services/__tests__/organizationExportEnterprise.realpg.test.ts",
+      "bytes": 4895,
+      "sha256": "348f845e3da575873c62c522cb0ed9e6988932c202979b29ee34bb800e5c3b3d"
+    },
+    {
+      "path": "server/src/services/organizationExportArchiveService.ts",
+      "bytes": 5287,
+      "sha256": "fddd683b34832e3d6d5a62045e80ee51621fdced9ccf675d7f73d8cee5af8251"
+    },
+    {
+      "path": "server/src/services/organizationExportContract.ts",
+      "bytes": 8411,
+      "sha256": "22984a6657a3304729710169ad292f0a6ee0b0f5d246ed1838179baf3162a698"
+    },
+    {
+      "path": "server/src/services/organizationExportEnterpriseContract.generated.ts",
+      "bytes": 2238044,
+      "sha256": "39b6bc77efe2ecc356db2a0a6fde8cf8131c343ef6c5454bec5e45660d16a989"
+    },
+    {
+      "path": "server/src/services/organizationExportService.ts",
+      "bytes": 26235,
+      "sha256": "905a3e9f89bb33b4d2b3d6add08720495534b7069a1706e1d337d076969f8263"
+    },
+    {
+      "path": "server/src/services/organizationLifecycleService.ts",
+      "bytes": 12161,
+      "sha256": "a7cde3da3c86bb95160707464bb8350b29b512a0dfdd79207468ad0b26e1b4f2"
+    }
+  ]
+}

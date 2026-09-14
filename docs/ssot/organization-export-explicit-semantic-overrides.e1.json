@@ -1,0 +1,77 @@
+{
+  "policyVersion": "organization-export-explicit-semantic-overrides-e1-1",
+  "entries": [
+    {
+      "identity": "public.integration_webhooks",
+      "family": "INTEGRATIONS",
+      "reason": "Tenant-owned webhook delivery configuration is exportable while webhook_secret remains excluded.",
+      "requiredExcludedColumns": ["webhook_secret"]
+    },
+    {
+      "identity": "public.interview_ai_parse_log",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes parsed interview business content while applied_by remains excluded.",
+      "requiredExcludedColumns": ["applied_by"]
+    },
+    {
+      "identity": "public.interview_answers",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes stored answer content without adding a person identity field.",
+      "requiredExcludedColumns": []
+    },
+    {
+      "identity": "public.interview_assignment_events",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes assignment governance events while actor_id remains excluded.",
+      "requiredExcludedColumns": ["actor_id"]
+    },
+    {
+      "identity": "public.interview_messages",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes interview message content linked by session without a direct person identity field.",
+      "requiredExcludedColumns": []
+    },
+    {
+      "identity": "public.interview_template_questions",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes tenant-linked interview question content without a direct person identity field.",
+      "requiredExcludedColumns": []
+    },
+    {
+      "identity": "public.interview_candidate_handoffs",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes governed handoff content while created_by remains excluded.",
+      "requiredExcludedColumns": ["created_by"]
+    },
+    {
+      "identity": "public.interview_evidence_access_log",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes evidence access history while actor_id and ip_address remain excluded.",
+      "requiredExcludedColumns": ["actor_id", "ip_address"]
+    },
+    {
+      "identity": "public.interview_insight_activity",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes insight activity while user_id remains excluded.",
+      "requiredExcludedColumns": ["user_id"]
+    },
+    {
+      "identity": "public.interview_inference_runs",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes inference provenance while created_by remains excluded.",
+      "requiredExcludedColumns": ["created_by"]
+    },
+    {
+      "identity": "public.interview_report_packs",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes report-pack business content while created_by remains excluded.",
+      "requiredExcludedColumns": ["created_by"]
+    },
+    {
+      "identity": "public.interview_distributions",
+      "family": "INTERVIEW",
+      "reason": "DEC-493 includes distribution state while recipient identity, public token, and revoker identity remain excluded.",
+      "requiredExcludedColumns": ["recipient_email", "recipient_name", "public_token", "revoked_by"]
+    }
+  ]
+}

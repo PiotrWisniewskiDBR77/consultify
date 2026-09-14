@@ -1,0 +1,239 @@
+{
+  "policyVersion": "tenant-export-classification-e1-wip-1",
+  "baseCommit": "0f0107b93c051b3ced9d3aafce740b36ac457f61",
+  "schemaSnapshotSha256": "bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78",
+  "authorityRule": "Only identities listed here are classified; no name or catalog heuristic grants authority.",
+  "counts": {
+    "EXPORT": 21,
+    "EXCLUDE_SECURITY": 4,
+    "DERIVED": 0,
+    "total": 25
+  },
+  "tables": [
+    {
+      "schema": "public",
+      "table": "api_keys",
+      "category": "EXCLUDE_SECURITY",
+      "family": "SECURITY_CREDENTIALS",
+      "reason": "This credential-bearing relation is excluded as security material and is never queried by organization export.",
+      "sourceEvidence": "server/src/services/organizationExportContract.ts generated security exclusion",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "decisions",
+      "category": "EXPORT",
+      "family": "DECISIONS",
+      "reason": "Decision content and provenance are tenant-owned and use the existing decision privacy projector and owner discriminator.",
+      "sourceEvidence": "server/src/services/organizationExportDecisionContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_aggregate_relations",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_aggregate_state",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_audit_events",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_command_receipts",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_initiative_card_selection",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_initiative_card_versions",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "ie_outbox_events",
+      "category": "EXPORT",
+      "family": "INITIATIVE_CANONICAL",
+      "reason": "Canonical initiative state and immutable governance receipts are tenant-owned records with explicit lineage and owner rules.",
+      "sourceEvidence": "server/src/services/organizationExportCanonicalContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "integration_secrets",
+      "category": "EXCLUDE_SECURITY",
+      "family": "SECURITY_CREDENTIALS",
+      "reason": "This credential-bearing relation is excluded as security material and is never queried by organization export.",
+      "sourceEvidence": "server/src/services/organizationExportContract.ts generated security exclusion",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_assignments",
+      "category": "EXPORT",
+      "family": "INTERVIEW",
+      "reason": "Interview business content is included under DEC-493 through the existing confidentiality-aware projector without person identification.",
+      "sourceEvidence": "server/src/services/organizationExportInterviewContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_evidence",
+      "category": "EXPORT",
+      "family": "INTERVIEW",
+      "reason": "Interview business content is included under DEC-493 through the existing confidentiality-aware projector without person identification.",
+      "sourceEvidence": "server/src/services/organizationExportInterviewContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insight_evidence_pointers",
+      "category": "EXPORT",
+      "family": "INTERVIEW_DECISIONS",
+      "reason": "Interview findings and decisions are tenant-owned content gated by persisted provenance and the existing privacy projector.",
+      "sourceEvidence": "server/src/services/organizationExportDecisionContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insight_findings",
+      "category": "EXPORT",
+      "family": "INTERVIEW_DECISIONS",
+      "reason": "Interview findings and decisions are tenant-owned content gated by persisted provenance and the existing privacy projector.",
+      "sourceEvidence": "server/src/services/organizationExportDecisionContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insight_handoffs",
+      "category": "EXPORT",
+      "family": "INTERVIEW_DECISIONS",
+      "reason": "Interview findings and decisions are tenant-owned content gated by persisted provenance and the existing privacy projector.",
+      "sourceEvidence": "server/src/services/organizationExportDecisionContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insights",
+      "category": "EXPORT",
+      "family": "INTERVIEW_DECISIONS",
+      "reason": "Interview findings and decisions are tenant-owned content gated by persisted provenance and the existing privacy projector.",
+      "sourceEvidence": "server/src/services/organizationExportDecisionContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_notes",
+      "category": "EXPORT",
+      "family": "INTERVIEW",
+      "reason": "Interview business content is included under DEC-493 through the existing confidentiality-aware projector without person identification.",
+      "sourceEvidence": "server/src/services/organizationExportInterviewContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_questions",
+      "category": "EXPORT",
+      "family": "INTERVIEW",
+      "reason": "Interview business content is included under DEC-493 through the existing confidentiality-aware projector without person identification.",
+      "sourceEvidence": "server/src/services/organizationExportInterviewContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "interview_sessions",
+      "category": "EXPORT",
+      "family": "INTERVIEW",
+      "reason": "Interview business content is included under DEC-493 through the existing confidentiality-aware projector without person identification.",
+      "sourceEvidence": "server/src/services/organizationExportInterviewContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "organizations",
+      "category": "EXPORT",
+      "family": "ORGANIZATION_ROOT",
+      "reason": "The organization root is tenant-owned and has an explicit safe projection in the existing v9 contract.",
+      "sourceEvidence": "server/src/services/organizationExportContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "project_members",
+      "category": "EXPORT",
+      "family": "PROJECT_MEMBERSHIP",
+      "reason": "Project membership is tenant-owned governance data; person-identifying columns require exclusion in the final projection.",
+      "sourceEvidence": "server/src/services/organizationExportMvpContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "projects",
+      "category": "EXPORT",
+      "family": "PROJECTS",
+      "reason": "Projects are tenant-owned business records with an explicit organization discriminator and reviewed v9 projection.",
+      "sourceEvidence": "server/src/services/organizationExportMvpContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "refresh_tokens",
+      "category": "EXCLUDE_SECURITY",
+      "family": "SECURITY_SESSIONS",
+      "reason": "This authentication-session relation is excluded as security material and is never queried by organization export.",
+      "sourceEvidence": "server/src/services/organizationExportContract.ts generated security exclusion",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "tasks",
+      "category": "EXPORT",
+      "family": "PERSONAL_TASKS",
+      "reason": "Personal task content is included under DEC-493 through the existing owner and privacy projection without person identification.",
+      "sourceEvidence": "server/src/services/organizationExportTaskContract.ts",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    },
+    {
+      "schema": "public",
+      "table": "user_sessions",
+      "category": "EXCLUDE_SECURITY",
+      "family": "SECURITY_SESSIONS",
+      "reason": "This authentication-session relation is excluded as security material and is never queried by organization export.",
+      "sourceEvidence": "server/src/services/organizationExportContract.ts generated security exclusion",
+      "reviewScope": "TABLE_CATEGORY_ONLY; column privacy and runtime completeness remain independently gated"
+    }
+  ]
+}

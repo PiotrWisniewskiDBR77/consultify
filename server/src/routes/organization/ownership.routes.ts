@@ -3,18 +3,24 @@
  * Organization ownership management - transfer, billing admin
  */
 import { Response, Router } from 'express';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import { exportOrganizationData, organizationExportToCsv } from '../../services/organizationLifecycleService.js';
+import { writeOrganizationExportArchive } from '../../services/organizationExportArchiveService.js';
 import { OrgPoliciesError } from '../../services/OrgPoliciesService.js';
 import { withOrganizationExportSnapshot } from '../../services/organizationExportSnapshot.js';
+import { hasPermission, ROLES } from '../../services/permissionService.js';
 
 const router = Router();
 
@@ -22,21 +28,34 @@ const router = Router();
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 
-async function requireOrganizationAdministrator(req: AuthRequest, res: Response) {
+export async function requireOrganizationExportOwner(
+  req: AuthRequest,
+  res: Response,
+  dependencies: {
+    getMembership?: typeof dbGet;
+    checkPermission?: typeof hasPermission;
+  } = {}
+) {
   const { orgId } = req.params;
   const userId = req.user?.id;
   if (!userId || req.user?.organizationId !== orgId) {
     res.status(403).json({ error: 'ORG_TENANT_ACCESS_DENIED' });
     return null;
   }
-  const membership = await dbGet<{ role: string; status: string }>(
+  const getMembership = dependencies.getMembership ?? dbGet;
+  const checkPermission = dependencies.checkPermission ?? hasPermission;
+  const membership = await getMembership<{ role: string; status: string }>(
     `SELECT role, status FROM organization_members WHERE organization_id = ? AND user_id = ?`,
     [orgId, userId],
     { fallback: false }
   );
   const role = String(membership?.role || '').toUpperCase();
-  if (!membership || String(membership.status || '').toUpperCase() !== 'ACTIVE' || !['OWNER', 'ADMIN'].includes(role)) {
-    res.status(403).json({ error: 'ORG_ADMIN_REQUIRED' });
+  if (!membership || String(membership.status || '').toUpperCase() !== 'ACTIVE' || role !== 'OWNER') {
+    res.status(403).json({ error: 'ORG_EXPORT_OWNER_REQUIRED' });
+    return null;
+  }
+  if (!(await checkPermission(userId, orgId, 'ORGANIZATION_EXPORT_FULL', ROLES.OWNER))) {
+    res.status(403).json({ error: 'ORG_EXPORT_PERMISSION_REQUIRED' });
     return null;
   }
   return { userId, role, email: String(req.user?.email || '') };
@@ -44,15 +63,46 @@ async function requireOrganizationAdministrator(req: AuthRequest, res: Response)
 
 router.get(
   '/:orgId/export',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await requireOrganizationAdministrator(req, res))) return;
+    if (!(await requireOrganizationExportOwner(req, res))) return;
     const client = await acquirePgClient();
     try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'organization_export_requested',
+        resourceType: 'organization_data',
+        resourceId: req.params.orgId,
+        metadata: { scope: 'full_e1' },
+      });
       const result = await withOrganizationExportSnapshot(client, req.params.orgId, (snapshot) =>
         exportOrganizationData(snapshot, req.params.orgId, undefined, { actorId: req.user?.id })
       );
-      const format = req.query.format === 'csv' ? 'csv' : 'json';
+      const format = req.query.format === 'zip' ? 'zip' : req.query.format === 'csv' ? 'csv' : 'json';
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'organization_export_downloaded',
+        resourceType: 'organization_data',
+        resourceId: req.params.orgId,
+        metadata: {
+          scope: 'full_e1',
+          format,
+          asOf: result.exportedAt,
+          totalRows: result.totalRows,
+          complete: result.securityManifest.complete,
+        },
+      });
       res.setHeader('Content-Disposition', `attachment; filename="organization-export-${req.params.orgId}.${format}"`);
+      if (format === 'zip') {
+        const archivePath = path.join(
+          os.tmpdir(),
+          `organization-export-${req.params.orgId}-${uuidv4()}.zip`
+        );
+        await writeOrganizationExportArchive(result, archivePath);
+        return res.download(archivePath, `organization-export-${req.params.orgId}.zip`, async () => {
+          await fs.rm(archivePath, { force: true });
+        });
+      }
       if (format === 'csv') return res.type('text/csv').send(organizationExportToCsv(result));
       return res.type('application/json').send(JSON.stringify(result, null, 2));
     } catch (error) {
