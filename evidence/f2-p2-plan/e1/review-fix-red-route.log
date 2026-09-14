@@ -1,0 +1,102 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 01:57:54:5754 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:57:55:5755 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 01:57:55:5755 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 01:57:55:5755 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts
+2026-09-14 01:57:55:5755 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 01:57:55:5755 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 01:57:55:5755 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI
+2026-09-14 01:57:55:5755 [31merror[39m: [31m[initiatives-execution] runtime failed unitOfWork.transaction is not a function[39m {"method":"POST","path":"/plan-scenarios/plan-url/analysis-proposals/proposal-stale","correlationId":null,"name":"TypeError","pgCode":null,"constraint":null,"detail":null,"stack":"TypeError: unitOfWork.transaction is not a function\n    at executeMaterialCommand (/Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/server/src/domain/initiatives-execution/materialCommand.ts:535:21)\n    at createPlanAnalysisProposal (/Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/server/src/domain/initiatives-execution/planAnalysisProposal.ts:52:10)\n    at /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:4304:28\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+
+stdout | server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI
+2026-09-14 01:57:55:5755 [31merror[39m: [31m[initiatives-execution] runtime failed unitOfWork.transaction is not a function[39m {"method":"POST","path":"/plan-scenarios/plan-url/analysis-proposals/proposal-stale","correlationId":null,"name":"TypeError","pgCode":null,"constraint":null,"detail":null,"stack":"TypeError: unitOfWork.transaction is not a function\n    at executeMaterialCommand (/Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/server/src/domain/initiatives-execution/materialCommand.ts:535:21)\n    at createPlanAnalysisProposal (/Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/server/src/domain/initiatives-execution/planAnalysisProposal.ts:52:10)\n    at /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:4304:28\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > does not call AI or write a proposal when the flag is OFF 22ms
+ ✓ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a body scenario that differs from the URL before AI 4ms
+ × server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI 13ms
+   → expected 500 to be 409 // Object.is equality
+ ❯ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts (3 tests | 1 failed) 41ms
+     ✓ does not call AI or write a proposal when the flag is OFF 22ms
+     ✓ rejects a body scenario that differs from the URL before AI 4ms
+     × rejects a stale Plan aggregate version before AI 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts:117:29
+    115|       });
+    116|
+    117|     expect(response.status).toBe(409);
+       |                             ^
+    118|     expect(response.body).toEqual({ error: { code: 'PLAN_VERSION_CONFL…
+    119|     expect(analyze).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  01:57:54
+   Duration  980ms (transform 563ms, setup 116ms, import 736ms, tests 41ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts > DEC-497 P2 E1 — default-OFF dependency analysis gate > rejects a stale Plan aggregate version before AI
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/src/routes/pmo/__tests__/planDependencyAnalysis.flag.test.ts:117:29
+    115|       });
+    116|
+    117|     expect(response.status).toBe(409);
+       |                             ^
+    118|     expect(response.body).toEqual({ error: { code: 'PLAN_VERSION_CONFL…
+    119|     expect(analyze).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  01:57:54
+   Duration  984ms (transform 563ms, setup 116ms, import 736ms, tests 41ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/plan-inicjatyw-20260914/junit.xml
