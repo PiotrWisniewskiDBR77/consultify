@@ -37,7 +37,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import databaseConfig from '../../config/DatabaseConfig.js';
+import { isInitiativesWorkloadEnabled } from '../../config/FeatureFlags.js';
 import { isInitiativesWorkReportEnabled } from '../../config/initiativesWorkReportFlag.js';
+import { InitiativeStatus, type InitiativeStatusType } from '../../constants/initiativeStatuses.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
 import { adoptChatDraftInitiative } from '../../domain/initiatives-execution/adoptChatDraftInitiative.js';
 import {
@@ -59,7 +61,10 @@ import {
 import { mutateCapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
 import type { CapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
 import { buildRoleSheet, roleSlug } from '../../domain/initiatives-execution/capacityRoleSheet.js';
-import { getRoleWeeklySupply } from '../../services/workloadCapacityService.js';
+import {
+  getInitiativeWorkloadProposals,
+  getRoleWeeklySupply,
+} from '../../services/workloadCapacityService.js';
 import {
   ConfiguredPortfolioConsultingModelGateway,
   isPortfolioConsultingAnalysisEnabled,
@@ -1664,6 +1669,47 @@ export function createInitiativesExecutionRuntimeRouter(
 ): Router {
   const router = Router();
   mountDefinitionApprovalReads(router, deps, actorFromRequest);
+
+  router.post(
+    '/workload-proposals',
+    requireOrgRole('user'),
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!isInitiativesWorkloadEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
+      const parsed = z
+        .object({
+          weeks: z.number().int().min(1).max(26).default(8),
+          projectId: z.string().trim().min(1).optional(),
+          initiativeStatuses: z
+            .array(
+              z.enum(
+                Object.values(InitiativeStatus) as [InitiativeStatusType, ...InitiativeStatusType[]]
+              )
+            )
+            .max(20)
+            .default([]),
+        })
+        .safeParse(req.body ?? {});
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const result = await getInitiativeWorkloadProposals(actor.organizationId, parsed.data);
+      res.json({
+        ...result,
+        mode: 'RULE_BASED_AI',
+        planningOnly: true,
+        applied: false,
+      });
+    })
+  );
 
   const authorizeProjects = async (
     actor: RuntimeActor,
@@ -7317,6 +7363,13 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
+      if (
+        payload.workReport?.templateId === 'WORKLOAD_CAPACITY' &&
+        !isInitiativesWorkloadEnabled()
+      ) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       if (payload.ownerId !== actor.userId || payload.approverId === actor.userId) {
         res.status(403).json({ error: { code: 'REPORT_RUN_OWNER_REQUIRED' } });
         return;
@@ -7429,6 +7482,10 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       if (run.workReport && !isInitiativesWorkReportEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
+      if (run.workReport?.templateId === 'WORKLOAD_CAPACITY' && !isInitiativesWorkloadEnabled()) {
         res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
@@ -7545,6 +7602,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
+      if (parsed.data.templateId === 'WORKLOAD_CAPACITY' && !isInitiativesWorkloadEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       if (
         parsed.data.projectIds.length > 0 &&
         !(await authorizeProjects(actor, parsed.data.projectIds, 'initiative.view'))
@@ -7568,6 +7629,10 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       if (!parsed.success || parsed.data.ownerId !== actor.userId) {
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      if (parsed.data.templateId === 'WORKLOAD_CAPACITY' && !isInitiativesWorkloadEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
         return;
       }
       if (
@@ -7647,6 +7712,10 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const frozenWorkReport = run.frozenSnapshot?.workReport;
+      if (frozenWorkReport?.templateId === 'WORKLOAD_CAPACITY' && !isInitiativesWorkloadEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       if (!['FROZEN', 'APPROVED', 'PUBLISHED'].includes(run.status) || !frozenWorkReport?.content) {
         res.status(409).json({ error: { code: 'REPORT_NOT_FROZEN' } });
         return;
@@ -7680,6 +7749,10 @@ export function createInitiativesExecutionRuntimeRouter(
       const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
         (item: any) => item.reportRunId === reportRunId
       ) as any;
+      if (run?.workReport?.templateId === 'WORKLOAD_CAPACITY' && !isInitiativesWorkloadEnabled()) {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
       if (!run || !(await canViewAggregate(actor, 'report_run', reportRunId))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -9165,6 +9238,9 @@ export async function runScheduledInitiativeWorkReport(
   const spec = schedule.runtimeReport;
   if (!spec || !INITIATIVE_WORK_REPORT_TEMPLATES.includes(spec.templateId as any)) {
     throw new Error('INITIATIVE_WORK_REPORT_SCHEDULE_INVALID');
+  }
+  if (spec.templateId === 'WORKLOAD_CAPACITY' && !isInitiativesWorkloadEnabled()) {
+    throw new Error('INITIATIVES_WORKLOAD_DISABLED');
   }
   const definition = (await dependencies.reader.findReportDefinition(
     schedule.organizationId,
