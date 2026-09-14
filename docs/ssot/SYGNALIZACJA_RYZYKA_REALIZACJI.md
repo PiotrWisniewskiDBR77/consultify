@@ -1,7 +1,7 @@
 # Sygnalizacja ryzyka Realizacji — kontrakt E0
 
-Status: **PROTOTYP DO AKCEPTU WŁAŚCICIELA; bez kodu produkcyjnego**  
-Zakres: F2-2 E0, R1.4–R1.5, DEC-487 i DEC-493  
+Status: **PROTOTYP DO AKCEPTU WŁAŚCICIELA; bez kodu produkcyjnego**
+Zakres: F2-2 E0, R1.4–R1.5, DEC-487 i DEC-493
 Flaga docelowa: `VITE_EXECUTION_FOUR_BUTTONS`, domyślnie OFF
 
 ## Granica dowodowa
