@@ -226,7 +226,12 @@ export function buildExecutionBankPreviewDeclaration({
           id: 'execution-case',
           label: t('execution.bank.preview.fact.case', 'Execution case'),
           value: row.executionCaseId
-            ? `Linked · v${row.executionCaseVersion ?? '—'}`
+            ? row.executionCaseVersion === null
+              ? t(
+                  'execution.bank.preview.fact.caseVersionMissing',
+                  'Linked · version not reported'
+                )
+              : `Linked · v${row.executionCaseVersion}`
             : t('execution.bank.preview.fact.caseMissing', 'Not linked yet'),
         },
         ...(showHandoffTrace
