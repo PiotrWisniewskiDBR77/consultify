@@ -14291,6 +14291,12 @@
         "proposer": "Zaproponował",
         "createdAt": "Data propozycji",
         "domain": "Obszar nadzoru"
+      },
+      "pmoDomain": {
+        "scheduleMilestones": "Harmonogram i kamienie milowe",
+        "resourceResponsibility": "Zasoby i odpowiedzialność",
+        "governanceDecisionMaking": "Decyzja nadzorcza",
+        "closure": "Zamknięcie"
       }
     }
   },

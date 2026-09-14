@@ -15116,6 +15116,12 @@
         "proposer": "Proposed by",
         "createdAt": "Proposed on",
         "domain": "Governance area"
+      },
+      "pmoDomain": {
+        "scheduleMilestones": "Schedule & milestones",
+        "resourceResponsibility": "Resources & responsibility",
+        "governanceDecisionMaking": "Governance decision",
+        "closure": "Closure"
       }
     }
   },
