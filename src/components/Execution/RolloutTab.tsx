@@ -458,7 +458,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
   > = useMemo(
     () => ({
       plan: {
-        label: t('execution.rollout.plan.title', 'Master Plan'),
+        label: t('execution.rollout.plan.title', 'Master Rollout Plan'),
         icon: <ClipboardList size={14} className="text-blue-400" />,
         count: initiatives.length,
       },
