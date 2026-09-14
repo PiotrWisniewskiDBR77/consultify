@@ -180,6 +180,18 @@ function splitEvidenceText(example: string): string[] {
 export type DrdPackLanguage = 'pl' | 'en';
 
 /**
+ * Licensed-content warning shown with the compiled pack. This is product
+ * chrome, not DRD methodology content: selecting the viewer's language does
+ * not alter any unit, level, question, scoring fixture or output hash input.
+ */
+export const DRD_METHOD_PACK_LICENCE_NOTICES: Record<DrdPackLanguage, string> = {
+  en:
+    'DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner\'s permission.',
+  pl:
+    'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
+};
+
+/**
  * One cached result PER LANGUAGE. A single `cached` slot used to make the
  * first caller's language win for the whole session — switching the
  * interface language then left the questionnaire in the previous language
@@ -390,8 +402,7 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
     licence: {
       holder: 'DBR77 / Digital Pathfinder (Dr. Piotr Wiśniewski)',
       usageRestriction: 'internal_only',
-      notice:
-        'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
+      notice: DRD_METHOD_PACK_LICENCE_NOTICES[lang],
     },
   };
 
