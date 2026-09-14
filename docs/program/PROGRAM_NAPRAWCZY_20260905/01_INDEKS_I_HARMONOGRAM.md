@@ -136,6 +136,54 @@ kolejka odbioru (KANAL wpis 33: S1 v3 → P1 → Q1 → S4 → S5 → S3). Wpisy
 (`wt/p1-raport`), fala B4 = H1e + Z-27 (`wt/fala-b4`). Worktree usunięte: `fala-a2`, `fala-b3`,
 `h1b`, `paczka5v2`. Dysk ~25 GiB.
 
+**P1 Raport z pracy — ODEBRANY i WDROŻONY na staging (14.09, run `34826961239`, success).**
+Linia `78086fb2c8` → `3e1363d01a` (kandydat `4d8113fa46` + docs `7724358c0b`, merge `fa3893df45`;
+jeden konflikt `InitiativesHub.tsx` — zakładka `workReport` pod nową flagą
+`WORK_REPORT_ENABLED`, nie `FOUR_BUTTONS`; `?lens=parking` bez zmian; Menu 3 czyste). Tag
+cofnięcia `rollback-pre-p1-raport-20260914` = `78086fb2c8`. 11/11 plików testów delty 33/33.
+Własna sonda CTO: runner → PDF (`work-report-3a588c6f….pdf`, 24 773 B, 2 strony, PDFKit) →
+MailHog (Message-ID `work-report-scheduled-delivery-…`) → PG (`PUBLISHED`, odbiorcy `DELIVERED`,
+`contentHash`) + ścieżka porażki bez SMTP (`APPROVED`/`FAILED`, `EMAIL_DELIVERY_FAILED`, receipty
+puste) — publikacja bez doręczenia nie przechodzi. Parytet OFF: flagi
+`ENABLE_INITIATIVES_WORK_REPORT` (6 wołaczy, nie fantom) i `VITE_INITIATIVES_WORK_REPORT`
+nieustawione; pełny spider 872 chunków żywego stagingu = 0 trafień kreatora. Autoryzacja: MEMBER
+403 na create/transitions/przebieg. Bramka: tsc 0/189, język OK, canon 349, artefakt 8-0-117,
+build OK. Żywy SMTP stagingu nietknięty (doręczenie na skrzynkę właściciela — po jego zgodzie,
+**Z-31**). Zrzuty Codexa bez powłoki (goły `<main>`) → **Z-29**. Szczegóły:
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, „P1 Raport z pracy — ODEBRANY i WDROŻONY".
+
+**Z-29 (14.09, nowe) — zrzuty P1 w powłoce.** Sonnet, gałąź
+`integracja/kandydat-z29-zrzuty-20260914`, HEAD `fb79dd4190`, kopia `backup/z29-zrzuty-20260914`;
+harness `dev-render/screens/z29-inicjatywy-raport-pracy.tsx`. Zrzuty w
+`~/Developer/cto-codex/zrzuty-z29-raport-pracy-20260914/` (lista, kreator, przebieg, OFF;
+jasny+ciemny). SKAZY poniżej kanonu w `InitiativeWorkReportView.tsx` (review Codexa oglądał samą
+powierzchnię): brak `StandardPreview` przebiegu, surowe kody enum w tabeli, 2 przyciski zamiast
+kebaba, natywne `<select>`, kreator jako blok nad tabelą, przeciek pigułek Menu 3 → etap **RP1b
+przejazd kanonu** (Opus, gałąź `integracja/kandydat-p1-kanon-20260914`, w toku). KANAŁ wpis 35 =
+reguła dla Codexa: każdy ekran przed freeze = StandardTable+StandardPreview+StandardModuleBar,
+etykiety i18n, kebab, zrzut w powłoce. **ROZLICZONE** (skazy przekazane do RP1b). Lekcja
+nadzorcy: „review powierzchni ≠ odbiór ekranu".
+
+**Z-31 (14.09, nowe).** Żywe doręczenie raportu z pracy mailem na skrzynkę właściciela — wymaga
+jego zgody przed uruchomieniem na żywym SMTP stagingu (sonda CTO powyżej użyła MailHog, nie
+żywej skrzynki).
+
+**Codex 14.09, 04:30–04:44.** S5 PMO E3 R3 **ACCEPT** → kolejka odbioru po Q1. S4 F2-2 E2
+rereview **HOLD** → poprawki zamrożone (04:44). KANAŁ wpisy 34 (P1 na linii, Q2 start, rebase
+S3/S4), 35 (reguła StandardTable/Preview/ModuleBar przed freeze, patrz Z-29).
+
+**Z-2 (aktualizacja 14.09, noc — druga fala integratorów).** Cztery równoległe: paczka 5 v3
+(push `19baa6d8bc` — run `34828181888` krok „Deploy app to staging" **FAILURE**, ale health
+stagingu = `19baa6d8bc`, tag `staging-deployed` został `3e1363d01a` — znany kształt „timeout
+workflow nie przesuwa tagu"; wyjaśnienie w raporcie integratora), fala B4 (H1e + Z-27), Q1
+Obciążenie, RP1b (przejazd kanonu). Dysk: 8,7 → ~26 GiB po czystce (z27, h1e, Caches). Worktree
+usunięte: `p1-raport`, `fala-a2`; `z29` (w toku — RP1b jeszcze aktywne).
+
+**EWIDENCJA (uzupełnienie 14.09).** RP1 → **🧪 NA STAGINGU** `3e1363d01a` (za flagą) + RP1b
+**🔧** w toku; Z-29 rozliczone; Z-31 nowy. Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 10 ·
+🔧 7 · ⬜ 26; FALA 2 = 41 etapów (0 ✅, 9 🧪, 7 🔧, 25 ⬜). Pełny wpis:
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, sekcja §5.
+
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
 (zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).
