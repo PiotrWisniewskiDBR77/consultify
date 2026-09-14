@@ -265,17 +265,22 @@ const BankTable = ({
     () => [
       {
         id: 'initiativeCase',
-        label: 'Initiative / Case',
+        label: rows.every((row) => row.id === row.initiativeId)
+          ? 'Initiative'
+          : 'Initiative / Case',
         primary: true,
         dataType: 'text',
         width: '300px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
+          const initiativeIdentity = row.id === row.initiativeId;
           return (
             <div
               data-testid={`execution-bank-table-item-${row.id}`}
               data-initiative-id={row.initiativeId}
-              data-execution-case-id={row.executionCaseId ?? undefined}
+              data-execution-case-id={
+                initiativeIdentity ? undefined : (row.executionCaseId ?? undefined)
+              }
               className="min-w-0"
             >
               {/*
@@ -291,7 +296,11 @@ const BankTable = ({
               {/* K5-R2: dla wiersza BEZ realizacji ten sam komunikat stoi już
                   w kolumnie „Execution phase" — nie powtarzamy go dwa razy
                   w jednym wierszu. */}
-              {row.executionCaseId ? (
+              {initiativeIdentity ? (
+                <div className="text-[11px] text-c-text-muted">
+                  {row.projectId ?? 'No project assigned'}
+                </div>
+              ) : row.executionCaseId ? (
                 <div className="text-[11px] text-c-text-muted">{caseAvailabilityLabel(row)}</div>
               ) : null}
             </div>
@@ -398,10 +407,7 @@ const BankTable = ({
           const row = source as unknown as ExecutionBankRow;
           return (
             <div>
-              <div
-                className="tabular-nums"
-                data-testid={`execution-bank-progress-${row.executionCaseId}`}
-              >
+              <div className="tabular-nums" data-testid={`execution-bank-progress-${row.id}`}>
                 {row.progress.status === 'KNOWN' ? (
                   `${row.progress.value}%`
                 ) : (
@@ -457,7 +463,7 @@ const BankTable = ({
           const row = source as unknown as ExecutionBankRow;
           return (
             <span
-              data-testid={`execution-bank-variance-${row.executionCaseId}`}
+              data-testid={`execution-bank-variance-${row.id}`}
               className={`${temporalClass} tabular-nums`}
             >
               {row.varianceDays.status === 'KNOWN' ? (
@@ -549,7 +555,7 @@ const BankTable = ({
         },
       },
     ],
-    [resolveOwnerName, t]
+    [resolveOwnerName, rows, t]
   );
   const rowMenu = (source: Record<string, unknown>): StandardRowMenu => {
     const row = source as unknown as ExecutionBankRow;
@@ -646,7 +652,10 @@ const BankKanban = ({
                 ]
               : []),
           ],
-          projectLabel: caseAvailabilityLabel(row),
+          projectLabel:
+            row.id === row.initiativeId
+              ? (row.projectId ?? 'No project assigned')
+              : caseAvailabilityLabel(row),
           dueLabel:
             row.displayFinish.status === 'KNOWN'
               ? readableDate(row.displayFinish.value)
@@ -670,10 +679,16 @@ const BankKanban = ({
             <span
               data-testid={`execution-bank-kanban-item-${row.id}`}
               data-initiative-id={row.initiativeId}
-              data-execution-case-id={row.executionCaseId ?? undefined}
+              data-execution-case-id={
+                row.id === row.initiativeId ? undefined : (row.executionCaseId ?? undefined)
+              }
               className="text-[10px] text-c-text-muted"
             >
-              {row.executionCaseId ? 'Native case identity retained' : 'Initiative awaiting a case'}
+              {row.id === row.initiativeId
+                ? (row.projectId ?? 'No project assigned')
+                : row.executionCaseId
+                  ? 'Native case identity retained'
+                  : 'Initiative awaiting a case'}
             </span>
           ),
         };
@@ -757,7 +772,9 @@ const BankCalendar = ({
                   key={row.id}
                   data-testid={`execution-bank-calendar-item-${row.id}`}
                   data-initiative-id={row.initiativeId}
-                  data-execution-case-id={row.executionCaseId ?? undefined}
+                  data-execution-case-id={
+                    row.id === row.initiativeId ? undefined : (row.executionCaseId ?? undefined)
+                  }
                   onClick={() => onSelect(row)}
                   className="mt-2 block w-full rounded-lg border border-c-border-subtle bg-c-surface p-2 text-left focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
@@ -786,7 +803,9 @@ const BankCalendar = ({
               key={row.id}
               data-testid={`execution-bank-calendar-item-${row.id}`}
               data-initiative-id={row.initiativeId}
-              data-execution-case-id={row.executionCaseId ?? undefined}
+              data-execution-case-id={
+                row.id === row.initiativeId ? undefined : (row.executionCaseId ?? undefined)
+              }
               onClick={() => onSelect(row)}
               className="mr-2 mt-2 rounded-full border border-c-border-subtle px-3 py-1 text-xs"
             >
@@ -1037,16 +1056,22 @@ const BankGantt = ({
           key={row.id}
           data-testid={`execution-bank-gantt-item-${row.id}`}
           data-initiative-id={row.initiativeId}
-          data-execution-case-id={row.executionCaseId ?? undefined}
+          data-execution-case-id={
+            row.id === row.initiativeId ? undefined : (row.executionCaseId ?? undefined)
+          }
           onClick={() => onSelect(row)}
           className="grid w-full grid-cols-[220px_minmax(730px,1fr)] gap-3 border-b border-c-border-subtle py-3 text-left focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <span>
             <strong className="block text-sm">{row.name}</strong>
-            <small className="text-c-text-muted">{caseAvailabilityLabel(row)}</small>
+            <small className="text-c-text-muted">
+              {row.id === row.initiativeId
+                ? (row.projectId ?? 'No project assigned')
+                : caseAvailabilityLabel(row)}
+            </small>
             <small
               className="mt-1 block text-c-text-secondary"
-              data-testid={`execution-bank-variance-${row.executionCaseId ?? row.id}`}
+              data-testid={`execution-bank-variance-${row.id}`}
             >
               {row.varianceDays.status === 'KNOWN'
                 ? `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`

@@ -1,11 +1,13 @@
 # F2-2 Realizacja — checkpoint E0 i niezależnej części E1
 
-**Werdykt: FROZEN FOR SECOND INDEPENDENT REVIEW / HOLD — P1 i P2 z pierwszego przeglądu zostały naprawione i mają zielony dowód zachowania; produkcyjna sygnalizacja, szósty filtr i pełne 29/29 pozostają jawnie wstrzymane.**
+**Werdykt: FROZEN FOR THIRD INDEPENDENT REVIEW / HOLD — jedyny P2 z drugiego przeglądu został naprawiony i ma RED→GREEN na rzeczywistym StandardPreview; produkcyjna sygnalizacja, szósty filtr i pełne 29/29 pozostają jawnie wstrzymane.**
 
 ## Tożsamość
 
-- baza: `bc40d5327c6cf133f8cfd2b0e68a5295fb782189`
+- baza po Wpisie 13: `c1e8fba7c2`
 - gałąź: `codex/realizacja-cztery-przyciski-20260913`
+- checkpoint przed rebase: `901d35da7f411f1d5eb1a00da9d9ffb980cfd550` (backup zweryfikowany 1:1)
+- HEAD po rebase: `0c27c5e92a`
 - flaga: `VITE_EXECUTION_FOUR_BUTTONS`, domyślnie OFF
 - migracje: 0 nowych i 0 zmodyfikowanych; migracja nie jest potrzebna
 
@@ -32,9 +34,15 @@ Bank korzysta z jednego kanonicznego zbioru we wszystkich czterech istniejących
 - używa wspólnego okna 1/3/6/12 miesięcy w tabeli, kanbanie, kalendarzu i Gantcie;
 - przy fladze OFF zachowuje starą tożsamość wierszy; dowodzi tego osobny test regresji.
 
-Focused behavior po naprawach niezależnego przeglądu: **23/23 PASS, 4/4 pliki, retry=0**. Dowód: `evidence/f2-2-realizacja/e0-e1/11-independent-review-fixes-green.log`.
+Focused behavior po naprawie P2 z drugiego przeglądu: **32/32 PASS, 5/5 plików, retry=0**. Zestaw obejmuje rzeczywisty render `TableWithPreviewLayout` → `StandardPreview` dla powiązanego rekordu z `executionCaseVersion: null`. Dowód: `evidence/f2-2-realizacja/e0-e1/24-null-version-focused-green.log`.
 
-Pełny frontend `tsc --noEmit` kończy się kodem 2 z **189 odziedziczonymi błędami**, czyli nie przekracza rejestru CTO `≤192`. Dwanaście historycznych trafień `ExecutionHub.tsx` leży poza zmienionymi odcinkami; w pozostałych zmienionych plikach nie ma trafień. Dowód: `evidence/f2-2-realizacja/e0-e1/13-typecheck-after-review-fixes.log`.
+Pełny frontend `tsc --noEmit` kończy się kodem 2 z **189 odziedziczonymi błędami**, czyli nie przekracza rejestru CTO `≤192`. Zmiana etykiety, jej test oraz pliki i18n mają 0 trafień typecheck. Dowód: `evidence/f2-2-realizacja/e0-e1/26-null-version-typecheck.log`.
+
+## Rebase według Wpisu 13
+
+Rebase na `c1e8fba7c2` miał trzy konflikty. `dev-render/main.tsx` zachowuje oba niezależne entrypointy. W `ExecutionBankViews.tsx` przyjęto nowy kanon CTO `primary`/`dataType` i wtórne kolumny `defaultVisible:false`; identyfikacja Initiative przy fladze ON została nałożona na ten kanon. W `ExecutionHub.tsx` przyjęto `TableWithPreviewLayout` i kanoniczną deklarację podglądu; pięć filtrów oraz przełączanie denominatora OFF/ON zostały nałożone ponownie. Własna zmiana `StandardPreview` została usunięta, ponieważ nowa baza ukrywa puste Relations w komponencie wspólnym.
+
+Pełny `check:list-canon`: PASS, 349 naruszeń = baseline 349. Świeży dowód: `evidence/f2-2-realizacja/e0-e1/25-null-version-list-canon.log`.
 
 ## Naprawy po pierwszym niezależnym przeglądzie
 
@@ -46,6 +54,10 @@ Raport `INDEPENDENT_REVIEW.md` miał dwa P1 i jedno P2. Wszystkie trzy zostały 
 
 RED→GREEN: `10-independent-review-fixes-red.log` (22/23, porażka oczekująca pojedynczego wiersza legacy) → `11-independent-review-fixes-green.log` (23/23).
 
+## Naprawa po drugim niezależnym przeglądzie
+
+Raport `INDEPENDENT_REREVIEW_POST_REBASE.md` odebrał oba wcześniejsze P1, ale znalazł jeden P2: osiągalny `Linked · v—`, gdy rzeczywisty model zachowuje `executionCaseVersion: null`. Granica została odtworzona na realnej deklaracji i realnym `StandardPreview`: `23-null-version-boundary-red.log` ma 8/9 PASS i dokładnie oczekiwaną porażkę. Po poprawce powiązany rekord bez wersji pokazuje opisowe, tłumaczone `Linked · version not reported` / `Powiązana · wersja niezaraportowana`, bez prefiksu `v`; `24-null-version-focused-green.log` ma 32/32 PASS.
+
 ## Kontrolowane czerwienie i mianownik
 
 Pełna mapa pozostaje 29/29. Checkpoint: **3 COMPLETE · 21 PARTIAL · 5 MISSING**. Szczegóły: `evidence/f2-2-realizacja/e0-e1/coverage-29-checkpoint.json`.
@@ -55,7 +67,7 @@ Test kontraktu pozostaje **2/4 PASS, 2/4 RED**:
 1. pełne 29/29 nie jest jeszcze dostarczone;
 2. `riskSignalLevels` nie istnieje, ponieważ zależy od nieudzielonej jeszcze akceptacji E0.
 
-Dowód po naprawach: `evidence/f2-2-realizacja/e0-e1/12-controlled-red-after-review-fixes.log`.
+Świeży dowód po naprawie P2: `evidence/f2-2-realizacja/e0-e1/27-null-version-controlled-red.log`.
 
 ## Bramka
 
