@@ -217,8 +217,30 @@ export interface AssessmentReportChapter {
   };
 }
 
+/** [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 — ile obszarów metodyki ma
+ * potwierdzoną odpowiedź. Liczy serwer (`assessmentReportCoverage.ts`), ekran
+ * tylko pokazuje; `null` dla źródeł, które zdarzeń odpowiedzi nie mają. */
+export interface AssessmentReportCoverageAxis {
+  readonly axisId: number;
+  readonly axisName: string;
+  readonly axisNamePL: string | null;
+  readonly answeredAreas: number;
+  readonly totalAreas: number;
+  readonly missingAreaIds: readonly string[];
+}
+
+export interface AssessmentReportCoverage {
+  readonly answeredAreas: number;
+  readonly totalAreas: number;
+  readonly percent: number;
+  readonly minPercent: number;
+  readonly sufficient: boolean;
+  readonly axes: readonly AssessmentReportCoverageAxis[];
+}
+
 export interface AssessmentReportContract {
   readonly contractVersion: 'assessment-report-contract-v1';
+  readonly coverage?: AssessmentReportCoverage | null;
   readonly sessionId: string;
   readonly outputId: string | null;
   readonly revision: number;
