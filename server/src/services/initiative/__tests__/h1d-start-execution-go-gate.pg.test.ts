@@ -82,6 +82,8 @@ describe.skipIf(!REAL_PG_REQUESTED)('H1d — start realizacji wymaga aktualnej d
   const proposerUserId = `h1d-proposer-${suffix}`;
   const reviewerUserId = `h1d-reviewer-${suffix}`;
   const initiativeId = `h1d-init-${suffix}`;
+  /** Bliźniak dla testu PARYTETU przy fladze OFF — ten sam kształt, osobny wiersz. */
+  const parityInitiativeId = `h1d-init-off-${suffix}`;
   const transformationCaseId = `h1d-case-${suffix}`;
   const planId = `h1d-plan-${suffix}`;
   const runId = `h1d-run-${suffix}`;
@@ -89,6 +91,11 @@ describe.skipIf(!REAL_PG_REQUESTED)('H1d — start realizacji wymaga aktualnej d
   const baselineId = `h1d-baseline-${suffix}`;
 
   beforeAll(async () => {
+    // Bramka GO startu realizacji jest od integracji fali B3 za flagą serwerową
+    // `ENABLE_LIFECYCLE_GO_GATE`, DOMYŚLNIE WYŁĄCZONĄ (rozjazd z preflightem +
+    // brak ludzkiej ścieżki zapisu decyzji przy OFF-owej skrzynce H1b).
+    // Testy A i B dowodzą bramki WŁĄCZONEJ, test PARYTETU (poniżej) — wyłączonej.
+    process.env.ENABLE_LIFECYCLE_GO_GATE = 'true';
     const pg = await import('pg');
     sql = new pg.Client({ connectionString: CONNECTION_STRING });
     await sql.connect();
@@ -177,6 +184,58 @@ describe.skipIf(!REAL_PG_REQUESTED)('H1d — start realizacji wymaga aktualnej d
       [`h1d-handoff-seed-${suffix}`, organizationId, initiativeId, proposerUserId]
     );
 
+    // ── BLIŹNIAK DO TESTU PARYTETU (flaga OFF) ────────────────────────────────
+    // Ten sam kształt co wiersz główny: kolumna APPROVED, etap SCHEDULED,
+    // kamień milowy, rola bramkowa PMO, przyjęty handoff — i ZERO decyzji GO.
+    await sql.query(
+      `INSERT INTO initiatives
+           (id,organization_id,project_id,name,status,owner_business_id,owner_execution_id,
+            planned_start_date,planned_end_date,schedule_baseline_id,baseline_version)
+         VALUES ($1,$2,$3,$4,'APPROVED',$5,$5,'2026-01-01','2026-12-31',$6,1)`,
+      [
+        parityInitiativeId,
+        organizationId,
+        projectId,
+        'H1d parity (flaga OFF)',
+        proposerUserId,
+        `${baselineId}-off`,
+      ]
+    );
+    await sql.query(
+      `INSERT INTO ie_aggregate_state
+           (organization_id,aggregate_type,aggregate_id,version,payload_json)
+         VALUES ($1,'initiative',$2,1,$3::jsonb)`,
+      [
+        organizationId,
+        parityInitiativeId,
+        JSON.stringify({
+          initiativeId: parityInitiativeId,
+          projectId,
+          initiativeOwnerId: proposerUserId,
+          title: 'H1d parity (flaga OFF)',
+          lifecycleState: 'SCHEDULED',
+        }),
+      ]
+    );
+    await sql.query(
+      `INSERT INTO initiative_milestones
+           (id,initiative_id,organization_id,name,target_date,baseline_date,baseline_version)
+         VALUES ($1,$2,$3,'H1d parity milestone','2026-06-30','2026-06-30',1)`,
+      [`h1d-milestone-off-${suffix}`, parityInitiativeId, organizationId]
+    );
+    await sql.query(
+      `INSERT INTO initiative_gate_roles (id,initiative_id,gate_role,user_id,assigned_at)
+         VALUES ($1,$2,'PMO',$3,NOW())`,
+      [`h1d-gate-role-off-${suffix}`, parityInitiativeId, reviewerUserId]
+    );
+    await sql.query(
+      `INSERT INTO initiative_handoffs
+           (id,organization_id,initiative_id,from_status,to_status,boundary,
+            readiness_allowed,actor_id)
+         VALUES ($1,$2,$3,'APPROVED','APPROVED','ready-for-execution',TRUE,$4)`,
+      [`h1d-handoff-off-${suffix}`, organizationId, parityInitiativeId, proposerUserId]
+    );
+
     await sql.query(
       `INSERT INTO wave8_agent_definitions
            (agent_id,organization_id,name,role,purpose,persona,approval_policy,cost_class,risk_level)
@@ -237,6 +296,10 @@ describe.skipIf(!REAL_PG_REQUESTED)('H1d — start realizacji wymaga aktualnej d
     const cleanup: Array<[string, unknown[]]> = [
       [`DELETE FROM initiative_lifecycle_gate_decisions WHERE organization_id=$1`, [organizationId]],
       [`DELETE FROM initiative_milestones WHERE initiative_id=$1`, [initiativeId]],
+      [`DELETE FROM initiative_milestones WHERE initiative_id=$1`, [parityInitiativeId]],
+      [`DELETE FROM initiative_gate_roles WHERE initiative_id=$1`, [parityInitiativeId]],
+      [`DELETE FROM initiative_handoffs WHERE initiative_id=$1`, [parityInitiativeId]],
+      [`DELETE FROM ie_aggregate_state WHERE aggregate_id=$1`, [parityInitiativeId]],
       [`DELETE FROM initiative_gate_roles WHERE initiative_id=$1`, [initiativeId]],
       [`DELETE FROM initiative_handoffs WHERE organization_id=$1`, [organizationId]],
       [`DELETE FROM initiative_status_history WHERE organization_id=$1`, [organizationId]],
@@ -270,6 +333,51 @@ describe.skipIf(!REAL_PG_REQUESTED)('H1d — start realizacji wymaga aktualnej d
     }
     await sql.end().catch(() => undefined);
   }, 60_000);
+
+  it('★ PARYTET (flaga ENABLE_LIFECYCLE_GO_GATE=OFF): start realizacji przechodzi jak na linii', async () => {
+    // Ten test broni WDROŻENIA: przy fladze wyłączonej zachowanie ma być
+    // IDENTYCZNE z linią sprzed H1d — bo preflight (a więc i przycisk w UI)
+    // nadal raportuje to przejście jako dozwolone, a ludzkiej ścieżki zapisu
+    // decyzji GO nie ma (skrzynka H1b za `VITE_TRANSITION_INBOX`, też OFF).
+    const previous = process.env.ENABLE_LIFECYCLE_GO_GATE;
+    process.env.ENABLE_LIFECYCLE_GO_GATE = 'false';
+    try {
+      const decisionsBefore = (
+        await sql.query<{ n: string }>(
+          `SELECT COUNT(*) AS n FROM initiative_lifecycle_gate_decisions
+            WHERE organization_id=$1 AND initiative_id=$2`,
+          [organizationId, parityInitiativeId]
+        )
+      ).rows[0];
+      // Premisa, nie założenie: decyzji GO naprawdę nie ma.
+      expect(Number(decisionsBefore.n)).toBe(0);
+
+      const result = await executeInitiativeTransition({
+        orgId: organizationId,
+        initiativeId: parityInitiativeId,
+        actorId: reviewerUserId,
+        actorRole: 'PMO',
+        nextStatusInput: 'IN_EXECUTION',
+        reason: 'H1d — parytet przy fladze OFF',
+      });
+      // eslint-disable-next-line no-console -- dowód wchodzi do evidence
+      console.log('[H1d][PARYTET OFF] zwrotka:', JSON.stringify(result));
+      expect(result.ok, 'flaga OFF zmieniła zachowanie — to byłby regres na stagingu').toBe(true);
+
+      // DOWÓD SELECT-em PO akcji — zwrotka funkcji kłamała już raz w tej rodzinie.
+      const after = (
+        await sql.query<{ status: string }>(
+          `SELECT status FROM initiatives WHERE id=$1 AND organization_id=$2`,
+          [parityInitiativeId, organizationId]
+        )
+      ).rows[0];
+      // eslint-disable-next-line no-console -- dowód wchodzi do evidence
+      console.log('[H1d][PARYTET OFF][SELECT PO]', JSON.stringify(after));
+      expect(after.status).toBe('IN_EXECUTION');
+    } finally {
+      process.env.ENABLE_LIFECYCLE_GO_GATE = previous;
+    }
+  }, 120_000);
 
   it('★ A (RED przed naprawą): bez aktualnej decyzji GO start realizacji jest odmówiony', async () => {
     const decisionsBefore = (

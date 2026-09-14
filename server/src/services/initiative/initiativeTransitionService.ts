@@ -125,6 +125,15 @@ export class TransitionGateSupersededError extends Error {
  * a generic `decisions` row cannot unlock a transition and a new canonical
  * version cannot land between this read and the transition commit.
  */
+/**
+ * Bramka GO na starcie realizacji (H1d / H16 / INI-005) za flagą serwerową.
+ * Domyślnie WYŁĄCZONA — patrz komentarz przy `GateType.START` w
+ * `evaluateInitiativeTransition`. Czytana przy każdym wywołaniu (nie w module),
+ * żeby test mógł ją przestawić bez przeładowania modułu.
+ */
+export const isLifecycleGoGateEnabled = (): boolean =>
+  process.env.ENABLE_LIFECYCLE_GO_GATE === 'true';
+
 export const hasApprovedGateDecision = async (
   orgId: string,
   initiativeId: string,
@@ -963,7 +972,30 @@ export async function executeInitiativeTransition(
       // `POST /:id/start-execution`, `PATCH /:id/status`, cron
       // `initiativeAutoStartJob` (aktor systemowy NIE omija tej kontroli —
       // lista dozwolonych bramek zdejmuje z niego tylko wymóg roli ludzkiej).
-      if (gate === GateType.START) {
+      //
+      // ★★ DECYZJA CTO (integracja fala B3, 14.09) — TA BRAMKA IDZIE ZA FLAGĄ
+      // SERWEROWĄ `ENABLE_LIFECYCLE_GO_GATE`, DOMYŚLNIE WYŁĄCZONĄ. Powód nie
+      // jest kosmetyczny, jest mierzalny:
+      //  · wiersz macierzy APPROVED→IN_EXECUTION ma warunek
+      //    `HANDOFF_AND_START_DATE`, a NIE `CURRENT_GO_DECISION`, więc
+      //    `initiativeTransitionPreflightService` (jedyne źródło, z którego UI
+      //    rysuje dostępność przycisku) nadal raportuje to przejście jako
+      //    DOZWOLONE. Bez flagi przycisk byłby aktywny, a serwer odpowiadałby
+      //    409 — rozjazd UI↔serwer, nie bramka.
+      //  · JEDYNYM kodem zapisującym decyzję GOVERNANCE_DECISION_MAKING dla
+      //    inicjatywy jest trasa `POST /:id/lifecycle-gate-decisions` oraz
+      //    adapter Teresy; zmierzone `git grep 'lifecycle-gate-decisions' -- src`
+      //    = 0 trafień, a schemat trasy wymaga `sourceDigest` (SHA-256),
+      //    `a05ProposalVersionId` i `a05ApprovalReceiptRef` — prowenancji,
+      //    której człowiek nie wpisze z ręki. Ludzka ścieżka zapisu tej decyzji
+      //    powstaje dopiero ze skrzynką recenzenta (H1b, `VITE_TRANSITION_INBOX`,
+      //    też OFF).
+      // Włączenie bramki przy OFF-owej skrzynce dałoby kształt „zamknięte przez
+      // wygaszenie": start realizacji odmawiany WSZYSTKIM, bez ścieżki naprawy.
+      // Flagę włączamy dopiero razem ze skrzynką (i po dopisaniu warunku
+      // `CURRENT_GO_DECISION` do wiersza START macierzy, żeby preflight mówił
+      // to samo co writer).
+      if (gate === GateType.START && isLifecycleGoGateEnabled()) {
         const refusal = await requireCurrentGateDecision('GOVERNANCE_DECISION_MAKING', {
           error: 'A current Go/No-Go decision is required to start execution of this initiative',
           rule: 'GATE_DECISION_REQUIRED',
@@ -991,7 +1023,17 @@ export async function executeInitiativeTransition(
       // Wymóg dałby więc 409 na KAŻDYM ludzkim domknięciu — dokładnie kształt
       // „zamknięte przez wygaszenie". Zostaje kontrola KOMPLETNOŚCI PRACY, bo
       // ona nie zależy od artefaktu, którego nikt nie produkuje.
-      if (gate === GateType.COMPLETE) {
+      // ★★ TA SAMA FLAGA `ENABLE_LIFECYCLE_GO_GATE` (integracja fala B3, 14.09).
+      // Powód: liczenie KAMIENI MILOWYCH jest tu NOWE — warunek macierzy
+      // `NO_OPEN_WORK`, żywy i na linii, liczy otwarte ZADANIA i wiszące decyzje
+      // wykonawcze, ale kamieni milowych nie liczył nigdy. Przy fladze OFF
+      // domknięcie zachowuje się DOKŁADNIE jak na linii (zadania dalej pilnuje
+      // `NO_OPEN_WORK`), więc wdrożenie nie wnosi ANI JEDNEJ nowej odmowy.
+      // Dodatkowy powód, żeby nie puszczać tego bez flagi: kod odmowy
+      // `CLOSURE_WORK_INCOMPLETE` nie ma wpisu w `initiativeLifecycleMessages`
+      // (zmierzone), więc użytkownik zobaczyłby surowy angielski komunikat
+      // serwera. Włączamy razem z bramką GO, po dopisaniu tłumaczenia.
+      if (gate === GateType.COMPLETE && isLifecycleGoGateEnabled()) {
         // Predykat kompletności zostaje na TEJ przypiętej transakcji, a istniejące
         // wiersze potomne są blokowane przed policzeniem. Błąd zapytania/schematu
         // propaguje się — domknięcie ma padać zamknięte, a nie uznawać
