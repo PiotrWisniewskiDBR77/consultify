@@ -10,6 +10,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
 import { governRecipients } from './deliverables/recipientGovernance.js';
+import {
+  normalizeReportLocale,
+  reportMessage,
+  resolveReportLocale,
+  type ReportLocale,
+} from './report/reportLocale.js';
 
 // ============================================
 // TYPES
@@ -33,6 +39,8 @@ export interface ReportSchedule {
   organizationId: string;
   name: string;
   description?: string;
+  /** Locale frozen at job creation; every artifact and delivery from this job uses it. */
+  locale: ReportLocale;
   // Template configuration
   templateId?: string;
   reportType: string;
@@ -102,6 +110,7 @@ export interface DeliveryConfig {
 export interface ScheduleCreateRequest {
   name: string;
   description?: string;
+  locale?: ReportLocale;
   templateId?: string;
   reportType: string;
   runtimeReport?: ReportSchedule['runtimeReport'];
@@ -122,6 +131,7 @@ export interface ScheduleCreateRequest {
 export interface ScheduleUpdateRequest {
   name?: string;
   description?: string;
+  locale?: ReportLocale;
   scheduleType?: ScheduleType;
   deliverableType?: DeliverableType;
   scopeType?: ScopeType;
@@ -154,6 +164,23 @@ export interface DeliveryResult {
   status: 'success' | 'failed';
   details?: string;
   timestamp: string;
+}
+
+export function buildScheduledReportEmail(
+  locale: ReportLocale,
+  scheduleName: string,
+  reportId: string,
+  hasBundleAttachment: boolean
+): { subject: string; html: string } {
+  return {
+    subject: reportMessage(locale, 'scheduledReports.subject', { name: scheduleName }),
+    html:
+      `<p>${reportMessage(locale, 'scheduledReports.generated', { name: scheduleName })}</p>` +
+      `<p>${reportMessage(locale, 'scheduledReports.reportId', { reportId })}</p>` +
+      (hasBundleAttachment
+        ? `<p>${reportMessage(locale, 'scheduledReports.attachment')}</p>`
+        : `<p>${reportMessage(locale, 'scheduledReports.library')}</p>`),
+  };
 }
 
 // ============================================
@@ -200,6 +227,38 @@ class ScheduledReportService {
     this.setDependencies({ db, reportBuilderService });
   }
 
+  private async resolveJobLocale(
+    explicit: unknown,
+    userId: string,
+    organizationId: string
+  ): Promise<ReportLocale> {
+    const requested = normalizeReportLocale(explicit);
+    if (requested) return requested;
+    try {
+      const user = await this.db.get(`SELECT language FROM users WHERE id = ?`, [userId]);
+      const fromUser = normalizeReportLocale(user?.language);
+      if (fromUser) return fromUser;
+    } catch {
+      // Continue to the legacy preference column.
+    }
+    try {
+      const legacyUser = await this.db.get(`SELECT locale FROM users WHERE id = ?`, [userId]);
+      const fromLegacyUser = normalizeReportLocale(legacyUser?.locale);
+      if (fromLegacyUser) return fromLegacyUser;
+    } catch {
+      // Continue to organization/EN.
+    }
+    try {
+      const organization = await this.db.get(
+        `SELECT default_language FROM organizations WHERE id = ?`,
+        [organizationId]
+      );
+      return resolveReportLocale(organization?.default_language);
+    } catch {
+      return 'en';
+    }
+  }
+
   // ============================================
   // SCHEDULE CRUD
   // ============================================
@@ -226,12 +285,14 @@ class ScheduledReportService {
     const scheduleType = request.scheduleType || 'time_based';
     const deliverableType = request.deliverableType || 'report';
     const scopeType = request.scopeType || 'organization';
+    const locale = await this.resolveJobLocale(request.locale, userId, organizationId);
 
     const schedule: ReportSchedule = {
       id,
       organizationId,
       name: request.name,
       description: request.description,
+      locale,
       templateId: request.templateId,
       reportType: request.reportType,
       runtimeReport: request.runtimeReport,
@@ -278,6 +339,7 @@ class ScheduledReportService {
         schedule.isActive ? 1 : 0,
         JSON.stringify({
           description: schedule.description,
+          locale: schedule.locale,
           templateId: schedule.templateId,
           reportType: schedule.reportType,
           runtimeReport: schedule.runtimeReport,
@@ -319,6 +381,7 @@ class ScheduledReportService {
       ...existing,
       name: updates.name ?? existing.name,
       description: updates.description ?? existing.description,
+      locale: updates.locale ?? existing.locale,
       scheduleType: updates.scheduleType ?? existing.scheduleType,
       deliverableType: updates.deliverableType ?? existing.deliverableType,
       scopeType: updates.scopeType ?? existing.scopeType,
@@ -354,6 +417,7 @@ class ScheduledReportService {
         updated.isActive ? 1 : 0,
         JSON.stringify({
           description: updated.description,
+          locale: updated.locale,
           templateId: updated.templateId,
           reportType: updated.reportType,
           runtimeReport: updated.runtimeReport,
@@ -566,6 +630,7 @@ class ScheduledReportService {
               // preserve schedule intent in report config for generation "voice"
               scheduleName: scheduleData.name,
               scheduleFrequency: scheduleData.frequency,
+              language: scheduleData.locale,
             },
           }
         );
@@ -604,8 +669,10 @@ class ScheduledReportService {
               status: 'success' as const,
               details:
                 method === 'email'
-                  ? 'Frozen PDF accepted by configured SMTP provider'
-                  : 'Published report available in dashboard',
+                  ? scheduleData.locale === 'pl'
+                    ? 'Zamrożony PDF został przyjęty przez skonfigurowanego dostawcę SMTP'
+                    : 'Frozen PDF accepted by configured SMTP provider'
+                  : reportMessage(scheduleData.locale, 'scheduledReports.dashboard'),
               timestamp: new Date().toISOString(),
             }))
           : await this.deliverReport(scheduleData, reportId, zipAttachment);
@@ -690,7 +757,7 @@ class ScheduledReportService {
             results.push({
               method: 'dashboard',
               status: 'success',
-              details: 'Report available in dashboard',
+              details: reportMessage(schedule.locale, 'scheduledReports.dashboard'),
               timestamp: new Date().toISOString(),
             });
             break;
@@ -740,13 +807,14 @@ class ScheduledReportService {
     // W6.2 — un-stub: realnie WYŚLIJ przez emailService. Wcześniej tylko logowało
     // (a `this.emailService` bywa nieustawiony w cron-path → 0 wysyłek). Importujemy
     // realny `send` z modułu; fallback na wstrzyknięty serwis gdy obecny.
-    const subject = emailConfig.subject || `Raport „${schedule.name}" gotowy`;
-    const html =
-      `<p>Zaplanowany raport <strong>${schedule.name}</strong> został wygenerowany.</p>` +
-      `<p>Identyfikator raportu: <code>${reportId}</code></p>` +
-      (bundleAttachment
-        ? `<p>W załączniku znajdziesz komplet plików (DOCX+XLSX+PPTX).</p>`
-        : `<p>Materiał jest dostępny w bibliotece „Materiały".</p>`);
+    const localizedEmail = buildScheduledReportEmail(
+      schedule.locale,
+      schedule.name,
+      reportId,
+      Boolean(bundleAttachment)
+    );
+    const subject = emailConfig.subject || localizedEmail.subject;
+    const html = localizedEmail.html;
 
     // W6.1 — dołącz ZIP wiązki gdy dostępny.
     const attachments = bundleAttachment
@@ -899,6 +967,7 @@ class ScheduledReportService {
       organizationId: row.organization_id,
       name: row.schedule_name,
       description: row.description || config.description,
+      locale: resolveReportLocale(config.locale),
       templateId: config.templateId || row.report_template_id,
       reportType: config.reportType || 'assessment',
       runtimeReport: config.runtimeReport,

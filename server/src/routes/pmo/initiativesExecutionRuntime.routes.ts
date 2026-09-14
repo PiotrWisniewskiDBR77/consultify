@@ -249,6 +249,11 @@ import { get as dbGet } from '../../utils/DbPromise.js';
 import EmailService from '../../services/emailService.js';
 import { renderExecutionReportPdf } from '../../services/executionReportProfileService.js';
 import {
+  reportMessage,
+  resolveReportLocale,
+  type ReportLocale,
+} from '../../services/report/reportLocale.js';
+import {
   INITIATIVE_WORK_REPORT_TEMPLATES,
   renderInitiativeWorkReportPdf,
   type InitiativeWorkReportContent,
@@ -9277,6 +9282,7 @@ export async function deliverInitiativeWorkReport(
     expectedVersion: number;
     receiptId: string;
     recipients: string[];
+    locale?: ReportLocale;
   },
   deps: InitiativeWorkReportDeliveryDependencies
 ): Promise<{
@@ -9355,6 +9361,7 @@ export async function deliverInitiativeWorkReport(
   }
 
   const content = run.frozenSnapshot.workReport.content as InitiativeWorkReportContent;
+  const locale = resolveReportLocale(input.locale, (content as { locale?: unknown }).locale);
   const pdf = await (deps.renderPdf ?? renderInitiativeWorkReportPdf)(content);
   const sendEmail = deps.sendEmail ?? EmailService.send.bind(EmailService);
   let aggregateVersion = Number(run.version ?? 0) || Number((await readRun())?.version ?? 0);
@@ -9404,8 +9411,10 @@ export async function deliverInitiativeWorkReport(
       accepted = await sendEmail({
         to: recipientState.address,
         subject: content.title,
-        text: `Consultify work report: ${content.title}`,
-        html: `<p>Consultify work report: <strong>${content.title.replace(/[<>&"']/g, '')}</strong></p>`,
+        text: reportMessage(locale, 'scheduledReports.workReportText', { title: content.title }),
+        html: `<p>${reportMessage(locale, 'scheduledReports.workReportHtml', {
+          title: content.title.replace(/[<>&"']/g, ''),
+        })}</p>`,
         requireDelivery: true,
         messageId: `<work-report-${input.receiptId}-${recipientKey}@consultify.local>`,
         attachments: [
@@ -9497,6 +9506,7 @@ export async function runScheduledInitiativeWorkReport(
   schedule: {
     id: string;
     organizationId: string;
+    locale?: ReportLocale;
     runtimeReport?: {
       profile?: 'initiative_work_report' | 'execution_report';
       definitionId: string;
@@ -9683,6 +9693,7 @@ export async function runScheduledInitiativeWorkReport(
       expectedVersion: version,
       receiptId,
       recipients: spec.recipients,
+      locale: schedule.locale,
     },
     profile === 'execution_report'
       ? { ...dependencies, renderPdf: renderExecutionReportPdf as any }
