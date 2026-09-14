@@ -7,8 +7,15 @@ import { StandardArtifactShell } from '@/components/standard/StandardArtifactShe
 import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
 import { PLAN_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
 import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
+import type { ScheduleItem } from '@/types/initiativeSchedule';
 
 import { formatPlanSolverReason } from '../planSolverReason';
+import { InitiativeGantt } from '../gantt';
+import {
+  PlanDependencyAnalysisPanel,
+  type DependencyCriticalPath,
+} from '../PlanDependencyAnalysisPanel';
+import type { DependencyObservation, ObservationReview } from '../planDependencyReview';
 import {
   GeneratorPlanuModal,
   type GeneratorInitiative,
@@ -159,7 +166,15 @@ export function PlanCard({
   scenario: PlanCardScenario;
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   plannable?: GeneratorInitiative[];
-  proposal?: { conflicts: string[]; changes: unknown[]; status: string } | null;
+  proposal?: {
+    conflicts: string[];
+    changes: unknown[];
+    status: string;
+    analysisSource?: 'SOLVER' | 'AI';
+    dependencyObservations?: DependencyObservation[];
+    criticalPaths?: DependencyCriticalPath[];
+    analysisModel?: string | null;
+  } | null;
   proposalRows?: GeneratorProposalRow[] | null;
   proposalConflicts?: string[];
   savedLabel?: string | null;
@@ -169,7 +184,7 @@ export function PlanCard({
   onBack: () => void;
   onAnalyze: (mode: PlanGenerationMode) => void;
   onGenerate?: (input: GeneratorPlanInput) => void;
-  onReview: (outcome: 'ACCEPT' | 'REJECT') => void;
+  onReview: (outcome: 'ACCEPT' | 'REJECT', reviews?: ObservationReview[]) => void;
   onPublish: () => void;
   onAddInitiative?: (initiativeId: string) => void;
   onRemoveInitiative?: (initiativeId: string) => void;
@@ -189,6 +204,7 @@ export function PlanCard({
   const [generator, setGenerator] = useState(false);
   const [readMode, setReadMode] = useState(false);
   const [candidate, setCandidate] = useState('');
+  const [horizonMonths, setHorizonMonths] = useState<1 | 3 | 6 | 12>(3);
   const title = resolveBusinessDisplayLabel({
     displayName: scenario.name,
     rawId: scenario.scenarioId,
@@ -204,6 +220,8 @@ export function PlanCard({
     [initiatives, plannable]
   );
   const nameOf = (id: string) => names.get(id) ?? id;
+  const lifecycleOf = (id: string) =>
+    initiatives.find((initiative) => initiative.id === id)?.lifecycle ?? null;
   const horizon = useMemo(
     () =>
       scenario.periods.length
@@ -264,6 +282,50 @@ export function PlanCard({
           'Tryb wg obciążenia ról wymaga opublikowanej analizy obciążenia dla tej wersji planu — utwórz ją w Obciążeniu.',
       });
   const [rowError, setRowError] = useState<Record<string, 'ORDER' | 'HORIZON'>>({});
+  const ganttRange = useMemo(() => {
+    const start = new Date();
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setUTCMonth(end.getUTCMonth() + horizonMonths);
+    return { start: start.toISOString(), end: end.toISOString() };
+  }, [horizonMonths]);
+  const ganttItems = useMemo<ScheduleItem[]>(
+    () =>
+      scenario.windows.map((window) => ({
+        id: window.initiativeId,
+        type: 'phase',
+        title: nameOf(window.initiativeId),
+        start: window.earliest ?? window.target,
+        end: window.latest ?? window.target,
+        status: lifecycleOf(window.initiativeId),
+        sourceId: window.initiativeId,
+        sourceKind: 'phase',
+      })),
+    [scenario.windows, initiatives]
+  );
+  const ganttDependencies = useMemo(
+    () =>
+      scenario.windows.flatMap((window) =>
+        window.dependencySnapshot.map((predecessorId) => ({
+          fromId: predecessorId,
+          toId: window.initiativeId,
+        }))
+      ),
+    [scenario.windows]
+  );
+  const criticalPathIds = useMemo(
+    () => [...new Set((proposal?.criticalPaths ?? []).flatMap((path) => path.initiativeIds))],
+    [proposal]
+  );
+  const frozenIds = useMemo(
+    () =>
+      scenario.windows
+        .filter((window) =>
+          ['IN_EXECUTION', 'EXECUTION', 'IN_PROGRESS'].includes(String(lifecycleOf(window.initiativeId)).toUpperCase())
+        )
+        .map((window) => window.initiativeId),
+    [scenario.windows, initiatives]
+  );
 
   const box = 'rounded-xl border border-c-border-subtle bg-c-surface p-4';
   const field = 'rounded-lg border border-c-border bg-c-surface px-2 py-1 text-sm';
@@ -534,6 +596,15 @@ export function PlanCard({
   // ani zatwierdzić poza generatorem.
   const dependenciesSection = (
     <div className={box}>
+      {proposal?.analysisSource === 'AI' && (
+        <PlanDependencyAnalysisPanel
+          proposal={proposal}
+          editable={editable}
+          busy={busy}
+          resolveName={nameOf}
+          onReview={onReview}
+        />
+      )}
       {proposalRows && proposalRows.length > 0 && (
         <div className="mb-3 overflow-x-auto">
           <h4 className="mb-1 font-medium">
@@ -578,7 +649,7 @@ export function PlanCard({
               ))}
             </tbody>
           </table>
-          {editable && proposal?.status === 'PENDING_REVIEW' && (
+          {editable && proposal?.status === 'PENDING_REVIEW' && proposal.analysisSource !== 'AI' && (
             <div className="mt-2 flex gap-2">
               <button type="button" className={button} disabled={busy} onClick={() => onReview('ACCEPT')}>
                 {t('initiatives.planGenerator.accept', 'Approve')}
@@ -616,6 +687,45 @@ export function PlanCard({
           </li>
         ))}
       </ul>
+      <div className="mt-5 border-t border-c-border-subtle pt-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 className="font-medium">{t('initiatives.planAnalysis.timelineTitle')}</h4>
+            <p className="text-xs text-c-text-muted">
+              {horizonMonths <= 3
+                ? t('initiatives.planAnalysis.timelineWeeks')
+                : t('initiatives.planAnalysis.timelineMonths')}
+            </p>
+          </div>
+          <div className="inline-flex overflow-hidden rounded-lg border border-c-border">
+            {([1, 3, 6, 12] as const).map((months) => (
+              <button
+                key={months}
+                type="button"
+                aria-pressed={horizonMonths === months}
+                className={`px-3 py-1.5 text-sm ${
+                  horizonMonths === months ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'
+                }`}
+                onClick={() => setHorizonMonths(months)}
+              >
+                {t('initiatives.planAnalysis.horizonMonths', { count: months })}
+              </button>
+            ))}
+          </div>
+        </div>
+        <InitiativeGantt
+          items={ganttItems}
+          dependencies={ganttDependencies}
+          criticalPathIds={criticalPathIds}
+          frozenItemIds={frozenIds}
+          rangeStart={ganttRange.start}
+          rangeEnd={ganttRange.end}
+          initialZoom={horizonMonths <= 3 ? 'week' : 'month'}
+        />
+        <p className="mt-2 text-xs text-c-text-muted">
+          {t('initiatives.planAnalysis.frozenLegend')}
+        </p>
+      </div>
     </div>
   );
 
@@ -779,7 +889,7 @@ export function PlanCard({
   );
   const rightPanel = {
     actions: {
-      label: 'Akcje',
+      label: t('common.actions', 'Actions'),
       children: (
         <button
           className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -791,7 +901,7 @@ export function PlanCard({
       actionIds: ['back'],
     },
     properties: {
-      label: 'Właściwości',
+      label: t('initiatives.planCard.properties.title', 'Properties'),
       children: (
         <ArtifactPropertiesTable
           propertyLabel={t('initiatives.planCard.properties.propertyLabel', 'Property')}
@@ -850,10 +960,10 @@ export function PlanCard({
         onClose: onBack,
         statusLabel:
           scenario.status === 'DRAFT'
-            ? 'Szkic'
+            ? t('initiatives.planScenario.status.draft', 'Draft')
             : scenario.status === 'PUBLISHED'
-              ? 'Opublikowany'
-              : 'Zastąpiony',
+              ? t('initiatives.planScenario.status.published', 'Published')
+              : t('initiatives.planScenario.status.superseded', 'Superseded'),
         statusTone: scenario.status === 'PUBLISHED' ? 'approved' : 'draft',
       }}
       primaryAction={{
