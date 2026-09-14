@@ -3,6 +3,7 @@ import {
   type MaterialCommandEnvelope,
   type MaterialCommandResult,
   type MaterialCommandUnitOfWork,
+  MaterialCommandConflictError,
   MaterialCommandValidationError,
 } from './materialCommand.js';
 import type { CapacityScenario } from './capacityScenario.js';
@@ -66,8 +67,14 @@ export async function createPlanAnalysisProposal(
       'plan_scenario',
       envelope.payload.scenarioId
     );
-    if (!source || source.version !== envelope.payload.inputAggregateVersion)
+    if (!source)
       throw new MaterialCommandValidationError('Exact Plan Scenario input version required');
+    if (source.version !== envelope.payload.inputAggregateVersion)
+      throw new MaterialCommandConflictError(
+        'Plan input aggregate version conflict',
+        envelope.payload.inputAggregateVersion,
+        source.version
+      );
     if (source.payload.status !== 'DRAFT')
       throw new MaterialCommandValidationError('Analysis proposals may target only a DRAFT Plan');
     const dependencyAnalysis =
