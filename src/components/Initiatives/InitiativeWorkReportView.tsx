@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { StandardTable, type TableColumn } from '@/components/standard';
 import { readMemberId, readMemberLabel } from '@/hooks/useOrganizationMemberNames';
 import { OrganizationApi } from '@/services/api/organizations.api';
+import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 import {
   createReportDefinition,
   createReportRun,
@@ -55,6 +56,23 @@ type ReportContent = {
 
 const itemsAt = (payload: any): any[] =>
   Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+
+export function isEligibleWorkReportApprover(
+  member: Record<string, unknown>,
+  currentUserId: string
+): boolean {
+  const memberId = readMemberId(member);
+  const role = String(member.role ?? member.organizationRole ?? member.organization_role ?? '');
+  const status = String(member.status ?? 'active')
+    .trim()
+    .toLowerCase();
+  return (
+    Boolean(memberId) &&
+    memberId !== currentUserId &&
+    status === 'active' &&
+    isAdminOwnerOrSuperAdminRole(role)
+  );
+}
 
 export function InitiativeWorkReportView({
   currentProjectId,
@@ -135,8 +153,9 @@ export function InitiativeWorkReportView({
         })
       );
       const readableMembers = (memberList as unknown as Array<Record<string, unknown>>)
+        .filter((member) => isEligibleWorkReportApprover(member, currentUserId))
         .map((member) => ({ id: readMemberId(member), label: readMemberLabel(member) || '' }))
-        .filter((member) => member.id && member.label && member.id !== currentUserId);
+        .filter((member) => member.id && member.label);
       setMembers(readableMembers);
       setRuns(itemsAt(runList).filter((run) => run.workReport));
       setForm((current) => ({
@@ -549,6 +568,14 @@ export function InitiativeWorkReportView({
                 </option>
               ))}
             </select>
+            {members.length === 0 && (
+              <span className="mt-1 block text-xs text-c-text-muted">
+                {t(
+                  'initiatives.workReport.noEligibleApprover',
+                  'No other active administrator can approve and deliver this report.'
+                )}
+              </span>
+            )}
           </label>
           <div className="flex flex-wrap gap-2 md:col-span-2">
             <button

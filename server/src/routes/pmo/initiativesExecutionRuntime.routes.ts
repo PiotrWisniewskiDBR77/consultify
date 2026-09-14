@@ -1406,7 +1406,7 @@ const InitiativeWorkReportPreviewSchema = z.object({
 const InitiativeWorkReportDeliverySchema = z.object({
   expectedVersion: z.number().int().min(1),
   clientRequestId: z.string().min(1),
-  recipients: z.array(z.string().email()).min(1).max(50),
+  recipients: z.array(z.string().trim().email()).min(1).max(50),
 });
 const InitiativeWorkReportScheduleSchema = z.object({
   title: z.string().trim().min(1).max(180),
@@ -1417,7 +1417,7 @@ const InitiativeWorkReportScheduleSchema = z.object({
   projectIds: z.array(z.string().min(1)).max(100).default([]),
   ownerId: z.string().min(1),
   approverId: z.string().min(1),
-  recipients: z.array(z.string().email()).min(1).max(50),
+  recipients: z.array(z.string().trim().email()).min(1).max(50),
   timezone: z.string().min(1).default('UTC'),
 });
 const AcceptanceCommandSchema = z
@@ -1577,6 +1577,9 @@ export interface InitiativesExecutionRuntimeDependencies {
   controlKpis?: ControlKpiReadModel;
   asOfVersions?: PostgresAsOfVersionReader;
   portfolioAnalysis?: PortfolioAnalysisRuntimeDependencies;
+  sendWorkReportEmail?: typeof EmailService.send;
+  renderWorkReportPdf?: typeof renderInitiativeWorkReportPdf;
+  workReportNow?: () => Date;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -7657,10 +7660,16 @@ export function createInitiativesExecutionRuntimeRouter(
           reportRunId,
           approverId: actor.userId,
           expectedVersion: parsed.data.expectedVersion,
-          receiptId: parsed.data.clientRequestId,
+          receiptId: `manual-delivery-${reportRunId}`,
           recipients: parsed.data.recipients,
         },
-        { unitOfWork: deps.unitOfWork, reader: deps.reader }
+        {
+          unitOfWork: deps.unitOfWork,
+          reader: deps.reader,
+          sendEmail: deps.sendWorkReportEmail,
+          renderPdf: deps.renderWorkReportPdf,
+          now: deps.workReportNow,
+        }
       );
       if (!delivery.published) {
         res.status(502).json({
@@ -7668,7 +7677,7 @@ export function createInitiativesExecutionRuntimeRouter(
           failed: delivery.failed,
           pending: delivery.pending,
           delivered: delivery.delivered,
-          receiptId: parsed.data.clientRequestId,
+          receiptId: `manual-delivery-${reportRunId}`,
         });
         return;
       }
@@ -8965,13 +8974,22 @@ export async function deliverInitiativeWorkReport(
   if (!aggregateVersion) aggregateVersion = input.expectedVersion + (attempt ? 1 : 0);
 
   for (const recipientState of attempt.recipients as Array<any>) {
-    if (recipientState.status === 'DELIVERED' || recipientState.status === 'SENDING') continue;
-    const attemptedAt = (deps.now?.() ?? new Date()).toISOString();
+    if (recipientState.status === 'DELIVERED') continue;
+    const attemptClock = deps.now?.() ?? new Date();
+    const attemptedAt = attemptClock.toISOString();
+    if (
+      recipientState.status === 'SENDING' &&
+      (!recipientState.leaseExpiresAt ||
+        Date.parse(String(recipientState.leaseExpiresAt)) > attemptClock.getTime())
+    )
+      continue;
     const attemptNumber = Number(recipientState.attempts ?? 0) + 1;
     const recipientKey = createHash('sha256')
       .update(recipientState.address)
       .digest('hex')
       .slice(0, 12);
+    const attemptToken = randomUUID();
+    const leaseExpiresAt = new Date(attemptClock.getTime() + 5 * 60_000).toISOString();
     const claimed = await transitionReportRun(deps.unitOfWork, {
       organizationId: input.organizationId,
       actorId: input.approverId,
@@ -8988,6 +9006,8 @@ export async function deliverInitiativeWorkReport(
         receiptId: input.receiptId,
         recipient: recipientState.address,
         attemptedAt,
+        attemptToken,
+        leaseExpiresAt,
       },
     });
     aggregateVersion = claimed.aggregateVersion;
@@ -9000,6 +9020,7 @@ export async function deliverInitiativeWorkReport(
         text: `Consultify work report: ${content.title}`,
         html: `<p>Consultify work report: <strong>${content.title.replace(/[<>&"']/g, '')}</strong></p>`,
         requireDelivery: true,
+        messageId: `<work-report-${input.receiptId}-${recipientKey}@consultify.local>`,
         attachments: [
           {
             filename: `work-report-${input.reportRunId}.pdf`,
@@ -9029,6 +9050,7 @@ export async function deliverInitiativeWorkReport(
         recipient: recipientState.address,
         outcome,
         attemptedAt,
+        attemptToken,
         error: accepted ? undefined : deliveryError || 'EMAIL_DELIVERY_FAILED',
       },
     });

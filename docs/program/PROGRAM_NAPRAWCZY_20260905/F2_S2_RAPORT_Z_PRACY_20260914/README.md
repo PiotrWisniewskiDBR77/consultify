@@ -12,7 +12,7 @@ Kod E1 po pierwszym niezależnym przeglądzie i sześciu poprawkach jest gotowy 
 - E2: zestawienie osób zalegających z decyzjami, liczba decyzji oczekujących i przeterminowanych oraz najstarszy termin;
 - PDF generowany z zamrożonego snapshotu; pięć szablonów ma trwały identyfikator i różny dobór treści;
 - wysyłka PDF przez istniejący `EmailService`; serwer wymaga stanu APPROVED, zgodności zatwierdzającego i identyczności adresatów z zamrożoną listą;
-- harmonogram wykorzystuje istniejące `report_schedules.config_json`, deterministyczny identyfikator okresu, zamraża, zatwierdza, publikuje receipt przed SMTP i wysyła rzeczywisty PDF;
+- harmonogram wykorzystuje istniejące `report_schedules.config_json`, deterministyczny identyfikator okresu, zamraża i zatwierdza raport, utrwala stan dostawy każdego odbiorcy, wysyła rzeczywisty PDF przez SMTP i publikuje receipt dopiero po sukcesie wszystkich odbiorców;
 - usunięto atrapę `report={true}`; listę przebiegów renderuje `StandardTable`;
 - jeśli PMO nie dostarcza bieżącego projektu, zakres degraduje się do `All initiatives`.
 
@@ -30,4 +30,5 @@ Lokalny transport SMTP został sprawdzony przez prawdziwe połączenie TCP i wia
 
 ## Znane ograniczenia E1
 
-- odpowiedź błędu członków organizacji pozostawia wybór zatwierdzającego pusty zamiast podstawiać niezweryfikowaną osobę.
+- odpowiedź błędu członków organizacji pozostawia wybór zatwierdzającego pusty zamiast podstawiać niezweryfikowaną osobę; lista pokazuje wyłącznie aktywnych administratorów, właścicieli i superadministratorów.
+- stan `SENDING` ma pięciominutowy lease i token fence; po wygaśnięciu może zostać przejęty przez nową próbę ze stabilnym RFC Message-ID, a stary proces nie może zapisać spóźnionego wyniku.

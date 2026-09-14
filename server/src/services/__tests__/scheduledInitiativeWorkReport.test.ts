@@ -1,4 +1,6 @@
 /** @vitest-environment node */
+import express from 'express';
+import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -6,7 +8,12 @@ import type {
   MaterialCommandUnitOfWork,
   StoredCommandReceipt,
 } from '../../domain/initiatives-execution/materialCommand.js';
-import { runScheduledInitiativeWorkReport } from '../../routes/pmo/initiativesExecutionRuntime.routes.js';
+import { reportContentHash } from '../../domain/initiatives-execution/reportRun.js';
+import {
+  createInitiativesExecutionRuntimeRouter,
+  deliverInitiativeWorkReport,
+  runScheduledInitiativeWorkReport,
+} from '../../routes/pmo/initiativesExecutionRuntime.routes.js';
 
 interface StoredAggregate {
   version: number;
@@ -142,7 +149,7 @@ function createMemoryRuntime() {
           ...value.payload,
         })),
   };
-  return { unitOfWork, reader, outbox };
+  return { unitOfWork, reader, outbox, aggregates };
 }
 
 const schedule = {
@@ -234,5 +241,192 @@ describe('scheduled initiative work report canonical lifecycle', () => {
         'report-run.publish',
       ])
     );
+  });
+
+  it('manual HTTP retry reuses the run receipt and never resends a successful recipient', async () => {
+    const runtime = createMemoryRuntime();
+    const content = {
+      title: 'Manual report',
+      templateId: 'EXECUTIVE_SUMMARY',
+      generatedAt: '2026-09-14T09:00:00.000Z',
+      projectIds: [],
+      summary: { initiatives: 0, pendingDecisions: 0, overdueDecisions: 0, byStatus: {} },
+      initiatives: [],
+      decisionDebtors: [],
+    };
+    const frozenSnapshot = {
+      definitionRef: { definitionId: 'definition-1', version: 3 },
+      tenantId: 'org-1',
+      audience: ['a@example.test', 'b@example.test'],
+      scopeRefs: ['project:project-1'],
+      period: { start: '2026-09-07T09:00:00.000Z', end: '2026-09-14T09:00:00.000Z' },
+      asOf: content.generatedAt,
+      workReport: {
+        title: content.title,
+        templateId: content.templateId,
+        cadence: 'ON_DEMAND',
+        content,
+      },
+      sources: [{ sourceType: 'initiative', sourceId: 'initiative-1', version: 1 }],
+    };
+    runtime.aggregates.set(canonicalKey('org-1', 'report_run', 'run-manual'), {
+      version: 4,
+      payload: {
+        reportRunId: 'run-manual',
+        status: 'APPROVED',
+        approverId: 'approver-1',
+        ownerId: 'owner-1',
+        frozenSnapshot,
+        contentHash: reportContentHash(frozenSnapshot),
+        distributionReceipts: [],
+        deliveryAttempts: [],
+      },
+    });
+    const attempts = new Map<string, number>();
+    const sendWorkReportEmail = vi.fn(async ({ to }: any) => {
+      const count = (attempts.get(to) ?? 0) + 1;
+      attempts.set(to, count);
+      return !(to === 'b@example.test' && count === 1);
+    });
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      (req as any).user = { id: 'approver-1', organizationId: 'org-1', role: 'admin' };
+      (req as any).userRole = 'admin';
+      next();
+    });
+    app.use(
+      '/api/v8/pmo/initiatives-execution',
+      createInitiativesExecutionRuntimeRouter({
+        unitOfWork: runtime.unitOfWork as any,
+        reader: {
+          ...runtime.reader,
+          resolveProjectIdsForAggregate: async () => ['project-1'],
+        } as any,
+        authorize: async () => true,
+        resolvePolicy: vi.fn(),
+        sendWorkReportEmail,
+        renderWorkReportPdf: async () => Buffer.from('%PDF-manual'),
+      })
+    );
+
+    const first = await request(app)
+      .post('/api/v8/pmo/initiatives-execution/work-reports/run-manual/deliver')
+      .send({
+        expectedVersion: 4,
+        clientRequestId: 'ui-click-1',
+        recipients: [' A@example.test ', 'b@example.test', 'a@example.test'],
+      });
+    expect(first.status).toBe(502);
+    expect(first.body).toMatchObject({
+      delivered: ['a@example.test'],
+      failed: ['b@example.test'],
+      receiptId: 'manual-delivery-run-manual',
+    });
+
+    const second = await request(app)
+      .post('/api/v8/pmo/initiatives-execution/work-reports/run-manual/deliver')
+      .send({
+        expectedVersion: 4,
+        clientRequestId: 'ui-click-2',
+        recipients: ['b@example.test', 'a@example.test'],
+      });
+    expect(second.status).toBe(200);
+    expect(attempts.get('a@example.test')).toBe(1);
+    expect(attempts.get('b@example.test')).toBe(2);
+    const dashboard = await runtime.reader.listReportRuns('org-1');
+    expect(dashboard[0]).toMatchObject({
+      status: 'PUBLISHED',
+      distributionReceipts: [{ receiptId: 'manual-delivery-run-manual' }],
+    });
+  });
+
+  it('keeps an active SENDING lease fenced, then safely reclaims it after timeout', async () => {
+    const runtime = createMemoryRuntime();
+    const content = {
+      title: 'Recovery report',
+      templateId: 'EXECUTIVE_SUMMARY',
+      generatedAt: '2026-09-14T09:00:00.000Z',
+      projectIds: [],
+      summary: { initiatives: 0, pendingDecisions: 0, overdueDecisions: 0, byStatus: {} },
+      initiatives: [],
+      decisionDebtors: [],
+    };
+    const frozenSnapshot = {
+      definitionRef: { definitionId: 'definition-1', version: 3 },
+      tenantId: 'org-1',
+      audience: ['recovery@example.test'],
+      scopeRefs: ['organization'],
+      period: { start: '2026-09-07T09:00:00.000Z', end: '2026-09-14T09:00:00.000Z' },
+      asOf: content.generatedAt,
+      workReport: { title: content.title, templateId: content.templateId, cadence: 'ON_DEMAND', content },
+      sources: [{ sourceType: 'initiative', sourceId: 'initiative-1', version: 1 }],
+    };
+    runtime.aggregates.set(canonicalKey('org-1', 'report_run', 'run-recovery'), {
+      version: 5,
+      payload: {
+        reportRunId: 'run-recovery',
+        status: 'APPROVED',
+        approverId: 'approver-1',
+        ownerId: 'owner-1',
+        frozenSnapshot,
+        contentHash: reportContentHash(frozenSnapshot),
+        distributionReceipts: [],
+        deliveryAttempts: [
+          {
+            receiptId: 'manual-delivery-run-recovery',
+            audience: ['recovery@example.test'],
+            startedAt: '2026-09-14T09:00:00.000Z',
+            recipients: [
+              {
+                address: 'recovery@example.test',
+                status: 'SENDING',
+                attempts: 1,
+                lastAttemptAt: '2026-09-14T09:00:00.000Z',
+                lastError: null,
+                attemptToken: 'dead-process-fence',
+                leaseExpiresAt: '2026-09-14T09:05:00.000Z',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const sendEmail = vi.fn(async () => true);
+    const baseInput = {
+      organizationId: 'org-1',
+      reportRunId: 'run-recovery',
+      approverId: 'approver-1',
+      expectedVersion: 5,
+      receiptId: 'manual-delivery-run-recovery',
+      recipients: ['recovery@example.test'],
+    };
+
+    const activeLease = await deliverInitiativeWorkReport(baseInput, {
+      unitOfWork: runtime.unitOfWork as any,
+      reader: runtime.reader as any,
+      sendEmail,
+      renderPdf: async () => Buffer.from('%PDF-recovery'),
+      now: () => new Date('2026-09-14T09:04:00.000Z'),
+    });
+    expect(activeLease).toMatchObject({ published: false, status: 'DELIVERY_IN_PROGRESS' });
+    expect(sendEmail).not.toHaveBeenCalled();
+
+    const recovered = await deliverInitiativeWorkReport(baseInput, {
+      unitOfWork: runtime.unitOfWork as any,
+      reader: runtime.reader as any,
+      sendEmail,
+      renderPdf: async () => Buffer.from('%PDF-recovery'),
+      now: () => new Date('2026-09-14T09:06:00.000Z'),
+    });
+    expect(recovered).toMatchObject({ published: true, status: 'PUBLISHED' });
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    const dashboard = await runtime.reader.listReportRuns('org-1');
+    expect(dashboard[0].deliveryAttempts[0].recipients[0]).toMatchObject({
+      status: 'DELIVERED',
+      attempts: 2,
+      attemptToken: null,
+      leaseExpiresAt: null,
+    });
   });
 });
