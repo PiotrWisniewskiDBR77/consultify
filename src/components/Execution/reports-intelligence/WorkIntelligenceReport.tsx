@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { initiativeStatusLabel } from '@/components/Initiatives/initiativeStatusLabels';
 import {
+  memberNameOrUnknown,
+  type MemberNameResolver,
+} from '@/hooks/useOrganizationMemberNames';
+import {
   StandardTable,
   type TableColumn,
   type TableRow,
@@ -29,6 +33,7 @@ import {
 
 interface Props {
   analysisEnabled?: boolean;
+  resolveOwnerName?: MemberNameResolver;
   onOpenDocument?: (row: {
     id: string;
     title: string;
@@ -168,6 +173,7 @@ const badgeClass = (value: string): string => {
 
 export function WorkIntelligenceReport({
   analysisEnabled = false,
+  resolveOwnerName,
   onOpenDocument,
 }: Props): React.ReactElement {
   const { t, i18n } = useTranslation();
@@ -374,6 +380,12 @@ export function WorkIntelligenceReport({
       id: 'ownerId',
       label: t('execution.reports.intelligence.columns.owner', 'Owner'),
       sortable: true,
+      render: (row: TableRow) =>
+        memberNameOrUnknown(
+          resolveOwnerName,
+          String(row.ownerId || ''),
+          i18n.language.startsWith('pl')
+        ),
     },
     { id: 'dueAt', label: t('execution.reports.intelligence.columns.due', 'Due'), sortable: true },
     {
@@ -469,6 +481,18 @@ export function WorkIntelligenceReport({
     });
   const selectedAttentionRow =
     attentionRows.find((row) => row.id === selectedAttentionId) ?? null;
+  const canOpenSourceRecord = (row: (typeof attentionRows)[number]) =>
+    (row.kind === 'TASK' || row.kind === 'DECISION') && Boolean(onOpenDocument);
+  const openSourceRecord = (row: (typeof attentionRows)[number]) => {
+    if (!canOpenSourceRecord(row) || !onOpenDocument) return;
+    onOpenDocument({
+      id: row.id,
+      title: row.title,
+      kind: row.kind as 'TASK' | 'DECISION',
+      status: row.status,
+      executionCaseId: row.executionCaseId,
+    });
+  };
   const attentionColumns: TableColumn[] = [
     { id: 'title', label: t('execution.workAnalysis.columns.record', 'Attention record'), primary: true, dataType: 'text' },
     {
@@ -581,15 +605,31 @@ export function WorkIntelligenceReport({
                     rowMenu={(tableRow) => {
                       const row = tableRow as unknown as (typeof attentionRows)[number];
                       return {
-                        primary: managerActionsFor(row).map(({ actionId, label }) => ({
-                          id: actionId,
-                          label,
-                          onClick: () => void runManagerAction(row, actionId),
-                          disabled: busyAction !== null,
-                        })),
+                        primary: [
+                          ...(canOpenSourceRecord(row)
+                            ? [
+                                {
+                                  id: 'open-source',
+                                  label: t(
+                                    'execution.workAnalysis.preview.openSource',
+                                    'Open source record'
+                                  ),
+                                  onClick: () => openSourceRecord(row),
+                                },
+                              ]
+                            : []),
+                          ...managerActionsFor(row).map(({ actionId, label }) => ({
+                            id: actionId,
+                            label,
+                            onClick: () => void runManagerAction(row, actionId),
+                            disabled: busyAction !== null,
+                          })),
+                        ],
                         universalHandlers: {
                           preview: () => setSelectedAttentionId(row.id),
                         },
+                        // Runtime work rows expose no edit/archive/delete mutation.
+                        // Those capabilities remain N/D instead of becoming dead placeholders.
                       };
                     }}
                     empty={{ title: t('execution.workAnalysis.noAttention', 'No records require management attention') }}
@@ -598,22 +638,26 @@ export function WorkIntelligenceReport({
                 {selectedAttentionRow ? (() => {
                   const row = selectedAttentionRow;
                   const actions = managerActionsFor(selectedAttentionRow);
-                  const canOpen =
-                    (row.kind === 'TASK' || row.kind === 'DECISION') && Boolean(onOpenDocument);
+                  const canOpen = canOpenSourceRecord(row);
                   return (
                     <aside className="w-[min(420px,42%)] shrink-0 overflow-hidden rounded-xl border border-c-border bg-c-surface">
                       <StandardPreview
                         title={row.title}
                         onClose={() => setSelectedAttentionId(null)}
-                        openDisabledReason={t(
-                          'execution.workAnalysis.preview.openDisabled',
-                          'Use the source record action to open this work item.'
-                        )}
+                        onOpenFull={canOpen ? () => openSourceRecord(row) : undefined}
+                        openDisabledReason={
+                          canOpen
+                            ? undefined
+                            : t(
+                                'execution.workAnalysis.preview.openDisabled',
+                                'This work item has no available source route.'
+                              )
+                        }
                         meta={{
                         pills: [
                           {
                             label: initiativeStatusLabel(t, row.status),
-                            tone: row.status === 'BLOCKED' ? 'critical' : 'neutral',
+                            tone: row.status === 'BLOCKED' ? 'danger' : 'neutral',
                           },
                           {
                             label: trPair(
@@ -659,8 +703,16 @@ export function WorkIntelligenceReport({
                             id: 'owner',
                             label: t('execution.reports.intelligence.columns.owner', 'Owner'),
                             value:
-                              row.ownerId ||
-                              t('execution.workAnalysis.preview.noOwner', 'No owner assigned'),
+                              row.ownerId
+                                ? memberNameOrUnknown(
+                                    resolveOwnerName,
+                                    row.ownerId,
+                                    i18n.language.startsWith('pl')
+                                  )
+                                : t(
+                                    'execution.workAnalysis.preview.noOwner',
+                                    'No owner assigned'
+                                  ),
                           },
                         ],
                         propertyLabel: t('common.property', 'Property'),
@@ -699,16 +751,7 @@ export function WorkIntelligenceReport({
                               'Open source record'
                             ),
                             disabled: !canOpen,
-                            onClick: () => {
-                              if (!canOpen || !onOpenDocument) return;
-                              onOpenDocument({
-                                id: row.id,
-                                title: row.title,
-                                kind: row.kind as 'TASK' | 'DECISION',
-                                status: row.status,
-                                executionCaseId: row.executionCaseId,
-                              });
-                            },
+                            onClick: () => openSourceRecord(row),
                           },
                         ],
                       }}
