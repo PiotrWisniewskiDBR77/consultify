@@ -262,6 +262,20 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'gateReadiness',
+      /*
+       * DEC-492 (2026-09-13) — KOLUMNA WTORNA DOMYSLNIE SCHOWANA.
+       *
+       * Zmierzone na rejestrze Inicjatyw organizacji DBR77 (1440x900, podglad
+       * OTWARTY): jedenascie kolumn nie miescilo sie w obszarze 989 px, wiec
+       * ogon tabeli chowal sie pod przypieta kolumna akcji. Te trzy kolumny
+       * niosly przy tym w KAZDYM wierszu „Not evaluated" / „Unknown" — czyli
+       * zabieraly szerokosc kolumnom, ktore naprawde maja co pokazac.
+       *
+       * To NIE jest usuniecie kolumny: definicja zostaje w kontrakcie, a
+       * pstryczek kolumn wlacza ja jednym kliknieciem. Kanon §3.2: domyslny
+       * zestaw kolumn ma sie MIESCIC; reszta jest decyzja uzytkownika.
+       */
+      defaultVisible: false,
       label: tr('initiatives.columns.gateReadiness', 'Readiness'),
       width: '150px',
       render: (raw) => {
@@ -338,6 +352,20 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'expectedImpact',
+      /*
+       * DEC-492 (2026-09-13) — KOLUMNA WTORNA DOMYSLNIE SCHOWANA.
+       *
+       * Zmierzone na rejestrze Inicjatyw organizacji DBR77 (1440x900, podglad
+       * OTWARTY): jedenascie kolumn nie miescilo sie w obszarze 989 px, wiec
+       * ogon tabeli chowal sie pod przypieta kolumna akcji. Te trzy kolumny
+       * niosly przy tym w KAZDYM wierszu „Not evaluated" / „Unknown" — czyli
+       * zabieraly szerokosc kolumnom, ktore naprawde maja co pokazac.
+       *
+       * To NIE jest usuniecie kolumny: definicja zostaje w kontrakcie, a
+       * pstryczek kolumn wlacza ja jednym kliknieciem. Kanon §3.2: domyslny
+       * zestaw kolumn ma sie MIESCIC; reszta jest decyzja uzytkownika.
+       */
+      defaultVisible: false,
       label: tr('initiatives.columns.expectedImpact', 'Expected impact'),
       width: '160px',
       render: (raw) => {
@@ -386,6 +414,20 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'healthState',
+      /*
+       * DEC-492 (2026-09-13) — KOLUMNA WTORNA DOMYSLNIE SCHOWANA.
+       *
+       * Zmierzone na rejestrze Inicjatyw organizacji DBR77 (1440x900, podglad
+       * OTWARTY): jedenascie kolumn nie miescilo sie w obszarze 989 px, wiec
+       * ogon tabeli chowal sie pod przypieta kolumna akcji. Te trzy kolumny
+       * niosly przy tym w KAZDYM wierszu „Not evaluated" / „Unknown" — czyli
+       * zabieraly szerokosc kolumnom, ktore naprawde maja co pokazac.
+       *
+       * To NIE jest usuniecie kolumny: definicja zostaje w kontrakcie, a
+       * pstryczek kolumn wlacza ja jednym kliknieciem. Kanon §3.2: domyslny
+       * zestaw kolumn ma sie MIESCIC; reszta jest decyzja uzytkownika.
+       */
+      defaultVisible: false,
       label: tr('initiatives.columns.healthState', 'Health'),
       width: '110px',
       render: (raw) => {
