@@ -148,9 +148,9 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
     try {
       await Api.post('/api/user/preferences/reset-onboarding', {});
       setSettings({ ...settings, onboardingCompleted: false });
-      toast.success('Onboarding reset. You will see the tutorial on next login.');
+      toast.success(t('settings.generalPreferencesSettings.onboardingResetToast', 'Onboarding reset. You will see the tutorial on next login.'));
     } catch (error) {
-      toast.error('Failed to reset onboarding');
+      toast.error(t('settings.generalPreferencesSettings.resetOnboardingFailedToast', 'Failed to reset onboarding'));
     }
   };
 
@@ -167,7 +167,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
             <Settings size={28} className="text-c-text-muted" />
             {t('settings.preferences.general.title', 'General Preferences')}
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">Configure application behavior</p>
+          <p className="text-c-text-muted text-sm mt-1">{t('settings.generalPreferencesSettings.configureApplicationBehavior', 'Configure application behavior')}</p>
         </div>
         <button
           onClick={handleSave}
@@ -183,12 +183,12 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Home size={20} className="text-blue-500" />
-          Startup Preferences
+          {t('settings.generalPreferencesSettings.startupPreferences', 'Startup Preferences')}
         </h3>
 
         <div>
           <label className="block text-sm font-medium text-c-text-secondary mb-3">
-            Default Startup View
+            {t('settings.generalPreferencesSettings.defaultStartupView', 'Default Startup View')}
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {startupViews.map((view) => (
@@ -210,8 +210,8 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
 
         <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
-            <p className="font-medium text-c-text">Show Welcome Message</p>
-            <p className="text-sm text-c-text-muted">Display welcome screen on startup</p>
+            <p className="font-medium text-c-text">{t('settings.generalPreferencesSettings.showWelcomeMessage', 'Show Welcome Message')}</p>
+            <p className="text-sm text-c-text-muted">{t('settings.generalPreferencesSettings.displayWelcomeScreenOnStartup', 'Display welcome screen on startup')}</p>
           </div>
           <button
             onClick={() =>
@@ -234,13 +234,13 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <RefreshCw size={20} className="text-green-500" />
-          Auto-Save
+          {t('settings.generalPreferencesSettings.autoSave', 'Auto-Save')}
         </h3>
 
         <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
-            <p className="font-medium text-c-text">Enable Auto-Save</p>
-            <p className="text-sm text-c-text-muted">Automatically save changes periodically</p>
+            <p className="font-medium text-c-text">{t('settings.generalPreferencesSettings.enableAutoSave', 'Enable Auto-Save')}</p>
+            <p className="text-sm text-c-text-muted">{t('settings.generalPreferencesSettings.autoSaveDescription', 'Automatically save changes periodically')}</p>
           </div>
           <button
             onClick={() => setSettings({ ...settings, autoSaveEnabled: !settings.autoSaveEnabled })}
@@ -259,7 +259,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
         {settings.autoSaveEnabled && (
           <div className="p-4 bg-c-surface-raised rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-c-text-secondary">Save Interval</label>
+              <label className="text-sm font-medium text-c-text-secondary">{t('settings.generalPreferencesSettings.saveInterval', 'Save Interval')}</label>
               <span className="text-sm text-green-600">{settings.autoSaveInterval} seconds</span>
             </div>
             <input
@@ -281,7 +281,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <MessageSquare size={20} className="text-amber-500" />
-          Confirmation Dialogs
+          {t('settings.generalPreferencesSettings.confirmationDialogs', 'Confirmation Dialogs')}
         </h3>
 
         <div className="space-y-3">
@@ -338,7 +338,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <HelpCircle size={20} className="text-c-accent" />
-          Tooltips & Hints
+          {t('settings.generalPreferencesSettings.tooltipsAndHints', 'Tooltips & Hints')}
         </h3>
 
         <div className="space-y-3">
@@ -394,7 +394,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
           onClick={resetOnboarding}
           className="w-full p-3 text-center text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors"
         >
-          Reset Onboarding Tutorial
+          {t('settings.generalPreferencesSettings.resetOnboardingTutorial', 'Reset Onboarding Tutorial')}
         </button>
       </div>
 
@@ -402,13 +402,13 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Globe size={20} className="text-indigo-500" />
-          Regional Settings
+          {t('settings.generalPreferencesSettings.regionalSettings', 'Regional Settings')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Date Format
+              {t('settings.generalPreferencesSettings.dateFormat', 'Date Format')}
             </label>
             <select
               value={settings.dateFormat}
@@ -425,7 +425,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
 
           <div>
             <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Time Format
+              {t('settings.generalPreferencesSettings.timeFormat', 'Time Format')}
             </label>
             <div className="flex gap-2">
               {(['12h', '24h'] as const).map((format) => (
@@ -446,7 +446,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
 
           <div>
             <label className="block text-sm font-medium text-c-text-secondary mb-2">
-              Week Starts On
+              {t('settings.generalPreferencesSettings.weekStartsOn', 'Week Starts On')}
             </label>
             <div className="flex gap-2">
               {(['sunday', 'monday'] as const).map((day) => (

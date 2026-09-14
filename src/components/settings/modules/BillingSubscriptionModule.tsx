@@ -321,7 +321,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       } catch {
         // ignore
       }
-      toast.success('Subscription cancelled.');
+      toast.success(t('settings.billingSubscriptionModule.subscriptionCancelledToast', 'Subscription cancelled.'));
     } catch (err: unknown) {
       const message = normalizeApiErrorMessage(err, 'Failed to cancel subscription');
       setActionError(message);
@@ -394,7 +394,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   if (loadError) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-        <DegradedState title="Billing data unavailable" description={loadError} />
+        <DegradedState title={t('settings.billingSubscriptionModule.billingDataUnavailable', 'Billing data unavailable')} description={loadError} />
       </div>
     );
   }
@@ -674,7 +674,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 onClick={handleCancelSubscription}
                 className="text-sm text-c-text-secondary hover:text-danger-400 transition-colors"
               >
-                Cancel Subscription
+                {t('settings.billingSubscriptionModule.cancelSubscription', 'Cancel Subscription')}
               </button>
             </div>
           )}
@@ -692,7 +692,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {/* Usage Tab */}
       {activeTab === 'usage' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-c-text">Current Usage</h3>
+          <h3 className="text-lg font-semibold text-c-text">{t('settings.billingSubscriptionModule.currentUsage', 'Current Usage')}</h3>
 
           <div className="space-y-6">
             {usage ? (
@@ -700,26 +700,26 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 <UsageBar
                   used={usage.users.used}
                   limit={usage.users.limit}
-                  label="Team Members"
+                  label={t('settings.billingSubscriptionModule.teamMembers', 'Team Members')}
                   policyPercent={snapshot?.usagePercent?.users}
                 />
                 <UsageBar
                   used={usage.projects.used}
                   limit={usage.projects.limit}
-                  label="Projects"
+                  label={t('settings.billingSubscriptionModule.projects', 'Projects')}
                   policyPercent={snapshot?.usagePercent?.projects}
                 />
                 <UsageBar
                   used={usage.storage.used}
                   limit={usage.storage.limit}
-                  label="Storage"
+                  label={t('settings.billingSubscriptionModule.storage', 'Storage')}
                   unit={` ${usage.storage.unit}`}
                   policyPercent={snapshot?.usagePercent?.storage}
                 />
                 <UsageBar
                   used={usage.aiTokens.used}
                   limit={usage.aiTokens.limit}
-                  label="AI Tokens"
+                  label={t('settings.billingSubscriptionModule.aiTokens', 'AI Tokens')}
                   policyPercent={snapshot?.usagePercent?.tokens}
                 />
               </>
@@ -728,31 +728,31 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 <UsageBar
                   used={snapshot.usageToday.users}
                   limit={snapshot.limits?.maxUsers ?? -1}
-                  label="Team Members"
+                  label={t('settings.billingSubscriptionModule.teamMembers', 'Team Members')}
                   policyPercent={snapshot.usagePercent?.users}
                 />
                 <UsageBar
                   used={snapshot.usageToday.projects}
                   limit={snapshot.limits?.maxProjects ?? -1}
-                  label="Projects"
+                  label={t('settings.billingSubscriptionModule.projects', 'Projects')}
                   policyPercent={snapshot.usagePercent?.projects}
                 />
                 <UsageBar
                   used={snapshot.usageToday.storageMb}
                   limit={snapshot.limits?.maxStorageMb ?? -1}
-                  label="Storage"
+                  label={t('settings.billingSubscriptionModule.storage', 'Storage')}
                   unit=" MB"
                   policyPercent={snapshot.usagePercent?.storage}
                 />
                 <UsageBar
                   used={snapshot.usageToday.tokensUsed}
                   limit={snapshot.limits?.maxTotalTokens ?? -1}
-                  label="AI Tokens"
+                  label={t('settings.billingSubscriptionModule.aiTokens', 'AI Tokens')}
                   policyPercent={snapshot.usagePercent?.tokens}
                 />
               </>
             ) : (
-              <p className="text-sm text-c-text-muted">No usage data available.</p>
+              <p className="text-sm text-c-text-muted">{t('settings.billingSubscriptionModule.noUsageDataAvailable', 'No usage data available.')}</p>
             )}
           </div>
 
@@ -773,10 +773,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {activeTab === 'invoices' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700">
-            <h3 className="font-semibold text-c-text">Billing History</h3>
+            <h3 className="font-semibold text-c-text">{t('settings.billingSubscriptionModule.billingHistory', 'Billing History')}</h3>
           </div>
           {invoices.length === 0 ? (
-            <EmptyState preset="noData" title="No invoices yet." />
+            <EmptyState preset="noData" title={t('settings.billingSubscriptionModule.noInvoicesYet', 'No invoices yet.')} />
           ) : (
             <div className="divide-y divide-c-border-subtle dark:divide-white/5">
               {invoices.map((invoice) => (
@@ -849,17 +849,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-c-text">Payment Methods</h3>
+              <h3 className="font-semibold text-c-text">{t('settings.billingSubscriptionModule.paymentMethods', 'Payment Methods')}</h3>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg">
                 <Plus size={16} />
-                Add Method
+                {t('settings.billingSubscriptionModule.addMethod', 'Add Method')}
               </button>
             </div>
 
             {paymentMethods.length === 0 ? (
               <div className="text-center py-8 text-c-text-muted">
                 <CreditCard size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No payment methods on file.</p>
+                <p className="text-sm">{t('settings.billingSubscriptionModule.noPaymentMethodsOnFile', 'No payment methods on file.')}</p>
                 <p className="text-xs mt-1">
                   {snapshot?.isTrial
                     ? 'Add a payment method to unlock AI beyond your free budget.'
@@ -892,7 +892,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                       <div className="flex items-center gap-2">
                         {method.isDefault && (
                           <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
-                            Default
+                            {t('settings.billingSubscriptionModule.default', 'Default')}
                           </span>
                         )}
                         <button className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg">

@@ -164,7 +164,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
         <div>
           <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <BarChart3 size={28} className="text-blue-500" />
-            Personal Analytics
+            {t('settings.personalAnalyticsModule.title', 'Personal Analytics')}
           </h2>
           <p className="text-c-text-muted text-sm mt-1">
             {t('settings.analytics.subtitle', 'Track your productivity and performance')}
@@ -187,7 +187,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
           >
             <Download size={16} />
-            Export
+            {t('settings.personalAnalyticsModule.export', 'Export')}
           </button>
         </div>
       </div>
@@ -203,28 +203,28 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       {!loadError && stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
-            label="Tasks Completed"
+            label={t('settings.personalAnalyticsModule.tasksCompleted', 'Tasks Completed')}
             value={stats.tasksCompleted}
             change={stats.tasksCompletedChange}
             icon={CheckCircle}
             color="bg-emerald-500"
           />
           <StatCard
-            label="Hours Logged"
+            label={t('settings.personalAnalyticsModule.hoursLogged', 'Hours Logged')}
             value={`${stats.hoursLogged}h`}
             change={stats.hoursLoggedChange}
             icon={Clock}
             color="bg-blue-500"
           />
           <StatCard
-            label="Productivity Score"
+            label={t('settings.personalAnalyticsModule.productivityScore', 'Productivity Score')}
             value={`${stats.productivityScore}%`}
             change={stats.productivityChange}
             icon={TrendingUp}
             color="bg-navy-900"
           />
           <StatCard
-            label="Focus Time"
+            label={t('settings.personalAnalyticsModule.focusTime', 'Focus Time')}
             value={`${stats.focusTime}h`}
             change={stats.focusTimeChange}
             icon={Target}
@@ -238,13 +238,13 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Calendar size={20} className="text-emerald-500" />
-            Activity Heatmap
+            {t('settings.personalAnalyticsModule.activityHeatmap', 'Activity Heatmap')}
           </h3>
           <div className="overflow-x-auto">
             <ActivityHeatmap data={dailyActivity} />
           </div>
           <div className="flex items-center gap-2 mt-4 text-xs text-c-text-muted">
-            <span>Less</span>
+            <span>{t('settings.personalAnalyticsModule.less', 'Less')}</span>
             <div className="flex gap-1">
               <div className="w-3 h-3 rounded-sm bg-c-surface-raised" />
               <div className="w-3 h-3 rounded-sm bg-emerald-200" />
@@ -252,14 +252,14 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
               <div className="w-3 h-3 rounded-sm bg-emerald-400" />
               <div className="w-3 h-3 rounded-sm bg-emerald-500" />
             </div>
-            <span>More</span>
+            <span>{t('settings.personalAnalyticsModule.more', 'More')}</span>
           </div>
         </div>
       )}
 
       {/* Weekly Breakdown */}
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-c-text mb-4">Daily Breakdown</h3>
+        <h3 className="text-lg font-semibold text-c-text mb-4">{t('settings.personalAnalyticsModule.dailyBreakdown', 'Daily Breakdown')}</h3>
         <div className="space-y-3">
           {dailyActivity.slice(-7).map((day, i) => (
             <div key={i} className="flex items-center gap-4">
@@ -291,7 +291,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Target size={20} className="text-amber-500" />
-          Weekly Goals
+          {t('settings.personalAnalyticsModule.weeklyGoals', 'Weekly Goals')}
         </h3>
         <div className="space-y-4">
           {[
