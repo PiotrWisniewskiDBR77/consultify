@@ -42,6 +42,7 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
   const ORG = `org-s7-list-${SUFFIX}`;
   const OTHER_ORG = `org-s7-list-other-${SUFFIX}`;
   const OWNER = `user-s7-owner-${SUFFIX}`;
+  const ORG_ADMIN = `user-s7-admin-${SUFFIX}`;
   const OWNER2 = `user-s7-owner2-${SUFFIX}`;
   const APPROVER = `user-s7-approver-${SUFFIX}`;
   const OTHER_ORG_USER = `user-s7-otherorg-${SUFFIX}`;
@@ -51,6 +52,7 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
   const PACK_VERSION = 'v1';
 
   let ownerToken = '';
+  let adminToken = '';
   let owner2Token = '';
   let approverToken = '';
   let otherOrgToken = '';
@@ -73,6 +75,7 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
     ]);
     for (const [id, org] of [
       [OWNER, ORG],
+      [ORG_ADMIN, ORG],
       [OWNER2, ORG],
       [APPROVER, ORG],
       [OTHER_ORG_USER, OTHER_ORG],
@@ -83,6 +86,12 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
       );
     }
 
+    await pool.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'ADMIN', 'ACTIVE') ON CONFLICT DO NOTHING`,
+      [`om-s7-admin-${SUFFIX}`, ORG, ORG_ADMIN]
+    );
+
     const { default: config } = await import('../../config/Config.js');
     const sign = (id: string, organizationId: string) =>
       jwt.sign({ id, organizationId, role: 'user' }, config.JWT_SECRET, {
@@ -91,6 +100,7 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
         ...(config.JWT_AUDIENCE ? { audience: config.JWT_AUDIENCE } : {}),
       });
     ownerToken = sign(OWNER, ORG);
+    adminToken = sign(ORG_ADMIN, ORG);
     owner2Token = sign(OWNER2, ORG);
     approverToken = sign(APPROVER, ORG);
     otherOrgToken = sign(OTHER_ORG_USER, OTHER_ORG);
@@ -125,7 +135,8 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, OWNER2, APPROVER, OTHER_ORG_USER]]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[ORG, OTHER_ORG]]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, ORG_ADMIN, OWNER2, APPROVER, OTHER_ORG_USER]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG, OTHER_ORG]]);
     await pool.end();
   });
@@ -172,6 +183,14 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
     expect(ownRes.status).toBe(200);
     expect(ownRes.body.sessions.some((s: any) => s.id === sessionId)).toBe(true);
 
+    // Library is organization-scoped: an ADMIN in the same organization
+    // sees the OWNER-created session even though created_by/owner_user_id is
+    // different. The role is seeded in organization_members, the source of
+    // truth used by the application for organization authority.
+    const adminRes = await listSessions(adminToken);
+    expect(adminRes.status).toBe(200);
+    expect(adminRes.body.sessions.some((s: any) => s.id === sessionId)).toBe(true);
+
     const otherRes = await listSessions(otherOrgToken);
     expect(otherRes.status).toBe(200);
     expect(otherRes.body.sessions.some((s: any) => s.id === sessionId)).toBe(false);
@@ -180,6 +199,16 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
     for (const s of otherRes.body.sessions) {
       expect(s.organizationId).toBe(OTHER_ORG);
     }
+
+    const crossTenantRead = await request(app)
+      .get(`/api/method/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${otherOrgToken}`);
+    expect(crossTenantRead.status).toBe(403);
+    expect(crossTenantRead.body.code).toBe('METHOD_SESSION_ORG_FORBIDDEN');
+
+    // The authentication middleware runs before the route reads a session.
+    const unauthenticatedRead = await request(app).get(`/api/method/sessions/${sessionId}`);
+    expect(unauthenticatedRead.status).toBe(401);
   });
 
   // ---------------------------------------------------------------------------

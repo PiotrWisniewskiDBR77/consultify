@@ -454,7 +454,10 @@ async function loadOwnedSession(
     return null;
   }
   if (session.organizationId !== req.organizationId) {
-    res.status(403).json({ error: 'Session does not belong to this organization' });
+    res.status(403).json({
+      error: 'Session does not belong to this organization',
+      code: 'METHOD_SESSION_ORG_FORBIDDEN',
+    });
     return null;
   }
   return session;
