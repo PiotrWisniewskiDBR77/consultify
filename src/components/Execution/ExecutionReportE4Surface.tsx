@@ -39,6 +39,7 @@ interface ReportRow extends TableRow {
   id: string;
   title: string;
   template: string;
+  templateId: string;
   detail: string;
   cadence: string;
   status: string;
@@ -87,6 +88,11 @@ export function ExecutionReportE4Surface({
   const [approvers, setApprovers] = useState<Array<{ id: string; label: string }>>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  // Kanon TRIADA: Menu 3 ma NAJWYŻEJ 3 pigułki. „Report templates" nie jest
+  // filtrem statusu, więc schodzi z Menu 3 do dropdownu Menu 2 (wzorzec
+  // Materiałów DEC-420 / „Po terminie" z ExecutionControlSurface) — działa
+  // dodatkowo w każdym z trzech widoków statusu, nie zamiast nich.
+  const [templateFilter, setTemplateFilter] = useState<string>('all');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const now = new Date();
@@ -168,10 +174,15 @@ export function ExecutionReportE4Surface({
           .map((run) => ({
             id: run.reportRunId,
             title: run.workReport.title,
-            template: t(
-              `executionReports.definitions.${run.workReport.templateId}.name`,
-              run.workReport.templateId
+            // tsc: `t()` z kluczem-szablonem zwraca unię ze `$SpecialObject`;
+            // `String()` jest no-opem w runtime (fallback jest stringiem).
+            template: String(
+              t(
+                `executionReports.definitions.${run.workReport.templateId}.name`,
+                run.workReport.templateId
+              )
             ),
+            templateId: String(run.workReport.templateId ?? ''),
             detail: detailLabel(run.workReport.detailLevel || 'MANAGEMENT'),
             cadence: cadenceLabel(run.workReport.cadence),
             status: statusLabel(run.status),
@@ -208,6 +219,16 @@ export function ExecutionReportE4Surface({
       })),
     [detailLabel]
   );
+  const templateOptions = useMemo(
+    () => [
+      { id: 'all', label: String(t('common.all', 'All')) },
+      ...definitions.map((item) => ({
+        id: item.key,
+        label: String(t(`executionReports.definitions.${item.key}.name`, item.name)),
+      })),
+    ],
+    [definitions, t]
+  );
   const cadenceOptions = useMemo(
     () =>
       (['ON_DEMAND', 'WEEKLY', 'MONTHLY'] as Cadence[]).map((id) => ({
@@ -233,10 +254,26 @@ export function ExecutionReportE4Surface({
           onChange={(id) => setForm((current) => ({ ...current, cadence: id as Cadence }))}
           compact
         />
+        <Menu2PresetDropdown
+          label={t('executionReports.columns.definition', 'Report template')}
+          options={templateOptions}
+          value={templateFilter}
+          onChange={setTemplateFilter}
+          compact
+        />
       </div>
     );
     return () => onRegisterFilterControl?.(null);
-  }, [cadenceOptions, detailOptions, form.cadence, form.detailLevel, onRegisterFilterControl, t]);
+  }, [
+    cadenceOptions,
+    detailOptions,
+    form.cadence,
+    form.detailLevel,
+    onRegisterFilterControl,
+    t,
+    templateFilter,
+    templateOptions,
+  ]);
   useEffect(() => {
     onRegisterPrimaryCta?.({
       label: t('executionReports.menu2.addReport', 'New report'),
@@ -287,7 +324,7 @@ export function ExecutionReportE4Surface({
           asOf: new Date().toISOString(),
           inputs,
           t: (key: string, fallback: string, options?: unknown) =>
-            t(key, fallback, options as never) as string,
+            String(t(key, fallback, options as never)),
         })
       );
       const persisted = await createExecutionReportRun({ ...snapshot, title: form.title });
@@ -399,12 +436,13 @@ export function ExecutionReportE4Surface({
     () =>
       rows.filter(
         (row) =>
-          activePreset === 'all' ||
-          (activePreset === 'published'
-            ? row.rawStatus === 'PUBLISHED'
-            : ['FROZEN', 'APPROVED'].includes(row.rawStatus))
+          (templateFilter === 'all' || row.templateId === templateFilter) &&
+          (activePreset === 'all' ||
+            (activePreset === 'published'
+              ? row.rawStatus === 'PUBLISHED'
+              : ['FROZEN', 'APPROVED'].includes(row.rawStatus)))
       ),
-    [activePreset, rows]
+    [activePreset, rows, templateFilter]
   );
   const selected = filtered.find((row) => row.id === selectedId) ?? null;
   const columns: TableColumn[] = [
@@ -620,7 +658,7 @@ export function ExecutionReportE4Surface({
                   id: 'approve',
                   label: t('executionReports.e4.approve', 'Approve'),
                   icon: CheckCircle2,
-                  variant: 'accept',
+                  variant: 'positive',
                   onClick: () => void approve(row),
                   disabled: row.rawStatus !== 'FROZEN' || row.source.approverId !== currentUserId,
                 },
@@ -630,7 +668,7 @@ export function ExecutionReportE4Surface({
                   id: 'pdf',
                   label: t('executionReports.e4.downloadPdf', 'Download PDF'),
                   icon: Download,
-                  variant: 'secondary',
+                  variant: 'neutral',
                   onClick: () => void download(row),
                   disabled: !['FROZEN', 'APPROVED', 'PUBLISHED'].includes(row.rawStatus),
                 },
@@ -638,7 +676,7 @@ export function ExecutionReportE4Surface({
                   id: 'send',
                   label: t('executionReports.e4.send', 'Send by email'),
                   icon: Mail,
-                  variant: 'secondary',
+                  variant: 'neutral',
                   onClick: () => void deliver(row),
                   disabled: row.rawStatus !== 'APPROVED' || row.source.approverId !== currentUserId,
                 },
@@ -701,10 +739,11 @@ export function ExecutionReportE4Surface({
               'executionReports.e4.emptyHint',
               'Create the first governed report from current delivery data and KPI results.'
             ),
-            primaryAction: {
-              label: t('executionReports.menu2.addReport', 'New report'),
-              onClick: () => setWizardOpen(true),
-            },
+            // StandardTableEmpty (StandardTable.tsx:396-401) przyjmuje
+            // `actionLabel` + `onAction`; `primaryAction` było ciche — pusta
+            // zakładka nie miała ŻADNEGO przycisku.
+            actionLabel: String(t('executionReports.menu2.addReport', 'New report')),
+            onAction: () => setWizardOpen(true),
           }}
         />
       </TableWithPreviewLayout>

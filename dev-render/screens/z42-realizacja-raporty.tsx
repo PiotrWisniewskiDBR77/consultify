@@ -1,6 +1,11 @@
 /**
  * Z-42 — full ExecutionHub shell with the E4 governed execution-report list.
  * Run with VITE_EXECUTION_REPORT_E4=true and use &tab=reports.
+ *
+ * `&empty=1` — zero report runs. To jest DOWÓD na HOLD 2b (odbiór 14.09):
+ * `StandardTableEmpty` przyjmuje `actionLabel`/`onAction`, a paczka podawała
+ * `primaryAction` (cicho ignorowane), więc pusta zakładka nie miała ŻADNEGO
+ * przycisku „New report". Ten wariant renderuje ten właśnie stan.
  */
 import React, { useEffect } from 'react';
 
@@ -16,6 +21,8 @@ const OWNER_ID = 'user-piotr-demo';
 const APPROVER_ID = 'user-anna-admin';
 const ORG_ID = 'org-dbr77-demo';
 const REPORT_RUN_ID = 'run-execution-weekly-01';
+const EMPTY =
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('empty') === '1';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -63,6 +70,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
     return json({ items: [{ definitionId: 'def-execution-weekly' }] });
   }
   if (url.endsWith('/report-runs') && method === 'GET') {
+    if (EMPTY) return json({ items: [] });
     return json({
       items: [
         {
@@ -130,6 +138,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
 
 function OpenPreview(): null {
   useEffect(() => {
+    if (EMPTY) return;
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;

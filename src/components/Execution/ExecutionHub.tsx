@@ -6368,10 +6368,30 @@ Please return:
            * Zagrożone · Po terminie) realnie zawężają teraz `summaryInitiatives`.
            */
           [
-            ...(getExecutionMenu3(t)[activeTab] ?? []).map((preset) => ({
-              ...preset,
-              count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
-            })),
+            ...(getExecutionMenu3(t)[activeTab] ?? [])
+              // KANON TRIADA — Menu 3 ma NAJWYŻEJ 3 pigułki. Zakładka
+              // „Raporty" deklaruje cztery: czwarta („Report templates",
+              // preset `definitions`, P16-R6) przełącza widok na katalog
+              // `ExecutionReportsSurface`. Za flagą E4 zakładkę obsługuje
+              // `ExecutionReportE4Surface`, która widoku katalogu NIE MA —
+              // czwarta pigułka byłaby MARTWA i łamała limit naraz.
+              // Szablony nie znikają: w E4 żyją w dropdownie Menu 2
+              // („Report template", `Menu2PresetDropdown` w powierzchni)
+              // oraz w kreatorze „New report" (pole „Template").
+              // Ścieżka przed-E4 zostaje BEZ ZMIAN — stąd filtr tutaj,
+              // a nie skasowany wpis w `getExecutionMenu3`.
+              .filter(
+                (preset) =>
+                  !(
+                    activeTab === 'reports' &&
+                    preset.id === 'definitions' &&
+                    executionReportE4Enabled
+                  )
+              )
+              .map((preset) => ({
+                ...preset,
+                count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+              })),
             ...(execReportsIntelligenceEnabled && activeTab === 'work'
               ? [
                   {
