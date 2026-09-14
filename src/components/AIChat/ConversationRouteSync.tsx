@@ -29,8 +29,22 @@ export const ConversationRouteSync: React.FC = () => {
   const clearActiveChat = useConversationStore((s) => s.clearActiveChat);
   const activeConversationState = useConversationStore((s) => s._activeConversationState);
 
-  // Guard to prevent Store→URL sync from firing right after URL→Store sync
-  const syncingFromUrl = useRef(false);
+  // Uwaga Tomka IX (pilotaż 13.09): „mimo rozpoczęcia nowej rozmowy okno
+  // przeskakuje do ostatniego Chatu". PRZYCZYNA (zmierzona na żywo 14.09):
+  // poprzedni bezpiecznik `syncingFromUrl` gasł dopiero w `setTimeout(100ms)`,
+  // a sprzątanie efektu kasowało ten timer przy najbliższym re-renderze — ten
+  // zaś następował NATYCHMIAST po `setActiveConversation`. Flaga zostawała
+  // `true` do końca życia komponentu i trwale wyłączała kierunek Store → URL:
+  // adres zostawał na starej rozmowie, więc każde ponowne zamontowanie trasy
+  // (powrót, przeładowanie) wczytywało z powrotem STARĄ rozmowę.
+  //
+  // Dziś zamiast wyścigu z zegarem pytamy wprost: czy zmienił się ADRES, czy
+  // store. `lastUrlConversationId` pamięta ostatnio zobaczony parametr trasy —
+  // URL → Store działa tylko, gdy to adres się zmienił. `pendingUrlActivation`
+  // wstrzymuje kierunek Store → URL wyłącznie do czasu, aż store dogoni
+  // rozmowę zażądaną adresem (inaczej deep link odbijałby do poprzedniej).
+  const lastUrlConversationId = useRef<string | undefined>(undefined);
+  const pendingUrlActivation = useRef<string | null>(null);
   const ensuredConversationId = useRef<string | null>(null);
   const notFoundHandledRef = useRef(false);
   const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
@@ -47,24 +61,34 @@ export const ConversationRouteSync: React.FC = () => {
 
   // URL → Store sync
   useEffect(() => {
-    if (!isChatRoute) return;
+    if (!isChatRoute) {
+      // Poza trasą czatu adres nie niesie rozmowy — zapominamy go, żeby powrót
+      // na `/chat/:id` liczył się jako zmiana adresu i został uszanowany.
+      lastUrlConversationId.current = undefined;
+      return;
+    }
+
+    const urlChanged = lastUrlConversationId.current !== conversationId;
+    lastUrlConversationId.current = conversationId;
 
     if (!conversationId) {
       // Base /chat is also the starting point for a new send. When
       // createConversation() sets activeConversationId, the Store -> URL effect
       // below must navigate to /chat/:id.
+      pendingUrlActivation.current = null;
       return;
     }
 
     if (isConversationMarkedMissing(conversationId)) {
       ensuredConversationId.current = null;
-      syncingFromUrl.current = false;
+      pendingUrlActivation.current = null;
       clearActiveChat();
       navigate('/chat', { replace: true });
       return;
     }
 
     if (conversationId === activeConversationId) {
+      pendingUrlActivation.current = null;
       if (
         !isLoading &&
         activeMessagesCount === 0 &&
@@ -76,14 +100,14 @@ export const ConversationRouteSync: React.FC = () => {
       return;
     }
 
+    // Rozjazd bez zmiany adresu = to STORE się przestawił (np. „Nowa rozmowa",
+    // klik w historii). Wtedy prawdę niesie store i adres ma iść za nim —
+    // efekt niżej. Ponowne aktywowanie rozmowy z adresu cofałoby użytkownika.
+    if (!urlChanged) return;
+
     ensuredConversationId.current = conversationId;
-    syncingFromUrl.current = true;
+    pendingUrlActivation.current = conversationId;
     setActiveConversation(conversationId);
-    // Reset flag after a tick so Store→URL effect doesn't fire for this change
-    const timer = setTimeout(() => {
-      syncingFromUrl.current = false;
-    }, 100);
-    return () => clearTimeout(timer);
   }, [
     conversationId,
     isChatRoute,
@@ -115,7 +139,14 @@ export const ConversationRouteSync: React.FC = () => {
   // Store → URL sync (only when user changes conversation via UI, not from URL sync)
   useEffect(() => {
     if (!isChatRoute) return;
-    if (syncingFromUrl.current) return;
+    // Czekamy tylko na dogonienie rozmowy zażądanej ADRESEM (deep link) —
+    // inaczej odbilibyśmy użytkownika z powrotem do poprzedniej rozmowy.
+    if (
+      pendingUrlActivation.current &&
+      pendingUrlActivation.current !== activeConversationId
+    ) {
+      return;
+    }
 
     if (activeConversationId && activeConversationId !== conversationId) {
       navigate(`/chat/${activeConversationId}`, { replace: true });
