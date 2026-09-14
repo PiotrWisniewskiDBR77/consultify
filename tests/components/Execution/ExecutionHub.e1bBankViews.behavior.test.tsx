@@ -135,10 +135,12 @@ vi.mock('@/store/useInitiativeRefreshStore', () => ({
 vi.mock('@/hooks/useOpenChatWithContext', () => ({ useOpenChatWithContext: () => vi.fn() }));
 vi.mock('@/hooks/useOrganizationMemberNames', () => ({
   useOrganizationMemberNames: () => (id: string) => id,
+  memberNameOrUnknown: (resolver: ((id: string) => string) | undefined, id: string) =>
+    resolver?.(id) ?? 'Unknown user',
 }));
 vi.mock('@/components/shared/PreviewPane/useJedenPanel', () => ({
   useJedenPanel: () => ({
-    zamkniety: true,
+    zamkniety: false,
     dokOtwarty: false,
     otworz: vi.fn(),
     pokazPanel: vi.fn(),
@@ -294,10 +296,10 @@ describe('E1b Execution Bank views', () => {
     expect(screen.queryByText(/2028-01-31T00:00:00\.000Z/)).not.toBeInTheDocument();
     expect(within(preview).queryByText(/^UNKNOWN$/)).not.toBeInTheDocument();
     expect(within(preview).queryByText(/^—$/)).not.toBeInTheDocument();
-    expect(within(preview).getByRole('table')).toBeInTheDocument();
-    expect(within(preview).getByText('Lifecycle')).toBeInTheDocument();
-    expect(within(preview).getByText('Execution state')).toBeInTheDocument();
-    expect(preview.querySelector('[data-preview-block="relations"]')).toBeNull();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByText('Owner')).toBeInTheDocument();
+    expect(screen.getByText('Execution phase')).toBeInTheDocument();
+    expect(document.querySelector('[data-preview-block="relations"]')).toBeNull();
 
     fireEvent.click(screen.getByTestId('view-mode-calendar'));
     await waitFor(() => expectSameInitiatives('calendar', expected));

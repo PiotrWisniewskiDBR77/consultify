@@ -15371,6 +15371,7 @@
         "fact": {
           "case": "Execution case",
           "caseMissing": "Not linked yet",
+          "caseVersionMissing": "Linked · version not reported",
           "owner": "Owner",
           "phase": "Execution phase",
           "progress": "Progress",
