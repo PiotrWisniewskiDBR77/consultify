@@ -168,6 +168,73 @@ describe('Menu 3 · pigułki rejestru nie przeciekają do skrzynki [H1f DEC-507]
   });
 });
 
+describe('Menu 3 · `commandRowContent` (pigułki cyklu życia) — `capacity` już bezwarunkowo wyłączony', () => {
+  it('warunek zawiera `activeTab === \'capacity\'` BEZ gałęzi flagi — sprzed `INITIATIVES_WORKLOAD_ENABLED` (audyt Q1 P3 DEC-495, zmiany NIE było)', () => {
+    /*
+     * Audyt Q1 P3 (14.09): premisa zlecenia mówiła o przecieku pigułek
+     * REJESTRU (Wszystkie/Do zatwierdzenia/W realizacji) do zakładki
+     * „Obciążenie" przy włączonej heatmapie. Ten konkretny prop
+     * (`commandRowContent`) wyłącza `capacity` bezwarunkowo od commitu
+     * c7faa68b0d — SPRZED istnienia flagi `INITIATIVES_WORKLOAD_ENABLED`.
+     * Realny przeciek (patrz opis niżej) siedział gdzie indziej — w
+     * `canonicalMenu3Definitions.capacity` (`chips=`) i w dropdownie
+     * „Status" (`Menu2PresetDropdown`). Test zostaje jako regresja-guard na
+     * TEN prop — nie dowodzi całości fixa Q1 P3.
+     * Mutacja: dopisz `&& INITIATIVES_WORKLOAD_ENABLED` obok `capacity` w
+     * tym warunku → RED (chipy wróciłyby przy OFF, na linii scenariuszy).
+     */
+    const start = hub.indexOf('commandRowContent={');
+    const koniec = hub.indexOf('commandRowRightContent={', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(koniec).toBeGreaterThan(start);
+    const blok = bezKomentarzy(hub.slice(start, koniec));
+    expect(blok).toContain("activeTab === 'capacity'");
+    expect(blok).not.toContain("'capacity' && INITIATIVES_WORKLOAD_ENABLED");
+    expect(blok).not.toContain("INITIATIVES_WORKLOAD_ENABLED && activeTab === 'capacity'");
+  });
+});
+
+describe('Menu 3 · pigułki „Drafts/Published/With gaps" nie przeciekają do heatmapy Obciążenia [Q1 P3 DEC-495]', () => {
+  it('`canonicalMenu3Definitions.capacity` zwraca PUSTĄ listę gdy `INITIATIVES_WORKLOAD_ENABLED` — inaczej dla OFF (linia zachowuje chipy)', () => {
+    /*
+     * ZNALEZIONY i NAPRAWIONY przeciek (dev-render z realną atrapą API,
+     * zrzut a1-heatmapa-on-light.png PRZED naprawą pokazywał "Drafts 0 /
+     * Published 0 / With gaps 0" nad heatmapą Q1 — te trzy pigułki filtrują
+     * WYŁĄCZNIE `CapacityScenarioSurface` (linia, `activePreset=
+     * {canonicalMenu3Preset.capacity}` przekazywany TYLKO tam), heatmapa
+     * (`InitiativeWorkloadSurface`) nie zna `activePreset` — klik był martwy.
+     * Mutacja: usuń `INITIATIVES_WORKLOAD_ENABLED ? [] :` przed listą
+     * `capacity` w `canonicalMenu3Definitions` → RED (chipy wracają przy ON).
+     */
+    const start = hub.indexOf('const canonicalMenu3Definitions');
+    const koniec = hub.indexOf('const canonicalMenu3 = canonicalMenu3Definitions', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(koniec).toBeGreaterThan(start);
+    const blok = bezKomentarzy(hub.slice(start, koniec));
+    const capacityStart = blok.indexOf('capacity: INITIATIVES_WORKLOAD_ENABLED');
+    expect(capacityStart).toBeGreaterThan(-1);
+    const capacityBlok = blok.slice(capacityStart, blok.indexOf('],', capacityStart) + 2);
+    expect(capacityBlok.replace(/\s+/g, ' ')).toContain('INITIATIVES_WORKLOAD_ENABLED ? [] : [');
+  });
+
+  it('dropdown „Status" (`Menu2PresetDropdown`, te same Drafts/Published/With gaps) renderuje się TYLKO gdy `!INITIATIVES_WORKLOAD_ENABLED`', () => {
+    /*
+     * Drugi wołacz tych samych opcji (`canonicalMenu3FullOptions.capacity`) —
+     * dropdown „Status" w Menu 2 (`rightControls`). Ten sam przeciek: bez
+     * odpowiednika w heatmapie, musi zniknąć razem z chipami.
+     * Mutacja: usuń `&& !INITIATIVES_WORKLOAD_ENABLED` z warunku renderowania
+     * tego `Menu2PresetDropdown` → RED.
+     */
+    const marker = "data-testid=\"initiatives-capacity-constraint-dropdown\"";
+    const dropdownIdx = hub.indexOf(marker);
+    expect(dropdownIdx).toBeGreaterThan(-1);
+    const wstecz = hub.lastIndexOf("{activeTab === 'capacity'", dropdownIdx);
+    expect(wstecz).toBeGreaterThan(-1);
+    const warunek = hub.slice(wstecz, hub.indexOf('(', wstecz));
+    expect(bezKomentarzy(warunek)).toContain('!INITIATIVES_WORKLOAD_ENABLED');
+  });
+});
+
 describe('Segment zakresu — wspólny SSOT z Realizacją', () => {
   it('bierze klasy z `MENU_2_SEGMENT_*`, nie z własnego zestawu', () => {
     // Mutacja: wpisz z powrotem lokalne `h-8 px-3 rounded-full border-slate-200/60` → RED.
