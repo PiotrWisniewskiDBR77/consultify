@@ -37,6 +37,7 @@ maybeDescribe(
       'SMTP_PASS',
       'SMTP_SECURE',
       'SMTP_FROM',
+      'ENABLE_INITIATIVES_WORK_REPORT',
     ];
 
     beforeAll(async () => {
@@ -171,6 +172,7 @@ maybeDescribe(
       process.env.SMTP_PASS = 'secret';
       process.env.SMTP_SECURE = 'false';
       process.env.SMTP_FROM = 'sender@example.test';
+      process.env.ENABLE_INITIATIVES_WORK_REPORT = 'true';
       setEmailDependencies({
         db: {
           all: (_sql: string, _params: unknown[], callback: Function) => callback(null, []),

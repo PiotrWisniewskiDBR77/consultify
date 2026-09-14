@@ -271,6 +271,7 @@ interface InitiativesHubProps {
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
+const FOUR_BUTTONS_ENABLED = isInitiativesFourButtonsEnabled();
 // K5-8: "Work report" (4th Menu 2 tab) stays hidden until Codex ships the real
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.

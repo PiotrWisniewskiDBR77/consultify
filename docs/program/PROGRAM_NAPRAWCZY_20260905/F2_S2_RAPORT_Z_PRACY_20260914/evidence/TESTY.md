@@ -6,16 +6,17 @@ Wyniki uzyskane w worktree pakietu, bez stagingu:
 - `npx esbuild src/components/Initiatives/InitiativeWorkReportView.tsx --bundle '--external:*' ...` — PASS po rebase, bundle 25.1 kB;
 - `initiativeWorkReportService.test.ts --retry=0` — PASS 6/6 (PDF + pięć odrębnych kontraktów szablonów), rzeczywisty bufor `%PDF` z polskimi znakami;
 - `initiativeWorkReportReader.test.ts --retry=0` — PASS 1/1;
-- `scheduledInitiativeWorkReport.test.ts --retry=0` — PASS 3/3: prawdziwe komendy domenowe CREATE → VALIDATE → FREEZE → APPROVE → PUBLISH, PDF przekazany do mostu SMTP, odczyt dashboardu, częściowa porażka, retry tylko błędnego odbiorcy i brak duplikatu po sukcesie;
+- `scheduledInitiativeWorkReport.test.ts --retry=0` — PASS 4/4: default OFF zatrzymuje runner przed read/write; ON wykonuje prawdziwe komendy domenowe CREATE → VALIDATE → FREEZE → APPROVE → PUBLISH, PDF przekazany do mostu SMTP, odczyt dashboardu, częściową porażkę, retry tylko błędnego odbiorcy i brak duplikatu po sukcesie;
 - `initiativeWorkReportEmail.realSmtp.test.ts --retry=0` — PASS 1/1, lokalne połączenie SMTP TCP i załącznik;
 - `initiativeWorkReport.realdb.test.ts --retry=0` na PostgreSQL `cx-s2-work-report-pg`, port 6459 — PASS 1/1, tenant/project isolation i E2;
-- `InitiativesHub.workReportFlag.test.tsx --retry=0` — PASS 3/3: OFF ukrywa kartę i deeplink, ON montuje prawdziwy kreator;
+- `InitiativesHub.workReportFlag.test.tsx --retry=0` — PASS 4/4: OFF ukrywa kartę i deeplink, parking przy obu flagach OFF bezpiecznie wraca do listy i nie dodaje Menu 3, ON montuje prawdziwy kreator;
 - hooki commitowe dla kandydata E1 — PASS: table canon, TRIADA, artifact, density, focus ratchet, flag env static i język EN/PL.
 
-Ostrzeżenia `act(...)` w istniejącym teście hubu nie wpływają na wynik 3/3 i wymagają osobnej korekty harnessu.
+Ostrzeżenia `act(...)` w istniejącym teście hubu nie wpływają na wynik 4/4 i wymagają osobnej korekty harnessu.
 
 - `reportDefinitions.adminGate.routes.test.ts --retry=0` — PASS 8/8, w tym MEMBER → 403 dla create/transition przebiegu;
-- siedem skupionych plików testowych po rebase — PASS 23/23 (`--retry=0`);
+- `workReport.serverFlag.routes.test.ts --retry=0` — PASS 2/2: default OFF blokuje preview/schedule/PDF/deliver, ON wpuszcza wszystkie cztery trasy do właściwych handlerów;
+- osiem skupionych plików testowych — PASS 27/27 (`--retry=0`);
 - skan tokenów c-\* tylko w zmienionych ekranach względem `src/index.css` — PASS, 9/9 tokenów istnieje;
 - zrzuty Vite/CUA: light 24 423 B, dark 24 732 B — wizualnie sprawdzone.
 
