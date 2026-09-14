@@ -16,4 +16,4 @@ The RealPG test submits the same organization, proposal, and `clientRequestId`, 
 
 ## Rebase and runtime
 
-The repair was rebased onto `origin/integracja/20260911` at `d9a2374d461d8e7901ae25318e2976f31d603334` before the final verification. The isolated PostgreSQL container `cx-s3-plan-pg` runs on port 6455 with restart policy `unless-stopped`; 914 migrations were applied again after the Colima restart.
+The repair was finally rebased onto `origin/integracja/20260911` at `52fdcfebd5beeb0ea51c9459412acad72d195fbd` before the last focused verification. The isolated PostgreSQL container `cx-s3-plan-pg` runs on port 6455 with restart policy `unless-stopped`; 914 migrations were applied again after the Colima restart.
