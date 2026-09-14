@@ -266,7 +266,7 @@ export class AssessmentLegacyReportContractService {
         normalizeIndustry(organizationProfile?.industry) ??
         normalizeIndustry(organization?.industry) ??
         null,
-      employment: formatEmployeeCount(organizationProfile?.employee_count),
+      employment: formatEmployeeCount(organizationProfile?.employee_count, language),
       assessmentPeriod: assessment.created_at
         ? formatAssessmentPeriod(new Date(assessment.created_at), language)
         : null,

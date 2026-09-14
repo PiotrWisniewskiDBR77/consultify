@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import notificationService from '../notificationService.js';
+import { type ReportLocale } from '../report/reportLocale.js';
+import { actionCardMessage } from './actionCardMessages.js';
 export { readLegacyActionCardCandidates } from './adapters/index.js';
 
 export const ACTION_CARD_SOURCE_KINDS = [
@@ -51,6 +53,12 @@ export interface CreateActionCardInput {
   ownerUserId: string;
   dueDate: string;
   comment?: string;
+  /** [ODMROZENIE 04_ASSESSMENT DEC-510] G1 — język POWIADOMIENIA o karcie.
+   * Pominięty ⇒ tytuł zostaje literalnie taki, jaki był (polski), żeby żaden
+   * dotychczasowy wołacz (`execution_delay`, `audit_finding`,
+   * `finance_variance`, `meeting_action`) nie zmienił zachowania. Podaje go
+   * dziś tylko wyzwalacz odchylenia KPI. */
+  locale?: ReportLocale;
 }
 
 export interface ActionCardScope {
@@ -182,7 +190,9 @@ export async function createActionCard(
     userId: input.ownerUserId,
     organizationId: scope.organizationId,
     type: 'ACTION_CARD_ASSIGNED',
-    title: 'Karta działania wymaga reakcji',
+    title: input.locale
+      ? actionCardMessage(input.locale, 'actionCards.assignedNotification')
+      : 'Karta działania wymaga reakcji',
     // Karta utworzona automatycznie nie ma jeszcze OPISU DZIAŁANIA (§2.4:
     // wypełnia go człowiek), więc treść powiadomienia bierze wtedy OPIS PROBLEMU —
     // pusty dzwonek nie powiedziałby odpowiedzialnemu, czego dotyczy zgłoszenie.
