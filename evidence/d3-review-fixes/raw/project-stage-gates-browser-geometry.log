@@ -8,7 +8,7 @@ Running 1 test using 1 worker
   ✘  1 [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport (24.8s)
 
 
-  1) [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport 
+  1) [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport
 
     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
 
@@ -48,4 +48,4 @@ Running 1 test using 1 worker
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
   1 failed
-    [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport 
+    [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport
