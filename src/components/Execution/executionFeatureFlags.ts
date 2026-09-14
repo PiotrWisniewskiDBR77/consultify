@@ -59,6 +59,11 @@ const FLAGS = {
     localStorage: 'ff.exec_reports_intel',
     env: 'VITE_EXEC_REPORTS_INTELLIGENCE_ENABLED',
   },
+  workAnalysis: {
+    query: 'ff_executionWorkAnalysis',
+    localStorage: 'ff.exec_work_analysis',
+    env: 'VITE_EXECUTION_WORK_ANALYSIS',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -130,7 +135,8 @@ export function isExecutionFlagEnabled(
   //     (evidence/1-12-r4/05-menu3-chipy-flaga-on.png).
   // Warunek zdjęcia tej linii: przepiąć te cztery raporty na realne dane (pakiet R1)
   // ALBO zrobić ich własny czysty zrzut i dostać akcept właściciela.
-  if (flag === 'fourButtons' || flag === 'execReportsIntelligence') return false;
+  if (flag === 'fourButtons' || flag === 'execReportsIntelligence' || flag === 'workAnalysis')
+    return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).

@@ -16288,6 +16288,22 @@
       "empty": "No high-risk initiatives — everything on track.",
       "suggestedActions": "Suggested actions"
     },
+    "workAnalysis": {
+      "label": "Weekly management analysis",
+      "title": "Work across three time windows",
+      "weekOf": "Week of",
+      "completed": "Completed",
+      "attention": "Requires management attention",
+      "windows": {
+        "previousWeek": "Previous week",
+        "nextWeek": "Next week",
+        "nextMonth": "Next month"
+      },
+      "columns": {
+        "project": "Project",
+        "priority": "Priority"
+      }
+    },
     "control": {
       "columns": {
         "title": "Intervention",

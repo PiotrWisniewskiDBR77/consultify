@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard/StandardTable';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import {
   listExecutionCases,
   readExecutionMilestones,
@@ -9,8 +13,15 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { buildWorkReportModel, type WorkReportItem } from './workReportModel';
+import {
+  buildExecutionWorkAnalysis,
+  type ExecutionWorkAnalysis,
+  type ExecutionWorkAnalysisItem,
+  type WorkAnalysisWindow,
+} from './workAnalysisModel';
 
 interface Props {
+  analysisEnabled?: boolean;
   onOpenDocument?: (row: {
     id: string;
     title: string;
@@ -74,7 +85,8 @@ const SECTION_SHELL_CLASS = 'rounded-xl border border-c-border bg-c-surface-rais
 // tle); amber: literal #8a4517 w light (5.64:1), dark zostaje bo juz przechodzi.
 const SEVERITY_BADGE_CLASS: Record<string, string> = {
   red: 'bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-danger-700 dark:text-danger-300',
-  amber: 'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-[#8a4517] dark:text-c-warning',
+  amber:
+    'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-[#8a4517] dark:text-c-warning',
   neutral: 'bg-c-surface-raised text-c-text-secondary',
   unknown: 'bg-c-surface-raised text-c-text-muted',
 };
@@ -101,7 +113,10 @@ const REASON_LABEL_KEY: Record<string, [string, string]> = {
     'No objective-mapping API available',
   ],
 };
-const EPISTEMIC_LABEL_KEY: Record<'fact' | 'recommendation' | 'unknown' | 'calculated', [string, string]> = {
+const EPISTEMIC_LABEL_KEY: Record<
+  'fact' | 'recommendation' | 'unknown' | 'calculated',
+  [string, string]
+> = {
   fact: ['execution.reports.intelligence.epistemic.fact', 'FACT'],
   recommendation: ['execution.reports.intelligence.epistemic.recommendation', 'RECOMMENDATION'],
   unknown: ['execution.reports.intelligence.epistemic.unknown', 'UNKNOWN'],
@@ -119,10 +134,16 @@ const KIND_LABEL_KEY: Record<string, [string, string]> = {
   MILESTONE: ['execution.reports.intelligence.kinds.milestone', 'Milestone'],
 };
 
-export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactElement {
+export function WorkIntelligenceReport({
+  analysisEnabled = false,
+  onOpenDocument,
+}: Props): React.ReactElement {
   const { t, i18n } = useTranslation();
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [drilldownId, setDrilldownId] = useState<string | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState(() => new Date().toISOString().slice(0, 10));
+  const [selectedWindow, setSelectedWindow] =
+    useState<keyof ExecutionWorkAnalysis['windows']>('nextWeek');
 
   useEffect(() => {
     let active = true;
@@ -140,6 +161,8 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             const common = {
               executionCaseId: caseId,
               initiativeId: String(executionCase.initiativeId || ''),
+              projectId: executionCase.projectId ? String(executionCase.projectId) : null,
+              projectTitle: executionCase.projectTitle ? String(executionCase.projectTitle) : null,
             };
             const tasks: WorkReportItem[] = arrayAt(work, 'tasks').map((item: any) => ({
               ...common,
@@ -147,8 +170,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
               title: String(item.title || item.taskId),
               kind: 'TASK',
               status: String(item.status || 'UNKNOWN'),
+              priority: item.priority ? String(item.priority) : null,
               ownerId: item.assigneeId ? String(item.assigneeId) : null,
               dueAt: item.dueAt ? String(item.dueAt) : null,
+              completedAt: item.completedAt ? String(item.completedAt) : null,
               slaAt: item.slaAt ? String(item.slaAt) : null,
               dependencies: Array.isArray(item.dependencies) ? item.dependencies : [],
               evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
@@ -161,8 +186,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
               title: String(item.title || item.decisionId),
               kind: 'DECISION',
               status: String(item.status || 'UNKNOWN'),
+              priority: item.priority ? String(item.priority) : null,
               ownerId: item.authorityId ? String(item.authorityId) : null,
               dueAt: item.dueAt ? String(item.dueAt) : null,
+              completedAt: item.decidedAt ? String(item.decidedAt) : null,
               slaAt: item.slaAt ? String(item.slaAt) : null,
               dependencies: Array.isArray(item.dependencies) ? item.dependencies : [],
               evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
@@ -176,8 +203,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                 title: String(item.title || item.milestoneId),
                 kind: 'MILESTONE',
                 status: String(item.status || 'UNKNOWN'),
+                priority: item.priority ? String(item.priority) : null,
                 ownerId: item.ownerId ? String(item.ownerId) : null,
                 dueAt: item.targetAt ? String(item.targetAt) : null,
+                completedAt: item.completedAt ? String(item.completedAt) : null,
                 slaAt: null,
                 dependencies: [],
                 evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
@@ -217,6 +246,16 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       state.kind === 'ready' ? buildWorkReportModel(state.items, new Date(state.syncedAt)) : null,
     [state]
   );
+  const analysis = useMemo(
+    () =>
+      state.kind === 'ready' && analysisEnabled
+        ? buildExecutionWorkAnalysis(
+            state.items as ExecutionWorkAnalysisItem[],
+            new Date(`${selectedWeek}T12:00:00.000Z`)
+          )
+        : null,
+    [analysisEnabled, selectedWeek, state]
+  );
   const selectedMetric = model?.metrics.find((metric) => metric.id === drilldownId) ?? null;
   const registerItems = selectedMetric ? selectedMetric.drilldown : (model?.items ?? []);
   const columns: TableColumn[] = [
@@ -224,16 +263,31 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       id: 'title',
       label: t('execution.reports.intelligence.columns.title', 'Record'),
       sortable: true,
+      primary: true,
+      dataType: 'text',
     },
+    ...(analysisEnabled
+      ? [
+          {
+            id: 'projectTitle',
+            label: t('execution.workAnalysis.columns.project', 'Project'),
+            sortable: true,
+            dataType: 'text' as const,
+          },
+          {
+            id: 'priority',
+            label: t('execution.workAnalysis.columns.priority', 'Priority'),
+            sortable: true,
+            dataType: 'status' as const,
+          },
+        ]
+      : []),
     {
       id: 'kind',
       label: t('execution.reports.intelligence.columns.kind', 'Type'),
       sortable: true,
       render: (row: TableRow) =>
-        trPair(
-          t,
-          KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]
-        ),
+        trPair(t, KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]),
     },
     {
       id: 'status',
@@ -272,6 +326,31 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       </div>
     );
 
+  const windowEntries: Array<{
+    id: keyof ExecutionWorkAnalysis['windows'];
+    label: string;
+    value: WorkAnalysisWindow;
+  }> = analysis
+    ? [
+        {
+          id: 'previousWeek',
+          label: t('execution.workAnalysis.windows.previousWeek', 'Previous week'),
+          value: analysis.windows.previousWeek,
+        },
+        {
+          id: 'nextWeek',
+          label: t('execution.workAnalysis.windows.nextWeek', 'Next week'),
+          value: analysis.windows.nextWeek,
+        },
+        {
+          id: 'nextMonth',
+          label: t('execution.workAnalysis.windows.nextMonth', 'Next month'),
+          value: analysis.windows.nextMonth,
+        },
+      ]
+    : [];
+  const selectedAnalysisWindow = analysis?.windows[selectedWindow] ?? null;
+
   return (
     <main
       className="min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"
@@ -286,6 +365,53 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.workTitle', 'Work Intelligence Report')}
           </h1>
         </header>
+
+        {analysis ? (
+          <section aria-labelledby="work-analysis-title" className={SECTION_SHELL_CLASS}>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {t('execution.workAnalysis.label', 'Weekly management analysis')}
+                </p>
+                <h2 id="work-analysis-title" className="font-semibold">
+                  {t('execution.workAnalysis.title', 'Work across three time windows')}
+                </h2>
+              </div>
+              <label className="text-sm text-c-text-secondary">
+                {t('execution.workAnalysis.weekOf', 'Week of')}
+                <input
+                  aria-label={t('execution.workAnalysis.weekOf', 'Week of')}
+                  className="ml-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-c-text"
+                  type="date"
+                  value={selectedWeek}
+                  onChange={(event) => setSelectedWeek(event.target.value)}
+                />
+              </label>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {windowEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  aria-pressed={selectedWindow === entry.id}
+                  onClick={() => setSelectedWindow(entry.id)}
+                  className="rounded-xl border border-c-border bg-c-surface p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  <span className="block text-sm font-semibold">{entry.label}</span>
+                  <strong className="mt-1 block text-2xl">{entry.value.items.length}</strong>
+                  <span className="text-xs text-c-text-muted">
+                    {t('execution.workAnalysis.completed', 'Completed')}:{' '}
+                    {entry.value.completed.numerator}/{entry.value.completed.denominator}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-sm text-c-text-secondary">
+              {t('execution.workAnalysis.attention', 'Requires management attention')}:{' '}
+              <strong>{analysis.attention.length}</strong>
+            </p>
+          </section>
+        ) : null}
 
         <section
           data-section-order={sections[0]}
@@ -310,10 +436,12 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                   under the trust strip, instead of a raw ISO string here and
                   the same instant repeated (also as raw ISO) on every one of
                   the eight KPI cards below. */}
-              <dd>{new Date(state.syncedAt).toLocaleString(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}</dd>
+              <dd>
+                {new Date(state.syncedAt).toLocaleString(i18n.language, {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </dd>
             </div>
             <div>
               <dt className="text-c-text-muted">
@@ -435,8 +563,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.stake', 'What is at stake')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.NO_API_BSC)} ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} · {trPair(t, REASON_LABEL_KEY.NO_API_BSC)} ·{' '}
             {t(
               'execution.reports.intelligence.operationalOnly',
               'Objective mappings are unavailable; this remains an operational report, not a strategy report.'
@@ -460,8 +587,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.trend', 'How the system is changing')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.NO_API_HISTORY)}
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} · {trPair(t, REASON_LABEL_KEY.NO_API_HISTORY)}
           </p>
         </section>
         <section data-section-order={sections[7]} className={SECTION_SHELL_CLASS}>
@@ -492,12 +618,17 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                 className="rounded-lg border border-c-border px-3 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               >
                 {t('execution.reports.intelligence.showAllRecords', 'Show all records')} (
-                {t(`execution.reports.intelligence.metrics.${selectedMetric.id}`, selectedMetric.id)}{' '}
+                {t(
+                  `execution.reports.intelligence.metrics.${selectedMetric.id}`,
+                  selectedMetric.id
+                )}{' '}
                 → {model.items.length})
               </button>
             ) : null}
           </div>
-          {state.items.length === 0 ? (
+          {(
+            analysisEnabled ? selectedAnalysisWindow?.items.length === 0 : state.items.length === 0
+          ) ? (
             <p className="mt-2 text-sm text-c-text-muted">
               {t(
                 'execution.reports.intelligence.workEmpty',
@@ -507,7 +638,9 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           ) : (
             <StandardTable
               columns={columns}
-              data={registerItems as any}
+              data={
+                (analysisEnabled ? (selectedAnalysisWindow?.items ?? []) : registerItems) as any
+              }
               density="compact"
               empty={{
                 title: t(
