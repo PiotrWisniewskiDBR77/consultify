@@ -99,6 +99,29 @@ describe('solvePlanScenario', () => {
     ]);
   });
 
+  it('enforces only active conditional dependencies and retains inactive conditions as non-blocking', () => {
+    const inactive = {
+      ...window('B'),
+      conditionalDependencySnapshot: [
+        { predecessorId: 'A', condition: 'Production cohort selected.', active: false },
+      ],
+    };
+    const active = {
+      ...window('C'),
+      conditionalDependencySnapshot: [
+        { predecessorId: 'B', condition: 'Production cohort selected.', active: true },
+      ],
+    };
+
+    const result = solvePlanScenario(scenario([active, inactive, window('A')]));
+
+    expect(
+      Object.fromEntries(
+        result.assignments.map((item) => [item.window.initiativeId, item.periodId])
+      )
+    ).toEqual({ A: 'Q1', B: 'Q1', C: 'Q2' });
+  });
+
   it('keeps parallel dependants in the same earliest feasible period', () => {
     const result = solvePlanScenario(
       scenario([window('A'), window('B', ['A']), window('C', ['A'])])

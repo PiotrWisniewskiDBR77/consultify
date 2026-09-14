@@ -31,6 +31,7 @@ interface Draft {
   rationale: string;
   kind: 'ABSOLUTE' | 'CONDITIONAL';
   condition: string;
+  conditionActive: boolean;
 }
 
 export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
@@ -55,6 +56,7 @@ export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
             rationale: observation.rationale,
             kind: observation.kind,
             condition: observation.condition ?? '',
+            conditionActive: false,
           },
         ])
       )
@@ -68,6 +70,10 @@ export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
         return {
           observationId: observation.observationId,
           outcome: draft?.accepted ? 'ACCEPTED' : 'REJECTED',
+          conditionActive:
+            (draft?.kind ?? observation.kind) === 'CONDITIONAL'
+              ? (draft?.conditionActive ?? false)
+              : null,
           humanComment: draft?.humanComment.trim() || t('initiatives.planAnalysis.noChangeComment'),
           finalObservation: {
             ...observation,
@@ -181,6 +187,10 @@ export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
                           patch(observation.observationId, {
                             kind: event.target.value as Draft['kind'],
                             condition: event.target.value === 'ABSOLUTE' ? '' : draft?.condition ?? '',
+                            conditionActive:
+                              event.target.value === 'ABSOLUTE'
+                                ? false
+                                : (draft?.conditionActive ?? false),
                           })
                         }
                       >
@@ -189,14 +199,30 @@ export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
                       </select>
                     </label>
                     {(draft?.kind ?? observation.kind) === 'CONDITIONAL' && (
-                      <label className="text-xs text-c-text-muted">
-                        {t('initiatives.planAnalysis.condition')}
-                        <input
-                          className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2 text-sm"
-                          value={draft?.condition ?? ''}
-                          onChange={(event) => patch(observation.observationId, { condition: event.target.value })}
-                        />
-                      </label>
+                      <div className="text-xs text-c-text-muted">
+                        <label>
+                          {t('initiatives.planAnalysis.condition')}
+                          <input
+                            className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2 text-sm"
+                            value={draft?.condition ?? ''}
+                            onChange={(event) =>
+                              patch(observation.observationId, { condition: event.target.value })
+                            }
+                          />
+                        </label>
+                        <label className="mt-2 flex items-center gap-2 text-sm text-c-text">
+                          <input
+                            type="checkbox"
+                            checked={draft?.conditionActive ?? false}
+                            onChange={(event) =>
+                              patch(observation.observationId, {
+                                conditionActive: event.target.checked,
+                              })
+                            }
+                          />
+                          {t('initiatives.planAnalysis.conditionActive')}
+                        </label>
+                      </div>
                     )}
                   </div>
                 )}
@@ -249,4 +275,3 @@ export const PlanDependencyAnalysisPanel: React.FC<Props> = ({
     </section>
   );
 };
-

@@ -16,8 +16,15 @@ export interface DependencyObservation {
 export interface ObservationReview {
   observationId: string;
   outcome: 'ACCEPTED' | 'REJECTED';
+  conditionActive: boolean | null;
   humanComment: string;
   finalObservation: DependencyObservation;
+}
+
+export interface ConditionalDependencySnapshot {
+  predecessorId: string;
+  condition: string;
+  active: boolean;
 }
 
 /**
@@ -34,17 +41,45 @@ export function applyDependencyObservationReviews<T extends PlanCardWindow>(
     .map((review) => review.finalObservation);
   const ids = new Set(windows.map((window) => window.initiativeId));
   const predecessors = new Map(windows.map((window) => [window.initiativeId, new Set(window.dependencySnapshot)]));
+  const conditionalPredecessors = new Map(
+    windows.map((window) => [
+      window.initiativeId,
+      new Map(
+        (window.conditionalDependencySnapshot ?? []).map((dependency) => [
+          dependency.predecessorId,
+          dependency,
+        ])
+      ),
+    ])
+  );
 
   for (const observation of accepted) {
     if (!ids.has(observation.predecessorId) || !ids.has(observation.successorId)) continue;
-    predecessors.get(observation.successorId)?.add(observation.predecessorId);
+    const review = reviews.find(
+      (candidate) =>
+        candidate.outcome === 'ACCEPTED' &&
+        candidate.finalObservation.observationId === observation.observationId
+    );
+    if (observation.kind === 'ABSOLUTE') {
+      predecessors.get(observation.successorId)?.add(observation.predecessorId);
+      conditionalPredecessors.get(observation.successorId)?.delete(observation.predecessorId);
+      continue;
+    }
+    conditionalPredecessors.get(observation.successorId)?.set(observation.predecessorId, {
+      predecessorId: observation.predecessorId,
+      condition: observation.condition!,
+      active: review?.conditionActive === true,
+    });
   }
 
   const sourceOrder = new Map(windows.map((window, index) => [window.initiativeId, index]));
   const indegree = new Map(windows.map((window) => [window.initiativeId, 0]));
   const successors = new Map(windows.map((window) => [window.initiativeId, new Set<string>()]));
   for (const [successorId, deps] of predecessors) {
-    for (const predecessorId of deps) {
+    const activeConditional = [...(conditionalPredecessors.get(successorId)?.values() ?? [])]
+      .filter((dependency) => dependency.active)
+      .map((dependency) => dependency.predecessorId);
+    for (const predecessorId of new Set([...deps, ...activeConditional])) {
       if (!ids.has(predecessorId) || predecessorId === successorId) continue;
       indegree.set(successorId, (indegree.get(successorId) ?? 0) + 1);
       successors.get(predecessorId)?.add(successorId);
@@ -71,11 +106,17 @@ export function applyDependencyObservationReviews<T extends PlanCardWindow>(
   // The server rejects cycles. Retain the current order if stale UI data somehow contains one.
   const finalIds = orderedIds.length === windows.length ? orderedIds : windows.map((window) => window.initiativeId);
   const byId = new Map(
-    windows.map((window) => [
-      window.initiativeId,
-      { ...window, dependencySnapshot: [...(predecessors.get(window.initiativeId) ?? [])] },
-    ])
+    windows.map((window) => {
+      const conditionals = [...(conditionalPredecessors.get(window.initiativeId)?.values() ?? [])];
+      return [
+        window.initiativeId,
+        {
+          ...window,
+          dependencySnapshot: [...(predecessors.get(window.initiativeId) ?? [])],
+          ...(conditionals.length ? { conditionalDependencySnapshot: conditionals } : {}),
+        },
+      ];
+    })
   );
   return finalIds.map((id) => byId.get(id)!).filter(Boolean) as T[];
 }
-

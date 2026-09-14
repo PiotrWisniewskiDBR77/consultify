@@ -43,6 +43,7 @@ export interface PlanAnalysisProposal {
 export interface PlanDependencyObservationReview {
   observationId: string;
   outcome: 'ACCEPTED' | 'REJECTED';
+  conditionActive: boolean | null;
   humanComment: string;
   finalObservation: PlanDependencyObservation;
 }
@@ -241,7 +242,9 @@ export async function reviewPlanAnalysisProposal(
           final.successorId !== original.successorId ||
           !review.humanComment.trim() ||
           (final.kind === 'ABSOLUTE' && final.condition !== null) ||
+          (final.kind === 'ABSOLUTE' && review.conditionActive !== null) ||
           (final.kind === 'CONDITIONAL' && !final.condition?.trim()) ||
+          (final.kind === 'CONDITIONAL' && typeof review.conditionActive !== 'boolean') ||
           !final.rationale.trim()
         ) {
           throw new MaterialCommandValidationError(

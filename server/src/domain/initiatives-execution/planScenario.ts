@@ -30,6 +30,11 @@ export interface PlannedWindow {
   confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
   rationale: string;
   dependencySnapshot: string[];
+  conditionalDependencySnapshot?: Array<{
+    predecessorId: string;
+    condition: string;
+    active: boolean;
+  }>;
   constraintSnapshot: Array<{ constraintId: string; state: 'KNOWN' | 'UNKNOWN'; detail: string }>;
   roleDemand?: RoleDemandLine[];
 }
@@ -90,7 +95,15 @@ export function validatePlanScenario(s: PlanScenario) {
     throw new MaterialCommandValidationError('Planned Initiative membership must be unique');
   const ids = new Set(s.windows.map((w) => w.initiativeId));
   const edges = new Map(
-    s.windows.map((w) => [w.initiativeId, w.dependencySnapshot.filter((d) => ids.has(d))])
+    s.windows.map((w) => [
+      w.initiativeId,
+      [
+        ...w.dependencySnapshot,
+        ...(w.conditionalDependencySnapshot ?? [])
+          .filter((dependency) => dependency.active)
+          .map((dependency) => dependency.predecessorId),
+      ].filter((dependencyId) => ids.has(dependencyId)),
+    ])
   );
   for (const w of s.windows) {
     const values = [date(w.earliest), date(w.target), date(w.latest)];
@@ -107,6 +120,18 @@ export function validatePlanScenario(s: PlanScenario) {
       );
     if (!w.rationale.trim())
       throw new MaterialCommandValidationError('Window rationale is required');
+    if (
+      (w.conditionalDependencySnapshot ?? []).some(
+        (dependency) =>
+          !dependency.predecessorId.trim() ||
+          dependency.predecessorId === w.initiativeId ||
+          !dependency.condition.trim()
+      ) ||
+      new Set(
+        (w.conditionalDependencySnapshot ?? []).map((dependency) => dependency.predecessorId)
+      ).size !== (w.conditionalDependencySnapshot ?? []).length
+    )
+      throw new MaterialCommandValidationError('Conditional Plan dependency is invalid');
     if (w.roleDemand) {
       const roles = new Set<string>();
       for (const line of w.roleDemand) {
