@@ -1,0 +1,1141 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67
+
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > deklarowana suma szerokości kolumn mieści się w desktopowym budżecie panelu 155ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > żadna kolumna nie deklaruje `primary: true` (podłoga 200px odtworzyłaby defekt) 38ms
+ × src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie) 1016ms
+   → Found multiple elements with the text: Not ready
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600 dark:text-amber-400"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-circle-dot"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"13"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"13"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"10"[39m
+    [36m/>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"1"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0mNot ready[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex max-w-full items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600 dark:text-amber-400"[39m
+  [33mdata-testid[39m=[32m"project-stage-gate-mobile-status"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-circle-dot"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"13"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"13"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"10"[39m
+    [36m/>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"1"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0mNot ready[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"[39m
+      [33mdata-testid[39m=[32m"project-stage-gates-panel"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mb-2 flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock-keyhole text-c-text-secondary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"14"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"14"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"16"[39m
+            [33mr[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"12"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 10V7a5 5 0 0 1 10 0v3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-xs font-bold uppercase tracking-wide text-c-text-secondary"[39m
+        [36m>[39m
+          [0mPMBOK-lite stage gates[0m
+        [36m</h4>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-auto text-[10px] text-c-text-muted"[39m
+        [36m>[39m
+          [0mWeekly review rhythm[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Refresh"[39m
+          [33mclass[39m=[32m"rounded-full border border-c-border p-1 text-c-text-secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"hidden min-[420px]:block"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full overflow-x-auto"[39m
+            [36m>[39m
+              [36m<table[39m
+                [33mclass[39m=[32m"w-full table-fixed"[39m
+                [33mdata-min-table-width[39m=[32m"auto"[39m
+              [36m>[39m
+                [36m<thead[39m
+                  [33mclass[39m=[32m"sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig"[39m
+                [36m>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mclass[39m=[32m"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider "[39m
+                      [33mdata-column-id[39m=[32m"gateType"[39m
+                      [33mstyle[39m=[32m"width: 140px; min-width: 140px; max-width: 320px;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center gap-1 min-w-0 break-words "[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"min-w-0 flex-1 min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                          [33mdata-overflow-tooltip-trigger[39m=[32m"true"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                            [33mdata-overflow-tooltip-text[39m=[32m"true"[39m
+                          [36m>[39m
+                            [0mGate[0m
+                          [36m</span>[39m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33maria-label[39m=[32m"Resize {{column}} column"[39m
+                        [33maria-orientation[39m=[32m"vertical"[39m
+                        [33maria-valuemax[39m=[32m"320"[39m
+                        [33maria-valuemin[39m=[32m"140"[39m
+                        [33maria-valuenow[39m=[32m"140"[39m
+                        [33mclass[39m=[32m"
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        z-10
+      "[39m
+                        [33mrole[39m=[32m"separator"[39m
+                        [33mtabindex[39m=[32m"0"[39m
+                        [33mtitle[39m=[32m"Resize {{column}} column"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150 bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                    [36m</th>[39m
+                  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"[39m
+      [33mdata-testid[39m=[32m"project-stage-gates-panel"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mb-2 flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock-keyhole text-c-text-secondary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"14"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"14"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"16"[39m
+            [33mr[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"12"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 10V7a5 5 0 0 1 10 0v3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-xs font-bold uppercase tracking-wide text-c-text-secondary"[39m
+        [36m>[39m
+          [0mPMBOK-lite stage gates[0m
+        [36m</h4>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-auto text-[10px] text-c-text-muted"[39m
+        [36m>[39m
+          [0mWeekly review rhythm[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Refresh"[39m
+          [33mclass[39m=[32m"rounded-full border border-c-border p-1 text-c-text-secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"hidden min-[420px]:block"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full overflow-x-auto"[39m
+            [36m>[39m
+              [36m<table[39m
+                [33mclass[39m=[32m"w-full table-fixed"[39m
+                [33mdata-min-table-width[39m=[32m"auto"[39m
+              [36m>[39m
+                [36m<thead[39m
+                  [33mclass[39m=[32m"sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig"[39m
+                [36m>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mclass[39m=[32m"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider "[39m
+                      [33mdata-column-id[39m=[32m"gateType"[39m
+                      [33mstyle[39m=[32m"width: 140px; min-width: 140px; max-width: 320px;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center gap-1 min-w-0 break-words "[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"min-w-0 flex-1 min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                          [33mdata-overflow-tooltip-trigger[39m=[32m"true"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                            [33mdata-overflow-tooltip-text[39m=[32m"true"[39m
+                          [36m>[39m
+                            [0mGate[0m
+                          [36m</span>[39m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33maria-label[39m=[32m"Resize {{column}} column"[39m
+                        [33maria-orientation[39m=[32m"vertical"[39m
+                        [33maria-valuemax[39m=[32m"320"[39m
+                        [33maria-valuemin[39m=[32m"140"[39m
+                        [33maria-valuenow[39m=[32m"140"[39m
+                        [33mclass[39m=[32m"
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        z-10
+      "[39m
+                        [33mrole[39m=[32m"separator"[39m
+                        [33mtabindex[39m=[32m"0"[39m
+                        [33mtitle[39m=[32m"Resize {{column}} column"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150 bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                    [36m</th>[39m
+                  ...
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony" 23ms
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx (4 tests | 1 failed) 1235ms
+     ✓ deklarowana suma szerokości kolumn mieści się w desktopowym budżecie panelu 155ms
+     ✓ żadna kolumna nie deklaruje `primary: true` (podłoga 200px odtworzyłaby defekt) 38ms
+     × plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie) 1016ms
+     ✓ przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony" 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie)
+TestingLibraryElementError: Found multiple elements with the text: Not ready
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600 dark:text-amber-400"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-circle-dot"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"13"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"13"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"10"[39m
+    [36m/>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"1"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0mNot ready[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex max-w-full items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600 dark:text-amber-400"[39m
+  [33mdata-testid[39m=[32m"project-stage-gate-mobile-status"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-circle-dot"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"13"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"13"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"10"[39m
+    [36m/>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"1"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0mNot ready[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"[39m
+      [33mdata-testid[39m=[32m"project-stage-gates-panel"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mb-2 flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock-keyhole text-c-text-secondary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"14"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"14"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"16"[39m
+            [33mr[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"12"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 10V7a5 5 0 0 1 10 0v3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-xs font-bold uppercase tracking-wide text-c-text-secondary"[39m
+        [36m>[39m
+          [0mPMBOK-lite stage gates[0m
+        [36m</h4>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-auto text-[10px] text-c-text-muted"[39m
+        [36m>[39m
+          [0mWeekly review rhythm[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Refresh"[39m
+          [33mclass[39m=[32m"rounded-full border border-c-border p-1 text-c-text-secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"hidden min-[420px]:block"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full overflow-x-auto"[39m
+            [36m>[39m
+              [36m<table[39m
+                [33mclass[39m=[32m"w-full table-fixed"[39m
+                [33mdata-min-table-width[39m=[32m"auto"[39m
+              [36m>[39m
+                [36m<thead[39m
+                  [33mclass[39m=[32m"sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig"[39m
+                [36m>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mclass[39m=[32m"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider "[39m
+                      [33mdata-column-id[39m=[32m"gateType"[39m
+                      [33mstyle[39m=[32m"width: 140px; min-width: 140px; max-width: 320px;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center gap-1 min-w-0 break-words "[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"min-w-0 flex-1 min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                          [33mdata-overflow-tooltip-trigger[39m=[32m"true"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                            [33mdata-overflow-tooltip-text[39m=[32m"true"[39m
+                          [36m>[39m
+                            [0mGate[0m
+                          [36m</span>[39m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33maria-label[39m=[32m"Resize {{column}} column"[39m
+                        [33maria-orientation[39m=[32m"vertical"[39m
+                        [33maria-valuemax[39m=[32m"320"[39m
+                        [33maria-valuemin[39m=[32m"140"[39m
+                        [33maria-valuenow[39m=[32m"140"[39m
+                        [33mclass[39m=[32m"
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        z-10
+      "[39m
+                        [33mrole[39m=[32m"separator"[39m
+                        [33mtabindex[39m=[32m"0"[39m
+                        [33mtitle[39m=[32m"Resize {{column}} column"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150 bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                    [36m</th>[39m
+                  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"[39m
+      [33mdata-testid[39m=[32m"project-stage-gates-panel"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mb-2 flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock-keyhole text-c-text-secondary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"14"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"14"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"16"[39m
+            [33mr[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"12"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 10V7a5 5 0 0 1 10 0v3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-xs font-bold uppercase tracking-wide text-c-text-secondary"[39m
+        [36m>[39m
+          [0mPMBOK-lite stage gates[0m
+        [36m</h4>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-auto text-[10px] text-c-text-muted"[39m
+        [36m>[39m
+          [0mWeekly review rhythm[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Refresh"[39m
+          [33mclass[39m=[32m"rounded-full border border-c-border p-1 text-c-text-secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"hidden min-[420px]:block"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full overflow-x-auto"[39m
+            [36m>[39m
+              [36m<table[39m
+                [33mclass[39m=[32m"w-full table-fixed"[39m
+                [33mdata-min-table-width[39m=[32m"auto"[39m
+              [36m>[39m
+                [36m<thead[39m
+                  [33mclass[39m=[32m"sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig"[39m
+                [36m>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mclass[39m=[32m"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider "[39m
+                      [33mdata-column-id[39m=[32m"gateType"[39m
+                      [33mstyle[39m=[32m"width: 140px; min-width: 140px; max-width: 320px;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center gap-1 min-w-0 break-words "[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"min-w-0 flex-1 min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                          [33mdata-overflow-tooltip-trigger[39m=[32m"true"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                            [33mdata-overflow-tooltip-text[39m=[32m"true"[39m
+                          [36m>[39m
+                            [0mGate[0m
+                          [36m</span>[39m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33maria-label[39m=[32m"Resize {{column}} column"[39m
+                        [33maria-orientation[39m=[32m"vertical"[39m
+                        [33maria-valuemax[39m=[32m"320"[39m
+                        [33maria-valuemin[39m=[32m"140"[39m
+                        [33maria-valuenow[39m=[32m"140"[39m
+                        [33mclass[39m=[32m"
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        z-10
+      "[39m
+                        [33mrole[39m=[32m"separator"[39m
+                        [33mtabindex[39m=[32m"0"[39m
+                        [33mtitle[39m=[32m"Resize {{column}} column"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150 bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                    [36m</th>[39m
+                  ...
+ ❯ waitForWrapper ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx:127:32
+    125|   it('plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go …
+    126|     render(<ProjectStageGatesPanel projectId="project-1" />);
+    127|     const badge = await screen.findByText('Not ready');
+       |                                ^
+    128|     expect(badge.className).toContain('whitespace-nowrap');
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  17:18:03
+   Duration  3.79s (transform 1.32s, setup 205ms, import 1.79s, tests 1.23s, environment 422ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie)
+TestingLibraryElementError: Found multiple elements with the text: Not ready
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600 dark:text-amber-400"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-circle-dot"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"13"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"13"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"10"[39m
+    [36m/>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"1"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0mNot ready[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex max-w-full items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600 dark:text-amber-400"[39m
+  [33mdata-testid[39m=[32m"project-stage-gate-mobile-status"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-circle-dot"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"13"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"13"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"10"[39m
+    [36m/>[39m
+    [36m<circle[39m
+      [33mcx[39m=[32m"12"[39m
+      [33mcy[39m=[32m"12"[39m
+      [33mr[39m=[32m"1"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0mNot ready[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"[39m
+      [33mdata-testid[39m=[32m"project-stage-gates-panel"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mb-2 flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock-keyhole text-c-text-secondary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"14"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"14"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"16"[39m
+            [33mr[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"12"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 10V7a5 5 0 0 1 10 0v3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-xs font-bold uppercase tracking-wide text-c-text-secondary"[39m
+        [36m>[39m
+          [0mPMBOK-lite stage gates[0m
+        [36m</h4>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-auto text-[10px] text-c-text-muted"[39m
+        [36m>[39m
+          [0mWeekly review rhythm[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Refresh"[39m
+          [33mclass[39m=[32m"rounded-full border border-c-border p-1 text-c-text-secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"hidden min-[420px]:block"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full overflow-x-auto"[39m
+            [36m>[39m
+              [36m<table[39m
+                [33mclass[39m=[32m"w-full table-fixed"[39m
+                [33mdata-min-table-width[39m=[32m"auto"[39m
+              [36m>[39m
+                [36m<thead[39m
+                  [33mclass[39m=[32m"sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig"[39m
+                [36m>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mclass[39m=[32m"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider "[39m
+                      [33mdata-column-id[39m=[32m"gateType"[39m
+                      [33mstyle[39m=[32m"width: 140px; min-width: 140px; max-width: 320px;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center gap-1 min-w-0 break-words "[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"min-w-0 flex-1 min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                          [33mdata-overflow-tooltip-trigger[39m=[32m"true"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                            [33mdata-overflow-tooltip-text[39m=[32m"true"[39m
+                          [36m>[39m
+                            [0mGate[0m
+                          [36m</span>[39m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33maria-label[39m=[32m"Resize {{column}} column"[39m
+                        [33maria-orientation[39m=[32m"vertical"[39m
+                        [33maria-valuemax[39m=[32m"320"[39m
+                        [33maria-valuemin[39m=[32m"140"[39m
+                        [33maria-valuenow[39m=[32m"140"[39m
+                        [33mclass[39m=[32m"
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        z-10
+      "[39m
+                        [33mrole[39m=[32m"separator"[39m
+                        [33mtabindex[39m=[32m"0"[39m
+                        [33mtitle[39m=[32m"Resize {{column}} column"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150 bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                    [36m</th>[39m
+                  ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"[39m
+      [33mdata-testid[39m=[32m"project-stage-gates-panel"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mb-2 flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock-keyhole text-c-text-secondary"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"14"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"14"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<circle[39m
+            [33mcx[39m=[32m"12"[39m
+            [33mcy[39m=[32m"16"[39m
+            [33mr[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"12"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"10"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 10V7a5 5 0 0 1 10 0v3"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-xs font-bold uppercase tracking-wide text-c-text-secondary"[39m
+        [36m>[39m
+          [0mPMBOK-lite stage gates[0m
+        [36m</h4>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ml-auto text-[10px] text-c-text-muted"[39m
+        [36m>[39m
+          [0mWeekly review rhythm[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Refresh"[39m
+          [33mclass[39m=[32m"rounded-full border border-c-border p-1 text-c-text-secondary"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"hidden min-[420px]:block"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-full overflow-x-auto"[39m
+            [36m>[39m
+              [36m<table[39m
+                [33mclass[39m=[32m"w-full table-fixed"[39m
+                [33mdata-min-table-width[39m=[32m"auto"[39m
+              [36m>[39m
+                [36m<thead[39m
+                  [33mclass[39m=[32m"sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig"[39m
+                [36m>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mclass[39m=[32m"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider "[39m
+                      [33mdata-column-id[39m=[32m"gateType"[39m
+                      [33mstyle[39m=[32m"width: 140px; min-width: 140px; max-width: 320px;"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center gap-1 min-w-0 break-words "[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"min-w-0 flex-1 min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                          [33mdata-overflow-tooltip-trigger[39m=[32m"true"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"min-w-0 block break-normal overflow-hidden text-ellipsis"[39m
+                            [33mdata-overflow-tooltip-text[39m=[32m"true"[39m
+                          [36m>[39m
+                            [0mGate[0m
+                          [36m</span>[39m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33maria-label[39m=[32m"Resize {{column}} column"[39m
+                        [33maria-orientation[39m=[32m"vertical"[39m
+                        [33maria-valuemax[39m=[32m"320"[39m
+                        [33maria-valuemin[39m=[32m"140"[39m
+                        [33maria-valuenow[39m=[32m"140"[39m
+                        [33mclass[39m=[32m"
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        z-10
+      "[39m
+                        [33mrole[39m=[32m"separator"[39m
+                        [33mtabindex[39m=[32m"0"[39m
+                        [33mtitle[39m=[32m"Resize {{column}} column"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150 bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]"[39m
+                        [36m/>[39m
+                      [36m</div>[39m
+                    [36m</th>[39m
+                  ...
+ ❯ waitForWrapper ../../Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx:127:32
+    125|   it('plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go …
+    126|     render(<ProjectStageGatesPanel projectId="project-1" />);
+    127|     const badge = await screen.findByText('Not ready');
+       |                                ^
+    128|     expect(badge.className).toContain('whitespace-nowrap');
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  17:18:03
+   Duration  3.80s (transform 1.32s, setup 205ms, import 1.79s, tests 1.23s, environment 422ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/junit.xml

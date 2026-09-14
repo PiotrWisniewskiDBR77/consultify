@@ -1,0 +1,85 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67
+
+ × src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > deklarowana suma szerokości kolumn mieści się w realnym budżecie PL360 146ms
+   → expected 280 to be less than or equal to 222
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > żadna kolumna nie deklaruje `primary: true` (podłoga 200px odtworzyłaby defekt) 27ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie) 107ms
+ × src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony" 32ms
+   → expected 280 to be less than or equal to 222
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx (4 tests | 2 failed) 314ms
+     × deklarowana suma szerokości kolumn mieści się w realnym budżecie PL360 146ms
+     ✓ żadna kolumna nie deklaruje `primary: true` (podłoga 200px odtworzyłaby defekt) 27ms
+     ✓ plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie) 107ms
+     × przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony" 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > deklarowana suma szerokości kolumn mieści się w realnym budżecie PL360
+AssertionError: expected 280 to be less than or equal to 222
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx:108:17
+    106|       sum += px;
+    107|     }
+    108|     expect(sum).toBeLessThanOrEqual(MEASURED_PREVIEW_TABLE_BUDGET_PX);
+       |                 ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony"
+AssertionError: expected 280 to be less than or equal to 222
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx:162:59
+    160|     );
+    161|     expect(widths).toHaveLength(2);
+    162|     expect(widths.reduce((sum, width) => sum + width, 0)).toBeLessThan…
+       |                                                           ^
+    163|       MEASURED_PREVIEW_TABLE_BUDGET_PX
+    164|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:16:05
+   Duration  2.59s (transform 894ms, setup 197ms, import 1.39s, tests 314ms, environment 563ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > deklarowana suma szerokości kolumn mieści się w realnym budżecie PL360
+AssertionError: expected 280 to be less than or equal to 222
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx:108:17
+    106|       sum += px;
+    107|     }
+    108|     expect(sum).toBeLessThanOrEqual(MEASURED_PREVIEW_TABLE_BUDGET_PX);
+       |                 ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony"
+AssertionError: expected 280 to be less than or equal to 222
+ ❯ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx:162:59
+    160|     );
+    161|     expect(widths).toHaveLength(2);
+    162|     expect(widths.reduce((sum, width) => sum + width, 0)).toBeLessThan…
+       |                                                           ^
+    163|       MEASURED_PREVIEW_TABLE_BUDGET_PX
+    164|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:16:05
+   Duration  2.60s (transform 894ms, setup 197ms, import 1.39s, tests 314ms, environment 563ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/junit.xml

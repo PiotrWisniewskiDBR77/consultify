@@ -1,0 +1,25 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67
+
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > deklarowana suma szerokości kolumn mieści się w desktopowym budżecie panelu 114ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > żadna kolumna nie deklaruje `primary: true` (podłoga 200px odtworzyłaby defekt) 31ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie) 110ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx > ProjectStageGatesPanel — szerokość kolumn (Z-43) > przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony" 21ms
+ ✓ src/components/MyWork/__tests__/ProjectStageGatesPanel.columnWidth.test.tsx (4 tests) 278ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:19:13
+   Duration  2.09s (transform 736ms, setup 128ms, import 1.16s, tests 278ms, environment 430ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:19:13
+   Duration  2.09s (transform 736ms, setup 128ms, import 1.16s, tests 278ms, environment 430ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/junit.xml
