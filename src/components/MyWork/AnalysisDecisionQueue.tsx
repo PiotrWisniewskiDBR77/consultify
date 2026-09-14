@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -27,15 +28,15 @@ interface DecisionRow extends TableRow {
   source: PendingAnalysisDecisionReadModel;
 }
 
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Decision', sortable: true, width: '240px' },
-  { id: 'initiativeId', label: 'Initiative', sortable: true },
-  { id: 'gate', label: 'Gate', sortable: true, filterable: true },
-  { id: 'requesterId', label: 'Requested by', sortable: true },
-  { id: 'dueAt', label: 'Due', sortable: true },
-];
-
 export const AnalysisDecisionQueue: React.FC = () => {
+  const { t } = useTranslation();
+  const columns: TableColumn[] = [
+    { id: 'title', label: t('myWork.analysisDecisionQueue.decision', 'Decision'), sortable: true, width: '240px' },
+    { id: 'initiativeId', label: t('myWork.analysisDecisionQueue.initiative', 'Initiative'), sortable: true },
+    { id: 'gate', label: t('myWork.analysisDecisionQueue.gate', 'Gate'), sortable: true, filterable: true },
+    { id: 'requesterId', label: t('myWork.analysisDecisionQueue.requestedBy', 'Requested by'), sortable: true },
+    { id: 'dueAt', label: t('myWork.analysisDecisionQueue.due', 'Due'), sortable: true },
+  ];
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [decisions, setDecisions] = useState<PendingAnalysisDecisionReadModel[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -65,7 +66,7 @@ export const AnalysisDecisionQueue: React.FC = () => {
     () =>
       decisions.map((decision) => ({
         id: decision.decisionId,
-        title: 'Analysis Decision',
+        title: t('myWork.analysisDecisionQueue.rowTitle', 'Analysis Decision'),
         initiativeId: decision.initiativeId,
         gate: decision.gate,
         requesterId: decision.requesterId,
@@ -105,22 +106,21 @@ export const AnalysisDecisionQueue: React.FC = () => {
 
   if (state === 'LOADING')
     return (
-      <section aria-label="Analysis decisions" className="p-4">
+      <section aria-label={t('myWork.analysisDecisionQueue.sectionLabel', 'Analysis decisions')} className="p-4">
         <div role="status" className="flex items-center gap-2 text-sm text-c-text-muted">
-          <Loader2 aria-hidden="true" className="animate-spin" size={16} /> Loading Analysis
-          decisions
+          <Loader2 aria-hidden="true" className="animate-spin" size={16} /> {t('myWork.analysisDecisionQueue.loading', 'Loading Analysis decisions')}
         </div>
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Analysis decisions" className="p-4">
+      <section aria-label={t('myWork.analysisDecisionQueue.sectionLabel', 'Analysis decisions')} className="p-4">
         <div role="alert" className="flex items-center justify-between gap-3 text-sm text-c-danger">
           <span className="flex items-center gap-2">
-            <AlertTriangle aria-hidden="true" size={16} /> Analysis decisions are unavailable.
+            <AlertTriangle aria-hidden="true" size={16} /> {t('myWork.analysisDecisionQueue.unavailable', 'Analysis decisions are unavailable.')}
           </span>
           <button type="button" className="btn-secondary" onClick={() => void load()}>
-            Retry
+            {t('myWork.analysisDecisionQueue.retry', 'Retry')}
           </button>
         </div>
       </section>
@@ -128,18 +128,18 @@ export const AnalysisDecisionQueue: React.FC = () => {
   if (!rows.length) return null;
 
   return (
-    <section aria-label="Analysis decisions" className="border-b border-c-border">
+    <section aria-label={t('myWork.analysisDecisionQueue.sectionLabel', 'Analysis decisions')} className="border-b border-c-border">
       <div className="px-4 pt-3">
-        <h3 className="font-semibold text-c-text-primary">Analysis decisions waiting on you</h3>
+        <h3 className="font-semibold text-c-text-primary">{t('myWork.analysisDecisionQueue.title', 'Analysis decisions waiting on you')}</h3>
         <p className="text-xs text-c-text-muted">
-          Dedicated canonical Analysis gate queue; it does not open the legacy Decision detail.
+          {t('myWork.analysisDecisionQueue.subtitle', 'Dedicated canonical Analysis gate queue; it does not open the legacy Decision detail.')}
         </p>
       </div>
       {(writeState === 'CONFLICT' || writeState === 'FAILED') && (
         <div role="alert" className="mx-4 mt-2 text-sm text-c-danger">
           {writeState === 'CONFLICT'
-            ? 'This Analysis Decision changed. Reload before deciding again.'
-            : 'The Analysis Decision was not changed.'}
+            ? t('myWork.analysisDecisionQueue.conflict', 'This Analysis Decision changed. Reload before deciding again.')
+            : t('myWork.analysisDecisionQueue.failed', 'The Analysis Decision was not changed.')}
         </div>
       )}
       <TableWithPreviewLayout<DecisionRow>
@@ -153,26 +153,26 @@ export const AnalysisDecisionQueue: React.FC = () => {
           <div className="space-y-3 p-4 text-sm">
             <dl className="grid grid-cols-2 gap-3">
               <div>
-                <dt className="text-c-text-muted">Canonical Decision ID</dt>
+                <dt className="text-c-text-muted">{t('myWork.analysisDecisionQueue.canonicalDecisionId', 'Canonical Decision ID')}</dt>
                 <dd>{row.id}</dd>
               </div>
               <div>
-                <dt className="text-c-text-muted">Initiative</dt>
+                <dt className="text-c-text-muted">{t('myWork.analysisDecisionQueue.initiative', 'Initiative')}</dt>
                 <dd>{row.initiativeId}</dd>
               </div>
               <div>
-                <dt className="text-c-text-muted">Due</dt>
+                <dt className="text-c-text-muted">{t('myWork.analysisDecisionQueue.due', 'Due')}</dt>
                 <dd>{row.dueAt}</dd>
               </div>
               <div>
-                <dt className="text-c-text-muted">Frozen analysis cards</dt>
+                <dt className="text-c-text-muted">{t('myWork.analysisDecisionQueue.frozenAnalysisCards', 'Frozen analysis cards')}</dt>
                 <dd>{Object.keys(row.source.cardVersions).length}/10</dd>
               </div>
             </dl>
             <label className="block">
-              <span className="mb-1 block text-c-text-muted">Decision rationale</span>
+              <span className="mb-1 block text-c-text-muted">{t('myWork.analysisDecisionQueue.decisionRationale', 'Decision rationale')}</span>
               <textarea
-                aria-label="Analysis Decision rationale"
+                aria-label={t('myWork.analysisDecisionQueue.rationaleAriaLabel', 'Analysis Decision rationale')}
                 className="min-h-24 w-full rounded-md border border-c-border bg-c-surface p-2"
                 value={rationale}
                 onChange={(event) => setRationale(event.target.value)}
@@ -180,7 +180,7 @@ export const AnalysisDecisionQueue: React.FC = () => {
             </label>
             {!gateGuard.ready && (
               <div role="alert" className="text-c-warning">
-                Analysis decision is fail-closed until its exact Gate Sign-off quorum is satisfied.
+                {t('myWork.analysisDecisionQueue.failClosed', 'Analysis decision is fail-closed until its exact Gate Sign-off quorum is satisfied.')}
               </div>
             )}
           </div>
@@ -193,7 +193,7 @@ export const AnalysisDecisionQueue: React.FC = () => {
               disabled={!rationale.trim() || !gateGuard.ready || writeState === 'SAVING'}
               onClick={() => void decide('RETURNED')}
             >
-              Return analysis
+              {t('myWork.analysisDecisionQueue.returnAnalysis', 'Return analysis')}
             </button>
             <button
               type="button"
@@ -201,7 +201,7 @@ export const AnalysisDecisionQueue: React.FC = () => {
               disabled={!rationale.trim() || !gateGuard.ready || writeState === 'SAVING'}
               onClick={() => void decide('APPROVED')}
             >
-              Approve analysis
+              {t('myWork.analysisDecisionQueue.approveAnalysis', 'Approve analysis')}
             </button>
           </div>
         )}

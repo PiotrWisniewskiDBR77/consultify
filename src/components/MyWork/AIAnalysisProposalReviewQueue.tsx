@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -40,13 +41,14 @@ interface Row extends TableRow {
   requester: string;
   sourceValue: P;
 }
-const columns: TableColumn[] = [
-  { id: 'target', label: 'Card target', sortable: true },
-  { id: 'source', label: 'Exact source', sortable: true },
-  { id: 'confidence', label: 'Confidence', sortable: true },
-  { id: 'requester', label: 'Requested by', sortable: true },
-];
 export const AIAnalysisProposalReviewQueue = () => {
+  const { t } = useTranslation();
+  const columns: TableColumn[] = [
+    { id: 'target', label: t('myWork.aiAnalysisProposalReviewQueue.cardTarget', 'Card target'), sortable: true },
+    { id: 'source', label: t('myWork.aiAnalysisProposalReviewQueue.exactSource', 'Exact source'), sortable: true },
+    { id: 'confidence', label: t('myWork.aiAnalysisProposalReviewQueue.confidence', 'Confidence'), sortable: true },
+    { id: 'requester', label: t('myWork.aiAnalysisProposalReviewQueue.requestedBy', 'Requested by'), sortable: true },
+  ];
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [items, setItems] = useState<P[]>([]),
     [selectedId, setSelectedId] = useState<string | null>(null),
@@ -110,36 +112,39 @@ export const AIAnalysisProposalReviewQueue = () => {
   };
   if (state === 'LOADING')
     return (
-      <section aria-label="AI Analysis reviews" role="status" className="p-4">
-        Loading AI analysis reviews
+      <section aria-label={t('myWork.aiAnalysisProposalReviewQueue.sectionLabel', 'AI Analysis reviews')} role="status" className="p-4">
+        {t('myWork.aiAnalysisProposalReviewQueue.loading', 'Loading AI analysis reviews')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="AI Analysis reviews" role="alert" className="p-4">
-        AI review queue unavailable.
+      <section aria-label={t('myWork.aiAnalysisProposalReviewQueue.sectionLabel', 'AI Analysis reviews')} role="alert" className="p-4">
+        {t('myWork.aiAnalysisProposalReviewQueue.unavailable', 'AI review queue unavailable.')}
       </section>
     );
   if (!rows.length && !receipt) return null;
   return (
-    <section aria-label="AI Analysis reviews" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">AI Analysis proposals</h3>
+    <section aria-label={t('myWork.aiAnalysisProposalReviewQueue.sectionLabel', 'AI Analysis reviews')} className="border-b border-c-border p-4">
+      <h3 className="font-semibold">{t('myWork.aiAnalysisProposalReviewQueue.title', 'AI Analysis proposals')}</h3>
       <p className="text-xs text-c-text-muted">
-        AI output is a proposal until an independent human review publishes exact truth.
+        {t('myWork.aiAnalysisProposalReviewQueue.disclaimer', 'AI output is a proposal until an independent human review publishes exact truth.')}
       </p>
       {receipt && (
         <p role="status" className="my-2 rounded border border-c-success/40 p-3">
-          Proposal {String(receipt.proposalId)} · {String(receipt.outcome)} ·{' '}
+          {t('myWork.aiAnalysisProposalReviewQueue.proposalLabel', 'Proposal')} {String(receipt.proposalId)} · {String(receipt.outcome)} ·{' '}
           {receipt.publishedCardVersion
-            ? `Card v${String(receipt.publishedCardVersion)}; v${String(receipt.oldCardVersion)} retained with AI lineage`
-            : 'no truth change'}
+            ? t('myWork.aiAnalysisProposalReviewQueue.cardRetained', 'Card v{{newVersion}}; v{{oldVersion}} retained with AI lineage', {
+                newVersion: String(receipt.publishedCardVersion),
+                oldVersion: String(receipt.oldCardVersion),
+              })
+            : t('myWork.aiAnalysisProposalReviewQueue.noTruthChange', 'no truth change')}
         </p>
       )}
       {write !== 'IDLE' && (
         <p role="alert" className="text-c-danger">
           {write === 'CONFLICT'
-            ? 'Card or source is stale. Review blocked.'
-            : 'Review was not saved.'}
+            ? t('myWork.aiAnalysisProposalReviewQueue.staleConflict', 'Card or source is stale. Review blocked.')
+            : t('myWork.aiAnalysisProposalReviewQueue.notSaved', 'Review was not saved.')}
         </p>
       )}
       {rows.length > 0 && (
@@ -151,50 +156,50 @@ export const AIAnalysisProposalReviewQueue = () => {
           itemIds={rows.map((r) => r.id)}
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
           renderPreview={(r) => (
-            <div className="space-y-3 p-4 text-sm" aria-label="AI Analysis Review Workbench">
-              <p>Proposal {r.id}</p>
+            <div className="space-y-3 p-4 text-sm" aria-label={t('myWork.aiAnalysisProposalReviewQueue.workbenchLabel', 'AI Analysis Review Workbench')}>
+              <p>{t('myWork.aiAnalysisProposalReviewQueue.proposalLabel', 'Proposal')} {r.id}</p>
               <p>
-                {r.target} · Initiative v{r.sourceValue.initiativeVersion}
+                {r.target} · {t('myWork.aiAnalysisProposalReviewQueue.initiativeVersion', 'Initiative')} v{r.sourceValue.initiativeVersion}
               </p>
               <p>{r.source}</p>
               <p>
-                Model {r.sourceValue.model.provider}/{r.sourceValue.model.model} v
+                {t('myWork.aiAnalysisProposalReviewQueue.modelLabel', 'Model')} {r.sourceValue.model.provider}/{r.sourceValue.model.model} v
                 {r.sourceValue.model.version}
               </p>
               <p>
-                Prompt {r.sourceValue.prompt.promptId} v{r.sourceValue.prompt.version} · template{' '}
+                {t('myWork.aiAnalysisProposalReviewQueue.promptLabel', 'Prompt')} {r.sourceValue.prompt.promptId} v{r.sourceValue.prompt.version} · {t('myWork.aiAnalysisProposalReviewQueue.templateLabel', 'template')}{' '}
                 {r.sourceValue.template.templateId} v{r.sourceValue.template.version}
               </p>
               <p>
-                Input hash <code>{r.sourceValue.inputHash}</code> · confidence{' '}
+                {t('myWork.aiAnalysisProposalReviewQueue.inputHashLabel', 'Input hash')} <code>{r.sourceValue.inputHash}</code> · {t('myWork.aiAnalysisProposalReviewQueue.confidenceLabel', 'confidence')}{' '}
                 {r.sourceValue.confidence}
               </p>
               <p>
-                Evidence{' '}
+                {t('myWork.aiAnalysisProposalReviewQueue.evidenceLabel', 'Evidence')}{' '}
                 {r.sourceValue.evidenceRefs.map((x) => `${x.ref} v${x.version}`).join(', ')}
               </p>
               <p>
-                Counter-evidence{' '}
+                {t('myWork.aiAnalysisProposalReviewQueue.counterEvidenceLabel', 'Counter-evidence')}{' '}
                 {r.sourceValue.counterEvidenceRefs
                   .map((x) => `${x.ref} v${x.version}`)
-                  .join(', ') || 'None declared'}
+                  .join(', ') || t('myWork.aiAnalysisProposalReviewQueue.noneDeclared', 'None declared')}
               </p>
               <pre className="overflow-auto rounded border border-c-border p-2">
                 {JSON.stringify(r.sourceValue.output, null, 2)}
               </pre>
               <label className="block">
-                Human rationale
+                {t('myWork.aiAnalysisProposalReviewQueue.humanRationale', 'Human rationale')}
                 <textarea
-                  aria-label="AI review rationale"
+                  aria-label={t('myWork.aiAnalysisProposalReviewQueue.rationaleAriaLabel', 'AI review rationale')}
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
                 />
               </label>
               <label className="block">
-                Exact edited human fragment (JSON)
+                {t('myWork.aiAnalysisProposalReviewQueue.editedFragmentLabel', 'Exact edited human fragment (JSON)')}
                 <textarea
-                  aria-label="AI edited fragment"
+                  aria-label={t('myWork.aiAnalysisProposalReviewQueue.editedFragmentAriaLabel', 'AI edited fragment')}
                   value={edited}
                   onChange={(e) => setEdited(e.target.value)}
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -205,13 +210,13 @@ export const AIAnalysisProposalReviewQueue = () => {
           renderPreviewFooter={() => (
             <div className="flex gap-2 p-3">
               <button className="btn-secondary" onClick={() => void review('REJECT')}>
-                Reject
+                {t('myWork.aiAnalysisProposalReviewQueue.reject', 'Reject')}
               </button>
               <button className="btn-secondary" onClick={() => void review('EDIT')}>
-                Publish human edit
+                {t('myWork.aiAnalysisProposalReviewQueue.publishHumanEdit', 'Publish human edit')}
               </button>
               <button className="btn-primary" onClick={() => void review('ACCEPT')}>
-                Accept proposal
+                {t('myWork.aiAnalysisProposalReviewQueue.acceptProposal', 'Accept proposal')}
               </button>
             </div>
           )}

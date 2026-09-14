@@ -77,7 +77,7 @@ export const HandoffAcceptanceQueue = () => {
     () =>
       items.map((d) => ({
         id: d.decisionId,
-        title: 'Handoff Acceptance',
+        title: t('p9Handoff.rowTitle', 'Handoff Acceptance'),
         initiativeId: d.initiativeId,
         pack: `${d.handoffPackageId} v${d.handoffPackageVersion}`,
         caseId: d.executionCaseId,
@@ -131,13 +131,13 @@ export const HandoffAcceptanceQueue = () => {
   };
   if (state === 'LOADING')
     return (
-      <section aria-label="Handoff acceptances" className="p-4" role="status">
+      <section aria-label={t('p9Handoff.sectionLabel', 'Handoff acceptances')} className="p-4" role="status">
         {t('p9Handoff.loading', 'Loading handoff acceptances…')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Handoff acceptances" className="p-4" role="alert">
+      <section aria-label={t('p9Handoff.sectionLabel', 'Handoff acceptances')} className="p-4" role="alert">
         {t('p9Handoff.unavailable', 'Handoff queue unavailable.')}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
           {t('p9Handoff.retry', 'Retry')}
@@ -146,7 +146,7 @@ export const HandoffAcceptanceQueue = () => {
     );
   if (!rows.length && !receipt) return null;
   return (
-    <section aria-label="Handoff acceptances" className="border-b border-c-border p-4">
+    <section aria-label={t('p9Handoff.sectionLabel', 'Handoff acceptances')} className="border-b border-c-border p-4">
       <h3 className="font-semibold text-c-text">
         {t('p9Handoff.acceptanceHeading', 'For acceptance — handoffs waiting on you')}
       </h3>
@@ -155,14 +155,14 @@ export const HandoffAcceptanceQueue = () => {
       </p>
       {receipt && (
         <p role="status" className="rounded border border-c-success/40 p-3">
-          Execution Case {receipt.caseId} · {receipt.state}
+          {t('p9Handoff.executionCase', 'Execution Case')} {receipt.caseId} · {receipt.state}
         </p>
       )}
       {(write === 'CONFLICT' || write === 'FAILED') && (
         <p role="alert" className="text-c-danger">
           {write === 'CONFLICT'
-            ? 'Initiative or package changed; reload required.'
-            : 'No decision was saved.'}
+            ? t('p9Handoff.conflict', 'Initiative or package changed; reload required.')
+            : t('p9Handoff.notSaved', 'No decision was saved.')}
         </p>
       )}
       {rows.length > 0 && (
@@ -175,22 +175,22 @@ export const HandoffAcceptanceQueue = () => {
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
           renderPreview={(r) => (
             <div className="space-y-2 p-4 text-sm">
-              <p>Canonical ID {r.id}</p>
+              <p>{t('p9Handoff.canonicalId', 'Canonical ID')} {r.id}</p>
               <p>{r.pack}</p>
-              <p>Case {r.caseId}</p>
+              <p>{t('p9Handoff.case', 'Case')} {r.caseId}</p>
               <p>
-                Rollout: {r.source.rolloutChildren.pilot.length} pilot ·{' '}
-                {r.source.rolloutChildren.waves.length} waves
+                {t('p9Handoff.rolloutLabel', 'Rollout:')} {r.source.rolloutChildren.pilot.length} {t('p9Handoff.pilot', 'pilot')} ·{' '}
+                {r.source.rolloutChildren.waves.length} {t('p9Handoff.waves', 'waves')}
               </p>
               <textarea
-                aria-label="Handoff rationale"
+                aria-label={t('p9Handoff.rationaleAriaLabel', 'Handoff rationale')}
                 value={rationale}
                 onChange={(e) => setRationale(e.target.value)}
                 className="w-full rounded border border-c-border bg-c-surface p-2"
               />
               {!gateGuard.ready && (
                 <div role="alert" className="text-c-warning">
-                  Handoff decision is fail-closed until its exact Gate Sign-off quorum is satisfied.
+                  {t('p9Handoff.failClosed', 'Handoff decision is fail-closed until its exact Gate Sign-off quorum is satisfied.')}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2">
@@ -223,14 +223,14 @@ export const HandoffAcceptanceQueue = () => {
                 disabled={!rationale.trim() || !gateGuard.ready || write === 'SAVING'}
                 onClick={() => void decide('ACCEPT_WITH_EXPLICIT_GAPS')}
               >
-                Accept conditionally
+                {t('p9Handoff.acceptConditionally', 'Accept conditionally')}
               </button>
               <button
                 className="btn-primary"
                 disabled={!rationale.trim() || !gateGuard.ready || write === 'SAVING'}
                 onClick={() => void decide('ACCEPT')}
               >
-                Accept handoff
+                {t('p9Handoff.acceptHandoff', 'Accept handoff')}
               </button>
             </div>
           )}
