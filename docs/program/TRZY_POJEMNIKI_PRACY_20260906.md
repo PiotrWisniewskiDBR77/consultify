@@ -1273,7 +1273,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | ⬜ NIE ZACZĘTE (atrapa) | — | — |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | ⬜ NIE ZACZĘTE (atrapa) | — | — |
-| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą; kosmetyka gotowa do scalenia `a427ef7af9`, fala C2) | `257e851d94` | 14.09 |
+| Inicjatywy | Obciążenie | OB1 heat mapa per osoba × tydzień | Codex P3 | — | E | heat mapa z czerwonym tygodniem | 🧪 NA STAGINGU (za flagą; Z-38 heatmapa PL WDROŻONA, fala C3) | `7722319dfc` | 14.09 |
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
@@ -1281,7 +1281,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
-| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🔧 W TOKU (scoped ACCEPT, pełne HOLD) | `4d381f6811` | 13.09 |
+| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🔧 W TOKU (S4 odbiór = HOLD CTO, Z-45: `identityMode` regresja rodzeństwa testów, naprawa u Codexa) | `4d381f6811` | 14.09 |
 | Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | Praca | P-E2c eskalacja/delegacja/zmiana zasobów | Codex F2-2 | DEC-485/486 | D | akcja + wynik po zmianie | ⬜ NIE ZACZĘTE (serwis jest, bez ekranu) | `managerActionExecutionService` | — |
@@ -1305,7 +1305,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
 | Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | 🔧 W TOKU (części istnieją) | `report-builder.routes.ts` | — |
-| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga `VITE_PMO_PROJECTS` OFF) | `7332fa2a6f` | 14.09 |
+| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga `VITE_PMO_PROJECTS` OFF; Z-43 naprawa kolumn bramek na linii `29d1db9f00`, jeszcze nie na stagingu*) | `7332fa2a6f` | 14.09 |
 | Wspólne | — | S5 E3b PMO czworo oczu `passGate` (Z-24: `requested_by`≠`approved_by`, ciało 403) | Codex | S5 PMO E3, Z-24 | F | 403 z komunikatem, brak samo-zatwierdzenia | ⬜ NIE ZACZĘTE (wydane, KANAŁ wpis 39) | — | 14.09 |
 | Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | ⬜ NIE ZACZĘTE (kandydat wskazany) | `InitiativeGantt.tsx` | — |
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
@@ -1443,3 +1443,27 @@ pracy, PMO). Worktree CTO: `fala-c3`, `fala-c4`, `z43` (do sprzątnięcia po C4)
 **EWIDENCJA (uzupełnienie 14.09, Z-43/C4).** Z-43 → **🔧 gotowe do scalenia `a843ef5b13` (C4)**;
 Z-38 → **w wdrożeniu (C3)**; PMO E3 — dopisz „zrzut EN v2 wysłany właścicielowi 14.09". Skrzynka:
 **Z-43 → w C4**.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po C3/C4/Z-44/Z-45/Z-46/Z-47).** §5: **OB1** → Z-38
+heatmapa PL **WDROŻONA** na staging `7722319dfc` (fala C3, 11:06 UTC success; bramka tsc 0/189,
+canon 349, artefakt 8-0-117, testy 22/22) — stan pozostaje 🧪 NA STAGINGU (był już 🧪 przed falą
+C3; dopisane SHA/uwaga, bez zmiany stanu). **PMO E3** → Z-43 (kolumny bramek 140/130 px) scalone
+do linii `29d1db9f00` (fala C4), wdrożenie na staging **w toku** po naprawie Z-44 (jedno
+wyzwolenie na wdrożenie: push ALBO dispatch, nigdy oba na to samo SHA) — stan pozostaje 🧪 NA
+STAGINGU (SHA `7332fa2a6f` to ostatnie wdrożenie na staging; kod naprawy Z-43 jest na linii, ale
+**jeszcze nie na stagingu** — \* formuła §0.1 nie ma osobnego stanu dla „na linii, nie na
+stagingu"; jeśli C4 nie wejdzie na staging do następnego pomiaru, rozważyć doprecyzowanie
+formuły). **B-E1 (S4)** → odbiór **HOLD CTO** (Z-45): `executionBankModel.ts:938`
+`identityMode ?? 'INITIATIVE'` łamie 3 testy rodzeństwa poza deltą; stan pozostaje 🔧 W TOKU
+(scoped ACCEPT, pełne HOLD do naprawy domyślnej wartości u Codexa). Q2/Q1 — odbiór w toku, bez
+wyniku, liczniki bez zmiany. Pilotaż (Z-46): instrukcja testerów u właściciela, konta stagingu
+DBR77 zmierzone (Justyna/Paweł pewne; Tomek/Kasia do potwierdzenia; Irina do założenia) — poza
+zakresem §5 (nie jest etapem tabeli). Dysk 3,5 → 44 GiB (Z-47, dług: cache `ms-playwright`
+wyczyszczony).
+
+**Liczniki §5 — bez zmiany stanu żadnego etapu 14.09 noc (po C3/C4):** ✅ 2 · 🧪 14 · 🔧 4 ·
+⬜ 27 · 👁 0 · 🚀 0 · ⛔ 0 (47 etapów, jak w poprzednim przeliczeniu). Powód: OB1 i PMO E3 były
+już 🧪 NA STAGINGU przed falą C3/C4 (dopisane tylko SHA/gałęzie), B-E1 był już 🔧 W TOKU (HOLD
+doprecyzowany, nie zmieniony). Skrzynka: **Z-43 → w C4 (na linii, nie na stagingu)**, **Z-44
+nowa (rozliczona)**, **Z-45 nowa (otwarta, u Codexa)**, **Z-46 nowa (otwarta)**, **Z-47 nowa
+(dług drobny, otwarta)**.

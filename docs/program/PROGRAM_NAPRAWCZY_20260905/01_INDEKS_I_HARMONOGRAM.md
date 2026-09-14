@@ -1141,6 +1141,72 @@ wspólna historia z C2); szczegóły w raporcie integratora.
 pracy, PMO). Worktree CTO: `fala-c3`, `fala-c4`, `z43` (do sprzątnięcia po C4), `rejestr-0914`,
 `kandydat-20260913`. Dysk ~32 GiB. Skrzynka: **Z-43 → w C4**.
 
+**Fala C3 — Z-38 heatmapa PL WDROŻONA na staging (14.09, push `7722319dfc`, 11:06 UTC
+**SUCCESS**; tag cofnięcia `rollback-pre-fala-c3-20260914`).** Pigułka „Brak"/„None" +
+nagłówki PL „Dostępność (h/tydz.)"/„Dostępność (%)" na żywo. Bramka: tsc 0/189, canon 349,
+artefakt 8-0-117, testy 22/22. Flaga OFF (bez zmiany zachowania na żywo).
+
+**Fala C4 — Z-43 bramki PMO NA LINII (14.09).** Kandydat scalony do `29d1db9f00` (kolumny
+`gateType`/status w `ProjectStageGatesPanel` 140/130 px bez `primary`, harness
+`dev-render/screens/z41-pmo-projekty.tsx`); tag cofnięcia `rollback-pre-fala-c4-20260914`.
+Bramka zielona; parytet OFF na zbudowanym bundlu: 0 wystąpień `pmo.projects`. Wdrożenie na
+staging w toku — patrz **Z-44**.
+
+**Z-44 nowy (14.09, lekcja o wyzwalaniu wdrożeń).** Push na `refs/heads/staging` + `gh workflow
+run` tego samego SHA uruchomiły dwie równoległe budowy Railway — obie utknęły w BUILDING
+90 minut bez przyrostu logów, workflow timeout. Naprawa: obie budowy usunięte przez GraphQL
+`deploymentRemove`, jedna nowa budowa uruchomiona dispatchem 12:52 UTC. **Reguła: jedno
+wyzwolenie na wdrożenie — albo push, albo `gh workflow run`, nigdy oba na to samo SHA.**
+
+**Codex Wpis 42/43 (14.09).** Podział pracy na cztery instancje równoległe A/B/C/D (osobne
+pliki meldunków `OD_CODEXA_<X>.md`, osobne worktree, osobne porty PG 5290–5329, zakres
+5290–5329). Instancja **[A]** 06:49–07:25 CDT dostarczyła trzy ACCEPT: S4 F2-2 Praca
+`e9879d2850`, Q2 E4 Raporty Realizacji R2 `14642a7d04`, Q1 P3 Obciążenie E2–E4 R2 `064b00e091`.
+Instancja **[S5 E3b]** `120a4abc00` — **STOP przed migracją** `projects.current_phase`
+(zgodnie z Z-39 → skierowane do toru C, bez samodzielnej migracji schematu).
+
+**Z-45 nowa — odbiór S4 = HOLD CTO (14.09).** `src/components/Execution/executionBankModel.ts:938`
+`identityMode ?? 'INITIATIVE'` zmienia id wiersza z `initiative:${id}` na goły identyfikator —
+**3 testy POZA deltą** zaczerwienione: `tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx:121`,
+`ExecutionBankViews.valueCleared.behavior.test.tsx:71`,
+`tests/integration/execution-change-progress-spine.golden-flow.realdb.test.ts:548,578` (zielone
+na `29d1db9f00`). Przy fladze OFF bezpieczne — `ExecutionHub` podaje tryb jawnie, więc regresja
+nie dotyka żywego ruchu. Naprawa zlecona Codexowi: domyślnie `'LEGACY'` + lista woływaczy modułu +
+testy rodzeństwa. **35. kształt fałszywego „gotowe": „testy delty zielone, rodzeństwo czerwone"**
+— zmiana domyślnej wartości/sygnatury we współdzielonym module wymaga listy woływaczy i testów
+importerów, nie tylko listy zmienionych plików. Zastane przy okazji (poza zakresem naprawy):
+`StandardPreview` etykiety „Property"/„Value" po angielsku mimo kluczy PL
+`standardPreview.property/value`; surowy `subType` `work-intelligence` widoczny w zakładce
+dokumentu; wyścig przyrządu w `scripts/dev/e2-work-execution-hub-screenshots.mjs` (zrzut jasny
+bez kolumny PROJECT). Dowody: `~/Developer/cto-codex/odbior-s4-20260914/`.
+
+**Odbiory Q2 i Q1 — w toku (14.09).** Dwaj integratorzy prowadzą scalenie do linii bez
+przystanku na stagingu, z regułą rodzeństwa (Z-45) stosowaną przy odbiorze. Bez wyniku na razie.
+
+**Z-46 nowa — pilotaż, testerzy (14.09, decyzja właściciela).** Instrukcja
+`~/Developer/cto-codex/INSTRUKCJA_TESTEROW_STAGING_20260914.md` wysłana właścicielowi. Pomiar
+kont org DBR77 na stagingu (SELECT): Justyna i Paweł — konta pewne. „Tomek" — dwaj kandydaci:
+`tomasz.jankowski` (ADMIN, nigdy nie logował) albo `tomasz.lewandowski` (OWNER, ostatnie
+logowanie 13.06) — **do wskazania przez właściciela**. „Kasia" — `katarzyna.wojcik` (MEMBER,
+nigdy nie logowała) — do potwierdzenia. **Irina — brak konta na stagingu, do założenia.**
+Widżet zgłoszeń = `FeedbackFloatingButton` → tabela `feedback_items` (51 wierszy na stagingu).
+PDF scenariuszy per osoba w przygotowaniu. Rozjazd zmierzony: plan 06.09 mówił pilotaż na demo;
+obowiązuje **DEC-476** (pilotaż na stagingu).
+
+**Z-47 nowa — dysk i dług drobny (14.09).** Dysk 3,5 → 44 GiB (worktree `z27`/`h1e`/`fala-c3`/
+`fala-c4`/`z43` usunięte po scaleniu, cache, 8 obrazów Docker sprzątniętych). Uwaga: cache
+`ms-playwright` wyczyszczony przy okazji — harnessy zrzutów mogą wymagać ponownego
+`npx playwright install chromium` przy następnym użyciu (dług techniczny drobny).
+
+**Z-2 (aktualizacja 14.09, po C3/C4/Z-44/Z-45/Z-46/Z-47).** Fala C3 (Z-38) **WDROŻONA** na
+staging `7722319dfc`; fala C4 (Z-43) **na linii** `29d1db9f00`, wdrożenie na staging w toku po
+naprawie Z-44 (jedno wyzwolenie na wdrożenie). Odbiór S4 = **HOLD CTO** (Z-45, naprawa u
+Codexa); Q2/Q1 w odbiorze. Pilotaż: instrukcja u właściciela, 2 konta pewne (Justyna, Paweł),
+2 do potwierdzenia/wskazania (Tomek, Kasia), 1 do założenia (Irina) — Z-46. Dysk ~44 GiB (Z-47).
+Skrzynka: **Z-43 → w C4 (na linii)**, **Z-44 nowa (rozliczona — reguła zapisana)**, **Z-45 nowa
+(otwarta — u Codexa)**, **Z-46 nowa (otwarta — czeka na właściciela/Codex)**, **Z-47 nowa
+(dług drobny, otwarta)**.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
