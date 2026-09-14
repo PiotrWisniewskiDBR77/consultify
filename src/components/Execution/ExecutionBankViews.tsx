@@ -567,8 +567,13 @@ const BankTable = ({
       columns={columns}
       data={rows as Array<ExecutionBankRow & Record<string, unknown>>}
       selectedRowId={
-        selected?.executionCaseId ??
-        (selected?.initiativeId ? `initiative:${selected.initiativeId}` : null)
+        selected
+          ? (rows.find(
+              (row) =>
+                row.initiativeId === selected.initiativeId &&
+                row.executionCaseId === selected.executionCaseId
+            )?.id ?? null)
+          : null
       }
       onRowClick={(row) => onSelect(row as unknown as ExecutionBankRow)}
       onRowDoubleClick={(row) => onOpen(row as unknown as ExecutionBankRow)}
