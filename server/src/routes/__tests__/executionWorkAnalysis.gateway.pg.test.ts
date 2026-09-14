@@ -123,6 +123,34 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
     process.env.ENABLE_EXECUTION_WORK_ANALYSIS = 'true';
   });
 
+  it('returns the persisted receipt to the loser of a concurrent generation race', async () => {
+    const [left, right] = await Promise.all([
+      call('/api/execution-reports/work-analysis/generate', {
+        method: 'POST', body: JSON.stringify({ weekOf: '2026-10-05' }),
+      }),
+      call('/api/execution-reports/work-analysis/generate', {
+        method: 'POST', body: JSON.stringify({ weekOf: '2026-10-05' }),
+      }),
+    ]);
+
+    expect([left.status, right.status].sort()).toEqual([200, 201]);
+    const created = [left.body.created, right.body.created];
+    expect(created.filter(Boolean)).toHaveLength(1);
+    expect(left.body.id).toBe(right.body.id);
+    expect(left.body.asOf).toBe(right.body.asOf);
+    expect(left.body.payload).toEqual(right.body.payload);
+
+    const persisted = await db.query(
+      `SELECT count(*)::int count, min(as_of)::text AS "asOf", min(payload::text) AS payload
+         FROM execution_report_snapshots
+        WHERE organization_id=$1 AND definition_key='weekly-exec' AND period_start='2026-10-05T00:00:00.000Z'`,
+      [org]
+    );
+    expect(persisted.rows[0].count).toBe(1);
+    expect(new Date(persisted.rows[0].asOf).toISOString()).toBe(left.body.asOf);
+    expect(JSON.parse(persisted.rows[0].payload)).toEqual(left.body.payload);
+  });
+
   it('executes resource change through managerActionExecutionService route and writes its audit', async () => {
     const problems = await call('/api/v8/execution-control/manager/lanes/workload/problems');
     expect(problems.status, JSON.stringify(problems.body)).toBe(200);
