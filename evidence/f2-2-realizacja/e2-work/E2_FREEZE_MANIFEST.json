@@ -1,12 +1,12 @@
 {
   "schemaVersion": 3,
-  "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
+  "status": "FROZEN_FOR_INDEPENDENT_REREVIEW",
   "baseSha": "eba9d72ad9c730728b212ee7826164519e4d095c",
-  "candidateContentSha": "6345589c946b7cf8ae7b795274664e3193e041fc",
+  "candidateContentSha": "17bc310ba05e2ca0e0c6607f5d78275992e981e1",
   "branch": "codex/realizacja-cztery-przyciski-20260913",
   "manifestSelfExcluded": true,
-  "fileCount": 70,
-  "evidenceBytes": 1464131,
+  "fileCount": 73,
+  "evidenceBytes": 1470714,
   "evidenceCapBytes": 2097152,
   "files": [
     {
@@ -155,6 +155,16 @@
       "sha256": "ddff45d00d43ec675232786f543504b11d865b29e4a348c81a36febe46966b27"
     },
     {
+      "path": "evidence/f2-2-realizacja/e2-work/W46_EXACT_SHA_INDEPENDENT_REVIEW_20260914.md",
+      "bytes": 4266,
+      "sha256": "f6731ff6afa53a77d9f6ed02a02943b7bba9db16927f8fbf169e0662367b6a84"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/W46_R2_AUTHOR_CLOSURE_20260914.md",
+      "bytes": 2317,
+      "sha256": "80b44f1e0349bfac33bdb1fecc3487b03009422e01cc8fedd4fb046f3d7b28ee"
+    },
+    {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-empty-en-dark.png",
       "bytes": 68034,
       "sha256": "ff79a62b000d39822105e20d853efb7b6e7df0088509f1b7d7dae081eecdf54e"
@@ -266,8 +276,8 @@
     },
     {
       "path": "src/components/Execution/ExecutionHub.tsx",
-      "bytes": 275221,
-      "sha256": "a6b40c9e195dcc3316cf8546bcbf9aa8f217a7510d24113962ee6b5b45f7d56d"
+      "bytes": 275207,
+      "sha256": "118336a2033c5c391100028664f9a22552993dcaa9ee6e2e941614bc0cf77f93"
     },
     {
       "path": "src/components/Execution/__tests__/ExecutionHub.bankPreviewCanon.test.tsx",
@@ -303,6 +313,11 @@
       "path": "src/components/Execution/executionFeatureFlags.ts",
       "bytes": 7867,
       "sha256": "e4593d1fc6988230c59f564b43dc1c13f7240f04526bab845b2d3d162a37d42c"
+    },
+    {
+      "path": "src/components/Execution/executionRealData.ts",
+      "bytes": 22352,
+      "sha256": "3ba1d8c9e5cbee9f797016e50279b8dd95e94c8c2bcaa78fa1d4811b951bd761"
     },
     {
       "path": "src/components/Execution/reports-intelligence/WorkIntelligenceReport.tsx",
