@@ -17,6 +17,11 @@ XV/XVI/XVII/XIV) — dopisany, patrz sekcja niżej.
 `support@consultify.com` (błędny, strona `.com` nie istnieje) — docelowo `support@consultify.ai`?
 Trzy domeny w kodzie (.com/.app/.ai) — decyzja właściciela.
 
+**Z-6 (14.09).** DEC-497 — Codex prowadzi duże pakiety fali 2 (słowo właściciela 14.09: „zarządzaj
+tez duzymi projektami na codex (…) smiało mozemy mu dać duze zadania z Fala 2"). Sloty 3→5, sześć
+pakietów P1..P6 (P1 Raport z pracy, P2 Plan, P3 Obciążenie, P4 Analiza portfela+parking, P5 F2-7b
+kontrakty, P6 Agent-edytor przepływu), KANAL.md Wpis 17. Patrz sekcja 14.09.2026, DEC-497.
+
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
 (zastępuje wpis Z-0 z nocy wskazujący `PRZEKAZANIE_20260913_NOC.md` — ta noc jest historią).
@@ -149,6 +154,56 @@ Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_
 | P-T22 (XXII) | DRD ocena | Potwierdzenie/zamknięcie odpowiedzi nie działa (ciąg dalszy XXI) | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
 
 Podział: 🔴 blokery → dwie gałęzie Opus od linii `0de4dc9c66`: `integracja/kandydat-tomek-konto-20260914` (XII reset hasła, III profil, VIII duplikaty org, V avatar, XI historia logowania, II /help) i `integracja/kandydat-tomek-czat-20260914` (IX nowa rozmowa, XXI DRD Teresa regresja, IV załączniki, XXII DRD potwierdzenie/zamknięcie, XIII kontekst Mind Map, VII/X kosmetyka). 🟠 rdzeń Wywiad/Moja Praca (XV usuwanie załącznika, XVI niespójność AI na bełkot, XVII Kreator wniosków kontekst, XIV Moja Praca) → Codex (KANAL.md wpis 16). ⚪ XX = duplikat §3 #16 First Value plan; XIX ctrl+click i „aktywne sesje” = wiedza użytkownika (zamknięte informacją, nie naprawą); I adres wsparcia = decyzja właściciela (trzy domeny w kodzie: .com/.app/.ai, Z-5). Znacznik commitów napraw: `DEC-496`.
+
+**DEC-497 (CTO na mandacie właściciela, 14.09) — Codex prowadzi duże pakiety fali 2.**
+Słowo właściciela dosłownie (14.09): „zarządzaj tez duzymi projektami na codex. Mysle ze smiało
+mozemy mu dać duze zadania z Fala 2". Analiza pokrycia: SPEC_FALA2_20260912.md (12 tematów) +
+WIZJA_INICJATYWY_4_PRZYCISKI_20260914.md + kanał `~/Developer/cto-codex/KANAL.md` (Wpisy 1-16) i
+`OD_CODEXA.md` (stan paczek) — pełna tabela w
+`/private/tmp/claude-501/-Users-piotrwisniewski-Developer-Consultify/0753e4dc-e860-466d-aa56-a2f57424fcc0/scratchpad/codex-duze-pakiety-20260914.md`.
+
+**Sloty: 3 → 5.** Dziś zajęte 4 (F2-1, F2-2, F2-3, F2-E, wszystkie kontynuują na swoich bazach) —
+1 wolny natychmiast, reszta wchodzi w miarę zwalniania slotów.
+
+**Sześć pakietów P1..P6, wszystkie na nowej bazie `c3ac90ca73`:**
+- **P1 — Raport z pracy** (`codex/raport-z-pracy-inicjatyw-20260914`): kreator prawdziwy (tytuł,
+  adresaci, na żądanie/okresowo, 5 szablonów) na silniku `reportDefinition`/`reportRun`, PDF +
+  wysyłka mailem żywym `noreply@consultinity.ai` (dziś tylko JSON-atrapa `report={true}` na
+  `InitiativePreparationReadView`, Wpis 11). Flaga `VITE_INITIATIVES_WORK_REPORT`.
+- **P2 — Plan** (`codex/plan-inicjatyw-20260914`): analiza AI (nie kreator) — obserwacje do akceptu
+  pojedynczo/hurtem + komentarz zmieniający propozycję, ścieżki krytyczne bezwzględne/warunkowe,
+  timeline 1/3/6/12 mies. (1,3 tygodniowo, 6,12 miesięcznie), kolor „w realizacji = zamrożone"
+  (ciemnogranatowy) na Gantcie kanonicznym z DEC-493. Flaga `VITE_INITIATIVES_PLAN_ANALYSIS`.
+- **P3 — Obciążenie** (`codex/obciazenie-inicjatyw-20260914`): heat mapa per osoba/tydzień, progi
+  jak Realizacja (`ExecutionWorkloadView.tsx:704`), deklaracja dostępności tygodniowej per osoba,
+  AI proponuje przesunięcia WYŁĄCZNIE na etapie projektowania (zakaz zmiany przydziałów biegnących
+  — dotyczy tylko tego ekranu, DEC-495e), generator raportów obciążenia. Analiza finansowa
+  obciążenia POZA zakresem (czeka na moduł Finanse). Flaga `VITE_INITIATIVES_WORKLOAD`.
+- **P4 — Analiza portfela + parking** (`codex/analiza-portfela-inicjatyw-20260914`): dokończenie
+  przycisku 1 Inicjatyw (przejmuje `cc1c23b139` z F2-1, STOP-meldunek przed startem żeby uniknąć
+  dwóch wersji) — parking z powodem + ponowna propozycja gdy przeszkoda ustąpi, karty N
+  zawsze-widoczne/dodawane, wycena kart + zatwierdzenie uprawnionego, filtr Arch/actual. Flaga
+  `VITE_INITIATIVES_PORTFOLIO_ANALYSIS`.
+- **P5 — F2-7b Kontrakty pracy konsultanta, etap 2** (`codex/kontrakty-pracy-konsultanta-etap2-20260914`):
+  promocja z kolejki (KANAL.md Wpis 10, 19 paczek z audytu, format KP-<RODZINA> już zdefiniowany).
+- **P6 — Agent: edytor przepływu klocków** (`codex/agent-edytor-przeplywu-20260914`): paleta
+  klocków istniejących funkcji, kolory/zasady/czas/osoby, wyklikanie do narzędzia, przełożenie na
+  Gantt kanoniczny — na bazie prototypu CTO `e8fbe5ec` (wstępne OK właściciela). Klocek twardy przy
+  artefakcie, miękki przy Spotkaniach (Spotkania same POZA zakresem — DEC-483 przesunięcie o
+  tygodnie). Flaga `VITE_AGENT_FLOW_BUILDER`.
+
+**Kolejność startu:** (1) P4 od razu (slot wolny, najkrótsza ścieżka, przejmuje pracę w toku);
+(2) P1 gdy zwolni się kolejny slot; (3) P2; (4) P3 (XL, największy nakład); (5) piąty slot —
+P6 przed P5 (właściciel: „krytycznie ważny element" > kontrakty, które działają nieformalnie).
+
+**Zasady bez zmian:** migracje TYLKO za jawną zgodą CTO w kanale (STOP przed napisaniem, pule
+numerów per pakiet w KANAL.md Wpis 17), kopie zapasowe `backup/<gałąź>-<data>`, freeze +
+niezależny review, zero pushu na staging/demo/Londyn/integracja/rc2 (scalanie i wdrożenia = CTO),
+każdy etap za flagą OFF do akceptu właściciela na zrzucie jasny+ciemny (TRIADA_KANON dla list,
+ARTIFACT_ANATOMY dla kart N). STOP po E1 każdego pakietu = meldunek w OD_CODEXA.md + freeze, dalej
+dopiero po OK CTO w kanale. Znaczniki commitów: `[ODMROZENIE INICJATYWY DEC-497]` (P1-P4),
+`[ODMROZENIE KONTRAKTY DEC-497]` (P5), `[ODMROZENIE AGENT DEC-497]` (P6). Pełna treść dla Codexa:
+`~/Developer/cto-codex/KANAL.md`, Wpis 17.
 
 ---
 
