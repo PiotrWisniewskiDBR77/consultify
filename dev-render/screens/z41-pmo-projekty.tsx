@@ -35,7 +35,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { MyProjects } from '../../src/components/MyWork/MyProjects';
 
 // ── Mock payloads ────────────────────────────────────────────────────────
-const PROJECTS = [
+const CAPTURE_STATE = new URLSearchParams(window.location.search).get('state') || 'full';
+
+const PROJECTS = CAPTURE_STATE === 'empty' ? [] : [
   {
     id: 'p1',
     name: 'PMO E3 Chicago Pilot',
@@ -91,6 +93,14 @@ const TEAM_BY_PROJECT: Record<string, any[]> = {
       last_name: 'Wiśniewski',
       email: 'piotr@dbr77.com',
       role: 'OWNER',
+    },
+    {
+      id: 'm2',
+      user_id: 'u2',
+      first_name: 'Anna',
+      last_name: 'Kowalska',
+      email: 'anna.kowalska@dbr77.com',
+      role: 'PROJECT_SPONSOR',
     },
   ],
 };
@@ -200,6 +210,12 @@ if (!g.__Z41_FETCH__) {
           communication: [],
           approvalInputs: {
             roleBindings: [
+              {
+                roleKey: 'BUSINESS_AUTHORITY',
+                bindingType: 'REVIEWER',
+                projectRoleKey: 'PROJECT_SPONSOR',
+                principalId: 'u2',
+              },
               {
                 roleKey: 'GATE_REQUESTER',
                 bindingType: 'REQUESTER',

@@ -1,0 +1,74 @@
+{
+  "baseUrl": "http://127.0.0.1:4214",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "captures": [
+    {
+      "name": "s5-e3b-en-light-full",
+      "lang": "en",
+      "theme": "light",
+      "state": "full",
+      "luma": 248.2,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-en-light-empty",
+      "lang": "en",
+      "theme": "light",
+      "state": "empty",
+      "luma": 250.6,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-en-dark-full",
+      "lang": "en",
+      "theme": "dark",
+      "state": "full",
+      "luma": 22.9,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-en-dark-empty",
+      "lang": "en",
+      "theme": "dark",
+      "state": "empty",
+      "luma": 22.5,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-pl-light-full",
+      "lang": "pl",
+      "theme": "light",
+      "state": "full",
+      "luma": 248,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-pl-light-empty",
+      "lang": "pl",
+      "theme": "light",
+      "state": "empty",
+      "luma": 250.5,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-pl-dark-full",
+      "lang": "pl",
+      "theme": "dark",
+      "state": "full",
+      "luma": 23.2,
+      "errors": 0
+    },
+    {
+      "name": "s5-e3b-pl-dark-empty",
+      "lang": "pl",
+      "theme": "dark",
+      "state": "empty",
+      "luma": 22.6,
+      "errors": 0
+    }
+  ],
+  "errors": []
+}
