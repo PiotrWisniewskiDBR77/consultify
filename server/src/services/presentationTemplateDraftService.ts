@@ -38,6 +38,8 @@
  * draft's outline before approval.
  */
 
+import { withResolvedLocaleInstruction } from './ai/languagePolicy.js';
+
 import { generateChatResponse } from './aiService.js';
 import {
   buildSystemTemplateRuntime,
@@ -390,7 +392,7 @@ export async function refinePresentationTemplateWithLlm(
   let response: { content: string };
   try {
     response = await generateChatResponse({
-      systemPrompt: buildSystemPrompt(),
+      systemPrompt: withResolvedLocaleInstruction(buildSystemPrompt(), input.language),
       messages: [{ role: 'user', content: buildUserPrompt(template, input) }],
       model: options.model || 'default',
       maxTokens: options.maxTokens ?? 1200,

@@ -28,8 +28,8 @@ import logger from '../../utils/Logger.js';
 import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import {
-  buildLanguageInstruction,
   resolveAiLanguage,
+  withResolvedLocaleInstruction,
 } from './languagePolicy.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
@@ -1383,6 +1383,13 @@ export class AIPipeline {
       }
     }
 
+    // DEC-510: this must remain the final system instruction, after adaptive
+    // preferences, learned instructions and dedicated prompt assembly.
+    systemPrompt = withResolvedLocaleInstruction(
+      systemPrompt,
+      ctx?.conversationLanguage ?? request.options?.language ?? request.context?.language
+    );
+
     messages.push({
       role: 'system',
       content: systemPrompt,
@@ -1746,11 +1753,6 @@ export class AIPipeline {
 
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
-
-    // 9. Strict LANGUAGE INSTRUCTION (i18n-teresa fix 2026-04-18).
-    //    Appended LAST so it is the most recent / highest-priority directive the LLM sees.
-    //    Mirrors the non-negotiable language policy used in /chat/stream & /chat/confirm routes.
-    parts.push(buildLanguageInstruction(resolveAiLanguage(conversationLang)));
 
     return parts.filter(Boolean).join('\n\n');
   }

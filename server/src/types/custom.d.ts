@@ -32,5 +32,6 @@ declare module 'cheerio';
 declare namespace Express {
   interface Request {
     _rateLimitUserId?: string;
+    resolvedLocale?: 'pl' | 'en' | 'de' | 'es' | 'ja' | 'ar';
   }
 }
