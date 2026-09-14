@@ -13,7 +13,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { REPORT_STATUS_META, type UnifiedOutputRow } from '../types';
-import { countRowsByStatus, statusFieldForScope } from '../statusCounts';
+import {
+  countRowsByStatus,
+  countUnrepresentedStatuses,
+  statusFieldForScope,
+} from '../statusCounts';
 
 function docRow(statusKey: string): Partial<UnifiedOutputRow> {
   return { kind: 'document', statusKey, title: 't', originRecordId: 'x' };
@@ -54,6 +58,13 @@ describe('countRowsByStatus — liczniki statusów Menu 3', () => {
     expect(statusFieldForScope('outputs_documents')).toBe('statusKey');
     expect(statusFieldForScope('templates')).toBe('status');
     expect(statusFieldForScope('presentations')).toBe('status');
+  });
+
+  it('jawnie wylicza kategorię statusów niewidocznych w kompaktowych pigułkach', () => {
+    const counts = { draft: 8, ready: 34, generated: 1 };
+    const other = countUnrepresentedStatuses(counts, ['draft', 'ready']);
+    expect(counts.draft + counts.ready + other).toBe(43);
+    expect(other).toBe(1);
   });
 
   it('puste/nieznane statusy nie tworzą chipa-śmiecia', () => {

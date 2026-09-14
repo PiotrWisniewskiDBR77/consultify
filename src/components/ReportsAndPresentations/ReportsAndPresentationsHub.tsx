@@ -63,7 +63,11 @@ import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
-import { countRowsByStatus, type MaterialsStatusCountScope } from './statusCounts';
+import {
+  countRowsByStatus,
+  countUnrepresentedStatuses,
+  type MaterialsStatusCountScope,
+} from './statusCounts';
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
 import {
   TEMPLATE_SCOPE_ORDER,
@@ -1209,6 +1213,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     const MENU_3_STATUSES = ['draft', 'ready'];
     const statusActive = (value: string) =>
       activeFilters.some((f) => f.column === 'status' && String(f.value).toLowerCase() === value);
+    const otherStatusCount = countUnrepresentedStatuses(tabStatusCounts, MENU_3_STATUSES);
 
     return (
       <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
@@ -1238,6 +1243,15 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             </button>
           );
         })}
+        {otherStatusCount > 0 ? (
+          <span
+            className="inline-flex h-8 items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-3 text-xs text-c-text-secondary"
+            data-testid="materials-menu3-unrepresented-statuses"
+          >
+            <span>{t('rap.filters.status.other', 'Other statuses')}</span>
+            <span className="font-semibold tabular-nums text-c-text">{otherStatusCount}</span>
+          </span>
+        ) : null}
       </div>
     );
   }, [

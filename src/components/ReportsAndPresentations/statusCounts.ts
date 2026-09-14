@@ -52,3 +52,15 @@ export function countRowsByStatus(
     return acc;
   }, {});
 }
+
+/** Count rows whose status is not represented by the compact Menu 3 status pills. */
+export function countUnrepresentedStatuses(
+  counts: Readonly<Record<string, number>>,
+  representedStatuses: ReadonlyArray<string>
+): number {
+  const represented = new Set(representedStatuses.map((value) => value.toLowerCase()));
+  return Object.entries(counts).reduce(
+    (total, [status, count]) => total + (represented.has(status.toLowerCase()) ? 0 : count),
+    0
+  );
+}

@@ -45,6 +45,7 @@ vi.mock('../auditsMethodApi', async () => {
 
 import {
   AuditLibraryTab,
+  countAuditCriteriaTree,
   evaluateApproveExpertGate,
   evaluatePublishPackGate,
 } from '../tabs/AuditLibraryTab';
@@ -307,6 +308,31 @@ describe('AuditLibraryTab', () => {
 
     fireEvent.click(previewButton);
     expect(onStartAudit).toHaveBeenCalledWith(verifiedInternalProcedure);
+  });
+
+  it('uses the full nested criteria tree as the detail count, matching the list total', async () => {
+    const criterion = (id: string, children: any[] = []): any => ({
+      id, programId: 'pack-1', parentId: null, ordinal: 1, refCode: id, title: id,
+      applicable: true, conformityStatus: 'not_assessed', workStatus: 'open',
+      evidenceCount: 0, findingCount: 0, children,
+    });
+    const nested = [
+      criterion('A', [criterion('A1'), criterion('A2')]),
+      criterion('B', [criterion('B1'), criterion('B2')]),
+      criterion('C', [criterion('C1'), criterion('C2')]),
+    ];
+    expect(countAuditCriteriaTree(nested)).toBe(9);
+    mockedGetPack.mockResolvedValue({
+      ...packDetailFixture(verifiedInternalProcedure),
+      criteriaCount: 9,
+      criteria: nested,
+    });
+    renderTab({ packs: [{ ...verifiedInternalProcedure, criteriaCount: 9 }] });
+    fireEvent.click(screen.getByText('Client QMS Procedure'));
+    await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-1'));
+    const label = await screen.findByText('Criteria count');
+    expect(label.parentElement).toHaveTextContent('9');
+    expect(label.parentElement).not.toHaveTextContent('3');
   });
 
   it('shows ErrorState with a working retry when the pack list failed to load', () => {
