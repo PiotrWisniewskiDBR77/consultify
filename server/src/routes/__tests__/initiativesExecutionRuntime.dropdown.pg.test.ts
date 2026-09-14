@@ -110,6 +110,7 @@ describe('initiatives execution runtime — dropdown title on real PostgreSQL', 
           executionCaseId,
           initiativeId,
           initiativeTitle,
+          projectId,
         }),
       ])
     );
