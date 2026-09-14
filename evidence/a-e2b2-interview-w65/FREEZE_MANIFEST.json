@@ -1,0 +1,89 @@
+{
+  "package": "A/E E2b-2 Interview UI",
+  "status": "FROZEN_PENDING_INDEPENDENT_REVIEW",
+  "base": "34888b04459987f3bfc7527dae43a25655ceef09",
+  "contentSha": "d232c7a449590047b9ef22ad78e6530a1841a472",
+  "productAndTestFiles": [
+    {
+      "path": "public/locales/en/translation.json",
+      "bytes": 2255129,
+      "sha256": "c8d77f61abe3e79b5823094053559097e9306e57b2b8572ef23b49b3b31dceb7"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "bytes": 2411055,
+      "sha256": "59fd61b653889bb2105520995b239963ea3413c61e1f80b26d83441d27acb31a"
+    },
+    {
+      "path": "src/components/Interview/InterviewHub.tsx",
+      "bytes": 426724,
+      "sha256": "54281e6173740763df415993692a1550668673b2d2d1518bea91af99f930a3fa"
+    },
+    {
+      "path": "src/components/Interview/InterviewSessionPreview.tsx",
+      "bytes": 9832,
+      "sha256": "26a099bdc9b8269e48298621efac9dadcbf6e48cad1b60bbdb278d31d7aeba91"
+    },
+    {
+      "path": "src/components/Interview/__tests__/interviewActionMatrix.contract.test.tsx",
+      "bytes": 7719,
+      "sha256": "7aa617930d8cd82aa0dcbfd69f2b188e76659ae2d426bdf9f66dbfc82d1e2f9e"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "evidence/a-e2b2-interview-w65/interview-sessions-en-dark.jpg",
+      "bytes": 88795,
+      "sha256": "a302d8ab5a355fc37d095966a90d6cd9de89531213e472cb894e087a37f2dd60"
+    },
+    {
+      "path": "evidence/a-e2b2-interview-w65/interview-sessions-en-light.jpg",
+      "bytes": 90514,
+      "sha256": "4014c9b7d9285ccfdf2ac40137f9ec1b53bbd7fc137981845fd79f0c70995e3f"
+    },
+    {
+      "path": "evidence/a-e2b2-interview-w65/interview-sessions-pl-dark.jpg",
+      "bytes": 92335,
+      "sha256": "1354ab910b66066806e615d72f1024c6591905f9743416ca9c17d0068868ad8a"
+    },
+    {
+      "path": "evidence/a-e2b2-interview-w65/interview-sessions-pl-light.jpg",
+      "bytes": 93947,
+      "sha256": "1080261eef396b2570b56a70b1537b6c01497c6efed2af0d2761d26b5ab914d0"
+    }
+  ],
+  "metrics": {
+    "K4Interview": {
+      "before": {
+        "pl": 0,
+        "en": 0
+      },
+      "after": {
+        "pl": 0,
+        "en": 0
+      }
+    },
+    "K5Interview": {
+      "before": {
+        "pl": 0,
+        "en": 51
+      },
+      "after": {
+        "pl": 0,
+        "en": 51
+      }
+    },
+    "tsc": {
+      "base": 177,
+      "candidate": 177,
+      "changedFiles": 0
+    },
+    "esbuild": "3/3",
+    "screenshots": "4/4",
+    "screenshotErrors": 0
+  },
+  "z63d7": "STOP_PENDING_DEC_513_NO_MIGRATION_NO_IMPLEMENTATION",
+  "knownBaseline": {
+    "InterviewHub.smoke": "13/14 passed + 2 unhandled on base and candidate; missing useInterviewReviewAccess in test mock"
+  }
+}
