@@ -79,6 +79,7 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
+import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import {
@@ -134,6 +135,7 @@ import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
 import { InitiativePreparationReadView } from './InitiativePreparationReadView';
+import { InitiativeWorkloadSurface } from './InitiativeWorkloadSurface';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -274,6 +276,7 @@ const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLI
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
 const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
+const INITIATIVES_WORKLOAD_ENABLED = isInitiativesWorkloadEnabled();
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
   FOUR_BUTTONS_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
 );
@@ -1963,6 +1966,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           }}
         />
       );
+    }
+    if (activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED) {
+      return <InitiativeWorkloadSurface initiatives={allInitiatives as any[]} />;
     }
     if (activeTab === 'capacity')
       return (
