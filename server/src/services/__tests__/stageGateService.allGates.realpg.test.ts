@@ -18,6 +18,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
   const organizationId = `f23-five-org-${suffix}`;
   const projectId = `f23-five-project-${suffix}`;
   const actorId = `f23-five-user-${suffix}`;
+  const requesterId = `f23-five-requester-${suffix}`;
   const assessmentId = `f23-five-assessment-${suffix}`;
   const initiativeId = `f23-five-initiative-${suffix}`;
   const kpiId = `f23-five-kpi-${suffix}`;
@@ -40,6 +41,11 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
       `${actorId}@test.invalid`,
       organizationId,
     ]);
+    await pool.query(`INSERT INTO users(id,email,organization_id) VALUES($1,$2,$3)`, [
+      requesterId,
+      `${requesterId}@test.invalid`,
+      organizationId,
+    ]);
     await pool.query(
       `INSERT INTO projects(id,organization_id,name,current_phase,context_data,owner_id)
        VALUES($1,$2,$3,'Context','{}',$4)`,
@@ -49,6 +55,11 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
       `INSERT INTO project_members(id,project_id,user_id,project_role,normalized_project_role)
        VALUES($1,$2,$3,'PROJECT_SPONSOR','PROJECT_SPONSOR')`,
       [randomUUID(), projectId, actorId]
+    );
+    await pool.query(
+      `INSERT INTO project_members(id,project_id,user_id,project_role,normalized_project_role)
+       VALUES($1,$2,$3,'PROJECT_LEADER','PROJECT_LEADER')`,
+      [randomUUID(), projectId, requesterId]
     );
   });
 
@@ -67,6 +78,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     await pool.query('DELETE FROM project_members WHERE project_id=$1', [projectId]).catch(() => undefined);
     await pool.query('DELETE FROM projects WHERE id=$1', [projectId]).catch(() => undefined);
     await pool.query('DELETE FROM users WHERE id=$1', [actorId]).catch(() => undefined);
+    await pool.query('DELETE FROM users WHERE id=$1', [requesterId]).catch(() => undefined);
     await pool.query('DELETE FROM organizations WHERE id=$1', [organizationId]).catch(() => undefined);
     await pool.end();
     const pgModule = await import('../../database/PostgresDatabase.js');
@@ -94,6 +106,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     );
     await passGate(projectId, GATE_TYPES.READINESS_GATE, actorId, undefined, undefined, {
       organizationId,
+      requestedBy: requesterId,
     });
 
     expect((await evaluateGate(projectId, GATE_TYPES.DESIGN_GATE)).status).toBe('NOT_READY');
@@ -109,6 +122,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     );
     await passGate(projectId, GATE_TYPES.DESIGN_GATE, actorId, undefined, undefined, {
       organizationId,
+      requestedBy: requesterId,
     });
 
     expect((await evaluateGate(projectId, GATE_TYPES.PLANNING_GATE)).status).toBe('NOT_READY');
@@ -129,6 +143,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     });
     await passGate(projectId, GATE_TYPES.PLANNING_GATE, actorId, undefined, undefined, {
       organizationId,
+      requestedBy: requesterId,
     });
 
     expect((await evaluateGate(projectId, GATE_TYPES.EXECUTION_GATE)).status).toBe('NOT_READY');
@@ -144,6 +159,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     );
     await passGate(projectId, GATE_TYPES.EXECUTION_GATE, actorId, undefined, undefined, {
       organizationId,
+      requestedBy: requesterId,
     });
 
     expect((await evaluateGate(projectId, GATE_TYPES.CLOSURE_GATE)).status).toBe('NOT_READY');
@@ -170,6 +186,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     await pool.query(`UPDATE decisions SET status='decided' WHERE id=$1`, [decisionId]);
     await passGate(projectId, GATE_TYPES.CLOSURE_GATE, actorId, undefined, undefined, {
       organizationId,
+      requestedBy: requesterId,
     });
 
     const project = await pool.query<{ current_phase: string }>(

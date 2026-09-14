@@ -140,10 +140,10 @@ const STAGE_GATE_CURRENT: Record<string, any> = {
     nextGate: 'DESIGN_GATE',
     nextPhase: 'Initiatives',
     completionCriteria: [
-      { criterion: 'All axes assessed', isMet: false, evidence: '' },
-      { criterion: 'Gap analysis verified', isMet: false, evidence: '' },
+      { criterion: 'assessmentComplete', isMet: false, evidence: '' },
+      { criterion: 'gapAnalysisReviewed', isMet: false, evidence: '' },
     ],
-    missingElements: ['All axes assessed', 'Gap analysis verified'],
+    missingElements: ['assessmentComplete', 'gapAnalysisReviewed'],
   },
 };
 
@@ -198,7 +198,16 @@ if (!g.__Z41_FETCH__) {
           responsibilities: [],
           capacity: [],
           communication: [],
-          approvalInputs: { roleBindings: [] },
+          approvalInputs: {
+            roleBindings: [
+              {
+                roleKey: 'GATE_REQUESTER',
+                bindingType: 'REQUESTER',
+                projectRoleKey: 'PROJECT_LEADER',
+                principalId: 'u1',
+              },
+            ],
+          },
           missingRequiredRoles: [],
           permissions: { canManageTeam: true, canManageCommunication: true },
         });

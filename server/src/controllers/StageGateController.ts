@@ -150,7 +150,7 @@ export class StageGateController {
   static passGate = asyncHandler(
     async (req: AuthenticatedRequest<PassGateRequest>, res: Response): Promise<void> => {
       const { projectId, gateType } = req.params;
-      const { notes } = req.body;
+      const { notes, requestedBy } = req.body;
       const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -172,31 +172,30 @@ export class StageGateController {
         return;
       }
 
-      // First evaluate
-      const evaluation = await evaluateGate(
-        projectId,
-        gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]
-      );
-
-      if (evaluation.status !== 'READY') {
-        res.status(400).json({
-          error: 'Gate not ready',
-          missingElements: evaluation.missingElements,
-        });
-        return;
+      // The service authorizes the checker and requester before it reads gate
+      // readiness. This prevents an organization owner without a project role
+      // from learning readiness data before the request is rejected.
+      let result;
+      try {
+        result = await passGate(
+          projectId,
+          gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
+          userId,
+          notes,
+          (req as any).userRole ?? req.user?.role ?? null,
+          { organizationId, requestedBy }
+        );
+      } catch (error) {
+        const denied = error as { statusCode?: number; code?: string; message?: string };
+        if (denied.statusCode === 403) {
+          res.status(403).json({
+            error: denied.message || 'Stage-gate approval forbidden',
+            code: denied.code || 'STAGE_GATE_FORBIDDEN',
+          });
+          return;
+        }
+        throw error;
       }
-
-      // Pass the gate. Forward the actor role so the service can fail-closed on
-      // pilot-restricted (USER/GUEST) callers — defense-in-depth behind the
-      // `manage_stage_gates` capability check above.
-      const result = await passGate(
-        projectId,
-        gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
-        userId,
-        notes,
-        (req as any).userRole ?? req.user?.role ?? null,
-        { organizationId }
-      );
 
       res.json(result);
     }

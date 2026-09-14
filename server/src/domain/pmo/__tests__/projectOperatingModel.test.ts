@@ -46,8 +46,18 @@ describe('F2-3 E2 project operating model', () => {
     ]);
     expect(model.approvalInputs.roleBindings).toEqual(
       expect.arrayContaining([
-        { roleKey: 'BUSINESS_AUTHORITY', principalId: 'sponsor-1' },
-        { roleKey: 'GATE_AUTHORITY', principalId: 'pm-1' },
+        {
+          roleKey: 'BUSINESS_AUTHORITY',
+          bindingType: 'REVIEWER',
+          projectRoleKey: 'PROJECT_SPONSOR',
+          principalId: 'sponsor-1',
+        },
+        {
+          roleKey: 'GATE_REQUESTER',
+          bindingType: 'REQUESTER',
+          projectRoleKey: 'PROJECT_LEADER',
+          principalId: 'pm-1',
+        },
       ])
     );
   });
@@ -65,5 +75,33 @@ describe('F2-3 E2 project operating model', () => {
       notifications,
     });
     expect(second.approvalInputs.roleBindings).not.toEqual(first.approvalInputs.roleBindings);
+  });
+
+  it('separates sponsor and steering reviewers from PMO and project-leader requesters', () => {
+    const model = deriveProjectOperatingModel({
+      members: [
+        { userId: 'sponsor', name: 'Sponsor', role: 'PROJECT_SPONSOR', allocationPercent: 10 },
+        { userId: 'steering', name: 'Steering', role: 'STEERING_COMMITTEE', allocationPercent: 10 },
+        { userId: 'leader', name: 'Leader', role: 'PROJECT_LEADER', allocationPercent: 80 },
+        { userId: 'pmo', name: 'PMO', role: 'PMO', allocationPercent: 30 },
+      ],
+    });
+
+    expect(
+      model.approvalInputs.roleBindings.filter((binding) => binding.bindingType === 'REVIEWER')
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ projectRoleKey: 'PROJECT_SPONSOR', principalId: 'sponsor' }),
+        expect.objectContaining({ projectRoleKey: 'STEERING_COMMITTEE', principalId: 'steering' }),
+      ])
+    );
+    expect(
+      model.approvalInputs.roleBindings.filter((binding) => binding.bindingType === 'REQUESTER')
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ projectRoleKey: 'PROJECT_LEADER', principalId: 'leader' }),
+        expect.objectContaining({ projectRoleKey: 'PMO', principalId: 'pmo' }),
+      ])
+    );
   });
 });

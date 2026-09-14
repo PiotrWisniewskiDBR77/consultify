@@ -101,6 +101,7 @@ export function deriveProjectOperatingModel(input: {
   const members = input.members.map((member) => ({
     ...member,
     roleKey: toCanonicalRole(member.role),
+    governanceRoleKey: normalizeProjectRole(member.role),
     allocationPercent: Math.max(0, Math.min(100, Number(member.allocationPercent) || 0)),
   }));
 
@@ -137,14 +138,27 @@ export function deriveProjectOperatingModel(input: {
       : null,
   ].filter((row): row is { trigger: string; recipientIds: string[] } => Boolean(row));
 
-  const bindingByRole: Partial<Record<CanonicalPmoRoleKey, string>> = {
-    PROJECT_SPONSOR: 'BUSINESS_AUTHORITY',
-    PROJECT_LEADER: 'GATE_AUTHORITY',
-    STEERING_COMMITTEE: 'DOMAIN_AUTHORITY',
+  const bindingByRole: Partial<
+    Record<string, { roleKey: string; bindingType: 'REVIEWER' | 'REQUESTER' }>
+  > = {
+    PROJECT_SPONSOR: { roleKey: 'BUSINESS_AUTHORITY', bindingType: 'REVIEWER' },
+    STEERING_COMMITTEE: { roleKey: 'DOMAIN_AUTHORITY', bindingType: 'REVIEWER' },
+    PROJECT_LEADER: { roleKey: 'GATE_REQUESTER', bindingType: 'REQUESTER' },
+    PMO: { roleKey: 'GATE_REQUESTER', bindingType: 'REQUESTER' },
   };
   const roleBindings = members.flatMap((member) => {
-    const roleKey = member.roleKey ? bindingByRole[member.roleKey] : undefined;
-    return roleKey ? [{ roleKey, principalId: member.userId }] : [];
+    const binding = member.governanceRoleKey
+      ? bindingByRole[member.governanceRoleKey]
+      : undefined;
+    return binding
+      ? [
+          {
+            ...binding,
+            projectRoleKey: member.governanceRoleKey,
+            principalId: member.userId,
+          },
+        ]
+      : [];
   });
 
   return {
