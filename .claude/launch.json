@@ -673,6 +673,19 @@
         "--strictPort"
       ],
       "port": 5310
+    },
+    {
+      "name": "k5d-work-kolumny-20260913",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "5320",
+        "--strictPort"
+      ],
+      "port": 5320
     }
   ]
 }

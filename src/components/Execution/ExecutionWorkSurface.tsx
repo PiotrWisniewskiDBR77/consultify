@@ -342,6 +342,10 @@ const buildCols = ({
       label: t('execution.work.columns.person', 'Person'),
       sortable: true,
       width: '170px',
+      // K5-7 (2026-09-13): bez `dataType` kolumna schodzi do podłogi 90 px
+      // zamiast 150 px, gdy tabela nie mieści się przy 1440 px (podgląd
+      // otwarty) — patrz nota przy `getColumnFitFloor` w `FilterableTable.tsx`.
+      dataType: 'owner',
       render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
       editable: {
         kind: 'select',
@@ -362,6 +366,12 @@ const buildCols = ({
       label: t('execution.work.columns.due', 'Deadline'),
       sortable: true,
       width: '150px',
+      // K5-7 (2026-09-13) — patrz nota przy kolumnie `owner` powyżej: bez
+      // `dataType: 'date'` podłoga zjazdu (`getColumnFitFloor`) spada do 90 px
+      // (podłoga LICZBOWA), a nie 110 px, i data przy przepełnieniu zlewa się
+      // z sąsiednią kolumną (defekt zmierzony na stagingu `c1e8fba7c2`:
+      // „05/02/2026Done").
+      dataType: 'date',
       editable: {
         kind: 'date',
         ariaLabel: t('execution.work.edit.due', 'Change due date'),
@@ -377,6 +387,11 @@ const buildCols = ({
       label: t('execution.work.columns.status', 'Status'),
       sortable: true,
       width: '150px',
+      // K5-7 (2026-09-13) — bez `dataType: 'status'` podłoga zjazdu spada do
+      // 90 px (podłoga LICZBOWA) zamiast 130 px, i chip statusu przy
+      // przepełnieniu zlewa się z kolumną DEADLINE po lewej: „05/02/2026Done"
+      // (odbiór na żywo, staging `c1e8fba7c2`, tabela Praca).
+      dataType: 'status',
       render: (row) => <span role="status">{etykietaStatusu(row.status as string, t)}</span>,
       editable: {
         kind: 'select',
@@ -411,6 +426,11 @@ const buildCols = ({
       label: t('execution.work.columns.daysOverdue', 'Days overdue'),
       sortable: true,
       width: '130px',
+      // K5-7 (2026-09-13): kolumna liczbowa, wyrównana do prawej (kanon §3.3
+      // „liczby/metryki = prawo"); bez `dataType` dzieliła podłogę z resztą
+      // kolumn bez typu zamiast trzymać się węższej podłogi liczbowej.
+      dataType: 'number',
+      align: 'right',
       render: (row) => {
         const dni = row.slipDays as number | null;
         if (dni == null) return <span className="text-c-text-muted">—</span>;
