@@ -166,19 +166,29 @@ export const InitiativeWorkloadSurface: React.FC<{ initiatives: InitiativeScopeR
             const cell = row.cells[weekStart];
             const percent = cell?.utilizationPercent ?? 0;
             const band = cell?.capacityExceeded ? 'red' : workloadBand(percent);
+            const noCapacityLabel = t('initiatives.workload.noCapacity', 'No capacity');
+            const cellTitle = cell?.capacityExceeded
+              ? t('initiatives.workload.cellHintNoCapacity', {
+                  defaultValue: '{{label}}: {{demand}} h demand / {{supply}} h capacity',
+                  label: noCapacityLabel,
+                  demand: cell?.demandHours ?? 0,
+                  supply: cell?.supplyHours ?? 0,
+                })
+              : t('initiatives.workload.cellHint', {
+                  defaultValue: '{{demand}} h demand / {{supply}} h capacity',
+                  demand: cell?.demandHours ?? 0,
+                  supply: cell?.supplyHours ?? 0,
+                });
             return (
               <span
                 data-testid={`workload-${row.id}-${weekStart}`}
                 data-workload-band={band}
-                title={t('initiatives.workload.cellHint', {
-                  defaultValue: '{{demand}} h demand / {{supply}} h capacity',
-                  demand: cell?.demandHours ?? 0,
-                  supply: cell?.supplyHours ?? 0,
-                })}
+                title={cellTitle}
+                aria-label={cell?.capacityExceeded ? cellTitle : undefined}
                 className={`inline-flex min-w-14 items-center justify-end rounded-md border px-2 py-1 text-xs font-semibold ${bandClass[band]}`}
               >
                 {cell?.capacityExceeded
-                  ? t('initiatives.workload.noCapacity', 'No capacity')
+                  ? t('initiatives.workload.noCapacityShort', 'None')
                   : `${percent}%`}
               </span>
             );

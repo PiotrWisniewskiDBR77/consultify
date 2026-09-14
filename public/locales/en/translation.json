@@ -11420,7 +11420,9 @@
       "profile": "Person profile",
       "default": "Default policy",
       "cellHint": "{{demand}} h demand / {{supply}} h capacity",
-      "noCapacity": "No capacity"
+      "cellHintNoCapacity": "{{label}}: {{demand}} h demand / {{supply}} h capacity",
+      "noCapacity": "No capacity",
+      "noCapacityShort": "None"
     },
     "register": {
       "archiveLocked": "Lifecycle changes and archiving run through a controlled process."
