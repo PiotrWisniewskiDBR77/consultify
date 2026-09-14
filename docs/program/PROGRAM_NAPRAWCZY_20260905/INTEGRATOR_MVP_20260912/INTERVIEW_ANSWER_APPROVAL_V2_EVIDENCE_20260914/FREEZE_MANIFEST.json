@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "package": "S1 interview answer approval v2",
   "verdict": "READY_FOR_INDEPENDENT_REVIEW",
-  "generatedAt": "2026-09-14T02:20:00-05:00",
+  "generatedAt": "2026-09-14T02:23:00-05:00",
   "branch": "codex/interview-answer-approval-20260913",
   "base": {
     "ref": "origin/integracja/20260911",
-    "sha": "9e9a5f94e71cf099104382cb28f568061b36a2f2"
+    "sha": "90059a10547437b618f3bcc25ed09613ccdda33f"
   },
-  "candidateHeadBeforeRefreshedFreezeEvidenceCommit": "5cc5a5cdd36f6426250d5a76fc6893be7b280533",
+  "candidateHeadBeforeRefreshedFreezeEvidenceCommit": "23de0e39327ad645983ce5931ab21fe9cdfd121d",
   "activation": {
     "environment": "ENABLE_INTERVIEW_ANSWER_APPROVAL=true",
     "organizationPolicy": "interview.answerApproval.enabled=true",
@@ -35,7 +35,7 @@
     },
     "offParity": {
       "verdict": "PASS",
-      "currentLine": "9e9a5f94e71cf099104382cb28f568061b36a2f2",
+      "currentLine": "90059a10547437b618f3bcc25ed09613ccdda33f",
       "normalizedSha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8"
     },
     "serverTypecheck": "PASS",
@@ -572,19 +572,19 @@
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/DECISION_REALPG.log",
       "status": "A",
       "bytes": 2304,
-      "sha256": "cd3c129d75c8ae01e52340dfcd6da12dff005bc8a55a204b766e630a832f556c"
+      "sha256": "38ccfdb6050f361af42e8c4404b64bf80d769060842a31f65fe667d36f47cb23"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/DECISION_UNIT.log",
       "status": "A",
-      "bytes": 296,
-      "sha256": "b84ba5a616f23826f93f5abf107693b0fa195edb8e8ab6d8ea3252803f286cf1"
+      "bytes": 295,
+      "sha256": "505d73faf310bc20631a4375601a4ef2bab6a14ceafd557427034ef86d47a572"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/DIFF_CHECK.log",
       "status": "A",
       "bytes": 110,
-      "sha256": "18691380757302e0bdee6b9bec81bb483c2dca2f57f4cbfd9814d40ea6e296f9"
+      "sha256": "4199d508f7acfaa35bba6f000d653c0d946d9755b977d500965392659883464a"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/ESBUILD_PER_FILE.json",
@@ -602,13 +602,13 @@
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/FREEZE_20260914.md",
       "status": "A",
       "bytes": 1978,
-      "sha256": "879219638de9b6da26efaaf1319522a742c017f499359cc196d201bbc3b9a0ad"
+      "sha256": "0457e75dd7bb2d38f976e1de59c89abe1a97125faca95a3cd6daba5ab46f8e7c"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/GATEWAY_JWT_REALPG.log",
       "status": "A",
-      "bytes": 16918,
-      "sha256": "6d0772322d26fbaa6cd247462f50626d14e82cc65071be95b749d485616a0554"
+      "bytes": 16919,
+      "sha256": "c316ababe60d88558c58cde1631f43ea0aa138888879783ad8e7ee91191a9fc0"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/HOST_ENOSPC_20260914.md",
@@ -620,55 +620,55 @@
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/MIGRATION_CONTRACT.log",
       "status": "A",
       "bytes": 269,
-      "sha256": "f8415144dfc49c81cad4ea2b1956cae479fb887b4cd0e723e5c48dd52a9ac90f"
+      "sha256": "e8730dddc6e61e13188c32b34457d302286e91b4122740522595a2b1cfefcd58"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_CANDIDATE_ENV_OFF.log",
       "status": "A",
       "bytes": 18030,
-      "sha256": "fd3ce85904b03dfde517bc31dceed933aed08969c395593d6b64dd114dbcfb53"
+      "sha256": "c7f3746197b45bf95b5f129f05928ea7266e868fb6dd5e7f7bf4e815ee52ee51"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_CANDIDATE_ORG_OFF.log",
       "status": "A",
       "bytes": 18030,
-      "sha256": "26f3bfee70baa98c80db9fbd38cd29bd076cdf7833646c2913c383c85ed10b12"
+      "sha256": "43012019e24a20047bdbfb086a114c4fe5c53b59aa136b3f89440667fa9578d5"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_LINE_CURRENT.log",
       "status": "A",
-      "bytes": 17985,
-      "sha256": "b47cae19c5596a1e9eb4ed86a6ae12bf0a21c5d5b31b5c169d99b07d5e7fb8b1"
+      "bytes": 17972,
+      "sha256": "46958a0db0e92b52b1358cd78567e8710cca7f94bd6ac08d81681fd6167f317d"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OFF_PARITY_TWO_API_REALPG.json",
       "status": "A",
       "bytes": 8039,
-      "sha256": "3d0ef722b2a0fd56cf3b263488d115f69a95c6e2711efb114d0b73ce4aa7d5c0"
+      "sha256": "4cd47779c7fd247164ca1e027799b4032ca8d279438f906e1b2ea80ce28737bf"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/ORG_POLICY_UI.log",
       "status": "A",
-      "bytes": 286,
-      "sha256": "11103cfced2edc04c90e95e6464404d9f0ecdc13409b10430c784aa8fb69351c"
+      "bytes": 287,
+      "sha256": "7aa07872c81521eaab9fefe945fa2ea5653c6f06636f3cc86b9f58aab6f682f6"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/OWNER_SQL_CONTRACT.log",
       "status": "A",
-      "bytes": 270,
-      "sha256": "3812f09310756fcaf9ff6f51413525197d9c7b3dac8e0cedd92115a60647891e"
+      "bytes": 271,
+      "sha256": "012cbccee0ed8b8b8e865224f03300aae448344e2b752d89b35bde0c38c17aa6"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/POLICY_UNIT.log",
       "status": "A",
       "bytes": 278,
-      "sha256": "f9ee31da65e6d0a0896b107072842f1772f460338a35f8e7476fcffa329c5568"
+      "sha256": "8ef0c82b6582fbdb2b80d74e3c4d5f8b7faf3fd0721ff238e5835324716d8a7e"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/RACE_REALPG.log",
       "status": "A",
-      "bytes": 4900,
-      "sha256": "58f1ac811fcdc94a10e498d2faa3f8bd5070b45d89779faa33f429e45e20c7ca"
+      "bytes": 4917,
+      "sha256": "dec77b8f28be826d1d41585f16805dd262454afa6d4860e15140ca85199d0a2b"
     },
     {
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_V2_EVIDENCE_20260914/REALPG_SCHEMA_READBACK.txt",
@@ -703,14 +703,14 @@
     {
       "path": "public/locales/en/translation.json",
       "status": "M",
-      "bytes": 2229550,
-      "sha256": "f72cff1990ad6cbe5801144c8354257336156882e662f307b6243c01706e0642"
+      "bytes": 2233355,
+      "sha256": "6f159de3e7bd836b4f46e1395aadabf3055f5881d75399133fc8a8e37b626a4f"
     },
     {
       "path": "public/locales/pl/translation.json",
       "status": "M",
-      "bytes": 2383300,
-      "sha256": "6c1452dc61b9976eb646cdd37bbe6c556faa3f303bbbd13ba3951c1fceae5dc4"
+      "bytes": 2387285,
+      "sha256": "db9132622f7b2268b68a0f77b9d6fb8e3b21a00ba01db2d793a27c5c86e7107b"
     },
     {
       "path": "server/migrations/20262170_interview_answer_decisions.sql",
