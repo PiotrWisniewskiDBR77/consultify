@@ -10,9 +10,12 @@ import { Router } from 'express';
 import StageGateControllerRaw from '../controllers/StageGateController.js';
 const StageGateController = StageGateControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { requireProjectCapability } from '../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { PassGateSchema } from '../validators/stageGate.validators.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -21,6 +24,30 @@ router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+
+// Resolve tenant ownership before capability evaluation. This preserves the
+// endpoint contract that a foreign-tenant project is indistinguishable from a
+// missing project (404) and avoids leaking its existence through a preceding 403.
+router.param('projectId', async (req: AuthRequest, res, next, projectId: string) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const project = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [projectId, organizationId]
+    );
+    if (!project) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ==========================================
 // STAGE GATE OPERATIONS
@@ -44,6 +71,7 @@ router.get('/:projectId/current', StageGateController.getCurrentGate);
  */
 router.post(
   '/:projectId/pass/:gateType',
+  requireProjectCapability('gate.approve', undefined, { shadow: true, enforceMode: 'enforce' }),
   validateBody(PassGateSchema),
   StageGateController.passGate
 );

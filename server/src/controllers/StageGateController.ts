@@ -172,12 +172,6 @@ export class StageGateController {
         return;
       }
 
-      // Check permission
-      if (!req.can || !req.can('manage_stage_gates')) {
-        res.status(403).json({ error: 'Permission denied' });
-        return;
-      }
-
       // First evaluate
       const evaluation = await evaluateGate(
         projectId,
@@ -200,7 +194,8 @@ export class StageGateController {
         gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
         userId,
         notes,
-        (req as any).userRole ?? req.user?.role ?? null
+        (req as any).userRole ?? req.user?.role ?? null,
+        { organizationId }
       );
 
       res.json(result);
@@ -225,8 +220,10 @@ export class StageGateController {
       }
 
       const gates = await queryHelpers.queryAll(
-        `SELECT * FROM stage_gates WHERE project_id = ? ORDER BY approved_at DESC`,
-        [projectId]
+        `SELECT * FROM stage_gates
+          WHERE organization_id = ? AND project_id = ?
+          ORDER BY approved_at DESC NULLS LAST, created_at DESC`,
+        [organizationId, projectId]
       );
 
       res.json(gates);

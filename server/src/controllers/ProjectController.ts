@@ -1176,7 +1176,7 @@ export class ProjectController {
         id: String(r.id),
         projectId: String(r.project_id),
         userId: String(r.user_id),
-        projectRole: String(r.project_role || ''),
+        projectRole: String(normalizeProjectRole(r.project_role) || r.project_role || ''),
         isInvoked: !!r.is_invoked,
         consultantProfile: String(r.consultant_profile || 'NONE'),
         engagementType: String(r.engagement_type || 'INTERNAL'),
