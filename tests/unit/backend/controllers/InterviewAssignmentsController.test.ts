@@ -1,7 +1,9 @@
 /**
  * InterviewController - Assignment workflow unit tests
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const originalInterviewAnswerApprovalEnv = process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL;
 
 // Mock dependencies
 const mockQueryAll = vi.fn();
@@ -18,9 +20,17 @@ const mockReviewAccess = vi.fn();
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (sql: unknown, ...args: unknown[]) =>
-    String(sql).includes('FROM interview_assignments a') && String(sql).includes('FOR UPDATE')
-      ? mockLockedAssignmentQuery(sql, ...args)
-      : mockQueryOne(sql, ...args),
+    String(sql).includes('FROM organization_ai_policy')
+      ? Promise.resolve({
+          policy: {
+            interview: {
+              answerApproval: { enabled: true, mode: 'manager', version: 1 },
+            },
+          },
+        })
+      : String(sql).includes('FROM interview_assignments a') && String(sql).includes('FOR UPDATE')
+        ? mockLockedAssignmentQuery(sql, ...args)
+        : mockQueryOne(sql, ...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
   withPgTransaction: (fn: () => unknown) => fn(),
 }));
@@ -79,6 +89,7 @@ describe('InterviewController assignments', () => {
   let mockNext: any;
 
   beforeEach(() => {
+    process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
     vi.clearAllMocks();
     mockQueryAll.mockReset();
     mockQueryOne.mockReset();
@@ -152,6 +163,14 @@ describe('InterviewController assignments', () => {
     };
 
     mockNext = vi.fn();
+  });
+
+  afterEach(() => {
+    if (originalInterviewAnswerApprovalEnv === undefined) {
+      delete process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL;
+    } else {
+      process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = originalInterviewAnswerApprovalEnv;
+    }
   });
 
   it('submitAssignment: <50% stays submitted and remains reviewable', async () => {
