@@ -86,7 +86,9 @@ const OUTPUT = {
       id: 'find-1a',
       outputId: OUTPUT_ID,
       unitId: '1A',
-      unitName: '1A',
+      // ★ FALA J3: mostek zapisuje od 14.09 NAZWĘ obszaru z metodyki, nie
+      // identyfikator (D5, `outputUnitNames.ts`). Mock idzie za produktem.
+      unitName: 'Sales Processes',
       currentLevel: 4,
       targetLevel: 6,
       gap: 2,
@@ -116,7 +118,7 @@ const OUTPUT = {
       id: 'find-4c',
       outputId: OUTPUT_ID,
       unitId: '4C',
-      unitName: '4C',
+      unitName: 'Data Communication',
       currentLevel: 2,
       targetLevel: 5,
       gap: 3,
@@ -151,6 +153,60 @@ const OUTPUT = {
   demoBypassActive: false,
 };
 
+/**
+ * ★ FALA J3 — ZDARZENIA, BEZ KTÓRYCH WYWIAD NIE MA CO POKAZAĆ.
+ * Do 14.09 harness podawał pustą listę zdarzeń, więc zakładka „Wywiad"
+ * zamrożonej sesji siłą rzeczy stała na poziomie 1 z pustym polem odpowiedzi
+ * — i tak wyglądał defekt na żywo. Tu odtwarzamy RAMPĘ (poziomy 1..N
+ * potwierdzone po kolei), dokładnie tak, jak robi to zasiew `seed-ramp.mjs`:
+ * bez niej klient liczy `currentLevel = null` (`drdAdapter.resolveOpenLevels`).
+ */
+const RAMPA: Record<string, number> = { '1A': 4, '1B': 6, '4C': 2 };
+const EVENTS = Object.entries(RAMPA).flatMap(([unitId, current]) => [
+  ...Array.from({ length: current }, (_, i) => ({
+    id: `evt-${unitId}-ans-${i + 1}`,
+    organizationId: 'org-1',
+    sessionId: SESSION_ID,
+    type: 'ANSWER_CONFIRMED',
+    unitId,
+    level: i + 1,
+    actorKind: 'human',
+    actorUserId: 'user-42',
+    methodPackVersion: METHOD_PACK_VERSION,
+    payload: {
+      questionId: `${unitId}-L${i + 1}-Q1`,
+      answerState: 'confirmed',
+      text: `Confirmed at level ${i + 1} — evidence reviewed during the workshop.`,
+    },
+    createdAt: '2026-09-14T09:10:00.000Z',
+  })),
+  {
+    id: `evt-${unitId}-ev`,
+    organizationId: 'org-1',
+    sessionId: SESSION_ID,
+    type: 'EVIDENCE_ATTACHED',
+    unitId,
+    actorKind: 'human',
+    actorUserId: 'user-42',
+    methodPackVersion: METHOD_PACK_VERSION,
+    payload: { evidenceId: `ev-${unitId}-1`, evidenceType: 'system_export', strength: 'E2' },
+    createdAt: '2026-09-14T09:12:00.000Z',
+  },
+  {
+    id: `evt-${unitId}-target`,
+    organizationId: 'org-1',
+    sessionId: SESSION_ID,
+    type: 'DECISION_APPROVED',
+    unitId,
+    level: (OUTPUT.target as Record<string, number>)[unitId],
+    actorKind: 'human',
+    actorUserId: 'user-42',
+    methodPackVersion: METHOD_PACK_VERSION,
+    payload: { subject: 'target_level' },
+    createdAt: '2026-09-14T09:14:00.000Z',
+  },
+]);
+
 const APPROVALS = [
   {
     id: 'appr-1',
@@ -159,6 +215,8 @@ const APPROVALS = [
     decision: 'approved',
     comment: 'Consistent with the validation workshop.',
     actorUserId: 'user-7',
+    // ★ FALA J3 (D6): ślad zatwierdzenia niesie nazwę osoby OBOK identyfikatora.
+    actorName: 'Irina Lebedjuk',
     createdAt: '2026-09-14T09:18:00.000Z',
   },
 ];
@@ -173,9 +231,11 @@ function json(body: unknown, status = 200): Response {
 const realFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  if (/\/api\/method\/sessions\/[^/?]+\/events/.test(url)) return json({ events: [] });
+  if (/\/api\/method\/sessions\/[^/?]+\/events/.test(url)) return json({ events: EVENTS });
   if (/\/api\/method\/sessions\/[^/?]+\/approvals/.test(url)) return json({ approvals: APPROVALS });
-  if (/\/api\/method\/sessions\/[^/?]+$/.test(url)) return json({ session: SESSION, roles: ['owner'] });
+  if (/\/api\/method\/sessions\/[^/?]+$/.test(url))
+    // ★ FALA J3 (D6): `ownerName` przychodzi OBOK rekordu sesji.
+    return json({ session: SESSION, roles: ['owner'], ownerName: 'Tomasz Kowalczyk' });
   if (/\/api\/method\/outputs\/[^/?]+$/.test(url)) {
     return json({ output: OUTPUT, superseded: false, supersededByOutputId: null });
   }

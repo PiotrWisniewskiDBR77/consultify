@@ -5,7 +5,10 @@
  * `docs/program/grafika/MACIERZ_TRESC_KOMOREK.md` mierzyła TEN kod, który
  * renderuje ekran, a nie jego kopię w skrypcie (pułapka „harness kłamie").
  */
+import i18n from 'i18next';
+
 import type { DRDArea } from '../../../services/drdStructure';
+import { nazwaWJezyku } from './drdNazwa';
 
 /**
  * SKRACANIE TERMINU DO KOMÓRKI — reguła DŁUGOŚCI, nie reguła przynależności.
@@ -64,13 +67,21 @@ export function czyTerminToPlaceholder(term: string): boolean {
  */
 export function etykietyPoziomowZMetodyki(
   areas: DRDArea[],
-  levelCount: number
+  levelCount: number,
+  /**
+   * ★ FALA J3 (2026-09-14): tytuły poziomów osi 5 i 6 są w korpusie POLSKIE
+   * i mają od dziś wariant `titleEN`. Bez tego wiersze macierzy zostawały
+   * na koncie EN po polsku („WSPIERAJĄCY"), choć obszary obok były już
+   * angielskie. Domyślnie język interfejsu — test może podać go wprost.
+   */
+  poPolsku: boolean = interfejsPoPolsku()
 ): Record<number, string> {
   const out: Record<number, string> = {};
   for (let level = 1; level <= levelCount; level++) {
     const licznik = new Map<string, number>();
     for (const area of areas) {
-      const tytul = area.levels?.find((l) => l.level === level)?.title?.trim();
+      const poziom = area.levels?.find((l) => l.level === level);
+      const tytul = ((!poPolsku && poziom?.titleEN) || poziom?.title)?.trim();
       if (tytul) licznik.set(tytul, (licznik.get(tytul) ?? 0) + 1);
     }
     let best = '';
@@ -96,14 +107,23 @@ export function etykietyPoziomowZMetodyki(
  * pisało „Procesy Sprzedaży", „Procesy Marketingowe". Jeden ekran mówił dwoma
  * językami o tej samej rzeczy.
  *
- * ★ DLACZEGO BEZ WARUNKU NA JĘZYK INTERFEJSU. Kryterium odbioru brzmi: „te
- * same nazwy, co w drzewie". Drzewo — `DrdMethodWorkspaceScreen`,
- * `DrdHttpMethodWorkspaceScreen`, `drdWorkspaceViewModel`, panel jakości,
- * mapy SIRI/ADMA — bierze `namePL || name` BEZWARUNKOWO, więc warunek na język
- * w macierzy rozjechałby ją z drzewem dokładnie w tym jednym przypadku, dla
- * którego ta poprawka powstała (interfejs EN: drzewo po polsku, macierz po
- * angielsku). Macierz nie wprowadza tu żadnego nowego mieszania języków —
- * dokłada się do zastanej, spójnej reguły ekranu.
+ * ★ DLACZEGO TERAZ Z WARUNKIEM NA JĘZYK (fala J3, 2026-09-14). Poprzednia
+ * wersja brała `namePL || name` BEZWARUNKOWO, a uzasadniała to tym, że
+ * drzewo obszarów robi dokładnie to samo — więc warunek rozjechałby macierz
+ * z drzewem. Ta przesłanka przestała być prawdziwa: fala J1 przestawiła
+ * drzewo, panel jakości, warsztat i etykiety raportu na `nazwaWJezyku`
+ * (`drdNazwa.ts`, `drdLabels.ts`), a macierz została ostatnim miejscem z
+ * bezwarunkowym `namePL`. Zmierzone na koncie EN (staging a2b0a0fe32,
+ * sesja 381966f5): dolny pasek obszarów i tabela AREA/AS/TO w raporcie
+ * pisały „Procesy Sprzedaży", a karta dwadzieścia centymetrów niżej
+ * „1A · Sales Processes" — ten sam rozjazd jednego ekranu, dla którego ta
+ * funkcja powstała, tylko w drugą stronę. Kryterium odbioru „te same nazwy,
+ * co w drzewie" jest więc dziś spełnione WŁAŚNIE przez warunek na język.
+ *
+ * ★ DECYZJA 01.09 („nie odpolszczamy tego, co polskie") NADAL OBOWIĄZUJE —
+ * dotyczyła ekranu POLSKIEGO (slajd 6 zaakceptowany po polsku) i ten kod jej
+ * nie łamie: dla `language=pl` zwracamy dokładnie to, co wcześniej.
+ * Zmienia się wyłącznie zachowanie dla konta EN.
  *
  * ★ GRANICA JĘZYKOWA — CO SIĘ NIE ZMIENIA. `KANON_Z_ODBIOROW.md` (31.08)
  * stanowi, że metodyka DRD zostaje po angielsku, bo książka jest po angielsku.
@@ -120,9 +140,25 @@ export function etykietaObszaru(
    * (`name` + opcjonalne `namePL`) i tę samą regułę podpisu, więc podpis osi
    * w selektorze edytora nie może rozjechać się z podpisem obszaru w siatce.
    */
-  jednostka: Pick<DRDArea, 'name' | 'namePL'>
+  jednostka: Pick<DRDArea, 'name' | 'namePL'>,
+  /**
+   * Język interfejsu. Domyślnie czytany z `i18next` — sześć wołaczy w
+   * `DRDAssessmentEditor` nie musi przeciągać flagi przez cztery poziomy
+   * propsów, a test może podać ją wprost.
+   */
+  poPolsku: boolean = interfejsPoPolsku()
 ): string {
-  return jednostka.namePL?.trim() || jednostka.name;
+  return nazwaWJezyku(jednostka.namePL?.trim(), jednostka.name, poPolsku);
+}
+
+/**
+ * Świadomie `i18next`, a NIE `@/i18n`: ten drugi jest modułem inicjalizującym
+ * (backend HTTP, detektor) i wciągałby to wszystko do każdego testu, który
+ * mockuje `react-i18next` — ten sam powód, dla którego robi tak
+ * `src/components/assessment/report/drdLabels.ts`.
+ */
+function interfejsPoPolsku(): boolean {
+  return String(i18n.language || '').toLowerCase().startsWith('pl');
 }
 
 export const MIN_CZYTELNA_KOLUMNA_PX = 56;

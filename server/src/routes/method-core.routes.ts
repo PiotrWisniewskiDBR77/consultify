@@ -91,6 +91,7 @@ import {
 } from '../method-core/outputs/index.js';
 import { computeContentHash, genId, nowIso } from '../method-core/db.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import { resolveResponseLanguage } from '../services/ai/responseLanguage.js';
 import {
   AssessmentSkipReasonError,
   assessmentSkipReasonService,
@@ -324,6 +325,79 @@ async function readUserLanguage(userId: string): Promise<string | null> {
     return row?.language ?? null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * ŚLAD AUDYTU ZAMROŻENIA WŁAŚCICIELSKIEGO — dwa warianty językowe, nie jeden.
+ *
+ * To zdanie ZAPISUJE SIĘ do `method_approvals.comment` i raport drukuje je
+ * DOSŁOWNIE („The approval was recorded … — „…"", `AssessmentReportDocument`
+ * przez `assessment.report.intro.approvalComment`). Do 2026-09-14 było zaszyte
+ * po polsku niezależnie od konta — zmierzone na żywo na koncie EN (staging
+ * a2b0a0fe32, sesja 381966f5): jedno polskie zdanie w angielskim dokumencie
+ * dla zarządu. To samo widać było w evidence/jezyk-j5/po.
+ *
+ * TEKST, NIE KOD: wiersz jest ZAPISEM AUDYTOWYM — zamiana na `key+params`
+ * unieważniłaby odczyt wierszy już zapisanych (ten sam powód, dla którego
+ * `EventDerivedOutputBridge` trzyma `scope`/`limitations` jako tekst w dwóch
+ * wariantach). Wiersze zapisane wcześniej zostają nietknięte.
+ *
+ * Wariant wybiera `resolveResponseLanguage` — ten sam mechanizm, co w E2c
+ * i w mostku Outputu; brak deklaracji języka → 'en' (reguła programu dla
+ * wersji angielskiej).
+ */
+const SLAD_ZAMROZENIA_WLASCICIELA: Record<'pl' | 'en', string> = {
+  pl: 'Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).',
+  en: 'Frozen by the organization owner (the approver role was not filled in this session).',
+};
+
+/**
+ * NAZWY OSÓB DO ŚLADU AUDYTU — imię i nazwisko zamiast surowego UUID.
+ *
+ * ★ ZMIERZONE (fala J3, 2026-09-14): raport z oceny pisał w polach
+ * „APPROVED BY" i „SESSION OWNER" surowy identyfikator
+ * (`75f25357-…`) — czytelnik dokumentu dla zarządu nie wiedział, kto to
+ * (staging a2b0a0fe32, sesja 381966f5). Ani Output, ani rekord sesji, ani
+ * ślad zatwierdzenia NIE niosły żadnego pola z nazwą (sprawdzone w
+ * `MethodOutputService`, `contracts/session.ts` i `getApprovals`).
+ *
+ * DLACZEGO TU, A NIE W WIDOKU: jedyna trasa z nazwami (`GET /api/users`)
+ * jest wyłącznie dla ADMIN/OWNER — konsultant czytający własny raport
+ * dostałby 403 i pusty napis. Ta trasa i tak jest już po kontroli tenanta
+ * (`loadOwnedSession`), a nazwisko osoby, która zamroziła ocenę, jest
+ * częścią śladu audytu tej oceny.
+ *
+ * POLE DODATKOWE, NIE ZAMIANA: `actorUserId`/`ownerUserId` zostają
+ * nietknięte — dochodzi `…Name`. Brak wiersza w `users` (albo pusta
+ * tabela) → `null`, a widok zostaje przy identyfikatorze. Fail-open:
+ * nieczytelna tabela użytkowników nigdy nie wywraca odczytu raportu.
+ */
+async function readUserDisplayNames(
+  userIds: readonly string[]
+): Promise<Map<string, string>> {
+  const unikalne = [...new Set(userIds.filter((id) => typeof id === 'string' && id.length > 0))];
+  if (unikalne.length === 0) return new Map();
+  try {
+    const placeholders = unikalne.map(() => '?').join(', ');
+    const rows = await DbPromise.all<{
+      id: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      email?: string | null;
+    }>(
+      `SELECT id, first_name, last_name, email FROM users WHERE id IN (${placeholders})`,
+      unikalne
+    );
+    const out = new Map<string, string>();
+    for (const row of rows ?? []) {
+      const nazwa = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
+      const etykieta = nazwa || (row.email ?? '').trim();
+      if (etykieta) out.set(row.id, etykieta);
+    }
+    return out;
+  } catch {
+    return new Map();
   }
 }
 
@@ -936,7 +1010,12 @@ router.get(
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
     const roles = await sessionService.getRoles(organizationId, session.id, actorUserId);
-    res.status(200).json({ session, roles });
+    // Pole DODATKOWE — patrz `readUserDisplayNames`. Rekord `session` jest
+    // kontraktem jądra i zostaje bajt w bajt taki, jak był.
+    const nazwy = await readUserDisplayNames([session.ownerUserId]);
+    res
+      .status(200)
+      .json({ session, roles, ownerName: nazwy.get(session.ownerUserId) ?? null });
   })
 );
 
@@ -1467,7 +1546,11 @@ router.get(
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
     const approvals = await sessionService.getApprovals(organizationId, session.id);
-    res.status(200).json({ approvals });
+    const nazwy = await readUserDisplayNames(approvals.map((a) => a.actorUserId));
+    res.status(200).json({
+      // Pole DODATKOWE (`actorName`) — `actorUserId` nietknięte.
+      approvals: approvals.map((a) => ({ ...a, actorName: nazwy.get(a.actorUserId) ?? null })),
+    });
   })
 );
 
@@ -1706,7 +1789,12 @@ router.post(
           revision: revisionUnderReview,
           decision: 'approved',
           comment:
-            'Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).',
+            SLAD_ZAMROZENIA_WLASCICIELA[
+              resolveResponseLanguage({
+                requested: await readUserLanguage(actorUserId),
+                samples: [],
+              })
+            ],
           actorUserId,
         });
       }

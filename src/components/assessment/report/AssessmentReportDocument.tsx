@@ -289,7 +289,17 @@ const AreaBlock: React.FC<{
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-[11px] tabular-nums text-c-text-secondary">
             {current === null ? '—' : current} / {target === null ? '—' : target}
-            <span className="text-c-text-muted"> (skala 1–{levelCount})</span>
+            {/*
+              ★ FALA J3 (2026-09-14): to zdanie było jedynym miejscem karty
+              obszaru zaszytym po polsku — na koncie EN raport pisał
+              „4 / 5 (skala 1–7)" 39 razy (zmierzone: staging a2b0a0fe32,
+              sesja 381966f5). Liczba poziomów jest cechą osi, więc wchodzi
+              parametrem, a nie do treści klucza.
+            */}
+            <span className="text-c-text-muted">
+              {' '}
+              {t('assessment.report.area.scale', '(scale 1–{{levels}})', { levels: levelCount })}
+            </span>
           </span>
           <div className="w-24">
             <LevelBar current={current} target={target} min={1} max={levelCount} />
@@ -1026,7 +1036,16 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             value={
               latestApproval ? (
                 <span>
-                  <span className="font-mono text-[12px]">{latestApproval.actorUserId}</span>
+                  {/*
+                    ★ FALA J3 (2026-09-14): do dziś stał tu surowy UUID —
+                    czytelnik dokumentu dla zarządu nie wiedział, kto
+                    zatwierdził ocenę. Nazwa przychodzi ze śladu audytu
+                    (`actorName`); brak nazwy → identyfikator, jak dotąd,
+                    zamiast pustego miejsca.
+                  */}
+                  <span className={latestApproval.actorName ? 'text-[12px]' : 'font-mono text-[12px]'}>
+                    {latestApproval.actorName || latestApproval.actorUserId}
+                  </span>
                   {' · '}
                   {formatDate(latestApproval.createdAt)}
                 </span>
@@ -1210,8 +1229,8 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
             <Property
               label={t('assessment.report.props.sessionOwner', 'Session owner')}
-              value={session?.ownerUserId ?? '—'}
-              mono={!!session?.ownerUserId}
+              value={session?.ownerName || session?.ownerUserId || '—'}
+              mono={!session?.ownerName && !!session?.ownerUserId}
             />
             <Property
               label={t('assessment.report.props.sessionOpened', 'Session opened')}

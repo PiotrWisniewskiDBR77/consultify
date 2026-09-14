@@ -272,7 +272,15 @@ describe.skipIf(!REAL_DB)('MVP-OWNER-FREEZE — org OWNER może zamrozić ocenę
     expect(approvals.rows).toHaveLength(1);
     expect(approvals.rows[0].actor_user_id).toBe(ORG_OWNER);
     expect(approvals.rows[0].decision).toBe('approved');
-    expect(approvals.rows[0].comment).toContain('właściciela organizacji');
+    // ★ FALA J3 (2026-09-14, D4). Do dziś to zdanie zapisywało się PO POLSKU
+    // niezależnie od konta — na koncie EN raport drukował jedno polskie zdanie
+    // w dokumencie dla zarządu (zmierzone: staging a2b0a0fe32, sesja 381966f5).
+    // Fikstura nie ustawia `users.language`, więc `resolveResponseLanguage`
+    // wypada na 'en' — i to jest właśnie reguła programu dla wersji angielskiej.
+    // Dowód mutacyjny: przywróć literał polski → ta asercja spada.
+    expect(approvals.rows[0].comment).toBe(
+      'Frozen by the organization owner (the approver role was not filled in this session).'
+    );
 
     const trail = await request(app)
       .get(`/api/method/sessions/${sessionId}/approvals`)
@@ -280,6 +288,26 @@ describe.skipIf(!REAL_DB)('MVP-OWNER-FREEZE — org OWNER może zamrozić ocenę
     expect(trail.status).toBe(200);
     expect(trail.body.approvals).toHaveLength(1);
     expect(trail.body.approvals[0].actorUserId).toBe(ORG_OWNER);
+  }, 60_000);
+
+  it('1b. [JĘZYK] ten sam ślad zapisuje się PO POLSKU, gdy konto zamrażającego ma language=pl', async () => {
+    await pool.query(`UPDATE users SET language = 'pl' WHERE id = $1`, [ORG_OWNER]);
+    try {
+      const sessionId = await readyForFreeze();
+      const res = await freezeAs(sessionId, orgOwnerToken);
+      expect(res.status).toBe(200);
+
+      const approvals = await pool.query<{ comment: string | null }>(
+        `SELECT comment FROM method_approvals WHERE session_id = $1`,
+        [sessionId]
+      );
+      expect(approvals.rows).toHaveLength(1);
+      expect(approvals.rows[0].comment).toBe(
+        'Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).'
+      );
+    } finally {
+      await pool.query(`UPDATE users SET language = NULL WHERE id = $1`, [ORG_OWNER]);
+    }
   }, 60_000);
 
   it('2. [DENY] zwykły członek organizacji (twórca sesji, role robocze) nadal nie zamrozi', async () => {

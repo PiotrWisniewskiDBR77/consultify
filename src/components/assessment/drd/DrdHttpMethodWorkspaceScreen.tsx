@@ -644,7 +644,24 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     return set;
   }, [pendingPreviews]);
 
-  const navigatorNodes = useMemo(() => buildNavigatorNodes(events), [events]);
+  /**
+   * ★ FALA J3 (2026-09-14) — PLAKIETKA „3" PRZY KAŻDYM WIERSZU DRZEWA.
+   * Zmierzone, czym ona jest: `openQuestionCount` = liczba pytań QBank
+   * na POZIOMIE OGNISKOWYM jednostki (`drdWorkspaceViewModel.ts:198`).
+   * QBank ma po trzy pytania na parę obszar#poziom, więc w praktyce wychodzi
+   * „3" przy każdym wierszu — sensowne w sesji CZYNNEJ („tyle pytań tu
+   * czeka"), a nieprawdziwe w sesji ZAMROŻONEJ, gdzie nie czeka już nic.
+   * Zamrożona sesja nie ma pytań otwartych, więc licznik idzie do zera i
+   * plakietka znika (`MethodNavigator` rysuje ją tylko dla > 0).
+   */
+  /** Sesja tylko do odczytu (fala J2: domyślna zakładka „Raport"; fala J3:
+   *  plakietka pytań i poziom ogniskowy Wywiadu). */
+  const sesjaZamrozona = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
+  const navigatorNodes = useMemo(() => {
+    const nodes = buildNavigatorNodes(events);
+    if (!sesjaZamrozona) return nodes;
+    return nodes.map((node) => ({ ...node, openQuestionCount: 0 }));
+  }, [events, sesjaZamrozona]);
   const activeAxis = DRD_STRUCTURE.find((a) => a.id === activeAxisId) ?? DRD_STRUCTURE[0];
   const matrixRows = useMemo(
     () => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels),
@@ -669,8 +686,26 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       }),
     [events, activeArea.id]
   );
-  const derivedFocusLevel =
-    activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
+  /**
+   * ★ FALA J3 (2026-09-14) — WYWIAD ZAMROŻONEJ SESJI OTWIERAŁ SIĘ NA PUSTCE.
+   * Zmierzone (staging a2b0a0fe32, sesja 381966f5, 39/39 jednostek
+   * odpowiedzianych): zakładka „Wywiad" startowała na `blockedAtLevel`,
+   * czyli na PIERWSZYM NIEPOTWIERDZONYM poziomie — z pustym polem
+   * „Your answer". Czytelnik zamkniętej oceny nie widział tego, co zostało
+   * odpowiedziane, tylko puste pytanie, na które i tak nie może odpowiedzieć
+   * (sesja jest read-only).
+   *
+   * Dla sesji zamrożonej/zamkniętej ogniskujemy więc na POTWIERDZONYM
+   * poziomie bieżącym — tam stoi zapisana odpowiedź. Gdy nic nie
+   * potwierdzono, zostaje dotychczasowe zachowanie (pierwszy poziom osi).
+   * Sesja czynna jest NIETKNIĘTA: tam `blockedAtLevel` to dokładnie miejsce,
+   * w którym praca ma być kontynuowana.
+   */
+  const derivedFocusLevel = sesjaZamrozona
+    ? (activeProgression.currentLevel ??
+      activeProgression.blockedAtLevel ??
+      Math.min(...activeArea.levels.map((l) => l.level)))
+    : (activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level)));
   // Przypięcie działa tylko dla jednostki, w której padło; zmiana jednostki
   // (drzewo, macierz, „Dalej") automatycznie wraca do poziomu wyliczonego.
   const focusLevelFallback =
@@ -702,8 +737,10 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     ['owner', 'lead_assessor', 'assessor', 'respondent', 'evidence_owner'].includes(role)
   );
 
-  // ★ FALA J2 — patrz `frozenViewModeAppliedRef` wyżej.
-  const sesjaZamrozona = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
+  // ★ FALA J2 — patrz `frozenViewModeAppliedRef` wyżej. Sama flaga
+  // `sesjaZamrozona` jest od fali J3 zadeklarowana WYŻEJ (przed drzewem
+  // nawigatora i przed poziomem ogniskowym, które też jej potrzebują) —
+  // jedna deklaracja na ekran, nie dwie.
   useEffect(() => {
     if (frozenViewModeAppliedRef.current) return;
     if (initialViewMode) return;
@@ -1359,6 +1396,27 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * mieszka pod „Szczegóły techniczne" w Ustawieniach powłoki, a pełny ekran
    * (dla diagnostyki) wraca wyłącznie przez awaryjne `?ff_drdFrozenRaw=1`.
    */
+  /**
+   * Czy pokazywać plakietki diagnostyczne („SERVER DATA" / stan zapisu).
+   * Domyślnie: TAK w dev (i w harnessie/testach, gdzie `import.meta.env.DEV`
+   * jest prawdą), NIE na zbudowanym produkcie. Awaryjnie na żywo:
+   * `?ff_debugBadges=1`.
+   */
+  const plakietkiDiagnostyczne = (() => {
+    let zadane: string | null = null;
+    try {
+      zadane = new URLSearchParams(window.location.search).get('ff_debugBadges');
+    } catch {
+      zadane = null;
+    }
+    // Parametr rozstrzyga w OBIE strony: `=1` włącza na zbudowanym produkcie,
+    // `=0` wyłącza w dev — bez tego drugiego harness zrzutów (który jest dev)
+    // nie potrafiłby pokazać właścicielowi obrazu, jaki zobaczy klient.
+    if (zadane === '1') return true;
+    if (zadane === '0') return false;
+    return Boolean(import.meta.env.DEV);
+  })();
+
   const isFrozen = session.state === 'frozen' || session.state === 'closed';
   const surowyWidokZadany =
     isFrozen &&
@@ -1508,20 +1566,35 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
         />
       )}
-      <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-1">
-        <DrdSourceIndicator
-          source={sourceKind}
-          title={
-            sourceKind === 'SERVER'
-              ? t('assessment.drd.http.source.server', 'Freshly confirmed by the server.')
-              : t(
-                  'assessment.drd.http.source.recovery',
-                  'Not fully synchronised with the server.'
-                )
-          }
-        />
-        <AssessmentSaveStateIndicator state={saveIndicatorState} />
-      </div>
+      {/*
+        ★ FALA J3 (2026-09-14) — PLAKIETKI DIAGNOSTYCZNE TYLKO DLA DIAGNOZY.
+        Ta para („SERVER DATA" + „SERVER") stała w LEWYM GÓRNYM ROGU ekranu
+        sesji na każdym zrzucie odbioru (zmierzone: staging a2b0a0fe32, sesja
+        381966f5) — czytelnik zamrożonej oceny widział słownik wewnętrzny
+        zamiast produktu. Sam plik `DrdSourceIndicator` nazywa się w nagłówku
+        „dev/telemetry badge"; tu tylko przestajemy pokazywać go klientowi.
+        NIE USUWAMY go: w dev jest dalej domyślnie, a na żywo wraca awaryjnie
+        przez `?ff_debugBadges=1` — tym samym mechanizmem, co `?ff_drdFrozenRaw=1`
+        kilkadziesiąt linii wyżej.
+        Zachowanie diagnostyczne bez zmian: `data-testid`/`data-source`
+        istnieją dokładnie tak jak dotąd, gdy plakietki są widoczne.
+      */}
+      {plakietkiDiagnostyczne && (
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-1">
+          <DrdSourceIndicator
+            source={sourceKind}
+            title={
+              sourceKind === 'SERVER'
+                ? t('assessment.drd.http.source.server', 'Freshly confirmed by the server.')
+                : t(
+                    'assessment.drd.http.source.recovery',
+                    'Not fully synchronised with the server.'
+                  )
+            }
+          />
+          <AssessmentSaveStateIndicator state={saveIndicatorState} />
+        </div>
+      )}
       {state.status === 'error' && state.error && (
         <div
           role="alert"

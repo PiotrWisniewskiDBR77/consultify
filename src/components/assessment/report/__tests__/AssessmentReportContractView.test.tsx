@@ -1,11 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from 'i18next';
 
 import * as api from '@/method-core/api/methodCoreApi';
 import { resetAssessmentReportViewFlagCache } from '@/utils/assessmentReportViewFlag';
 
 import { AssessmentReportContractView } from '../AssessmentReportContractView';
+
+const JEZYK_STARTOWY = i18n.language;
 
 const chapter = (axisId: number): api.AssessmentReportChapter => ({
   axisId,
@@ -151,6 +154,7 @@ describe('AssessmentReportContractView', () => {
   // rysuje macierz DRD właściciela (`DRDMatrixGrid` przez `DRDMatrixReadOnly`)
   // i że odrzucona tabela nie ma jak wrócić.
   it('rysuje macierz DRD właściciela w rozdziale osi (a nie odrzuconej tabeli 5 kolumn)', async () => {
+    await i18n.changeLanguage('pl');
     localStorage.setItem('ff.assessment_report_view', '1');
     resetAssessmentReportViewFlagCache();
     vi.spyOn(api, 'getAssessmentReportContract').mockResolvedValue(contract);
@@ -175,6 +179,29 @@ describe('AssessmentReportContractView', () => {
     expect(matrix.textContent).not.toContain('Sales Processes');
     // ...i ani jednej tabeli w miejscu macierzy.
     expect(matrix.querySelector('table')).toBeNull();
+    await i18n.changeLanguage(JEZYK_STARTOWY);
+  });
+
+  /**
+   * ★ FALA J3 (2026-09-14) — DRUGA POŁOWA TEGO SAMEGO KRYTERIUM.
+   * Asercja wyżej pilnuje, żeby polski raport nie mówił po angielsku. Na
+   * koncie EN działo się dokładnie odwrotnie i to było zmierzone na żywo
+   * (staging a2b0a0fe32, sesja 381966f5): dolny pasek macierzy i tabela
+   * AREA/AS/TO pisały „Procesy Sprzedaży", a karta obszaru pod nimi
+   * „1A · Sales Processes". Jeden test bez drugiego przepuszczał ten defekt.
+   */
+  it('EN: ten sam pasek obszarów jest angielski (fala J3)', async () => {
+    await i18n.changeLanguage('en');
+    localStorage.setItem('ff.assessment_report_view', '1');
+    resetAssessmentReportViewFlagCache();
+    vi.spyOn(api, 'getAssessmentReportContract').mockResolvedValue(contract);
+    render(<AssessmentReportContractView sessionId="session-1" />);
+    await screen.findByTestId('assessment-report-contract-view');
+
+    const matrix = await screen.findByTestId('assessment-report-drd-matrix');
+    expect(matrix.textContent).toContain('Sales Processes');
+    expect(matrix.textContent).not.toContain('Procesy Sprzedaży');
+    await i18n.changeLanguage(JEZYK_STARTOWY);
   });
 
   it('nie renderuje odrzuconej tabeli macierzy osi („Axis matrix table")', async () => {

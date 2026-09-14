@@ -16,8 +16,36 @@
 
 export interface DRDLevel {
   level: number;
+  /**
+   * Tytuł poziomu W JĘZYKU KORPUSU. Osie 1–4 i 7 mają go po angielsku,
+   * osie 5 i 6 po polsku — tak napisał je właściciel metodyki i to zostaje
+   * wersją ŹRÓDŁOWĄ (a dla konta PL: jedyną używaną).
+   */
   title: string;
   description: string;
+  /**
+   * ★ WARIANT ANGIELSKI (fala J3, 2026-09-14) — TYLKO tam, gdzie `title` /
+   * `description` są po polsku, czyli na osiach 5 i 6 (60 poziomów).
+   *
+   * PO CO: na koncie EN raport z oceny drukował „CURRENT LEVEL 4 —
+   * WSPIERAJĄCY" i „Typ przywództwa wg książki: …" w dokumencie dla zarządu
+   * (zmierzone: staging a2b0a0fe32, sesja 381966f5; 25 polskich tytułów
+   * i 53 polskie opisy z 233 w całej strukturze). Do dziś struktura niosła
+   * DOKŁADNIE JEDEN wariant na poziom, więc kompilacja z `lang='en'` i tak
+   * wypluwała polski tekst — kompilator sam to zgłaszał jako `discrepancy`.
+   *
+   * WZORZEC: ten sam, co `name` / `namePL` na obszarze i osi — jedno pole
+   * źródłowe plus wariant dla drugiego języka. Tu wariantem jest angielski,
+   * bo to polski jest tu językiem źródłowym.
+   *
+   * STATUS TREŚCI: tłumaczenie robocze, CZEKA NA AKCEPT WŁAŚCICIELA
+   * METODYKI (lista PL→EN: `~/Developer/cto-codex/fala-j3-20260914/
+   * D2_TYTULY_POZIOMOW_EN.md`). Brak pola = brak tłumaczenia → konsument
+   * zostaje przy wariancie źródłowym i oznacza go znacznikiem EN/PL,
+   * zamiast udawać, że przetłumaczył.
+   */
+  titleEN?: string;
+  descriptionEN?: string;
 }
 
 export interface DRDArea {
@@ -1178,36 +1206,54 @@ const AXIS_5_CULTURE: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Passive',
+          descriptionEN:
+            'Leadership TYPE (not "better/worse") per the book: a passive leader, with no support for innovation or change.',
           title: 'Pasywny',
           description:
             'Typ przywództwa (nie „lepszy/gorszy") wg książki: lider pasywny, brak wsparcia dla innowacji i zmiany.',
         },
         {
           level: 2,
+          titleEN: 'Autocratic',
+          descriptionEN:
+            'Leadership type per the book: decisions are taken centrally, with little involvement of the team in the decision-making process.',
           title: 'Autokratyczny',
           description:
             'Typ przywództwa wg książki: decyzje podejmowane centralnie, niski udział zespołu w procesie decyzyjnym.',
         },
         {
           level: 3,
+          titleEN: 'Directive',
+          descriptionEN:
+            'Leadership type per the book: high expectations combined with providing the tools and resources needed to meet them.',
           title: 'Dyrektywny',
           description:
             'Typ przywództwa wg książki: wysokie wymagania połączone z zapewnieniem narzędzi i zasobów do ich realizacji.',
         },
         {
           level: 4,
+          titleEN: 'Supportive',
+          descriptionEN:
+            'Leadership type per the book: building psychological safety and motivating the team.',
           title: 'Wspierający',
           description:
             'Typ przywództwa wg książki: budowanie bezpieczeństwa psychologicznego i motywowanie zespołu.',
         },
         {
           level: 5,
+          titleEN: 'Innovator',
+          descriptionEN:
+            'Leadership type per the book: taking risks, experimenting and driving change.',
           title: 'Innowator',
           description:
             'Typ przywództwa wg książki: podejmowanie ryzyka, eksperymentowanie i napędzanie zmiany.',
         },
         {
           level: 6,
+          titleEN: 'Transformational',
+          descriptionEN:
+            'Leadership type per the book: vision, ethics, rejection of the status quo and development of people. This is a scale of TYPES, not increasing maturity — assess the dominant type and one or two supporting ones.',
           title: 'Transformacyjny',
           description:
             'Typ przywództwa wg książki: wizja, etyka, odrzucenie status quo i rozwój ludzi. To skala typów, nie rosnąca dojrzałość — oceniaj typ dominujący i 1–2 wspierające.',
@@ -1221,31 +1267,49 @@ const AXIS_5_CULTURE: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Need Recognised',
+          descriptionEN:
+            'The organisation recognises the need for change.',
           title: 'Rozpoznanie potrzeby',
           description: 'Organizacja rozpoznaje potrzebę zmiany.',
         },
         {
           level: 2,
+          titleEN: 'Change Coalition',
+          descriptionEN:
+            'A change coalition is being built — a team and sponsors.',
           title: 'Koalicja zmiany',
           description: 'Budowana jest koalicja zmiany — zespół i sponsorzy.',
         },
         {
           level: 3,
+          titleEN: 'Searching for a Vision',
+          descriptionEN:
+            'The search for a vision and a change strategy is under way.',
           title: 'Poszukiwanie wizji',
           description: 'Trwa poszukiwanie wizji i strategii zmiany.',
         },
         {
           level: 4,
+          titleEN: 'Communicating the Vision',
+          descriptionEN:
+            'The vision is communicated across the organisation, in both directions.',
           title: 'Komunikowanie wizji',
           description: 'Wizja jest komunikowana w organizacji, dwukierunkowo.',
         },
         {
           level: 5,
+          titleEN: 'Implementing Change',
+          descriptionEN:
+            'Change is being implemented through initiatives and progress criteria.',
           title: 'Wdrażanie zmiany',
           description: 'Zmiana jest wdrażana poprzez inicjatywy i kryteria postępu.',
         },
         {
           level: 6,
+          titleEN: 'Institutionalisation',
+          descriptionEN:
+            'Change is institutionalised — embedded in the culture and in the way of working.',
           title: 'Instytucjonalizacja',
           description:
             'Zmiana jest zinstytucjonalizowana — zakorzeniona w kulturze i sposobie pracy.',
@@ -1259,31 +1323,49 @@ const AXIS_5_CULTURE: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'External Exposure',
+          descriptionEN:
+            'Development through external exposure — attending trade fairs and conferences.',
           title: 'Kontakt zewnętrzny',
           description: 'Rozwój przez kontakt zewnętrzny — udział w targach i konferencjach.',
         },
         {
           level: 2,
+          titleEN: 'Internal Training',
+          descriptionEN:
+            'Internal training is delivered.',
           title: 'Szkolenia wewnętrzne',
           description: 'Prowadzone są szkolenia wewnętrzne.',
         },
         {
           level: 3,
+          titleEN: 'External Training',
+          descriptionEN:
+            'The organisation makes use of external training.',
           title: 'Szkolenia zewnętrzne',
           description: 'Organizacja korzysta ze szkoleń zewnętrznych.',
         },
         {
           level: 4,
+          titleEN: 'Self-learning',
+          descriptionEN:
+            'Self-learning is supported — platforms, books, courses.',
           title: 'Self-learning',
           description: 'Wspierany jest self-learning — platformy, książki, kursy.',
         },
         {
           level: 5,
+          titleEN: 'Project Teams',
+          descriptionEN:
+            'Development through work in project teams (learning by doing).',
           title: 'Zespoły projektowe',
           description: 'Rozwój przez pracę w zespołach projektowych (learning-by-doing).',
         },
         {
           level: 6,
+          titleEN: 'Mentoring',
+          descriptionEN:
+            'Mentoring is in place — systematic development of junior staff.',
           title: 'Mentoring',
           description: 'Działa mentoring — systemowe rozwijanie juniorów.',
         },
@@ -1296,31 +1378,49 @@ const AXIS_5_CULTURE: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Promoting Ideas',
+          descriptionEN:
+            'Ideas are promoted — hackathons, idea platforms.',
           title: 'Promowanie pomysłów',
           description: 'Promowanie pomysłów — hackathony, platformy idei.',
         },
         {
           level: 2,
+          titleEN: 'Experimentation',
+          descriptionEN:
+            'Experimentation — prototypes and pilots.',
           title: 'Eksperymentowanie',
           description: 'Eksperymentowanie — prototypy i pilotaże.',
         },
         {
           level: 3,
+          titleEN: 'Trend Analysis',
+          descriptionEN:
+            'Active analysis of market trends.',
           title: 'Analiza trendów',
           description: 'Aktywna analiza trendów rynkowych.',
         },
         {
           level: 4,
+          titleEN: 'Accepting Failure',
+          descriptionEN:
+            'Mistakes are accepted as part of learning.',
           title: 'Akceptacja błędów',
           description: 'Akceptacja błędów jako element uczenia się.',
         },
         {
           level: 5,
+          titleEN: 'R&D in the Strategy',
+          descriptionEN:
+            'R&D is written into the company strategy — continuous, not ad hoc.',
           title: 'R&D w strategii',
           description: 'R&D wpisane w strategię firmy — ciągłe, nie „ad hoc".',
         },
         {
           level: 6,
+          titleEN: 'External Collaboration',
+          descriptionEN:
+            'External collaboration is part of the strategy — startups, universities, partners.',
           title: 'Współpraca zewnętrzna',
           description: 'Współpraca zewnętrzna w strategii — startupy, uczelnie, partnerzy.',
         },
@@ -1333,31 +1433,49 @@ const AXIS_5_CULTURE: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Capital',
+          descriptionEN:
+            'Access to capital — a funding plan for initiatives.',
           title: 'Kapitał',
           description: 'Dostęp do kapitału — plan finansowania inicjatyw.',
         },
         {
           level: 2,
+          titleEN: 'Training',
+          descriptionEN:
+            'Access to training — development paths.',
           title: 'Szkolenia',
           description: 'Dostęp do szkoleń — ścieżki rozwoju.',
         },
         {
           level: 3,
+          titleEN: 'Experts',
+          descriptionEN:
+            'Access to experts — internal and external.',
           title: 'Eksperci',
           description: 'Dostęp do ekspertów — wewnętrznych i zewnętrznych.',
         },
         {
           level: 4,
+          titleEN: 'Data',
+          descriptionEN:
+            'Access to data — systems, security and the way it is used.',
           title: 'Dane',
           description: 'Dostęp do danych — systemy, bezpieczeństwo, sposób użycia.',
         },
         {
           level: 5,
+          titleEN: 'Technology',
+          descriptionEN:
+            'Access to technology — tools together with support.',
           title: 'Technologia',
           description: 'Dostęp do technologii — narzędzia wraz ze wsparciem.',
         },
         {
           level: 6,
+          titleEN: 'Partners',
+          descriptionEN:
+            'Access to partners — an ecosystem and collaboration.',
           title: 'Partnerzy',
           description: 'Dostęp do partnerów — ekosystem i współpraca.',
         },
@@ -1385,31 +1503,49 @@ const AXIS_6_CYBERSECURITY: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'No Strategy',
+          descriptionEN:
+            'No security strategy or policies.',
           title: 'Brak strategii',
           description: 'Brak strategii i polityk bezpieczeństwa.',
         },
         {
           level: 2,
+          titleEN: 'Risk Analysis',
+          descriptionEN:
+            'Risk analysis is carried out.',
           title: 'Analiza ryzyka',
           description: 'Prowadzona jest analiza ryzyka.',
         },
         {
           level: 3,
+          titleEN: 'Action Plan',
+          descriptionEN:
+            'An action plan for security is being drawn up.',
           title: 'Plan działań',
           description: 'Powstaje plan działań w obszarze bezpieczeństwa.',
         },
         {
           level: 4,
+          titleEN: 'Security Policies',
+          descriptionEN:
+            'Security policies are in place — standards and procedures.',
           title: 'Polityki bezpieczeństwa',
           description: 'Wdrożone polityki bezpieczeństwa — standardy i procedury.',
         },
         {
           level: 5,
+          titleEN: 'HR in the Strategy',
+          descriptionEN:
+            'HR is part of the strategy — training and competency building.',
           title: 'HR w strategii',
           description: 'HR włączone w strategię — szkolenia i budowanie kompetencji.',
         },
         {
           level: 6,
+          titleEN: 'Monitoring and Review',
+          descriptionEN:
+            'Monitoring and review of effectiveness — audits, tests, log analysis.',
           title: 'Monitoring i ocena',
           description: 'Monitoring i ocena skuteczności — audyty, testy, analiza logów.',
         },
@@ -1422,31 +1558,49 @@ const AXIS_6_CYBERSECURITY: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Firewalls',
+          descriptionEN:
+            'Firewalls are in use.',
           title: 'Firewalle',
           description: 'Stosowane są firewalle.',
         },
         {
           level: 2,
+          titleEN: 'Antivirus',
+          descriptionEN:
+            'Antivirus protection is deployed.',
           title: 'Antywirus',
           description: 'Wdrożona ochrona antywirusowa.',
         },
         {
           level: 3,
+          titleEN: 'IDS',
+          descriptionEN:
+            'Intrusion detection systems (IDS) are operating.',
           title: 'IDS',
           description: 'Działają systemy wykrywania włamań (IDS).',
         },
         {
           level: 4,
+          titleEN: 'Correlating SIEM/IDS',
+          descriptionEN:
+            'SIEM/IDS correlating events from multiple sources.',
           title: 'SIEM/IDS korelujące',
           description: 'SIEM/IDS korelujące zdarzenia z wielu źródeł.',
         },
         {
           level: 5,
+          titleEN: 'Authorisation and Authentication',
+          descriptionEN:
+            'Authorisation and authentication mechanisms are deployed.',
           title: 'Autoryzacja i uwierzytelnianie',
           description: 'Wdrożone mechanizmy autoryzacji i uwierzytelniania.',
         },
         {
           level: 6,
+          titleEN: 'VPN and Segmentation',
+          descriptionEN:
+            'VPN — secure channels and segmentation of connections.',
           title: 'VPN i segmentacja',
           description: 'VPN — bezpieczne kanały i segmentacja połączeń.',
         },
@@ -1459,31 +1613,49 @@ const AXIS_6_CYBERSECURITY: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Encryption',
+          descriptionEN:
+            'Data encryption is in use.',
           title: 'Szyfrowanie',
           description: 'Stosowane jest szyfrowanie danych.',
         },
         {
           level: 2,
+          titleEN: 'Password Policy',
+          descriptionEN:
+            'A password policy and secure storage.',
           title: 'Polityka haseł',
           description: 'Polityka haseł i bezpieczne przechowywanie.',
         },
         {
           level: 3,
+          titleEN: 'Access Control',
+          descriptionEN:
+            'Access control — roles and auditing.',
           title: 'Kontrola dostępu',
           description: 'Kontrola dostępu — role i audyt.',
         },
         {
           level: 4,
+          titleEN: 'Backup and DR',
+          descriptionEN:
+            'Backup and disaster recovery.',
           title: 'Backup i DR',
           description: 'Backup oraz disaster recovery.',
         },
         {
           level: 5,
+          titleEN: 'Monitoring and Detection',
+          descriptionEN:
+            'Monitoring and threat detection.',
           title: 'Monitoring i detekcja',
           description: 'Monitoring i detekcja zagrożeń.',
         },
         {
           level: 6,
+          titleEN: 'Identity Verification',
+          descriptionEN:
+            'Identity verification (e.g. certificates or biometrics) together with the supporting processes.',
           title: 'Weryfikacja tożsamości',
           description: 'Weryfikacja tożsamości (np. certyfikaty/biometria) wraz z procesami.',
         },
@@ -1496,31 +1668,49 @@ const AXIS_6_CYBERSECURITY: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Training Scheme Defined',
+          descriptionEN:
+            'A description of the security training scheme exists.',
           title: 'Opis systemu szkoleń',
           description: 'Istnieje opis systemu szkoleń z bezpieczeństwa.',
         },
         {
           level: 2,
+          titleEN: 'Training Rollout Plan',
+          descriptionEN:
+            'A plan for rolling out training in various formats.',
           title: 'Plan wdrożenia szkoleń',
           description: 'Plan wdrożenia szkoleń w różnych formach.',
         },
         {
           level: 3,
+          titleEN: 'Testing Scheme',
+          descriptionEN:
+            'A security testing scheme is in operation.',
           title: 'System testów',
           description: 'Działa system testów bezpieczeństwa.',
         },
         {
           level: 4,
+          titleEN: 'Internal Auditors',
+          descriptionEN:
+            'Internal auditors have been appointed.',
           title: 'Audytorzy wewnętrzni',
           description: 'Wyznaczeni audytorzy wewnętrzni.',
         },
         {
           level: 5,
+          titleEN: 'Cyber Audit Plan',
+          descriptionEN:
+            'A cybersecurity audit plan exists.',
           title: 'Plan audytów cyber',
           description: 'Istnieje plan audytów cyberbezpieczeństwa.',
         },
         {
           level: 6,
+          titleEN: 'ISO 27001',
+          descriptionEN:
+            'ISO 27001 certification (information security management system, ISMS).',
           title: 'ISO 27001',
           description:
             'Certyfikacja ISO 27001 (system zarządzania bezpieczeństwem informacji, ISMS).',
@@ -1534,31 +1724,49 @@ const AXIS_6_CYBERSECURITY: DRDAxis = {
       levels: [
         {
           level: 1,
+          titleEN: 'Threat Identification',
+          descriptionEN:
+            'Threats are identified.',
           title: 'Identyfikacja zagrożeń',
           description: 'Identyfikacja zagrożeń.',
         },
         {
           level: 2,
+          titleEN: 'Incident Priorities',
+          descriptionEN:
+            'Priorities for acting during an incident have been set.',
           title: 'Priorytety w incydencie',
           description: 'Ustalone priorytety postępowania w incydencie.',
         },
         {
           level: 3,
+          titleEN: 'Response Procedures',
+          descriptionEN:
+            'Response procedures have been drawn up.',
           title: 'Procedury postępowania',
           description: 'Opracowane procedury postępowania.',
         },
         {
           level: 4,
+          titleEN: 'Emergency Drills',
+          descriptionEN:
+            'Regular emergency drills.',
           title: 'Szkolenia awaryjne',
           description: 'Regularne szkolenia awaryjne.',
         },
         {
           level: 5,
+          titleEN: 'Plan Testing',
+          descriptionEN:
+            'Contingency plans are tested against scenarios.',
           title: 'Testy planów',
           description: 'Testy planów awaryjnych w oparciu o scenariusze.',
         },
         {
           level: 6,
+          titleEN: 'Documentation and Improvement',
+          descriptionEN:
+            'Documentation and continuous improvement of the plans.',
           title: 'Dokumentacja i doskonalenie',
           description: 'Dokumentacja i ciągłe doskonalenie planów.',
         },

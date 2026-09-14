@@ -59,6 +59,7 @@ const NodeRow: React.FC<{
   expandedRootId: string | null;
   onRootToggle: (id: string) => void;
 }> = ({ node, depth, activeUnitId, onSelect, expandedRootId, onRootToggle }) => {
+  const { t } = useTranslation();
   const containsActiveUnit = useMemo(() => {
     const contains = (candidate: TreeNode): boolean =>
       candidate.unitId === activeUnitId || candidate.children.some(contains);
@@ -133,7 +134,22 @@ const NodeRow: React.FC<{
           </span>
         )}
         {isLeaf && node.openQuestionCount > 0 && (
-          <span className="shrink-0 rounded-full bg-c-info/10 text-c-info px-1.5 text-[10px] font-medium">
+          /*
+            ★ FALA J3 (2026-09-14): ta plakietka stała przy KAŻDYM wierszu bez
+            żadnego podpisu i nikt z odbioru nie wiedział, co liczy („ta sama
+            fioletowa trójka wszędzie"). To liczba pytań czekających na
+            POZIOMIE OGNISKOWYM jednostki — teraz mówi to wprost w dymku
+            i czytnikowi ekranu. Liczba bez zmian.
+          */
+          <span
+            title={t('methodWorkspace.navigator.openQuestions', 'Questions open at this level: {{count}}', {
+              count: node.openQuestionCount,
+            })}
+            aria-label={t('methodWorkspace.navigator.openQuestions', 'Questions open at this level: {{count}}', {
+              count: node.openQuestionCount,
+            })}
+            className="shrink-0 rounded-full bg-c-info/10 text-c-info px-1.5 text-[10px] font-medium"
+          >
             {node.openQuestionCount}
           </span>
         )}

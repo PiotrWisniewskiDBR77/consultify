@@ -207,8 +207,14 @@ async function pobierzRaportZMagazynuZastanego(
  * enrichment, and says so. */
 export async function fetchSessionForReport(sessionId: string): Promise<ReportSessionMeta | null> {
   try {
-    const res = await getSessionRaw(sessionId);
-    return res.session as unknown as ReportSessionMeta;
+    const res = (await getSessionRaw(sessionId)) as unknown as {
+      session: unknown;
+      ownerName?: string | null;
+    };
+    // `ownerName` przychodzi OBOK rekordu sesji (kontrakt jądra nietknięty —
+    // patrz `readUserDisplayNames` w method-core.routes.ts), więc scalamy je
+    // tutaj, na jednej granicy, zamiast przeciągać drugi obiekt przez widok.
+    return { ...(res.session as object), ownerName: res.ownerName ?? null } as ReportSessionMeta;
   } catch (err) {
     if (err instanceof MethodCoreApiError && err.status === 404) return null;
     throw err;

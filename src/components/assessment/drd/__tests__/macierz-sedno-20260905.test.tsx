@@ -10,7 +10,8 @@
  */
 import { render, screen, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import i18n from 'i18next';
 
 import {
   MIN_CZYTELNA_KOLUMNA_PX,
@@ -25,6 +26,8 @@ import type { MatrixRow } from '@/components/method-workspace/types';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 
 const OS1 = DRD_STRUCTURE.find((axis) => axis.id === 1)!;
+
+const JEZYK_STARTOWY = i18n.language;
 
 /**
  * DRABINA POZIOMÓW OSI 1 — przepisana z kanonu
@@ -43,15 +46,25 @@ const DRABINA_Z_KANONU: Record<number, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// A. Nazwy obszarów po polsku — te same, co w drzewie sesji obok
-//    Dowód mutacyjny: przywróć w `DRDMatrixGrid` `{area.name}` zamiast
-//    `{etykietaObszaru(area)}` → test „pasek obszarów pisze Procesy Sprzedaży"
-//    spada na obu asercjach (brak polskiej, obecna angielska), a test D
-//    („sesja rysuje macierz właściciela") spada na tej samej nazwie. Test
-//    jednostkowy `etykietaObszaru` przechodzi dalej — i to jest właśnie różnica
-//    między „funkcja działa" a „ekran jej używa".
+// A. Nazwy obszarów W JĘZYKU INTERFEJSU — te same, co w drzewie sesji obok
+//    Dowód mutacyjny: przywróć w `etykietaObszaru` bezwarunkowe
+//    `jednostka.namePL?.trim() || jednostka.name` → oba testy EN spadają
+//    („pasek obszarów po angielsku" znajduje polską nazwę), a testy PL
+//    przechodzą dalej — czyli dokładnie ten defekt, który zmierzono na
+//    koncie EN (staging a2b0a0fe32, sesja 381966f5).
+//    Drugi dowód: przywróć w `DRDMatrixGrid` `{area.name}` zamiast
+//    `{etykietaObszaru(area)}` → test PL spada, a jednostkowy przechodzi —
+//    różnica między „funkcja działa" a „ekran jej używa".
 // ---------------------------------------------------------------------------
 describe('A. Macierz podpisuje obszary tak samo jak drzewo sesji', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('pl');
+  });
+
+  afterAll(async () => {
+    await i18n.changeLanguage(JEZYK_STARTOWY);
+  });
+
   it('SSOT ma polską nazwę dla każdego obszaru osi 1 (przesłanka testu, nie założenie)', () => {
     for (const area of OS1.areas) {
       expect(area.namePL?.trim()).toBeTruthy();
@@ -59,23 +72,46 @@ describe('A. Macierz podpisuje obszary tak samo jak drzewo sesji', () => {
     }
   });
 
-  it('pasek obszarów pisze „Procesy Sprzedaży", nie „Sales Processes"', () => {
+  it('PL: pasek obszarów pisze „Procesy Sprzedaży", nie „Sales Processes"', () => {
     render(<DRDMatrixReadOnly axisNumber={1} value={{ areas: { '1A': { achievedLevel: 4 } } }} />);
     expect(screen.getByText('Procesy Sprzedaży')).toBeInTheDocument();
     expect(screen.queryByText('Sales Processes')).not.toBeInTheDocument();
   });
 
-  it('etykietaObszaru bierze namePL — tak samo, jak robi to drzewo sesji', () => {
-    expect(etykietaObszaru(OS1.areas[0])).toBe('Procesy Sprzedaży');
-    // Reguła jest ta sama, co w `drdWorkspaceViewModel` i obu ekranach
-    // warsztatu: `namePL || name`. Sprawdzone na WSZYSTKICH obszarach osi 1,
-    // nie na jednej próbce.
+  it('EN: ten sam pasek pisze „Sales Processes", nie „Procesy Sprzedaży"', async () => {
+    await i18n.changeLanguage('en');
+    render(<DRDMatrixReadOnly axisNumber={1} value={{ areas: { '1A': { achievedLevel: 4 } } }} />);
+    expect(screen.getByText('Sales Processes')).toBeInTheDocument();
+    expect(screen.queryByText('Procesy Sprzedaży')).not.toBeInTheDocument();
+  });
+
+  it('EN: ŻADEN z dziewięciu obszarów osi 1 nie zostaje po polsku', async () => {
+    await i18n.changeLanguage('en');
+    render(<DRDMatrixReadOnly axisNumber={1} value={{ areas: { '1A': { achievedLevel: 4 } } }} />);
     for (const area of OS1.areas) {
-      expect(etykietaObszaru(area)).toBe(area.namePL || area.name);
+      expect(screen.queryByText(area.namePL!)).not.toBeInTheDocument();
+      expect(screen.getByText(area.name)).toBeInTheDocument();
     }
-    // Obszar bez polskiej nazwy nie znika — wraca angielska.
-    expect(etykietaObszaru({ name: 'Only English' })).toBe('Only English');
-    expect(etykietaObszaru({ name: 'Only English', namePL: '   ' })).toBe('Only English');
+  });
+
+  it('etykietaObszaru wybiera wariant po języku — na WSZYSTKICH obszarach osi 1', () => {
+    expect(etykietaObszaru(OS1.areas[0], true)).toBe('Procesy Sprzedaży');
+    expect(etykietaObszaru(OS1.areas[0], false)).toBe('Sales Processes');
+    for (const area of OS1.areas) {
+      expect(etykietaObszaru(area, true)).toBe(area.namePL || area.name);
+      expect(etykietaObszaru(area, false)).toBe(area.name);
+    }
+    // Obszar bez polskiej nazwy nie znika — wraca angielska (w obu językach).
+    expect(etykietaObszaru({ name: 'Only English' }, true)).toBe('Only English');
+    expect(etykietaObszaru({ name: 'Only English', namePL: '   ' }, true)).toBe('Only English');
+    expect(etykietaObszaru({ name: 'Only English' }, false)).toBe('Only English');
+  });
+
+  it('bez argumentu bierze język z i18next (to czyta ekran, nie test)', async () => {
+    await i18n.changeLanguage('en');
+    expect(etykietaObszaru(OS1.areas[0])).toBe('Sales Processes');
+    await i18n.changeLanguage('pl');
+    expect(etykietaObszaru(OS1.areas[0])).toBe('Procesy Sprzedaży');
   });
 });
 
@@ -179,6 +215,17 @@ describe('C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się 
 //    o skalach per oś zaczyna nie znajdować `drd-matrix-cell`.
 // ---------------------------------------------------------------------------
 describe('D. Sesja DRD: zakładka „Macierz" to macierz właściciela', () => {
+  // Nazwy obszarów idą od 2026-09-14 za językiem interfejsu (fala J3), a ten
+  // blok sprawdza WARIANT POLSKI — deklarujemy go wprost, zamiast liczyć na
+  // domyślny język harnessu.
+  beforeEach(async () => {
+    await i18n.changeLanguage('pl');
+  });
+
+  afterAll(async () => {
+    await i18n.changeLanguage(JEZYK_STARTOWY);
+  });
+
   const WIERSZE: MatrixRow[] = OS1.areas.map((area, index) => ({
     unitId: area.id,
     unitName: area.namePL || area.name,
@@ -196,7 +243,7 @@ describe('D. Sesja DRD: zakładka „Macierz" to macierz właściciela', () => {
     })),
   }));
 
-  it('rysuje siatkę obszary × poziomy z drabiną i polskimi nazwami obszarów', () => {
+  it('PL: rysuje siatkę obszary × poziomy z drabiną i polskimi nazwami obszarów', () => {
     render(
       <DrdOwnerMatrixPanel
         axisNumber={1}

@@ -309,9 +309,13 @@ describe('EventDerivedOutputBridge — scope/limitations w języku konta', () =>
 
     const rows = testDb.getRows('method_outputs');
     const row = rows[rows.length - 1];
+    const findings = testDb
+      .getRows('method_findings')
+      .filter((f: Record<string, unknown>) => f.output_id === row.id);
     return {
       scope: String(row.scope ?? ''),
       limitations: JSON.parse(String(row.limitations_json ?? '[]')) as string[],
+      findings,
     };
   }
 
@@ -328,6 +332,39 @@ describe('EventDerivedOutputBridge — scope/limitations w języku konta', () =>
       expect(maPolskieZnaki(l)).toBe(false);
     }
     expect(limitations.join(' ')).toContain('derived deterministically from the confirmed answers');
+  });
+
+  /**
+   * ★ FALA J3 (2026-09-14) — D5. `findings[].unitName` był KOPIĄ `unitId` dla
+   * 39/39 jednostek, więc raport z oceny pisał „Area 1A" zamiast
+   * „Sales Processes" (zmierzone: staging a2b0a0fe32, output fa94f405).
+   * Dowód mutacyjny: przywróć `unitName: u.unitId` w mostku → obie asercje
+   * poniżej spadają; usuń sam warunek języka w `outputUnitNames` → spada
+   * asercja EN, PL przechodzi (czyli dokładnie stan sprzed J1/J3).
+   *
+   * To zmienia TREŚĆ nowych Outputów (a więc i ich `contentHash`); rekordy
+   * już zamrożone są nietknięte — zapis jest INSERT-only.
+   */
+  it("EN: unitName to nazwa obszaru z metodyki, nie identyfikator", async () => {
+    const { findings } = await zamroz('en');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].unit_id).toBe('1A');
+    expect(findings[0].unit_name).toBe('Sales Processes');
+  });
+
+  it("PL: ta sama jednostka dostaje polską nazwę", async () => {
+    const { findings } = await zamroz('pl');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].unit_name).toBe('Procesy Sprzedaży');
+  });
+
+  it('nieznana metodyka nie dostaje zmyślonej nazwy — zostaje identyfikator', async () => {
+    const { unitNameResolverForPack } = await import('../outputUnitNames.js');
+    expect(unitNameResolverForPack('siri', 'en')).toBeNull();
+    const drd = unitNameResolverForPack('drd', 'en');
+    expect(drd).not.toBeNull();
+    // Jednostka spoza struktury DRD wraca jako własny identyfikator.
+    expect(drd!('ZZ9')).toBe('ZZ9');
   });
 
   it("language='pl' — scope i limitations zostają po polsku (naprawa EN nie zabiera polskiego)", async () => {

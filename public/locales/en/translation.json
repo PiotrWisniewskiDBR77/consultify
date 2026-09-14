@@ -9709,6 +9709,7 @@
       "lifecycleSessionRecord": "Assessment session record — not frozen yet",
       "methodologySourceEn": "Source: the DRD methodology in its English original — this axis has no Polish translation in the pack yet.",
       "area": {
+        "scale": "(scale 1–{{levels}})",
         "currentLevel": "Current level {{level}} — {{title}}",
         "currentUnresolved": "The current level was not determined in this assessment.",
         "levelDefinitionMissing": "The methodology pinned in this Output carries no definition of this level.",
@@ -51334,6 +51335,7 @@
       "targetLevel": "Target level"
     },
     "navigator": {
+      "openQuestions": "Questions open at this level: {{count}}",
       "noStructure": "The Method Pack has not delivered a structure yet."
     },
     "help": {

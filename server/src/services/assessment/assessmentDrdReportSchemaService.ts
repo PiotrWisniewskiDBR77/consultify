@@ -229,7 +229,15 @@ export function resolveDrdLevelLabelPL(
   // raportu angielskiego etykieta poziomu jest ZAWSZE angielskim tytułem
   // ze struktury (nigdy nakładką PL), niezależnie od tego, czy ta oś ma
   // `levelLabelsPL`.
-  if (language === 'en') return axis.areas[0]?.levels[level - 1]?.title ?? String(level);
+  // ★ FALA J3 (2026-09-14): „ZAWSZE angielskim tytułem" było prawdą tylko
+  // dla osi 1-4 i 7. Osie 5 i 6 mają korpus POLSKI, więc raport EN drukował
+  // tu „WSPIERAJĄCY" / „PLAN WDROŻENIA SZKOLEŃ". Od dziś struktura niesie
+  // `titleEN` dla tych 60 poziomów — bierzemy go, a gdy go nie ma, zostaje
+  // tytuł źródłowy (czyli dokładnie poprzednie zachowanie).
+  if (language === 'en') {
+    const poziom = axis.areas[0]?.levels[level - 1];
+    return poziom?.titleEN ?? poziom?.title ?? String(level);
+  }
   return (
     axis.levelLabelsPL?.[level - 1] ?? axis.areas[0]?.levels[level - 1]?.title ?? String(level)
   );
