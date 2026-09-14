@@ -90,7 +90,25 @@ vi.mock('../useRapData', () => ({
 
 // Treść zakładek nie jest przedmiotem tego kontraktu — liczy się pasek.
 vi.mock('../OutputsAggregateTabContent', () => ({
-  OutputsAggregateTabContent: () => <div data-testid="tab-content-aggregate" />,
+  OutputsAggregateTabContent: ({
+    rows,
+    activeFilters,
+  }: {
+    rows: Array<{ title: string; statusKey: string }>;
+    activeFilters: Array<{ column: string; value: unknown }>;
+  }) => {
+    const status = activeFilters.find((filter) => filter.column === 'status')?.value;
+    const visibleRows = status
+      ? rows.filter((row) => matchesMaterialsStatusFilter(row.statusKey, status))
+      : rows;
+    return (
+      <div data-testid="tab-content-aggregate">
+        {visibleRows.map((row) => (
+          <span key={row.title}>{row.title}</span>
+        ))}
+      </div>
+    );
+  },
 }));
 vi.mock('../PresentationsTabContent', () => ({
   PresentationsTabContent: () => <div data-testid="tab-content-presentations" />,
@@ -126,6 +144,7 @@ vi.mock('@/store/useConversationStore', () => ({
 }));
 
 import { ReportsAndPresentationsHub } from '../ReportsAndPresentationsHub';
+import { matchesMaterialsStatusFilter } from '../statusCounts';
 
 const outputRow = (
   id: string,
@@ -294,6 +313,18 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
     expect(screen.getByTestId('materials-menu3-chip-ready')).toHaveTextContent('34');
     expect(screen.getByTestId('materials-menu3-chip-other')).toHaveTextContent('1');
     expect(8 + 34 + 1).toBe(43);
+
+    const other = screen.getByTestId('materials-menu3-chip-other');
+    expect(other.tagName).toBe('BUTTON');
+    fireEvent.click(other);
+    expect(screen.getByText('Materiał generated-1')).toBeInTheDocument();
+    expect(screen.queryByText('Materiał draft-0')).toBeNull();
+    expect(screen.queryByText('Materiał ready-0')).toBeNull();
+
+    fireEvent.click(other);
+    expect(screen.getByText('Materiał generated-1')).toBeInTheDocument();
+    expect(screen.getByText('Materiał draft-0')).toBeInTheDocument();
+    expect(screen.getByText('Materiał ready-0')).toBeInTheDocument();
   });
 
   it('Biblioteka wzorców: Menu 3 = formaty + źródła, Menu 2 bez dropdownu Widoczność', async () => {

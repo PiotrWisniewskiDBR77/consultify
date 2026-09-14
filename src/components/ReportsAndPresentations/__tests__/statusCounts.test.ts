@@ -16,6 +16,8 @@ import { REPORT_STATUS_META, type UnifiedOutputRow } from '../types';
 import {
   countRowsByStatus,
   countUnrepresentedStatuses,
+  matchesMaterialsStatusFilter,
+  MATERIALS_OTHER_STATUSES_FILTER,
   statusFieldForScope,
 } from '../statusCounts';
 
@@ -65,6 +67,16 @@ describe('countRowsByStatus — liczniki statusów Menu 3', () => {
     const other = countUnrepresentedStatuses(counts, ['draft', 'ready']);
     expect(counts.draft + counts.ready + other).toBe(43);
     expect(other).toBe(1);
+  });
+
+  it('filtr Other obejmuje wyłącznie statusy poza Draft i Ready', () => {
+    expect(
+      ['draft', 'ready', 'generated', 'editing', 'exported', 'shared', 'archived'].filter((status) =>
+        matchesMaterialsStatusFilter(status, MATERIALS_OTHER_STATUSES_FILTER)
+      )
+    ).toEqual(['generated', 'editing', 'exported', 'shared', 'archived']);
+    expect(matchesMaterialsStatusFilter('draft', 'draft')).toBe(true);
+    expect(matchesMaterialsStatusFilter('ready', 'draft')).toBe(false);
   });
 
   it('puste/nieznane statusy nie tworzą chipa-śmiecia', () => {

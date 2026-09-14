@@ -55,6 +55,7 @@ import { resolveArtifactOpenPath } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
 import { MATERIAL_FILE_FORMATS } from './materialFileFormat';
 import { SaveAsTemplateModal, type SaveAsTemplateSource } from './SaveAsTemplateModal';
+import { matchesMaterialsStatusFilter } from './statusCounts';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import type { ArtifactGovernanceSummary, SheetOrigin, UnifiedOutputRow } from './types';
 import { SHEET_ORIGIN_META } from './types';
@@ -385,7 +386,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     for (const f of activeFilters) {
       if (f.column === 'outputKind') data = data.filter((item) => item.kind === f.value);
       if (f.column === 'fileFormat') data = data.filter((item) => item.fileFormat === f.value);
-      if (f.column === 'status') data = data.filter((item) => item.statusKey === f.value);
+      if (f.column === 'status') {
+        data = data.filter((item) => matchesMaterialsStatusFilter(item.statusKey, f.value));
+      }
       if (f.column === 'visibilityScope') {
         data = data.filter((item) => (item.governance?.visibilityScope || '') === f.value);
       }

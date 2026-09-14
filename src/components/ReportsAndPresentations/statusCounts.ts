@@ -33,6 +33,25 @@ const STATUS_KEY_SCOPES: ReadonlySet<MaterialsStatusCountScope> = new Set([
   'outputs_sheets',
 ]);
 
+/** Compact Menu 3 keeps two named statuses and groups every remaining status. */
+export const MATERIALS_MENU3_NAMED_STATUSES = ['draft', 'ready'] as const;
+export const MATERIALS_OTHER_STATUSES_FILTER = '__other_statuses__';
+
+export function isMaterialsOtherStatus(status: unknown): boolean {
+  const normalized = String(status ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    normalized.length > 0 &&
+    !MATERIALS_MENU3_NAMED_STATUSES.some((represented) => represented === normalized)
+  );
+}
+
+export function matchesMaterialsStatusFilter(status: unknown, filter: unknown): boolean {
+  if (filter === MATERIALS_OTHER_STATUSES_FILTER) return isMaterialsOtherStatus(status);
+  return String(status ?? '') === String(filter ?? '');
+}
+
 /** Które pole niesie status w danym zbiorze wierszy. */
 export function statusFieldForScope(scope: MaterialsStatusCountScope): 'statusKey' | 'status' {
   return STATUS_KEY_SCOPES.has(scope) ? 'statusKey' : 'status';
