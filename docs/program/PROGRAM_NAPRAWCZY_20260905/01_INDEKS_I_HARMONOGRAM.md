@@ -1254,6 +1254,89 @@ S4 = nadal **HOLD CTO** (Z-45, Codex A: 2/3 plików zielone, B/C/D wstrzymane u 
 Skrzynka: **Z-48 nowa (drobna, tor D)**, **Z-49 nowa (procedura, zapisana)**, **Z-50 nowa
 (zamknięta — reguła commit-per-etap zapisana)**.
 
+**S4 F2-2 Praca — v2 HOLD → v3 `861db8842f` PRZYJĘTE (14.09).** v2 miała 10× `as any` w
+`ExecutionHub` → 2 testy source-contract czerwone (wykryte równolegle przez CTO i niezależny
+review Codexa — dwa niezależne pomiary zgodne, Z-45 rozszerzona). v3: 0 `as any`, typy jawne
+`core.ts:2667`, `executionBankModel.ts:124`, `executionRealData.ts:50`; 20/20 source-contract z
+niezmienionymi asercjami; golden-flow RealPG 12/12; tsc 177. Merge linii → `1e6c435fa9`. Odbiór
+S4 = **ACCEPT** (Z-45 zamknięta naprawą domyślnej wartości + listą wołaczy + testami rodzeństwa).
+§5 B-E1 przechodzi **🔧 W TOKU (HOLD) → 🧪 NA STAGINGU**.
+
+**Q1 E5 `f05fabae66` PRZYJĘTE (14.09).** Naprawa trzech drobnych z wpisu 44: bramka
+`WORKLOAD_CAPACITY` w `InitiativeWorkReportView.tsx:124` (była bez osłony flagi), literał
+uzasadnienia po angielsku w `workloadCapacityService.ts:1197` → `reasonKey+params` zamiast
+literału EN, komentarz do fałszywego alarmu hooka na z30. Merge linii → **`1154ebd809`**.
+**Staging = `1154ebd809`** (jedno wdrożenie wg reguły Z-44/procedury Z-49; health i tag
+`staging-deployed` potwierdzone). Tagi cofnięcia: `rollback-pre-s4v3-20260914`,
+`rollback-pre-q1e5-20260914`. Dwa P3 nieblokujące zastane przy okazji, skierowane do Codexa tor
+D: `WorkIntelligenceReport.tsx:718` używa kluczy `common.property/value`, których nie ma (etykiety
+PL „Property/Value" zamiast tłumaczenia — 18. kształt, klucz istnieje ≠ przetłumaczony, tu klucz
+nie istnieje wcale); 7 `as any` poza `ExecutionHub` w delcie S4 (nienaprawione, poza zakresem v3).
+
+**Z-51 nowa — reguła bramki (14.09).** Dwie lekcje z odbioru S4/Q1: (1) testy `*.pg.test.ts`
+uruchomione bez `MOCK_DB=false` kończą się exit 0 ze SKIPPED = fałszywa zieleń — sprawdzać
+zmienną przed odczytaniem wyniku suity PG; (2) „zastane czerwienie" wolno deklarować tylko z
+**pełnego rodzeństwa** (realna lista importerów zmienianego pliku/eksportu), nie z listy delty
+Codexa — w S4 Codex zgłosił 3 pliki rodzeństwa, realnie było 27 (grep importerów
+`executionBankModel`/`identityMode`); (3) nowy `as any` pojawiający się w delcie liczy się jako
+regresja wymagająca uzasadnienia, nie jako neutralny szum. **35. kształt fałszywego „gotowe" (wariant
+b): „testy delty zielone, rodzeństwo policzone niepełną listą"** — rozszerza Z-45.
+
+**DEC-508 (CTO, wpis 51).** Zgoda na migrację addytywną Z-39
+`server/migrations/20262200_projects_current_phase.sql` =
+`ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS current_phase text DEFAULT 'Context'::text;`
+(źródło poza migracjami: self-heal `PostgresDatabase.ts:1745-1765`; staging
+`DB_MANAGED_SCHEMA=off`). Warunki przed apply: zero danych w kolumnie na starcie, test świeżej
+bazy zielony + no-op na stagingu (kolumna już tam self-healem), 4 suity RealPG S5 zielone. Potem
+odblokowane S5 E3b. Pomiar Codexa zaplanowany 11:53 CDT.
+
+**Organizacja Codexa — aktualizacja (wpisy 42/49/50, 14.09).** Właściciel nie uruchomił okien
+B/C/D/E → instancja **[A]** samodzielnie prowadzi wszystkie tory własnymi agentami: [A/C] Z-39,
+D-g, D-i, D-j; [A/E] E0 inwentarz warstw języka; [A/B] S3 Plan — rebase 5 commitów na
+`eba9d72ad9` wykonany, HEAD `3a2dbdc644`; [A/D] pilotaż. Limit czterech worktree Codexa (dysk)
+utrzymany.
+
+**Wpis 48 — pakiet JĘZYK, DEC-509 (decyzja właściciela 14.09).** Cel: „każda widoczna treść
+wynika z jednego ustawienia języka użytkownika w każdej warstwie" — 7 warstw inwentarza (method
+pack DRD, i18n UI, literały serwera, prompty Teresy, dane pokazowe, formaty, ustawienie języka).
+Kolejność: E0 (inwentarz) → E1 (STOP, decyzja) → E2a–f. Priorytet E2a: kwestionariusz DRD po
+angielsku. **Pomiar CTO 14.09:** treść EN kwestionariusza **już istnieje**
+(`src/services/assessmentKnowledge/drdKnowledgeOverridesAxis{1And2,3And4,5To7}.en.ts`,
+`whyThisMatters.ts` {en,pl}, `getDRDKnowledge(…, lang)`), ale `compileDrdPack.ts:226/243/360` ma
+`'pl'` przybite na sztywno, 6 wołaczy, 2 cache modułowe — treść jest, wołacz jej nie używa.
+**Z-52 nowa — kształt „biblioteka bez wywołania" (wariant DRD-EN).** Fala **J1 CTO** okablowuje
+(w toku). Zastane: etykiety raportów już EN (`assessmentReportI18n.ts`, S1.4b); narracja silnika
+`assessmentNarrativeComposer.ts` trwale po polsku (L, poza zakresem dziś); Teresa —
+`languagePolicy.ts` łańcuch → domyślnie `pl`; konta DBR77 mają `users.language=null` (do
+uzupełnienia danymi); tabela `assessment_questions` z kolumnami `*_translations` = 0 wierszy
+(martwa ścieżka).
+
+**Z-46 domknięte częściowo (14.09).** Org prezentacyjna EN na stagingu = **Northwind
+Manufacturing Ltd.** (`468b234c-…`, 13 inicjatyw, 46 zadań, ocena APPROVED, raport EN, 2 decki
+EN); Piotr dopisany jako OWNER, testerzy Justyna/Paweł/T. Jankowski/T. Lewandowski/K. Wójcik jako
+ADMIN, `token_balance` 100 mln, usunięty 1 polski rekord testowy. Konto Iriny
+(`irina.lebedjuk@dbr77.com`) założone — ADMIN DBR77 + Northwind, login 200. Rollbacki w
+`cto-codex/dbr77-usa-20260914/`, `cto-codex/dbr77-northwind-admins-20260914/`,
+`cto-codex/irina-20260914/`. Demo nietknięte (agent na demo zatrzymany przed zapisem — DEC-503).
+Poprawka instrukcji: widżet zgłoszeń = „Opinie" (`FeedbackToggleButton`), nie „Zgłoś błąd"
+(niezamontowany). PDF scenariuszy v2 (21 stron) wysłany właścicielowi.
+
+**Fale CTO w toku (14.09, stan na koniec dnia).** J1 = DRD-EN (Z-52, okablowanie
+`compileDrdPack.ts`); D1 = U2 „What's next" w Decisions + P-T15 + P-T06; D2 = P-T14 + P-T16;
+pomiar 16 kryteriów S1.1–S1.16 na żywo w toku. **Z-53 nowa — luka pomiaru.** Ostatni pomiar
+kryteriów S1.1–S1.16 był 13.09; brak pomiaru 14.09 do tej pory — dopisać po zakończeniu przebiegu
+w toku, nie zakładać stanu z 13.09 jako aktualnego.
+
+**Z-2 (aktualizacja 14.09, po S4 v3/Q1 E5/DEC-508/DEC-509/Z-51..Z-53/Northwind).** S4 F2-2
+Praca **v3 PRZYJĘTE** `861db8842f` → linia `1e6c435fa9`; Q1 E5 **PRZYJĘTE** `f05fabae66` → linia
+**`1154ebd809`** = **staging** (jedno wdrożenie, health+tag potwierdzone). §5 B-E1 (S4) →
+**🧪 NA STAGINGU `1154ebd809`**; OB2/OB3/OB4 (Q1 Obciążenie, Q1 E5 dogrywka) pozostają
+**🧪 NA STAGINGU**, SHA dopisane `1154ebd809`. Northwind Manufacturing Ltd. = org prezentacyjna EN
+pilotażu (Z-46 częściowo domknięte); Irina założona. Skrzynka: **Z-51 nowa (reguła bramki,
+zapisana)**, **Z-52 nowa (biblioteka bez wywołania, DRD-EN, u Codexa fala J1)**, **Z-53 nowa
+(luka pomiaru S1.1–S1.16, otwarta)**, **DEC-508 (zgoda migracja addytywna Z-39, warunkowa)**,
+**DEC-509 (pakiet JĘZYK, w toku)**.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
