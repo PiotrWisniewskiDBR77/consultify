@@ -1,5 +1,6 @@
 import { AlertCircle, CreditCard, Loader2, Mail, Plus, UserPlus, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '../store/useAppStore';
 import { isAdminOrSuperAdminRole } from '../utils/roleGuards';
@@ -28,8 +29,11 @@ interface SeatInfo {
 const API_URL = '/api';
 const INVITE_SEAT_ADD_FAILED_COPY = 'Could not add a seat. Try again or contact support.';
 const INVITE_SEND_FAILED_COPY = 'Could not send invitation. Try again or contact support.';
+const INVITE_SEAT_ADD_FAILED_KEY = 'settings.inviteUserModal.seatAddFailed';
+const INVITE_SEND_FAILED_KEY = 'settings.inviteUserModal.sendFailed';
 
 const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, projectId }) => {
+  const { t } = useTranslation();
   const { currentUser } = useAppStore();
   const token = localStorage.getItem('token');
   const [email, setEmail] = useState('');
@@ -108,19 +112,24 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
     e.preventDefault();
 
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError(
+        t('settings.inviteUserModal.invalidEmail', 'Please enter a valid email address'),
+      );
       return;
     }
 
     if (isProjectInvite && !selectedProject) {
-      setError('Please select a project');
+      setError(t('settings.inviteUserModal.selectProject', 'Please select a project'));
       return;
     }
 
     // Check if we need to add a seat first
     if (seatsAreFull && !autoAddSeat) {
       setError(
-        'Please enable "Add seat automatically" to proceed, or contact your administrator to upgrade your plan.'
+        t(
+          'settings.inviteUserModal.enableAutoSeat',
+          'Please enable "Add seat automatically" to proceed, or contact your administrator to upgrade your plan.',
+        ),
       );
       return;
     }
@@ -150,7 +159,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           const nextCode =
             typeof rawCode === 'string' && rawCode.trim().length > 0 ? rawCode.trim() : null;
           setErrorCode(nextCode);
-          setError(INVITE_SEAT_ADD_FAILED_COPY);
+          setError(t(INVITE_SEAT_ADD_FAILED_KEY, INVITE_SEAT_ADD_FAILED_COPY));
           return;
         }
 
@@ -189,14 +198,14 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
         const nextCode =
           typeof rawCode === 'string' && rawCode.trim().length > 0 ? rawCode.trim() : null;
         setErrorCode(nextCode);
-        setError(INVITE_SEND_FAILED_COPY);
+        setError(t(INVITE_SEND_FAILED_KEY, INVITE_SEND_FAILED_COPY));
         return;
       }
 
       onSuccess();
     } catch (err) {
       setErrorCode(null);
-      setError(INVITE_SEND_FAILED_COPY);
+      setError(t(INVITE_SEND_FAILED_KEY, INVITE_SEND_FAILED_COPY));
     } finally {
       setLoading(false);
       setAddingSeat(false);
@@ -212,7 +221,9 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Invite User</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('settings.inviteUserModal.header', 'Invite User')}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -230,11 +241,18 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-medium">Organization has reached maximum seats.</p>
+                  <p className="font-medium">
+                    {t('settings.inviteUserModal.seatsFull', 'Organization has reached maximum seats.')}
+                  </p>
                   <p className="text-amber-700 text-xs mt-1">
-                    {seatInfo?.seatsUsed}/{seatInfo?.maxSeats} seats used.
+                    {t('settings.inviteUserModal.seatsUsed', '{{used}}/{{max}} seats used.', {
+                      used: seatInfo?.seatsUsed,
+                      max: seatInfo?.maxSeats,
+                    })}
                     {seatInfo?.canAddSeats &&
-                      ` Add a seat for $${seatInfo?.seatPrice}/month to continue.`}
+                      ` ${t('settings.inviteUserModal.seatsAddPrompt', 'Add a seat for ${{price}}/month to continue.', {
+                        price: seatInfo?.seatPrice,
+                      })}`}
                   </p>
 
                   {/* Auto-add seat option */}
@@ -249,11 +267,14 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                       <div className="flex-1">
                         <span className="font-medium text-amber-900 flex items-center gap-1">
                           <Plus className="w-3 h-3" />
-                          Add seat automatically
+                          {t('settings.inviteUserModal.autoAddSeat', 'Add seat automatically')}
                         </span>
                         <span className="text-xs text-amber-600 block">
-                          +${seatInfo?.seatPrice}/{seatInfo?.currency}/month will be added to your
-                          billing
+                          {t(
+                            'settings.inviteUserModal.autoAddSeatBilling',
+                            '+${{price}}/{{currency}}/month will be added to your billing',
+                            { price: seatInfo?.seatPrice, currency: seatInfo?.currency },
+                          )}
                         </span>
                       </div>
                       <CreditCard className="w-4 h-4 text-amber-600" />
@@ -277,7 +298,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                     data-testid="invite-user-error-code"
                     className="mt-1 text-[11px] font-medium text-danger-700/90 dark:text-danger-300/90"
                   >
-                    Code: {errorCode}
+                    {t('settings.inviteUserModal.errorCode', 'Code: {{code}}', { code: errorCode })}
                   </div>
                 ) : null}
               </div>
@@ -290,7 +311,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Email Address *
+              {t('settings.inviteUserModal.emailLabel', 'Email Address *')}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -310,7 +331,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           {!projectId && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Invitation Type
+                {t('settings.inviteUserModal.invitationType', 'Invitation Type')}
               </label>
               <div className="flex gap-2">
                 <button
@@ -322,7 +343,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                       : 'bg-white dark:bg-navy-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
                   }`}
                 >
-                  Organization
+                  {t('settings.inviteUserModal.invitationTypeOrg', 'Organization')}
                 </button>
                 <button
                   type="button"
@@ -333,7 +354,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                       : 'bg-white dark:bg-navy-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
                   }`}
                 >
-                  Project
+                  {t('settings.inviteUserModal.invitationTypeProject', 'Project')}
                 </button>
               </div>
             </div>
@@ -346,7 +367,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 htmlFor="project"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Project *
+                {t('settings.inviteUserModal.projectLabel', 'Project *')}
               </label>
               <select
                 id="project"
@@ -355,7 +376,9 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 className="w-full px-4 py-2 bg-white dark:bg-navy-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               >
-                <option value="">Select a project</option>
+                <option value="">
+                  {t('settings.inviteUserModal.selectProjectOption', 'Select a project')}
+                </option>
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -371,7 +394,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               htmlFor="role"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Account Type
+              {t('settings.inviteUserModal.accountType', 'Account Type')}
             </label>
             <select
               id="role"
@@ -379,13 +402,21 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               onChange={(e) => setRole(e.target.value)}
               className="w-full px-4 py-2 bg-white dark:bg-navy-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
-              <option value="USER">User</option>
-              {isAdmin && <option value="ADMIN">Admin</option>}
+              <option value="USER">{t('settings.inviteUserModal.roleUser', 'User')}</option>
+              {isAdmin && (
+                <option value="ADMIN">{t('settings.inviteUserModal.roleAdmin', 'Admin')}</option>
+              )}
             </select>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {role === 'USER'
-                ? 'Can view and contribute to assigned projects'
-                : 'Can manage organization settings and users'}
+                ? t(
+                    'settings.inviteUserModal.roleUserHint',
+                    'Can view and contribute to assigned projects',
+                  )
+                : t(
+                    'settings.inviteUserModal.roleAdminHint',
+                    'Can manage organization settings and users',
+                  )}
             </p>
           </div>
 
@@ -396,7 +427,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 htmlFor="projectRole"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Project Role
+                {t('settings.inviteUserModal.projectRole', 'Project Role')}
               </label>
               <select
                 id="projectRole"
@@ -404,18 +435,48 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 onChange={(e) => setProjectRole(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
-                <option value="PROJECT_EXECUTIVE">Project Executive / Sponsor</option>
-                <option value="PROJECT_MANAGER">Project Manager</option>
-                <option value="TEAM_LEAD">Team Lead</option>
-                <option value="TEAM_MEMBER">Team Member</option>
-                <option value="STAKEHOLDER">Stakeholder / Viewer</option>
+                <option value="PROJECT_EXECUTIVE">
+                  {t('settings.inviteUserModal.projectRoleExecutive', 'Project Executive / Sponsor')}
+                </option>
+                <option value="PROJECT_MANAGER">
+                  {t('settings.inviteUserModal.projectRoleManager', 'Project Manager')}
+                </option>
+                <option value="TEAM_LEAD">
+                  {t('settings.inviteUserModal.projectRoleTeamLead', 'Team Lead')}
+                </option>
+                <option value="TEAM_MEMBER">
+                  {t('settings.inviteUserModal.projectRoleTeamMember', 'Team Member')}
+                </option>
+                <option value="STAKEHOLDER">
+                  {t('settings.inviteUserModal.projectRoleStakeholder', 'Stakeholder / Viewer')}
+                </option>
               </select>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {projectRole === 'PROJECT_EXECUTIVE' && 'Strategic oversight and sponsorship'}
-                {projectRole === 'PROJECT_MANAGER' && 'Full project management responsibilities'}
-                {projectRole === 'TEAM_LEAD' && 'Leads a workstream or team within the project'}
-                {projectRole === 'TEAM_MEMBER' && 'Executes tasks and contributes to deliverables'}
-                {projectRole === 'STAKEHOLDER' && 'View-only access to project progress'}
+                {projectRole === 'PROJECT_EXECUTIVE' &&
+                  t(
+                    'settings.inviteUserModal.projectRoleExecutiveHint',
+                    'Strategic oversight and sponsorship',
+                  )}
+                {projectRole === 'PROJECT_MANAGER' &&
+                  t(
+                    'settings.inviteUserModal.projectRoleManagerHint',
+                    'Full project management responsibilities',
+                  )}
+                {projectRole === 'TEAM_LEAD' &&
+                  t(
+                    'settings.inviteUserModal.projectRoleTeamLeadHint',
+                    'Leads a workstream or team within the project',
+                  )}
+                {projectRole === 'TEAM_MEMBER' &&
+                  t(
+                    'settings.inviteUserModal.projectRoleTeamMemberHint',
+                    'Executes tasks and contributes to deliverables',
+                  )}
+                {projectRole === 'STAKEHOLDER' &&
+                  t(
+                    'settings.inviteUserModal.projectRoleStakeholderHint',
+                    'View-only access to project progress',
+                  )}
               </p>
             </div>
           )}
@@ -423,22 +484,25 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           {/* Preview */}
           <div className="bg-gray-50 dark:bg-navy-800 rounded-lg p-4 border border-gray-200 dark:border-navy-700">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Invitation Preview
+              {t('settings.inviteUserModal.previewHeader', 'Invitation Preview')}
             </h4>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{email || 'user@example.com'}</span> will be invited
-              with <span className="font-medium">{role}</span> account type
+              <span className="font-medium">{email || 'user@example.com'}</span>{' '}
+              {t('settings.inviteUserModal.previewInvitedWith', 'will be invited with')}{' '}
+              <span className="font-medium">{role}</span>{' '}
+              {t('settings.inviteUserModal.previewAccountType', 'account type')}
               {isProjectInvite && selectedProject && (
                 <>
                   {' '}
-                  and <span className="font-medium">{projectRole.replace(/_/g, ' ')}</span> project
-                  role
+                  {t('settings.inviteUserModal.previewAnd', 'and')}{' '}
+                  <span className="font-medium">{projectRole.replace(/_/g, ' ')}</span>{' '}
+                  {t('settings.inviteUserModal.previewProjectRole', 'project role')}
                 </>
               )}
               .
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              The invitation will expire in 7 days.
+              {t('settings.inviteUserModal.previewExpiry', 'The invitation will expire in 7 days.')}
             </p>
           </div>
 
@@ -449,7 +513,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               onClick={onClose}
               className="flex-1 px-4 py-2 bg-gray-100 dark:bg-navy-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-navy-700 transition-colors font-medium"
             >
-              Cancel
+              {t('settings.inviteUserModal.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
@@ -460,23 +524,23 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 addingSeat ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Adding Seat...
+                    {t('settings.inviteUserModal.addingSeat', 'Adding Seat...')}
                   </>
                 ) : (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Sending...
+                    {t('settings.inviteUserModal.sending', 'Sending...')}
                   </>
                 )
               ) : seatsAreFull && autoAddSeat ? (
                 <>
                   <Plus className="w-4 h-4" />
-                  Add Seat & Invite
+                  {t('settings.inviteUserModal.addSeatAndInvite', 'Add Seat & Invite')}
                 </>
               ) : (
                 <>
                   <Mail className="w-4 h-4" />
-                  Send Invitation
+                  {t('settings.inviteUserModal.sendInvitation', 'Send Invitation')}
                 </>
               )}
             </button>

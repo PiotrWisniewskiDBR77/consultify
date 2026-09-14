@@ -273,7 +273,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
             {/* Video Player Placeholder */}
             <video className="aspect-video w-full rounded-xl overflow-hidden shadow-2xl" controls>
               <source src={`/videos/en.mp4`} type="video/mp4" />
-              Your browser does not support the video tag.
+              {t('settings.welcomeView.videoUnsupported', 'Your browser does not support the video tag.')}
             </video>
 
             <div className="mt-6 text-center">
