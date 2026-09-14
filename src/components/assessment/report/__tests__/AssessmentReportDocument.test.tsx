@@ -10,10 +10,13 @@
  */
 import { render, screen, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import i18n from 'i18next';
 
 import { AssessmentReportDocument } from '../AssessmentReportDocument';
 import type { AssessmentReportData } from '../types';
+
+const JEZYK_STARTOWY = i18n.language;
 
 function buildData(overrides: Partial<AssessmentReportData['output']> = {}): AssessmentReportData {
   return {
@@ -283,6 +286,50 @@ describe('AssessmentReportDocument', () => {
     // Opisy osi 1–4 i 7 są w korpusie po angielsku — dokument oznacza je
     // znacznikiem EN zamiast podawać jako treść polską.
     expect(container.querySelectorAll('[title*="English original"]').length).toBeGreaterThan(0);
+  });
+
+  /**
+   * ★ FALA J3 (2026-09-14) — D3. Karta obszaru pisała „(skala 1–7)" zaszyte
+   * po polsku niezależnie od konta; na koncie EN wychodziło to 39 razy
+   * w dokumencie dla zarządu (zmierzone: staging a2b0a0fe32, sesja 381966f5).
+   * Dowód mutacyjny: przywróć literał ` (skala 1–{levelCount})` →
+   * asercja EN spada na „nie ma słowa skala".
+   */
+  describe('J3/D3 — skala obszaru idzie za językiem, nie za literałem', () => {
+    afterAll(async () => {
+      await i18n.changeLanguage(JEZYK_STARTOWY);
+    });
+
+    it('EN: karta obszaru pisze „(scale 1–7)" i ani razu „skala"', async () => {
+      await i18n.changeLanguage('en');
+      const { container } = render(<AssessmentReportDocument data={buildData()} />);
+      expect(container.textContent).toContain('(scale 1–7)');
+      expect(container.textContent).not.toContain('skala');
+    });
+
+    /**
+     * ★ CZEGO TEN HARNESS NIE WIDZI. `tests/setup.ts` podmienia
+     * `react-i18next` na atrapę, której `t(klucz, domyslna)` ZAWSZE zwraca
+     * wartość domyślną — więc polskiego wariantu NIE da się zobaczyć przez
+     * render (sprawdzone: przy `language='pl'` cały dokument i tak wychodzi
+     * po angielsku). Asercja wyżej dowodzi tego, co dowieść może: literał
+     * zniknął, a wartość domyślna jest angielska. Polski wariant sprawdzamy
+     * tam, gdzie naprawdę mieszka — w zasobach tłumaczeń.
+     */
+    it('oba pliki tłumaczeń niosą klucz — pl po polsku, en po angielsku', async () => {
+      const pl = JSON.parse(
+        await import('node:fs/promises').then((fs) =>
+          fs.readFile('public/locales/pl/translation.json', 'utf8')
+        )
+      );
+      const en = JSON.parse(
+        await import('node:fs/promises').then((fs) =>
+          fs.readFile('public/locales/en/translation.json', 'utf8')
+        )
+      );
+      expect(pl.assessment.report.area.scale).toBe('(skala 1–{{levels}})');
+      expect(en.assessment.report.area.scale).toBe('(scale 1–{{levels}})');
+    });
   });
 
   it('nie zostawia jednostki bez osi poza dokumentem', () => {

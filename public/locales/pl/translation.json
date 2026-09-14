@@ -8892,6 +8892,7 @@
       "lifecycleSessionRecord": "Zapis sesji oceny — jeszcze nie zamrożony",
       "methodologySourceEn": "Źródło: metodyka DRD w oryginale angielskim — polskiego tłumaczenia tej osi jeszcze nie ma w pakiecie.",
       "area": {
+        "scale": "(skala 1–{{levels}})",
         "currentLevel": "Poziom obecny {{level}} — {{title}}",
         "currentUnresolved": "Poziom obecny nie został w tej ocenie rozstrzygnięty.",
         "levelDefinitionMissing": "Metodyka przypięta w tym Outpucie nie niesie definicji tego poziomu.",
