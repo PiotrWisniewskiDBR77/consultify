@@ -127,6 +127,7 @@ describe('presentationLayoutDirectorService (B1)', () => {
     expect(llmCall).toHaveBeenCalledTimes(1);
     // premium tier routed
     expect(llmCall.mock.calls[0][0].modelConfig).toEqual({ id: 'premium' });
+    expect(llmCall.mock.calls[0][0].systemPrompt).toMatch(/Answer in en\.$/);
   });
 
   // ── FT-1.3 — invalid layoutIntent → mapped to deterministic ──

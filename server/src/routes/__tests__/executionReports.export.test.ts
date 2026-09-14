@@ -24,9 +24,7 @@ const snapshot = {
   ragReason: '10 blokad, 20 sygnałów krytycznych.',
   period: { start: '2026-08-31T00:00:00.000Z', end: '2026-09-07T00:00:00.000Z' },
   asOf: '2026-09-06T12:00:00.000Z',
-  metrics: [
-    { id: 'overdue', label: 'Zadania po terminie', value: '20', tone: 'CRIT' as const },
-  ],
+  metrics: [{ id: 'overdue', label: 'Zadania po terminie', value: '20', tone: 'CRIT' as const }],
   sections: [
     {
       id: 'progress',
@@ -51,7 +49,10 @@ const snapshot = {
 async function docxText(buffer: Buffer): Promise<string> {
   const zip = await JSZip.loadAsync(buffer);
   const xml = await zip.file('word/document.xml')!.async('string');
-  return xml.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+  return xml
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ');
 }
 
 describe('1.12-R4 — eksport raportu Realizacji przez UnifiedExportService', () => {
@@ -102,9 +103,22 @@ describe('1.12-R4 — eksport raportu Realizacji przez UnifiedExportService', ()
   it('PDF ma poprawną sygnaturę i realną objętość', async () => {
     const buffer = await unifiedExportService.exportPdf({
       title: snapshot.title,
-      markdown: snapshotToMarkdown(decodeSnapshotEntities(snapshot) as any, 'STEERCO', 'Opublikowany'),
+      markdown: snapshotToMarkdown(
+        decodeSnapshotEntities(snapshot) as any,
+        'STEERCO',
+        'Opublikowany'
+      ),
     });
     expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     expect(buffer.length).toBeGreaterThan(10000);
+  });
+
+  it('renders the same snapshot in English without Polish framing', () => {
+    const markdown = snapshotToMarkdown({ ...snapshot, locale: 'en' } as any, 'STEERCO');
+    expect(markdown).toContain('**Report level:** Steering committee');
+    expect(markdown).toContain('**Period:** 08/31/2026 – 09/07/2026');
+    expect(markdown).toContain('**Data as of:** 09/06/2026');
+    expect(markdown).toContain('**RAG assessment:** Red');
+    expect(markdown).not.toMatch(/Poziom raportu|Okres:|Stan danych na|Czerwony/);
   });
 });

@@ -1095,10 +1095,9 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
       /* non-fatal — fall back to default label */
     }
 
-    const language: 'pl' | 'en' =
-      String((req.query.lang as string) || reportRow.language || 'pl').toLowerCase() === 'en'
-        ? 'en'
-        : 'pl';
+    // The report/job locale is frozen with the report. `?lang=` remains an explicit
+    // preview override; older rows fall through user → organization → EN (DEC-510).
+    const language = await resolveAssessmentReportLanguage(req, organizationId, reportRow.language);
 
     // Wire the real LLM narrator (fail-safe). If the service is unavailable the
     // narrator is simply omitted and the deterministic stub authors the prose.
@@ -1263,10 +1262,11 @@ router.post('/:reportId/conclusion', async (req: AuthRequest, res: Response) => 
       /* non-fatal — fall back to default label */
     }
 
-    const language: 'pl' | 'en' =
-      String((req.body?.language as string) || reportRow.language || 'pl').toLowerCase() === 'en'
-        ? 'en'
-        : 'pl';
+    const language = await resolveAssessmentReportLanguage(
+      req,
+      organizationId,
+      req.body?.language ?? reportRow.language
+    );
 
     // Narrator LLM i ugruntowanie ksiazkowe — identycznie fail-safe jak w
     // `/:reportId/drd-report`: brak uslugi = narrator deterministyczny, wniosek
@@ -1445,7 +1445,11 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
       return notConfigured(res);
     }
 
-    const lang = language || 'pl';
+    const lang = await resolveAssessmentReportLanguage(
+      req,
+      organizationId,
+      language ?? reportRow.language
+    );
     const langLabel = lang === 'pl' ? 'Polish' : 'English';
     const assessmentContext = `Assessment: "${reportRow.assessmentName}" (${reportRow.assessmentType || 'DRD'}), Status: ${reportRow.assessmentStatus || 'IN_PROGRESS'}`;
     const axisDataSummary =
@@ -3110,10 +3114,14 @@ function parseExplicitReportLanguage(value: unknown): 'pl' | 'en' | null {
 
 async function resolveAssessmentReportLanguage(
   req: AuthRequest,
-  organizationId: string
+  organizationId: string,
+  jobLocale?: unknown
 ): Promise<'pl' | 'en'> {
   const explicit = parseExplicitReportLanguage(req.query?.lang);
   if (explicit) return explicit;
+
+  const frozenJobLocale = parseExplicitReportLanguage(jobLocale);
+  if (frozenJobLocale) return frozenJobLocale;
 
   try {
     const userId = req.user?.id;

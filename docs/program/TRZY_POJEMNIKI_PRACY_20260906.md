@@ -1574,3 +1574,57 @@ sukcesem, do D3)**, **Z-56 nowa (druga migracja addytywna `normalized_project_ro
 poziomów DRD PL bez EN, decyzja właściciela metodyki)**, **DEC-510 (język, resolver
 `users.language`, fala 2 bez migracji)**, **DEC-511 (zgoda migracja addytywna
 `normalized_project_role`, warunkowa)**.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po falach D3/J2, Z-59/Z-60, DEC-512, S3 P2 HOLD,
+testerach).** Staging: `f996f03a6a` (fala D3 + Z-39; 18:28) → **`a2b0a0fe32`** (fala J2; 19:00),
+health i tag potwierdzone; tagi cofnięcia `rollback-pre-fala-d3-20260914`,
+`rollback-pre-fala-j2-20260914`. Fala **D3** `f996f03a6a` (CTO): **Z-54** pasek „Read only" +
+tooltipy (przewód `canWrite` istniał, brakowało wyjaśnienia), **Z-55** realny
+`DELETE /api/method/sessions/:id` (twardy DELETE w transakcji; uprawnienie właściciel/OWNER/
+ADMIN; `DELETE /api/assessments` przestał kłamać; naprawiona projekcja `source`), kanon **P-T14**
+— premisa obalona (natywny `<select>` w komórce JEST kanonem `StandardEditableCell`), „Sesja/
+Pytanie x z y" → i18n, klucze `standardPreview.property/value` zamiast nieistniejących
+`common.*`, P-T14 reszta (synchronizacja nazwy, obca karta) naprawiona; nowe trasy zwracają kody
+błędów bez prozy (DEC-461). **Z-39** migracja `6f545e222e` PRZYJĘTA (fresh strict 917, S5 70/70 z
+`ENABLE_V8_GLOBAL=true`) → linia `19b633c81e`; ledger stagingu +20262200.
+
+**Z-59 nowa („dramat właściciela", DEC-512).** Sesja DRD frozen/closed pokazywała surowy zrzut
+kontraktu A6 (`FrozenOutputHttpView`, `DrdHttpMethodWorkspaceScreen.tsx:1313` early-return przed
+`MethodWorkspaceShell`; slice z 13.08 `0a4a0719f7`, bramka rozbrojona) zamiast raportu; teksty
+`scope/limitations` zamrożone w bazie po polsku (sesja Northwind 08.09 14:47, EN dodano 22:09);
+findings zaszyte PL; 0 celów (`DECISION_APPROVED target_level`) w całej bazie → GAP null;
+CURRENT=3 wszędzie (seed). Fala **J2** `a2b0a0fe32` (CTO): frozen/closed zostaje w powłoce
+(Interview·Matrix·Report readOnly z powodem `readOnlyReason`), domyślnie Report = kanoniczny
+`AssessmentReportView(outputId)`, surowy widok pod Ustawienia → „Technical details"
+(+`?ff_drdFrozenRaw=1`); `TEKSTY_OUTPUTU` bez nazw repo, `deriveFindingsFromEvents(events, lang)`
+EN/PL; zrzuty `zrzuty-j2-frozen-20260914/`. Długi → Codex tor D (Wpis 57): spec e2e
+`asm-ui-canon-technical.spec.ts`, ścieżka legacy `DrdMethodWorkspaceScreen.tsx:429`, mock
+`dev-render/screens/assessment-output-report.tsx`, `unitName=unitId`. Zasiew Northwind przez API
+(39 jednostek, poziomy 2–4, cele 3–5, dowody EN → output v2) w toku; skrypt
+`cto-codex/seed-northwind-20260914/` (dry-run 1388/1388); atrapy `614e5f28` (Northwind) i
+`203d5476` (DBR77) do usunięcia trasą Z-55.
+
+**S3 P2 Plan `075f239f55` — HOLD CTO (Wpis 58).** Paczka chowa istniejącą zakładkę Plan za flagą
+OFF (Menu 2 3→2, trasy 404), 2 testy kanonu Menu 2 czerwone tylko na kandydacie; reszta zielona
+(RealPG 24/24, tsc 177, canon 349). Decyzja CTO A: flaga bramkuje tylko nowość; + natywny select
+w `PlanDependencyAnalysisPanel.tsx:183`, fantom `VITE_INITIATIVES_PLAN_ANALYSIS` w docs. **Z-60
+nowa (P2).** `DocumentCardMenu5.tsx:31` `isPolish = true` domyślnie, `PlanCard.tsx:992` nie
+przekazuje → powłoka artefaktu po polsku w EN — dotyczy KAŻDEGO artefaktu, do Codexa tor D.
+
+**Testerzy (Z-46 domknięte).** Tomek = `tomasz.jankowski@`, Kasia = `katarzyna.szwarocka@`
+(konto założone 14.09, ADMIN DBR77+Northwind; Wójcik to inna osoba), Irina założona. Maile ze
+scenariuszami wysłane 14.09 z Outlooka właściciela (treść
+`cto-codex/maile-testerzy-20260914/`).
+
+**Codex — stan.** Z-56/DEC-511 w toku, E2d Teresa w toku, S3 v2 po HOLD. Dysk 34 GiB.
+
+**Liczniki §5 — po D3/J2 (14.09 noc): nie przeliczone w tym wpisie.** Poprzedni zmierzony stan
+✅3 · 🧪18 · 🔧6 · ⬜20 (47 etapów, po fali D1/U2, patrz wyżej). P-T14 dokończone falą D3;
+Z-54/Z-55 to nowe naprawy poza katalogiem P-T, obie zamknięte tą samą falą. Przeliczenie liczników
+§5 i stanu pilotażu po D3/J2 zostaje jako zadanie kolejnej sesji/Codexa — brak w tym przekazaniu
+narzędzia pomiaru na żywo, zgodnie z zasadą „brak pomiaru nie jest wynikiem". Skrzynka: **P-T14
+zamknięte**, **Z-54 zamknięte (naprawa D3)**, **Z-55 zamknięte (naprawa D3)**, **Z-58 nadal
+otwarta (25 tytułów poziomów DRD PL bez EN)**, **Z-59 nowa (surowy kontrakt A6 zamiast raportu na
+frozen/closed, DEC-512)**, **Z-60 nowa (powłoka artefaktu PL w EN, `isPolish` domyślne, P2)**,
+**DEC-512 (frozen/closed w powłoce, Report kanoniczny domyślnie)**. S3 P2 Plan `075f239f55` —
+**HOLD CTO** (nie wchodzi na staging bez decyzji o flagowaniu/naprawie 2 testów kanonu Menu 2).

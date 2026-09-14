@@ -1,5 +1,5 @@
 /**
- * SSOT języka odpowiedzi Teresy (2026-09-06).
+ * SSOT języka odpowiedzi Teresy (DEC-510, 2026-09-14).
  *
  * PRZYCZYNA (zmierzona na stanowisku lokalnym 05.09, `/private/tmp/stanowisko-noc/teresa-stream.txt`):
  * `POST /api/ai/chat/stream` z polskim pytaniem odpowiadał po angielsku —
@@ -13,23 +13,18 @@
  *   - `services/ai/AIPipeline.ts` — `authoritativeLanguage` i `langBaseFinal` domyślnie `'en'`.
  *   - `ai/persona.ts` — `detectLanguage()` domyślnie `'en'`.
  *
- * SSOT (`docs/ssot/ZASADY_AI_TERESA_SSOT.md` §8 J1) mówi wprost:
- * „**Polski jest domyślny** dla całego UI Teresy i dla treści generowanych;
- *  angielski tylko na jawne żądanie użytkownika."
- *
- * Ten moduł jest jedynym miejscem, w którym rozstrzyga się język odpowiedzi
- * i buduje instrukcję językową dla modelu. Kolejność rozstrzygania:
- *   1. jawny wybór z żądania (`body.language` / `options.language` / `context.language`)
- *   2. język wątku (`conversationLanguage`)
- *   3. profil użytkownika (`users.language` — migracja `20260726_users_language_preference.sql`)
- *   4. nagłówek `Accept-Language`
- *   5. `pl` (domyślny — NIE `en`)
+ * Ten moduł jest jedynym miejscem, w którym rozstrzyga się locale odpowiedzi
+ * i buduje końcową instrukcję językową dla modelu. Jawny wybór w żądaniu jest
+ * zachowaną ścieżką kompatybilności. Bez niego obowiązuje kolejność DEC-510:
+ * `users.language` → legacy `users.locale` → `organizations.default_language` → `en`.
  */
 
 export type AiLanguage = 'pl' | 'en' | 'de' | 'es' | 'ja' | 'ar';
 
 /** Domyślny język Teresy. Zmiana tej stałej zmienia zachowanie CAŁEJ aplikacji. */
-export const DEFAULT_AI_LANGUAGE: AiLanguage = 'pl';
+export const DEFAULT_AI_LANGUAGE: AiLanguage = 'en';
+
+export type ResolvedLocale = AiLanguage;
 
 /** Etykiety podawane modelowi — pełna nazwa + endonim, żeby model nie zgadywał. */
 export const AI_LANGUAGE_LABELS: Record<AiLanguage, string> = {
@@ -115,13 +110,39 @@ export function buildLanguageInstruction(language: AiLanguage): string {
   );
 }
 
+const FINAL_LOCALE_MARKER = '[FINAL RESPONSE LANGUAGE]';
+const FINAL_LOCALE_BLOCK = new RegExp(
+  `\\n*\\${FINAL_LOCALE_MARKER}\\n\\[LANGUAGE INSTRUCTION:[^\\n]*\\]\\nAnswer in (?:pl|en|de|es|ja|ar)\\.\\n*`,
+  'g'
+);
+
+/**
+ * Dopina jedną, idempotentną instrukcję na sam koniec promptu systemowego.
+ * Ostatnia linia jest celowo krótka i jednoznaczna dla każdego providera.
+ */
+export function withResolvedLocaleInstruction(systemPrompt: string, locale: unknown): string {
+  const resolvedLocale = resolveAiLanguage(locale);
+  const undecorated = String(systemPrompt || '').replace(FINAL_LOCALE_BLOCK, '\n\n').trim();
+  const finalBlock = `${FINAL_LOCALE_MARKER}\n${buildLanguageInstruction(resolvedLocale)}\nAnswer in ${resolvedLocale}.`;
+  return undecorated ? `${undecorated}\n\n${finalBlock}` : finalBlock;
+}
+
 /** Kształt żądania, jakiego potrzebujemy — celowo minimalny, żeby test nie musiał budować Expressa. */
 export interface LanguageRequestLike {
   body?: Record<string, unknown> | null;
   headers?: Record<string, unknown> | null;
   get?: (name: string) => string | undefined;
   userId?: string | null;
-  user?: { id?: string | null; language?: string | null; preferred_language?: string | null } | null;
+  organizationId?: string | null;
+  resolvedLocale?: ResolvedLocale;
+  user?: {
+    id?: string | null;
+    language?: string | null;
+    locale?: string | null;
+    preferred_language?: string | null;
+    organizationId?: string | null;
+    organization_id?: string | null;
+  } | null;
 }
 
 /**
@@ -150,46 +171,87 @@ export function resolveAiLanguageFromRequest(
 }
 
 /**
- * Pełne rozstrzygnięcie: jak wyżej, ale gdy nic z żądania nie wskazuje języka,
- * dociąga `users.language` z bazy (SSOT preferencji — migracja 20260726).
- *
- * Odczyt jest best-effort: błąd bazy NIE wywraca czatu, tylko cofa nas do
- * `Accept-Language` → `pl`. Fail-safe jest tu polski, nie angielski.
+ * Ogólny resolver DEC-510. Jawny wybór żądania jest kompatybilnym override'em;
+ * poza nim kolejność jest stała: profil kanoniczny, profil legacy, organizacja,
+ * angielski. Wynik zapisujemy również na `req.resolvedLocale`.
  */
+export async function resolveLocale(
+  req: LanguageRequestLike | null | undefined,
+  explicit?: unknown
+): Promise<ResolvedLocale> {
+  const body = (req?.body || {}) as Record<string, unknown>;
+  const explicitRequestLocale =
+    normalizeAiLanguage(explicit) ||
+    normalizeAiLanguage(body.language) ||
+    normalizeAiLanguage((body.context as Record<string, unknown> | undefined)?.language);
+  if (explicitRequestLocale) {
+    if (req) req.resolvedLocale = explicitRequestLocale;
+    return explicitRequestLocale;
+  }
+
+  const alreadyResolved = normalizeAiLanguage(req?.resolvedLocale);
+  if (alreadyResolved) return alreadyResolved;
+
+  const tokenLanguage = normalizeAiLanguage(req?.user?.language);
+  if (tokenLanguage) {
+    if (req) req.resolvedLocale = tokenLanguage;
+    return tokenLanguage;
+  }
+  const tokenLegacyLocale = normalizeAiLanguage(req?.user?.locale ?? req?.user?.preferred_language);
+  if (tokenLegacyLocale) {
+    if (req) req.resolvedLocale = tokenLegacyLocale;
+    return tokenLegacyLocale;
+  }
+
+  let organizationId =
+    req?.organizationId || req?.user?.organizationId || req?.user?.organization_id || null;
+  const userId = req?.userId || req?.user?.id || null;
+  try {
+    const { get: dbGet } = await import('../../utils/DbPromise.js');
+    if (userId) {
+      // `to_jsonb` keeps the legacy locale read compatible with installations
+      // where the physical `users.locale` column has already been removed.
+      const row: any = await dbGet(
+        `SELECT to_jsonb(u)->>'language' AS language,
+                to_jsonb(u)->>'locale' AS locale,
+                organization_id
+           FROM users u
+          WHERE id = ?`,
+        [userId]
+      );
+      organizationId = organizationId || row?.organization_id || null;
+      const userLanguage = normalizeAiLanguage(row?.language);
+      const legacyLocale = normalizeAiLanguage(row?.locale);
+      const profileLocale = userLanguage || legacyLocale;
+      if (profileLocale) {
+        if (req) req.resolvedLocale = profileLocale;
+        return profileLocale;
+      }
+    }
+
+    if (organizationId) {
+      const organization: any = await dbGet(
+        'SELECT default_language FROM organizations WHERE id = ?',
+        [organizationId]
+      );
+      const organizationLocale = normalizeAiLanguage(organization?.default_language);
+      if (organizationLocale) {
+        if (req) req.resolvedLocale = organizationLocale;
+        return organizationLocale;
+      }
+    }
+  } catch {
+    // Locale lookup is fail-open for chat availability; DEC-510 fallback remains `en`.
+  }
+
+  if (req) req.resolvedLocale = DEFAULT_AI_LANGUAGE;
+  return DEFAULT_AI_LANGUAGE;
+}
+
+/** Compatibility alias retained for existing callers. */
 export async function resolveAiLanguageForRequest(
   req: LanguageRequestLike | null | undefined,
   explicit?: unknown
 ): Promise<AiLanguage> {
-  const body = (req?.body || {}) as Record<string, unknown>;
-  const fromRequest = resolveAiLanguage(
-    explicit,
-    body.language,
-    (body.context as Record<string, unknown> | undefined)?.language,
-    req?.user?.language,
-    req?.user?.preferred_language
-  );
-  // Wprost wybrany język (albo profil już w tokenie) — nie ruszamy bazy.
-  if (
-    normalizeAiLanguage(explicit) ||
-    normalizeAiLanguage(body.language) ||
-    normalizeAiLanguage((body.context as Record<string, unknown> | undefined)?.language) ||
-    normalizeAiLanguage(req?.user?.language) ||
-    normalizeAiLanguage(req?.user?.preferred_language)
-  ) {
-    return fromRequest;
-  }
-
-  const userId = req?.userId || req?.user?.id || null;
-  if (userId) {
-    try {
-      const { get: dbGet } = await import('../../utils/DbPromise.js');
-      const row: any = await dbGet('SELECT language FROM users WHERE id = ?', [userId]);
-      const fromProfile = normalizeAiLanguage(row?.language);
-      if (fromProfile) return fromProfile;
-    } catch {
-      // Kolumna/baza niedostępna — schodzimy do nagłówka i domyślnego `pl`.
-    }
-  }
-
-  return resolveAiLanguageFromRequest(req, explicit);
+  return resolveLocale(req, explicit);
 }
