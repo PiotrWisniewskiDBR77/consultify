@@ -1,6 +1,6 @@
-# A/E W53–W55 E2d Teresa locale — freeze receipt
+# A/E W53–W56 E2d Teresa locale — freeze receipt
 
-**Verdict: READY_FOR_INDEPENDENT_REVIEW.** DEC-510 locale resolution and the final prompt-language instruction are implemented and rebased without conflict onto required base `08c1bb7a2614a84092b8c4ed52404df69dcfd907`; no migration or response-schema change was made.
+**Verdict: READY_FOR_INDEPENDENT_REVIEW.** DEC-510 locale resolution and the final prompt-language instruction are implemented and rebased without conflict onto required base `19b633c81e262b9f3c2f25b0555b2dfceab8b42e`; no migration or response-schema change was made.
 
 ## Seven bounded positions delivered
 
@@ -15,20 +15,20 @@
 ## Evidence after required rebase
 
 - Pre-rebase content commit: `2c52e8caf373fbfcb8f8717228244e2f9240dadb`; exact backup `backup/codex/a-e2d-teresa-locale-20260914-2c52e8caf3-20260914`.
-- Rebase onto `08c1bb7a26` completed without conflicts; rebased content commit `38d98f424eb0e3173541921daa9e5b4dcfc7877d`.
+- W56 rebase onto `19b633c81e` completed without conflicts; rebased content commit `665130039474fd158772cd2fe0bf04df9c7105d7`. The previously reviewed freeze was `52aaf2fd30822e84bfca0178d9a684e34c4702a4`.
 - RED before implementation: language policy **10 failed / 14 passed**.
-- GREEN after rebase: **5 files / 58 tests passed**, `--retry=0`; changed RealPG suite additionally passed **5/5**, collected with no skip.
+- GREEN after W56 rebase: **5 files / 58 tests passed**, `--retry=0`; source wiring **5/5**; changed RealPG suite **5/5**, collected with no skip.
 - Covered siblings: language policy 24, deck brief 5, layout director 8, layout variants 10, presentation template draft 11.
-- Server TypeScript, repeated after shared dependency repair: exact new base **0 errors**, candidate **0 errors**.
+- Server TypeScript after W56 rebase: exact base **0 errors**, candidate **0 errors**.
 - Original content commit hooks: Teresa contract **19/19**; artifact, labels, density and language ratchets passed.
 - `git diff --check`: clean.
-- Fresh RealPG proof: `cx-a-e2d-pg`, PG18+vector, `127.0.0.1:5330/consultify_e2d`; strict schema migration passed. `RUN_DB_TESTS=1 MOCK_DB=false` collected and passed the changed `managementReports.titleLanguage.realdb.test.ts` **5/5**, with **0 skipped**. The package adds no migration.
+- Fresh RealPG proof repeated after W56 rebase: `cx-a-e2d-pg`, PG18+vector, `127.0.0.1:5330/consultify_e2d`; strict schema migration passed. `RUN_DB_TESTS=1 MOCK_DB=false` collected and passed the changed `managementReports.titleLanguage.realdb.test.ts` **5/5**, with **0 skipped**. The package adds no migration.
 
 ## Freeze identities
 
-- Exact base: `08c1bb7a2614a84092b8c4ed52404df69dcfd907`
-- Content commit: `38d98f424eb0e3173541921daa9e5b4dcfc7877d`
-- Exact rebased backup: `backup/codex/a-e2d-teresa-locale-20260914-38d98f424e-20260914`
+- Exact base: `19b633c81e262b9f3c2f25b0555b2dfceab8b42e`
+- Content commit: `665130039474fd158772cd2fe0bf04df9c7105d7`
+- Previous exact backup: `backup/codex/a-e2d-teresa-locale-20260914-review-fix-52aaf2fd30-20260914`
 - Freeze manifest: `evidence/a-e2d-teresa-locale/freeze-manifest.json` (self-excluding)
 
-STOP before independent review as required by W53/W55.
+STOP before independent review as required by W56.

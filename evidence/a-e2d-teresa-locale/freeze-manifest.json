@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "package": "A/E W53-W55 E2d Teresa locale DEC-510",
-  "base": "08c1bb7a2614a84092b8c4ed52404df69dcfd907",
-  "contentCommit": "38d98f424eb0e3173541921daa9e5b4dcfc7877d",
+  "package": "A/E W53-W56 E2d Teresa locale DEC-510",
+  "base": "19b633c81e262b9f3c2f25b0555b2dfceab8b42e",
+  "contentCommit": "665130039474fd158772cd2fe0bf04df9c7105d7",
   "preRebaseContentCommit": "2c52e8caf373fbfcb8f8717228244e2f9240dadb",
   "status": "READY_FOR_INDEPENDENT_REVIEW",
   "migration": false,
@@ -11,20 +11,21 @@
     "container": "cx-a-e2d-pg",
     "identity": "127.0.0.1:5330/consultify_e2d",
     "image": "pgvector/pgvector:pg18",
-    "strictMigrations": "PASS",
+    "strictMigrations": "PASS after W56 rebase",
     "environment": {
       "RUN_DB_TESTS": "1",
       "MOCK_DB": "false"
     },
     "test": "tests/integration/managementReports.titleLanguage.realdb.test.ts",
-    "result": "5/5 collected, 0 skipped"
+    "result": "5/5 collected, 0 skipped after W56 rebase"
   },
   "tests": {
-    "focused": "58/58 unit and caller tests + 5/5 RealPG",
+    "focused": "58/58 after W56 rebase",
     "serverTypeScript": {
       "baseErrors": 0,
       "candidateErrors": 0
-    }
+    },
+    "sourceWiring": "5/5 after W56 rebase"
   },
   "files": [
     {
@@ -97,5 +98,6 @@
       "sha256": "285e7788af123fb761768fac07d9a722f4dd6c79f87bef3af8a9e995a52f1ce4",
       "bytes": 12805
     }
-  ]
+  ],
+  "previousReviewedFreeze": "52aaf2fd30822e84bfca0178d9a684e34c4702a4"
 }
