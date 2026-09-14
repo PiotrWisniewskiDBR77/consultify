@@ -308,6 +308,51 @@ po dowiezieniu Pracy i Raportów (W1, fala D). Q5 — **czeka na właściciela**
 kontraktami — rekomendacja CTO). Plan: `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` §5/§6
 zaktualizowane (L2 GOTOWE fala A, A4 przydzielone fala B, U1 domknięte).
 
+**Uzupełnienie DEC-496 (CTO, 14.09) — zgłoszenia Pawła P-P06…P-P13 (widget feedback, staging).**
+Zgłaszający: `pawel.mroczkowski@dbr77.com` (OWNER, org DBR77). Kontynuacja tabeli P-P01…P-P05;
+razem z tym uzupełnieniem Paweł ma **13 zgłoszeń** (5 + 8), wszystkie z widgetu, każde ze zrzutem
+i logami.
+
+| Nr | ID | Czas (UTC, 14.09) | Waga | Moduł | Opis | Stan |
+|---|---|---|---|---|---|---|
+| P-P06 | `3317aaf2` | 04:18 | HIGH | Initiatives | Ręczne tworzenie inicjatywy gubi wybrany projekt (pole wraca do „Select a project…” po uzupełnieniu podsumowania) i nie da się utworzyć — backend wymaga `projectId` i `initiativeOwnerId`, formularz nie ma pola właściciela | gałąź `integracja/kandydat-pawel-inicjatywa-20260914` (Opus) — w toku |
+| P-P07 | `4b5e98bf` | 04:24 | MEDIUM | AI chat (Teresa) | Czat Teresy zwraca `AI_STREAM_ERROR` przy każdym żądaniu | Opus — diagnoza na żywo (przyczyna po stronie dostawców/strumienia; zmierzona i naprawiona przed wdrożeniem fali A, 04:31) |
+| P-P08 | `260d083a` | 04:19 | LOW | Assessment (DRD) | Niejasne znaczenie „boxes” pod odpowiedziami w DRD | decyzja produktu — opis w raporcie Opus assessment |
+| P-P09 | `f8cc1674` | 04:23 | LOW | Assessment (DRD) | Logika pól typu „I have no evidence” w DRD do przejrzenia | decyzja produktu — opis w raporcie Opus assessment |
+| P-P10 | `8e27e4eb` | 04:28 | MEDIUM | Assessment | Raport `DBR77 Staging Assessment Executive Report` otwiera obcą, pustą ocenę (`Analiza gotowości AI`, 0/39 obszarów, PL zamiast EN) | gałąź `integracja/kandydat-pawel-assessment-20260914` (Opus) — w toku |
+| P-P11 | `ceb436ce` | 04:31 | MEDIUM | Assessment | Zgłoszenie ogólne pilotażu (nawigacja, spójność danych) | do listy UX |
+| P-P12 | `b7ac5351` | 04:31 | MEDIUM | Assessment | Raport generuje się mimo pustych pól (większość obszarów bez danych) | gałąź `integracja/kandydat-pawel-assessment-20260914` (Opus) — w toku |
+| P-P13 | `56c2cc19` | 04:43 | MEDIUM | Presentations | Wygenerowane raporty oceny nie są widoczne w Materials/Documents (tylko lokalne pobranie) | gałąź `integracja/kandydat-pawel-assessment-20260914` (Opus) — w toku |
+
+P-P10, P-P12, P-P13 zebrane w jedną gałąź Opus `integracja/kandydat-pawel-assessment-20260914`
+(wspólny obszar Assessment/raporty). P-P08/P-P09 pozostają decyzją produktu, nie defektem —
+skrót w raporcie Opus assessment. P-P11 ogólne — trafia do zbiorczej listy UX pilotażu.
+
+**Fala A cz. 1 — WDROŻONA na staging 14.09 04:31 UTC.**
+Linia `c3ac90ca73` → `005ead2ece` (merge drobne `8a445ba920` + pilot-blokery `005ead2ece`), run
+`34806390242` headSha zgodny, `/api/health` = `005ead2ece`, tag `staging-deployed` = `005ead2ece`,
+tag cofnięcia `rollback-pre-fala-a1-20260914` = `c3ac90ca73`. Demo nadal `90833bc94a` (bez zmian).
+Bramka: tsc serwer 0, front 189/189 (**PRÓG WYCZERPANY** — kolejna fala bez marginesu: obniżyć
+dług albo podnieść próg, decyzja CTO otwarta), język bez wzrostu, canon 349, artefakt 8-0-117,
+build OK, testy 4/4. Zrzuty (konto Northwind, jasny):
+`~/Developer/wt/fala-a1/evidence/fala-a1-20260914/northwind/` (niezacommitowane).
+Znaleziska: `/api/health/migrations` = degraded z powodu `DB_MANAGED_SCHEMA=off` (konfiguracja
+stagingu — decyzja CTO otwarta); deep-link `/admin/ai-operations` spada do Members (działa
+`/admin/ai/ai-operations`) — dług. Integrator wypchnął także `refs/heads/staging`
+(FF `90833bc94a`→`005ead2ece`) — obie ścieżki (gałąź `staging` i workflow) są zsynchronizowane.
+
+**Poczta stagingu — sprostowanie 14.09.** Tabela `settings` pusta — env jest jedyną prawdą. SMTP
+Hostinger, `noreply@consultinity.ai`, serwis zrestartowany 02:30 UTC; 2/2 maile wysłane po
+restarcie (04:05, 04:18) — P-T12(1) zamknięte jako infrastruktura sprzed restartu. Avatar P-T05:
+serwis consultify na stagingu bez wolumenu, brak `STORAGE_DIR` — plan: wolumen + `STORAGE_DIR`
+przy wdrożeniu fali A cz.2 (Z-9). Gemini `google-01` `health_status` unhealthy(08.09)→unknown na
+stagingu (rollback w `LOG_APPLY_20260914.md`).
+
+**Stan gałęzi napraw do fali A cz.2 (Z-2):** `tomek-konto` `6660d7ba86` ✔; `archived-filter`
+`574eb6e20c` ✔ (zrzut wysłany właścicielowi 14.09, meldunek); `drd-en` `129dfd7ff5` ✔ (bez zrzutu —
+dowód po wdrożeniu); `tomek-czat` (w toku); `pawel-wywiad` (w toku); `pawel-inicjatywa` (w toku);
+`pawel-assessment` (w toku). Warunek startu cz.2: wynik diagnozy Teresy (P-P07).
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
