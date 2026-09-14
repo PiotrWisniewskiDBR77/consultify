@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "package": "Q1_E5_WORKLOAD_FOLLOWUPS",
   "exactBaseSha": "eba9d72ad9c730728b212ee7826164519e4d095c",
-  "contentSha": "ab8b8850090495e552ab054295fabbb9bfded618",
+  "contentSha": "6a8d542515c40723af0825c8afa81d0a6f1b460d",
   "manifestPath": "evidence/q1-e5-workload-followups/freeze-manifest.json",
   "selfExcluded": true,
-  "generatedAt": "2026-09-14T15:28:46.355795+00:00",
-  "fileCount": 23,
+  "generatedAt": "2026-09-14T15:31:23.990253+00:00",
+  "fileCount": 25,
   "files": [
     {
       "path": "dev-render/screens/z30-inicjatywy-obciazenie.tsx",
@@ -17,6 +17,16 @@
       "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/Q1_E5_WORKLOAD_FOLLOWUPS_FREEZE_20260914.md",
       "bytes": 3526,
       "sha256": "bf4650d2211e9a00d8e82f03f1ce3aba3cf0073a5b85f5e3e670515c4f03500f"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/receipt-off.json",
+      "bytes": 1336,
+      "sha256": "bd6aec55de2c8ea00fba54be6ec4249fe91b163000edf3cf56ddd6667a353435"
+    },
+    {
+      "path": "evidence/q1-e5-workload-followups/ui/receipt-on.json",
+      "bytes": 2726,
+      "sha256": "2d1c7c185f97066cdd94b77b074951d36272a0870b4aa129425611028ff130ae"
     },
     {
       "path": "evidence/q1-e5-workload-followups/ui/work-report-workload-off-en-dark.jpg",
