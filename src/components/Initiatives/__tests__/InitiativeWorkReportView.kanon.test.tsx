@@ -164,4 +164,38 @@ describe('InitiativeWorkReportView — canon pass (RP1b)', () => {
     });
     expect(screen.getByText('Open preview')).toBeTruthy();
   });
+
+  it('keeps the creator collapsed behind a "New report" toggle, list first (skaza 6)', async () => {
+    renderView();
+    await screen.findByText('Weekly team update — 8-14 Sep');
+
+    /* Kreator ZWINIĘTY na starcie — pole „Title" kreatora nie istnieje. */
+    expect(screen.queryByText('Published report definition')).toBeNull();
+
+    const toggle = screen.getByTestId('work-report-creator-toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(toggle);
+
+    await waitFor(() => {
+      expect(screen.getByText('Published report definition')).toBeTruthy();
+    });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('uses the canonical SelectField (labelled control), not a bare native select (skaza 4)', async () => {
+    const { container } = renderView();
+    await screen.findByText('Weekly team update — 8-14 Sep');
+    fireEvent.click(screen.getByTestId('work-report-creator-toggle'));
+    await screen.findByText('Published report definition');
+
+    const selects = Array.from(container.querySelectorAll('select'));
+    expect(selects.length).toBeGreaterThan(0);
+    /* Kanon: KAŻDY dropdown kreatora jest opakowany przez `SelectField` —
+       ma własny `id`, powiązany `<label for>` i chevron. Gołe `<select>`
+       w `<label>` (stan sprzed 14.09) nie miało ani id, ani chevrona. */
+    for (const select of selects) {
+      expect(select.id).toBeTruthy();
+      expect(container.querySelector(`label[for="${select.id}"]`)).toBeTruthy();
+    }
+  });
 });
