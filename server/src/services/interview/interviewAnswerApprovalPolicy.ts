@@ -12,14 +12,22 @@ export type InterviewAnswerApprovalPolicyCompatibility =
   | 'default_missing'
   | 'invalid_version'
   | 'unsupported_future_version'
-  | 'invalid_mode';
+  | 'invalid_mode'
+  | 'invalid_enabled';
 
 export interface ResolvedInterviewAnswerApprovalPolicy {
+  enabled: boolean;
   mode: InterviewAnswerApprovalMode;
   stages: readonly InterviewAnswerApprovalStage[];
   source: 'organization_policy' | 'default';
   compatibility: InterviewAnswerApprovalPolicyCompatibility;
   configuredVersion: number | null;
+}
+
+export function isInterviewAnswerApprovalEnvironmentEnabled(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  return env.ENABLE_INTERVIEW_ANSWER_APPROVAL === 'true';
 }
 
 export interface InterviewAnswerApprovalStageDecision {
@@ -84,6 +92,7 @@ export function resolveInterviewAnswerApprovalPolicy(
   const answerApproval = objectOrNull(interview?.answerApproval);
   if (!answerApproval) {
     return {
+      enabled: false,
       mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
       stages: stagesFor(DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE),
       source: 'default',
@@ -95,6 +104,7 @@ export function resolveInterviewAnswerApprovalPolicy(
   const configuredVersion = answerApproval.version;
   if (!Number.isInteger(configuredVersion) || (configuredVersion as number) < 1) {
     return {
+      enabled: false,
       mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
       stages: stagesFor(DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE),
       source: 'default',
@@ -104,6 +114,7 @@ export function resolveInterviewAnswerApprovalPolicy(
   }
   if ((configuredVersion as number) > INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION) {
     return {
+      enabled: false,
       mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
       stages: stagesFor(DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE),
       source: 'default',
@@ -117,14 +128,21 @@ export function resolveInterviewAnswerApprovalPolicy(
     ? (candidate as InterviewAnswerApprovalMode)
     : DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE;
 
+  const enabled = answerApproval.enabled === true;
   return {
+    enabled,
     mode,
     stages: stagesFor(mode),
     source:
       candidate === mode && INTERVIEW_ANSWER_APPROVAL_MODES.includes(mode)
         ? 'organization_policy'
         : 'default',
-    compatibility: candidate === mode ? 'supported' : 'invalid_mode',
+    compatibility:
+      answerApproval.enabled !== undefined && typeof answerApproval.enabled !== 'boolean'
+        ? 'invalid_enabled'
+        : candidate === mode
+          ? 'supported'
+          : 'invalid_mode',
     configuredVersion: configuredVersion as number,
   };
 }
@@ -167,6 +185,7 @@ export function withInterviewAnswerApprovalMode(
         answerApproval: {
           ...(answerApproval ?? {}),
           version: INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION,
+          enabled: answerApproval?.enabled === true,
           mode,
         },
       },

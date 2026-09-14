@@ -30,6 +30,7 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
   const submissionId = `iaa-submission-${tag}`;
 
   beforeAll(async () => {
+    process.env.ENABLE_INTERVIEW_ANSWER_APPROVAL = 'true';
     const { Pool: PgPool } = await import('pg');
     pool = new PgPool({ connectionString: CONNECTION_STRING });
     await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, 'IAA realpg')`, [orgId]);
@@ -41,7 +42,7 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
     await pool.query(
       `INSERT INTO organization_ai_policy (organization_id, policy)
        VALUES ($1, $2::jsonb)`,
-      [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, mode: 'two_stage' } } })]
+      [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, enabled: true, mode: 'two_stage' } } })]
     );
     await pool.query(
       `INSERT INTO interview_sessions (id, organization_id, name, owner_id, status)
@@ -136,7 +137,7 @@ describe.skipIf(!REAL_DB)('Interview answer decisions — real PostgreSQL', () =
     await pool.query(
       `UPDATE organization_ai_policy
        SET policy=$2::jsonb WHERE organization_id=$1`,
-      [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, mode: 'manager' } } })]
+      [orgId, JSON.stringify({ interview: { answerApproval: { version: 1, enabled: true, mode: 'manager' } } })]
     );
     const revision = await pool.query(
       `SELECT id, updated_at FROM interview_questions WHERE id IN ($1,$2) ORDER BY id`,

@@ -248,6 +248,9 @@ describe('OrgAIPolicyTab honest workflows', () => {
     expect(screen.getByRole('option', { name: 'AI' })).toHaveValue('ai');
     expect(screen.getByRole('option', { name: 'Manager' })).toHaveValue('manager');
     expect(screen.getByRole('option', { name: 'Two-stage' })).toHaveValue('two_stage');
+    const enabled = screen.getByRole('checkbox', { name: 'Enable answer approval' });
+    expect(enabled).not.toBeChecked();
+    fireEvent.click(enabled);
     fireEvent.change(mode, { target: { value: 'two_stage' } });
     fireEvent.click(screen.getByRole('button', { name: /Save draft/i }));
 
@@ -258,7 +261,7 @@ describe('OrgAIPolicyTab honest workflows', () => {
           future_policy_key: { keep: true },
           interview: {
             future_interview_key: 'keep',
-            answerApproval: { version: 1, mode: 'two_stage' },
+            answerApproval: { version: 1, enabled: true, mode: 'two_stage' },
           },
         }),
         expect.objectContaining({ mode: 'draft' })
