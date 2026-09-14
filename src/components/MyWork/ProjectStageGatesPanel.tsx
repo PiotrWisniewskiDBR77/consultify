@@ -161,7 +161,9 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
         id: 'state',
         label: t('myWork.projects.stageGates.status', 'Status'),
         width: '130px',
-        dataType: 'status',
+        // Compact preview owns the semantic pill. The global status floor is
+        // 160 px; using it here would make 140 + 160 exceed the 285 px panel.
+        dataType: 'text',
         render: (tableRow: TableRow) => {
           const row = tableRow as unknown as ProjectStageGateRow;
           const scheme =
