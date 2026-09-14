@@ -47,6 +47,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import os from 'node:os';
+import url from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -299,6 +301,13 @@ const KATEGORIE = {
   K5pl: 'polskie zdania z serwera do UI',
   K5en: 'angielskie zdania z serwera do UI',
   K7: 'daty/liczby/waluty bez locale albo z locale na sztywno',
+  K8spl: 'PL w literalach serwera widocznych dla uzytkownika (poza routes/*, tj. services/jobs/email/PDF)',
+  K8sen: 'EN proza w tych samych literalach, poza slownikami dwujezycznymi',
+  K9pPL: 'prompt AI napisany po polsku (odpowiedz modelu pojdzie po polsku)',
+  K9pMIX: 'prompt AI mieszany PL+EN w jednym literale',
+  K9pBRAK: 'plik buduje system prompt, ale nie dopina withResolvedLocaleInstruction',
+  K10dPL: 'method pack DRD: polski tekst w compileDrdPack(\'en\') (cel 0)',
+  K10dROZ: 'method pack DRD: report.discrepancies (ujawnione rozjazdy metodyki)',
 };
 
 function aktualnySha() {
@@ -687,6 +696,301 @@ function analizujDatyZawartosc(trescSurowa) {
 }
 
 // ---------------------------------------------------------------------------
+// K8s — literały serwera widoczne dla użytkownika POZA katalogami K5
+//
+// K5 mierzy WYŁĄCZNIE `server/src/{routes,middleware,validators,schemas,
+// controllers}` — świadome zawężenie z 08.09. Fale E2c/E2c-bis/D4 (14.09)
+// pokazały, że druga połowa bałaganu siedzi POZA tymi katalogami: w
+// `services/` (maile, PDF, eksporty) i w `method-core/` (teksty Outputu).
+// K8s liczy dokładnie tę resztę — rozłącznie z K5, więc nic nie jest liczone
+// dwa razy.
+//
+// CZEGO NIE LICZYMY (i dlaczego):
+//   * SŁOWNIKI DWUJĘZYCZNE — obiekt, w którym obok siebie stoją klucze `en:`
+//     i `pl:`, jest MECHANIZMEM naprawy, nie długiem. Tak wygląda `MESSAGES`
+//     w `services/report/reportLocale.ts` i `TEKSTY_OUTPUTU` w
+//     `method-core/outputs/EventDerivedOutputBridge.ts`. Liczenie ich
+//     nagradzałoby usunięcie tłumaczenia („bezpiecznik nagradza defekt").
+//   * PLIKI POLITYKI JĘZYKA — `services/ai/languagePolicy.ts`,
+//     `services/ai/responseLanguage.ts`, `services/report/reportLocale.ts`:
+//     z definicji zawierają napisy w obu językach.
+//   * testy, mocki, kopie zapasowe, `scripts/`.
+// ---------------------------------------------------------------------------
+const K8S_PLIKI_POLITYKI = [
+  /^server\/src\/services\/ai\/languagePolicy\.ts$/,
+  /^server\/src\/services\/ai\/responseLanguage\.ts$/,
+  /^server\/src\/services\/report\/reportLocale\.ts$/,
+];
+const K8S_POMIJANE = [
+  /(^|\/)__tests__\//,
+  /(^|\/)__mocks__\//,
+  /(^|\/)_backup\//,
+  /\.(test|spec)\.ts$/,
+  /^server\/src\/(scripts|testing)\//,
+];
+
+/** dodatkowe ujścia widoczne dla użytkownika: e-mail i PDF */
+const WZORCE_SERWERA_K8S = [
+  ...WZORCE_SERWERA,
+  /\bsubject\s*:\s*(["'`])([^"'`]{6,200})\1/g,
+  /\b(?:html|htmlBody|textBody|bodyText)\s*:\s*(["'`])([^"'`]{12,200})\1/g,
+  /\.(?:drawText|addText|writeText)\(\s*(["'`])([^"'`]{6,200})\1/g,
+];
+
+/**
+ * Zamazuje (spacjami, bez zmiany offsetów i numerów linii) treść obiektów,
+ * w których obok siebie stoją klucze `en:` i `pl:` — czyli słowników
+ * dwujęzycznych. Dopasowanie po nawiasach klamrowych, nie regexem „od do",
+ * bo słowniki bywają zagnieżdżone na kilka poziomów.
+ */
+function bezSlownikowDwujezycznych(tresc) {
+  const znaki = tresc.split('');
+  const startDeklaracji = /(?:^|\n)\s*(?:export\s+)?(?:const|let|var)\s+[A-Za-z0-9_$]+[^=\n]*=\s*\{/g;
+  let m;
+  startDeklaracji.lastIndex = 0;
+  while ((m = startDeklaracji.exec(tresc))) {
+    const otwarcie = tresc.indexOf('{', m.index);
+    if (otwarcie < 0) continue;
+    let glebokosc = 0;
+    let koniec = -1;
+    for (let i = otwarcie; i < tresc.length; i += 1) {
+      const c = tresc[i];
+      if (c === '{') glebokosc += 1;
+      else if (c === '}') {
+        glebokosc -= 1;
+        if (glebokosc === 0) { koniec = i; break; }
+      }
+    }
+    if (koniec < 0) continue;
+    const cialo = tresc.slice(otwarcie, koniec + 1);
+    if (/\ben\s*:/.test(cialo) && /\bpl\s*:/.test(cialo)) {
+      for (let i = otwarcie; i <= koniec; i += 1) if (znaki[i] !== '\n') znaki[i] = ' ';
+    }
+    startDeklaracji.lastIndex = koniec;
+  }
+  return znaki.join('');
+}
+
+function jestKodemSerwerowymK8s(rel) {
+  if (!/^server\/src\/.*\.ts$/.test(rel)) return false;
+  if (jestKodemSerwerowymUI(rel)) return false; // to liczy K5
+  for (const r of K8S_POMIJANE) if (r.test(rel)) return false;
+  for (const r of K8S_PLIKI_POLITYKI) if (r.test(rel)) return false;
+  return true;
+}
+
+function analizujSerwerK8sZawartosc(trescSurowa) {
+  const w = { K8spl: 0, K8sen: 0, trafienia: [] };
+  if (!trescSurowa) return w;
+  const tresc = bezSlownikowDwujezycznych(bezKomentarzy(trescSurowa));
+  for (const wz of WZORCE_SERWERA_K8S) {
+    wz.lastIndex = 0;
+    let m;
+    while ((m = wz.exec(tresc))) {
+      const tekst = m[2];
+      if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue; // kod błędu, nie zdanie
+      const nrLinii = tresc.slice(0, m.index).split('\n').length;
+      const pl = wykryjPolski(tekst);
+      if (pl) { w.K8spl += 1; w.trafienia.push(['K8spl', nrLinii, tekst, pl.dowod]); continue; }
+      const en = wykryjAngielski(tekst);
+      if (en) { w.K8sen += 1; w.trafienia.push(['K8sen', nrLinii, tekst, en.dowod]); }
+    }
+  }
+  return w;
+}
+
+function skanujSerwerK8s(pliki) {
+  for (const rel of pliki) {
+    if (!jestKodemSerwerowymK8s(rel)) continue;
+    const w = analizujSerwerK8sZawartosc(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    const modul = modulSerwera(rel);
+    for (const [kat, nrLinii, tekst, dowod] of w.trafienia) {
+      zapisz(kat, modul, `${rel}:${nrLinii}`, tekst, dowod);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// K9p — prompty AI
+//
+// Inwentarz Codexa (14.09, `AI_PROMPTS.tsv`: 282 wpisy w 59 plikach, 238 EN /
+// 40 PL / 1 mieszany) leży POZA repo. Dowód poza repo wyparowuje, więc ten
+// skaner liczy po SWOJEMU, z drzewa: literał promptowy = napis >= 60 znaków
+// przypisany do zmiennej/klucza o nazwie promptowej, albo stojący w wywołaniu
+// budującym prompt. Liczby nie muszą się zgadzać z TSV co do jednego — ważne,
+// żeby liczył ZAWSZE tak samo, bo to jest ratchet, nie spis inwentarza.
+//
+// K9pBRAK to licznik PLIKÓW, nie literałów: plik, który sam składa prompt
+// systemowy, a nie przepuszcza go przez `withResolvedLocaleInstruction`
+// (SSOT DEC-510, `services/ai/languagePolicy.ts`), nie ma jak wymusić języka
+// odpowiedzi — to jest dokładnie ten defekt, przez który Teresa odpowiadała
+// po angielsku na polskie pytanie.
+// ---------------------------------------------------------------------------
+const K9P_KATALOGI = [/^server\/src\//, /^src\/services\//, /^src\/lib\//];
+const K9P_POMIJANE = K8S_POMIJANE;
+/** literał przypisany do nazwy promptowej: `const systemPrompt = \`...\`` / `system: '...'` */
+const WZ_PROMPT_LITERAL =
+  /(?:(?:const|let|var)\s+([A-Za-z0-9_$]*(?:[Pp]rompt|[Ii]nstruction|[Pp]ersona|[Ss]ystem)[A-Za-z0-9_$]*)\s*(?::[^=\n]+)?=|\b(system|systemPrompt|systemInstruction|prompt|instructions)\s*:)\s*(["'`])((?:[^\\]|\\[\s\S]){60,4000}?)\3/g;
+/** plik „buduje system prompt" — składa go sam, a nie tylko przekazuje dalej */
+const WZ_BUDUJE_SYSTEM_PROMPT = [
+  /(?:const|let|var)\s+[A-Za-z0-9_$]*[Ss]ystem[A-Za-z0-9_$]*\s*(?::[^=\n]+)?=\s*["'`]/,
+  /\b(?:system|systemPrompt|systemInstruction)\s*:\s*["'`]/,
+  /function\s+build[A-Za-z0-9_$]*(?:System)?Prompt/,
+];
+
+function jestPlikiemPromptowym(rel) {
+  if (!/\.(ts|tsx)$/.test(rel)) return false;
+  for (const r of K9P_POMIJANE) if (r.test(rel)) return false;
+  for (const r of K9P_KATALOGI) if (r.test(rel)) return true;
+  return false;
+}
+
+function analizujPromptyZawartosc(trescSurowa) {
+  const w = { K9pPL: 0, K9pMIX: 0, K9pBRAK: 0, trafienia: [] };
+  if (!trescSurowa) return w;
+  const tresc = bezKomentarzy(trescSurowa);
+  WZ_PROMPT_LITERAL.lastIndex = 0;
+  let m;
+  while ((m = WZ_PROMPT_LITERAL.exec(tresc))) {
+    const tekst = m[4];
+    const nrLinii = tresc.slice(0, m.index).split('\n').length;
+    const pl = wykryjPolski(tekst);
+    const en = wykryjAngielski(tekst);
+    // `wykryjAngielski` sam zwraca null, gdy widzi polskie znaki — mieszany
+    // literał rozpoznajemy po tym, że POZA polskim dowodem stoi angielskie
+    // zdanie (>= 2 silne angielskie słowa) w tym samym napisie.
+    if (pl) {
+      const enSilneWTekscie = [...new Set(slowa(tekst).filter((s) => enSilne.has(s)))];
+      if (enSilneWTekscie.length >= 2) {
+        w.K9pMIX += 1;
+        w.trafienia.push(['K9pMIX', nrLinii, tekst, [...pl.dowod.slice(0, 2), ...enSilneWTekscie.slice(0, 2).map((s) => `en:${s}`)]]);
+      } else {
+        w.K9pPL += 1;
+        w.trafienia.push(['K9pPL', nrLinii, tekst, pl.dowod]);
+      }
+      continue;
+    }
+    if (en) continue; // prompt po angielsku = stan docelowy, nie liczymy
+  }
+  const budujeSystem = WZ_BUDUJE_SYSTEM_PROMPT.some((r) => r.test(tresc));
+  if (budujeSystem && !/withResolvedLocaleInstruction/.test(trescSurowa)) {
+    w.K9pBRAK = 1;
+    w.trafienia.push(['K9pBRAK', 1, 'buduje system prompt bez withResolvedLocaleInstruction', ['brak SSOT DEC-510']]);
+  }
+  return w;
+}
+
+function skanujPrompty(pliki) {
+  for (const rel of pliki) {
+    if (!jestPlikiemPromptowym(rel)) continue;
+    const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    if (!/prompt|Prompt|system/.test(tresc)) continue;
+    const w = analizujPromptyZawartosc(tresc);
+    const modul = rel.startsWith('server/') ? modulSerwera(rel) : modulZeSciezki(rel);
+    for (const [kat, nrLinii, tekst, dowod] of w.trafienia) {
+      zapisz(kat, modul, `${rel}:${nrLinii}`, tekst, dowod);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// K10d — method pack DRD skompilowany po angielsku
+//
+// Po falach J1/J3 `compileDrdPack('en')` ma emitować wariant EN poziomu
+// (`titleEN`/`descriptionEN`) i obszaru (`name`/`namePL`). Ten licznik pilnuje,
+// żeby to nie odrosło: CEL = 0 polskich tekstów w paczce zbudowanej dla `en`.
+//
+// DOWÓD, ŻE PRZYRZĄD MIERZY (a nie zwraca zera, bo nie patrzy): ta sama
+// funkcja licząca na `compileDrdPack('pl')` daje 1338 trafień — test
+// `pomiar-jezyka.warstwy.test.mjs` trzyma tę mutację.
+//
+// `compileDrdPack` to TypeScript z aliasem `@/`, więc pomiar bundluje go
+// esbuildem do pliku tymczasowego i importuje. Gdy bundlowanie się NIE uda,
+// NIE wpisujemy zera (brak pomiaru nie jest wynikiem) — pomiar zgłasza błąd.
+// ---------------------------------------------------------------------------
+const K10D_ZRODLA = [
+  /^src\/method-core\/methods\/drd\//,
+  /^src\/services\/drdStructure\.ts$/,
+  /^src\/services\/assessmentKnowledge/,
+];
+const K10D_MODUL = '05 Assessment';
+
+function zbundlujDrd() {
+  const wyjscie = path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'pomiar-jezyka-drd-')),
+    'compileDrdPack.mjs',
+  );
+  const esbuild = path.join(ROOT, 'node_modules', '.bin', 'esbuild');
+  if (!fs.existsSync(esbuild)) throw new Error('brak node_modules/.bin/esbuild — nie da się zmierzyć K10d');
+  execFileSync(
+    esbuild,
+    [
+      'src/method-core/methods/drd/compileDrdPack.ts',
+      '--bundle',
+      '--format=esm',
+      '--platform=node',
+      `--outfile=${wyjscie}`,
+      '--log-level=error',
+    ],
+    { cwd: ROOT, encoding: 'utf8' },
+  );
+  return wyjscie;
+}
+
+/** Zbiera wszystkie teksty widoczne dla użytkownika z jednej skompilowanej paczki. */
+export function tekstyPaczkiDrd(wynikKompilacji) {
+  const out = [];
+  const dodaj = (gdzie, tekst) => {
+    if (typeof tekst === 'string' && tekst.trim()) out.push([gdzie, tekst]);
+  };
+  for (const u of wynikKompilacji.pack.units || []) {
+    dodaj(`unit:${u.unitId}#name`, u.name);
+    dodaj(`unit:${u.unitId}#description`, u.description);
+  }
+  for (const l of wynikKompilacji.pack.levels || []) {
+    dodaj(`level:${l.unitId}#${l.level}#title`, l.title);
+    dodaj(`level:${l.unitId}#${l.level}#canonicalDefinition`, l.canonicalDefinition);
+    (l.expectedEvidence || []).forEach((e, i) => dodaj(`level:${l.unitId}#${l.level}#expectedEvidence[${i}]`, e));
+    (l.technologyExamples || []).forEach((e, i) => dodaj(`level:${l.unitId}#${l.level}#technologyExamples[${i}]`, e));
+  }
+  for (const q of wynikKompilacji.pack.questions || []) {
+    dodaj(`question:${q.questionId}#canonicalWording`, q.canonicalWording);
+    (q.expectedEvidence || []).forEach((e, i) => dodaj(`question:${q.questionId}#expectedEvidence[${i}]`, e));
+  }
+  return out;
+}
+
+/** @returns {{K10dPL:number, K10dROZ:number, trafienia:Array}} */
+export function policzDrd(wynikKompilacji) {
+  const w = { K10dPL: 0, K10dROZ: 0, trafienia: [] };
+  for (const [gdzie, tekst] of tekstyPaczkiDrd(wynikKompilacji)) {
+    const pl = wykryjPolski(tekst);
+    if (pl) {
+      w.K10dPL += 1;
+      w.trafienia.push(['K10dPL', gdzie, tekst, pl.dowod]);
+    }
+  }
+  const rozjazdy = wynikKompilacji.report?.discrepancies || [];
+  w.K10dROZ = rozjazdy.length;
+  rozjazdy.forEach((r, i) => w.trafienia.push(['K10dROZ', `report.discrepancies[${i}]`, r, ['ujawniony rozjazd metodyki']]));
+  return w;
+}
+
+async function skanujDrd() {
+  const bundle = zbundlujDrd();
+  const modul = await import(url.pathToFileURL(bundle).href);
+  const w = policzDrd(modul.compileDrdPack('en'));
+  for (const [kat, gdzie, tekst, dowod] of w.trafienia) {
+    zapisz(kat, K10D_MODUL, `drd:en:${gdzie}`, tekst, dowod);
+  }
+  try {
+    fs.rmSync(path.dirname(bundle), { recursive: true, force: true });
+  } catch {
+    /* plik tymczasowy — sprzątanie nie może wywrócić pomiaru */
+  }
+}
+
+// ---------------------------------------------------------------------------
 // raport
 // ---------------------------------------------------------------------------
 const POD_KATEGORIE = new Set(['K1defWID', 'K3aKLUCZ']); // zawarte w K3a — poza sumą RAZEM
@@ -734,6 +1038,28 @@ function raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria) {
     }
   }
   return linie.join('\n');
+}
+
+/**
+ * `--report <plik>` — PEŁNA lista `plik:linia` per kategoria (bez przycinania
+ * do 25 przykładów, którym karmiony jest baseline). To jest robocza lista dla
+ * człowieka, który ma dług spłacić, nie dowód bramki.
+ */
+function zapiszRaportPlikLinia(sciezka) {
+  const linie = [];
+  linie.push(`POMIAR JĘZYKA — LISTA PLIK:LINIA — ${new Date().toISOString()}`);
+  linie.push(`sha=${wynik._meta.sha || '?'}`);
+  linie.push('');
+  for (const [kat, opis] of Object.entries(KATEGORIE)) {
+    linie.push(`### ${kat} — ${opis} — ${wynik.suma[kat]}`);
+    for (const p of wynik.przyklady[kat]) {
+      linie.push(`${p.gdzie}\t${p.modul}\t${p.tekst.replace(/\s+/g, ' ')}\t${p.dowod}`);
+    }
+    linie.push('');
+  }
+  fs.mkdirSync(path.dirname(path.resolve(ROOT, sciezka)), { recursive: true });
+  fs.writeFileSync(path.resolve(ROOT, sciezka), linie.join('\n'), 'utf8');
+  console.log(`RAPORT PLIK:LINIA -> ${sciezka} (${Object.values(wynik.przyklady).reduce((a, b) => a + b.length, 0)} pozycji)`);
 }
 
 // ---------------------------------------------------------------------------
@@ -809,7 +1135,7 @@ function gitOldContent(rel) {
   }
 }
 
-function trybSzybki(baselinePath) {
+async function trybSzybki(baselinePath) {
   if (!fs.existsSync(baselinePath)) {
     console.error(`BRAK PLIKU BAZOWEGO: ${baselinePath}. Wygeneruj: node scripts/i18n/pomiar-jezyka.mjs --json > ${baselinePath}`);
     return 2;
@@ -821,6 +1147,15 @@ function trybSzybki(baselinePath) {
   if (dotykaTlumaczen) {
     console.error('BRAMKA JĘZYKOWA: commit dotyka public/locales/**.json — tryb szybki nie');
     console.error('  potrafi bezpiecznie policzyć K1/K2/K3a/K3b z samej delty, robię pełny skan.');
+    return trybPelny(baselinePath, bazowy);
+  }
+
+  // K10d (DRD) nie da się policzyć z delty pliku — paczka powstaje z kilku
+  // źródeł naraz (DRD_STRUCTURE + trzy pliki override'ów) i jedna zmiana
+  // przestawia setki tekstów. Gdy commit dotyka tych źródeł, spadamy na
+  // pełny skan, dokładnie jak przy public/locales.
+  if (dotkniete.some((f) => K10D_ZRODLA.some((r) => r.test(f)))) {
+    console.error('BRAMKA JĘZYKOWA: commit dotyka źródeł method packa DRD — robię pełny skan (K10d).');
     return trybPelny(baselinePath, bazowy);
   }
 
@@ -880,6 +1215,24 @@ function trybSzybki(baselinePath) {
       const stareDaty = analizujDatyZawartosc(staraTresc);
       dodaj(WSPOLNE, 'K7', noweDaty.K7 - stareDaty.K7);
     }
+
+    // K8s i K9p liczą się PER PLIK (każde trafienie siedzi w jednym pliku),
+    // więc delta starej i nowej treści jest tu dokładna — tak samo jak K5/K7.
+    if (jestKodemSerwerowymK8s(rel)) {
+      const modul = modulSerwera(rel);
+      const noweK8 = analizujSerwerK8sZawartosc(nowaTresc);
+      const stareK8 = analizujSerwerK8sZawartosc(staraTresc);
+      dodaj(modul, 'K8spl', noweK8.K8spl - stareK8.K8spl);
+      dodaj(modul, 'K8sen', noweK8.K8sen - stareK8.K8sen);
+    }
+    if (jestPlikiemPromptowym(rel)) {
+      const modul = rel.startsWith('server/') ? modulSerwera(rel) : modulZeSciezki(rel);
+      const noweP = analizujPromptyZawartosc(nowaTresc);
+      const stareP = analizujPromptyZawartosc(staraTresc);
+      dodaj(modul, 'K9pPL', noweP.K9pPL - stareP.K9pPL);
+      dodaj(modul, 'K9pMIX', noweP.K9pMIX - stareP.K9pMIX);
+      dodaj(modul, 'K9pBRAK', noweP.K9pBRAK - stareP.K9pBRAK);
+    }
   }
 
   const sumaAktualna = { ...bazowy.suma };
@@ -908,12 +1261,20 @@ function trybSzybki(baselinePath) {
 // Używany zawsze w CI, i jako spadek trybu szybkiego, gdy dotknięte są pliki
 // tłumaczeń.
 // ---------------------------------------------------------------------------
-function trybPelny(baselinePath, bazowyPrzekazany, przytnijPrzykladyDo25 = true) {
+async function trybPelny(baselinePath, bazowyPrzekazany, przytnijPrzykladyDo25 = true) {
   skanujDefaultyT(listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n)));
   skanujTlumaczenia();
   skanujDefaultyWidoczne();
   skanujJsx(listujPliki(path.join(ROOT, 'src'), (n) => n.endsWith('.tsx')));
   skanujSerwer(KATALOGI_SERWERA.flatMap((k) => listujPliki(path.join(ROOT, 'server/src', k), (n) => n.endsWith('.ts'))));
+  const plikiSerwera = listujPliki(path.join(ROOT, 'server/src'), (n) => n.endsWith('.ts'));
+  skanujSerwerK8s(plikiSerwera);
+  skanujPrompty([
+    ...plikiSerwera,
+    ...listujPliki(path.join(ROOT, 'src/services'), (n) => /\.(ts|tsx)$/.test(n)),
+    ...listujPliki(path.join(ROOT, 'src/lib'), (n) => /\.(ts|tsx)$/.test(n)),
+  ]);
+  await skanujDrd();
   skanujDaty([
     ...listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n)),
     ...listujPliki(path.join(ROOT, 'server/src'), (n) => /\.(ts|tsx)$/.test(n)),
@@ -950,7 +1311,7 @@ function trybPelny(baselinePath, bazowyPrzekazany, przytnijPrzykladyDo25 = true)
 // w środku importu — dlatego funkcje klasyfikujące (wykryjPolski/wykryjAngielski/
 // bazaKlucza/oczysc) są wyeksportowane osobno, do użycia bez efektów ubocznych.
 // ---------------------------------------------------------------------------
-function main() {
+async function main() {
   const argv = process.argv.slice(2);
   function arg(nazwa, domyslna = null) {
     const i = argv.indexOf(nazwa);
@@ -962,9 +1323,10 @@ function main() {
   const limitPrzykladow = Number(arg('--przyklady', '3'));
   const filtrModul = arg('--modul');
   const filtrKategoria = arg('--kategoria');
+  const raportPlik = arg('--report');
 
-  if (baseline && chceStaged) {
-    process.exit(trybSzybki(baseline));
+  if (baseline && chceStaged && !raportPlik) {
+    process.exit(await trybSzybki(baseline));
   }
 
   if (baseline) {
@@ -972,19 +1334,38 @@ function main() {
       console.error(`BRAK PLIKU BAZOWEGO: ${baseline}. Wygeneruj: node scripts/i18n/pomiar-jezyka.mjs --json > ${baseline}`);
       process.exit(2);
     }
-    process.exit(trybPelny(baseline));
+    const kod = await trybPelny(baseline, null, !raportPlik);
+    if (raportPlik) zapiszRaportPlikLinia(raportPlik);
+    process.exit(kod);
   }
 
-  trybPelny(null, null, chceJson);
+  await trybPelny(null, null, chceJson && !raportPlik);
+  if (raportPlik) zapiszRaportPlikLinia(raportPlik);
   if (chceJson) console.log(JSON.stringify(wynik, null, 2));
-  else console.log(raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria));
+  else if (!raportPlik) console.log(raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main();
+  main().catch((e) => {
+    console.error('POMIAR JĘZYKA PRZERWANY (brak pomiaru nie jest wynikiem):', e?.message || e);
+    process.exit(2);
+  });
 }
 
 // Eksport dla testów (scripts/i18n/__tests__/pomiar-jezyka.klasyfikacja.test.mjs)
 // — WYŁĄCZNIE czyste funkcje klasyfikujące, bez efektów ubocznych (nie liczą do
 // `wynik`, nie dotykają dysku poza odczytem, nie wołają process.exit).
-export { wykryjPolski, wykryjAngielski, bazaKlucza, oczysc, wartoOceniac };
+export {
+  wykryjPolski,
+  wykryjAngielski,
+  bazaKlucza,
+  oczysc,
+  wartoOceniac,
+  // E2f (DEC-510) — trzy warstwy poza UI. Wszystkie są czyste: liczą z
+  // przekazanej treści/obiektu, nie dotykają dysku i nie wołają process.exit.
+  analizujSerwerK8sZawartosc,
+  jestKodemSerwerowymK8s,
+  bezSlownikowDwujezycznych,
+  analizujPromptyZawartosc,
+  jestPlikiemPromptowym,
+};
