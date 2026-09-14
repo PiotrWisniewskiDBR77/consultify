@@ -52,7 +52,7 @@ const rows = buildExecutionBankRows(
     },
     { executionCaseId: 'case-b', initiativeId: 'initiative-b', version: 2, state: 'ACTIVE' },
   ],
-  { asOf: '2028-01-31' }
+  { asOf: '2028-01-31', identityMode: 'INITIATIVE' }
 );
 
 afterEach(cleanup);

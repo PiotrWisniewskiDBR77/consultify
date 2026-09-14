@@ -490,7 +490,25 @@ describe('EXE-005-006 — change + progress spine golden flow against a real Pos
       // 1h. E1b evidence read: one fresh HTTP list request returns the exact
       // receipts used above. This is opt-in so ordinary Initiative consumers
       // retain their previous list dependency and response cost.
-      const evidenceAsOf = new Date().toISOString();
+      // PostgreSQL owns `changed_at`; the application and DB clocks can cross a
+      // millisecond boundary after the HTTP commit. Put this isolated fixture's
+      // receipts on a deterministic clock before the controlled evidence read.
+      // This changes only test rows and keeps every production assertion intact.
+      const fixtureReceiptTime = new Date(Date.now() - 2_000);
+      const fixtureAuditTime = new Date(fixtureReceiptTime.getTime() - 1_000);
+      await h.client.query(
+        `UPDATE initiative_history
+            SET changed_at = $2
+          WHERE initiative_id = $1`,
+        [h.initiativeAId, fixtureReceiptTime]
+      );
+      await h.client.query(
+        `UPDATE execution_audit_log
+            SET changed_at = $2
+          WHERE initiative_id = $1`,
+        [h.initiativeAId, fixtureAuditTime]
+      );
+      const evidenceAsOf = new Date(fixtureReceiptTime.getTime() + 1_000).toISOString();
       const evidenceGet = await request(buildApp())
         .get('/api/initiatives')
         .query({ includeExecutionEvidence: '1', asOf: evidenceAsOf })

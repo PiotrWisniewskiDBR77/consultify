@@ -935,7 +935,7 @@ export function buildExecutionBankRows(
   options: { asOf: string; identityMode?: 'INITIATIVE' | 'LEGACY' }
 ): ExecutionBankRow[] {
   const asOf = controlledAsOf(options.asOf);
-  const identityMode = options.identityMode ?? 'INITIATIVE';
+  const identityMode = options.identityMode ?? 'LEGACY';
   const initiativesById = new Map(initiatives.map((initiative) => [initiative.id, initiative]));
   const validCases = executionCases.filter(
     (executionCase) => executionCase.executionCaseId && executionCase.initiativeId

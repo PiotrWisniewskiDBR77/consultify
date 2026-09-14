@@ -69,7 +69,10 @@ const cases: ExecutionBankCaseSource[] = [
 
 describe('E1b executionBankModel', () => {
   it('keeps lifecycle, execution state and native identities separate while using forecast or fixed actual variance', () => {
-    const rows = buildExecutionBankRows(initiatives, cases, { asOf: '2028-01-31T00:00:00Z' });
+    const rows = buildExecutionBankRows(initiatives, cases, {
+      asOf: '2028-01-31T00:00:00Z',
+      identityMode: 'INITIATIVE',
+    });
     expect(rows.map((row) => [row.initiativeId, row.executionCaseId])).toEqual([
       ['initiative-a', 'case-a'],
       ['initiative-c', 'case-c'],
@@ -109,7 +112,7 @@ describe('E1b executionBankModel', () => {
         { ...cases[0], executionCaseId: 'case-a-v5', version: 5 },
         { ...cases[0], executionCaseId: 'case-a-v4', version: 4 },
       ],
-      { asOf: '2028-01-31' }
+      { asOf: '2028-01-31', identityMode: 'INITIATIVE' }
     );
 
     expect(rows).toHaveLength(1);
