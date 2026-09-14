@@ -28,12 +28,23 @@ export const { pack } = compileDrdPack();
 // Output current/target/gap rollup IS a fixed-schema record list (rows =
 // units) — TRIADA doctrine case 1, not case 3 (LiveMatrix's unit×level grid
 // is the Matryca-shaped exception; this per-unit summary is not).
-export const OUTPUT_UNIT_COLUMNS: TableColumn[] = [
-  { id: 'unitId', label: 'Jednostka' },
-  { id: 'current', label: 'Current' },
-  { id: 'target', label: 'Target' },
-  { id: 'gap', label: 'Gap' },
-];
+//
+// DEC-461 (2026-09-14): this used to be a static array with a hardcoded
+// Polish `label: 'Jednostka'` — a frozen Output opened by an EN user showed
+// that column header in Polish while everything around it was English.
+// Column labels are UI chrome (not frozen record content, unlike
+// `scope`/`limitations`), so they must follow the viewer's own i18n
+// language, not the account language captured at freeze time. Both call
+// sites already have `t` from `useTranslation()` in scope where the table
+// is rendered — build the columns from that `t` instead of a module const.
+export function getOutputUnitColumns(t: (key: string, fallback: string) => string): TableColumn[] {
+  return [
+    { id: 'unitId', label: t('assessment.drd.output.unitColumn', 'Unit') },
+    { id: 'current', label: t('assessment.drd.output.currentColumn', 'Current') },
+    { id: 'target', label: t('assessment.drd.output.targetColumn', 'Target') },
+    { id: 'gap', label: t('assessment.drd.output.gapColumn', 'Gap') },
+  ];
+}
 
 export function confirmedLevelsFor(events: readonly MethodEvent[], unitId: string): number[] {
   const levels = new Set<number>();

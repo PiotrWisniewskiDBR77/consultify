@@ -10223,6 +10223,17 @@
         "actorLabel": "Actor:",
         "reopenHeading": "Reopen — new revision",
         "reopenButton": "Reopen session (new revision)"
+      },
+      "output": {
+        "unitColumn": "Unit",
+        "currentColumn": "Current",
+        "targetColumn": "Target",
+        "gapColumn": "Gap"
+      },
+      "sourceIndicator": {
+        "server": "SERVER DATA",
+        "recoveryDraft": "RECOVERY DRAFT",
+        "demoLocal": "LOCAL DATA"
       }
     },
     "glossary": {
