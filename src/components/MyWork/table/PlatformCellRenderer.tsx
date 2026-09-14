@@ -36,7 +36,7 @@ import {
   RiskScoreCell,
   SourceReferenceCell,
 } from './cells';
-import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
+import { formatListDate, formatListNumber, localeListy } from '@/utils/listDateFormat';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({
   }
   const num = Number(value);
   const formatted = Number.isFinite(num)
-    ? num.toLocaleString(undefined, { maximumFractionDigits: precision })
+    ? num.toLocaleString(localeListy(), { maximumFractionDigits: precision })
     : '—';
   return (
     <span className="text-xs text-c-text tabular-nums text-right block px-1">{formatted}</span>
@@ -102,7 +102,7 @@ const CurrencyDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, 
   const symbol = getCurrencySymbol(fieldOptions);
   const precision = getPrecision(fieldOptions);
   const formatted = Number.isFinite(num)
-    ? `${symbol}${num.toLocaleString(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision })}`
+    ? `${symbol}${num.toLocaleString(localeListy(), { minimumFractionDigits: precision, maximumFractionDigits: precision })}`
     : '—';
   return (
     <span className="text-xs text-c-text tabular-nums text-right block px-1">{formatted}</span>
@@ -119,7 +119,7 @@ const PercentDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   const num = Number(value);
   const precision = getPrecision(fieldOptions);
   const formatted = Number.isFinite(num)
-    ? `${num.toLocaleString(undefined, { maximumFractionDigits: precision })}%`
+    ? `${num.toLocaleString(localeListy(), { maximumFractionDigits: precision })}%`
     : '—';
   return (
     <span className="text-xs text-c-text tabular-nums text-right block px-1">{formatted}</span>

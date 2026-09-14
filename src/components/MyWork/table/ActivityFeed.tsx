@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../../services/api';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ function relativeTime(ts: string, t: TFunction): string {
   if (mins < 60) return t('myWorkTable.activityFeed.minutesAgo', { value: mins });
   const hours = Math.floor(mins / 60);
   if (hours < 24) return t('myWorkTable.activityFeed.hoursAgo', { value: hours });
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' });
 }
 
 function eventIcon(eventType: string) {
