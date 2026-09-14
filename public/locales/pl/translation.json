@@ -4170,7 +4170,7 @@
           "closure": "Bramka zamknięcia"
         },
         "states": {
-          "passed": "Zatwierdzona",
+          "passed": "Zatwierdzony",
           "ready": "Gotowa",
           "not_ready": "Niegotowa",
           "upcoming": "Nadchodząca"

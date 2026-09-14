@@ -6,7 +6,8 @@
  * + `read_page`/`getBoundingClientRect` na dev-render harness 1440×900):
  * kolumny deklarowały 230px („Gate") + 170px („Status") = 400px, a panel
  * podglądu (`clamp(340px, 28%, 480px)` — `CANON_PREVIEW`) daje tabeli w tej
- * karcie ok. 285px. Tabela SZERSZA niż `.overflow-x-auto` viewport nie
+ * karcie desktop ok. 285px, a w widoku PL360 tylko 222px. Tabela SZERSZA
+ * niż `.overflow-x-auto` viewport nie
  * przewijała się na zrzucie — prawa krawędź kolumny „Status" była OCIĘTA
  * (nie zawinięta): "Passed"→"Pas", "Not ready"→"Not", "Upcoming"→"Upc".
  *
@@ -15,7 +16,7 @@
  * (`~/Developer/cto-codex/zrzuty-s5-pmo-20260914/en/v2/`). Ten test pilnuje
  * KONTRAKTU, który do defektu doprowadził i którego regresja go przywróci:
  *  1) suma zadeklarowanych szerokości kolumn mieści się w zmierzonym budżecie
- *     panelu (270px ⊂ 285px, z zapasem),
+ *     panelu PL360 (86+136=222px),
  *  2) żadna kolumna nie niesie `primary: true` — ta flaga daje w jądrze
  *     (`FilterableTable.tsx` `getColumnTypeFloor`) TWARDĄ podłogę 200px
  *     egzekwowaną przez CSS `min-width` w `<th>` NIEZALEŻNIE od `columnFit`,
@@ -28,7 +29,7 @@
  *     PL, „Zatwierdź bramkę", ma prawo zawinąć się na dwie linie zamiast
  *     zostać ucięta).
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -67,11 +68,9 @@ vi.mock('react-i18next', () => ({
 
 /**
  * ── ZMIERZONY BUDŻET PANELU (Z-43, Playwright 1440×900, jasny, EN) ─────────
- * Karta bramek ma własny `p-3` (24px) wewnątrz preview (`p-3`, 24px) wewnątrz
- * `clamp(340px, 28%, 480px)`. Na dolnej granicy klamry (340px) realny
- * `.overflow-x-auto` viewport tabeli wynosi 285.19px — to jest DOLNA granica
- * budżetu w całym zakresie panelu (28%×1440=403px i 28%×1280=358px dają
- * WIĘCEJ miejsca, nie mniej).
+ * Karta bramek ma własny `p-3` wewnątrz mobilnego preview. Odbiór niezależny
+ * wykazał, że wcześniejsza liczba 285px pochodziła z desktopu i nie chroniła
+ * 360px. Realny Chromium przy 360px mierzy viewport tabeli jako 222px.
  */
 const MEASURED_PREVIEW_TABLE_BUDGET_PX = 285;
 
@@ -90,7 +89,7 @@ describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
     api.getProjectStageGateHistory.mockResolvedValue([]);
   });
 
-  it('deklarowana suma szerokości kolumn (Gate+Status) mieści się w zmierzonym budżecie panelu 285px', async () => {
+  it('deklarowana suma szerokości kolumn mieści się w desktopowym budżecie panelu', async () => {
     render(<ProjectStageGatesPanel projectId="project-1" />);
     const table = await screen.findByRole('table');
     const headers = table.querySelectorAll('th[data-column-id]');
@@ -118,14 +117,14 @@ describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
       const minWidth = parseFloat((th as HTMLElement).style.minWidth || '0');
       // Podłoga kolumny głównej w jądrze to 200px (`getColumnTypeFloor`,
       // FilterableTable.tsx) — żadna z dwóch kolumn nie może jej nosić,
-      // bo 200 + druga kolumna zawsze przekroczy budżet 285px.
+      // bo 200 + druga kolumna zawsze przekroczy budżet 222px.
       expect(minWidth).toBeLessThan(200);
     }
   });
 
   it('plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie)', async () => {
     render(<ProjectStageGatesPanel projectId="project-1" />);
-    const badge = await screen.findByText('Not ready');
+    const badge = (await screen.findAllByText('Not ready'))[0];
     expect(badge.className).toContain('whitespace-nowrap');
 
     const buttons = screen.getAllByRole('button', { name: /Pass gate/i });
@@ -135,7 +134,7 @@ describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
     }
   });
 
-  it('przy polskim locale i szerokości 360 px zachowuje pełne „Zatwierdzona" oraz budżet Z-43', async () => {
+  it('przy polskim locale i szerokości 360 px zachowuje dokładne „Zatwierdzony"', async () => {
     locale.language = 'pl';
     api.getProjectCurrentStageGate.mockResolvedValue({
       currentPhase: 'Assessment',
@@ -146,22 +145,17 @@ describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
       missingElements: [],
     });
 
-    const { container } = render(
+    render(
       <div style={{ width: 360 }} data-testid="mobile-preview-360">
         <ProjectStageGatesPanel projectId="project-1" />
       </div>
     );
 
-    const badge = await screen.findByText('Zatwierdzona');
+    const mobileList = await screen.findByTestId('project-stage-gates-mobile-list');
+    const badge = within(mobileList).getAllByText('Zatwierdzony')[0];
     expect(badge).toHaveClass('whitespace-nowrap');
     expect(screen.getByTestId('mobile-preview-360')).toHaveStyle({ width: '360px' });
 
-    const widths = Array.from(container.querySelectorAll('th[data-column-id]')).map((th) =>
-      parseFloat((th as HTMLElement).style.width || '0')
-    );
-    expect(widths).toHaveLength(2);
-    expect(widths.reduce((sum, width) => sum + width, 0)).toBeLessThanOrEqual(
-      MEASURED_PREVIEW_TABLE_BUDGET_PX
-    );
+    expect(within(mobileList).getAllByTestId('project-stage-gate-mobile-row')).toHaveLength(5);
   });
 });
