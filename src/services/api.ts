@@ -4058,7 +4058,6 @@ export const Api = {
     name: string;
     ownerId?: string;
     description?: string;
-    goal?: string;
     status?: 'draft' | 'active';
     pmo_standard?: 'prince2' | 'pmbok' | 'agile' | 'safe' | 'custom';
     start_date?: string;

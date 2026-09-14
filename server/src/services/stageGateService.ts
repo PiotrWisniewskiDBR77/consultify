@@ -88,29 +88,29 @@ const GATE_MAP: Record<string, GateType> = {
 
 const GATE_CRITERIA: Record<GateType, GateCriteria[]> = {
   [GATE_TYPES.READINESS_GATE]: [
-    { criterion: 'Strategic goals defined', field: 'hasStrategicGoals' },
-    { criterion: 'Challenges documented', field: 'hasChallenges' },
-    { criterion: 'Constraints identified', field: 'hasConstraints' },
-    { criterion: 'Context readiness score >= 80%', field: 'contextReadinessOk' },
+    { criterion: 'hasStrategicGoals', field: 'hasStrategicGoals' },
+    { criterion: 'hasChallenges', field: 'hasChallenges' },
+    { criterion: 'hasConstraints', field: 'hasConstraints' },
+    { criterion: 'contextReadinessOk', field: 'contextReadinessOk' },
   ],
   [GATE_TYPES.DESIGN_GATE]: [
-    { criterion: 'All axes assessed', field: 'assessmentComplete' },
-    { criterion: 'Gap analysis reviewed', field: 'gapAnalysisReviewed' },
+    { criterion: 'assessmentComplete', field: 'assessmentComplete' },
+    { criterion: 'gapAnalysisReviewed', field: 'gapAnalysisReviewed' },
   ],
   [GATE_TYPES.PLANNING_GATE]: [
-    { criterion: 'At least one initiative defined', field: 'hasInitiatives' },
-    { criterion: 'All initiatives have owners', field: 'allInitiativesOwned' },
-    { criterion: 'Initiative priorities set', field: 'prioritiesSet' },
+    { criterion: 'hasInitiatives', field: 'hasInitiatives' },
+    { criterion: 'allInitiativesOwned', field: 'allInitiativesOwned' },
+    { criterion: 'prioritiesSet', field: 'prioritiesSet' },
   ],
   [GATE_TYPES.EXECUTION_GATE]: [
-    { criterion: 'Roadmap baselined', field: 'roadmapBaselined' },
-    { criterion: 'All initiatives assigned to waves', field: 'allAssignedToWaves' },
-    { criterion: 'No dependency conflicts', field: 'noDependencyConflicts' },
+    { criterion: 'roadmapBaselined', field: 'roadmapBaselined' },
+    { criterion: 'allAssignedToWaves', field: 'allAssignedToWaves' },
+    { criterion: 'noDependencyConflicts', field: 'noDependencyConflicts' },
   ],
   [GATE_TYPES.CLOSURE_GATE]: [
-    { criterion: 'All initiatives completed or cancelled', field: 'allInitiativesClosed' },
-    { criterion: 'No blocking decisions pending', field: 'noBlockingDecisions' },
-    { criterion: 'KPIs measured', field: 'kpisMeasured' },
+    { criterion: 'allInitiativesClosed', field: 'allInitiativesClosed' },
+    { criterion: 'noBlockingDecisions', field: 'noBlockingDecisions' },
+    { criterion: 'kpisMeasured', field: 'kpisMeasured' },
   ],
 };
 
@@ -162,7 +162,7 @@ export async function evaluateGate(
     results.push({
       criterion: crit.criterion,
       isMet,
-      evidence: isMet ? 'Verified' : 'Not met',
+      evidence: isMet ? 'MET' : 'NOT_MET',
     });
   }
 

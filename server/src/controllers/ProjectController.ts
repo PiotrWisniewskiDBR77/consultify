@@ -257,7 +257,6 @@ export class ProjectController {
         name: rawName,
         description: rawDescription,
         ownerId,
-        goal: rawGoal,
         status = 'active',
         pmo_standard = 'pmbok',
         location_id,
@@ -276,7 +275,6 @@ export class ProjectController {
       const name = decodeHtmlEntities(String(rawName));
       const description =
         typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
-      const goal = typeof rawGoal === 'string' ? decodeHtmlEntities(rawGoal) : rawGoal;
       const id = uuidv4();
       const owner = ownerId || userId;
 
@@ -291,9 +289,9 @@ export class ProjectController {
       }
 
       const sql = `INSERT INTO projects
-        (id, organization_id, name, description, goal, status, owner_id, pmo_standard,
+        (id, organization_id, name, description, status, owner_id, pmo_standard,
          location_id, start_date, target_end_date, budget_amount, budget_currency)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       logger.error(`[ProjectController] Executing INSERT for project ${id}`);
       await queryHelpers.queryRun(sql, [
@@ -301,7 +299,6 @@ export class ProjectController {
         orgId,
         name,
         description || null,
-        goal || null,
         status,
         owner,
         pmo_standard,
@@ -320,7 +317,7 @@ export class ProjectController {
 
       // Return only server-confirmed persisted truth from the current schema.
       const created = await queryHelpers.queryOne<any>(
-        `SELECT id, name, description, goal, status, owner_id, pmo_standard, location_id,
+        `SELECT id, name, description, status, owner_id, pmo_standard, location_id,
                 start_date, target_end_date, budget_amount, budget_currency
          FROM projects WHERE id = ? AND organization_id = ?`,
         [id, orgId]
@@ -333,7 +330,6 @@ export class ProjectController {
         description: created.description,
         status: created.status,
         ownerId: created.owner_id,
-        goal: created.goal,
         pmoStandard: created.pmo_standard,
         locationId: created.location_id,
         startDate: created.start_date,

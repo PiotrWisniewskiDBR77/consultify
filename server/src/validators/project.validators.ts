@@ -15,7 +15,6 @@ export const CreateProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(255),
   ownerId: z.string().uuid().optional(),
   description: z.string().max(5000).optional(),
-  goal: z.string().max(1000).optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled', 'archived']).optional(),
   // FLOW-PROJECT-001 enhancements
   pmo_standard: z.enum(['prince2', 'pmbok', 'agile', 'safe', 'custom']).optional().default('pmbok'),
