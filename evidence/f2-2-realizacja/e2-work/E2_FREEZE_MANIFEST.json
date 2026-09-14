@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
-  "baseSha": "94754c3b4d9ebb25e8b5197a0aaff2b2dc3adbd2",
-  "candidateContentSha": "625308405c53b6fe6d38f47ba620034faf9bd5ca",
+  "baseSha": "29d1db9f00793dab6aeac5f68656200cddf9e529",
+  "candidateContentSha": "ce44aa8edcccc52564a69364b49c6e64d7cad50d",
   "branch": "codex/realizacja-cztery-przyciski-20260913",
   "manifestSelfExcluded": true,
-  "fileCount": 57,
-  "evidenceBytes": 1335083,
+  "fileCount": 62,
+  "evidenceBytes": 1069335,
   "evidenceCapBytes": 2097152,
   "files": [
     {
@@ -21,8 +21,8 @@
     },
     {
       "path": "dev-render/execution-work-analysis-main.tsx",
-      "bytes": 475,
-      "sha256": "a210fe171614871d64bf03ad01df509871f2dc0177b04ea9abbae09710432e3b"
+      "bytes": 666,
+      "sha256": "9861b6e379ef67636d628c426997eb51d007bc92643a33bc2b1286533293a2aa"
     },
     {
       "path": "dev-render/execution-work-analysis.html",
@@ -31,13 +31,13 @@
     },
     {
       "path": "dev-render/main.tsx",
-      "bytes": 157880,
-      "sha256": "2bafba125da9965edd1048f9da3b1b464999233c375145200281487cf050c803"
+      "bytes": 159821,
+      "sha256": "d9c592694c3809ff1235240203587a9cc88c99fb22adda83a2fcb3e314a36ca2"
     },
     {
       "path": "dev-render/screens/execution-report-day11.tsx",
-      "bytes": 10039,
-      "sha256": "cad78dfa09fb2b7aa6104798e7593be0d65fd7f207b01c63bcf57eae36f84e47"
+      "bytes": 10248,
+      "sha256": "540d62f1d1977e796adbc9e5db95ce5a713e3132371ac1698d19bc6a0e1e6c14"
     },
     {
       "path": "dev-render/screens/execution-risk-signal-e0.tsx",
@@ -115,14 +115,24 @@
       "sha256": "d2993df1fb7b37ef75387c1090f876fe2795554eee8df873a8e0add5541a1bad"
     },
     {
+      "path": "evidence/f2-2-realizacja/e2-work/AUTHOR_UI_CANON_CLOSURE_20260914.md",
+      "bytes": 1933,
+      "sha256": "518672d776a4298330e3c4b6453ae93fac03996646727ba4d7c177fdca2c8adb"
+    },
+    {
       "path": "evidence/f2-2-realizacja/e2-work/BROWSER_RECEIPT.md",
-      "bytes": 1021,
-      "sha256": "34b6fa4df90a870fd01848035b401a2612aa74afd2d88d7eba8fef6cf4b755f1"
+      "bytes": 1560,
+      "sha256": "9017c2d60fc709d33fb790cc644a807bbe8734ebcf319cbc869c7319c53d1bba"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/E2_FINAL_RECEIPT.md",
-      "bytes": 1599,
-      "sha256": "2da43f03867f7af8ed866dc57019aaa1c55170d0124c2deec0ac8607c3c98935"
+      "bytes": 2054,
+      "sha256": "fb103444ae0632b717c76423e184e747db047b507ae8234e5951ba38da5365f5"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/INDEPENDENT_FINAL_REVIEW_20260914.md",
+      "bytes": 5970,
+      "sha256": "05b34ab6275b57a1d83863241dde9090cfb7817436a869e91cbb1c921d114cde"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/INDEPENDENT_REREVIEW_20260914.md",
@@ -136,23 +146,33 @@
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-dark.png",
-      "bytes": 293953,
-      "sha256": "b3f992025e053111c65006eb4e42bb686c468fafbb70ac70f63c654fd392f615"
+      "bytes": 114268,
+      "sha256": "ff658131abc22818a2d0d3f708f5b19382f95faeefd4bfc3e91c254bf23af125"
+    },
+    {
+      "path": "evidence/f2-2-realizacja/e2-work/work-analysis-en-dark.png",
+      "bytes": 107069,
+      "sha256": "cd66ea785f212fba4bf4dd1212aa18adaaffe74ab30f02185100143ee3b3972c"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-light.png",
-      "bytes": 292099,
-      "sha256": "3517695d7921e9e09f5d5b9469eac6761588549ef34cbd50d9a570bb1123ef64"
+      "bytes": 101331,
+      "sha256": "98a98d1b6774a9cf702c23d12706c8ee163394ce6dd2a7432ecdd1b9389598bb"
     },
     {
       "path": "public/locales/en/translation.json",
-      "bytes": 2237279,
-      "sha256": "e47e1b8d65fc65d64fff0a3bc9840856449419b75624c13c019a2b91d09ecc6a"
+      "bytes": 2246023,
+      "sha256": "a0cf8df4e29aad20e8128ff73e093ddfd6042aab94c25dbe31b8e810cb362aff"
     },
     {
       "path": "public/locales/pl/translation.json",
-      "bytes": 2391808,
-      "sha256": "094fd7b719449cd01d295f3283a3886722a296504b67ddd9249cfbd17b0b7a55"
+      "bytes": 2401387,
+      "sha256": "f0c3ea4a6c42205accfd8e40d1f1e490927166284c9a4e659229a7c625e85ac2"
+    },
+    {
+      "path": "scripts/dev/e2-work-execution-hub-screenshots.mjs",
+      "bytes": 3255,
+      "sha256": "d2bbeead6d1c2a25402eb8e5f8bcb830fcaac89f22cc05ff56494c4431118850"
     },
     {
       "path": "server/src/cron/Scheduler.ts",
@@ -211,8 +231,8 @@
     },
     {
       "path": "src/components/Execution/ExecutionHub.tsx",
-      "bytes": 270537,
-      "sha256": "174bc3a64b50124f0aae1410cb28c27649a789da5cebbbe2a8122ada1b24fd09"
+      "bytes": 273561,
+      "sha256": "1fcc963427959e1df90ef7a739fbfc33930899efef80fe6edb1c3afaed292ac7"
     },
     {
       "path": "src/components/Execution/__tests__/ExecutionHub.bankPreviewCanon.test.tsx",
@@ -251,8 +271,13 @@
     },
     {
       "path": "src/components/Execution/reports-intelligence/WorkIntelligenceReport.tsx",
-      "bytes": 42906,
-      "sha256": "e0d639ac40ced04dba1a5b8a1191b2d43899b9b35da95a3aa416472b3c411644"
+      "bytes": 44617,
+      "sha256": "f0c9b0186ff86eeb4d2eae49476467b66ff64413a1c055ef70246999264a7a6c"
+    },
+    {
+      "path": "src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.canon.test.tsx",
+      "bytes": 4951,
+      "sha256": "0b616f8c1fb9cd1a1f703c800e27d7b9ef3142d325829ab47c16fdd52a29b2ec"
     },
     {
       "path": "src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx",
@@ -286,8 +311,8 @@
     },
     {
       "path": "tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx",
-      "bytes": 20438,
-      "sha256": "6094c36a2abc85b6ede0ecd77e630b543c471bdf950ec86edb8845905c8a6987"
+      "bytes": 21208,
+      "sha256": "ede3c577d34ee22dc8427ef02f0a97a809d482a6bbc765b1ad4429c3458926c7"
     },
     {
       "path": "tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx",
