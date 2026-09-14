@@ -435,7 +435,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         {
           id: 'criteriaCount',
           label: isPolish ? 'Liczba kryteriów' : 'Criteria count',
-          value: String(countAuditCriteriaTree(detail.criteria) || detail.criteriaCount),
+          value: String(Math.max(countAuditCriteriaTree(detail.criteria), detail.criteriaCount)),
           mono: true,
         },
       ]

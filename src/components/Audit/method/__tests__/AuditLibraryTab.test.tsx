@@ -322,6 +322,7 @@ describe('AuditLibraryTab', () => {
       criterion('C', [criterion('C1'), criterion('C2')]),
     ];
     expect(countAuditCriteriaTree(nested)).toBe(9);
+    expect(Math.max(countAuditCriteriaTree(nested.slice(0, 3).map((item) => ({ ...item, children: [] }))), 9)).toBe(9);
     mockedGetPack.mockResolvedValue({
       ...packDetailFixture(verifiedInternalProcedure),
       criteriaCount: 9,
