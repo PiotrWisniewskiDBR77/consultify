@@ -11625,6 +11625,8 @@
       "summary": "Summary",
       "summaryPlaceholder": "Briefly describe the goal and scope of the initiative",
       "titleRequiredError": "Enter an initiative name.",
+      "projectRequiredError": "Choose a project for this initiative — or create one first if the list is empty.",
+      "ownerUnavailableError": "Your user account could not be resolved. Sign in again and retry.",
       "duplicateWarning": "Initiative \"{{name}}\" already exists.",
       "duplicateWarningDesc": "Review the existing card or continue if you are creating a separate initiative.",
       "initiativeCreated": "Initiative created.",
