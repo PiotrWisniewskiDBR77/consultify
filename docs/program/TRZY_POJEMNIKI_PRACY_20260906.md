@@ -450,10 +450,18 @@ nie opcja.
 
 ## EWIDENCJA POSTĘPU — stan na 14.09.2026
 
-**Zmierzone dziś:** staging `b7d27ccc304b` (tag `staging-deployed`), demo `90833bc94adb` — **falaA
-jeszcze nie na demo**, to jest dziura opisana niżej. Źródła pomiaru: `curl .../api/health` (oba
-środowiska), `git merge-base --is-ancestor <SHA> HEAD` na `~/Developer/wt/rejestr-0914` dla każdego
-SHA cytowanego w tym pliku i w `OD_CODEXA.md`, tabele P-T01…P-T22 / P-P01…P-P13 wyżej w rejestrze.
+**Zmierzone 14.09 ~06:30 UTC:** staging `b7d27ccc304b` (tag `staging-deployed`, fala A cz. 3, run
+`34810170858`), demo `90833bc94adb` — **fala A jeszcze nie na demo**, to jest dziura opisana niżej.
+Źródła pomiaru: `curl .../api/health` (oba środowiska), `git merge-base --is-ancestor <SHA> HEAD`
+na `~/Developer/wt/rejestr-0914` dla każdego SHA cytowanego w tym pliku i w `OD_CODEXA.md`, tabele
+P-T01…P-T22 / P-P01…P-P13 wyżej w rejestrze — przeliczone wiersz po wierszu (metoda: „na stagingu”
+liczy się tylko wtedy, gdy SHA naprawy jest przodkiem `b7d27ccc30`, nie gdy gałąź jest tylko
+„scalona do swojej kopii”/„gotowa”); wynik zgodny z licznikiem niżej (18/35), bez korekty.
+
+**Cz. 4 gotowa do scalenia (kolejka po cz. 3):** `drd-output-en` `744394e45e` (Z-15, DRD Output EN
+nadal po polsku), `answer-state-hints` `1efa59275f` 🔧 (w toku). **Fala B 🔧 (dwie gałęzie Opus,
+równolegle):** `integracja/kandydat-fala-b-inicjatywy-20260914` (A1+A2), `integracja/kandydat-fala-b-realizacja-20260914`
+(H1+H2+B-E0). **Codex:** wpis 22 w `KANAL.md` (podział pracy) czeka na wklejenie przez właściciela.
 
 **Licznik MVP (pojemnik 1).** Rdzeń: **2/2** filarów zaakceptowane (Inicjatywy DEC-481, Realizacja
 DEC-494). Pilotaż: **5** kont, aktywni dziś Paweł + Justyna, Tomek testował 10–11.09 (gmail).
@@ -497,6 +505,8 @@ Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░�
   snapshot/resume (pula `20262200–20262219`).
 - **Wolumen avatarów** (P-T05) — `STORAGE_DIR` na dysk kontenera Railway znika; decyzja przy
   najbliższym wdrożeniu (Z-9).
+- **Z-18 (nowy, z fali A cz. 3)** — „Delete” w kebabie listy Processes nie otwiera dialogu (sesja
+  DRD QA `8cdf5624` na stagingu); do przydziału.
 
 ---
 

@@ -32,6 +32,14 @@ success); demo `90833bc94a` nietknięte tą falą (health potwierdzony curl-em).
 `pawel-inicjatywa` (scalone) + `pawel-assessment` (w toku) + `drd-output-en` (w toku, Z-15).
 Szczegóły: sekcja 14.09.2026 niżej, „Fala A cz. 2 — WDROŻONA".
 
+**Aktualizacja Z-2 (14.09, noc→rano) — ZAMKNIĘTE.** Fala A cz. 3 WDROŻONA na staging (run
+`34810170858`, success): `tomek-czat` `9dbae281a5` + `pawel-inicjatywa` `b6965e992d` +
+`pawel-assessment` `b7d27ccc30` scalone bez konfliktów; linia `94b2271b1c` → `b7d27ccc30` (65 plików,
++1736/−64). Demo `90833bc94a` nietknięte. P-T09/T21/T04/T07/T10 (Tomek, czat) i P-P06 (Paweł,
+inicjatywa), P-P10/P12/P13 (Paweł, assessment) → 🧪 NA STAGINGU. Nowy alarm **Z-18**: „Delete” w
+kebabie listy Processes nie otwiera dialogu (sesja DRD QA `8cdf5624` zostawiona na stagingu —
+defekt, nie sprzątnięcie). Szczegóły: sekcja 14.09.2026 niżej, „Fala A cz. 3 — WDROŻONA”.
+
 **Z-3 (14.09).** KANAL.md — Wpis 16 do Codexa (DEC-495 skrót + cztery uwagi rdzenia Tomka
 XV/XVI/XVII/XIV) — dopisany, patrz sekcja niżej.
 
@@ -96,6 +104,11 @@ fala A cz. 3.
 **Z-16 (14.09, nowe, z rozliczenia Z-14).** Decyzja otwarta: 22× organizacje
 `ateliertoys-demo-session-*` (efemeryczne, tryb demo) pominięte w naprawie danych `v8_feature_flags`
 14.09 — sprzątać, wykluczyć na stałe z higieny, czy zostawić jako oczekiwany artefakt trybu demo?
+
+**Z-18 (14.09, nowe, z odbioru fali A cz. 3).** Sesja DRD QA `8cdf5624` zostawiona na stagingu:
+„Delete” w kebabie listy Processes nie otwiera dialogu potwierdzenia — defekt, nie sprzątnięcie
+(kliknięcie nie robi nic; brak dialogu = brak destrukcyjnej akcji, więc nie blokuje pilotażu, ale
+kebab jest martwy). Do przydziału.
 
 **Z-0 (13.09 ~22:00).** Punkt startu następcy:
 `docs/program/PRZEKAZANIE_KODOWANIA_20260907/PRZEKAZANIE_20260913_WIECZOR.md`
@@ -208,13 +221,13 @@ Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_
 | P-T01 (I) | Mail powitalny | Adres wsparcia `support@consultify.com` — domena `.com` nie istnieje | ⚪ decyzja | właściciel | Z-5 |
 | P-T02 (II) | Mail powitalny | Stopka „Warsaw, Poland” do zweryfikowania (PL/US); link `/help` z maila 404 | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
 | P-T03 (III) | Profil | Nie można zmienić i zapisać danych (imię, telefon) | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
-| P-T04 (IV) | Chat | Załączniki nie działają — brak dostępu do treści pliku | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T04 (IV) | Chat | Załączniki nie działają — brak dostępu do treści pliku | 🔴 bloker (czat) | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
 | P-T05 (V) | Profil | Zdjęcie profilowe wgrywa się, następnego dnia nie wczytuje | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
 | P-T06 (VI) | Ustawienia/dashboard | Suwaki „Widoczności widgetów” niewidoczne w trybie jasnym gdy OFF | ⚪ kosmetyka | — | NIEROZLICZONE — brak w Podziale CTO, do przydziału |
-| P-T07 (VII) | Chat | Obrys zaznaczonej rozmowy nachodzi na tekst | ⚪ kosmetyka | Opus `tomek-czat` | otwarte |
+| P-T07 (VII) | Chat | Obrys zaznaczonej rozmowy nachodzi na tekst | ⚪ kosmetyka | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
 | P-T08 (VIII) | Organizacje | Kilka kliknięć „utwórz” tworzy duplikaty organizacji o tej samej nazwie | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
-| P-T09 (IX) | Chat | Nowa rozmowa przeskakuje do ostatniego czatu zamiast otworzyć nowe okno | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
-| P-T10 (X) | Chat | Lewy panel historii zasłania tekst | ⚪ kosmetyka | Opus `tomek-czat` | otwarte |
+| P-T09 (IX) | Chat | Nowa rozmowa przeskakuje do ostatniego czatu zamiast otworzyć nowe okno | 🔴 bloker (czat) | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
+| P-T10 (X) | Chat | Lewy panel historii zasłania tekst | ⚪ kosmetyka | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
 | P-T11 (XI) | Ustawienia/auth-access | Historia logowania nieprawdziwa/nie odświeża się po przelogowaniu | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
 | P-T12 (XII) | Odzyskiwanie hasła | Link resetu nie dochodzi mailem; stare hasło nadal działa; brak opcji telefon/mail przy resecie | 🔴 bloker (konto) | Opus `tomek-konto` | otwarte |
 | P-T13 (XIII) | Moja Praca / Mind Map | Teresa nie pomaga w nawigacji po środowisku | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
@@ -225,7 +238,7 @@ Dosłowny tekst właściciela: `docs/program/FALA2/WIZJA_INICJATYWY_4_PRZYCISKI_
 | P-T18 (XVIII) | Nawigacja | Nie można otwierać przycisków jako nowe karty przeglądarki | ⚪ kosmetyka | — | NIEROZLICZONE — brak w Podziale CTO, do przydziału |
 | P-T19 (XIX) | Onboarding/organizacja | Błąd przy tworzeniu zakładu mimo że organizacja się tworzy; nie można wyjść z panelu | ⚪ wiedza użytkownika | — | zamknięte (informacja) |
 | P-T20 (XX) | DRD ocena | „Zapytaj Teresę” → „Ta rozmowa nie istnieje” | ⚪ duplikat | — | duplikat §3 #16 First Value plan |
-| P-T21 (XXI) | DRD ocena | Problemy z dodawaniem plików; przycisk potwierdzenia nie działa; okno czatu bez zamknięcia | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
+| P-T21 (XXI) | DRD ocena | Problemy z dodawaniem plików; przycisk potwierdzenia nie działa; okno czatu bez zamknięcia | 🔴 bloker (czat) | Opus `tomek-czat` || 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
 | P-T22 (XXII) | DRD ocena | Potwierdzenie/zamknięcie odpowiedzi nie działa (ciąg dalszy XXI) | 🔴 bloker (czat) | Opus `tomek-czat` | otwarte |
 
 Podział: 🔴 blokery → dwie gałęzie Opus od linii `0de4dc9c66`: `integracja/kandydat-tomek-konto-20260914` (XII reset hasła, III profil, VIII duplikaty org, V avatar, XI historia logowania, II /help) i `integracja/kandydat-tomek-czat-20260914` (IX nowa rozmowa, XXI DRD Teresa regresja, IV załączniki, XXII DRD potwierdzenie/zamknięcie, XIII kontekst Mind Map, VII/X kosmetyka). 🟠 rdzeń Wywiad/Moja Praca (XV usuwanie załącznika, XVI niespójność AI na bełkot, XVII Kreator wniosków kontekst, XIV Moja Praca) → Codex (KANAL.md wpis 16). ⚪ XX = duplikat §3 #16 First Value plan; XIX ctrl+click i „aktywne sesje” = wiedza użytkownika (zamknięte informacją, nie naprawą); I adres wsparcia = decyzja właściciela (trzy domeny w kodzie: .com/.app/.ai, Z-5). Znacznik commitów napraw: `DEC-496`.
@@ -393,14 +406,14 @@ i logami.
 
 | Nr | ID | Czas (UTC, 14.09) | Waga | Moduł | Opis | Stan |
 |---|---|---|---|---|---|---|
-| P-P06 | `3317aaf2` | 04:18 | HIGH | Initiatives | Ręczne tworzenie inicjatywy gubi wybrany projekt (pole wraca do „Select a project…” po uzupełnieniu podsumowania) i nie da się utworzyć — backend wymaga `projectId` i `initiativeOwnerId`, formularz nie ma pola właściciela | gałąź `integracja/kandydat-pawel-inicjatywa-20260914` (Opus) — w toku |
+| P-P06 | `3317aaf2` | 04:18 | HIGH | Initiatives | Ręczne tworzenie inicjatywy gubi wybrany projekt (pole wraca do „Select a project…” po uzupełnieniu podsumowania) i nie da się utworzyć — backend wymaga `projectId` i `initiativeOwnerId`, formularz nie ma pola właściciela | naprawione `b6965e992d` — 🧪 na stagingu `b7d27ccc30` (fala A cz. 3) |
 | P-P07 | `4b5e98bf` | 04:24 | MEDIUM | AI chat (Teresa) | Czat Teresy zwraca `AI_STREAM_ERROR` przy każdym żądaniu | Opus — diagnoza na żywo (przyczyna po stronie dostawców/strumienia; zmierzona i naprawiona przed wdrożeniem fali A, 04:31) |
 | P-P08 | `260d083a` | 04:19 | LOW | Assessment (DRD) | Niejasne znaczenie „boxes” pod odpowiedziami w DRD | decyzja produktu — opis w raporcie Opus assessment |
 | P-P09 | `f8cc1674` | 04:23 | LOW | Assessment (DRD) | Logika pól typu „I have no evidence” w DRD do przejrzenia | decyzja produktu — opis w raporcie Opus assessment |
-| P-P10 | `8e27e4eb` | 04:28 | MEDIUM | Assessment | Raport `DBR77 Staging Assessment Executive Report` otwiera obcą, pustą ocenę (`Analiza gotowości AI`, 0/39 obszarów, PL zamiast EN) | gałąź `integracja/kandydat-pawel-assessment-20260914` (Opus) — w toku |
+| P-P10 | `8e27e4eb` | 04:28 | MEDIUM | Assessment | Raport `DBR77 Staging Assessment Executive Report` otwiera obcą, pustą ocenę (`Analiza gotowości AI`, 0/39 obszarów, PL zamiast EN) | naprawione `b7d27ccc30` — 🧪 na stagingu (fala A cz. 3) |
 | P-P11 | `ceb436ce` | 04:31 | MEDIUM | Assessment | Zgłoszenie ogólne pilotażu (nawigacja, spójność danych) | do listy UX |
-| P-P12 | `b7ac5351` | 04:31 | MEDIUM | Assessment | Raport generuje się mimo pustych pól (większość obszarów bez danych) | gałąź `integracja/kandydat-pawel-assessment-20260914` (Opus) — w toku |
-| P-P13 | `56c2cc19` | 04:43 | MEDIUM | Presentations | Wygenerowane raporty oceny nie są widoczne w Materials/Documents (tylko lokalne pobranie) | gałąź `integracja/kandydat-pawel-assessment-20260914` (Opus) — w toku |
+| P-P12 | `b7ac5351` | 04:31 | MEDIUM | Assessment | Raport generuje się mimo pustych pól (większość obszarów bez danych) | naprawione `b7d27ccc30` — 🧪 na stagingu (fala A cz. 3) |
+| P-P13 | `56c2cc19` | 04:43 | MEDIUM | Presentations | Wygenerowane raporty oceny nie są widoczne w Materials/Documents (tylko lokalne pobranie) | naprawione `b7d27ccc30` — 🧪 na stagingu (fala A cz. 3); brak w Materials/Documents dla org QA = brak danych, nie defekt (potwierdzić na koncie z raportem) |
 
 P-P10, P-P12, P-P13 zebrane w jedną gałąź Opus `integracja/kandydat-pawel-assessment-20260914`
 (wspólny obszar Assessment/raporty). P-P08/P-P09 pozostają decyzją produktu, nie defektem —
@@ -509,6 +522,23 @@ P-T17 Kreator wniosków / P-T18 tryb demo = ten sam defekt flag → retest.
 
 **Codex — nadal bez odpowiedzi (14.09).** `OD_CODEXA` 22:29 13.09 mimo sprzątnięcia procesów `rg`;
 właściciel proszony o wznowienie tury.
+
+**Fala A cz. 3 — WDROŻONA na staging (run `34810170858`, success).** Linia `94b2271b1c` →
+`b7d27ccc30` (merge `tomek-czat` `9dbae281a5`, `pawel-inicjatywa` `b6965e992d`, `pawel-assessment`
+`b7d27ccc30`; delta 65 plików +1736/−64; zero konfliktów). Tag cofnięcia
+`rollback-pre-fala-a3-20260914` = `94b2271b1c`; `staging-deployed` = `b7d27ccc30`; demo `90833bc94a`
+bez zmian. Bramka: tsc serwer 0, front 188, język bez wzrostu (spadki), canon 349, artefakt 8-0-117,
+build OK, 10 nowych plików testów zielone (41 testów), 12 zastanych czerwieni identycznych na linii
+(bez zmian tą falą). Zrzuty (konto Northwind + sesja DRD w org QA Fable, jasny):
+`~/Developer/cto-codex/zrzuty-fala-a3-20260914/` (niezacommitowane celowo — commit evidence na
+gałąź `staging` wyzwoliłby build): ✔ nowa rozmowa (P-T09), ✔ DRD „Zapytaj Teresę” (P-T21), ✔
+załącznik 200 zamiast 400 (P-T04), ✔ obwódka bez crimson (P-T07), ✔ nowa inicjatywa z domyślnym
+projektem (P-P06), ✔ raport oceny — nagłówek poprawny + bramka DOCX 0/39 (80%) (P-P10/P12), ✖
+Materiały→Dokumenty bez wiersza raportu (P-P13 — brak danych w org QA, NIE defekt: raport nigdy nie
+był tam zapisywany dla tej organizacji, ścieżka zapisu działa gdzie indziej — do potwierdzenia na
+koncie z realnym raportem przed pełnym zamknięciem P-P13).
+Znaleziska: sesja DRD QA `8cdf5624` zostawiona na stagingu — „Delete” w kebabie listy Processes nie
+otwiera dialogu (**Z-18**, nowy defekt, nie regresja tej fali).
 
 ---
 
