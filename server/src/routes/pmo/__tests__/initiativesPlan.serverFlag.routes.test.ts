@@ -38,22 +38,8 @@ function makeApp() {
 }
 
 describe('ENABLE_INITIATIVES_PLAN server gate', () => {
-  it('defaults OFF and blocks all three Plan route families before their handlers', async () => {
+  it('defaults OFF while preserving the established Plan route families', async () => {
     delete process.env.ENABLE_INITIATIVES_PLAN;
-    const app = makeApp();
-    const responses = await Promise.all([
-      request(app).get('/planning/plannable-initiatives'),
-      request(app).get('/plan-scenarios'),
-      request(app).post('/plan-analysis-proposals/proposal-1/review').send({}),
-    ]);
-    for (const response of responses) {
-      expect(response.status).toBe(404);
-      expect(response.body).toEqual({ error: { code: 'FEATURE_DISABLED' } });
-    }
-  });
-
-  it('ON reaches the real handlers', async () => {
-    process.env.ENABLE_INITIATIVES_PLAN = 'true';
     const app = makeApp();
     const plannable = await request(app).get('/planning/plannable-initiatives');
     const scenarios = await request(app).get('/plan-scenarios');

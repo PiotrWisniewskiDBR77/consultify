@@ -94,6 +94,89 @@ describe('DEC-497 P2 E1 — default-OFF dependency analysis gate', NO_RETRY, () 
     expect(analyze).not.toHaveBeenCalled();
   });
 
+  it('blocks conditional persistence and observation review while OFF without hiding Plan', async () => {
+    const analyze = vi.fn();
+    const app = createPlanAnalysisRouteTestApp({ analyze, enabled: false, foundVersion: 2 });
+    const scenario = {
+      scenarioId: 'plan-url',
+      scenarioVersion: 2,
+      status: 'DRAFT',
+      portfolioScenarioId: 'portfolio-flag',
+      portfolioScenarioVersion: 1,
+      windowUnit: 'WEEK',
+      timezone: 'Europe/Warsaw',
+      periods: [
+        {
+          periodId: 'W1',
+          start: '2026-09-14T00:00:00.000Z',
+          end: '2026-09-21T00:00:00.000Z',
+        },
+      ],
+      windows: [
+        {
+          initiativeId: 'initiative-b',
+          initiativeVersion: 1,
+          earliest: null,
+          target: null,
+          latest: null,
+          confidence: 'HIGH',
+          rationale: 'Governed sequence.',
+          dependencySnapshot: [],
+          conditionalDependencySnapshot: [
+            { predecessorId: 'initiative-a', condition: 'Only after approval.', active: false },
+          ],
+          constraintSnapshot: [],
+        },
+      ],
+      assumptions: [],
+      createdBy: 'owner-1',
+      updatedBy: 'owner-1',
+      publishedBy: null,
+      publishedAt: null,
+    };
+
+    const conditionalWrite = await request(app)
+      .post('/plan-scenarios/plan-url')
+      .send({
+        expectedVersion: 2,
+        clientRequestId: 'conditional-off',
+        operation: 'UPDATE',
+        scenario,
+      });
+    const conditionalReview = await request(app)
+      .post('/plan-analysis-proposals/proposal-off/review')
+      .send({
+        expectedVersion: 1,
+        clientRequestId: 'review-off',
+        outcome: 'ACCEPT',
+        rationale: 'Reviewed by manager.',
+        observationReviews: [
+          {
+            observationId: 'obs-off',
+            outcome: 'ACCEPTED',
+            conditionActive: false,
+            humanComment: 'Condition does not currently apply.',
+            finalObservation: {
+              observationId: 'obs-off',
+              predecessorId: 'initiative-a',
+              successorId: 'initiative-b',
+              kind: 'CONDITIONAL',
+              condition: 'Only after approval.',
+              rationale: 'Conditional sequence.',
+              evidenceRefs: ['scopeIn'],
+              confidence: 'HIGH',
+            },
+          },
+        ],
+      });
+
+    expect(conditionalWrite.status).toBe(404);
+    expect(conditionalWrite.body).toEqual({ error: { code: 'FEATURE_DISABLED' } });
+    expect(conditionalReview.status).toBe(404);
+    expect(conditionalReview.body).toEqual({ error: { code: 'FEATURE_DISABLED' } });
+    expect(analyze).not.toHaveBeenCalled();
+  });
+
   it('rejects a stale Plan aggregate version before AI', async () => {
     const analyze = vi.fn().mockResolvedValue({
       source: 'AI',

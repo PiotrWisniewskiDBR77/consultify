@@ -2,7 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({
   listPlanScenarioRegister: vi.fn(),
@@ -84,6 +84,9 @@ const conditionalObservation = {
 };
 
 describe('PlanScenarioSurface AI dependency review flow', () => {
+  beforeEach(() => vi.stubEnv('VITE_INITIATIVES_PLAN', 'true'));
+  afterEach(() => vi.unstubAllEnvs());
+
   it('requests AI analysis and applies approved dependencies plus logical order through canonical writers', async () => {
     api.listPlanScenarioRegister.mockResolvedValue({ scenarios: [{ id: 'plan-ai', name: 'AI plan', state: 'DRAFT', version: 1, portfolioRef: { scenarioId: 'portfolio', scenarioVersion: 1 }, window: { earliest: null, latest: null }, updatedAt: '2026-09-14T00:00:00.000Z', timeBasis: { windowUnit: 'WEEK', timezone: 'Europe/Warsaw', periods: scenario.periods, knowledgeState: 'KNOWN' } }] });
     api.readPlanScenario.mockResolvedValue({ version: 1, scenario });

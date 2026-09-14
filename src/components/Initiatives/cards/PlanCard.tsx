@@ -153,6 +153,7 @@ export function PlanCard({
   savedLabel,
   errorLabel,
   busy,
+  dependencyAnalysisEnabled,
   onBack,
   onAnalyze,
   onGenerate,
@@ -186,6 +187,8 @@ export function PlanCard({
   /** Komunikat błędu zapisu (np. konflikt wersji) — karta musi go POKAZAĆ. */
   errorLabel?: string | null;
   busy?: boolean;
+  /** Wave 2 dependency analysis gate. The established Plan workspace stays available at OFF. */
+  dependencyAnalysisEnabled?: boolean;
   onBack: () => void;
   onAnalyze: (mode: PlanGenerationMode) => void;
   onGenerate?: (input: GeneratorPlanInput) => void;
@@ -313,7 +316,7 @@ export function PlanCard({
       scenario.windows.flatMap((window) =>
         [
           ...window.dependencySnapshot,
-          ...(window.conditionalDependencySnapshot ?? [])
+          ...(dependencyAnalysisEnabled ? (window.conditionalDependencySnapshot ?? []) : [])
             .filter((dependency) => dependency.active)
             .map((dependency) => dependency.predecessorId),
         ]
@@ -323,11 +326,17 @@ export function PlanCard({
             toId: window.initiativeId,
           }))
       ),
-    [scenario.windows]
+    [dependencyAnalysisEnabled, scenario.windows]
   );
   const criticalPathIds = useMemo(
-    () => [...new Set((proposal?.criticalPaths ?? []).flatMap((path) => path.initiativeIds))],
-    [proposal]
+    () => [
+      ...new Set(
+        (dependencyAnalysisEnabled ? (proposal?.criticalPaths ?? []) : []).flatMap(
+          (path) => path.initiativeIds
+        )
+      ),
+    ],
+    [dependencyAnalysisEnabled, proposal]
   );
   const frozenIds = useMemo(
     () =>
@@ -608,7 +617,7 @@ export function PlanCard({
   // ani zatwierdzić poza generatorem.
   const dependenciesSection = (
     <div className={box}>
-      {proposal?.analysisSource === 'AI' && (
+      {dependencyAnalysisEnabled && proposal?.analysisSource === 'AI' && (
         <PlanDependencyAnalysisPanel
           proposal={proposal}
           editable={editable}

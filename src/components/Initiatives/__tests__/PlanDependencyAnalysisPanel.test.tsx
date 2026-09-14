@@ -65,6 +65,12 @@ describe('PlanDependencyAnalysisPanel', () => {
     expect(screen.getByText(/Rollout → Training/)).toBeInTheDocument();
     expect(screen.getAllByText('initiatives.planAnalysis.kind.ABSOLUTE').length).toBeGreaterThan(0);
     expect(screen.getAllByText('initiatives.planAnalysis.kind.CONDITIONAL').length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole('combobox', { name: 'initiatives.planAnalysis.dependencyType' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: 'initiatives.planAnalysis.dependencyType' })
+    ).toHaveLength(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'initiatives.planAnalysis.acceptAll' }));
     const rationale = screen.getAllByLabelText('initiatives.planAnalysis.rationale')[0];

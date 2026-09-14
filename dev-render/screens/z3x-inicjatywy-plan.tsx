@@ -65,10 +65,15 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const originalFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = String(input);
+  if (url.includes('/api/organizations/') && url.includes('/members')) return json({ members: [] });
+  if (url.includes('/api/v8/planning/pending-decisions')) return json([]);
+  if (url.includes('/api/users')) return json([]);
+  if (url.includes('/api/organizations/current')) return json({ id: ORG_ID, name: 'DBR77' });
+  if (url.includes('/api/v8/admin/flags')) return json({ flags: {} });
   if (url.includes('/api/initiatives/runtime-v1/plan-scenarios/plan-us-launch/analysis-proposals')) return json({ items: [proposal] });
   if (url.includes('/api/initiatives/runtime-v1/plan-scenarios/plan-us-launch')) return json({ version: 4, scenario });
   if (url.includes('/api/initiatives/runtime-v1/plan-scenarios')) return json({ scenarios: empty ? [] : [{ id: scenario.scenarioId, name: scenario.name, state: scenario.status, version: scenario.scenarioVersion, portfolioRef: { scenarioId: scenario.portfolioScenarioId, scenarioVersion: scenario.portfolioScenarioVersion, name: 'US launch portfolio' }, window: { earliest: windows[0]?.earliest ?? null, latest: windows.at(-1)?.latest ?? null }, updatedAt: '2026-09-14T10:00:00.000Z', timeBasis: { windowUnit: 'WEEK', timezone: scenario.timezone, periods, knowledgeState: 'KNOWN' }, initiativeCount: windows.length, conflicts: 0, author: 'Piotr Wisniewski' }] });
-  if (url.includes('/api/initiatives/runtime-v1/planning/initiatives')) return json({ initiatives: [] });
+  if (url.includes('/api/initiatives/runtime-v1/planning/')) return json({ initiatives: [] });
   if (url.includes('/api/initiatives/runtime-v1/capacity-scenarios')) return json({ scenarios: [] });
   if (url.includes('/api/initiatives/lifecycle-transition-proposals')) return json({ proposals: [] });
   if (url.includes('/api/initiatives/runtime-v1/initiatives')) return json({ initiatives: [], nextCursor: null });
