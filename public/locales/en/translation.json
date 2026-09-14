@@ -51448,6 +51448,34 @@
     }
   },
   "executionReports": {
+    "e4": {
+      "title": "Execution reports",
+      "created": "Execution report frozen for approval.",
+      "delivered": "The report was delivered.",
+      "approve": "Approve",
+      "send": "Send by email",
+      "downloadPdf": "Download PDF",
+      "noSources": "No evidence sources",
+      "empty": "No execution reports yet",
+      "emptyHint": "Create the first governed report from current delivery data and KPI results.",
+      "detail": {
+        "label": "Detail",
+        "executive": "Executive",
+        "management": "Management",
+        "detailed": "Detailed"
+      },
+      "cadence": { "on_demand": "On demand", "weekly": "Weekly", "monthly": "Monthly" },
+      "fields": {
+        "title": "Report title",
+        "recipients": "Recipients",
+        "template": "Template",
+        "definition": "Governed definition",
+        "approver": "Approver"
+      },
+      "errors": {
+        "required": "Complete the report title, recipients, template, definition and approver."
+      }
+    },
     "definitionsHeading": "Report templates",
     "definitionsHelp": "Four templates — one per reporting level — generate a report. Use the row menu (Generate report) to build a snapshot; the rest stay visible and arrive in Wave 2.",
     "subtitle": "Frozen snapshot of delivery data",

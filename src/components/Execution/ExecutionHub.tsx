@@ -195,6 +195,7 @@ import {
   type ReportDef,
 } from './executionReports';
 import { ExecutionReportsSurface } from './ExecutionReportsSurface';
+import { ExecutionReportE4Surface, executionReportE4Enabled } from './ExecutionReportE4Surface';
 import { ExecutionResourcesSurface } from './ExecutionResourcesSurface';
 import { buildExecutionSourceRelations } from './executionSourceRelations';
 import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
@@ -5885,8 +5886,7 @@ Please return:
                           label: t('common.copyLink', 'Copy link'),
                           icon: Copy,
                           colorScheme: 'neutral',
-                          onClick: () =>
-                            void navigator.clipboard?.writeText(window.location.href),
+                          onClick: () => void navigator.clipboard?.writeText(window.location.href),
                         },
                       ],
                     },
@@ -5985,7 +5985,17 @@ Please return:
         />
       );
     if (activeTab === 'reports')
-      return (
+      return executionReportE4Enabled ? (
+        <ExecutionReportE4Surface
+          activePreset={canonicalMenu3Preset.reports}
+          onCountsChange={menu3CountHandlers.reports}
+          onRegisterFilterControl={setReportsFilterControl}
+          onRegisterPrimaryCta={setReportsPrimaryCta}
+          onRegisterMenu3Control={setReportsMenu3Control}
+          currentUserId={currentUser?.id ?? ''}
+          currentOrganizationId={currentOrganizationId ?? ''}
+        />
+      ) : (
         <ExecutionReportsSurface
           activePreset={canonicalMenu3Preset.reports}
           onCountsChange={menu3CountHandlers.reports}
