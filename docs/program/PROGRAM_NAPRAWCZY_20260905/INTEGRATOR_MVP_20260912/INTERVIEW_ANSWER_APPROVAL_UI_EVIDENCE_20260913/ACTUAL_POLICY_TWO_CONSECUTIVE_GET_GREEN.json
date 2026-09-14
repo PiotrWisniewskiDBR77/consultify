@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "requests": [
+    {
+      "status": 200
+    },
+    {
+      "status": 200
+    }
+  ]
+}

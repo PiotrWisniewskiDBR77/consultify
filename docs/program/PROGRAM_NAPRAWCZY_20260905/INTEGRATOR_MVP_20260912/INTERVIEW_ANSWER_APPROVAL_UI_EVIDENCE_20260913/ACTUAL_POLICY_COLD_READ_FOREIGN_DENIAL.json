@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "coldRead": {
+    "status": 200,
+    "mode": "two_stage",
+    "futureModeKey": "keep-me",
+    "futureTop": {
+      "preserved": "yes"
+    }
+  },
+  "foreignDenied": {
+    "status": 403,
+    "code": "ORG_SCOPE_MISMATCH"
+  }
+}

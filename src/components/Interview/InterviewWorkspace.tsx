@@ -35,6 +35,7 @@ import {
   MessageSquare,
   Mic,
   Paperclip,
+  RefreshCw,
   Save,
   Send,
   Shield,
@@ -62,18 +63,19 @@ import {
 } from '@/components/shared/NModeLayout';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-import { sekcjeZKontraktu } from '@/components/standard/contractSections';
-import { PracujZAI } from '@/components/standard/PracujZAI';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { sekcjeZKontraktu } from '@/components/standard/contractSections';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useInterviewReviewAccess } from '@/hooks/useInterviewPermissions';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
+  type V8InterviewAnswerApproval,
   V8InterviewApi,
   type V8InterviewAssignment,
   type V8InterviewSessionEvaluation,
@@ -98,9 +100,9 @@ import { loadInterviewV8Capability } from './interviewBackendRouting';
 // karty (cardContract.types.ts) zamiast z luźnej tablicy NModeSection[] —
 // patrz interviewCardContract.ts. Za flagą (default OFF), zero regresji na demo.
 import {
-  INTERVIEW_CARDS,
   INTERVIEW_CARD_RENDER_IDS,
   INTERVIEW_CARD_SPEC,
+  INTERVIEW_CARDS,
 } from './interviewCardContract';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
@@ -140,6 +142,22 @@ const withTimeout = async <T,>(promise: Promise<T>, ms: number, message: string)
   } finally {
     if (timer) clearTimeout(timer);
   }
+};
+
+const createClientRequestId = () =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `interview-answer-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const getApiMessageKey = (error: unknown): string | null => {
+  const candidate = error as {
+    data?: { messageKey?: unknown };
+    response?: { data?: { messageKey?: unknown } };
+  };
+  // ApiClient rejects with its normalized payload (`error.data`), while a few
+  // older Axios callers still expose `error.response.data`.
+  const messageKey = candidate?.data?.messageKey ?? candidate?.response?.data?.messageKey;
+  return typeof messageKey === 'string' && messageKey.trim() ? messageKey : null;
 };
 
 // ==========================================
@@ -335,6 +353,109 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [answerHistoryByQuestionId, setAnswerHistoryByQuestionId] = useState<
     Record<string, Array<{ id: string; answerText: string | null; savedAt: string }>>
   >({});
+  const approvalScopeKey = `${currentOrganization?.id || ''}:${currentUser?.id || ''}:${session?.assignmentId || ''}`;
+  const approvalScopeRef = useRef(approvalScopeKey);
+  approvalScopeRef.current = approvalScopeKey;
+  const [answerApprovalState, setAnswerApprovalState] = useState<{
+    scopeKey: string;
+    approvals: V8InterviewAnswerApproval[];
+    loading: boolean;
+    error: boolean;
+  }>({ scopeKey: '', approvals: [], loading: false, error: false });
+  const [answerDecisionReasons, setAnswerDecisionReasons] = useState<Record<string, string>>({});
+  const [answerDecisionPending, setAnswerDecisionPending] = useState<string | null>(null);
+
+  const refreshAnswerApprovals = useCallback(async () => {
+    const assignmentId = session?.assignmentId;
+    const scopeKey = approvalScopeKey;
+    if (!assignmentId) {
+      setAnswerApprovalState({ scopeKey, approvals: [], loading: false, error: false });
+      return [];
+    }
+    setAnswerApprovalState({ scopeKey, approvals: [], loading: true, error: false });
+    try {
+      const result = await V8InterviewApi.getAnswerApprovals(assignmentId);
+      if (result.assignmentId !== assignmentId || !Array.isArray(result.approvals)) {
+        throw new Error('Answer approval projection is invalid for this scope');
+      }
+      if (approvalScopeRef.current !== scopeKey) return [];
+      setAnswerApprovalState({
+        scopeKey,
+        approvals: result.approvals,
+        loading: false,
+        error: false,
+      });
+      return result.approvals;
+    } catch (error) {
+      if (approvalScopeRef.current === scopeKey) {
+        setAnswerApprovalState({ scopeKey, approvals: [], loading: false, error: true });
+      }
+      throw error;
+    }
+  }, [approvalScopeKey, session?.assignmentId]);
+
+  useEffect(() => {
+    let active = true;
+    const assignmentId = session?.assignmentId;
+    const scopeKey = approvalScopeKey;
+    if (!assignmentId) {
+      setAnswerApprovalState({ scopeKey, approvals: [], loading: false, error: false });
+      return () => {
+        active = false;
+      };
+    }
+    setAnswerApprovalState({ scopeKey, approvals: [], loading: true, error: false });
+    void V8InterviewApi.getAnswerApprovals(assignmentId)
+      .then((result) => {
+        if (!active || approvalScopeRef.current !== scopeKey) return;
+        if (result.assignmentId !== assignmentId || !Array.isArray(result.approvals)) {
+          setAnswerApprovalState({ scopeKey, approvals: [], loading: false, error: true });
+          return;
+        }
+        setAnswerApprovalState({
+          scopeKey,
+          approvals: result.approvals,
+          loading: false,
+          error: false,
+        });
+      })
+      .catch(() => {
+        if (active) {
+          setAnswerApprovalState({ scopeKey, approvals: [], loading: false, error: true });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [approvalScopeKey, session?.assignmentId]);
+
+  const visibleAnswerApprovals = useMemo(
+    () => (answerApprovalState.scopeKey === approvalScopeKey ? answerApprovalState.approvals : []),
+    [answerApprovalState, approvalScopeKey]
+  );
+  // An assigned interview must not infer the legacy contract from an empty
+  // initial/loading/error state. Only a successful GET for this exact scope
+  // can resolve the projection. Resolved [] is the explicit legacy contract.
+  const isAnswerApprovalProjectionResolved =
+    !isAssignmentMode ||
+    (answerApprovalState.scopeKey === approvalScopeKey &&
+      !answerApprovalState.loading &&
+      !answerApprovalState.error);
+  const hasPerAnswerApproval =
+    isAnswerApprovalProjectionResolved && visibleAnswerApprovals.length > 0;
+  const isWorkspaceReadOnly = isLocked || !isAnswerApprovalProjectionResolved;
+  const isQuestionReadOnly = useCallback(
+    (questionId: string) => {
+      if (session?.assignmentId && !isAnswerApprovalProjectionResolved) return true;
+      if (!session?.assignmentId || visibleAnswerApprovals.length === 0) return isLocked;
+      if (!isLocked && !visibleAnswerApprovals.some((item) => item.status === 'sent_back')) {
+        return false;
+      }
+      const approval = visibleAnswerApprovals.find((item) => item.questionId === questionId);
+      return approval ? approval.status !== 'sent_back' : true;
+    },
+    [isAnswerApprovalProjectionResolved, isLocked, session?.assignmentId, visibleAnswerApprovals]
+  );
 
   useEffect(() => {
     if (!isReviewerMode || !session?.assignmentId) {
@@ -1074,7 +1195,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Update question
   const handleUpdateQuestion = useCallback(
     async (questionId: string, updates: Partial<InterviewQuestion>) => {
-      if (!session || isLocked) return;
+      if (!session || isQuestionReadOnly(questionId)) return;
       setIsSaving(true);
 
       try {
@@ -1131,13 +1252,96 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, questions, isPolish, onSessionChange]
+    [session, isQuestionReadOnly, questions, isPolish, onSessionChange]
   );
+
+  const handleAnswerDecision = useCallback(
+    async (approval: V8InterviewAnswerApproval, decision: 'approved' | 'sent_back') => {
+      const assignmentId = session?.assignmentId;
+      if (!assignmentId || !isReviewerMode || approval.nextStage !== 'manager') return;
+      const scopeKey = approvalScopeKey;
+      const reason = answerDecisionReasons[approval.questionId]?.trim() || '';
+      if (decision === 'sent_back' && !reason) return;
+      setAnswerDecisionPending(approval.questionId);
+      try {
+        await V8InterviewApi.decideAnswerApprovals(assignmentId, {
+          submissionId: approval.submissionId,
+          clientRequestId: createClientRequestId(),
+          answers: [
+            {
+              questionId: approval.questionId,
+              expectedAnswerUpdatedAt: approval.answerUpdatedAt,
+            },
+          ],
+          decision,
+          reason: decision === 'sent_back' ? reason : undefined,
+        });
+        await refreshAnswerApprovals();
+        if (approvalScopeRef.current === scopeKey) {
+          toast.success(
+            t(
+              decision === 'approved'
+                ? 'interview.workspace.answerApproved'
+                : 'interview.workspace.answerSentBack'
+            )
+          );
+        }
+      } catch (error) {
+        if (approvalScopeRef.current !== scopeKey) return;
+        const messageKey = getApiMessageKey(error);
+        toast.error(
+          t(
+            messageKey ||
+              ((error as { status?: number })?.status === 409
+                ? 'interview.workspace.answerDecisionConflict'
+                : 'interview.workspace.answerDecisionFailed')
+          )
+        );
+      } finally {
+        setAnswerDecisionPending(null);
+      }
+    },
+    [
+      answerDecisionReasons,
+      approvalScopeKey,
+      isReviewerMode,
+      refreshAnswerApprovals,
+      session?.assignmentId,
+      t,
+    ]
+  );
+
+  const handleRetryAiAnswerApprovals = useCallback(async () => {
+    const assignmentId = session?.assignmentId;
+    if (!assignmentId) return;
+    const scopeKey = approvalScopeKey;
+    setAnswerDecisionPending('ai');
+    try {
+      const result = await V8InterviewApi.retryAiAnswerApprovals(
+        assignmentId,
+        createClientRequestId()
+      );
+      if (approvalScopeRef.current === scopeKey) {
+        setAnswerApprovalState({
+          scopeKey,
+          approvals: result.approvals,
+          loading: false,
+          error: false,
+        });
+      }
+    } catch (error) {
+      if (approvalScopeRef.current !== scopeKey) return;
+      const messageKey = getApiMessageKey(error);
+      toast.error(t(messageKey || 'interview.workspace.aiAnswerReviewUnavailable'));
+    } finally {
+      setAnswerDecisionPending(null);
+    }
+  }, [approvalScopeKey, session?.assignmentId, t]);
 
   // Add question
   const handleAddQuestion = useCallback(
     async (category: InterviewCategory, questionText: string) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly) return;
       setIsSaving(true);
 
       try {
@@ -1153,13 +1357,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish]
   );
 
   // Create note
   const handleCreateNote = useCallback(
     async (title: string, content: string, category?: InterviewCategory) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly) return;
       setIsSaving(true);
 
       try {
@@ -1176,13 +1380,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish]
   );
 
   // Update note
   const handleUpdateNote = useCallback(
     async (noteId: string, updates: Partial<InterviewNote>) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly) return;
       setIsSaving(true);
 
       try {
@@ -1195,13 +1399,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish]
   );
 
   // Delete note
   const handleDeleteNote = useCallback(
     async (noteId: string) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly) return;
 
       try {
         await Api.delete(`/interview/notes/${noteId}`);
@@ -1211,13 +1415,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         toast.error(t('interview.workspace.failedToDeleteNote'));
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish]
   );
 
   // Upload file
   const handleUploadFile = useCallback(
     async (file: File, category?: InterviewCategory, questionId?: string) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly || (questionId && isQuestionReadOnly(questionId))) return;
       setIsSaving(true);
 
       try {
@@ -1242,7 +1446,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish, isQuestionReadOnly]
   );
 
   // Add link
@@ -1254,7 +1458,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       category?: InterviewCategory,
       questionId?: string
     ) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly || (questionId && isQuestionReadOnly(questionId))) return;
       setIsSaving(true);
 
       try {
@@ -1277,12 +1481,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish, isQuestionReadOnly]
   );
 
   const handleAddEvidenceComment = useCallback(
     async (text: string, category?: InterviewCategory, questionId?: string) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly || (questionId && isQuestionReadOnly(questionId))) return;
       setIsSaving(true);
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
@@ -1304,7 +1508,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish, isQuestionReadOnly]
   );
 
   const handleAddVoiceEvidence = useCallback(
@@ -1314,7 +1518,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       category?: InterviewCategory,
       questionId?: string
     ) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly || (questionId && isQuestionReadOnly(questionId))) return;
       setIsSaving(true);
 
       try {
@@ -1339,13 +1543,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish, isQuestionReadOnly]
   );
 
   // Delete evidence
   const handleDeleteEvidence = useCallback(
     async (evidenceId: string) => {
-      if (!session || isLocked) return;
+      if (!session || isWorkspaceReadOnly) return;
 
       try {
         await Api.delete(`/interview/evidence/${evidenceId}`);
@@ -1355,12 +1559,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         toast.error(t('interview.workspace.failedToDelete'));
       }
     },
-    [session, isLocked, isPolish]
+    [session, isWorkspaceReadOnly, isPolish]
   );
 
   // Update company profile
   const handleUpdateProfile = useCallback(async () => {
-    if (isLocked) return;
+    if (isWorkspaceReadOnly) return;
     setIsSaving(true);
 
     try {
@@ -1381,11 +1585,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [editedProfile, isPolish, isLocked]);
+  }, [editedProfile, isPolish, isWorkspaceReadOnly]);
 
   // Save session
   const handleSave = useCallback(async () => {
-    if (!session || isLocked) return;
+    if (!session || isWorkspaceReadOnly) return;
     setIsSaving(true);
 
     try {
@@ -1399,7 +1603,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [session, isLocked, sessionName, isPolish]);
+  }, [session, isWorkspaceReadOnly, sessionName, isPolish]);
 
   // Submit session — core action (no gate). Used directly when the quality
   // gate is bypassed or when there are no weak answers to flag.
@@ -1409,6 +1613,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       toast.error(t('interview.workspace.sessionNotLoadedRefreshThe'));
       return;
     }
+
+    // Protect stale/programmatic callbacks too: an assigned interview has no
+    // writable contract until the projection resolves for its exact scope.
+    if (session.assignmentId && !isAnswerApprovalProjectionResolved) return;
 
     if (isLocked) {
       toast(t('interview.workspace.thisInterviewIsAlreadySubmitted'), { icon: 'ℹ️' });
@@ -1426,6 +1634,18 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const updatedSession = (result as any)?.session;
         const updatedAssignment = (result as any)?.assignment;
         const completeness = (result as any)?.completenessPercent;
+        const submittedApprovals = (result as any)?.answerApproval;
+        const hasAnswerApprovalCommand = Array.isArray(submittedApprovals)
+          ? submittedApprovals.length > 0
+          : Boolean(submittedApprovals && typeof submittedApprovals === 'object');
+        if (Array.isArray(submittedApprovals)) {
+          setAnswerApprovalState({
+            scopeKey: approvalScopeKey,
+            approvals: submittedApprovals,
+            loading: false,
+            error: false,
+          });
+        }
         if (updatedSession) {
           setSession(updatedSession);
           onSessionChange?.(updatedSession);
@@ -1444,7 +1664,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         toast.success(t('interview.workspace.submittedForReviewPct', { pct: completeness ?? 0 }), {
           id: toastId,
         });
-        void runAiQualityReview({ silent: true });
+        // The governed answer-approval command has already frozen the policy
+        // and owns AI/two-stage evaluation. Starting the legacy whole-session
+        // quality review here creates a second provider call (including in
+        // manager-only mode). Keep that legacy behavior only for submissions
+        // that do not return the governed approval contract.
+        if (!hasAnswerApprovalCommand) void runAiQualityReview({ silent: true });
         onComplete?.(session.id);
         onClose?.();
         return;
@@ -1505,9 +1730,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       setIsSubmittingSession(false);
     }
   }, [
+    isAnswerApprovalProjectionResolved,
     isLocked,
     isPolish,
     isSubmittingSession,
+    approvalScopeKey,
     onAssignmentChange,
     onComplete,
     onSessionChange,
@@ -1524,7 +1751,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const handleSubmitSession = useCallback(
     async (opts?: { bypassGate?: boolean }) => {
       if (isSubmittingSession || qualityGate.checking) return;
+      if (session?.assignmentId && !isAnswerApprovalProjectionResolved) return;
       if (!session || isLocked) {
+        await performSubmit();
+        return;
+      }
+
+      // A returned answer already has a frozen per-answer policy and revision
+      // in the approval ledger. The backend evaluates only that corrected
+      // revision; running the legacy whole-session evaluator here would issue
+      // a second AI request and re-evaluate approved siblings.
+      if (session.assignmentId && hasPerAnswerApproval) {
         await performSubmit();
         return;
       }
@@ -1576,9 +1813,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     [
       aiEvaluation,
       computeWeakAnswers,
+      isAnswerApprovalProjectionResolved,
       isLocked,
       isSubmittingSession,
       performSubmit,
+      hasPerAnswerApproval,
       qualityGate.checking,
       runAiQualityReview,
       session,
@@ -1736,7 +1975,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
-    if (!session || isLocked) return;
+    if (!session || isWorkspaceReadOnly) return;
     const created = (await Api.post(`/interview/sessions/${session.id}/linked-items`, {
       id: item.id,
       type: item.type,
@@ -1745,7 +1984,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   };
 
   const handleRemoveLinkedItem = async (id: string) => {
-    if (!session || isLocked) return;
+    if (!session || isWorkspaceReadOnly) return;
     const existing = linkedItems.find((item) => item.id === id || item.edgeId === id);
     if (!existing?.edgeId) {
       setLinkedItems((prev) => prev.filter((i) => i.id !== id));
@@ -1937,7 +2176,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           runtimeMode={runtimeMode}
           onUpdateQuestion={handleUpdateQuestion}
           onAddQuestion={handleAddQuestion}
-          readOnly={isLocked}
+          readOnly={isWorkspaceReadOnly}
         />
       </div>
     );
@@ -2113,7 +2352,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const actions: NModeAction[] = (() => {
     const out: NModeAction[] = [];
 
-    if (isReviewerMode) {
+    if (isReviewerMode && isAnswerApprovalProjectionResolved && !hasPerAnswerApproval) {
       out.push({
         id: 'approve',
         label: { en: 'Approve', pl: 'Zatwierdź' },
@@ -2138,7 +2377,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         },
         disabled: isApproving || isSendingBack,
       });
-    } else if (!isLocked) {
+    } else if (!isLocked && isAnswerApprovalProjectionResolved) {
       if (isAssignmentMode) {
         out.push({
           id: 'submit',
@@ -2449,89 +2688,188 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
   ];
 
-  const aiReviewPanel = (aiEvaluation || isAiEvaluating || aiEvaluationError || assignmentStatus === 'submitted') && (
-          <Callout
-            variant={
-              aiEvaluation?.overallVerdict === 'ready_for_approval'
-                ? 'success'
-                : aiEvaluation?.overallVerdict === 'needs_improvement'
-                  ? 'warning'
-                  : aiEvaluation?.overallVerdict === 'insufficient'
-                    ? 'critical'
-                    : 'info'
-            }
-            title={t('interview.workspace.aiQualityReview')}
-            compact
-            action={{
-              label: isAiEvaluating
-                ? t('interview.workspace.running')
-                : t('interview.workspace.refresh'),
-              onClick: () => {
-                void runAiQualityReview();
-              },
-            }}
-          >
-            {isAiEvaluating ? (
-              <p>{t('interview.workspace.aiIsReviewingAnswerQuality')}</p>
-            ) : aiEvaluation ? (
-              <div className="space-y-2">
-                <p>
-                  {t('interview.workspace.verdict')} <strong>{aiVerdictLabel}</strong>
-                  {' · '}
-                  {t('interview.workspace.score')}{' '}
-                  <strong>{aiEvaluation.overallScore.toFixed(1)}/5</strong>
-                </p>
-                {aiWeakAnswerMap.length > 0 && (
-                  <div>
-                    <p className="font-medium">
-                      {t('interview.workspace.structuredWeakAnswerMap')}
-                    </p>
-                    <ul className="list-disc pl-4 space-y-1">
-                      {aiWeakAnswerMap.slice(0, 5).map((item) => (
-                        <li key={item.key}>
-                          <strong>{item.label}</strong>
-                          {' · '}
-                          {item.fixType.replaceAll('_', ' ')}
-                          {' · '}
-                          {item.feedback}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {latestReviewDecision && (
-                  <p className="text-xs opacity-80">
-                    {t('interview.workspace.latestReviewDecision')}{' '}
-                    <strong>{String(latestReviewDecision.action || '-')}</strong>
+  const aiReviewPanel = (aiEvaluation ||
+    isAiEvaluating ||
+    aiEvaluationError ||
+    assignmentStatus === 'submitted') && (
+    <Callout
+      variant={
+        aiEvaluation?.overallVerdict === 'ready_for_approval'
+          ? 'success'
+          : aiEvaluation?.overallVerdict === 'needs_improvement'
+            ? 'warning'
+            : aiEvaluation?.overallVerdict === 'insufficient'
+              ? 'critical'
+              : 'info'
+      }
+      title={t('interview.workspace.aiQualityReview')}
+      compact
+      action={{
+        label: isAiEvaluating ? t('interview.workspace.running') : t('interview.workspace.refresh'),
+        onClick: () => {
+          void runAiQualityReview();
+        },
+      }}
+    >
+      {isAiEvaluating ? (
+        <p>{t('interview.workspace.aiIsReviewingAnswerQuality')}</p>
+      ) : aiEvaluation ? (
+        <div className="space-y-2">
+          <p>
+            {t('interview.workspace.verdict')} <strong>{aiVerdictLabel}</strong>
+            {' · '}
+            {t('interview.workspace.score')}{' '}
+            <strong>{aiEvaluation.overallScore.toFixed(1)}/5</strong>
+          </p>
+          {aiWeakAnswerMap.length > 0 && (
+            <div>
+              <p className="font-medium">{t('interview.workspace.structuredWeakAnswerMap')}</p>
+              <ul className="list-disc pl-4 space-y-1">
+                {aiWeakAnswerMap.slice(0, 5).map((item) => (
+                  <li key={item.key}>
+                    <strong>{item.label}</strong>
                     {' · '}
-                    {t('interview.workspace.aiAlignment')}{' '}
-                    <strong>{String(latestReviewDecision.alignment || '-')}</strong>
-                  </p>
-                )}
-                {aiEvaluation.recommendations.length > 0 && (
-                  <div>
-                    <p className="font-medium">{t('interview.workspace.aiRecommendations')}</p>
-                    <ul className="list-disc pl-4 space-y-1">
-                      {aiEvaluation.recommendations.map((item, index) => (
-                        <li key={`${index}-${item}`}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {aiEvaluationUpdatedAt && (
-                  <p className="text-xs opacity-80">
-                    {t('interview.workspace.lastReview')}{' '}
-                    {new Date(aiEvaluationUpdatedAt).toLocaleString(
-                      t('interview.workspace.enUs', 'en-US')
-                    )}
-                  </p>
-                )}
-              </div>
+                    {item.fixType.replaceAll('_', ' ')}
+                    {' · '}
+                    {item.feedback}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {latestReviewDecision && (
+            <p className="text-xs opacity-80">
+              {t('interview.workspace.latestReviewDecision')}{' '}
+              <strong>{String(latestReviewDecision.action || '-')}</strong>
+              {' · '}
+              {t('interview.workspace.aiAlignment')}{' '}
+              <strong>{String(latestReviewDecision.alignment || '-')}</strong>
+            </p>
+          )}
+          {aiEvaluation.recommendations.length > 0 && (
+            <div>
+              <p className="font-medium">{t('interview.workspace.aiRecommendations')}</p>
+              <ul className="list-disc pl-4 space-y-1">
+                {aiEvaluation.recommendations.map((item, index) => (
+                  <li key={`${index}-${item}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {aiEvaluationUpdatedAt && (
+            <p className="text-xs opacity-80">
+              {t('interview.workspace.lastReview')}{' '}
+              {new Date(aiEvaluationUpdatedAt).toLocaleString(
+                t('interview.workspace.enUs', 'en-US')
+              )}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p>{aiEvaluationError || t('interview.workspace.aiReviewMissing')}</p>
+      )}
+    </Callout>
+  );
+
+  const answerApprovalPanel = session?.assignmentId ? (
+    <section
+      aria-label={t('interview.workspace.answerApprovalPanel')}
+      className="mb-4 space-y-3 rounded-xl border border-c-border/60 bg-c-surface/40 p-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('interview.workspace.answerApprovalPanel')}
+        </h3>
+        {visibleAnswerApprovals.some((approval) => approval.nextStage === 'ai') ? (
+          <button
+            type="button"
+            onClick={() => void handleRetryAiAnswerApprovals()}
+            disabled={answerDecisionPending === 'ai'}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-border/60 px-3 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:opacity-50"
+          >
+            {answerDecisionPending === 'ai' ? (
+              <Loader2 size={14} className="animate-spin" />
             ) : (
-              <p>{aiEvaluationError || t('interview.workspace.aiReviewMissing')}</p>
+              <RefreshCw size={14} />
             )}
-          </Callout>
-        );
+            {t('interview.workspace.retryAiAnswerReview')}
+          </button>
+        ) : null}
+      </div>
+      {answerApprovalState.loading && answerApprovalState.scopeKey === approvalScopeKey ? (
+        <p className="text-sm text-c-text-muted">
+          {t('interview.workspace.loadingAnswerApprovals')}
+        </p>
+      ) : answerApprovalState.error && answerApprovalState.scopeKey === approvalScopeKey ? (
+        <p role="alert" className="text-sm text-c-warning">
+          {t('interview.workspace.answerApprovalsUnavailable')}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {visibleAnswerApprovals.map((approval) => {
+            const question = questions.find((item) => item.id === approval.questionId);
+            const reason = answerDecisionReasons[approval.questionId] || '';
+            const pending = answerDecisionPending === approval.questionId;
+            return (
+              <article
+                key={approval.questionId}
+                className="rounded-lg border border-c-border/50 bg-white/60 p-3 dark:bg-c-surface/60"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-c-text">
+                      {question?.questionText || t('interview.workspace.answerApprovalQuestion')}
+                    </p>
+                    <p className="mt-1 text-xs text-c-text-muted">
+                      {t(`interview.workspace.answerApprovalStatus.${approval.status}`)}
+                    </p>
+                  </div>
+                  {approval.reason ? (
+                    <p className="max-w-xl text-sm text-c-warning">{approval.reason}</p>
+                  ) : null}
+                </div>
+                {isReviewerMode && approval.nextStage === 'manager' ? (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+                    <label className="text-xs text-c-text-muted">
+                      <span className="mb-1 block">
+                        {t('interview.workspace.answerDecisionReason')}
+                      </span>
+                      <input
+                        value={reason}
+                        onChange={(event) =>
+                          setAnswerDecisionReasons((current) => ({
+                            ...current,
+                            [approval.questionId]: event.target.value,
+                          }))
+                        }
+                        className="h-9 w-full rounded-lg border border-c-border/60 bg-c-surface px-3 text-sm text-c-text"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void handleAnswerDecision(approval, 'approved')}
+                      disabled={pending}
+                      className="self-end inline-flex h-9 items-center rounded-lg bg-c-success px-3 text-sm font-medium text-white disabled:opacity-50"
+                    >
+                      {t('interview.workspace.approveAnswer')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleAnswerDecision(approval, 'sent_back')}
+                      disabled={pending || !reason.trim()}
+                      className="self-end inline-flex h-9 items-center rounded-lg border border-c-warning/50 px-3 text-sm font-medium text-c-warning disabled:opacity-50"
+                    >
+                      {t('interview.workspace.sendBackAnswer')}
+                    </button>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  ) : null;
 
   const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
     const overview = (
@@ -2563,75 +2901,78 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         )}
         {managerFeedback}
         {aiReviewPanel}
-        {showSendBackForm && isReviewerMode && (
-          <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-              {t('interview.workspace.reasonForSendingBack')}
-            </p>
-            <textarea
-              value={sendBackReason}
-              onChange={(e) => setSendBackReason(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-c-text-secondary resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-              placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
-            />
-            {sendBackMissingItems.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                  {t('interview.workspace.missingItems')}
-                </p>
-                {sendBackMissingItems.map((item, idx) => (
-                  <label
-                    key={item.key}
-                    className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={item.checked}
-                      onChange={() => {
-                        setSendBackMissingItems((prev) =>
-                          prev.map((it, i) => (i === idx ? { ...it, checked: !it.checked } : it))
-                        );
-                      }}
-                      className="rounded"
-                    />
-                    {item.label}
-                  </label>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleSendBack}
-                disabled={!sendBackReason.trim() || isSendingBack}
-                /* R1 / SPEC-N §2.3 — poza slotem primary NIC nie jest solid.
+        {showSendBackForm &&
+          isReviewerMode &&
+          isAnswerApprovalProjectionResolved &&
+          !hasPerAnswerApproval && (
+            <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                {t('interview.workspace.reasonForSendingBack')}
+              </p>
+              <textarea
+                value={sendBackReason}
+                onChange={(e) => setSendBackReason(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-c-text-secondary resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
+              />
+              {sendBackMissingItems.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                    {t('interview.workspace.missingItems')}
+                  </p>
+                  {sendBackMissingItems.map((item, idx) => (
+                    <label
+                      key={item.key}
+                      className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={() => {
+                          setSendBackMissingItems((prev) =>
+                            prev.map((it, i) => (i === idx ? { ...it, checked: !it.checked } : it))
+                          );
+                        }}
+                        className="rounded"
+                      />
+                      {item.label}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleSendBack}
+                  disabled={!sendBackReason.trim() || isSendingBack}
+                  /* R1 / SPEC-N §2.3 — poza slotem primary NIC nie jest solid.
                    Bylo `bg-amber-500 text-white` (pelne wypelnienie), czyli
                    drugie CTA konkurujace wizualnie z akcja glowna powloki.
                    Teraz: obrys + tinta ostrzegawcza — waga semantyczna zostaje
                    (to nadal akcja ostrzegawcza), waga wizualna spada. */
-                className="inline-flex items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 py-1.5 text-xs font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-              >
-                {isSendingBack ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Send size={12} />
-                )}
-                {t('interview.workspace.sendBack')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSendBackForm(false);
-                  setSendBackReason('');
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-c-border/70 px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors"
-              >
-                {t('interview.workspace.cancel')}
-              </button>
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 py-1.5 text-xs font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                >
+                  {isSendingBack ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Send size={12} />
+                  )}
+                  {t('interview.workspace.sendBack')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSendBackForm(false);
+                    setSendBackReason('');
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-c-border/70 px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors"
+                >
+                  {t('interview.workspace.cancel')}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         <Callout
           variant={isReviewerMode ? 'info' : isLocked ? 'info' : 'purple'}
           title={
@@ -2705,13 +3046,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       <NModeSectionWrapper heading={{ en: 'Questions', pl: 'Pytania' }}>
         <div ref={questionsTopRef} />
 
+        {answerApprovalPanel}
+
         <div className="mb-4">
           <RuntimeModeSelector
             currentMode={runtimeMode}
             recommendedMode="single_question"
             onModeSelect={handleRuntimeModeSelect}
             compact={runtimeMode === 'single_question'}
-            locked={isLocked}
+            locked={isWorkspaceReadOnly}
           />
         </div>
 
@@ -2727,7 +3070,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             onQuestionAnswered={(questionId, answerText) =>
               handleUpdateQuestion(questionId, { answerText, status: 'answered' as any })
             }
-            locked={isLocked}
+            locked={isWorkspaceReadOnly}
           />
         ) : runtimeMode === 'single_question' ? (
           /* SPEC-N §7 decyzja #5 — JEDNA POWŁOKA, różni się CENTRUM.
@@ -2773,7 +3116,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 onSubmitSession={handleSubmitSession}
                 onSaveAndExit={onClose}
                 sessionName={sessionName}
-                readOnly={isLocked}
+                readOnly={isWorkspaceReadOnly}
+                answerApprovals={visibleAnswerApprovals}
+                isQuestionReadOnly={isQuestionReadOnly}
                 isSubmitting={isSubmittingSession}
                 immersive
                 answerHistoryByQuestionId={answerHistoryByQuestionId}
@@ -2837,7 +3182,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 runtimeMode={runtimeMode}
                 onUpdateQuestion={handleUpdateQuestion}
                 onAddQuestion={handleAddQuestion}
-                readOnly={isLocked}
+                readOnly={isWorkspaceReadOnly}
               />
             ) : (
               <Callout
@@ -2865,7 +3210,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           onCreateNote={handleCreateNote}
           onUpdateNote={handleUpdateNote}
           onDeleteNote={handleDeleteNote}
-          readOnly={isLocked}
+          readOnly={isWorkspaceReadOnly}
         />
       </NModeSectionWrapper>
     );
@@ -2879,7 +3224,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           onAddLink={handleAddLink}
           onAddComment={handleAddEvidenceComment}
           onDeleteEvidence={handleDeleteEvidence}
-          readOnly={isLocked}
+          readOnly={isWorkspaceReadOnly}
         />
       </NModeSectionWrapper>
     );
@@ -3167,19 +3512,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // DEC-432: kontrakt jest jedynym źródłem członkostwa, nazw, ikon i kolejności.
   // Lokalnie zostaje wyłącznie treść oraz widoczność wynikająca z realnych danych.
-  const sections: NModeSection[] = sekcjeZKontraktu(
-    INTERVIEW_CARDS,
-    'interview',
-    (id) => {
-      if (id === 'notes') return notes.length > 0;
-      if (id === 'evidence') return evidence.length > 0;
-      if (id === 'stakeholders') return stakeholders.length > 0;
-      if (id === 'open-gaps') return openGaps.length > 0;
-      if (id === 'company-facts') return Boolean(companyProfile.name || companyProfile.industry || companyProfile.location);
-      if (id === 'summary') return !isAssignmentMode && summaryData.facts.length > 0;
-      return true;
-    }
-  ).map((contractSection) => ({
+  const sections: NModeSection[] = sekcjeZKontraktu(INTERVIEW_CARDS, 'interview', (id) => {
+    if (id === 'notes') return notes.length > 0;
+    if (id === 'evidence') return evidence.length > 0;
+    if (id === 'stakeholders') return stakeholders.length > 0;
+    if (id === 'open-gaps') return openGaps.length > 0;
+    if (id === 'company-facts')
+      return Boolean(companyProfile.name || companyProfile.industry || companyProfile.location);
+    if (id === 'summary') return !isAssignmentMode && summaryData.facts.length > 0;
+    return true;
+  }).map((contractSection) => ({
     ...contractSection,
     ...Object.fromEntries(
       Object.entries(sectionContentById[contractSection.id] ?? {}).filter(
@@ -3434,35 +3776,39 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     <Shield size={12} />
                     {t('interview.workspace.review')}
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleApprove}
-                    disabled={isApproving || !canApprove}
-                    title={!canApprove ? approveBlockedHint : undefined}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-success/30 bg-c-success/10 px-3 text-sm font-medium text-c-success transition-colors hover:bg-c-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isApproving ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <ThumbsUp size={14} />
-                    )}
-                    {t('interview.workspace.approve')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowSendBackForm(true)}
-                    disabled={isSendingBack}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-                  >
-                    <AlertTriangle size={14} />
-                    {t('interview.workspace.sendBack')}
-                  </button>
+                  {isAnswerApprovalProjectionResolved && !hasPerAnswerApproval ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleApprove}
+                        disabled={isApproving || !canApprove}
+                        title={!canApprove ? approveBlockedHint : undefined}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-success/30 bg-c-success/10 px-3 text-sm font-medium text-c-success transition-colors hover:bg-c-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isApproving ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <ThumbsUp size={14} />
+                        )}
+                        {t('interview.workspace.approve')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowSendBackForm(true)}
+                        disabled={isSendingBack}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                      >
+                        <AlertTriangle size={14} />
+                        {t('interview.workspace.sendBack')}
+                      </button>
+                    </>
+                  ) : null}
                 </>
               ) : (
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={isSaving || isLocked}
+                  disabled={isSaving || isWorkspaceReadOnly}
                   className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -3488,74 +3834,80 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             </div>
           )}
 
-          {showSendBackForm && isReviewerMode && (
-            <section className="shrink-0 border-b border-c-warning/20 bg-c-warning/5 px-6 py-3">
-              <div className="mx-auto max-w-3xl space-y-3">
-                <label className="block text-sm font-medium text-c-text">
-                  {t('interview.workspace.reasonForSendingBack')}
-                </label>
-                <textarea
-                  value={sendBackReason}
-                  onChange={(event) => setSendBackReason(event.target.value)}
-                  rows={2}
-                  className="w-full resize-none rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
-                  placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
-                />
-                {sendBackMissingItems.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {sendBackMissingItems.map((item, index) => (
-                      <label
-                        key={item.key}
-                        className="inline-flex items-center gap-1.5 text-xs text-c-warning"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={item.checked}
-                          onChange={() =>
-                            setSendBackMissingItems((current) =>
-                              current.map((entry, entryIndex) =>
-                                entryIndex === index ? { ...entry, checked: !entry.checked } : entry
+          {showSendBackForm &&
+            isReviewerMode &&
+            isAnswerApprovalProjectionResolved &&
+            !hasPerAnswerApproval && (
+              <section className="shrink-0 border-b border-c-warning/20 bg-c-warning/5 px-6 py-3">
+                <div className="mx-auto max-w-3xl space-y-3">
+                  <label className="block text-sm font-medium text-c-text">
+                    {t('interview.workspace.reasonForSendingBack')}
+                  </label>
+                  <textarea
+                    value={sendBackReason}
+                    onChange={(event) => setSendBackReason(event.target.value)}
+                    rows={2}
+                    className="w-full resize-none rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                    placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
+                  />
+                  {sendBackMissingItems.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {sendBackMissingItems.map((item, index) => (
+                        <label
+                          key={item.key}
+                          className="inline-flex items-center gap-1.5 text-xs text-c-warning"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={item.checked}
+                            onChange={() =>
+                              setSendBackMissingItems((current) =>
+                                current.map((entry, entryIndex) =>
+                                  entryIndex === index
+                                    ? { ...entry, checked: !entry.checked }
+                                    : entry
+                                )
                               )
-                            )
-                          }
-                          className="rounded"
-                        />
-                        {item.label}
-                      </label>
-                    ))}
+                            }
+                            className="rounded"
+                          />
+                          {item.label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSendBack}
+                      disabled={!sendBackReason.trim() || isSendingBack}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 disabled:opacity-50"
+                    >
+                      {isSendingBack ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Send size={14} />
+                      )}
+                      {t('interview.workspace.sendBack')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSendBackForm(false);
+                        setSendBackReason('');
+                      }}
+                      className="inline-flex h-9 items-center rounded-lg px-3 text-sm text-c-text-muted hover:bg-c-surface-raised"
+                    >
+                      {t('interview.workspace.cancel')}
+                    </button>
                   </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSendBack}
-                    disabled={!sendBackReason.trim() || isSendingBack}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 disabled:opacity-50"
-                  >
-                    {isSendingBack ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Send size={14} />
-                    )}
-                    {t('interview.workspace.sendBack')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSendBackForm(false);
-                      setSendBackReason('');
-                    }}
-                    className="inline-flex h-9 items-center rounded-lg px-3 text-sm text-c-text-muted hover:bg-c-surface-raised"
-                  >
-                    {t('interview.workspace.cancel')}
-                  </button>
                 </div>
-              </div>
-            </section>
-          )}
+              </section>
+            )}
 
           {managerFeedback}
           {aiReviewPanel}
+          {answerApprovalPanel}
           <main className="min-h-0 flex-1">
             {totalCount > 0 ? (
               <InterviewSingleQuestionRuntime
@@ -3570,7 +3922,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 onSubmitSession={handleSubmitSession}
                 onSaveAndExit={onClose}
                 sessionName={sessionName}
-                readOnly={isLocked}
+                readOnly={isWorkspaceReadOnly}
+                answerApprovals={visibleAnswerApprovals}
+                isQuestionReadOnly={isQuestionReadOnly}
                 isSubmitting={isSubmittingSession}
                 immersive
                 answerHistoryByQuestionId={answerHistoryByQuestionId}
@@ -3597,7 +3951,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           // D-A: Interview = aktywny warsztat → tryb EDYCJI (tytul edytowalny).
           // Wyjatek: sesja zamknieta (approved/completed → isLocked) przechodzi
           // w PODGLAD, wiec tytul staje sie tylko-do-odczytu.
-          titleReadOnly: isLocked,
+          titleReadOnly: isWorkspaceReadOnly,
           titlePlaceholder: { en: 'Session name...', pl: 'Nazwa sesji...' },
           artifactId: session?.id,
           artifactType: 'tool',
@@ -3630,44 +3984,42 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         // (Sekcje ▾ z przełącznikiem Rdzeń/Pełny + Nowa karta ▾), a istniejące
         // akcje renderujemy obok (NModeActionBar) — nic nie ginie. Flaga OFF ⇒
         // `undefined` ⇒ powłoka rysuje standardowy pasek jak dotąd (zero regresji).
-        renderActionBar={
-          () => (
-                <div className="flex items-center gap-2 min-h-[36px] flex-wrap">
-                  <NModeCardManager layout={interviewCardLayout} isPolish={isPolish} />
-                  <div className="ml-auto flex items-center gap-2">
-                    {actions.length > 0 && (
-                      <NModeActionBar actions={actions} activeSection={activeSection} />
-                    )}
-                    {/* DEC-433 (K21): „Pracuj z AI" — jedno wejście AI, trzy
+        renderActionBar={() => (
+          <div className="flex items-center gap-2 min-h-[36px] flex-wrap">
+            <NModeCardManager layout={interviewCardLayout} isPolish={isPolish} />
+            <div className="ml-auto flex items-center gap-2">
+              {actions.length > 0 && (
+                <NModeActionBar actions={actions} activeSection={activeSection} />
+              )}
+              {/* DEC-433 (K21): „Pracuj z AI" — jedno wejście AI, trzy
                         pozycje. „Ocena AI" żyje tu jako „Analizuj" (ta sama
                         funkcja `runAiQualityReview`, bez duplikatu). Karta
                         wywiadu nie ma generatora treści pól (odpowiedzi daje
                         człowiek) — „Uzupełnij…" świadomie bez źródła,
                         komponent pokaże je wyszarzone z powodem. */}
-                    <PracujZAI
-                      isPolish={isPolish}
-                      onAnalizuj={() => {
-                        void runAiQualityReview();
-                      }}
-                      analizaWToku={isAiEvaluating}
-                      aktywnaSekcja={activeSection}
-                      kontekstArtefaktu={{
-                        title: sessionName,
-                        status: lifecycleStatus,
-                        type: 'interview_session',
-                      }}
-                      moznaEdytowac={!isLocked}
-                      powodTylkoOdczyt={
-                        isLocked
-                          ? t('interview.workspace.sessionClosedReadOnlyReason', 'session is closed')
-                          : undefined
-                      }
-                      disabled={!session?.id}
-                    />
-                  </div>
-                </div>
-              )
-        }
+              <PracujZAI
+                isPolish={isPolish}
+                onAnalizuj={() => {
+                  void runAiQualityReview();
+                }}
+                analizaWToku={isAiEvaluating}
+                aktywnaSekcja={activeSection}
+                kontekstArtefaktu={{
+                  title: sessionName,
+                  status: lifecycleStatus,
+                  type: 'interview_session',
+                }}
+                moznaEdytowac={!isLocked}
+                powodTylkoOdczyt={
+                  isLocked
+                    ? t('interview.workspace.sessionClosedReadOnlyReason', 'session is closed')
+                    : undefined
+                }
+                disabled={!session?.id}
+              />
+            </div>
+          </div>
+        )}
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         presentationMode={presentationMode}

@@ -126,23 +126,23 @@ async function ensureEnterpriseSchema(): Promise<void> {
           sql: `CREATE INDEX IF NOT EXISTS idx_ai_purpose_assignments_org ON ai_purpose_assignments(organization_id)`,
         },
         {
-          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN fallback_model_id TEXT`,
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN IF NOT EXISTS fallback_model_id TEXT`,
           optional: true,
         },
         {
-          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN release_bundle_id TEXT`,
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN IF NOT EXISTS release_bundle_id TEXT`,
           optional: true,
         },
         {
-          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN prompt_key TEXT`,
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN IF NOT EXISTS prompt_key TEXT`,
           optional: true,
         },
         {
-          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN prompt_version TEXT`,
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN IF NOT EXISTS prompt_version TEXT`,
           optional: true,
         },
         {
-          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN policy_version TEXT`,
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN IF NOT EXISTS policy_version TEXT`,
           optional: true,
         },
 
