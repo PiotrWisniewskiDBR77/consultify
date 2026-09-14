@@ -23,7 +23,12 @@ const installFixtureTransport = (state: string) => {
     if (state === 'error') return response({ error: 'Controlled dev-render failure' }, 503);
     if (/\/api\/tasks(?:\?|$)/.test(url)) return response([]);
     if (/\/api\/initiatives(?:\?|$)/.test(url)) return response([]);
-    if (/\/api\/organizations\/[^/]+\/members(?:\?|$)/.test(url)) return response([]);
+    if (/\/api\/organizations\/[^/]+\/members(?:\?|$)/.test(url))
+      return response([
+        { id: 'anna', firstName: 'Anna', lastName: 'Kowalska' },
+        { id: 'marek', firstName: 'Marek', lastName: 'Nowak' },
+        { id: 'board', firstName: 'Steering', lastName: 'Board' },
+      ]);
     if (/\/api\/tasks\/workflow-config(?:\?|$)/.test(url))
       return response({ statuses: ['todo', 'in_progress', 'blocked', 'done'], transitions: {} });
     if (url.includes('/report-definitions/def-weekly'))
