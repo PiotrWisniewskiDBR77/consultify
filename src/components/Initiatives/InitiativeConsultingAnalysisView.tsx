@@ -60,7 +60,7 @@ export function InitiativeConsultingAnalysisView({
 }: {
   scopeKey: string;
   authorityId: string;
-  onNavigatePlan: () => void;
+  onNavigatePlan?: () => void;
   onNavigateCapacity: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -662,9 +662,11 @@ export function InitiativeConsultingAnalysisView({
       </div>
       {analysis && disposition === 'IN' && decisionSaved ? (
         <div className="flex gap-2 border-t border-c-border p-3">
-          <button type="button" className="btn-secondary" onClick={onNavigatePlan}>
-            {t('initiatives.analysis.openPlan', 'Open Plan')}
-          </button>
+          {onNavigatePlan ? (
+            <button type="button" className="btn-secondary" onClick={onNavigatePlan}>
+              {t('initiatives.analysis.openPlan', 'Open Plan')}
+            </button>
+          ) : null}
           <button type="button" className="btn-secondary" onClick={onNavigateCapacity}>
             {t('initiatives.analysis.openCapacity', 'Open Capacity')}
           </button>
