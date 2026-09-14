@@ -36792,7 +36792,10 @@
     "contextAssetSelector": {
       "loadingDocuments": "Ładowanie dokumentów...",
       "orgWideResearchModeSearches": "Tryb badania w skali organizacji przeszukuje cały zatwierdzony kontekst organizacji. Nie trzeba wybierać\n          konkretnych dokumentów."
-    }
+    },
+    "uploadNeedsProject": "Ten widok nie ma wybranego projektu, więc pliku nie da się dodać do dokumentów projektu. Wyślij go w zakładce „Moje dokumenty\" albo otwórz panel z poziomu projektu.",
+    "uploadFailed": "Wysyłka pliku „{{name}}\" nie powiodła się. Plik nie został zapisany.",
+    "uploadFailedWithReason": "Wysyłka pliku „{{name}}\" nie powiodła się: {{reason}}"
   },
   "intelligence": {
     "analyzing": "Analizowanie…",

@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+const [out, url] = process.argv.slice(2);
+const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1100,height:900}});
+const errs=[]; p.on('console',m=>{if(m.type()==='error')errs.push(m.text());});
+await p.goto(url,{waitUntil:'networkidle'});
+await sleep(2500);
+const input = p.locator('input[type="file"]').first();
+await input.setInputFiles({ name:'MapaRozwojuDigitalnego-Plastmet(1).pdf', mimeType:'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
+await sleep(2500);
+await p.screenshot({path: out});
+console.log('KOMUNIKAT NA EKRANIE:', await p.locator('[data-testid="document-upload-error"]').innerText().catch(()=>'(BRAK — cisza)'));
+console.log('KONSOLA-BLEDY:', JSON.stringify(errs.slice(0,3)));
+await b.close();
