@@ -81,39 +81,64 @@ export async function renderInitiativeWorkReportPdf(
     doc.text(`${safeText(status, 'UNKNOWN')}: ${count}`);
   }
 
-  doc.moveDown(1.2);
-  doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Initiatives');
-  if (content.initiatives.length === 0) {
-    doc.font(PDF_FONT.italic).fontSize(10).fillColor('#64748b').text('No initiatives in scope.');
-  }
-  for (const item of content.initiatives) {
-    if (doc.y > 730) doc.addPage();
-    doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(item.title);
+  const showInitiatives = content.templateId !== 'DECISION_BACKLOG';
+  const showDecisionOwners = content.templateId !== 'PORTFOLIO_STATUS';
+  const initiatives =
+    content.templateId === 'DELIVERY_RISKS'
+      ? content.initiatives.filter((item) => /BLOCK|RISK|DELAY|ESCALAT/i.test(item.status))
+      : content.initiatives;
+
+  if (showInitiatives) {
+    doc.moveDown(1.2);
     doc
-      .font(PDF_FONT.regular)
-      .fontSize(9)
-      .fillColor('#475569')
+      .font(PDF_FONT.bold)
+      .fontSize(13)
+      .fillColor('#0f172a')
       .text(
-        `${item.status} · project ${item.projectId ?? 'unassigned'} · owner ${item.ownerId ?? 'unassigned'}`
+        content.templateId === 'DELIVERY_RISKS' ? 'Initiatives requiring attention' : 'Initiatives'
       );
+    if (initiatives.length === 0) {
+      doc
+        .font(PDF_FONT.italic)
+        .fontSize(10)
+        .fillColor('#64748b')
+        .text(
+          content.templateId === 'DELIVERY_RISKS'
+            ? 'No initiatives requiring attention.'
+            : 'No initiatives in scope.'
+        );
+    }
+    for (const item of initiatives) {
+      if (doc.y > 730) doc.addPage();
+      doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(item.title);
+      doc
+        .font(PDF_FONT.regular)
+        .fontSize(9)
+        .fillColor('#475569')
+        .text(
+          `${item.status} · project ${item.projectId ?? 'unassigned'} · owner ${item.ownerId ?? 'unassigned'}`
+        );
+    }
   }
 
-  doc.moveDown(1.2);
-  if (doc.y > 680) doc.addPage();
-  doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Decision owners');
-  if (content.decisionDebtors.length === 0) {
-    doc.font(PDF_FONT.italic).fontSize(10).fillColor('#64748b').text('No pending decisions.');
-  }
-  for (const debtor of content.decisionDebtors) {
-    if (doc.y > 730) doc.addPage();
-    doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(debtor.authorityName);
-    doc
-      .font(PDF_FONT.regular)
-      .fontSize(9)
-      .fillColor('#475569')
-      .text(
-        `Pending ${debtor.pending} · overdue ${debtor.overdue} · oldest due ${debtor.oldestDueAt ?? 'not set'}`
-      );
+  if (showDecisionOwners) {
+    doc.moveDown(1.2);
+    if (doc.y > 680) doc.addPage();
+    doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Decision owners');
+    if (content.decisionDebtors.length === 0) {
+      doc.font(PDF_FONT.italic).fontSize(10).fillColor('#64748b').text('No pending decisions.');
+    }
+    for (const debtor of content.decisionDebtors) {
+      if (doc.y > 730) doc.addPage();
+      doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(debtor.authorityName);
+      doc
+        .font(PDF_FONT.regular)
+        .fontSize(9)
+        .fillColor('#475569')
+        .text(
+          `Pending ${debtor.pending} · overdue ${debtor.overdue} · oldest due ${debtor.oldestDueAt ?? 'not set'}`
+        );
+    }
   }
 
   const range = doc.bufferedPageRange();
