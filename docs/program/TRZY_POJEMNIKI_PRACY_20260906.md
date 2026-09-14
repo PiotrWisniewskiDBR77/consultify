@@ -450,37 +450,62 @@ nie opcja.
 
 ## EWIDENCJA POSTĘPU — stan na 14.09.2026
 
-**Zmierzone 14.09 ~06:30 UTC:** staging `b7d27ccc304b` (tag `staging-deployed`, fala A cz. 3, run
-`34810170858`), demo `90833bc94adb` — **fala A jeszcze nie na demo**, to jest dziura opisana niżej.
+**Zmierzone 14.09 ~06:30 UTC → zaktualizowane 14.09 wieczór (fala A cz. 4 wdrożona):** staging
+`54f07e0ccd` (tag `staging-deployed`, fala A cz. 4, run `34814866980`, success), demo
+`90833bc94adb` — **fala A nadal nie na demo**, demo zamrożone do domknięcia stagingu (DEC-503).
 Źródła pomiaru: `curl .../api/health` (oba środowiska), `git merge-base --is-ancestor <SHA> HEAD`
 na `~/Developer/wt/rejestr-0914` dla każdego SHA cytowanego w tym pliku i w `OD_CODEXA.md`, tabele
-P-T01…P-T22 / P-P01…P-P13 wyżej w rejestrze — przeliczone wiersz po wierszu (metoda: „na stagingu”
-liczy się tylko wtedy, gdy SHA naprawy jest przodkiem `b7d27ccc30`, nie gdy gałąź jest tylko
-„scalona do swojej kopii”/„gotowa”); wynik zgodny z licznikiem niżej (18/35), bez korekty.
+P-T01…P-T22 / P-P01…P-P15 wyżej w rejestrze — przeliczone wiersz po wierszu (metoda: „na stagingu”
+liczy się tylko wtedy, gdy SHA naprawy jest przodkiem `54f07e0ccd`, nie gdy gałąź jest tylko
+„scalona do swojej kopii”/„gotowa”); wynik: **23/37** (wcześniej 18/35).
 
-**Cz. 4 gotowa do scalenia (kolejka po cz. 3):** `drd-output-en` `744394e45e` (Z-15, DRD Output EN
-nadal po polsku), `answer-state-hints` `1efa59275f` 🔧 (w toku). **Fala B — Realizacja E1 gotowa
-(Opus, 14.09):** `integracja/kandydat-fala-b-realizacja-20260914` HEAD `942748423c` (kopia
+**Cz. 4 — WDROŻONA na staging (14.09, run `34814866980`).** `drd-output-en` `bcfbe94a42` +
+`answer-state-hints` `7a19c38ab6` + `pawel-0539` `40bf4d9441` + `chunk-reload` `54f07e0ccd`
+scalone, 0 konfliktów; tag cofnięcia `rollback-pre-fala-a4-20260914` = `13070169a4`. P-P02 DRD EN,
+P-P08/09 etykiety, P-P14 dyktowanie, P-P15 widget (decyzja CTO Report = tylko Bug), Z-11
+auto-odświeżenie → **🧪 NA STAGINGU**. Dowody: `~/Developer/cto-codex/zrzuty-fala-a4-20260914/`
+(harness + i18n z żywego builda; sesja QA wygasła — zrzuty nie z zalogowanej sesji stagingu,
+**Z-20**: odświeżyć `storageState` QA lub włączyć `test-support` na stagingu).
+
+**Fala B — Inicjatywy E1 gotowa do scalenia (Opus, 14.09):**
+`integracja/kandydat-fala-b-inicjatywy-20260914` HEAD `1c811a8b19` (kopia
+`backup/fala-b-inicjatywy-20260914`) — **A1 Analiza portfela** (StandardTable/Preview, 5 kryteriów
+Coverage gap · Overlap · Priority · New or extension · Decision history, „dlaczego" w podglądzie)
++ **A2 Parking** (IN/PARKING/ARCHIVE z powodem i warunkiem powrotu, propozycja AI widoczna) →
+**gotowe do scalenia**. Zero migracji, flaga `VITE_INITIATIVES_FOUR_BUTTONS` OFF. HOLD-y Codexa
+zamknięte: „migracja 919 BLOCKED" = artefakt przyrządu (ZAMKNIĘTY); „real model
+EVIDENCE_MISSING" — brama deterministyczna wystarcza na testy, model AI nadal nieudowodniony;
+„PMO authority PARTIAL" → **DEC-504 (CTO, 14.09): zostaje fail-closed**
+(`initiative.review` + `canReview && canSelfApprove`, bez fallbacku OWNER/ADMIN). Zastane: 4
+czerwone `initiativeLifecycleCanon`/`forbiddenTransitions`, chwiejny
+`InitiativeConsultingAnalysisView.behavior.test`. Zrzuty wysłane właścicielowi 14.09 (Tak/Nie na
+wygląd, w toku).
+
+**Fala B — Realizacja E1 gotowa (Opus, 14.09, bez zmian tym wpisem):**
+`integracja/kandydat-fala-b-realizacja-20260914` HEAD `942748423c` (kopia
 `backup/fala-b-realizacja-20260914`, baza `b7d27ccc30` → wymaga rebase na linię ≥`54f07e0ccd`
-przed scaleniem) — H1 `75304fbb7a` (wyjątek w `executionSpineLegacyReadOnly` dla 3 tras
-lifecycle-*; test na realnej bramce 54/54, mutacja 19 czerwonych) + H2+B-E0 `2e20c10d26`
-(`ExecutionBankRow.handoff` ACCEPTED/LINKED_WITHOUT_DATE/ABSENT + sanitizer;
-`executionRiskSignal` progi 0,95/0,85/0,70, UNKNOWN nigdy zielony; flagi
-`VITE_EXEC_RISK_SIGNAL`/`VITE_EXEC_HANDOFF_TRACE` default OFF) → **gotowe do scalenia**. Front
-H1 NIE zbudowany — wymaga prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) i
-skrzynki recenzenta → nowy etap **H1b** (patrz §5). `integracja/kandydat-fala-b-inicjatywy-20260914`
-(A1+A2) bez zmian tym wpisem. **Codex:** wpis 22 w `KANAL.md` (podział pracy) czeka na wklejenie
-przez właściciela.
+przed scaleniem) — H1 `75304fbb7a` + H2+B-E0 `2e20c10d26` → **gotowe do scalenia**, integrator w
+toku. Front H1 NIE zbudowany → nowy etap **H1b** (patrz §5). **Codex:** wpis 22 w `KANAL.md`
+(podział pracy) czeka na wklejenie przez właściciela; wpisy 23/24/25 (zgoda migracja B + czystka,
+kolejka Q1–Q5/dyżury D-a..D-f, restart Dockera/Colimy) potwierdzone.
+
+**Incydent Docker/Colima 14.09.** Silnik kontenerów = **Colima**, nie Docker Desktop; ENOSPC
+uszkodził `containerd` (`meta.db` + content store), 4 kontenery umarły same. Naprawa: `colima
+stop/start` ~01:54 + `docker start` na 9 bazach → 9/9 `pg_isready`. Reguła nowa: `--restart
+unless-stopped`. Osobno: `docker system prune -af --volumes` w ENOSPC skasował zatrzymane
+kontenery i wolumeny sieroce (**Z-21**, `fizzup`/`selix`, do wiadomości właściciela) i uciął do
+0 B `public/locales/en/translation.json`, odtworzony z HEAD.
 
 **Licznik MVP (pojemnik 1).** Rdzeń: **2/2** filarów zaakceptowane (Inicjatywy DEC-481, Realizacja
 DEC-494). Pilotaż: **5** kont, aktywni dziś Paweł + Justyna, Tomek testował 10–11.09 (gmail).
-Zgłoszenia pilotażu: **18/35 (51%) naprawione na stagingu**, 2 naprawione czekają na retest/wdrożenie,
-4 nie są defektem (decyzja produktu/wiedza), 2 czekają na decyzję właściciela, 9 nadal otwarte.
-Na demo z tych napraw: **0/35** — luka, patrz „Co blokuje".
+Zgłoszenia pilotażu: **23/37 (62%) naprawione na stagingu** (fala A cz. 4 przenosi P-P02, P-P08,
+P-P09, P-P14, P-P15 do 🧪 NA STAGINGU), 1 naprawiona czeka na retest/wdrożenie, 2 nie są defektem
+(decyzja produktu/wiedza), 2 czekają na decyzję właściciela, 9 nadal otwarte. Na demo z tych
+napraw: **0/37** — demo zamrożone do domknięcia stagingu (DEC-503), patrz „Co blokuje".
 
 ```
 MVP rdzeń        [██████████████████████████████████████████████████] 2/2 zaakceptowane
-MVP zgłoszenia    [███████████████████████████░░░░░░░░░░░░░░░░░░░░░░░] 18/35 na stagingu (51%)
+MVP zgłoszenia    [█████████████████████████████████░░░░░░░░░░░░░░░░░] 23/37 na stagingu (62%)
 ```
 
 **Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **37**
@@ -490,35 +515,48 @@ w tym H1/H2/B-E0 fali B — Realizacja E1 — gotowe do scalenia `942748423c`, r
 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2 dostarczone/nie scalone, F2-E
 non-migration ACCEPT/pełne E1 HOLD, paczka 5 wraca do naprawy). Nowe pakiety P1–P6 (DEC-497):
 **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od 13.09 22:29. Fale B–F: **0/5** zamknięte
-(żadna nie ma jeszcze partii akceptu właściciela; fala B Realizacja gotowa do scalenia, nie
-scalona).
+(żadna nie ma jeszcze partii akceptu właściciela; fala B Inicjatywy A1/A2 i fala B Realizacja
+H1/H2/B-E0 obie gotowe do scalenia, żadna jeszcze nie scalona).
 
 ```
 Fala2 etapy §5    [█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 9/37 w toku (24%)
 Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0/6 przyjęte
 ```
 
-**Zgłoszenia pilotażu 35 — rozbicie (P-T01…22 Tomek + P-P01…13 Paweł):**
+**Zgłoszenia pilotażu 37 — rozbicie (P-T01…22 Tomek + P-P01…15 Paweł):**
+
+**Zaktualizowane 14.09 wieczór (dokumentalista, rozliczenie wierszy P-T po SHA-przodkach `54f07e0ccd`):**
+same liczby ✅/23 (P-T02/03/08/11 były już liczone tu, tekst wiersza w tabeli był tylko nieaktualny —
+poprawiony), ⛔/⚪-zamknięte/🔧 rozdzielone precyzyjniej; suma nadal 37, licznik nagłówkowy **23/37
+bez zmian**.
 
 | Kategoria | Liczba | Przykłady |
 |---|---|---|
-| ✅ naprawione, 🧪 na stagingu | 18 | P-T02/03/04/07/08/09/10/11/21, P-P01/03/04/05/06/07/10/12/13 |
-| 🔧 naprawione, czekają na retest/scalenie | 2 | P-T22 (retest po wdrożeniu), P-P02 DRD EN (`744394e45e`, gotowe do scalenia) |
-| ⚪ nie jest defektem / wiedza użytkownika | 4 | P-T19, P-T20 (duplikat), P-P08, P-P09 |
+| ✅ naprawione, 🧪 na stagingu | 23 | P-T02/03/04/07/08/09/10/11/21, P-P01/02/03/04/05/06/07/08/09/10/12/13/14/15 |
+| 🔧 naprawione danymi/kodem, czekają na retest/scalenie | 4 | P-T17, P-T19, P-T20 (Z-14: flagi v8 org `tt2tt` naprawione danymi 14.09), P-T22 (retest po wdrożeniu cz. 3) |
+| ⚪ nie jest defektem / wiedza użytkownika | 1 | P-T18 (ctrl+click, SPA) |
 | ⚪ czeka na decyzję właściciela | 2 | P-T01 (adres wsparcia, Z-5), P-T13 (kontekst Teresy, Z-13) |
-| 🔴 otwarte | 9 | P-T05, P-T06, P-T12, P-T14, P-T15, P-T16, P-T17, P-T18, P-P11 |
+| ⛔ zablokowane (infrastruktura) | 1 | P-T05 (avatar, wolumen Railway, Z-9) |
+| ⚪ zamknięte (infrastruktura, nie defekt) | 1 | P-T12 (reset hasła — SMTP po restarcie 02:30 UTC działa 2/2) |
+| 🔴 otwarte | 5 | P-T06 (kandydat dyżuru Codexa D-h), P-T14, P-T15, P-T16, P-P11 |
 
 **Co blokuje (14.09):**
 - **Codex milczy** w `OD_CODEXA.md` od 22:29 13.09 — Wpis 17 (DEC-497, pakiety P1–P6) czeka na
   przyjęcie; bez tego fale B–F się nie zaczynają.
-- **Demo bez fali A** — nic z 18 napraw na stagingu jeszcze nie trafiło na `demo.consultify.ai`;
-  wymaga zrzutów jasny+ciemny fali A (cz.1–cz.3) i akceptu właściciela przed promocją (CLAUDE.md §9).
+- **Demo zamrożone (DEC-503)** — nic z 23 napraw na stagingu jeszcze nie trafiło na
+  `demo.consultify.ai`; promocja czeka na domknięcie stagingu, nie na Codexa.
 - **Migracja F2-E** — pełne E1 eksportu HOLD/MIGRATION_REQUIRED, czeka na decyzję CTO o trwałym
   snapshot/resume (pula `20262200–20262219`).
 - **Wolumen avatarów** (P-T05) — `STORAGE_DIR` na dysk kontenera Railway znika; decyzja przy
   najbliższym wdrożeniu (Z-9).
-- **Z-18 (nowy, z fali A cz. 3)** — „Delete” w kebabie listy Processes nie otwiera dialogu (sesja
+- **Z-18 (z fali A cz. 3)** — „Delete” w kebabie listy Processes nie otwiera dialogu (sesja
   DRD QA `8cdf5624` na stagingu); do przydziału.
+- **Z-19** — kopie sierpniowe 32 GB, czeka decyzja właściciela o usunięciu. **Z-9** — wolumen
+  `STORAGE_DIR`, czeka decyzja właściciela. **Z-20** (nowa) — sesja QA na stagingu wygasła, zrzuty
+  fali A4 do powtórki po zalogowaniu. **Z-21** (nowa) — wolumeny sieroce skasowane w ENOSPC
+  (`fizzup`/`selix`), do wiadomości właściciela.
+- **Decyzja właściciela w toku** — Tak/Nie na wygląd fali B Inicjatywy (A1/A2), zrzuty wysłane
+  14.09.
 
 ---
 
