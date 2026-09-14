@@ -1,5 +1,11 @@
 {
+  "manifestSelfExcluded": true,
   "files": [
+    {
+      "file": "fresh-918-columns-w56.json.gz",
+      "bytes": 249101,
+      "sha256": "4c34fc00de38b1e6cd859b3d4547e1086322aa53a72923b520bf3102071d6f9f"
+    },
     {
       "file": "fresh-918-columns.json.gz",
       "bytes": 249091,
@@ -56,6 +62,16 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "file": "server-tsc-w56.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "staging-columns-w56.json.gz",
+      "bytes": 250292,
+      "sha256": "a4f9c16fb70e7e352e6b398cdaccc2b1c67cc7e795822d82ec3e64aaed3a56c7"
+    },
+    {
       "file": "staging-columns.json.gz",
       "bytes": 250292,
       "sha256": "5b0dff2a294ff10ecb9f2007dbdf78ebe577815d132738954712281f43a667bf"
@@ -71,6 +87,11 @@
       "sha256": "ea16ee9f7cc28a581b77203e2743da51d924be36ff9bcbe15ac0d28c7134ea33"
     },
     {
+      "file": "strict-fresh-w56.log",
+      "bytes": 41250,
+      "sha256": "eb99fa36b50255d1ea87e915e34f3d3759525490a4a1dfa063187436cf4e6e3a"
+    },
+    {
       "file": "strict-fresh.log",
       "bytes": 38965,
       "sha256": "74aa7edc96613b1eda30616e94db0276fb128003cf65149b58b8c01a73821699"
@@ -81,10 +102,40 @@
       "sha256": "a4ed2163878ca2369063f661246c6193891478dbc772096d8924e54e7cb7e492"
     },
     {
+      "file": "strict-second-w56.log",
+      "bytes": 549,
+      "sha256": "3dde87c3e24c5d7e8b526f533eb82f9e66e8070cc1d4349142770a9d45f1a6e6"
+    },
+    {
+      "file": "w56-s5-f2-3-pmo-e2.pg.log",
+      "bytes": 44915,
+      "sha256": "d30159e637541217366b8bc0aac236f14306e920fc136bca744da2caa323f0ee"
+    },
+    {
+      "file": "w56-s5-stageGateService.allGates.realpg.log",
+      "bytes": 4457,
+      "sha256": "456e68a22e42f3156e28b9c24e24cc4672e66f4f12c0888aabd2031c32c82fe8"
+    },
+    {
+      "file": "w56-s5-stageGateService.transaction.realpg.log",
+      "bytes": 2771,
+      "sha256": "d919d731a13818c6e5c7f9ee1ae3df6fdc3ed81e31e9793c8202a49264fd8d6d"
+    },
+    {
+      "file": "w56-s5-stageGates.pmoE3.realpg.log",
+      "bytes": 54114,
+      "sha256": "df8cc48415aaca7e38c011a23bca0fa1ee10e86923709582bd3dfb706feb3cba"
+    },
+    {
+      "file": "z57-schema-diff-w56.json",
+      "bytes": 151433,
+      "sha256": "8542e24ee6a616553ffa20f892b3febfff7ffabee684c73852cb9615824237d7"
+    },
+    {
       "file": "z57-schema-diff.json",
       "bytes": 151376,
       "sha256": "a278785be64ee1ac65e07109df0d1d090f930331b3e8337c16ee35657d164bd0"
     }
   ],
-  "totalBytes": 880226
+  "totalBytes": 1679108
 }
