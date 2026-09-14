@@ -170,6 +170,12 @@ import {
   reviewPlanAnalysisProposal,
 } from '../../domain/initiatives-execution/planAnalysisProposal.js';
 import {
+  analyzePlanDependencies,
+  PlanDependencyAnalysisError,
+  type PlanDependencyAnalysisInput,
+  type PlanDependencyAnalysisResult,
+} from '../../services/ai/planDependencyAnalysisService.js';
+import {
   diffPlanScenarios,
   mutatePlanScenario,
 } from '../../domain/initiatives-execution/planScenario.js';
@@ -690,6 +696,7 @@ const PlanAnalysisCreateSchema = z.object({
   clientRequestId: z.string().min(1),
   scenarioId: z.string().min(1),
   inputAggregateVersion: z.number().int().min(1),
+  analysisKind: z.enum(['SOLVER', 'AI_DEPENDENCY']).optional().default('SOLVER'),
   useCapacity: z.boolean().optional().default(true),
   /** P15-K6: analiza wskazana wprost (wybór wariantu doradcy na planie v+1). */
   capacityScenarioId: z.string().min(1).optional(),
@@ -1659,6 +1666,12 @@ export interface InitiativesExecutionRuntimeDependencies {
   sendWorkReportEmail?: typeof EmailService.send;
   renderWorkReportPdf?: typeof renderInitiativeWorkReportPdf;
   workReportNow?: () => Date;
+  /** Test seam + production adapter for DEC-497 P2 dependency analysis. */
+  analyzePlanDependencies?: (
+    input: PlanDependencyAnalysisInput
+  ) => Promise<PlanDependencyAnalysisResult>;
+  /** Default is fail-closed. The release flag must be explicitly true. */
+  planDependencyAnalysisEnabled?: () => boolean;
 }
 
 function actorFromRequest(req: Request): RuntimeActor | null {
@@ -4754,6 +4767,42 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         portfolio.scenario.scope.portfolioId
       );
+      let dependencyAnalysis: PlanDependencyAnalysisResult | undefined;
+      if (parsed.data.analysisKind === 'AI_DEPENDENCY') {
+        if (!deps.planDependencyAnalysisEnabled?.()) {
+          res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+          return;
+        }
+        const periods = found.scenario.periods;
+        const initiatives = await deps.reader.listPlanDependencyAnalysisContext(
+          actor.organizationId,
+          found.scenario.windows.map((window) => window.initiativeId)
+        );
+        if (initiatives.length !== found.scenario.windows.length) {
+          res.status(409).json({ error: { code: 'PLAN_ANALYSIS_CONTEXT_INCOMPLETE' } });
+          return;
+        }
+        try {
+          dependencyAnalysis = await (deps.analyzePlanDependencies ?? analyzePlanDependencies)({
+            scenarioId: found.scenario.scenarioId,
+            scenarioVersion: found.scenario.scenarioVersion,
+            timezone: found.scenario.timezone,
+            horizon: {
+              start: periods[0].start,
+              end: periods[periods.length - 1].end,
+            },
+            initiatives,
+          });
+        } catch (error) {
+          if (error instanceof PlanDependencyAnalysisError) {
+            res.status(error.code === 'AI_UNAVAILABLE' ? 503 : 502).json({
+              error: { code: error.code },
+            });
+            return;
+          }
+          throw error;
+        }
+      }
       /**
        * P15-K7 (DEC-421, §4.1 pkt 4): KONIEC CICHEJ DEGRADACJI.
        *
@@ -4808,6 +4857,7 @@ export function createInitiativesExecutionRuntimeRouter(
           inputAggregateVersion: parsed.data.inputAggregateVersion,
           capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
           hints: parsed.data.hints,
+          dependencyAnalysis,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -9220,6 +9270,9 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
       ? new DeterministicPortfolioConsultingModelGateway()
       : new ConfiguredPortfolioConsultingModelGateway(),
   },
+  analyzePlanDependencies,
+  planDependencyAnalysisEnabled: () =>
+    process.env.VITE_INITIATIVES_PLAN_ANALYSIS === 'true',
   resolvePolicy: (organizationId, projectId, initiativeId) =>
     new PostgresGovernancePolicyResolver(runtimePool).resolve(
       organizationId,
