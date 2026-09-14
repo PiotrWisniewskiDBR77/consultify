@@ -8433,7 +8433,26 @@
       "exportHint": "Wyeksportuj ten kontekst, aby wzbogacić Narzędzia lub Ocenę"
     }
   },
-  "assessment": {
+"assessment": {
+    "maturityMatrix": {
+      "progress": "Oceniono {{completed}} z {{total}} obszarów",
+      "complete": "Zakończ ocenę",
+      "areas": "Obszary oceny",
+      "areaCode": "Obszar {{id}}",
+      "instructions": "Oceń zdolność organizacji w tym obszarze, wybierając wszystkie poziomy, które odpowiadają obecnej sytuacji.",
+      "selectArea": "Wybierz obszar, aby rozpocząć",
+      "ai": {
+        "name": "Asystent AI Digital Pathfinder",
+        "open": "Nie masz pewności? Poproś AI o diagnozę",
+        "close": "Zamknij asystenta AI",
+        "prompt": "Opisz obecne procesy, narzędzia i wyzwania w obszarze {{area}}.",
+        "placeholder": "Na przykład: Obecnie używamy Excela do wszystkiego, ale rozważamy…",
+        "diagnose": "Określ poziom",
+        "recommendedLevel": "Rekomendowany poziom: {{level}}",
+        "addLevel": "Dodaj poziom {{level}}",
+        "tryAgain": "Spróbuj ponownie"
+      }
+    },
     "reportView": {
       "assessment": "Ocena",
       "report": "Raport",
@@ -9486,6 +9505,27 @@
         "demoLocalTitle": "Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)."
       },
       "editor": {
+        "noResults": "Brak wyników.",
+        "collapsePanel": "Zwiń panel",
+        "expandNavigation": "Rozwiń nawigację",
+        "navigation": "Nawigacja",
+        "notAssessed": "Nie oceniono",
+        "clickForDetails": "Kliknij, aby zobaczyć szczegóły",
+        "achievedImplicit": "Osiągnięty pośrednio",
+        "notAchieved": "Nieosiągnięty",
+        "skipped": "Pominięty",
+        "questions": "Pytania",
+        "comment": "Komentarz",
+        "addAttachment": "Dodaj załącznik",
+        "addLink": "Dodaj link",
+        "validationQuestions": "Pytania walidacyjne",
+        "verified": "Zweryfikowano",
+        "canonSource": "Kanon",
+        "commentPlaceholder": "Fakty: co istnieje? Luki: czego brakuje? Kontekst: zakres, właściciele i narzędzia?",
+        "links": "Linki",
+        "add": "Dodaj",
+        "previous": "Poprzedni",
+        "next": "Następny",
         "generatingGuidance": "Generuję podpowiedź…",
         "consultantGuidance": "Podpowiedź konsultanta",
         "whyItMatters": "Dlaczego to ważne: ",

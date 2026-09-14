@@ -1,0 +1,107 @@
+POMIAR SPÓJNOŚCI JĘZYKOWEJ — 2026-09-14 19:38:51
+
+LEGENDA KATEGORII
+  K1    PL w plikach EN (klucze tłumaczeń)
+  K1def polski defaultValue w t() — widoczny w EN
+  K1defWID   z tego: brak klucza w EN -> EN WIDZI POLSKI NA STAŁE
+  K2    EN w plikach PL (klucze tłumaczeń)
+  K3a   klucz jest w PL, brak w EN (razem)
+  K3aKLUCZ   z tego: brak defaultu w kodzie -> EN widzi SUROWY KLUCZ
+  K3b   klucz jest w EN, brak w PL (fallback pokaże angielski)
+  K4pl  polski tekst na sztywno w JSX/TSX (poza t())
+  K4en  angielski tekst na sztywno w JSX/TSX (poza t())
+  K5pl  polskie zdania z serwera do UI
+  K5en  angielskie zdania z serwera do UI
+  K7    daty/liczby/waluty bez locale albo z locale na sztywno
+
+TABELA: MODUŁ × KATEGORIA
+(K1defWID ⊂ K1def, K3aKLUCZ ⊂ K3a — wiersze rozbicia nie wchodzą do kolumny RAZEM)
+| Moduł                |     K1 |  K1def | K1defWID |     K2 |    K3a | K3aKLUCZ |    K3b |   K4pl |   K4en |   K5pl |   K5en |     K7 | RAZEM |
+|----------------------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+| 01 Chat              |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      1 |      0 |     27 |      0 |    28 |
+| 02 My Work           |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      1 |     52 |      1 |     61 |      0 |   115 |
+| 03 Interview         |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |     51 |      0 |    51 |
+| 04 Tools             |      0 |      0 |      0 |      1 |      0 |      0 |      0 |      0 |      1 |     49 |    112 |      0 |   163 |
+| 05 Assessment        |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      1 |     97 |     76 |      0 |   174 |
+| 06 Initiatives       |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      2 |     97 |      0 |    99 |
+| 07 Execution         |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |     63 |      0 |    63 |
+| 08 Results           |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |     45 |      0 |    45 |
+| 09 Finance           |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      6 |      6 |    158 |      0 |   170 |
+| 10 Materials         |      0 |      0 |      0 |      1 |      0 |      0 |      0 |      0 |      1 |     19 |    223 |      8 |   252 |
+| 11 Audits            |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |     14 |     12 |      0 |    26 |
+| 12 Meeting           |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |     12 |      0 |    12 |
+| 13 Organization      |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      1 |     64 |      0 |    65 |
+| 14 Admin Panel       |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |    543 |     13 |     73 |    174 |   803 |
+| 15 Settings          |      1 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |     31 |     32 |    196 |      2 |   262 |
+| 16 Partner Portal    |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      1 |      3 |     29 |      0 |    33 |
+| ZZ wspólne           |      1 |      1 |      0 |      2 |      0 |      0 |      0 |     21 |    232 |     19 |    523 |     88 |   887 |
+| RAZEM                |      2 |      1 |      0 |      4 |      0 |      0 |      0 |     22 |    869 |    256 |   1822 |    272 |  3248 |
+
+TOP 10 NAJGORSZYCH PLIKÓW
+     86  server/src/routes/document-studio.routes.ts
+     61  server/src/routes/work-canvas.routes.ts
+     56  src/views/legal/TermsOfServiceView.tsx
+     51  server/src/routes/table-platform.routes.ts
+     48  server/src/routes/knowledge.routes.ts
+     46  server/src/routes/billing/billing.routes.ts
+     43  server/src/routes/settings.routes.ts
+     42  src/views/legal/PrivacyPolicyView.tsx
+     42  server/src/routes/presentations.routes.ts
+     39  server/src/controllers/InterviewController.ts
+
+PRZYKŁADY
+  [K1] PL w plikach EN (klucze tłumaczeń) — 2
+      public/locales/en/translation.json:pages.public.cards.tour.description
+        „Guided by Dr. Piotr Wiśniewski"  (diakrytyk:ś)
+      public/locales/en/translation.json:welcome.videoPerson
+        „Paweł Bochniarz"  (diakrytyk:ł)
+  [K1def] polski defaultValue w t() — widoczny w EN — 1
+      src/views/PublicLandingPage.tsx:156
+        „pages.public.cards.tour.description = "Guided by Dr. Piotr Wiśniewski""  (diakrytyk:ś)
+  [K1defWID]   z tego: brak klucza w EN -> EN WIDZI POLSKI NA STAŁE — 0
+  [K2] EN w plikach PL (klucze tłumaczeń) — 4
+      public/locales/pl/translation.json:documentStudio.panel.manifestCounts
+        „MUST: {{must}} · SHOULD: {{should}}"  (en:should)
+      public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder
+        „Szukaj task, decision, initiative..."  (en?:task,en?:initiative)
+      public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge
+        „AI-draft"  (en:draft)
+  [K3a] klucz jest w PL, brak w EN (razem) — 0
+  [K3aKLUCZ]   z tego: brak defaultu w kodzie -> EN widzi SUROWY KLUCZ — 0
+  [K3b] klucz jest w EN, brak w PL (fallback pokaże angielski) — 0
+  [K4pl] polski tekst na sztywno w JSX/TSX (poza t()) — 22
+      src/components/CaseWorkspace/podglad/main.tsx:224
+        „ATRAPA SIECI (podglad/main.tsx) — harness komponentu, NIE dowód żywego backendu. Dowód = testy *.pg.test.ts na realnym P"  (diakrytyk:ó,pl:nie)
+      src/pages/dev/StyleGuide.tsx:58
+        „VF0-11 · dev-only, za flagą"  (diakrytyk:ą)
+      src/pages/dev/StyleGuide.tsx:59
+        „· bez logowania. Zero
+              re-implementacji — wszystko importowane z żywego systemu."  (diakrytyk:ż)
+  [K4en] angielski tekst na sztywno w JSX/TSX (poza t()) — 869
+      src/App.tsx:134
+        „This invitation URL is incomplete. Please request a new invitation link."  (en:this,en:please)
+      src/components/AIAnalyticsDashboard.tsx:305
+        „Cost Saved"  (en?:cost,en?:saved)
+      src/components/AIAnalyticsDashboard.tsx:497
+        „Failed"  (en:failed)
+  [K5pl] polskie zdania z serwera do UI — 256
+      server/src/routes/adminP32.routes.ts:2814
+        „Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian."  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai/agent-plan.routes.ts:593
+        „Brak dostępu do projektu"  (diakrytyk:ę,pl:brak)
+      server/src/routes/ai/agent-plan.routes.ts:625
+        „Nie udało się pobrać folderów"  (diakrytyk:ł,pl:nie,pl:się)
+  [K5en] angielskie zdania z serwera do UI — 1822
+      server/src/routes/access-control.routes.ts:51
+        „Access request already pending"  (en:pending)
+      server/src/routes/access-control.routes.ts:447
+        „This access code has been deactivated"  (en:this,en:has,en:been)
+      server/src/routes/access-control.routes.ts:450
+        „This access code has expired"  (en:this,en:has)
+  [K7] daty/liczby/waluty bez locale albo z locale na sztywno — 272
+      src/components/Help/FeatureUpdatesPanel.tsx:260
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      src/components/Help/FeatureUpdatesPanel.tsx:361
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      src/components/ReportBuilder/ExportSharePanel.tsx:508
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)

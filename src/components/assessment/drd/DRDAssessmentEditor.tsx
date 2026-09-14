@@ -1343,7 +1343,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         })}
         {filteredAreas.length === 0 && (
           <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            No results.
+            {t('assessment.drd.editor.noResults', 'No results.')}
           </div>
         )}
       </div>
@@ -1353,7 +1353,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         <button
           onClick={() => setIsNavCollapsed(true)}
           className="w-full flex items-center justify-center gap-1 py-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
-          title="Collapse panel"
+          title={t('assessment.drd.editor.collapsePanel', 'Collapse panel')}
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -1370,7 +1370,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
           className="md:hidden mb-4 p-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
         >
           {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          <span className="text-sm font-medium">Navigation</span>
+          <span className="text-sm font-medium">
+            {t('assessment.drd.editor.navigation', 'Navigation')}
+          </span>
         </button>
 
         {/* ===================================================================== */}
@@ -1490,7 +1492,11 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                           }`}
                         >
-                          {isTooltipAchieved ? 'AS-IS' : isTooltipTarget ? 'TO-BE' : 'Not assessed'}
+                          {isTooltipAchieved
+                            ? 'AS-IS'
+                            : isTooltipTarget
+                              ? 'TO-BE'
+                              : t('assessment.drd.editor.notAssessed', 'Not assessed')}
                         </span>
                       </div>
                       {tooltipTechs.length > 0 && (
@@ -1505,7 +1511,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           ))}
                         </div>
                       )}
-                      <div className="mt-1.5 text-[9px] text-slate-500">Click for details</div>
+                      <div className="mt-1.5 text-[9px] text-slate-500">
+                        {t('assessment.drd.editor.clickForDetails', 'Click for details')}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1883,18 +1891,21 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               >
                                 {achieved
                                   ? isImplicit
-                                    ? 'Achieved (implicit)'
-                                    : 'Achieved'
-                                  : 'Not achieved'}
+                                    ? t(
+                                        'assessment.drd.editor.achievedImplicit',
+                                        'Achieved (implicit)'
+                                      )
+                                    : t('assessment.drd.editor.achieved', 'Achieved')
+                                  : t('assessment.drd.editor.notAchieved', 'Not achieved')}
                               </span>
                               {isTarget && !achieved && (
                                 <span className="text-[11px] px-2 py-0.5 rounded-full border bg-blue-100/60 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200/60 dark:border-blue-900/30">
-                                  Target
+                                  {t('assessment.drd.editor.target', 'Target')}
                                 </span>
                               )}
                               {isSkipped && !achieved && !isTarget && (
                                 <span className="text-[11px] px-2 py-0.5 rounded-full border bg-transparent text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-navy-700">
-                                  Skipped
+                                  {t('assessment.drd.editor.skipped', 'Skipped')}
                                 </span>
                               )}
                               <button
@@ -2044,7 +2055,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }`}
                           >
                             <HelpCircle className="w-4 h-4" />
-                            Questions
+                            {t('assessment.drd.editor.questions', 'Questions')}
                           </button>
 
                           <button
@@ -2059,7 +2070,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }`}
                           >
                             <MessageSquare className="w-4 h-4" />
-                            Comment
+                            {t('assessment.drd.editor.comment', 'Comment')}
                           </button>
 
                           <button
@@ -2076,7 +2087,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }`}
                           >
                             <Paperclip className="w-4 h-4" />
-                            Add attachment
+                            {t('assessment.drd.editor.addAttachment', 'Add attachment')}
                           </button>
 
                           <button
@@ -2091,7 +2102,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }`}
                           >
                             <Link2 className="w-4 h-4" />
-                            Add link
+                            {t('assessment.drd.editor.addLink', 'Add link')}
                           </button>
                         </div>
 
@@ -2099,10 +2110,15 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         {activeCardPanel === 'questions' && (
                           <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 p-4">
                             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <span>Validation questions</span>
+                              <span>
+                                {t(
+                                  'assessment.drd.editor.validationQuestions',
+                                  'Validation questions'
+                                )}
+                              </span>
                               {achieved && (
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                                  Verified
+                                  {t('assessment.drd.editor.verified', 'Verified')}
                                 </span>
                               )}
                             </div>
@@ -2151,7 +2167,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     <Sparkles className="w-3 h-3" />
                                     {t('assessment.drd.editor.consultantGuidance', 'Consultant guidance')}
                                     <span className="ml-auto font-normal normal-case text-slate-400">
-                                      {g.data.source === 'llm' ? 'AI' : 'kanon'}
+                                      {g.data.source === 'llm'
+                                        ? 'AI'
+                                        : t('assessment.drd.editor.canonSource', 'Canon')}
                                     </span>
                                   </div>
                                   <p className="text-slate-800 dark:text-slate-200">
@@ -2187,12 +2205,15 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         {activeCardPanel === 'comment' && (
                           <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 p-4">
                             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                              Comment
+                              {t('assessment.drd.editor.comment', 'Comment')}
                             </div>
                             <textarea
                               value={note}
                               onChange={(e) => setLevelNote(lvl.level, e.target.value)}
-                              placeholder="Facts: what exists? Gaps: what's missing? Context: scope/owners/tools?"
+                              placeholder={t(
+                                'assessment.drd.editor.commentPlaceholder',
+                                "Facts: what exists? Gaps: what's missing? Context: scope, owners, and tools?"
+                              )}
                               disabled={readOnly}
                               rows={3}
                               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
@@ -2216,7 +2237,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         {activeCardPanel === 'links' && (
                           <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 p-4">
                             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                              Links
+                              {t('assessment.drd.editor.links', 'Links')}
                             </div>
                             <div className="flex items-center gap-2">
                               <input
@@ -2234,7 +2255,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 }}
                                 className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold"
                               >
-                                Add
+                                {t('assessment.drd.editor.add', 'Add')}
                               </button>
                             </div>
                             {(() => {
@@ -2374,7 +2395,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                         : 'bg-transparent border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
                                     }`}
                                   >
-                                    Skip
+                                    {t('assessment.drd.editor.skip', 'Skip')}
                                   </button>
                                 </div>
 
@@ -2385,10 +2406,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                       disabled={!prev}
                                       onClick={() => prev && setLevel(prev.level)}
                                       className="h-10 px-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                      title="Previous"
+                                      title={t('assessment.drd.editor.previous', 'Previous')}
                                     >
                                       <ArrowLeft className="w-4 h-4" />
-                                      Previous
+                                      {t('assessment.drd.editor.previous', 'Previous')}
                                     </button>
                                     <div className="w-px bg-slate-200/80 dark:bg-white/10" />
                                     <button
@@ -2396,9 +2417,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                       disabled={!next}
                                       onClick={() => next && setLevel(next.level)}
                                       className="h-10 px-4 inline-flex items-center gap-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300/60 disabled:text-white/90 disabled:cursor-not-allowed transition-colors"
-                                      title="Next"
+                                      title={t('assessment.drd.editor.next', 'Next')}
                                     >
-                                      Next
+                                      {t('assessment.drd.editor.next', 'Next')}
                                       <ArrowRight className="w-4 h-4" />
                                     </button>
                                   </div>
@@ -2495,7 +2516,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         <button
           onClick={() => setIsNavCollapsed(false)}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 border-r-0 rounded-l-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-colors"
-          title="Expand navigation"
+          title={t('assessment.drd.editor.expandNavigation', 'Expand navigation')}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
