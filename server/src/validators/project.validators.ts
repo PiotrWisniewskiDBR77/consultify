@@ -15,7 +15,6 @@ export const CreateProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(255),
   ownerId: z.string().uuid().optional(),
   description: z.string().max(5000).optional(),
-  goal: z.string().max(1000).optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled', 'archived']).optional(),
   // FLOW-PROJECT-001 enhancements
   pmo_standard: z.enum(['prince2', 'pmbok', 'agile', 'safe', 'custom']).optional().default('pmbok'),
@@ -48,6 +47,17 @@ export const ArchiveProjectSchema = z.object({
 
 export const ProjectNotificationSettingsSchema = z.object({
   task_overdue_enabled: z.boolean().optional(),
+  task_due_soon_enabled: z.boolean().optional(),
+  task_blocked_enabled: z.boolean().optional(),
+  decision_pending_enabled: z.boolean().optional(),
+  decision_escalation_enabled: z.boolean().optional(),
+  phase_transition_enabled: z.boolean().optional(),
+  gate_blocked_enabled: z.boolean().optional(),
+  initiative_at_risk_enabled: z.boolean().optional(),
+  escalation_email_enabled: z.boolean().optional(),
+  email_daily_digest: z.boolean().optional(),
+  email_weekly_summary: z.boolean().optional(),
+  // Legacy aliases remain accepted while callers move to the canonical schema.
   task_due_today_enabled: z.boolean().optional(),
   blocker_detected_enabled: z.boolean().optional(),
   gate_ready_enabled: z.boolean().optional(),

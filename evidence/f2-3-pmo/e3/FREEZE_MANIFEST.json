@@ -1,0 +1,29 @@
+{
+  "package": "F2-3 PMO E3",
+  "freeze": "R3",
+  "date": "2026-09-14",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW",
+  "base_sha": "3e1363d01a609c0dc9178ef7a5bdf96af22f9f30",
+  "implementation_sha": "9d423e0fc71abd1099c87eaca8eb9022dca7cbfe",
+  "review_sha": "c839a8a35c",
+  "diff_range": "3e1363d01a609c0dc9178ef7a5bdf96af22f9f30..9d423e0fc71abd1099c87eaca8eb9022dca7cbfe",
+  "feature_flag": { "name": "VITE_PMO_PROJECTS", "default": "OFF" },
+  "validation": {
+    "strict_migrations_fresh": "PASS 915",
+    "initialize_database": "PASS",
+    "full_create_gateway_jwt_realpg": "PASS 5/5",
+    "all_five_gates_realpg": "PASS 1/1",
+    "stage_gate_gateway_jwt_realpg": "PASS 3/3",
+    "transaction_rollback_realpg": "PASS 1/1",
+    "focused_ui_zod_i18n": "PASS 7/7",
+    "server_tsc": "PASS",
+    "esbuild_per_changed_frontend_file": "PASS",
+    "diff_check": "PASS"
+  },
+  "browser_evidence": [
+    { "path": "evidence/f2-3-pmo/e3/01_stage_gates_dark.png", "sha256": "e4d623acb8ef8b0602a0ab1be81df5b692a335e2241e9f6f1b9c0310157f338b" },
+    { "path": "evidence/f2-3-pmo/e3/02_stage_gates_light.png", "sha256": "ac9afef8e3d91d78d5cae40df834cf0baea55bf99e628b34235e3de77afcfd10" }
+  ],
+  "evidence": { "bytes_total": 527194, "files_total": 27, "limit_bytes": 2097152 },
+  "final_candidate_ref": "refs/heads/backup/codex/pmo-projekty-role-statusy-20260913-r3-20260914"
+}

@@ -1,0 +1,32 @@
+F2-3 PMO E1 status measurement
+Measured on branch: codex/f2-3-pmo-20260913
+Base/HEAD: bc40d5327c6cf133f8cfd2b0e68a5295fb782189
+Schema artifact: /Users/piotrwisniewski/Developer/cto-codex/staging-schema-20260913.sql
+Schema artifact SHA-256: bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78
+Runtime: pgvector/pgvector:pg18, container cx-f23-pg, host port 6458, database f23_e1
+Restore result: RC=0
+
+Relation counts after restore:
+public: 1809 tables
+v8: 121 tables
+
+Row counts in the supplied artifact:
+initiatives: 0
+projects: 0
+project_members: 0
+ie_governance_policies: 0
+ie_governance_role_bindings: 0
+initiative_lifecycle_gate_decisions: 0
+
+Initiative distribution query:
+SELECT status, current_stage, stage, archived, count(*)
+FROM initiatives
+GROUP BY status, current_stage, stage, archived;
+
+Result: 0 rows.
+
+Verdict: EVIDENCE_MISSING for the current staging record distribution. The supplied
+artifact is a schema-only dump. Zero rows prove schema restoration, not the live data
+distribution. A source comment in initiativeUnifiedReader.ts records an older 10.09
+measurement (REJECTED x16, PROPOSED x1); it is historical evidence and is not promoted
+to a current count.

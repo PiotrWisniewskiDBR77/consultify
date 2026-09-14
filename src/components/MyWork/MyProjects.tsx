@@ -53,6 +53,10 @@ import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel
 import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
+import { CreateProjectModal } from './CreateProjectModal';
+import { ProjectRoleAssignmentsSummary } from './ProjectRoleAssignmentsSummary';
+import { ProjectRolePermissionCopy } from './ProjectRolePermissionCopy';
+import { ProjectStageGatesPanel } from './ProjectStageGatesPanel';
 
 interface ProjectRow {
   id: string;
@@ -88,11 +92,46 @@ interface FinanceRollup {
 interface ProjectTeamMember {
   id: string;
   user_id?: string;
+  userId?: string;
   first_name?: string | null;
   last_name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   email?: string | null;
   role?: string | null;
+  projectRole?: string | null;
+  allocationPercent?: number;
 }
+
+interface ProjectOperatingModel {
+  roles: Array<{
+    key: string;
+    label: { en: string; pl: string };
+    description: { en: string; pl: string };
+    can: string[];
+    cannot: string[];
+    memberIds: string[];
+  }>;
+  responsibilities: Array<{
+    roleKey: string;
+    decisionLevel: number;
+    accountableFor: string[];
+    memberIds: string[];
+  }>;
+  capacity: Array<{ userId: string; name: string; allocationPercent: number; roleKey: string }>;
+  communication: Array<{ trigger: string; recipientIds: string[] }>;
+  approvalInputs: { roleBindings: Array<{ roleKey: string; principalId: string }> };
+  missingRequiredRoles: string[];
+  permissions: { canManageTeam: boolean; canManageCommunication: boolean };
+}
+
+const CANONICAL_PROJECT_ROLES = [
+  'PROJECT_SPONSOR',
+  'PROJECT_LEADER',
+  'STEERING_COMMITTEE',
+  'WORKSTREAM_OWNER',
+  'TASK_ASSIGNEE',
+] as const;
 
 /** Zwornik (#78) — project task slice (GET /api/tasks?projectId=…). */
 interface ProjectTask {
@@ -176,8 +215,8 @@ const stakeholderLabel = (s: EffectiveStakeholder): string =>
     : s.externalName || s.email || s.externalEmail || '—';
 
 const memberLabel = (m: ProjectTeamMember): string =>
-  m.first_name || m.last_name
-    ? `${m.first_name || ''} ${m.last_name || ''}`.trim()
+  m.firstName || m.lastName || m.first_name || m.last_name
+    ? `${m.firstName || m.first_name || ''} ${m.lastName || m.last_name || ''}`.trim()
     : m.email || '—';
 
 const assigneeLabel = (a: ProjectTask['assignee']): string | null =>
@@ -196,6 +235,21 @@ export const MyProjects: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const projectRoleLabel = useCallback(
+    (roleKey: string) =>
+      t(`myWork.projects.roles.${roleKey}`, { defaultValue: roleKey }),
+    [t]
+  );
+  const permissionLabel = useCallback(
+    (permission: string) =>
+      t(`myWork.projects.permissions.${permission}`, { defaultValue: permission }),
+    [t]
+  );
+  const approvalRoleLabel = useCallback(
+    (roleKey: string) =>
+      t(`myWork.projects.approvalRoles.${roleKey}`, { defaultValue: roleKey }),
+    [t]
+  );
   // ★ Odbiór 2026-08-30 (droga-dojscia #4): breadcrumb pokazywał „My Work"
   // jako martwy tekst (ten sam styl co link, zero onClick) — wygląda na
   // nawigację, nic nie robi po kliknięciu. Kanon breadcrumbs (patrz
@@ -231,6 +285,7 @@ export const MyProjects: React.FC = () => {
   const [programRollupLoading, setProgramRollupLoading] = useState(false);
   const [programRollupError, setProgramRollupError] = useState<string | null>(null);
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<ProgramSummary | null>(null);
 
   // ── Zwornik: efektywni stakeholderzy + finance rollup projektu ──────────
@@ -244,6 +299,16 @@ export const MyProjects: React.FC = () => {
   const [team, setTeam] = useState<ProjectTeamMember[]>([]);
   const [teamLoading, setTeamLoading] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
+  const [operatingModel, setOperatingModel] = useState<ProjectOperatingModel | null>(null);
+  const [communicationSettings, setCommunicationSettings] = useState<any>(null);
+  const [orgUsers, setOrgUsers] = useState<any[]>([]);
+  const [newMemberUserId, setNewMemberUserId] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('TASK_ASSIGNEE');
+  const [newMemberAllocation, setNewMemberAllocation] = useState(100);
+  const [memberSaving, setMemberSaving] = useState(false);
+  const [teamEdits, setTeamEdits] = useState<
+    Record<string, { projectRole: string; allocationPercent: number }>
+  >({});
   const [tasks, setTasks] = useState<ProjectTask[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
@@ -273,6 +338,12 @@ export const MyProjects: React.FC = () => {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  useEffect(() => {
+    Api.getUsers()
+      .then(setOrgUsers)
+      .catch(() => setOrgUsers([]));
+  }, []);
 
   // ── Zwornik D3: lista programów — fetched on mount regardless of active
   // tab (also feeds the "Przypisz do programu" submenu on project rows). ──
@@ -335,6 +406,8 @@ export const MyProjects: React.FC = () => {
       setStakeholders([]);
       setFinance(null);
       setTeam([]);
+      setOperatingModel(null);
+      setCommunicationSettings(null);
       setTasks([]);
       return;
     }
@@ -397,6 +470,22 @@ export const MyProjects: React.FC = () => {
         if (!cancelled) setTeamLoading(false);
       });
 
+    Api.getProjectOperatingModel(previewId)
+      .then((model: ProjectOperatingModel) => {
+        if (!cancelled) setOperatingModel(model);
+      })
+      .catch(() => {
+        if (!cancelled) setOperatingModel(null);
+      });
+
+    Api.getProjectCommunicationSettings(previewId)
+      .then((settings: any) => {
+        if (!cancelled) setCommunicationSettings(settings);
+      })
+      .catch(() => {
+        if (!cancelled) setCommunicationSettings(null);
+      });
+
     // Zwornik (#78): zadania projektu.
     setTasksLoading(true);
     setTasksError(null);
@@ -446,22 +535,6 @@ export const MyProjects: React.FC = () => {
   );
 
   const previewProject = previewId ? (projects.find((p) => p.id === previewId) ?? null) : null;
-
-  // Zwornik (#78): przypisania ról — grupowanie członków po roli projektowej
-  // (macierz RACI wymaga osobnego backendu, którego nie ma — pokazujemy realne
-  // przypisania ról z tabeli project_members, bez 404).
-  const roleGroups = useMemo(() => {
-    const map = new Map<string, ProjectTeamMember[]>();
-    for (const m of team) {
-      const key = String(m.role || 'MEMBER').toUpperCase();
-      const arr = map.get(key) || [];
-      arr.push(m);
-      map.set(key, arr);
-    }
-    return Array.from(map.entries())
-      .map(([role, members]) => ({ role, members }))
-      .sort((a, b) => b.members.length - a.members.length);
-  }, [team]);
 
   const programNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -537,10 +610,183 @@ export const MyProjects: React.FC = () => {
         width: '140px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.created_at || row.createdAt || ''),
-        render: (row: TableRow) => formatDate((row.created_at || row.createdAt) as string | undefined),
+        render: (row: TableRow) =>
+          formatDate((row.created_at || row.createdAt) as string | undefined),
       },
     ],
     [t, isPolish, programNameById]
+  );
+
+  const teamColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'member',
+        label: t('myWork.projects.teamMember', 'Team member'),
+        width: '220px',
+        render: (row: TableRow) => memberLabel(row as unknown as ProjectTeamMember),
+      },
+      {
+        id: 'projectRole',
+        label: t('myWork.projects.projectRole', 'Project role'),
+        width: '190px',
+        render: (row: TableRow) => {
+          const member = row as unknown as ProjectTeamMember;
+          const memberId = String(member.userId || member.user_id || '');
+          const value =
+            teamEdits[memberId]?.projectRole || member.projectRole || member.role || 'TASK_ASSIGNEE';
+          return (
+            <select
+              aria-label={t('myWork.projects.projectRole', 'Project role')}
+              value={String(value)}
+              disabled={operatingModel?.permissions?.canManageTeam !== true}
+              onChange={(event) =>
+                setTeamEdits((current) => ({
+                  ...current,
+                  [memberId]: {
+                    projectRole: event.target.value,
+                    allocationPercent:
+                      current[memberId]?.allocationPercent ?? Number(member.allocationPercent ?? 0),
+                  },
+                }))
+              }
+              className="w-full rounded border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text"
+            >
+              {CANONICAL_PROJECT_ROLES.map((role) => (
+                <option key={role} value={role}>{projectRoleLabel(role)}</option>
+              ))}
+            </select>
+          );
+        },
+      },
+      {
+        id: 'allocationPercent',
+        label: t('myWork.projects.capacity', 'Capacity'),
+        width: '110px',
+        render: (row: TableRow) => {
+          const member = row as unknown as ProjectTeamMember;
+          const memberId = String(member.userId || member.user_id || '');
+          return (
+            <input
+              aria-label={t('myWork.projects.capacity', 'Capacity')}
+              type="number"
+              min={0}
+              max={100}
+              disabled={operatingModel?.permissions?.canManageTeam !== true}
+              value={teamEdits[memberId]?.allocationPercent ?? Number(member.allocationPercent ?? 0)}
+              onChange={(event) =>
+                setTeamEdits((current) => ({
+                  ...current,
+                  [memberId]: {
+                    projectRole:
+                      current[memberId]?.projectRole ||
+                      String(member.projectRole || member.role || 'TASK_ASSIGNEE'),
+                    allocationPercent: Number(event.target.value),
+                  },
+                }))
+              }
+              className="w-20 rounded border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text"
+            />
+          );
+        },
+      },
+      {
+        id: 'saveMember',
+        label: t('common.actions', 'Actions'),
+        width: '90px',
+        render: (row: TableRow) => {
+          const member = row as unknown as ProjectTeamMember;
+          const memberId = String(member.userId || member.user_id || '');
+          return (
+            <button
+              disabled={
+                operatingModel?.permissions?.canManageTeam !== true ||
+                !teamEdits[memberId] ||
+                memberSaving
+              }
+              onClick={() => void handleUpdateMember(member)}
+              className="rounded border border-c-border px-2 py-1 text-xs font-medium text-c-text disabled:opacity-40"
+            >
+              {t('common.save', 'Save')}
+            </button>
+          );
+        },
+      },
+    ],
+    [t, teamEdits, memberSaving, operatingModel?.permissions?.canManageTeam, projectRoleLabel]
+  );
+
+  const refreshTeamModel = useCallback(async () => {
+    if (!previewId) return;
+    const [members, model] = await Promise.all([
+      Api.getProjectTeamMembers(previewId),
+      Api.getProjectOperatingModel(previewId),
+    ]);
+    setTeam(Array.isArray(members) ? members : []);
+    setOperatingModel(model);
+  }, [previewId]);
+
+  const handleAddMember = useCallback(async () => {
+    if (!previewId || !newMemberUserId) return;
+    setMemberSaving(true);
+    try {
+      await Api.addProjectTeamMember(previewId, {
+        userId: newMemberUserId,
+        projectRole: newMemberRole,
+        allocationPercent: newMemberAllocation,
+      });
+      await refreshTeamModel();
+      setNewMemberUserId('');
+      toast.success(t('myWork.projects.memberAdded', 'Team member added'));
+    } catch (error: any) {
+      toast.error(
+        error?.message || t('myWork.projects.failedToAddMember', 'Failed to add team member')
+      );
+    } finally {
+      setMemberSaving(false);
+    }
+  }, [previewId, newMemberUserId, newMemberRole, newMemberAllocation, refreshTeamModel, t]);
+
+  async function handleUpdateMember(member: ProjectTeamMember) {
+      if (!previewId) return;
+      const memberId = String(member.userId || member.user_id || '');
+      const update = teamEdits[memberId];
+      if (!memberId || !update) return;
+      setMemberSaving(true);
+      try {
+        await Api.updateProjectTeamMember(previewId, memberId, update);
+        await refreshTeamModel();
+        setTeamEdits((current) => {
+          const next = { ...current };
+          delete next[memberId];
+          return next;
+        });
+        toast.success(t('myWork.projects.memberUpdated', 'Team member updated'));
+      } catch (error: any) {
+        toast.error(
+          error?.message || t('myWork.projects.failedToUpdateMember', 'Failed to update team member')
+        );
+      } finally {
+        setMemberSaving(false);
+      }
+  }
+
+  const handleCommunicationChange = useCallback(
+    async (key: string, value: boolean) => {
+      if (!previewId || !communicationSettings) return;
+      const next = { ...communicationSettings, [key]: value };
+      setCommunicationSettings(next);
+      try {
+        await Api.updateProjectCommunicationSettings(previewId, next);
+        setOperatingModel(await Api.getProjectOperatingModel(previewId));
+      } catch (error: any) {
+        setCommunicationSettings(communicationSettings);
+        toast.error(
+          error?.message ||
+            t('myWork.projects.failedToSaveCommunication', 'Failed to save communication plan')
+        );
+      }
+    },
+    [previewId, communicationSettings, t]
   );
 
   // Zwornik D3 — przypisanie projektu do programu (kebab, blok 1 "primary").
@@ -814,7 +1060,11 @@ export const MyProjects: React.FC = () => {
                   setIsProgramModalOpen(true);
                 },
               }
-            : undefined
+            : {
+                label: t('myWork.projects.newProject', 'New project'),
+                icon: Plus,
+                onClick: () => setIsProjectModalOpen(true),
+              }
         }
         chips={
           activeMainTab === 'projects'
@@ -895,7 +1145,9 @@ export const MyProjects: React.FC = () => {
             />
           </div>
 
-          <JedenPrawyPanel rekord={previewProgramListRow ? (
+          <JedenPrawyPanel
+            rekord={
+              previewProgramListRow ? (
               <StandardPreview
                 title={programRollup?.program.name || previewProgramListRow.name}
                 onClose={() => setProgramPreviewId(null)}
@@ -989,7 +1241,10 @@ export const MyProjects: React.FC = () => {
                           {t('myWork.projects.budgetContainers', 'Budget (containers)')}
                         </span>
                         <span className="font-semibold text-c-text">
-                          {formatMoney(programRollup.budget.containerTotal, programRollup.currency)}
+                            {formatMoney(
+                              programRollup.budget.containerTotal,
+                              programRollup.currency
+                            )}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -1059,8 +1314,8 @@ export const MyProjects: React.FC = () => {
                         >
                           <span className="truncate text-c-text">{p.projectName}</span>
                           <span className="shrink-0 text-c-text-muted">
-                            {p.initiativeCount} {t('myWork.projects.initiatives3', 'initiatives')} ·{' '}
-                            {formatMoney(p.valueTotal, p.currency)}
+                              {p.initiativeCount} {t('myWork.projects.initiatives3', 'initiatives')}{' '}
+                              · {formatMoney(p.valueTotal, p.currency)}
                           </span>
                         </li>
                       ))}
@@ -1076,10 +1331,14 @@ export const MyProjects: React.FC = () => {
                     </h4>
                     <ul className="space-y-1.5">
                       {programRollup.childPrograms.map((cp) => (
-                        <li key={cp.id} className="flex items-center justify-between gap-2 text-xs">
+                          <li
+                            key={cp.id}
+                            className="flex items-center justify-between gap-2 text-xs"
+                          >
                           <span className="truncate text-c-text">{cp.name}</span>
                           <span className="shrink-0 text-c-text-muted">
-                            {cp.initiativeCount} {t('myWork.projects.initiatives4', 'initiatives')}
+                              {cp.initiativeCount}{' '}
+                              {t('myWork.projects.initiatives4', 'initiatives')}
                           </span>
                         </li>
                       ))}
@@ -1087,7 +1346,9 @@ export const MyProjects: React.FC = () => {
                   </div>
                 ) : null}
               </StandardPreview>
-          ) : null} />
+              ) : null
+            }
+          />
         </div>
       ) : (
         <div className="flex-1 min-h-0 flex overflow-hidden">
@@ -1125,7 +1386,9 @@ export const MyProjects: React.FC = () => {
             />
           </div>
 
-          <JedenPrawyPanel rekord={previewProject ? (
+          <JedenPrawyPanel
+            rekord={
+              previewProject ? (
               <StandardPreview
                 title={previewProject.name || t('myWork.projects.project2', 'Project')}
                 onClose={() => {
@@ -1207,7 +1470,10 @@ export const MyProjects: React.FC = () => {
                             {s.inherited ? (
                               <span
                                 className="px-1.5 py-0.5 rounded-full bg-c-info/15 text-[10px] font-semibold text-[var(--c-info)]"
-                                title={t('myWork.projects.inheritedFromOrg', 'Inherited from org')}
+                                  title={t(
+                                    'myWork.projects.inheritedFromOrg',
+                                    'Inherited from org'
+                                  )}
                               >
                                 {t('myWork.projects.inherited', 'inherited')}
                               </span>
@@ -1323,6 +1589,17 @@ export const MyProjects: React.FC = () => {
                       </span>
                     ) : null}
                   </div>
+                  {operatingModel && operatingModel.permissions?.canManageTeam !== true ? (
+                    <p
+                      data-testid="pmo-no-management-permission"
+                      className="mb-2 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-2 text-xs text-c-text-secondary"
+                    >
+                      {t(
+                        'myWork.projects.noManagementPermission',
+                        'You can review this operating model, but you cannot change the team, roles or communication settings.'
+                      )}
+                    </p>
+                  ) : null}
                   {teamLoading ? (
                     <p className="text-xs text-c-text-muted animate-pulse">
                       {t('myWork.projects.loading4', 'Loading…')}
@@ -1332,29 +1609,78 @@ export const MyProjects: React.FC = () => {
                       <AlertTriangle size={12} /> {teamError}
                     </p>
                   ) : team.length === 0 ? (
-                    <p className="text-xs text-c-text-muted">
+                      <p className="mb-2 text-xs text-c-text-muted">
                       {t(
                         'myWork.projects.noTeamMembersFor',
                         'No team members for this project yet.'
                       )}
                     </p>
                   ) : (
-                    <ul className="space-y-1.5">
-                      {team.map((m, idx) => (
-                        <li
-                          key={`${m.id || m.user_id || m.email || idx}`}
-                          className="flex items-center justify-between gap-2 text-xs"
+                      <StandardTable
+                        columns={teamColumns}
+                        data={team as unknown as TableRow[]}
+                        persistKey="mywork.projects.team"
+                        minTableWidth="auto"
+                      />
+                    )}
+                    <div className="mt-2 grid grid-cols-[1fr_1fr_72px_auto] gap-2">
+                      <select
+                        aria-label={t('myWork.projects.teamMember', 'Team member')}
+                        value={newMemberUserId}
+                        disabled={operatingModel?.permissions?.canManageTeam !== true}
+                        onChange={(event) => setNewMemberUserId(event.target.value)}
+                        className="rounded border border-c-border bg-c-surface-raised px-2 py-1.5 text-xs text-c-text"
                         >
-                          <span className="truncate text-c-text">{memberLabel(m)}</span>
-                          {m.role ? (
-                            <span className="shrink-0 px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary">
-                              {String(m.role).toUpperCase()}
-                            </span>
-                          ) : null}
-                        </li>
+                        <option value="">
+                          {t('myWork.projects.selectMember', 'Select member')}
+                        </option>
+                        {orgUsers
+                          .filter(
+                            (user) =>
+                              !team.some((member) => (member.userId || member.user_id) === user.id)
+                          )
+                          .map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {[user.firstName, user.lastName].filter(Boolean).join(' ') ||
+                                user.email}
+                            </option>
                       ))}
-                    </ul>
-                  )}
+                      </select>
+                      <select
+                        aria-label={t('myWork.projects.projectRole', 'Project role')}
+                        value={newMemberRole}
+                        disabled={operatingModel?.permissions?.canManageTeam !== true}
+                        onChange={(event) => setNewMemberRole(event.target.value)}
+                        className="rounded border border-c-border bg-c-surface-raised px-2 py-1.5 text-xs text-c-text"
+                      >
+                        {CANONICAL_PROJECT_ROLES.map((role) => (
+                          <option key={role} value={role}>
+                            {projectRoleLabel(role)}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        aria-label={t('myWork.projects.capacity', 'Capacity')}
+                        type="number"
+                        min={0}
+                        max={100}
+                        disabled={operatingModel?.permissions?.canManageTeam !== true}
+                        value={newMemberAllocation}
+                        onChange={(event) => setNewMemberAllocation(Number(event.target.value))}
+                        className="rounded border border-c-border bg-c-surface-raised px-2 py-1.5 text-xs text-c-text"
+                      />
+                      <button
+                        onClick={handleAddMember}
+                        disabled={
+                          operatingModel?.permissions?.canManageTeam !== true ||
+                          !newMemberUserId ||
+                          memberSaving
+                        }
+                        className="rounded bg-c-text px-3 py-1.5 text-xs font-medium text-c-bg disabled:opacity-50"
+                      >
+                        {t('common.add', 'Add')}
+                      </button>
+                    </div>
                 </div>
 
                 {/* ── Zwornik (#78): Role — przypisania ról projektowych ────── */}
@@ -1373,30 +1699,127 @@ export const MyProjects: React.FC = () => {
                     <p className="text-xs text-danger-500 flex items-center gap-1.5">
                       <AlertTriangle size={12} /> {teamError}
                     </p>
-                  ) : roleGroups.length === 0 ? (
+                  ) : team.length === 0 ? (
                     <p className="text-xs text-c-text-muted">
                       {t('myWork.projects.noRolesAssignedYet', 'No roles assigned yet.')}
                     </p>
                   ) : (
-                    <ul className="space-y-1.5">
-                      {roleGroups.map(({ role, members }) => (
-                        <li key={role} className="flex items-center justify-between gap-2 text-xs">
-                          <span className="flex items-center gap-1.5 min-w-0">
-                            <span className="px-1.5 py-0.5 rounded bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary shrink-0">
-                              {role}
+                    <ProjectRoleAssignmentsSummary
+                      members={team}
+                      roleLabel={projectRoleLabel}
+                      memberLabel={memberLabel}
+                    />
+                  )}
+                    {operatingModel ? (
+                      <div className="mt-3 space-y-2 border-t border-c-border-subtle pt-3">
+                        {operatingModel.roles.map((role) => (
+                          <div key={role.key} className="text-xs">
+                            <div className="font-semibold text-c-text">
+                              {isPolish ? role.label.pl : role.label.en}
+                            </div>
+                            <p className="text-c-text-muted">
+                              {isPolish ? role.description.pl : role.description.en}
+                            </p>
+                          <ProjectRolePermissionCopy can={role.can} cannot={role.cannot} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {operatingModel?.missingRequiredRoles?.length ? (
+                      <div
+                        data-testid="pmo-unassigned-required-role"
+                        className="mt-3 rounded-lg border border-amber-300/70 bg-amber-50 px-2.5 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"
+                      >
+                        {t('myWork.projects.unassignedRequiredRole', 'Required role without an assignee')}:{' '}
+                        {operatingModel.missingRequiredRoles.map(projectRoleLabel).join(', ')}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-2.5 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+                    <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-c-text-secondary">
+                      {t('myWork.projects.roleResponsibilities', 'Role responsibilities')}
+                    </h4>
+                    {!operatingModel ? (
+                      <p className="text-xs text-c-text-muted">{t('common.loading', 'Loading…')}</p>
+                    ) : (
+                      <div className="space-y-1.5 text-xs">
+                        {operatingModel.responsibilities.map((row) => (
+                          <div key={row.roleKey} className="grid grid-cols-[150px_56px_1fr] gap-2">
+                            <span className="font-semibold text-c-text">
+                              {projectRoleLabel(row.roleKey)}
                             </span>
-                            <span className="truncate text-c-text-muted">
-                              {members.map((m) => memberLabel(m)).join(', ')}
+                            <span className="text-c-text-muted">L{row.decisionLevel}</span>
+                            <span className="text-c-text-secondary">
+                              {row.accountableFor.map(permissionLabel).join(', ')}
                             </span>
-                          </span>
-                          <span className="shrink-0 font-semibold text-c-text">
-                            {members.length}
-                          </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-2.5 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+                    <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-c-text-secondary">
+                      {t('myWork.projects.communicationPlan', 'Communication plan')}
+                    </h4>
+                    <div className="space-y-2 text-xs text-c-text">
+                      {[
+                        ['task_overdue_enabled', t('myWork.projects.taskOverdue', 'Task overdue')],
+                        [
+                          'decision_pending_enabled',
+                          t('myWork.projects.decisionPending', 'Decision pending'),
+                        ],
+                        [
+                          'email_weekly_summary',
+                          t('myWork.projects.weeklySummary', 'Weekly summary'),
+                        ],
+                      ].map(([key, label]) => (
+                        <label
+                          key={String(key)}
+                          className="flex items-center justify-between gap-3"
+                        >
+                          <span>{label}</span>
+                          <input
+                            type="checkbox"
+                            disabled={
+                              operatingModel?.permissions?.canManageCommunication !== true
+                            }
+                            checked={!!communicationSettings?.[String(key)]}
+                            onChange={(event) =>
+                              void handleCommunicationChange(String(key), event.target.checked)
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+                    <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-c-text-secondary">
+                      {t('myWork.projects.approvalInputs', 'Approval inputs')}
+                    </h4>
+                    <p className="text-xs text-c-text-muted">
+                      {t(
+                        'myWork.projects.approvalInputsHelp',
+                        'Derived from project roles for the existing approval engine. Policy is configured in the approval stage.'
+                      )}
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs text-c-text-secondary">
+                      {(operatingModel?.approvalInputs.roleBindings || []).map((binding) => (
+                        <li key={`${binding.roleKey}-${binding.principalId}`}>
+                          {approvalRoleLabel(binding.roleKey)} →{' '}
+                          {memberLabel(
+                            team.find(
+                              (member) => (member.userId || member.user_id) === binding.principalId
+                            ) || ({ id: binding.principalId } as ProjectTeamMember)
+                          )}
                         </li>
                       ))}
                     </ul>
-                  )}
                 </div>
+
+                <ProjectStageGatesPanel projectId={previewProject.id} />
 
                 {/* ── Zwornik (#78): Zadania — zadania projektu ─────────────── */}
                 <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 mt-2.5">
@@ -1461,7 +1884,9 @@ export const MyProjects: React.FC = () => {
                   )}
                 </div>
               </StandardPreview>
-          ) : null} />
+              ) : null
+            }
+          />
         </div>
       )}
 
@@ -1479,6 +1904,17 @@ export const MyProjects: React.FC = () => {
             Api.getProgramRollup(programPreviewId)
               .then(setProgramRollup)
               .catch(() => {});
+        }}
+      />
+      <CreateProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        onSaved={(project) => {
+          void fetchProjects();
+          if (project?.id) {
+            jedenPanel.otworz();
+            setPreviewId(String(project.id));
+          }
         }}
       />
     </div>
