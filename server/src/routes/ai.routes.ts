@@ -41,7 +41,7 @@ import {
 import {
   AI_LANGUAGE_LABELS,
   resolveAiLanguageFromRequest,
-  resolveLocale,
+  resolveChatResponseLanguage,
   withResolvedLocaleInstruction,
 } from '../services/ai/languagePolicy.js';
 import {
@@ -1456,7 +1456,11 @@ router.post(
     if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // Language instruction — ten sam SSOT co /chat/stream (services/ai/languagePolicy.ts).
-    const langCode = await resolveLocale(req, language);
+    // DEC-511: język wątku nie jest jawnym wyborem — patrz komentarz w /chat/stream.
+    const { language: langCode } = await resolveChatResponseLanguage(req, {
+      explicit: (body as any)?.languageExplicit === true ? language : undefined,
+      thread: language,
+    });
     const langName = AI_LANGUAGE_LABELS[langCode];
     const languageInstruction = `\n\n${withResolvedLocaleInstruction('', langCode)}\n`;
 
@@ -1695,10 +1699,15 @@ router.post(
       responseStyle,
     } = body;
 
-    // DEC-510 SSOT: explicit request override, then users.language -> legacy
-    // users.locale -> organizations.default_language -> en. Resolver also stores
-    // the decision on req.resolvedLocale for downstream prompt builders.
-    const language = await resolveLocale(req, bodyLanguage);
+    // DEC-511 SSOT: `body.language` niesie język WĄTKU (front:
+    // `chatLanguageByConversationId`), a nie wybór użytkownika — traktowanie go
+    // jak jawnego override'u sprawiało, że `users.language` nigdy nie było
+    // czytane i język przyklejony do wątku (DE) wygrywał z profilem (EN).
+    // Jawny wybór front sygnalizuje flagą `languageExplicit`.
+    const { language } = await resolveChatResponseLanguage(req, {
+      explicit: (body as any)?.languageExplicit === true ? bodyLanguage : undefined,
+      thread: bodyLanguage,
+    });
 
     // Security: prevent user-controlled arbitrary endpoints on production by default.
     // Local inference is expected to be loopback-only unless explicitly allowed.
