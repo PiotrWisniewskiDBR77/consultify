@@ -772,6 +772,57 @@ odbioru** (Codex Q1 E1 ACCEPT `d27172ed3c`). Skrzynka: Z-27 rozliczone, **Z-28**
 rodzaju żeńskiego „Zatwierdzona"). Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 9 · 🔧 8 ·
 ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 41 etapów (0 ✅, 8 🧪, 8 🔧, 25 ⬜).
 
+**P1 Raport z pracy — ODEBRANY i WDROŻONY na staging (14.09, CTO, run `34826961239`, success).**
+Linia `78086fb2c8` → `3e1363d01a` (kandydat `4d8113fa46` + docs `7724358c0b`, merge `fa3893df45`;
+jeden konflikt `InitiativesHub.tsx` — zakładka `workReport` rozstrzygnięta pod nową flagą
+`WORK_REPORT_ENABLED`, nie pod `FOUR_BUTTONS`; `?lens=parking` bez zmian; Menu 3 czyste). Tag
+cofnięcia `rollback-pre-p1-raport-20260914` = `78086fb2c8`. 11/11 plików testów delty 33/33.
+Własna sonda CTO (nie tylko dowód Codexa): runner → PDF (`work-report-3a588c6f….pdf`, 24 773 B,
+2 strony, PDFKit) → MailHog (Message-ID `work-report-scheduled-delivery-…`) → PG (`PUBLISHED`,
+odbiorcy `DELIVERED`, `contentHash`) + osobno ścieżka porażki bez SMTP (`APPROVED`/`FAILED`,
+`EMAIL_DELIVERY_FAILED`, receipty puste) — **publikacja bez doręczenia nie przechodzi sondy**.
+Parytet flag OFF potwierdzony: `ENABLE_INITIATIVES_WORK_REPORT` (6 wołaczy w kodzie, nie fantom)
+i `VITE_INITIATIVES_WORK_REPORT` nieustawione; pełny spider 872 chunków żywego stagingu = 0
+trafień kreatora. Autoryzacja: MEMBER dostaje 403 na create/transitions/przebieg. Bramka: tsc
+0/189, język bez wzrostu, kanon 349, artefakt 8-0-117, build OK. Żywy SMTP stagingu nietknięty tą
+sondą (doręczenie na żywą skrzynkę właściciela wymaga jego zgody — patrz **Z-31**). Zrzuty
+Codexa z odbioru wcześniejszego (S2 FINAL ACCEPT) były gołym `<main>` bez powłoki Menu 1/2/3 —
+przekazane do **Z-29**.
+
+**Z-29 zrzuty P1 w powłoce (Sonnet, gałąź `integracja/kandydat-z29-zrzuty-20260914`, HEAD
+`fb79dd4190`, kopia `backup/z29-zrzuty-20260914`; harness
+`dev-render/screens/z29-inicjatywy-raport-pracy.tsx`).** Zrzuty w
+`~/Developer/cto-codex/zrzuty-z29-raport-pracy-20260914/` (lista, kreator, przebieg, OFF;
+jasny+ciemny). **SKAZY poniżej kanonu** (zmierzone w kodzie `InitiativeWorkReportView.tsx`; review
+Codexa oglądał samą powierzchnię komponentu, nie montaż w Hub): brak `StandardPreview` przebiegu
+(klik w wiersz nic nie robi — brak statusu doręczeń/PDF w podglądzie), surowe kody enum
+`PUBLISHED`/`WEEKLY`/`ON_DEMAND` w tabeli zamiast etykiet, 2 przyciski zamiast kebaba, natywne
+`<select>`, kreator jako blok nad tabelą zamiast modala/panelu, przeciek pigułek Menu 3 do
+zakładki. **Etap RP1b „przejazd kanonu"** (Opus, gałąź `integracja/kandydat-p1-kanon-20260914`,
+w toku) naprawia powyższe. KANAŁ wpis 35 (reguła dla Codexa): każdy ekran przed freeze =
+`StandardTable`+`StandardPreview`+`StandardModuleBar`, etykiety i18n, kebab, zrzut w powłoce.
+**Lekcja nadzorcy (kandydat do pamięci):** „review powierzchni ≠ odbiór ekranu" — Codex i CTO
+oglądali komponent bez powłoki; dopiero montaż całego Hub pokazał brak podglądu.
+
+**Codex 14.09, 04:30–04:44.** S5 PMO E3 R3 **ACCEPT** → kolejka odbioru po Q1. S4 F2-2 E2
+rereview **HOLD** → poprawki zamrożone (04:44). KANAŁ wpis 34 (P1 na linii, Q2 start, rebase
+S3/S4), wpis 35 (reguła StandardTable/Preview/ModuleBar przed freeze, patrz Z-29 wyżej).
+
+**Z-2 (aktualizacja 14.09, integratory w toku — druga fala).** Cztery równoległe: paczka 5 v3
+(push `19baa6d8bc` — run `34828181888` krok „Deploy app to staging" **FAILURE**, ale health
+stagingu = `19baa6d8bc`, tag `staging-deployed` został `3e1363d01a` — znany kształt „timeout
+workflow nie przesuwa tagu"; wyjaśnienie w raporcie integratora), fala B4 (H1e + Z-27), Q1
+Obciążenie, RP1b (przejazd kanonu). Dysk: 8,7 → ~26 GiB po czystce (z27, h1e, Caches). Worktree
+usunięte: `p1-raport`, `fala-a2`; `z29` (w toku — RP1b jeszcze aktywne).
+
+**EWIDENCJA (uzupełnienie 14.09, po P1 odbiorze/Z-29/RP1b).** §5: RP1 →
+**🧪 NA STAGINGU `3e1363d01a`** (za flagą `ENABLE_INITIATIVES_WORK_REPORT`/
+`VITE_INITIATIVES_WORK_REPORT` OFF), 🔧 GOTOWE DO ODBIORU CTO → 🧪 NA STAGINGU; **RP1b** (przejazd
+kanonu, skazy Z-29) w toku pod tym samym wierszem RP1, nie liczony osobno. Skrzynka: **Z-29
+rozliczone** (skazy przekazane do RP1b), **Z-31 nowy** (żywe doręczenie maila do właściciela —
+wymaga jego zgody, patrz sonda CTO wyżej). Liczniki §5 przeliczone: 45 etapów — ✅ 2 · 🧪 10 ·
+🔧 7 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 41 etapów (0 ✅, 9 🧪, 7 🔧, 25 ⬜).
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -1065,7 +1116,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🔧 GOTOWE DO ODBIORU CTO (Codex S2 FINAL ACCEPT) | `4d8113fa46` | 14.09 |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu w toku po Z-29) | `3e1363d01a` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
@@ -1097,12 +1148,12 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (45 etapów; 14.09 wieczór: H1e → gotowe do scalenia `1b9d467823`, RP1 → gotowe do
-odbioru CTO `4d8113fa46`, OB1 → gotowe do odbioru `d27172ed3c`; RP1/OB1 przechodzą
-⬜ NIE ZACZĘTE → 🔧 W TOKU, H1e zostaje 🔧 z adnotacją „gotowe do scalenia"):** ✅ 2 · 🧪 9 ·
-🔧 8 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
+**Liczniki §5 (45 etapów; 14.09 noc: RP1 ODEBRANY i WDROŻONY na staging `3e1363d01a` za flagą
+(RP1b przejazd kanonu w toku po skazach Z-29), OB1 → gotowe do odbioru `d27172ed3c`; RP1
+przechodzi 🔧 GOTOWE DO ODBIORU → 🧪 NA STAGINGU, H1e zostaje 🔧 z adnotacją „gotowe do
+scalenia"):** ✅ 2 · 🧪 10 · 🔧 7 · ⬜ 26 · 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**41 etapów to FALA 2** (0 ✅, 8 🧪, 8 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**41 etapów to FALA 2** (0 ✅, 9 🧪, 7 🔧, 25 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
