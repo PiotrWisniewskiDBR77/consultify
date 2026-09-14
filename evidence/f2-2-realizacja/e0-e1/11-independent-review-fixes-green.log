@@ -1,0 +1,48 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/realizacja-cztery-przyciski-20260913
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/realizacja-cztery-przyciski-20260913
+
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > keeps lifecycle, execution state and native identities separate while using forecast or fixed actual variance 44ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > renders one user-facing Initiative when several technical Execution Case shadows exist 1ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > preserves the legacy row identity when the new default-OFF feature is not enabled 0ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > keeps missing and invalid evidence UNKNOWN with reasons instead of zero or invented dates 0ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > keeps missing case counters and version distinct from a measured numeric zero 12ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > rejects a forecast observed after controlled asOf and never substitutes current plan 0ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > uses per-field Initiative evidence ahead of the legacy Execution Case forecast and preserves provenance 0ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > builds real 1/3/6/12 calendar-month windows with weekly and monthly resolution plus leap-week drilldown 1ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts > E1b executionBankModel > applies one deterministic filter and sort contract to the shared rows 1ms
+ ✓ src/components/Execution/__tests__/executionBankModel.test.ts (9 tests) 64ms
+ ✓ tests/components/Execution/ExecutionBankViews.behavior.test.tsx > E1b ExecutionBankViews mounted behavior > keeps the same ordered identity denominator and selection across every read-only renderer 87ms
+ ✓ tests/components/Execution/ExecutionBankViews.behavior.test.tsx > E1b ExecutionBankViews mounted behavior > positions dated Gantt geometry on the shared horizon and moves it when the horizon changes 12ms
+ ✓ tests/components/Execution/ExecutionBankViews.behavior.test.tsx > E1b ExecutionBankViews mounted behavior > exposes 1/3/6/12 calendar-month controls and 6/12 month week drilldown 153ms
+ ✓ tests/components/Execution/ExecutionBankViews.behavior.test.tsx (3 tests) 253ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx > E1b independent reviewer gaps > keeps a canonical Initiative without an Execution Case visible without fabricating a case identity 223ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx > E1b independent reviewer gaps > keeps the exact legacy denominator and case render while the new flag is OFF 94ms
+ ✓ tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx > E1b Execution Bank views > E1b Bank renders one ordered Initiative set across table, kanban, calendar and gantt without writes 346ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx > E1b independent reviewer gaps > writes the user-facing Initiative identity while retaining the case as an internal shadow 93ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx > E1b independent reviewer gaps > selects and restores a canonical Initiative without inventing an Execution Case identity 121ms
+ ✓ tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx > E1b Execution Bank views > wires five reachable Bank filters to the same set used by every view, including no-project 201ms
+ ✓ tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx > E1b Execution Bank views > hydrates the requested Bank view and native selection from a cold query and keeps selection when the view changes 31ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx > E1b independent reviewer gaps > rehydrates controlled asOf when browser history changes the query 123ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx > E1b independent reviewer gaps > preserves one Initiative identity multiset and the shared sort inside semantic groups 74ms
+ ✓ tests/components/Execution/ExecutionHub.e1bReviewerGaps.behavior.test.tsx (6 tests) 730ms
+ ✓ tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx > E1b Execution Bank views > selects an Initiative without a Case and restores that native selection after a view switch and reload 103ms
+ ✓ tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx > E1b Execution Bank views > refetches the same Initiative evidence at controlled asOf on browser Back and Forward 212ms
+ ✓ tests/components/Execution/ExecutionHub.e1bBankViews.behavior.test.tsx (5 tests) 895ms
+     ✓ E1b Bank renders one ordered Initiative set across table, kanban, calendar and gantt without writes  346ms
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  20:11:23
+   Duration  2.66s (transform 2.26s, setup 444ms, import 3.26s, tests 1.94s, environment 1.28s)
+
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  20:11:23
+   Duration  2.66s (transform 2.26s, setup 444ms, import 3.26s, tests 1.94s, environment 1.28s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/realizacja-cztery-przyciski-20260913/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/realizacja-cztery-przyciski-20260913/junit.xml
