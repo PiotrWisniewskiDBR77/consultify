@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "capturedAt": "2026-09-13T18:24:08.137Z",
+  "fixture": {
+    "orgId": "iaa-ui-20260913175715-06ce0b08-org"
+  },
+  "sourceCommit": "b0a2642f9152fd36e590aff2cdb36278c26688b3",
+  "indexSha256": "914aa33e33c28ecae468cf0e31dd180d8fbcbf805d6ee5a89056fb9cb8739710",
+  "policyRequests": [
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy",
+      "body": null
+    },
+    {
+      "method": "PUT",
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy",
+      "body": {
+        "policy": {
+          "futureTop": {
+            "preserved": "yes"
+          },
+          "interview": {
+            "answerApproval": {
+              "mode": "two_stage",
+              "version": 1,
+              "futureModeKey": "keep-me"
+            },
+            "futureInterviewKey": {
+              "preserved": 42
+            }
+          },
+          "operating_mode": "standard"
+        },
+        "mode": "published"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy",
+      "body": null
+    }
+  ],
+  "policyResponses": [
+    {
+      "method": "GET",
+      "status": 200,
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy"
+    },
+    {
+      "method": "PUT",
+      "status": 200,
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "path": "/api/llm/org/iaa-ui-20260913175715-06ce0b08-org/policy"
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "httpErrors": [
+    {
+      "method": "GET",
+      "path": "/api/system-health",
+      "status": 404
+    }
+  ]
+}

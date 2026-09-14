@@ -1094,16 +1094,19 @@ export const InterviewHub: React.FC = () => {
 
   // Load data
   useEffect(() => {
+    if (permissionsLoading) return;
     const loadData = async () => {
       setIsLoading(true);
       const [sessionsRes, insightsRes, initiativesRes, templatesRes, decisionsRes, tasksRes] =
         await Promise.allSettled([
           loadManagedSessions(),
-          loadInterviewV8Capability('insights', () =>
-            V8InterviewApi.listInsights().then((r) => r.insights)
-          ),
+          permissionsCanViewInsights
+            ? loadInterviewV8Capability('insights', () =>
+                V8InterviewApi.listInsights().then((r) => r.insights)
+              )
+            : Promise.resolve([]),
           Api.get('/initiatives?source=interview_insight'),
-          Api.get('/interview/templates'),
+          permissionsCanAssign ? Api.get('/interview/templates') : Promise.resolve([]),
           // Lineage read-back — decisions/tasks tagged source_type='interview_insight'.
           Api.get('/my-work/decisions?source=interview_insight'),
           Api.get('/my-work/tasks?source=interview_insight'),
@@ -1189,7 +1192,16 @@ export const InterviewHub: React.FC = () => {
     };
 
     loadData();
-  }, [isPolish, loadManagedSessions, normalizeTemplateRecord, unwrapApiList, loadRevision]);
+  }, [
+    isPolish,
+    loadManagedSessions,
+    normalizeTemplateRecord,
+    unwrapApiList,
+    loadRevision,
+    permissionsCanAssign,
+    permissionsCanViewInsights,
+    permissionsLoading,
+  ]);
 
   // #8b — Re-fetch the sessions list when the Active | Archive | Trash filter
   // changes. The first run is skipped (the main load effect already fetched the

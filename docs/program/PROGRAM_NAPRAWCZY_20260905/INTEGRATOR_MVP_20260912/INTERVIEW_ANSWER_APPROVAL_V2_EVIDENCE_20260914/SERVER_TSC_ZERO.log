@@ -1,0 +1,3 @@
+
+> consultinity@0.0.1 type-check:server
+> NODE_OPTIONS=--max-old-space-size=8192 tsc -p server/tsconfig.json --noEmit

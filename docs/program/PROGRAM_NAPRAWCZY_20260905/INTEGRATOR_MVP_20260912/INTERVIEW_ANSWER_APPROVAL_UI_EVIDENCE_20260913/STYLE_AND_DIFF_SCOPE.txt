@@ -1,0 +1,8 @@
+git_diff_check=PASS
+scoped_prettier_typescript_plan=PASS
+locale_catalog_prettier_head=FAIL_BASELINE
+locale_catalog_prettier_candidate=FAIL_SAME_CLASS
+llm_routes_eslint_error=simple-import-sort/imports_at_line_6_UNCHANGED
+llm_routes_product_diff=5
+_added_lines
+locale_numstat=26	0	public/locales/en/translation.json;26	0	public/locales/pl/translation.json;

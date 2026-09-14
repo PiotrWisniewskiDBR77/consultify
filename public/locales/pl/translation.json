@@ -7487,7 +7487,34 @@
       "proposeChangesPreviewNotice": "Propozycje zmian pojawią się w podglądzie do zatwierdzenia.",
       "generateWholeTemplatePreviewNotice": "Projekt całego wzorca pojawi się przed zapisem."
     },
+    "answerApproval": {
+      "policy": {
+        "enabledLabel": "Włącz zatwierdzanie odpowiedzi",
+        "modeLabel": "Tryb zatwierdzania odpowiedzi",
+        "modeAi": "AI",
+        "modeManager": "Menedżer",
+        "modeTwoStage": "Dwuetapowo",
+        "unsupportedVersion": "Nieobsługiwana wersja polityki zatwierdzania odpowiedzi"
+      }
+    },
     "workspace": {
+      "answerApprovalPanel": "Zatwierdzanie odpowiedzi",
+      "answerApprovalQuestion": "Odpowiedź w wywiadzie",
+      "answerApprovalStatus": {
+        "pending": "Oczekuje na zatwierdzenie",
+        "stages_complete": "Zatwierdzona",
+        "sent_back": "Odesłana do poprawy"
+      },
+      "answerApprovalsUnavailable": "Status zatwierdzenia odpowiedzi jest niedostępny. Spróbuj ponownie.",
+      "answerApproved": "Odpowiedź zatwierdzona.",
+      "answerDecisionConflict": "Ta odpowiedź się zmieniła. Odśwież ją przed decyzją.",
+      "answerDecisionFailed": "Nie udało się zapisać decyzji. Spróbuj ponownie.",
+      "answerDecisionReason": "Powód odesłania tej odpowiedzi",
+      "answerSentBack": "Odpowiedź odesłana do poprawy.",
+      "approveAnswer": "Zatwierdź odpowiedź",
+      "loadingAnswerApprovals": "Wczytywanie statusu zatwierdzenia odpowiedzi…",
+      "retryAiAnswerReview": "Ponów ocenę AI",
+      "sendBackAnswer": "Odeślij odpowiedź",
       "clarifyKeyAnswers": "Doprecyzuj kluczowe odpowiedzi",
       "readyForApproval": "Gotowe do zatwierdzenia",
       "needsImprovement": "Wymaga poprawy",
@@ -7526,6 +7553,7 @@
       "interviewCompleted": "Wywiad zakończony!",
       "requiredAnswer": "Wymagana odpowiedź",
       "cannotSubmitCompleteTheRequired": "Nie można wysłać: uzupełnij wymagane odpowiedzi.",
+      "aiAnswerReviewUnavailable": "Ocena odpowiedzi przez AI jest chwilowo niedostępna. Spróbuj ponownie.",
       "failedToSubmit": "Nie udało się zatwierdzić",
       "interviewSentBackForRevision": "Wywiad odesłany do poprawy.",
       "failedToSendBack": "Nie udało się odesłać.",

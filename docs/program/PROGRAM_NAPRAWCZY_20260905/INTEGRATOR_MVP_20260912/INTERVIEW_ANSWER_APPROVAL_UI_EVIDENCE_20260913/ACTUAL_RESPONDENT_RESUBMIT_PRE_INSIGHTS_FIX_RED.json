@@ -1,0 +1,259 @@
+{
+  "businessRequests": [
+    {
+      "method": "PATCH",
+      "path": "/api/interview/questions/iaa-ui-20260913175715-06ce0b08-q2",
+      "body": {
+        "answerText": "The corrected result includes the validated source date: 2026-09-13.",
+        "answerMode": "text_answer",
+        "answerPayload": null,
+        "voiceTranscript": "",
+        "voiceTranscriptStatus": "none",
+        "status": "answered",
+        "expectedUpdatedAt": "2026-09-13T18:03:52.745Z"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v8/interview/assignments/iaa-ui-20260913175715-06ce0b08-assignment/submit",
+      "body": {}
+    }
+  ],
+  "businessResponses": [
+    {
+      "method": "PATCH",
+      "status": 200,
+      "body": {
+        "id": "iaa-ui-20260913175715-06ce0b08-q2",
+        "sessionId": "iaa-ui-20260913175715-06ce0b08-session",
+        "category": "operations",
+        "questionText": "What should be corrected before approval?",
+        "answerText": "The corrected result includes the validated source date: 2026-09-13.",
+        "isRequired": true,
+        "answerType": "open",
+        "answerOptions": [],
+        "expectedAnswerShape": "",
+        "description": "",
+        "evidencePrompt": "",
+        "answerMode": "text_answer",
+        "answerPayload": {},
+        "contextNote": "",
+        "notes": "",
+        "voiceTranscript": "",
+        "voiceTranscriptStatus": "none",
+        "allowVoice": false,
+        "allowFileUpload": false,
+        "allowUrl": false,
+        "allowContextNote": true,
+        "guidance": "",
+        "exampleAnswer": "",
+        "answerKnowledgeDocId": "d1c4b52c-7670-4f57-9e93-281ff569ee9c",
+        "status": "answered",
+        "confidenceScore": 0,
+        "answeredBy": "iaa-ui-20260913175715-06ce0b08-respondent",
+        "answeredAt": "2026-09-13T18:16:33.603Z",
+        "tags": [],
+        "sortOrder": 2,
+        "isTemplate": false,
+        "updatedAt": "2026-09-13T18:16:33.603Z"
+      }
+    },
+    {
+      "method": "POST",
+      "status": 200,
+      "body": {
+        "data": {
+          "assignment": {
+            "id": "iaa-ui-20260913175715-06ce0b08-assignment",
+            "organization_id": "iaa-ui-20260913175715-06ce0b08-org",
+            "assignee_user_id": "iaa-ui-20260913175715-06ce0b08-respondent",
+            "template_id": "template-answer-approval-ui",
+            "template_version": 1,
+            "process_ref": null,
+            "status": "submitted",
+            "session_id": "iaa-ui-20260913175715-06ce0b08-session",
+            "task_id": null,
+            "due_at": null,
+            "started_at": null,
+            "submitted_at": "2026-09-13T18:16:33.687Z",
+            "sent_back_at": null,
+            "sent_back_reason": null,
+            "created_by": "iaa-ui-20260913175715-06ce0b08-manager",
+            "created_at": "2026-09-13T17:57:15.195Z",
+            "updated_at": "2026-09-13T18:16:33.687Z",
+            "missing_items_json": null,
+            "ai_review_snapshot_json": null,
+            "ai_reviewed_at": null,
+            "review_decision_memory_json": null,
+            "project_id": null,
+            "priority": "high",
+            "reminder_sent_at": null,
+            "reminder_count": 0,
+            "last_reminder_type": null,
+            "escalated_at": null,
+            "escalation_count": 0,
+            "is_team_assignment": 0,
+            "notes": null,
+            "escalate_to": null,
+            "is_active": 1,
+            "archived_at": null,
+            "archived_by": null,
+            "archived_via_session": false,
+            "is_anonymous": false,
+            "create_request_key": null,
+            "create_request_fingerprint": null,
+            "answerApproval": {
+              "commandId": "ba6074d0-0ed6-437e-b662-ff94f1dc8361",
+              "assignmentId": "iaa-ui-20260913175715-06ce0b08-assignment",
+              "sessionId": "iaa-ui-20260913175715-06ce0b08-session",
+              "submissionId": "be3332e1-d9a6-453e-b391-03484140318d",
+              "policyMode": "manager",
+              "policyVersion": 1,
+              "status": "applied",
+              "observedAt": "2026-09-13T18:16:33.703Z",
+              "decisions": [
+                {
+                  "id": "d5dfa6c3-edc0-42ec-a1ac-36bdad30c0d0",
+                  "questionId": "iaa-ui-20260913175715-06ce0b08-q2",
+                  "ordinal": 1,
+                  "eventType": "submitted",
+                  "stage": null,
+                  "decision": null,
+                  "answerUpdatedAt": "2026-09-13T18:16:33.603Z",
+                  "answerDigest": "5d122f542df9d46bab0d7b698d18b67f2a0a49324ee7a86e70388789444ac44a"
+                }
+              ],
+              "idempotentReplay": false
+            },
+            "aiAnswerApproval": [],
+            "aiReview": null,
+            "aiReviewedAt": null,
+            "reviewDecisionMemory": []
+          },
+          "session": {
+            "id": "iaa-ui-20260913175715-06ce0b08-session",
+            "organizationId": "iaa-ui-20260913175715-06ce0b08-org",
+            "name": "Answer approval UI session",
+            "ownerId": "iaa-ui-20260913175715-06ce0b08-respondent",
+            "status": "submitted",
+            "templateVersion": 1,
+            "assignmentId": "iaa-ui-20260913175715-06ce0b08-assignment",
+            "progress": {
+              "operations": 100
+            },
+            "totalQuestions": 2,
+            "answeredQuestions": 2,
+            "summaryFacts": [],
+            "summaryGaps": [],
+            "summaryConstraints": [],
+            "summaryPainPoints": [],
+            "runtimeModeDefault": "single_question",
+            "startedAt": "2026-09-13T17:57:15.195Z",
+            "completedAt": null,
+            "lastActivityAt": "2026-09-13T18:16:33.687Z"
+          },
+          "completenessPercent": 100,
+          "entersContext": false,
+          "aiReview": null,
+          "answerApproval": {
+            "commandId": "ba6074d0-0ed6-437e-b662-ff94f1dc8361",
+            "assignmentId": "iaa-ui-20260913175715-06ce0b08-assignment",
+            "sessionId": "iaa-ui-20260913175715-06ce0b08-session",
+            "submissionId": "be3332e1-d9a6-453e-b391-03484140318d",
+            "policyMode": "manager",
+            "policyVersion": 1,
+            "status": "applied",
+            "observedAt": "2026-09-13T18:16:33.703Z",
+            "decisions": [
+              {
+                "id": "d5dfa6c3-edc0-42ec-a1ac-36bdad30c0d0",
+                "questionId": "iaa-ui-20260913175715-06ce0b08-q2",
+                "ordinal": 1,
+                "eventType": "submitted",
+                "stage": null,
+                "decision": null,
+                "answerUpdatedAt": "2026-09-13T18:16:33.603Z",
+                "answerDigest": "5d122f542df9d46bab0d7b698d18b67f2a0a49324ee7a86e70388789444ac44a"
+              }
+            ],
+            "idempotentReplay": false
+          },
+          "aiAnswerApproval": []
+        },
+        "meta": {
+          "version": "v8",
+          "contract": "interview_runtime_read_v1"
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "httpErrors": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:5290/api/v8/interview/insights",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:5290/api/v8/interview/insights",
+      "status": 403
+    }
+  ],
+  "failedRequests": [
+    {
+      "method": "POST",
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-JTLZ5Z6W0H&gtm=45je6992v9254417271za200zd9254417271&_p=1789323392227&gcd=13l3l3l3l1l1&npa=0&dma=0&are=1&cid=1420656118.1789323392&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=HeadlessChrome%3B143.0.7499.4%7CChromium%3B143.0.7499.4%7CNot%2520A(Brand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.6.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~120912438&sid=1789323392&sct=1&seg=0&dl=http%3A%2F%2F127.0.0.1%2Finterview%3FassignmentId%3Diaa-ui-20260913175715-06ce0b08-assignment&dt=Consultify%20%E2%80%94%20Transformation%20AI%20Consulting%20Platform&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&tfd=132",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-JTLZ5Z6W0H&gtm=45je6992v9254417271za200zd9254417271&_p=1789323392227&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1420656118.1789323392&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=HeadlessChrome%3B143.0.7499.4%7CChromium%3B143.0.7499.4%7CNot%2520A(Brand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.6.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~120912438&sid=1789323392&sct=1&seg=0&dl=http%3A%2F%2F127.0.0.1%2Finterview%3FassignmentId%3Diaa-ui-20260913175715-06ce0b08-assignment&dt=Consultify%20%E2%80%94%20Transformation%20AI%20Consulting%20Platform&en=scroll&epn.percent_scrolled=90&_et=4&tfd=332",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:5290/api/v8/interview/assignments/overdue",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:5290/api/v8/interview/assignments/managed",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:5290/api/analytics/web-vitals",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-JTLZ5Z6W0H&gtm=45je6992v9254417271za200zd9254417271&_p=1789323392227&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&are=1&cid=1420656118.1789323392&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=HeadlessChrome%3B143.0.7499.4%7CChromium%3B143.0.7499.4%7CNot%2520A(Brand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.6.2&uaw=0&ul=en-us&tag_exp=115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~120912438&dp=%2Finterview%3FassignmentId%3Diaa-ui-20260913175715-06ce0b08-assignment&dt=Consultify%20%E2%80%94%20Transformation%20AI%20Consulting%20Platform&sid=1789323392&sct=1&seg=1&dl=http%3A%2F%2F127.0.0.1%2Finterview%3FassignmentId%3Diaa-ui-20260913175715-06ce0b08-assignment&_s=3&tfd=1531",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:5290/api/v8/interview/assignments/my",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:5290/api/interview/sessions",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-JTLZ5Z6W0H&gtm=45je6992v9254417271za200zd9254417271&_p=1789323393753&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&are=1&cid=1420656118.1789323392&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=1440x900&uaa=arm&uab=64&uafvl=HeadlessChrome%3B143.0.7499.4%7CChromium%3B143.0.7499.4%7CNot%2520A(Brand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.6.2&uaw=0&ul=en-us&_s=1&tag_exp=115616986~115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153&sid=1789323392&sct=1&seg=1&dl=http%3A%2F%2F127.0.0.1%2Finterview%3FassignmentId%3Diaa-ui-20260913175715-06ce0b08-assignment&dt=Consultify%20%E2%80%94%20Transformation%20AI%20Consulting%20Platform&en=page_view&_ee=1&tfd=112",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-JTLZ5Z6W0H&gtm=45je6992v9254417271za200zd9254417271&_p=1789323393753&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1420656118.1789323392&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=1440x900&uaa=arm&uab=64&uafvl=HeadlessChrome%3B143.0.7499.4%7CChromium%3B143.0.7499.4%7CNot%2520A(Brand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.6.2&uaw=0&ul=en-us&_s=2&tag_exp=115616986~115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153&sid=1789323392&sct=1&seg=1&dl=http%3A%2F%2F127.0.0.1%2Finterview%3FassignmentId%3Diaa-ui-20260913175715-06ce0b08-assignment&dt=Consultify%20%E2%80%94%20Transformation%20AI%20Consulting%20Platform&en=scroll&epn.percent_scrolled=90&tfd=194",
+      "failure": "net::ERR_ABORTED"
+    }
+  ]
+}

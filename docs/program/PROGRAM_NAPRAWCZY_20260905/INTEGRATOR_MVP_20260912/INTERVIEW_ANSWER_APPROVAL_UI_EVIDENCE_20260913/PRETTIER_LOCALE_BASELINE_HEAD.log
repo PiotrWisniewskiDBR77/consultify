@@ -1,0 +1,4 @@
+Checking formatting...
+[warn] ../../../../../tmp/INTERVIEW_BASE_EN_translation.json
+[warn] ../../../../../tmp/INTERVIEW_BASE_PL_translation.json
+[warn] Code style issues found in 2 files. Run Prettier with --write to fix.
