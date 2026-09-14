@@ -14090,8 +14090,10 @@
       "label": "Scope",
       "active": "Active",
       "all": "All",
+      "archived": "Archived",
       "activeHint": "Draft → Pending approval → Approved → In execution",
-      "allHint": "Full lifecycle including Draft, Pending approval, Approved, In execution, On hold, Closed, Rejected"
+      "allHint": "Full lifecycle including Draft, Pending approval, Approved, In execution, On hold, Closed, Rejected",
+      "archivedHint": "Only archived initiatives — hidden by default, recalled on demand"
     },
     "charter": {
       "short": "Charter"

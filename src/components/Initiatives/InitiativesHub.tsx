@@ -126,6 +126,7 @@ import { CapacityScenarioSurface } from './CapacityScenarioSurface';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
+  type RegisterScope,
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
@@ -140,6 +141,7 @@ import {
 import {
   canonicalInitiativeMatchesRegisterFilters,
   filterCanonicalInitiativeRegisterScope,
+  rowMatchesRegisterScope,
   INITIATIVE_LIFECYCLE_PRESETS,
   type InitiativeLifecyclePreset,
   lifecycleMatchesPreset,
@@ -184,13 +186,11 @@ export const readV8InitiativeId = (response: unknown): string => {
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0 ? MODULE_STATUSES : Object.values(InitiativeStatus);
 
-// ODMROZENIE 05_INITIATIVES: statusy odcinane przez zakres „Aktywne" — ten sam
-// zbiór, którym `fetchData` przycina wyrenderowaną listę, użyty ponownie przez
-// liczniki (`registerCountBase`), żeby lista i liczba nigdy się nie rozjechały.
-const SCOPE_ACTIVE_EXCLUDED_STATUSES = new Set<string>([
-  InitiativeStatus.CLOSED,
-  InitiativeStatus.REJECTED,
-]);
+// ODMROZENIE 05_INITIATIVES: zakres („Aktywne" / „Wszystkie" / „Archiwalne")
+// rozstrzyga JEDEN helper w `initiativeRegisterProjection.ts` — ten sam dla
+// `fetchData` i dla licznikow (`registerCountBase`), zeby lista i liczba nigdy
+// sie nie rozjechaly. `KanbanScope` zostaje nietkniety (kolumny kanbana maja
+// wlasny slownik), a kanban dostaje nizej 'all' zamiast 'archived'.
 
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
@@ -350,8 +350,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     (counts: Record<string, number>) => updateCanonicalMenu3Counts('capacity', counts),
     [updateCanonicalMenu3Counts]
   );
-  /** Active/All scope toggle — used for Kanban columns and data filtering */
-  const [scope, setScope] = useState<KanbanScope>('active');
+  /** Aktualne / Wszystkie / Archiwalne — Kanban columns and data filtering */
+  const [scope, setScope] = useState<RegisterScope>('active');
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -568,7 +568,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (!allowDemoData) {
           const [registeredResult, legacyRows, approvalAdapter] = await Promise.all([
             listRegisteredInitiatives(),
-            listLegacyInitiatives().catch((legacyError) => {
+            // DEC-495: rejestr — i tylko on — prosi o archiwalne jawnie.
+            // Filtrowanie robi `rowMatchesRegisterScope` nizej, bo wiersz moze
+            // przyjsc rowniez z projekcji runtime-v1 (merge), ktora flagi nie
+            // zna; obciecie samego zapytania nie zdjeloby duplikatu.
+            listLegacyInitiatives({ includeArchived: true }).catch((legacyError) => {
               console.warn('[InitiativesHub] Legacy initiatives fetch failed:', legacyError);
               return [];
             }),
@@ -647,12 +651,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             ) {
               return false;
             }
-            if (
-              scope === 'active' &&
-              [InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
-                initiative.status as InitiativeStatus
-              )
-            ) {
+            if (!rowMatchesRegisterScope(initiative, scope)) {
               return false;
             }
             if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
@@ -802,7 +801,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     });
     const needle = searchQuery.toLocaleLowerCase();
     return scoped.filter((initiative) => {
-      if (scope === 'active' && SCOPE_ACTIVE_EXCLUDED_STATUSES.has(String(initiative.status))) {
+      if (!rowMatchesRegisterScope(initiative, scope)) {
         return false;
       }
       if (
@@ -1145,7 +1144,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     resolveOwnerMemberName
                   );
                 } catch {
-                  const interviewResponse = await Api.get('/initiatives?source=interview_insight');
+                  // DEC-495: fallback rozwiazuje KONKRETNY rekord po id — musi widziec
+                  // rowniez archiwalne, inaczej karta zarchiwizowanej inicjatywy
+                  // przestaje sie otwierac z glebokiego linku.
+                  const interviewResponse = await Api.get(
+                    '/initiatives?source=interview_insight&includeArchived=true'
+                  );
                   const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
                   response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
                   if (!response) throw v8Error;
@@ -2247,7 +2251,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 initiatives={searchedInitiatives}
                 onInitiativeClick={handleInitiativeClick}
                 onStatusChange={handleStatusChange}
-                scope={scope}
+                // DEC-495: kanban nie ma kolumny „Archiwalne" — w tym zakresie
+                // dostaje slownik „Wszystkie", a wiersze sa juz przyciete wyzej.
+                scope={scope === 'archived' ? 'all' : scope}
                 // #75a — same existing signal that already gates
                 // handleStatusChange (dispatchPilotAccessBlocked above):
                 // pilot/viewer roles have no permission to change an
@@ -2304,6 +2310,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {[
         { id: 'active' as const, label: t('initiatives.scope.active', 'Active') },
         { id: 'all' as const, label: t('initiatives.scope.all', 'All') },
+        // DEC-495 — „mozna tez archiwalne przywolac". Trzecia pozycja tego
+        // samego pstryczka, nie osobne menu: kanon triady zabrania wlasnych
+        // kontrolek per ekran.
+        { id: 'archived' as const, label: t('initiatives.scope.archived', 'Archived') },
       ].map((opt) => (
         <button
           key={opt.id}
@@ -2319,10 +2329,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   'initiatives.scope.activeHint',
                   'Review → Promoted → Planning → Approved → Scheduled'
                 )
-              : t(
-                  'initiatives.scope.allHint',
-                  'Full lifecycle including Draft, Executing, Blocked, Done, Archived...'
-                )
+              : opt.id === 'archived'
+                ? t(
+                    'initiatives.scope.archivedHint',
+                    'Only archived initiatives — recalled on demand, hidden by default'
+                  )
+                : t(
+                    'initiatives.scope.allHint',
+                    'Full lifecycle including Draft, Executing, Blocked, Done...'
+                  )
           }
           role="radio"
           aria-checked={scope === opt.id}

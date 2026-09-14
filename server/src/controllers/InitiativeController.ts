@@ -313,6 +313,40 @@ export class InitiativeController {
         sql += ` AND UPPER(i.status) = ?`;
         params.push(normalizeStatus(status));
       }
+      // DEC-495 — rejestr Inicjatyw pokazuje domyslnie tylko AKTUALNE.
+      //
+      // Jedyna prawda o archiwum to KOLUMNA `initiatives.archived` (+ legacy
+      // `archived_at`), NIE status: migracja P12
+      // (`20262103_p12_initiative_status_slownik.sql`) skasowala 'ARCHIVED' ze
+      // slownika 12 etapow i przepisala go do flagi, a
+      // `executeInitiativeTransition({ flagOperation: 'ARCHIVE' })`
+      // (`services/initiative/initiativeTransitionService.ts:533`) robi
+      // `UPDATE initiatives SET archived = TRUE, archived_at = ...` zostawiajac
+      // status CLOSED/REJECTED. Dlatego filtr po statusie by tego NIE zlapal.
+      //
+      // Kontrakt zapytania jest przepisany 1:1 z istniejacego wzoru w
+      // `routes/report-builder.routes.ts:2020` (zamiast wymyslac trzeci):
+      //   brak parametru        -> tylko aktualne
+      //   ?archived=true        -> WYLACZNIE archiwalne („przywolanie”)
+      //   ?archived=false       -> jawnie tylko aktualne
+      //   ?includeArchived=true -> jedne i drugie (ma pierwszenstwo)
+      // Warunek doklejamy tylko gdy kolumna istnieje — ten sam styl co
+      // `initiativeColumns` wyzej (stare kopie schematu nie maja flagi).
+      const includeArchived = String((req.query as any)?.includeArchived ?? '') === 'true';
+      const archivedParam = String((req.query as any)?.archived ?? '');
+      if (!includeArchived && initiativeColumns.has('archived')) {
+        if (archivedParam === 'true') {
+          sql += ` AND COALESCE(i.archived, FALSE) = TRUE`;
+        } else {
+          sql += ` AND COALESCE(i.archived, FALSE) = FALSE`;
+          // Parytet z czytnikiem modulu Plan
+          // (`domain/initiatives-execution/postgresInitiativeReader.ts:1449`):
+          // wiersze sprzed P12 potrafia miec `archived_at` bez flagi.
+          if (initiativeColumns.has('archived_at')) {
+            sql += ` AND i.archived_at IS NULL`;
+          }
+        }
+      }
       if (priorities.length > 0) {
         const normalized = priorities.map((p) => String(p || '').toUpperCase()).filter(Boolean);
         if (normalized.length > 0) {

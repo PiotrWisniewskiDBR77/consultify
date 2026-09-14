@@ -2402,7 +2402,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           readLegacyInitiative: (id) => Api.getInitiativeById(id),
           readRegisteredInitiative: (id) => readRegisteredInitiative(id),
           readInterviewInitiatives: async () =>
-            unwrapApiList(await Api.get('/initiatives?source=interview_insight'), 'initiatives'),
+            // DEC-495: ostatni fallback rozwiazania rekordu po id — archiwalne
+            // muszą tu byc widoczne, zeby dalo sie otworzyc ich karte.
+            unwrapApiList(
+              await Api.get('/initiatives?source=interview_insight&includeArchived=true'),
+              'initiatives'
+            ),
           notFoundMessage: t('initiatives.initiativeNotFound2'),
         }));
       setInitiative(data);

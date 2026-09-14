@@ -13263,8 +13263,10 @@
       "label": "Zakres",
       "active": "Aktywne",
       "all": "Wszystkie",
+      "archived": "Archiwalne",
       "activeHint": "Szkic → Do zatwierdzenia → Zatwierdzona → W realizacji",
-      "allHint": "Pełny cykl życia z uwzględnieniem statusów: Szkic, Do zatwierdzenia, Zatwierdzona, W realizacji, Wstrzymana, Zamknięta, Odrzucona"
+      "allHint": "Pełny cykl życia z uwzględnieniem statusów: Szkic, Do zatwierdzenia, Zatwierdzona, W realizacji, Wstrzymana, Zamknięta, Odrzucona",
+      "archivedHint": "Tylko zarchiwizowane inicjatywy — domyślnie ukryte, przywoływane na żądanie"
     },
     "charter": {
       "short": "Karta"

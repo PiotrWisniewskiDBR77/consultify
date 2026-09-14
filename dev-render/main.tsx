@@ -620,6 +620,9 @@ const StagingFixesInitiativesI18nScreen = React.lazy(
 // harnessie (patrz StagingFixesInitiativesI18nScreen wyżej) — ten wpis go
 // tylko wystawia pod nazwą, którą właściciel faktycznie odnajdzie.
 const InicjatywyListaScreen = React.lazy(() => import('./screens/inicjatywy-lista'));
+const Dec495InicjatywyArchiwumScreen = React.lazy(
+  () => import('./screens/dec495-inicjatywy-archiwum')
+);
 const P2bInicjatywyEmptyScreen = React.lazy(() => import('./screens/p2b-inicjatywy-empty'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
@@ -812,6 +815,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
     render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'dec495-inicjatywy-archiwum': {
+    label:
+      'DEC-495 — REALNY <InitiativesHub> z pstryczkiem „Aktywne / Wszystkie / Archiwalne". Atrapa /api/initiatives odtwarza kontrakt naprawionej trasy (includeArchived/archived). &theme=light|dark',
+    render: () => <Dec495InicjatywyArchiwumScreen />,
   },
   'inicjatywy-lista': {
     label:
