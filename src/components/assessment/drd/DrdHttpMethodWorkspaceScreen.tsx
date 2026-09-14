@@ -699,12 +699,30 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * potwierdzono, zostaje dotychczasowe zachowanie (pierwszy poziom osi).
    * Sesja czynna jest NIETKNIĘTA: tam `blockedAtLevel` to dokładnie miejsce,
    * w którym praca ma być kontynuowana.
+   *
+   * ★ FALA F2 (2026-09-15) — P-P21, ZGŁOSZENIE PAWŁA: „Next" na ostatnim
+   * kroku w pełni odpowiedzianej jednostki WRACAŁ na „Question 1 of 7 /
+   * Step 1/3" tej samej jednostki.
+   * ZMIERZONA PRZYCZYNA: gdy jednostka jest potwierdzona w 100 %,
+   * `resolveOpenLevels` zwraca `blockedAtLevel === null` (nic nie jest
+   * zablokowane — fikstura `drd-progression-full-ramp-v1`). Wyrażenie
+   * `blockedAtLevel ?? Math.min(...)` spadało wtedy na POZIOM 1, a
+   * `handleNext` widziało `derivedFocusLevel (1) !== pinnedFocus.level (7)`
+   * i brało to za „odpowiedź otworzyła nowy poziom w tej samej jednostce" —
+   * odpinało poziom i ZOSTAWAŁO w jednostce, na pytaniu poziomu 1.
+   * LEKARSTWO: brak blokady oznacza „jednostka domknięta", więc ogniskujemy
+   * na OSTATNIM potwierdzonym poziomie (`currentLevel`) — tam stoi ostatnia
+   * odpowiedź. Poziom 1 zostaje wyłącznie dla jednostki bez ani jednego
+   * potwierdzenia i bez blokady (jednostka spoza paczki). Logika blokad
+   * (`resolveOpenLevels`) nie zmienia się ani o linijkę.
    */
   const derivedFocusLevel = sesjaZamrozona
     ? (activeProgression.currentLevel ??
       activeProgression.blockedAtLevel ??
       Math.min(...activeArea.levels.map((l) => l.level)))
-    : (activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level)));
+    : (activeProgression.blockedAtLevel ??
+      activeProgression.currentLevel ??
+      Math.min(...activeArea.levels.map((l) => l.level)));
   // Przypięcie działa tylko dla jednostki, w której padło; zmiana jednostki
   // (drzewo, macierz, „Dalej") automatycznie wraca do poziomu wyliczonego.
   const focusLevelFallback =
@@ -964,18 +982,41 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     ]
   );
 
+  /**
+   * ★ FALA F2 (2026-09-15) — RODZEŃSTWO P-P21. „Dalej" na OSTATNIEJ jednostce
+   * osi nie robiło NIC (ślepy zaułek: `activeAxis.areas[idx + 1]` to
+   * `undefined`), więc człowiek musiał sięgnąć po drzewo. Nawigacja idzie
+   * teraz po PŁASKIEJ liście jednostek całej struktury: koniec osi przechodzi
+   * do pierwszej jednostki osi następnej, a koniec CAŁOŚCI otwiera panel
+   * gotowości sesji (jedyne sensowne „co dalej" po ostatnim pytaniu).
+   * „Wstecz" z pierwszej jednostki osi wraca na ostatnią jednostkę osi
+   * poprzedniej; z pierwszej jednostki całości nie robi nic (jak dotąd).
+   */
+  const flatUnits = useMemo(
+    () =>
+      DRD_STRUCTURE.flatMap((axis) => axis.areas.map((area) => ({ axisId: axis.id, areaId: area.id }))),
+    []
+  );
+
   const handleUnitNav = useCallback(
     (direction: 1 | -1) => {
-      const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
-      const target = activeAxis.areas[idx + direction];
+      const idx = flatUnits.findIndex((u) => u.areaId === activeArea.id);
+      const target = idx === -1 ? undefined : flatUnits[idx + direction];
       // Zmiana jednostki zawsze zdejmuje przypięcie poziomu — inaczej powrót
       // do tej jednostki otworzyłby stary, już odpowiedziany poziom.
       if (target) {
         setPinnedFocus(null);
-        setActiveUnitId(target.id);
+        if (target.axisId !== activeAxisId) setActiveAxisId(target.axisId);
+        setActiveUnitId(target.areaId);
+        return;
+      }
+      // Ostatnia jednostka całości + „Dalej" = koniec wywiadu.
+      if (direction === 1 && idx === flatUnits.length - 1) {
+        setPinnedFocus(null);
+        setAnalizaOtwarta(true);
       }
     },
-    [activeAxis.areas, activeArea.id]
+    [flatUnits, activeArea.id, activeAxisId]
   );
 
   const handleBack = useCallback(() => handleUnitNav(-1), [handleUnitNav]);

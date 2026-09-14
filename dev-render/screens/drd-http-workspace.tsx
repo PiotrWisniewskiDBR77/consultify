@@ -35,10 +35,26 @@ import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { DrdHttpMethodWorkspaceScreen } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
 import type { DrdHttpDebugForcedState } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
 import type { MethodWorkspaceViewMode } from '../../src/components/method-workspace/types';
-import { forceNextSessionCreateError, installMethodCoreFakeServer } from '../mocks/methodCoreFakeServer';
+import {
+  forceNextSessionCreateError,
+  installMethodCoreFakeServer,
+  seedConfirmedLevels,
+} from '../mocks/methodCoreFakeServer';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
+
+/**
+ * `&stage=pelna-jednostka` (P-P21, fala F2) — jednostka 1A z potwierdzonymi
+ * poziomami 1-6, czyli ekran staje na OSTATNIM (7.) poziomie: dokładnie stan,
+ * w którym Paweł kliknął „Next" i wracał na „Question 1 of 7". Zasiew idzie
+ * przez atrapę serwera PRZED jej instalacją, bo `seedTo` komponentu umie
+ * potwierdzić najwyżej dwa pierwsze poziomy.
+ */
+if ((new URLSearchParams(window.location.search).get('stage') || '') === 'pelna-jednostka') {
+  seedConfirmedLevels('1A', [1, 2, 3, 4, 5, 6]);
+}
+
 installMethodCoreFakeServer();
 
 /**
@@ -65,6 +81,7 @@ const view = (params.get('view') || 'interview') as MethodWorkspaceViewMode;
 
 const SEED_BY_STAGE: Record<string, 'interview' | 'matrix' | 'approval' | 'frozen' | undefined> = {
   fresh: undefined,
+  'pelna-jednostka': 'interview',
   inprogress: 'matrix',
   blocked: 'approval',
   frozen: 'frozen',
