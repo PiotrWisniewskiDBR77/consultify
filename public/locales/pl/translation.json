@@ -51276,7 +51276,14 @@
       "groupLabel": "Stan odpowiedzi",
       "naJustifyLabel": "Uzasadnij „Nie dotyczy” (wymagane)",
       "naJustifyPlaceholder": "Dlaczego to pytanie nie ma zastosowania w tym przypadku?",
-      "naConfirm": "Potwierdź „Nie dotyczy”"
+      "naConfirm": "Potwierdź „Nie dotyczy”",
+      "intro": "Określ, w jakim stopniu ten poziom jest dziś spełniony — wybierz jeden pasujący stan; dowody możesz dodać poniżej.",
+      "tooltipConfirmed": "Spełnione dziś i możesz wskazać dowód.",
+      "tooltipPartial": "Częściowo — część elementów jest wdrożona.",
+      "tooltipNo": "Dziś niespełnione.",
+      "tooltipDontKnow": "Nie potrafisz jeszcze odpowiedzieć — otwiera pomoc zamiast oceny.",
+      "tooltipNoEvidence": "Uważasz, że spełnione, ale nie możesz jeszcze pokazać dowodu.",
+      "tooltipNotApplicable": "Ten poziom nie dotyczy Twojej organizacji (wymagane uzasadnienie)."
     },
     "resolution": {
       "assignQuestion": "Przypisz pytanie",

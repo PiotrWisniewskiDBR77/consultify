@@ -50908,7 +50908,14 @@
       "groupLabel": "Answer state",
       "naJustifyLabel": "Justify “Not applicable” (required)",
       "naJustifyPlaceholder": "Why does this question not apply in this case?",
-      "naConfirm": "Confirm “Not applicable”"
+      "naConfirm": "Confirm “Not applicable”",
+      "intro": "Say how far this level is met today — pick the one state that fits; you can add evidence below.",
+      "tooltipConfirmed": "Met today and you can point to proof.",
+      "tooltipPartial": "Partly met — some elements are in place.",
+      "tooltipNo": "Not met today.",
+      "tooltipDontKnow": "You cannot answer yet — this opens help instead of scoring.",
+      "tooltipNoEvidence": "You believe it is met but cannot show proof yet.",
+      "tooltipNotApplicable": "This level does not apply to your organisation (justification required)."
     },
     "resolution": {
       "assignQuestion": "Assign the question",
