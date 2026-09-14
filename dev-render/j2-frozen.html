@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>J2 — sesja DRD zamrożona (harness)</title>
+  </head>
+  <body>
+    <!--
+      FALA J2 HARNESS (CLAUDE.md #7: renderuję realny ekran sam, na mocku,
+      i robię zrzut ZANIM zobaczy go właściciel).
+
+      Mountuje REALNY `DrdHttpMethodWorkspaceScreen` na sesji w stanie
+      `frozen`, z podstawionym `window.fetch` (żadnego serwera, żadnego
+      logowania) — po to, żeby porównać obraz PRZED (surowy zrzut kontraktu)
+      i PO (powłoka + kanoniczny raport) na TEJ SAMEJ scenie.
+
+      URL params:
+        &theme=light|dark   (domyślnie light)
+        &lang=pl|en         (domyślnie en)
+        &ff_drdFrozenRaw=1  awaryjny surowy widok (po naprawie)
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/j2-frozen-main.tsx"></script>
+  </body>
+</html>
