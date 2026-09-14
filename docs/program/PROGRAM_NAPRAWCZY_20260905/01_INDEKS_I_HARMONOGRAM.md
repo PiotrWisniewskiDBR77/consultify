@@ -849,6 +849,55 @@ Liczniki §5 (`TRZY_POJEMNIKI_PRACY_20260906.md`) przeliczone: 44 etapy (+1) —
 (decyzje właściciela — migracja stempla recenzji, bramka RESOURCE_RESPONSIBILITY), integrator
 fali B3 w drodze (Z-2).
 
+**Fala B3 — H1b+H1c+H1d WDROŻONA na staging (14.09, integrator, run `34824636382`, success).**
+Linia `61334b2c21`/`f9239fe307` → `78086fb2c8`: merge kandydata `36b83f3e04` = `40fd649d2b`
+(Inicjatywy H1b skrzynka propozycji + H1c mapowanie 12→7 + H1d bramka GO); commit flagi
+`f662fa1c0b` (bramka GO startu realizacji + kontrola kamieni za `ENABLE_LIFECYCLE_GO_GATE`,
+domyślnie OFF); merge rejestru `78086fb2c8`. Jedyny konflikt scalenia: importy w
+`InitiativesHub.tsx` (`PortfolioHealthView` z fali B2 vs `TransitionInboxSurface` z H1b) — oba
+zostały, bez utraty żadnej strony. Commity fali B1 są wspólne w historii obu linii (bez
+duplikatu H1). Tag cofnięcia: `rollback-pre-fala-b3-20260914` = `88f1a1994d`. `staging-deployed`
+= `78086fb2c8`. **Bramka:** tsc 0/189 (⚠ próg wyczerpany — pierwszy przebieg dał fałszywe „0" przez
+OOM, powtórzony z `--max-old-space-size` i dopiero wtedy wiarygodny); język OK; canon 349; artefakt
+8-0-117; build OK; RealPG H1b 7/7, H1c 1/1, H1d 4/4 (w tym nowy test parytetu za flagą OFF);
+`initiativeLifecycleCanon` 3→2 czerwienie (H1c naprawił jedną, 1 zastana zostaje). Parytet
+zmierzony na żywym chunku stagingu: `transitionInbox` 0 wywołań, `lifecycle-transition-proposals`
+0 wywołań (flagi OFF, zero ruchu — zgodne z oczekiwaniem). Zrzuty:
+`~/Developer/cto-codex/zrzuty-fala-b3-20260914/`. **Sprostowanie integratora:** zrzuty 06/07 „off"
+to napis harnessu o samym sobie, nie dowód wyłączenia (dowód = pomiar chunku, wyżej); zrzuty
+01–05/08–09 pokazują produkcyjną powierzchnię skrzynki BEZ powłoki Menu 1/2/3 (zdjęcie
+powierzchni komponentu, nie ekranu aplikacji) → przed pokazaniem właścicielowi potrzebny zrzut
+w powłoce (nowy dług: **Z-27**).
+
+**DEC-507 (14.09, integrator na mandacie CTO) — Bramka GO za flagą serwera
+`ENABLE_LIFECYCLE_GO_GATE`, domyślnie OFF.** Powód zmierzony, nie założony: wiersz macierzy
+przejść APPROVED→IN_EXECUTION ma warunek `HANDOFF_AND_START_DATE` BEZ `CURRENT_GO_DECISION`
+(preflight UI mówi „dozwolone", writer serwera zwraca 409 — rozjazd UI↔serwer przy ON) i zero
+wołaczy `lifecycle-gate-decisions` we froncie (jedyna ścieżka zapisu decyzji GO wymaga
+prowenancji maszynowej AI; ścieżkę ludzką otwiera skrzynka H1b — też za flagą OFF). Wniosek:
+włączenie bramki bez otwartej skrzynki = nikt nie potrafi uruchomić realizacji (kształt „zamknięte
+przez wygaszenie"). START i COMPLETE (liczenie kamieni milowych; kod błędu
+`CLOSURE_WORK_INCOMPLETE` bez klucza i18n) zostają za flagą; przypięcie decyzji przy APPROVE
+działa bez flagi (nie blokuje). **Warunek włączenia bramki:** razem `ENABLE_LIFECYCLE_GO_GATE` +
+`VITE_TRANSITION_INBOX` + domknięcie H1e (`CURRENT_GO_DECISION` dopisane do wiersza START macierzy
+przy ON; i18n dla `CLOSURE_WORK_INCOMPLETE`) — H1e w toku (Sonnet, gałąź
+`integracja/kandydat-h1e-20260914`). **Zastany dług znaleziony przy tej fali:** duplikat klucza
+`initiatives.analysis` w `public/locales/{en,pl}/translation.json` — `JSON.parse` zjada pierwszy
+blok, drugi ginie po cichu → naprawa przy H1e.
+
+**Flagi fali B na stagingu — wszystkie OFF (14.09).** `VITE_INITIATIVES_FOUR_BUTTONS` (B2),
+`VITE_EXEC_RISK_SIGNAL`, `VITE_EXEC_HANDOFF_TRACE` (B1), `VITE_TRANSITION_INBOX`,
+`ENABLE_LIFECYCLE_GO_GATE` (B3), `PORTFOLIO_ANALYSIS_DETERMINISTIC_MODEL` (tylko testy; blokada w
+production), `ENABLE_INTERVIEW_ANSWER_APPROVAL` (+ parametr org; paczka 5 v3 w wdrożeniu — S2
+`REQUEST_CHANGES`, wraca). Zmiana `VITE_*` = redeploy ~9 min; flagi serwerowe (zmienna Railway) =
+też redeploy.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po fali B3).** H1b/H1c/H1d: 🔧 → **🧪 NA STAGINGU `78086fb2c8`**
+(za flagą). H1e: nowy wiersz 🔧. Skrzynka: **Z-27** (nowy — zrzut fali B3 w powłoce Menu 1/2/3
+przed pokazaniem właścicielowi). Liczniki §5 przeliczone niżej (`TRZY_POJEMNIKI_PRACY_20260906.md`
+§2). Co blokuje: akcept wyglądu fali B na czystym zrzucie w powłoce (Z-27), H1e (warunek włączenia
+DEC-507), kopie 32 GB (Z-19), wolumen (Z-9), Z-25/Z-26 (decyzje właściciela nierozstrzygnięte).
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)

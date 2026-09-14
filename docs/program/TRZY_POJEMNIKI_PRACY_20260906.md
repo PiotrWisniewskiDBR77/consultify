@@ -535,19 +535,19 @@ MVP rdzeń        [████████████████████�
 MVP zgłoszenia    [█████████████████████████████████░░░░░░░░░░░░░░░░░] 23/37 na stagingu (62%)
 ```
 
-**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **39**
-(+2 = H1c/H1d dołożone 14.09 obok H1b). Z tego: 0 zaakceptowanych, **5 na stagingu** (13%, A1+A2
-fali B2 Inicjatywy `90059a1054` + H1/H2/B-E0 fali B1 Realizacja `88f1a1994d`, wszystkie za flagami
-OFF), **8 w toku** (A4 DEC-499, B-E1 F2-2, silnik raportów, PMO E3, P6, H1b gotowe do scalenia
-`119ad9af3f`, H1c gotowe do scalenia `119ad9af3f`, H1d w toku), **26 nie zaczętych**. Duże pakiety
-Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
+**Licznik FALA 2 (pakiety Codexa + fale B–F).** Etapy planu §5 poza rdzeniem/pilotażem: **41**
+(+1 = H1e dołożone 14.09 po wdrożeniu fali B3). Z tego: 0 zaakceptowanych, **8 na stagingu** (20%,
+A1+A2 fali B2 Inicjatywy `90059a1054` + H1/H2/B-E0 fali B1 Realizacja `88f1a1994d` + H1b/H1c/H1d
+fali B3 `78086fb2c8`, wszystkie za flagami OFF), **6 w toku** (A4 DEC-499, B-E1 F2-2, silnik
+raportów, PMO E3, P6, H1e — warunek włączenia bramki GO, DEC-507), **27 nie zaczętych**. Duże
+pakiety Codexa: **5/5 w toku, 0 scalonych** (F2-1 HOLD, F2-2 scoped ACCEPT/HOLD, F2-3 E1+E2
 dostarczone/nie scalone, F2-E non-migration ACCEPT/pełne E1 HOLD, paczka 5 v2 ACCEPT `e1a2c2c160`
 w odbiorze CTO). Nowe pakiety P1–P6 (DEC-497): **0/6 przyjęte** — Codex milczy w `OD_CODEXA.md` od
-13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B WDROŻONA na staging za flagami OFF —
-DEC-505; akcept wyglądu właściciela = warunek włączenia flag).
+13.09 22:29. Fale B–F: **0/5** zamknięte na demo (fala B3 WDROŻONA na staging za flagami OFF —
+DEC-507; akcept wyglądu właściciela na zrzucie w powłoce (Z-27) = warunek włączenia flag).
 
 ```
-Fala2 etapy §5    [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5/39 na stagingu (13%)
+Fala2 etapy §5    [██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 8/41 na stagingu (20%)
 Fala2 pakiety P1-6[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0/6 przyjęte
 ```
 
@@ -705,6 +705,25 @@ dziś sposobu zapisu decyzji GO — decyzja w raporcie integratora.
 porównań poza `initiativeTransitionService`, nienaprawione, KANAL wpis 31). Liczniki §5
 przeliczone: 44 etapy (+1 D-j) — ✅ 2 · 🧪 6 · 🔧 8 · ⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 40
 etapów (0 ✅, 5 🧪, 8 🔧, 27 ⬜).
+
+**Fala B3 — H1b+H1c+H1d WDROŻONA na staging (14.09, integrator, run `34824636382`, success).**
+§2 przewód: **H1b 🔧 → 🧪 NA STAGINGU `78086fb2c8`** (flaga `VITE_TRANSITION_INBOX` OFF), **H1c
+🔧 → 🧪 NA STAGINGU `78086fb2c8`**, **H1d 🔧 → 🧪 NA STAGINGU `78086fb2c8`** (flaga
+`ENABLE_LIFECYCLE_GO_GATE` OFF, DEC-507). Linia `61334b2c21`/`f9239fe307` → `78086fb2c8`: merge
+kandydata `36b83f3e04` = `40fd649d2b` + commit flagi `f662fa1c0b` + merge rejestru `78086fb2c8`.
+Jedyny konflikt: importy w `InitiativesHub.tsx` (`PortfolioHealthView` z B2 vs
+`TransitionInboxSurface` z H1b) — oba zostały. Tag cofnięcia `rollback-pre-fala-b3-20260914` =
+`88f1a1994d`. Bramka: tsc 0/189 (⚠ próg wyczerpany, pierwszy przebieg OOM dał fałszywe „0",
+powtórzony z `--max-old-space-size`), język OK, canon 349, artefakt 8-0-117, build OK, RealPG H1b
+7/7, H1c 1/1, H1d 4/4 (w tym nowy test parytetu za flagą OFF), `initiativeLifecycleCanon` 3→2
+czerwienie. Parytet na żywym chunku stagingu: `transitionInbox` 0, `lifecycle-transition-proposals`
+0. Nowy wiersz **H1e** (Sonnet, gałąź `integracja/kandydat-h1e-20260914`) — warunek włączenia
+bramki GO (DEC-507): `CURRENT_GO_DECISION` w wierszu START macierzy przy ON + i18n
+`CLOSURE_WORK_INCOMPLETE`. Skrzynka: **Z-27** (nowa — zrzuty fali B3 pokazują powierzchnię
+komponentu bez powłoki Menu 1/2/3; przed pokazaniem właścicielowi potrzebny zrzut w powłoce).
+Liczniki §5 przeliczone: 45 etapów (+1 H1e) — ✅ 2 · 🧪 9 · 🔧 6 · ⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0;
+FALA 2 = 41 etapów (0 ✅, 8 🧪, 6 🔧, 27 ⬜). Co blokuje: akcept wyglądu fali B na czystym zrzucie
+w powłoce (Z-27), H1e (warunek włączenia DEC-507), Z-25/Z-26 (decyzje właściciela).
 
 ---
 
@@ -1017,9 +1036,10 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | ⬜ NIE ZACZĘTE | — | — |
 | Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
 | Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
-| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B | ekran recenzji z prowenencją, nie 409 | 🔧 GOTOWE DO SCALENIA | `119ad9af3f` | 14.09 |
-| Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🔧 GOTOWE DO SCALENIA | `119ad9af3f` | 14.09 |
-| Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🔧 **GOTOWE DO SCALENIA** `36b83f3e04` | `integracja/kandydat-h1b-skrzynka-20260914`, kopia `backup/h1b-skrzynka-20260914` | 14.09 |
+| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | 🧪 NA STAGINGU (flaga `VITE_TRANSITION_INBOX` OFF) | `78086fb2c8` | 14.09 |
+| Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B3 | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🧪 NA STAGINGU | `78086fb2c8` | 14.09 |
+| Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B3 | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🧪 NA STAGINGU (flaga `ENABLE_LIFECYCLE_GO_GATE` OFF, DEC-507) | `78086fb2c8` | 14.09 |
+| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🔧 W TOKU | `integracja/kandydat-h1e-20260914` | 14.09 |
 | Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | ⬜ NIE ZACZĘTE (dyżur wydany, nienaprawione) | KANAL wpis 31 | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
@@ -1030,11 +1050,11 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ NIE ZACZĘTE (w kolejce) | — | — |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 W TOKU (prototyp CTO) | — | — |
 
-**Liczniki §5 (44 etapy, +1 = D-j dyżur Codexa dołożony 14.09 obok H1c/H1d/H1b; H1d przechodzi
-🔧 W TOKU→🔧 „gotowe do scalenia" `36b83f3e04`, ikona bez zmiany):** ✅ 2 · 🧪 6 · 🔧 8 · ⬜ 28 ·
+**Liczniki §5 (45 etapów, +1 = H1e dołożone 14.09 po wdrożeniu fali B3; H1b/H1c/H1d przechodzą
+🔧 „gotowe do scalenia"→🧪 NA STAGINGU `78086fb2c8`, D-j bez zmiany):** ✅ 2 · 🧪 9 · 🔧 6 · ⬜ 28 ·
 👁 0 · 🚀 0 · ⛔ 0.
 Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (2 ✅, 1 🧪, 1 ⬜); pozostałe
-**40 etapów to FALA 2** (0 ✅, 5 🧪, 8 🔧, 27 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
+**41 etapów to FALA 2** (0 ✅, 8 🧪, 6 🔧, 27 ⬜) — patrz liczniki w §0.1/EWIDENCJA.
 
 ---
 
