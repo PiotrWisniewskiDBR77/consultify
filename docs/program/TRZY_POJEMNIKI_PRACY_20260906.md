@@ -1303,7 +1303,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | ⬜ NIE ZACZĘTE (dyżur wydany, nienaprawione) | KANAL wpis 31 | 14.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | ⬜ NIE ZACZĘTE (deep-linki żyją) | — | — |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` | 14.09 |
-| Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | — | ⬜ NIE ZACZĘTE (otwarte) | — | — |
+| Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | zamknięte kanonem (strefa nieobecna z zasady, Decisions bez konwersji) | ✅ ZAAKCEPTOWANE (kanon, zrzuty `zrzuty-u2-decisions-20260914/`) | `dd4fc82b38` | 14.09 |
 | Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | 🔧 W TOKU (części istnieją) | `report-builder.routes.ts` | — |
 | Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga `VITE_PMO_PROJECTS` OFF; Z-43 naprawa kolumn bramek na linii `29d1db9f00`, jeszcze nie na stagingu*) | `7332fa2a6f` | 14.09 |
 | Wspólne | — | S5 E3b PMO czworo oczu `passGate` (Z-24: `requested_by`≠`approved_by`, ciało 403) | Codex | S5 PMO E3, Z-24 | F | 403 z komunikatem, brak samo-zatwierdzenia | ⬜ NIE ZACZĘTE (wydane, KANAŁ wpis 39) | — | 14.09 |
@@ -1535,3 +1535,42 @@ potwierdzenia przez właściciela — Tomek/Kasia)**, **Z-47 dług drobny (otwar
 **Z-50 zamknięta (bez zmiany)**, **Z-51 nowa (reguła bramki, zapisana)**, **Z-52 nowa (biblioteka
 bez wywołania, DRD-EN `compileDrdPack.ts`, u Codexa fala J1)**, **Z-53 nowa (luka pomiaru
 S1.1–S1.16, ostatni pomiar 13.09, otwarta)**.
+
+**EWIDENCJA (uzupełnienie 14.09 wieczór, po D1/D2/J1/D-i/pomiarze 8/16/czystce DBR77/DEC-510/
+DEC-511).** §5: **U2** „What's next" w Decisions → **✅ ZAAKCEPTOWANE**, zamknięte kanonem — blok
+był obecny i pusty, `TABLE_AND_PREVIEW_CANON` §7.3 pkt 4.4/„Reguła strefy": strefa tylko przy
+konwersji, Decisions bez konwersji → strefa nieobecna z zasady, nie defekt; naprawa
+`executionPreviewHead.tsx` dla 9 podglądów Realizacji, 8 testów, zrzuty
+`zrzuty-u2-decisions-20260914/`; linia `dd4fc82b38`. Fala **D1** poza U2: **P-T15 NAPRAWIONE**
+(kosz Wywiadu był `disabled` na sztywno mimo gotowej trasy/handlera — „zbudowane, niepodłączone";
+404 obca org, 403 nie-właściciel, testy 4/4+4/4), **P-T06 NAPRAWIONE** (kontrast toru 1,00→1,46
+jasny/6,24 ciemny, `SettingsToggleControl` współdzielony, rodzina `AISettings/SettingsToggle` ×8
+ON-w-crimsonie usunięta). Fala **D2** `4f9db7f9c6`: **P-T14** (Pomysły/Moja praca — zmiana etapu
+jednym kliknięciem, „Przejrzyj kandydaturę" nazwana zamiast hasha, 11 testów), **P-T16** (bełkot
+Wywiadu → stała odpowiedź EN/PL zamiast wywołania modelu, 21 testów); dług do D3: natywny
+`<select>` w `IdeaStageSelectCell` (kanon), zrzut harnessu porównawczego. Fala **J1** `08c1bb7a26`
+(DEC-509): kwestionariusz DRD po angielsku okablowany (`compileDrdPack(lang)`, `useDrdPack`,
+`namePL||name` usunięte), 39/233/699 zielone oba języki — **Z-52 zamknięte**; nowy dług **Z-58**
+(25 tytułów poziomów PL osi 5–6 bez EN, decyzja właściciela metodyki). **D-i** Codexa `1003bc636d`
+PRZYJĘTE → linia `61f945b28e` — **Z-33/D-g zamknięte** (ledger strict 916/916, bez backfillu).
+Pomiar 16 kryteriów S1.1–S1.16 (Z-53 rozliczone): 8/16 zamknięte (S1.1/S1.2 warunkowo/S1.5/S1.8/
+S1.9/S1.10/S1.12/S1.16), 8 otwarte (S1.3/S1.4/S1.6/S1.7/S1.11/S1.13/S1.14/S1.15); retest P-T17/
+P-T20/P-T22 naprawione (P-T22 → **Z-54** cudza sesja `roles=[]` bez etykiety); **Z-55** kebab
+„Delete" ocen kłamie sukcesem (`DELETE /api/assessments`) → do D3. S1.7 czystka DBR77 wykonana
+(rollback 559 wierszy), decyzje o kilku wnioskach/ocenie czekają na właściciela. DEC-510 (język):
+resolver `users.language → organizations.default_language → en`, bez migracji/snapshotów w tej
+fali. DEC-511: druga migracja addytywna `normalized_project_role` (**Z-56**, luka Z-39), **Z-57**
+kandydat pomiaru (diff kolumn staging vs świeża baza). **Staging `dd4fc82b38` w wdrożeniu** — nie
+potwierdzony health/tag, nie zakładać wdrożonego stanu przed weryfikacją.
+
+**Liczniki §5 — po D1/U2 (14.09 wieczór):** ✅ 3 · 🧪 18 · 🔧 6 · ⬜ 20 · 👁 0 · 🚀 0 · ⛔ 0
+(47 etapów). Zmiana wobec poprzedniego przeliczenia: ✅ 2→3 (+1: U2), ⬜ 21→20 (−1: U2 wyszło).
+Z tego do **MVP** (rdzeń + pilotaż) należą L1, L2, U1, U2 (3 ✅, 1 🧪, 0 ⬜) — MVP-rdzeń bez
+otwartych etapów w §5 (pozostają otwarte długi poza tabelą: Z-54..Z-58, S1.3/S1.4/S1.6/S1.7/S1.11/
+S1.13/S1.14/S1.15 z pomiaru 16 kryteriów). Skrzynka: **Z-33/D-g zamknięte**, **Z-52 zamknięte**,
+**Z-54 nowa (cudza sesja bez etykiety, P-T22, otwarta)**, **Z-55 nowa (kebab Delete ocen kłamie
+sukcesem, do D3)**, **Z-56 nowa (druga migracja addytywna `normalized_project_role`, luka Z-39)**,
+**Z-57 nowa (kandydat pomiaru — diff kolumn staging vs świeża baza)**, **Z-58 nowa (25 tytułów
+poziomów DRD PL bez EN, decyzja właściciela metodyki)**, **DEC-510 (język, resolver
+`users.language`, fala 2 bez migracji)**, **DEC-511 (zgoda migracja addytywna
+`normalized_project_role`, warunkowa)**.

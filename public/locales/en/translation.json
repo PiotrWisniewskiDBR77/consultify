@@ -8849,6 +8849,8 @@
       "appliedImprovedVersion": "Applied improved version",
       "apply": "Apply",
       "dismiss": "Dismiss",
+      "removeAttachment": "Remove attachment",
+      "removeAttachmentConfirm": "Remove attachment?",
       "removeFromTheEvidencePanel": "Remove from the Evidence panel",
       "remove": "Remove",
       "recording": "Recording",

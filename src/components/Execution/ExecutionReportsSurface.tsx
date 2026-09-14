@@ -35,7 +35,7 @@ import {
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { ExecutionReportDocument } from './ExecutionReportDocument';
-import { buildExecutionPreviewHead } from './executionPreviewHead';
+import { buildExecutionPreviewHead, zlozProzeBloku3 } from './executionPreviewHead';
 import {
   buildExecutionReportSnapshot,
   fetchExecutionReportInputs,
@@ -1332,12 +1332,11 @@ export const ExecutionReportsSurface = ({
                     title={row.title}
                     onClose={() => setSelectedDefinitionId(null)}
                     meta={glowa.meta}
-                    whatsNext={glowa.whatsNext}
                     details={{
                       label: t('executionReports.preview.contract', 'Report contents'),
-                      text: t(
-                        `executionReports.definitions.${item.key}.scope`,
-                        item.scope || '—'
+                      text: zlozProzeBloku3(
+                        t(`executionReports.definitions.${item.key}.scope`, item.scope || '—'),
+                        glowa.detailsNote
                       ),
                       properties: [
                         {
@@ -1411,10 +1410,9 @@ export const ExecutionReportsSurface = ({
                   title={row.title}
                   onClose={() => setSelectedDefinitionId(null)}
                   meta={glowa.meta}
-                  whatsNext={glowa.whatsNext}
                   details={{
                     label: t('executionReports.contract', 'Report contract'),
-                    text: version?.purpose || '—',
+                    text: zlozProzeBloku3(version?.purpose || '—', glowa.detailsNote),
                     properties: [
                       {
                         id: 'owner',
@@ -1756,10 +1754,9 @@ export const ExecutionReportsSurface = ({
                 title={r.title}
                 onClose={() => setSelectedId(null)}
                 meta={glowa.meta}
-                whatsNext={glowa.whatsNext}
                 details={{
                   label: t('executionReports.preview.scope', 'Report scope'),
-                  text: `${r.period} · ${r.asOf}`,
+                  text: zlozProzeBloku3(`${r.period} · ${r.asOf}`, glowa.detailsNote),
                   properties: [
                     {
                       id: 'definition',
@@ -1790,13 +1787,15 @@ export const ExecutionReportsSurface = ({
               title={r.title}
               onClose={() => setSelectedId(null)}
               meta={glowa.meta}
-              whatsNext={glowa.whatsNext}
               details={{
                 label: t('executionReports.reportScope', 'Report scope'),
-                text: t('executionReports.periodAsOf', '{{period}} · data as of {{asOf}}', {
-                  period: r.period,
-                  asOf: r.asOf,
-                }),
+                text: zlozProzeBloku3(
+                  t('executionReports.periodAsOf', '{{period}} · data as of {{asOf}}', {
+                    period: r.period,
+                    asOf: r.asOf,
+                  }),
+                  glowa.detailsNote
+                ),
                 properties: [
                   {
                     id: 'definition',

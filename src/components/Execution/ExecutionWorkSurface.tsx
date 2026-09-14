@@ -74,7 +74,7 @@ import {
   getExecutionReviewMilestones,
   getExecutionReviewWork,
 } from './executionLocalReviewData';
-import { buildExecutionPreviewHead } from './executionPreviewHead';
+import { buildExecutionPreviewHead, zlozProzeBloku3 } from './executionPreviewHead';
 import { isTaskBlocked, isTaskOverdue, taskSlipDays } from './executionRealData';
 type WorkKind = 'TASK' | 'DECISION';
 interface Row extends TableRow {
@@ -1874,12 +1874,13 @@ export const ExecutionWorkSurface = ({
                 title={r.title}
                 onClose={() => setSelectedId(null)}
                 meta={glowa.meta}
-                whatsNext={glowa.whatsNext}
                 details={{
                   label: t('execution.work.preview.details', 'Work details'),
-                  text:
+                  text: zlozProzeBloku3(
                     r.source.description ||
-                    t('execution.work.preview.noDescription', 'No additional description.'),
+                      t('execution.work.preview.noDescription', 'No additional description.'),
+                    glowa.detailsNote
+                  ),
                   properties: [
                     {
                       id: 'owner',

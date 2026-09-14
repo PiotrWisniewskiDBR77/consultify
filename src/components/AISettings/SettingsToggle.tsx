@@ -1,6 +1,18 @@
 /**
  * SettingsToggle Component
  *
+ * P-T06 (uwaga testera VI, 14.09) — RODZEŃSTWO usterki „suwaki niewidoczne w
+ * trybie jasnym". Ten pstryczek (Admin → AI: `OrgAISettingsView`, 8 sztuk;
+ * `AIConfigurationView`) miał OBA stany nieczytelne w motywie jasnym:
+ *   · OFF — tor `bg-c-surface-raised` (#f8fafc) przy gałce `bg-c-surface`
+ *     (#ffffff): kontrast 1,03:1, czyli nic nie widać;
+ *   · ON  — tor był gradientem z tokenu akcentu miękkiego
+ *     (`rgba(133,24,47,.08)`), czyli CRIMSON w 8% na białym. Poza nieczytelnością to złamanie CLAUDE.md §3: czerwień
+ *     jest zarezerwowana dla semantyki krytycznej, stan aktywny ma być
+ *     neutralny.
+ * Oba stany wyrównane do kanonu pstryczka ustawień (`settings/shared`
+ * `SettingsToggleControl`): ON = `--c-focus-solid`, OFF = `--c-border`.
+ *
  * Toggle switch with label and description for AI settings.
  */
 
@@ -95,13 +107,14 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
                     relative flex-shrink-0 rounded-full p-0.5
                     transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-c-focus
                     ${sizeConfig.toggle}
-                    ${checked ? 'bg-gradient-to-r from-c-accent-soft to-c-accent-soft' : 'bg-c-surface-raised'}
+                    ${/* P-T06 — patrz nota nad komponentem */ ''}
+                    ${checked ? 'bg-c-focus-solid' : 'bg-c-border'}
                     ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
       >
         <motion.span
           className={`
-                        block rounded-full bg-c-surface shadow-lg
+                        block rounded-full bg-white shadow-lg
                         ${sizeConfig.knob}
                     `}
           animate={{
