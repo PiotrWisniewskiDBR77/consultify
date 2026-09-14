@@ -6012,7 +6012,9 @@ Please return:
                   <div
                     data-testid="execution-bank-preview"
                     data-initiative-id={row.initiativeId}
-                    data-execution-case-id={row.executionCaseId ?? undefined}
+                    data-execution-case-id={
+                      row.id === row.initiativeId ? undefined : (row.executionCaseId ?? undefined)
+                    }
                     className="sr-only"
                   >
                     <span data-testid="execution-bank-progress">{progressLabel}</span>
