@@ -100,10 +100,12 @@ vi.mock('@/store/useInitiativeRefreshStore', () => ({
 vi.mock('@/hooks/useOpenChatWithContext', () => ({ useOpenChatWithContext: () => vi.fn() }));
 vi.mock('@/hooks/useOrganizationMemberNames', () => ({
   useOrganizationMemberNames: () => (id: string) => id,
+  memberNameOrUnknown: (resolver: ((id: string) => string) | undefined, id: string) =>
+    resolver?.(id) ?? 'Unknown user',
 }));
 vi.mock('@/components/shared/PreviewPane/useJedenPanel', () => ({
   useJedenPanel: () => ({
-    zamkniety: true,
+    zamkniety: false,
     dokOtwarty: false,
     otworz: vi.fn(),
     pokazPanel: vi.fn(),

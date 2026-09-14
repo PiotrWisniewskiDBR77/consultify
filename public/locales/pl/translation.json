@@ -14280,6 +14280,7 @@
         "fact": {
           "case": "Realizacja",
           "caseMissing": "Jeszcze niepodłączona",
+          "caseVersionMissing": "Powiązana · wersja niezaraportowana",
           "owner": "Właściciel",
           "phase": "Faza realizacji",
           "progress": "Postęp",
