@@ -348,14 +348,16 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang =
-      settings.language === 'pl'
-        ? 'pl-PL'
-        : settings.language === 'en'
-          ? 'en-US'
-          : settings.language === 'de'
-            ? 'de-DE'
-            : 'pl-PL';
+    // ★ NAPRAWA [ODMROZENIE WSPOLNE DEC-496] (feedback Pawła 2026-09-14
+    // 05:37, ticket 66f30ed7 "Dictate does not recognise languages"):
+    // ta gałąź już wiąże `settings.language` z i18n.language (patrz
+    // VoiceAnswerChannel.tsx, naprawa 06.09 — pl-PL nie jest tu stałą).
+    // Zmierzona PRAWDZIWA przyczyna resztkowego defektu: ternary obsługiwał
+    // tylko 3 z 6 wspieranych języków (pl/en/de) i dla ar/ja/es cicho spadał
+    // na 'pl-PL' zamiast na język użytkownika — niespójne z `LANG_TO_BCP47`
+    // używanym już przez TTS w tym samym pliku. Ujednolicone na jedno źródło
+    // prawdy, fallback na en-US (a nie pl-PL) dla nieznanego kodu.
+    recognition.lang = LANG_TO_BCP47[settings.language] || LANG_TO_BCP47.en;
 
     recognition.onresult = (event: any) => {
       let interimTranscript = '';

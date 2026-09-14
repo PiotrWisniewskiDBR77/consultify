@@ -32447,7 +32447,8 @@
       "description": "Description",
       "descPlaceholder": "Describe the feature and how it would help you...",
       "impact": "Business Impact",
-      "submit": "Submit Feature Request"
+      "submit": "Submit Feature Request",
+      "intro": "Suggest an improvement or a new feature."
     },
     "floatingButton": {
       "ariaLabel": "Report a bug (Shift+Ctrl+B)",
@@ -32487,10 +32488,10 @@
     "quickPulse": "Quick feedback",
     "tabs": {
       "report": "Report",
-      "feature": "Feature"
+      "feature": "Idea / Feature"
     },
     "report": {
-      "intro": "Help us improve by reporting issues or sharing ideas."
+      "intro": "Help us improve by reporting a bug."
     },
     "type": {
       "bug": "Bug",

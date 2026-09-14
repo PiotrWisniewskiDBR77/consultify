@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Frown,
-  Lightbulb,
   Loader2,
   MapPin,
   Meh,
@@ -224,7 +223,9 @@ export const FeedbackSidePanel: React.FC = () => {
         const prefill = (window as any).__FEEDBACK_PREFILL__;
         if (prefill && typeof prefill === 'object') {
           if (prefill.type === 'BUG' || prefill.type === 'IDEA') {
-            setReportType(prefill.type);
+            // Report tab is bug-only (DEC-496 P-P15) — force BUG regardless
+            // of what the caller (e.g. ErrorBoundary) requested.
+            setReportType('BUG');
             setActiveTab('report');
           }
           if (typeof prefill.title === 'string') setReportTitle(prefill.title);
@@ -704,7 +705,7 @@ export const FeedbackSidePanel: React.FC = () => {
     <div className="flex border-b border-slate-200 dark:border-navy-700 px-2">
       {[
         { id: 'report', icon: Bug, label: t('feedback.tabs.report', 'Report') },
-        { id: 'feature', icon: Sparkles, label: t('feedback.tabs.feature', 'Feature') },
+        { id: 'feature', icon: Sparkles, label: t('feedback.tabs.feature', 'Idea / Feature') },
       ].map(({ id, icon: Icon, label }) => (
         <button
           key={id}
@@ -750,38 +751,10 @@ export const FeedbackSidePanel: React.FC = () => {
   const renderReportTab = () => (
     <form onSubmit={handleReportSubmit} className="flex flex-col gap-4 h-full">
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        {t('feedback.report.intro', 'Help us improve by reporting issues or sharing ideas.')}
+        {t('feedback.report.intro', 'Help us improve by reporting a bug.')}
       </p>
 
       {renderContextBadge()}
-
-      {/* Type Selector */}
-      <div className="flex bg-slate-100 dark:bg-navy-900 p-1 rounded-lg">
-        <button
-          type="button"
-          onClick={() => setReportType('BUG')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-            reportType === 'BUG'
-              ? 'bg-white dark:bg-navy-800 text-danger-600 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-          }`}
-        >
-          <Bug size={16} />
-          {t('feedback.type.bug', 'Bug')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setReportType('IDEA')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-            reportType === 'IDEA'
-              ? 'bg-white dark:bg-navy-800 text-amber-600 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-          }`}
-        >
-          <Lightbulb size={16} />
-          {t('feedback.type.idea', 'Idea')}
-        </button>
-      </div>
 
       {/* Severity (for bugs) */}
       {reportType === 'BUG' && (
@@ -1084,6 +1057,10 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const renderFeatureTab = () => (
     <form onSubmit={handleFeatureSubmit} className="flex flex-col gap-4 h-full">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        {t('feedback.feature.intro', 'Suggest an improvement or a new feature.')}
+      </p>
+
       {renderContextBadge()}
 
       {/* AI Insights Section */}
