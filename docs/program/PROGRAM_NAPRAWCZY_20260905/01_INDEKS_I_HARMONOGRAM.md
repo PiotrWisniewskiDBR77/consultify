@@ -1071,6 +1071,39 @@ PROJECT_LEADER ma `initiative.review` + komplet wykonawczy; ciało 403 puste; OW
 gotowości przed 403 → **S5 E3b** u Codexa (wpis 39). Zrzuty:
 `~/Developer/cto-codex/zrzuty-s5-pmo-20260914/` + README.
 
+**Z-41 rozliczone — zrzuty PMO E3 w EN w powłoce (14.09, Sonnet, gałąź
+`integracja/kandydat-z41-zrzuty-20260914`, HEAD `9db76ba132`, kopia
+`backup/z41-zrzuty-20260914`).** Harness `dev-render/screens/z41-pmo-projekty.tsx` (realny
+MyProjects, atrapa 1 projekt + 5 bramek wg kontraktu `api.ts:3656-3680`/
+`projectStageGateModel.ts`) + `z41-pmo-projekty-off.tsx` (realny `AppRoutes` na `/projects` przy
+OFF → My Work; pułapka: podwójny Router crashuje — `history.replaceState` zamiast owijania) +
+skrypt zrzutów. Zrzuty `~/Developer/cto-codex/zrzuty-s5-pmo-20260914/en/` (EN jasny/ciemny luma
+248/23, PL jasny, kreator „New project", OFF). Oko CTO: przy 1440 px **etykiety stanów bramek i
+przycisk „Pass gate" ucięte** („Pas"/„Not"/„Upc") — panel podglądu ~360 px, prawa kolumna wiersza
+bramki za wąska; na zrzucie Codexa 1728 px mieściło się → nowy dyżur **Z-43**. Zrzut PMO dla
+właściciela dopiero po Z-43.
+
+**Z-43 nowy (14.09, w toku, Sonnet, gałąź `integracja/kandydat-z43-bramki-20260914`).** Naprawa
+uciętych etykiet bramek PMO przy 360 px panelu podglądu: plakietka statusu bramki `nowrap` + akcja
+„Pass gate" w osobnej linii/kebabie zamiast obok etykiety w jednym wierszu; test w kontenerze
+360 px (nie 1728 px jak zrzut Codexa, który maskował defekt). Blokuje wysłanie zrzutu PMO
+właścicielowi (Z-41).
+
+**Z-38 gotowe (14.09, Sonnet, gałąź `integracja/kandydat-z38-heatmapa-pl-20260914`, HEAD
+`018c72c4f1`, kopia `backup/z38-heatmapa-pl-20260914`; zawiera merge `q1-kosmetyka` `a427ef7af9`).**
+`InitiativeWorkloadSurface.tsx:168-192` pigułka „Brak"/„None" (klucze
+`initiatives.workload.noCapacityShort`, `cellHintNoCapacity` w title/aria-label; pl:10640-10646,
+en:11420-11426) + nagłówki PL „Dostępność (h/tydz.)"/„Dostępność (%)" (pl:10627-10628); testy
+3/3 + `i18nTrescPolska` 5/5. Zrzuty v3 `~/Developer/cto-codex/zrzuty-q1-obciazenie-20260914/v3/`
+→ integrator fala C3 (`wt/fala-c3`) w toku. Uwaga: gałąź `kandydat-q1-kosmetyka` nie istnieje na
+`origin` pod nazwą kandydata (tylko `backup/`) — konwencja: kopie zawsze `backup/*`.
+
+**Z-2 (aktualizacja 14.09, po Z-41/Z-38).** Fala C2 (kosmetyka Q1, push `ba0edc6eb1`) w
+wdrożeniu; C3 (Z-38) w toku; Z-43 (bramki PMO) w toku. Codex (kopie z ostatniej godziny): S4
+`e2-line94754-ui-canon` → `e2-final-review-hold`; Q1 `e234-prereset` (reset przed E2–E4 wg wpisu
+38). Worktree CTO usunięte: `fala-c1`, `z38`, `z41` (Z-43 w toku). Dysk ~32 GiB. Skrzynka: **Z-41
+rozliczone**, **Z-43 nowe**.
+
 ---
 
 # Program naprawczy „Award Winning / CES 2027” — indeks i harmonogram (05.09.2026)
