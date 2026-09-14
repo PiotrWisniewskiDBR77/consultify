@@ -782,6 +782,35 @@ w `services/initiative` (fikstura `'PLANNING'`, grep po skasowanym SQL, `ARCHIVE
 **EWIDENCJA (uzupełnienie 14.09 noc, po H1b/H1c).** H1b: 🔧→**gotowe do scalenia `119ad9af3f`**.
 Dodane wiersze: H1c (gotowe), H1d (🔧). Skrzynka: Z-23, Z-24.
 
+**H1d — martwa bramka GO/NO-GO naprawiona (14.09, Opus, gałąź
+`integracja/kandydat-h1b-skrzynka-20260914`, HEAD `36b83f3e04`, kopia
+`backup/h1b-skrzynka-20260914`).** Dowód martwoty: CHECK P12 vs COUNT=0 dla starych predykatów
+`'SCHEDULED'`/`'EXECUTING'`/`'DONE'`/`'PROMOTED'`/`'PLANNING'`/`'BLOCKED'`
+(`evidence/h1b-20260914/h1d-realpg-dowod.txt`). Naprawy w `initiativeTransitionService.ts`:
+bramki kluczowane `gate` z `INITIATIVE_TRANSITION_MATRIX` (APPROVE/START/COMPLETE); START bez
+aktualnej decyzji GO (najwyższa zatwierdzona niewygasła wersja w
+`initiative_lifecycle_gate_decisions`, `pmo_domain` `GOVERNANCE_DECISION_MAKING`) → 409
+`GATE_DECISION_REQUIRED`; stemple `execution_started_at`/`done_at`/`cancelled_at` na kodach P12;
+usunięte martwe przejścia PROMOTED→PLANNING, APPROVED→SCHEDULED (właściciel: `scheduleDecision.ts`),
+BLOCKED/TRACKING (flaga `on_hold`/etap); cron `initiativeAutoStartJob.ts:96` selektor = kolumna
+`APPROVED` + etap `SCHEDULED` (był `scanned=0` zawsze). Wymóg decyzji CLOSURE przy domknięciu NIE
+przywrócony (`initiativeClosureService` jej nie zapisuje — dałoby 409 na każdym ludzkim
+domknięciu). Zastany defekt naprawiony: `resolveInitiativeStageWriteTarget('REJECTED')` zapisywało
+`CLOSED`. Testy RealPG `h1d-start-execution-go-gate.pg.test.ts` 3/3 (A RED→GREEN, B z decyzją,
+C cron); regresja 4 failed/191 → 3 failed/194 (zastane). Sanitizer
+`scripts/dev/h1d-sanitizer-inexecution-bez-lancucha-go.sql` (raport, zero zapisu). **NIENAPRAWIONE**
+(dyżur Codexa D-j, KANAL wpis 31): `ExecutionReportCron.ts:26`,
+`transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`,
+`planningPortfolioReadService.ts:1037/1047/1124/1169`. Długi: `review_requested_at`/`approved_at`
+nie istnieją po strict migrate (**Z-25**: stempel prośby o recenzję wymaga migracji — decyzja
+później); bramka `RESOURCE_RESPONSIBILITY` bez kodu (**Z-26**, decyzja właściciela); okno
+`tracking_*` bez właściciela; testy H1c/H1d tylko na bazie jednorazowej (wyzwalacz
+niezmienności).
+
+**Z-2 (integrator fali B3, w toku).** H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX` OFF;
+bramka GO ewentualnie za flagą serwera `ENABLE_LIFECYCLE_GO_GATE`, jeśli UI nie ma sposobu zapisu
+decyzji GO — decyzja w raporcie integratora.
+
 **Codex 14.09, 02:40–02:46 (KANAL Wpisy 28–29).** S1 paczka 5 v2 **ACCEPT** (`e1a2c2c160`) →
 odbiór CTO w toku (integrator paczka5v2 → staging, flaga OFF). S2 **REQUEST_CHANGES** (P1: receipt
 UUID/`SENDING` bez lease/MEMBER w pickerze; SMTP lokalny do E1, doręczenie na skrzynkę stagingu
@@ -808,11 +837,66 @@ pełny ścisły łańcuch migracji na klonie schematu stagingu pada na 919 (ledg
 pochodzi z delty — nowy kształt fałszywego „gotowe" (kandydat do pamięci).
 
 **Codex 14.09, 03:01–03:09.** S2 nowy freeze → final review **REQUEST_CHANGES** (drugi raz); S4/S5
-checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review). **Z-2:** H1d w toku
-(martwa bramka GO/NO-GO), po H1d integrator H1b+H1c+H1d → staging za flagą `VITE_TRANSITION_INBOX`.
+checkpoint; S5 PMO E3 E1 **FREEZE** (do odbioru CTO po independent review).
 
 **EWIDENCJA (uzupełnienie 14.09 noc, po odbiorze paczki 5 v2).** Paczka 5 (Wywiad) →
 **🔧 wraca** (wpis 30). S5 PMO E3 → **🔧 freeze E1**.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po H1d).** H1d 🔧 → **gotowe do scalenia `36b83f3e04`**;
+dodany wiersz D-j (Codex, dyżur — 4 rodziny martwych porównań, nienaprawione, KANAL wpis 31).
+Liczniki §5 (`TRZY_POJEMNIKI_PRACY_20260906.md`) przeliczone: 44 etapy (+1) — ✅ 2 · 🧪 6 · 🔧 8 ·
+⬜ 28 · 👁 0 · 🚀 0 · ⛔ 0; FALA 2 = 40 etapów (0 ✅, 5 🧪, 8 🔧, 27 ⬜). Co blokuje: Z-25/Z-26
+(decyzje właściciela — migracja stempla recenzji, bramka RESOURCE_RESPONSIBILITY), integrator
+fali B3 w drodze (Z-2).
+
+**Fala B3 — H1b+H1c+H1d WDROŻONA na staging (14.09, integrator, run `34824636382`, success).**
+Linia `61334b2c21`/`f9239fe307` → `78086fb2c8`: merge kandydata `36b83f3e04` = `40fd649d2b`
+(Inicjatywy H1b skrzynka propozycji + H1c mapowanie 12→7 + H1d bramka GO); commit flagi
+`f662fa1c0b` (bramka GO startu realizacji + kontrola kamieni za `ENABLE_LIFECYCLE_GO_GATE`,
+domyślnie OFF); merge rejestru `78086fb2c8`. Jedyny konflikt scalenia: importy w
+`InitiativesHub.tsx` (`PortfolioHealthView` z fali B2 vs `TransitionInboxSurface` z H1b) — oba
+zostały, bez utraty żadnej strony. Commity fali B1 są wspólne w historii obu linii (bez
+duplikatu H1). Tag cofnięcia: `rollback-pre-fala-b3-20260914` = `88f1a1994d`. `staging-deployed`
+= `78086fb2c8`. **Bramka:** tsc 0/189 (⚠ próg wyczerpany — pierwszy przebieg dał fałszywe „0" przez
+OOM, powtórzony z `--max-old-space-size` i dopiero wtedy wiarygodny); język OK; canon 349; artefakt
+8-0-117; build OK; RealPG H1b 7/7, H1c 1/1, H1d 4/4 (w tym nowy test parytetu za flagą OFF);
+`initiativeLifecycleCanon` 3→2 czerwienie (H1c naprawił jedną, 1 zastana zostaje). Parytet
+zmierzony na żywym chunku stagingu: `transitionInbox` 0 wywołań, `lifecycle-transition-proposals`
+0 wywołań (flagi OFF, zero ruchu — zgodne z oczekiwaniem). Zrzuty:
+`~/Developer/cto-codex/zrzuty-fala-b3-20260914/`. **Sprostowanie integratora:** zrzuty 06/07 „off"
+to napis harnessu o samym sobie, nie dowód wyłączenia (dowód = pomiar chunku, wyżej); zrzuty
+01–05/08–09 pokazują produkcyjną powierzchnię skrzynki BEZ powłoki Menu 1/2/3 (zdjęcie
+powierzchni komponentu, nie ekranu aplikacji) → przed pokazaniem właścicielowi potrzebny zrzut
+w powłoce (nowy dług: **Z-27**).
+
+**DEC-507 (14.09, integrator na mandacie CTO) — Bramka GO za flagą serwera
+`ENABLE_LIFECYCLE_GO_GATE`, domyślnie OFF.** Powód zmierzony, nie założony: wiersz macierzy
+przejść APPROVED→IN_EXECUTION ma warunek `HANDOFF_AND_START_DATE` BEZ `CURRENT_GO_DECISION`
+(preflight UI mówi „dozwolone", writer serwera zwraca 409 — rozjazd UI↔serwer przy ON) i zero
+wołaczy `lifecycle-gate-decisions` we froncie (jedyna ścieżka zapisu decyzji GO wymaga
+prowenancji maszynowej AI; ścieżkę ludzką otwiera skrzynka H1b — też za flagą OFF). Wniosek:
+włączenie bramki bez otwartej skrzynki = nikt nie potrafi uruchomić realizacji (kształt „zamknięte
+przez wygaszenie"). START i COMPLETE (liczenie kamieni milowych; kod błędu
+`CLOSURE_WORK_INCOMPLETE` bez klucza i18n) zostają za flagą; przypięcie decyzji przy APPROVE
+działa bez flagi (nie blokuje). **Warunek włączenia bramki:** razem `ENABLE_LIFECYCLE_GO_GATE` +
+`VITE_TRANSITION_INBOX` + domknięcie H1e (`CURRENT_GO_DECISION` dopisane do wiersza START macierzy
+przy ON; i18n dla `CLOSURE_WORK_INCOMPLETE`) — H1e w toku (Sonnet, gałąź
+`integracja/kandydat-h1e-20260914`). **Zastany dług znaleziony przy tej fali:** duplikat klucza
+`initiatives.analysis` w `public/locales/{en,pl}/translation.json` — `JSON.parse` zjada pierwszy
+blok, drugi ginie po cichu → naprawa przy H1e.
+
+**Flagi fali B na stagingu — wszystkie OFF (14.09).** `VITE_INITIATIVES_FOUR_BUTTONS` (B2),
+`VITE_EXEC_RISK_SIGNAL`, `VITE_EXEC_HANDOFF_TRACE` (B1), `VITE_TRANSITION_INBOX`,
+`ENABLE_LIFECYCLE_GO_GATE` (B3), `PORTFOLIO_ANALYSIS_DETERMINISTIC_MODEL` (tylko testy; blokada w
+production), `ENABLE_INTERVIEW_ANSWER_APPROVAL` (+ parametr org; paczka 5 v3 w wdrożeniu — S2
+`REQUEST_CHANGES`, wraca). Zmiana `VITE_*` = redeploy ~9 min; flagi serwerowe (zmienna Railway) =
+też redeploy.
+
+**EWIDENCJA (uzupełnienie 14.09 noc, po fali B3).** H1b/H1c/H1d: 🔧 → **🧪 NA STAGINGU `78086fb2c8`**
+(za flagą). H1e: nowy wiersz 🔧. Skrzynka: **Z-27** (nowy — zrzut fali B3 w powłoce Menu 1/2/3
+przed pokazaniem właścicielowi). Liczniki §5 przeliczone niżej (`TRZY_POJEMNIKI_PRACY_20260906.md`
+§2). Co blokuje: akcept wyglądu fali B na czystym zrzucie w powłoce (Z-27), H1e (warunek włączenia
+DEC-507), kopie 32 GB (Z-19), wolumen (Z-9), Z-25/Z-26 (decyzje właściciela nierozstrzygnięte).
 
 ---
 

@@ -23,11 +23,11 @@ import {
   isTerminalStatus,
   isValidTransition,
   VALID_TRANSITIONS,
+  willChangeModule,
   type InitiativeFlagOperation,
 } from '../../constants/initiativeStatuses.js';
 import { gateAiSoftBlocks } from '../../types/gateAi.js';
 import logger from '../../utils/Logger.js';
-import { flagOn } from '../../utils/pgFlags.js';
 import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import auditEventsService from '../AuditEventsService.js';
@@ -54,7 +54,9 @@ import {
   coerceInitiativeStatusForWrite,
   hasInitiativeStatusSchemaDrift,
   normalizeInitiativeDbStatusForRead,
+  resolveInitiativeStageForRow,
 } from './initiativeLifecycleCanon.js';
+import { resolveInitiativeLifecycleStage } from '../../constants/initiativeLifecycleStages.js';
 import { recordHandoff as recordStageHandoff } from './stageHandoffService.js';
 import {
   evaluateInitiativeAuthorOnly,
@@ -123,6 +125,15 @@ export class TransitionGateSupersededError extends Error {
  * a generic `decisions` row cannot unlock a transition and a new canonical
  * version cannot land between this read and the transition commit.
  */
+/**
+ * Bramka GO na starcie realizacji (H1d / H16 / INI-005) za flagą serwerową.
+ * Domyślnie WYŁĄCZONA — patrz komentarz przy `GateType.START` w
+ * `evaluateInitiativeTransition`. Czytana przy każdym wywołaniu (nie w module),
+ * żeby test mógł ją przestawić bez przeładowania modułu.
+ */
+export const isLifecycleGoGateEnabled = (): boolean =>
+  process.env.ENABLE_LIFECYCLE_GO_GATE === 'true';
+
 export const hasApprovedGateDecision = async (
   orgId: string,
   initiativeId: string,
@@ -442,6 +453,11 @@ export async function executeInitiativeTransition(
     };
   }
   const nextStatus = coercedNext.status;
+  // H1c / DEC-506 — druga prawda tego samego celu: etap silnika (12, DEC-490).
+  // `nextStatus` idzie do kolumny (7 kodów, CHECK P12), `nextStage` do agregatu
+  // silnika, żeby kolaps 12→7 nie zjadał informacji (APPROVED_BACKLOG i
+  // SCHEDULED to ten sam kod `APPROVED`, DELIVERED i CLOSED to ten sam `CLOSED`).
+  const nextStage = coercedNext.stage;
   const overrideReasonTrimmed = params.overrideReason ? String(params.overrideReason).trim() : '';
 
   type TransitionOutcome =
@@ -543,15 +559,37 @@ export async function executeInitiativeTransition(
       // makes /unblock fail cleanly on a non-BLOCKED initiative instead of silently
       // acting as if it were /start-execution.
       if (params.expectedCurrentStatus) {
+        // H1c / DEC-506 — CZWARTE miejsce tego samego rozjazdu słowników.
+        // `expectedCurrentStatus` przychodzi z adaptera przejść cyklu życia
+        // pisanego ETAPAMI silnika (SCHEDULED · EXECUTING · PROMOTED), a
+        // `currentStatus` to kod kolumny (7, P12). Surowe `!==` znaczyło
+        // „wymaga SCHEDULED, a jest APPROVED" dla inicjatywy, która JEST na
+        // etapie SCHEDULED — bo etap SCHEDULED zapisuje się w kolumnie
+        // właśnie jako APPROVED. Porównujemy więc ETAP z ETAPEM: agregat
+        // silnika jest prawdą pierwszą, kolumna zapasem.
         const expected = normalizeStatus(params.expectedCurrentStatus);
-        if (currentStatus !== expected) {
+        const expectedStage = resolveInitiativeLifecycleStage(expected);
+        const aggregateStage = (
+          await client.query<{ lifecycle_state: string | null }>(
+            `SELECT payload_json->>'lifecycleState' AS lifecycle_state
+               FROM ie_aggregate_state
+              WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
+            [orgId, id]
+          ).catch(() => ({ rows: [] as Array<{ lifecycle_state: string | null }> }))
+        ).rows[0]?.lifecycle_state;
+        const currentStage = resolveInitiativeStageForRow({
+          aggregateLifecycleState: aggregateStage ?? null,
+          dbStatus: currentStatus,
+        });
+        if (!expectedStage || currentStage !== expectedStage) {
           return {
             kind: 'error',
             statusCode: 400,
             body: {
-              error: `This action requires the initiative to be ${expected}, but it is ${currentStatus}`,
+              error: `This action requires the initiative to be ${expected}, but it is ${currentStage ?? currentStatus}`,
               rule: 'UNEXPECTED_CURRENT_STATUS',
               from: currentStatus,
+              fromStage: currentStage,
               expected,
               to: nextStatus,
             },
@@ -798,7 +836,7 @@ export async function executeInitiativeTransition(
       // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist.
       // CANCELLED bypasses readiness (same as gate bypass above).
       const blockingItems =
-        nextStatus === 'CANCELLED' ? [] : await getBlockingReadinessItems(orgId, id);
+        nextStatus === InitiativeStatus.REJECTED ? [] : await getBlockingReadinessItems(orgId, id);
       if (blockingItems.length > 0) {
         return {
           kind: 'error',
@@ -822,359 +860,184 @@ export async function executeInitiativeTransition(
         };
       }
 
-      // Gate decision validation
-      // Canonical flow (PMO):
-      // DRAFT -> PENDING_REVIEW -> REVIEW -> PROMOTED -> PLANNING -> APPROVED -> SCHEDULED -> EXECUTING -> DONE -> TRACKING
+      // ══════════════════════════════════════════════════════════════════════
+      // BRAMKI DECYZYJNE — H1d: KLUCZOWANE BRAMKĄ Z MACIERZY, NIE LITERAŁEM KODU
+      // ══════════════════════════════════════════════════════════════════════
+      //
+      // CO BYŁO ZEPSUTE (zmierzone na realnym Postgresie, test
+      // `h1d-start-execution-go-gate.pg.test.ts`, wariant A):
+      // ten blok składał się z siedmiu warunków pisanych STARYM słownikiem
+      // runtime — `currentStatus === 'REVIEW' && nextStatus === 'PROMOTED'`,
+      // `'PROMOTED'→'PLANNING'`, `'APPROVED'→'SCHEDULED'`,
+      // `('SCHEDULED'|'BLOCKED')→'EXECUTING'`, `'EXECUTING'→'DONE'`,
+      // `nextStatus === 'BLOCKED'`, `'DONE'→'TRACKING'`. Od migracji
+      // `20262103_p12_initiative_status_slownik.sql` kolumna `initiatives.status`
+      // nie może zawierać ŻADNEGO z tych kodów (CHECK `initiatives_status_check_p12`
+      // dopuszcza siedem: PROPOSED · DRAFT · PENDING_APPROVAL · APPROVED ·
+      // IN_EXECUTION · CLOSED · REJECTED), a `currentStatus`/`nextStatus` są
+      // w tym miejscu JUŻ znormalizowane do tych siedmiu. Żaden z siedmiu
+      // warunków nie mógł być prawdziwy — cała egzekucja H16/INI-005 („decyzja
+      // GO musi być aktualna w momencie startu realizacji") była martwa, a start
+      // realizacji przechodził BEZ ani jednego wiersza w
+      // `initiative_lifecycle_gate_decisions`.
+      //
+      // DLACZEGO BRAMKA, A NIE ETAP: `gate` pochodzi z
+      // `INITIATIVE_TRANSITION_MATRIX` (jedno źródło, to samo, z którego UI
+      // rysuje przyciski), więc nie da się go rozjechać ze słownikiem kolumny
+      // tak, jak rozjechał się literał. Etap silnika (12, DEC-490) jest potrzebny
+      // tam, gdzie DWA etapy mapują się na jeden kod — a to nie zdarza się
+      // w żadnej z trzech bramek decyzyjnych poniżej (START i COMPLETE są 1:1,
+      // APPROVE prowadzi do jedynego kodu APPROVED).
+      //
+      // CO ZNIKŁO RAZEM ZE STARYMI WARUNKAMI (świadomie, nie przez przeoczenie):
+      //  · `'PROMOTED'→'PLANNING'` (decyzja RESOURCE_RESPONSIBILITY) — po P12
+      //    macierz nie ma przejścia, do którego dałoby się tę bramkę przypiąć:
+      //    oba etapy kolapsują na kod PENDING_APPROVAL. Bramka wymaga decyzji
+      //    właściciela (patrz raport H1d), nie cichego przywrócenia.
+      //  · `'APPROVED'→'SCHEDULED'` (decyzja SCHEDULE_MILESTONES + daty +
+      //    kamienie milowe + snapshot `initiative_schedule_baselines`) — to
+      //    przejście zmienia WYŁĄCZNIE etap silnika (APPROVED_BACKLOG→SCHEDULED,
+      //    kod kolumny w obu przypadkach APPROVED), więc `isValidTransition`
+      //    odrzuca je zanim ten blok zdąży się wykonać. Żywym właścicielem tej
+      //    ścieżki jest `domain/initiatives-execution/scheduleDecision.ts`
+      //    (pisze `lifecycleState: 'SCHEDULED'` do agregatu). Kopia tutaj była
+      //    duplikatem, i to nieosiągalnym.
+      //  · `nextStatus === 'BLOCKED'` i `'DONE'→'TRACKING'` — BLOCKED to od
+      //    DEC-424 flaga `on_hold` (ścieżka `flagOperation` wyżej, kończy się
+      //    `return` przed tym blokiem), a TRACKING nie jest kodem kolumny.
+      //
       let satisfyingDecisionId: string | null = null;
-      // Tracks which pmoDomain satisfied the gate above, so the pre-commit recheck
-      // (right before the write path) knows which gate tuple to re-verify against
-      // a possible concurrent decision write. See `TransitionGateSupersededError`.
+      // Zapamiętuje domenę, która bramkę zaspokoiła, żeby przedcommitowa
+      // kontrola (tuż przed ścieżką zapisu) wiedziała, którą krotkę zweryfikować
+      // ponownie wobec równoległego zapisu decyzji. Patrz `TransitionGateSupersededError`.
       let decisionGatePmoDomain: string | null = null;
 
-      // REVIEW -> PROMOTED: requires Go/No-Go decision (governance)
-      if (currentStatus === 'REVIEW' && nextStatus === 'PROMOTED') {
-        const goNoGo = await hasApprovedGateDecision(
-          orgId,
-          id,
-          'GOVERNANCE_DECISION_MAKING',
-          client
-        );
-        if (!goNoGo.ok) {
+      /**
+       * Jedno miejsce na „bramka wymaga AKTUALNEJ, zatwierdzonej decyzji domeny X".
+       * Zwraca opis odmowy albo `null`; przy powodzeniu pina decyzję do
+       * przedcommitowej kontroli.
+       */
+      const requireCurrentGateDecision = async (
+        pmoDomain: string,
+        refusal: { error: string; rule: string; notifyBody: string }
+      ): Promise<TransitionOutcome | null> => {
+        const decision = await hasApprovedGateDecision(orgId, id, pmoDomain, client);
+        if (!decision.ok) {
           return {
             kind: 'error',
-            statusCode: 400,
+            // 409, nie 400: żądanie jest poprawne, a odmowa wynika ze STANU
+            // rządzenia (brak decyzji / decyzja nieaktualna lub wygasła) —
+            // to konflikt, nie błąd składni wejścia.
+            statusCode: 409,
             body: {
-              error: 'Go/No-Go decision is required to promote this initiative',
-              rule: 'GATE_DECISION_REQUIRED',
+              error: refusal.error,
+              rule: refusal.rule,
+              gate: pmoDomain,
+              from: currentStatus,
+              to: nextStatus,
             },
             notify: {
               type: 'initiative.gate_blocked',
               title: 'Initiative gate blocked',
-              body: `${initiativeName}: Go/No-Go decision is required to promote.`,
+              body: `${initiativeName}: ${refusal.notifyBody}`,
               priority: 'high',
-              metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
+              metadata: { currentStatus, nextStatus, gate: pmoDomain },
             },
           };
         }
-        satisfyingDecisionId = goNoGo.decisionId;
-        decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
+        satisfyingDecisionId = decision.decisionId;
+        decisionGatePmoDomain = pmoDomain;
         await syncHook('after-decision-read');
+        return null;
+      };
+
+      // APPROVE (PENDING_APPROVAL → APPROVED): decyzja GO/NO-GO.
+      // Warunek `CURRENT_GO_DECISION` sprawdził ją już wyżej (wspólny moduł
+      // warunków, ten sam, którego używa preflight) — tutaj PINUJEMY jej
+      // identyfikator, żeby przedcommitowa kontrola wykryła podmianę decyzji
+      // w trakcie przejścia. Bez tego pinu ochrona przed wyścigiem (H16)
+      // obejmowała START i COMPLETE, ale nie APPROVE.
+      if (gate === GateType.APPROVE) {
+        const refusal = await requireCurrentGateDecision('GOVERNANCE_DECISION_MAKING', {
+          error: 'A current Go/No-Go decision is required to approve this initiative',
+          rule: 'GATE_DECISION_REQUIRED',
+          notifyBody: 'a current Go/No-Go decision is required to approve.',
+        });
+        if (refusal) return refusal;
       }
 
-      // PROMOTED -> PLANNING: requires Resources Commit decision
-      if (currentStatus === 'PROMOTED' && nextStatus === 'PLANNING') {
-        const resourcesCommit = await hasApprovedGateDecision(
-          orgId,
-          id,
-          'RESOURCE_RESPONSIBILITY',
-          client
-        );
-        if (!resourcesCommit.ok) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'Resources Commit decision is required to start planning',
-              rule: 'GATE_DECISION_REQUIRED',
-            },
-            notify: {
-              type: 'initiative.gate_blocked',
-              title: 'Initiative gate blocked',
-              body: `${initiativeName}: Resources Commit decision is required to start planning.`,
-              priority: 'high',
-              metadata: { currentStatus, nextStatus, gate: 'RESOURCE_RESPONSIBILITY' },
-            },
-          };
-        }
-        satisfyingDecisionId = resourcesCommit.decisionId;
-        decisionGatePmoDomain = 'RESOURCE_RESPONSIBILITY';
-        await syncHook('after-decision-read');
-      }
-
-      // APPROVED -> SCHEDULED: requires Schedule Lock decision (and dates + milestones + baseline)
-      let plannedStart: unknown;
-      let plannedEnd: unknown;
-      if (currentStatus === 'APPROVED' && nextStatus === 'SCHEDULED') {
-        const scheduleLock = await hasApprovedGateDecision(
-          orgId,
-          id,
-          'SCHEDULE_MILESTONES',
-          client
-        );
-        if (!scheduleLock.ok) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'Schedule Lock decision is required to schedule this initiative',
-              rule: 'GATE_DECISION_REQUIRED',
-            },
-            notify: {
-              type: 'initiative.gate_blocked',
-              title: 'Initiative gate blocked',
-              body: `${initiativeName}: Schedule Lock decision is required to schedule.`,
-              priority: 'high',
-              metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_MILESTONES' },
-            },
-          };
-        }
-        satisfyingDecisionId = scheduleLock.decisionId;
-        decisionGatePmoDomain = 'SCHEDULE_MILESTONES';
-        await syncHook('after-decision-read');
-
-        plannedStart = lockedRow.planned_start_date;
-        plannedEnd = lockedRow.planned_end_date;
-        if (!plannedStart || !plannedEnd) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'plannedStartDate and plannedEndDate are required to schedule this initiative',
-              rule: 'SCHEDULE_DATES_REQUIRED',
-            },
-            notify: {
-              type: 'initiative.gate_blocked',
-              title: 'Initiative gate blocked',
-              body: `${initiativeName}: plannedStartDate and plannedEndDate are required to schedule.`,
-              priority: 'high',
-              metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_DATES_REQUIRED' },
-            },
-          };
-        }
-
-        // Require at least one milestone before baselining/scheduling
-        try {
-          const m = await queryHelpers.queryOne(
-            `SELECT COUNT(*) as c
-           FROM initiative_milestones
-           WHERE initiative_id = ? AND organization_id = ?`,
-            [id, orgId]
-          );
-          const c = Number((m as any)?.c || 0);
-          if (c <= 0) {
-            return {
-              kind: 'error',
-              statusCode: 400,
-              body: {
-                error: 'At least one milestone is required to schedule this initiative',
-                rule: 'SCHEDULE_MILESTONES_REQUIRED',
-              },
-            };
-          }
-        } catch (e: any) {
-          const msg = String(e?.message || e || '').toLowerCase();
-          if (
-            msg.includes('no such table') ||
-            msg.includes('does not exist') ||
-            msg.includes('relation')
-          ) {
-            return {
-              kind: 'error',
-              statusCode: 400,
-              body: {
-                error:
-                  'Milestones schema is required to schedule (missing initiative_milestones). Run migrations.',
-                rule: 'SCHEDULE_SCHEMA_MISSING',
-                table: 'initiative_milestones',
-              },
-            };
-          }
-          throw e;
-        }
-
-        // Create schedule baseline snapshot (versioned) — on the SAME pinned client
-        // as the rest of this transition, so it commits/rolls back atomically with
-        // the state UPDATE below (previously a separate, unpinned queryRun call).
-        const existingBaselineVersion = Number((lockedRow as any)?.baseline_version || 0) || 0;
-        const baselineVersion = existingBaselineVersion + 1;
-        const baselineId = uuidv4();
-        const capturedAt = new Date().toISOString();
-
-        const milestones = (await queryHelpers
-          .queryAll(
-            `SELECT id, name, description, target_date, actual_date, status, order_index, is_gate, gate_decision_id
-           FROM initiative_milestones
-           WHERE initiative_id = ? AND organization_id = ?
-           ORDER BY order_index ASC, target_date ASC`,
-            [id, orgId]
-          )
-          .catch(() => [])) as any[];
-
-        const deps = (await queryHelpers
-          .queryAll(
-            `SELECT id, from_initiative_id, to_initiative_id, type
-           FROM initiative_dependencies
-           WHERE organization_id = ?
-             AND (from_initiative_id = ? OR to_initiative_id = ?)
-           ORDER BY created_at ASC`,
-            [orgId, id, id]
-          )
-          .catch(() => [])) as any[];
-
-        const snapshot = {
-          initiativeId: id,
-          statusAtBaseline: currentStatus,
-          plannedStartDate: plannedStart,
-          plannedEndDate: plannedEnd,
-          milestones: (milestones || []).map((mm) => ({
-            id: mm.id,
-            name: mm.name,
-            description: mm.description || null,
-            targetDate: mm.target_date || null,
-            actualDate: mm.actual_date || null,
-            status: mm.status || null,
-            orderIndex: mm.order_index ?? 0,
-            isGate: flagOn(mm.is_gate),
-            gateDecisionId: mm.gate_decision_id || null,
-          })),
-          dependencies: (deps || []).map((d) => ({
-            id: d.id,
-            fromInitiativeId: d.from_initiative_id,
-            toInitiativeId: d.to_initiative_id,
-            type: d.type,
-          })),
-          capturedAt,
-          capturedBy: actorId || null,
-        };
-
-        try {
-          await client.query(
-            `INSERT INTO initiative_schedule_baselines
-             (id, organization_id, initiative_id, version, status_at_baseline, planned_start_date, planned_end_date, snapshot, created_by, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              baselineId,
-              orgId,
-              id,
-              baselineVersion,
-              currentStatus,
-              plannedStart,
-              plannedEnd,
-              JSON.stringify(snapshot),
-              actorId || null,
-              capturedAt,
-            ]
-          );
-        } catch (e: any) {
-          const msg = String(e?.message || e || '').toLowerCase();
-          if (
-            msg.includes('no such table') ||
-            msg.includes('does not exist') ||
-            msg.includes('relation')
-          ) {
-            return {
-              kind: 'error',
-              statusCode: 400,
-              body: {
-                error:
-                  'Schedule baseline schema is required to schedule (missing initiative_schedule_baselines). Run migrations.',
-                rule: 'SCHEDULE_BASELINE_SCHEMA_MISSING',
-                table: 'initiative_schedule_baselines',
-              },
-            };
-          }
-          throw e;
-        }
-
-        // Persist baseline reference on the locked row (so UI can show version +
-        // lock state) — best-effort for legacy schemas missing these columns,
-        // same as before, but now on the pinned client.
-        if (
-          initiativeColumns.has('baseline_version') &&
-          initiativeColumns.has('schedule_baseline_id')
-        ) {
-          await client.query(
-            `UPDATE initiatives
-           SET baseline_version = ?, schedule_baseline_id = ?
-           WHERE id = ? AND organization_id = ?`,
-            [baselineVersion, baselineId, id, orgId]
-          );
-        }
-      }
-
-      // NEW (H16 fix): SCHEDULED -> EXECUTING (START) now requires GO/NO-GO
-      // decision currency, exactly like the three gates above. This transition
-      // previously had ZERO decision enforcement — the entire bypass this
-      // packet closes (only PMO-role RBAC was ever checked, via the `gate`
-      // block above / the legacy /start-execution endpoint had no check at
-      // all). Reuses the SAME gate/pmoDomain as the REVIEW->PROMOTED check
-      // (GOVERNANCE_DECISION_MAKING) — it's the same GO/NO-GO governance
-      // decision that must still be current (not superseded by a later
-      // NO-GO/pending re-decision) at the moment execution actually starts.
+      // ★ START (APPROVED → IN_EXECUTION): SEDNO NAPRAWY H1d.
+      // To jest bramka H16/INI-005 — „decyzja GO musi być aktualna w momencie
+      // startu realizacji". Dotyczy KAŻDEGO wołacza tej samej funkcji:
+      // `POST /:id/start-execution`, `PATCH /:id/status`, cron
+      // `initiativeAutoStartJob` (aktor systemowy NIE omija tej kontroli —
+      // lista dozwolonych bramek zdejmuje z niego tylko wymóg roli ludzkiej).
       //
-      // EXTENDED (INI-005 follow-up, 2026-08-01) to also cover BLOCKED ->
-      // EXECUTING (UNBLOCK, /unblock endpoint — previously a raw UPDATE with
-      // NO decision check at all). Design decision, made explicit: unblocking
-      // resumes execution, and the exact rework/supersession risk the H16 fix
-      // exists for applies just as much here — a block can span a rework cycle
-      // where the initiative's GO decision gets superseded by a NO-GO before
-      // anyone unblocks it. Requiring a CURRENT approved GOVERNANCE_DECISION_
-      // MAKING decision at unblock time (not just at the original SCHEDULED->
-      // EXECUTING start) closes that gap too, for the same reason and via the
-      // same check — not a separate, parallel decision type.
-      if (
-        (currentStatus === 'SCHEDULED' || currentStatus === 'BLOCKED') &&
-        nextStatus === 'EXECUTING'
-      ) {
-        const executionGoNoGo = await hasApprovedGateDecision(
-          orgId,
-          id,
-          'GOVERNANCE_DECISION_MAKING',
-          client
-        );
-        if (!executionGoNoGo.ok) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error:
-                currentStatus === 'BLOCKED'
-                  ? 'A current Go/No-Go decision is required to unblock and resume execution of this initiative'
-                  : 'Go/No-Go decision is required to start execution of this initiative',
-              rule: 'GATE_DECISION_REQUIRED',
-            },
-            notify: {
-              type: 'initiative.gate_blocked',
-              title: 'Initiative gate blocked',
-              body:
-                currentStatus === 'BLOCKED'
-                  ? `${initiativeName}: a current Go/No-Go decision is required to unblock.`
-                  : `${initiativeName}: Go/No-Go decision is required to start execution.`,
-              priority: 'high',
-              metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
-            },
-          };
-        }
-        satisfyingDecisionId = executionGoNoGo.decisionId;
-        decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
-        await syncHook('after-decision-read');
+      // ★★ DECYZJA CTO (integracja fala B3, 14.09) — TA BRAMKA IDZIE ZA FLAGĄ
+      // SERWEROWĄ `ENABLE_LIFECYCLE_GO_GATE`, DOMYŚLNIE WYŁĄCZONĄ. Powód nie
+      // jest kosmetyczny, jest mierzalny:
+      //  · wiersz macierzy APPROVED→IN_EXECUTION ma warunek
+      //    `HANDOFF_AND_START_DATE`, a NIE `CURRENT_GO_DECISION`, więc
+      //    `initiativeTransitionPreflightService` (jedyne źródło, z którego UI
+      //    rysuje dostępność przycisku) nadal raportuje to przejście jako
+      //    DOZWOLONE. Bez flagi przycisk byłby aktywny, a serwer odpowiadałby
+      //    409 — rozjazd UI↔serwer, nie bramka.
+      //  · JEDYNYM kodem zapisującym decyzję GOVERNANCE_DECISION_MAKING dla
+      //    inicjatywy jest trasa `POST /:id/lifecycle-gate-decisions` oraz
+      //    adapter Teresy; zmierzone `git grep 'lifecycle-gate-decisions' -- src`
+      //    = 0 trafień, a schemat trasy wymaga `sourceDigest` (SHA-256),
+      //    `a05ProposalVersionId` i `a05ApprovalReceiptRef` — prowenancji,
+      //    której człowiek nie wpisze z ręki. Ludzka ścieżka zapisu tej decyzji
+      //    powstaje dopiero ze skrzynką recenzenta (H1b, `VITE_TRANSITION_INBOX`,
+      //    też OFF).
+      // Włączenie bramki przy OFF-owej skrzynce dałoby kształt „zamknięte przez
+      // wygaszenie": start realizacji odmawiany WSZYSTKIM, bez ścieżki naprawy.
+      // Flagę włączamy dopiero razem ze skrzynką (i po dopisaniu warunku
+      // `CURRENT_GO_DECISION` do wiersza START macierzy, żeby preflight mówił
+      // to samo co writer).
+      if (gate === GateType.START && isLifecycleGoGateEnabled()) {
+        const refusal = await requireCurrentGateDecision('GOVERNANCE_DECISION_MAKING', {
+          error: 'A current Go/No-Go decision is required to start execution of this initiative',
+          rule: 'GATE_DECISION_REQUIRED',
+          notifyBody: 'a current Go/No-Go decision is required to start execution.',
+        });
+        if (refusal) return refusal;
       }
 
-      // EXECUTING -> DONE is a material human closure decision, distinct from
-      // delivery completion and from the generic pending-decision scan below.
-      // Only the current immutable CLOSURE version in the canonical lifecycle
-      // owner can satisfy it; a legacy/generic approved `decisions` row is not
-      // consulted by `hasApprovedGateDecision`.
-      if (currentStatus === 'EXECUTING' && nextStatus === 'DONE') {
-        const closureDecision = await hasApprovedGateDecision(orgId, id, 'CLOSURE', client);
-        if (!closureDecision.ok) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'An approved Closure decision is required to complete this initiative',
-              rule: 'CLOSURE_GATE_DECISION_REQUIRED',
-            },
-          };
-        }
-        satisfyingDecisionId = closureDecision.decisionId;
-        decisionGatePmoDomain = 'CLOSURE';
-        await syncHook('after-decision-read');
-
-        // Keep the completion predicate on this pinned transaction and lock the
-        // existing child rows before counting. Query/schema failures propagate,
-        // so closure fails closed instead of treating an unreadable workload as
-        // complete.
+      // COMPLETE (IN_EXECUTION → CLOSED): decyzja CLOSURE + zerowa otwarta praca.
+      // Warunek macierzy `NO_OPEN_WORK` liczy otwarte ZADANIA i wiszące decyzje
+      // wykonawcze; kamieni milowych nie liczy, a decyzji CLOSURE nie sprawdza
+      // wcale — te dwie kontrole żyły wyłącznie w martwym warunku
+      // `'EXECUTING'→'DONE'` i razem z nim przestały działać.
+      //
+      // ★ DECYZJA CTO (H1d) — CZEGO TU CELOWO NIE MA: martwa gałąź
+      // `'EXECUTING'→'DONE'` wymagała też AKTUALNEJ decyzji `CLOSURE`
+      // w `initiative_lifecycle_gate_decisions`. Przywrócenie tego wymogu
+      // ZAMKNĘŁOBY domknięcie dla wszystkich: jedynym kodem, który taką decyzję
+      // zapisuje, jest adapter Teresy
+      // (`transformationInitiativeTransitionAdapterService`), a ludzka ścieżka
+      // domknięcia (`initiativeClosureService`: pakiet dowodowy + role
+      // zatwierdzające + warunek `NO_OPEN_WORK`) nie tworzy go wcale i nigdy
+      // nie tworzyła — zmierzone: `rg recordInitiativeLifecycleGateDecision
+      // server/src/services/initiative/initiativeClosureService.ts` = 0 trafień.
+      // Wymóg dałby więc 409 na KAŻDYM ludzkim domknięciu — dokładnie kształt
+      // „zamknięte przez wygaszenie". Zostaje kontrola KOMPLETNOŚCI PRACY, bo
+      // ona nie zależy od artefaktu, którego nikt nie produkuje.
+      // ★★ TA SAMA FLAGA `ENABLE_LIFECYCLE_GO_GATE` (integracja fala B3, 14.09).
+      // Powód: liczenie KAMIENI MILOWYCH jest tu NOWE — warunek macierzy
+      // `NO_OPEN_WORK`, żywy i na linii, liczy otwarte ZADANIA i wiszące decyzje
+      // wykonawcze, ale kamieni milowych nie liczył nigdy. Przy fladze OFF
+      // domknięcie zachowuje się DOKŁADNIE jak na linii (zadania dalej pilnuje
+      // `NO_OPEN_WORK`), więc wdrożenie nie wnosi ANI JEDNEJ nowej odmowy.
+      // Dodatkowy powód, żeby nie puszczać tego bez flagi: kod odmowy
+      // `CLOSURE_WORK_INCOMPLETE` nie ma wpisu w `initiativeLifecycleMessages`
+      // (zmierzone), więc użytkownik zobaczyłby surowy angielski komunikat
+      // serwera. Włączamy razem z bramką GO, po dopisaniu tłumaczenia.
+      if (gate === GateType.COMPLETE && isLifecycleGoGateEnabled()) {
+        // Predykat kompletności zostaje na TEJ przypiętej transakcji, a istniejące
+        // wiersze potomne są blokowane przed policzeniem. Błąd zapytania/schematu
+        // propaguje się — domknięcie ma padać zamknięte, a nie uznawać
+        // nieczytelnej pracy za skończoną.
         await client.query(
           `SELECT id FROM tasks
            WHERE initiative_id=? AND organization_id=?
@@ -1215,106 +1078,6 @@ export async function executeInitiativeTransition(
           };
         }
       }
-
-      // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
-      // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
-      // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
-      if (nextStatus === 'BLOCKED' && !String(reason ?? '').trim()) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: { error: 'Blocked status requires a reason', rule: 'BLOCKED_REASON_REQUIRED' },
-        };
-      }
-
-      if (
-        ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
-        nextStatus === 'DONE' &&
-        (await hasPendingExecutionGateDecisions(orgId, id))
-      ) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: {
-            error: 'Resolve pending execution gate decisions before closing this initiative',
-            rule: 'EXECUTION_GATE_DECISION_REQUIRED',
-          },
-        };
-      }
-
-      // DONE -> TRACKING (Benefits start) policy enforcement:
-      // - Business Owner must be assigned (initiative.owner_business_id)
-      // - at least 1 KPI must exist, and at least 1 KPI must have target + unit
-      if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
-        const ownerBusinessId = lockedRow.owner_business_id
-          ? String(lockedRow.owner_business_id)
-          : '';
-        if (!ownerBusinessId) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'Business Owner is required to start benefits tracking',
-              rule: 'BENEFITS_OWNER_REQUIRED',
-              field: 'ownerBusinessId',
-            },
-          };
-        }
-
-        try {
-          const kpiCount = await queryHelpers.queryOne(
-            `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
-            [id]
-          );
-          const cAll = Number((kpiCount as any)?.c || 0);
-          if (cAll <= 0) {
-            return {
-              kind: 'error',
-              statusCode: 400,
-              body: {
-                error: 'At least one KPI is required to start benefits tracking',
-                rule: 'BENEFITS_KPI_REQUIRED',
-              },
-            };
-          }
-
-          const readyCount = await queryHelpers.queryOne(
-            `SELECT COUNT(*) as c
-           FROM initiative_kpis
-           WHERE initiative_id = ?
-             AND target_value IS NOT NULL
-             AND unit IS NOT NULL`,
-            [id]
-          );
-          const cReady = Number((readyCount as any)?.c || 0);
-          if (cReady <= 0) {
-            return {
-              kind: 'error',
-              statusCode: 400,
-              body: {
-                error: 'KPI target and unit are required to start benefits tracking',
-                rule: 'BENEFITS_KPI_TARGET_REQUIRED',
-              },
-            };
-          }
-        } catch (e: any) {
-          const msg = String(e?.message || e || '').toLowerCase();
-          // If KPI schema is missing, block transition with a clear message.
-          if (msg.includes('no such table') || msg.includes('initiative_kpis')) {
-            return {
-              kind: 'error',
-              statusCode: 400,
-              body: {
-                error:
-                  'KPI schema is required to start benefits tracking (missing initiative_kpis)',
-                rule: 'BENEFITS_KPI_SCHEMA_MISSING',
-              },
-            };
-          }
-          throw e;
-        }
-      }
-
       // Pre-commit defense in depth. The canonical decision owner already uses
       // the same advisory lock as this read, so a new version cannot commit
       // concurrently. Rechecking the exact immutable decision id also protects
@@ -1335,7 +1098,12 @@ export async function executeInitiativeTransition(
       const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
       const lifecycleParams: unknown[] = [nextStatus, now];
 
-      if (nextStatus === 'PENDING_REVIEW') {
+      // H1d: kod 'PENDING_REVIEW' nie istnieje w słowniku siedmiu (CHECK P12);
+      // prośba o recenzję to dziś PENDING_APPROVAL. UWAGA DO RAPORTU: na bazie
+      // po `strict migrate` kolumn `review_requested_at`/`review_requested_by`
+      // NIE MA, więc `pushOptionalColumnUpdate` je pominie — poprawka czyni kod
+      // prawdziwym, ale sama nie tworzy kolumny (migracje poza zakresem H1d).
+      if (nextStatus === InitiativeStatus.PENDING_APPROVAL) {
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
@@ -1376,70 +1144,31 @@ export async function executeInitiativeTransition(
           );
         }
       }
-      if (nextStatus === 'SCHEDULED') {
+      // ── STEMPLE CZASOWE — H1d: KODY Z SIEDMIOSŁOWNIKA, NIE ZE STAREGO ──────
+      //
+      // Każdy z pięciu warunków niżej porównywał `nextStatus` ze STARYM
+      // słownikiem runtime ('SCHEDULED' · 'EXECUTING' · 'BLOCKED' · 'DONE' ·
+      // 'CANCELLED' · 'ARCHIVED'), którego CHECK `initiatives_status_check_p12`
+      // nie dopuszcza. Skutek zmierzony na realnym Postgresie: `execution_started_at`
+      // NIGDY nie było ustawiane (INI-005), `done_at`/`completed_at` też nie.
+      // Warunki dotyczące BLOCKED/ARCHIVED usunięte, bo od DEC-424 to FLAGI
+      // (`on_hold`/`archived`), obsługiwane w ścieżce `flagOperation`, która
+      // kończy się `return` daleko przed tym miejscem.
+      //
+      // ★ INI-005: `execution_started_at` stemplowane przy WEJŚCIU w IN_EXECUTION.
+      // Dawne wykluczenie „nie resetuj przy wznowieniu z BLOCKED" zostaje
+      // zachowane co do sensu, ale wyrażone stanem docelowym: wejście liczy się
+      // tylko wtedy, gdy inicjatywa NIE była już w realizacji.
+      if (nextStatus === InitiativeStatus.IN_EXECUTION && currentStatus !== InitiativeStatus.IN_EXECUTION) {
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
           initiativeColumns,
           'execution_started_at',
-          null
-        ); // will be set when EXECUTING starts
-      }
-      // INI-005 follow-up (2026-08-01): only set execution_started_at on a
-      // GENUINE first start (SCHEDULED->EXECUTING, the START gate). Excluded
-      // for BLOCKED->EXECUTING (UNBLOCK) — that's a resume, not a new start;
-      // the raw UPDATE this replaced never touched this column on unblock
-      // either, so this preserves that behavior rather than resetting the
-      // original start timestamp every time an initiative is blocked/unblocked.
-      if (nextStatus === 'EXECUTING' && currentStatus !== 'BLOCKED') {
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'execution_started_at',
           now
         );
       }
-      if (nextStatus === 'BLOCKED') {
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'blocked_at',
-          now
-        );
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'blocked_reason',
-          reason || null
-        );
-      }
-      if (currentStatus === 'BLOCKED' && nextStatus === 'EXECUTING') {
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'unblocked_at',
-          now
-        );
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'blocked_at',
-          null
-        );
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'blocked_reason',
-          null
-        );
-      }
-      if (nextStatus === 'DONE') {
+      if (nextStatus === InitiativeStatus.CLOSED) {
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
@@ -1462,7 +1191,7 @@ export async function executeInitiativeTransition(
           now
         );
       }
-      if (nextStatus === 'CANCELLED') {
+      if (nextStatus === InitiativeStatus.REJECTED) {
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
@@ -1476,15 +1205,6 @@ export async function executeInitiativeTransition(
           initiativeColumns,
           'cancelled_reason',
           reason || null
-        );
-      }
-      if (nextStatus === 'ARCHIVED') {
-        pushOptionalColumnUpdate(
-          lifecycleUpdates,
-          lifecycleParams,
-          initiativeColumns,
-          'archived_at',
-          now
         );
       }
       if (
@@ -1502,29 +1222,58 @@ export async function executeInitiativeTransition(
         lifecycleParams
       );
 
-      // Benefits tracking window defaults — same transaction/client now. Only a
-      // genuinely-missing legacy column is swallowed; any other error aborts
-      // (rolls back) the whole transition, unlike the previous best-effort catch.
-      if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
-        const trackingStart = now;
-        const trackingEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(); // default 90 days
-        try {
-          await client.query(
-            `UPDATE initiatives
-           SET tracking_started_at = COALESCE(tracking_started_at, ?),
-               tracking_started_by = COALESCE(tracking_started_by, ?),
-               tracking_start_date = COALESCE(tracking_start_date, ?),
-               tracking_end_date = COALESCE(tracking_end_date, ?),
-               updated_at = ?
-           WHERE id = ? AND organization_id = ?`,
-            [trackingStart, actorId || null, trackingStart, trackingEnd, now, id, orgId]
-          );
-        } catch (e: any) {
-          const msg = String(e?.message || e || '').toLowerCase();
-          if (!msg.includes('no such column') && !msg.includes('does not exist')) throw e;
-          // ignore for legacy schemas
+      // ---- H1c / DEC-506: ETAP SILNIKA (12) DO AGREGATU, W TEJ SAMEJ TRANSAKCJI ----
+      //
+      // Kolumna `initiatives.status` niesie SIEDEM kodów i nie ma jak odróżnić
+      // APPROVED_BACKLOG od SCHEDULED ani DELIVERED od CLOSED. Dwunastostopniowa
+      // prawda DEC-490 mieszka więc tam, gdzie już dziś mieszka —
+      // `ie_aggregate_state` (`aggregate_type='initiative'`, klucz
+      // `payload_json.lifecycleState`), zapisywana przez `registerInitiative`
+      // i czytana przez `initiativeUnifiedReader`.
+      //
+      // W TEJ SAMEJ TRANSAKCJI — celowo. Gdyby etap lądował po COMMIT-cie, każdy
+      // błąd między zapisami zostawiałby kolumnę i agregat w rozjeździe, czyli
+      // dokładnie stan, który H1c ma zlikwidować. `||` scala z istniejącym
+      // payloadem, więc nie kasujemy pól, których ta ścieżka nie zna.
+      // H1d: DYSPOZYCJA (REJECTED/CANCELLED) nie ma etapu — `nextStage` jest
+      // wtedy `null` i agregatu NIE dotykamy. Inicjatywa odrzucona zachowuje
+      // etap, na którym umarła; nadpisanie go `CLOSED` kłamałoby, że przeszła
+      // całą ścieżkę realizacji (canon §5.3: odrzucenie to dyspozycja, nie etap).
+      const stagePatch =
+        nextStage === null ? null : JSON.stringify({ initiativeId: id, lifecycleState: nextStage });
+      if (stagePatch !== null) try {
+        await client.query(
+          `INSERT INTO ie_aggregate_state
+             (organization_id, aggregate_type, aggregate_id, version, payload_json, updated_at)
+           VALUES (?, 'initiative', ?, 1, CAST(? AS jsonb), NOW())
+           ON CONFLICT (organization_id, aggregate_type, aggregate_id) DO UPDATE
+             SET version = ie_aggregate_state.version + 1,
+                 payload_json = ie_aggregate_state.payload_json || CAST(? AS jsonb),
+                 updated_at = NOW()`,
+          [orgId, id, stagePatch, stagePatch]
+        );
+      } catch (stageErr: unknown) {
+        // FAIL CLOSED, z jednym wyjątkiem: baza bez tabeli agregatu (stary
+        // bootstrap „thin"). Tam etapu nie ma gdzie zapisać i milczenie byłoby
+        // kłamstwem — dlatego głośny WARN, nie ciche `catch {}`.
+        const msg = String((stageErr as Error)?.message || stageErr || '');
+        if (!/ie_aggregate_state/i.test(msg) || !/does not exist|no such table/i.test(msg)) {
+          throw stageErr;
         }
+        logger.warn(
+          `[initiatives] etap silnika ${nextStage} NIE zapisany dla ${id}: brak tabeli ie_aggregate_state`
+        );
       }
+
+      // H1d — USUNIĘTE: domyślne okno śledzenia korzyści przy 'DONE'→'TRACKING'.
+      // Ani 'DONE', ani 'TRACKING' nie są kodami kolumny po P12 (CHECK
+      // `initiatives_status_check_p12`), a `BENEFITS_TRACKING` jest ETAPEM silnika,
+      // który mapuje się na ten sam kod `CLOSED` co `DELIVERED` i `CLOSED` —
+      // przejście nie przechodzi więc przez `isValidTransition` i ten kod był
+      // nieosiągalny. Kolumny `tracking_*` zostają nietknięte; właścicielem
+      // otwierania okna korzyści musi zostać ścieżka etapowa (patrz raport H1d,
+      // decyzja do właściciela). Nic tu nie zostało „po cichu wyłączone" — ta
+      // gałąź nie wykonała się ani razu od migracji P12.
 
       // Audit trail — ONE correlationId shared by both rows. It IS the
       // initiative_status_history primary key, and is also embedded in
@@ -1612,7 +1361,7 @@ export async function executeInitiativeTransition(
       // row; the actual delivery attempt still happens outside this
       // transaction (see the post-commit trigger below), but its durable
       // bookkeeping does not depend on that attempt ever running.
-      if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+      if (currentStatus !== InitiativeStatus.CLOSED && nextStatus === InitiativeStatus.CLOSED) {
         await createReceiptOnClosure(client, {
           organizationId: orgId,
           initiativeId: id,
@@ -1703,29 +1452,28 @@ export async function executeInitiativeTransition(
   // and retry independently of whether this call ever ran. Still
   // non-blocking by design — callers must not wait on downstream delivery
   // to get a response to the status change itself.
-  if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+  if (currentStatus !== InitiativeStatus.CLOSED && nextStatus === InitiativeStatus.CLOSED) {
     triggerImmediateDeliveryBestEffort(correlationId);
   }
 
   // Emit notifications (best-effort)
   try {
     const recipients = await getInitiativeNotificationRecipients(orgId, id);
-    const isModuleChange =
-      (currentStatus === 'PENDING_REVIEW' && nextStatus === 'REVIEW') ||
-      (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
-      (currentStatus === 'DONE' && nextStatus === 'TRACKING');
+    // H1d: „zmiana modułu" liczona przez `getModuleForStatus` (SSOT z
+    // `initiativeStatuses`), a nie przez trzy pary starych kodów, z których
+    // ŻADNA nie mogła być prawdziwa po P12 — powiadomienie o przeniesieniu
+    // między modułami nie wysyłało się nigdy.
+    const isModuleChange = willChangeModule(currentStatus as any, nextStatus as any);
 
     // 1. General status change notification to all stakeholders.
     // M13/R4: this is the SINGLE canonical status-change notification.
     // A → BLOCKED transition is escalated to CRITICAL and carries the
     // blocker reason (replaces the removed dedicated R4 emitter).
     const statusSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
-      nextStatus === 'BLOCKED' ? 'CRITICAL' : nextStatus === 'CANCELLED' ? 'WARNING' : 'INFO';
+      nextStatus === InitiativeStatus.REJECTED ? 'WARNING' : 'INFO';
     const statusTitle = isModuleChange
       ? 'Initiative moved to new module'
-      : nextStatus === 'BLOCKED'
-        ? 'Initiative blocked'
-        : 'Initiative status changed';
+      : 'Initiative status changed';
     await Promise.allSettled(
       recipients
         .filter((uid) => uid && uid !== actorId)
@@ -1742,7 +1490,7 @@ export async function executeInitiativeTransition(
             actorId,
             actorName,
             severity: statusSeverity,
-            priority: nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
+            priority: nextStatus === InitiativeStatus.REJECTED ? 'high' : 'normal',
             metadata: { from: currentStatus, to: nextStatus, reason, gate },
           })
         )

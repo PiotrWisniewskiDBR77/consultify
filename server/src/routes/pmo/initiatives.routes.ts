@@ -65,6 +65,7 @@ import { checkSimilarInitiatives } from '../../services/initiativeSimilarityServ
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
 import {
   executeApprovedEarlyInitiativeTransition,
+  listEarlyInitiativeTransitionProposals,
   proposeEarlyInitiativeTransition,
 } from '../../services/v8/transformationInitiativeTransitionAdapterService.js';
 import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
@@ -3106,6 +3107,39 @@ router.post(
 router.get('/by-status/:statuses', InitiativeController.getInitiativesByStatus);
 
 /**
+ * GET /api/initiatives/lifecycle-transition-proposals?status=pending
+ *
+ * H1b — SKRZYNKA RECENZENTA na poziomie organizacji. MUSI stać PRZED
+ * `router.get('/:id')` niżej: Express dopasowuje trasy w kolejności rejestracji,
+ * a `/:id` złapałoby ten jednosegmentowy adres i oddało 404 „initiative not found"
+ * zamiast listy (ta sama pułapka, co przy `/by-status/:statuses` wyżej).
+ *
+ * Fail-closed: `requireOrgRole('user')` + organizacja i tożsamość WYŁĄCZNIE
+ * z sesji (nigdy z ciała/zapytania), a serwis oddaje wiersz tylko autorowi
+ * propozycji albo recenzentowi wskazanemu w `reviewer_authority_json`.
+ * Odczyt — nie tworzy, nie zatwierdza i nie wykonuje niczego.
+ */
+router.get('/lifecycle-transition-proposals', requireOrgRole('user'), async (req: any, res: any) => {
+  const organizationId = String(req.user?.organizationId || '');
+  const viewerUserId = String(req.user?.id || '');
+  if (!organizationId || !viewerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
+  const status = String(req.query?.status || 'pending');
+  if (!['pending', 'approved', 'rejected', 'all'].includes(status))
+    return res.status(400).json({ code: 'INVALID_PROPOSAL_STATUS_FILTER' });
+  try {
+    const proposals = await listEarlyInitiativeTransitionProposals({
+      organizationId,
+      viewerUserId,
+      status: status as 'pending' | 'approved' | 'rejected' | 'all',
+    });
+    return res.json({ proposals });
+  } catch (error) {
+    logger.error('[M13 Initiatives] lifecycle transition proposals inbox failed', error);
+    return res.status(500).json({ code: 'INITIATIVE_LIFECYCLE_PROPOSALS_READ_FAILED' });
+  }
+});
+
+/**
  * GET /api/initiatives/:id
  * Get single initiative by ID
  */
@@ -3858,6 +3892,38 @@ const EarlyLifecycleProposalSchema = z.object({
   targetStatus: z.enum(['PROMOTED', 'PLANNING', 'SCHEDULED', 'EXECUTING', 'DONE']),
   reason: z.string().trim().min(1).max(2000),
 });
+
+/**
+ * GET /api/initiatives/:id/lifecycle-transition-proposals
+ *
+ * H1b — te same wiersze co skrzynka wyżej, zawężone do jednej inicjatywy
+ * (domyślnie WSZYSTKIE statusy, bo na karcie inicjatywy liczy się też ślad
+ * decyzji już podjętych). Ta sama bramka i ten sam serwis — zero własnego SQL.
+ */
+router.get(
+  '/:id/lifecycle-transition-proposals',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    const organizationId = String(req.user?.organizationId || '');
+    const viewerUserId = String(req.user?.id || '');
+    if (!organizationId || !viewerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
+    const status = String(req.query?.status || 'all');
+    if (!['pending', 'approved', 'rejected', 'all'].includes(status))
+      return res.status(400).json({ code: 'INVALID_PROPOSAL_STATUS_FILTER' });
+    try {
+      const proposals = await listEarlyInitiativeTransitionProposals({
+        organizationId,
+        viewerUserId,
+        initiativeId: String(req.params.id),
+        status: status as 'pending' | 'approved' | 'rejected' | 'all',
+      });
+      return res.json({ proposals });
+    } catch (error) {
+      logger.error('[M13 Initiatives] lifecycle transition proposals read failed', error);
+      return res.status(500).json({ code: 'INITIATIVE_LIFECYCLE_PROPOSALS_READ_FAILED' });
+    }
+  }
+);
 
 router.post(
   '/:id/lifecycle-transition-proposals',

@@ -702,7 +702,14 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
+const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'h1b-skrzynka-przejsc': {
+    label:
+      'H1b — Inicjatywy → „Do akceptacji" (REALNY <TransitionInboxSurface>: StandardTable + StandardPreview): skrzynka recenzenta przejść cyklu życia. &case=empty|off &lang=pl|en &theme=light|dark',
+    render: () => <H1bSkrzynkaPrzejscScreen />,
+  },
   's114b-narzedzia': {
     label:
       'S1.14b — naprawy Idea/Notes/Documents: &part=b1|b2|w3|b3|b6|w11 (realne ConvertToDialog, AccessBlockedModal, OrgSetupWizard, NotebookVersionHistory).',

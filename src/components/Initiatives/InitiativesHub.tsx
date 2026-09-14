@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Filter,
   GitBranch,
+  Inbox,
   Lightbulb,
   List,
   MoreVertical,
@@ -134,6 +135,7 @@ import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
 import { InitiativePreparationReadView } from './InitiativePreparationReadView';
+import { InitiativeWorkReportView } from './InitiativeWorkReportView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -159,6 +161,7 @@ import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { Menu2PresetDropdown } from './Menu2PresetDropdown';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
 import { PortfolioHealthView } from './PortfolioHealthView';
+import { TransitionInboxSurface } from './TransitionInboxSurface';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -270,13 +273,23 @@ interface InitiativesHubProps {
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
+const FOUR_BUTTONS_ENABLED = isInitiativesFourButtonsEnabled();
 // K5-8: "Work report" (4th Menu 2 tab) stays hidden until Codex ships the real
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
-const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
-  FOUR_BUTTONS_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
-);
+const WORK_REPORT_ENABLED = import.meta.env.VITE_INITIATIVES_WORK_REPORT === 'true';
+/* H1b (14.09) — „Do akceptacji": skrzynka recenzenta przejść cyklu życia.
+   Domyślnie OFF: wygląd idzie do właściciela na ZRZUCIE, nie przez „włącz
+   flagę i zobacz". Przy OFF zakładka nie istnieje ani w Menu 1, ani w zbiorze
+   dopuszczonych adresów — parytet z dzisiejszym ekranem jest zupełny. */
+const TRANSITION_INBOX_ENABLED = import.meta.env.VITE_TRANSITION_INBOX === 'true';
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
+  'list',
+  'plan',
+  'capacity',
+  ...(WORK_REPORT_ENABLED ? (['workReport'] as ModuleTab[]) : []),
+  ...(TRANSITION_INBOX_ENABLED ? (['transitionInbox'] as ModuleTab[]) : []),
+]);
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
   // A2 (DEC-498 §1): trzecia soczewka Menu 3 — lista parkingu — istnieje TYLKO
@@ -939,12 +952,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
-      ...(FOUR_BUTTONS_ENABLED
+      ...(WORK_REPORT_ENABLED
         ? [
             {
               id: 'workReport' as ModuleTab,
               label: t('initiatives.tabs.workReport', 'Work report'),
               icon: <Activity size={16} />,
+            },
+          ]
+        : []),
+      ...(TRANSITION_INBOX_ENABLED
+        ? [
+            {
+              id: 'transitionInbox' as ModuleTab,
+              label: t('initiatives.tabs.transitionInbox', 'For approval'),
+              icon: <Inbox size={16} />,
             },
           ]
         : []),
@@ -1937,6 +1959,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
+    if (activeTab === 'transitionInbox' && TRANSITION_INBOX_ENABLED) {
+      return <TransitionInboxSurface />;
+    }
     if (activeTab === 'plan') {
       return (
         <PlanScenarioSurface
@@ -2109,16 +2134,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
     }
 
+    if (activeTab === 'workReport' && WORK_REPORT_ENABLED) {
+      return (
+        <InitiativeWorkReportView
+          currentProjectId={currentProjectId}
+          currentUserId={String((currentUser as any)?.id || '')}
+          currentOrganizationId={String(currentOrganization?.id || '')}
+        />
+      );
+    }
+
     // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
     // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
-    if (
-      (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') ||
-      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
-    ) {
+    if (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}
-          report={activeTab === 'workReport'}
           onOpen={handleOpenInitiativeDocument}
         />
       );

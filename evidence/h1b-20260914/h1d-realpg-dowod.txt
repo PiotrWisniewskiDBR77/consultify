@@ -1,0 +1,16 @@
+H1d — DOWOD RealPG. Kontener h1d-pg (pgvector:pg18), baza h1d po strict migrate.
+Data: 2026-09-14T08:22:32Z  HEAD: 63d731ba61
+
+=== 1. CHECK, KTORY UNIEWAZNIA STARE KODY ===
+CHECK ((status = ANY (ARRAY['PROPOSED'::text, 'DRAFT'::text, 'PENDING_APPROVAL'::text, 'APPROVED'::text, 'IN_EXECUTION'::text, 'CLOSED'::text, 'REJECTED'::text])))
+
+=== 2. STARE PREDYKATY = ZERO WIERSZY (dowod martwoty, nie opinia) ===
+ status_scheduled | status_executing | status_done | status_promoted | status_planning | status_blocked | wszystkie 
+------------------+------------------+-------------+-----------------+-----------------+----------------+-----------
+                0 |                0 |           0 |               0 |               0 |              0 |         9
+(1 row)
+
+=== 3. KOLUMNY, KTORYCH NIE MA PO strict migrate (stemple nieosiagalne mimo naprawy literalu) ===
+review_requested_at: 0
+approved_at: 0
+execution_started_at: 1

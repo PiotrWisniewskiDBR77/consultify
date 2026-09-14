@@ -3,7 +3,7 @@
  * K5-8 (odbiór na żywo, 2026-09-13): Piotr — „nie wiem, co to jest całkiem" —
  * o surowej zakładce Menu 2 „Work report" (`InitiativePreparationReadView`).
  * Docelowy kreator „Raport z pracy" buduje Codex w F2-1 E4. Do tego czasu
- * zakładka i jej trasa mają być ukryte za flagą `VITE_INITIATIVES_FOUR_BUTTONS`
+ * zakładka i jej trasa mają być ukryte za flagą `VITE_INITIATIVES_WORK_REPORT`
  * (domyślnie OFF). Ten test broni obu stanów: OFF = 3 przyciski Menu 2
  * (Initiatives/Plan/Load), ON = 4 (+ Work report).
  *
@@ -126,9 +126,9 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('K5-8: Menu 2 "Work report" tab gated by VITE_INITIATIVES_FOUR_BUTTONS', () => {
+describe('Work report tab gated by VITE_INITIATIVES_WORK_REPORT', () => {
   it('flag OFF (default): shows exactly 3 Menu 2 buttons, no Work report', async () => {
-    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
     await mount();
     await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
     const tabs = screen.getAllByRole('tab').map((el) => el.textContent);
@@ -140,7 +140,7 @@ describe('K5-8: Menu 2 "Work report" tab gated by VITE_INITIATIVES_FOUR_BUTTONS'
   });
 
   it('flag OFF: visiting ?tab=workReport directly redirects to the Initiatives list, not the raw read-view', async () => {
-    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
     await mount('/initiatives?tab=workReport');
     await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
     expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
@@ -148,12 +148,22 @@ describe('K5-8: Menu 2 "Work report" tab gated by VITE_INITIATIVES_FOUR_BUTTONS'
     expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
   });
 
+  it('evaluates the parking deep link with both flags OFF and keeps the canonical Menu 3 unchanged', async () => {
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
+    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'false');
+    await mount('/initiatives?lens=parking');
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
+    expect(screen.queryByTestId('standard-chip-parking')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^standard-chip-/)).toHaveLength(0);
+  });
+
   it('flag ON: shows 4 Menu 2 buttons including Work report, and the tab opens the read-view', async () => {
-    vi.stubEnv('VITE_INITIATIVES_FOUR_BUTTONS', 'true');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
     await mount();
     const workReportTab = await screen.findByRole('tab', { name: 'Work report' });
     expect(screen.getAllByRole('tab')).toHaveLength(4);
     fireEvent.click(workReportTab);
-    expect(await screen.findByText(/initiatives in the current scope/i)).toBeInTheDocument();
+    expect(await screen.findByText('Work report creator')).toBeInTheDocument();
   });
 });
