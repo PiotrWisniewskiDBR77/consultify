@@ -21,13 +21,7 @@
  * `status === 'published'` client-side, picking the newest version. Do not
  * ask the backend for a new endpoint here — one already exists.
  */
-import {
-  AlertTriangle,
-  BookOpen,
-  Library as LibraryIcon,
-  PlayCircle,
-  RefreshCw,
-} from 'lucide-react';
+import { BookOpen, Library as LibraryIcon, PlayCircle } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
+import { EmptyState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardRowMenu,
@@ -439,7 +434,15 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
           // Every refusal/readback failure is ambiguous after POST dispatch.
           // Preserve the exact key until an exact canonical readback succeeds.
         } else {
-          const reason = e?.message || `Failed to start ${row.name}`;
+          const offline =
+            e?.name === 'AbortError' || /abort|network|failed to fetch/i.test(String(e?.message || ''));
+          const reason = offline
+            ? isPolish
+              ? 'Żądanie zostało przerwane. Sprawdź połączenie i spróbuj ponownie.'
+              : 'The request was interrupted. Check your connection and try again.'
+            : isPolish
+              ? 'Nie udało się uruchomić oceny.'
+              : `Failed to start ${row.name}.`;
           toast.error(reason, { id: toastId });
           setStartError(reason);
         }
@@ -625,25 +628,15 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
     <div className="flex h-full min-w-0 overflow-hidden">
       <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-auto p-4">
         {startError && (
-          <div
-            role="alert"
-            className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
-          >
-            <div className="flex min-w-0 items-start gap-2">
-              <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-              <span>{startError}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
-              }
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
-            >
-              <RefreshCw size={13} />
-              {isPolish ? 'Ponów' : 'Retry'}
-            </button>
-          </div>
+          <EmptyState
+            variant="error"
+            compact
+            title={isPolish ? 'Nie udało się uruchomić oceny' : 'Could not start assessment'}
+            description={startError}
+            onRetry={() =>
+              failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
+            }
+          />
         )}
         <StandardTable
           columns={columns}
