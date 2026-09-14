@@ -3,8 +3,15 @@ import { ACTIVE_STATUSES } from '@/utils/initiativeHelpers';
 import { InitiativeStatus, type PortfolioInitiative } from '../../types';
 import type { KanbanScope } from '../Portfolio/PortfolioKanbanView';
 
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-495] Zakres rejestru Inicjatyw = zakres kanbana
+ * plus „Archiwalne". `KanbanScope` zostaje nietkniety, bo kolumny kanbana maja
+ * wlasny slownik statusow; rejestr rozszerza tylko WIDOCZNOSC wierszy.
+ */
+export type RegisterScope = KanbanScope | 'archived';
+
 export interface InitiativeCreateRevealState {
-  scope: KanbanScope;
+  scope: RegisterScope;
   activeStatusFilter: string | null;
 }
 
@@ -90,6 +97,12 @@ export function getCreatedInitiativeRevealState(
       scope: 'all',
       activeStatusFilter: status,
     };
+  }
+
+  // DEC-495: nowa inicjatywa nigdy nie jest archiwalna, wiec widok „Archiwalne"
+  // musi ustapic, inaczej „utworz" konczy sie pusta tabela.
+  if (current.scope === 'archived') {
+    return { scope: 'all', activeStatusFilter: current.activeStatusFilter };
   }
 
   if (current.scope === 'active' && !ACTIVE_STATUSES.includes(status)) {

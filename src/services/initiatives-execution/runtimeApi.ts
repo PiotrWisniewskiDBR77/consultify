@@ -1322,6 +1322,12 @@ export interface LegacyInitiativeApiRow {
   projectId?: string | null;
   /** DEC-424 flaga wstrzymania (kontroler zwraca `onHold: Boolean(on_hold)`). */
   onHold?: boolean | null;
+  /**
+   * DEC-495 flaga archiwum (kontroler zwraca `archived: Boolean(archived)`).
+   * To JEDYNA prawda o archiwum — status 'ARCHIVED' nie istnieje od migracji
+   * P12, a `/archive` zapisuje wylacznie te kolumne.
+   */
+  archived?: boolean | null;
   name?: string | null;
   title?: string | null;
   summary?: string | null;
@@ -1376,10 +1382,27 @@ export interface LegacyInitiativeApiRow {
  * `mergeLegacyInitiativesIntoRegister` (initiativeRegisterProjection.ts),
  * żeby żaden rekord nie znikał tylko dlatego, że powstał inną ścieżką zapisu.
  */
+export interface ListLegacyInitiativesOptions {
+  signal?: AbortSignal;
+  /**
+   * DEC-495: `true` przywoluje rowniez zarchiwizowane wiersze. Domyslnie trasa
+   * ich NIE zwraca (kontrakt jak w `report-builder`), wiec rejestr Inicjatyw —
+   * jedyny ekran z przelacznikiem „Aktualne / Archiwalne" — musi poprosic
+   * jawnie, zeby miec co pokazac po przelaczeniu.
+   */
+  includeArchived?: boolean;
+}
+
 export async function listLegacyInitiatives(
-  signal?: AbortSignal
+  signalOrOptions?: AbortSignal | ListLegacyInitiativesOptions
 ): Promise<LegacyInitiativeApiRow[]> {
-  const response = await fetch('/api/initiatives', { credentials: 'include', signal });
+  const options: ListLegacyInitiativesOptions =
+    signalOrOptions instanceof AbortSignal
+      ? { signal: signalOrOptions }
+      : (signalOrOptions ?? {});
+  const { signal, includeArchived } = options;
+  const url = includeArchived ? '/api/initiatives?includeArchived=true' : '/api/initiatives';
+  const response = await fetch(url, { credentials: 'include', signal });
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return Array.isArray(body) ? (body as LegacyInitiativeApiRow[]) : [];
