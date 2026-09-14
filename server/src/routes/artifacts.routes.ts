@@ -108,7 +108,7 @@ function canPublishOrgTemplate(roleKey: string | null): boolean {
   );
 }
 
-function buildActionTargetPayload(artifact: {
+export function buildActionTargetPayload(artifact: {
   artifactId: string;
   originRuntime?: string | null;
   originRecordId?: string | null;
@@ -138,6 +138,28 @@ function buildActionTargetPayload(artifact: {
   // /reports/builder/{id} (that opens an empty "Add first block" builder =
   // looks like data loss). Route back to the assessment run it came from.
   if (originRuntime === 'assessment_report') {
+    // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P13 — pod tym samym runtime żyją
+    // DWA różne magazyny źródłowe i mają różne adresy:
+    //   • promocja warsztatu P28 (AssessmentWorkbenchService.recordPromotion)
+    //     → `assessments`, adres `/assessment?assessmentId=<id>`,
+    //   • raport wydany z sesji jądra metodycznego (method-core.routes.ts,
+    //     `assessment-report.docx`) → `method_sessions`, adres
+    //     `/assessment/drd/<sessionId>`.
+    // Bez tego rozróżnienia raport z sesji prowadziłby pod adres, który tego
+    // identyfikatora nie zna — czyli w pustkę (ta sama klasa błędu, co
+    // HOTFIX task#63 opisany niżej).
+    if (String(originSummary?.sourceType ?? '') === 'METHOD_SESSION') {
+      return {
+        artifactId: artifact.artifactId,
+        originRuntime,
+        originRecordId,
+        openPath: `/assessment/drd/${encodeURIComponent(originRecordId)}`,
+        exportPath: `/api/method/sessions/${encodeURIComponent(originRecordId)}/assessment-report.docx`,
+        deletePath: null,
+        reviewPath,
+        authority: 'method_core',
+      };
+    }
     return {
       artifactId: artifact.artifactId,
       originRuntime,

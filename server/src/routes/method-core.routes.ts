@@ -98,6 +98,8 @@ import {
 import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
 import { buildAssessmentDrdReportSchema } from '../services/assessment/assessmentDrdReportSchemaService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
+import { ASSESSMENT_REPORT_INSUFFICIENT_COVERAGE } from '../services/assessment/assessmentReportCoverage.js';
+import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Wiring — one bridge, one session service instance, matching how the rest
@@ -578,6 +580,22 @@ router.get(
         req.params.sessionId,
         isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
       );
+
+      // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 (`b7ac5351`) — nie wydajemy
+      // pliku z oceny, która nie ma dość odpowiedzi. Próg i pełne
+      // uzasadnienie: `assessmentReportCoverage.ts`. Odpowiedź NIESIE pomiar,
+      // żeby ekran mógł powiedzieć, ile brakuje i gdzie — zamiast samego
+      // „nie można".
+      const coverage = reportContract.coverage;
+      if (coverage && !coverage.sufficient) {
+        res.status(409).json({
+          error: 'Assessment coverage is too low to issue a report.',
+          code: ASSESSMENT_REPORT_INSUFFICIENT_COVERAGE,
+          coverage,
+        });
+        return;
+      }
+
       const buffer = await renderDocumentSchemaToDocxBuffer(
         buildAssessmentDrdReportSchema(reportContract)
       );
@@ -594,6 +612,61 @@ router.get(
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^A-Za-z0-9._-]/g, '_');
+      // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P13 (`56c2cc19`) — wydany raport
+      // wchodzi do Materiałów/Dokumentów TYM SAMYM mechanizmem, co każdy inny
+      // dokument: kanoniczny rejestr artefaktów (`registerArtifactOrigin`,
+      // ten sam, którego używa `report-builder.routes.ts`
+      // syncArtifactRegistryForReport i Document Studio). Żadnego drugiego
+      // magazynu. Rejestracja jest idempotentna po parze
+      // (originRuntime, originRecordId), więc powtórne pobranie odświeża ten
+      // sam wiersz zamiast mnożyć kopie — dokładnie o to prosił zgłaszający
+      // („have the last version avalible in materilas-documents").
+      //
+      // Niepowodzenie rejestracji NIE przerywa pobrania: użytkownik ma dostać
+      // swój plik nawet wtedy, gdy rejestr jest wyłączony (ENABLE_V8_GLOBAL)
+      // albo chwilowo niedostępny. Ślad idzie do logu, nie do odpowiedzi.
+      try {
+        const { registerArtifactOrigin } = await import(
+          '../services/v8/artifactRegistryService.js'
+        );
+        await registerArtifactOrigin({
+          organizationId,
+          outputType: 'report',
+          artifactFamily: 'document',
+          originRuntime: 'assessment_report',
+          originRecordId: req.params.sessionId,
+          // Tytuł czytelny dla człowieka, nie nazwa pliku: w Materiałach
+          // wiersz stoi obok dokumentów nazwanych zdaniem, a `Raport_DRD_
+          // <uuid>_<data>` wygląda tam jak śmieć po eksporcie.
+          titleSnapshot: reportContract.sessionLabel?.displayName
+            ? `DRD report — ${reportContract.sessionLabel.displayName}`
+            : `DRD report — ${date}`,
+          ownerUserId: req.userId ?? null,
+          createdBy: req.userId ?? 'system',
+          deliveryState: reportContract.outputId ? 'ready' : 'draft',
+          visibilityScope: 'organization',
+          projectId: reportContract.sessionLabel?.projectId ?? null,
+          originSummary: {
+            // Ten znacznik rozstrzyga, DOKĄD prowadzi „Otwórz" —
+            // `buildActionTargetPayload` w `artifacts.routes.ts`. Sesja
+            // jądra metodycznego mieszka pod `/assessment/drd/:sessionId`,
+            // a nie pod `/assessment?assessmentId=` (to adres promocji
+            // warsztatu P28, inny magazyn).
+            sourceType: 'METHOD_SESSION',
+            sourceId: req.params.sessionId,
+            outputId: reportContract.outputId ?? null,
+            methodVersion: reportContract.methodVersion,
+            coveragePercent: reportContract.coverage?.percent ?? null,
+            sourceTable: 'method_sessions',
+          },
+        });
+      } catch (registryError) {
+        logger.warn(
+          '[method-core] assessment-report.docx: nie udało się zarejestrować raportu w Materiałach',
+          { sessionId: req.params.sessionId, registryError }
+        );
+      }
+
       res
         .status(200)
         .set({
