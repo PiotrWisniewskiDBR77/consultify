@@ -9,6 +9,11 @@ import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
 import { solvePlanScenario, type PlanSolverHint } from './planSolver.js';
 import { encodePlanSolverReason } from './planSolverReason.js';
+import type {
+  PlanCriticalPath,
+  PlanDependencyAnalysisResult,
+  PlanDependencyObservation,
+} from '../../services/ai/planDependencyAnalysisService.js';
 
 export interface PlanAnalysisProposal {
   proposalId: string;
@@ -20,6 +25,11 @@ export interface PlanAnalysisProposal {
   rationale: string;
   conflicts: string[];
   changes: Array<{ initiativeId: string; before: PlannedWindow; after: PlannedWindow }>;
+  analysisSource: 'SOLVER' | 'AI';
+  dependencyObservations: PlanDependencyObservation[];
+  criticalPaths: PlanCriticalPath[];
+  analysisModel: string | null;
+  analyzedAt: string | null;
   requestedBy: string;
   reviewedBy: string | null;
   reviewRationale: string | null;
@@ -35,6 +45,8 @@ export async function createPlanAnalysisProposal(
     capacityScenarioId?: string;
     /** P15-K6: przesunięcia z wybranego wariantu doradcy (patrz `PlanSolverHint`). */
     hints?: PlanSolverHint[];
+    /** DEC-497 P2 E1: wynik LLM zweryfikowany względem dokładnego snapshotu planu. */
+    dependencyAnalysis?: PlanDependencyAnalysisResult;
   }>
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
@@ -47,6 +59,13 @@ export async function createPlanAnalysisProposal(
       throw new MaterialCommandValidationError('Exact Plan Scenario input version required');
     if (source.payload.status !== 'DRAFT')
       throw new MaterialCommandValidationError('Analysis proposals may target only a DRAFT Plan');
+    if (
+      envelope.payload.dependencyAnalysis &&
+      envelope.payload.dependencyAnalysis.inputScenarioVersion !== source.payload.scenarioVersion
+    )
+      throw new MaterialCommandValidationError(
+        'Exact AI dependency analysis input version required'
+      );
     const capacity = envelope.payload.capacityScenarioId
       ? await tx.getRelatedAggregateForUpdate<CapacityScenario>(
           envelope.organizationId,
@@ -126,6 +145,11 @@ export async function createPlanAnalysisProposal(
       rationale: encodePlanSolverReason({ code: 'ONE_FEASIBLE_PERIOD' }),
       conflicts: solved.conflicts,
       changes,
+      analysisSource: envelope.payload.dependencyAnalysis ? 'AI' : 'SOLVER',
+      dependencyObservations: envelope.payload.dependencyAnalysis?.observations ?? [],
+      criticalPaths: envelope.payload.dependencyAnalysis?.criticalPaths ?? [],
+      analysisModel: envelope.payload.dependencyAnalysis?.model ?? null,
+      analyzedAt: envelope.payload.dependencyAnalysis?.analyzedAt ?? null,
       requestedBy: envelope.actorId,
       reviewedBy: null,
       reviewRationale: null,
