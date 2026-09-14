@@ -1,0 +1,115 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/enterprise-trust-pack-20260913
+
+ ✓ server/src/services/__tests__/organizationExportInterviewPrivacy.test.ts > Interview export D18 projection > redacts answer, payload, transcript and material pointers for another actor without mutating storage values 67ms
+ ✓ server/src/services/__tests__/organizationExportInterviewPrivacy.test.ts > Interview export D18 projection > retains full anonymous respondent and nonanonymous answer content 1ms
+ ✓ server/src/services/__tests__/organizationExportInterviewPrivacy.test.ts > Interview export D18 projection > missing actor and missing respondent cannot turn off the anonymity wall 0ms
+ ✓ server/src/services/__tests__/organizationExportInterviewPrivacy.test.ts > Interview export D18 projection > redacts anonymous notes, evidence locations and session summaries 0ms
+ ✓ server/src/services/__tests__/organizationExportInterviewPrivacy.test.ts > Interview export D18 projection > redacts AI recommendations, feedback and justification while preserving scores in TEXT and JSON snapshots 1ms
+ ✓ server/src/services/__tests__/organizationExportInterviewPrivacy.test.ts > Interview export D18 projection > malformed anonymous AI snapshots fail closed instead of returning raw text 0ms
+ ✓ server/src/services/__tests__/organizationExportArchiveService.test.ts > organization enterprise archive > writes a ZIP receipt with JSON and table-specific CSV hashes and explicit omissions 76ms
+stdout | server/src/routes/organization/__tests__/ownershipExportPermission.test.ts
+2026-09-13 19:36:53:3653 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-13 19:36:53:3653 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-13 19:36:53:3653 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-13 19:36:53:3653 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-13 19:36:53:3653 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > exports manual writer fields in JSON and CSV without exporting supplemental payloads or foreign rows 57ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps AI proposal lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps private notebook lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps partial provenance lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps legacy source lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps missing source lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps linked initiative lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps linked project lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > keeps typed execution task lineage without copied body 1ms
+ ✓ server/src/services/__tests__/organizationExportTaskContract.test.ts > organization export personal task content boundary > does not query tasks after description type drift 1ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > keeps org/type/id/version and source lineage distinct while deferring private payload in JSON and CSV 65ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > keeps audit/card/receipt/relation versions and typed task linkage without copying free text 2ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > unknown generic aggregate type never gains payload authority from organization ownership 1ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > schema mismatch blocks the provisional source contract before any row query 1ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > verified manual Hub provenance plus registration preserves current content and two distinct proposal version meanings 2ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: source-backed 4ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: private-reference 2ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: missing-registration 1ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: foreign-registration 1ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: wrong-source-version 2ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: wrong-proposal-version 2ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > manual source label alone does not authorize content: foreign-project 1ms
+ ✓ server/src/services/__tests__/organizationExportCanonicalContract.test.ts > canonical export source contracts, mock client only > current manual parent cannot grant historical or typed child payload authority 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > denies timestamp-compatible Finding content without an immutable generation receipt 60ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > denies a creation receipt whose snapshot collection was not verified 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > denies edit then restore when a permanent invalidation marker remains 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > denies a foreign generation receipt even with matching Finding and run identifiers 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > permits unchanged nonanonymous snapshot without mutating source 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > permits anonymous respondent but denies other admin 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies foreign question 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies foreign session 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies foreign finding 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies foreign insight 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies missing receipt 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies ambiguous receipt 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies receipt without target kind 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies cross-kind initiative receipt for Decision target 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies changed copied body 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies changed source after handoff 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies unknown anonymity 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies NULL provenance 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies unconfirmed readback 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies malformed generation metadata 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies approved organization knowledge 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies selected context document 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies unlisted source session 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies literal fingerprint with changed excerpt 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies tombstoned source 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision content authority > denies unknown pointer 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision generation-to-finding provenance > denies failed insight retaining an older complete enrichment stamp 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision generation-to-finding provenance > denies generating insight retaining an older complete enrichment stamp 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision generation-to-finding provenance > denies a stale finding created before the current completed generation 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Interview Decision generation-to-finding provenance > permits a confirmed finding created from the current completed generation 0ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision source-aware export JSON CSV > exports public with actor-scoped body and private supplemental exclusion 8ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision source-aware export JSON CSV > exports respondent with actor-scoped body and private supplemental exclusion 3ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision source-aware export JSON CSV > exports other admin with actor-scoped body and private supplemental exclusion 9ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by private customPrompt from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by malformed filters from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by wrong customPrompt type from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by filters topicFocus from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by scope topic_focus from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by stored topic_focus_json from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by generation topicFocus from JSON and CSV 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > excludes copied content influenced by missing topic provenance from JSON and CSV 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision prompt-input privacy > preserves legal empty prompt inputs and unchanged source 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision evidence-linked KB privacy > excludes copied body with private KB despite empty contextDocuments 2ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision evidence-linked KB privacy > excludes copied body with unresolved evidence despite empty contextDocuments 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision evidence-linked KB privacy > excludes copied body with lookup failure despite empty contextDocuments 1ms
+ ✓ server/src/services/__tests__/organizationExportDecisionPrivacy.test.ts > Decision evidence-linked KB privacy > excludes copied body with historical missing stamp despite empty contextDocuments 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > keeps same-name public and v8 records separate in JSON and CSV with exact counts 55ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > owner-only selection does not export counterparty rows and recursively strips credentials 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > unknown relation is not queried and makes completeness false 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > new schema column is never exported and degrades only that column 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > security exclusions are never queried and do not imply truncation 0ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > catalog failure produces no successful file or completeness claim 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > changed column type drops that column from the projection, not the table 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > removed excluded column is schema drift, not a silently changed complete contract 0ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > schema qualified export policy behavior > indirect child cannot use a parent whose approved schema drifted 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > K3b: rozjazd kolumn korzenia daje eksport częściowy, nie 500 > układ A — kolumny SĄ w bazie: pełny eksport, kontrakt kompletny 0ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > K3b: rozjazd kolumn korzenia daje eksport częściowy, nie 500 > układ B — kolumn NIE MA w bazie: eksport częściowy z jawnym wpisem, bez wyjątku 5ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > K3b: rozjazd kolumn korzenia daje eksport częściowy, nie 500 > korzeń bez kolumny właściciela nadal zawodzi zamknięciem (fail-closed) 1ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > CSV durable export scope > retains the exact manifest, omitted scope and business counts without changing business records 88ms
+ ✓ server/src/services/__tests__/organizationExportService.contract.test.ts > CSV durable export scope > rejects reserved metadata identity collisions 0ms
+stdout | server/src/routes/organization/__tests__/ownershipExportPermission.test.ts
+2026-09-13 19:36:54:3654 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/organization/__tests__/ownershipExportPermission.test.ts
+2026-09-13 19:36:54:3654 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+ ✓ server/src/routes/organization/__tests__/ownershipExportPermission.test.ts > organization full-export owner permission > denies an active administrator before checking the full-export permission 31ms
+ ✓ server/src/routes/organization/__tests__/ownershipExportPermission.test.ts > organization full-export owner permission > denies an owner without ORGANIZATION_EXPORT_FULL 0ms
+ ✓ server/src/routes/organization/__tests__/ownershipExportPermission.test.ts > organization full-export owner permission > accepts only the active owner with ORGANIZATION_EXPORT_FULL 1ms
+
+ Test Files  7 passed (7)
+      Tests  93 passed (93)
+   Start at  19:36:51
+   Duration  3.20s (transform 3.51s, setup 1.56s, import 4.61s, tests 610ms, environment 5.80s)
+

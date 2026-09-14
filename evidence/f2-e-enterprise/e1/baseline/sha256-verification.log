@@ -1,0 +1,10 @@
+live-schema-counts.tsv: OK
+live-columns.tsv: OK
+live-primary-keys.tsv: OK
+live-foreign-keys.tsv: OK
+live-table-columns.tsv: OK
+staging-schema-inventory.json: OK
+base-contract-classified-tables.json: OK
+classification-guard-red.log: OK
+classification-guard-instrument-green.log: OK
+generator-determinism.log: OK

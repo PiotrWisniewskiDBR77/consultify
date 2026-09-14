@@ -1,0 +1,71 @@
+{
+  "policyVersion": "organization-export-required-lifecycle-state-e1-1",
+  "credentialStateRule": "Credential exchange state is excluded through exact whole-table CREDENTIAL_TABLES entries; business lifecycle state is exported only for the identities below.",
+  "tables": [
+    {
+      "schema": "public",
+      "table": "artifact_handoff_proposals",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "artifact_lineage_operation_claims",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "chat_target_mapping_receipts",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "lane_decisions",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "method_sessions",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "myw_agent_materialization_proposals",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "partner_organizations",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "teresa_proposals",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "v8_ai_suggestions",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "v8_execution_runs",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "v8_lane_decisions",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "v8_notification_records",
+      "column": "state"
+    },
+    {
+      "schema": "public",
+      "table": "v8_workspace_sessions",
+      "column": "state"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "baseCommit": "0f0107b93c051b3ced9d3aafce740b36ac457f61",
+  "counts": {
+    "EXPORT": 21,
+    "EXCLUDE_SECURITY": 4,
+    "total": 25
+  },
+  "tables": [
+    {
+      "schema": "public",
+      "table": "api_keys",
+      "category": "EXCLUDE_SECURITY",
+      "source": "server/src/services/organizationExportContract.ts generated security exclusion"
+    },
+    {
+      "schema": "public",
+      "table": "decisions",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportDecisionContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_aggregate_relations",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_aggregate_state",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_audit_events",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_command_receipts",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_initiative_card_selection",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_initiative_card_versions",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "ie_outbox_events",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportCanonicalContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "integration_secrets",
+      "category": "EXCLUDE_SECURITY",
+      "source": "server/src/services/organizationExportContract.ts generated security exclusion"
+    },
+    {
+      "schema": "public",
+      "table": "interview_assignments",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportInterviewContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_evidence",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportInterviewContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insight_evidence_pointers",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportDecisionContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insight_findings",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportDecisionContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insight_handoffs",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportDecisionContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_insights",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportDecisionContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_notes",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportInterviewContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_questions",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportInterviewContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "interview_sessions",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportInterviewContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "organizations",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "project_members",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportMvpContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "projects",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportMvpContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "refresh_tokens",
+      "category": "EXCLUDE_SECURITY",
+      "source": "server/src/services/organizationExportContract.ts generated security exclusion"
+    },
+    {
+      "schema": "public",
+      "table": "tasks",
+      "category": "EXPORT",
+      "source": "server/src/services/organizationExportTaskContract.ts"
+    },
+    {
+      "schema": "public",
+      "table": "user_sessions",
+      "category": "EXCLUDE_SECURITY",
+      "source": "server/src/services/organizationExportContract.ts generated security exclusion"
+    }
+  ]
+}

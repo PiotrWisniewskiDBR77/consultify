@@ -1,0 +1,76 @@
+{
+  "physicalNameCollisions": 119,
+  "v8Relations": 121,
+  "v8QualifiedEvidenceRelations": 2,
+  "v8UnqualifiedEvidenceRelations": 0,
+  "v8CategoryCounts": {
+    "EXPORT": 2,
+    "EXCLUDE_SECURITY": 119,
+    "DERIVED": 0
+  },
+  "qualifiedEvidence": [
+    {
+      "identity": "v8.v8_feature_flags",
+      "source": {
+        "path": "server/src/services/v8/featureFlagService.ts",
+        "line": 63,
+        "kind": "SQL_FROM"
+      },
+      "lineText": "`SELECT module, enabled FROM v8.v8_feature_flags WHERE organization_id = $1`,"
+    },
+    {
+      "identity": "v8.v8_feature_flags",
+      "source": {
+        "path": "server/src/services/v8/featureFlagService.ts",
+        "line": 213,
+        "kind": "SQL_FROM"
+      },
+      "lineText": "`SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,"
+    },
+    {
+      "identity": "v8.v8_feature_flags",
+      "source": {
+        "path": "server/src/services/v8/featureFlagService.ts",
+        "line": 245,
+        "kind": "SQL_FROM"
+      },
+      "lineText": "`SELECT organization_id, module, enabled, updated_at FROM v8.v8_feature_flags ORDER BY organization_id, module`,"
+    },
+    {
+      "identity": "v8.v8_shadow_comparisons",
+      "source": {
+        "path": "server/src/services/v8/shadowModeService.ts",
+        "line": 200,
+        "kind": "SQL_INSERT_INTO"
+      },
+      "lineText": "`INSERT INTO v8.v8_shadow_comparisons"
+    },
+    {
+      "identity": "v8.v8_shadow_comparisons",
+      "source": {
+        "path": "server/src/services/v8/shadowModeService.ts",
+        "line": 273,
+        "kind": "SQL_FROM"
+      },
+      "lineText": "FROM v8.v8_shadow_comparisons"
+    },
+    {
+      "identity": "v8.v8_shadow_comparisons",
+      "source": {
+        "path": "server/src/services/v8/shadowModeService.ts",
+        "line": 283,
+        "kind": "SQL_FROM"
+      },
+      "lineText": "`SELECT COUNT(*) as count FROM v8.v8_shadow_comparisons"
+    },
+    {
+      "identity": "v8.v8_shadow_comparisons",
+      "source": {
+        "path": "server/src/services/v8/shadowModeService.ts",
+        "line": 323,
+        "kind": "SQL_FROM"
+      },
+      "lineText": "FROM v8.v8_shadow_comparisons"
+    }
+  ]
+}

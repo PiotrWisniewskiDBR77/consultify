@@ -116,6 +116,8 @@ export interface OrganizationExportResult {
     includedSchemas: string[];
     unresolvedTables: Array<{ table: string; reason: string }>;
     excludedTables: Array<{ table: string; reason: string }>;
+    derivedTables?: Array<{ table: string; reason: string; derivedFrom: unknown }>;
+    notIncluded?: Array<{ scope: string; reason: string }>;
     excludedColumns: Array<{ table: string; classes: string[]; count: number; reason: string }>;
   };
   totalRows: number;
