@@ -123,7 +123,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
         setLoadError(null);
         const response = await Api.getAppearancePreferences();
         if (!response?.preferences) {
-          throw new Error('Appearance preferences response was missing preferences');
+          throw new Error(
+            t(
+              'settings.appearance.missingPreferencesError',
+              'Appearance preferences response was missing preferences'
+            )
+          );
         }
         const savedTheme = response?.preferences?.theme as Theme;
         const savedAccent = response?.preferences?.accentColor;
@@ -152,7 +157,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           applyFontScale(savedFontScale);
         }
       } catch (err: unknown) {
-        setLoadError(normalizeApiErrorMessage(err, 'Failed to load appearance preferences'));
+        setLoadError(
+          normalizeApiErrorMessage(
+            err,
+            t('settings.appearance.loadError', 'Failed to load appearance preferences')
+          )
+        );
       } finally {
         setLoading(false);
       }
@@ -196,7 +206,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       await Api.saveAppearancePreferences({ theme, accentColor, density, fontScale });
       const response = await Api.getAppearancePreferences();
       if (!response?.preferences) {
-        throw new Error('Appearance settings save was not confirmed by the server');
+        throw new Error(
+          t(
+            'settings.appearance.saveNotConfirmedError',
+            'Appearance settings save was not confirmed by the server'
+          )
+        );
       }
       const nextTheme = response.preferences.theme as Theme;
       const nextAccent = response.preferences.accentColor;
@@ -208,7 +223,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
         nextDensity !== density ||
         nextFontScale !== fontScale
       ) {
-        throw new Error('Appearance settings save was not confirmed by the server');
+        throw new Error(
+          t(
+            'settings.appearance.saveNotConfirmedError',
+            'Appearance settings save was not confirmed by the server'
+          )
+        );
       }
       toggleTheme(nextTheme);
       setAccentColor(nextAccent);
@@ -262,7 +282,10 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   if (loadError) {
     return (
       <div className={cn('space-y-6', className)}>
-        <DegradedState title="Appearance preferences unavailable" description={loadError} />
+        <DegradedState
+          title={t('settings.appearance.unavailable', 'Appearance preferences unavailable')}
+          description={loadError}
+        />
       </div>
     );
   }

@@ -304,10 +304,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
   const handleTrustLocation = async (id: string, trusted: boolean) => {
     try {
       await (Api as any).put(`/api/user/security/login-locations/${id}/trust`, { trusted });
-      toast.success(trusted ? 'Location marked as trusted' : 'Location unmarked');
+      toast.success(
+        trusted
+          ? t('settings.advancedSecuritySettings.locationTrusted', 'Location marked as trusted')
+          : t('settings.advancedSecuritySettings.locationUntrusted', 'Location unmarked')
+      );
       loadData();
     } catch (error) {
-      toast.error('Failed to update location');
+      toast.error(t('settings.advancedSecuritySettings.locationUpdateError', 'Failed to update location'));
     }
   };
 
@@ -315,10 +319,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
   const handleAcknowledgeActivity = async (id: string) => {
     try {
       await (Api as any).put(`/api/user/security/suspicious-activities/${id}/acknowledge`);
-      toast.success('Activity acknowledged');
+      toast.success(t('settings.advancedSecuritySettings.activityAcknowledged', 'Activity acknowledged'));
       loadData();
     } catch (error) {
-      toast.error('Failed to acknowledge activity');
+      toast.error(t('settings.advancedSecuritySettings.activityAcknowledgeError', 'Failed to acknowledge activity'));
     }
   };
 
@@ -349,13 +353,25 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
   }
 
   const tabs = [
-    { id: 'password', label: 'Password Policy', icon: Key },
-    { id: 'ip', label: 'IP Rules', icon: Globe },
-    { id: 'questions', label: 'Security Questions', icon: HelpCircle },
-    { id: 'recovery', label: 'Recovery', icon: UserPlus },
-    { id: 'locations', label: 'Login Locations', icon: MapPin },
-    { id: 'activity', label: 'Suspicious Activity', icon: AlertTriangle },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'password', label: t('settings.security.passwordPolicy', 'Password Policy'), icon: Key },
+    { id: 'ip', label: t('settings.advancedSecuritySettings.tabIpRules', 'IP Rules'), icon: Globe },
+    {
+      id: 'questions',
+      label: t('settings.security.securityQuestions', 'Security Questions'),
+      icon: HelpCircle,
+    },
+    { id: 'recovery', label: t('settings.advancedSecuritySettings.tabRecovery', 'Recovery'), icon: UserPlus },
+    {
+      id: 'locations',
+      label: t('settings.advancedSecuritySettings.tabLoginLocations', 'Login Locations'),
+      icon: MapPin,
+    },
+    {
+      id: 'activity',
+      label: t('settings.security.suspiciousActivity', 'Suspicious Activity'),
+      icon: AlertTriangle,
+    },
+    { id: 'settings', label: t('settings.advancedSecuritySettings.tabSettings', 'Settings'), icon: Settings },
   ];
 
   return (
@@ -406,29 +422,43 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">Minimum Length</span>
+                  <span className="text-sm text-c-text-secondary">
+                    {t('settings.advancedSecuritySettings.minimumLength', 'Minimum Length')}
+                  </span>
                   <span className="font-medium text-c-text">
-                    {passwordPolicy.policy?.min_length || 8} characters
+                    {t('settings.advancedSecuritySettings.charactersCount', '{{count}} characters', {
+                      count: passwordPolicy.policy?.min_length || 8,
+                    })}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">Password Expires</span>
+                  <span className="text-sm text-c-text-secondary">
+                    {t('settings.advancedSecuritySettings.passwordExpires', 'Password Expires')}
+                  </span>
                   <span className="font-medium text-c-text">
                     {passwordPolicy.policy?.max_age_days > 0
-                      ? `${passwordPolicy.policy.max_age_days} days`
-                      : 'Never'}
+                      ? t('settings.advancedSecuritySettings.daysCount', '{{count}} days', {
+                          count: passwordPolicy.policy.max_age_days,
+                        })
+                      : t('settings.advancedSecuritySettings.never', 'Never')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">History Count</span>
+                  <span className="text-sm text-c-text-secondary">
+                    {t('settings.advancedSecuritySettings.historyCount', 'History Count')}
+                  </span>
                   <span className="font-medium text-c-text">
-                    {passwordPolicy.policy?.history_count || 5} passwords
+                    {t('settings.advancedSecuritySettings.passwordsCount', '{{count}} passwords', {
+                      count: passwordPolicy.policy?.history_count || 5,
+                    })}
                   </span>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">Require Uppercase</span>
+                  <span className="text-sm text-c-text-secondary">
+                    {t('settings.advancedSecuritySettings.requireUppercase', 'Require Uppercase')}
+                  </span>
                   {passwordPolicy.policy?.require_uppercase ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
@@ -436,7 +466,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">Require Numbers</span>
+                  <span className="text-sm text-c-text-secondary">
+                    {t('settings.advancedSecuritySettings.requireNumbers', 'Require Numbers')}
+                  </span>
                   {passwordPolicy.policy?.require_numbers ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
@@ -444,7 +476,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
-                  <span className="text-sm text-c-text-secondary">Require Special Chars</span>
+                  <span className="text-sm text-c-text-secondary">
+                    {t('settings.advancedSecuritySettings.requireSpecialChars', 'Require Special Chars')}
+                  </span>
                   {passwordPolicy.policy?.require_special_chars ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
@@ -458,10 +492,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           {passwordPolicy?.passwordLastChanged && (
             <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                Password last changed:{' '}
+                {t('settings.advancedSecuritySettings.passwordLastChanged', 'Password last changed:')}{' '}
                 {formatListDate(passwordPolicy.passwordLastChanged)}
                 {passwordPolicy.passwordExpiresAt && (
-                  <> • Expires: {formatListDate(passwordPolicy.passwordExpiresAt)}</>
+                  <>
+                    {' '}
+                    • {t('settings.advancedSecuritySettings.expires', 'Expires:')}{' '}
+                    {formatListDate(passwordPolicy.passwordExpiresAt)}
+                  </>
                 )}
               </p>
             </div>
@@ -482,7 +520,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               className="flex items-center gap-2 px-3 py-1.5 text-sm bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
-              Add Rule
+              {t('settings.advancedSecuritySettings.addRule', 'Add Rule')}
             </button>
           </div>
 
@@ -493,7 +531,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   type="text"
                   value={newIPRule.ipAddress}
                   onChange={(e) => setNewIPRule({ ...newIPRule, ipAddress: e.target.value })}
-                  placeholder="IP Address or CIDR"
+                  placeholder={t('settings.advancedSecuritySettings.ipAddressPlaceholder', 'IP Address or CIDR')}
                   className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
                 <select
@@ -501,14 +539,17 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   onChange={(e) => setNewIPRule({ ...newIPRule, ruleType: e.target.value as any })}
                   className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 >
-                  <option value="allow">Allow</option>
-                  <option value="block">Block</option>
+                  <option value="allow">{t('settings.advancedSecuritySettings.allow', 'Allow')}</option>
+                  <option value="block">{t('settings.advancedSecuritySettings.block', 'Block')}</option>
                 </select>
                 <input
                   type="text"
                   value={newIPRule.description}
                   onChange={(e) => setNewIPRule({ ...newIPRule, description: e.target.value })}
-                  placeholder="Description (optional)"
+                  placeholder={t(
+                    'settings.advancedSecuritySettings.descriptionPlaceholder',
+                    'Description (optional)'
+                  )}
                   className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
               </div>
@@ -518,13 +559,17 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   disabled={saving}
                   className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm disabled:opacity-50"
                 >
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : 'Add Rule'}
+                  {saving ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    t('settings.advancedSecuritySettings.addRule', 'Add Rule')
+                  )}
                 </button>
                 <button
                   onClick={() => setShowAddIP(false)}
                   className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
                 >
-                  Cancel
+                  {t('settings.advancedSecuritySettings.cancel', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -562,7 +607,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {ipRules.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">No IP rules configured</p>
+              <p className="text-center text-c-text-muted py-8">
+                {t('settings.advancedSecuritySettings.noIpRules', 'No IP rules configured')}
+              </p>
             )}
           </div>
         </div>
@@ -581,7 +628,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               className="flex items-center gap-2 px-3 py-1.5 text-sm bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
-              Add Question
+              {t('settings.advancedSecuritySettings.addQuestion', 'Add Question')}
             </button>
           </div>
 
@@ -617,7 +664,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   onChange={(e) =>
                     setNewQuestion({ ...newQuestion, customQuestion: e.target.value })
                   }
-                  placeholder="Or enter custom question..."
+                  placeholder={t(
+                    'settings.advancedSecuritySettings.customQuestionPlaceholder',
+                    'Or enter custom question...'
+                  )}
                   className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
               )}
@@ -634,13 +684,17 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   disabled={saving}
                   className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm disabled:opacity-50"
                 >
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save Question'}
+                  {saving ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    t('settings.advancedSecuritySettings.saveQuestion', 'Save Question')
+                  )}
                 </button>
                 <button
                   onClick={() => setShowAddQuestion(false)}
                   className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
                 >
-                  Cancel
+                  {t('settings.advancedSecuritySettings.cancel', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -654,7 +708,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               >
                 <div>
                   <p className="font-medium text-c-text">{q.question_text}</p>
-                  <p className="text-sm text-c-text-muted">Answer: ••••••••</p>
+                  <p className="text-sm text-c-text-muted">
+                    {t('settings.advancedSecuritySettings.answerMasked', 'Answer: ••••••••')}
+                  </p>
                 </div>
                 <button
                   onClick={() => handleDeleteQuestion(q.id)}
@@ -665,7 +721,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {securityQuestions.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">No security questions set up</p>
+              <p className="text-center text-c-text-muted py-8">
+                {t('settings.advancedSecuritySettings.noSecurityQuestions', 'No security questions set up')}
+              </p>
             )}
           </div>
         </div>
@@ -684,7 +742,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               className="flex items-center gap-2 px-3 py-1.5 text-sm bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
-              Add Recovery Contact
+              {t('settings.advancedSecuritySettings.addRecoveryContact', 'Add Recovery Contact')}
             </button>
           </div>
 
@@ -698,9 +756,11 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   }
                   className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 >
-                  <option value="email">Email</option>
-                  <option value="phone">Phone</option>
-                  <option value="trusted_person">Trusted Person</option>
+                  <option value="email">{t('settings.advancedSecuritySettings.email', 'Email')}</option>
+                  <option value="phone">{t('settings.advancedSecuritySettings.phone', 'Phone')}</option>
+                  <option value="trusted_person">
+                    {t('settings.advancedSecuritySettings.trustedPerson', 'Trusted Person')}
+                  </option>
                 </select>
                 <input
                   type="text"
@@ -711,7 +771,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       ? 'email@example.com'
                       : newRecovery.contactType === 'phone'
                         ? '+1234567890'
-                        : 'Name'
+                        : t('settings.advancedSecuritySettings.namePlaceholder', 'Name')
                   }
                   className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
@@ -723,7 +783,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   onChange={(e) => setNewRecovery({ ...newRecovery, isPrimary: e.target.checked })}
                   className="rounded"
                 />
-                Set as primary recovery contact
+                {t('settings.advancedSecuritySettings.setAsPrimary', 'Set as primary recovery contact')}
               </label>
               <div className="flex gap-2">
                 <button
@@ -731,13 +791,17 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   disabled={saving}
                   className="px-4 py-2 bg-danger-600 text-white rounded-lg text-sm disabled:opacity-50"
                 >
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : 'Add Contact'}
+                  {saving ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    t('settings.advancedSecuritySettings.addContact', 'Add Contact')
+                  )}
                 </button>
                 <button
                   onClick={() => setShowAddRecovery(false)}
                   className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
                 >
-                  Cancel
+                  {t('settings.advancedSecuritySettings.cancel', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -762,14 +826,15 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       {contact.contact_value}
                       {contact.is_primary && (
                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                          Primary
+                          {t('settings.advancedSecuritySettings.primary', 'Primary')}
                         </span>
                       )}
                     </p>
                     <p className="text-sm text-c-text-muted flex items-center gap-1">
                       {contact.is_verified ? (
                         <>
-                          <CheckCircle size={12} className="text-green-500" /> Verified
+                          <CheckCircle size={12} className="text-green-500" />{' '}
+                          {t('settings.advancedSecuritySettings.verified', 'Verified')}
                         </>
                       ) : (
                         <>
@@ -789,7 +854,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {recoveryContacts.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">No recovery contacts configured</p>
+              <p className="text-center text-c-text-muted py-8">
+                {t('settings.advancedSecuritySettings.noRecoveryContacts', 'No recovery contacts configured')}
+              </p>
             )}
           </div>
         </div>
@@ -841,7 +908,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       )}
                       {location.is_proxy && (
                         <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                          Proxy
+                          {t('settings.advancedSecuritySettings.proxy', 'Proxy')}
                         </span>
                       )}
                       {location.is_tor && (
@@ -851,7 +918,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       )}
                       {location.is_trusted && (
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                          Trusted
+                          {t('settings.advancedSecuritySettings.trusted', 'Trusted')}
                         </span>
                       )}
                     </div>
@@ -865,12 +932,16 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       : 'bg-green-600 text-white'
                   }`}
                 >
-                  {location.is_trusted ? 'Untrust' : 'Trust'}
+                  {location.is_trusted
+                    ? t('settings.advancedSecuritySettings.untrust', 'Untrust')
+                    : t('settings.advancedSecuritySettings.trust', 'Trust')}
                 </button>
               </div>
             ))}
             {loginLocations.length === 0 && (
-              <p className="text-center text-c-text-muted py-8">No login locations recorded</p>
+              <p className="text-center text-c-text-muted py-8">
+                {t('settings.advancedSecuritySettings.noLoginLocations', 'No login locations recorded')}
+              </p>
             )}
           </div>
         </div>
@@ -925,7 +996,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       onClick={() => handleAcknowledgeActivity(activity.id)}
                       className="px-3 py-1.5 text-sm bg-c-surface-raised text-c-text-secondary rounded-lg"
                     >
-                      Acknowledge
+                      {t('settings.advancedSecuritySettings.acknowledge', 'Acknowledge')}
                     </button>
                   )}
                 </div>
@@ -933,7 +1004,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             ))}
             {suspiciousActivities.length === 0 && (
               <p className="text-center text-c-text-muted py-8">
-                No suspicious activities detected
+                {t('settings.advancedSecuritySettings.noSuspiciousActivities', 'No suspicious activities detected')}
               </p>
             )}
           </div>
@@ -954,7 +1025,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              Save Settings
+              {t('settings.advancedSecuritySettings.saveSettings', 'Save Settings')}
             </button>
           </div>
 
@@ -991,8 +1062,15 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
             <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div>
-                <label className="font-medium text-c-text">Single Session Only</label>
-                <p className="text-sm text-c-text-muted">Only allow one active session at a time</p>
+                <label className="font-medium text-c-text">
+                  {t('settings.advancedSecuritySettings.singleSessionOnly', 'Single Session Only')}
+                </label>
+                <p className="text-sm text-c-text-muted">
+                  {t(
+                    'settings.advancedSecuritySettings.singleSessionOnlyHint',
+                    'Only allow one active session at a time'
+                  )}
+                </p>
               </div>
               <button
                 onClick={() =>
@@ -1015,7 +1093,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
             <div className="p-4 bg-c-surface-raised rounded-lg">
               <label className="block font-medium text-c-text mb-2">
-                Re-authentication Timeout
+                {t('settings.advancedSecuritySettings.reauthTimeout', 'Re-authentication Timeout')}
               </label>
               <select
                 value={securitySettings.require_reauth_minutes}
@@ -1027,22 +1105,45 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 }
                 className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               >
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={60}>1 hour</option>
-                <option value={120}>2 hours</option>
-                <option value={480}>8 hours</option>
+                <option value={15}>{t('settings.advancedSecuritySettings.minutes15', '15 minutes')}</option>
+                <option value={30}>{t('settings.advancedSecuritySettings.minutes30', '30 minutes')}</option>
+                <option value={60}>{t('settings.advancedSecuritySettings.hour1', '1 hour')}</option>
+                <option value={120}>{t('settings.advancedSecuritySettings.hours2', '2 hours')}</option>
+                <option value={480}>{t('settings.advancedSecuritySettings.hours8', '8 hours')}</option>
               </select>
             </div>
 
             <div className="border-t border-c-border-subtle dark:border-navy-700 pt-4">
-              <h4 className="font-medium text-c-text mb-4">Notification Preferences</h4>
+              <h4 className="font-medium text-c-text mb-4">
+                {t('settings.advancedSecuritySettings.notificationPreferences', 'Notification Preferences')}
+              </h4>
               <div className="space-y-3">
                 {[
-                  { key: 'notify_new_login', label: 'New login alerts' },
-                  { key: 'notify_password_change', label: 'Password change alerts' },
-                  { key: 'notify_suspicious_activity', label: 'Suspicious activity alerts' },
-                  { key: 'notify_recovery_change', label: 'Recovery contact change alerts' },
+                  {
+                    key: 'notify_new_login',
+                    label: t('settings.advancedSecuritySettings.notifyNewLogin', 'New login alerts'),
+                  },
+                  {
+                    key: 'notify_password_change',
+                    label: t(
+                      'settings.advancedSecuritySettings.notifyPasswordChange',
+                      'Password change alerts'
+                    ),
+                  },
+                  {
+                    key: 'notify_suspicious_activity',
+                    label: t(
+                      'settings.advancedSecuritySettings.notifySuspiciousActivity',
+                      'Suspicious activity alerts'
+                    ),
+                  },
+                  {
+                    key: 'notify_recovery_change',
+                    label: t(
+                      'settings.advancedSecuritySettings.notifyRecoveryChange',
+                      'Recovery contact change alerts'
+                    ),
+                  },
                 ].map((item) => (
                   <label key={item.key} className="flex items-center gap-3 cursor-pointer">
                     <input
