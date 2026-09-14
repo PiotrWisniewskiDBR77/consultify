@@ -111,6 +111,8 @@ async function mount(route = '/initiatives') {
 }
 
 beforeEach(() => {
+  // This suite isolates the Work report gate; keep the separate Plan gate ON.
+  vi.stubEnv('VITE_INITIATIVES_PLAN', 'true');
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
   getInitiative.mockReset();
@@ -119,6 +121,28 @@ beforeEach(() => {
   listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
   apiGet.mockReset();
   apiGet.mockResolvedValue({});
+});
+
+describe('Plan tab gated by VITE_INITIATIVES_PLAN', () => {
+  it('flag OFF: hides Plan and rejects a direct deep link', async () => {
+    vi.stubEnv('VITE_INITIATIVES_PLAN', 'false');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
+    await mount('/initiatives?tab=plan');
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.queryByRole('tab', { name: 'Plan' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Initiatives' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  });
+
+  it('flag ON: exposes Plan as the second Menu 2 destination', async () => {
+    vi.stubEnv('VITE_INITIATIVES_PLAN', 'true');
+    vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'false');
+    await mount();
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+    expect(screen.getByRole('tab', { name: 'Plan' })).toBeInTheDocument();
+  });
 });
 
 afterEach(() => {
