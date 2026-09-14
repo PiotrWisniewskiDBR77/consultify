@@ -955,6 +955,32 @@ poza migracjami — `projects.current_phase` brak w migracjach, obecny na stagin
 → „w S5 E3b" (nie zamknięte, przeniesione do zadania Codexa); Z-2: fala C1 (RP1b) i C2 (Q1
 kosmetyka) w wdrożeniu. Flagi na stagingu: dopisz `VITE_PMO_PROJECTS` OFF.
 
+**Fala C1 — RP1b (przejazd kanonu Raportu z pracy) WDROŻONA na staging (14.09; push
+`6dfb338ba0`; run `34833778187` **success** — tym razem workflow zdążył, tag `staging-deployed`
+przesunięty przez workflow na `6dfb338ba0` — **Z-35 częściowo rozwiązane: tag = realny
+staging**).** Staging przed `7332fa2a6f`; kandydat `e9d5592f3f` (6 commitów) → merge `5936105611`
+→ merge linii `39277d8d86` → `6dfb338ba0`; zero konfliktów (Q1 `INITIATIVES_WORKLOAD_ENABLED` i
+RP1b `WORK_REPORT_ENABLED` w rozłącznych hunkach `InitiativesHub.tsx`); wykrywacz duplikatów
+kluczy pl 0 / en 0 (55 kluczy `initiatives.workReport` w obu). Tag cofnięcia
+`rollback-pre-fala-c1-20260914` = `7332fa2a6f`. Bramka: tsc serwer 0, front 189 (0 w plikach P1),
+język OK, canon 349, artefakt 8-0-117, build 35 s, testy delty 28/28 + `i18nTrescPolska` 5/5.
+Parytet OFF na zbudowanym artefakcie: 0 plików z
+`initiatives.workReport|workReportLabels|InitiativeWorkReportView` w `dist/assets`, chunk
+kreatora tree-shaken; żywe `/locales` pl 55 kluczy (listTitle „Raporty z pracy"), en 55 („Work
+reports"); demo nietknięte (`origin/demo` `790c828fc0`). Zrzuty
+`~/Developer/cto-codex/zrzuty-p1-kanon-20260914/` = wdrożony kod (diff pusty). Włączenie
+`VITE_INITIATIVES_WORK_REPORT` po akcepcie właściciela (zrzut wysłany). **Pułapka:** tsc bez
+heap → OOM → fałszywe „0" (trzeci raz dziś — kandydat do reguły w skryptach bramki: **Z-42
+nowy** — bramka lite ma wymuszać `--max-old-space-size=8192` i traktować OOM jako brak pomiaru).
+**EWIDENCJA:** §5 RP1 → tekst wiersza „RP1b przejazd kanonu GOTOWY, gotowe do scalenia
+`e9d5592f3f`" zastąpiony „RP1b WDROŻONA na staging `6dfb338ba0`, fala C1"; SHA wiersza
+`3e1363d01a` → `6dfb338ba0`; stan RP1 bez zmiany kategorii (pozostaje 🧪 NA STAGINGU — RP1b jest
+przejazdem wewnątrz istniejącego wiersza, nie osobnym etapem). Skrzynka: **Z-35** uzupełnij (tag
+przesunięty przez run `34833778187`; wcześniejsze 4 wdrożenia bez przesunięcia tagu — przy
+promocji na demo weryfikować tag = health); **Z-42 nowy**; **Z-41** (zrzuty PMO po polsku) i
+**Z-38** (pigułka „Brak dostępności" ucięta, heatmapa PL) nadal w toku. Liczniki §5/§0.1 bez
+zmiany stanu (kategoria RP1 niezmieniona).
+
 ---
 
 ## §1 INICJATYWY — cztery przyciski Menu 2, etap po etapie
@@ -1251,7 +1277,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | ⬜ NIE ZACZĘTE | — | — |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu GOTOWY, gotowe do scalenia `e9d5592f3f`, fala C1) | `3e1363d01a` | 14.09 |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (za flagą; RP1b przejazd kanonu WDROŻONA na staging `6dfb338ba0`, fala C1) | `6dfb338ba0` | 14.09 |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | ⬜ NIE ZACZĘTE | — | — |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ NIE ZACZĘTE (atrapa żyje) | — | — |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🧪 NA STAGINGU (flaga OFF) | `88f1a1994d` | 14.09 |
