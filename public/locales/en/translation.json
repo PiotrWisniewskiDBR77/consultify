@@ -51583,7 +51583,38 @@
       }
     }
   },
+  "scheduledReports": {
+    "subject": "Report “{{name}}” is ready",
+    "generated": "The scheduled report <strong>{{name}}</strong> has been generated.",
+    "reportId": "Report identifier: <code>{{reportId}}</code>",
+    "attachment": "The complete file bundle (DOCX+XLSX+PPTX) is attached.",
+    "library": "The report is available in the Materials library.",
+    "dashboard": "Report available in dashboard",
+    "smtpAccepted": "Frozen PDF accepted by configured SMTP provider",
+    "workReportText": "Consultify work report: {{title}}",
+    "workReportHtml": "Consultify work report: <strong>{{title}}</strong>"
+  },
   "executionReports": {
+    "labels": {
+      "status": "Status",
+      "level": "Report level",
+      "period": "Period",
+      "asOf": "Data as of",
+      "rag": "RAG assessment",
+      "metric": "Metric",
+      "value": "Value",
+      "empty": "No data is available for this period."
+    },
+    "kpiResults": "KPI results",
+    "initiative": "Initiative",
+    "kpi": "KPI",
+    "result": "Result",
+    "target": "Target",
+    "measuredAt": "Measured at",
+    "notMeasured": "Not measured",
+    "noTarget": "No target",
+    "noKpiResults": "No KPI results have been recorded for initiatives in this organization.",
+    "source": "Consultify · Execution · {{level}}",
     "e4": {
       "title": "Execution reports",
       "created": "Execution report frozen for approval.",
@@ -51635,6 +51666,8 @@
       "GREY": "Grey (data gap)"
     },
     "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
       "draft": "Draft",
       "published": "Published",
       "validated": "Validated",
@@ -51739,6 +51772,10 @@
       "noReason": "no stated reason"
     },
     "rag": {
+      "GREEN": "Green",
+      "AMBER": "Amber",
+      "RED": "Red",
+      "GREY": "Grey (data gap)",
       "green": "No blockers and nothing overdue.",
       "amber": "{{tasks}} tasks and {{decisions}} decisions overdue.",
       "red": "{{blocked}} blockers, {{signals}} critical signals.",

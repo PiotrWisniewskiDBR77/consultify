@@ -219,18 +219,18 @@ export function snapshotToMarkdown(
   const lines: string[] = [];
   if (snapshot.subtitle) lines.push(`_${snapshot.subtitle}_`, '');
   lines.push(
-    `**${reportMessage(locale, 'executionReports.status')}:** ${statusLabel}  `,
-    `**${reportMessage(locale, 'executionReports.level')}:** ${reportMessage(locale, levelKey)}  `,
-    `**${reportMessage(locale, 'executionReports.period')}:** ${formatDate(snapshot.period.start, locale)} – ${formatDate(snapshot.period.end, locale)}  `,
-    `**${reportMessage(locale, 'executionReports.asOf')}:** ${formatDate(snapshot.asOf, locale)}  `,
-    `**${reportMessage(locale, 'executionReports.rag')}:** ${reportMessage(locale, ragKey)}${
+    `**${reportMessage(locale, 'executionReports.labels.status')}:** ${statusLabel}  `,
+    `**${reportMessage(locale, 'executionReports.labels.level')}:** ${reportMessage(locale, levelKey)}  `,
+    `**${reportMessage(locale, 'executionReports.labels.period')}:** ${formatDate(snapshot.period.start, locale)} – ${formatDate(snapshot.period.end, locale)}  `,
+    `**${reportMessage(locale, 'executionReports.labels.asOf')}:** ${formatDate(snapshot.asOf, locale)}  `,
+    `**${reportMessage(locale, 'executionReports.labels.rag')}:** ${reportMessage(locale, ragKey)}${
       snapshot.ragReason ? ` — ${snapshot.ragReason}` : ''
     }`,
     ''
   );
   if (snapshot.metrics.length) {
     lines.push(
-      `| ${reportMessage(locale, 'executionReports.metric')} | ${reportMessage(locale, 'executionReports.value')} |`,
+      `| ${reportMessage(locale, 'executionReports.labels.metric')} | ${reportMessage(locale, 'executionReports.labels.value')} |`,
       '| --- | --- |'
     );
     for (const metric of snapshot.metrics) {
@@ -258,7 +258,7 @@ export function snapshotToMarkdown(
       Boolean(section.bullets?.length) ||
       Boolean(section.table?.rows.length);
     if (!hasContent) {
-      lines.push(section.empty || reportMessage(locale, 'executionReports.empty'), '');
+      lines.push(section.empty || reportMessage(locale, 'executionReports.labels.empty'), '');
     }
   }
   return lines.join('\n');
