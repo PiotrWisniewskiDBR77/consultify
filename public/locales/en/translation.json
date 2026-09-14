@@ -14996,7 +14996,8 @@
           "currentPlanFinish": "Current plan finish",
           "forecastFinish": "Forecast finish",
           "actualFinish": "Actual finish",
-          "variance": "Variance"
+          "variance": "Variance",
+          "handoff": "Handoff"
         },
         "next": {
           "noExecutionCase": "Execution starts when this initiative is handed off from its initiative record — schedule, forecast and progress are reported only after that.",
@@ -15021,6 +15022,13 @@
           "forecast": "forecast vs baseline",
           "value": "{{signed}} d ({{reference}})"
         }
+      },
+      "handoff": {
+        "accepted": "Handed over {{date}}",
+        "linkedNoDate": "Handed over (date unknown)",
+        "absent": "No handoff",
+        "missingInExecution": "In execution without handoff",
+        "missingInExecutionHint": "The initiative reports an execution status, but no accepted handoff package backs it."
       }
     },
     "review": {
@@ -16879,6 +16887,23 @@
     },
     "list": {
       "deleteDisabledNote": "Only draft or rejected initiatives can be deleted. Cancel this initiative through its lifecycle first."
+    },
+    "risk": {
+      "level": {
+        "0": "In tolerance",
+        "1": "Watch",
+        "2": "Act",
+        "3": "Escalate",
+        "unknown": "Not measured"
+      },
+      "axis": {
+        "schedule": "Schedule health",
+        "impact": "Impact gap",
+        "promise": "Delivery promise"
+      },
+      "axisSentence": "{{axis}}: {{verdict}} (index {{ratio}})",
+      "axisSentenceUnknown": "{{axis}}: not measured — no baseline data",
+      "noSignal": "Risk axes have not been computed for this row"
     }
   },
   "benefits": {

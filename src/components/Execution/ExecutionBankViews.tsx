@@ -20,6 +20,8 @@ import type {
   ExecutionCalendarBucket,
   ExecutionCalendarWindow,
 } from './executionBankModel';
+import type { ExecutionRiskSignal } from './executionRiskSignal';
+import { ExecutionHandoffBadge, ExecutionRiskCell } from './executionRiskSignalView';
 
 export type ExecutionBankViewMode = 'table' | 'kanban' | 'calendar' | 'gantt';
 
@@ -55,6 +57,13 @@ export interface ExecutionBankViewsProps {
    * pokazujemy „Unknown user", NIGDY UUID-a.
    */
   resolveOwnerName?: MemberNameResolver;
+  /**
+   * B-E0 — sygnał ryzyka per inicjatywa (3 osie × 4 poziomy, DEC-487).
+   * `undefined` = flaga `VITE_EXEC_RISK_SIGNAL` wyłączona → kolumna „Risk"
+   * NIE POWSTAJE, więc przy OFF tabela jest co do kolumny tą samą tabelą, co
+   * na linii (parytet wymagany w E1).
+   */
+  riskSignals?: ReadonlyMap<string, ExecutionRiskSignal>;
 }
 
 const UNKNOWN_LABELS: Record<string, string> = {
@@ -214,9 +223,10 @@ const BankTable = ({
   onSelect,
   onOpen,
   resolveOwnerName,
+  riskSignals,
 }: Pick<
   ExecutionBankViewsProps,
-  'rows' | 'selected' | 'onSelect' | 'onOpen' | 'resolveOwnerName'
+  'rows' | 'selected' | 'onSelect' | 'onOpen' | 'resolveOwnerName' | 'riskSignals'
 >) => {
   const { t: translate } = useTranslation();
   const t = translate as unknown as BankT;
@@ -329,6 +339,50 @@ const BankTable = ({
           );
         },
       },
+      {
+        /*
+         * H2 (DEC-453 pkt b) — „czy widać". Ślad przekazania inicjatywy do
+         * Realizacji był w danych od zawsze (`acceptedAt`/`handoffPackageId`
+         * z `ie_aggregate_state`), ale nie było go na ekranie: wiersz w toku
+         * bez przekazania wyglądał identycznie jak wiersz przekazany.
+         * `dataType: 'status'` (130 px), bo „Handed over 12 Sep 2026" i
+         * „In execution without handoff" nie mieszczą się w podłodze 90 px.
+         */
+        id: 'handoff',
+        label: 'Handoff',
+        dataType: 'status',
+        width: '170px',
+        render: (source) => (
+          <ExecutionHandoffBadge
+            handoff={(source as unknown as ExecutionBankRow).handoff}
+            formatDate={readableDate}
+            t={t}
+          />
+        ),
+      },
+      /*
+       * B-E0 — kolumna „Risk" istnieje WYŁĄCZNIE za flagą. Przy OFF nie ma jej
+       * w tablicy kolumn, więc pstryczek kolumn, sumy podłóg i zapamiętany
+       * układ (`persistKey`) zostają dokładnie takie jak na linii.
+       */
+      ...(riskSignals
+        ? [
+            {
+              id: 'risk',
+              label: 'Risk',
+              dataType: 'status' as const,
+              width: '210px',
+              render: (source: Record<string, unknown>) => (
+                <ExecutionRiskCell
+                  signal={
+                    riskSignals.get((source as unknown as ExecutionBankRow).initiativeId) ?? null
+                  }
+                  t={t}
+                />
+              ),
+            },
+          ]
+        : []),
       {
         id: 'executionState',
         label: 'Execution phase',
@@ -549,7 +603,7 @@ const BankTable = ({
         },
       },
     ],
-    [resolveOwnerName, t]
+    [resolveOwnerName, riskSignals, t]
   );
   const rowMenu = (source: Record<string, unknown>): StandardRowMenu => {
     const row = source as unknown as ExecutionBankRow;

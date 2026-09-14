@@ -54,6 +54,17 @@ const FLAGS = {
     localStorage: 'ff.exec_reports_intel',
     env: 'VITE_EXEC_REPORTS_INTELLIGENCE_ENABLED',
   },
+  // B-E0 (DEC-487, FALA B 14.09) — sygnalizacja ryzyka realizacji w banku:
+  // kolumna „Risk" (3 osie × 4 poziomy) + wiersze ryzyka w podglądzie.
+  // Default OFF WSZĘDZIE do akceptu właściciela na czystym zrzucie (reguła #7):
+  // ekran nie był jeszcze oglądany, a `threeAxisReportService` liczy z
+  // baseline'ów kosztu i wartości, których część organizacji nie ma — włączone
+  // na ślepo pokazałoby trzy „Not measured" w każdym wierszu.
+  execRiskSignal: {
+    query: 'ff_execRiskSignal',
+    localStorage: 'ff.exec_risk_signal',
+    env: 'VITE_EXEC_RISK_SIGNAL',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ExecutionFlag = keyof typeof FLAGS;
@@ -125,7 +136,11 @@ export function isExecutionFlagEnabled(
   //     (evidence/1-12-r4/05-menu3-chipy-flaga-on.png).
   // Warunek zdjęcia tej linii: przepiąć te cztery raporty na realne dane (pakiet R1)
   // ALBO zrobić ich własny czysty zrzut i dostać akcept właściciela.
-  if (flag === 'execReportsIntelligence') return false;
+  //
+  // B-E0: `execRiskSignal` stoi w tej samej linii obrony. WAŻNE — ten `return`
+  // jest PO odczycie query/localStorage/env, więc `?ff_execRiskSignal=1`
+  // (i zrzut odbiorowy) dalej działa; wyłączony jest tylko DOMYŚLNY stan.
+  if (flag === 'execReportsIntelligence' || flag === 'execRiskSignal') return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production
   // (consultify.ai). Demo/stage/dev → ON; prod stays env-gated (D-G = no prod).

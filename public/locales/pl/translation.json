@@ -14171,7 +14171,8 @@
           "currentPlanFinish": "Koniec wg bieżącego planu",
           "forecastFinish": "Koniec wg prognozy",
           "actualFinish": "Koniec rzeczywisty",
-          "variance": "Wariancja"
+          "variance": "Wariancja",
+          "handoff": "Przekazanie"
         },
         "next": {
           "noExecutionCase": "Realizacja zaczyna się w chwili przekazania inicjatywy z jej karty — harmonogram, prognoza i postęp są raportowane dopiero potem.",
@@ -14196,6 +14197,13 @@
           "forecast": "prognoza vs baza odniesienia",
           "value": "{{signed}} d ({{reference}})"
         }
+      },
+      "handoff": {
+        "accepted": "Przekazana {{date}}",
+        "linkedNoDate": "Przekazana (data nieznana)",
+        "absent": "Bez przekazania",
+        "missingInExecution": "W toku bez przekazania",
+        "missingInExecutionHint": "Inicjatywa ma status wykonawczy, ale nie stoi za nim przyjęta paczka przekazania."
       }
     },
     "review": {
@@ -16056,6 +16064,23 @@
     },
     "list": {
       "deleteDisabledNote": "Usunąć można tylko inicjatywę w statusie „Szkic” lub „Odrzucona”. Tę inicjatywę trzeba najpierw anulować w cyklu życia."
+    },
+    "risk": {
+      "level": {
+        "0": "W normie",
+        "1": "Obserwuj",
+        "2": "Działanie",
+        "3": "Komitet",
+        "unknown": "Nie zmierzono"
+      },
+      "axis": {
+        "schedule": "Zdrowie harmonogramu",
+        "impact": "Luka wpływu",
+        "promise": "Obietnica dowiezienia"
+      },
+      "axisSentence": "{{axis}}: {{verdict}} (wskaźnik {{ratio}})",
+      "axisSentenceUnknown": "{{axis}}: nie zmierzono — brak danych bazowych",
+      "noSignal": "Osie ryzyka nie zostały policzone dla tego wiersza"
     }
   },
   "benefits": {
