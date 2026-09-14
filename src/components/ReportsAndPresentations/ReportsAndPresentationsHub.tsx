@@ -1217,9 +1217,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     return (
       <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
-        {allChip(!activeFilters.some((f) => f.column === 'status'), tabRows.length, () =>
-          setSinglePreset('status', null)
-        )}
+        <div
+          className="flex h-8 items-baseline gap-1 border-r border-c-border-subtle pr-3 text-xs text-c-text-secondary"
+          data-testid="materials-menu3-total"
+        >
+          <span>{t('common.all', 'All')}</span>
+          <strong className="tabular-nums text-c-text">{tabRows.length}</strong>
+        </div>
         {MENU_3_STATUSES.map((value) => {
           const option = tabStatusOptions.find((o) => o.value === value);
           if (!option) return null;
@@ -1246,7 +1250,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         {otherStatusCount > 0 ? (
           <span
             className="inline-flex h-8 items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-3 text-xs text-c-text-secondary"
-            data-testid="materials-menu3-unrepresented-statuses"
+            data-testid="materials-menu3-chip-other"
           >
             <span>{t('rap.filters.status.other', 'Other statuses')}</span>
             <span className="font-semibold tabular-nums text-c-text">{otherStatusCount}</span>
