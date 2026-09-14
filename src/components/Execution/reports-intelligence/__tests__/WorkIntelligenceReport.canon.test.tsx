@@ -140,4 +140,38 @@ describe('Work Intelligence attention surface — real triad behavior', () => {
       })
     );
   });
+
+  it.each([
+    ['Escalate', 'escalate'],
+    ['Delegate', 'reassign'],
+    ['Change resources', 'set_capacity'],
+  ] as const)('executes the canonical %s action from the row menu', async (label, actionId) => {
+    managerApi.executeManagerProblemAction.mockResolvedValue({
+      data: { success: true, message: `${label} completed.` },
+    });
+    render(<WorkIntelligenceReport analysisEnabled />);
+
+    expect((await screen.findAllByText('Blocked commissioning')).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Row actions' })[0]);
+    fireEvent.click(within(await screen.findByRole('menu')).getByText(label));
+
+    await waitFor(() =>
+      expect(managerApi.executeManagerProblemAction).toHaveBeenCalledWith(
+        'action-queue',
+        { problemId: 'problem-1', actionId },
+        'project-1'
+      )
+    );
+  });
+
+  it('renders the canonical empty state when no work record needs management attention', async () => {
+    api.readExecutionWork.mockResolvedValue({ tasks: [], decisions: [] });
+    managerApi.getManagerProblems.mockResolvedValue({ data: { problems: [] } });
+    render(<WorkIntelligenceReport analysisEnabled />);
+
+    expect(
+      await screen.findByText('No records require management attention')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Row actions' })).toBeNull();
+  });
 });
