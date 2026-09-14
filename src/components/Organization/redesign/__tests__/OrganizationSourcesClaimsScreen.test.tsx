@@ -21,24 +21,24 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../../../../services/organizationGovernedContextApi', () => ({
   organizationGovernedContextApi: {
-    listClaims: vi.fn(),
+    listClaimsPage: vi.fn(),
     listVersions: vi.fn(),
   },
 }));
 
 describe('OrganizationSourcesClaimsScreen', () => {
   beforeEach(() => {
-    vi.mocked(organizationGovernedContextApi.listClaims).mockResolvedValue([]);
+    vi.mocked(organizationGovernedContextApi.listClaimsPage).mockResolvedValue({ claims: [], total: 0, limit: 200 });
     vi.mocked(organizationGovernedContextApi.listVersions).mockResolvedValue([]);
   });
 
   it('scala dawne trzy ekrany Źródeł (Pliki + Twierdzenia + Konflikty-duplikat) w jeden ekran', async () => {
     render(<OrganizationSourcesClaimsScreen isAdmin={false} />);
 
-    expect(screen.getByText('Pliki')).toBeInTheDocument();
-    expect(screen.getByText('Twierdzenia, konflikty i publikacja')).toBeInTheDocument();
+    expect(screen.getByText('Files')).toBeInTheDocument();
+    expect(screen.getByText('Claims, conflicts and publication')).toBeInTheDocument();
     expect(screen.getByText('Pliki organizacji')).toBeInTheDocument();
 
-    await waitFor(() => expect(organizationGovernedContextApi.listClaims).toHaveBeenCalled());
+    await waitFor(() => expect(organizationGovernedContextApi.listClaimsPage).toHaveBeenCalled());
   });
 });

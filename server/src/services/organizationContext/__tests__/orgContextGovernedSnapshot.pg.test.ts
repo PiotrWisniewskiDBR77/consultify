@@ -262,12 +262,19 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
   // ── Confidentiality: visibility_scope actually filters a read ─────────────
   it('excludes a restricted-visibility claim from the default (non-admin) governed claims read, includes it when includeRestricted=true', async () => {
     const defaultRead = await organizationContextService.listGovernedClaims(orgA, {});
+    const defaultTotal = await organizationContextService.countGovernedClaims(orgA, {});
     expect(defaultRead.some((c: any) => c.claimId === claimRestricted)).toBe(false);
+    expect(defaultTotal).toBe(defaultRead.length);
 
     const privilegedRead = await organizationContextService.listGovernedClaims(orgA, {
       includeRestricted: true,
     });
+    const privilegedTotal = await organizationContextService.countGovernedClaims(orgA, {
+      includeRestricted: true,
+    });
     expect(privilegedRead.some((c: any) => c.claimId === claimRestricted)).toBe(true);
+    expect(privilegedTotal).toBe(privilegedRead.length);
+    expect(privilegedTotal).toBe(defaultTotal + 1);
   });
 
   // ── Tenant isolation ────────────────────────────────────────────────────

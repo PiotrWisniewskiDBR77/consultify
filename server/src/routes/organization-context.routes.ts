@@ -118,11 +118,12 @@ router.get(
     const orgId = requireOrgId(req, res);
     if (!orgId) return;
     const limit = Math.max(1, Math.min(Number(req.query.limit || 200), 500));
-    const claims = await organizationContextService.listGovernedClaims(orgId, {
-      includeRestricted: isAdminLike(req),
-      limit,
-    });
-    res.json({ claims });
+    const includeRestricted = isAdminLike(req);
+    const [claims, total] = await Promise.all([
+      organizationContextService.listGovernedClaims(orgId, { includeRestricted, limit }),
+      organizationContextService.countGovernedClaims(orgId, { includeRestricted }),
+    ]);
+    res.json({ claims, total, limit });
   })
 );
 

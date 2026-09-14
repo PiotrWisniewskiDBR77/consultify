@@ -107,6 +107,7 @@ function governedError(error: unknown, fallback: string, t: TFunction): string {
 export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> = ({ isAdmin }) => {
   const { t } = useTranslation();
   const [claims, setClaims] = useState<GovernedClaim[]>([]);
+  const [claimsTotal, setClaimsTotal] = useState(0);
   const [versions, setVersions] = useState<GovernedSnapshotVersion[]>([]);
   const [selected, setSelected] = useState<PinnedGovernedSnapshot | null>(null);
   const [selectedRef, setSelectedRef] = useState<GovernedSnapshotRef | null>(null);
@@ -126,10 +127,11 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
     setError(null);
     try {
       const [nextClaims, nextVersions] = await Promise.all([
-        organizationGovernedContextApi.listClaims(),
+        organizationGovernedContextApi.listClaimsPage(),
         organizationGovernedContextApi.listVersions(),
       ]);
-      setClaims(nextClaims);
+      setClaims(nextClaims.claims);
+      setClaimsTotal(nextClaims.total);
       setVersions(nextVersions);
     } catch (caught) {
       setError(
@@ -587,8 +589,16 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       >
         <div className="flex items-center justify-between gap-3">
           <h3 id="governed-claims-title" className="font-semibold text-c-text">
-            {t('organization.governance.claims', 'Claims')} ({claims.length})
+            {t('organization.governance.claims', 'Claims')} ({claimsTotal})
           </h3>
+          <div className="ml-auto text-xs text-c-text-muted" data-testid="governed-claims-page-summary">
+            {claims.length < claimsTotal
+              ? t('organization.governance.showingClaims', 'Showing {{shown}} of {{total}}', {
+                  shown: claims.length,
+                  total: claimsTotal,
+                })
+              : t('organization.governance.showingAllClaims', 'Showing all {{total}}', { total: claimsTotal })}
+          </div>
           <Button variant="ghost" size="sm" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={loading ? 'animate-spin' : ''} size={15} />
             {t('common.refresh', 'Refresh')}
