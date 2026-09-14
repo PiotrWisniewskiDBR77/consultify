@@ -2,6 +2,18 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "z30-obciazenie-on",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["scripts/dev/z30-obciazenie-devrender-on.sh"],
+      "port": 5410
+    },
+    {
+      "name": "z30-obciazenie-off",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["scripts/dev/z30-obciazenie-devrender-off.sh"],
+      "port": 5411
+    },
+    {
       "name": "p10-decyzje-devrender",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
