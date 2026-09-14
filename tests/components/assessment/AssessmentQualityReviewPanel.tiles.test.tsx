@@ -92,15 +92,15 @@ describe('AssessmentQualityReviewPanel — trzy kafle z obrazu', () => {
     render(<AssessmentQualityReviewPanel assessmentId="dbr77-assess-001" />);
 
     const completeness = await screen.findByTestId('assessment-quality-tile-completeness');
-    expect(completeness).toHaveTextContent('Kompletność');
+    expect(completeness).toHaveTextContent('Completeness');
     expect(completeness).toHaveTextContent('42%');
 
     const avgLevel = screen.getByTestId('assessment-quality-tile-avg-level');
-    expect(avgLevel).toHaveTextContent('Śr. poziom osiągnięty');
+    expect(avgLevel).toHaveTextContent('Avg. level achieved');
     expect(avgLevel).toHaveTextContent('2.4');
 
     const coverage = screen.getByTestId('assessment-quality-tile-evidence-coverage');
-    expect(coverage).toHaveTextContent('Pokrycie dowodami');
+    expect(coverage).toHaveTextContent('Evidence coverage');
     expect(coverage).toHaveTextContent('17%');
 
     // i nie ma komunikatu zastępczego

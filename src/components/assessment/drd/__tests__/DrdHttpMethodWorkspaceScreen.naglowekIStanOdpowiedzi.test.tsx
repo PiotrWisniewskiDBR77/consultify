@@ -147,21 +147,21 @@ describe('(A) nagłówek sesji DRD — pięć elementów, ani jednego więcej', 
     const header = screen.getByTestId('method-workspace-shell').querySelector('header');
     expect(header).not.toBeNull();
 
-    expect(screen.getByRole('button', { name: /Wyjdź/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Exit/ })).toBeInTheDocument();
     expect(header!.textContent).toMatch(/DRD/);
     expect(screen.getByTestId('pracuj-z-ai')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ustawienia' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Więcej opcji' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More options' })).toBeInTheDocument();
   });
 
   it('nie ma już „Zapisz teraz", „Zapisano" ani pigułki statusu — zapis jest automatyczny', async () => {
     await renderAtInterviewFocus();
 
-    expect(screen.queryByRole('button', { name: 'Zapisz teraz' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save now' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('save-state-indicator')).not.toBeInTheDocument();
     const header = screen.getByTestId('method-workspace-shell').querySelector('header')!;
-    expect(header.textContent).not.toMatch(/Zapisano/);
-    expect(header.textContent).not.toMatch(/W trakcie wywiadu/);
+    expect(header.textContent).not.toMatch(/Saved/);
+    expect(header.textContent).not.toMatch(/Interview in progress/);
   });
 });
 
@@ -213,7 +213,7 @@ describe('(C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom', () => 
       .querySelector('[data-testid^="question-card-"]')!
       .getAttribute('data-testid');
 
-    fireEvent.click(screen.getByRole('radio', { name: /Potwierdzone/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Confirmed/ }));
 
     // Zdarzenie musi dojść (inaczej test przechodziłby dlatego, że NIC się nie
     // stało — a nie dlatego, że ekran został na miejscu).
@@ -229,11 +229,11 @@ describe('(C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom', () => 
   it('dopiero „Dalej" odsłania kolejny, otwarty poziom tej jednostki', async () => {
     await renderAtInterviewFocus();
 
-    fireEvent.click(screen.getByRole('radio', { name: /Potwierdzone/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Confirmed/ }));
     await waitFor(() => expect(hoisted.appendEvent).toHaveBeenCalled());
     expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 3 of 7');
 
-    fireEvent.click(screen.getByRole('button', { name: /^Dalej$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Next$/ }));
 
     await waitFor(() =>
       expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 4 of 7')
