@@ -4128,11 +4128,14 @@
         "title": "Bramki etapów PMBOK-lite",
         "weeklyRhythm": "Cotygodniowy rytm przeglądu",
         "loadError": "Nie udało się wczytać bramek projektu",
+        "requested": "Przekazano bramkę do niezależnej akceptacji",
         "passed": "Bramka etapu zatwierdzona",
         "passError": "Nie udało się zatwierdzić bramki etapu",
         "gate": "Bramka",
         "transition": "Przejście",
         "status": "Status",
+        "request": "Przekaż do akceptacji",
+        "approve": "Zatwierdź bramkę",
         "pass": "Zatwierdź bramkę",
         "missing": "Brakuje przed następną bramką",
         "criteria": {
@@ -4159,10 +4162,19 @@
           "execution": "Bramka realizacji",
           "closure": "Bramka zamknięcia"
         },
+        "phases": {
+          "context": "Kontekst",
+          "assessment": "Ocena",
+          "initiatives": "Inicjatywy",
+          "roadmap": "Mapa drogowa",
+          "execution": "Realizacja",
+          "stabilization": "Stabilizacja"
+        },
         "states": {
           "passed": "Zatwierdzona",
           "ready": "Gotowa",
           "not_ready": "Niegotowa",
+          "pending_review": "Oczekuje na niezależną akceptację",
           "upcoming": "Nadchodząca"
         }
       },

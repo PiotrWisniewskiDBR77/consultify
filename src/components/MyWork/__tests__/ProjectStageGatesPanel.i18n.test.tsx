@@ -18,10 +18,13 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallback?: string | { defaultValue?: string }) => {
       const translated = key
         .split('.')
-        .reduce<unknown>((value, part) =>
-          value && typeof value === 'object'
-            ? (value as Record<string, unknown>)[part]
-            : undefined, pl);
+        .reduce<unknown>(
+          (value, part) =>
+            value && typeof value === 'object'
+              ? (value as Record<string, unknown>)[part]
+              : undefined,
+          pl
+        );
       if (typeof translated === 'string') return translated;
       return typeof fallback === 'string' ? fallback : fallback?.defaultValue || key;
     },
@@ -51,5 +54,7 @@ describe('ProjectStageGatesPanel criterion localization', () => {
     expect(await screen.findByText(/Oceniono wszystkie osie/)).toBeInTheDocument();
     expect(screen.getByText(/Zweryfikowano analizę luk/)).toBeInTheDocument();
     expect(screen.queryByText(/All axes assessed|Gap analysis reviewed/)).not.toBeInTheDocument();
+    expect(screen.getByText('Ocena → Inicjatywy')).toBeInTheDocument();
+    expect(screen.queryByText('Assessment → Initiatives')).not.toBeInTheDocument();
   });
 });

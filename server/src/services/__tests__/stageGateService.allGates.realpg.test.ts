@@ -18,6 +18,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
   const organizationId = `f23-five-org-${suffix}`;
   const projectId = `f23-five-project-${suffix}`;
   const actorId = `f23-five-user-${suffix}`;
+  const reviewerId = `f23-five-reviewer-${suffix}`;
   const assessmentId = `f23-five-assessment-${suffix}`;
   const initiativeId = `f23-five-initiative-${suffix}`;
   const kpiId = `f23-five-kpi-${suffix}`;
@@ -35,10 +36,12 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
       organizationId,
       'F23 five-gate proof',
     ]);
-    await pool.query(`INSERT INTO users(id,email,organization_id) VALUES($1,$2,$3)`, [
+    await pool.query(`INSERT INTO users(id,email,organization_id) VALUES($1,$2,$3),($4,$5,$3)`, [
       actorId,
       `${actorId}@test.invalid`,
       organizationId,
+      reviewerId,
+      `${reviewerId}@test.invalid`,
     ]);
     await pool.query(
       `INSERT INTO projects(id,organization_id,name,current_phase,context_data,owner_id)
@@ -47,31 +50,69 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     );
     await pool.query(
       `INSERT INTO project_members(id,project_id,user_id,project_role,normalized_project_role)
-       VALUES($1,$2,$3,'PROJECT_SPONSOR','PROJECT_SPONSOR')`,
-      [randomUUID(), projectId, actorId]
+       VALUES($1,$2,$3,'PROJECT_LEADER','PROJECT_LEADER'),
+             ($4,$2,$5,'PROJECT_SPONSOR','PROJECT_SPONSOR')`,
+      [randomUUID(), projectId, actorId, randomUUID(), reviewerId]
     );
   });
 
   afterAll(async () => {
-    await pool.query('DELETE FROM stage_gates WHERE project_id=$1', [projectId]).catch(() => undefined);
-    await pool.query('DELETE FROM kpi_measurements WHERE kpi_id=$1', [kpiId]).catch(() => undefined);
+    await pool
+      .query('DELETE FROM stage_gates WHERE project_id=$1', [projectId])
+      .catch(() => undefined);
+    await pool
+      .query('DELETE FROM kpi_measurements WHERE kpi_id=$1', [kpiId])
+      .catch(() => undefined);
     await pool.query('DELETE FROM initiative_kpis WHERE id=$1', [kpiId]).catch(() => undefined);
     await pool.query('DELETE FROM decisions WHERE id=$1', [decisionId]).catch(() => undefined);
     await pool
       .query('DELETE FROM assessment_report_reviews WHERE assessment_id=$1', [assessmentId])
       .catch(() => undefined);
-    await pool.query('DELETE FROM maturity_assessments WHERE id=$1', [assessmentId]).catch(() => undefined);
-    await pool.query('DELETE FROM plan_baselines WHERE project_id=$1', [projectId]).catch(() => undefined);
-    await pool.query('DELETE FROM roadmap_waves WHERE project_id=$1', [projectId]).catch(() => undefined);
+    await pool
+      .query('DELETE FROM maturity_assessments WHERE id=$1', [assessmentId])
+      .catch(() => undefined);
+    await pool
+      .query('DELETE FROM plan_baselines WHERE project_id=$1', [projectId])
+      .catch(() => undefined);
+    await pool
+      .query('DELETE FROM roadmap_waves WHERE project_id=$1', [projectId])
+      .catch(() => undefined);
     await pool.query('DELETE FROM initiatives WHERE id=$1', [initiativeId]).catch(() => undefined);
-    await pool.query('DELETE FROM project_members WHERE project_id=$1', [projectId]).catch(() => undefined);
+    await pool
+      .query('DELETE FROM project_members WHERE project_id=$1', [projectId])
+      .catch(() => undefined);
     await pool.query('DELETE FROM projects WHERE id=$1', [projectId]).catch(() => undefined);
-    await pool.query('DELETE FROM users WHERE id=$1', [actorId]).catch(() => undefined);
-    await pool.query('DELETE FROM organizations WHERE id=$1', [organizationId]).catch(() => undefined);
+    await pool
+      .query('DELETE FROM users WHERE id IN ($1,$2)', [actorId, reviewerId])
+      .catch(() => undefined);
+    await pool
+      .query('DELETE FROM organizations WHERE id=$1', [organizationId])
+      .catch(() => undefined);
     await pool.end();
     const pgModule = await import('../../database/PostgresDatabase.js');
     await (pgModule as { closePool?: () => Promise<void> }).closePool?.();
   });
+
+  const requestAndApprove = async (gateType: (typeof GATE_TYPES)[keyof typeof GATE_TYPES]) => {
+    const requested = await passGate(projectId, gateType, actorId, undefined, undefined, {
+      organizationId,
+    });
+    expect(requested).toMatchObject({
+      gateType,
+      status: 'PENDING',
+      requestedBy: actorId,
+      approvedBy: null,
+    });
+    const approved = await passGate(projectId, gateType, reviewerId, undefined, undefined, {
+      organizationId,
+    });
+    expect(approved).toMatchObject({
+      gateType,
+      status: 'PASSED',
+      requestedBy: actorId,
+      approvedBy: reviewerId,
+    });
+  };
 
   it('fails closed until each gate has evidence, then persists all five transitions', async () => {
     const readinessBeforeEvidence = await evaluateGate(projectId, GATE_TYPES.READINESS_GATE);
@@ -81,20 +122,15 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
         expect.objectContaining({ criterion: 'hasStrategicGoals', evidence: 'NOT_MET' }),
       ])
     );
-    await pool.query(
-      `UPDATE projects SET context_data=$1 WHERE id=$2`,
-      [
-        JSON.stringify({
-          strategicGoals: ['Reliable delivery'],
-          challenges: ['Fragmented governance'],
-          constraints: ['Fixed pilot window'],
-        }),
-        projectId,
-      ]
-    );
-    await passGate(projectId, GATE_TYPES.READINESS_GATE, actorId, undefined, undefined, {
-      organizationId,
-    });
+    await pool.query(`UPDATE projects SET context_data=$1 WHERE id=$2`, [
+      JSON.stringify({
+        strategicGoals: ['Reliable delivery'],
+        challenges: ['Fragmented governance'],
+        constraints: ['Fixed pilot window'],
+      }),
+      projectId,
+    ]);
+    await requestAndApprove(GATE_TYPES.READINESS_GATE);
 
     expect((await evaluateGate(projectId, GATE_TYPES.DESIGN_GATE)).status).toBe('NOT_READY');
     await pool.query(
@@ -107,9 +143,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
        VALUES($1,$2,$3,$4,$5,'approved')`,
       [randomUUID(), organizationId, assessmentId, `version-${suffix}`, actorId]
     );
-    await passGate(projectId, GATE_TYPES.DESIGN_GATE, actorId, undefined, undefined, {
-      organizationId,
-    });
+    await requestAndApprove(GATE_TYPES.DESIGN_GATE);
 
     expect((await evaluateGate(projectId, GATE_TYPES.PLANNING_GATE)).status).toBe('NOT_READY');
     await pool.query(
@@ -127,9 +161,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
       status: 'READY',
       missingElements: [],
     });
-    await passGate(projectId, GATE_TYPES.PLANNING_GATE, actorId, undefined, undefined, {
-      organizationId,
-    });
+    await requestAndApprove(GATE_TYPES.PLANNING_GATE);
 
     expect((await evaluateGate(projectId, GATE_TYPES.EXECUTION_GATE)).status).toBe('NOT_READY');
     await pool.query(
@@ -142,9 +174,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
        VALUES($1,$2,$3,'Wave 1','2026-10-01','2026-10-31')`,
       [randomUUID(), organizationId, projectId]
     );
-    await passGate(projectId, GATE_TYPES.EXECUTION_GATE, actorId, undefined, undefined, {
-      organizationId,
-    });
+    await requestAndApprove(GATE_TYPES.EXECUTION_GATE);
 
     expect((await evaluateGate(projectId, GATE_TYPES.CLOSURE_GATE)).status).toBe('NOT_READY');
     await pool.query(
@@ -168,9 +198,7 @@ describe('PMO E3 five stage gates on real PostgreSQL', NO_RETRY, () => {
     expect(blockedClosure.status).toBe('NOT_READY');
     expect(blockedClosure.missingElements).toContain('noBlockingDecisions');
     await pool.query(`UPDATE decisions SET status='decided' WHERE id=$1`, [decisionId]);
-    await passGate(projectId, GATE_TYPES.CLOSURE_GATE, actorId, undefined, undefined, {
-      organizationId,
-    });
+    await requestAndApprove(GATE_TYPES.CLOSURE_GATE);
 
     const project = await pool.query<{ current_phase: string }>(
       `SELECT current_phase FROM projects WHERE id=$1`,

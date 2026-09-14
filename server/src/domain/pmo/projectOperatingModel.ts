@@ -137,14 +137,27 @@ export function deriveProjectOperatingModel(input: {
       : null,
   ].filter((row): row is { trigger: string; recipientIds: string[] } => Boolean(row));
 
-  const bindingByRole: Partial<Record<CanonicalPmoRoleKey, string>> = {
-    PROJECT_SPONSOR: 'BUSINESS_AUTHORITY',
-    PROJECT_LEADER: 'GATE_AUTHORITY',
-    STEERING_COMMITTEE: 'DOMAIN_AUTHORITY',
+  const bindingByRole: Partial<
+    Record<string, { roleKey: string; stageGateDuty: 'REVIEWER' | 'EXECUTOR' }>
+  > = {
+    PROJECT_SPONSOR: { roleKey: 'BUSINESS_AUTHORITY', stageGateDuty: 'REVIEWER' },
+    STEERING_COMMITTEE: { roleKey: 'DOMAIN_AUTHORITY', stageGateDuty: 'REVIEWER' },
+    PROJECT_LEADER: { roleKey: 'GATE_AUTHORITY', stageGateDuty: 'EXECUTOR' },
+    PMO: { roleKey: 'GATE_AUTHORITY', stageGateDuty: 'EXECUTOR' },
   };
   const roleBindings = members.flatMap((member) => {
-    const roleKey = member.roleKey ? bindingByRole[member.roleKey] : undefined;
-    return roleKey ? [{ roleKey, principalId: member.userId }] : [];
+    const projectRole = normalizeProjectRole(member.role);
+    const binding = projectRole ? bindingByRole[projectRole] : undefined;
+    return binding
+      ? [
+          {
+            roleKey: binding.roleKey,
+            principalId: member.userId,
+            projectRole,
+            stageGateDuty: binding.stageGateDuty,
+          },
+        ]
+      : [];
   });
 
   return {

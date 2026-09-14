@@ -4978,11 +4978,14 @@
         "title": "PMBOK-lite stage gates",
         "weeklyRhythm": "Weekly review rhythm",
         "loadError": "Failed to load project stage gates",
+        "requested": "Stage-gate review requested",
         "passed": "Stage gate passed",
         "passError": "Stage gate was not passed",
         "gate": "Gate",
         "transition": "Transition",
         "status": "Status",
+        "request": "Request review",
+        "approve": "Approve gate",
         "pass": "Pass gate",
         "missing": "Missing before the next gate",
         "criteria": {
@@ -5009,10 +5012,19 @@
           "execution": "Execution gate",
           "closure": "Closure gate"
         },
+        "phases": {
+          "context": "Context",
+          "assessment": "Assessment",
+          "initiatives": "Initiatives",
+          "roadmap": "Roadmap",
+          "execution": "Execution",
+          "stabilization": "Stabilization"
+        },
         "states": {
           "passed": "Passed",
           "ready": "Ready",
           "not_ready": "Not ready",
+          "pending_review": "Awaiting independent review",
           "upcoming": "Upcoming"
         }
       },

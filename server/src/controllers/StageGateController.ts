@@ -13,11 +13,13 @@ import _StageGateService, {
   getGateType,
   passGate,
   PHASE_ORDER,
+  stageGateDutyForRole,
 } from '../services/stageGateService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { normalizeProjectRole } from '../utils/roleNormalization.js';
 import type { PassGateRequest } from '../validators/stageGate.validators.js';
 
 // ==========================================
@@ -44,15 +46,39 @@ import type { PassGateRequest } from '../validators/stageGate.validators.js';
 // which project IDs exist in other tenants either. The role/capability check
 // stays, but runs AFTER this ownership check, as defense-in-depth — not as a
 // replacement for it.
-async function resolveOwnedProject(
-  projectId: string,
-  organizationId: string
-): Promise<boolean> {
+async function resolveOwnedProject(projectId: string, organizationId: string): Promise<boolean> {
   const row = await queryHelpers.queryOne<{ id: string }>(
     `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
     [projectId, organizationId]
   );
   return !!row;
+}
+
+async function resolveActorStageGateDuty(
+  projectId: string,
+  userId: string | undefined
+): Promise<'EXECUTOR' | 'REVIEWER' | null> {
+  if (!userId) return null;
+  const membership = await queryHelpers.queryOne<{
+    project_role?: string | null;
+    normalized_project_role?: string | null;
+  }>(
+    `SELECT project_role, normalized_project_role
+       FROM project_members
+      WHERE project_id = ? AND user_id = ?
+      LIMIT 1`,
+    [projectId, userId]
+  );
+  return stageGateDutyForRole(
+    normalizeProjectRole(membership?.normalized_project_role || membership?.project_role)
+  );
+}
+
+function rejectMissingStageGateDuty(res: Response): void {
+  res.status(403).json({
+    error: 'Project stage-gate duty is required',
+    code: 'STAGE_GATE_ROLE_FORBIDDEN',
+  });
 }
 
 // ==========================================
@@ -74,6 +100,15 @@ export class StageGateController {
       }
       if (!(await resolveOwnedProject(projectId, organizationId))) {
         res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      // Authorize the project duty before evaluating any readiness criteria.
+      // Otherwise a tenant-level wildcard could read project evidence without
+      // being the executor or independent reviewer for this project.
+      const actorDuty = await resolveActorStageGateDuty(projectId, req.user?.id);
+      if (!actorDuty) {
+        rejectMissingStageGateDuty(res);
         return;
       }
 
@@ -100,6 +135,13 @@ export class StageGateController {
       }
       if (!(await resolveOwnedProject(projectId, organizationId))) {
         res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      // Resolve authorization before reading the current phase or readiness.
+      const actorDuty = await resolveActorStageGateDuty(projectId, req.user?.id);
+      if (!actorDuty) {
+        rejectMissingStageGateDuty(res);
         return;
       }
 
@@ -134,12 +176,27 @@ export class StageGateController {
       }
 
       const evaluation = await evaluateGate(projectId, gateType);
+      const pendingRequest = await queryHelpers.queryOne<{
+        id: string;
+        requested_by: string;
+      }>(
+        `SELECT id, requested_by
+           FROM stage_gates
+          WHERE organization_id = ? AND project_id = ? AND gate_type = ? AND status = 'PENDING'
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [organizationId, projectId, gateType]
+      );
 
       res.json({
         currentPhase,
         nextPhase,
         ...evaluation,
         gateType: gateType as any,
+        actorDuty,
+        pendingRequest: pendingRequest
+          ? { id: pendingRequest.id, requestedBy: pendingRequest.requested_by }
+          : null,
       });
     }
   );
@@ -172,33 +229,36 @@ export class StageGateController {
         return;
       }
 
-      // First evaluate
-      const evaluation = await evaluateGate(
-        projectId,
-        gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]
-      );
+      try {
+        // Role/duty resolution happens inside passGate before readiness is
+        // evaluated. This prevents an organization-level wildcard from using
+        // this write route to inspect gate readiness without a project duty.
+        const result = await passGate(
+          projectId,
+          gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
+          userId,
+          notes,
+          (req as any).userRole ?? req.user?.role ?? null,
+          { organizationId }
+        );
 
-      if (evaluation.status !== 'READY') {
-        res.status(400).json({
-          error: 'Gate not ready',
-          missingElements: evaluation.missingElements,
-        });
-        return;
+        res.json(result);
+      } catch (error) {
+        const known = error as { statusCode?: number; code?: string; message?: string };
+        if (
+          typeof known.statusCode === 'number' &&
+          known.statusCode >= 400 &&
+          known.statusCode < 500 &&
+          typeof known.code === 'string'
+        ) {
+          res.status(known.statusCode).json({
+            error: known.message || 'Stage gate request was rejected',
+            code: known.code,
+          });
+          return;
+        }
+        throw error;
       }
-
-      // Pass the gate. Forward the actor role so the service can fail-closed on
-      // pilot-restricted (USER/GUEST) callers — defense-in-depth behind the
-      // `manage_stage_gates` capability check above.
-      const result = await passGate(
-        projectId,
-        gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
-        userId,
-        notes,
-        (req as any).userRole ?? req.user?.role ?? null,
-        { organizationId }
-      );
-
-      res.json(result);
     }
   );
 

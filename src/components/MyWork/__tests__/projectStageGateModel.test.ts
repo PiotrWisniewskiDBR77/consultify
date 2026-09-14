@@ -9,12 +9,24 @@ describe('buildProjectStageGateRows', () => {
       nextGate: {
         gateType: 'PLANNING_GATE',
         status: 'READY',
-        completionCriteria: [{ criterion: 'Initiatives have owners', isMet: true, evidence: 'Verified' }],
+        completionCriteria: [
+          { criterion: 'Initiatives have owners', isMet: true, evidence: 'Verified' },
+        ],
         missingElements: [],
       },
       history: [
-        { id: 'g1', gate_type: 'READINESS_GATE', status: 'PASSED', approved_at: '2026-09-01T00:00:00Z' },
-        { id: 'g2', gate_type: 'DESIGN_GATE', status: 'PASSED', approved_at: '2026-09-02T00:00:00Z' },
+        {
+          id: 'g1',
+          gate_type: 'READINESS_GATE',
+          status: 'PASSED',
+          approved_at: '2026-09-01T00:00:00Z',
+        },
+        {
+          id: 'g2',
+          gate_type: 'DESIGN_GATE',
+          status: 'PASSED',
+          approved_at: '2026-09-02T00:00:00Z',
+        },
       ],
     });
 
@@ -27,8 +39,29 @@ describe('buildProjectStageGateRows', () => {
       'CLOSURE_GATE',
     ]);
     expect(rows[0]).toMatchObject({ state: 'PASSED', actionable: false });
-    expect(rows[2]).toMatchObject({ state: 'READY', actionable: true });
+    expect(rows[2]).toMatchObject({ state: 'READY', actionable: true, action: 'REQUEST' });
     expect(rows[3]).toMatchObject({ state: 'UPCOMING', actionable: false });
+  });
+
+  it('exposes a pending request only as an approval action for an independent reviewer', () => {
+    const rows = buildProjectStageGateRows({
+      currentPhase: 'Context',
+      nextGate: {
+        gateType: 'READINESS_GATE',
+        status: 'READY',
+        completionCriteria: [],
+        missingElements: [],
+      },
+      history: [],
+      actorDuty: 'REVIEWER',
+      pendingRequest: { id: 'request-1', requestedBy: 'executor-1' },
+    });
+
+    expect(rows[0]).toMatchObject({
+      state: 'PENDING_REVIEW',
+      actionable: true,
+      action: 'APPROVE',
+    });
   });
 
   it('keeps missing readiness criteria visible and blocks passage', () => {

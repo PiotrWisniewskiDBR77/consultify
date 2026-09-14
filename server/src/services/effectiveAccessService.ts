@@ -125,6 +125,7 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'initiative.create',
       'initiative.status.change',
       'initiative.delete',
+      'gate.request',
       'my_work.triage',
       'my_work.delegate',
       'decision.request',
@@ -259,7 +260,7 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'initiative.status.change',
       'initiative.delete',
       'task.delete',
-      'gate.approve',
+      'gate.request',
       'my_work.triage',
       'my_work.delegate',
       'decision.request',
@@ -1102,8 +1103,7 @@ function matchEffectiveCapability(
     return { kind: 'allow', reason: 'superadmin', matched: null };
   const capabilities = new Set(access.capabilities);
   if (capabilities.has('*')) return { kind: 'allow', reason: 'wildcard', matched: '*' };
-  if (capabilities.has(capability))
-    return { kind: 'allow', reason: 'exact', matched: capability };
+  if (capabilities.has(capability)) return { kind: 'allow', reason: 'exact', matched: capability };
   if (capabilities.has(ADMIN_UNRESTRICTED_SENTINEL) && !OWNER_ONLY_CAPABILITIES.has(capability))
     return { kind: 'allow', reason: 'admin_unrestricted', matched: ADMIN_UNRESTRICTED_SENTINEL };
   for (const suffix of SCOPE_SUFFIXES) {

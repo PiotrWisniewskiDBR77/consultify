@@ -63,8 +63,10 @@ interface GateEvaluationResult {
 interface GatePassageResult {
   id: string;
   gateType: GateType;
-  status: 'PASSED';
-  toPhase: Phase | undefined;
+  status: 'PENDING' | 'PASSED';
+  toPhase?: Phase;
+  requestedBy: string;
+  approvedBy: string | null;
 }
 
 interface Project {
@@ -462,11 +464,7 @@ async function countKPIs(projectId: string): Promise<number> {
   }
 }
 
-function throwStageGateCriterionError(
-  criterion: string,
-  projectId: string,
-  error: unknown
-): never {
+function throwStageGateCriterionError(criterion: string, projectId: string, error: unknown): never {
   logger.error('[StageGateService] Criterion query failed', {
     criterion,
     projectId,
@@ -484,12 +482,9 @@ function throwStageGateCriterionError(
  * transitions (PMO / sponsor / admin band). The pilot-restricted USER/GUEST band
  * is never permitted to record a passage.
  */
-const STAGE_GATE_APPROVER_ROLES = new Set([
-  'PROJECT_SPONSOR',
-  'PROJECT_LEADER',
-  'STEERING_COMMITTEE',
-  'PMO',
-]);
+const STAGE_GATE_EXECUTOR_ROLES = new Set(['PMO', 'PROJECT_LEADER']);
+
+const STAGE_GATE_REVIEWER_ROLES = new Set(['PROJECT_SPONSOR', 'STEERING_COMMITTEE']);
 
 export class StageGateForbiddenError extends Error {
   readonly code = 'STAGE_GATE_ROLE_FORBIDDEN';
@@ -498,6 +493,14 @@ export class StageGateForbiddenError extends Error {
     super(message);
     this.name = 'StageGateForbiddenError';
   }
+}
+
+type StageGateDuty = 'EXECUTOR' | 'REVIEWER';
+
+export function stageGateDutyForRole(projectRole: string | null): StageGateDuty | null {
+  if (projectRole && STAGE_GATE_EXECUTOR_ROLES.has(projectRole)) return 'EXECUTOR';
+  if (projectRole && STAGE_GATE_REVIEWER_ROLES.has(projectRole)) return 'REVIEWER';
+  return null;
 }
 
 /**
@@ -523,7 +526,6 @@ export async function passGate(
     quorumReceiptId?: string | null;
   }
 ): Promise<GatePassageResult> {
-  const id = uuidv4();
   const gateKey = Object.keys(GATE_MAP).find((k) => GATE_MAP[k] === gateType);
   const fromPhase = gateKey?.split('_')[0] as Phase | undefined;
   const toPhase = gateKey?.split('_')[1] as Phase | undefined;
@@ -536,27 +538,12 @@ export async function passGate(
     );
   }
 
-  const sql = `INSERT INTO stage_gates
-                 (id, organization_id, project_id, gate_type, from_phase, to_phase, status,
-                  decision_id, policy_id, policy_version, quorum_id, quorum_version,
-                  quorum_receipt_id, requested_by, approved_by, approved_at, notes)
-               VALUES (?, ?, ?, ?, ?, ?, 'PASSED', ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`;
-
-  // M13 SECURITY (fix/inbox-failopen-stagegates-20260828, commit 2):
-  // DbPromise.run() defaults to `fallback: true`, which resolves
-  // `{success: false}` on a DB error INSTEAD OF rejecting — the same "cichy
-  // catch maskujący błąd SQL" pattern guarded against elsewhere in this
-  // codebase (see DbPromise.ts's isSilenceableMissingRelationError doc, and
-  // stripe.routes.ts's tryBeginStripeEvent H6.3 comment). Left unchecked
-  // here, a failed INSERT (e.g. `stage_gates` missing — true today on the
-  // current schema, it exists only in migrations-v2/001_baseline) would
-  // still fall through to `status: 'PASSED'` below: a fabricated success
-  // telling the caller their gate passage was recorded when nothing was
-  // written and no phase transition happened. `fallback: false` makes this
-  // call REJECT on a DB error instead, so it propagates through the
-  // controller's asyncHandler to the global error handler as an honest 5xx.
+  // The project lock, pending request, independent approval and phase update
+  // all use one pinned PostgreSQL transaction. A pooled DbPromise write here
+  // would escape the transaction and could publish a receipt without the
+  // matching phase transition.
   try {
-    await queryHelpers.withPgTransaction(async (client) => {
+    return await queryHelpers.withPgTransaction(async (client) => {
       const projectResult = await client.query<{ current_phase?: Phase }>(
         `SELECT current_phase FROM projects
           WHERE id = ? AND organization_id = ?
@@ -590,51 +577,133 @@ export async function passGate(
       const projectRole = normalizeProjectRole(
         membership?.normalized_project_role || membership?.project_role
       );
-      if (!projectRole || !STAGE_GATE_APPROVER_ROLES.has(projectRole)) {
+      const duty = stageGateDutyForRole(projectRole);
+      if (!duty) {
         throw new StageGateForbiddenError();
+      }
+
+      const pendingResult = await client.query<{ id: string; requested_by: string }>(
+        `SELECT id, requested_by
+           FROM stage_gates
+          WHERE organization_id = ? AND project_id = ? AND gate_type = ? AND status = 'PENDING'
+          ORDER BY created_at DESC
+          LIMIT 1
+          FOR UPDATE`,
+        [governance.organizationId, projectId, gateType]
+      );
+      const pending = pendingResult.rows[0];
+
+      if (duty === 'EXECUTOR') {
+        if (pending) {
+          if (pending.requested_by !== userId) {
+            throw new AppError(
+              409,
+              'A stage-gate review has already been requested',
+              'STAGE_GATE_REQUEST_ALREADY_PENDING'
+            );
+          }
+          return {
+            id: pending.id,
+            gateType,
+            status: 'PENDING' as const,
+            requestedBy: userId,
+            approvedBy: null,
+          };
+        }
+
+        const evaluation = await evaluateGate(projectId, gateType);
+        if (evaluation.status !== 'READY') {
+          throw new AppError(400, 'Stage gate is not ready', 'STAGE_GATE_NOT_READY');
+        }
+
+        const requestId = uuidv4();
+        const requestResult = await client.query(
+          `INSERT INTO stage_gates
+             (id, organization_id, project_id, gate_type, from_phase, to_phase, status,
+              decision_id, policy_id, policy_version, quorum_id, quorum_version,
+              quorum_receipt_id, requested_by, approved_by, approved_at, notes)
+           VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)`,
+          [
+            requestId,
+            governance.organizationId,
+            projectId,
+            gateType,
+            fromPhase,
+            toPhase,
+            governance.decisionId ?? null,
+            governance.policyId ?? null,
+            governance.policyVersion ?? null,
+            governance.quorumId ?? null,
+            governance.quorumVersion ?? null,
+            governance.quorumReceiptId ?? null,
+            userId,
+            notes || null,
+          ]
+        );
+        if (requestResult.rowCount !== 1) {
+          throw new Error('stage gate request insert did not affect exactly one row');
+        }
+        return {
+          id: requestId,
+          gateType,
+          status: 'PENDING' as const,
+          requestedBy: userId,
+          approvedBy: null,
+        };
+      }
+
+      if (!pending) {
+        throw new AppError(
+          409,
+          'A stage-gate review must be requested before approval',
+          'STAGE_GATE_REQUEST_REQUIRED'
+        );
+      }
+      if (pending.requested_by === userId) {
+        throw new AppError(
+          403,
+          'The stage-gate requester cannot approve the same request',
+          'SEPARATION_OF_DUTIES_REQUIRED'
+        );
       }
 
       const evaluation = await evaluateGate(projectId, gateType);
       if (evaluation.status !== 'READY') {
-        throw new AppError(409, 'Stage gate is not ready', 'STAGE_GATE_NOT_READY');
+        throw new AppError(400, 'Stage gate is not ready', 'STAGE_GATE_NOT_READY');
       }
 
-      const insertResult = await DbPromise.run(
-        db,
-        sql,
-        [
-          id,
-          governance.organizationId,
-          projectId,
-          gateType,
-          fromPhase,
-          toPhase,
-          governance.decisionId ?? null,
-          governance.policyId ?? null,
-          governance.policyVersion ?? null,
-          governance.quorumId ?? null,
-          governance.quorumVersion ?? null,
-          governance.quorumReceiptId ?? null,
-          userId,
-          userId,
-          notes || null,
-        ],
-        { fallback: false }
+      const approvalResult = await client.query(
+        `UPDATE stage_gates
+            SET status = 'PASSED', approved_by = ?, approved_at = CURRENT_TIMESTAMP,
+                notes = COALESCE(?, notes), updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND organization_id = ? AND project_id = ? AND gate_type = ?
+            AND status = 'PENDING' AND requested_by <> ?`,
+        [userId, notes || null, pending.id, governance.organizationId, projectId, gateType, userId]
       );
-      if (!insertResult.success) {
-        throw new Error('stage gate insert returned no success');
+      if (approvalResult.rowCount !== 1) {
+        throw new AppError(
+          403,
+          'The stage-gate requester cannot approve the same request',
+          'SEPARATION_OF_DUTIES_REQUIRED'
+        );
       }
 
-      const updateResult = await DbPromise.run(
-        db,
+      const updateResult = await client.query(
         `UPDATE projects SET current_phase = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND organization_id = ? AND COALESCE(current_phase, 'Context') = ?`,
-        [toPhase, projectId, governance.organizationId, fromPhase],
-        { fallback: false }
+        [toPhase, projectId, governance.organizationId, fromPhase]
       );
-      if (!updateResult.success || updateResult.changes !== 1) {
+      if (updateResult.rowCount !== 1) {
         throw new Error('project phase update did not affect exactly one row');
       }
+      return {
+        id: pending.id,
+        gateType,
+        status: 'PASSED' as const,
+        toPhase,
+        requestedBy: pending.requested_by,
+        approvedBy: userId,
+      };
     });
   } catch (err) {
     if (err instanceof AppError || err instanceof StageGateForbiddenError) throw err;
@@ -644,12 +713,6 @@ export async function passGate(
       'STAGE_GATE_WRITE_FAILED'
     );
   }
-  return {
-    id,
-    gateType,
-    status: 'PASSED',
-    toPhase,
-  };
 }
 
 // Default export for backward compatibility
@@ -659,6 +722,7 @@ const StageGateService = {
   getGateType,
   evaluateGate,
   passGate,
+  stageGateDutyForRole,
   _setDb: setDb, // For testing
   setDependencies: (deps: { db: IDatabase }) => {
     if (deps.db) setDb(deps.db);

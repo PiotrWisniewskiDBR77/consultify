@@ -28,8 +28,9 @@ export interface ProjectStageGateRow {
   gateType: ProjectStageGateType;
   fromPhase: string;
   toPhase: string;
-  state: 'PASSED' | 'READY' | 'NOT_READY' | 'UPCOMING';
+  state: 'PASSED' | 'READY' | 'NOT_READY' | 'PENDING_REVIEW' | 'UPCOMING';
   actionable: boolean;
+  action: 'REQUEST' | 'APPROVE' | null;
   missingElements: string[];
   approvedAt: string | null;
 }
@@ -38,6 +39,8 @@ export function buildProjectStageGateRows(input: {
   currentPhase: string;
   nextGate: ProjectStageGateEvaluation | null;
   history: ProjectStageGateHistoryItem[];
+  actorDuty?: 'EXECUTOR' | 'REVIEWER' | null;
+  pendingRequest?: { id: string; requestedBy: string } | null;
 }): ProjectStageGateRow[] {
   const passedByType = new Map<ProjectStageGateType, ProjectStageGateHistoryItem>();
   for (const item of input.history) {
@@ -54,16 +57,25 @@ export function buildProjectStageGateRows(input: {
         ...definition,
         state: 'PASSED' as const,
         actionable: false,
+        action: null,
         missingElements: [],
         approvedAt: passed.approved_at ?? null,
       };
     }
     if (input.nextGate?.gateType === definition.gateType) {
+      const action = input.pendingRequest
+        ? input.actorDuty === 'REVIEWER'
+          ? 'APPROVE'
+          : null
+        : input.actorDuty === 'EXECUTOR' || input.actorDuty === undefined
+          ? 'REQUEST'
+          : null;
       return {
         id: definition.gateType,
         ...definition,
-        state: input.nextGate.status,
-        actionable: input.nextGate.status === 'READY',
+        state: input.pendingRequest ? ('PENDING_REVIEW' as const) : input.nextGate.status,
+        actionable: input.nextGate.status === 'READY' && action !== null,
+        action,
         missingElements: input.nextGate.missingElements,
         approvedAt: null,
       };
@@ -73,6 +85,7 @@ export function buildProjectStageGateRows(input: {
       ...definition,
       state: 'UPCOMING' as const,
       actionable: false,
+      action: null,
       missingElements: [],
       approvedAt: null,
     };

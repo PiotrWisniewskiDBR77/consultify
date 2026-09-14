@@ -24,8 +24,8 @@
  *     200px) — powrót `primary: true` cichcem odtwarza defekt,
  *  3) plakietka statusu ma `whitespace-nowrap` (nie może złamać się w
  *     połowie słowa przy wąskiej kolumnie),
- *  4) przycisk „Pass gate" NIE ma `whitespace-nowrap` (najdłuższa etykieta
- *     PL, „Zatwierdź bramkę", ma prawo zawinąć się na dwie linie zamiast
+ *  4) przycisk „Request review" NIE ma `whitespace-nowrap` (najdłuższa etykieta
+ *     PL, „Przekaż do akceptacji", ma prawo zawinąć się na dwie linie zamiast
  *     zostać ucięta).
  */
 import { render, screen } from '@testing-library/react';
@@ -52,7 +52,9 @@ vi.mock('react-i18next', () => ({
         .split('.')
         .reduce<unknown>(
           (value, part) =>
-            value && typeof value === 'object' ? (value as Record<string, unknown>)[part] : undefined,
+            value && typeof value === 'object'
+              ? (value as Record<string, unknown>)[part]
+              : undefined,
           en
         );
       if (typeof translated === 'string') return translated;
@@ -118,12 +120,12 @@ describe('ProjectStageGatesPanel — szerokość kolumn (Z-43)', () => {
     }
   });
 
-  it('plakietka statusu ma whitespace-nowrap; przycisk „Pass gate" go NIE ma (wolno mu zawinąć się na dwie linie)', async () => {
+  it('plakietka statusu ma whitespace-nowrap; przycisk akcji go NIE ma (wolno mu zawinąć się na dwie linie)', async () => {
     render(<ProjectStageGatesPanel projectId="project-1" />);
     const badge = await screen.findByText('Not ready');
     expect(badge.className).toContain('whitespace-nowrap');
 
-    const buttons = screen.getAllByRole('button', { name: /Pass gate/i });
+    const buttons = screen.getAllByRole('button', { name: /Request review/i });
     expect(buttons.length).toBeGreaterThan(0);
     for (const button of buttons) {
       expect(button.className).not.toContain('whitespace-nowrap');

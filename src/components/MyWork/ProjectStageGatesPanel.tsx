@@ -13,21 +13,16 @@ import {
   type ProjectStageGateRow,
   type ProjectStageGateType,
 } from './projectStageGateModel';
+import { PROJECT_GATE_LABEL_KEYS, projectPhaseLabel } from './projectStageGateLabels';
 
 interface CurrentStageGateResponse extends Partial<ProjectStageGateEvaluation> {
   currentPhase: string;
   nextGate: ProjectStageGateType | null;
   nextPhase?: string;
   message?: string;
+  actorDuty?: 'EXECUTOR' | 'REVIEWER' | null;
+  pendingRequest?: { id: string; requestedBy: string } | null;
 }
-
-const gateLabelKey: Record<ProjectStageGateType, string> = {
-  READINESS_GATE: 'readiness',
-  DESIGN_GATE: 'design',
-  PLANNING_GATE: 'planning',
-  EXECUTION_GATE: 'execution',
-  CLOSURE_GATE: 'closure',
-};
 
 export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projectId }) => {
   const { t } = useTranslation();
@@ -84,20 +79,28 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
         currentPhase: current?.currentPhase || 'Context',
         nextGate,
         history,
+        actorDuty: current?.actorDuty,
+        pendingRequest: current?.pendingRequest,
       }),
-    [current?.currentPhase, history, nextGate]
+    [current?.actorDuty, current?.currentPhase, current?.pendingRequest, history, nextGate]
   );
 
   const passGate = useCallback(
     async (gateType: ProjectStageGateType) => {
       setPassing(gateType);
       try {
-        await Api.passProjectStageGate(projectId, gateType);
-        toast.success(t('myWork.projects.stageGates.passed', 'Stage gate passed'));
+        const result = await Api.passProjectStageGate(projectId, gateType);
+        toast.success(
+          result?.status === 'PENDING'
+            ? t('myWork.projects.stageGates.requested', 'Stage-gate review requested')
+            : t('myWork.projects.stageGates.passed', 'Stage gate passed')
+        );
         await load();
       } catch (cause: any) {
         toast.error(
-          String(cause?.message || t('myWork.projects.stageGates.passError', 'Stage gate was not passed'))
+          String(
+            cause?.message || t('myWork.projects.stageGates.passError', 'Stage gate was not passed')
+          )
         );
       } finally {
         setPassing(null);
@@ -137,9 +140,11 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
           const row = tableRow as unknown as ProjectStageGateRow;
           return (
             <span className="flex flex-col gap-0.5">
-              <span>{t(`myWork.projects.stageGates.names.${gateLabelKey[row.gateType]}`)}</span>
+              <span>
+                {t(`myWork.projects.stageGates.names.${PROJECT_GATE_LABEL_KEYS[row.gateType]}`)}
+              </span>
               <span className="text-[10px] font-normal text-c-text-muted">
-                {row.fromPhase} → {row.toPhase}
+                {projectPhaseLabel(t, row.fromPhase)} → {projectPhaseLabel(t, row.toPhase)}
               </span>
             </span>
           );
@@ -183,7 +188,9 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
                 <span className="text-left leading-tight">
                   {passing === row.gateType
                     ? t('common.saving', 'Saving…')
-                    : t('myWork.projects.stageGates.pass', 'Pass gate')}
+                    : row.action === 'APPROVE'
+                      ? t('myWork.projects.stageGates.approve', 'Approve gate')
+                      : t('myWork.projects.stageGates.request', 'Request review')}
                 </span>
               </button>
             </span>
@@ -223,7 +230,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string }> = ({ projec
       />
       {nextGate?.missingElements.length ? (
         <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
-          {t('myWork.projects.stageGates.missing', 'Missing before the next gate')}: {' '}
+          {t('myWork.projects.stageGates.missing', 'Missing before the next gate')}:{' '}
           {nextGate.missingElements.map(criterionLabel).join(', ')}
         </p>
       ) : null}

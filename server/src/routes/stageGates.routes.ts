@@ -11,7 +11,7 @@ import StageGateControllerRaw from '../controllers/StageGateController.js';
 const StageGateController = StageGateControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
-import { requireProjectCapability } from '../middleware/effectiveCapability.middleware.js';
+import { requireAnyProjectCapability } from '../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { PassGateSchema } from '../validators/stageGate.validators.js';
@@ -71,7 +71,10 @@ router.get('/:projectId/current', StageGateController.getCurrentGate);
  */
 router.post(
   '/:projectId/pass/:gateType',
-  requireProjectCapability('gate.approve', undefined, { shadow: true, enforceMode: 'enforce' }),
+  requireAnyProjectCapability(['gate.request', 'gate.approve'], undefined, {
+    shadow: true,
+    enforceMode: 'enforce',
+  }),
   validateBody(PassGateSchema),
   StageGateController.passGate
 );
