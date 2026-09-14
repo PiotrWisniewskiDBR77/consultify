@@ -4,7 +4,7 @@ Wyniki uzyskane w worktree pakietu, bez stagingu:
 
 - `npm run type-check:server` — PASS, 0 błędów;
 - `npx esbuild src/components/Initiatives/InitiativeWorkReportView.tsx ...` — PASS, bundle 23.9 kB;
-- `initiativeWorkReportService.test.ts --retry=0` — PASS 1/1, rzeczywisty bufor `%PDF` z polskimi znakami;
+- `initiativeWorkReportService.test.ts --retry=0` — PASS 6/6 (PDF + pięć odrębnych kontraktów szablonów), rzeczywisty bufor `%PDF` z polskimi znakami;
 - `initiativeWorkReportReader.test.ts --retry=0` — PASS 1/1;
 - `scheduledInitiativeWorkReport.test.ts --retry=0` — PASS 1/1;
 - `initiativeWorkReportEmail.realSmtp.test.ts --retry=0` — PASS 1/1, lokalne połączenie SMTP TCP i załącznik;
@@ -13,3 +13,7 @@ Wyniki uzyskane w worktree pakietu, bez stagingu:
 - hooki commitowe dla `7a7c238441` — PASS: table canon, TRIADA, artifact, density, focus ratchet, flag env static i język EN/PL.
 
 Ostrzeżenia `act(...)` w istniejącym teście hubu nie wpływają na wynik 3/3 i wymagają osobnej korekty harnessu.
+
+- `reportDefinitions.adminGate.routes.test.ts --retry=0` — PASS 8/8, w tym MEMBER → 403 dla create/transition przebiegu;
+- skan tokenów c-* tylko w zmienionych ekranach względem `src/index.css` — PASS, 10/10 tokenów istnieje;
+- zrzuty Vite/CUA: light 24 423 B, dark 24 732 B — wizualnie sprawdzone.

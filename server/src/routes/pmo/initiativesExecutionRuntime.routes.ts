@@ -33,7 +33,7 @@ import {
 } from '../../domain/initiatives-execution/budgetItems.js';
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { Pool, type PoolConfig } from 'pg';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import databaseConfig from '../../config/DatabaseConfig.js';
@@ -1247,30 +1247,40 @@ const ReportSourceSchema = z.object({
   accessState: z.enum(['FULL', 'REDACTED', 'DENIED']),
   redactions: z.array(z.string()),
 });
-const ReportDraftSchema = z.object({
-  expectedVersion: z.literal(0),
-  clientRequestId: z.string().min(1),
-  definitionRef: z.object({ definitionId: z.string().min(1), version: z.number().int().min(1) }),
-  parentRunRef: z
-    .object({ reportRunId: z.string().min(1), version: z.number().int().min(1) })
-    .nullable(),
-  audience: z.array(z.string().min(1)).min(1),
-  scopeRefs: z.array(z.string().min(1)).min(1),
-  period: z.object({ start: z.string().datetime(), end: z.string().datetime() }),
-  asOf: z.string().datetime(),
-  workReport: z
-    .object({
-      title: z.string().min(1).max(180),
-      templateId: z.enum(INITIATIVE_WORK_REPORT_TEMPLATES),
-      cadence: z.enum(['ON_DEMAND', 'WEEKLY', 'MONTHLY']),
-      content: z.record(z.string(), z.unknown()),
-    })
-    .nullable()
-    .default(null),
-  sources: z.array(ReportSourceSchema).min(1),
-  ownerId: z.string().min(1),
-  approverId: z.string().min(1),
-});
+const ReportDraftSchema = z
+  .object({
+    expectedVersion: z.literal(0),
+    clientRequestId: z.string().min(1),
+    definitionRef: z.object({ definitionId: z.string().min(1), version: z.number().int().min(1) }),
+    parentRunRef: z
+      .object({ reportRunId: z.string().min(1), version: z.number().int().min(1) })
+      .nullable(),
+    audience: z.array(z.string().min(1)).min(1),
+    scopeRefs: z.array(z.string().min(1)).min(1),
+    period: z.object({ start: z.string().datetime(), end: z.string().datetime() }),
+    asOf: z.string().datetime(),
+    workReport: z
+      .object({
+        title: z.string().min(1).max(180),
+        templateId: z.enum(INITIATIVE_WORK_REPORT_TEMPLATES),
+        cadence: z.enum(['ON_DEMAND', 'WEEKLY', 'MONTHLY']),
+        projectIds: z.array(z.string().min(1)).max(100).default([]),
+      })
+      .nullable()
+      .default(null),
+    sources: z.array(ReportSourceSchema).default([]),
+    ownerId: z.string().min(1),
+    approverId: z.string().min(1),
+  })
+  .superRefine((value, context) => {
+    if (!value.workReport && value.sources.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sources'],
+        message: 'REPORT_SOURCES_REQUIRED',
+      });
+    }
+  });
 const ReportDefinitionContentSchema = z.object({
   name: z.string().min(1),
   purpose: z.string().min(1),
@@ -7172,6 +7182,10 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      if (payload.ownerId !== actor.userId || payload.approverId === actor.userId) {
+        res.status(403).json({ error: { code: 'REPORT_DEFINITION_OWNER_REQUIRED' } });
+        return;
+      }
       const result = await createReportDefinition(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -7215,12 +7229,28 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const definitionId = firstParam(req.params.definitionId);
+      const definition = (await deps.reader.findReportDefinition(
+        actor.organizationId,
+        definitionId
+      )) as any;
+      const currentDefinition = definition?.versions?.find(
+        (version: any) => version.definitionVersion === definition.currentVersion
+      );
+      const actorIsAuthorized =
+        payload.action === 'PUBLISH'
+          ? currentDefinition?.approverId === actor.userId
+          : currentDefinition?.ownerId === actor.userId;
+      if (!definition || !actorIsAuthorized) {
+        res.status(403).json({ error: { code: 'REPORT_DEFINITION_ACTOR_FORBIDDEN' } });
+        return;
+      }
       res.json(
         await transitionReportDefinition(deps.unitOfWork, {
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'report_definition',
-          aggregateId: firstParam(req.params.definitionId),
+          aggregateId: definitionId,
           expectedVersion,
           clientRequestId,
           correlationId: `report-definition-transition-${clientRequestId}`,
@@ -7253,6 +7283,7 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/report-runs/:reportRunId',
+    requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req),
         parsed = ReportDraftSchema.safeParse(req.body);
@@ -7265,6 +7296,61 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      if (payload.ownerId !== actor.userId || payload.approverId === actor.userId) {
+        res.status(403).json({ error: { code: 'REPORT_RUN_OWNER_REQUIRED' } });
+        return;
+      }
+      let trustedAsOf = payload.asOf;
+      let trustedSources = payload.sources;
+      let trustedWorkReport: {
+        title: string;
+        templateId: string;
+        cadence: 'ON_DEMAND' | 'WEEKLY' | 'MONTHLY';
+        content: Record<string, unknown>;
+      } | null = null;
+      if (payload.workReport) {
+        if (
+          payload.workReport.projectIds.length > 0 &&
+          !(await authorizeProjects(actor, payload.workReport.projectIds, 'initiative.view'))
+        ) {
+          res.status(404).json({ error: { code: 'NOT_FOUND' } });
+          return;
+        }
+        const definition = (await deps.reader.findReportDefinition(
+          actor.organizationId,
+          payload.definitionRef.definitionId
+        )) as any;
+        const published = definition?.versions?.find(
+          (version: any) =>
+            version.definitionVersion === payload.definitionRef.version &&
+            version.state === 'PUBLISHED'
+        );
+        if (
+          !published ||
+          published.ownerId !== actor.userId ||
+          published.approverId !== payload.approverId
+        ) {
+          res.status(409).json({ error: { code: 'PUBLISHED_DEFINITION_REQUIRED' } });
+          return;
+        }
+        const captured = await deps.reader.buildInitiativeWorkReport(actor.organizationId, {
+          title: payload.workReport.title,
+          templateId: payload.workReport.templateId,
+          projectIds: payload.workReport.projectIds,
+        });
+        if (captured.sources.length === 0) {
+          res.status(409).json({ error: { code: 'REPORT_SOURCES_REQUIRED' } });
+          return;
+        }
+        trustedAsOf = captured.content.generatedAt;
+        trustedSources = captured.sources as any;
+        trustedWorkReport = {
+          title: payload.workReport.title,
+          templateId: payload.workReport.templateId,
+          cadence: payload.workReport.cadence,
+          content: captured.content as unknown as Record<string, unknown>,
+        };
+      }
       const result = await createReportRun(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -7279,8 +7365,10 @@ export function createInitiativesExecutionRuntimeRouter(
         createIfMissing: true,
         payload: {
           ...payload,
+          asOf: trustedAsOf,
+          workReport: trustedWorkReport,
           parentRunRef: payload.parentRunRef ?? null,
-          sources: payload.sources.map((source) => ({
+          sources: trustedSources.map((source) => ({
             ...source,
             formula: source.formula ?? null,
             unit: source.unit ?? null,
@@ -7294,6 +7382,7 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/report-runs/:reportRunId/transitions',
+    requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req),
         parsed = ReportTransitionSchema.safeParse(req.body);
@@ -7306,12 +7395,28 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const reportRunId = firstParam(req.params.reportRunId);
+      const run = (await deps.reader.listReportRuns(actor.organizationId)).find(
+        (item: any) => item.reportRunId === reportRunId
+      ) as any;
+      if (!run) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const actorIsAuthorized =
+        payload.action === 'DECIDE' || payload.action === 'PUBLISH'
+          ? run.approverId === actor.userId
+          : run.ownerId === actor.userId;
+      if (!actorIsAuthorized || (run.workReport && payload.action === 'PUBLISH')) {
+        res.status(403).json({ error: { code: 'REPORT_RUN_ACTOR_FORBIDDEN' } });
+        return;
+      }
       res.json(
         await transitionReportRun(deps.unitOfWork, {
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'report_run',
-          aggregateId: firstParam(req.params.reportRunId),
+          aggregateId: reportRunId,
           expectedVersion,
           clientRequestId,
           correlationId: `report-transition-${clientRequestId}`,
@@ -7463,7 +7568,7 @@ export function createInitiativesExecutionRuntimeRouter(
           reportType: 'initiative_work_report',
           frequency: parsed.data.cadence === 'WEEKLY' ? 'weekly' : 'monthly',
           timezone: parsed.data.timezone,
-          deliveryMethods: ['dashboard'],
+          deliveryMethods: ['email', 'dashboard'],
           deliveryConfig: {
             email: {
               recipients: parsed.data.recipients,
@@ -7545,6 +7650,17 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
+      const priorReceipt = run.distributionReceipts?.find(
+        (receipt: any) => receipt.receiptId === parsed.data.clientRequestId
+      );
+      if (run.status === 'PUBLISHED' && priorReceipt) {
+        res.json({
+          result: { status: 'IDEMPOTENT_REPLAY' },
+          delivered: parsed.data.recipients,
+          distributedAt: priorReceipt.distributedAt,
+        });
+        return;
+      }
       if (
         run.status !== 'APPROVED' ||
         run.approverId !== actor.userId ||
@@ -7568,28 +7684,9 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const content = run.frozenSnapshot.workReport.content as InitiativeWorkReportContent;
       const pdf = await renderInitiativeWorkReportPdf(content);
-      const failed: string[] = [];
-      for (const recipient of parsed.data.recipients) {
-        const accepted = await EmailService.send({
-          to: recipient,
-          subject: content.title,
-          text: `Consultify work report: ${content.title}`,
-          html: `<p>Consultify work report: <strong>${content.title.replace(/[<>&"']/g, '')}</strong></p>`,
-          requireDelivery: true,
-          attachments: [
-            {
-              filename: `work-report-${reportRunId}.pdf`,
-              content: pdf,
-              contentType: 'application/pdf',
-            },
-          ],
-        });
-        if (!accepted) failed.push(recipient);
-      }
-      if (failed.length > 0) {
-        res.status(502).json({ error: { code: 'EMAIL_DELIVERY_FAILED' }, failed });
-        return;
-      }
+      // Reserve the immutable distribution receipt before contacting SMTP. A
+      // version conflict therefore sends nothing, and a retry with the same
+      // clientRequestId resolves through the receipt above without duplicating mail.
       const distributedAt = new Date().toISOString();
       const result = await transitionReportRun(deps.unitOfWork, {
         organizationId: actor.organizationId,
@@ -7611,6 +7708,32 @@ export function createInitiativesExecutionRuntimeRouter(
           },
         },
       });
+      const failed: string[] = [];
+      for (const recipient of parsed.data.recipients) {
+        const accepted = await EmailService.send({
+          to: recipient,
+          subject: content.title,
+          text: `Consultify work report: ${content.title}`,
+          html: `<p>Consultify work report: <strong>${content.title.replace(/[<>&"']/g, '')}</strong></p>`,
+          requireDelivery: true,
+          attachments: [
+            {
+              filename: `work-report-${reportRunId}.pdf`,
+              content: pdf,
+              contentType: 'application/pdf',
+            },
+          ],
+        });
+        if (!accepted) failed.push(recipient);
+      }
+      if (failed.length > 0) {
+        res.status(502).json({
+          error: { code: 'EMAIL_DELIVERY_FAILED' },
+          failed,
+          receiptId: parsed.data.clientRequestId,
+        });
+        return;
+      }
       res.json({ result, delivered: parsed.data.recipients, distributedAt });
     })
   );
@@ -8799,6 +8922,7 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
 };
 
 export async function runScheduledInitiativeWorkReport(schedule: {
+  id: string;
   organizationId: string;
   runtimeReport?: {
     definitionId: string;
@@ -8816,6 +8940,20 @@ export async function runScheduledInitiativeWorkReport(schedule: {
   if (!spec || !INITIATIVE_WORK_REPORT_TEMPLATES.includes(spec.templateId as any)) {
     throw new Error('INITIATIVE_WORK_REPORT_SCHEDULE_INVALID');
   }
+  const definition = (await runtimeDependencies.reader.findReportDefinition(
+    schedule.organizationId,
+    spec.definitionId
+  )) as any;
+  const publishedDefinition = definition?.versions?.find(
+    (version: any) =>
+      version.definitionVersion === spec.definitionVersion &&
+      version.state === 'PUBLISHED' &&
+      version.ownerId === spec.ownerId &&
+      version.approverId === spec.approverId
+  );
+  if (!publishedDefinition || spec.ownerId === spec.approverId) {
+    throw new Error('INITIATIVE_WORK_REPORT_PUBLISHED_DEFINITION_REQUIRED');
+  }
   const captured = await runtimeDependencies.reader.buildInitiativeWorkReport(
     schedule.organizationId,
     {
@@ -8825,11 +8963,26 @@ export async function runScheduledInitiativeWorkReport(schedule: {
     }
   );
   if (captured.sources.length === 0) throw new Error('INITIATIVE_WORK_REPORT_NO_SOURCES');
-  const reportRunId = randomUUID();
   const now = new Date();
   const start = new Date(now);
   if (spec.cadence === 'WEEKLY') start.setUTCDate(start.getUTCDate() - 7);
   else start.setUTCMonth(start.getUTCMonth() - 1);
+  const periodKey =
+    spec.cadence === 'MONTHLY'
+      ? now.toISOString().slice(0, 7)
+      : new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - now.getUTCDay())
+        )
+          .toISOString()
+          .slice(0, 10);
+  const digest = createHash('sha256')
+    .update(`${schedule.organizationId}:${schedule.id}:${spec.cadence}:${periodKey}`)
+    .digest('hex');
+  const reportRunId = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-a${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
+  const existing = (await runtimeDependencies.reader.listReportRuns(schedule.organizationId)).find(
+    (item: any) => item.reportRunId === reportRunId
+  ) as any;
+  if (existing?.status === 'PUBLISHED') return reportRunId;
   const envelope = {
     organizationId: schedule.organizationId,
     actorId: spec.ownerId,
@@ -8838,45 +8991,117 @@ export async function runScheduledInitiativeWorkReport(schedule: {
     policyId: 'report-run',
     policyVersion: 1,
   };
-  await createReportRun(runtimeDependencies.unitOfWork, {
+  let status = existing?.status as string | undefined;
+  let version = Number(existing?.version ?? 0);
+  if (!existing) {
+    await createReportRun(runtimeDependencies.unitOfWork, {
+      ...envelope,
+      expectedVersion: 0,
+      clientRequestId: `scheduled-create-${reportRunId}`,
+      correlationId: `scheduled-work-report-${reportRunId}`,
+      commandType: 'report-run.create',
+      createIfMissing: true,
+      payload: {
+        definitionRef: { definitionId: spec.definitionId, version: spec.definitionVersion },
+        parentRunRef: null,
+        audience: spec.recipients,
+        scopeRefs: spec.projectIds.length
+          ? spec.projectIds.map((id) => `project:${id}`)
+          : ['organization'],
+        period: { start: start.toISOString(), end: now.toISOString() },
+        asOf: captured.content.generatedAt,
+        sources: captured.sources as any,
+        ownerId: spec.ownerId,
+        approverId: spec.approverId,
+        workReport: {
+          title: spec.title,
+          templateId: spec.templateId,
+          cadence: spec.cadence,
+          content: captured.content as unknown as Record<string, unknown>,
+        },
+      },
+    });
+    status = 'DRAFT';
+    version = 1;
+  }
+  if (status === 'DRAFT') {
+    await transitionReportRun(runtimeDependencies.unitOfWork, {
+      ...envelope,
+      expectedVersion: version,
+      clientRequestId: `scheduled-validate-${reportRunId}`,
+      correlationId: `scheduled-work-report-${reportRunId}-validate`,
+      commandType: 'report-run.transition',
+      payload: { action: 'VALIDATE' },
+    });
+    status = 'VALIDATED';
+    version += 1;
+  }
+  if (status === 'VALIDATED') {
+    await transitionReportRun(runtimeDependencies.unitOfWork, {
+      ...envelope,
+      expectedVersion: version,
+      clientRequestId: `scheduled-freeze-${reportRunId}`,
+      correlationId: `scheduled-work-report-${reportRunId}-freeze`,
+      commandType: 'report-run.transition',
+      payload: { action: 'FREEZE' },
+    });
+    status = 'FROZEN';
+    version += 1;
+  }
+  if (status === 'FROZEN') {
+    await transitionReportRun(runtimeDependencies.unitOfWork, {
+      ...envelope,
+      actorId: spec.approverId,
+      expectedVersion: version,
+      clientRequestId: `scheduled-approve-${reportRunId}`,
+      correlationId: `scheduled-work-report-${reportRunId}-approve`,
+      commandType: 'report-run.transition',
+      payload: { action: 'DECIDE', outcome: 'APPROVED', rationale: 'SCHEDULE_DEFINITION_APPROVAL' },
+    });
+    status = 'APPROVED';
+    version += 1;
+  }
+  if (status !== 'APPROVED') throw new Error('INITIATIVE_WORK_REPORT_STATE_INVALID');
+  const receiptId = `scheduled-delivery-${reportRunId}`;
+  await transitionReportRun(runtimeDependencies.unitOfWork, {
     ...envelope,
-    expectedVersion: 0,
-    clientRequestId: randomUUID(),
-    correlationId: `scheduled-work-report-${reportRunId}`,
-    commandType: 'report-run.create',
-    createIfMissing: true,
+    actorId: spec.approverId,
+    expectedVersion: version,
+    clientRequestId: receiptId,
+    correlationId: `scheduled-work-report-${reportRunId}-publish`,
+    commandType: 'report-run.transition',
     payload: {
-      definitionRef: { definitionId: spec.definitionId, version: spec.definitionVersion },
-      parentRunRef: null,
-      audience: spec.recipients,
-      scopeRefs: spec.projectIds.length
-        ? spec.projectIds.map((id) => `project:${id}`)
-        : ['organization'],
-      period: { start: start.toISOString(), end: now.toISOString() },
-      asOf: captured.content.generatedAt,
-      sources: captured.sources as any,
-      ownerId: spec.ownerId,
-      approverId: spec.approverId,
-      workReport: {
-        title: spec.title,
-        templateId: spec.templateId,
-        cadence: spec.cadence,
-        content: captured.content as unknown as Record<string, unknown>,
+      action: 'PUBLISH',
+      distribution: {
+        receiptId,
+        audience: spec.recipients.join(','),
+        distributedAt: now.toISOString(),
       },
     },
   });
-  for (const [expectedVersion, action] of [
-    [1, 'VALIDATE'],
-    [2, 'FREEZE'],
-  ] as const) {
-    await transitionReportRun(runtimeDependencies.unitOfWork, {
-      ...envelope,
-      expectedVersion,
-      clientRequestId: randomUUID(),
-      correlationId: `scheduled-work-report-${reportRunId}-${action.toLowerCase()}`,
-      commandType: 'report-run.transition',
-      payload: { action },
+  const publishedRun = (
+    await runtimeDependencies.reader.listReportRuns(schedule.organizationId)
+  ).find((item: any) => item.reportRunId === reportRunId) as any;
+  const deliveryContent = publishedRun?.frozenSnapshot?.workReport
+    ?.content as InitiativeWorkReportContent;
+  if (!deliveryContent) throw new Error('INITIATIVE_WORK_REPORT_FROZEN_CONTENT_MISSING');
+  const pdf = await renderInitiativeWorkReportPdf(deliveryContent);
+  for (const recipient of spec.recipients) {
+    const accepted = await EmailService.send({
+      to: recipient,
+      subject: deliveryContent.title,
+      text: `Consultify work report: ${deliveryContent.title}`,
+      html: `<p>Consultify work report: <strong>${deliveryContent.title.replace(/[<>&"']/g, '')}</strong></p>`,
+      requireDelivery: true,
+      attachments: [
+        {
+          filename: `work-report-${reportRunId}.pdf`,
+          content: pdf,
+          contentType: 'application/pdf',
+        },
+      ],
     });
+    if (!accepted) throw new Error('INITIATIVE_WORK_REPORT_EMAIL_FAILED');
   }
   return reportRunId;
 }

@@ -523,11 +523,13 @@ class ScheduledReportService {
       let reportId: string | null = null;
       let bundleZip: Buffer | null = null;
       let bundleBaseName: string | null = null;
+      let initiativeWorkReportDelivered = false;
 
       // W6.1 — bridge do generatora M17 gdy deliverableType === 'bundle'.
       if (scheduleData.reportType === 'initiative_work_report' && scheduleData.runtimeReport) {
         const runtime = await import('../routes/pmo/initiativesExecutionRuntime.routes.js');
         reportId = await runtime.runScheduledInitiativeWorkReport(scheduleData);
+        initiativeWorkReportDelivered = true;
       } else if (scheduleData.deliverableType === 'bundle') {
         const brief = scheduleData.description?.trim() || scheduleData.name;
         if (brief && brief.length >= 20) {
@@ -590,7 +592,17 @@ class ScheduledReportService {
               contentBase64: bundleZip.toString('base64'),
             }
           : undefined;
-        execution.deliveryResults = await this.deliverReport(scheduleData, reportId, zipAttachment);
+        execution.deliveryResults = initiativeWorkReportDelivered
+          ? scheduleData.deliveryMethods.map((method) => ({
+              method,
+              status: 'success' as const,
+              details:
+                method === 'email'
+                  ? 'Frozen PDF accepted by configured SMTP provider'
+                  : 'Published report available in dashboard',
+              timestamp: new Date().toISOString(),
+            }))
+          : await this.deliverReport(scheduleData, reportId, zipAttachment);
       }
 
       // Update schedule
