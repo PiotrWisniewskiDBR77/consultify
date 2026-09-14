@@ -3077,7 +3077,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         filterControls={rightControls}
         commandRowContent={
-          activeTab === 'plan' || activeTab === 'capacity' || activeTab === 'portfolioHealth'
+          activeTab === 'plan' ||
+          activeTab === 'capacity' ||
+          activeTab === 'portfolioHealth' ||
+          activeTab === 'transitionInbox'
             ? undefined
             : isBulkMode
               ? bulkBarContent
