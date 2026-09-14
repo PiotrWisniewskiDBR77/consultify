@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
-  "baseSha": "88f1a1994dffa8b1f3b706476078844cbb43441f",
-  "candidateContentSha": "2bfca250eddf766cf922409e5b4239d8a4b09113",
+  "baseSha": "3e1363d01a609c0dc9178ef7a5bdf96af22f9f30",
+  "candidateContentSha": "fac9ed4f12",
   "branch": "codex/realizacja-cztery-przyciski-20260913",
   "manifestSelfExcluded": true,
   "fileCount": 57,
-  "evidenceBytes": 850368,
+  "evidenceBytes": 1323580,
   "evidenceCapBytes": 2097152,
   "files": [
     {
@@ -31,13 +31,13 @@
     },
     {
       "path": "dev-render/main.tsx",
-      "bytes": 156938,
-      "sha256": "2b8ddc1f78c4279e959d0f9b94746b1350275a397bd618c422780cd6326a659e"
+      "bytes": 157332,
+      "sha256": "53f57a41d20a906ede1b713e841dfe91cd8b39fe0544a979b74d545cef5801cb"
     },
     {
       "path": "dev-render/screens/execution-report-day11.tsx",
-      "bytes": 9207,
-      "sha256": "fd0c0dfa4de636e09124e56e0cc9954bbb81b19162a79985facf5ca2498b2944"
+      "bytes": 10039,
+      "sha256": "cad78dfa09fb2b7aa6104798e7593be0d65fd7f207b01c63bcf57eae36f84e47"
     },
     {
       "path": "dev-render/screens/execution-risk-signal-e0.tsx",
@@ -111,8 +111,8 @@
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/AUTHOR_REREVIEW_CLOSURE_20260914.md",
-      "bytes": 2512,
-      "sha256": "b223d6f06e38f953e0cd566751eba822aef8905ac35909753205c1f43338a280"
+      "bytes": 3288,
+      "sha256": "4c1a46d3c9dc801b2bda513284a35848d5fccc8c7784875ab1582b18c045aae4"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/BROWSER_RECEIPT.md",
@@ -136,23 +136,23 @@
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-dark.png",
-      "bytes": 56306,
-      "sha256": "8a49dedc612669fa3b04938349bd6fc4765d534043ef1d65c8929978f0b2b69d"
+      "bytes": 293953,
+      "sha256": "b3f992025e053111c65006eb4e42bb686c468fafbb70ac70f63c654fd392f615"
     },
     {
       "path": "evidence/f2-2-realizacja/e2-work/work-analysis-light.png",
-      "bytes": 57310,
-      "sha256": "66f4cf2fdca2e46e3383847234e82b0869110503aa7b1c8438c5da50becadcc4"
+      "bytes": 292099,
+      "sha256": "3517695d7921e9e09f5d5b9469eac6761588549ef34cbd50d9a570bb1123ef64"
     },
     {
       "path": "public/locales/en/translation.json",
-      "bytes": 2234487,
-      "sha256": "a6235720b0857eb9e543edb0a8ee1d67f576b750985653aedff9f39fe8e5fe80"
+      "bytes": 2235331,
+      "sha256": "f79524cc68d58a6a4409b5572d2a4e1c855463aa5ba72db69393a2b56b44572c"
     },
     {
       "path": "public/locales/pl/translation.json",
-      "bytes": 2388436,
-      "sha256": "cb542e8dec998b5176be60ffa5efe9b28e3615afc42cc568b8a29a9052a7b890"
+      "bytes": 2389674,
+      "sha256": "98c58e7abd711ee42a75e346f29119bbcb502a78344a5948148a30d6f44a2b78"
     },
     {
       "path": "server/src/cron/Scheduler.ts",
@@ -166,8 +166,8 @@
     },
     {
       "path": "server/src/domain/initiatives-execution/postgresInitiativeReader.ts",
-      "bytes": 88856,
-      "sha256": "571f8e5afcdfe86e496cbaaea5d58b12bcbb9a8d084b6ae9ca491f6030cc693a"
+      "bytes": 93990,
+      "sha256": "6eb5bdaea998571de3aec01a8d6a0f2496363bb9c885602c6cee1480b9a11beb"
     },
     {
       "path": "server/src/middleware/__tests__/executionSpineLegacyReadOnly.middleware.test.ts",
@@ -196,8 +196,8 @@
     },
     {
       "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
-      "bytes": 317011,
-      "sha256": "55026237fb0a98625b688ea906767f2e9a668f42cc54eef83448b663d93f88f8"
+      "bytes": 345643,
+      "sha256": "88ab4704ae23f76b6eaaebf697c29e212576a2ba651317788291e3411109d966"
     },
     {
       "path": "server/src/services/execution/executionWorkAnalysisService.ts",
@@ -251,13 +251,13 @@
     },
     {
       "path": "src/components/Execution/reports-intelligence/WorkIntelligenceReport.tsx",
-      "bytes": 35179,
-      "sha256": "1f1d14e4896302f646d1253c37801c66d6860822d1b7176d861e0116e52572cb"
+      "bytes": 42949,
+      "sha256": "cf85726ff00d9de52a819999b764227a398c9636e445525d14aa76c4f3dceb88"
     },
     {
       "path": "src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx",
-      "bytes": 14155,
-      "sha256": "2391da8ce21bdc0178b5d498f17df42883f06e0b215cad11dd0b34f22f6a5823"
+      "bytes": 14356,
+      "sha256": "034d88acde9158ae47d5f9ce50e543f7de8b940081141ed824f1b0f852c13d8a"
     },
     {
       "path": "src/components/Execution/reports-intelligence/__tests__/workAnalysisModel.test.ts",
@@ -276,8 +276,8 @@
     },
     {
       "path": "src/services/initiatives-execution/runtimeApi.ts",
-      "bytes": 78515,
-      "sha256": "947b9eaa9204155f330d8d431c771836d4377ac260b5ded053f4ff9dd23ede27"
+      "bytes": 79424,
+      "sha256": "68620a2da2f215a948ebc86cb96d6126f3fa7f88ef42381a97d341666f5f7d87"
     },
     {
       "path": "tests/components/Execution/ExecutionBankViews.behavior.test.tsx",
