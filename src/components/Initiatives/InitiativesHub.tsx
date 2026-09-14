@@ -80,6 +80,7 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
+import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import {
@@ -135,6 +136,7 @@ import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
 import { InitiativePreparationReadView } from './InitiativePreparationReadView';
+import { InitiativeWorkloadSurface } from './InitiativeWorkloadSurface';
 import { InitiativeWorkReportView } from './InitiativeWorkReportView';
 import {
   InitiativePreviewV3Body,
@@ -278,11 +280,15 @@ const FOUR_BUTTONS_ENABLED = isInitiativesFourButtonsEnabled();
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
 const WORK_REPORT_ENABLED = import.meta.env.VITE_INITIATIVES_WORK_REPORT === 'true';
-/* H1b (14.09) — „Do akceptacji": skrzynka recenzenta przejść cyklu życia.
-   Domyślnie OFF: wygląd idzie do właściciela na ZRZUCIE, nie przez „włącz
-   flagę i zobacz". Przy OFF zakładka nie istnieje ani w Menu 1, ani w zbiorze
-   dopuszczonych adresów — parytet z dzisiejszym ekranem jest zupełny. */
+/* H1b (14.09) — „Do akceptacji": skrzynka recenzenta przejsc cyklu zycia.
+   Domyslnie OFF: wyglad idzie do wlasciciela na ZRZUCIE, nie przez „wlacz
+   flage i zobacz". Przy OFF zakladka nie istnieje ani w Menu 1, ani w zbiorze
+   dopuszczonych adresow — parytet z dzisiejszym ekranem jest zupelny. */
 const TRANSITION_INBOX_ENABLED = import.meta.env.VITE_TRANSITION_INBOX === 'true';
+/* Q1 P3 E1 (14.09) — heatmapa obciazenia osoba x tydzien podmienia SRODEK
+   istniejacej zakladki `capacity` (zero nowych soczewek w Menu 3 — kanon 3 pigulek).
+   Flaga domyslnie OFF: przy OFF `capacity` renderuje CapacityScenarioSurface jak na linii. */
+const INITIATIVES_WORKLOAD_ENABLED = isInitiativesWorkloadEnabled();
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   'list',
   'plan',
@@ -1988,6 +1994,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           }}
         />
       );
+    }
+    if (activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED) {
+      return <InitiativeWorkloadSurface initiatives={allInitiatives as any[]} />;
     }
     if (activeTab === 'capacity')
       return (

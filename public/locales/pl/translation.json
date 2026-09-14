@@ -10510,6 +10510,27 @@
     }
   },
   "initiatives": {
+    "workload": {
+      "aria": "Obciążenie inicjatyw",
+      "person": "Członek zespołu",
+      "capacity": "Dostępność tygodniowa",
+      "availability": "Dostępność",
+      "projectScope": "Zakres projektu",
+      "allProjects": "Wszystkie projekty",
+      "initiativeStatus": "Status inicjatywy",
+      "horizon": "Horyzont",
+      "weeks": "tygodni",
+      "green": "Poniżej 85%",
+      "amber": "85–100%",
+      "red": "Powyżej 100%",
+      "error": "Nie udało się wczytać danych o obciążeniu.",
+      "empty": "Brak zaplanowanego obciążenia w tym zakresie.",
+      "source": "Źródło dostępności",
+      "profile": "Profil osoby",
+      "default": "Polityka domyślna",
+      "cellHint": "{{demand}} h popytu / {{supply}} h dostępności",
+      "noCapacity": "Brak dostępności"
+    },
     "register": {
       "archiveLocked": "Zmiany cyklu życia i archiwizacja są wykonywane w kontrolowanym procesie."
     },
