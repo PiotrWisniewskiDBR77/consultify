@@ -1,0 +1,107 @@
+{
+  "package": "F2 P2 Plan E2-E4",
+  "base": "19b633c81e262b9f3c2f25b0555b2dfceab8b42e",
+  "implementation": "f1e5010aff243346db6c119eeab23b9036997c65",
+  "flags": {
+    "VITE_INITIATIVES_PLAN": "default OFF; exact true enables",
+    "ENABLE_INITIATIVES_PLAN": "default OFF; exact true enables"
+  },
+  "migration": "none",
+  "tests": {
+    "focused": {
+      "files": 11,
+      "tests": 28,
+      "result": "PASS"
+    },
+    "realpg": {
+      "files": 1,
+      "tests": 1,
+      "result": "PASS",
+      "mockDb": false,
+      "port": 5300
+    },
+    "serverTsc": {
+      "baseErrors": 0,
+      "candidateErrors": 0,
+      "baseExitCode": 0,
+      "candidateExitCode": 0
+    },
+    "frontendTsc": {
+      "w56Base": "TIMEOUT_120S",
+      "w56Candidate": "TIMEOUT_120S",
+      "previousExactBaseErrors": 177,
+      "previousCandidateBeforeFixErrors": 178,
+      "fixedAddedErrors": 1,
+      "claim": "NOT_GREEN"
+    },
+    "esbuild": {
+      "frontendFiles": 6,
+      "serverFiles": 2,
+      "result": "PASS"
+    }
+  },
+  "evidenceBytes": 855424,
+  "screenshots": [
+    {
+      "path": "evidence/a-b-plan/en-dark-empty.jpg",
+      "bytes": 30142,
+      "sha256": "14e458faa2c52af2e1a57028c18f47826fc611cf2308189bcde44f85372c1c3c"
+    },
+    {
+      "path": "evidence/a-b-plan/en-dark-full.jpg",
+      "bytes": 90243,
+      "sha256": "578146f1930134ff1bf62b7996d66172570c02c379ae240d4f6c1695b1304816"
+    },
+    {
+      "path": "evidence/a-b-plan/en-dark-timeline.jpg",
+      "bytes": 86125,
+      "sha256": "5cb2a86d90460b1b29de4188b5554fd19531d448444275415237e0d96e1889a2"
+    },
+    {
+      "path": "evidence/a-b-plan/en-light-empty.jpg",
+      "bytes": 31472,
+      "sha256": "d8c77121209e8807f7b0cde325e7199eb9f32dc4bacefb81090228e27d3153ce"
+    },
+    {
+      "path": "evidence/a-b-plan/en-light-full.jpg",
+      "bytes": 93413,
+      "sha256": "58653f58479d03e4febc29d24278b90849943a6ea6c51e30f89e4b62698624c1"
+    },
+    {
+      "path": "evidence/a-b-plan/en-light-timeline.jpg",
+      "bytes": 91184,
+      "sha256": "e1ff28fa08a082190e3dbc8fd15639ddc835e9690aac99068119fb19c1abb7dc"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-dark-empty.jpg",
+      "bytes": 31794,
+      "sha256": "0760c32f6fddfec8c892ed42d159fdd90cb80d034951c2ddf203022ed36c39c1"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-dark-full.jpg",
+      "bytes": 89182,
+      "sha256": "2ac507d65b1e2ad1d7a33d9f39955cf22abebe25950d00cfee6b341bb58660fa"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-dark-timeline.jpg",
+      "bytes": 89843,
+      "sha256": "248ba8c270400035a40a0c24f31b602e131b769e8fdfdcc7c65ee82f24e48450"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-light-empty.jpg",
+      "bytes": 33161,
+      "sha256": "89b55b716d005834c971def4701819911c3755f59307e4b9293c7436be321ee2"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-light-full.jpg",
+      "bytes": 94084,
+      "sha256": "2706c59e4319134b9d77d6b75775cd3c2c282e29339f54337003610d2e3c0e46"
+    },
+    {
+      "path": "evidence/a-b-plan/pl-light-timeline.jpg",
+      "bytes": 94781,
+      "sha256": "c05241fe8255943e9a39bbad5b53ef40b5936329b21ca7f7df3351b4618e54d3"
+    }
+  ],
+  "reviewStatus": "FROZEN_AWAITING_INDEPENDENT_REVIEW"
+}
