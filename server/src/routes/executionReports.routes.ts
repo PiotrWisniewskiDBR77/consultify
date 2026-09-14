@@ -27,6 +27,14 @@ import { isExecutionReportE4Enabled } from '../config/executionReportE4Flag.js';
 import { requirePermission } from '../middleware/permission.middleware.js';
 import { generateExecutionWorkAnalysis } from '../services/execution/executionWorkAnalysisService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
+import {
+  localizedReportMessage,
+  normalizeReportLocale,
+  reportMessage,
+  resolveReportLocale,
+  type ReportLocale,
+  type ReportMessageKey,
+} from '../services/report/reportLocale.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
@@ -36,6 +44,13 @@ const router = Router();
 
 const WorkAnalysisGenerateSchema = z.object({
   weekOf: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const LocalizedMessageSchema = z.object({
+  key: z.string().min(1),
+  params: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
+  value: z.string(),
+  locale: z.enum(['en', 'pl']),
 });
 
 interface AuthRequest extends Request {
@@ -73,15 +88,25 @@ export const EXECUTION_REPORT_CATALOG: Record<
 const SectionSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
+  titleMessage: LocalizedMessageSchema.optional(),
   narrative: z.string().optional(),
   bullets: z.array(z.string()).optional(),
   table: z
     .object({
-      columns: z.array(z.object({ id: z.string().min(1), label: z.string().min(1) })).min(1),
+      columns: z
+        .array(
+          z.object({
+            id: z.string().min(1),
+            label: z.string().min(1),
+            labelMessage: LocalizedMessageSchema.optional(),
+          })
+        )
+        .min(1),
       rows: z.array(z.record(z.string(), z.string())),
     })
     .optional(),
   empty: z.string().optional(),
+  emptyMessage: LocalizedMessageSchema.optional(),
 });
 
 const SnapshotSchema = z.object({
@@ -92,11 +117,14 @@ const SnapshotSchema = z.object({
   ragReason: z.string().optional(),
   period: z.object({ start: z.string().min(1), end: z.string().min(1) }),
   asOf: z.string().min(1),
+  /** Locale is frozen with the snapshot so later profile changes cannot mix a report. */
+  locale: z.enum(['en', 'pl']).optional(),
   metrics: z
     .array(
       z.object({
         id: z.string().min(1),
         label: z.string().min(1),
+        labelMessage: LocalizedMessageSchema.optional(),
         value: z.string(),
         hint: z.string().optional(),
         tone: z.enum(['NEUTRAL', 'WARN', 'CRIT', 'OK', 'GREY']).optional(),
@@ -108,27 +136,52 @@ const SnapshotSchema = z.object({
 
 export type ExecutionReportSnapshotPayload = z.infer<typeof SnapshotSchema>;
 
-const RAG_LABEL_PL: Record<string, string> = {
-  GREEN: 'Zielony',
-  AMBER: 'Żółty',
-  RED: 'Czerwony',
-  GREY: 'Szary (luka danych)',
-};
+async function resolveExecutionReportLocale(
+  req: AuthRequest,
+  organizationId: string
+): Promise<ReportLocale> {
+  const explicit = normalizeReportLocale(req.body?.locale ?? req.query?.lang);
+  if (explicit) return explicit;
+  const userId = req.user?.id;
+  if (userId) {
+    try {
+      const user = (await dbGet(`SELECT language FROM users WHERE id = ?`, [userId])) as
+        | { language?: string | null }
+        | undefined;
+      const userLocale = normalizeReportLocale(user?.language);
+      if (userLocale) return userLocale;
+    } catch {
+      // Continue to the legacy preference column.
+    }
+    try {
+      const user = (await dbGet(`SELECT locale FROM users WHERE id = ?`, [userId])) as
+        | { locale?: string | null }
+        | undefined;
+      const legacyLocale = normalizeReportLocale(user?.locale);
+      if (legacyLocale) return legacyLocale;
+    } catch {
+      // Organization remains valid.
+    }
+  }
+  try {
+    const organization = (await dbGet(
+      `SELECT default_language AS "defaultLanguage" FROM organizations WHERE id = ?`,
+      [organizationId]
+    )) as { defaultLanguage?: string | null } | undefined;
+    return resolveReportLocale(organization?.defaultLanguage);
+  } catch {
+    return 'en';
+  }
+}
 
-const LEVEL_LABEL_PL: Record<ExecutionReportLevel, string> = {
-  OWNER: 'Właściciel inicjatywy',
-  PMO: 'PMO',
-  STEERCO: 'Komitet sterujący',
-  BOARD: 'Zarząd',
-};
-
-const formatDatePl = (iso: string) => {
+const formatDate = (iso: string, locale: ReportLocale) => {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat('pl-PL', {
+  return new Intl.DateTimeFormat(locale === 'pl' ? 'pl-PL' : 'en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    timeZone: 'UTC',
   }).format(date);
 };
 
@@ -147,22 +200,39 @@ const cell = (value: string) =>
 export function snapshotToMarkdown(
   snapshot: ExecutionReportSnapshotPayload,
   level: ExecutionReportLevel,
-  statusLabel = 'Szkic'
+  status: 'DRAFT' | 'PUBLISHED' | string = 'DRAFT',
+  explicitLocale?: ReportLocale
 ): string {
+  // Historical snapshots did not carry locale and were authored in Polish.
+  const locale = explicitLocale ?? snapshot.locale ?? 'pl';
+  const statusKey = `executionReports.status.${status}` as ReportMessageKey;
+  const levelKey = `executionReports.level.${level}` as ReportMessageKey;
+  const ragKey = `executionReports.rag.${snapshot.rag}` as ReportMessageKey;
+  const statusLabel =
+    statusKey in
+    ({
+      'executionReports.status.DRAFT': true,
+      'executionReports.status.PUBLISHED': true,
+    } as const)
+      ? reportMessage(locale, statusKey)
+      : status;
   const lines: string[] = [];
   if (snapshot.subtitle) lines.push(`_${snapshot.subtitle}_`, '');
   lines.push(
-    `**Status:** ${statusLabel}  `,
-    `**Poziom raportu:** ${LEVEL_LABEL_PL[level]}  `,
-    `**Okres:** ${formatDatePl(snapshot.period.start)} – ${formatDatePl(snapshot.period.end)}  `,
-    `**Stan danych na:** ${formatDatePl(snapshot.asOf)}  `,
-    `**Ocena RAG:** ${RAG_LABEL_PL[snapshot.rag] ?? snapshot.rag}${
+    `**${reportMessage(locale, 'executionReports.status')}:** ${statusLabel}  `,
+    `**${reportMessage(locale, 'executionReports.level')}:** ${reportMessage(locale, levelKey)}  `,
+    `**${reportMessage(locale, 'executionReports.period')}:** ${formatDate(snapshot.period.start, locale)} – ${formatDate(snapshot.period.end, locale)}  `,
+    `**${reportMessage(locale, 'executionReports.asOf')}:** ${formatDate(snapshot.asOf, locale)}  `,
+    `**${reportMessage(locale, 'executionReports.rag')}:** ${reportMessage(locale, ragKey)}${
       snapshot.ragReason ? ` — ${snapshot.ragReason}` : ''
     }`,
     ''
   );
   if (snapshot.metrics.length) {
-    lines.push('| Miernik | Wartość |', '| --- | --- |');
+    lines.push(
+      `| ${reportMessage(locale, 'executionReports.metric')} | ${reportMessage(locale, 'executionReports.value')} |`,
+      '| --- | --- |'
+    );
     for (const metric of snapshot.metrics) {
       lines.push(`| ${cell(metric.label)} | ${cell(metric.value)} |`);
     }
@@ -188,7 +258,7 @@ export function snapshotToMarkdown(
       Boolean(section.bullets?.length) ||
       Boolean(section.table?.rows.length);
     if (!hasContent) {
-      lines.push(section.empty || 'Brak danych w tym okresie.', '');
+      lines.push(section.empty || reportMessage(locale, 'executionReports.empty'), '');
     }
   }
   return lines.join('\n');
@@ -271,6 +341,7 @@ async function withCanonicalKpiResults(
   snapshot: ExecutionReportSnapshotPayload
 ): Promise<ExecutionReportSnapshotPayload> {
   if (!isExecutionReportE4Enabled()) return snapshot;
+  const locale = snapshot.locale ?? 'en';
   const kpis = (await dbAll(
     `SELECT k.id, k.name, k.target_value AS "targetValue", k.unit,
             i.title AS "initiativeTitle", latest.value AS "actualValue",
@@ -293,11 +364,15 @@ async function withCanonicalKpiResults(
     kpi: String(kpi.name ?? '—'),
     actual:
       kpi.actualValue == null
-        ? 'Not measured'
+        ? reportMessage(locale, 'executionReports.notMeasured')
         : `${kpi.actualValue}${kpi.unit ? ` ${kpi.unit}` : ''}`,
     target:
-      kpi.targetValue == null ? 'No target' : `${kpi.targetValue}${kpi.unit ? ` ${kpi.unit}` : ''}`,
+      kpi.targetValue == null
+        ? reportMessage(locale, 'executionReports.noTarget')
+        : `${kpi.targetValue}${kpi.unit ? ` ${kpi.unit}` : ''}`,
     measuredAt: kpi.measuredAt ? new Date(kpi.measuredAt).toISOString() : '—',
+    actualKey: kpi.actualValue == null ? 'executionReports.notMeasured' : '',
+    targetKey: kpi.targetValue == null ? 'executionReports.noTarget' : '',
   }));
   return {
     ...snapshot,
@@ -305,7 +380,8 @@ async function withCanonicalKpiResults(
       ...snapshot.metrics,
       {
         id: 'canonical-kpi-results',
-        label: 'KPI results',
+        label: reportMessage(locale, 'executionReports.kpiResults'),
+        labelMessage: localizedReportMessage(locale, 'executionReports.kpiResults'),
         value: String(resultRows.length),
         tone: 'NEUTRAL',
       },
@@ -314,18 +390,40 @@ async function withCanonicalKpiResults(
       ...snapshot.sections,
       {
         id: 'canonical-kpi-results',
-        title: 'KPI results',
+        title: reportMessage(locale, 'executionReports.kpiResults'),
+        titleMessage: localizedReportMessage(locale, 'executionReports.kpiResults'),
         table: {
           columns: [
-            { id: 'initiative', label: 'Initiative' },
-            { id: 'kpi', label: 'KPI' },
-            { id: 'actual', label: 'Result' },
-            { id: 'target', label: 'Target' },
-            { id: 'measuredAt', label: 'Measured at' },
+            {
+              id: 'initiative',
+              label: reportMessage(locale, 'executionReports.initiative'),
+              labelMessage: localizedReportMessage(locale, 'executionReports.initiative'),
+            },
+            {
+              id: 'kpi',
+              label: reportMessage(locale, 'executionReports.kpi'),
+              labelMessage: localizedReportMessage(locale, 'executionReports.kpi'),
+            },
+            {
+              id: 'actual',
+              label: reportMessage(locale, 'executionReports.result'),
+              labelMessage: localizedReportMessage(locale, 'executionReports.result'),
+            },
+            {
+              id: 'target',
+              label: reportMessage(locale, 'executionReports.target'),
+              labelMessage: localizedReportMessage(locale, 'executionReports.target'),
+            },
+            {
+              id: 'measuredAt',
+              label: reportMessage(locale, 'executionReports.measuredAt'),
+              labelMessage: localizedReportMessage(locale, 'executionReports.measuredAt'),
+            },
           ],
           rows: resultRows,
         },
-        empty: 'No KPI results have been recorded for initiatives in this organization.',
+        empty: reportMessage(locale, 'executionReports.noKpiResults'),
+        emptyMessage: localizedReportMessage(locale, 'executionReports.noKpiResults'),
       },
     ],
   };
@@ -412,7 +510,8 @@ router.post(
       res.status(orgId ? 400 : 401).json({ error: orgId ? 'VALIDATION_FAILED' : 'AUTH_REQUIRED' });
       return;
     }
-    const authorName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || null;
+    const authorName =
+      [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || null;
     const result = await generateExecutionWorkAnalysis({
       organizationId: orgId,
       weekOf: new Date(`${parsed.data.weekOf}T12:00:00.000Z`),
@@ -471,7 +570,8 @@ router.post(
       res.status(400).json({ error: 'VALIDATION_FAILED', code: 'SNAPSHOT_INVALID' });
       return;
     }
-    const snapshot = await withCanonicalKpiResults(orgId, parsed.data);
+    const locale = await resolveExecutionReportLocale(req, orgId);
+    const snapshot = await withCanonicalKpiResults(orgId, { ...parsed.data, locale });
     const meta = EXECUTION_REPORT_CATALOG[snapshot.definitionKey];
     if (!meta) {
       res.status(400).json({ error: 'UNKNOWN_DEFINITION' });
@@ -580,11 +680,17 @@ const exportSnapshot = (format: 'docx' | 'pdf') =>
     }
     const target = EXPORTS[format];
     try {
-      const statusLabel = row.status === 'PUBLISHED' ? 'Opublikowany' : 'Szkic';
+      const locale = payload.locale ?? 'pl';
+      const statusCode = row.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
+      const level = row.level as ExecutionReportLevel;
+      const levelLabel = reportMessage(
+        locale,
+        `executionReports.level.${level}` as ReportMessageKey
+      );
       const buffer = await target.render({
         title: row.title,
-        markdown: snapshotToMarkdown(payload, row.level as ExecutionReportLevel, statusLabel),
-        sourceLabel: `Consultify · Realizacja · ${LEVEL_LABEL_PL[row.level as ExecutionReportLevel] ?? row.level}`,
+        markdown: snapshotToMarkdown(payload, level, statusCode, locale),
+        sourceLabel: reportMessage(locale, 'executionReports.source', { level: levelLabel }),
         // `lifecycle` i `updatedAt` CELOWO pominięte: UnifiedExportService drukuje przy nich
         // zaszyte po angielsku etykiety „Lifecycle:" / „Updated:" (UnifiedExportService.ts:296,
         // :306). Ta sama informacja jest w markdownie po polsku, więc dokument zostaje w

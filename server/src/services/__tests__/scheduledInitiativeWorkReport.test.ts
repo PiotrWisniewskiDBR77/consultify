@@ -155,6 +155,7 @@ function createMemoryRuntime() {
 const schedule = {
   id: 'schedule-1',
   organizationId: 'org-1',
+  locale: 'en' as const,
   runtimeReport: {
     definitionId: 'definition-1',
     definitionVersion: 3,
@@ -201,12 +202,17 @@ describe('scheduled initiative work report canonical lifecycle', () => {
   it('persists CREATE→VALIDATE→FREEZE→APPROVE, retries a partial SMTP delivery, then PUBLISHes once', async () => {
     const runtime = createMemoryRuntime();
     const attempts = new Map<string, number>();
-    const sent: Array<{ to: string; pdf: Buffer }> = [];
+    const sent: Array<{ to: string; pdf: Buffer; text: string; html: string }> = [];
     const sendEmail = vi.fn(async (message: any) => {
       const to = String(message.to);
       const attempt = (attempts.get(to) ?? 0) + 1;
       attempts.set(to, attempt);
-      sent.push({ to, pdf: message.attachments[0].content });
+      sent.push({
+        to,
+        pdf: message.attachments[0].content,
+        text: message.text,
+        html: message.html,
+      });
       return !(to === 'ops@example.test' && attempt === 1);
     });
 
@@ -249,6 +255,8 @@ describe('scheduled initiative work report canonical lifecycle', () => {
     expect(attempts.get('board@example.test')).toBe(1);
     expect(attempts.get('ops@example.test')).toBe(2);
     expect(sent.every(({ pdf }) => pdf.subarray(0, 4).toString() === '%PDF')).toBe(true);
+    expect(sent.every(({ text }) => text.startsWith('Consultify work report:'))).toBe(true);
+    expect(sent.every(({ html }) => !/Raport z pracy/.test(html))).toBe(true);
 
     await expect(
       runScheduledInitiativeWorkReport(schedule, {
@@ -388,7 +396,12 @@ describe('scheduled initiative work report canonical lifecycle', () => {
       scopeRefs: ['organization'],
       period: { start: '2026-09-07T09:00:00.000Z', end: '2026-09-14T09:00:00.000Z' },
       asOf: content.generatedAt,
-      workReport: { title: content.title, templateId: content.templateId, cadence: 'ON_DEMAND', content },
+      workReport: {
+        title: content.title,
+        templateId: content.templateId,
+        cadence: 'ON_DEMAND',
+        content,
+      },
       sources: [{ sourceType: 'initiative', sourceId: 'initiative-1', version: 1 }],
     };
     runtime.aggregates.set(canonicalKey('org-1', 'report_run', 'run-recovery'), {
