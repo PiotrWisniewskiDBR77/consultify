@@ -50,9 +50,16 @@ import {
   type AuditPackSummary,
 } from '../auditsMethodApi';
 
-export function countAuditCriteriaTree(criteria: AuditPackDetail['criteria']): number {
+export function countAuditCriteriaTree(criteria: readonly unknown[]): number {
   return criteria.reduce(
-    (total, criterion) => total + 1 + countAuditCriteriaTree(criterion.children ?? []),
+    (total, criterion) => {
+      const childrenValue =
+        criterion && typeof criterion === 'object'
+          ? (criterion as { children?: unknown }).children
+          : undefined;
+      const children = Array.isArray(childrenValue) ? childrenValue : [];
+      return total + 1 + countAuditCriteriaTree(children);
+    },
     0
   );
 }

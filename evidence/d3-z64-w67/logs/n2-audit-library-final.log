@@ -1,0 +1,43 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > renders a real StandardTable element, not a bespoke grid 47ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns) 29ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes 18ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never gives the DEMONSTRATION source-type chip a success (emerald) shell 19ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell) 16ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > VERIFIED gets the success (emerald) shell on the verification axis 15ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > changing verificationStatus never changes the rendered source-type label — same pack, four verification states 45ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason 135ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit 55ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason 62ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > enables "Start audit" for a published pack that HAS a source, and calls onStartAudit 54ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > uses the full nested criteria tree as the detail count, matching the list total 23ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows ErrorState with a working retry when the pack list failed to load 9ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows an explanatory EmptyState when there are no packs at all 8ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders the raw technical packKey under the title (RAPORT_B #8) 8ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > kebab pakietu w statusie szkicu pokazuje OBIE pozycje, włączone, gdy actor może zarządzać biblioteką 13ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > klik „Zatwierdź (ekspert)" woła onApprovePackExpert z tym pakietem 12ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > po zatwierdzeniu eksperckim „Publikuj" jest włączony i woła onPublishPack 12ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > bez uprawnień administratora organizacji OBIE pozycje są widoczne, ale wyłączone z uczciwym powodem — nigdy ukryte 11ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > dla pakietu już opublikowanego obie pozycje kebaba są wyłączone 10ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > evaluateApproveExpertGate: odmawia bez uprawnień, potem bez statusu przedpublikacyjnego, potem gdy już zatwierdzony, przepuszcza w przeciwnym razie 1ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > evaluatePublishPackGate: odmawia bez uprawnień, gdy już opublikowany/wycofany, i gdy brak zatwierdzenia eksperckiego 0ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx (22 tests) 604ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  17:36:08
+   Duration  2.59s (transform 783ms, setup 160ms, import 1.25s, tests 604ms, environment 479ms)
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  17:36:08
+   Duration  2.59s (transform 783ms, setup 160ms, import 1.25s, tests 604ms, environment 479ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
