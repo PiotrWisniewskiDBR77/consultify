@@ -43,15 +43,19 @@ const poniedzialek = (offsetTygodni: number) => {
 };
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+// This suite exercises resource-plan allocation, not the database driver's DATE
+// decoder. Pass local Date values through the DbPromise mock: a bare YYYY-MM-DD
+// string is parsed as UTC by JavaScript and therefore becomes the previous day
+// in negative UTC offsets, making the result depend on the machine timezone.
 const zadania = (
   rows: Array<{
     user_id: string;
-    due_date: string | null;
+    due_date: string | Date | null;
     hours: number;
     task_id?: string;
     title?: string;
     status?: string;
-    start_at?: string | null;
+    start_at?: string | Date | null;
     actual_hours?: number;
   }>
 ) =>
@@ -86,7 +90,7 @@ const podstaw = (
 describe('getExecutionResourcePlan', () => {
   it('domyslna podaz to 40 h x 100 %, gdy profil osoby nic nie mowi (a NIE 0)', async () => {
     podstaw(
-      zadania([{ user_id: 'u1', due_date: iso(poniedzialek(0)), hours: 20 }]),
+      zadania([{ user_id: 'u1', due_date: poniedzialek(0), hours: 20 }]),
       [{ user_id: 'u1', name: 'Anna Kowalska', role: null, weekly_capacity_hours: null, availability_percent: null }]
     );
 
@@ -101,8 +105,8 @@ describe('getExecutionResourcePlan', () => {
   it('oblozenie i luka licza sie z realnego popytu, a przeciazenie wychodzi na wierzch', async () => {
     podstaw(
       zadania([
-        { user_id: 'u1', due_date: iso(poniedzialek(0)), hours: 60 },
-        { user_id: 'u1', due_date: iso(poniedzialek(1)), hours: 10 },
+        { user_id: 'u1', due_date: poniedzialek(0), hours: 60 },
+        { user_id: 'u1', due_date: poniedzialek(1), hours: 10 },
       ]),
       [{ user_id: 'u1', name: 'Anna Kowalska', role: null, weekly_capacity_hours: null, availability_percent: null }]
     );
@@ -120,7 +124,7 @@ describe('getExecutionResourcePlan', () => {
 
   it('etat z profilu przelicza podaz przez dostepnosc (40 h x 50 % = 20 h)', async () => {
     podstaw(
-      zadania([{ user_id: 'u2', due_date: iso(poniedzialek(0)), hours: 20 }]),
+      zadania([{ user_id: 'u2', due_date: poniedzialek(0), hours: 20 }]),
       [{ user_id: 'u2', name: 'Marta Kamińska', role: 'Konsultant', weekly_capacity_hours: 40, availability_percent: 50 }]
     );
 
@@ -146,8 +150,8 @@ describe('getExecutionResourcePlan', () => {
   it('zadanie PO TERMINIE nie wchodzi do popytu tygodnia — idzie do zaleglosci', async () => {
     podstaw(
       zadania([
-        { user_id: 'u1', due_date: iso(poniedzialek(-3)), hours: 12 },
-        { user_id: 'u1', due_date: iso(poniedzialek(0)), hours: 8 },
+        { user_id: 'u1', due_date: poniedzialek(-3), hours: 12 },
+        { user_id: 'u1', due_date: poniedzialek(0), hours: 8 },
       ]),
       [{ user_id: 'u1', name: 'Anna Kowalska', role: null, weekly_capacity_hours: null, availability_percent: null }]
     );
@@ -165,8 +169,8 @@ describe('getExecutionResourcePlan', () => {
   it('zaleglosc to JEDNA liczba na osobe — tylko w wierszu biezacego tygodnia', async () => {
     podstaw(
       zadania([
-        { user_id: 'u1', due_date: iso(poniedzialek(-2)), hours: 10, task_id: 'z1', title: 'Zalegle A' },
-        { user_id: 'u1', due_date: iso(poniedzialek(-1)), hours: 6, actual_hours: 2, task_id: 'z2', title: 'Zalegle B' },
+        { user_id: 'u1', due_date: poniedzialek(-2), hours: 10, task_id: 'z1', title: 'Zalegle A' },
+        { user_id: 'u1', due_date: poniedzialek(-1), hours: 6, actual_hours: 2, task_id: 'z2', title: 'Zalegle B' },
       ]),
       [{ user_id: 'u1', name: 'Anna Kowalska', role: null, weekly_capacity_hours: null, availability_percent: null }]
     );
@@ -224,8 +228,8 @@ describe('getExecutionResourcePlan', () => {
       zadania([
         {
           user_id: 'u1',
-          start_at: iso(pon),
-          due_date: iso(dzienRoboczy(pon, 11)),
+          start_at: pon,
+          due_date: dzienRoboczy(pon, 11),
           hours: 20,
         },
       ]),
@@ -246,7 +250,7 @@ describe('getExecutionResourcePlan', () => {
    */
   it('podaz = dni robocze tygodnia x godziny dzienne osoby (profil 20 h -> 20 h)', async () => {
     podstaw(
-      zadania([{ user_id: 'u3', due_date: iso(poniedzialek(0)), hours: 20 }]),
+      zadania([{ user_id: 'u3', due_date: poniedzialek(0), hours: 20 }]),
       [{ user_id: 'u3', name: 'Jan Zieliński', role: null, weekly_capacity_hours: 20, availability_percent: 100 }]
     );
 
