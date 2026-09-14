@@ -6663,6 +6663,12 @@
       },
       "addTask": "Zadanie",
       "preview": "Podgląd"
+    },
+    "locationFilter": {
+      "loading": "Wczytywanie..."
+    },
+    "personalExecutionBar": {
+      "topTenPercent": "Top 10% zespołu w tym tygodniu"
     }
   },
   "step1": {

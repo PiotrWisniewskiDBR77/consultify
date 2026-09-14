@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Task } from '../../types';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export const PersonalExecutionBar: React.FC<Props> = ({ stats }) => {
+  const { t } = useTranslation();
   const { total, completed, overdue, blocked } = stats;
 
   // Simple calculation for "Execution Score"
@@ -59,7 +61,7 @@ export const PersonalExecutionBar: React.FC<Props> = ({ stats }) => {
 
       <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
         <TrendingUp size={14} className="text-green-500" />
-        <span>Top 10% of team this week</span>
+        <span>{t('myWork.personalExecutionBar.topTenPercent', 'Top 10% of team this week')}</span>
       </div>
     </div>
   );

@@ -7538,6 +7538,12 @@
       },
       "addTask": "Task",
       "preview": "Preview"
+    },
+    "locationFilter": {
+      "loading": "Loading..."
+    },
+    "personalExecutionBar": {
+      "topTenPercent": "Top 10% of team this week"
     }
   },
   "step1": {
