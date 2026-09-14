@@ -1,0 +1,10 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913
+
+····
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  02:09:48
+   Duration  458ms (transform 64ms, setup 99ms, import 6ms, tests 35ms, environment 237ms)
+

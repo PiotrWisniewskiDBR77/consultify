@@ -1,7 +1,7 @@
 {
   "verdict": "PASS",
-  "baseSha": "13070169a439985e34db2d8daa9807cb26870599",
-  "candidateHeadBeforeWip": "5a4a9efead",
+  "baseSha": "d9a2374d461d8e7901ae25318e2976f31d603334",
+  "candidateHeadBeforeFreeze": "abc868d7ad4a5a1ec2c6e221aba97e9d200b4a7c",
   "database": {
     "container": "cx-s1-v2-pg",
     "host": "127.0.0.1",
@@ -14,18 +14,18 @@
     "line": {
       "env": false,
       "organization": true,
-      "sha256": "93267ed39d7f40301c6fef56e7b07e4d0ac6a7f91bde971ffbac194fabf29a9a"
+      "sha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8"
     },
     "candidate_env_off": {
       "env": false,
       "organization": true,
-      "sha256": "93267ed39d7f40301c6fef56e7b07e4d0ac6a7f91bde971ffbac194fabf29a9a",
+      "sha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8",
       "identicalToLine": true
     },
     "candidate_org_off": {
       "env": true,
       "organization": false,
-      "sha256": "93267ed39d7f40301c6fef56e7b07e4d0ac6a7f91bde971ffbac194fabf29a9a",
+      "sha256": "0507b9f36359f6bc027525a74cba1dea75c77ac9b73dfad672861131d7be6aa8",
       "identicalToLine": true
     }
   },
