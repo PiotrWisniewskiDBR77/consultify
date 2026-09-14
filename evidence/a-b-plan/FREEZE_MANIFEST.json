@@ -1,7 +1,7 @@
 {
   "package": "F2 P2 Plan E2-E4",
   "base": "19b633c81e262b9f3c2f25b0555b2dfceab8b42e",
-  "implementation": "f1e5010aff243346db6c119eeab23b9036997c65",
+  "implementation": "04109287cd",
   "flags": {
     "VITE_INITIATIVES_PLAN": "default OFF; exact true enables",
     "ENABLE_INITIATIVES_PLAN": "default OFF; exact true enables"
@@ -18,7 +18,9 @@
       "tests": 1,
       "result": "PASS",
       "mockDb": false,
-      "port": 5300
+      "port": 5300,
+      "acceptedObservations": 2,
+      "conditionalStateReadback": false
     },
     "serverTsc": {
       "baseErrors": 0,
@@ -35,12 +37,19 @@
       "claim": "NOT_GREEN"
     },
     "esbuild": {
-      "frontendFiles": 6,
-      "serverFiles": 2,
+      "frontendFiles": 4,
+      "serverFiles": 4,
       "result": "PASS"
+    },
+    "holdRepairFocused": {
+      "files": 5,
+      "tests": 18,
+      "result": "PASS",
+      "red": "inactive conditional flattened into dependencySnapshot",
+      "green": "inactive retained without hard edge; active enforced by solver"
     }
   },
-  "evidenceBytes": 855424,
+  "evidenceBytes": 847179,
   "screenshots": [
     {
       "path": "evidence/a-b-plan/en-dark-empty.jpg",
@@ -49,8 +58,8 @@
     },
     {
       "path": "evidence/a-b-plan/en-dark-full.jpg",
-      "bytes": 90243,
-      "sha256": "578146f1930134ff1bf62b7996d66172570c02c379ae240d4f6c1695b1304816"
+      "bytes": 86691,
+      "sha256": "51c51726b08ffd691569ea80df3f8781008ed5bb2999a25f5f9b3a0533d4766d"
     },
     {
       "path": "evidence/a-b-plan/en-dark-timeline.jpg",
@@ -64,8 +73,8 @@
     },
     {
       "path": "evidence/a-b-plan/en-light-full.jpg",
-      "bytes": 93413,
-      "sha256": "58653f58479d03e4febc29d24278b90849943a6ea6c51e30f89e4b62698624c1"
+      "bytes": 88167,
+      "sha256": "af65e32ee1865e135064c44bb43969bbed290389729182b8a5973f74adbdaa74"
     },
     {
       "path": "evidence/a-b-plan/en-light-timeline.jpg",
@@ -79,8 +88,8 @@
     },
     {
       "path": "evidence/a-b-plan/pl-dark-full.jpg",
-      "bytes": 89182,
-      "sha256": "2ac507d65b1e2ad1d7a33d9f39955cf22abebe25950d00cfee6b341bb58660fa"
+      "bytes": 91401,
+      "sha256": "2ffcfd54c21970aff72f715aceae97040e8952baa00b4d40114f6292d2d6864d"
     },
     {
       "path": "evidence/a-b-plan/pl-dark-timeline.jpg",
@@ -94,8 +103,8 @@
     },
     {
       "path": "evidence/a-b-plan/pl-light-full.jpg",
-      "bytes": 94084,
-      "sha256": "2706c59e4319134b9d77d6b75775cd3c2c282e29339f54337003610d2e3c0e46"
+      "bytes": 92418,
+      "sha256": "4b3a376950187e0912bc1afedba004c2164058f0816721f83744f4b39bc5e9b2"
     },
     {
       "path": "evidence/a-b-plan/pl-light-timeline.jpg",
@@ -103,5 +112,6 @@
       "sha256": "c05241fe8255943e9a39bbad5b53ef40b5936329b21ca7f7df3351b4618e54d3"
     }
   ],
-  "reviewStatus": "FROZEN_AWAITING_INDEPENDENT_REVIEW"
+  "reviewStatus": "FROZEN_AWAITING_INDEPENDENT_REVIEW",
+  "holdRepair": "ABSOLUTE stays hard; CONDITIONAL retains condition and active state; solver uses only active conditional edges"
 }
