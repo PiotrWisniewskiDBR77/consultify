@@ -1155,23 +1155,23 @@ function RadarPreviewPanel({
           className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary-500/50 bg-gradient-to-r from-primary-600 to-primary-500 px-3 py-2 text-[12px] font-medium text-white transition hover:from-primary-700 hover:to-primary-600 dark:border-primary-300/50 dark:from-primary-500/35 dark:to-primary-400/25 dark:text-primary-50 dark:hover:from-primary-500/45 dark:hover:to-primary-400/35"
         >
           <MessageCircle className="h-3.5 w-3.5" />
-          Talk to Teresa
+          {t('myWork.homeView.talkToTeresa', 'Talk to Teresa')}
         </button>
 
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           <ActionChip
             icon={<BookOpen className="h-3.5 w-3.5" />}
-            label="Save to Notebook"
+            label={t('myWork.homeView.saveToNotebook', 'Save to Notebook')}
             onClick={() => onAction({ type: 'create', target: 'note' })}
           />
           <ActionChip
             icon={<Lightbulb className="h-3.5 w-3.5" />}
-            label="Create Idea"
+            label={t('myWork.homeView.createIdea', 'Create Idea')}
             onClick={() => onAction({ type: 'create', target: 'idea' })}
           />
           <ActionChip
             icon={<Sparkles className="h-3.5 w-3.5" />}
-            label="Explore Deeper"
+            label={t('myWork.homeView.exploreDeeper', 'Explore Deeper')}
             onClick={() =>
               onAction({
                 type: 'chat',
@@ -1192,7 +1192,7 @@ function RadarPreviewPanel({
         <div className="mt-2 flex items-center gap-1.5">
           <ActionChip
             icon={<Eye className="h-3.5 w-3.5" />}
-            label="Watch Topic"
+            label={t('myWork.homeView.watchTopic', 'Watch Topic')}
             tone="subtle"
             onClick={() =>
               onAction({
@@ -1205,7 +1205,7 @@ function RadarPreviewPanel({
           />
           <ActionChip
             icon={<XCircle className="h-3.5 w-3.5" />}
-            label="Not Relevant"
+            label={t('myWork.homeView.notRelevant', 'Not Relevant')}
             tone="subtle"
             onClick={() =>
               onAction({
