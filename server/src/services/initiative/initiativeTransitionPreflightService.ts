@@ -12,6 +12,7 @@
  */
 
 import {
+  GateType,
   INITIATIVE_FLAG_RULES,
   INITIATIVE_TRANSITION_MATRIX,
   VALID_TRANSITIONS,
@@ -34,6 +35,7 @@ import { getBlockingReadinessItems } from './initiativeGateReadinessService.js';
 import {
   hasApprovedGateDecision,
   hasPendingExecutionGateDecisions,
+  isLifecycleGoGateEnabled,
   normalizeStatus,
 } from './initiativeTransitionService.js';
 import { normalizeInitiativeDbStatusForRead } from './initiativeLifecycleCanon.js';
@@ -145,6 +147,30 @@ export async function getInitiativeTransitionPreflight(input: {
         hasPendingExecutionGateDecisions,
       });
       blockingRule = failure?.rule ?? null;
+
+      // ★ H1e: START (APPROVED→IN_EXECUTION) carries a SECOND, gate-scoped
+      // condition the matrix row does not encode — `requireCurrentGateDecision`
+      // in the writer (`initiativeTransitionService`) requires a CURRENT
+      // GOVERNANCE_DECISION_MAKING decision for this gate, but ONLY when
+      // `ENABLE_LIFECYCLE_GO_GATE` is ON. The matrix row itself stays
+      // `HANDOFF_AND_START_DATE` unconditionally (so preflight === writer at
+      // OFF, unchanged from today), and this layers the SAME shared-module
+      // `CURRENT_GO_DECISION` check (`evaluateInitiativeTransitionCondition`,
+      // no duplicated logic) on top when ON — the button and the 409 the
+      // writer would give cannot disagree again.
+      if (blockingRule === null && definition.gate === GateType.START && isLifecycleGoGateEnabled()) {
+        const goFailure = await evaluateInitiativeTransitionCondition(client, {
+          orgId,
+          initiativeId,
+          row,
+          condition: 'CURRENT_GO_DECISION',
+          reason: '',
+          skipReasonRequired: true,
+          hasApprovedGateDecision,
+          hasPendingExecutionGateDecisions,
+        });
+        blockingRule = goFailure?.rule ?? null;
+      }
     }
     // Ta sama kolejność co u pisarza: najpierw warunek z macierzy, potem gotowość.
     const blockingItems = blockingRule === null && readinessBlocking.length > 0 ? readinessBlocking : [];
