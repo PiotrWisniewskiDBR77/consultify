@@ -51997,7 +51997,38 @@
       }
     }
   },
+  "scheduledReports": {
+    "subject": "Raport „{{name}}” jest gotowy",
+    "generated": "Zaplanowany raport <strong>{{name}}</strong> został wygenerowany.",
+    "reportId": "Identyfikator raportu: <code>{{reportId}}</code>",
+    "attachment": "W załączniku znajdziesz komplet plików (DOCX+XLSX+PPTX).",
+    "library": "Materiał jest dostępny w bibliotece „Materiały”.",
+    "dashboard": "Raport dostępny w panelu",
+    "smtpAccepted": "Zamrożony PDF został przyjęty przez skonfigurowanego dostawcę SMTP",
+    "workReportText": "Raport z pracy Consultify: {{title}}",
+    "workReportHtml": "Raport z pracy Consultify: <strong>{{title}}</strong>"
+  },
   "executionReports": {
+    "labels": {
+      "status": "Status",
+      "level": "Poziom raportu",
+      "period": "Okres",
+      "asOf": "Stan danych na",
+      "rag": "Ocena RAG",
+      "metric": "Miernik",
+      "value": "Wartość",
+      "empty": "Brak danych w tym okresie."
+    },
+    "kpiResults": "Wyniki KPI",
+    "initiative": "Inicjatywa",
+    "kpi": "KPI",
+    "result": "Wynik",
+    "target": "Cel",
+    "measuredAt": "Zmierzono",
+    "notMeasured": "Nie zmierzono",
+    "noTarget": "Brak celu",
+    "noKpiResults": "Nie zapisano wyników KPI dla inicjatyw w tej organizacji.",
+    "source": "Consultify · Realizacja · {{level}}",
     "e4": {
       "title": "Raporty Realizacji",
       "created": "Raport Realizacji zamrożono do zatwierdzenia.",
@@ -52047,6 +52078,8 @@
       "GREY": "Szary (luka danych)"
     },
     "status": {
+      "DRAFT": "Szkic",
+      "PUBLISHED": "Opublikowany",
       "draft": "Szkic",
       "published": "Opublikowany",
       "validated": "Zweryfikowany",
@@ -52151,6 +52184,10 @@
       "noReason": "bez uzasadnienia"
     },
     "rag": {
+      "GREEN": "Zielony",
+      "AMBER": "Żółty",
+      "RED": "Czerwony",
+      "GREY": "Szary (luka danych)",
       "green": "Brak blokad i pozycji po terminie.",
       "amber": "{{tasks}} zadań i {{decisions}} decyzji po terminie.",
       "red": "{{blocked}} blokad, {{signals}} sygnałów krytycznych.",
