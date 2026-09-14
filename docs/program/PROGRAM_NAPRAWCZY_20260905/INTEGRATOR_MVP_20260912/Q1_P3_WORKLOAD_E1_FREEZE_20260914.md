@@ -1,6 +1,6 @@
 # Q1 P3 Obciążenie — E1 freeze
 
-Werdykt: **READY_FOR_INDEPENDENT_RE-REVIEW — E1 ukończone, trzy uwagi pierwszego review naprawione, E2–E4 poza tym freeze.**
+Werdykt: **ACCEPT — E1 ukończone i odebrane na dokładnym SHA `0d26111ac3`; E2–E4 poza tym freeze.**
 
 - Implementacja: `d27172ed3cca66c86a307daaa3b0663bff9e27b1`
 - Tree implementacji: `993aff02b6b3c05033c680d9f4e9e250702b4138`
@@ -23,6 +23,8 @@ Werdykt: **READY_FOR_INDEPENDENT_RE-REVIEW — E1 ukończone, trzy uwagi pierwsz
 ## Zamknięcie uwag niezależnego review
 
 Pierwszy niezależny review SHA `c7c9bbd977` wydał `REQUEST_CHANGES`. Implementacja `d27172ed3c` zamyka wszystkie trzy uwagi: dodatni popyt przy zerowej dostępności ma jawny stan krytyczny `capacityExceeded` i czerwony token; filtr projektu korzysta z kanonicznego `initiatives.project_id`; niekanoniczny status daje HTTP 400 `INVALID_INITIATIVE_STATUS` zamiast poszerzać zapytanie. Dowody regresyjne są częścią zestawu 5 plików / 7 testów poniżej.
+
+Exact-SHA re-review `0d26111ac34cf6a7f1afbc90f613cb1699655e31` wydał `ACCEPT` i potwierdził zamknięcie wszystkich trzech uwag bez regresji E1. Pełny receipt znajduje się w `Q1_P3_WORKLOAD_E1_INDEPENDENT_REVIEW_20260914.md`.
 
 ## Dowody
 
