@@ -1777,6 +1777,25 @@ export class LLMService {
     };
   }
 
+  /**
+   * Diagnostic PROBE of a provider. Every caller is diagnostic — the provider
+   * health panel (`GET /api/llm/providers/health`), the admin "Test" buttons
+   * (`llm.routes.ts`, `modelRegistry.routes.ts`) and `providerSentinel` — never
+   * user traffic.
+   *
+   * PILOT-A (2026-09-14, staging): the health panel polls this on a timer. Both
+   * `openai` ("You have no credits remaining") and `deepseek` ("Insufficient
+   * Balance") were out of credit, so every poll recorded a breaker failure and
+   * re-OPENED the shared circuit for real traffic (logs: `[AI:CircuitBreaker]
+   * Circuit [openai] OPENED after 13 failures` at 03:42:41, 03:48:20, 03:53:27
+   * — one per snapshot refresh), plus a Slack alert each time. An observation
+   * tool must not change what it observes.
+   *
+   * Therefore probes are ASYMMETRIC: a successful probe still calls
+   * `recordSuccess` (proving a provider works may safely close its circuit),
+   * a failing probe records NOTHING. Real traffic opens the breaker on its own
+   * through `llmService`'s generate paths.
+   */
   async testConnection(modelConfig: ModelConfig): Promise<Record<string, unknown>> {
     const providerId = String(modelConfig.provider || 'openai');
 
@@ -1825,7 +1844,8 @@ export class LLMService {
           data?.error?.message ||
           data?.message ||
           `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-        await circuitBreaker.recordFailure(providerId, new Error(msg));
+        // PILOT-A: a health PROBE must never open the shared production breaker.
+        // See the comment on testConnection() — probes may only heal, never block.
         return {
           success: false,
           latency: Date.now() - startedAt,
@@ -1895,7 +1915,8 @@ export class LLMService {
           data?.error?.message ||
           data?.message ||
           `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-        await circuitBreaker.recordFailure(providerId, new Error(msg));
+        // PILOT-A: a health PROBE must never open the shared production breaker.
+        // See the comment on testConnection() — probes may only heal, never block.
         return {
           success: false,
           latency: Date.now() - startedAt,
@@ -1924,8 +1945,8 @@ export class LLMService {
         circuitState: (await circuitBreaker.canExecute(providerId)).state,
       };
     } catch (error) {
-      await circuitBreaker.recordFailure(providerId, error as Error);
-
+      // PILOT-A: probe failures are reported to the caller, never recorded on the
+      // shared breaker. See the comment on testConnection().
       return {
         success: false,
         error: (error as Error).message,
