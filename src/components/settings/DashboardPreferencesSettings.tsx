@@ -21,6 +21,8 @@ import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 
+import { SettingsToggleControl } from './shared';
+
 interface DashboardPreferencesSettingsProps {
   currentUser: User;
   onUpdateUser: (updates: Partial<User>) => void;
@@ -305,19 +307,11 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                       />
                       <span className="font-medium text-c-text-secondary">{option.label}</span>
                     </div>
-                    <button
-                      onClick={() => toggleWidget(option.key)}
-                      role="switch"
-                      aria-checked={isEnabled}
-                      aria-label={option.label}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        isEnabled ? 'bg-navy-900' : 'bg-c-surface-raised'
-                      }`}
-                    >
-                      <span
-                        className={`${isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
-                      />
-                    </button>
+                    <SettingsToggleControl
+                      checked={isEnabled}
+                      onChange={() => toggleWidget(option.key)}
+                      ariaLabel={option.label}
+                    />
                   </div>
                 );
               })}
@@ -345,19 +339,11 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     )}
                   </p>
                 </div>
-                <button
-                  onClick={() => updatePreference('compactMode', !preferences.compactMode)}
-                  role="switch"
-                  aria-checked={preferences.compactMode}
-                  aria-label={t('settings.dashboard.compactMode', 'Compact Mode')}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.compactMode ? 'bg-navy-900' : 'bg-c-surface-raised'
-                  }`}
-                >
-                  <span
-                    className={`${preferences.compactMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
-                  />
-                </button>
+                <SettingsToggleControl
+                  checked={preferences.compactMode}
+                  onChange={(value) => updatePreference('compactMode', value)}
+                  ariaLabel={t('settings.dashboard.compactMode', 'Compact Mode')}
+                />
               </div>
 
               {/* Show Greeting */}
@@ -374,19 +360,11 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     )}
                   </p>
                 </div>
-                <button
-                  onClick={() => updatePreference('showGreeting', !preferences.showGreeting)}
-                  role="switch"
-                  aria-checked={preferences.showGreeting}
-                  aria-label={t('settings.dashboard.showGreeting', 'Show Greeting Message')}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.showGreeting ? 'bg-navy-900' : 'bg-c-surface-raised'
-                  }`}
-                >
-                  <span
-                    className={`${preferences.showGreeting ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
-                  />
-                </button>
+                <SettingsToggleControl
+                  checked={preferences.showGreeting}
+                  onChange={(value) => updatePreference('showGreeting', value)}
+                  ariaLabel={t('settings.dashboard.showGreeting', 'Show Greeting Message')}
+                />
               </div>
             </div>
           </div>

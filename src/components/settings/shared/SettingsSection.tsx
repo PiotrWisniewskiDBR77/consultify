@@ -350,6 +350,68 @@ interface SettingsToggleProps {
   disabled?: boolean;
 }
 
+/**
+ * P-T06 (uwaga testera VI: „suwaki «Widoczności widgetów» niewidoczne w trybie
+ * jasnym gdy OFF") — SAM PSTRYCZEK, bez wiersza etykiety.
+ *
+ * DLACZEGO OSOBNY EKSPORT: `SettingsToggle` niesie WŁASNY układ (etykieta po
+ * lewej, opis pod nią). Ekrany, które mają inny układ wiersza — siatka
+ * widżetów w `DashboardPreferencesSettings` ma ikonę + nazwę w kafelku —
+ * nie mogły go osadzić, więc kleiły własny pstryczek. I dokładnie tam
+ * wylądowała usterka: tor w stanie OFF dostał `bg-c-surface-raised` (#f8fafc),
+ * a gałka `bg-c-surface` (#ffffff) — w motywie jasnym kontrast toru do gałki
+ * to 1,03:1, a toru do tła kafelka (też `c-surface-raised`) DOKŁADNIE 1,00:1.
+ * Suwak nie był „słabo widoczny" — był NIEWIDOCZNY.
+ *
+ * Kanon: tor OFF = `--c-border` (#cbd2da), tor ON = `--c-focus-solid`
+ * (neutralne niebieskie, NIGDY crimson — TRIADA/CLAUDE.md §3), fokus
+ * `--c-focus`. To te same wartości, których używały pozostałe ekrany ustawień
+ * (Dostępność, Dostępność czasowa, Powiadomienia) — czyli te, na które tester
+ * NIE narzekał.
+ *
+ * Pamięć „naprawa per-wywołanie odrasta": kształt mieszka tutaj, w jednym
+ * miejscu; ekran deklaruje stan i wołacz.
+ */
+interface SettingsToggleControlProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  /** Nazwa dla czytnika ekranu — wiersz etykiety rysuje ekran. */
+  ariaLabel: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+export const SettingsToggleControl: React.FC<SettingsToggleControlProps> = ({
+  checked,
+  onChange,
+  ariaLabel,
+  disabled,
+  className,
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    aria-label={ariaLabel}
+    disabled={disabled}
+    onClick={() => onChange(!checked)}
+    className={cn(
+      'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200',
+      'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-c-surface',
+      checked ? 'bg-c-focus-solid' : 'bg-c-border',
+      disabled && 'opacity-50 cursor-not-allowed',
+      className
+    )}
+  >
+    <span
+      className={cn(
+        'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200',
+        checked ? 'translate-x-6' : 'translate-x-1'
+      )}
+    />
+  </button>
+);
+
 export const SettingsToggle: React.FC<SettingsToggleProps> = ({
   checked,
   onChange,
@@ -362,26 +424,12 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       <span className="text-sm font-medium text-c-text">{label}</span>
       {description && <p className="text-xs text-c-text-secondary mt-0.5">{description}</p>}
     </div>
-    <button
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
+    <SettingsToggleControl
+      checked={checked}
+      onChange={onChange}
+      ariaLabel={label}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-c-surface',
-        checked ? 'bg-c-focus-solid' : 'bg-c-border',
-        disabled && 'opacity-50 cursor-not-allowed'
-      )}
-    >
-      <span
-        className={cn(
-          'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200',
-          checked ? 'translate-x-6' : 'translate-x-1'
-        )}
-      />
-    </button>
+    />
   </div>
 );
 

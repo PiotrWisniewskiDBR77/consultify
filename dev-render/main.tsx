@@ -351,6 +351,7 @@ const K5PreviewBankScreen = React.lazy(() => import('./screens/k5-preview-bank')
 const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work'));
 const U2RealizacjaDecyzjeScreen = React.lazy(() => import('./screens/u2-realizacja-decyzje'));
 const Pt15WywiadZalacznikiScreen = React.lazy(() => import('./screens/pt15-wywiad-zalaczniki'));
+const Pt06UstawieniaSuwakiScreen = React.lazy(() => import('./screens/pt06-ustawienia-suwaki'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
@@ -2107,6 +2108,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5-5 — góra podglądów Realizacji (bloki 1–2) po wyrównaniu do kanonu: REALNY <ExecutionHub initialTab="work"> z zadaniem ZAMKNIĘTYM i OTWARTYM (osoba + termin); Menu 1 przełącza na Risk management i Reports. &lang=en&theme=light|dark',
     render: () => <K5PreviewWorkScreen />,
+  },
+  'pt06-ustawienia-suwaki': {
+    label:
+      'P-T06 (uwaga testera VI) — suwaki „Widoczności widgetów" w powłoce Ustawień (REALNY <AppearanceModule initialTab="dashboard">): cztery ON i trzy OFF na jednym zrzucie. &lang=en|pl&theme=light|dark',
+    render: () => <Pt06UstawieniaSuwakiScreen />,
   },
   'pt15-wywiad-zalaczniki': {
     label:
