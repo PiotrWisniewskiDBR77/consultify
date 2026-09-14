@@ -5407,6 +5407,7 @@ export function createInitiativesExecutionRuntimeRouter(
           ...entry.item,
           initiativeTitle: entry.initiative!.initiative.title,
           projectId: projectIdOf(entry.initiative!),
+          projectTitle: entry.initiative!.projectTitle ?? null,
         }));
       res.json({ cases: visible });
     })

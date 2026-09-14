@@ -13,7 +13,7 @@ const response = (value: unknown, status = 200) =>
   });
 
 const installFixtureTransport = (state: string) => {
-  globalThis.fetch = (async (input: RequestInfo | URL) => {
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (state === 'error') return response({ error: 'Controlled dev-render failure' }, 503);
     if (url.includes('/report-definitions/def-weekly'))
@@ -116,6 +116,45 @@ const installFixtureTransport = (state: string) => {
                 },
               ],
       });
+    if (url.includes('/api/v8/execution-control/manager/lanes/')) {
+      if (url.includes('/problem-actions/execute') && init?.method === 'POST') {
+        return response({ data: { success: true, message: 'Task delegated.', changedCount: 1 } });
+      }
+      const lane = url.includes('/action-queue/') ? 'action-queue' : url.includes('/blockers/') ? 'blockers' : 'workload';
+      return response({
+        data: {
+          problems: lane === 'action-queue' && state !== 'empty' ? [{
+            id: 'aq-task-blocked-task-overdue',
+            severity: 'critical',
+            problemType: 'overdue_task',
+            title: 'Close supplier readiness gap',
+            rootCause: 'Blocked and overdue',
+            sourceEntityType: 'TASK',
+            sourceEntityId: 'task-overdue',
+            sourceEntityName: 'Close supplier readiness gap',
+            ownerId: 'anna',
+            ownerName: 'Anna Kowalska',
+            daysOverdue: 25,
+            impactCount: 1,
+            affectedEntities: [],
+            actions: [
+              { id: 'escalate', label: 'Escalate' },
+              { id: 'reassign', label: 'Reassign' },
+              { id: 'set_capacity', label: 'Set capacity' },
+            ],
+            meta: {},
+          }] : [],
+          count: lane === 'action-queue' && state !== 'empty' ? 1 : 0,
+        },
+      });
+    }
+    if (url.endsWith('/api/execution-reports/work-analysis/generate') && init?.method === 'POST')
+      return response({
+        id: '1bf4228a-010f-4a00-a6c8-5aaac567d3a2',
+        created: true,
+        asOf: '2026-09-14T05:00:00.000Z',
+        period: { start: '2026-09-14T00:00:00.000Z', end: '2026-09-21T00:00:00.000Z' },
+      }, 201);
     if (url.endsWith('/execution-cases'))
       return response({
         cases:
@@ -126,6 +165,8 @@ const installFixtureTransport = (state: string) => {
                   executionCaseId: 'case-1',
                   initiativeId: 'initiative-1',
                   initiativeTitle: 'Factory AI rollout',
+                  projectId: 'project-north-plant',
+                  projectTitle: 'North plant transformation',
                 },
               ],
       });
@@ -188,7 +229,7 @@ export function ExecutionReportDay11Screen(): React.ReactElement {
      * zmian w ExecutionReportsSurface.tsx.
      */
     <div className="h-screen bg-c-surface p-4 text-c-text">
-      {report === 'work' ? <WorkIntelligenceReport /> : null}
+      {report === 'work' ? <WorkIntelligenceReport analysisEnabled /> : null}
       {report === 'resources' ? <ResourcesCapacityReport /> : null}
       {report === 'control' ? <ControlLoopReport /> : null}
       {report === 'generator' ? <UnifiedExecutionReportGenerator /> : null}

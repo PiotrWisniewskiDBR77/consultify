@@ -74,6 +74,23 @@ describe('execution spine legacy read-only boundary', () => {
     }
   });
 
+  it('allows only the governed manager problem-action executor through the legacy namespace guard', () => {
+    const exact = invoke('POST', '/lanes/workload/problem-actions/execute');
+    expect(exact.next).toHaveBeenCalledOnce();
+    expect(exact.status).not.toHaveBeenCalled();
+
+    for (const [method, path] of [
+      ['POST', '/lanes/workload/problem-actions'],
+      ['POST', '/lanes/workload/problem-actions/execute/other'],
+      ['PUT', '/lanes/workload/problem-actions/execute'],
+      ['POST', '/lanes/workload/suggestions/apply'],
+    ]) {
+      const nearMiss = invoke(method, path);
+      expect(nearMiss.next).not.toHaveBeenCalled();
+      expect(nearMiss.status).toHaveBeenCalledWith(409);
+    }
+  });
+
   // DEC-453: wycofana zostaje TYLKO sciezka, ktora ma sprawdzonego nastepce
   // (RAID) albo ktorej nikt nie wola (start/block/unblock, lifecycle-*,
   // apply-*). Ta lista jest bezpiecznikiem przed ponownym rozszerzeniem

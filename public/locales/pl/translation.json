@@ -15618,12 +15618,35 @@
       "weekOf": "Tydzień od",
       "completed": "Wykonane",
       "attention": "Wymaga uwagi przełożonego",
+      "generate": "Wygeneruj dla tego tygodnia",
+      "generateFailed": "Nie udało się wygenerować analizy.",
+      "savedReceipt": "Zapisany raport {{id}} · {{state}}",
+      "savedNew": "utworzony",
+      "savedExisting": "już wygenerowany",
+      "noAttention": "Brak rekordów wymagających uwagi przełożonego",
+      "actionDone": "Działanie przełożonego wykonane.",
+      "actionFailed": "Nie udało się wykonać działania przełożonego.",
+      "actions": {
+        "escalate": "Eskaluj",
+        "delegate": "Deleguj",
+        "resources": "Zmień zasoby",
+        "running": "Wykonywanie…"
+      },
+      "reasons": {
+        "blocked": "Zablokowane",
+        "overdue": "Po terminie",
+        "unassigned": "Bez właściciela",
+        "no_due_date": "Bez terminu"
+      },
       "windows": {
         "previousWeek": "Miniony tydzień",
         "nextWeek": "Nadchodzący tydzień",
         "nextMonth": "Nadchodzący miesiąc"
       },
       "columns": {
+        "record": "Rekord wymagający uwagi",
+        "reason": "Powód",
+        "actions": "Działania przełożonego",
         "project": "Projekt",
         "priority": "Priorytet"
       }
