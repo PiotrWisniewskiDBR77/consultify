@@ -2,42 +2,42 @@
  RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Env] Loaded from:[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-09-14 02:18:00:180 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 02:18:00:180 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 02:18:00:180 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 02:18:00:180 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 02:18:00:180 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes an evidence create ahead of a manager decision and rejects the governed mutation without a write
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 02:18:01:181 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 02:18:01:181 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 02:18:01:181 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes an evidence create ahead of a manager decision and rejects the governed mutation without a write
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
-2026-09-14 02:10:05:105 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_s1_v2","max":10,"dbTarget":"unset"}
+2026-09-14 02:18:01:181 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 02:18:01:181 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_s1_v2","max":10,"dbTarget":"unset"}
 DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_s1_v2 host=127.0.0.1 port=6454 database=consultify_s1_v2 source=app:pool-config
-2026-09-14 02:10:05:105 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+2026-09-14 02:18:01:181 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes an evidence create ahead of a manager decision and rejects the governed mutation without a write
-2026-09-14 02:10:05:105 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-14 02:18:01:181 [37mdebug[39m: [37m[Postgres] Client connected[39m
 
-····stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes a permitted returned-answer edit ahead of a manager decision without deadlock
-2026-09-14 02:10:06:106 [33mwarn[39m: [33m[InterviewController] Knowledge ingestion skipped for interview_answer: pipeline.ingestText is not a function[39m
+···stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes a permitted returned-answer edit ahead of a manager decision without deadlock
+2026-09-14 02:18:01:181 [33mwarn[39m: [33m[InterviewController] Knowledge ingestion skipped for interview_answer: pipeline.ingestText is not a function[39m
+
+·stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes a permitted returned-answer edit ahead of a manager decision without deadlock
+2026-09-14 02:18:01:181 [33mwarn[39m: [33m[InterviewController] Knowledge ingestion skipped for interview_evidence: pipeline.ingestText is not a function[39m
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes a permitted returned-answer edit ahead of a manager decision without deadlock
-2026-09-14 02:10:06:106 [33mwarn[39m: [33m[InterviewController] Knowledge ingestion skipped for interview_evidence: pipeline.ingestText is not a function[39m
+2026-09-14 02:18:01:181 [33mwarn[39m: [33m[adaptQuery] INSERT OR IGNORE INTO "link_graph_edges" has no entry in conflictTargets registry; falling back to first-column heuristic ON CONFLICT (id). If "id" is not this table's real unique/primary key the upsert may silently duplicate rows or fail. Add "link_graph_edges" to server/src/database/conflictTargets.ts.[39m
 
-stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > serializes a permitted returned-answer edit ahead of a manager decision without deadlock
-2026-09-14 02:10:06:106 [33mwarn[39m: [33m[adaptQuery] INSERT OR IGNORE INTO "link_graph_edges" has no entry in conflictTargets registry; falling back to first-column heuristic ON CONFLICT (id). If "id" is not this table's real unique/primary key the upsert may silently duplicate rows or fail. Add "link_graph_edges" to server/src/database/conflictTargets.ts.[39m
+··stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > rolls back all AI decision receipts and exposes none when the later lifecycle transition fails
+2026-09-14 02:18:01:181 [33mwarn[39m: [33m[InterviewController] AI answer review remains pending INTERVIEW_AI_SEND_BACK_SESSION_CONFLICT[39m {"stack":"Error: INTERVIEW_AI_SEND_BACK_SESSION_CONFLICT\n    at /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913/server/src/controllers/InterviewController.ts:5314:23\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.withPgTransaction (/Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913/server/src/utils/queryHelpers.ts:276:20)\n    at /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913/server/src/controllers/InterviewController.ts:5209:28"}
 
-·stdout | server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts > Interview answer evidence revision serialization — real PostgreSQL > rolls back all AI decision receipts and exposes none when the later lifecycle transition fails
-2026-09-14 02:10:06:106 [33mwarn[39m: [33m[InterviewController] AI answer review remains pending INTERVIEW_AI_SEND_BACK_SESSION_CONFLICT[39m {"stack":"Error: INTERVIEW_AI_SEND_BACK_SESSION_CONFLICT\n    at /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913/server/src/controllers/InterviewController.ts:5314:23\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.withPgTransaction (/Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913/server/src/utils/queryHelpers.ts:276:20)\n    at /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913/server/src/controllers/InterviewController.ts:5209:28"}
-
-····
+···
 
  Test Files  1 passed (1)
       Tests  9 passed (9)
-   Start at  02:10:03
-   Duration  3.48s (transform 935ms, setup 304ms, import 604ms, tests 1.86s, environment 540ms)
+   Start at  02:18:00
+   Duration  1.96s (transform 457ms, setup 96ms, import 314ms, tests 1.24s, environment 235ms)
 

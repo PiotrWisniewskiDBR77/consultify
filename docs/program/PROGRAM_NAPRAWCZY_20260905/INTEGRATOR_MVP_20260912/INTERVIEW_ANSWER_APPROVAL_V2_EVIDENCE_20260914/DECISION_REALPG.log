@@ -2,30 +2,30 @@
  RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/interview-answer-approval-20260913
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Env] Loaded from:[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts > Interview answer decisions — real PostgreSQL > submits the exact server denominator, cold-replays it and omits optional unanswered questions
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
 
-stdout | server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts > Interview answer decisions — real PostgreSQL > uses frozen policy per answer and keeps one question decision isolated from the other
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
-2026-09-14 02:10:02:102 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_s1_v2","max":10,"dbTarget":"unset"}
+·stdout | server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts > Interview answer decisions — real PostgreSQL > uses frozen policy per answer and keeps one question decision isolated from the other
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 02:17:59:1759 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_s1_v2","max":10,"dbTarget":"unset"}
 DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_s1_v2 host=127.0.0.1 port=6454 database=consultify_s1_v2 source=app:pool-config
-2026-09-14 02:10:02:102 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+2026-09-14 02:17:59:1759 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
 
 stdout | server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts > Interview answer decisions — real PostgreSQL > uses frozen policy per answer and keeps one question decision isolated from the other
-2026-09-14 02:10:02:102 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-14 02:17:59:1759 [37mdebug[39m: [37m[Postgres] Client connected[39m
 
-······
+·····
 
  Test Files  1 passed (1)
       Tests  6 passed (6)
-   Start at  02:10:01
-   Duration  925ms (transform 184ms, setup 99ms, import 208ms, tests 297ms, environment 239ms)
+   Start at  02:17:58
+   Duration  930ms (transform 178ms, setup 101ms, import 231ms, tests 278ms, environment 238ms)
 
