@@ -1,0 +1,46 @@
+{
+  "package": "E2c server locale",
+  "branch": "codex/a-e2c-server-locale-20260914",
+  "exactBase": "08c1bb7a2614a84092b8c4ed52404df69dcfd907",
+  "testedCandidate": "c22b295f1bc294f75a3d6c6bf8b841e82be7ede2",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW",
+  "scopeCount": 7,
+  "scope": [
+    "shared EN/PL report catalog and locale resolver",
+    "KPI snapshot frozen locale and stable localization metadata with legacy strings retained",
+    "execution report Markdown/PDF/DOCX localized from snapshot locale",
+    "status, level, and RAG rendering from stable codes",
+    "DRD HTML/deck report locale inherited from request/job/report",
+    "DRD section generation using the same locale resolution",
+    "scheduled report locale persistence, builder propagation, dashboard, and email output"
+  ],
+  "validation": {
+    "focusedTests": {
+      "passed": 14,
+      "failed": 0,
+      "retry": 0
+    },
+    "realPostgres": {
+      "suite": "tests/integration/initiatives-execution/executionReportE4.gateway.smtp.realdb.test.ts",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "runDbTests": true,
+      "mockDb": false,
+      "container": "cx-a-e2c-pg",
+      "port": 5331
+    },
+    "serverTypeScript": {
+      "exactBaseExit": 0,
+      "candidateExit": 0
+    }
+  },
+  "boundaries": {
+    "migration": false,
+    "stagingData": false,
+    "compileDrdPack": false,
+    "d3": false
+  },
+  "evidence": "evidence/e2c-server",
+  "independentReview": "NOT_RUN_STOP_BEFORE_INDEPENDENT_REVIEW"
+}
