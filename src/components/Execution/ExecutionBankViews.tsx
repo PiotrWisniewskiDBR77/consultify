@@ -484,7 +484,10 @@ const BankTable = ({
           const row = source as unknown as ExecutionBankRow;
           return (
             <div>
-              <div className="tabular-nums" data-testid={`execution-bank-progress-${row.id}`}>
+              <div
+                className="tabular-nums"
+                data-testid={`execution-bank-progress-${row.executionCaseId}`}
+              >
                 {row.progress.status === 'KNOWN' ? (
                   `${row.progress.value}%`
                 ) : (
