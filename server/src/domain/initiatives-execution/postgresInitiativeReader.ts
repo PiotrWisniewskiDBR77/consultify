@@ -9,6 +9,10 @@ import type { PortfolioScenario } from './portfolioScenario.js';
 import type { EffectiveGovernancePolicy } from './postgresGovernancePolicyResolver.js';
 import type { RegisteredInitiative } from './registerInitiative.js';
 import type { ModuleInitiativeForPlanning } from './registerModuleInitiativeForPlanning.js';
+import type {
+  InitiativeWorkReportContent,
+  InitiativeWorkReportTemplate,
+} from '../../services/initiativeWorkReportService.js';
 
 export interface SourceProposalReadModel {
   id: string;
@@ -125,6 +129,130 @@ export interface PendingDefinitionRemediationReadModel {
 
 export class PostgresInitiativeReader {
   constructor(private readonly pool: Pool) {}
+
+  async buildInitiativeWorkReport(
+    organizationId: string,
+    input: { title: string; templateId: InitiativeWorkReportTemplate; projectIds: string[] }
+  ): Promise<{ content: InitiativeWorkReportContent; sources: Array<Record<string, unknown>> }> {
+    const [initiativesResult, decisionsResult] = await Promise.all([
+      this.pool.query<{
+        aggregate_id: string;
+        version: number;
+        payload_json: Record<string, any>;
+        updated_at: Date | string;
+      }>(
+        `SELECT aggregate_id,version,payload_json,updated_at
+           FROM ie_aggregate_state
+          WHERE organization_id=$1 AND aggregate_type='initiative'
+            AND (cardinality($2::text[])=0 OR payload_json->>'projectId'=ANY($2::text[]))
+          ORDER BY updated_at DESC`,
+        [organizationId, input.projectIds]
+      ),
+      this.pool.query<{
+        aggregate_id: string;
+        version: number;
+        payload_json: Record<string, any>;
+        authority_name: string | null;
+        updated_at: Date | string;
+      }>(
+        `SELECT d.aggregate_id,d.version,d.payload_json,d.updated_at,
+                COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')),''),u.email,d.payload_json->>'authorityId') authority_name
+           FROM ie_aggregate_state d
+           LEFT JOIN users u ON u.id=d.payload_json->>'authorityId' AND u.organization_id=d.organization_id
+          WHERE d.organization_id=$1 AND d.aggregate_type IN ('decision','execution_decision')
+            AND UPPER(COALESCE(d.payload_json->>'status',''))='PENDING'
+            AND (cardinality($2::text[])=0 OR d.payload_json->>'projectId'=ANY($2::text[]))
+          ORDER BY NULLIF(d.payload_json->>'dueAt','')::timestamptz NULLS LAST`,
+        [organizationId, input.projectIds]
+      ),
+    ]);
+    const generatedAt = new Date().toISOString();
+    const initiatives = initiativesResult.rows.map((row) => ({
+      id: row.aggregate_id,
+      version: row.version,
+      title: String(row.payload_json.title || row.payload_json.name || row.aggregate_id),
+      status: String(row.payload_json.status || 'UNKNOWN'),
+      projectId: row.payload_json.projectId ? String(row.payload_json.projectId) : null,
+      ownerId:
+        row.payload_json.initiativeOwnerId || row.payload_json.ownerId
+          ? String(row.payload_json.initiativeOwnerId || row.payload_json.ownerId)
+          : null,
+      updatedAt:
+        row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+    }));
+    const byStatus = initiatives.reduce<Record<string, number>>((counts, item) => {
+      counts[item.status] = (counts[item.status] ?? 0) + 1;
+      return counts;
+    }, {});
+    const now = Date.now();
+    const debtors = new Map<string, InitiativeWorkReportContent['decisionDebtors'][number]>();
+    for (const row of decisionsResult.rows) {
+      const authorityId = String(row.payload_json.authorityId || 'UNASSIGNED');
+      const dueAt = row.payload_json.dueAt ? String(row.payload_json.dueAt) : null;
+      const overdue =
+        dueAt !== null && Number.isFinite(Date.parse(dueAt)) && Date.parse(dueAt) < now;
+      const current = debtors.get(authorityId) ?? {
+        authorityId,
+        authorityName: row.authority_name || authorityId,
+        pending: 0,
+        overdue: 0,
+        oldestDueAt: null,
+      };
+      current.pending += 1;
+      if (overdue) current.overdue += 1;
+      if (dueAt && (!current.oldestDueAt || dueAt < current.oldestDueAt))
+        current.oldestDueAt = dueAt;
+      debtors.set(authorityId, current);
+    }
+    const decisionDebtors = [...debtors.values()].sort(
+      (a, b) => b.overdue - a.overdue || b.pending - a.pending
+    );
+    const content: InitiativeWorkReportContent = {
+      generatedAt,
+      title: input.title,
+      templateId: input.templateId,
+      projectIds: input.projectIds,
+      summary: {
+        initiatives: initiatives.length,
+        pendingDecisions: decisionsResult.rows.length,
+        overdueDecisions: decisionDebtors.reduce((sum, item) => sum + item.overdue, 0),
+        byStatus,
+      },
+      initiatives,
+      decisionDebtors,
+    };
+    const sources = [
+      ...initiativesResult.rows.map((row) => ({
+        sourceType: 'initiative',
+        sourceId: row.aggregate_id,
+        version: row.version,
+        capturedAt: generatedAt,
+        freshness: 'CURRENT',
+        formula: null,
+        unit: null,
+        currency: null,
+        window: null,
+        confidence: 'HIGH',
+        accessState: 'FULL',
+        redactions: [],
+      })),
+      ...decisionsResult.rows.map((row) => ({
+        sourceType: 'decision',
+        sourceId: row.aggregate_id,
+        version: row.version,
+        capturedAt: generatedAt,
+        freshness: 'CURRENT',
+        formula: null,
+        unit: null,
+        currency: null,
+        window: null,
+        confidence: 'HIGH',
+        accessState: 'FULL',
+        redactions: [],
+      })),
+    ];
+    return { content, sources };
+  }
 
   /**
    * Kto moze byc WLASCICIELEM inicjatywy w danym projekcie.

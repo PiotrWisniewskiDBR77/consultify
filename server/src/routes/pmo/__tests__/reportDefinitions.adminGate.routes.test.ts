@@ -44,10 +44,12 @@ describe('P16-R6 — POST /report-definitions[/transitions] wymaga roli admin', 
     const app = express();
     app.use(express.json());
     app.use((req, _res, next) => {
-      (req as any).user = role ? { id: 'user-a', organizationId: 'org-a', role } : {
-        id: 'user-a',
-        organizationId: 'org-a',
-      };
+      (req as any).user = role
+        ? { id: 'user-a', organizationId: 'org-a', role }
+        : {
+            id: 'user-a',
+            organizationId: 'org-a',
+          };
       if (role) (req as any).userRole = role;
       next();
     });
@@ -75,6 +77,20 @@ describe('P16-R6 — POST /report-definitions[/transitions] wymaga roli admin', 
   it('MEMBER (role "user") → 403 na transitions definicji', async () => {
     const response = await request(makeApp('user'))
       .post('/api/v8/pmo/initiatives-execution/report-definitions/def-1/transitions')
+      .send({});
+    expect(response.status).toBe(403);
+  });
+
+  it('MEMBER (role "user") → 403 na create przebiegu raportu', async () => {
+    const response = await request(makeApp('user'))
+      .post('/api/v8/pmo/initiatives-execution/report-runs/run-1')
+      .send({});
+    expect(response.status).toBe(403);
+  });
+
+  it('MEMBER (role "user") → 403 na transitions przebiegu raportu', async () => {
+    const response = await request(makeApp('user'))
+      .post('/api/v8/pmo/initiatives-execution/report-runs/run-1/transitions')
       .send({});
     expect(response.status).toBe(403);
   });

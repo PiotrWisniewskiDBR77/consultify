@@ -135,6 +135,7 @@ import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
 import { InitiativePreparationReadView } from './InitiativePreparationReadView';
+import { InitiativeWorkReportView } from './InitiativeWorkReportView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -272,10 +273,11 @@ interface InitiativesHubProps {
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
+const FOUR_BUTTONS_ENABLED = isInitiativesFourButtonsEnabled();
 // K5-8: "Work report" (4th Menu 2 tab) stays hidden until Codex ships the real
 // creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
 // Codex replaces it behind this same flag.
-const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
+const WORK_REPORT_ENABLED = import.meta.env.VITE_INITIATIVES_WORK_REPORT === 'true';
 /* H1b (14.09) — „Do akceptacji": skrzynka recenzenta przejść cyklu życia.
    Domyślnie OFF: wygląd idzie do właściciela na ZRZUCIE, nie przez „włącz
    flagę i zobacz". Przy OFF zakładka nie istnieje ani w Menu 1, ani w zbiorze
@@ -285,7 +287,7 @@ const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   'list',
   'plan',
   'capacity',
-  ...(FOUR_BUTTONS_ENABLED ? (['workReport'] as ModuleTab[]) : []),
+  ...(WORK_REPORT_ENABLED ? (['workReport'] as ModuleTab[]) : []),
   ...(TRANSITION_INBOX_ENABLED ? (['transitionInbox'] as ModuleTab[]) : []),
 ]);
 const resolvePreparationLens = (params: URLSearchParams) => {
@@ -950,7 +952,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
-      ...(FOUR_BUTTONS_ENABLED
+      ...(WORK_REPORT_ENABLED
         ? [
             {
               id: 'workReport' as ModuleTab,
@@ -2132,16 +2134,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       );
     }
 
+    if (activeTab === 'workReport' && WORK_REPORT_ENABLED) {
+      return (
+        <InitiativeWorkReportView
+          currentProjectId={currentProjectId}
+          currentUserId={String((currentUser as any)?.id || '')}
+          currentOrganizationId={String(currentOrganization?.id || '')}
+        />
+      );
+    }
+
     // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
     // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
-    if (
-      (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') ||
-      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
-    ) {
+    if (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}
-          report={activeTab === 'workReport'}
           onOpen={handleOpenInitiativeDocument}
         />
       );

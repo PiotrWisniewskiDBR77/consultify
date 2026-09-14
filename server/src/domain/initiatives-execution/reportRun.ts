@@ -32,6 +32,13 @@ export interface ReportRun {
   scopeRefs: string[];
   period: { start: string; end: string };
   asOf: string;
+  /** Immutable, human-readable work-report payload captured from tenant data. */
+  workReport: {
+    title: string;
+    templateId: string;
+    cadence: 'ON_DEMAND' | 'WEEKLY' | 'MONTHLY';
+    content: Record<string, unknown>;
+  } | null;
   sources: ReportSource[];
   ownerId: string;
   approverId: string;
@@ -45,6 +52,20 @@ export interface ReportRun {
     audience: string;
     distributedAt: string;
     contentHash: string;
+  }>;
+  deliveryAttempts: Array<{
+    receiptId: string;
+    audience: string[];
+    startedAt: string;
+    recipients: Array<{
+      address: string;
+      status: 'PENDING' | 'SENDING' | 'DELIVERED' | 'FAILED';
+      attempts: number;
+      lastAttemptAt: string | null;
+      lastError: string | null;
+      attemptToken: string | null;
+      leaseExpiresAt: string | null;
+    }>;
   }>;
   followUpTaskRef: { taskId: string; version: number; receiptClientRequestId: string } | null;
   createdAt: string;
@@ -73,7 +94,7 @@ type Draft = Pick<
   | 'sources'
   | 'ownerId'
   | 'approverId'
->;
+> & { workReport?: ReportRun['workReport'] };
 async function exactDefinition(
   tx: any,
   org: string,
@@ -114,6 +135,7 @@ export async function createReportRun(
     const now = new Date().toISOString(),
       run: ReportRun = {
         ...p,
+        workReport: p.workReport ?? null,
         reportRunId: envelope.aggregateId,
         tenantId: envelope.organizationId,
         status: 'DRAFT',
@@ -123,6 +145,7 @@ export async function createReportRun(
         approval: null,
         exportPackage: null,
         distributionReceipts: [],
+        deliveryAttempts: [],
         followUpTaskRef: null,
         createdAt: now,
         updatedAt: now,
@@ -154,6 +177,24 @@ type Action =
   | {
       action: 'PUBLISH';
       distribution: { receiptId: string; audience: string; distributedAt: string };
+    }
+  | { action: 'BEGIN_DELIVERY'; receiptId: string; audience: string[]; startedAt: string }
+  | {
+      action: 'CLAIM_RECIPIENT';
+      receiptId: string;
+      recipient: string;
+      attemptedAt: string;
+      attemptToken: string;
+      leaseExpiresAt: string;
+    }
+  | {
+      action: 'RECORD_RECIPIENT';
+      receiptId: string;
+      recipient: string;
+      outcome: 'DELIVERED' | 'FAILED';
+      attemptedAt: string;
+      attemptToken: string;
+      error?: string;
     }
   | { action: 'FAIL'; reason: string }
   | { action: 'SUPERSEDE' }
@@ -214,6 +255,7 @@ export async function transitionReportRun(
         scopeRefs: r.scopeRefs,
         period: r.period,
         asOf: r.asOf,
+        workReport: r.workReport,
         sources: r.sources,
       };
       const hash = reportContentHash(snapshot);
@@ -235,6 +277,110 @@ export async function transitionReportRun(
         frozenSnapshot: p.outcome === 'APPROVED' ? r.frozenSnapshot : null,
         updatedAt: now,
       };
+    } else if (p.action === 'BEGIN_DELIVERY') {
+      if (r.status !== 'APPROVED' || envelope.actorId !== r.approverId)
+        throw new MaterialCommandValidationError('Approved report and approver required');
+      if ((r.deliveryAttempts ?? []).some((attempt) => attempt.receiptId === p.receiptId))
+        throw new MaterialCommandValidationError('Delivery receipt already exists');
+      next = {
+        ...r,
+        deliveryAttempts: [
+          ...(r.deliveryAttempts ?? []),
+          {
+            receiptId: p.receiptId,
+            audience: p.audience,
+            startedAt: p.startedAt,
+            recipients: p.audience.map((address) => ({
+              address,
+              status: 'PENDING' as const,
+              attempts: 0,
+              lastAttemptAt: null,
+              lastError: null,
+              attemptToken: null,
+              leaseExpiresAt: null,
+            })),
+          },
+        ],
+        updatedAt: now,
+      };
+    } else if (p.action === 'CLAIM_RECIPIENT') {
+      if (r.status !== 'APPROVED' || envelope.actorId !== r.approverId)
+        throw new MaterialCommandValidationError('Approved report and approver required');
+      const attempts = r.deliveryAttempts ?? [];
+      const attempt = attempts.find((item) => item.receiptId === p.receiptId);
+      const recipient = attempt?.recipients.find((item) => item.address === p.recipient);
+      const expiredSending =
+        recipient?.status === 'SENDING' &&
+        Boolean(recipient.leaseExpiresAt) &&
+        Date.parse(String(recipient.leaseExpiresAt)) <= Date.parse(p.attemptedAt);
+      if (
+        !attempt ||
+        !recipient ||
+        recipient.status === 'DELIVERED' ||
+        (recipient.status === 'SENDING' && !expiredSending)
+      )
+        throw new MaterialCommandValidationError('Retryable delivery recipient required');
+      next = {
+        ...r,
+        deliveryAttempts: attempts.map((item) =>
+          item.receiptId !== p.receiptId
+            ? item
+            : {
+                ...item,
+                recipients: item.recipients.map((candidate) =>
+                  candidate.address !== p.recipient
+                    ? candidate
+                    : {
+                        ...candidate,
+                        status: 'SENDING' as const,
+                        attempts: candidate.attempts + 1,
+                        lastAttemptAt: p.attemptedAt,
+                        lastError: null,
+                        attemptToken: p.attemptToken,
+                        leaseExpiresAt: p.leaseExpiresAt,
+                      }
+                ),
+              }
+        ),
+        updatedAt: now,
+      };
+    } else if (p.action === 'RECORD_RECIPIENT') {
+      if (r.status !== 'APPROVED' || envelope.actorId !== r.approverId)
+        throw new MaterialCommandValidationError('Approved report and approver required');
+      const attempts = r.deliveryAttempts ?? [];
+      const attempt = attempts.find((item) => item.receiptId === p.receiptId);
+      const recipient = attempt?.recipients.find((item) => item.address === p.recipient);
+      if (
+        !attempt ||
+        !recipient ||
+        recipient.status !== 'SENDING' ||
+        recipient.attemptToken !== p.attemptToken
+      )
+        throw new MaterialCommandValidationError('Claimed delivery recipient required');
+      next = {
+        ...r,
+        deliveryAttempts: attempts.map((item) =>
+          item.receiptId !== p.receiptId
+            ? item
+            : {
+                ...item,
+                recipients: item.recipients.map((candidate) =>
+                  candidate.address !== p.recipient
+                    ? candidate
+                    : {
+                        ...candidate,
+                        status: p.outcome,
+                        lastAttemptAt: p.attemptedAt,
+                        lastError:
+                          p.outcome === 'FAILED' ? p.error || 'EMAIL_DELIVERY_FAILED' : null,
+                        attemptToken: null,
+                        leaseExpiresAt: null,
+                      }
+                ),
+              }
+        ),
+        updatedAt: now,
+      };
     } else if (p.action === 'PUBLISH') {
       if (
         r.status !== 'APPROVED' ||
@@ -248,6 +394,15 @@ export async function transitionReportRun(
       const hash = reportContentHash(r.frozenSnapshot);
       if (hash !== r.contentHash)
         throw new MaterialCommandValidationError('Frozen report hash mismatch');
+      const deliveryAttempt = (r.deliveryAttempts ?? []).find(
+        (attempt) => attempt.receiptId === p.distribution.receiptId
+      );
+      if (
+        !deliveryAttempt ||
+        deliveryAttempt.recipients.length === 0 ||
+        deliveryAttempt.recipients.some((recipient) => recipient.status !== 'DELIVERED')
+      )
+        throw new MaterialCommandValidationError('All delivery recipients must be delivered');
       next = {
         ...r,
         status: 'PUBLISHED',

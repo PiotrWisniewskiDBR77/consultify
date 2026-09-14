@@ -36,6 +36,17 @@ export interface ReportSchedule {
   // Template configuration
   templateId?: string;
   reportType: string;
+  runtimeReport?: {
+    definitionId: string;
+    definitionVersion: number;
+    templateId: string;
+    title: string;
+    projectIds: string[];
+    ownerId: string;
+    approverId: string;
+    recipients: string[];
+    cadence: 'WEEKLY' | 'MONTHLY';
+  };
   // Source data
   sourceAssessmentId?: string;
   sourceProjectId?: string;
@@ -90,6 +101,7 @@ export interface ScheduleCreateRequest {
   description?: string;
   templateId?: string;
   reportType: string;
+  runtimeReport?: ReportSchedule['runtimeReport'];
   sourceAssessmentId?: string;
   sourceProjectId?: string;
   scheduleType?: ScheduleType;
@@ -219,6 +231,7 @@ class ScheduledReportService {
       description: request.description,
       templateId: request.templateId,
       reportType: request.reportType,
+      runtimeReport: request.runtimeReport,
       sourceAssessmentId: request.sourceAssessmentId,
       sourceProjectId: request.sourceProjectId,
       scheduleType,
@@ -264,6 +277,7 @@ class ScheduledReportService {
           description: schedule.description,
           templateId: schedule.templateId,
           reportType: schedule.reportType,
+          runtimeReport: schedule.runtimeReport,
           sourceAssessmentId: schedule.sourceAssessmentId,
           sourceProjectId: schedule.sourceProjectId,
           frequency: schedule.frequency,
@@ -339,6 +353,7 @@ class ScheduledReportService {
           description: updated.description,
           templateId: updated.templateId,
           reportType: updated.reportType,
+          runtimeReport: updated.runtimeReport,
           sourceAssessmentId: updated.sourceAssessmentId,
           sourceProjectId: updated.sourceProjectId,
           frequency: updated.frequency,
@@ -508,9 +523,14 @@ class ScheduledReportService {
       let reportId: string | null = null;
       let bundleZip: Buffer | null = null;
       let bundleBaseName: string | null = null;
+      let initiativeWorkReportDelivered = false;
 
       // W6.1 — bridge do generatora M17 gdy deliverableType === 'bundle'.
-      if (scheduleData.deliverableType === 'bundle') {
+      if (scheduleData.reportType === 'initiative_work_report' && scheduleData.runtimeReport) {
+        const runtime = await import('../routes/pmo/initiativesExecutionRuntime.routes.js');
+        reportId = await runtime.runScheduledInitiativeWorkReport(scheduleData);
+        initiativeWorkReportDelivered = true;
+      } else if (scheduleData.deliverableType === 'bundle') {
         const brief = scheduleData.description?.trim() || scheduleData.name;
         if (brief && brief.length >= 20) {
           const { generateBundle } = await import('./deliverables/bundleGenerationRuntime.js');
@@ -572,7 +592,17 @@ class ScheduledReportService {
               contentBase64: bundleZip.toString('base64'),
             }
           : undefined;
-        execution.deliveryResults = await this.deliverReport(scheduleData, reportId, zipAttachment);
+        execution.deliveryResults = initiativeWorkReportDelivered
+          ? scheduleData.deliveryMethods.map((method) => ({
+              method,
+              status: 'success' as const,
+              details:
+                method === 'email'
+                  ? 'Frozen PDF accepted by configured SMTP provider'
+                  : 'Published report available in dashboard',
+              timestamp: new Date().toISOString(),
+            }))
+          : await this.deliverReport(scheduleData, reportId, zipAttachment);
       }
 
       // Update schedule
@@ -865,6 +895,7 @@ class ScheduledReportService {
       description: row.description || config.description,
       templateId: config.templateId || row.report_template_id,
       reportType: config.reportType || 'assessment',
+      runtimeReport: config.runtimeReport,
       sourceAssessmentId: config.sourceAssessmentId || row.source_assessment_id,
       sourceProjectId: config.sourceProjectId,
       scheduleType: row.schedule_type || 'time_based',
