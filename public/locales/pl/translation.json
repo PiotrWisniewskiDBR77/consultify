@@ -14798,7 +14798,61 @@
       "monthlyScale": "skala miesięczna",
       "initiativeSchedule": "Harmonogram inicjatyw",
       "track": "Ścieżka",
-      "timelineAria": "Oś czasu od {{from}} do {{to}}"
+      "timelineAria": "Oś czasu od {{from}} do {{to}}",
+      "column": {
+        "initiative": "Inicjatywa",
+        "initiativeCase": "Inicjatywa / realizacja",
+        "lifecycle": "Cykl życia",
+        "handoff": "Przekazanie",
+        "risk": "Ryzyko",
+        "executionPhase": "Faza realizacji",
+        "owner": "Właściciel",
+        "deliveryProfile": "Profil dostarczania",
+        "progress": "Postęp",
+        "baselineFinish": "Koniec wg bazy",
+        "forecastFinish": "Koniec wg prognozy",
+        "variance": "Odchylenie",
+        "health": "Kondycja",
+        "blockers": "Blokery",
+        "pendingDecisions": "Decyzje oczekujące",
+        "constraint": "Ograniczenie",
+        "nextAction": "Następne działanie",
+        "updated": "Aktualizacja"
+      },
+      "rowMenu": {
+        "open": "Otwórz"
+      },
+      "lifecycle": {
+        "DRAFT": "Szkic",
+        "PENDING_APPROVAL": "Oczekuje na zatwierdzenie",
+        "APPROVED": "Zatwierdzona",
+        "IN_EXECUTION": "W realizacji",
+        "CLOSED": "Zamknięta",
+        "REJECTED": "Odrzucona",
+        "ARCHIVED": "Zarchiwizowana",
+        "CANCELLED": "Anulowana",
+        "ON_HOLD": "Wstrzymana"
+      },
+      "executionState": {
+        "ACTIVE": "Aktywna",
+        "PAUSED": "Wstrzymana",
+        "CLOSING": "W zamykaniu",
+        "CLOSED": "Zamknięta"
+      },
+      "health": {
+        "GREEN": "Zgodnie z planem",
+        "AMBER": "Zagrożona",
+        "AT_RISK": "Zagrożona",
+        "RED": "Krytyczna",
+        "CRITICAL": "Krytyczna"
+      },
+      "gantt": {
+        "baseline": "Baza odniesienia",
+        "currentPlan": "Plan bieżący",
+        "forecast": "Prognoza",
+        "actual": "Wykonanie",
+        "trackAria": "Oś czasu „{{track}}” dla: {{name}}"
+      }
     },
     "review": {
       "roles": {

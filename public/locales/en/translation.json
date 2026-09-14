@@ -15568,7 +15568,61 @@
       "monthlyScale": "monthly scale",
       "initiativeSchedule": "Initiative schedule",
       "track": "Track",
-      "timelineAria": "Timeline from {{from}} to {{to}}"
+      "timelineAria": "Timeline from {{from}} to {{to}}",
+      "column": {
+        "initiative": "Initiative",
+        "initiativeCase": "Initiative / Case",
+        "lifecycle": "Lifecycle",
+        "handoff": "Handoff",
+        "risk": "Risk",
+        "executionPhase": "Execution phase",
+        "owner": "Owner",
+        "deliveryProfile": "Delivery profile",
+        "progress": "Progress",
+        "baselineFinish": "Baseline finish",
+        "forecastFinish": "Forecast finish",
+        "variance": "Variance",
+        "health": "Health",
+        "blockers": "Blockers",
+        "pendingDecisions": "Pending decisions",
+        "constraint": "Constraint",
+        "nextAction": "Next action",
+        "updated": "Updated"
+      },
+      "rowMenu": {
+        "open": "Open"
+      },
+      "lifecycle": {
+        "DRAFT": "Draft",
+        "PENDING_APPROVAL": "Pending approval",
+        "APPROVED": "Approved",
+        "IN_EXECUTION": "In execution",
+        "CLOSED": "Closed",
+        "REJECTED": "Rejected",
+        "ARCHIVED": "Archived",
+        "CANCELLED": "Cancelled",
+        "ON_HOLD": "On hold"
+      },
+      "executionState": {
+        "ACTIVE": "Active",
+        "PAUSED": "Paused",
+        "CLOSING": "Closing",
+        "CLOSED": "Closed"
+      },
+      "health": {
+        "GREEN": "On track",
+        "AMBER": "At risk",
+        "AT_RISK": "At risk",
+        "RED": "Critical",
+        "CRITICAL": "Critical"
+      },
+      "gantt": {
+        "baseline": "Baseline",
+        "currentPlan": "Current plan",
+        "forecast": "Forecast",
+        "actual": "Actual",
+        "trackAria": "{{track}} timeline for {{name}}"
+      }
     },
     "review": {
       "roles": {

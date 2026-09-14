@@ -184,9 +184,13 @@ const humanizeCode = (value: string) =>
     .replace(/_/g, ' ')
     .replace(/^./, (first) => first.toUpperCase());
 export const executionBankLifecycleLabel = (value: string) =>
-  LIFECYCLE_LABELS[value] ?? humanizeCode(value);
+  LIFECYCLE_LABELS[value]
+    ? tlumaczPozaHookiem(`execution.bank.lifecycle.${value}`, LIFECYCLE_LABELS[value])
+    : humanizeCode(value);
 export const executionBankExecutionStateLabel = (value: string) =>
-  EXECUTION_STATE_LABELS[value] ?? humanizeCode(value);
+  EXECUTION_STATE_LABELS[value]
+    ? tlumaczPozaHookiem(`execution.bank.executionState.${value}`, EXECUTION_STATE_LABELS[value])
+    : humanizeCode(value);
 /**
  * K5-3: zdrowie realizacji ma WŁASNY słownik — `GREEN`/`AT_RISK`/`CRITICAL` to
  * nie są stany realizacji i przepuszczanie ich przez
@@ -202,7 +206,9 @@ const HEALTH_LABELS: Readonly<Record<string, string>> = {
   CRITICAL: 'Critical',
 };
 export const executionBankHealthLabel = (value: string) =>
-  HEALTH_LABELS[value] ?? humanizeCode(value);
+  HEALTH_LABELS[value]
+    ? tlumaczPozaHookiem(`execution.bank.health.${value}`, HEALTH_LABELS[value])
+    : humanizeCode(value);
 
 /**
  * Dwa napisy tego ekranu, które użytkownik REALNIE czyta jako ZDANIE (reszta
@@ -303,8 +309,8 @@ const BankTable = ({
       {
         id: 'initiativeCase',
         label: rows.every((row) => row.id === row.initiativeId)
-          ? 'Initiative'
-          : 'Initiative / Case',
+          ? t('execution.bank.column.initiative', 'Initiative')
+          : t('execution.bank.column.initiativeCase', 'Initiative / Case'),
         primary: true,
         dataType: 'text',
         width: '300px',
@@ -350,7 +356,7 @@ const BankTable = ({
         // execution" renderował się jako „In ex…" (zrzut 13.09, 1440 px).
         // Przy przepełnieniu kolumna wtórna siada DOKŁADNIE na swojej
         // podłodze, więc to podłoga — nie `width` — jest tu jedynym lewarem.
-        label: 'Lifecycle',
+        label: t('execution.bank.column.lifecycle', 'Lifecycle'),
         dataType: 'status',
         width: '130px',
         render: (source) => {
@@ -389,7 +395,7 @@ const BankTable = ({
                * pstryczek kolumn i zapamiętany układ są te same co na linii.
                */
               id: 'handoff',
-              label: 'Handoff',
+              label: t('execution.bank.column.handoff', 'Handoff'),
               dataType: 'status' as const,
               width: '150px',
               render: (source: Record<string, unknown>) => (
@@ -411,7 +417,7 @@ const BankTable = ({
         ? [
             {
               id: 'risk',
-              label: 'Risk',
+              label: t('execution.bank.column.risk', 'Risk'),
               dataType: 'status' as const,
               // Jedna pastylka agregatu — ta sama klasa szerokości co chip
               // „In execution" w kolumnie Lifecycle (podłoga `status` 130 px).
@@ -431,7 +437,7 @@ const BankTable = ({
         : []),
       {
         id: 'executionState',
-        label: 'Execution phase',
+        label: t('execution.bank.column.executionPhase', 'Execution phase'),
         dataType: 'number',
         width: '150px',
         render: (source) => {
@@ -465,7 +471,7 @@ const BankTable = ({
       },
       {
         id: 'ownerName',
-        label: 'Owner',
+        label: t('execution.bank.column.owner', 'Owner'),
         dataType: 'owner',
         width: '160px',
         render: (source) => (
@@ -477,7 +483,7 @@ const BankTable = ({
       },
       {
         id: 'deliveryProfile',
-        label: 'Delivery profile',
+        label: t('execution.bank.column.deliveryProfile', 'Delivery profile'),
         defaultVisible: false,
         dataType: 'number',
         // 155 px = zmierzona podłoga NAGŁÓWKA („DELIVERY PROFILE", 16 znaków);
@@ -490,7 +496,7 @@ const BankTable = ({
       },
       {
         id: 'progress',
-        label: 'Progress',
+        label: t('execution.bank.column.progress', 'Progress'),
         dataType: 'number',
         align: 'right',
         width: '190px',
@@ -517,7 +523,7 @@ const BankTable = ({
       },
       {
         id: 'baselineFinish',
-        label: 'Baseline finish',
+        label: t('execution.bank.column.baselineFinish', 'Baseline finish'),
         dataType: 'date',
         align: 'right',
         width: '145px',
@@ -532,7 +538,7 @@ const BankTable = ({
       },
       {
         id: 'forecastFinish',
-        label: 'Forecast finish',
+        label: t('execution.bank.column.forecastFinish', 'Forecast finish'),
         dataType: 'date',
         align: 'right',
         width: '145px',
@@ -547,7 +553,7 @@ const BankTable = ({
       },
       {
         id: 'varianceDays',
-        label: 'Variance',
+        label: t('execution.bank.column.variance', 'Variance'),
         // `date` (110 px): treść to nie goła liczba, tylko „12 days · forecast"
         // — przy podłodze `number` (90 px) łamała się na trzy linie.
         dataType: 'date',
@@ -571,7 +577,7 @@ const BankTable = ({
       },
       {
         id: 'health',
-        label: 'Health',
+        label: t('execution.bank.column.health', 'Health'),
         // Chip „At risk"/„On track" — ta sama podłoga co Lifecycle.
         dataType: 'status',
         width: '130px',
@@ -590,7 +596,7 @@ const BankTable = ({
       },
       {
         id: 'blockerCount',
-        label: 'Blockers',
+        label: t('execution.bank.column.blockers', 'Blockers'),
         dataType: 'number',
         align: 'right',
         width: '95px',
@@ -601,7 +607,7 @@ const BankTable = ({
       },
       {
         id: 'pendingDecisionCount',
-        label: 'Pending decisions',
+        label: t('execution.bank.column.pendingDecisions', 'Pending decisions'),
         defaultVisible: false,
         dataType: 'number',
         align: 'right',
@@ -613,7 +619,7 @@ const BankTable = ({
       },
       {
         id: 'resourceConstraint',
-        label: 'Constraint',
+        label: t('execution.bank.column.constraint', 'Constraint'),
         defaultVisible: false,
         dataType: 'text',
         width: '160px',
@@ -623,7 +629,7 @@ const BankTable = ({
       },
       {
         id: 'nextAction',
-        label: 'Next action',
+        label: t('execution.bank.column.nextAction', 'Next action'),
         dataType: 'text',
         width: '160px',
         render: (source) => (
@@ -635,7 +641,7 @@ const BankTable = ({
         // Było „Updated / actions" — kolumna renderuje WYŁĄCZNIE datę, a akcje
         // mieszkają w strukturalnej kolumnie kebaba. Napis kosztował 160 px
         // podłogi (jądro mierzy nagłówek) zamiast 110 px podłogi typu `date`.
-        label: 'Updated',
+        label: t('execution.bank.column.updated', 'Updated'),
         dataType: 'date',
         align: 'right',
         width: '160px',
@@ -658,7 +664,14 @@ const BankTable = ({
          pozycje jednego bloku, dwa różne kształty. Ikona `ExternalLink` to ta
          sama, którą rejestr Inicjatyw daje swojemu „Open"
          (`initiativeRegisterColumns.shared.ts`). */
-      primary: [{ id: 'open', label: 'Open', icon: ExternalLink, onClick: () => onOpen(row) }],
+      primary: [
+        {
+          id: 'open',
+          label: t('execution.bank.rowMenu.open', 'Open'),
+          icon: ExternalLink,
+          onClick: () => onOpen(row),
+        },
+      ],
       universalHandlers: { preview: () => onSelect(row) },
     };
   };
@@ -937,6 +950,7 @@ type GanttTrackKind = 'baseline' | 'current-plan' | 'forecast' | 'actual';
 
 const GANTT_TRACKS: Array<{
   kind: GanttTrackKind;
+  labelKey: string;
   label: string;
   tone: string;
   start: keyof Pick<
@@ -950,6 +964,7 @@ const GANTT_TRACKS: Array<{
 }> = [
   {
     kind: 'baseline',
+    labelKey: 'execution.bank.gantt.baseline',
     label: 'Baseline',
     tone: 'fill-slate-400 stroke-slate-500',
     start: 'baselineStart',
@@ -957,6 +972,7 @@ const GANTT_TRACKS: Array<{
   },
   {
     kind: 'current-plan',
+    labelKey: 'execution.bank.gantt.currentPlan',
     label: 'Current plan',
     tone: 'fill-blue-400 stroke-blue-500',
     start: 'currentPlanStart',
@@ -964,6 +980,7 @@ const GANTT_TRACKS: Array<{
   },
   {
     kind: 'forecast',
+    labelKey: 'execution.bank.gantt.forecast',
     label: 'Forecast',
     tone: 'fill-amber-400 stroke-amber-500',
     start: 'forecastStart',
@@ -971,6 +988,7 @@ const GANTT_TRACKS: Array<{
   },
   {
     kind: 'actual',
+    labelKey: 'execution.bank.gantt.actual',
     label: 'Actual',
     tone: 'fill-emerald-500 stroke-emerald-600',
     start: 'actualStart',
@@ -982,6 +1000,7 @@ const GanttTrack = ({
   row,
   calendarWindow,
   kind,
+  labelKey,
   label,
   tone,
   start,
@@ -990,11 +1009,13 @@ const GanttTrack = ({
   row: ExecutionBankRow;
   calendarWindow: ExecutionCalendarWindow;
   kind: GanttTrackKind;
+  labelKey: string;
   label: string;
   tone: string;
   start: (typeof GANTT_TRACKS)[number]['start'];
   finish: (typeof GANTT_TRACKS)[number]['finish'];
 }) => {
+  const etykieta = tlumaczPozaHookiem(labelKey, label);
   const startEvidence = row[start];
   const finishEvidence = row[finish];
   const startValue = startEvidence.status === 'KNOWN' ? startEvidence.value : null;
@@ -1045,13 +1066,17 @@ const GanttTrack = ({
         className="truncate text-[10px] font-medium text-c-text-secondary"
         title={unknownText ?? ''}
       >
-        {label}
+        {etykieta}
       </span>
       <div className="relative min-w-0">
         <svg
           viewBox={`0 0 ${GANTT_WIDTH} 20`}
           className="h-5 w-full overflow-visible"
-          aria-label={`${label} timeline for ${row.name}`}
+          aria-label={tlumaczPozaHookiem(
+            'execution.bank.gantt.trackAria',
+            '{{track}} timeline for {{name}}',
+            { track: etykieta, name: row.name }
+          )}
         >
           <line x1="0" y1="10" x2={GANTT_WIDTH} y2="10" className="stroke-c-border-subtle" />
           {geometry === 'interval' ? (
