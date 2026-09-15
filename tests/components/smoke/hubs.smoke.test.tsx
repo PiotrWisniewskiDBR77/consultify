@@ -46,11 +46,11 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     });
   });
 
-  it('Initiatives (InitiativesHub) renders with the Portfolio tab', async () => {
+  it('Initiatives (InitiativesHub) renders with the canonical Initiatives tab', async () => {
     const { InitiativesHub } = await import('@/components/Initiatives/InitiativesHub');
     renderHub(<InitiativesHub />, '/initiatives');
     await waitFor(() => {
-      expect(screen.getByText('Portfolio')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Initiatives' })).toBeInTheDocument();
     });
   });
 
@@ -60,7 +60,7 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     );
     renderHub(<ReportsAndPresentationsHub />, '/outputs');
     await waitFor(() => {
-      expect(screen.getByTestId('module-hub')).toBeInTheDocument();
+      expect(screen.getByTestId('reports-presentations-hub')).toBeInTheDocument();
     });
   });
 
@@ -76,7 +76,7 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     const { AssessmentHub } = await import('@/components/assessment/AssessmentHub');
     renderHub(<AssessmentHub />, '/assessment');
     await waitFor(() => {
-      expect(screen.getByTestId('module-hub')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Assessment' })).toBeInTheDocument();
     });
   });
 
@@ -84,7 +84,7 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     const { AdminSettingsModule } = await import('@/views/admin/AdminSettingsModule');
     renderHub(<AdminSettingsModule currentUser={SMOKE_USER} />, '/admin/people');
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+      expect(screen.getAllByRole('heading', { level: 1 }).length).toBeGreaterThan(0);
     });
   });
 });

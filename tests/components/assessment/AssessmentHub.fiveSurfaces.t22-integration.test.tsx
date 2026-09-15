@@ -178,7 +178,7 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
     const tabs = within(tabList());
     expect(tabs.getByText('Library')).toBeInTheDocument();
     expect(tabs.getByText('Processes')).toBeInTheDocument();
-    expect(tabs.getByText('Outputs')).toBeInTheDocument();
+    expect(tabs.getByText('Insights')).toBeInTheDocument();
     expect(tabs.getByText('Reports')).toBeInTheDocument();
     expect(tabs.getByText('Initiatives')).toBeInTheDocument();
     expect(tabs.queryByText('Assessment')).not.toBeInTheDocument();
@@ -236,7 +236,7 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
     // renders, which can transiently re-trigger AssessmentHub's load effect
     // after a state change. `findByRole` polls, so it survives that
     // flicker instead of failing on a single synchronous snapshot.
-    const outputsTab = await screen.findByRole('tab', { name: /Outputs/i });
+    const outputsTab = await screen.findByRole('tab', { name: /Insights/i });
     fireEvent.click(outputsTab);
 
     expect(await screen.findByTestId('assessment-quality-review-panel')).toHaveTextContent(
@@ -263,7 +263,8 @@ describe('T22-INTEGRATION-SHELL source anchors — protects the real Library/Out
 
   it('AssessmentHub wires AssessmentOutputsTab as the outputs tab\'s no-selection default, not as a replacement for AssessmentQualityReviewPanel (doctryna gęstości §3 — new component needs a real caller)', () => {
     expect(hubSource).toContain("import { AssessmentOutputsTab } from './AssessmentOutputsTab';");
-    expect(hubSource).toContain('<AssessmentOutputsTab onCountChange={setOutputsCount} />');
+    expect(hubSource).toContain('<AssessmentOutputsTab');
+    expect(hubSource).toContain('onCountChange={setOutputsCount}');
     expect(hubSource).toContain('<AssessmentQualityReviewPanel assessmentId={selectedAssessmentId} />');
   });
 

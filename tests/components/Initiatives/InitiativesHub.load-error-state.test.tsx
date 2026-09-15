@@ -48,7 +48,12 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
 
 vi.mock('../../../src/services/initiativeLifecycle', () => ({
   getStatusesForModule: () => [],
-  STATUS_METADATA: {},
+  getLocalizedStatusLabel: (id: string) => id,
+  getStatusMeta: (id: string) => ({
+    labelKey: `initiatives.status.${id}`,
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-400',
+  }),
 }));
 
 vi.mock('../../../src/services/initiativeWriteTruth', () => ({

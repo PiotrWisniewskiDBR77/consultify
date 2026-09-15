@@ -1,60 +1,39 @@
-/**
- * R13 — source-anchor guard (raw source-text assertions, no mount): the
- * canonical T26 table is wired in above the five existing analysis
- * subviews, which remain present and untouched; InitiativesHub.tsx and
- * the R11 T27/T28/T29 wiring were not touched by this package.
- */
-import { readFileSync } from 'fs';
-import path from 'path';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-const VIEW_PATH = path.resolve(
-  __dirname,
-  '../../../src/components/Initiatives/Analysis/PortfolioAnalysisView.tsx'
+const hubSource = readFileSync(
+  path.resolve(__dirname, '../../../src/components/Initiatives/InitiativesHub.tsx'),
+  'utf8'
 );
-const source = readFileSync(VIEW_PATH, 'utf-8');
 
-describe('R13 PortfolioAnalysisView wiring — source anchors', () => {
-  it('imports and mounts PortfolioAnalysisTable above the existing subview switch', () => {
-    expect(source).toContain("import { PortfolioAnalysisTable } from './PortfolioAnalysisTable';");
-    const tableIdx = source.indexOf(
-      '<PortfolioAnalysisTable initiatives={initiatives} onOpenInitiative={onOpenInitiative} />'
+describe('R13 analysis compatibility after the F9 three-tab cutover', () => {
+  it('maps retired analysis URLs into the canonical Initiatives preparation lens', () => {
+    expect(hubSource).toContain(
+      "['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')"
     );
-    const switchIdx = source.indexOf("subview === 'resources' &&");
-    expect(tableIdx).toBeGreaterThan(-1);
-    expect(switchIdx).toBeGreaterThan(tableIdx);
+    expect(hubSource).toContain("? 'portfolioHealth'");
+    expect(hubSource).toContain(": 'analysis'");
   });
 
-  it('preserves all five analysis subviews unchanged, relocated below the table', () => {
-    for (const subview of ['resources', 'feasibility', 'logic', 'timeline', 'completeness']) {
-      expect(source).toContain(`subview === '${subview}' &&`);
+  it('keeps Portfolio health behind its strict default-off flag', () => {
+    expect(hubSource).toContain("import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true'");
+    expect(hubSource).toContain("preparationLens === 'portfolioHealth'");
+    expect(hubSource).toContain('<PortfolioHealthView');
+  });
+
+  it('does not restore retired analysis destinations as Menu 2 pills', () => {
+    const start = hubSource.indexOf('const tabs = useMemo(');
+    const tabs = hubSource.slice(start, hubSource.indexOf('useEffect(() => {', start));
+    for (const id of ['analysis', 'portfolio', 'observability', 'portfolioHealth']) {
+      expect(tabs).not.toContain(`id: '${id}'`);
     }
-    expect(source).toContain('<ResourcesAnalysis');
-    expect(source).toContain('<FeasibilityAnalysis');
-    expect(source).toContain('<LogicAnalysis');
-    expect(source).toContain('<TimelineAnalysis');
-    expect(source).toContain('<CompletenessAnalysis');
   });
 
-  it('does not touch TableWithPreviewLayout/dependency POST-DELETE logic (still present, unmodified call sites)', () => {
-    expect(source).toContain('<TableWithPreviewLayout<PreviewItem>');
-    expect(source).toContain("Api.post('/initiatives/portfolio/dependencies'");
-    expect(source).toContain("Api.delete(`/initiatives/portfolio/dependencies/${dependencyId}`)");
-  });
-});
-
-describe('R13 — InitiativesHub.tsx and R11 wiring untouched by this package', () => {
-  it('InitiativesHub.tsx analysis mount site is unmodified; R11 T27/T28/T29 wiring intact', () => {
-    const HUB_PATH = path.resolve(__dirname, '../../../src/components/Initiatives/InitiativesHub.tsx');
-    const hubSource = readFileSync(HUB_PATH, 'utf-8');
-    expect(hubSource).toContain("if (activeTab === 'analysis') {");
-    expect(hubSource).toContain('<PortfolioAnalysisView');
-    expect(hubSource).not.toContain('PortfolioAnalysisTable');
-    // R11 regressions (byte-preserved anchors from the prior accepted package)
-    expect(hubSource).toContain('<InitiativeObservabilityTable');
-    expect(hubSource).toContain('<CandidatesTable onAccept={handleAcceptCandidate} />');
-    expect(hubSource).toContain('<PortfolioHealthTable onOpenInitiative={openInitiative} />');
-    // T25 (byte-preserved anchor from the prior accepted package)
-    expect(hubSource).toContain('const tablePreviewDetailsText = buildInitiativePreviewDetails(');
+  it('preserves the F9 visible Menu 2 denominator', () => {
+    expect(hubSource).toContain("id: 'list' as ModuleTab");
+    expect(hubSource).toContain("id: 'plan' as ModuleTab");
+    expect(hubSource).toContain("id: 'capacity' as ModuleTab");
   });
 });
