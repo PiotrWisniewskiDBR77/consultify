@@ -8,7 +8,7 @@ import { Router } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { resolveAiLanguageFromRequest } from '../services/ai/languagePolicy.js';
+import { resolveLocale } from '../services/ai/languagePolicy.js';
 import managementReportsService from '../services/managementReportsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -87,8 +87,16 @@ router.post(
     // 1.1-Z2 #2: tytuł raportu (`Portfolio RAID Report` itd.) był zawsze po
     // angielsku bez względu na język użytkownika/organizacji — ten sam SSOT
     // jezykowy co reszta serwera (services/ai/languagePolicy.ts), jawny wybór
-    // z żądania/nagłówka wygrywa, domyślny `pl` (nie `en`).
-    const resolvedLanguage = resolveAiLanguageFromRequest(req, language);
+    // z żądania wygrywa.
+    //
+    // F7 (DEC-461) — POPRAWKA: było `resolveAiLanguageFromRequest`, które
+    // bierze pod uwagę NAGŁÓWEK `Accept-Language`. Przeglądarka doradcy wysyła
+    // `pl-PL`, więc raport zarządczy generował się PO POLSKU nawet dla
+    // organizacji z `default_language='en'` — mierzone na stagingu (Northwind).
+    // `resolveLocale` to resolver DEC-510: jawny język żądania → `users.language`
+    // → legacy `users.locale` → `organizations.default_language` → 'en'.
+    // Nagłówek przeglądarki NIE jest już źródłem prawdy o języku produktu.
+    const resolvedLanguage = await resolveLocale(req, language);
 
     const report = await managementReportsService.generateReport({
       reportType,

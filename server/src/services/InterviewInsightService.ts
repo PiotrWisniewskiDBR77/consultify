@@ -17,6 +17,7 @@ import {
   buildInsightTypeGuidanceBlock,
 } from './ai/insightTypePromptRegistry.js';
 import { llmService } from './ai/llmService.js';
+import { resolveLocale, withResolvedLocaleInstruction } from './ai/languagePolicy.js';
 import {
   assertCardMeetsFormula,
   buildRepairBriefFromVerdict,
@@ -513,6 +514,31 @@ export interface InsightEvidenceValidationResult {
   warnings: string[];
 }
 
+
+/**
+ * Prompt systemowy generatora wniosków z wywiadu — BEZ instrukcji językowej.
+ * Instrukcję dokleja `buildInterviewInsightSystemPrompt` z rozstrzygniętego locale.
+ */
+export const INTERVIEW_INSIGHT_SYSTEM_PROMPT_BASE =
+        'You are a senior McKinsey-style management consultant analyzing interview data. ' +
+        'Build a sharp, decision-useful narrative: capture what people say explicitly AND what they signal between the lines, ' +
+        'reconcile where voices agree vs. diverge, and name the dependencies, tensions and risks a sharp partner would notice. ' +
+        'Write for a busy executive — plain, specific and light, no jargon padding; lead with the "so what". ' +
+        'Return ONLY valid JSON matching the requested schema. ' +
+        'Ground every finding strictly in the provided interview data — never invent facts. ' +
+        'Do NOT provide final approved action plans, roadmaps, timelines, owners, or mitigation plans. ' +
+        'When recommendations are requested, keep them as evidence-bounded hypotheses or opportunities with clear limits.';
+
+/**
+ * F7 (DEC-461): prompt systemowy MUSI nieść instrukcję językową, inaczej model
+ * dziedziczy język z materiału/promptu naprawczego i organizacja `en` dostaje
+ * wnioski po polsku (zmierzone na stagingu, Northwind). Domyślka resolvera to
+ * `'en'` — nigdy `'pl'`.
+ */
+export function buildInterviewInsightSystemPrompt(locale: unknown): string {
+  return withResolvedLocaleInstruction(INTERVIEW_INSIGHT_SYSTEM_PROMPT_BASE, locale);
+}
+
 /**
  * HP-17 follow-up (fala 11b) — buduje `EvidenceContract` dla V6 insight,
  * DETERMINISTYCZNIE, zero LLM, zero I/O. Analogiczne do
@@ -534,8 +560,15 @@ export interface InsightEvidenceValidationResult {
  */
 export function buildInterviewInsightEvidenceContract(
   v6Data: ParsedInsightGenerationData,
-  materialQuality: InsightMaterialQuality
+  materialQuality: InsightMaterialQuality,
+  /**
+   * F7 (DEC-461): teksty ryzyk były STAŁĄ POLSKĄ i lądowały na karcie wniosku
+   * także dla organizacji EN. Domyślka to `en` (DEC-510), polski tylko gdy
+   * wołający realnie rozstrzygnął `pl`.
+   */
+  locale: 'pl' | 'en' | (string & {}) = 'en'
 ): EvidenceContract {
+  const pl = locale === 'pl';
   const refIds = new Set<string>();
   const snippetByRef = new Map<string, string>();
   (v6Data.evidence_map || []).forEach((e) => {
@@ -559,9 +592,15 @@ export function buildInterviewInsightEvidenceContract(
 
   const risks: string[] = [...(materialQuality.limitations || [])];
   if (materialQuality.coverage_posture === 'single_perspective') {
-    risks.push('Pokrycie jednoosobowe — wnioski mogą nie generalizować na całą organizację.');
+    risks.push(
+      pl
+        ? 'Pokrycie jednoosobowe — wnioski mogą nie generalizować na całą organizację.'
+        : 'Single-perspective coverage — findings may not generalise across the organisation.'
+    );
   }
-  (materialQuality.missing_voices || []).forEach((v) => risks.push(`Brak głosu: ${v}`));
+  (materialQuality.missing_voices || []).forEach((v) =>
+    risks.push(pl ? `Brak głosu: ${v}` : `Missing voice: ${v}`)
+  );
 
   const toVerify: string[] = [
     ...(v6Data.missing_data || []),
@@ -2660,15 +2699,12 @@ Rules:
         generationPreferences
       );
 
-      const systemPrompt =
-        'You are a senior McKinsey-style management consultant analyzing interview data. ' +
-        'Build a sharp, decision-useful narrative: capture what people say explicitly AND what they signal between the lines, ' +
-        'reconcile where voices agree vs. diverge, and name the dependencies, tensions and risks a sharp partner would notice. ' +
-        'Write for a busy executive — plain, specific and light, no jargon padding; lead with the "so what". ' +
-        'Return ONLY valid JSON matching the requested schema. ' +
-        'Ground every finding strictly in the provided interview data — never invent facts. ' +
-        'Do NOT provide final approved action plans, roadmaps, timelines, owners, or mitigation plans. ' +
-        'When recommendations are requested, keep them as evidence-bounded hypotheses or opportunities with clear limits.';
+      // F7 (DEC-461): wnioski z wywiadu wychodziły PO POLSKU nawet dla org/usera
+      // `en` — prompt systemowy NIE niósł żadnej instrukcji językowej, a prompt
+      // naprawczy niżej był napisany po polsku, więc model dziedziczył polski.
+      // Resolver DEC-510: users.language → users.locale → organizations.default_language → 'en'.
+      const resolvedLocale = await resolveLocale({ userId: userId || null, organizationId });
+      const systemPrompt = buildInterviewInsightSystemPrompt(resolvedLocale);
 
       const response = await llmService.generateResponse({
         prompt,
@@ -2729,9 +2765,9 @@ Rules:
             // than regenerating blindly.
             const typeHints = buildInsightRepairHints(formulaVerdict.violationCodes);
             const repairResponse = await llmService.generateResponse({
-              prompt: `${repairBrief}${typeHints ? `\n\n${typeHints}` : ''}\n\n--- POPRZEDNIA KARTA (JSON do poprawy) ---\n${JSON.stringify(
+              prompt: `${repairBrief}${typeHints ? `\n\n${typeHints}` : ''}\n\n--- PREVIOUS CARD (JSON to repair) ---\n${JSON.stringify(
                 parsedV6Data
-              )}\n\nZwróć WYŁĄCZNIE poprawiony obiekt JSON w tym samym kontrakcie pól.`,
+              )}\n\nReturn ONLY the repaired JSON object using the same field contract.`,
               temperature: 0.2,
               maxTokens: 4000,
               model: 'standard',
@@ -2924,7 +2960,7 @@ Rules:
       // initiative, closed alongside this change). Fire-and-forget + fail-safe: a
       // write failure NEVER blocks insight generation.
       void safePersistEvidenceContract(
-        buildInterviewInsightEvidenceContract(v6Data, materialQuality),
+        buildInterviewInsightEvidenceContract(v6Data, materialQuality, resolvedLocale),
         {
           organizationId,
           artifactType: 'insight',
