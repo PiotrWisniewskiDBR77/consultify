@@ -6,7 +6,6 @@ import type { TFunction } from 'i18next';
  * Connected to real API endpoints
  */
 import {
-  Activity,
   AlertTriangle,
   Archive,
   CalendarClock,
@@ -1001,16 +1000,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
-      ...(WORK_REPORT_ENABLED
-        ? [
-            {
-              id: 'workReport' as ModuleTab,
-              label: t('initiatives.tabs.workReport', 'Work report'),
-              icon: <Activity size={16} />,
-            },
-          ]
-        : []),
-      /* F9 (15.09.2026) — „For approval" (DEC-507) NIE jest tu pigulka.
+      /* F9 (15.09.2026) — ani „Work report", ani „For approval" NIE sa tu
+         pigulkami. Zmierzone Playwrightem na realnej powloce (dist + proxy
+         /api -> staging, konto Irina, org Northwind): przy CZTERECH pigulkach
+         rzad Menu 2 nadal sie nie miescil w 1440 — pigulka „Work report"
+         byla PRZECIETA W POL przez krawedz przewijania, tuz przy filtrze
+         projektow. Wlasciciel prosil o ≤3 (DEC-420: „trzecie menu ma za duzo
+         przyciskow — ogranicz je do dwoch lub trzech"), wiec pigulki to TRZY
+         kanoniczne cele modulu (Initiatives · Plan · Load), a obie
+         powierzchnie za flagami zyja w istniejacym przelaczniku „Status"
+         (Menu 2). Adresy `?tab=workReport` i `?tab=transitionInbox` dzialaja
+         bez zmian (`CANONICAL_INITIATIVES_TABS` wciaz je zna).
          Zmierzone na stagingu c458374bfa: przy wszystkich flagach ON rzad
          Menu 2 mial PIEC pigulek (Initiatives · Plan · Load · Work report ·
          For approval) i wypychal primary CTA „New initiative" poza 1440x900.
@@ -2958,10 +2958,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       label: getLocalizedStatusLabel(status, t),
       count: statusCounts[status] ?? 0,
     })),
-    /* F9 DEC-507: skrzynka recenzenta przejsc cyklu zycia. Nie jest statusem
-       rejestru, wiec nie ma licznika z `statusCounts` — jest OSOBNA
-       POWIERZCHNIA, do ktorej ten sam przelacznik prowadzi i z ktorej tym
-       samym przelacznikiem sie wraca (wybor „All" wraca na liste). */
+    /* F9: powierzchnie za flagami. Nie sa statusami rejestru, wiec nie maja
+       licznika z `statusCounts` — sa OSOBNYMI POWIERZCHNIAMI, do ktorych ten
+       sam przelacznik prowadzi i z ktorych tym samym przelacznikiem sie wraca
+       (wybor „All" wraca na liste). */
+    ...(WORK_REPORT_ENABLED
+      ? [
+          {
+            id: 'workReport',
+            label: t('initiatives.tabs.workReport', 'Work report'),
+          },
+        ]
+      : []),
     ...(TRANSITION_INBOX_ENABLED
       ? [
           {
@@ -2976,12 +2984,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
      (zakladka bez pigulki), kazde inne id filtruje rejestr i — gdy stoimy w
      skrzynce — wraca na liste. Jedno wejscie i jedno wyjscie, bez piatej
      pigulki i bez martwego adresu. */
+  const POWIERZCHNIE_Z_PRZELACZNIKA: ModuleTab[] = ['workReport', 'transitionInbox'];
   const handleLifecycleDropdownChange = (id: string) => {
-    if (id === 'transitionInbox') {
-      handleMainTabChange('transitionInbox');
+    if (POWIERZCHNIE_Z_PRZELACZNIKA.includes(id as ModuleTab)) {
+      handleMainTabChange(id as ModuleTab);
       return;
     }
-    if (activeTab === 'transitionInbox') handleMainTabChange('list');
+    if (POWIERZCHNIE_Z_PRZELACZNIKA.includes(activeTab)) handleMainTabChange('list');
     setActiveStatusFilter(id === 'all' ? null : id);
     setActiveLifecyclePreset(null);
   };
@@ -3070,16 +3079,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           {initiativesFourButtonsEnabled ? fourButtonsScopeToggle : scopeToggle}
         </>
       )}
-      {/* F9 DEC-507: w skrzynce recenzenta zostaje SAM przelacznik „Status" —
-          bez niego wejscie byloby jednokierunkowe (kanon: kazde wejscie ma
-          wyjscie tym samym sterem). Reszta filtrow rejestru tu nie dziala,
-          wiec jej tu nie ma. */}
-      {activeTab === 'transitionInbox' && TRANSITION_INBOX_ENABLED && (
+      {/* F9: na powierzchniach za flagami (Raport z pracy, Skrzynka) zostaje
+          SAM przelacznik „Status" — bez niego wejscie byloby jednokierunkowe
+          (kanon: kazde wejscie ma wyjscie tym samym sterem). Reszta filtrow
+          rejestru tam nie dziala, wiec jej tam nie ma. */}
+      {POWIERZCHNIE_Z_PRZELACZNIKA.includes(activeTab) && (
         <Menu2PresetDropdown
           compact
           label={t('initiatives.filters.status', 'Status')}
           options={lifecycleDropdownOptions}
-          value="transitionInbox"
+          value={activeTab}
           onChange={handleLifecycleDropdownChange}
           data-testid="initiatives-lifecycle-dropdown"
         />

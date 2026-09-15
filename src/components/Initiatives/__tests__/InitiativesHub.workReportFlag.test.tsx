@@ -181,12 +181,30 @@ describe('Work report tab gated by VITE_INITIATIVES_WORK_REPORT', () => {
     expect(screen.queryAllByTestId(/^standard-chip-/)).toHaveLength(0);
   });
 
-  it('flag ON: shows 4 Menu 2 buttons including Work report, and the tab opens the read-view', async () => {
+  /* F9 (15.09.2026) — ZMIANA MIEJSCA, NIE OSLABIENIE STRAZNIKA.
+     Zmierzone Playwrightem na realnej powloce: czwarta pigulka Menu 2 nie
+     miescila sie w 1440 (byla PRZECIETA W POL przez krawedz przewijania).
+     Wlasciciel prosil o ≤3 pigulki (DEC-420), wiec „Work report" przeniesiono
+     do istniejacego przelacznika „Status" w Menu 2. Ten test dalej broni
+     DOKLADNIE tego samego kontraktu flagi: OFF = powierzchni nie ma nigdzie
+     (trzy testy wyzej, bez zmian), ON = powierzchnia jest osiagalna i montuje
+     wlasciwy widok. Zmienil sie STER, nie zabezpieczenie.
+     Mutacja: `=== 'true'` -> `!== 'true'` w InitiativesHub.tsx wywraca
+     zarowno testy OFF wyzej, jak i ten. */
+  it('flag ON: Work report jest pozycja przelacznika "Status" (nie 4. pigulka) i montuje widok', async () => {
     vi.stubEnv('VITE_INITIATIVES_WORK_REPORT', 'true');
     await mount();
-    const workReportTab = await screen.findByRole('tab', { name: 'Work report' });
-    expect(screen.getAllByRole('tab')).toHaveLength(4);
-    fireEvent.click(workReportTab);
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
+
+    // Menu 2 trzyma ≤3 pigulki i NIE ma wsrod nich „Work report".
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
+
+    // ...a powierzchnia jest osiagalna z przelacznika „Status".
+    const przelacznik = screen.getByTestId('initiatives-lifecycle-dropdown');
+    fireEvent.click(przelacznik.querySelector('button') ?? przelacznik);
+    const pozycja = await screen.findByText('Work report');
+    fireEvent.click(pozycja);
     /* P1 RP1b (14.09): nagłówek ekranu przestał brzmieć „Work report creator" —
        kreator jest teraz zwiniętą akcją, a treścią ekranu jest LISTA przebiegów.
        Test dalej sprawdza to samo: że klik w zakładkę montuje właściwy widok. */
