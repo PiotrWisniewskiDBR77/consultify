@@ -37,7 +37,13 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DRD_STRUCTURE, DRDArea, DRDAxis, DRDLevel } from '../../../services/drdStructure';
+import {
+  DRD_STRUCTURE,
+  DRDArea,
+  DRDAxis,
+  DRDLevel,
+  getLocalizedDRDLevel,
+} from '../../../services/drdStructure';
 import { hasAssessmentResponse } from '../../../services/assessmentCompleteness';
 
 // Types
@@ -84,7 +90,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
   readOnly = false,
   showProgress = true,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [activeAxisId, setActiveAxisId] = useState<number>(1);
   const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
@@ -301,6 +307,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                 {t('assessment.form.levelDescriptions', 'Level descriptions:')}
               </p>
               {area.levels.map((level) => {
+                const localizedLevel = getLocalizedDRDLevel(level, i18n.language);
                 const levelKey = `${area.id}-${level.level}`;
                 const isLevelExpanded = expandedLevels.has(levelKey);
                 const isCurrentLevel = scores[0] === level.level;
@@ -334,7 +341,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                           {level.level}
                         </span>
                         <span className="font-medium text-navy-900 dark:text-white text-sm">
-                          {level.title}
+                          {localizedLevel.title}
                         </span>
                         {isCurrentLevel && (
                           <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-xs">
@@ -354,7 +361,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                     </button>
                     {isLevelExpanded && (
                       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 pl-8">
-                        {level.description}
+                        {localizedLevel.description}
                       </p>
                     )}
                   </div>
