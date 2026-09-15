@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   analizujLiteralyObiektowZawartosc,
+  analizujSerwerK8sZawartosc,
   analizujTwLiteraleZawartosc,
   jestKodemSerwerowymK8s,
   wykryjAngielski,
@@ -151,6 +152,36 @@ describe('E2f-bis / K8spl i K11', () => {
     expect(jestKodemSerwerowymK8s('server/src/services/assessment/composer.ts')).toBe(true);
     expect(jestKodemSerwerowymK8s('server/src/services/actionCard/generator.ts')).toBe(true);
     expect(jestKodemSerwerowymK8s('server/src/services/assessment/__tests__/composer.test.ts')).toBe(false);
+  });
+
+  it('K8s pomija wyłącznie wewnętrzne warstwy bootstrap/database', () => {
+    expect(jestKodemSerwerowymK8s('server/src/config/Config.ts')).toBe(false);
+    expect(jestKodemSerwerowymK8s('server/src/database/ConnectionPool.ts')).toBe(false);
+    expect(jestKodemSerwerowymK8s('server/src/services/taskAssignmentService.ts')).toBe(true);
+  });
+
+  it('K8s nie myli machine code z angielską prozą użytkownika', () => {
+    const kod = [
+      "throw new Error('share_link_not_found');",
+      "return { message: 'A visible sentence reaches the user' };",
+    ].join('\n');
+    expect(analizujSerwerK8sZawartosc(kod)).toMatchObject({ K8sen: 1, K8spl: 0 });
+  });
+
+  it('K8s pomija sanitowany Error, ale zachowuje operacyjny ValidationError', () => {
+    const kod = [
+      "throw new Error('Internal dependency was not found');",
+      "throw new ValidationError('The requested field is invalid');",
+    ].join('\n');
+    expect(analizujSerwerK8sZawartosc(kod)).toMatchObject({ K8sen: 1, K8spl: 0 });
+  });
+
+  it('K8s nie skleja dwóch apostrofowych literałów przez kolejne linie kodu', () => {
+    const kod = [
+      "logger.error('[Worker] Processing error:', error);",
+      "return { base64: buffer.toString('base64') };",
+    ].join('\n');
+    expect(analizujSerwerK8sZawartosc(kod)).toMatchObject({ K8sen: 0, K8spl: 0 });
   });
 
   it('K11 widzi trzy rodzaje t() zamkniętego w literale i pomija prawdziwe wywołanie', () => {

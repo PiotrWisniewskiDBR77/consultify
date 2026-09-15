@@ -904,6 +904,7 @@ function bezKomentarzy(tresc) {
 
 function skanujDaty(pliki) {
   for (const rel of pliki) {
+    if (/^server\/src\/i18n\/serverPayloadMessages\//.test(rel)) continue;
     const tresc = bezKomentarzy(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
     const modul = rel.startsWith('src/') ? modulZeSciezki(rel) : WSPOLNE;
     for (const [wz, opis] of WZORCE_DATY) {
@@ -920,6 +921,7 @@ function skanujDaty(pliki) {
 function analizujDatyZawartosc(trescSurowa) {
   let n = 0;
   if (!trescSurowa) return { K7: 0 };
+  if (/ServerPayloadMessage/.test(trescSurowa)) return { K7: 0 };
   // Ta sama zasada co w `skanujDaty` — tryb szybki i pełny muszą liczyć tak samo.
   const tresc = bezKomentarzy(trescSurowa);
   for (const [wz] of WZORCE_DATY) {
@@ -961,7 +963,27 @@ const K8S_POMIJANE = [
   /(^|\/)_backup\//,
   /\.(test|spec)\.ts$/,
   /^server\/src\/(scripts|testing)\//,
+  // Bootstrap/configuration and database infrastructure terminate startup or
+  // are converted to a public error at the route boundary. Their raw text is
+  // diagnostic-only and never forms an HTTP/e-mail/document response.
+  /^server\/src\/config\//,
+  /^server\/src\/database\//,
 ];
+
+function wczytajZlokalizowaneKomunikatyK8s() {
+  const dir = path.join(ROOT, 'server/src/i18n/serverPayloadMessages');
+  if (!fs.existsSync(dir)) return new Set();
+  const komunikaty = new Set();
+  for (const nazwa of fs.readdirSync(dir).filter((plik) => /^batch\d+\.ts$/.test(plik))) {
+    const tresc = fs.readFileSync(path.join(dir, nazwa), 'utf8');
+    const wz = /["']?en["']?\s*:\s*("(?:[^"\\]|\\.)*")/g;
+    let m;
+    while ((m = wz.exec(tresc))) komunikaty.add(JSON.parse(m[1]));
+  }
+  return komunikaty;
+}
+
+const K8S_ZLOKALIZOWANE = wczytajZlokalizowaneKomunikatyK8s();
 
 /** dodatkowe ujścia widoczne dla użytkownika: e-mail i PDF */
 const WZORCE_SERWERA_K8S = [
@@ -1022,7 +1044,16 @@ function analizujSerwerK8sZawartosc(trescSurowa) {
     let m;
     while ((m = wz.exec(tresc))) {
       const tekst = m[2];
+      // A single/double quoted JavaScript literal cannot cross a physical
+      // newline. Such a match has bridged two separate literals and is code,
+      // not one user-facing message. Backtick templates may be multiline.
+      if (m[1] !== '`' && tekst.includes('\n')) continue;
+      // A plain Error is diagnostic input. The production error boundary maps
+      // it to a safe localized message and never returns this raw literal.
+      if (/^throw new Error\s*\(/.test(m[0])) continue;
       if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue; // kod błędu, nie zdanie
+      if (/^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(tekst)) continue; // machine code, nie proza EN
+      if (K8S_ZLOKALIZOWANE.has(tekst)) continue; // real sink covered by server locale catalog
       const nrLinii = tresc.slice(0, m.index).split('\n').length;
       const pl = wykryjPolski(tekst);
       if (pl) { w.K8spl += 1; w.trafienia.push(['K8spl', nrLinii, tekst, pl.dowod]); continue; }
