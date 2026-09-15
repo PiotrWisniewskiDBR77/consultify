@@ -119,7 +119,17 @@ describe('A-2 approved KPI visibility in Execution on real PostgreSQL', () => {
         reviewState: 'REQUESTED',
         content: {
           kpiRefs: [kpiId],
-          measurementPlan: [{ kpiId, cadence: 'WEEKLY', realizationTarget: '6' }],
+          measurementPlan: [
+            {
+              kpiId,
+              name: 'Cycle time',
+              unit: 'days',
+              observationPhase: 'realization',
+              cadence: 'WEEKLY',
+              realizationTarget: '6',
+              postImplementationTarget: '6',
+            },
+          ],
           challenge: 'Independent challenge required',
           counterEvidence: 'Baseline source checked',
           acceptedHumanTruth: 'Only accepted snapshot enters execution',
@@ -161,6 +171,15 @@ describe('A-2 approved KPI visibility in Execution on real PostgreSQL', () => {
         reviewedBy: reviewerId,
         publishedBy: authorId,
       },
+    });
+
+    await pool.query(`UPDATE initiative_kpis SET target_value = 5 WHERE id = $1`, [kpiId]);
+    const changedAfterApproval = await getInitiativeKpisRead(initiativeId, organizationId);
+    expect(changedAfterApproval?.[0]).toMatchObject({
+      id: kpiId,
+      targetValue: 5,
+      approvedForExecution: false,
+      approvalReceipt: { state: 'ACCEPTED', cardVersion: 2 },
     });
   });
 });

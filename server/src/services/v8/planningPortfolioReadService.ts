@@ -1313,6 +1313,33 @@ export async function getInitiativeKpisRead(
         ? approvalContent.kpiRefs.filter((value): value is string => typeof value === 'string')
         : []
     );
+    const approvedMeasurementPlans = new Map<string, Record<string, unknown>>(
+      Array.isArray(approvalContent.measurementPlan)
+        ? approvalContent.measurementPlan
+            .filter(
+              (value): value is Record<string, unknown> =>
+                Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+            )
+            .map((value) => [String(value.kpiId || ''), value])
+            .filter(([kpiId]) => Boolean(kpiId))
+        : []
+    );
+    const normalized = (value: unknown) => String(value ?? '').trim();
+    const snapshotMatchesCurrentKpi = (kpi: (typeof assignments)[number]) => {
+      const plan = approvedMeasurementPlans.get(String(kpi.id));
+      if (!plan) return false;
+      return (
+        normalized(plan.name) === normalized(kpi.name) &&
+        normalized(plan.unit) === normalized(kpi.unit) &&
+        normalized(plan.observationPhase) === normalized(kpi.observationPhase) &&
+        normalized(plan.cadence).toUpperCase() ===
+          normalized(kpi.measurementFrequency).toUpperCase() &&
+        normalized(plan.realizationTarget) ===
+          normalized(kpi.realizationExpectation?.targetValue) &&
+        normalized(plan.postImplementationTarget) ===
+          normalized(kpi.postImplementationExpectation?.targetValue)
+      );
+    };
     return assignments.map((kpi) => ({
       id: kpi.id,
       mappingId: kpi.mappingId,
@@ -1340,7 +1367,9 @@ export async function getInitiativeKpisRead(
       realizationExpectation: kpi.realizationExpectation,
       postImplementationExpectation: kpi.postImplementationExpectation,
       approvedForExecution:
-        approvalCard?.review_state === 'ACCEPTED' && approvedKpiIds.has(String(kpi.id)),
+        approvalCard?.review_state === 'ACCEPTED' &&
+        approvedKpiIds.has(String(kpi.id)) &&
+        snapshotMatchesCurrentKpi(kpi),
       approvalReceipt: approvalCard
         ? {
             state: approvalCard.review_state,
