@@ -1,12 +1,12 @@
-Candidate 6f77b9406f9a7dadc1b10467fc08a1a8f5f0be66:
+Candidate 2a165fa1f18b3f646f7ff19ab1ee0f6178833810:
   Test files: 24 passed, 1 failed
-  Tests: 247 passed, 1 failed
+  Tests: 248 passed, 1 failed
 
 Exact base f2628a0d36af85d97bcbe67b820d728c7c2f2f28:
   Test files: 23 passed, 1 failed
   Tests: 246 passed, 1 failed
 
-The additional candidate file/test is tests/unit/routes/teresaNavigationManifest.test.ts.
+The additional candidate file is tests/unit/routes/teresaNavigationManifest.test.ts with two passing contracts.
 Both sides have the same sole failure:
   tests/navigation/routeMapping.test.ts
   AppView.BENEFITS_REALIZATION maps to /results

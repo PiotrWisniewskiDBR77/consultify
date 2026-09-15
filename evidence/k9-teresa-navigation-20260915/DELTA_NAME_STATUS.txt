@@ -1,5 +1,13 @@
 A	docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/K9_TERESA_NAVIGATION_W73/FREEZE_MANIFEST.md
 A	docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/K9_TERESA_NAVIGATION_W73/MELDUNEK.md
+A	evidence/k9-teresa-navigation-20260915/DELTA_NAME_STATUS.txt
+A	evidence/k9-teresa-navigation-20260915/DIFF_CHECK.txt
+A	evidence/k9-teresa-navigation-20260915/FRONT_TSC_SUMMARY.txt
+A	evidence/k9-teresa-navigation-20260915/GATES_SUMMARY.txt
+A	evidence/k9-teresa-navigation-20260915/IMPORTER_COMPARISON.txt
+A	evidence/k9-teresa-navigation-20260915/SERVER_TSC.txt
+A	evidence/k9-teresa-navigation-20260915/SHA256SUMS.txt
+A	evidence/k9-teresa-navigation-20260915/TARGET_TESTS.txt
 A	server/src/routes/__tests__/aiChatStreamMembershipRole.test.ts
 M	server/src/routes/ai.routes.ts
 M	server/src/services/ai/__tests__/moduleContextGrounding.test.ts

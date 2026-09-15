@@ -1,6 +1,6 @@
-Command: NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --listFiles
+Command: NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit
 Result: RC 2 (existing repository debt)
 Errors: 177
-List files: 7427
 W73 ceiling: 177
 Verdict: PASS ratchet; no increase
+Diagnostic note: absolute `--listFiles` output varied between 7424 and 7427 across linked environments because dependency paths are environment-owned. It is no longer a frozen gate or asserted denominator.

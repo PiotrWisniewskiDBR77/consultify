@@ -1,7 +1,8 @@
-Target: 4 files, 20 passed, 0 failed
+Target: 5 files, 28 passed, 0 failed
 Server TypeScript: RC 0
-Frontend TypeScript: 177 errors, 7427 list files; ratchet unchanged
-Frontend build: RC 0, built in 39.77s
+Frontend TypeScript: 177 errors; ratchet unchanged
+Frontend listFiles: diagnostic only, not frozen; observed 7424-7427 across linked environments
+Frontend build: RC 0, built in 37.05s
 Language ratchet: PASS; no bucket increased
 List canon: PASS; 349 findings, baseline 349
 Artifact canon: PASS; 8 crimson, 0 R2/R3, 117 danger; baselines unchanged

@@ -13,11 +13,12 @@ Verdict: **P1 CORRECTED; READY FOR A NEW INDEPENDENT REVIEW; not accepted and no
 - The route passes the verified server role and server-owned Meetings flag; no client-provided role or flag decides visibility.
 - `/chat/stream` now selects `status, role` from the active membership row and replaces a stale JWT role before grounding. A downgrade from `ADMIN` to `MEMBER` therefore removes admin navigation, queries and citations.
 - A failed `feature_flags` query keeps chat available while excluding all organization-gated manifest entries. It emits no gated label or route in either language.
+- `PROJECTS` carries `VITE_PMO_PROJECTS` in both manifest copies. The server supplies the flag from `process.env` and the filter admits Projects only for exact `true`, matching the `/projects` UI route gate.
 - Navigation remains descriptive and is consistent with `navigationHonesty.ts`: no second Teresa panel and no claim that Teresa opened a screen.
 
 ## Behavioral proof
 
-- Targeted tests: **4 files, 20 passed, 0 failed**.
+- Targeted tests: **5 files, 28 passed, 0 failed**.
   - role/org/runtime-hidden module is absent from the prompt;
   - available admin/meeting module has an EN click path;
   - PL labels, path and unavailable reason are localized;
@@ -25,12 +26,13 @@ Verdict: **P1 CORRECTED; READY FOR A NEW INDEPENDENT REVIEW; not accepted and no
   - admin/settings citations are addressable and secret setting values do not enter the prompt.
   - flag-query fault injection excludes all five organization-gated entries, labels and routes in EN and PL;
   - route middleware proves stale `ADMIN` JWT plus current `MEMBER` membership yields no admin label, route, query or citation.
-- Expanded routing importer set: candidate **247 passed / 1 failed**; exact base `f2628a0d36` **246 passed / 1 failed**. The added passing test is the K9 manifest mirror. The same pre-existing failure name appears on both sides: `tests/navigation/routeMapping.test.ts` expects `/results` for `BENEFITS_REALIZATION` and receives `/results/kpi`.
+  - Projects runtime OFF proves zero label, click path, route and project citation in EN and PL; runtime ON proves the exact localized click path used by the UI.
+- Expanded routing importer set: candidate **248 passed / 1 failed**; exact base `f2628a0d36` **246 passed / 1 failed**. The two added passing tests are the K9 mirror and runtime-gate inventory contracts. The same pre-existing failure name appears on both sides: `tests/navigation/routeMapping.test.ts` expects `/results` for `BENEFITS_REALIZATION` and receives `/results/kpi`.
 
 ## W73 gates
 
 - server TypeScript: RC 0;
-- frontend TypeScript: RC 2, **177 errors**, **7427 listFiles** (W73 limit: 177; three package files are newly included);
+- frontend TypeScript: RC 2, **177 errors** (W73 limit: 177). Absolute `--listFiles` output varied between 7424 and 7427 across linked environments, so it remains diagnostic and is no longer frozen as a gate;
 - `check:jezyk:ci`: PASS, no bucket increased (reported reductions K4en −68, K7 −1);
 - `check:list-canon`: **349**, unchanged;
 - `check:artefakt`: **8 / 0 / 117**, unchanged;
