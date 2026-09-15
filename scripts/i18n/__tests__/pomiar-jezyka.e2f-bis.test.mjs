@@ -245,4 +245,22 @@ describe('W77 / wieloliniowe literały i tablice JS', () => {
     expect(analizujSerwerZawartosc(serverExpression).K5en).toBe(0);
     expect(analizujSerwerK8sZawartosc(serverExpression).K8sen).toBe(0);
   });
+
+  it('pomija dokładną generyczną sygnaturę z InterviewWorkspace', () => {
+    const source =
+      'const withTimeout = async <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> => {';
+    expect(analizujJsxZawartosc(source).K4en).toBe(0);
+  });
+
+  it('pomija przecięcie typów z propsów InterviewWorkspace', () => {
+    const source =
+      "assignment: Partial<V8InterviewAssignment> & Pick<V8InterviewAssignment, 'id' | 'status'>";
+    expect(analizujJsxZawartosc(source).K4en).toBe(0);
+  });
+
+  it('pomija dokładny literał ragLogic z tablicy ExecutionHub', () => {
+    const source =
+      "ragLogic: 'GREEN if no blockers and progress on-track; AMBER if overdue items >0 or progress <5% this week; RED if blockers >0',";
+    expect(analizujJsxZawartosc(source).K4en).toBe(0);
+  });
 });

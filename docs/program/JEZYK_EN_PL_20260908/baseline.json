@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-15T10:53:21.651Z",
+    "data": "2026-09-15T11:12:46.743Z",
     "root": "/Users/piotrwisniewski/Developer/codex-wt/a-k1-fix-w77",
-    "sha": "eb75e391c579cecfc65cf2abe02b39275ad279d3"
+    "sha": "714a1ab35a82ea1ab69d4e0422ab7ba2e44b60db"
   },
   "suma": {
     "K1": 5,
@@ -13,7 +13,7 @@
     "K3aKLUCZ": 0,
     "K3b": 0,
     "K4pl": 74,
-    "K4en": 4632,
+    "K4en": 4626,
     "K4objPL": 702,
     "K4obj": 4279,
     "K5pl": 263,
@@ -38,7 +38,7 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 67,
+      "K4en": 66,
       "K4objPL": 19,
       "K4obj": 105,
       "K5pl": 0,
@@ -86,7 +86,7 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 21,
+      "K4en": 19,
       "K4objPL": 0,
       "K4obj": 167,
       "K5pl": 0,
@@ -182,7 +182,7 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 139,
+      "K4en": 138,
       "K4objPL": 21,
       "K4obj": 74,
       "K5pl": 0,
@@ -398,7 +398,7 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 11,
+      "K4en": 9,
       "K4objPL": 20,
       "K4obj": 30,
       "K5pl": 3,

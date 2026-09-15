@@ -10,16 +10,17 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { wartoscTechniczna, wykryjAngielski } from '../pomiar-jezyka.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const PROGI = {
   '13 Organization': { K1def: 0, K4pl: 0, K4en: 2, K7: 0 },
   '08 Results': { K1def: 0, K4pl: 0, K4en: 65, K7: 0 },
   '12 Meeting': { K1def: 0, K4pl: 0, K4en: 0, K7: 0 },
-  '03 Interview': { K1def: 0, K4pl: 0, K4en: 21, K7: 0 },
+  '03 Interview': { K1def: 0, K4pl: 0, K4en: 19, K7: 0 },
   '11 Audits': { K1def: 0, K4pl: 0, K4en: 4, K7: 0 },
   '06 Initiatives': { K1def: 1, K4pl: 0, K4en: 128, K7: 0 },
-  '07 Execution': { K1def: 0, K4pl: 0, K4en: 139, K7: 0 },
+  '07 Execution': { K1def: 0, K4pl: 0, K4en: 138, K7: 0 },
 };
 const KATEGORIE = ['K1def', 'K4pl', 'K4en', 'K7'];
 
@@ -53,6 +54,7 @@ describe('W77 / J-małe — uczciwy ratchet rozszerzonego miernika', () => {
 
   it.each(Object.entries(PROGI))('%s ma sprawdzalną próbkę do 10 realnych trafień K4en', (modul, progi) => {
     const sample = receipt.samples[modul];
+    expect(receipt.moduleRationales[modul]).toMatch(/\S.{15,}/);
     expect(sample).toHaveLength(Math.min(10, progi.K4en));
     for (const hit of sample) {
       const separator = hit.gdzie.lastIndexOf(':');
@@ -63,6 +65,8 @@ describe('W77 / J-małe — uczciwy ratchet rozszerzonego miernika', () => {
       const sourceWindow = sourceLines.slice(line - 1, line + 3).join('\n');
       expect(sourceWindow, hit.gdzie).toContain(hit.tekst);
       expect(hit.classification).toBe('real-en-ui');
+      expect(wartoscTechniczna(hit.tekst), `technical false positive: ${hit.gdzie}`).toBe(false);
+      expect(wykryjAngielski(hit.tekst), `missing EN evidence: ${hit.gdzie}`).toBeTruthy();
     }
   });
 });

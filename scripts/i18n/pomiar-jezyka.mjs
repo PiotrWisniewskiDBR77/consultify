@@ -728,6 +728,9 @@ function wartoscTechniczna(tekst) {
   if (/^[A-Za-z]+(?:\.[A-Za-z_$][\w$]*)*\s*\(/.test(s)) return true; // wywołanie / chain: Array.isArray(
   if (/^\([^)]*:\s*[A-Za-z_$][\w$<>,.[\] |?]*\)\s*(?::|=>)/.test(s)) return true; // sygnatura TS
   if (/^[A-Za-z_$][\w$]*\)\s*:\s*[A-Za-z_$][\w$<>,.[\] |?]*$/.test(s)) return true; // ogon sygnatury po generyku `>`
+  if (/,\s*[A-Za-z_$][\w$]*\s*:\s*(?:string|number|boolean|unknown|never|any)\b.*\bPromise\s*$/.test(s)) return true; // ciało generycznej sygnatury między `>` i `<`
+  if (/^\d+%?\s+(?:or|and)\s+[A-Za-z_$][\w$]*(?:\s*[<>=].*)?$/.test(s)) return true; // fragment warunku `>0 or progress <5%` przecięty przez regex JSX
+  if (/^[&|]\s*[A-Z][A-Za-z0-9_$]*(?:<[^>]+>)?$/.test(s)) return true; // przecięcie typu `Partial<T> & Pick<U>`
   if (/^!?\([A-Za-z_$][\w$.?]*$/.test(s)) return true;              // początek wyrażenia przeciętego operatorem `<`
   if (/=>|===|!==|==|\b(?:const|let|var|return|reduce|map|filter)\b|\?\s*[A-Za-z_$]/.test(s)) return true;
   if (/^[A-Za-z_$][\w$.?]*(?:\s*[+*/-]\s*[A-Za-z_$][\w$.?]*)?\)+$/.test(s)) return true; // ogon wyrażenia po `=>`

@@ -1,14 +1,23 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "base": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
   "measurement": {
     "13 Organization": 2,
     "08 Results": 65,
     "12 Meeting": 0,
-    "03 Interview": 21,
+    "03 Interview": 19,
     "11 Audits": 4,
     "06 Initiatives": 128,
-    "07 Execution": 139
+    "07 Execution": 138
+  },
+  "moduleRationales": {
+    "13 Organization": "Opcje ról Member i Viewer są bezpośrednio renderowane w polu wyboru członka organizacji.",
+    "08 Results": "Etykiety, akcje, placeholdery i opisy formularzy Benefits są bezpośrednio renderowanym tekstem użytkownika.",
+    "12 Meeting": "Pełny mianownik wynosi zero; przyrząd nie zgłasza próbki ani nie tworzy sztucznego trafienia.",
+    "03 Interview": "Nagłówki, statystyki i empty state są bezpośrednio renderowane; sygnatury TypeScript zostały usunięte z próbki.",
+    "11 Audits": "Nagłówki i opisy prototypu DRD są tekstem renderowanym w JSX, a nie identyfikatorami technicznymi.",
+    "06 Initiatives": "Etykiety kart, przyciski i placeholdery są bezpośrednio renderowanymi akcjami lub opisami inicjatyw.",
+    "07 Execution": "Nagłówki raportu i ekrany pilota są renderowane użytkownikowi; ragLogic z tablicy konfiguracji został usunięty."
   },
   "samples": {
     "13 Organization": [
@@ -144,9 +153,9 @@
         "classification": "real-en-ui"
       },
       {
-        "gdzie": "src/components/Interview/InterviewWorkspace.tsx:135",
-        "tekst": ", ms: number, message: string): Promise",
-        "dowod": "en:message,en-suf:string",
+        "gdzie": "src/components/Interview/SummaryView.tsx:154",
+        "tekst": "No summary generated yet",
+        "dowod": "en:summary,en-suf:generated",
         "classification": "real-en-ui"
       }
     ],
@@ -240,12 +249,6 @@
     ],
     "07 Execution": [
       {
-        "gdzie": "src/components/Execution/ExecutionHub.tsx:4827",
-        "tekst": "0 or progress",
-        "dowod": "en:progress",
-        "classification": "real-en-ui"
-      },
-      {
         "gdzie": "src/components/Execution/ReportDocumentView.tsx:1964",
         "tekst": "AI Executive Readout",
         "dowod": "en?suf:executive,en?:TitleCase",
@@ -298,8 +301,14 @@
         "tekst": "No exclusion items defined",
         "dowod": "en:items,en-suf:exclusion",
         "classification": "real-en-ui"
+      },
+      {
+        "gdzie": "src/components/FullPilotWorkspace.tsx:105",
+        "tekst": "Pilot Team Structure",
+        "dowod": "en:team",
+        "classification": "real-en-ui"
       }
     ]
   },
-  "note": "10 first measured K4en hits per module, or the complete denominator when it has fewer than 10; Meeting denominator is zero."
+  "note": "Manual source audit: first 10 measured K4en hits per module, or complete denominator when fewer than 10. Each entry is rechecked by source presence, non-technical classification and English evidence in the gate."
 }
