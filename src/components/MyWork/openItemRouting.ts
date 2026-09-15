@@ -22,6 +22,7 @@ export type OpenItemRoute = 'in-context' | 'navigate';
  * - assessment / meeting / tool → own module
  */
 export const NAVIGATE_ITEM_TYPES = [
+  'action_card',
   'assessment',
   'report',
   'presentation',

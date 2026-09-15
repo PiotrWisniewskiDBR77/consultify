@@ -5942,6 +5942,7 @@
       "sourceIdea": "Pomysł",
       "sourceNote": "Notatka",
       "sourceDecision": "Decyzja",
+      "sourceActionCard": "Karta działania",
       "sourcesAndAssumptions": "Źródła i założenia",
       "noSourceContext": "Brak kontekstu źródła",
       "actionsHiddenInReadMode": "Akcje ukryte w trybie podglądu",

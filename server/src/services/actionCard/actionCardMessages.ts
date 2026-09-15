@@ -54,6 +54,11 @@ const MESSAGES = {
     en: 'Review the result of {kpi} in {period} (result {actual}, target {target}) and record a corrective action with a deadline.',
     pl: 'Sprawdź rezultat miernika {kpi} w okresie {period} (rezultat {actual}, cel {target}) i zapisz działanie naprawcze z terminem.',
   },
+  'actionCards.task.fallbackTitle': { en: 'Action card', pl: 'Karta działania' },
+  'actionCards.task.problemLabel': { en: 'Problem', pl: 'Problem' },
+  'actionCards.task.rootCauseLabel': { en: 'Root cause', pl: 'Główna przyczyna' },
+  'actionCards.task.ownerLabel': { en: 'Owner', pl: 'Odpowiedzialność' },
+  'actionCards.task.periodLabel': { en: 'Period', pl: 'Okres' },
 } as const;
 
 export type ActionCardMessageKey = keyof typeof MESSAGES;

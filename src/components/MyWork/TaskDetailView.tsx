@@ -5383,6 +5383,8 @@ Return ONLY the final comment text.`;
       if (sourceType === 'idea') return t('myWork.taskDetail.sourceIdea', 'Idea');
       if (sourceType === 'notebook') return t('myWork.taskDetail.sourceNote', 'Note');
       if (sourceType === 'decision') return t('myWork.taskDetail.sourceDecision', 'Decision');
+      if (sourceType === 'action_card')
+        return t('myWork.taskDetail.sourceActionCard', 'Action card');
       return sourceType;
     })();
     const SourceIcon =
