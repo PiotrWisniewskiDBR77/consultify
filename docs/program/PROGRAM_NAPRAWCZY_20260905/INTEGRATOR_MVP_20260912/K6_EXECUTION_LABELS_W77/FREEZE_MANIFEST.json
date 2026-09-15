@@ -1,0 +1,125 @@
+{
+  "package": "W77-K6-v3",
+  "verdict": "E1_READY_STOP_FOR_INDEPENDENT_REVIEW",
+  "lineBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "acceptedK1Base": "5e1f9c2b38745fbd0d4b32db7220b727252d3495",
+  "contentSha": "d8e5d7d161d1aa93ebe870428a3467e2f7af3328",
+  "branch": "codex/a-k6-execution-labels-v3-20260915",
+  "backup": "origin/backup/codex/a-k6-execution-labels-v3-20260915",
+  "gates": {
+    "focusedReports": "22/22 PASS --retry=0",
+    "k6Behavior": "4/4 PASS",
+    "language": "PASS K4en -6 K4obj -36",
+    "build": "PASS 10949 modules with 8GB heap",
+    "frontTsc": "194 inherited shared-toolchain fingerprint; 0 owned",
+    "serverTsc": "27 inherited shared-toolchain fingerprint; 0 owned",
+    "visual": "PL light+dark real ExecutionHub",
+    "migrations": 0,
+    "newAsAny": 0
+  },
+  "closedLeakage": [
+    "AI executive heading",
+    "five executive readout sentences",
+    "three execution hygiene gaps",
+    "gap table headers",
+    "decision age labels",
+    "eleven fallback catalog titles"
+  ],
+  "inventory": [
+    {
+      "path": "public/locales/en/translation.json",
+      "sha256": "534bfe9f605d63ca686ef2cb64b600627b24fa3c0a17455ea7e5abbaba7ad4f7",
+      "bytes": 2391415
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "sha256": "88a0ccd7a05436a37df21bfc8d40207b2aced83141eed5b19b313654dd13c250",
+      "bytes": 2560687
+    },
+    {
+      "path": "scripts/triada-allowlist.txt",
+      "sha256": "710be39a7115f3677cb0479b56d2dada69003c02112d64bd23b1792a2e616d1f",
+      "bytes": 1370
+    },
+    {
+      "path": "src/components/Execution/BudgetControlPanel.tsx",
+      "sha256": "82abdc94fa6f52316f3c0c1b1136550cf49cd418fbe6a29794c2e231284df652",
+      "bytes": 41438
+    },
+    {
+      "path": "src/components/Execution/ExecutionBankViews.tsx",
+      "sha256": "99691e2c89e81878b642935c618e06f6cc7fcf1ffc1f0b28da0f59e3e381bdca",
+      "bytes": 48237
+    },
+    {
+      "path": "src/components/Execution/ExecutionHub.tsx",
+      "sha256": "0c24f313a96310dbfd500adc7caf6d9960e3014bd8c00f3799e8c20fcaf3a879",
+      "bytes": 276101
+    },
+    {
+      "path": "src/components/Execution/ExecutionManagementTable.tsx",
+      "sha256": "ccafb457d3deb87b1b8a1918d25ab72bbd6efa92053cb9577fb0eefea2c3be18",
+      "bytes": 8644
+    },
+    {
+      "path": "src/components/Execution/Manager/ProblemPreview.tsx",
+      "sha256": "33978b889dea1fd6bc3d3aaa65f0ebf348eb12d6f3ad930b20c08a0c2954c0fc",
+      "bytes": 10823
+    },
+    {
+      "path": "src/components/Execution/ManagerModuleView.tsx",
+      "sha256": "08df1c1f26f0fcb3f76bd08968ba7890ad4b6c3e6ef9650b8f38029cf2d65b6b",
+      "bytes": 14582
+    },
+    {
+      "path": "src/components/Execution/ReportDocumentView.tsx",
+      "sha256": "b8f6caea990169426b656b72e046a21d6e33e8a5469c85ae0c32f0bb9242d0cd",
+      "bytes": 79741
+    },
+    {
+      "path": "src/components/Execution/RolloutBaselinePanel.tsx",
+      "sha256": "915ede49484e7e7728f26ee10d2e11605f1de8e44ac24f793f05465195b81404",
+      "bytes": 6372
+    },
+    {
+      "path": "src/components/Execution/RolloutTab.tsx",
+      "sha256": "0eeea9d47dc667f4e3b74a3760bc6ab26b1877018861810aee366b7fddfc5f20",
+      "bytes": 59715
+    },
+    {
+      "path": "src/components/Execution/executionReports.ts",
+      "sha256": "1668339e9811fb45e26cf6beefb812b33b5c11f677d0acbd7504875ab583c7f7",
+      "bytes": 23428
+    },
+    {
+      "path": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx",
+      "sha256": "8812054fe40ef23bf5343c2dc0322d7daba393af37476cb04aeb098731c9535f",
+      "bytes": 25135
+    },
+    {
+      "path": "src/views/MyApprovalsView.tsx",
+      "sha256": "3de61034fc5e975fb06e29a52244d63c3bcfbde641d457d4e3ee22e7924151a4",
+      "bytes": 10720
+    },
+    {
+      "path": "tests/unit/i18n/k6ExecutionLabels.behavior.test.ts",
+      "sha256": "830ac09d37773587f10b5b84ab8716a709e3bd5974045087b9f9ccf3645de9b3",
+      "bytes": 4903
+    },
+    {
+      "path": "evidence/k6-v3-w77/execution-templates-pl-light.png",
+      "sha256": "e1f1421589a4a6580f28061559234f3da998c475257f49481afb130258e640f4",
+      "bytes": 90524
+    },
+    {
+      "path": "evidence/k6-v3-w77/execution-templates-pl-dark.png",
+      "sha256": "77a7695cc2e833f31b2de89b616358f70da589fa62b247d5ffa927f6b6b9abdc",
+      "bytes": 89130
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/K6_EXECUTION_LABELS_W77/FREEZE.md",
+      "sha256": "db7062a155e403148b1726289ff445037b1fc4303eee4b918c2d6dfdaa2c8a63",
+      "bytes": 1917
+    }
+  ]
+}
