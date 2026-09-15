@@ -52,6 +52,8 @@ import { Api } from '../../services/api';
 import { SuperAdminAISettings } from '../../types';
 import { LLMProvider, LLMProviderConfig } from '../../types/domain/ai';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 // AI Capability definitions with their prompt keys
 const AI_CAPABILITIES = [
   {
@@ -550,7 +552,7 @@ Help leaders develop change management competencies.`,
             <div>
               <h1 className="text-2xl font-bold text-c-text">LLM Management</h1>
               <p className="text-sm text-slate-400 dark:text-slate-500">
-                Manage AI behavior, providers, and system health
+                {tlumaczPozaHookiem("superadmin.aIConfiguration.manageAIBehaviorProvidersAndSystemHealth", "Manage AI behavior, providers, and system health")}
               </p>
             </div>
           </div>
@@ -812,7 +814,7 @@ Help leaders develop change management competencies.`,
               <div className="bg-c-surface border border-white/10 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-c-text mb-4">Model Routing per Tier</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
-                  Define which LLM model to use for different complexity levels.
+                  {tlumaczPozaHookiem("superadmin.aIConfiguration.defineWhichLLMModelToUseFor", "Define which LLM model to use for different complexity levels.")}
                 </p>
 
                 <div className="space-y-4">
@@ -877,19 +879,19 @@ Help leaders develop change management competencies.`,
               <StatCard
                 icon={Zap}
                 label="Tokens Today"
-                value={usageStats?.user?.tokens_used_today?.toLocaleString() || '0'}
+                value={usageStats?.user?.tokens_used_today?.toLocaleString(localeListy()) || '0'}
                 color="text-yellow-400"
               />
               <StatCard
                 icon={DollarSign}
-                label="Cost (30 days)"
+                label={tlumaczPozaHookiem("superadmin.aIConfiguration.cost30Days", "Cost (30 days)")}
                 value={`$${(costStats?.totals?.costUsd || 0).toFixed(4)}`}
                 color="text-emerald-400"
               />
               <StatCard
                 icon={Activity}
                 label="Requests (30 days)"
-                value={costStats?.totals?.requests?.toLocaleString() || '0'}
+                value={costStats?.totals?.requests?.toLocaleString(localeListy()) || '0'}
                 color="text-blue-400"
               />
               <StatCard
@@ -918,7 +920,7 @@ Help leaders develop change management competencies.`,
                       <div className="text-right">
                         <div className="text-sm text-emerald-400">${(m.cost || 0).toFixed(4)}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {(m.tokens || 0).toLocaleString()} tokens
+                          {(m.tokens || 0).toLocaleString(localeListy())} tokens
                         </div>
                       </div>
                     </div>
@@ -1004,7 +1006,7 @@ Help leaders develop change management competencies.`,
                 <div>
                   <h2 className="text-xl font-bold text-c-text">Global AI Settings</h2>
                   <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                    Platform-wide AI configuration. These settings apply to all organizations.
+                    {tlumaczPozaHookiem("superadmin.aIConfiguration.platformWideAIConfigurationTheseSettingsApply", "Platform-wide AI configuration. These settings apply to all organizations.")}
                   </p>
                 </div>
                 <button
@@ -1026,7 +1028,7 @@ Help leaders develop change management competencies.`,
                   {/* Infrastructure Settings */}
                   <SettingsCard
                     title="Infrastructure"
-                    description="Provider failover and circuit breaker configuration"
+                    description={tlumaczPozaHookiem("superadmin.aIConfiguration.providerFailoverAndCircuitBreakerConfiguration", "Provider failover and circuit breaker configuration")}
                     icon={Server}
                     iconColor="text-blue-400"
                   >
@@ -1099,7 +1101,7 @@ Help leaders develop change management competencies.`,
                   {/* Global Limits */}
                   <SettingsCard
                     title="Global Limits"
-                    description="Token and rate limits for the entire platform"
+                    description={tlumaczPozaHookiem("superadmin.aIConfiguration.tokenAndRateLimitsForTheEntire", "Token and rate limits for the entire platform")}
                     icon={Globe}
                     iconColor="text-emerald-400"
                   >
@@ -1179,7 +1181,7 @@ Help leaders develop change management competencies.`,
                   {/* Security & PII */}
                   <SettingsCard
                     title="Security & Privacy"
-                    description="PII detection, encryption, and data residency"
+                    description={tlumaczPozaHookiem("superadmin.aIConfiguration.pIIDetectionEncryptionAndDataResidency", "PII detection, encryption, and data residency")}
                     icon={Lock}
                     iconColor="text-danger-400"
                   >
@@ -1249,7 +1251,7 @@ Help leaders develop change management competencies.`,
                   {/* Audit Log */}
                   <SettingsCard
                     title="Settings Audit Log"
-                    description="Track all changes to AI settings across the platform"
+                    description={tlumaczPozaHookiem("superadmin.aIConfiguration.trackAllChangesToAISettingsAcross", "Track all changes to AI settings across the platform")}
                     icon={History}
                     iconColor="text-amber-400"
                     collapsible
@@ -1266,7 +1268,7 @@ Help leaders develop change management competencies.`,
               ) : (
                 <div className="text-center py-12">
                   <RefreshCw className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-3 animate-spin" />
-                  <p className="text-slate-400 dark:text-slate-500">Loading global settings...</p>
+                  <p className="text-slate-400 dark:text-slate-500">{tlumaczPozaHookiem("superadmin.aIConfiguration.loadingGlobalSettings", "Loading global settings...")}</p>
                 </div>
               )}
             </div>

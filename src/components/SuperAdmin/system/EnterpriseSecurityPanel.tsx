@@ -34,6 +34,8 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SecurityEvent {
   id: string;
   event_type: string;
@@ -153,12 +155,12 @@ const toBool = (value: unknown) =>
 
 const formatDateTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const formatDate = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 const parseArray = (value: string) => {
@@ -581,7 +583,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-semibold text-c-text">Security & Compliance</h2>
           <p className="text-c-text-secondary text-sm">
-            Monitor security events, manage access, and ensure compliance
+            {tlumaczPozaHookiem("superadmin.enterpriseSecurity.monitorSecurityEventsManageAccessAndEnsure", "Monitor security events, manage access, and ensure compliance")}
           </p>
         </div>
       </div>
@@ -717,7 +719,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                     variant="new"
                     icon={Shield}
                     title="No security events found"
-                    description="Security events will appear here as they are detected."
+                    description={tlumaczPozaHookiem("superadmin.enterpriseSecurity.securityEventsWillAppearHereAsThey", "Security events will appear here as they are detected.")}
                   />
                 ) : (
                   safeEvents.map((event) => {
@@ -804,7 +806,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                     variant="new"
                     icon={Users}
                     title="No active sessions"
-                    description="Active user sessions will appear here once someone signs in."
+                    description={tlumaczPozaHookiem("superadmin.enterpriseSecurity.activeUserSessionsWillAppearHereOnce", "Active user sessions will appear here once someone signs in.")}
                   />
                 ) : (
                   safeSessions.map((session) => {
@@ -891,8 +893,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-c-warning">IP Filtering Mode</h4>
                     <p className="text-sm text-c-text-secondary mt-1">
-                      Currently using <strong>allowlist mode</strong>. Only IPs matching allow rules
-                      can access the system. Deny rules take precedence over allow rules.
+                      {tlumaczPozaHookiem("superadmin.enterpriseSecurity.currentlyUsing", "Currently using")} <strong>{tlumaczPozaHookiem("superadmin.enterpriseSecurity.allowlistMode", "allowlist mode")}</strong>{tlumaczPozaHookiem("superadmin.enterpriseSecurity.onlyIPsMatchingAllowRulesCanAccess", ". Only IPs matching allow rules can access the system. Deny rules take precedence over allow rules.")}
                     </p>
                   </div>
                 </div>
@@ -1102,11 +1103,11 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   SIEM Integration
                 </h4>
                 <p className="text-sm text-c-text-secondary mb-4">
-                  Forward security events to your SIEM solution for centralized monitoring.
+                  {tlumaczPozaHookiem("superadmin.enterpriseSecurity.forwardSecurityEventsToYourSIEMSolution", "Forward security events to your SIEM solution for centralized monitoring.")}
                 </p>
                 <ReadOnlyState
                   title="SIEM configuration workflow unavailable"
-                  description="The UI describes SIEM forwarding, but there is no audited SuperAdmin SIEM configuration workflow wired here yet."
+                  description={tlumaczPozaHookiem("superadmin.enterpriseSecurity.theUIDescribesSIEMForwardingButThere", "The UI describes SIEM forwarding, but there is no audited SuperAdmin SIEM configuration workflow wired here yet.")}
                 />
               </div>
             </div>

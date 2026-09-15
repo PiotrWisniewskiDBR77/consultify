@@ -21,6 +21,7 @@ import { ABTestingDashboard } from './components/ABTestingDashboard';
 import { AdminKnowledgeView } from './components/AdminKnowledgeView';
 import { PromptManagementUI } from './components/PromptManagementUI';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface AIDevelopmentModuleProps {
   initialTab?: string;
 }
@@ -106,7 +107,7 @@ export const AIDevelopmentModule: React.FC<AIDevelopmentModuleProps> = ({ initia
         activeTab={activeTab}
         onTabChange={setActiveTab}
         title="AI Development"
-        subtitle="Prompt library, intelligence configuration, experiments, and knowledge base"
+        subtitle={tlumaczPozaHookiem("superadmin.aIDevelopment.promptLibraryIntelligenceConfigurationExperimentsAndKnowledge", "Prompt library, intelligence configuration, experiments, and knowledge base")}
       >
         {renderContent()}
       </TabLayout>

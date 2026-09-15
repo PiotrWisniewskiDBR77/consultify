@@ -38,6 +38,8 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ServiceHealth {
   name: string;
   status: 'healthy' | 'degraded' | 'down' | 'unknown';
@@ -140,13 +142,13 @@ const safeNumber = (value: unknown, fallback = 0) => {
 
 const formatTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleTimeString();
+  return Number.isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleTimeString(localeListy());
 };
 
 const formatDateTime = (value?: string) => {
   if (!value) return 'Never';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const normalizeOperator = (value: unknown): AlertConfig['operator'] => {
@@ -985,8 +987,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               <div>
                 <h4 className="font-medium text-c-warning">Alert Channels</h4>
                 <p className="text-sm text-c-text-secondary mt-1">
-                  Configure notification channels (Email, Slack, PagerDuty) in the Organization
-                  settings to receive alerts.
+                  {tlumaczPozaHookiem("superadmin.enterpriseHealthMonitor.configureNotificationChannelsEmailSlackPagerDutyIn", "Configure notification channels (Email, Slack, PagerDuty) in the Organization settings to receive alerts.")}
                 </p>
               </div>
             </div>
