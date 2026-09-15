@@ -115,4 +115,18 @@ describe('InterviewAssignmentService reminders/escalation (N2)', () => {
     );
     expect(mockEmailSend).not.toHaveBeenCalled();
   });
+
+  it('rejects an explicit escalation target that is not a member of the assignment organization', async () => {
+    await expect(
+      interviewAssignmentService.create({
+        organizationId: 'org-1',
+        templateId: 'template-1',
+        assigneeUserIds: ['assignee-1'],
+        dueAt: new Date(Date.now() + 86_400_000).toISOString(),
+        createdBy: 'owner-1',
+        escalateTo: 'ghost-user',
+      })
+    ).rejects.toThrow('INTERVIEW_ESCALATION_TARGET_INVALID');
+    expect(mockSend).not.toHaveBeenCalled();
+  });
 });

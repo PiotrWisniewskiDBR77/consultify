@@ -61,7 +61,6 @@ interface DecisionRow {
   organization_id: string;
   title: string;
   status: string;
-  due_date?: string;
   deadline?: string;
   priority?: string;
   escalation_level: number;
@@ -71,6 +70,20 @@ interface DecisionRow {
   backup_decider_id?: string;
   last_reminder_sent_at?: string;
 }
+
+export const OVERDUE_DECISIONS_SQL = `SELECT
+        id, organization_id, title, status, priority,
+        deadline,
+        escalation_level, escalated_at,
+        COALESCE(decider_id, decision_maker_id) as decider_id,
+        backup_decider_id, last_reminder_sent_at
+       FROM decisions
+       WHERE
+         status IN ('pending', 'PENDING', 'escalated', 'ESCALATED')
+         AND deadline IS NOT NULL
+         AND deadline < ?
+       ORDER BY deadline ASC
+       LIMIT ?`;
 
 // ==========================================
 // SERVICE CLASS
@@ -233,28 +246,16 @@ export class DecisionEscalationChainService {
     const results = { processed: 0, escalated: 0, notified: 0, errors: 0 };
 
     // Get overdue pending decisions
-    const decisions = await queryHelpers.queryAll<DecisionRow>(
-      `SELECT 
-        id, organization_id, title, status, priority,
-        COALESCE(due_date, deadline) as due_date,
-        escalation_level, escalated_at,
-        COALESCE(decider_id, decision_maker_id) as decider_id,
-        backup_decider_id, last_reminder_sent_at
-       FROM decisions
-       WHERE 
-         status IN ('pending', 'PENDING', 'escalated', 'ESCALATED')
-         AND COALESCE(due_date, deadline) IS NOT NULL
-         AND COALESCE(due_date, deadline) < ?
-       ORDER BY COALESCE(due_date, deadline) ASC
-       LIMIT ?`,
-      [nowIso, limit]
-    );
+    const decisions = await queryHelpers.queryAll<DecisionRow>(OVERDUE_DECISIONS_SQL, [
+      nowIso,
+      limit,
+    ]);
 
     for (const decision of decisions || []) {
       results.processed++;
 
       try {
-        const dueDate = decision.due_date ? new Date(decision.due_date) : null;
+        const dueDate = decision.deadline ? new Date(decision.deadline) : null;
         if (!dueDate || isNaN(dueDate.getTime())) continue;
 
         const overdueHours = Math.floor((Date.now() - dueDate.getTime()) / (1000 * 60 * 60));

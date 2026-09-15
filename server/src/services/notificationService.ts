@@ -15,6 +15,20 @@ import { send as sendEmail } from './emailService.js';
 import { enqueueProgressEvent } from './slack/progressFeed.js';
 import { SlackServiceClass } from './slackService.js';
 
+let integrationSchemaWarningLogged = false;
+
+async function hasIntegrationShape(required: readonly string[]): Promise<boolean> {
+  const columns = await getTableColumns('integrations').catch(() => new Set<string>());
+  const ready = required.every((column) => columns.has(column));
+  if (!ready && !integrationSchemaWarningLogged) {
+    integrationSchemaWarningLogged = true;
+    logger.warn(
+      '[NotificationService] Integration-backed channels disabled: integrations schema is absent or incompatible; environment fallbacks remain available'
+    );
+  }
+  return ready;
+}
+
 // ==========================================
 // PROGRESS FEED (Slack Command Center, Filar 4 / F3)
 // ==========================================
@@ -1781,13 +1795,21 @@ class NotificationService {
     // 1) Org-level integration config (legacy schema)
     try {
       const db = await this.getDb();
-      const row = await db.get<{ config?: string }>(
-        `SELECT config FROM integrations
-         WHERE organization_id = ? AND provider = 'slack' AND status = 'connected'
-         ORDER BY created_at DESC
-         LIMIT 1`,
-        [organizationId]
-      );
+      const row = (await hasIntegrationShape([
+        'organization_id',
+        'provider',
+        'config',
+        'status',
+        'created_at',
+      ]))
+        ? await db.get<{ config?: string }>(
+            `SELECT config FROM integrations
+             WHERE organization_id = ? AND provider = 'slack' AND status = 'connected'
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [organizationId]
+          )
+        : null;
       if (row?.config) {
         try {
           const cfg = JSON.parse(String(row.config || '{}'));
@@ -1815,7 +1837,16 @@ class NotificationService {
     // 1a) New integrations system schema: integrations(provider_id/settings/status) + integration_providers(name='slack')
     try {
       const db = await this.getDb();
-      const row = await db.get<{
+      const row = (await hasIntegrationShape([
+        'organization_id',
+        'provider_id',
+        'settings',
+        'notification_settings',
+        'status',
+        'connected_at',
+        'updated_at',
+        'last_sync_at',
+      ])) ? await db.get<{
         settings?: string | null;
         notification_settings?: string | null;
         provider_id?: string | null;
@@ -1838,7 +1869,7 @@ class NotificationService {
         LIMIT 1
       `,
         [organizationId]
-      );
+      ) : null;
 
       const parseCandidates = (raw?: string | null): string[] => {
         if (!raw) return [];
@@ -1875,13 +1906,21 @@ class NotificationService {
     // 1b) Minimal SQLite schema: integrations(type, config, is_active)
     try {
       const db = await this.getDb();
-      const row = await db.get<{ type?: string; config?: string; is_active?: number }>(
-        `SELECT type, config, is_active FROM integrations
-         WHERE organization_id = ? AND is_active = 1
-         ORDER BY created_at DESC
-         LIMIT 5`,
-        [organizationId]
-      );
+      const row = (await hasIntegrationShape([
+        'organization_id',
+        'type',
+        'config',
+        'is_active',
+        'created_at',
+      ]))
+        ? await db.get<{ type?: string; config?: string; is_active?: number }>(
+            `SELECT type, config, is_active FROM integrations
+             WHERE organization_id = ? AND is_active = 1
+             ORDER BY created_at DESC
+             LIMIT 5`,
+            [organizationId]
+          )
+        : null;
       if (row) {
         const t = String(row.type || '').toLowerCase();
         if (t.includes('slack') && row.config) {
@@ -1956,7 +1995,16 @@ class NotificationService {
     // 1) New integrations system schema (preferred): integrations(provider_id/settings/status) + integration_providers(name='microsoft_teams')
     try {
       const db = await this.getDb();
-      const row = await db.get<{
+      const row = (await hasIntegrationShape([
+        'organization_id',
+        'provider_id',
+        'settings',
+        'notification_settings',
+        'status',
+        'connected_at',
+        'updated_at',
+        'last_sync_at',
+      ])) ? await db.get<{
         settings?: string | null;
         notification_settings?: string | null;
         provider_id?: string | null;
@@ -1979,7 +2027,7 @@ class NotificationService {
         LIMIT 1
       `,
         [organizationId]
-      );
+      ) : null;
 
       const parseCandidates = (raw?: string | null): string[] => {
         if (!raw) return [];
@@ -2016,13 +2064,21 @@ class NotificationService {
     // 2) Legacy schema fallback: integrations(provider/config/status)
     try {
       const db = await this.getDb();
-      const row = await db.get<{ config?: string }>(
-        `SELECT config FROM integrations
-         WHERE organization_id = ? AND (provider = 'teams' OR provider = 'microsoft_teams') AND status IN ('connected', 'active')
-         ORDER BY created_at DESC
-         LIMIT 1`,
-        [organizationId]
-      );
+      const row = (await hasIntegrationShape([
+        'organization_id',
+        'provider',
+        'config',
+        'status',
+        'created_at',
+      ]))
+        ? await db.get<{ config?: string }>(
+            `SELECT config FROM integrations
+             WHERE organization_id = ? AND (provider = 'teams' OR provider = 'microsoft_teams') AND status IN ('connected', 'active')
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [organizationId]
+          )
+        : null;
       if (row?.config) {
         try {
           const cfg = JSON.parse(String(row.config || '{}'));

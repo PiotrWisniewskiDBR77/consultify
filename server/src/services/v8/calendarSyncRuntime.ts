@@ -5,7 +5,7 @@
  * provider adapters, manages checkpoints, maps errors → lifecycle states.
  */
 
-import { run as dbRun } from '../../utils/DbPromise.js';
+import { columnExists, run as dbRun, tableExists } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import {
   type CalendarSource,
@@ -27,6 +27,7 @@ const LOG_PREFIX = '[P02-SyncRuntime]';
 const SYNC_WINDOW_DAYS_BACK = 30;
 const SYNC_WINDOW_DAYS_FORWARD = 90;
 const BACKOFF_SKIP_MS = 5 * 60 * 1000;
+let missingLegacyIntegrationsLogged = false;
 
 /**
  * P02 §2.3.12 bridge — map a canonical calendar provider to the connector id
@@ -315,12 +316,25 @@ async function buildConnectionRef(source: CalendarSource): Promise<ConnectionRef
 
   if (source.connectionId) {
     try {
+      const hasLegacyIntegrations =
+        (await tableExists('integrations')) &&
+        (await columnExists('integrations', 'access_token')) &&
+        (await columnExists('integrations', 'credentials')) &&
+        (await columnExists('integrations', 'server_url'));
+      if (!hasLegacyIntegrations && !missingLegacyIntegrationsLogged) {
+        missingLegacyIntegrationsLogged = true;
+        logger.warn(
+          `${LOG_PREFIX} Legacy integrations channel disabled: table is absent or incompatible; falling back to v8_connection_credentials`
+        );
+      }
       const { get: dbGet } = await import('../../utils/DbPromise.js');
-      const row = await dbGet<Record<string, unknown>>(
-        `SELECT access_token, credentials, server_url FROM integrations WHERE id = ?`,
-        [source.connectionId],
-        { fallback: true }
-      );
+      const row = hasLegacyIntegrations
+        ? await dbGet<Record<string, unknown>>(
+            `SELECT access_token, credentials, server_url FROM integrations WHERE id = ?`,
+            [source.connectionId],
+            { fallback: false }
+          )
+        : null;
       if (row) {
         accessToken = (row.access_token as string) || '';
         if (!accessToken && row.credentials) {

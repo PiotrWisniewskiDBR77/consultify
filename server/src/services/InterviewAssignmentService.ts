@@ -434,6 +434,16 @@ class InterviewAssignmentService {
     const isTeam = input.assigneeUserIds.length > 1;
     const primaryAssignee = input.teamLeadId || input.assigneeUserIds[0];
 
+    if (input.escalateTo) {
+      const escalationTarget = await db.get<{ id: string }>(
+        `SELECT id FROM users WHERE id = ? AND organization_id = ? LIMIT 1`,
+        [input.escalateTo, input.organizationId]
+      );
+      if (!escalationTarget?.id) {
+        throw new Error('INTERVIEW_ESCALATION_TARGET_INVALID');
+      }
+    }
+
     // Create main assignment record
     await db.run(
       `INSERT INTO interview_assignments
@@ -1070,33 +1080,61 @@ class InterviewAssignmentService {
   /**
    * Check and escalate overdue assignments (called by cron job)
    */
-  async checkAndEscalate(): Promise<{ escalated: number; errors: number }> {
+  async checkAndEscalate(
+    options: { limit?: number; recentDays?: number } = {}
+  ): Promise<{ escalated: number; errors: number }> {
     const db = await this.getDb();
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const limit = Math.max(1, Math.min(options.limit ?? 25, 100));
+    const recentDays = Math.max(1, Math.min(options.recentDays ?? 30, 365));
+    const recentCutoff = new Date(now.getTime() - recentDays * 24 * 60 * 60 * 1000);
     let escalated = 0;
     let errors = 0;
 
     // Get overdue assignments that need escalation
     const assignments = await db.all<any>(
       `SELECT a.*, t.name as template_name, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name, 
-              escalation_target.id as escalation_user_id,
-              escalation_target.email as escalation_email,
-              (escalation_target.first_name || ' ' || escalation_target.last_name) as escalation_name
+              COALESCE(escalation_target.id, assignment_owner.id, org_owner.id) as escalation_user_id,
+              COALESCE(escalation_target.email, assignment_owner.email, org_owner.email) as escalation_email,
+              COALESCE(
+                escalation_target.first_name || ' ' || escalation_target.last_name,
+                assignment_owner.first_name || ' ' || assignment_owner.last_name,
+                org_owner.first_name || ' ' || org_owner.last_name
+              ) as escalation_name
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
-       LEFT JOIN users escalation_target ON escalation_target.id = COALESCE(a.escalate_to, a.created_by)
+       LEFT JOIN users escalation_target
+         ON escalation_target.id = a.escalate_to
+        AND escalation_target.organization_id = a.organization_id
+       LEFT JOIN users assignment_owner
+         ON assignment_owner.id = a.created_by
+        AND assignment_owner.organization_id = a.organization_id
+       LEFT JOIN users org_owner ON org_owner.id = (
+         SELECT candidate.id FROM users candidate
+          WHERE candidate.organization_id = a.organization_id
+            AND LOWER(COALESCE(candidate.role, '')) = 'owner'
+          ORDER BY candidate.id ASC
+          LIMIT 1
+       )
        WHERE ${statusInSql('a.status', ['assigned', 'in_progress', 'sent_back'])}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
-         AND (a.escalated_at IS NULL OR a.escalated_at < ?)`,
-      [oneHourAgo.toISOString(), new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()]
+         AND a.created_at >= ?
+         AND a.escalated_at IS NULL
+       ORDER BY a.due_at ASC
+       LIMIT ${limit}`,
+      [oneHourAgo.toISOString(), recentCutoff.toISOString()]
     );
 
     for (const row of assignments || []) {
       try {
-        // Send escalation to the designated escalation target (or creator as fallback)
+        if (row.escalate_to && row.escalation_user_id !== row.escalate_to) {
+          logger.warn(
+            `[InterviewAssignmentService] Escalation target ${row.escalate_to} is unavailable for assignment ${row.id}; using ${row.escalation_user_id || 'no valid fallback'}`
+          );
+        }
         if (row.escalation_user_id && row.escalation_email) {
           const dueAt = new Date(row.due_at);
           const overdueDays = Math.floor((now.getTime() - dueAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -1165,6 +1203,11 @@ class InterviewAssignmentService {
           );
 
           escalated++;
+        } else {
+          logger.warn(
+            `[InterviewAssignmentService] No valid escalation recipient for assignment ${row.id}`
+          );
+          errors++;
         }
       } catch (err) {
         logger.error(`[InterviewAssignmentService] Escalation error for ${row.id}:`, err);
@@ -1533,4 +1576,5 @@ export const getOverdueCount = (managerId: string, organizationId: string, optio
 export const sendReminder = (assignmentId: string, senderId: string) =>
   interviewAssignmentService.sendReminder(assignmentId, senderId);
 export const checkAndSendReminders = () => interviewAssignmentService.checkAndSendReminders();
-export const checkAndEscalate = () => interviewAssignmentService.checkAndEscalate();
+export const checkAndEscalate = (options?: { limit?: number; recentDays?: number }) =>
+  interviewAssignmentService.checkAndEscalate(options);

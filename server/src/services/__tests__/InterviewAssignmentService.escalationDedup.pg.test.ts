@@ -15,13 +15,9 @@
  * (`InboxContent.tsx` `buildDuplicateIdentityKey`, title-only match) then
  * surfaced a large "Możliwy duplikat (N)" badge.
  *
- * ZABEZPIECZENIE: before inserting, `checkAndEscalate()` now looks for an
- * existing OPEN (unread) `notifications` row for the same
- * (organization_id, user_id, type='interview_escalation',
- * entity_type='interview_assignment', entity_id) and UPDATEs it in place
- * (fresh body + created_at) instead of inserting a second row — one open
- * assignment → one open inbox card, updated in place across escalation
- * cycles.
+ * ZABEZPIECZENIE W86: `escalated_at` is the durable once-only marker. An
+ * unresolved assignment is not re-admitted every 24 hours. The query is also
+ * bounded by age and run limit, and the scheduler keeps escalation default OFF.
  *
  * DOWÓD MUTACYJNY: this test seeds ONE assignment already past both the 1h
  * overdue gate and the 24h re-escalation gate, then calls
@@ -80,8 +76,8 @@ describe.skipIf(!enabled)(
       await pool.query(
         `INSERT INTO interview_assignments
            (id, organization_id, assignee_user_id, template_id, template_version, status,
-            due_at, created_by, escalate_to, escalation_count)
-         VALUES ($1, $2, $3, 'tmpl-h1-esc', 1, 'assigned', $4, $5, $5, 0)`,
+            due_at, created_by, escalate_to, escalation_count, created_at)
+         VALUES ($1, $2, $3, 'tmpl-h1-esc', 1, 'assigned', $4, $5, 'ghost-user', 0, NOW())`,
         [assignmentId, org, assignee, threeDaysAgo, manager]
       );
     });
@@ -100,29 +96,15 @@ describe.skipIf(!enabled)(
 
       const first = await checkAndEscalate();
       expect(first.errors).toBe(0);
+      expect(first.escalated).toBe(1);
 
-      // Simulate 24h of wall-clock time passing without the assignment
-      // being resolved: push escalated_at back past the re-escalation gate
-      // so the SAME assignment is admitted again on the next cycle — this
-      // is exactly what the hourly cron sees a day later in production.
-      await pool.query(
-        `UPDATE interview_assignments SET escalated_at = $2 WHERE id = $1`,
-        [assignmentId, new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()]
-      );
-
-      // notificationService.send() also carries its OWN generic idempotency
-      // (a 60s dedup slot keyed by real wall-clock time — see
-      // DEFAULT_DEDUPE_WINDOW_SECONDS in notificationService.ts). Real
-      // production cycles are 24h apart, so that slot is long expired by the
-      // second cycle and cannot be what prevents the duplicate — but this
-      // test's two cycles run milliseconds apart, so without clearing it the
-      // generic dedup would mask whether checkAndEscalate()'s OWN guard (the
-      // one under test) is doing anything. Clearing it here reproduces the
-      // "slot already expired" state the 24h gap guarantees in production.
+      // Remove notification-layer dedupe so only the assignment marker can
+      // prevent another escalation.
       await pool.query(`DELETE FROM notification_dedup WHERE user_id = $1`, [manager]);
 
       const second = await checkAndEscalate();
       expect(second.errors).toBe(0);
+      expect(second.escalated).toBe(0);
 
       const rows = (
         await pool.query(

@@ -48,7 +48,7 @@ async function runEscalationCheck(): Promise<{ escalated: number; errors: number
 /**
  * Main job function - runs both reminder and escalation checks
  */
-async function runJob(): Promise<{
+async function runJob(options: { enableEscalation?: boolean; escalationLimit?: number; recentDays?: number } = {}): Promise<{
   success: boolean;
   reminders: { sent: number; errors: number };
   escalations: { escalated: number; errors: number };
@@ -64,8 +64,14 @@ async function runJob(): Promise<{
     // Run reminder check first
     const reminderResult = await runReminderCheck();
 
-    // Then run escalation check
-    const escalationResult = await runEscalationCheck();
+    // Escalation is behavioural and can create Inbox/email traffic. It stays
+    // default-OFF until an operator explicitly enables it.
+    const escalationResult = options.enableEscalation
+      ? await interviewAssignmentService.checkAndEscalate({
+          limit: options.escalationLimit,
+          recentDays: options.recentDays,
+        })
+      : { escalated: 0, errors: 0 };
 
     const success = reminderResult.errors === 0 && escalationResult.errors === 0;
 

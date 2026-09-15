@@ -2,7 +2,8 @@
  * K5 acceptance — automatic TTL reclaim on a real local PostgreSQL schema.
  *
  * The old and fresh organizations are created on the production schema. The test proves the 24-hour boundary, default-ON flag, hard three-
- * tenant batch limit and absence of rows across the complete cleanup plan.
+ * tenant batch limit, explicit default-OFF gate and absence of rows across the
+ * complete cleanup plan.
  */
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -138,7 +139,7 @@ beforeAll(async () => {
       VALUES ($1, $2, 'demo', 'active', $4, 'DEMO', 1, $3)`;
     await client.query(insertOrg, [
       OLD_ID,
-      `${MARK} expired sandbox`,
+      'Atelier Toys',
       new Date(Date.now() - 25 * 60 * 60 * 1000),
       null,
     ]);
@@ -262,14 +263,28 @@ afterAll(async () => {
 }, 60_000);
 
 describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
-  it('defaults ON, respects 24h and caps one run at three tenants', async () => {
+  it('defaults OFF and does not delete a matching expired sandbox', async () => {
     const env = {
       ...process.env,
+      DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID].join(','),
+    };
+    delete env.ENABLE_DEMO_SANDBOX_TTL;
+    expect((await demoService.findExpiredDemoCandidates(3, env)).map((row) => row.id)).toContain(
+      OLD_ID
+    );
+    expect(await demoService.cleanupExpiredDemos(env)).toBe(0);
+    expect(await orgExists(OLD_ID)).toBe(true);
+  });
+
+  it('when explicitly ON, deletes a brand-named sandbox, respects 24h and caps one run at three tenants', async () => {
+    const env = {
+      ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_LIMIT: '999',
       DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID].join(','),
     };
-    delete env.ENABLE_DEMO_SANDBOX_TTL;
     const candidates = await demoService.findExpiredDemoCandidates(3, env);
     const fixtureCandidates = candidates.filter((row) => row.id.includes(MARK));
     expect(fixtureCandidates).toHaveLength(3);
@@ -282,7 +297,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
     expect(deleted).toBe(3);
     expect(await orgExists(OLD_ID)).toBe(false);
     expect(await orgExists(FRESH_ID)).toBe(true);
-    expect(await orgExists(WHITELISTED_ID)).toBe(true);
+    expect(await orgExists(WHITELISTED_ID)).toBe(false);
     expect(await orgExists(HUMAN_ID)).toBe(true);
   }, 120_000);
 
@@ -325,6 +340,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('protects paid tenants and a fresh tenant even when its session is ended', async () => {
     const env = {
       ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID, ...EXTRA_IDS].join(','),
     };
@@ -338,6 +354,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('re-checks safety under lock and skips a tenant that becomes paid after selection', async () => {
     const env = {
       ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_WHITELIST: [FAULT_ID, OLD_ID, ...EXTRA_IDS].join(','),
     };
@@ -361,6 +378,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('rolls back every earlier DELETE after a deterministic mid-purge failure', async () => {
     const env = {
       ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_WHITELIST: [OLD_ID, RECHECK_ID, ...EXTRA_IDS].join(','),
     };

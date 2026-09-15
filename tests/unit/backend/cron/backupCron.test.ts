@@ -54,9 +54,27 @@ describe('DATA-DR BackupCron tick coordinator', () => {
     deps.backupService.createBackup.mockRejectedValue(new Error('missing key'));
     const coordinator = new BackupCron(deps as any);
     await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' }))
-      .resolves.toEqual({ claimed: true });
+      .resolves.toEqual({ claimed: true, error: 'missing key' });
     expect(deps.backupService.finishBackupRun).toHaveBeenCalledWith(expect.objectContaining({ status: 'FAILED', error: 'missing key' }));
     await expect(coordinator.waitForIdle()).resolves.toBeUndefined();
+  });
+
+  it('turns an empty Error message and nested cause into an actionable receipt', async () => {
+    const deps = makeDeps();
+    const empty = new Error('');
+    (empty as Error & { cause?: unknown }).cause = new Error('storage refused write');
+    deps.backupService.createBackup.mockRejectedValue(empty);
+    const coordinator = new BackupCron(deps as any);
+
+    await expect(
+      coordinator.runBackupTick({
+        scheduleName: 'internal-beta-15m',
+        scheduledFor: '2026-08-19T12:00:00.000Z',
+      })
+    ).resolves.toEqual({ claimed: true, error: 'Error; cause=storage refused write' });
+    expect(deps.backupService.finishBackupRun).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'FAILED', error: 'Error; cause=storage refused write' })
+    );
   });
 
   it('reconciles a created artifact when the terminal receipt fence is lost', async () => {
@@ -64,7 +82,7 @@ describe('DATA-DR BackupCron tick coordinator', () => {
     deps.backupService.finishBackupRun.mockRejectedValueOnce(new Error('BACKUP_RUN_FENCE_LOST'));
     const coordinator = new BackupCron(deps as any);
     await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' }))
-      .resolves.toEqual({ claimed: true });
+      .resolves.toEqual({ claimed: true, error: 'BACKUP_RUN_FENCE_LOST' });
     expect(deps.backupService.reconcileUnboundBackup).toHaveBeenCalledWith('backup-1', 'BACKUP_RUN_FENCE_LOST');
   });
 
