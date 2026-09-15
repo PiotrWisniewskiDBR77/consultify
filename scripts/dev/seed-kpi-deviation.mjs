@@ -110,21 +110,33 @@ async function seedFlow() {
   });
   if (performanceStatus !== 'critical') fail(`unexpected performance status ${performanceStatus}`);
 
-  await recordMeasurement({
-    kpiId: ids.kpi,
-    definitionVersionId: ids.version,
-    organizationId,
-    periodStart,
-    periodEnd,
-    actualValue: 72,
-    performanceStatus,
-    source: 'Consultify S1.3 pilot fixture',
-    notes: 'English pilot fixture: KPI result outside the configured limit.',
-    recordedBy: ownerId,
-    actorEffectiveRole: 'OWNER',
-    idempotencyKey: `seed-kpi-deviation:${ids.kpi}:2026-08`,
-    access: { capabilities: ['*'], platformRole: null },
-  });
+  const existingMeasurement = await pool.query(
+    `SELECT measurement_id FROM rvn_kpi_measurements
+      WHERE organization_id=$1 AND kpi_id=$2
+        AND period_start=$3::date AND period_end=$4::date
+      ORDER BY recorded_at,measurement_id LIMIT 2`,
+    [organizationId, ids.kpi, periodStart, periodEnd]
+  );
+  if (existingMeasurement.rows.length > 1) {
+    fail('more than one measurement already exists for the deterministic fixture period');
+  }
+  if (existingMeasurement.rows.length === 0) {
+    await recordMeasurement({
+      kpiId: ids.kpi,
+      definitionVersionId: ids.version,
+      organizationId,
+      periodStart,
+      periodEnd,
+      actualValue: 72,
+      performanceStatus,
+      source: 'Consultify S1.3 pilot fixture',
+      notes: 'English pilot fixture: KPI result outside the configured limit.',
+      recordedBy: ownerId,
+      actorEffectiveRole: 'OWNER',
+      idempotencyKey: `seed-kpi-deviation:${ids.kpi}:2026-08`,
+      access: { capabilities: ['*'], platformRole: null },
+    });
+  }
   const card = await ensureActionCardForKpiDeviation({
     organizationId,
     actorUserId: ownerId,

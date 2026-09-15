@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import notificationService from '../notificationService.js';
 import { type ReportLocale } from '../report/reportLocale.js';
@@ -186,23 +187,34 @@ export async function createActionCard(
       input.ownerUserId, input.dueDate, input.comment || null, scope.actorUserId, now,
       scope.actorUserId, now]
   );
-  await notificationService.send({
-    userId: input.ownerUserId,
-    organizationId: scope.organizationId,
-    type: 'ACTION_CARD_ASSIGNED',
-    title: input.locale
-      ? actionCardMessage(input.locale, 'actionCards.assignedNotification')
-      : 'Karta działania wymaga reakcji',
-    // Karta utworzona automatycznie nie ma jeszcze OPISU DZIAŁANIA (§2.4:
-    // wypełnia go człowiek), więc treść powiadomienia bierze wtedy OPIS PROBLEMU —
-    // pusty dzwonek nie powiedziałby odpowiedzialnemu, czego dotyczy zgłoszenie.
-    body: input.actionText || input.problem,
-    entityType: 'action_card',
-    entityId: id,
-    actionUrl: `/my-work/inbox?actionCardId=${encodeURIComponent(id)}`,
-    isActionable: true,
-    dedupeKey: `action-card:${id}`,
-  });
+  try {
+    await notificationService.send({
+      userId: input.ownerUserId,
+      organizationId: scope.organizationId,
+      type: 'ACTION_CARD_ASSIGNED',
+      title: input.locale
+        ? actionCardMessage(input.locale, 'actionCards.assignedNotification')
+        : 'Karta działania wymaga reakcji',
+      // Karta utworzona automatycznie nie ma jeszcze OPISU DZIAŁANIA (§2.4:
+      // wypełnia go człowiek), więc treść powiadomienia bierze wtedy OPIS PROBLEMU —
+      // pusty dzwonek nie powiedziałby odpowiedzialnemu, czego dotyczy zgłoszenie.
+      body: input.actionText || input.problem,
+      entityType: 'action_card',
+      entityId: id,
+      actionUrl: `/my-work/inbox?actionCardId=${encodeURIComponent(id)}`,
+      isActionable: true,
+      dedupeKey: `action-card:${id}`,
+    });
+  } catch (error) {
+    // The card and canonical Inbox projection are the durable workflow. A
+    // temporarily unavailable notification channel must not report that
+    // durable write as failed or make an idempotent producer retry forever.
+    logger.warn('[actionCard] assignment notification failed after card creation', {
+      actionCardId: id,
+      organizationId: scope.organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
   const [created] = await listActionCards(scope, { ownerUserId: input.ownerUserId });
   const exact = created?.id === id ? created : (await queryHelpers.queryAll<any>(`${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ?`, [id, scope.organizationId])).map(rowToActionCard)[0];
   return exact;
