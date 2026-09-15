@@ -12,6 +12,8 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface OrgMetrics {
   org_id: string;
   org_name: string;
@@ -166,7 +168,7 @@ const CustomerAnalyticsView: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Customer Analytics</h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Overview of customer health and engagement
+            {tlumaczPozaHookiem("superadmin.customerAnalytics.overviewOfCustomerHealthAndEngagement", "Overview of customer health and engagement")}
           </p>
         </div>
         <InfoButton cardId="superadmin-analytics-customers" />
@@ -226,7 +228,7 @@ const CustomerAnalyticsView: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {summary.totalAICalls.toLocaleString()}
+                    {summary.totalAICalls.toLocaleString(localeListy())}
                   </p>
                   <span className="text-xs text-slate-600 dark:text-slate-400">AI Calls (30d)</span>
                 </div>
@@ -267,7 +269,7 @@ const CustomerAnalyticsView: React.FC = () => {
                       </td>
                       <td className="py-3 text-slate-700 dark:text-slate-300">{org.user_count}</td>
                       <td className="py-3 text-slate-700 dark:text-slate-300">
-                        {org.ai_calls_30d.toLocaleString()}
+                        {org.ai_calls_30d.toLocaleString(localeListy())}
                       </td>
                       <td className="py-3">
                         {typeof org.health_score === 'number' ? (

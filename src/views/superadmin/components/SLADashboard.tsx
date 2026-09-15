@@ -35,6 +35,7 @@ import { DegradedState } from '../../../components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { formatListDateTime, formatListNumber, localeListy } from '../../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SLAMetrics {
   uptimePercentage: number;
   uptimeTarget: number;
@@ -356,7 +357,7 @@ export function SLADashboard() {
             SLA Dashboard
           </h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Service Level Agreement monitoring and compliance
+            {tlumaczPozaHookiem("superadmin.sLA.serviceLevelAgreementMonitoringAndCompliance", "Service Level Agreement monitoring and compliance")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -512,7 +513,7 @@ export function SLADashboard() {
                   color="text-emerald-400"
                 />
                 <StatRow
-                  label="Failed"
+                  label={tlumaczPozaHookiem("superadmin.sLA.failed", "Failed")}
                   value={formatListNumber(metrics.failedRequests)}
                   color="text-danger-400"
                 />
@@ -543,7 +544,7 @@ export function SLADashboard() {
               </h3>
               {loading ? (
                 <div className="h-40 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                  Loading chart...
+                  {tlumaczPozaHookiem("superadmin.sLA.loadingChart", "Loading chart...")}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -597,7 +598,7 @@ export function SLADashboard() {
             {breaches.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-slate-500 dark:text-slate-400">
                 <Info size={18} className="mr-2" />
-                No SLA breaches recorded in this period
+                {tlumaczPozaHookiem("superadmin.sLA.noSLABreachesRecordedInThisPeriod", "No SLA breaches recorded in this period")}
               </div>
             ) : (
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -692,7 +693,7 @@ export function SLADashboard() {
               <SLATargetCard
                 metric="Error Rate"
                 target="< 1.0%"
-                description="Failed requests percentage"
+                description={tlumaczPozaHookiem("superadmin.sLA.failedRequestsPercentage", "Failed requests percentage")}
               />
             </div>
           </div>

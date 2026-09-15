@@ -22,6 +22,8 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Contract {
   id: string;
   organization_id: string;
@@ -380,7 +382,7 @@ const ContractManagementView: React.FC = () => {
   };
 
   const formatCurrency = (value: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: currency,
     }).format(safeNumber(value));
@@ -389,7 +391,7 @@ const ContractManagementView: React.FC = () => {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
   };
 
   const getDaysUntil = (dateStr: string) => {
@@ -413,7 +415,7 @@ const ContractManagementView: React.FC = () => {
               Contract Management
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mt-1">
-              Manage customer contracts and renewals
+              {tlumaczPozaHookiem("superadmin.contractManagement.manageCustomerContractsAndRenewals", "Manage customer contracts and renewals")}
             </p>
           </div>
           <InfoButton cardId="superadmin-contracts" />
@@ -773,7 +775,7 @@ const ContractManagementView: React.FC = () => {
                       Select a Contract
                     </h3>
                     <p className="text-slate-600 dark:text-slate-400 text-center">
-                      Choose a contract from the list to view details
+                      {tlumaczPozaHookiem("superadmin.contractManagement.chooseAContractFromTheListTo", "Choose a contract from the list to view details")}
                     </p>
                   </div>
                 </Card>

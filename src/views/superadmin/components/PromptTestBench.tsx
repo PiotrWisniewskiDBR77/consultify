@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PromptAssistantApi } from '../../../services/api/promptAssistant.api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface TestResult {
   language: string;
   success: boolean;
@@ -397,7 +398,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
       {results.length === 0 && !isRunning && (
         <div className="p-8 text-center text-slate-600 dark:text-slate-500">
           <TestTube className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">Run tests to validate your prompt across languages</p>
+          <p className="text-sm">{tlumaczPozaHookiem("superadmin.promptTestBench.runTestsToValidateYourPromptAcross", "Run tests to validate your prompt across languages")}</p>
         </div>
       )}
     </div>

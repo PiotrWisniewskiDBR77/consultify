@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { V8AdminApi } from '@/services/api/v8';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type AdminDiagnosticsState = {
   health: any | null;
   metrics: any | null;
@@ -83,7 +84,7 @@ export const V8AdminDiagnosticsPanel: React.FC = () => {
             V8 Superadmin Diagnostics
           </h3>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Read-only governed diagnostics for health, metrics, and shadow readiness.
+            {tlumaczPozaHookiem("superadmin.v8AdminDiagnostics.readOnlyGovernedDiagnosticsForHealthMetrics", "Read-only governed diagnostics for health, metrics, and shadow readiness.")}
           </p>
         </div>
         <button
@@ -100,7 +101,7 @@ export const V8AdminDiagnosticsPanel: React.FC = () => {
       {loading ? (
         <div className="mt-4 inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <RefreshCw size={14} className="animate-spin" />
-          Loading V8 diagnostics...
+          {tlumaczPozaHookiem("superadmin.v8AdminDiagnostics.loadingV8Diagnostics", "Loading V8 diagnostics...")}
         </div>
       ) : error ? (
         <div className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
@@ -154,7 +155,7 @@ export const V8AdminDiagnosticsPanel: React.FC = () => {
           <div className="grid gap-4 xl:grid-cols-2">
             <div className="rounded-lg bg-slate-50 p-3 dark:bg-navy-800">
               <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Integrity and domain readiness
+                {tlumaczPozaHookiem("superadmin.v8AdminDiagnostics.integrityAndDomainReadiness", "Integrity and domain readiness")}
               </div>
               <div className="mt-2 space-y-1 text-sm text-slate-700 dark:text-slate-200">
                 <div>Drift count: {state.health?.integrity?.driftCount ?? 0}</div>

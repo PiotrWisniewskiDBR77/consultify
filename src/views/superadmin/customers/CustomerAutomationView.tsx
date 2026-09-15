@@ -13,6 +13,8 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AutomationRule {
   id: string;
   name: string;
@@ -42,7 +44,7 @@ interface AutomationExecution {
 const formatAutomationDate = (value?: string | null) => {
   if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 type JsonRecord = Record<string, unknown> & {
@@ -407,7 +409,7 @@ const CustomerAutomationView: React.FC = () => {
                   onClick={() => setShowCreateModal(true)}
                   className="mt-4 text-blue-400 hover:text-blue-300"
                 >
-                  Create your first rule
+                  {tlumaczPozaHookiem("superadmin.customerAutomation.createYourFirstRule", "Create your first rule")}
                 </button>
               </div>
             ) : (
@@ -497,7 +499,7 @@ const CustomerAutomationView: React.FC = () => {
                   Create automation rule
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Define a trigger and an action. Config fields accept JSON objects.
+                  {tlumaczPozaHookiem("superadmin.customerAutomation.defineATriggerAndAnActionConfig", "Define a trigger and an action. Config fields accept JSON objects.")}
                 </p>
 
                 {createError && (
@@ -526,7 +528,7 @@ const CustomerAutomationView: React.FC = () => {
                       value={newRule.description}
                       onChange={(e) => setNewRule({ ...newRule, description: e.target.value })}
                       className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
-                      placeholder="What does this rule do?"
+                      placeholder={tlumaczPozaHookiem("superadmin.customerAutomation.whatDoesThisRuleDo", "What does this rule do?")}
                     />
                   </div>
                   <div>
@@ -687,7 +689,7 @@ const CustomerAutomationView: React.FC = () => {
                   </h4>
                   {executionsLoading ? (
                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+                      <Loader2 className="w-4 h-4 animate-spin" /> {tlumaczPozaHookiem("superadmin.customerAutomation.loading", "Loading…")}
                     </div>
                   ) : ruleExecutions.length === 0 ? (
                     <div className="text-sm text-slate-600 dark:text-slate-400">
