@@ -15,7 +15,7 @@ afterEach(() => {
   else process.env.ENABLE_INITIATIVES_WORK_REPORT = savedFlag;
 });
 
-function createRuntime() {
+function createRuntime(deliveryAccepted = true) {
   const aggregates = new Map<string, { version: number; payload: any }>();
   const receipts = new Map<string, StoredCommandReceipt<any>>();
   const transaction: MaterialCommandTransaction = {
@@ -72,7 +72,8 @@ function createRuntime() {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { id: 'owner-1', organizationId: 'org-1', role: 'admin' };
+    const actorId = String(req.header('x-test-actor') || 'owner-1');
+    (req as any).user = { id: actorId, organizationId: 'org-1', role: 'admin' };
     (req as any).userRole = 'admin';
     next();
   });
@@ -83,6 +84,8 @@ function createRuntime() {
       reader: reader as any,
       authorize: vi.fn(async () => true),
       resolvePolicy: vi.fn(),
+      sendWorkReportEmail: vi.fn(async () => deliveryAccepted),
+      renderWorkReportPdf: vi.fn(async () => Buffer.from('M5 report')),
     })
   );
   return { app, reader, unitOfWork };
@@ -224,5 +227,133 @@ describe('shared report-run route respects the Work report server flag', () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: { code: 'FEATURE_DISABLED' } });
     expect(runtime.unitOfWork.transaction).toHaveBeenCalledTimes(writesBefore);
+  });
+
+  it('forbids direct PUBLISH and publishes only after the delivery endpoint succeeds', async () => {
+    process.env.ENABLE_INITIATIVES_WORK_REPORT = 'true';
+    const runtime = createRuntime(true);
+    await postRun(runtime.app, 'delivery-success', {
+      ...baseDraft,
+      clientRequestId: 'delivery-success-create',
+      workReport: {
+        title: 'Initiative work report',
+        templateId: 'EXECUTIVE_SUMMARY',
+        cadence: 'ON_DEMAND',
+        projectIds: [],
+      },
+      sources: [],
+    });
+    for (const [action, expectedVersion] of [
+      ['VALIDATE', 1],
+      ['FREEZE', 2],
+    ] as const) {
+      const response = await transitionRun(runtime.app, 'delivery-success', {
+        action,
+        expectedVersion,
+        clientRequestId: `delivery-success-${action.toLowerCase()}`,
+      });
+      expect(response.status).toBe(200);
+    }
+    const approved = await request(runtime.app)
+      .post('/api/v8/pmo/initiatives-execution/report-runs/delivery-success/transitions')
+      .set('x-test-actor', 'approver-1')
+      .send({
+        action: 'DECIDE',
+        outcome: 'APPROVED',
+        rationale: 'M5 delivery proof',
+        expectedVersion: 3,
+        clientRequestId: 'delivery-success-approve',
+      });
+    expect(approved.status).toBe(200);
+
+    const directPublish = await request(runtime.app)
+      .post('/api/v8/pmo/initiatives-execution/report-runs/delivery-success/transitions')
+      .set('x-test-actor', 'approver-1')
+      .send({
+        action: 'PUBLISH',
+        expectedVersion: 4,
+        clientRequestId: 'delivery-success-direct-publish',
+        distribution: {
+          receiptId: 'forbidden-direct',
+          audience: 'board@example.test',
+          distributedAt: '2026-09-15T15:00:00.000Z',
+        },
+      });
+    expect(directPublish.status).toBe(403);
+    expect(directPublish.body).toEqual({ error: { code: 'REPORT_RUN_ACTOR_FORBIDDEN' } });
+
+    const delivered = await request(runtime.app)
+      .post('/api/v8/pmo/initiatives-execution/work-reports/delivery-success/deliver')
+      .set('x-test-actor', 'approver-1')
+      .send({
+        expectedVersion: 4,
+        clientRequestId: 'delivery-success-send',
+        recipients: ['board@example.test'],
+      });
+    expect(delivered.status).toBe(200);
+    expect(delivered.body).toMatchObject({
+      published: true,
+      status: 'PUBLISHED',
+      delivered: ['board@example.test'],
+      failed: [],
+      pending: [],
+    });
+  });
+
+  it('returns a governed 502 and keeps the report unpublished when email delivery fails', async () => {
+    process.env.ENABLE_INITIATIVES_WORK_REPORT = 'true';
+    const runtime = createRuntime(false);
+    await postRun(runtime.app, 'delivery-failure', {
+      ...baseDraft,
+      clientRequestId: 'delivery-failure-create',
+      workReport: {
+        title: 'Initiative work report',
+        templateId: 'EXECUTIVE_SUMMARY',
+        cadence: 'ON_DEMAND',
+        projectIds: [],
+      },
+      sources: [],
+    });
+    for (const [action, expectedVersion] of [
+      ['VALIDATE', 1],
+      ['FREEZE', 2],
+    ] as const) {
+      await transitionRun(runtime.app, 'delivery-failure', {
+        action,
+        expectedVersion,
+        clientRequestId: `delivery-failure-${action.toLowerCase()}`,
+      });
+    }
+    await request(runtime.app)
+      .post('/api/v8/pmo/initiatives-execution/report-runs/delivery-failure/transitions')
+      .set('x-test-actor', 'approver-1')
+      .send({
+        action: 'DECIDE',
+        outcome: 'APPROVED',
+        rationale: 'M5 failed delivery proof',
+        expectedVersion: 3,
+        clientRequestId: 'delivery-failure-approve',
+      });
+
+    const failed = await request(runtime.app)
+      .post('/api/v8/pmo/initiatives-execution/work-reports/delivery-failure/deliver')
+      .set('x-test-actor', 'approver-1')
+      .send({
+        expectedVersion: 4,
+        clientRequestId: 'delivery-failure-send',
+        recipients: ['board@example.test'],
+      });
+    expect(failed.status).toBe(502);
+    expect(failed.body).toMatchObject({
+      error: { code: 'EMAIL_DELIVERY_FAILED' },
+      failed: ['board@example.test'],
+      pending: [],
+      delivered: [],
+      receiptId: 'manual-delivery-delivery-failure',
+    });
+    const run = (await runtime.reader.listReportRuns()).find(
+      (item: any) => item.reportRunId === 'delivery-failure'
+    );
+    expect(run?.status).toBe('APPROVED');
   });
 });

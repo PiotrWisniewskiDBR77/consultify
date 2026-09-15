@@ -1485,24 +1485,11 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
   const GENERATE_TYPES: Array<{
     reportType: string;
     scope: string;
-    // STEERING_COMMITTEE (scope=PROJECT) and RAID both call
-    // ManagementReportRepository.getBoardDecisions(), whose SQL compares the
-    // TEXT column decisions.escalation_level to the integer literal 2 (and
-    // joins on a d.requested_by column decisions does not have) — a
-    // pre-existing, PRE-DEC-140 schema/query bug that 500s on ANY project,
-    // own-org or foreign. Confirmed by temporarily disabling the new
-    // assertProjectInOrganization() gate and re-running this exact test:
-    // identical 500, so the gate is not the cause. Out of scope for this P0
-    // tenant-isolation fix — flagged separately. The own-project assertion
-    // below is relaxed to "gate did not block it" (any non-404) for these
-    // two types instead of a hard 200, so this pre-existing bug doesn't mask
-    // a DEC-140 regression or vice versa.
-    knownPreexistingGetBoardDecisionsBug?: boolean;
   }> = [
     { reportType: 'TEAM_MEETING', scope: 'PROJECT' },
     { reportType: 'TEAM_WEEKLY', scope: 'PROJECT' },
-    { reportType: 'STEERING_COMMITTEE', scope: 'PROJECT', knownPreexistingGetBoardDecisionsBug: true },
-    { reportType: 'RAID', scope: 'PROJECT', knownPreexistingGetBoardDecisionsBug: true },
+    { reportType: 'STEERING_COMMITTEE', scope: 'PROJECT' },
+    { reportType: 'RAID', scope: 'PROJECT' },
   ];
 
   itDB(
@@ -1567,11 +1554,9 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
 
   describe.each(GENERATE_TYPES)(
     'POST /generate — $reportType behind the DEC-140 gate',
-    ({ reportType, scope, knownPreexistingGetBoardDecisionsBug }) => {
+    ({ reportType, scope }) => {
       itDB(
-        knownPreexistingGetBoardDecisionsBug
-          ? `${reportType} — own project (owner org) — gate lets it through (pre-existing getBoardDecisions bug tracked separately, not 404)`
-          : `${reportType} — own project (owner org) — 200`,
+        `${reportType} — own project (owner org) — 200`,
         async (h) => {
           const app = buildApp();
           const projectId = await h.insertProject(
@@ -1585,15 +1570,8 @@ describe('DEC-131 P1-4 + DEC-136 — management-reports org scoping (real Postgr
             .set('Authorization', `Bearer ${ownerToken}`)
             .send({ reportType, scope, projectId });
 
-          if (knownPreexistingGetBoardDecisionsBug) {
-            // The DEC-140 gate must not be what's blocking this — prove it
-            // let the owner's own project through by asserting the failure
-            // is anything OTHER than the gate's 404.
-            expect(res.status).not.toBe(404);
-          } else {
-            expect(res.status).toBe(200);
-            expect(res.body?.report?.organizationId).toBe(h.orgAId);
-          }
+          expect(res.status).toBe(200);
+          expect(res.body?.report?.organizationId).toBe(h.orgAId);
         }
       );
 
