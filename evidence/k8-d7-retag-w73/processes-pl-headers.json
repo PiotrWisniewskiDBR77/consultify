@@ -1,0 +1,16 @@
+{
+  "url": "http://127.0.0.1:4218/?screen=assessment-list&lang=pl&theme=light&uwagi=0",
+  "headers": [
+    "Nazwa oceny",
+    "Status",
+    "Właściciel",
+    "Aktualizacja"
+  ],
+  "forbiddenAbsent": [
+    "Jednostka",
+    "Wynik",
+    "Pewność"
+  ],
+  "consoleErrors": 0,
+  "httpErrors": 0
+}

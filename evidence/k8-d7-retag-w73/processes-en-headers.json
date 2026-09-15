@@ -1,0 +1,16 @@
+{
+  "url": "http://127.0.0.1:4218/?screen=assessment-list&lang=en&theme=light&uwagi=0",
+  "headers": [
+    "Assessment name",
+    "Status",
+    "Owner",
+    "Updated"
+  ],
+  "forbiddenAbsent": [
+    "Business unit",
+    "Result",
+    "Confidence"
+  ],
+  "consoleErrors": 0,
+  "httpErrors": 0
+}
