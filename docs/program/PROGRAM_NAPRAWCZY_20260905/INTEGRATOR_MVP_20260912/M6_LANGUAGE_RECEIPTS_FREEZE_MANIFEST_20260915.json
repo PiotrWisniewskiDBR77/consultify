@@ -1,0 +1,50 @@
+{
+  "package": "M6 language and receipts",
+  "status": "READY FOR CTO REVIEW",
+  "frozenAt": "2026-09-15T12:35:06-05:00",
+  "branch": "codex/a-m6-language-receipts-20260915",
+  "base": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "productHead": "6cbc1265be328d138468ac70fab2a34d240b3c7b",
+  "productCommits": [
+    "da0639b0a1",
+    "95897bf5df",
+    "dd63930f9c",
+    "3be223c278",
+    "35ab487899",
+    "6cbc1265be"
+  ],
+  "verification": {
+    "targetedVitest": {
+      "passed": 44,
+      "failed": 0,
+      "files": 7
+    },
+    "esbuild": {
+      "passed": 13,
+      "failed": 0
+    },
+    "apiErrorLocaleCoverage": {
+      "sourceCodes": 220,
+      "en": 220,
+      "pl": 220
+    },
+    "typescript": {
+      "ctoLineReference": {
+        "frontend": 177,
+        "server": 0
+      },
+      "codexSharedNodeModulesReference": {
+        "frontend": 194,
+        "server": 27
+      },
+      "currentCandidateRerun": {
+        "frontend": "NOT_PROVEN: 120-second cutoff before completion",
+        "server": 27,
+        "typescriptVersion": "5.8.3"
+      }
+    },
+    "browserScreenshots": "NOT_PROVEN",
+    "stagingWrites": 0
+  },
+  "review": "CTO owned under KANAL.md W78"
+}
