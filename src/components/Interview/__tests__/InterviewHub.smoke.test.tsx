@@ -107,6 +107,7 @@ vi.mock('@/services/api/v8/interview', () => ({
     createInsight: vi.fn(async () => ({})),
     deleteInsight: vi.fn(async () => ({})),
     exportInsight: vi.fn(async () => ({})),
+    listContextDocuments: vi.fn(async () => ({ documents: [] })),
   },
 }));
 
@@ -126,6 +127,11 @@ vi.mock('@/hooks/useInterviewPermissions', () => ({
     isLoading: false,
     canAssignToUser: () => true,
     getAssignableProjects: () => [],
+  }),
+  useInterviewReviewAccess: () => ({
+    canReview: false,
+    isLoading: false,
+    refresh: vi.fn(),
   }),
 }));
 

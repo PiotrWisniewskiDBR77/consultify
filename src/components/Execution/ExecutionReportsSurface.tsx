@@ -546,8 +546,17 @@ export const ExecutionReportsSurface = ({
       listExecutionReportDefinitions(),
       listExecutionReportRuns(),
     ]);
-    setCatalog(catalogResult.status === 'fulfilled' ? catalogResult.value.definitions : []);
-    setSnapshots(runsResult.status === 'fulfilled' ? runsResult.value.items : []);
+    setCatalog(
+      catalogResult.status === 'fulfilled' &&
+        Array.isArray(catalogResult.value?.definitions)
+        ? catalogResult.value.definitions
+        : []
+    );
+    setSnapshots(
+      runsResult.status === 'fulfilled' && Array.isArray(runsResult.value?.items)
+        ? runsResult.value.items
+        : []
+    );
   }, []);
   useEffect(() => {
     void loadReportsMvp();

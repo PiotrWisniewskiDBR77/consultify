@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { PromptRegistryTab } from '@/views/superadmin/AIPlatformModule/Development/PromptRegistryTab';
@@ -54,6 +55,13 @@ const registryPayload = (prompts: unknown[]) => ({
   prompts,
 });
 
+const renderRegistry = () =>
+  render(
+    <MemoryRouter initialEntries={['/superadmin/ai/prompts']}>
+      <PromptRegistryTab />
+    </MemoryRouter>
+  );
+
 describe('PromptRegistryTab honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -62,7 +70,7 @@ describe('PromptRegistryTab honest UI', () => {
   it('renders registry rows from GET /api/admin/prompts/registry', async () => {
     vi.mocked(Api.get).mockResolvedValue(registryPayload([promptOk, promptDrifted]));
 
-    render(<PromptRegistryTab />);
+    renderRegistry();
 
     await waitFor(() => {
       expect(screen.getByText('persona-core')).toBeInTheDocument();
@@ -74,7 +82,7 @@ describe('PromptRegistryTab honest UI', () => {
   it('does not render a load failure as an empty registry', async () => {
     vi.mocked(Api.get).mockRejectedValue(new Error('ai_ops capability denied'));
 
-    render(<PromptRegistryTab />);
+    renderRegistry();
 
     await waitFor(() => {
       expect(screen.getByText('Prompt registry unavailable')).toBeInTheDocument();
@@ -86,7 +94,7 @@ describe('PromptRegistryTab honest UI', () => {
   it('does not render a malformed payload as an empty registry', async () => {
     vi.mocked(Api.get).mockResolvedValue({ prompts: { unexpected: true } });
 
-    render(<PromptRegistryTab />);
+    renderRegistry();
 
     await waitFor(() => {
       expect(screen.getByText('Prompt registry unavailable')).toBeInTheDocument();
@@ -99,7 +107,7 @@ describe('PromptRegistryTab honest UI', () => {
       data: { data: registryPayload([promptOk]) },
     });
 
-    render(<PromptRegistryTab />);
+    renderRegistry();
 
     await waitFor(() => {
       expect(screen.getByText('persona-core')).toBeInTheDocument();
@@ -110,7 +118,7 @@ describe('PromptRegistryTab honest UI', () => {
   it('filters rows via the Drifted checksum chip (Menu 3)', async () => {
     vi.mocked(Api.get).mockResolvedValue(registryPayload([promptOk, promptDrifted]));
 
-    render(<PromptRegistryTab />);
+    renderRegistry();
 
     await waitFor(() => {
       expect(screen.getByText('persona-core')).toBeInTheDocument();
@@ -127,7 +135,7 @@ describe('PromptRegistryTab honest UI', () => {
   it('opens the preview panel with prompt metadata on row click, never the prompt body', async () => {
     vi.mocked(Api.get).mockResolvedValue(registryPayload([promptOk]));
 
-    render(<PromptRegistryTab />);
+    renderRegistry();
 
     await waitFor(() => {
       expect(screen.getByText('persona-core')).toBeInTheDocument();

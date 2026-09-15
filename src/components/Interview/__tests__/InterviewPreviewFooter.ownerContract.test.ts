@@ -34,7 +34,7 @@ describe('Interview canonical preview footers', () => {
   it('keeps generic Open out of the Template footer while preserving authorized Edit', () => {
     const source = read('InterviewTemplatePreview.tsx');
     const footer = source.slice(source.indexOf('export const InterviewTemplatePreviewFooter'));
-    expect(footer).toContain("label: t('interview.templatePreview.edit')");
+    expect(footer).toContain("label: interviewActionMeta('template', 'edit', t).label");
     expect(footer).not.toContain("label: t('interview.templatePreview.open')");
     expect(footer).toContain('...(canAssign');
   });

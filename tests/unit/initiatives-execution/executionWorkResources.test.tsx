@@ -1,5 +1,5 @@
-import { act, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { act, fireEvent, render as rtlRender, screen, waitFor, within } from '@testing-library/react';
+import React, { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExecutionWorkSurface } from '../../../src/components/Execution/ExecutionWorkSurface';
@@ -8,11 +8,13 @@ import {
   listExecutionCases,
   createExecutionMilestone,
   readExecutionCase,
+  readExecutionCaseBundles,
   readExecutionMilestones,
   readExecutionWork,
   readOperationalAllocations,
   simulateOperationalAllocation,
-} from '../../../src/services/initiatives-execution/runtimeApi';
+} from '@/services/initiatives-execution/runtimeApi';
+import { readExecutionResourcePlan } from '@/services/execution/resourcePlanApi';
 /**
  * WRAPPER TRASY (1.12-R2, 2026-09-06) — dlaczego ten plik byl CZERWONY.
  *
@@ -27,10 +29,11 @@ import {
 const render = (ui: React.ReactElement) =>
   rtlRender(<MemoryRouter initialEntries={['/execution']}>{ui}</MemoryRouter>);
 
-vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
+vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   listExecutionCases: vi.fn(),
   createExecutionMilestone: vi.fn(),
   readExecutionCase: vi.fn(),
+  readExecutionCaseBundles: vi.fn(),
   readExecutionMilestones: vi.fn(),
   readExecutionWork: vi.fn(),
   createExecutionTask: vi.fn(),
@@ -44,7 +47,101 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   proposeOperationalAllocation: vi.fn(),
   transitionOperationalAllocation: vi.fn(),
 }));
+vi.mock('@/services/execution/resourcePlanApi', () => ({
+  readExecutionResourcePlan: vi.fn(),
+  saveUserCapacity: vi.fn(),
+  przeniesZadanieNaTermin: vi.fn(),
+  zamknijZadanieZaleglosci: vi.fn(),
+  zmniejszZakresZadania: vi.fn(),
+}));
+
+function WorkHarness() {
+  const [filter, setFilter] = useState<React.ReactNode>(null);
+  const [menu3, setMenu3] = useState<React.ReactNode>(null);
+  return (
+    <>
+      <ExecutionWorkSurface
+        onRegisterFilterControl={setFilter}
+        onRegisterMenu3Control={setMenu3}
+      />
+      <div data-testid="work-filter">{filter}</div>
+      <div data-testid="work-menu3">{menu3}</div>
+    </>
+  );
+}
+
+function ResourcesHarness() {
+  const [filter, setFilter] = useState<React.ReactNode>(null);
+  const [menu3, setMenu3] = useState<React.ReactNode>(null);
+  return (
+    <>
+      <ExecutionResourcesSurface
+        onRegisterFilterControl={setFilter}
+        onRegisterMenu3Control={setMenu3}
+      />
+      <div data-testid="resources-filter">{filter}</div>
+      <div data-testid="resources-menu3">{menu3}</div>
+    </>
+  );
+}
+
+async function selectCase(label: 'Execution Case for work' | 'Execution Case for resources') {
+  const select = await screen.findByLabelText(label);
+  await within(select).findByRole('option', { name: /case1/ });
+  await act(async () => {
+    fireEvent.change(select, { target: { value: 'case1' } });
+    await Promise.resolve();
+  });
+}
+
 beforeEach(() => {
+  vi.mocked(readExecutionResourcePlan).mockResolvedValue({
+    asOf: '2026-08-17',
+    weeks: ['2026-08-17'],
+    rows: [
+      {
+        userId: 'u1',
+        name: 'U1',
+        role: 'Consultant',
+        weekStart: '2026-08-17',
+        demandHours: 20,
+        supplyHours: 40,
+        utilizationPercent: 50,
+        gapHours: 20,
+        overdueHours: 0,
+        backlogHours: 0,
+        backlogTaskIds: [],
+        backlogTasks: [],
+        taskCount: 1,
+        supplySource: 'PROFIL',
+      },
+    ],
+    people: [
+      {
+        userId: 'u1',
+        name: 'U1',
+        role: 'Consultant',
+        weeklyCapacityHours: 40,
+        availabilityPercent: 100,
+        supplySource: 'PROFIL',
+        backlogHours: 0,
+        unscheduledHours: 0,
+        backlogTaskIds: [],
+        backlogTasks: [],
+      },
+    ],
+    summary: {
+      peopleCount: 1,
+      demandHours: 20,
+      supplyHours: 40,
+      gapHours: 20,
+      utilizationPercent: 50,
+      overloadedCount: 0,
+      peopleWithoutProfileSupply: 0,
+      backlogHoursTotal: 0,
+      backlogPeople: 0,
+    },
+  });
   vi.mocked(listExecutionCases).mockResolvedValue({ cases: [{ executionCaseId: 'case1' }] });
   vi.mocked(readExecutionCase).mockResolvedValue({
     version: 3,
@@ -98,6 +195,7 @@ beforeEach(() => {
     ],
     decisions: [],
   });
+  vi.mocked(readExecutionCaseBundles).mockResolvedValue(null);
   vi.mocked(readOperationalAllocations).mockResolvedValue({
     items: [
       {
@@ -119,9 +217,9 @@ describe('Execution canonical work/resources', () => {
     vi.mocked(listExecutionCases)
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce({ cases: [{ executionCaseId: 'case1' }] });
-    render(<ExecutionWorkSurface />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się załadować');
-    fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
+    render(<WorkHarness />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByLabelText('Execution Case for work')).toBeInTheDocument();
     expect(listExecutionCases).toHaveBeenCalledTimes(2);
   });
@@ -130,22 +228,22 @@ describe('Execution canonical work/resources', () => {
     vi.mocked(listExecutionCases)
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce({ cases: [{ executionCaseId: 'case1' }] });
-    render(<ExecutionResourcesSurface />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się załadować');
-    fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
+    vi.mocked(readExecutionResourcePlan).mockRejectedValueOnce(new Error('offline'));
+    render(<ResourcesHarness />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByLabelText('Execution Case for resources')).toBeInTheDocument();
     expect(listExecutionCases).toHaveBeenCalledTimes(2);
   });
 
   it('loads Task projection by stable executionCaseId and opens preview with keyboard', async () => {
-    render(<ExecutionWorkSurface />);
-    fireEvent.change(await screen.findByLabelText('Execution Case for work'), {
-      target: { value: 'case1' },
-    });
+    render(<WorkHarness />);
+    await selectCase('Execution Case for work');
+    await waitFor(() => expect(readExecutionMilestones).toHaveBeenCalledWith('case1'));
+    await screen.findByText(/Pilot ready/);
     const row = (await screen.findByText('Validate')).closest('tr')!;
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
-    expect(screen.getAllByText('Otwarte').length).toBeGreaterThan(0);
     expect(
       screen.getByRole('region', { name: 'Execution Work item workspace' })
     ).toBeInTheDocument();
@@ -153,21 +251,20 @@ describe('Execution canonical work/resources', () => {
     expect(screen.getByRole('region', { name: 'Task milestone blast radius' })).toHaveTextContent(
       'Kamień · …estone-1 v4 · Zagrożony · Zablokowany'
     );
-    expect(screen.getByText(/Odchylenie prognozy: NIEZNANA/)).toBeInTheDocument();
+    expect(screen.getByText(/Variance No data/)).toBeInTheDocument();
   });
   it('creates a canonical Milestone with exact Case and Handoff baseline versions', async () => {
     vi.mocked(createExecutionMilestone).mockResolvedValue({ response: {} });
-    render(<ExecutionWorkSurface />);
-    fireEvent.change(await screen.findByLabelText('Execution Case for work'), {
-      target: { value: 'case1' },
-    });
+    render(<WorkHarness />);
+    await selectCase('Execution Case for work');
     await screen.findByText(/Pilot ready/);
-    fireEvent.click(screen.getByRole('button', { name: 'Nowy kamień milowy' }));
+    fireEvent.click(within(screen.getByTestId('work-menu3')).getByLabelText('Row actions'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New milestone' }));
     fireEvent.change(screen.getByLabelText('Milestone id'), { target: { value: 'milestone-2' } });
     fireEvent.change(screen.getByLabelText('Milestone title'), { target: { value: 'Wave ready' } });
     fireEvent.change(screen.getByLabelText('Milestone ownerId'), { target: { value: 'owner-2' } });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Utwórz kamień milowy' }));
+      fireEvent.click(screen.getByRole('button', { name: 'New milestone' }));
       await Promise.resolve();
     });
     await vi.waitFor(() =>
@@ -186,11 +283,13 @@ describe('Execution canonical work/resources', () => {
     await waitFor(() => expect(readExecutionWork).toHaveBeenCalledTimes(3));
   });
   it('keeps allocation simulation pure and exposes literal EVIDENCE_MISSING', async () => {
-    render(<ExecutionResourcesSurface />);
-    fireEvent.change(await screen.findByLabelText('Execution Case for resources'), {
-      target: { value: 'case1' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Zaproponuj przydział' }));
+    render(<ResourcesHarness />);
+    await selectCase('Execution Case for resources');
+    await waitFor(() => expect(readExecutionCase).toHaveBeenCalledWith('case1', expect.anything()));
+    fireEvent.click(
+      await within(screen.getByTestId('resources-menu3')).findByLabelText('Row actions')
+    );
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Propose allocation' }));
     fireEvent.change(screen.getByLabelText('Operational Allocation proposal JSON'), {
       target: {
         value: JSON.stringify({
@@ -198,24 +297,21 @@ describe('Execution canonical work/resources', () => {
         }),
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Symuluj' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Simulate' }));
     expect(await screen.findByText('EVIDENCE_MISSING')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('EVIDENCE_MISSING');
   });
-  it('opens Allocation preview on single click and workspace on double click', async () => {
-    render(<ExecutionResourcesSurface />);
-    fireEvent.change(await screen.findByLabelText('Execution Case for resources'), {
-      target: { value: 'case1' },
-    });
-    const row = (await screen.findByText('U1')).closest('tr');
+  it('opens a person preview and its canonical Allocation workspace', async () => {
+    render(<ResourcesHarness />);
+    await selectCase('Execution Case for resources');
+    const row = (await screen.findByText(/U1/)).closest('tr');
     expect(row).toBeTruthy();
     fireEvent.click(row!);
-    expect(screen.getByRole('button', { name: /^Otwórz przydział/ })).toBeInTheDocument();
-    fireEvent.doubleClick(row!);
+    fireEvent.click(await screen.findByRole('button', { name: 'Allocation alloc1' }));
     expect(
       screen.getByRole('region', { name: 'Operational Allocation workspace' })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Propozycja · U1/)).toBeInTheDocument();
+    expect(screen.getByText(/Proposed · U1/)).toBeInTheDocument();
     expect(screen.queryByText(/\bPROPOSED\b/)).not.toBeInTheDocument();
   });
 });

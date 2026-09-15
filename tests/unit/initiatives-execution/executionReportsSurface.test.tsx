@@ -14,8 +14,8 @@ import {
   readExecutionCase,
   transitionReportDefinition,
   transitionReportRun,
-} from '../../../src/services/initiatives-execution/runtimeApi';
-vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
+} from '@/services/initiatives-execution/runtimeApi';
+vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   createExecutionTask: vi.fn(),
   createReportDefinition: vi.fn(),
   createReportRun: vi.fn(),
@@ -110,22 +110,31 @@ const definition = {
 function Harness(props: React.ComponentProps<typeof ExecutionReportsSurface>) {
   const [control, setControl] = useState<React.ReactNode>(null);
   const [menu3Control, setMenu3Control] = useState<React.ReactNode>(null);
+  const [primaryCta, setPrimaryCta] = useState<any>(null);
   return (
     <MemoryRouter>
       <ExecutionReportsSurface
         isAdmin
         {...props}
         onRegisterFilterControl={setControl}
+        onRegisterPrimaryCta={setPrimaryCta}
         onRegisterMenu3Control={setMenu3Control}
       />
       <div data-testid="menu2-slot">{control}</div>
+      <div data-testid="primary-cta-slot">
+        {primaryCta?.menu?.onCustom ? (
+          <button type="button" onClick={primaryCta.menu.onCustom}>
+            {primaryCta.menu.customLabel}
+          </button>
+        ) : null}
+      </div>
       <div data-testid="menu3-slot">{menu3Control}</div>
     </MemoryRouter>
   );
 }
 
-const dispatchNewReportCta = () =>
-  fireEvent(window, new CustomEvent('execution:reports-new-report'));
+const openCustomReportWizard = () =>
+  fireEvent.click(screen.getByRole('button', { name: 'Custom report…' }));
 
 /**
  * Otwiera kebab Menu 3 („Nowa definicja"/„Kontrakt raportu (zaawansowane)").
@@ -189,11 +198,8 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
     expect(screen.getByText(/Delivery · case 1 · v3/)).toBeInTheDocument();
-    // CTA „Nowy raport" — teraz w Menu 2 gospodarza, otwiera kreator zdarzeniem.
-    // Mutacja: usunięcie nasłuchu `execution:reports-new-report` w
-    // `ExecutionReportsSurface` ma przewrócić tę asercję (kreator nigdy się
-    // nie otworzy).
-    dispatchNewReportCta();
+    // Primary CTA registers the canonical custom-report action directly.
+    openCustomReportWizard();
     expect(await screen.findByTestId('execution-report-wizard')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Report distribution receiptId'), {
       target: { value: 'dist-1' },
@@ -204,7 +210,7 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.change(screen.getByLabelText('Report distribution distributedAt'), {
       target: { value: '2026-08-10T12:00' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Opublikuj zatwierdzoną migawkę' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish the approved snapshot' }));
     await waitFor(() =>
       expect(transitionReportRun).toHaveBeenCalledWith(
         'run-1',
@@ -215,13 +221,13 @@ describe('ExecutionReportsSurface', () => {
         })
       )
     );
-    expect(await screen.findByText(/Zamrożony pakiet pozostaje/)).toBeInTheDocument();
+    expect(await screen.findByText(/Distribution dist-1/)).toHaveTextContent('hash hash-1');
     expect(screen.queryByRole('button', { name: /download|export/i })).not.toBeInTheDocument();
   });
   it('uses only an exact PUBLISHED Definition version and supports its governed lifecycle', async () => {
     render(<Harness />);
     // Przełącznik Raporty|Definicje — teraz w Menu 2 (`onRegisterFilterControl`).
-    fireEvent.click(await screen.findByRole('tab', { name: 'Szablony' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Templates' }));
     const definitionRow = (await screen.findByText('Weekly execution')).closest('tr')!;
     fireEvent.click(definitionRow);
     expect(screen.getAllByText('owner 1').length).toBeGreaterThan(0);
@@ -229,7 +235,7 @@ describe('ExecutionReportsSurface', () => {
     expect(screen.getAllByText('1').length).toBeGreaterThan(0);
     // „Nowa definicja" — P16-R6: teraz w kebabie Menu 3 (admin-only).
     openReportsKebab();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Nowa definicja' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New definition' }));
     fireEvent.change(screen.getByLabelText('Report Definition publish rationale'), {
       target: { value: 'Independent contract approval' },
     });
@@ -249,7 +255,7 @@ describe('ExecutionReportsSurface', () => {
     // (`showRunEditor`), w odróżnieniu od CTA „Nowy raport" (Menu 2), które
     // otwiera tylko kreator migawki MVP (`wizardOpen`).
     openReportsKebab();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Kontrakt raportu (zaawansowane)' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Report contract (advanced)' }));
     fireEvent.change(screen.getByLabelText('ReportRun published Definition version'), {
       target: { value: 'weekly@2' },
     });
@@ -273,7 +279,7 @@ describe('ExecutionReportsSurface', () => {
   it('creates a versioned Definition only with explicit project scope and no tenant-wide default', async () => {
     render(<Harness />);
     openReportsKebab();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Nowa definicja' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New definition' }));
     expect(screen.getByRole('button', { name: 'Create definition' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Report Definition ID'), {
       target: { value: 'project-report' },
@@ -323,7 +329,7 @@ describe('ExecutionReportsSurface', () => {
     // kebaba Menu 3 (P16-R6, admin-only), nie CTA „Nowy raport" (to tylko
     // kreator migawki MVP).
     openReportsKebab();
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Kontrakt raportu (zaawansowane)' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Report contract (advanced)' }));
     for (const [label, value] of [
       ['executionCaseId', 'case-1'],
       ['taskId', 'task-follow-1'],

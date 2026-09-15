@@ -58,18 +58,22 @@ vi.mock('../../../../src/services/api', () => ({
 }));
 
 vi.mock('../../../../src/store/useConversationStore', () => ({
-  useConversationStore: (selector: any) =>
-    selector({
+  useConversationStore: (selector?: any) => {
+    const state = {
       activeMessages: [],
-    }),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock('../../../../src/store/useAppStore', () => ({
-  useAppStore: (selector: any) =>
-    selector({
+  useAppStore: (selector?: any) => {
+    const state = {
       chatKickoffMessage: null,
       clearChatKickoffMessage: vi.fn(),
-    }),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 import ExceleView from '../../../../src/components/AIChat/KimiWorkspace/ExceleView';
@@ -142,10 +146,11 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
     });
     expect(screen.queryByText('Creating an empty spreadsheet…')).not.toBeInTheDocument();
 
-    // The real workbook shell renders instead.
+    // The canonical spreadsheet studio renders the created workbook instead.
     await waitFor(() => {
-      expect(screen.getByTestId('kimi-shell')).toBeInTheDocument();
+      expect(screen.getByTestId('spreadsheet-artifact-studio')).toBeInTheDocument();
     });
+    expect(screen.getByTestId('mels-topbar-title')).toHaveTextContent('Pusty arkusz');
   });
 
   it('shows a permanent retry/back state instead of an eternal spinner when creation fails', async () => {
