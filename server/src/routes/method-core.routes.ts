@@ -790,6 +790,7 @@ router.post(
     const methodPackVersion = body.methodPackVersion;
     const mode = body.mode;
     const projectId = isNonEmptyString(body.projectId) ? body.projectId : null;
+    const name = typeof body.name === 'string' ? body.name.trim() : null;
     const requestedBypass = body.demoBypass === true;
 
     if (module !== 'assessment' && module !== 'tools' && module !== 'audits') {
@@ -802,6 +803,10 @@ router.post(
     }
     if (mode !== 'guided_manual' && mode !== 'teresa_led') {
       res.status(400).json({ error: 'mode must be guided_manual|teresa_led' });
+      return;
+    }
+    if (name !== null && name.length > 160) {
+      res.status(400).json({ code: 'METHOD_SESSION_NAME_TOO_LONG', maxLength: 160 });
       return;
     }
 
@@ -845,6 +850,7 @@ router.post(
       methodPackVersion,
       ownerUserId: actorUserId,
       mode,
+      name: name || null,
       demoBypassActive: bypassActive,
     });
 
@@ -929,6 +935,49 @@ router.post(
       idempotentReplay: false,
       ...(bypassActive ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE } : {}),
     });
+  })
+);
+
+router.patch(
+  '/sessions/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (!Object.prototype.hasOwnProperty.call(body, 'name') ||
+        (body.name !== null && typeof body.name !== 'string')) {
+      res.status(400).json({ code: 'METHOD_SESSION_NAME_INVALID' });
+      return;
+    }
+    if (!Number.isInteger(body.expectedVersion) || Number(body.expectedVersion) < 1) {
+      res.status(400).json({ code: 'METHOD_SESSION_EXPECTED_VERSION_REQUIRED' });
+      return;
+    }
+    const name = typeof body.name === 'string' ? body.name.trim() : null;
+    if (name !== null && name.length > 160) {
+      res.status(400).json({ code: 'METHOD_SESSION_NAME_TOO_LONG', maxLength: 160 });
+      return;
+    }
+    const result = await sessionService.updateSessionName({
+      organizationId,
+      sessionId: firstParam(req.params.id),
+      actorUserId,
+      name: name || null,
+      expectedVersion: Number(body.expectedVersion),
+    });
+    if (!result.ok) {
+      if (result.reason === 'forbidden') {
+        res.status(403).json({ code: 'METHOD_SESSION_NAME_FORBIDDEN' });
+      } else if (result.reason === 'version_conflict') {
+        res.status(409).json({ code: 'METHOD_SESSION_VERSION_CONFLICT', currentVersion: result.currentVersion });
+      } else {
+        res.status(404).json({ code: 'METHOD_SESSION_NOT_FOUND' });
+      }
+      return;
+    }
+    res.status(200).json({ session: result.session });
   })
 );
 

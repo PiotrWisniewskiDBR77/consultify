@@ -297,6 +297,7 @@ export interface CreateSessionRequest {
   readonly methodPackVersion: string;
   readonly mode: MethodSession['mode'];
   readonly projectId?: string | null;
+  readonly name?: string | null;
   /** Only takes effect when the server-side operator flag is also on AND
    * NODE_ENV is non-production — see server/src/method-core/demoBypass.ts.
    * Setting this true in prod code is inert, not a security hole. */
@@ -328,6 +329,19 @@ export async function getSession(
 ): Promise<{ session: MethodSession; roles: MethodProcessRole[] }> {
   return handle(
     fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'GET', headers: getHeaders() })
+  );
+}
+
+export async function updateSessionName(
+  sessionId: string,
+  input: { readonly name: string | null; readonly expectedVersion: number }
+): Promise<{ session: MethodSession }> {
+  return handle(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    })
   );
 }
 

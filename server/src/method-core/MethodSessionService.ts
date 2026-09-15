@@ -64,6 +64,7 @@ import {
 
 interface MethodSessionRow {
   id: string;
+  name: string | null;
   organization_id: string;
   project_id: string | null;
   module: string;
@@ -167,6 +168,7 @@ export interface CreateSessionInput {
   readonly methodPackVersion: string;
   readonly ownerUserId: string;
   readonly mode: MethodSession['mode'];
+  readonly name?: string | null;
   /** See `MethodSessionRow.demo_bypass_active`. Defaults to false. */
   readonly demoBypassActive?: boolean;
 }
@@ -224,6 +226,7 @@ export interface MethodOutputBridge {
 function toMethodSession(row: MethodSessionRow): MethodSession {
   return {
     id: row.id,
+    name: row.name,
     organizationId: row.organization_id,
     projectId: row.project_id,
     module: row.module as MethodSession['module'],
@@ -309,6 +312,7 @@ export class MethodSessionService {
     const now = nowIso();
     const row: MethodSessionRow = {
       id: genId(),
+      name: input.name ?? null,
       organization_id: input.organizationId,
       project_id: input.projectId,
       module: input.module,
@@ -328,12 +332,13 @@ export class MethodSessionService {
 
     await runOrThrow(
       `INSERT INTO method_sessions
-         (id, organization_id, project_id, module, method_pack_id, method_pack_version,
+         (id, name, organization_id, project_id, module, method_pack_id, method_pack_version,
           state, domain_stage, mode, owner_user_id, version, frozen_snapshot_id,
           revision_of_session_id, created_at, updated_at, demo_bypass_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         row.id,
+        row.name,
         row.organization_id,
         row.project_id,
         row.module,
@@ -359,6 +364,45 @@ export class MethodSessionService {
   async getSession(sessionId: string): Promise<MethodSession | null> {
     const row = await this.getSessionRow(sessionId);
     return row ? toMethodSession(row) : null;
+  }
+
+  async updateSessionName(input: {
+    organizationId: string;
+    sessionId: string;
+    actorUserId: string;
+    name: string | null;
+    expectedVersion: number;
+  }): Promise<
+    | { ok: true; session: MethodSession }
+    | { ok: false; reason: 'not_found' | 'forbidden' | 'version_conflict'; currentVersion?: number }
+  > {
+    const row = await this.getSessionRow(input.sessionId);
+    if (!row || row.organization_id !== input.organizationId) return { ok: false, reason: 'not_found' };
+    const authorized =
+      row.owner_user_id === input.actorUserId ||
+      (await this.isSameTenantActiveOrgOwnerOrAdmin(input.organizationId, input.actorUserId));
+    if (!authorized) return { ok: false, reason: 'forbidden' };
+    if (row.version !== input.expectedVersion) {
+      return { ok: false, reason: 'version_conflict', currentVersion: row.version };
+    }
+
+    const updatedAt = nowIso();
+    const result = await DbPromise.run(
+      `UPDATE method_sessions
+          SET name = ?, version = version + 1, updated_at = ?
+        WHERE id = ? AND organization_id = ? AND version = ?`,
+      [input.name, updatedAt, input.sessionId, input.organizationId, input.expectedVersion],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error ?? 'method_session_name_update_failed');
+    if ((result.changes ?? 0) === 0) {
+      const current = await this.getSessionRow(input.sessionId);
+      if (!current || current.organization_id !== input.organizationId) return { ok: false, reason: 'not_found' };
+      return { ok: false, reason: 'version_conflict', currentVersion: current.version };
+    }
+    const updated = await this.getSessionRow(input.sessionId);
+    if (!updated || updated.organization_id !== input.organizationId) return { ok: false, reason: 'not_found' };
+    return { ok: true, session: toMethodSession(updated) };
   }
 
   /** Sessions produced by reopening `sessionId` (frozen -> active revisions). */
@@ -731,6 +775,7 @@ export class MethodSessionService {
       const now = nowIso();
       const revision: MethodSessionRow = {
         id: genId(),
+        name: session.name,
         organization_id: session.organization_id,
         project_id: session.project_id,
         module: session.module,
