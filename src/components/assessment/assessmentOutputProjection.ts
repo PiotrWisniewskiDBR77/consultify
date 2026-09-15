@@ -40,6 +40,8 @@
  * z zapisanych wierszy, a projekcja zastana jest oznaczona `source: 'legacy'`,
  * żeby dokument mógł to czytelnikowi powiedzieć wprost.
  */
+import i18next from 'i18next';
+
 import type { MethodOutputListItem } from '@/method-core/api/methodCoreApi';
 
 import {
@@ -256,6 +258,36 @@ export function scalOcenyZastaneZOutputami(
  * wersji `drdLabels` zwraca `null` i dokument degraduje się do gołych liczb).
  * Dokument oznacza taki raport jako pochodzący z zapisu sesji, nie z zamrożenia.
  */
+/**
+ * ★ NAPRAWA F8a (2026-09-15, bloker targowy — zrzut
+ * `~/Developer/cto-codex/final-targi-20260915/zrzuty/55-F5-assessment-report-fin.png`).
+ * Te trzy zastrzeżenia były zaszyte PO POLSKU i jako jedyny blok rozdziału 1
+ * („Limitations and assumptions") świeciły polszczyzną w całym angielskim
+ * raporcie. Zastrzeżenia jądra przychodzą z serwera już po angielsku — to był
+ * wyłącznie tekst projekcji zastanej, czyli nasz. Teraz idą przez i18n,
+ * EN first; `i18next` bierzemy jako singleton (ten sam wzorzec co
+ * `ToolDocumentView.tsx`), bo to warstwa bez `t` — dokładnie jak
+ * `setApiErrorTranslator` w `src/i18n.ts`.
+ */
+export function zastrzezeniaOcenyZastanej(): string[] {
+  const t = (key: string, defaultValue: string): string =>
+    i18next.t(key, { defaultValue }) as string;
+  return [
+    t(
+      'assessment.report.legacyLimitations.notFrozen',
+      'This result comes from the assessment session record, not from a frozen, immutable Output of the method kernel — the numbers may still change until the assessment is frozen.'
+    ),
+    t(
+      'assessment.report.legacyLimitations.noAnswerNotZero',
+      'Areas with no answer are not shown as zero, but as "—" (not determined).'
+    ),
+    t(
+      'assessment.report.legacyLimitations.noEvidenceTrail',
+      'Evidence material and the approval trail do not exist for assessments from the legacy store — that is why every area is marked as "no accepted evidence".'
+    ),
+  ];
+}
+
 export function projektujOceneZastanaNaOutput(
   assessment: LegacyAssessmentDetail
 ): { output: FullAssessmentOutput; notatkiObszarow: Record<string, string> } {
@@ -283,11 +315,7 @@ export function projektujOceneZastanaNaOutput(
     aggregation: null,
     visualModel: null,
     evidenceCompleteness: null,
-    limitations: [
-      'Wynik pochodzi z zapisu sesji oceny (magazyn zastany), a nie z zamrożonego, niezmiennego Outputu jądra metodycznego — liczby mogą się jeszcze zmienić, dopóki ocena nie zostanie zamrożona.',
-      'Obszary bez odpowiedzi nie są pokazywane jako zero, tylko jako „—" (nie rozstrzygnięto).',
-      'Materiał dowodowy i ślad zatwierdzeń nie istnieją dla ocen z magazynu zastanego — dlatego każdy obszar jest oznaczony jako „brak przyjętego dowodu".',
-    ],
+    limitations: zastrzezeniaOcenyZastanej(),
     findings: [],
     prioritisationResult: null,
     sourceRevisionOfSessionId: null,

@@ -10411,7 +10411,12 @@
       "sessionRecordBanner": "This report was produced from the <1>assessment session record</1> — the areas and the current and target levels come from answers saved in the workshop, not from a frozen, immutable Output of the method kernel. The axis structure, area names and level descriptions come from the methodology in the version compiled into this application. Until the result is frozen, the numbers may still change.",
       "notAvailableTitle": "Report not available",
       "notAvailableDescription": "This report link no longer points to a report we can open. Open the assessment it came from to see its current results.",
-      "notAvailableBack": "Back to assessment reports"
+      "notAvailableBack": "Back to assessment reports",
+      "legacyLimitations": {
+        "notFrozen": "This result comes from the assessment session record, not from a frozen, immutable Output of the method kernel — the numbers may still change until the assessment is frozen.",
+        "noAnswerNotZero": "Areas with no answer are not shown as zero, but as \"—\" (not determined).",
+        "noEvidenceTrail": "Evidence material and the approval trail do not exist for assessments from the legacy store — that is why every area is marked as \"no accepted evidence\"."
+      }
     },
     "lean": {
       "overallDashboard": "Overall Assessment Dashboard",

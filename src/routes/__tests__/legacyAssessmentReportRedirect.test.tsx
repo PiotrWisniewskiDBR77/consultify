@@ -22,7 +22,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGet = vi.fn();
@@ -39,15 +39,20 @@ vi.mock('@/services/funnelAnalytics', () => ({
 
 import { LegacyAssessmentReportRedirect, trasaZPayloaduRaportu } from '../LegacyAssessmentReportRedirect';
 
+/** Cel przekierowania — pokazuje ID, na które alias naprawdę wszedł.
+ * (Wcześniej element czytał `location.pathname` z globalnego okna, a nie
+ * z MemoryRoutera, więc pokazywał zawsze „/" i nic nie dowodził.) */
+function CelRaportuOceny() {
+  const { outputId } = useParams<{ outputId?: string }>();
+  return <div data-testid="cel">raport-oceny:/assessment/outputs/{outputId}/report</div>;
+}
+
 function renderAt(reportId: string) {
   return render(
     <MemoryRouter initialEntries={[`/assessment-reports/${reportId}`]}>
       <Routes>
         <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
-        <Route
-          path="/assessment/outputs/:outputId/report"
-          element={<div data-testid="cel">raport-oceny:{location.pathname}</div>}
-        />
+        <Route path="/assessment/outputs/:outputId/report" element={<CelRaportuOceny />} />
         <Route path="/reports/builder/:id" element={<div data-testid="cel-kreator">kreator</div>} />
         <Route path="/reports/builder" element={<div data-testid="cel-kreator-lista">lista</div>} />
       </Routes>
@@ -128,5 +133,108 @@ describe('[F5] LegacyAssessmentReportRedirect — /assessment-reports/:reportId'
     expect(screen.getByText(/Report not available/i)).toBeInTheDocument();
     expect(screen.queryByTestId('cel-kreator')).not.toBeInTheDocument();
     expect(screen.queryByTestId('cel')).not.toBeInTheDocument();
+  });
+
+  // ── F8a (2026-09-15) ─────────────────────────────────────────────────────
+  // Kolejność z rozkazu: ZAMROŻONY Output przed rekordem sesji. Liczby
+  // w testach są ZMIERZONE na stagingu `6c34292eb0` (org Northwind, konto
+  // Iriny — `~/Developer/cto-codex/fala-f8a-20260915/pomiar/m2-api.json`):
+  //   zamrożone Outputy org: `566e5de3-…` (sesja `a9c8f477-…`, 39 jednostek),
+  //     `49ea2d44-…` (sesja `63aa51e1-…`, 39 jednostek);
+  //   raport `71de85bb-…` → `assessmentId b2de5832-…`, dla którego
+  //     `/api/method/outputs/b2de5832-…` = 404, a lista Outputów tej sesji jest
+  //     PUSTA — jądro nie zna żadnego dowiązania do tej oceny zastanej.
+  describe('[F8a] zamrożony Output ma pierwszeństwo przed rekordem sesji', () => {
+    it('czysta reguła: gdy jest zamrożony Output, trasa prowadzi do NIEGO, nie do oceny', () => {
+      expect(
+        trasaZPayloaduRaportu(
+          {
+            id: '71de85bb-f745-5159-8ba4-cbcfbd20602c',
+            builderReportId: null,
+            assessmentId: 'a9c8f477-8d8f-4d31-804d-a39700de4b0a',
+          },
+          '566e5de3-7527-4fa7-9707-8e4b6d0b91ba'
+        )
+      ).toBe('/assessment/outputs/566e5de3-7527-4fa7-9707-8e4b6d0b91ba/report');
+    });
+
+    it('czysta reguła: Kreator dalej wygrywa nawet przy istniejącym Outpucie', () => {
+      expect(
+        trasaZPayloaduRaportu({ builderReportId: 'bld-1', assessmentId: 'asm-1' }, 'out-1')
+      ).toBe('/reports/builder/bld-1');
+    });
+
+    it('trasa końcowa: sesja jądra z zamrożonym Outputem → /assessment/outputs/<outputId>/report', async () => {
+      const wolane: string[] = [];
+      mockGet.mockImplementation((url: string) => {
+        wolane.push(url);
+        if (url.includes('/assessment-reports/')) {
+          return Promise.resolve({
+            id: 'rap-1',
+            builderReportId: null,
+            assessmentId: 'a9c8f477-8d8f-4d31-804d-a39700de4b0a',
+          });
+        }
+        if (url.includes('/method/outputs')) {
+          return Promise.resolve({
+            outputs: [{ id: '566e5de3-7527-4fa7-9707-8e4b6d0b91ba' }],
+            total: 1,
+          });
+        }
+        return Promise.reject(new Error('nieoczekiwane'));
+      });
+
+      renderAt('rap-1');
+
+      await waitFor(() => expect(screen.getByTestId('cel')).toBeInTheDocument());
+      expect(
+        wolane.some((u) =>
+          u.includes('/method/outputs?sessionId=a9c8f477-8d8f-4d31-804d-a39700de4b0a')
+        )
+      ).toBe(true);
+      expect(screen.getByTestId('cel').textContent).toContain(
+        '/assessment/outputs/566e5de3-7527-4fa7-9707-8e4b6d0b91ba/report'
+      );
+    });
+
+    it('PRZYPADEK Northwind `71de85bb-…`: jądro nie ma Outputu → fallback na rekord sesji, bez cudzych liczb', async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes('/assessment-reports/')) {
+          return Promise.resolve({
+            id: '71de85bb-f745-5159-8ba4-cbcfbd20602c',
+            builderReportId: null,
+            assessmentId: 'b2de5832-0a42-5639-8e46-6ecff2db82e5',
+          });
+        }
+        // Zmierzone: pusta lista — ta ocena zastana nie ma Outputu w jądrze.
+        if (url.includes('/method/outputs')) return Promise.resolve({ outputs: [], total: 0 });
+        return Promise.reject(new Error('nieoczekiwane'));
+      });
+
+      renderAt('71de85bb-f745-5159-8ba4-cbcfbd20602c');
+
+      await waitFor(() => expect(screen.getByTestId('cel')).toBeInTheDocument());
+      expect(screen.getByTestId('cel').textContent).toContain(
+        '/assessment/outputs/b2de5832-0a42-5639-8e46-6ecff2db82e5/report'
+      );
+      // NIGDY cudzy Output — dopasowanie po nazwie byłoby zgadywaniem.
+      expect(screen.getByTestId('cel').textContent).not.toContain('566e5de3');
+    });
+
+    it('błąd zapytania o Output nie wywraca aliasu — spadamy do rekordu sesji', async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes('/assessment-reports/')) {
+          return Promise.resolve({ builderReportId: null, assessmentId: 'asm-err' });
+        }
+        return Promise.reject(Object.assign(new Error('boom'), { status: 500 }));
+      });
+
+      renderAt('rap-err');
+
+      await waitFor(() => expect(screen.getByTestId('cel')).toBeInTheDocument());
+      expect(screen.getByTestId('cel').textContent).toContain(
+        '/assessment/outputs/asm-err/report'
+      );
+    });
   });
 });

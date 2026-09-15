@@ -9560,7 +9560,12 @@
       "sessionRecordBanner": "Ten raport powstał z <1>zapisu sesji oceny</1> — obszary, poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego, niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie zamrożony, liczby mogą się jeszcze zmienić.",
       "notAvailableTitle": "Raport niedostępny",
       "notAvailableDescription": "Ten link nie prowadzi już do raportu, który moglibyśmy otworzyć. Otwórz ocenę, z której pochodzi, aby zobaczyć jej aktualne wyniki.",
-      "notAvailableBack": "Wróć do raportów oceny"
+      "notAvailableBack": "Wróć do raportów oceny",
+      "legacyLimitations": {
+        "notFrozen": "Wynik pochodzi z zapisu sesji oceny (magazyn zastany), a nie z zamrożonego, niezmiennego Outputu jądra metodycznego — liczby mogą się jeszcze zmienić, dopóki ocena nie zostanie zamrożona.",
+        "noAnswerNotZero": "Obszary bez odpowiedzi nie są pokazywane jako zero, tylko jako „—\" (nie rozstrzygnięto).",
+        "noEvidenceTrail": "Materiał dowodowy i ślad zatwierdzeń nie istnieją dla ocen z magazynu zastanego — dlatego każdy obszar jest oznaczony jako „brak przyjętego dowodu\"."
+      }
     },
     "lean": {
       "overallDashboard": "Dashboard ogólny oceny",
