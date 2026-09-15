@@ -425,6 +425,10 @@ const PublishCardSchema = z.object({
   content: z.record(z.string(), z.unknown()),
   evidenceRefs: z.array(z.string().min(1).max(2_000)).max(500),
   waiverDecisionId: z.string().min(1).max(255).nullable(),
+  estimate: z.object({
+    value: z.string().trim().min(1).max(200),
+    basis: z.string().trim().min(1).max(2_000),
+  }).nullable().optional(),
 });
 
 const ReviewCardSchema = z.object({
@@ -3229,6 +3233,7 @@ export function createInitiativesExecutionRuntimeRouter(
           content: parsed.data.content,
           evidenceRefs: parsed.data.evidenceRefs,
           waiverDecisionId: parsed.data.waiverDecisionId,
+          estimate: parsed.data.estimate ?? null,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -3252,11 +3257,12 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         firstParam(req.params.initiativeId)
       );
-      if (
-        !found ||
-        !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
-      ) {
+      if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      if (!(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))) {
+        res.status(403).json({ error: { code: 'INITIATIVE_REVIEW_FORBIDDEN' } });
         return;
       }
       const policy = await deps.resolvePolicy(

@@ -1422,11 +1422,17 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       content_json: Record<string, unknown>;
       evidence_refs_json: string[];
       waiver_decision_id: string | null;
+      estimate_text: string | null;
+      estimate_basis: string | null;
+      estimated_by: string | null;
+      estimated_at: Date | string | null;
       reviewed_by: string | null;
       published_by: string;
     }>(
       `SELECT card_key, card_version, applicability, completion, quality, freshness,
-              review_state, content_json, evidence_refs_json, waiver_decision_id, reviewed_by, published_by
+              review_state, content_json, evidence_refs_json, waiver_decision_id,
+              estimate_text, estimate_basis, estimated_by, estimated_at,
+              reviewed_by, published_by
          FROM ie_initiative_card_versions
         WHERE organization_id = $1 AND initiative_id = $2 AND card_key = $3
         ORDER BY card_version DESC
@@ -1447,6 +1453,17 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       content: row.content_json,
       evidenceRefs: row.evidence_refs_json,
       waiverDecisionId: row.waiver_decision_id,
+      estimate:
+        row.estimate_text && row.estimate_basis
+          ? { value: row.estimate_text, basis: row.estimate_basis }
+          : null,
+      estimatedBy: row.estimated_by,
+      estimatedAt:
+        row.estimated_at instanceof Date
+          ? row.estimated_at.toISOString()
+          : row.estimated_at
+            ? String(row.estimated_at)
+            : null,
       reviewedBy: row.reviewed_by,
       publishedBy: row.published_by,
     };
@@ -1466,14 +1483,16 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     content: Record<string, unknown>;
     evidenceRefs: string[];
     waiverDecisionId: string | null;
+    estimate?: { value: string; basis: string } | null;
     publishedBy: string;
   }): Promise<void> {
     const result = await this.client.query(
       `INSERT INTO ie_initiative_card_versions
         (organization_id, initiative_id, card_key, card_version, aggregate_version,
          applicability, completion, quality, freshness, review_state, content_json,
-         evidence_refs_json, waiver_decision_id, published_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14)`,
+         evidence_refs_json, waiver_decision_id, estimate_text, estimate_basis,
+         estimated_by, estimated_at, published_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,CURRENT_TIMESTAMP,$17)`,
       [
         input.organizationId,
         input.initiativeId,
@@ -1488,6 +1507,9 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
         JSON.stringify(input.content),
         JSON.stringify(input.evidenceRefs),
         input.waiverDecisionId,
+        input.estimate?.value ?? null,
+        input.estimate?.basis ?? null,
+        input.estimate ? input.publishedBy : null,
         input.publishedBy,
       ]
     );
@@ -1510,11 +1532,13 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       `INSERT INTO ie_initiative_card_versions
         (organization_id, initiative_id, card_key, card_version, aggregate_version,
          applicability, completion, quality, freshness, review_state, content_json,
-         evidence_refs_json, waiver_decision_id, published_by, review_decision_id,
-         reviewed_by, review_rationale)
+         evidence_refs_json, waiver_decision_id, estimate_text, estimate_basis,
+         estimated_by, estimated_at, published_by, review_decision_id, reviewed_by,
+         review_rationale)
        SELECT organization_id, initiative_id, card_key, $1, $2,
               applicability, completion, quality, freshness, $3, content_json,
-              evidence_refs_json, waiver_decision_id, published_by, $4, $5, $6
+              evidence_refs_json, waiver_decision_id, estimate_text, estimate_basis,
+              estimated_by, estimated_at, published_by, $4, $5, $6
          FROM ie_initiative_card_versions
         WHERE organization_id = $7 AND initiative_id = $8 AND card_key = $9
           AND card_version = $10`,

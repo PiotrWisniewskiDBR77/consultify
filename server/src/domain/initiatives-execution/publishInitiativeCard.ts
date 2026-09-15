@@ -5,6 +5,7 @@ import {
   type MaterialCommandResult,
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
+  type InitiativeCardEstimate,
 } from './materialCommand.js';
 
 export interface PublishInitiativeCardPayload {
@@ -18,6 +19,7 @@ export interface PublishInitiativeCardPayload {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
+  estimate?: InitiativeCardEstimate | null;
 }
 
 export interface InitiativeWithCardRefs {
@@ -63,6 +65,9 @@ export async function publishInitiativeCard(
   ) {
     throw new MaterialCommandValidationError('NOT_APPLICABLE requires waiverDecisionId');
   }
+  if (envelope.payload.estimate && (!envelope.payload.estimate.value.trim() || !envelope.payload.estimate.basis.trim())) {
+    throw new MaterialCommandValidationError('Estimate value and basis are required together');
+  }
   if (!['NOT_REQUESTED', 'REQUESTED'].includes(envelope.payload.reviewState)) {
     throw new MaterialCommandValidationError(
       'Content publication cannot accept or return its own independent review'
@@ -107,6 +112,7 @@ export async function publishInitiativeCard(
       content: envelope.payload.content,
       evidenceRefs: envelope.payload.evidenceRefs,
       waiverDecisionId: envelope.payload.waiverDecisionId,
+      estimate: envelope.payload.estimate ?? null,
       publishedBy: envelope.actorId,
     });
     const response: PublishedInitiativeCard = {
