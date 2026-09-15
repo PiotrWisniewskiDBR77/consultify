@@ -1,0 +1,13 @@
+BASE_FAILS_NORMALIZED
+× falls back to legacy legal acceptance on bounded compatibility statuses
+× prefers governed partner legal acceptance before legacy fallback
+× tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy legal acceptance on bounded compatibility statuses
+× tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner legal acceptance before legacy fallback
+CANDIDATE_FAILS_NORMALIZED
+× falls back to legacy legal acceptance on bounded compatibility statuses
+× prefers governed partner legal acceptance before legacy fallback
+× tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy legal acceptance on bounded compatibility statuses
+× tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner legal acceptance before legacy fallback
+IDENTICAL=True
+BASE_COUNT=4
+CANDIDATE_COUNT=4

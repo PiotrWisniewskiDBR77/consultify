@@ -1,0 +1,1356 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/d-k6-execution-labels-w73
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/d-k6-execution-labels-w73
+
+ ✓ tests/unit/execution/executionReportPdfExport.test.ts > M14 execution report — real PDF export > produces an HTML/PDF document, not a Markdown blob 32ms
+ ✓ tests/unit/execution/executionReportPdfExport.test.ts > M14 execution report — real PDF export > never creates a .md download (no markdown blob / anchor) 1ms
+ ✓ tests/unit/execution/executionReportPdfExport.test.ts > M14 execution report — real PDF export > renders the report content (title, metrics, sections) into the PDF HTML 0ms
+ ✓ tests/unit/execution/executionReportPdfExport.test.ts > M14 execution report — real PDF export > keeps the Markdown builder available for copy/presentation flows 0ms
+ ✓ tests/unit/execution/executionReportPdfExport.test.ts (4 tests) 35ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts > executionReports degraded-source footer (DEC-120 A1-A3) > reports high confidence and Live freshness when every source is healthy 31ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts > executionReports degraded-source footer (DEC-120 A1-A3) > never reports Confidence: high when the control tower failed to load 0ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts > executionReports degraded-source footer (DEC-120 A1-A3) > never reports Freshness: Live when tasks failed to load, even with a fresh timestamp 0ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts > executionReports degraded-source footer (DEC-120 A1-A3) > degrades on decision-source failure and names it in the footer 0ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts > executionReports degraded-source footer (DEC-120 A1-A3) > names every unavailable signal source explicitly instead of a silent empty list 0ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts > executionReports degraded-source footer (DEC-120 A1-A3) > stacks degradation across multiple simultaneous source failures without losing any 0ms
+ ✓ tests/unit/execution/executionReports.degradedFlags.test.ts (6 tests) 35ms
+ ✓ tests/components/Execution/BudgetControlPanel.governed-delete.test.tsx > BudgetControlPanel governed delete > announces success only after canonical readback no longer contains the entry 111ms
+ ✓ tests/components/Execution/BudgetControlPanel.governed-delete.test.tsx > BudgetControlPanel governed delete > preserves a governed 409 error and never reports success 24ms
+ ✓ tests/components/Execution/BudgetControlPanel.governed-delete.test.tsx (2 tests) 137ms
+ ✓ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner onboarding status before legacy fallback 32ms
+ ✓ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy onboarding status on bounded compatibility statuses 12ms
+ × tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner legal acceptance before legacy fallback 9ms
+   → Unable to find a label with the text of: Akceptuje warunki programu partnerskiego
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-c-bg flex items-center justify-center p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"text-center mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-c-accent dark:text-c-accent"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-3xl font-bold text-c-text mb-2"[39m
+          [36m>[39m
+            [0mStart your partner application[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-c-text-secondary"[39m
+          [36m>[39m
+            [0mThis is the same application path launched from the LP and from the product.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between text-sm mb-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-accent dark:text-c-accent font-medium"[39m
+            [36m>[39m
+              [0mStep 1 of 4[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-text-muted"[39m
+            [36m>[39m
+              [0mPartner agreement[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-2 bg-c-surface-raised rounded-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-full bg-c-surface w-1/4 transition-all duration-300"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mProgram terms[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mBy using Consultify, you agree to our enterprise service agreement...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mProfessional services and AI-powered consulting tools[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mData processing and privacy compliance (GDPR compliant)[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mSubscription terms and billing policies[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the partner program terms[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mPrivacy policy[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mWe respect your privacy and protect your data...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mWe collect only necessary business information[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYour data is encrypted and secure[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYou control your data - delete anytime[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the privacy policy[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [0mConfirm and continue[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy legal acceptance on bounded compatibility statuses 6ms
+   → Unable to find a label with the text of: Akceptuje warunki programu partnerskiego
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-c-bg flex items-center justify-center p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"text-center mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-c-accent dark:text-c-accent"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-3xl font-bold text-c-text mb-2"[39m
+          [36m>[39m
+            [0mStart your partner application[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-c-text-secondary"[39m
+          [36m>[39m
+            [0mThis is the same application path launched from the LP and from the product.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between text-sm mb-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-accent dark:text-c-accent font-medium"[39m
+            [36m>[39m
+              [0mStep 1 of 4[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-text-muted"[39m
+            [36m>[39m
+              [0mPartner agreement[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-2 bg-c-surface-raised rounded-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-full bg-c-surface w-1/4 transition-all duration-300"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mProgram terms[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mBy using Consultify, you agree to our enterprise service agreement...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mProfessional services and AI-powered consulting tools[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mData processing and privacy compliance (GDPR compliant)[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mSubscription terms and billing policies[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the partner program terms[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mPrivacy policy[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mWe respect your privacy and protect your data...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mWe collect only necessary business information[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYour data is encrypted and secure[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYou control your data - delete anytime[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the privacy policy[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [0mConfirm and continue[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner pricing-tier selection before legacy fallback 84ms
+ ✓ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy pricing-tier selection on bounded compatibility statuses 32ms
+ ✓ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner completion before legacy fallback 19ms
+ ✓ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy completion on bounded compatibility statuses 17ms
+ ❯ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx (8 tests | 2 failed) 212ms
+     ✓ prefers governed partner onboarding status before legacy fallback 32ms
+     ✓ falls back to legacy onboarding status on bounded compatibility statuses 12ms
+     × prefers governed partner legal acceptance before legacy fallback 9ms
+     × falls back to legacy legal acceptance on bounded compatibility statuses 6ms
+     ✓ prefers governed partner pricing-tier selection before legacy fallback 84ms
+     ✓ falls back to legacy pricing-tier selection on bounded compatibility statuses 32ms
+     ✓ prefers governed partner completion before legacy fallback 19ms
+     ✓ falls back to legacy completion on bounded compatibility statuses 17ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R1 — bank realizacji nigdy nie pokazuje identyfikatora osoby > rozwiązuje identyfikatora na nazwisko z katalogu organizacji 60ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R1 — bank realizacji nigdy nie pokazuje identyfikatora osoby > gdy katalog nie zna identyfikatora, pokazuje „Unknown user", nie UUID 22ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R1 — bank realizacji nigdy nie pokazuje identyfikatora osoby > kanban nie buduje awatara ze skrótu UUID („D2") 8ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R2 — statusy po ludzku, luki danych jako ciche „—" > nie renderuje surowego enuma statusu ani chipa „UNKNOWN" 25ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R2 — statusy po ludzku, luki danych jako ciche „—" > wiersz bez realizacji mówi wprost „No execution case yet" 20ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R2 — statusy po ludzku, luki danych jako ciche „—" > luki danych stoją myślnikiem, a powód siedzi w podpowiedzi 27ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx > K5-R5 — „Open" w kebabie ma ikonę, tak jak „Open preview" > renderuje ikonę przy akcji głównej wiersza 135ms
+ ✓ tests/components/Execution/ExecutionBankViews.k5Naprawy.behavior.test.tsx (7 tests) 299ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner legal acceptance before legacy fallback
+TestingLibraryElementError: Unable to find a label with the text of: Akceptuje warunki programu partnerskiego
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-c-bg flex items-center justify-center p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"text-center mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-c-accent dark:text-c-accent"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-3xl font-bold text-c-text mb-2"[39m
+          [36m>[39m
+            [0mStart your partner application[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-c-text-secondary"[39m
+          [36m>[39m
+            [0mThis is the same application path launched from the LP and from the product.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between text-sm mb-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-accent dark:text-c-accent font-medium"[39m
+            [36m>[39m
+              [0mStep 1 of 4[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-text-muted"[39m
+            [36m>[39m
+              [0mPartner agreement[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-2 bg-c-surface-raised rounded-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-full bg-c-surface w-1/4 transition-all duration-300"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mProgram terms[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mBy using Consultify, you agree to our enterprise service agreement...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mProfessional services and AI-powered consulting tools[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mData processing and privacy compliance (GDPR compliant)[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mSubscription terms and billing policies[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the partner program terms[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mPrivacy policy[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mWe respect your privacy and protect your data...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mWe collect only necessary business information[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYour data is encrypted and secure[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYou control your data - delete anytime[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the privacy policy[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [0mConfirm and continue[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../Consultify/node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx:152:28
+    150|     });
+    151|
+    152|     fireEvent.click(screen.getByLabelText('Akceptuje warunki programu …
+       |                            ^
+    153|     fireEvent.click(screen.getByLabelText('Akceptuje polityke prywatno…
+    154|     fireEvent.click(screen.getByRole('button', { name: /Potwierdz i pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy legal acceptance on bounded compatibility statuses
+TestingLibraryElementError: Unable to find a label with the text of: Akceptuje warunki programu partnerskiego
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-c-bg flex items-center justify-center p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"text-center mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-c-accent dark:text-c-accent"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-3xl font-bold text-c-text mb-2"[39m
+          [36m>[39m
+            [0mStart your partner application[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-c-text-secondary"[39m
+          [36m>[39m
+            [0mThis is the same application path launched from the LP and from the product.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between text-sm mb-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-accent dark:text-c-accent font-medium"[39m
+            [36m>[39m
+              [0mStep 1 of 4[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-text-muted"[39m
+            [36m>[39m
+              [0mPartner agreement[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-2 bg-c-surface-raised rounded-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-full bg-c-surface w-1/4 transition-all duration-300"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mProgram terms[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mBy using Consultify, you agree to our enterprise service agreement...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mProfessional services and AI-powered consulting tools[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mData processing and privacy compliance (GDPR compliant)[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mSubscription terms and billing policies[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the partner program terms[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mPrivacy policy[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mWe respect your privacy and protect your data...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mWe collect only necessary business information[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYour data is encrypted and secure[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYou control your data - delete anytime[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the privacy policy[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [0mConfirm and continue[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../Consultify/node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx:186:28
+    184|     });
+    185|
+    186|     fireEvent.click(screen.getByLabelText('Akceptuje warunki programu …
+       |                            ^
+    187|     fireEvent.click(screen.getByLabelText('Akceptuje polityke prywatno…
+    188|     fireEvent.click(screen.getByRole('button', { name: /Potwierdz i pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 25 passed (27)
+   Start at  22:35:54
+   Duration  1.45s (transform 927ms, setup 530ms, import 1.24s, tests 717ms, environment 1.39s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > prefers governed partner legal acceptance before legacy fallback
+TestingLibraryElementError: Unable to find a label with the text of: Akceptuje warunki programu partnerskiego
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-c-bg flex items-center justify-center p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"text-center mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-c-accent dark:text-c-accent"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-3xl font-bold text-c-text mb-2"[39m
+          [36m>[39m
+            [0mStart your partner application[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-c-text-secondary"[39m
+          [36m>[39m
+            [0mThis is the same application path launched from the LP and from the product.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between text-sm mb-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-accent dark:text-c-accent font-medium"[39m
+            [36m>[39m
+              [0mStep 1 of 4[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-text-muted"[39m
+            [36m>[39m
+              [0mPartner agreement[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-2 bg-c-surface-raised rounded-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-full bg-c-surface w-1/4 transition-all duration-300"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mProgram terms[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mBy using Consultify, you agree to our enterprise service agreement...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mProfessional services and AI-powered consulting tools[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mData processing and privacy compliance (GDPR compliant)[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mSubscription terms and billing policies[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the partner program terms[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mPrivacy policy[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mWe respect your privacy and protect your data...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mWe collect only necessary business information[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYour data is encrypted and secure[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYou control your data - delete anytime[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the privacy policy[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [0mConfirm and continue[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../Consultify/node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx:152:28
+    150|     });
+    151|
+    152|     fireEvent.click(screen.getByLabelText('Akceptuje warunki programu …
+       |                            ^
+    153|     fireEvent.click(screen.getByLabelText('Akceptuje polityke prywatno…
+    154|     fireEvent.click(screen.getByRole('button', { name: /Potwierdz i pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx > EnterpriseOnboardingWizard onboarding status seam > falls back to legacy legal acceptance on bounded compatibility statuses
+TestingLibraryElementError: Unable to find a label with the text of: Akceptuje warunki programu partnerskiego
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-c-bg flex items-center justify-center p-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-2xl w-full bg-c-surface-raised rounded-xl shadow-2xl p-8"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"text-center mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-c-accent dark:text-c-accent"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-3xl font-bold text-c-text mb-2"[39m
+          [36m>[39m
+            [0mStart your partner application[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-c-text-secondary"[39m
+          [36m>[39m
+            [0mThis is the same application path launched from the LP and from the product.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mb-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between text-sm mb-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-accent dark:text-c-accent font-medium"[39m
+            [36m>[39m
+              [0mStep 1 of 4[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-c-text-muted"[39m
+            [36m>[39m
+              [0mPartner agreement[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-2 bg-c-surface-raised rounded-full overflow-hidden"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"h-full bg-c-surface w-1/4 transition-all duration-300"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mProgram terms[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mBy using Consultify, you agree to our enterprise service agreement...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mProfessional services and AI-powered consulting tools[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mData processing and privacy compliance (GDPR compliant)[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mSubscription terms and billing policies[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the partner program terms[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"font-semibold text-c-text mb-3"[39m
+            [36m>[39m
+              [0mPrivacy policy[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mWe respect your privacy and protect your data...[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mWe collect only necessary business information[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYour data is encrypted and secure[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m•[0m
+                [0m [0m
+                [0mYou control your data - delete anytime[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"flex items-start gap-3 cursor-pointer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-sm text-c-text-secondary"[39m
+              [36m>[39m
+                [0mI accept the privacy policy[0m
+              [36m</span>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"w-full mt-8 bg-c-text text-c-surface hover:opacity-90 disabled:bg-c-border dark:disabled:bg-c-surface-raised font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [0mConfirm and continue[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right w-5 h-5"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../Consultify/node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/partner/EnterpriseOnboardingWizard.v8-status.test.tsx:186:28
+    184|     });
+    185|
+    186|     fireEvent.click(screen.getByLabelText('Akceptuje warunki programu …
+       |                            ^
+    187|     fireEvent.click(screen.getByLabelText('Akceptuje polityke prywatno…
+    188|     fireEvent.click(screen.getByRole('button', { name: /Potwierdz i pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 25 passed (27)
+   Start at  22:35:54
+   Duration  1.45s (transform 927ms, setup 530ms, import 1.24s, tests 717ms, environment 1.39s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/d-k6-execution-labels-w73/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/d-k6-execution-labels-w73/junit.xml
