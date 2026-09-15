@@ -10,8 +10,8 @@ bazę `f2628a0d36`; `git range-diff` wykazał dwa commity bez zmiany treści.
   Title Case. Dwuznaczne zapożyczenia (`company`, `status`, `lead`, `backlog`,
   `role`, `most`, `stale`) nie są samodzielnym dowodem języka.
 - `K4obj`/`K4objPL`: literały w `label`, `title`, `placeholder`, `header`,
-  `description`, `tooltip` i `emptyText` oraz zgodnych ujściach. Identyfikatory,
-  wartości techniczne, ścieżki i SCREAMING_CASE są pomijane.
+  `description`, `tooltip` i `emptyText`. To zamknięta lista siedmiu ujść z W73.
+  Identyfikatory, techniczne unie enumów, ścieżki i SCREAMING_CASE są pomijane.
 - `K8spl`: obejmuje `services/assessment` i `services/actionCard`; nadal pomija
   testy.
 - `K11`: wykrywa pojedynczy, podwójny i szablonowy literał zawierający `{t(`.
@@ -46,8 +46,8 @@ produktu po zmianie detektora. Wzrost oznacza ujawniony dług, a nie regresję U
 | K2 | 4 | 136 |
 | K4pl | 22 | 81 |
 | K4en | 869 | 5516 |
-| K4objPL | niemierzone | 866 |
-| K4obj | niemierzone | 5375 |
+| K4objPL | niemierzone | 711 |
+| K4obj | niemierzone | 4343 |
 | K5pl | 256 | 262 |
 | K5en | 1822 | 7161 |
 | K8spl | 91 | 95 |
@@ -60,3 +60,19 @@ produktu po zmianie detektora. Wzrost oznacza ujawniony dług, a nie regresję U
 | K11 | niemierzone | 1 |
 
 Pełny wynik per moduł i przykłady stanowią nowy ratchet w `baseline.json`.
+
+## Korekta po niezależnym review
+
+Pierwszy kandydat rozszerzał siedem ujść W73 o 33 dodatkowe nazwy
+właściwości. Review wykazał, że zawyżało to mianownik m.in. o klasy Tailwind
+z `text:` i techniczne kontrakty w `description:`. Lista jest teraz zamknięta
+na siedmiu wymaganych polach, a unie enumów rozdzielone `|` są rozpoznawane
+jako wartości techniczne. Regresje odtwarzają oba rodzaje fałszywych trafień.
+
+| Kategoria | Kandydat odrzucony | Po korekcie P1 | Delta |
+|---|---:|---:|---:|
+| K4objPL | 866 | 711 | -155 |
+| K4obj | 5375 | 4343 | -1032 |
+
+Wskazane przez review wpisy z `AIActionCard.tsx`, `sharedActions.ts` i
+`tableActions.ts` nie występują w przykładach nowego baseline.

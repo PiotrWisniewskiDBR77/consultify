@@ -700,8 +700,9 @@ function analizujJsxZawartosc(trescSurowa) {
 // w tablicy definicji kolumn `StandardTable`. Skala zmierzona w samym module
 // Realizacja: 123 takie literały w 13 plikach.
 //
-// Ujścia (nazwy właściwości) siedzą w `pomiar-jezyka.wyjatki.json`
-// (`wlasciwosciUjsciaUI`), żeby dało się je poprawiać bez ruszania skanera.
+// Dokładnie siedem ujść wskazanych w W73 siedzi w
+// `pomiar-jezyka.wyjatki.json` (`wlasciwosciUjsciaUI`). Każde rozszerzenie tej
+// listy zmienia mianownik i wymaga osobnego pomiaru precyzji.
 // Nazwy TECHNICZNE (id/key/value/type/status/href/path/icon/variant/...) są
 // wykluczone twardo poniżej — to nie są napisy dla człowieka.
 // ---------------------------------------------------------------------------
@@ -719,6 +720,7 @@ function wartoscTechniczna(tekst) {
   const s = String(tekst).trim();
   if (/^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9_]+)+$/.test(s)) return true; // klucz i18n: 'execution.bank.title'
   if (/^[a-z0-9]+([-_][a-z0-9]+)+$/.test(s)) return true;           // kebab/snake: 'data-quality'
+  if (/^[a-z][a-z0-9_-]*(?:\s*\|\s*[a-z][a-z0-9_-]*)+\.?$/.test(s)) return true; // unia enumów: 'public | authenticated'
   if (/^[@./#]/.test(s)) return true;                               // ścieżka, selektor, import
   if (/^[A-Za-z]+\(/.test(s)) return true;                          // wywołanie w literale
   return false;

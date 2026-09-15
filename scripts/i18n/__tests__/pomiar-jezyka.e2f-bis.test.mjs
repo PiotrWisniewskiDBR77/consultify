@@ -127,6 +127,23 @@ describe('E2f-bis / K4obj i K4objPL', () => {
     const kod = "const column = { label: t('execution.owner', 'Team Member') };";
     expect(analizujLiteralyObiektowZawartosc(kod)).toMatchObject({ K4obj: 0, K4objPL: 0 });
   });
+
+  it('nie rozszerza mianownika poza siedem ujść W73', () => {
+    const kod = [
+      "const colors = { text: 'text-c-text-secondary dark:text-c-text-secondary' };",
+      "const card = { name: 'Human readable name', message: 'Action completed',",
+      "  summary: 'Quarterly progress', subtitle: 'Next actions' };",
+    ].join('\n');
+    expect(analizujLiteralyObiektowZawartosc(kod)).toMatchObject({ K4obj: 0, K4objPL: 0 });
+  });
+
+  it('pomija techniczne unie enumów w description', () => {
+    const kod = [
+      "const target = { description: 'initiative | task_set | decision | report | presentation' };",
+      "const scope = { description: 'public|organization|authenticated.' };",
+    ].join('\n');
+    expect(analizujLiteralyObiektowZawartosc(kod)).toMatchObject({ K4obj: 0, K4objPL: 0 });
+  });
 });
 
 describe('E2f-bis / K8spl i K11', () => {
