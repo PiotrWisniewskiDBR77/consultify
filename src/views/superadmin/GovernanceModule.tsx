@@ -20,6 +20,8 @@ import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
 import AuditEventsViewer from './iam/AuditEventsViewer';
 import { SuperAdminLegalView } from './SuperAdminLegalView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface GovernanceModuleProps {
   initialTab?: string;
 }
@@ -131,7 +133,7 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
             {overview.audit?.unresolved ?? 0}
           </div>
           <div className="mt-2 text-xs text-slate-500">
-            Unresolved audit items across the operator plane.
+            {tlumaczPozaHookiem("superadmin.governance.unresolvedAuditItemsAcrossTheOperatorPlane", "Unresolved audit items across the operator plane.")}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -149,7 +151,7 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
             {overview.sessions?.active ?? 0}
           </div>
           <div className="mt-2 text-xs text-slate-500">
-            Active privileged sessions with visible MFA/JIT posture.
+            {tlumaczPozaHookiem("superadmin.governance.activePrivilegedSessionsWithVisibleMFAJIT", "Active privileged sessions with visible MFA/JIT posture.")}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -209,7 +211,7 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     {item.resourceType} {item.resourceId || ''}{' '}
-                    {item.timestamp ? `• ${new Date(item.timestamp).toLocaleString()}` : ''}
+                    {item.timestamp ? `• ${new Date(item.timestamp).toLocaleString(localeListy())}` : ''}
                   </div>
                   {item.summary && (
                     <div className="mt-2 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
@@ -272,7 +274,7 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Governance & Compliance"
-      subtitle="Unified audit, approval, export, retention, and legal evidence plane"
+      subtitle={tlumaczPozaHookiem("superadmin.governance.unifiedAuditApprovalExportRetentionAndLegal", "Unified audit, approval, export, retention, and legal evidence plane")}
       actions={<InfoButton cardId={TAB_HELP_CARDS[activeTab] || 'superadmin_governance'} />}
     >
       {renderContent()}

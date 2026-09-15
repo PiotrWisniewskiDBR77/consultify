@@ -34,6 +34,8 @@ import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { organizationExportDisclosure } from '../../utils/organizationExportDisclosure';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AccessRequest {
   id: string;
   organization_name: string;
@@ -242,13 +244,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   const formatDate = (value?: string | null, fallback = '-') => {
     if (!value) return fallback;
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString(localeListy());
   };
 
   const formatDateTime = (value?: string | null, fallback = '-') => {
     if (!value) return fallback;
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString(localeListy());
   };
 
   // [ODMROZENIE 14_ADMIN DEC-460] Podpiecie gotowego klienta Api.exportOrganizationData
@@ -611,7 +613,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
             >
               <option value="active">Active</option>
-              <option value="pending">Pending</option>
+              <option value="pending">{tlumaczPozaHookiem("superadmin.organizations.pending", "Pending")}</option>
               <option value="blocked">Blocked</option>
             </select>
           ) : (
@@ -1042,7 +1044,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             Organizations
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
-            Manage organizations, subscriptions, and access requests
+            {tlumaczPozaHookiem("superadmin.organizations.manageOrganizationsSubscriptionsAndAccessRequests", "Manage organizations, subscriptions, and access requests")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -1189,7 +1191,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
             <h3 className="font-semibold text-slate-900 dark:text-white">
-              Pending Organization Requests
+              {tlumaczPozaHookiem("superadmin.organizations.pendingOrganizationRequests", "Pending Organization Requests")}
             </h3>
           </div>
           {loadErrors.requests ? (

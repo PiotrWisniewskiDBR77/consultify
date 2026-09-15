@@ -15,6 +15,8 @@ import {
 } from '../../components/standard/StandardTable';
 import { apiGet } from '../../services/api/baseClient';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface InterestRecord {
   id: string;
   user_id: string;
@@ -103,7 +105,7 @@ export const ModuleWaitlistView: React.FC = () => {
     const rows = filteredInterests
       .map(
         (r) =>
-          `"${MODULE_META[r.module_key]?.label || r.module_key}","${r.user_name || ''}","${r.user_email || ''}","${r.org_name || ''}","${new Date(r.created_at).toLocaleDateString()}"`
+          `"${MODULE_META[r.module_key]?.label || r.module_key}","${r.user_name || ''}","${r.user_email || ''}","${r.org_name || ''}","${new Date(r.created_at).toLocaleDateString(localeListy())}"`
       )
       .join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
@@ -162,7 +164,7 @@ export const ModuleWaitlistView: React.FC = () => {
         label: 'Registered',
         render: (row: TableRow) => (
           <span className="text-slate-500 dark:text-slate-400 text-xs">
-            {new Date(row.created_at).toLocaleDateString('en-US', {
+            {new Date(row.created_at).toLocaleDateString(localeListy(), {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
@@ -232,7 +234,7 @@ export const ModuleWaitlistView: React.FC = () => {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               type="text"
-              placeholder="Search by name, email, org..."
+              placeholder={tlumaczPozaHookiem("superadmin.moduleWaitlist.searchByNameEmailOrg", "Search by name, email, org...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 w-64"

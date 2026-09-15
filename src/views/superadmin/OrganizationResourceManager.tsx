@@ -12,6 +12,8 @@ import { toast } from 'react-hot-toast';
 import ResourceLimitInput from '../../components/SuperAdmin/ResourceLimitInput';
 import api from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface OrgResourceData {
   organization: {
     id: string;
@@ -202,11 +204,11 @@ export const OrganizationResourceManager: React.FC = () => {
 
       {!selectedOrgId && (
         <div className="empty-state">
-          <p>Please select an organization to manage its resources</p>
+          <p>{tlumaczPozaHookiem("superadmin.organizationResourceManager.pleaseSelectAnOrganizationToManageIts", "Please select an organization to manage its resources")}</p>
         </div>
       )}
 
-      {selectedOrgId && isLoading && <div className="loading">Loading resource data...</div>}
+      {selectedOrgId && isLoading && <div className="loading">{tlumaczPozaHookiem("superadmin.organizationResourceManager.loadingResourceData", "Loading resource data...")}</div>}
 
       {selectedOrgId && resourceData && (
         <div className="resource-content">
@@ -269,10 +271,10 @@ export const OrganizationResourceManager: React.FC = () => {
               <h3>Token Balance</h3>
               <div className="token-display">
                 <span className="token-value">
-                  {safeNumber(resourceData.organization.token_balance).toLocaleString()}
+                  {safeNumber(resourceData.organization.token_balance).toLocaleString(localeListy())}
                 </span>
                 <span className="token-limit">
-                  Limit: {safeNumber(resourceData.organization.token_limit).toLocaleString()}
+                  Limit: {safeNumber(resourceData.organization.token_limit).toLocaleString(localeListy())}
                 </span>
               </div>
             </div>
@@ -347,7 +349,7 @@ export const OrganizationResourceManager: React.FC = () => {
                 <tbody>
                   {resourceData.recentExpenses?.map((expense: any) => (
                     <tr key={expense.id}>
-                      <td>{new Date(expense.recordedAt).toLocaleDateString()}</td>
+                      <td>{new Date(expense.recordedAt).toLocaleDateString(localeListy())}</td>
                       <td>
                         <span className="category-badge">{expense.category}</span>
                       </td>
@@ -539,7 +541,7 @@ export const OrganizationResourceManager: React.FC = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>New Value</label>
+                  <label>{tlumaczPozaHookiem("superadmin.organizationResourceManager.newValue", "New Value")}</label>
                   <input
                     type="number"
                     value={chargeForm.newValue}
