@@ -16189,7 +16189,7 @@
         "progress": "Postęp",
         "baselineFinish": "Koniec wg bazy",
         "forecastFinish": "Koniec wg prognozy",
-        "variance": "Odchylenie",
+        "variance": "Δ dni",
         "health": "Kondycja",
         "blockers": "Blokery",
         "pendingDecisions": "Decyzje oczekujące",
