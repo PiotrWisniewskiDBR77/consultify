@@ -29,18 +29,28 @@
       "pl": 220
     },
     "typescript": {
-      "ctoLineReference": {
-        "frontend": 177,
-        "server": 0
+      "sameEnvironmentComparison": {
+        "environment": "actual symlink to current owner node_modules; TypeScript 5.8.3",
+        "cleanBase": {
+          "frontend": "TIMEOUT_120",
+          "server": 27
+        },
+        "candidate": {
+          "frontend": "TIMEOUT_120",
+          "server": 27
+        },
+        "serverDelta": 0,
+        "frontendDelta": "NOT_PROVEN"
       },
-      "codexSharedNodeModulesReference": {
-        "frontend": 194,
-        "server": 27
-      },
-      "currentCandidateRerun": {
-        "frontend": "NOT_PROVEN: 120-second cutoff before completion",
-        "server": 27,
-        "typescriptVersion": "5.8.3"
+      "historicalReferencesOnly": {
+        "cto": {
+          "frontend": 177,
+          "server": 0
+        },
+        "earlierCodex": {
+          "frontend": 194,
+          "server": 27
+        }
       }
     },
     "browserScreenshots": "NOT_PROVEN",
