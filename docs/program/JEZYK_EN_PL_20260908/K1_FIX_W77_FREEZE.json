@@ -1,0 +1,98 @@
+{
+  "schema": "consultify-freeze-v1",
+  "package": "K1-fix-W77-review-fix",
+  "verdict": "P1_COMPLETE_E1_HOLD_INHERITED_TSC",
+  "exactBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "contentSha": "b77ac062ed6ffe4325913460be291fe76dad1296",
+  "branch": "codex/a-k1-fix-20260915",
+  "measurements": {
+    "K4en": 4626,
+    "K5en": 7164,
+    "K8sen": 2487,
+    "jMale": {
+      "organization": 2,
+      "results": 65,
+      "meeting": 0,
+      "interview": 19,
+      "audits": 4,
+      "initiatives": 128,
+      "execution": 138
+    }
+  },
+  "tests": {
+    "helperFalsePositive": "12/12",
+    "chat": "5/5",
+    "meter": "252/252",
+    "jMale": "14/14"
+  },
+  "gates": {
+    "serverTsc": {
+      "status": "HOLD",
+      "errors": 27,
+      "sourceDiff": 0
+    },
+    "frontTsc": {
+      "status": "HOLD",
+      "errors": 194,
+      "requiredCeiling": 177,
+      "sourceDiff": 0
+    },
+    "language": "GREEN",
+    "canon": "GREEN",
+    "artifact": "GREEN",
+    "build": "GREEN",
+    "diffCheck": "GREEN"
+  },
+  "forbiddenFilesChanged": 0,
+  "migrations": 0,
+  "inventoryExcludes": [
+    "receipt",
+    "freeze-self"
+  ],
+  "inventory": [
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73.md",
+      "sha256": "cffbe0c26a35aad6bca92b59e5d6aff3d45607815f07bea0d15b8faaa350c203"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73_RANGE_DIFF.txt",
+      "sha256": "46eebcf848471f0590812d5cc7ba5e4ff13cac2b257b6eaf76c3abf06da65b06"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/K1_FIX_W77_JMALE_SAMPLE.json",
+      "sha256": "d9f71845a9c9e626bfe0b8d5788666326dcd4ccb4a099dad3c3e865a276dbcc2"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
+      "sha256": "25a6d66f4a6fe22482dd8f9c6da6fcae78d4ddf631e1a9443b78392443fd8c02"
+    },
+    {
+      "path": "docs/ui-standards/MAPA_JEZYKA.md",
+      "sha256": "939deb1d0180476c631e26e2a28d97b949d7fed4cea44ce15c65afd45189f70c"
+    },
+    {
+      "path": "scripts/i18n/__tests__/jezykJmaleModuly.test.mjs",
+      "sha256": "ad815ff1843b8f5ff4413bb0b82537838d05f3c316928c1d15d65ca5eee76204"
+    },
+    {
+      "path": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
+      "sha256": "cb34a40b956ec209d40bafbd2d854f9dd2392679b45c94d3bbb426d9fc724aa0"
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.mjs",
+      "sha256": "902159904ffade8f1408763400a7c8e3a372e353f4f762e2dcda31b7cad7cf69"
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.wyjatki.json",
+      "sha256": "3cdbe5c2e29ed6607e7a5365677220f3874889a9e99dc800112e9d122621b439"
+    },
+    {
+      "path": "tests/unit/i18n/polskiBezOgonkowWspolny.test.ts",
+      "sha256": "72cf0b88e1e19d79b7b3f7657767c58405b974775b5aacd5ea28231fe4bbabc1"
+    },
+    {
+      "path": "tests/unit/i18n/polskiBezOgonkowWspolny.ts",
+      "sha256": "f06467670ab185dbd6465d684470aea2646c1c2923895107d4e92ade6bd54f0a"
+    }
+  ]
+}

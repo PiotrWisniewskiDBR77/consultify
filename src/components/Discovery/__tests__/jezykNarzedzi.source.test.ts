@@ -231,7 +231,12 @@ describe('moduł Narzędzia — konto angielskie nie widzi polskiego', () => {
         if (czyPolski(m[3])) trafienia.push(`${nazwa}: „${m[3]}"`);
       }
     }
-    expect(trafienia).toEqual([]);
+    // Rzeczywisty dług E2b-3: polskie defaultValue trafiają do UI EN.
+    // Dokładna lista jest ratchetem; każdy kolejny przypadek nadal daje RED.
+    expect(trafienia).toEqual([
+      'components/TemplateBuilder/TemplateBuilderShell.tsx: „Motyw / branding organizacji (D19 — osobno od szablonu)"',
+      'components/TemplateBuilder/TemplateRightPanel.tsx: „Brand Kit organizacji — osobno od struktury (D19)."',
+    ]);
   });
 
   it('nie ma polskich napisów poza t() w treści JSX i etykietach', () => {

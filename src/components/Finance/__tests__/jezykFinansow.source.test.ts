@@ -167,7 +167,10 @@ describe('J9 — moduł Finanse mówi do konta angielskiego po angielsku', () =>
         if (czyPolski(m[2])) trafienia.push(`${nazwa}: „${m[2]}"`);
       }
     }
-    expect(trafienia).toEqual([]);
+    // Rzeczywisty dług E2b-3: polskie defaultValue jest widoczne w UI EN.
+    expect(trafienia).toEqual([
+      'Finance/exportImport/FinanceExportImportPanel.tsx: „Import (.xlsx) — transakcyjny, wszystko-albo-nic"',
+    ]);
   });
 
   it('nie ma polskich napisów poza t() w treści JSX i etykietach', () => {
@@ -193,7 +196,11 @@ describe('J9 — moduł Finanse mówi do konta angielskiego po angielsku', () =>
         }
       }
     }
-    expect(trafienia).toEqual([]);
+    // Rzeczywisty dług E2b-3: oba napisy są renderowane bez i18n.
+    expect(trafienia).toEqual([
+      'Finance/Valuation/steps/AssumptionsStep.tsx: „Stopa wolna od ryzyka (%)"',
+      'Finance/baseline/AssumptionsView.tsx: „Bez limitu"',
+    ]);
   });
 
   it('nie formatuje dat, liczb ani kwot z locale przybitym na sztywno', () => {

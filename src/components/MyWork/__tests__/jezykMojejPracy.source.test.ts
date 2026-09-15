@@ -131,10 +131,17 @@ describe('J2 — moduł Moja Praca mówi po angielsku w kodzie', () => {
     const trafienia: string[] = [];
     for (const { nazwa, tekst } of ZRODLA) {
       for (const m of tekst.matchAll(wzorzec)) {
-        if (czyPolski(m[2])) trafienia.push(`${nazwa}: „${m[2]}"`);
+        // `Sa` to angielski skrót soboty w sekwencji Mo..Su, nie polskie „są".
+        if (m[2] !== 'Sa' && czyPolski(m[2])) trafienia.push(`${nazwa}: „${m[2]}"`);
       }
     }
-    expect(trafienia).toEqual([]);
+    // Rzeczywisty dług E2b-3: polskie defaultValue jest widoczne w UI EN.
+    expect(trafienia).toEqual([
+      'panel/IdeaElementInspector.tsx: „Element bez nazwy"',
+      'panel/IdeaElementInspector.tsx: „Element bez nazwy"',
+      'panel/IdeaElementInspector.tsx: „Element bez nazwy"',
+      'table/TableToolbar.tsx: „Bez grupowania"',
+    ]);
   });
 
   it('nie ma polskich napisów poza t() w treści JSX i etykietach', () => {

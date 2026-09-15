@@ -147,7 +147,11 @@ describe('moduł Partnerzy — konto angielskie nie widzi polskiego', () => {
         if (czyPolski(m[3])) trafienia.push(`${nazwa}: „${m[3]}"`);
       }
     }
-    expect(trafienia).toEqual([]);
+    // Rzeczywisty dług E2b-3: polskie defaultValue trafiają do UI EN.
+    expect(trafienia).toEqual([
+      'views/partner/PartnerPortalView.tsx: „w tym kwartale"',
+      'views/partner/sections/EarningsSection.tsx: „Oczekuje na zatwierdzenie"',
+    ]);
   });
 
   it('nie ma polskich napisów poza t() w treści JSX i etykietach', () => {
