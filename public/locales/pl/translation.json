@@ -1144,7 +1144,7 @@
         "title": "Zgodność klientów",
         "unknownOrganization": "Nieznana organizacja"
       },
-      "operateTenantsThroughOneControlPlaneFor": "Obsługuj najemców za pośrednictwem jednej płaszczyzny kontroli pod kątem cyklu życia, użytkowników, rozliczeń, przydziałów i ryzyka"
+      "operateTenantsThroughOneControlPlaneFor": "Zarządzaj organizacjami w jednym centrum: cykl życia, użytkownicy, rozliczenia, przydziały i ryzyko"
     },
     "playbookTemplates": {
       "title": "Szablony Playbooków",
@@ -1353,10 +1353,10 @@
       "createYourFirstCategoryToOrganizeContent": "Utwórz pierwszą kategorię, aby uporządkować zawartość"
     },
     "contentFilters": {
-      "from": "Z"
+      "from": "Od"
     },
     "contentSearch": {
-      "draft": "Projekt"
+      "draft": "Wersja robocza"
     },
     "contentTagsManager": {
       "createTagsToOrganizeYourContent": "Utwórz tagi, aby uporządkować treść"
@@ -1398,7 +1398,7 @@
     },
     "modelAuditLog": {
       "searchByEntityOrUser": "Wyszukaj według podmiotu lub użytkownika...",
-      "from": "Z",
+      "from": "Od",
       "noAuditEntriesMatchYourFilters": "Żadne wpisy audytu nie pasują do wybranych filtrów"
     },
     "pricing": {
@@ -1451,11 +1451,11 @@
       "failedLogins": "Nieudane logowanie"
     },
     "superadminRootClosure": {
-      "tenantsAndCustomers": "Najemcy i klienci",
+      "tenantsAndCustomers": "Organizacje i klienci",
       "aIAndConnectorPlatformOps": "Operacje na sztucznej inteligencji i platformie łącznikowej"
     },
     "invoices": {
-      "draft": "Projekt"
+      "draft": "Wersja robocza"
     },
     "backupConfig": {
       "backupsOlderThanThisWillBeDeleted": "Kopie zapasowe starsze niż ta zostaną usunięte",
@@ -1581,9 +1581,9 @@
       "patternExtractionAndPersonalizationFromInteractions": "Ekstrakcja wzorców i personalizacja z interakcji",
       "chatWithAssistant": "Czatuj z Asystentem",
       "templateCreationIsManagedThroughTheCanonical": "Tworzeniem szablonów zarządza się poprzez przepływ pracy w kanonicznej bibliotece podpowiedzi.",
-      "thisBuilderViewIsReadOnlyFor": "Ten widok kreatora jest w przypadku szablonów przeznaczony tylko do odczytu, dopóki akcje tworzenia/edycji/testowania nie zostaną połączone z przepływem pracy rejestru kanonicznego monitu.",
+      "thisBuilderViewIsReadOnlyFor": "Ten widok kreatora jest w przypadku szablonów przeznaczony tylko do odczytu, dopóki akcje tworzenia/edycji/testowania nie zostaną połączone z przepływem pracy rejestru kanonicznego promptu.",
       "loadingTemplates": "Ładowanie szablonów...",
-      "editThisPromptInPromptsLibrary": "Edytuj ten monit w Bibliotece podpowiedzi.",
+      "editThisPromptInPromptsLibrary": "Edytuj ten prompt w Bibliotece podpowiedzi.",
       "templateTestingIsUnavailableHereUntilIt": "Testowanie szablonów jest tutaj niedostępne, dopóki nie zostanie połączone z kanonicznym rejestrem podpowiedzi.",
       "aILearningPatternsQualityMetricsAndPerformance": "Wzorce uczenia się AI, wskaźniki jakości i trendy wydajności",
       "loadingChart": "Ładowanie wykresu...",
@@ -1691,7 +1691,7 @@
     },
     "featureUpdatesAdmin": {
       "manageGlobalAndOrganizationUpdatesSetGovernance": "Zarządzaj aktualizacjami globalnymi i organizacyjnymi, ustalaj zarządzanie i obserwuj wdrażanie.",
-      "draft": "Projekt",
+      "draft": "Wersja robocza",
       "newUpdate": "Nowa aktualizacja",
       "buildTheMessageTargetTheRightAudience": "Zbuduj przekaz, kieruj reklamy do właściwych odbiorców, a następnie opublikuj je tutaj.",
       "publishedUpdatesAreReadOnlyArchiveAnd": "Opublikowane aktualizacje są tylko do odczytu. Zarchiwizuj i opublikuj ponownie, jeśli potrzebujesz poprawionej wiadomości.",
@@ -1716,7 +1716,7 @@
     "invoiceCenter": {
       "thisPeriod": "Ten okres",
       "pending": "Aż do",
-      "draft": "Projekt",
+      "draft": "Wersja robocza",
       "last7Days": "Ostatnie 7 dni",
       "last30Days": "Ostatnie 30 dni",
       "last90Days": "Ostatnie 90 dni",
@@ -1730,7 +1730,7 @@
       "configureAIProvidersRoutingAndMonitorUsage": "Skonfiguruj dostawców AI, routing i monitoruj wykorzystanie",
       "configureWhichModelsServeEachPerformanceTier": "Skonfiguruj, które modele obsługują poszczególne warstwy wydajności",
       "incidentsDerivedFromPeriodicProviderHealthChecks": "Incydenty wynikające z okresowych kontroli stanu dostawcy",
-      "loading": "Załadunek…",
+      "loading": "Ładowanie…",
       "noIncidentDataAvailableYetHealthEvents": "Brak dostępnych danych o zdarzeniach (zdarzenia dotyczące kondycji zaczynają się gromadzić po pewnym czasie działania serwera).",
       "leaveEmptyToReuseTheSourceProvider": "Pozostaw puste, aby ponownie użyć klucza dostawcy źródłowego, lub wprowadź nowy."
     },
@@ -1772,7 +1772,7 @@
       "generateASigningSecretNextWithoutOne": "Następnie wygenerować sekret podpisu? Bez niego wychodzące webhooki dla tej subskrypcji będą niepodpisane.",
       "skipForNow": "Pomiń na razie",
       "thisIsTheOnlyTimeYouWill2": "To jedyny raz, kiedy zobaczysz ten sekret. Zapisz go teraz w aplikacji subskrybenta.",
-      "back": "Z powrotem"
+      "back": "Wstecz"
     },
     "presentationGovernanceWatchlist": {
       "clearActiveSavedSearch": "Wyczyść aktywne zapisane wyszukiwanie",
@@ -1872,7 +1872,7 @@
       "withUsage": "Z użyciem"
     },
     "superAdminSignals": {
-      "loading": "Załadunek…",
+      "loading": "Ładowanie…",
       "systemAlertsClientTicketsAndUserFeedback": "Alerty systemowe, zgłoszenia klientów i opinie użytkowników (nieprzeczytane)"
     },
     "system": {
@@ -1888,10 +1888,10 @@
       "loadingSettings": "Ładowanie ustawień..."
     },
     "tenantCommandCenter": {
-      "singleOperatorLandingForTenantLifecycleCommercial": "Obsługa jednego operatora w odniesieniu do cyklu życia najemcy, stanu komercyjnego, przydziałów, stanu zasad i ryzyka platformy.",
-      "selectATenantToInspectCommercialAnd": "Wybierz najemcę, aby sprawdzić stan handlowy i kwotowy.",
+      "singleOperatorLandingForTenantLifecycleCommercial": "Jedno centrum obsługi cyklu życia organizacji, jej sytuacji handlowej, limitów, zasad i ryzyka platformy.",
+      "selectATenantToInspectCommercialAnd": "Wybierz organizację, aby sprawdzić jej sytuację handlową i wykorzystanie limitów.",
       "commandSummaryAcrossLifecycleBillingQuotasAI": "Podsumowanie poleceń w całym cyklu życia, rozliczeniach, przydziałach, wykorzystaniu sztucznej inteligencji i zarządzaniu.",
-      "loadingTenantPosture": "Ładowanie stanu najemcy...",
+      "loadingTenantPosture": "Ładowanie danych organizacji...",
       "spentThisPeriod": "Spędziłem ten okres",
       "quotasAndBudgets": "Kwoty i budżety"
     },
@@ -1903,25 +1903,25 @@
     },
     "evaluations": {
       "trackBenchmarkRunsRegressionChecksAndReadiness": "Śledź przebiegi testów porównawczych, kontrole regresji i bramki gotowości przed wydaniem.",
-      "draft": "Projekt",
+      "draft": "Wersja robocza",
       "failed": "Przegrany",
       "passedAndFailedEvaluationsNowRequireA": "Pozytywne i nieudane oceny wymagają teraz niepustego zbioru danych, niepustych wyników i wyniku."
     },
     "knowledgeAssignment": {
-      "assignPillsToTheWorkerEditPill": "Przypisz pigułki pracownikowi, edytuj zawartość i sekcje pigułek oraz monitoruj zasięg produktów.",
-      "showsWhetherTheWorkerHasAtLeast": "Pokazuje, czy pracownik ma przypisaną co najmniej jedną pigułkę dla każdej dostępnej rodziny produktów.",
-      "governWholePillsSelectedSectionsAndFallback": "Zarządzaj całymi pigułkami, wybranymi sekcjami i zachowaniem awaryjnym na pracownika.",
-      "noKnowledgeAssignedYetBootstrapTheDefault": "Nie przypisano jeszcze żadnej wiedzy. Załaduj domyślne pigułki lub dodaj konkretną pigułkę ręcznie.",
-      "createOrUpdateTheWorkerSGoverned": "Utwórz lub zaktualizuj pigułki produktów dla pracowników, w tym zawartość na poziomie sekcji.",
+      "assignPillsToTheWorkerEditPill": "Przypisuj pracownikowi pakiety wiedzy, edytuj ich treść i sekcje oraz monitoruj pokrycie produktów.",
+      "showsWhetherTheWorkerHasAtLeast": "Pokazuje, czy pracownik ma co najmniej jeden pakiet wiedzy dla każdej dostępnej rodziny produktów.",
+      "governWholePillsSelectedSectionsAndFallback": "Zarządzaj całymi pakietami wiedzy, wybranymi sekcjami i zachowaniem awaryjnym każdego pracownika.",
+      "noKnowledgeAssignedYetBootstrapTheDefault": "Nie przypisano jeszcze wiedzy. Wczytaj domyślne pakiety lub dodaj wybrany pakiet ręcznie.",
+      "createOrUpdateTheWorkerSGoverned": "Twórz i aktualizuj kontrolowane pakiety wiedzy pracownika, w tym treść poszczególnych sekcji.",
       "cancelEdit": "Anuluj edycję",
-      "draft": "Projekt",
+      "draft": "Wersja robocza",
       "changeNotesForThisVersion": "Zmień notatki dla tej wersji",
-      "reviewWhichPillsExistWhichProductsThey": "Sprawdź, jakie pigułki istnieją, jakie produkty obejmują i czy są przypisane.",
-      "noKnowledgePillsYetCreateAPill": "Nie ma jeszcze pigułek wiedzy. Utwórz pigułkę lub załaduj domyślny zestaw produktów."
+      "reviewWhichPillsExistWhichProductsThey": "Sprawdź dostępne pakiety wiedzy, objęte nimi produkty i przypisania.",
+      "noKnowledgePillsYetCreateAPill": "Nie ma jeszcze pakietów wiedzy. Utwórz pakiet lub wczytaj zestaw domyślny."
     },
     "release": {
       "createGovernedReleaseEntriesAndActivateA": "Twórz wpisy wersji regulowanych i aktywuj zweryfikowaną wersję roboczą.",
-      "draft": "Projekt",
+      "draft": "Wersja robocza",
       "readyReleasesRequireAnActiveProfileAnd": "„Gotowe” wydania wymagają aktywnego profilu i pozytywnej oceny zawierającej zbiór danych, wyniki i wynik."
     },
     "workerAnalytics": {
@@ -1936,7 +1936,7 @@
       "noWebCitationsWereUsedInThis": "W tym podglądzie nie wykorzystano żadnych cytatów z Internetu."
     },
     "workerProfile": {
-      "draft": "Projekt",
+      "draft": "Wersja robocza",
       "describeTheCommunicationTone": "Opisz ton komunikacji...",
       "documentTheIntentOfThisWorkerProfile": "Udokumentuj przeznaczenie tej wersji profilu pracownika, kluczowe obszary ryzyka lub uwagi dotyczące wdrożenia...",
       "savingCreatesANewProfileVersionAnd": "Zapisanie tworzy nową wersję profilu i aktywuje ją."
@@ -2006,7 +2006,7 @@
     },
     "usageAnalytics": {
       "comprehensiveInsightsIntoAIUsagePatternsAnd": "Kompleksowy wgląd w wzorce i koszty wykorzystania sztucznej inteligencji",
-      "loading": "Załadunek...",
+      "loading": "Ładowanie...",
       "noUsageTrendDataForThisPeriod": "Brak danych o tendencjach użytkowania w tym okresie",
       "noModelUsageRecordedInThisPeriod": "W tym okresie nie zarejestrowano żadnego użycia modelu",
       "noCapabilityUsageRecordedInThisPeriod": "W tym okresie nie zarejestrowano żadnego wykorzystania możliwości"
@@ -2028,7 +2028,7 @@
     "bulkOperations": {
       "importUsersFromACSVFileDownload": "Importuj użytkowników z pliku CSV. Pobierz nasz szablon dla odpowiedniego formatu.",
       "matchYourCSVColumnsToTheUser": "Dopasuj kolumny CSV do pól użytkownika. Pola wymagane są oznaczone *.",
-      "back": "Z powrotem",
+      "back": "Wstecz",
       "pleaseWaitWhileWeImportYourUsers": "Poczekaj, aż zaimportujemy Twoich użytkowników. Może to chwilę potrwać.",
       "importCompletedWithErrors": "Import zakończony z błędami",
       "selectUsersAndAssignRolesInBulk": "Wybierz użytkowników i przypisz role zbiorczo",
@@ -2043,13 +2043,13 @@
       "clickBlocksInTheLibraryToAdd": "Kliknij bloki w bibliotece, aby je dodać"
     },
     "promptManagementUI": {
-      "selectAPromptToViewOrEdit": "Wybierz monit do wyświetlenia lub edycji",
+      "selectAPromptToViewOrEdit": "Wybierz prompt do wyświetlenia lub edycji",
       "createNewPrompt": "Utwórz nowy monit",
-      "briefDescriptionOfThisPrompt": "Krótki opis tego monitu...",
-      "enterTheSystemPrompt": "Wprowadź monit systemowy..."
+      "briefDescriptionOfThisPrompt": "Krótki opis tego promptu...",
+      "enterTheSystemPrompt": "Wprowadź prompt systemowy..."
     },
     "promptTestBench": {
-      "runTestsToValidateYourPromptAcross": "Uruchom testy, aby zweryfikować monit w różnych językach"
+      "runTestsToValidateYourPromptAcross": "Uruchom testy, aby zweryfikować prompt w różnych językach"
     },
     "sLA": {
       "serviceLevelAgreementMonitoringAndCompliance": "Monitorowanie i zgodność z umową dotyczącą poziomu usług",
@@ -2074,7 +2074,7 @@
       "createYourFirstRule": "Utwórz swoją pierwszą regułę",
       "defineATriggerAndAnActionConfig": "Zdefiniuj wyzwalacz i akcję. Pola konfiguracyjne akceptują obiekty JSON.",
       "whatDoesThisRuleDo": "Co robi ta zasada?",
-      "loading": "Załadunek…"
+      "loading": "Ładowanie…"
     },
     "customerCommunication": {
       "sendAnnouncementsAndMessagesToCustomers": "Wysyłaj ogłoszenia i wiadomości do klientów",
@@ -2153,10 +2153,10 @@
     "mFA": {
       "selectUser": "Wybierz opcję Użytkownik",
       "selectAUserToInspectMFAMethods": "Wybierz użytkownika, aby sprawdzić metody usługi MFA",
-      "loading": "Załadunek..."
+      "loading": "Ładowanie..."
     },
     "passwordPolicy": {
-      "loading": "Załadunek..."
+      "loading": "Ładowanie..."
     },
     "securityEvents": {
       "monitorAndManageSecurityEvents": "Monitoruj i zarządzaj zdarzeniami związanymi z bezpieczeństwem",
@@ -2166,12 +2166,12 @@
       "manageSecuritySettingsIPWhitelistingDevicesMFA": "Zarządzaj ustawieniami zabezpieczeń, białą listą adresów IP, urządzeniami, usługą MFA i monitoruj zdarzenia związane z bezpieczeństwem"
     },
     "customerHealth": {
-      "monitorCustomerHealthAndEngagement": "Monitoruj zdrowie i zaangażowanie klientów",
-      "loading": "Załadunek..."
+      "monitorCustomerHealthAndEngagement": "Monitoruj kondycję i zaangażowanie klientów",
+      "loading": "Ładowanie..."
     },
     "customerSuccessNotes": {
       "trackCustomerInteractionsAndSuccessMetrics": "Śledź interakcje z klientami i wskaźniki sukcesu",
-      "loading": "Załadunek...",
+      "loading": "Ładowanie...",
       "writeTheNote": "Napisz notatkę..."
     },
     "supportModule": {
