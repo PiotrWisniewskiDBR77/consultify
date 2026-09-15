@@ -40084,7 +40084,13 @@
     },
     "uploadNeedsProject": "Ten widok nie ma wybranego projektu, więc pliku nie da się dodać do dokumentów projektu. Wyślij go w zakładce „Moje dokumenty\" albo otwórz panel z poziomu projektu.",
     "uploadFailed": "Wysyłka pliku „{{name}}\" nie powiodła się. Plik nie został zapisany.",
-    "uploadFailedWithReason": "Wysyłka pliku „{{name}}\" nie powiodła się: {{reason}}"
+    "uploadFailedWithReason": "Wysyłka pliku „{{name}}\" nie powiodła się: {{reason}}",
+    "createTask": "Utwórz zadanie",
+    "taskCreated": "Zadanie utworzone",
+    "reviewTaskTitle": "Przejrzyj dokument: {{name}}",
+    "reviewTaskDescription": "Przejrzyj dokument źródłowy i zapisz wymagane dalsze działania.",
+    "taskCreateFailed": "Nie udało się utworzyć zadania.",
+    "taskCreateFailedWithReason": "Tworzenie zadania nie powiodło się: {{reason}}"
   },
   "intelligence": {
     "analyzing": "Analizowanie…",

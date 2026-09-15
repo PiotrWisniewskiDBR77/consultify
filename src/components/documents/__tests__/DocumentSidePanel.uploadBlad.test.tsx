@@ -16,6 +16,7 @@ const hoisted = vi.hoisted(() => ({
   uploadDocumentToLibrary: vi.fn(),
   getProjectDocuments: vi.fn(),
   getUserDocuments: vi.fn(),
+  createPersonalTask: vi.fn(),
 }));
 
 vi.mock('@/services/api', () => ({
@@ -23,6 +24,7 @@ vi.mock('@/services/api', () => ({
     uploadDocumentToLibrary: hoisted.uploadDocumentToLibrary,
     getProjectDocuments: hoisted.getProjectDocuments,
     getUserDocuments: hoisted.getUserDocuments,
+    createPersonalTask: hoisted.createPersonalTask,
     moveDocumentToProject: vi.fn(),
     deleteDocument: vi.fn(),
     acknowledgeDocument: vi.fn(),
@@ -51,6 +53,40 @@ beforeEach(() => {
   vi.clearAllMocks();
   hoisted.getProjectDocuments.mockResolvedValue([]);
   hoisted.getUserDocuments.mockResolvedValue([]);
+  hoisted.createPersonalTask.mockResolvedValue({ id: 'task-from-document-1' });
+});
+
+describe('S1.14 — dokument tworzy prawdziwe zadanie My Work', () => {
+  it('wysyła źródło dokumentu i pokazuje odczytywalne potwierdzenie', async () => {
+    hoisted.getUserDocuments.mockResolvedValue([
+      {
+        id: 'doc-7',
+        originalName: 'Operational charter.docx',
+        filename: 'operational-charter.docx',
+        fileType: 'docx',
+        fileSize: 1200,
+        createdAt: '2026-09-15T00:00:00.000Z',
+        status: 'ready',
+      },
+    ]);
+    render(<DocumentSidePanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'documents.myDocs' }));
+    expect(await screen.findByText('Operational charter.docx')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
+
+    await waitFor(() =>
+      expect(hoisted.createPersonalTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Review document: Operational charter.docx',
+          sourceType: 'document',
+          sourceId: 'doc-7',
+          idempotencyKey: expect.any(String),
+        })
+      )
+    );
+    expect(await screen.findByText('Task created')).toBeInTheDocument();
+  });
 });
 
 describe('P-P05 — wysyłka dokumentu nie kończy się w ciszy', () => {
