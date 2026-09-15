@@ -7,8 +7,8 @@ import { reviewInitiativeCard } from '../reviewInitiativeCard';
 import { PostgresMaterialCommandUnitOfWork } from '../postgresMaterialCommandUnitOfWork';
 
 const url = new URL(process.env.DATABASE_URL || 'postgresql://localhost/UNASSIGNED');
-if (url.hostname !== '127.0.0.1' || url.port !== '6459' || url.pathname !== '/cx8_e0') {
-  throw new Error('A1_ASSIGNED_LOCAL_DATABASE_REQUIRED');
+if (url.hostname !== '127.0.0.1' || url.port !== '6454' || url.pathname !== '/a3_w88') {
+  throw new Error('A3_ASSIGNED_LOCAL_DATABASE_REQUIRED');
 }
 const pool = new Pool({ connectionString: url.toString(), max: 2 });
 const uow = new PostgresMaterialCommandUnitOfWork(pool);
@@ -49,7 +49,7 @@ afterEach(async () => {
 });
 afterAll(async () => pool.end());
 
-describe('A-1 canonical initiative card estimate on real PostgreSQL', () => {
+describe('A3 canonical initiative card estimate on real PostgreSQL', () => {
   it('keeps the estimate receipt fully null for a card published without an estimate', async () => {
     const organizationId = randomUUID();
     const initiativeId = `a1-no-estimate-${randomUUID()}`;
