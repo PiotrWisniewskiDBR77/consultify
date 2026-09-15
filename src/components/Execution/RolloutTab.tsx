@@ -314,7 +314,7 @@ function deriveRisks(
     });
 }
 
-function deriveClosures(initiatives: FullInitiative[]): DerivedClosure[] {
+function deriveClosures(initiatives: FullInitiative[], t: ReturnType<typeof useTranslation>['t']): DerivedClosure[] {
   const completed = initiatives.filter((i) =>
     COMPLETED_STATUSES.has(String(i.status || '').toUpperCase())
   );
@@ -325,21 +325,33 @@ function deriveClosures(initiatives: FullInitiative[]): DerivedClosure[] {
     const status = String(i.status || '').toUpperCase();
     rows.push({
       id: `derived-handover-${i.id}`,
-      title: `Handover: transfer ${name} deliverables to operations`,
+      title: t(
+        'execution.rollout.closure.derived.handover',
+        `Handover: transfer ${name} deliverables to operations`,
+        { name }
+      ),
       category: 'Handover',
       status: 'OPEN',
       derived: true,
     });
     rows.push({
       id: `derived-signoff-${i.id}`,
-      title: `Sign-off: obtain sponsor acceptance for ${name}`,
+      title: t(
+        'execution.rollout.closure.derived.signOff',
+        `Sign-off: obtain sponsor acceptance for ${name}`,
+        { name }
+      ),
       category: 'Sign-off',
       status: status === 'ARCHIVED' ? 'DONE' : 'OPEN',
       derived: true,
     });
     rows.push({
       id: `derived-closure-${i.id}`,
-      title: `Closure: capture lessons learned & archive ${name}`,
+      title: t(
+        'execution.rollout.closure.derived.closure',
+        `Closure: capture lessons learned & archive ${name}`,
+        { name }
+      ),
       category: 'Closure',
       status: status === 'ARCHIVED' ? 'DONE' : 'OPEN',
       derived: true,
@@ -397,7 +409,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
     () => deriveRisks(initiatives, riskSignals, delaySignals),
     [initiatives, riskSignals, delaySignals]
   );
-  const derivedClosures = useMemo(() => deriveClosures(initiatives), [initiatives]);
+  const derivedClosures = useMemo(() => deriveClosures(initiatives, t), [initiatives, t]);
 
   const showDerivedKpis = kpis.length === 0 && derivedKpis.length > 0;
   const showDerivedRisks = risks.length === 0 && derivedRisks.length > 0;

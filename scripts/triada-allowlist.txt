@@ -13,3 +13,5 @@ src/components/Organization/redesign/__tests__/OrganizationKnowledgeGraphScreen.
 # Asercja NEGATYWNA pilnująca braku crimson w chipie filtra (1.1-Z4 #2, 06.09.2026)
 */src/components/Conclusions/__tests__/ConclusionsHub.filterChipCanon.test.tsx
 src/components/Conclusions/__tests__/ConclusionsHub.filterChipCanon.test.tsx
+# W73 K6: właściciel jawnie pozostawił kolor postępu kreatora c-accent bez zmian.
+src/components/Onboarding/EnterpriseOnboardingWizard.tsx
