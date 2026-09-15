@@ -1,19 +1,27 @@
 /**
  * deliverableTemplateSeedService — DBR77 curated template seed data.
  *
- * Eksportuje stałe z danymi szablonów (używane przez unit testy)
- * oraz funkcję seedDbr77Templates(), która wykonuje seed SQL idempotentnie.
+ * Exports the template seed constants (consumed by unit tests) and
+ * seedDbr77Templates(), which runs the seed SQL idempotently.
  *
- * Seed jest normalnie wykonywany przez runTablePlatformMigrations() poprzez
- * plik server/migrations/784_dbr77_template_seeds.sql (pattern 7xx_*.sql).
- * Ta funkcja jest alternatywną ścieżką do uruchomienia ręcznego.
+ * DEC-461 (F8b, 2026-09-15): every human-facing string here — template names,
+ * descriptions, section/slide titles, table field names and option values — is
+ * ENGLISH. These rows are written straight into report_builder_templates /
+ * presentation_templates / tp_base_templates and are then snapshotted into
+ * v8_output_artifacts.title_snapshot, so there is no per-request locale on the
+ * read path: a Polish seed would be permanently Polish for every viewer.
+ * Polish equivalents ship as a separate PL seed (DEC-461), not from here.
+ *
+ * The seed normally runs through runTablePlatformMigrations() via
+ * server/migrations/784_dbr77_template_seeds.sql (the 7xx_*.sql pattern).
+ * That function is the alternative manual path.
  */
 
 import logger from '../utils/Logger.js';
 import { queryRun } from '../utils/queryHelpers.js';
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Static seed data (źródło prawdy dla unit testów)
+// Static seed data (source of truth for unit tests)
 // ──────────────────────────────────────────────────────────────────────────────
 
 export interface DocTemplateSection {
@@ -66,9 +74,9 @@ export interface TableTemplateSeed {
 export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
   {
     id: 'dbr77-doc-audit-report',
-    name: 'Raport audytowy',
+    name: 'Audit Report',
     description:
-      'Ustrukturyzowany raport z audytu organizacyjnego lub procesowego. Sekcje: streszczenie, metodologia, wyniki, rekomendacje.',
+      'Structured report from an organizational or process audit. Sections: summary, methodology, findings, recommendations.',
     source_type: 'DELIVERABLE',
     report_type: 'audit_report',
     is_system: true,
@@ -77,38 +85,38 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
       {
         key: 'executive_summary',
         type: 'summary',
-        title: 'Streszczenie wykonawcze',
+        title: 'Executive summary',
         order: 0,
         required: true,
         defaultLength: 'short',
-        purpose: 'Kluczowe wyniki i rekomendacje w skrócie',
+        purpose: 'Key findings and recommendations in brief',
       },
       {
         key: 'methodology',
         type: 'methodology',
-        title: 'Metodologia',
+        title: 'Methodology',
         order: 1,
         required: true,
         defaultLength: 'short',
-        purpose: 'Zakres i podejście badawcze',
+        purpose: 'Scope and research approach',
       },
       {
         key: 'findings',
         type: 'findings',
-        title: 'Wyniki',
+        title: 'Findings',
         order: 2,
         required: true,
         defaultLength: 'long',
-        purpose: 'Szczegółowe ustalenia według obszarów',
+        purpose: 'Detailed findings by area',
       },
       {
         key: 'recommendations',
         type: 'recommendations',
-        title: 'Rekomendacje',
+        title: 'Recommendations',
         order: 3,
         required: true,
         defaultLength: 'medium',
-        purpose: 'Priorytety działań i plan wdrożenia',
+        purpose: 'Action priorities and implementation plan',
       },
     ],
   },
@@ -116,7 +124,7 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
     id: 'dbr77-doc-exec-memo',
     name: 'Executive memo',
     description:
-      'Zwięzłe memo decyzyjne dla zarządu. Sekcje: kontekst, problem, opcje, rekomendacja.',
+      'A concise decision memo for the board. Sections: context, problem, options, recommendation.',
     source_type: 'DELIVERABLE',
     report_type: 'exec_memo',
     is_system: true,
@@ -125,11 +133,11 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
       {
         key: 'context',
         type: 'context',
-        title: 'Kontekst',
+        title: 'Context',
         order: 0,
         required: true,
         defaultLength: 'short',
-        purpose: 'Sytuacja i tło decyzji',
+        purpose: 'Situation and decision background',
       },
       {
         key: 'problem',
@@ -138,33 +146,33 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
         order: 1,
         required: true,
         defaultLength: 'short',
-        purpose: 'Kluczowe wyzwanie do rozwiązania',
+        purpose: 'The key challenge to resolve',
       },
       {
         key: 'options',
         type: 'list',
-        title: 'Opcje',
+        title: 'Options',
         order: 2,
         required: true,
         defaultLength: 'medium',
-        purpose: 'Warianty rozwiązania z analizą',
+        purpose: 'Options with analysis',
       },
       {
         key: 'recommendation',
         type: 'recommendations',
-        title: 'Rekomendacja',
+        title: 'Recommendation',
         order: 3,
         required: true,
         defaultLength: 'short',
-        purpose: 'Rekomendowana opcja z uzasadnieniem',
+        purpose: 'Recommended option with rationale',
       },
     ],
   },
   {
     id: 'dbr77-doc-status-report',
-    name: 'Raport statusowy',
+    name: 'Status Report',
     description:
-      'Okresowy raport postępu projektu dla sponsora. Sekcje: streszczenie statusu, zakres, postęp, ryzyka, następne kroki.',
+      'Periodic project progress report for the sponsor. Sections: status summary, scope, progress, risks, next steps.',
     source_type: 'DELIVERABLE',
     report_type: 'status_report',
     is_system: true,
@@ -173,47 +181,47 @@ export const DBR77_DOC_TEMPLATES: DocTemplateSeed[] = [
       {
         key: 'status_summary',
         type: 'summary',
-        title: 'Streszczenie statusu',
+        title: 'Status summary',
         order: 0,
         required: true,
         defaultLength: 'short',
-        purpose: 'Status RAG, kluczowe osiągnięcia i alerty',
+        purpose: 'RAG status, key achievements and alerts',
       },
       {
         key: 'scope',
         type: 'context',
-        title: 'Zakres i cele',
+        title: 'Scope and objectives',
         order: 1,
         required: true,
         defaultLength: 'short',
-        purpose: 'Cele okresu i zakres prac',
+        purpose: 'Period objectives and scope of work',
       },
       {
         key: 'progress',
         type: 'findings',
-        title: 'Postęp i osiągnięcia',
+        title: 'Progress and achievements',
         order: 2,
         required: true,
         defaultLength: 'long',
-        purpose: 'Co zrobiono względem planu',
+        purpose: 'What was delivered against plan',
       },
       {
         key: 'risks',
         type: 'list',
-        title: 'Ryzyka i blokery',
+        title: 'Risks and blockers',
         order: 3,
         required: true,
         defaultLength: 'medium',
-        purpose: 'Otwarte ryzyka, blokery, plan mitygacji',
+        purpose: 'Open risks, blockers, mitigation plan',
       },
       {
         key: 'next_steps',
         type: 'recommendations',
-        title: 'Następne kroki',
+        title: 'Next steps',
         order: 4,
         required: true,
         defaultLength: 'short',
-        purpose: 'Priorytety i decyzje na kolejny okres',
+        purpose: 'Priorities and decisions for the next period',
       },
     ],
   },
@@ -224,106 +232,106 @@ export const DBR77_DECK_TEMPLATES: DeckTemplateSeed[] = [
     id: 'dbr77-deck-board',
     name: 'Board deck',
     description:
-      'Prezentacja dla zarządu lub rady nadzorczej. Układ: okładka, agenda, kontekst, wyniki, plan, Q&A.',
+      'Presentation for the board or supervisory board. Layout: cover, agenda, context, results, plan, Q&A.',
     deck_type: 'board_presentation',
     is_system: true,
     is_active: true,
     outline: [
-      { intent: 'cover', title: 'Tytuł prezentacji' },
+      { intent: 'cover', title: 'Title slide' },
       { intent: 'agenda', title: 'Agenda' },
-      { intent: 'context', title: 'Kontekst i tło' },
-      { intent: 'performance_overview', title: 'Wyniki i status' },
-      { intent: 'roadmap', title: 'Plan działania' },
-      { intent: 'next_steps', title: 'Decyzje i Q&A' },
+      { intent: 'context', title: 'Context and background' },
+      { intent: 'performance_overview', title: 'Results and status' },
+      { intent: 'roadmap', title: 'Action plan' },
+      { intent: 'next_steps', title: 'Decisions and Q&A' },
     ],
   },
   {
     id: 'dbr77-deck-diagnostic',
     name: 'Diagnostic deck',
     description:
-      'Diagnoza organizacji lub procesu. Układ: teza, dane, analiza, wnioski, rekomendacje.',
+      'Diagnosis of an organization or a process. Layout: thesis, data, analysis, conclusions, recommendations.',
     deck_type: 'diagnostic',
     is_system: true,
     is_active: true,
     outline: [
-      { intent: 'cover', title: 'Diagnoza' },
-      { intent: 'executive_summary', title: 'Teza i kluczowe wnioski' },
-      { intent: 'data_overview', title: 'Dane i obserwacje' },
-      { intent: 'analysis', title: 'Analiza' },
-      { intent: 'key_messages', title: 'Wnioski' },
-      { intent: 'recommendations', title: 'Rekomendacje' },
+      { intent: 'cover', title: 'Diagnosis' },
+      { intent: 'executive_summary', title: 'Thesis and key conclusions' },
+      { intent: 'data_overview', title: 'Data and observations' },
+      { intent: 'analysis', title: 'Analysis' },
+      { intent: 'key_messages', title: 'Conclusions' },
+      { intent: 'recommendations', title: 'Recommendations' },
     ],
   },
   {
     id: 'dbr77-deck-investor-pitch',
     name: 'Investor pitch',
     description:
-      'Pitch inwestorski: problem→rozwiązanie→trakcja→ask. Układ: okładka, teza, problem/rynek, rozwiązanie, model+trakcja, plan, ask.',
+      'Investor pitch: problem to solution to traction to ask. Layout: cover, thesis, problem/market, solution, model and traction, plan, ask.',
     deck_type: 'investor_pitch',
     is_system: true,
     is_active: true,
     outline: [
-      { intent: 'cover', title: 'Pitch inwestorski' },
-      { intent: 'executive_summary', title: 'Teza i ask' },
-      { intent: 'context', title: 'Problem i rynek' },
-      { intent: 'key_messages', title: 'Rozwiązanie i przewaga' },
-      { intent: 'performance_overview', title: 'Trakcja i model' },
-      { intent: 'roadmap', title: 'Plan i kamienie milowe' },
-      { intent: 'next_steps', title: 'Ask i następne kroki' },
+      { intent: 'cover', title: 'Investor pitch' },
+      { intent: 'executive_summary', title: 'Thesis and the ask' },
+      { intent: 'context', title: 'Problem and market' },
+      { intent: 'key_messages', title: 'Solution and advantage' },
+      { intent: 'performance_overview', title: 'Traction and model' },
+      { intent: 'roadmap', title: 'Plan and milestones' },
+      { intent: 'next_steps', title: 'The ask and next steps' },
     ],
   },
 ];
 
 export const DBR77_TABLE_TEMPLATES: TableTemplateSeed[] = [
   {
-    name: 'Rejestr ryzyk',
+    name: 'Risk Register',
     description:
-      'Tabela do śledzenia ryzyk projektu lub organizacji. Kolumny: ryzyko, prawdopodobieństwo, wpływ, właściciel, status.',
+      'Table for tracking project or organizational risks. Columns: risk, likelihood, impact, owner, status.',
     category: 'risk',
     is_featured: true,
     schema_snapshot: {
       fields: [
-        { name: 'Ryzyko', type: 'text' },
+        { name: 'Risk', type: 'text' },
         {
-          name: 'Prawdopodobieństwo',
+          name: 'Likelihood',
           type: 'singleSelect',
-          options: ['Niskie', 'Średnie', 'Wysokie'],
+          options: ['Low', 'Medium', 'High'],
         },
-        { name: 'Wpływ', type: 'singleSelect', options: ['Niski', 'Średni', 'Wysoki'] },
-        { name: 'Właściciel', type: 'text' },
-        { name: 'Status', type: 'singleSelect', options: ['Otwarty', 'W trakcie', 'Zamknięty'] },
+        { name: 'Impact', type: 'singleSelect', options: ['Low', 'Medium', 'High'] },
+        { name: 'Owner', type: 'text' },
+        { name: 'Status', type: 'singleSelect', options: ['Open', 'In progress', 'Closed'] },
       ],
     },
   },
   {
-    name: 'Dashboard KPI',
+    name: 'KPI Dashboard',
     description:
-      'Tabela wskaźników KPI z celami i aktualnymi wynikami. Kolumny: wskaźnik, cel, wynik, odchylenie, trend.',
+      'KPI table with targets and current results. Columns: metric, target, actual, variance, trend.',
     category: 'kpi',
     is_featured: true,
     schema_snapshot: {
       fields: [
-        { name: 'Wskaźnik', type: 'text' },
-        { name: 'Cel', type: 'number' },
-        { name: 'Wynik', type: 'number' },
-        { name: 'Odchylenie', type: 'number' },
-        { name: 'Trend', type: 'singleSelect', options: ['↑ Wzrost', '→ Stabilny', '↓ Spadek'] },
+        { name: 'Metric', type: 'text' },
+        { name: 'Target', type: 'number' },
+        { name: 'Actual', type: 'number' },
+        { name: 'Variance', type: 'number' },
+        { name: 'Trend', type: 'singleSelect', options: ['↑ Up', '→ Flat', '↓ Down'] },
       ],
     },
   },
   {
-    name: 'Rejestr inicjatyw',
+    name: 'Initiative Register',
     description:
-      'Tabela do śledzenia inicjatyw/zadań z priorytetem i postępem. Kolumny: inicjatywa, właściciel, priorytet, status, postęp.',
+      'Table for tracking initiatives and tasks with priority and progress. Columns: initiative, owner, priority, status, progress.',
     category: 'initiative',
     is_featured: true,
     schema_snapshot: {
       fields: [
-        { name: 'Inicjatywa', type: 'text' },
-        { name: 'Właściciel', type: 'text' },
-        { name: 'Priorytet', type: 'singleSelect', options: ['Wysoki', 'Średni', 'Niski'] },
-        { name: 'Status', type: 'singleSelect', options: ['Backlog', 'W toku', 'Zrobione'] },
-        { name: 'Postęp (%)', type: 'number' },
+        { name: 'Initiative', type: 'text' },
+        { name: 'Owner', type: 'text' },
+        { name: 'Priority', type: 'singleSelect', options: ['High', 'Medium', 'Low'] },
+        { name: 'Status', type: 'singleSelect', options: ['Backlog', 'In progress', 'Done'] },
+        { name: 'Progress (%)', type: 'number' },
       ],
     },
   },
