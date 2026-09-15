@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const postureTone = (value: number, warningThreshold: number, criticalThreshold: number) => {
   if (value >= criticalThreshold) return 'text-danger-600 dark:text-danger-400';
   if (value >= warningThreshold) return 'text-amber-600 dark:text-amber-400';
@@ -87,8 +88,7 @@ export const GlobalSecurityPostureView: React.FC = () => {
           Global Security Posture
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Enterprise evidence for privileged sessions, approval debt, incidents, MFA/SSO posture,
-          and operator blast radius.
+          {tlumaczPozaHookiem("superadmin.globalSecurityPosture.enterpriseEvidenceForPrivilegedSessionsApprovalDebt", "Enterprise evidence for privileged sessions, approval debt, incidents, MFA/SSO posture, and operator blast radius.")}
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export const GlobalSecurityPostureView: React.FC = () => {
                 {posture.activePrivilegedSessions}
               </div>
               <div className="mt-2 text-xs text-slate-500">
-                Active admin sessions that can reach P33.
+                {tlumaczPozaHookiem("superadmin.globalSecurityPosture.activeAdminSessionsThatCanReachP33", "Active admin sessions that can reach P33.")}
               </div>
             </div>
 
@@ -153,7 +153,7 @@ export const GlobalSecurityPostureView: React.FC = () => {
                 {data.systemHealth?.status || 'unknown'}
               </div>
               <div className="mt-2 text-xs text-slate-500">
-                Overall control plane status from the system health monitor.
+                {tlumaczPozaHookiem("superadmin.globalSecurityPosture.overallControlPlaneStatusFromTheSystem", "Overall control plane status from the system health monitor.")}
               </div>
             </div>
           </div>
@@ -212,16 +212,13 @@ export const GlobalSecurityPostureView: React.FC = () => {
               </h3>
               <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
                 <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-                  Privileged activity is visible through admin session stats, audit counts, and
-                  incident views.
+                  {tlumaczPozaHookiem("superadmin.globalSecurityPosture.privilegedActivityIsVisibleThroughAdminSession", "Privileged activity is visible through admin session stats, audit counts, and incident views.")}
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-                  MFA and SSO controls are separated from billing and support operations through
-                  capability-based auth.
+                  {tlumaczPozaHookiem("superadmin.globalSecurityPosture.mFAAndSSOControlsAreSeparatedFrom", "MFA and SSO controls are separated from billing and support operations through capability-based auth.")}
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-                  Security failures remain fail-closed: unresolved audit debt and critical incidents
-                  stay visible in the operator shell.
+                  {tlumaczPozaHookiem("superadmin.globalSecurityPosture.securityFailuresRemainFailClosedUnresolvedAudit", "Security failures remain fail-closed: unresolved audit debt and critical incidents stay visible in the operator shell.")}
                 </div>
               </div>
             </div>

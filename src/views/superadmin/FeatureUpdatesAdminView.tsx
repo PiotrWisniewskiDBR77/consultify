@@ -24,6 +24,8 @@ import {
   type ManagedFeatureUpdateInput,
 } from '../../services/api/admin.api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type ScopeFilter = 'relevant' | 'global' | 'organization';
 
 type OrganizationOption = {
@@ -345,7 +347,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
               Release communications
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Manage global and organization updates, set governance, and watch adoption.
+              {tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.manageGlobalAndOrganizationUpdatesSetGovernance", "Manage global and organization updates, set governance, and watch adoption.")}
             </p>
           </div>
 
@@ -366,7 +368,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
               className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
             >
               <option value="all">All statuses</option>
-              <option value="draft">Draft</option>
+              <option value="draft">{tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.draft", "Draft")}</option>
               <option value="review">Review</option>
               <option value="published">Published</option>
               <option value="archived">Archived</option>
@@ -390,7 +392,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
               className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              New update
+              {tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.newUpdate", "New update")}
             </button>
           </div>
         </div>
@@ -404,7 +406,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                 {selectedUpdate ? 'Edit update' : 'Draft new update'}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Build the message, target the right audience, then publish from here.
+                {tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.buildTheMessageTargetTheRightAudience", "Build the message, target the right audience, then publish from here.")}
               </p>
             </div>
             {selectedUpdate && (
@@ -416,7 +418,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
 
           {selectedIsReadOnly && (
             <div className="rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-              Published updates are read-only. Archive and republish if you need a revised message.
+              {tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.publishedUpdatesAreReadOnlyArchiveAnd", "Published updates are read-only. Archive and republish if you need a revised message.")}
             </div>
           )}
 
@@ -439,7 +441,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
               onChange={(e) => setEditor((prev) => ({ ...prev, bodyMd: e.target.value }))}
               rows={10}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm font-mono"
-              placeholder="What changed, who it is for, what to do now."
+              placeholder={tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.whatChangedWhoItIsForWhat", "What changed, who it is for, what to do now.")}
             />
           </div>
 
@@ -472,7 +474,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                 }
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
               >
-                <option value="draft">Draft</option>
+                <option value="draft">{tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.draft", "Draft")}</option>
                 <option value="review">Review</option>
                 <option value="archived">Archived</option>
               </select>
@@ -616,7 +618,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                Effective from
+                {tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.effectiveFrom", "Effective from")}
               </div>
               <input
                 type="datetime-local"
@@ -645,7 +647,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
               value={editor.actionLabel}
               onChange={(e) => setEditor((prev) => ({ ...prev, actionLabel: e.target.value }))}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
-              placeholder="Try it now"
+              placeholder={tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.tryItNow", "Try it now")}
             />
           </div>
 
@@ -691,7 +693,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-10 text-center">
               <Bell className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
               <div className="text-sm text-slate-600 dark:text-slate-300">
-                No updates match the selected filters.
+                {tlumaczPozaHookiem("superadmin.featureUpdatesAdmin.noUpdatesMatchTheSelectedFilters", "No updates match the selected filters.")}
               </div>
             </div>
           ) : (
@@ -755,7 +757,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                           {item.analytics.clicked} clicks
                         </span>
                         {item.publishedAt && (
-                          <span>Published {new Date(item.publishedAt).toLocaleDateString()}</span>
+                          <span>Published {new Date(item.publishedAt).toLocaleDateString(localeListy())}</span>
                         )}
                       </div>
                     </div>

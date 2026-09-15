@@ -31,6 +31,7 @@ import { Card } from '../../components/ui/BaseCard';
 import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface Permission {
   id: string;
   name: string;
@@ -379,7 +380,7 @@ const CustomRolesBuilder: React.FC = () => {
             {selectedRole.isSystem || selectedRole.roleType === 'system' ? (
               <div className="text-center py-8">
                 <Lock className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
-                <p className="text-slate-700 dark:text-gray-300">System roles cannot be modified</p>
+                <p className="text-slate-700 dark:text-gray-300">{tlumaczPozaHookiem("superadmin.customRolesBuilder.systemRolesCannotBeModified", "System roles cannot be modified")}</p>
                 <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                   Create a custom role to customize permissions
                 </p>
@@ -502,10 +503,10 @@ const CustomRolesBuilder: React.FC = () => {
           <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-12 text-center">
             <Shield className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
             <p className="text-slate-700 dark:text-gray-300">
-              Select a role to view and edit permissions
+              {tlumaczPozaHookiem("superadmin.customRolesBuilder.selectARoleToViewAndEdit", "Select a role to view and edit permissions")}
             </p>
             <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
-              Or create a new custom role
+              {tlumaczPozaHookiem("superadmin.customRolesBuilder.orCreateANewCustomRole", "Or create a new custom role")}
             </p>
           </div>
         )}
@@ -521,7 +522,7 @@ const CustomRolesBuilder: React.FC = () => {
             Permission Definitions
           </h3>
           <p className="text-sm text-slate-600 dark:text-gray-400">
-            All available permissions in the system
+            {tlumaczPozaHookiem("superadmin.customRolesBuilder.allAvailablePermissionsInTheSystem", "All available permissions in the system")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -629,7 +630,7 @@ const CustomRolesBuilder: React.FC = () => {
               onClick={() => handleCreateFromTemplate(template.name)}
               className="w-full py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors text-sm"
             >
-              Create Role from Template
+              {tlumaczPozaHookiem("superadmin.customRolesBuilder.createRoleFromTemplate", "Create Role from Template")}
             </button>
           </div>
         ))}
@@ -644,7 +645,7 @@ const CustomRolesBuilder: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Custom Roles</h2>
           <p className="text-slate-600 dark:text-gray-400 mt-1">
-            Create and manage role-based access control
+            {tlumaczPozaHookiem("superadmin.customRolesBuilder.createAndManageRoleBasedAccessControl", "Create and manage role-based access control")}
           </p>
         </div>
       </div>
@@ -679,7 +680,7 @@ const CustomRolesBuilder: React.FC = () => {
         <Card className="p-6 border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10">
           <div className="flex items-center gap-2 text-danger-700 dark:text-danger-300 font-medium">
             <AlertTriangle size={18} />
-            Failed to load custom roles
+            {tlumaczPozaHookiem("superadmin.customRolesBuilder.failedToLoadCustomRoles", "Failed to load custom roles")}
           </div>
           <p className="mt-2 text-sm text-danger-700 dark:text-danger-300">{loadError}</p>
           <button
@@ -731,7 +732,7 @@ const CustomRolesBuilder: React.FC = () => {
                   type="text"
                   value={newRole.description}
                   onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
-                  placeholder="What can this role do?"
+                  placeholder={tlumaczPozaHookiem("superadmin.customRolesBuilder.whatCanThisRoleDo", "What can this role do?")}
                   className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500"
                 />
               </div>
@@ -777,7 +778,7 @@ const CustomRolesBuilder: React.FC = () => {
                   className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                 />
                 <span className="text-sm text-slate-700 dark:text-gray-200">
-                  Set as default role for new users
+                  {tlumaczPozaHookiem("superadmin.customRolesBuilder.setAsDefaultRoleForNewUsers", "Set as default role for new users")}
                 </span>
               </label>
             </div>
