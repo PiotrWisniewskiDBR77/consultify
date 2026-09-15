@@ -1313,17 +1313,15 @@ export async function getInitiativeKpisRead(
         ? approvalContent.kpiRefs.filter((value): value is string => typeof value === 'string')
         : []
     );
-    const approvedMeasurementPlans = new Map<string, Record<string, unknown>>(
-      Array.isArray(approvalContent.measurementPlan)
-        ? approvalContent.measurementPlan
-            .filter(
-              (value): value is Record<string, unknown> =>
-                Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-            )
-            .map((value) => [String(value.kpiId || ''), value])
-            .filter(([kpiId]) => Boolean(kpiId))
-        : []
-    );
+    const approvedMeasurementPlans = new Map<string, Record<string, unknown>>();
+    if (Array.isArray(approvalContent.measurementPlan)) {
+      for (const value of approvalContent.measurementPlan) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+        const plan = value as Record<string, unknown>;
+        const kpiId = String(plan.kpiId || '');
+        if (kpiId) approvedMeasurementPlans.set(kpiId, plan);
+      }
+    }
     const normalized = (value: unknown) => String(value ?? '').trim();
     const snapshotMatchesCurrentKpi = (kpi: (typeof assignments)[number]) => {
       const plan = approvedMeasurementPlans.get(String(kpi.id));
