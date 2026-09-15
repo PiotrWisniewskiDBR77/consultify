@@ -1,0 +1,9 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:10:08
+   Duration  2.00s (transform 971ms, setup 0ms, import 107ms, tests 1.71s, environment 0ms)
+

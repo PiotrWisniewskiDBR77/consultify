@@ -1,0 +1,255 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+ ✓ server/src/services/__tests__/managementReportsXlsx.dependency.test.ts > Day 17 X.2 XLSX dependency contract > fails explicitly when exceljs cannot be loaded 228ms
+ ✓ server/src/services/__tests__/managementReportsXlsx.dependency.test.ts (1 test) 229ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:10:35
+   Duration  649ms (transform 162ms, setup 97ms, import 6ms, tests 229ms, environment 228ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:10:35
+   Duration  650ms (transform 162ms, setup 97ms, import 6ms, tests 229ms, environment 228ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:37:1037 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit) > GET /api/management-reports/:id/pptx returns 503 when schema is missing (no 500 HTML)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"iris_test","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=localhost:5432/iris_test host=localhost port=5432 database=iris_test source=app:pool-config
+2026-09-15 11:10:38:1038 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit) > GET /api/management-reports/:id/pptx returns 503 when schema is missing (no 500 HTML)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"iris_test","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=localhost:5432/iris_test host=localhost port=5432 database=iris_test source=app:pool-config
+2026-09-15 11:10:38:1038 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit) > GET /api/management-reports/:id/pptx returns 503 when schema is missing (no 500 HTML)
+2026-09-15 11:10:38:1038 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-09-15 11:10:38:1038 [31merror[39m: [31m[Postgres] Failed SQL: SELECT * FROM management_reports WHERE id = $1 AND organization_id = $2[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit) > GET /api/management-reports/:id/pptx returns 503 when schema is missing (no 500 HTML)
+2026-09-15 11:10:38:1038 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-09-15 11:10:38:1038 [31merror[39m: [31m[Postgres] Failed SQL: SELECT * FROM management_reports WHERE id = $1 AND organization_id = $2[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Database] Closing database handle...[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Database] Closing database handle...[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Postgres] Closing connection pool...[39m
+
+stdout | tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit)
+2026-09-15 11:10:38:1038 [32minfo[39m: [32m[Postgres] Closing connection pool...[39m
+
+ ✓ tests/integration/management/managementReports.pptx-dependency-missing.test.ts > Management reports export (dependency missing is explicit) > GET /api/management-reports/:id/pptx returns 503 when schema is missing (no 500 HTML) 62ms
+ ✓ tests/integration/management/managementReports.pptx-dependency-missing.test.ts (1 test) 1267ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:10:37
+   Duration  1.73s (transform 982ms, setup 97ms, import 60ms, tests 1.27s, environment 230ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:10:37
+   Duration  1.73s (transform 982ms, setup 97ms, import 60ms, tests 1.27s, environment 230ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+stdout | server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:39:1039 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts
+2026-09-15 11:10:40:1040 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:40:1040 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:40:1040 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts
+2026-09-15 11:10:40:1040 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:40:1040 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:40:1040 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts > shared report-run route respects the Work report server flag > OFF rejects a Work report create and a profiled transition before every reader/UoW call 23ms
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts > shared report-run route respects the Work report server flag > ON creates and advances a Work report through the shared route 6ms
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts > shared report-run route respects the Work report server flag > OFF preserves ordinary canonical report-run create and transition 4ms
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts > shared report-run route respects the Work report server flag > OFF blocks an existing Work report run even when a caller omits the profile hint 3ms
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts > shared report-run route respects the Work report server flag > forbids direct PUBLISH and publishes only after the delivery endpoint succeeds 9ms
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts > shared report-run route respects the Work report server flag > returns a governed 502 and keeps the report unpublished when email delivery fails 6ms
+ ✓ server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts (6 tests) 53ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  11:10:39
+   Duration  1.32s (transform 786ms, setup 94ms, import 1.09s, tests 53ms, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  11:10:39
+   Duration  1.32s (transform 786ms, setup 94ms, import 1.09s, tests 53ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+stdout | server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:41:1041 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts
+2026-09-15 11:10:42:1042 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:42:1042 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:42:1042 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts
+2026-09-15 11:10:42:1042 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:42:1042 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:42:1042 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts > ENABLE_INITIATIVES_WORK_REPORT server gate > defaults OFF and blocks every work-report endpoint before handler execution 22ms
+ ✓ server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts > ENABLE_INITIATIVES_WORK_REPORT server gate > ON reaches all four handlers instead of the feature gate 7ms
+ ✓ server/src/routes/pmo/__tests__/workReport.serverFlag.routes.test.ts (2 tests) 31ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:10:41
+   Duration  1.29s (transform 779ms, setup 98ms, import 1.08s, tests 31ms, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:10:41
+   Duration  1.29s (transform 779ms, setup 98ms, import 1.08s, tests 31ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 11:10:43:1043 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-15 11:10:44:1044 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:44:1044 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:44:1044 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts
+2026-09-15 11:10:44:1044 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-15 11:10:44:1044 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-15 11:10:44:1044 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > defaults OFF and rejects the runner before it reads or writes report state 2ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > persists CREATE→VALIDATE→FREEZE→APPROVE, retries a partial SMTP delivery, then PUBLISHes once 96ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > manual HTTP retry reuses the run receipt and never resends a successful recipient 21ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts > scheduled initiative work report canonical lifecycle > keeps an active SENDING lease fenced, then safely reclaims it after timeout 1ms
+ ✓ server/src/services/__tests__/scheduledInitiativeWorkReport.test.ts (4 tests) 121ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  11:10:43
+   Duration  1.41s (transform 796ms, setup 93ms, import 1.11s, tests 121ms, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  11:10:43
+   Duration  1.41s (transform 796ms, setup 93ms, import 1.11s, tests 121ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-m5-management-reports-w77/junit.xml

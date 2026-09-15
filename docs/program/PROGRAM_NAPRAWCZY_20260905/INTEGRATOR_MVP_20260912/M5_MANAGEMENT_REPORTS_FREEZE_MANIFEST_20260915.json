@@ -1,0 +1,38 @@
+{
+  "package": "M5-management-reports",
+  "status": "READY_FOR_INDEPENDENT_REVIEW",
+  "exactBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "contentCommit": "237a7f3baa1c9131fe8d60a60e5dd02d9d06c13f",
+  "branch": "codex/b-m5-management-reports-20260915",
+  "measurements": {
+    "realPgIdentity": "127.0.0.1:6454/consultify_m5",
+    "managementReportTypes": "5/5",
+    "red4Regression": "2/2",
+    "realPgSiblingTests": "73/73",
+    "nonPgSiblingTests": "14/14",
+    "migrations": 0,
+    "frontendFilesChanged": 0
+  },
+  "tests": {
+    "serverTsc": 0,
+    "frontTsc": 177,
+    "frontTscRatchet": 177,
+    "changedFileTscErrors": 0,
+    "retry": 0
+  },
+  "limitations": [
+    "Independent review not run because the shared Codex account limit blocked reviewer agents."
+  ],
+  "sha256": {
+    "server/src/repositories/ManagementReportRepository.ts": "a4effc5ba124ea9b8f8f2d6a159c9b9385e6afd816e3691ffff7a60be79ebe61",
+    "server/src/routes/pmo/__tests__/reportRun.workReportFlag.routes.test.ts": "90b9253470694e5e74daa862d3cc7dbfaa22656bf79871cb30cd18f3aafd51f7",
+    "tests/integration/managementReports.orgScope.realdb.test.ts": "51646293a481783c7bf0131cc9bbfd105b1ae671698925641f28b6544f3f0f42",
+    "tests/acceptance/m5-management-reports-all-types.e2e.test.ts": "f1aed74b6997bfe08778d9037f38e03bf5195dca1a6efeb3d7f1e1aa83a81b08",
+    "evidence/m5-management-reports/logs/acceptance-m5-5.log": "44011376ea2a4992a9a654d3a1213827e36da8dcd13a1a90233210b937d5417e",
+    "evidence/m5-management-reports/logs/acceptance-red4-2.log": "161bfdfb2d6670550a44abfc5fa25224569a90541e2656f35825971474252fc0",
+    "evidence/m5-management-reports/logs/front-tsc.log": "bc7732abf7563cb976fbd611a404a88df8f4e8d42d5ac9ada0260188dca9c47b",
+    "evidence/m5-management-reports/logs/nonpg-14.log": "45ae2aeeb53fd41d3f60e34f34cf15d4547964455307044f244dfc3e2605ea47",
+    "evidence/m5-management-reports/logs/realpg-73.log": "a1173f9baeee6d7e79ff51823b13b377935dc8c2984469b0e5717305f1b6baa7",
+    "evidence/m5-management-reports/logs/server-tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

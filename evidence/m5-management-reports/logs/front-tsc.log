@@ -1,0 +1,836 @@
+src/components/Admin/__tests__/ChatV9FlagsIndicator.test.tsx(137,23): error TS2345: Argument of type 'string' is not assignable to parameter of type 'boolean'.
+src/components/AIChat/__tests__/day374-canvasTooLong.i18n.test.tsx(38,7): error TS2322: Type 'TFunction<["translation", ...string[]], undefined>' is not assignable to type 'CanvasQuickT'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx(206,48): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx(220,48): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx(239,48): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx(334,90): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx(408,11): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/AIChat/UnifiedChatPanel.tsx(2071,13): error TS2559: Type '{ aiProviderError: { adminDiagnostic?: string | undefined; code: AiErrorCode; }; }' has no properties in common with type '{ citations?: Citation[] | undefined; actions?: ResponseAction[] | undefined; toolCalls?: any[] | undefined; thinkingSteps?: { id: string; title: string; content: string; status: "completed" | ... 1 more ... | "pending"; }[] | undefined; ... 12 more ...; initiativeHandoff?: { ...; } | undefined; }'.
+src/components/AIChat/WorkCanvasDocumentPanel.tsx(2501,7): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/AIChat/WorkCanvasDocumentPanel.tsx(2662,9): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/assessment/AssessmentHub.tsx(1007,9): error TS2322: Type '(TableColumn | { id: string; label: string; width: string; filterable: true; dataType: "status"; filterOptions: { value: string; label: string | undefined; color: string; }[]; render: (row: any) => Element; })[] | ({ ...; } | { ...; })[]' is not assignable to type 'TableColumn[]'.
+  Type '(TableColumn | { id: string; label: string; width: string; filterable: true; dataType: "status"; filterOptions: { value: string; label: string | undefined; color: string; }[]; render: (row: any) => Element; })[]' is not assignable to type 'TableColumn[]'.
+    Type 'TableColumn | { id: string; label: string; width: string; filterable: true; dataType: "status"; filterOptions: { value: string; label: string | undefined; color: string; }[]; render: (row: any) => Element; }' is not assignable to type 'TableColumn'.
+      Type '{ id: string; label: string; width: string; filterable: true; dataType: "status"; filterOptions: { value: string; label: string | undefined; color: string; }[]; render: (row: any) => Element; }' is not assignable to type 'TableColumn'.
+        Types of property 'filterOptions' are incompatible.
+          Type '{ value: string; label: string | undefined; color: string; }[]' is not assignable to type '{ value: string; label: string; color?: string | undefined; }[]'.
+            Type '{ value: string; label: string | undefined; color: string; }' is not assignable to type '{ value: string; label: string; color?: string | undefined; }'.
+              Types of property 'label' are incompatible.
+                Type 'string | undefined' is not assignable to type 'string'.
+                  Type 'undefined' is not assignable to type 'string'.
+src/components/assessment/AssessmentHub.tsx(2071,39): error TS2322: Type '{ id: string; label: string | undefined; badge: string; active: boolean; icon: Element; onClick: () => void; title: string; }[] | ({ id: string; label: string; badge: number | null; active: boolean; title: string; } | { ...; } | { ...; })[]' is not assignable to type 'Menu3Chip[] | undefined'.
+  Type '{ id: string; label: string | undefined; badge: string; active: boolean; icon: Element; onClick: () => void; title: string; }[]' is not assignable to type 'Menu3Chip[]'.
+    Type '{ id: string; label: string | undefined; badge: string; active: boolean; icon: JSX.Element; onClick: () => void; title: string; }' is not assignable to type 'Menu3Chip'.
+      Types of property 'label' are incompatible.
+        Type 'string | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx(95,3): error TS2741: Property 'expertApprovedBy' is missing in type '{ id: string; packKey: string; version: number; title: string; summary: null; sourceId: string; sourceTitle: string; sourceVersion: string; sourceType: "LICENSED_STANDARD"; verificationStatus: "VERIFIED"; publicationStatus: "published"; requiredRoles: never[]; criteriaCount: number; updatedAt: string; }' but required in type 'AuditPackSummary'.
+src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx(70,3): error TS2741: Property 'expertApprovedBy' is missing in type '{ id: string; packKey: string; version: number; title: string; summary: null; sourceId: string; sourceTitle: string; sourceVersion: string; sourceType: "LICENSED_STANDARD"; verificationStatus: "VERIFIED"; publicationStatus: "published"; requiredRoles: never[]; criteriaCount: number; updatedAt: string; }' but required in type 'AuditPackSummary'.
+src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx(86,3): error TS2741: Property 'expertApprovedBy' is missing in type '{ id: string; packKey: string; version: number; title: string; summary: null; sourceId: null; sourceTitle: null; sourceVersion: null; sourceType: "DEMONSTRATION"; verificationStatus: "UNVERIFIED"; publicationStatus: "draft"; requiredRoles: never[]; criteriaCount: number; updatedAt: string; }' but required in type 'AuditPackSummary'.
+src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx(103,3): error TS2741: Property 'expertApprovedBy' is missing in type '{ id: string; packKey: string; version: number; title: string; summary: null; sourceId: string; sourceTitle: string; sourceVersion: string; sourceType: "LICENSED_STANDARD"; verificationStatus: "VERIFIED"; publicationStatus: "published"; requiredRoles: never[]; criteriaCount: number; updatedAt: string; }' but required in type 'AuditPackSummary'.
+src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx(119,3): error TS2741: Property 'expertApprovedBy' is missing in type '{ id: string; packKey: string; version: number; title: string; summary: null; sourceId: string; sourceTitle: string; sourceVersion: string; sourceType: "INTERNAL_PROCEDURE"; verificationStatus: "VERIFIED"; publicationStatus: "published"; requiredRoles: never[]; criteriaCount: number; updatedAt: string; }' but required in type 'AuditPackSummary'.
+src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx(135,3): error TS2741: Property 'expertApprovedBy' is missing in type '{ id: string; packKey: string; version: number; title: string; summary: null; sourceId: null; sourceTitle: null; sourceVersion: null; sourceType: "DEMONSTRATION"; verificationStatus: "UNVERIFIED"; publicationStatus: "draft"; requiredRoles: never[]; criteriaCount: number; updatedAt: string; }' but required in type 'AuditPackSummary'.
+src/components/dashboard/DashboardExecutionSnapshot.tsx(71,54): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/dashboard/DashboardExecutionSnapshot.tsx(219,31): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "APPROVED" | "CLOSED" | "REJECTED"' and '"IN_EXECUTION"' have no overlap.
+src/components/dashboard/DashboardOverview.tsx(61,54): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/dashboard/DashboardOverview.tsx(80,9): error TS2345: Argument of type 'InitiativeStatus' is not assignable to parameter of type '"IN_EXECUTION" | "CLOSED"'.
+  Type '"PROPOSED"' is not assignable to type '"IN_EXECUTION" | "CLOSED"'.
+src/components/dashboard/DashboardOverview.tsx(85,75): error TS2345: Argument of type 'InitiativeStatus' is not assignable to parameter of type '"IN_EXECUTION"'.
+  Type '"PROPOSED"' is not assignable to type '"IN_EXECUTION"'.
+src/components/dashboard/LiveDashboard.tsx(45,54): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/dashboard/LiveDashboard.tsx(64,9): error TS2345: Argument of type 'InitiativeStatus' is not assignable to parameter of type '"IN_EXECUTION" | "CLOSED"'.
+  Type '"PROPOSED"' is not assignable to type '"IN_EXECUTION" | "CLOSED"'.
+src/components/dashboard/LiveDashboard.tsx(69,75): error TS2345: Argument of type 'InitiativeStatus' is not assignable to parameter of type '"IN_EXECUTION"'.
+  Type '"PROPOSED"' is not assignable to type '"IN_EXECUTION"'.
+src/components/DiscoveryTools/ToolDocumentView.tsx(2524,11): error TS2322: Type '"tool-document"' is not assignable to type 'ArtifactType'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(727,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(813,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(837,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(856,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(871,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1009,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1034,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1130,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1168,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1192,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1347,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1497,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1535,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1560,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1580,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1823,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1851,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(1881,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(2255,37): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(2451,42): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(2454,40): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(2489,38): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx(2630,39): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(489,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(530,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(544,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(558,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(572,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(586,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(601,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(619,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx(632,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Economics/__tests__/financeCanonicalMerge.test.ts(22,22): error TS2353: Object literal may only specify known properties, and 'canonicalArtifactId' does not exist in type '{ id: string; title: string; }'.
+src/components/Economics/FinanceHub.tsx(330,11): error TS2322: Type '(rowKey: any, canonicalLineId: any, lineCode: any, taxonomyNames: any) => string' is not assignable to type '(rowKey: string, canonicalLineId: string | null, lineCode: string | null) => string'.
+  Target signature provides too few arguments. Expected 4 or more, but got 3.
+src/components/Economics/FinanceHub.tsx(330,30): error TS7006: Parameter 'rowKey' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(330,38): error TS7006: Parameter 'canonicalLineId' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(330,55): error TS7006: Parameter 'lineCode' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(330,65): error TS7006: Parameter 'taxonomyNames' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(3584,25): error TS2322: Type '(rowKey: any, canonicalLineId: any, lineCode: any, taxonomyNames: any) => string' is not assignable to type '(rowKey: string, canonicalLineId: string | null, lineCode: string | null) => string'.
+  Target signature provides too few arguments. Expected 4 or more, but got 3.
+src/components/Economics/FinanceHub.tsx(3584,44): error TS7006: Parameter 'rowKey' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(3584,52): error TS7006: Parameter 'canonicalLineId' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(3584,69): error TS7006: Parameter 'lineCode' implicitly has an 'any' type.
+src/components/Economics/FinanceHub.tsx(3584,79): error TS7006: Parameter 'taxonomyNames' implicitly has an 'any' type.
+src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx(51,5): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(...items: ConcatArray<{ id: string; title: string; score: number; ownerName: null; initiativeId: null; initiativeName: null; status: string; dueDate: null; }>[]): { id: string; title: string; ... 5 more ...; dueDate: null; }[]', gave the following error.
+    Type 'null' is not assignable to type 'number'.
+  Overload 2 of 2, '(...items: ({ id: string; title: string; score: number; ownerName: null; initiativeId: null; initiativeName: null; status: string; dueDate: null; } | ConcatArray<{ id: string; title: string; score: number; ownerName: null; initiativeId: null; initiativeName: null; status: string; dueDate: null; }>)[]): { ...; }[]', gave the following error.
+    Type 'null' is not assignable to type 'number'.
+src/components/Execution/ExecutionReportsSurface.tsx(639,42): error TS2352: Conversion of type 'TFunctionDetailedResult<$SpecialObject, never>' to type 'string' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/components/Execution/ExecutionResourcesSurface.tsx(1155,23): error TS2322: Type '"success" | "warn"' is not assignable to type '"neutral" | "success" | "info" | "warning" | "danger" | undefined'.
+  Type '"warn"' is not assignable to type '"neutral" | "success" | "info" | "warning" | "danger" | undefined'.
+src/components/Execution/ExecutionWorkloadView.tsx(311,27): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "CLOSED" | "REJECTED"' and '"IN_EXECUTION"' have no overlap.
+src/components/Finance/exportImport/FinanceExportImportPanel.tsx(18,31): error TS2305: Module '"react-i18next"' has no exported member 'TFunction'.
+src/components/InitiativeCard.tsx(87,7): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/InitiativeCard.tsx(90,7): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/InitiativeCard.tsx(93,7): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx(69,42): error TS2352: Conversion of type '{ status: "EXECUTING"; }' to type 'InitiativeRegisterRow' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ status: "EXECUTING"; }' is missing the following properties from type 'PortfolioInitiative': id, name, axis, priority, and 4 more.
+src/components/Initiatives/__tests__/TransitionInboxSurface.behavior.test.tsx(112,38): error TS2493: Tuple type '[]' of length '0' has no element at index '1'.
+src/components/Initiatives/InitiativeDocumentView.tsx(1600,41): error TS2367: This comparison appears to be unintentional because the types 'InitiativeStatus' and '"ARCHIVED"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(1601,63): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "CLOSED" | "REJECTED"' and '"CANCELLED"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(3282,7): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "APPROVED" | "IN_EXECUTION" | "CLOSED" | "REJECTED"' and '"PENDING_APPROVAL"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(3412,22): error TS2345: Argument of type 'V8PlanningGateReadinessCheck | null' is not assignable to parameter of type 'SetStateAction<GateReadinessCheck | null>'.
+  Type 'V8PlanningGateReadinessCheck' is not assignable to type 'SetStateAction<GateReadinessCheck | null>'.
+    Type 'V8PlanningGateReadinessCheck' is not assignable to type 'GateReadinessCheck'.
+      Types of property 'capabilities' are incompatible.
+        Type '{ version: number; source: "backend" | "client-fallback"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; } | undefined' is not assignable to type '{ version: number; source: "backend"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; } | undefined'.
+          Type '{ version: number; source: "backend" | "client-fallback"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; }' is not assignable to type '{ version: number; source: "backend"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; }'.
+            Types of property 'source' are incompatible.
+              Type '"backend" | "client-fallback"' is not assignable to type '"backend"'.
+                Type '"client-fallback"' is not assignable to type '"backend"'.
+src/components/Initiatives/InitiativeDocumentView.tsx(3630,24): error TS2345: Argument of type 'V8PlanningGateReadinessCheck | null' is not assignable to parameter of type 'SetStateAction<GateReadinessCheck | null>'.
+  Type 'V8PlanningGateReadinessCheck' is not assignable to type 'SetStateAction<GateReadinessCheck | null>'.
+    Type 'V8PlanningGateReadinessCheck' is not assignable to type 'GateReadinessCheck'.
+      Types of property 'capabilities' are incompatible.
+        Type '{ version: number; source: "backend" | "client-fallback"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; } | undefined' is not assignable to type '{ version: number; source: "backend"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; } | undefined'.
+          Type '{ version: number; source: "backend" | "client-fallback"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; }' is not assignable to type '{ version: number; source: "backend"; topBar: { canEditPriority: boolean; canEditOwner: boolean; canEditTargetDate: boolean; }; cards?: { canEditCards: boolean; reasonCode: string | null; } | undefined; reasonCodes?: { ...; } | undefined; ctaBar: { ...; }; }'.
+            Types of property 'source' are incompatible.
+              Type '"backend" | "client-fallback"' is not assignable to type '"backend"'.
+                Type '"client-fallback"' is not assignable to type '"backend"'.
+src/components/Initiatives/InitiativeDocumentView.tsx(5292,31): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "CLOSED" | "REJECTED"' and '"CANCELLED"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(6113,11): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "CLOSED" | "REJECTED"' and '"IN_EXECUTION"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(6114,11): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "CLOSED" | "REJECTED"' and '"DONE"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(6115,11): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED"' and '"CANCELLED"' have no overlap.
+src/components/Initiatives/InitiativeDocumentView.tsx(6115,37): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED"' and '"ARCHIVED"' have no overlap.
+src/components/Initiatives/InitiativeDrawer.tsx(349,7): error TS2367: This comparison appears to be unintentional because the types 'InitiativeStatus' and '"REVIEW"' have no overlap.
+src/components/Initiatives/InitiativeDrawer.tsx(353,11): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "IN_EXECUTION" | "CLOSED" | "REJECTED"' and '"PLANNING"' have no overlap.
+src/components/Initiatives/InitiativeFullView.tsx(527,36): error TS2367: This comparison appears to be unintentional because the types '"IN_PROGRESS" | "BLOCKED" | "DONE" | "TODO"' and '"IN_EXECUTION"' have no overlap.
+src/components/Initiatives/initiativeRegisterColumns.shared.ts(209,47): error TS2345: Argument of type '(key: string, fallback: string) => string' is not assignable to parameter of type '(key: string) => string'.
+  Target signature provides too few arguments. Expected 2 or more, but got 1.
+src/components/Initiatives/initiativeRegisterColumns.shared.ts(241,49): error TS2345: Argument of type '(key: string, fallback: string) => string' is not assignable to parameter of type '(key: string) => string'.
+  Target signature provides too few arguments. Expected 2 or more, but got 1.
+src/components/Initiatives/initiativesDemoData.ts(1016,21): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/Initiatives/sections/__tests__/InitiativeTeamSection.aiProposalNames.test.tsx(63,8): error TS2739: Type '{}' is missing the following properties from type 'InitiativeSectionProps': sectionType, expanded, onToggle
+src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx(237,7): error TS2322: Type '{ id: string; organizationId: string; projectId: string; assigneeUserId: string; templateId: string; templateVersion: number; status: string; dueAt: string; priority: string; isTeamAssignment: boolean; ... 4 more ...; assignee: { ...; }; }' is not assignable to type 'never'.
+src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx(238,7): error TS2322: Type '{ id: string; organizationId: string; projectId: string; assigneeUserId: string; templateId: string; templateVersion: number; status: string; dueAt: string; priority: string; isTeamAssignment: boolean; ... 4 more ...; assignee: { ...; }; }' is not assignable to type 'never'.
+src/components/Interview/__tests__/InterviewHub.smoke.test.tsx(275,42): error TS2353: Object literal may only specify known properties, and 'assignments' does not exist in type 'never[]'.
+src/components/MyWork/Calendar/__tests__/CalendarSidebar.disconnectedCallout.test.tsx(73,8): error TS2322: Type '{ filter: { sources: string[]; }; onFilterChange: ((filter: CalendarFilter) => void) | Mock<Procedure>; currentDate: Date; onDateChange: ((date: Date) => void) | Mock<...>; externalSourceStatus?: Partial<...> | undefined; workloadSummary?: CalendarWorkloadSummary | ... 1 more ... | undefined; v2?: boolean | undefine...' is not assignable to type 'CalendarSidebarProps'.
+  The types of 'filter.sources' are incompatible between these types.
+    Type 'string[]' is not assignable to type 'CalendarEventSource[]'.
+      Type 'string' is not assignable to type 'CalendarEventSource'.
+src/components/MyWork/Calendar/__tests__/CalendarSidebar.disconnectedCallout.test.tsx(144,16): error TS2322: Type '{ externalSourceStatus: { google: { available: false; statusKey: "disconnected"; statusLabel: string; helper: string; nextStep: string; }; }; filter: { sources: string[]; }; onFilterChange: Mock<Procedure>; currentDate: Date; onDateChange: Mock<...>; }' is not assignable to type 'CalendarSidebarProps'.
+  The types of 'filter.sources' are incompatible between these types.
+    Type 'string[]' is not assignable to type 'CalendarEventSource[]'.
+      Type 'string' is not assignable to type 'CalendarEventSource'.
+src/components/MyWork/IdeaProcessFlowTool.tsx(3333,10): error TS2304: Cannot find name 'vf1CanvasSpecAEnabled'.
+src/components/MyWork/IdeaTableTool.tsx(4394,73): error TS2345: Argument of type '{ count: number; defaultValue: string; }' is not assignable to parameter of type 'string'.
+src/components/MyWork/notebook/__tests__/notebookViewLensPredicates.test.ts(120,31): error TS2322: Type '"file"' is not assignable to type 'NotebookCaptureSource | null | undefined'.
+src/components/PMO/StatusTransitionDropdown.tsx(58,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/PMO/StatusTransitionDropdown.tsx(79,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/PMO/StatusTransitionDropdown.tsx(100,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/PMO/StatusTransitionDropdown.tsx(357,19): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/PMO/StatusTransitionDropdown.tsx(370,23): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/PMO/StatusTransitionDropdown.tsx(377,23): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' and '"CLOSED"' have no overlap.
+src/components/Portfolio/PortfolioListView.tsx(654,41): error TS2345: Argument of type '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' is not assignable to parameter of type '"CLOSED" | "REJECTED"'.
+  Type '"PROPOSED"' is not assignable to type '"CLOSED" | "REJECTED"'.
+src/components/Portfolio/PortfolioListView.tsx(659,41): error TS2345: Argument of type '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "REJECTED"' is not assignable to parameter of type '"CLOSED" | "REJECTED"'.
+  Type '"PROPOSED"' is not assignable to type '"CLOSED" | "REJECTED"'.
+src/components/Presentations/DeckBuilder/DeckBuilder.tsx(999,58): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'SimpleT'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(359,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(410,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(545,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(563,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(580,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(599,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(614,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(673,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/Presentations/PresentationTemplateArchitectView.tsx(689,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(248,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(296,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(329,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(368,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(411,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(437,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(475,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(515,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(548,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(573,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(596,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(619,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(642,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(665,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(690,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(720,32): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(740,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(777,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(803,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(825,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(872,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(903,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(947,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(990,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(1013,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(1049,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ReportBuilder/useReportBuilder.ts(1081,34): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/ResultsVNext/okr/p7k/OkrReportPage.tsx(594,33): error TS2559: Type 'TableRow' has no properties in common with type '{ kind?: unknown; }'.
+src/components/ResultsVNext/okr/p7k/OkrReportPage.tsx(606,37): error TS2559: Type 'TableRow' has no properties in common with type '{ kind?: unknown; }'.
+src/components/ResultsVNext/okr/p7k/OkrReportPage.tsx(610,33): error TS2559: Type 'TableRow' has no properties in common with type '{ kind?: unknown; }'.
+src/components/ResultsVNext/resultsVNextOwnerSampleData.ts(184,3): error TS2741: Property 'periodTargetValue' is missing in type '{ measurementId: string; kpiId: string; definitionVersionId: string; organizationId: string; periodStart: string; periodEnd: string; actualValue: number; performanceStatus: "warning"; dataQualityStatus: "verified"; ... 6 more ...; recordedAt: string; }' but required in type 'KpiMeasurementDto'.
+src/components/ResultsVNext/resultsVNextOwnerSampleData.ts(202,3): error TS2741: Property 'periodTargetValue' is missing in type '{ measurementId: string; kpiId: string; definitionVersionId: string; organizationId: string; periodStart: string; periodEnd: string; actualValue: number; performanceStatus: "warning"; dataQualityStatus: "verified"; ... 6 more ...; recordedAt: string; }' but required in type 'KpiMeasurementDto'.
+src/components/ResultsVNext/resultsVNextOwnerSampleData.ts(220,3): error TS2741: Property 'periodTargetValue' is missing in type '{ measurementId: string; kpiId: string; definitionVersionId: string; organizationId: string; periodStart: string; periodEnd: string; actualValue: number; performanceStatus: "warning"; dataQualityStatus: "estimated"; ... 6 more ...; recordedAt: string; }' but required in type 'KpiMeasurementDto'.
+src/components/ResultsVNext/roi/card/__tests__/roiCardPage.kartaN.test.tsx(112,17): error TS2352: Conversion of type '{ capex: number; horizonYears: number; npv: number; irrPct: number; piRatio: number; bcr: number; }' to type 'RoiCardIndicators' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ capex: number; horizonYears: number; npv: number; irrPct: number; piRatio: number; bcr: number; }' is missing the following properties from type 'RoiCardIndicators': annualNetBenefit, roiPct, arrPct, paybackYears, and 4 more.
+src/components/shared/ModuleHub/index.ts(22,3): error TS2614: Module '"./StatusDropdown"' has no exported member 'InitiativeStatus'. Did you mean to use 'import InitiativeStatus from "./StatusDropdown"' instead?
+src/components/shared/PreviewPane/__tests__/useJedenPanel.test.tsx(122,17): error TS2352: Conversion of type 'UseJedenPanelResult' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'UseJedenPanelResult'.
+src/components/shared/PreviewPane/useDesktopPreviewOverlay.ts(93,12): error TS2322: Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+src/components/ui/primitives/ErrorState.tsx(39,45): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/components/workspaces/FullStep5Workspace.tsx(54,20): error TS2345: Argument of type 'InitiativeStatus' is not assignable to parameter of type '"DRAFT" | "PENDING_APPROVAL" | "APPROVED"'.
+  Type '"PROPOSED"' is not assignable to type '"DRAFT" | "PENDING_APPROVAL" | "APPROVED"'.
+src/contracts/initiatives-execution/legacyCompatibility.ts(25,14): error TS2740: Type '{ DRAFT: { runtimeStatus: "DRAFT"; lifecycle: "REGISTERED_DRAFT"; gateState: "NOT_REQUESTED"; disposition: "ACTIVE"; executionState: "NOT_STARTED"; executionHealth: "NOT_APPLICABLE"; confidence: "COMPATIBILITY_INFERENCE"; notes: string[]; }; ... 11 more ...; ARCHIVED: { ...; }; }' is missing the following properties from type 'Readonly<Record<"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "IN_EXECUTION" | "CLOSED" | "REJECTED" | "PENDING_REVIEW" | "REVIEW" | "PROMOTED" | "PLANNING" | "SCHEDULED" | "EXECUTING" | ... 5 more ... | "CANCELLED", LegacyStatusProjection>>': PROPOSED, PENDING_APPROVAL, IN_EXECUTION, CLOSED, and 2 more.
+src/hooks/useReportSections.ts(171,39): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(222,41): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(279,41): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(318,41): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(371,41): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(438,41): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(476,41): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(511,39): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(541,39): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(577,39): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/hooks/useReportSections.ts(610,39): error TS2345: Argument of type 'TFunction<"translation", undefined>' is not assignable to parameter of type 'TFunc'.
+  Types of parameters 'args' and 'key' are incompatible.
+    Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options: TOptionsBase & $Dictionary & { defaultValue: string; }] | [key: string | string[], defaultValue: string, options?: (TOptionsBase & $Dictionary) | undefined] | [key: ...]'.
+      Type '[key: string, defaultValue?: string | undefined]' is not assignable to type '[key: string | string[], options?: (TOptionsBase & $Dictionary) | undefined]'.
+        Type at position 1 in source is not compatible with type at position 1 in target.
+          Type 'string | undefined' is not assignable to type '(TOptionsBase & $Dictionary) | undefined'.
+            Type 'string' is not assignable to type 'TOptionsBase & $Dictionary'.
+              Type 'string' is not assignable to type '$Dictionary'.
+src/utils/initiativeHelpers.ts(62,43): error TS2367: This comparison appears to be unintentional because the types 'InitiativeStatus' and '"CANCELLED"' have no overlap.
+src/utils/initiativeHelpers.ts(62,64): error TS2367: This comparison appears to be unintentional because the types 'InitiativeStatus' and '"ARCHIVED"' have no overlap.
+src/utils/initiativeHelpers.ts(68,18): error TS2339: Property 'label' does not exist on type 'StatusMeta'.
