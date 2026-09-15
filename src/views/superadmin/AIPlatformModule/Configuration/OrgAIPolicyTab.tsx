@@ -16,6 +16,8 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type SaveMode = 'draft' | 'review' | 'approved' | 'published';
 
 type PolicyFormState = {
@@ -247,7 +249,7 @@ const formatDateTime = (value: string | null | undefined) => {
   if (!value) return 'Unknown date';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown date';
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 };
 
 export const OrgAIPolicyTab: React.FC = () => {
@@ -529,7 +531,7 @@ export const OrgAIPolicyTab: React.FC = () => {
             Org AI Policy
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Enterprise policy enforcement: regions, provider types, origins, and data classes.
+            {tlumaczPozaHookiem("superadmin.orgAIPolicy.enterprisePolicyEnforcementRegionsProviderTypesOrigins", "Enterprise policy enforcement: regions, provider types, origins, and data classes.")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="rounded-full bg-slate-100 px-2.5 py-1 dark:bg-white/[0.04]">
@@ -702,8 +704,7 @@ export const OrgAIPolicyTab: React.FC = () => {
           )}
         </div>
         <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
-          Workflow: save draft for edits, send to review, approve, then publish live. Rollback
-          always restores the published version.
+          {tlumaczPozaHookiem("superadmin.orgAIPolicy.workflowSaveDraftForEditsSendTo", "Workflow: save draft for edits, send to review, approve, then publish live. Rollback always restores the published version.")}
         </div>
         <div>
           <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
@@ -712,7 +713,7 @@ export const OrgAIPolicyTab: React.FC = () => {
           <input
             value={changeSummary}
             onChange={(e) => setChangeSummary(e.target.value)}
-            placeholder="What changed in this policy revision?"
+            placeholder={tlumaczPozaHookiem("superadmin.orgAIPolicy.whatChangedInThisPolicyRevision", "What changed in this policy revision?")}
             className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
           />
         </div>
@@ -724,8 +725,7 @@ export const OrgAIPolicyTab: React.FC = () => {
             Guided Policy Builder
           </h3>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Define what providers, regions and data classes are allowed without editing raw JSON
-            first.
+            {tlumaczPozaHookiem("superadmin.orgAIPolicy.defineWhatProvidersRegionsAndDataClasses", "Define what providers, regions and data classes are allowed without editing raw JSON first.")}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

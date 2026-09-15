@@ -6,6 +6,8 @@ import { Api } from '@/services/api';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type ContextCategory =
   | 'ORG_PROFILE'
   | 'ORG_TERMINOLOGY'
@@ -224,7 +226,7 @@ export const AIGovernanceTab: React.FC = () => {
             AI Governance
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Organization policy, context policy, and runtime guardrails.
+            {tlumaczPozaHookiem("superadmin.aIGovernance.organizationPolicyContextPolicyAndRuntimeGuardrails", "Organization policy, context policy, and runtime guardrails.")}
           </p>
         </div>
 
@@ -436,7 +438,7 @@ export const AIGovernanceTab: React.FC = () => {
               )}
               <span className="text-slate-500 dark:text-slate-400">{warnCount} warnings</span>
               <span className="text-slate-600 dark:text-slate-500">
-                {new Date(sanityReport.timestamp).toLocaleString()}
+                {new Date(sanityReport.timestamp).toLocaleString(localeListy())}
               </span>
             </div>
 
