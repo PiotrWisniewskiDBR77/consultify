@@ -1,10 +1,15 @@
 {
-  "schemaVersion": 3,
-  "sourceSha": "WORKTREE",
+  "schemaVersion": 4,
+  "sourceSha": "611fd20727e7952a56f7a4a06e17100139007b9a",
   "measurement": {
     "K8sen": 1584,
     "runtimeFalseExcludedFromCoverage": true,
-    "runtimeFalseResiduals": 7
+    "runtimeFalseResiduals": 7,
+    "K8senAfterV4": 0,
+    "fullPolishUnique": 1317,
+    "fullPolishRows": 1577,
+    "mixedOutputs": 0,
+    "knownEnglishProse": 0
   },
   "counts": {
     "b:http-error-boundary": 1575,
@@ -16,8 +21,10 @@
   "unclassified": 0,
   "realSinkCount": 1577,
   "behaviorCoverage": {
-    "plChanged": "ALL_REAL_SINKS",
-    "lossyGeneric": 0
+    "fullPolish": "1577/1577 rows; 1317/1317 unique",
+    "mixedFallback": 0,
+    "knownEnglishProse": 0,
+    "remaining35Table": "K4_K8SEN_W73_V4_REMAINING_35.json"
   },
   "entries": [
     {

@@ -1,35 +1,53 @@
 {
-  "schemaVersion": 3,
-  "package": "K4 v3 K8sen W73 HOLD repair",
+  "schemaVersion": 4,
+  "package": "K4 v4 K8sen W73 full Polish sink localization",
   "branch": "codex/c-k4-k8sen-20260915",
   "exactBase": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3",
-  "holdReview": "0cc005de576095a1fb07f0c581f6f20f93993ed9",
-  "testedCandidate": "6424a54e3d0cdb6545006c65b7ee3ff198fadc81",
-  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V3",
+  "holdReview": "7b5d27650f899a40c07f91fb62f3f3e539579572",
+  "testedCandidate": "611fd20727e7952a56f7a4a06e17100139007b9a",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V4",
   "measurement": {
-    "K8sen": 1584,
-    "realSinksB": 1577,
-    "localizedPlChanged": 1577,
-    "unchangedPl": 0,
-    "distinctPlOutputs": 1317,
-    "lossyGeneric": 0,
-    "internalA": 7,
-    "unclassified": 0,
-    "pdfDocTextAfter": 0,
-    "runtimeFalseRespected": true
+    "K8senBeforeV4": 1584,
+    "K8senAfterV4": 0,
+    "realSinkRowsB": 1577,
+    "uniqueRealSinkMessages": 1317,
+    "fullPolishRows": 1577,
+    "mixedOutputs": 0,
+    "knownEnglishProse": 0,
+    "lastResidualReviewed": 35,
+    "lastResidualLocalizedB": 29,
+    "lastResidualTechnicalA": 6,
+    "realSinksRemaining": 0
+  },
+  "catalog": {
+    "batches": "14-36",
+    "batchLimit": 60,
+    "batchCounts": "14-34:60; 35:58; 36:35",
+    "specificityOrdering": true
   },
   "validation": {
     "ownerMeter": "72/72 PASS retry=0",
-    "focusedTests": "110/110 PASS retry=0",
+    "ownedFocused": "43/43 PASS retry=0 (7 files)",
+    "combinedFocused": "46/48; only two inherited email sender reds",
+    "exactBaseEmailReproduction": "775947993e: 2 failed / 2 passed, same two sender names",
+    "superadminPublish": "PASS exact full PL, HTTP 500 and PLAYBOOK_PUBLISHED preserved",
     "meetingExecutorAdapterHttp400": "PASS exact PL payload, status/code preserved",
     "usersLanguageQueryContract": "PASS real verifyToken",
     "serverTypeScriptErrors": 0,
-    "frontendTypeScript": "v2 TIMEOUT_120S_AFTER_0_DIAGNOSTICS; no frontend delta in v3",
-    "languageRatchet": "PASS honest residual 1584",
+    "frontendTypeScriptErrors": 177,
+    "frontendDelta": "none",
+    "languageRatchet": "PASS K8sen 0",
     "listCanon": "349/349 PASS",
     "artifact": "8/8; R2+R3 0/0; danger 117/117 PASS",
-    "productionBuild": "PASS 10754 modules",
-    "newAsAny": 0
+    "productionBuild": "PASS 10754 modules, 34.35s, sequential heap 8192MB"
+  },
+  "inheritedReds": {
+    "emailSender": {
+      "count": 2,
+      "baseTestSha256": "dc22ba3e64dbcaa45fcf9ab6f5b39cfa85543330b05170e8e559ac53d627d6e7",
+      "candidateTestSha256": "a651f057acdeb1570f01dd44cec1e972c88131d1ac5ba42df664ae01e8067cd3",
+      "reason": "base and candidate both receive display-name envelope while legacy assertions expect bare mailbox; K4 changes locale subject only"
+    }
   },
   "boundaries": {
     "migration": false,
@@ -37,25 +55,35 @@
     "forbiddenFilesChanged": false
   },
   "inventoryPolicy": {
-    "count": 51,
+    "count": 79,
     "hash": "sha256",
     "manifestSelfExcluded": true
   },
   "inventory": [
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73.md",
-      "bytes": 2979,
-      "sha256": "e0408ca1d615996bfca846956096ac53c26ff50f2607a228fc1b43f9f4b3ebba"
+      "bytes": 3023,
+      "sha256": "67b4d3da611d3558c8daa89a1174a8dc81d1d3ce95faab1cc6a3a0bd8f0468a2"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json",
-      "bytes": 579460,
-      "sha256": "706769de9297b9a08893ae7c6cf449c344958519d57a22ab1c9543643b474266"
+      "bytes": 579733,
+      "sha256": "9016de326d6940e006d17bc002403ecb4d8f9e30a00258e86ba1b44e497b9ba2"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_REMAINING_35.json",
+      "bytes": 26780,
+      "sha256": "7e8833b970976203f6b92653e0b64750815791a1176937f738c4fd13e47a49f5"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_TRANSLATION_WORKING.json",
+      "bytes": 205091,
+      "sha256": "1ceee648aca9941e7b8b1118232402a82d9e029d430fe9f7ad53be6ef4bbf637"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
-      "bytes": 80297,
-      "sha256": "a31e2e9e0b7065876e76f1fad9a5aad59cbe760ef7deb4ed411c7549ce834162"
+      "bytes": 80269,
+      "sha256": "1f4973cd191809d9237990b7999536b8895815d4c75d5f3391d54cafd99e2b92"
     },
     {
       "path": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
@@ -78,9 +106,24 @@
       "sha256": "3539c2e3020dee1dc0e10f8dc5ef9e07f50e9273956313ad185777847062142a"
     },
     {
+      "path": "server/src/ai/aiPlaybookService.ts",
+      "bytes": 48486,
+      "sha256": "f6a4b68e9cd34e913e535dee04bb5b565e5caa7a7c579142be459f379ac7c2bb"
+    },
+    {
+      "path": "server/src/controllers/ai/AIPlaybooksController.ts",
+      "bytes": 38218,
+      "sha256": "0f69a71356f39bde2f1294fc86c14aaa095902e2f5e23448ac584f93becec6fe"
+    },
+    {
+      "path": "server/src/controllers/ai/__tests__/AIPlaybooksController.publishLocale.test.ts",
+      "bytes": 2148,
+      "sha256": "3c2b1a8f3d6c614c30e96d7e7c605178b3e2eb3f34b1a2551b9a0e97c5105582"
+    },
+    {
       "path": "server/src/i18n/__tests__/serverPayloadLocalizer.test.ts",
-      "bytes": 4137,
-      "sha256": "1dd0cf980f0c073eb3e418a52e37729926985fb0eecbc5fddd9ddfae24e4decb"
+      "bytes": 5719,
+      "sha256": "a8d79cc79a83517db5acd0c0abc7755aadf4c477a93658654438b94caac42e04"
     },
     {
       "path": "server/src/i18n/serverErrorMessages.ts",
@@ -89,8 +132,8 @@
     },
     {
       "path": "server/src/i18n/serverPayloadLocalizer.ts",
-      "bytes": 5617,
-      "sha256": "1cc89509da2ea52ca50e4a0b4b443b9f350852a6b270372cc5c146937afcd76e"
+      "bytes": 5901,
+      "sha256": "0d1d56f306813c9991141732666be3bdc1931911de06ff0ebab094ca05d3e749"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch01.ts",
@@ -158,9 +201,124 @@
       "sha256": "d6fcfcffe84a8270ec2e44ac475e748afe9f4a510579de911d6dea6c6bdd4603"
     },
     {
+      "path": "server/src/i18n/serverPayloadMessages/batch14.ts",
+      "bytes": 8905,
+      "sha256": "f854f559ebeb61b68a9b6bc83d3677d096dc3de29e211e1de3638b2942052374"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch15.ts",
+      "bytes": 7511,
+      "sha256": "06ba43f408477efa86fbc36d1a0cb1690a1d992c6b87ba4963f8443c5c8479a5"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch16.ts",
+      "bytes": 7718,
+      "sha256": "e74c44931c51688afafb48076019c1f4aadc202fd8a92750e787946d0a999563"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch17.ts",
+      "bytes": 8298,
+      "sha256": "ab7631116c95e0269f0ce9ca3cd3960497d8e5ff3ac3879807b7d5cefc33485f"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch18.ts",
+      "bytes": 9022,
+      "sha256": "c4f18ed73be89f10ad36fb07b9ed6f67b91e4eeebc0f0ba9e66a45cc1820c46f"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch19.ts",
+      "bytes": 8093,
+      "sha256": "d352fd11bb85b2e267ab78171bb79c844a9dcb34991685936bde0bcca7d2efea"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch20.ts",
+      "bytes": 8351,
+      "sha256": "4e02d9fc60513916ac22536739a47b2ff9b79b12a82ae5d71ceccf2d12c0cf19"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch21.ts",
+      "bytes": 11393,
+      "sha256": "1b864c76cd57d95cda83567d60061554ab6011d9e948100c6fb837d459cf8945"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch22.ts",
+      "bytes": 9175,
+      "sha256": "5b21478b1058d7d836a15b6d3cc71a21bd8fc727d3b5d8cd771d5351121befa7"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch23.ts",
+      "bytes": 8161,
+      "sha256": "6940cfd5fca5259d0438f149f2f2efb112ea332054a6fbbd5f9002cfb6540da9"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch24.ts",
+      "bytes": 7490,
+      "sha256": "1a15996eae6bab612fabed06568587498d2c8e8f0bff0935f4bba378c8176ccf"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch25.ts",
+      "bytes": 7773,
+      "sha256": "ae82aee1c5a5852ea1487cb2687b71553b5b3514b6dbec7bfc23e4ab2ffcc6ad"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch26.ts",
+      "bytes": 10870,
+      "sha256": "94340f3e9a58912b0fd481e5670b516fc98f7d01306b84576f7c1a727317803e"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch27.ts",
+      "bytes": 12060,
+      "sha256": "eb25b04c0e44ad5f16aeb544997ebe5a669f1c48628ca15591f966588cf177c1"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch28.ts",
+      "bytes": 11636,
+      "sha256": "e58c93ee19ceece804949da43431b0070057ac775c020617c4f6a8eb327b2198"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch29.ts",
+      "bytes": 8785,
+      "sha256": "84617f49bbf4806a5d66a2d81fb2b8b84b499e3da742873b0c50ebfeb4333c57"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch30.ts",
+      "bytes": 9771,
+      "sha256": "d597d4ec0cecbde09ad2daadc9bf2b1ea5b879a6801e36b3d4e40e963107783b"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch31.ts",
+      "bytes": 9319,
+      "sha256": "56fed0df708a2d06b88a64e3c583ae51ad7bec4c3936455936c2bd76775bec22"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch32.ts",
+      "bytes": 9536,
+      "sha256": "e99eace9ece3295ac1a11316faafd5241a9bb8af6581e322c5e777851c994e3e"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch33.ts",
+      "bytes": 9342,
+      "sha256": "5dee7ec04e1afd439cf641aa9d8c4af11354955a6ba019303a49419ee586ecaf"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch34.ts",
+      "bytes": 8417,
+      "sha256": "cb92c783799f3757e14ec35b8aaad5d2c157ef38b74107a577e049cd5f1084cc"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch35.ts",
+      "bytes": 6158,
+      "sha256": "54e837d161a4245dcf4700aab787f7763c6f0ec92b3d95e9dd943f9170ea4813"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch36.ts",
+      "bytes": 10803,
+      "sha256": "0438920b346f0404d6c822c941d754c556c2f32dede7ecc4aeddb2a2cbd55431"
+    },
+    {
       "path": "server/src/i18n/serverPayloadMessages/index.ts",
-      "bytes": 1522,
-      "sha256": "4e7fe4df448e583eaed08e174ffcb653b25958970b3bfc47941c0b61c51da152"
+      "bytes": 3914,
+      "sha256": "29532d3c0b7130bf96d63ca3e9349f80a022cb7e5cbc7259d4dad515be40b5f8"
     },
     {
       "path": "server/src/middleware/__tests__/appErrorMapper.test.ts",
@@ -220,7 +378,7 @@
     {
       "path": "server/src/services/ai/__tests__/AIPipeline.errorLocale.test.ts",
       "bytes": 1444,
-      "sha256": "fca64e227b268797e7b0d67d0cc443219a8702d58fdcc6821400f13011e68a3f"
+      "sha256": "af4617c1119d699dc44f86c6f60123ac9ce1a3a1853d94d3553678202f81bf28"
     },
     {
       "path": "server/src/services/documentStudio/documentPdfRenderer.ts",
