@@ -554,6 +554,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // to the live ReactFlow instance once it mounts (see onInit below).
   const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
+  const [laneHeaderGutter, setLaneHeaderGutter] = useState(0);
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
   // Z14: neighbour-edge magnetic snapping while dragging. Grid is left to
@@ -2695,8 +2696,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const rect = el.getBoundingClientRect();
       return rect.width === 0 || rect.height === 0 ? [] : [rect];
     });
-    if (rects.length === 0) return;
+    if (rects.length === 0) {
+      setLaneHeaderGutter(0);
+      return;
+    }
     const requiredGutter = computePaletteGutter(rects, container.getBoundingClientRect());
+    setLaneHeaderGutter(requiredGutter);
     if (requiredGutter <= 0) return;
     const vp = instance.getViewport?.();
     if (!vp || vp.x >= requiredGutter) return;
@@ -3678,6 +3683,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 // on every pointer move and would flood the undo stack).
                 onResizeStart={() => pushUndo()}
                 dragOverLaneId={dragOverLaneId}
+                headerGutter={laneHeaderGutter}
                 // PF-P2-02: the lane created by `addLane` above auto-enters
                 // inline naming once, then this clears itself.
                 autoEditLaneId={newLaneId}
