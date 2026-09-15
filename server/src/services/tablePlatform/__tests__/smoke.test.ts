@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Request } from 'express';
 
 const mockQuery = vi.fn();
 
@@ -104,6 +105,7 @@ vi.mock('../../chatToSchema/undoRedoStack.js', () => ({
 }));
 
 import chatToSchemaService from '../ChatToSchemaService.js';
+import { localizeServerPayload } from '../../../i18n/serverPayloadLocalizer.js';
 import governedModelService from '../GovernedModelService.js';
 import metadataService from '../MetadataService.js';
 import recordsService from '../RecordsService.js';
@@ -384,6 +386,38 @@ describe('Table Platform Smoke Tests', () => {
 
       const result = await chatToSchemaService.getProposal('nonexistent');
       expect(result).toBeNull();
+    });
+
+    it('preserves the persisted schema version but exposes only a human EN/PL warning', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'proposal-versioned',
+            warnings: [
+              { message: '__schema_version_at_creation:17' },
+              { message: 'Review before approving.' },
+            ],
+          },
+        ],
+      });
+
+      const result = await chatToSchemaService.getProposal('proposal-versioned');
+      expect(result.schema_version_at_creation).toBe(17);
+      expect(result.warnings).toEqual([
+        { message: 'Schema version at proposal creation: 17' },
+        { message: 'Review before approving.' },
+      ]);
+      expect(JSON.stringify(result)).not.toContain('__schema_version_at_creation');
+
+      const localized = localizeServerPayload(result, {
+        user: { language: 'pl' },
+        get: () => 'en-US',
+      } as unknown as Request) as typeof result;
+      expect(localized.schema_version_at_creation).toBe(17);
+      expect(localized.warnings[0].message).toBe(
+        'Wersja schematu podczas tworzenia propozycji: 17'
+      );
+      expect(JSON.stringify(localized)).not.toContain('__schema_version_at_creation');
     });
 
     it('listProposals returns array', async () => {

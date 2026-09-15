@@ -1,34 +1,36 @@
 {
-  "schemaVersion": 5,
-  "sourceSha": "d0b9ac1b4c5f97c563ae089c0f43403f84c29645",
+  "schemaVersion": 6,
+  "sourceSha": "WIP_K4_V6",
   "measurement": {
-    "K8sen": 1584,
+    "K8sen": 1585,
     "runtimeFalseExcludedFromCoverage": true,
     "runtimeFalseResiduals": 7,
     "K8senAfterV4": 0,
-    "fullPolishUnique": 1270,
-    "fullPolishRows": 1528,
+    "fullPolishUnique": 1271,
+    "fullPolishRows": 1529,
     "mixedOutputs": 0,
     "knownEnglishProse": 0,
     "technicalLiteralUnique": 46,
-    "K8senAfterV5": 0
+    "K8senAfterV5": 0,
+    "K8senAfterV6": 0
   },
   "counts": {
-    "b:http-error-boundary": 1528,
+    "b:http-error-boundary": 1529,
     "a:parser-fragment": 2,
     "a:technical-code": 48,
     "a:technical-diagnostic": 4,
     "a:internal-background": 2
   },
   "unclassified": 0,
-  "realSinkCount": 1528,
+  "realSinkCount": 1529,
   "behaviorCoverage": {
-    "fullPolish": "1528/1528 localized prose rows; 1270/1270 unique templates",
+    "fullPolish": "1529/1529 localized prose rows; 1271/1271 unique templates",
     "mixedFallback": 0,
     "knownEnglishProse": 0,
     "remaining35Table": "K4_K8SEN_W73_V4_REMAINING_35.json",
     "technicalLiteral": "46 stable machine-code keys excluded from Polish prose denominator",
-    "dynamicNested": "3/3 stable claimForCompute outcomes recursively localized through full payload; status/code preserved"
+    "dynamicNested": "3/3 stable claimForCompute outcomes recursively localized through full payload; status/code preserved",
+    "schemaVersionBoundary": "raw storage marker 0 at service/API/UI; human EN and PL warning; schema_version_at_creation preserved"
   },
   "entries": [
     {
@@ -9065,11 +9067,11 @@
     },
     {
       "path": "server/src/services/tablePlatform/ChatToSchemaService.ts",
-      "line": 446,
+      "line": 486,
       "text": "__schema_version_at_creation:${schemaVersionAtCreation}",
       "classification": "a",
-      "sink": "technical-diagnostic",
-      "reason": "machine/log/internal diagnostic, not an HTTP, SSE, e-mail, or document prose sink"
+      "sink": "technical-storage-marker",
+      "reason": "legacy JSONB persistence metadata; every service/API read extracts the version and replaces this exact marker with human EN/PL before presentation"
     },
     {
       "path": "server/src/services/tablePlatform/ChatToSchemaService.ts",
@@ -12702,6 +12704,14 @@
       "classification": "a",
       "sink": "internal-background",
       "reason": "worker/job/cron exception has no direct UI writer"
+    },
+    {
+      "path": "server/src/services/tablePlatform/ChatToSchemaService.ts",
+      "line": 102,
+      "text": "Schema version at proposal creation: ${match[1]}",
+      "classification": "b",
+      "sink": "http-error-boundary",
+      "reason": "get/list/create proposal responses expose this human warning; server payload locale maps it to PL and SchemaProposalCard renders it"
     }
   ]
 }

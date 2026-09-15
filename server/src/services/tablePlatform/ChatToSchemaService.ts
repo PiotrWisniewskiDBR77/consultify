@@ -67,6 +67,46 @@ export interface ExecutionResult {
   message?: string;
 }
 
+const SCHEMA_VERSION_WARNING = /^__schema_version_at_creation:(\d+)$/;
+
+/**
+ * The schema version is persisted inside the legacy JSONB warnings column because
+ * the table has no dedicated column. Keep that storage contract for stale checks,
+ * while exposing a human warning at every service/API read boundary.
+ */
+export function presentSchemaProposal<T extends Record<string, unknown>>(row: T): T {
+  const rawWarnings = (() => {
+    if (Array.isArray(row.warnings)) return row.warnings;
+    if (typeof row.warnings !== 'string') return [];
+    try {
+      const parsed = JSON.parse(row.warnings) as unknown;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+  let schemaVersion = row.schema_version_at_creation;
+  const warnings = rawWarnings.map((warning) => {
+    if (!warning || typeof warning !== 'object') return warning;
+    const typedWarning = warning as { message?: unknown; operationId?: string };
+    const match =
+      typeof typedWarning.message === 'string'
+        ? SCHEMA_VERSION_WARNING.exec(typedWarning.message)
+        : null;
+    if (!match) return warning;
+    schemaVersion = Number(match[1]);
+    return {
+      ...typedWarning,
+      message: `Schema version at proposal creation: ${match[1]}`,
+    };
+  });
+  return {
+    ...row,
+    warnings,
+    ...(schemaVersion != null ? { schema_version_at_creation: schemaVersion } : {}),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // LLM
 // ---------------------------------------------------------------------------
@@ -404,7 +444,7 @@ const chatToSchemaService = {
         ]
       );
       const row = (await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [id])).rows[0];
-      return row as unknown as SchemaProposal;
+      return presentSchemaProposal(row as Record<string, unknown>) as unknown as SchemaProposal;
     }
     if (parsed.confidence < 0.5) {
       parsed.warnings.push({
@@ -465,7 +505,7 @@ const chatToSchemaService = {
     if (row && schemaVersionAtCreation != null) {
       (row as Record<string, unknown>).schema_version_at_creation = schemaVersionAtCreation;
     }
-    return row as unknown as SchemaProposal;
+    return presentSchemaProposal(row as Record<string, unknown>) as unknown as SchemaProposal;
   },
 
   async executeProposal(
@@ -768,7 +808,8 @@ const chatToSchemaService = {
       const result = await db.query('SELECT * FROM tp_schema_proposals WHERE id = $1', [
         proposalId,
       ]);
-      return result.rows[0] ?? null;
+      const row = result.rows[0];
+      return row ? presentSchemaProposal(row as Record<string, unknown>) : null;
     } catch (e) {
       logger.error('[ChatToSchema] getProposal failed', {
         proposalId,
@@ -789,7 +830,7 @@ const chatToSchemaService = {
       }
       sql += ' ORDER BY created_at DESC';
       const result = await db.query(sql, params);
-      return result.rows;
+      return result.rows.map((row) => presentSchemaProposal(row as Record<string, unknown>));
     } catch (e) {
       logger.error('[ChatToSchema] listProposals failed', {
         workspaceId,

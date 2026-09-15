@@ -164,7 +164,8 @@
     "^event_id=\\$\\{event\\.event_id\\} event_type=\\$\\{event\\.event_type\\} org=\\$\\{event\\.organization_id\\} attempts=\\$\\{failResult\\.attempts\\} last_error=NO_CONSUMER_REGISTERED$",
     "^event_id=\\$\\{event\\.event_id\\} event_type=\\$\\{event\\.event_type\\} org=\\$\\{event\\.organization_id\\} attempts=\\$\\{failResult\\.attempts\\} last_error=\\$\\{message\\}$",
     "^Invalid code\\. \\$\\{remainingAttempts > 0",
-    "^__schema_version_at_creation:\\$\\{schemaVersionAtCreation\\}$"
+    "^__schema_version_at_creation:\\$\\{schemaVersionAtCreation\\}$",
+    "^Schema version at proposal creation: \\$\\{match\\[1\\]\\}$"
   ],
   "pomijaneKlucze": [
     "^_",
@@ -1242,5 +1243,6 @@
     "usage",
     "zurich"
   ],
-  "_uwagaK4K8senTechniczne": "K4 v5: six exact runtime source shapes classified literal-by-literal as parser fragments or technical diagnostics/codes; no wildcard path exclusion."
+  "_uwagaK4K8senTechniczne": "K4 v5: six exact runtime source shapes classified literal-by-literal as parser fragments or technical diagnostics/codes; no wildcard path exclusion.",
+  "_uwagaK4K8senHumanBoundary": "K4 v6: exact human schema-version template is a measured b sink covered by the central EN/PL server payload catalog and behavior tests; only this exact source shape is omitted from duplicate static K8sen counting."
 }

@@ -727,6 +727,24 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
     expect(screen.getByText(/Schema version mismatch/i)).toBeInTheDocument();
   });
 
+  it('renders the human schema-version warning without exposing its storage marker', () => {
+    const proposal = makeProposal({
+      warnings: [{ message: 'Schema version at proposal creation: 17' }],
+    });
+    const { container } = render(
+      <SchemaProposalCard
+        proposal={proposal}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onRefine={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Schema version at proposal creation: 17')).toBeInTheDocument();
+    expect(container.textContent).not.toContain('__schema_version_at_creation');
+  });
+
   it('4. permission denied for schema edit — FieldManager shows toast on failed field update', async () => {
     tpApiMocks.updateField.mockRejectedValueOnce(new Error('403 Forbidden'));
 

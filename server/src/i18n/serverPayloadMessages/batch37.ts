@@ -14,4 +14,8 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_37: readonly ServerPayloadMessage[] =
     en: "Failed to self-claim job ${params.job.id} — row is no longer 'queued' (concurrent claim raced this call, or it went terminal between enqueue and claim)",
     pl: "Nie udało się przejąć zadania ${params.job.id} — wiersz nie ma już statusu 'queued' (równoległe przejęcie wyprzedziło to wywołanie albo zadanie osiągnęło stan końcowy między enqueue a claim)",
   },
+  {
+    en: 'Schema version at proposal creation: ${schemaVersionAtCreation}',
+    pl: 'Wersja schematu podczas tworzenia propozycji: ${schemaVersionAtCreation}',
+  },
 ];

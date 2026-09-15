@@ -5079,6 +5079,10 @@
     {
       "en": "runDcfFcffValuation: ${claimResult.message}",
       "pl": "Wycena DCF/FCFF: ${claimResult.message}"
+    },
+    {
+      "en": "Schema version at proposal creation: ${match[1]}",
+      "pl": "Wersja schematu podczas tworzenia propozycji: ${match[1]}"
     }
   ]
 }

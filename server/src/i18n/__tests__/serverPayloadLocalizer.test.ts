@@ -110,7 +110,7 @@ describe('server payload localization', () => {
       actual: localizeServerPayloadText(source, 'pl'),
     }));
 
-    expect(manifest.measurement).toMatchObject({ fullPolishRows: 1528, fullPolishUnique: 1270 });
+    expect(manifest.measurement).toMatchObject({ fullPolishRows: 1529, fullPolishUnique: 1271 });
     expect(realSinks).toHaveLength(manifest.measurement.fullPolishRows);
     expect(uniqueRealSinks).toHaveLength(manifest.measurement.fullPolishUnique);
     expect(results.filter(({ expected: pl }) => !pl)).toEqual([]);
