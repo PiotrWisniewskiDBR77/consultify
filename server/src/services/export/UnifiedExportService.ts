@@ -40,6 +40,7 @@ export interface ExportSlide {
 }
 
 export interface ExportSource {
+  locale?: 'en' | 'pl';
   /** Document title (PDF heading / DOCX title / single-slide title). */
   title: string;
   /** Primary markdown body used by PDF and DOCX. */
@@ -166,8 +167,8 @@ class UnifiedExportService {
       if (src.sourceLabel) {
         doc.fontSize(9).fillColor('#475569').text(src.sourceLabel);
       }
-      if (src.lifecycle) doc.fontSize(9).fillColor('#475569').text(`Lifecycle: ${src.lifecycle}`);
-      if (src.updatedAt) doc.fontSize(9).fillColor('#475569').text(`Updated: ${src.updatedAt}`);
+      if (src.lifecycle) doc.fontSize(9).fillColor('#475569').text(`${src.locale === 'pl' ? 'Cykl życia' : 'Lifecycle'}: ${src.lifecycle}`);
+      if (src.updatedAt) doc.fontSize(9).fillColor('#475569').text(`${src.locale === 'pl' ? 'Zaktualizowano' : 'Updated'}: ${src.updatedAt}`);
       doc.moveDown(0.6);
 
       // Body renderer — walks struct tokens and projects onto pdfkit primitives.

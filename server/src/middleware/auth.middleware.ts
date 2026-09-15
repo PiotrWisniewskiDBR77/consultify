@@ -378,6 +378,8 @@ export interface JWTPayload {
 }
 
 export interface AuthenticatedUser extends GlobalUser {
+  /** UI locale loaded from the canonical user_preferences profile row. */
+  language?: 'en' | 'pl';
   isDemo?: boolean;
   impersonatorId?: string;
   impersonationSessionId?: string;
@@ -984,6 +986,19 @@ const attachUser = async (
     // ignore
   }
 
+  let profileLanguage: 'en' | 'pl' | undefined;
+  try {
+    const preference = await dbGet<{ value?: unknown }>(
+      `SELECT value FROM user_preferences WHERE user_id = ? AND key = ? LIMIT 1`,
+      [decodedUserId, 'language']
+    );
+    const raw = typeof preference?.value === 'string' ? preference.value.replace(/^"|"$/g, '') : '';
+    if (/^pl(?:[-_]|$)/i.test(raw)) profileLanguage = 'pl';
+    else if (/^en(?:[-_]|$)/i.test(raw)) profileLanguage = 'en';
+  } catch {
+    // Profile locale is best-effort; Accept-Language remains the deterministic fallback.
+  }
+
   const user: AuthenticatedUser = {
     id: decodedUserId,
     email: normalizedEmail,
@@ -993,6 +1008,7 @@ const attachUser = async (
     organizationId: req.organizationId || '',
     isSuperAdmin: resolvedIsSuperAdmin,
     isDemo: readBooleanTrueClaim(decodedClaims, 'isDemo') || isDemoHeader,
+    ...(profileLanguage ? { language: profileLanguage } : {}),
     impersonatorId:
       readOptionalStringClaim(decodedClaims, 'impersonatorId') ||
       readOptionalStringClaim(decodedClaims, 'impersonator_id'),

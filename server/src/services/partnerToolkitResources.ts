@@ -347,7 +347,7 @@ export async function generatePartnerToolkitResourceFile(params: {
     const pdfBuffer = await renderPdfToBuffer((doc) => {
       doc.fontSize(22).fillColor('#0f172a').text(titles[fileKey][language], { align: 'left' });
       doc.moveDown(0.8);
-      doc.fontSize(10).fillColor('#64748b').text(`Generated: ${new Date().toLocaleDateString()}`);
+      doc.fontSize(10).fillColor('#64748b').text(`${language === 'pl' ? 'Wygenerowano' : 'Generated'}: ${new Date().toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US')}`);
       doc.moveDown(1.2);
       doc.fontSize(12).fillColor('#334155').text(bodyText, { lineGap: 4 });
       doc.moveDown(1.2);

@@ -94,6 +94,9 @@ const mockDbGet = vi.fn(
     }
 
     if (text.includes('revoked_tokens')) return undefined;
+    if (text.includes('FROM user_preferences')) {
+      return first === 'profile-pl-user' ? ({ value: 'pl' } as never) : undefined;
+    }
     if (text.includes('SELECT role FROM users')) {
       const role = DB_USER_ROLE[first];
       return role ? ({ role } as never) : undefined;
@@ -127,6 +130,7 @@ interface Captured {
   status: number | null;
   body: unknown;
   nextCalled: boolean;
+  userLanguage?: string;
 }
 
 /** Drive the real verifyToken for one request and report what it decided. */
@@ -183,6 +187,7 @@ const runRequest = async (options: {
   };
 
   await verifyToken(req, res, next);
+  captured.userLanguage = req.user?.language;
   return captured;
 };
 
@@ -214,6 +219,17 @@ describe('DEC-91 organization suspension enforcement in auth middleware', () => 
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+  });
+
+  it('attaches the canonical profile locale to the real authenticated principal', async () => {
+    const result = await runRequest({
+      organizationId: 'org-active',
+      url: '/api/initiatives',
+      userId: 'profile-pl-user',
+    });
+
+    expect(result.nextCalled).toBe(true);
+    expect(result.userLanguage).toBe('pl');
   });
 
   it('refuses an API request from a member of a SUSPENDED organization', async () => {

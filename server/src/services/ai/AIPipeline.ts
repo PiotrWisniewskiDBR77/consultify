@@ -25,6 +25,7 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
+import { localizeServerErrorField } from '../../i18n/serverPayloadLocalizer.js';
 import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import {
@@ -772,7 +773,7 @@ export class AIPipeline {
         },
       };
     } catch (error: unknown) {
-      const aiError = this.handleError(error);
+      const aiError = this.handleError(error, request.options?.language);
       await this.logError(request, aiError, Date.now() - startTime, traceId);
 
       return {
@@ -846,7 +847,7 @@ export class AIPipeline {
         traceId
       );
     } catch (error: unknown) {
-      const aiError = this.handleError(error);
+      const aiError = this.handleError(error, request.options?.language);
       await this.logError(request, aiError, Date.now() - startTime, traceId);
       onChunk({
         type: 'error',
@@ -3183,7 +3184,7 @@ export class AIPipeline {
     }
   }
 
-  private handleError(error: unknown): AIError {
+  private handleError(error: unknown, language?: string): AIError {
     if (error instanceof Error) {
       const anyErr = error as any;
       // Feedback #a9fcdd99 / #3b6c0287 — preserve the underlying error's `code`
@@ -3207,7 +3208,7 @@ export class AIPipeline {
         : null;
       return {
         code: preserved || inferred || 'AI_ERROR',
-        message: error.message,
+        message: localizeServerErrorField(error.message, /^pl(?:[-_]|$)/i.test(language || '') ? 'pl' : 'en'),
         retryable: true,
         ...(Number.isInteger(anyErr?.providerStarts)
           ? { providerStarts: Number(anyErr.providerStarts) }

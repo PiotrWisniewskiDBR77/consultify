@@ -976,9 +976,12 @@ function wczytajZlokalizowaneKomunikatyK8s() {
   const komunikaty = new Set();
   for (const nazwa of fs.readdirSync(dir).filter((plik) => /^batch\d+\.ts$/.test(plik))) {
     const tresc = fs.readFileSync(path.join(dir, nazwa), 'utf8');
-    const wz = /["']?en["']?\s*:\s*("(?:[^"\\]|\\.)*")/g;
+    const wz = /\{\s*["']?en["']?\s*:\s*("(?:[^"\\]|\\.)*")[\s\S]*?\}/g;
     let m;
-    while ((m = wz.exec(tresc))) komunikaty.add(JSON.parse(m[1]));
+    while ((m = wz.exec(tresc))) {
+      if (/\bruntime\s*:\s*false\b/.test(m[0])) continue;
+      komunikaty.add(JSON.parse(m[1]));
+    }
   }
   return komunikaty;
 }
@@ -992,6 +995,7 @@ const WZORCE_SERWERA_K8S = [
   /\b(?:html|htmlBody|textBody|bodyText)\s*:\s*(["'`])([^"'`]{12,200})\1/g,
   /\.(?:drawText|addText|writeText)\(\s*(["'`])([^"'`]{6,200})\1/g,
 ];
+const WZORZEC_PDF_TEXT_K8S = /\.text\(\s*(["'`])([^"'`]{6,200})\1/g;
 
 /**
  * Zamazuje (spacjami, bez zmiany offsetów i numerów linii) treść obiektów,
@@ -1027,6 +1031,19 @@ function bezSlownikowDwujezycznych(tresc) {
   return znaki.join('');
 }
 
+/** Pomija jawne pary locale `warunek ? 'PL' : 'EN'`: są mechanizmem naprawy. */
+function bezParJezykowych(tresc) {
+  return tresc.replace(
+    /\?\s*(["'`])([^"'`]{3,240})\1\s*:\s*(["'`])([^"'`]{3,240})\3/g,
+    (calosc, _q1, lewa, _q2, prawa) => {
+      const para =
+        (wykryjPolski(lewa) && wykryjAngielski(prawa)) ||
+        (wykryjAngielski(lewa) && wykryjPolski(prawa));
+      return para ? calosc.replace(/[^\n]/g, ' ') : calosc;
+    }
+  );
+}
+
 function jestKodemSerwerowymK8s(rel) {
   if (!/^server\/src\/.*\.ts$/.test(rel)) return false;
   if (jestKodemSerwerowymUI(rel)) return false; // to liczy K5
@@ -1038,8 +1055,11 @@ function jestKodemSerwerowymK8s(rel) {
 function analizujSerwerK8sZawartosc(trescSurowa) {
   const w = { K8spl: 0, K8sen: 0, trafienia: [] };
   if (!trescSurowa) return w;
-  const tresc = bezSlownikowDwujezycznych(bezKomentarzy(trescSurowa));
-  for (const wz of WZORCE_SERWERA_K8S) {
+  const tresc = bezParJezykowych(bezSlownikowDwujezycznych(bezKomentarzy(trescSurowa)));
+  const wzorce = /(?:from\s+['"]pdfkit['"]|PDFDocument)/.test(trescSurowa)
+    ? [...WZORCE_SERWERA_K8S, WZORZEC_PDF_TEXT_K8S]
+    : WZORCE_SERWERA_K8S;
+  for (const wz of wzorce) {
     wz.lastIndex = 0;
     let m;
     while ((m = wz.exec(tresc))) {
@@ -1048,9 +1068,6 @@ function analizujSerwerK8sZawartosc(trescSurowa) {
       // newline. Such a match has bridged two separate literals and is code,
       // not one user-facing message. Backtick templates may be multiline.
       if (m[1] !== '`' && tekst.includes('\n')) continue;
-      // A plain Error is diagnostic input. The production error boundary maps
-      // it to a safe localized message and never returns this raw literal.
-      if (/^throw new Error\s*\(/.test(m[0])) continue;
       if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue; // kod błędu, nie zdanie
       if (/^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(tekst)) continue; // machine code, nie proza EN
       if (K8S_ZLOKALIZOWANE.has(tekst)) continue; // real sink covered by server locale catalog
@@ -1600,6 +1617,7 @@ async function main() {
     return i >= 0 ? argv[i + 1] : domyslna;
   }
   const chceJson = argv.includes('--json');
+  const pelneDowody = argv.includes('--full-evidence');
   const baseline = arg('--baseline');
   const chceStaged = argv.includes('--staged');
   const limitPrzykladow = Number(arg('--przyklady', '3'));
@@ -1621,7 +1639,7 @@ async function main() {
     process.exit(kod);
   }
 
-  await trybPelny(null, null, chceJson && !raportPlik);
+  await trybPelny(null, null, chceJson && !raportPlik && !pelneDowody);
   if (raportPlik) zapiszRaportPlikLinia(raportPlik);
   if (chceJson) console.log(JSON.stringify(wynik, null, 2));
   else if (!raportPlik) console.log(raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria));

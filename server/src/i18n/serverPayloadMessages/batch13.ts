@@ -167,6 +167,14 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_13: readonly ServerPayloadMessage[] =
     "pl": "Nieprawidłowy kod. Poproś o nowy kod."
   },
   {
+    "en": "Model not allowed by policy: ${modelId}",
+    "pl": "Model niedozwolony przez politykę: ${modelId}"
+  },
+  {
+    "en": "AI budget exceeded: ${warning}",
+    "pl": "Przekroczono budżet AI: ${warning}"
+  },
+  {
     "en": "${alert.message}${alert.checks?.length ? ",
     "pl": "${alert.message}${alert.checks?.length ? ",
     "runtime": false

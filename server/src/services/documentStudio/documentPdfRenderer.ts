@@ -468,7 +468,7 @@ function drawCover(
   doc
     .fontSize(ctx.sizing.caption)
     .fillColor('#94A3B8')
-    .text(`Generated: ${generatedAt}`, { align: 'center' });
+    .text(`${schema.language === 'pl' ? 'Wygenerowano' : 'Generated'}: ${generatedAt}`, { align: 'center' });
   doc.addPage();
 }
 
@@ -578,7 +578,7 @@ function drawParagraph(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRe
     doc
       .fontSize(ctx.sizing.caption)
       .fillColor('#B45309')
-      .text('  [Assumption — needs source]', { continued: false });
+      .text(ctx.schema.language === 'pl' ? '  [Założenie — wymaga źródła]' : '  [Assumption — needs source]', { continued: false });
   } else {
     doc
       .fontSize(ctx.sizing.body)
@@ -603,7 +603,7 @@ function drawList(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderC
       .fontSize(ctx.sizing.caption)
       .fillColor('#B45309')
       .font(PDF_FONT.italic)
-      .text('  [Assumption — needs source]', { indent: 12 });
+      .text(ctx.schema.language === 'pl' ? '  [Założenie — wymaga źródła]' : '  [Assumption — needs source]', { indent: 12 });
     doc.font(PDF_FONT.regular);
   }
   doc.moveDown(0.4);
@@ -698,7 +698,7 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
       .font(PDF_FONT.italic)
-      .text('[Table placeholder — populate with structured data once sources are attached.]');
+      .text(ctx.schema.language === 'pl' ? '[Symbol zastępczy tabeli — uzupełnij danymi strukturalnymi po dołączeniu źródeł.]' : '[Table placeholder — populate with structured data once sources are attached.]');
     doc.font(PDF_FONT.regular);
     doc.moveDown(0.4);
     return;
@@ -862,9 +862,7 @@ function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
       .font(PDF_FONT.italic)
-      .text(
-        `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization fallback]`
-      );
+      .text(ctx.schema.language === 'pl' ? `[Symbol zastępczy wykresu ${captionLabel} — wykres ${kindText}, ${seriesText}, ${valuesText}; tryb zapasowy rasteryzacji]` : `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization fallback]`);
   }
   doc.text(`${captionLabel} — ${titleText}${citationSuffix}`);
   const content = documentChartBlockContent(block);
@@ -893,7 +891,7 @@ function drawKpiStrip(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRen
       .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
       .font(PDF_FONT.italic)
-      .text('[KPI strip placeholder — no metrics provided.]');
+      .text(ctx.schema.language === 'pl' ? '[Symbol zastępczy paska KPI — nie podano mierników.]' : '[KPI strip placeholder — no metrics provided.]');
     doc.font(PDF_FONT.regular).fillColor('#0F172A');
     doc.moveDown(0.4);
     return;
@@ -950,7 +948,7 @@ function drawInlineFootnote(
   const bodyText = asString(value.text ?? '').trim();
   if (bodyText.length === 0) return;
   const id = registerFootnoteBody(ctx, bodyText);
-  doc.fontSize(ctx.sizing.body).fillColor('#64748B').font(PDF_FONT.italic).text(`Note ^${id}`);
+  doc.fontSize(ctx.sizing.body).fillColor('#64748B').font(PDF_FONT.italic).text(`${ctx.schema.language === 'pl' ? 'Przypis' : 'Note'} ^${id}`);
   doc.font(PDF_FONT.regular);
   doc.moveDown(0.2);
 }
@@ -1037,7 +1035,7 @@ function drawSources(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
       .fillColor('#92400E')
       .font(PDF_FONT.italic)
       .text(
-        'No sources attached. Substantive content blocks are flagged as assumptions and require a source pack before client distribution.'
+        ctx.schema.language === 'pl' ? 'Nie dołączono źródeł. Bloki merytoryczne oznaczono jako założenia i wymagają pakietu źródłowego przed przekazaniem klientowi.' : 'No sources attached. Substantive content blocks are flagged as assumptions and require a source pack before client distribution.'
       );
     doc.font(PDF_FONT.regular);
     return;

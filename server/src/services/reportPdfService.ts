@@ -65,6 +65,7 @@ export interface ReportPdfNarrative {
  * `StatusReportService.generateReport` output and a flattened caller shape.
  */
 export interface ReportPdfInput {
+  locale?: 'en' | 'pl';
   /** Report title (falls back to initiative name). */
   title?: string;
   initiativeName?: string;
@@ -85,6 +86,7 @@ export interface ReportPdfInput {
 }
 
 interface NormalizedReport {
+  locale: 'en' | 'pl';
   title: string;
   period: string;
   overallStatus: string;
@@ -134,6 +136,7 @@ function normalizeReport(input: ReportPdfInput): NormalizedReport {
   }
 
   return {
+    locale: input.locale === 'pl' ? 'pl' : 'en',
     title: title || 'Status Report',
     period: period || '—',
     overallStatus: (input.overallStatus ?? 'NA').toString().toUpperCase(),
@@ -200,6 +203,7 @@ function drawBulletList(doc: PDFKit.PDFDocument, items: string[]): void {
  */
 export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
   const report = normalizeReport(input);
+  const pl = report.locale === 'pl';
 
   return new Promise<Buffer>((resolve, reject) => {
     try {
@@ -222,7 +226,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
       doc.on('error', (err: Error) => reject(err));
 
       // ---- Header block -------------------------------------------------
-      doc.fillColor(MUTED).font(PDF_FONT.bold).fontSize(9).text('STATUS REPORT');
+      doc.fillColor(MUTED).font(PDF_FONT.bold).fontSize(9).text(pl ? 'RAPORT STATUSU' : 'STATUS REPORT');
       doc.moveDown(0.2);
       doc.fillColor(INK).font(PDF_FONT.bold).fontSize(20).text(report.title);
       doc.moveDown(0.3);
@@ -234,7 +238,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
 
       // Overall RAG roll-up.
       const overallY = doc.y;
-      doc.fillColor(INK).font(PDF_FONT.bold).fontSize(11).text('Overall status: ', {
+      doc.fillColor(INK).font(PDF_FONT.bold).fontSize(11).text(pl ? 'Status ogólny: ' : 'Overall status: ', {
         continued: true,
       });
       const pillX = doc.x;
@@ -287,7 +291,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
             drawBulletList(doc, highlights);
           }
           if (issues.length > 0) {
-            doc.font(PDF_FONT.bold).fontSize(9).fillColor(MUTED).text('Issues');
+            doc.font(PDF_FONT.bold).fontSize(9).fillColor(MUTED).text(pl ? 'Problemy' : 'Issues');
             drawBulletList(doc, issues);
           }
           doc.moveDown(0.2);
@@ -339,7 +343,7 @@ export async function renderReportPdf(input: ReportPdfInput): Promise<Buffer> {
             { lineBreak: false }
           );
         doc.text(
-          `Page ${i + 1} of ${range.count}`,
+          `${pl ? 'Strona' : 'Page'} ${i + 1} ${pl ? 'z' : 'of'} ${range.count}`,
           doc.page.width - doc.page.margins.right - 80,
           footerY,
           { width: 80, align: 'right', lineBreak: false }

@@ -85,6 +85,22 @@ export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): s
   return value;
 }
 
+function isUntranslatedEnglishProse(value: string): boolean {
+  if (value.length < 6 || /^[A-Z0-9_.:-]+$/.test(value)) return false;
+  if (/[ąćęłńóśźż]/i.test(value)) return false;
+  return /\b(?:the|a|an|is|are|was|were|not|missing|required|failed|invalid|cannot|could|must|found|allowed|error|request|user|organization|project|report|task|operation)\b/i.test(
+    value
+  );
+}
+
+export function localizeServerErrorField(value: string, locale: 'en' | 'pl'): string {
+  const localized = localizeServerPayloadText(value, locale);
+  if (locale === 'pl' && localized === value && isUntranslatedEnglishProse(value)) {
+    return 'Nie udało się wykonać operacji.';
+  }
+  return localized;
+}
+
 function localizePayload(value: unknown, locale: 'en' | 'pl'): unknown {
   if (Array.isArray(value)) return value.map((item) => localizePayload(item, locale));
   if (!value || typeof value !== 'object') return value;
@@ -96,7 +112,7 @@ function localizePayload(value: unknown, locale: 'en' | 'pl'): unknown {
   for (const [key, item] of Object.entries(source)) {
     localized[key] =
       (key === 'message' || key === 'error') && typeof item === 'string'
-        ? localizeServerPayloadText(item, locale)
+        ? localizeServerErrorField(item, locale)
         : localizePayload(item, locale);
   }
   return localized;

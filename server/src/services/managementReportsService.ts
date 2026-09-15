@@ -63,6 +63,30 @@ function dependencyMissing(dep: 'pdfkit' | 'pptxgenjs' | 'exceljs'): Error {
   return err;
 }
 
+export function managementReportPdfLabels(language: 'en' | 'pl') {
+  return language === 'pl'
+    ? {
+        fallbackTitle: 'Raport zarządczy',
+        decisions: 'Wymagane decyzje',
+        none: 'Brak',
+        decision: 'Decyzja',
+        owner: 'Właściciel',
+        tbd: 'Do ustalenia',
+        highlights: 'Najważniejsze informacje',
+        noHighlights: 'Brak dostępnych informacji.',
+      }
+    : {
+        fallbackTitle: 'Management Report',
+        decisions: 'Decisions Required',
+        none: 'None',
+        decision: 'Decision',
+        owner: 'Owner',
+        tbd: 'TBD',
+        highlights: 'Key Highlights',
+        noHighlights: 'No highlights available.',
+      };
+}
+
 // Tenant-scoping helper (DEC-131 P1-4): a foreign report must be
 // indistinguishable from a missing one — 404, never a leak of existence,
 // never a 503 from something downstream running first. Callers resolve
@@ -217,55 +241,63 @@ class ManagementReportsService {
     return exportDir;
   }
 
-  private buildSummaryLines(report: any): string[] {
+  private buildSummaryLines(report: any, language: 'en' | 'pl' = 'en'): string[] {
     const lines: string[] = [];
-    if (report?.title) lines.push(`Title: ${report.title}`);
-    if (report?.reportType) lines.push(`Type: ${report.reportType}`);
-    if (report?.scope) lines.push(`Scope: ${report.scope}`);
+    const label = (en: string, pl: string) => (language === 'pl' ? pl : en);
+    if (report?.title) lines.push(`${label('Title', 'Tytuł')}: ${report.title}`);
+    if (report?.reportType) lines.push(`${label('Type', 'Typ')}: ${report.reportType}`);
+    if (report?.scope) lines.push(`${label('Scope', 'Zakres')}: ${report.scope}`);
     if (report?.periodStart && report?.periodEnd) {
-      lines.push(`Period: ${report.periodStart} - ${report.periodEnd}`);
+      lines.push(`${label('Period', 'Okres')}: ${report.periodStart} - ${report.periodEnd}`);
     }
     if (report?.content?.executiveSummary) {
-      lines.push(`Executive Summary: ${report.content.executiveSummary}`);
+      lines.push(
+        `${label('Executive Summary', 'Podsumowanie zarządcze')}: ${report.content.executiveSummary}`
+      );
     }
     return lines;
   }
 
-  private async writePdfReport(report: any, filePath: string): Promise<void> {
+  private async writePdfReport(
+    report: any,
+    filePath: string,
+    language: 'en' | 'pl' = 'en'
+  ): Promise<void> {
     const { PDFDocument } = await loadExportDeps();
     if (!PDFDocument) throw dependencyMissing('pdfkit');
 
     const doc = new PDFDocument({ margin: 48 });
+    const copy = managementReportPdfLabels(language);
     // DEC-132/133: default pdfkit Helvetica has no Polish diacritics.
     registerPdfFonts(doc);
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    doc.fontSize(18).text(report.title || 'Management Report');
+    doc.fontSize(18).text(report.title || copy.fallbackTitle);
     doc.moveDown(0.5);
     doc.fontSize(11).fillColor('#555555');
-    this.buildSummaryLines(report).forEach((line) => doc.text(line));
+    this.buildSummaryLines(report, language).forEach((line) => doc.text(line));
 
     doc.moveDown();
-    doc.fillColor('#000000').fontSize(13).text('Decisions Required');
+    doc.fillColor('#000000').fontSize(13).text(copy.decisions);
     const decisions = report?.content?.decisionsRequired || [];
     if (decisions.length === 0) {
-      doc.fontSize(11).text('None');
+      doc.fontSize(11).text(copy.none);
     } else {
       decisions.slice(0, 10).forEach((decision: any, index: number) => {
         doc
           .fontSize(11)
           .text(
-            `${index + 1}. ${decision.title || 'Decision'} (Owner: ${decision.ownerName || 'TBD'})`
+            `${index + 1}. ${decision.title || copy.decision} (${copy.owner}: ${decision.ownerName || copy.tbd})`
           );
       });
     }
 
     doc.moveDown();
-    doc.fontSize(13).text('Key Highlights');
+    doc.fontSize(13).text(copy.highlights);
     const highlights = report?.aiNarrative ? [report.aiNarrative] : [];
     if (highlights.length === 0) {
-      doc.fontSize(11).text('No highlights available.');
+      doc.fontSize(11).text(copy.noHighlights);
     } else {
       highlights.forEach((item: string) => doc.fontSize(11).text(item));
     }
@@ -1351,7 +1383,7 @@ class ManagementReportsService {
     const publicPath = `/exports/management-reports/${fileName}`;
 
     if (format === 'pdf') {
-      await this.writePdfReport(report, filePath);
+      await this.writePdfReport(report, filePath, language);
     } else if (format === 'pptx') {
       await this.writePptxReport(report, filePath, language);
     } else if (format === 'xlsx') {

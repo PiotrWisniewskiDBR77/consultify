@@ -7945,7 +7945,11 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const pdf = await renderInitiativeWorkReportPdf(
-        frozenWorkReport.content as InitiativeWorkReportContent
+        frozenWorkReport.content as InitiativeWorkReportContent,
+        resolveReportLocale(
+          (req as Request & { user?: { language?: unknown } }).user?.language,
+          (frozenWorkReport.content as { locale?: unknown }).locale
+        )
       );
       res
         .status(200)
@@ -9475,7 +9479,7 @@ export async function deliverInitiativeWorkReport(
 
   const content = run.frozenSnapshot.workReport.content as InitiativeWorkReportContent;
   const locale = resolveReportLocale(input.locale, (content as { locale?: unknown }).locale);
-  const pdf = await (deps.renderPdf ?? renderInitiativeWorkReportPdf)(content);
+  const pdf = await (deps.renderPdf ?? renderInitiativeWorkReportPdf)(content, locale);
   const sendEmail = deps.sendEmail ?? EmailService.send.bind(EmailService);
   let aggregateVersion = Number(run.version ?? 0) || Number((await readRun())?.version ?? 0);
   if (!aggregateVersion) aggregateVersion = input.expectedVersion + (attempt ? 1 : 0);

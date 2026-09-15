@@ -484,15 +484,20 @@ export class InvoiceServiceClass {
 
       // Get organization and tax settings for invoice
       const orgData = await this.dbGet(
-        `SELECT o.name, bts.billing_name, bts.billing_address_line1, bts.billing_address_line2,
+        `SELECT o.name, op.preferred_language, bts.billing_name, bts.billing_address_line1, bts.billing_address_line2,
                         bts.billing_city, bts.billing_state, bts.billing_postal_code, bts.billing_country,
                         bts.tax_id, bts.tax_id_type
                  FROM organizations o
+                 LEFT JOIN organization_profiles op ON o.id = op.organization_id
                  LEFT JOIN billing_tax_settings bts ON o.id = bts.organization_id
                  WHERE o.id = ?`,
         [invoice.organization_id]
       );
 
+      const invoiceLocale = /^pl(?:[-_]|$)/i.test(
+        String((orgData as { preferred_language?: unknown } | null)?.preferred_language || '')
+      ) ? 'pl-PL' : 'en-US';
+      const pl = invoiceLocale === 'pl-PL';
       return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ margin: 50 });
         // DEC-132/133: default pdfkit Helvetica has no Polish diacritics —
@@ -503,7 +508,7 @@ export class InvoiceServiceClass {
         doc.pipe(stream);
 
         // Header
-        doc.fontSize(24).text('INVOICE', 50, 50);
+        doc.fontSize(24).text(pl ? 'FAKTURA' : 'INVOICE', 50, 50);
         doc.fontSize(10).text('Consultify', 400, 50, { align: 'right' });
         doc.text('DBR77 Consultify Sp. z o.o.', 400, 65, { align: 'right' });
         doc.text('ul. Przemysłowa 12/14', 400, 80, { align: 'right' });
@@ -513,13 +518,13 @@ export class InvoiceServiceClass {
         // Invoice details
         doc.moveTo(50, 140).lineTo(550, 140).stroke();
         doc.fontSize(12);
-        doc.text(`Invoice Number: ${invoice.invoice_number}`, 50, 160);
-        doc.text(`Issue Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 50, 180);
-        doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 50, 200);
+        doc.text(`${pl ? 'Numer faktury' : 'Invoice Number'}: ${invoice.invoice_number}`, 50, 160);
+        doc.text(`${pl ? 'Data wystawienia' : 'Issue Date'}: ${new Date(invoice.created_at).toLocaleDateString(invoiceLocale)}`, 50, 180);
+        doc.text(`${pl ? 'Termin płatności' : 'Due Date'}: ${new Date(invoice.due_date).toLocaleDateString(invoiceLocale)}`, 50, 200);
         doc.text(`Status: ${invoice.status.toUpperCase()}`, 50, 220);
 
         // Bill To section
-        doc.fontSize(12).text('Bill To:', 350, 160);
+        doc.fontSize(12).text(pl ? 'Nabywca:' : 'Bill To:', 350, 160);
         const customerName = (orgData as any)?.billing_name || (orgData as any)?.name || 'Customer';
         doc.text(customerName, 350, 180);
         if ((orgData as any)?.billing_address_line1) {
@@ -540,10 +545,10 @@ export class InvoiceServiceClass {
         const tableTop = 300;
         doc.moveTo(50, tableTop).lineTo(550, tableTop).stroke();
         doc.fontSize(10).font(PDF_FONT.bold);
-        doc.text('Description', 50, tableTop + 10);
+        doc.text(pl ? 'Opis' : 'Description', 50, tableTop + 10);
         doc.text('Qty', 300, tableTop + 10);
-        doc.text('Unit Price', 370, tableTop + 10);
-        doc.text('Amount', 470, tableTop + 10);
+        doc.text(pl ? 'Cena jednostkowa' : 'Unit Price', 370, tableTop + 10);
+        doc.text(pl ? 'Kwota' : 'Amount', 470, tableTop + 10);
         doc
           .moveTo(50, tableTop + 25)
           .lineTo(550, tableTop + 25)
@@ -556,7 +561,7 @@ export class InvoiceServiceClass {
 
         if (items.length === 0) {
           // Add default line if no items
-          doc.text('Subscription Service', 50, yPos);
+          doc.text(pl ? 'Usługa abonamentowa' : 'Subscription Service', 50, yPos);
           doc.text('1', 310, yPos);
           doc.text(`${invoice.currency} ${invoice.subtotal.toFixed(2)}`, 360, yPos);
           doc.text(`${invoice.currency} ${invoice.subtotal.toFixed(2)}`, 460, yPos);
@@ -581,7 +586,7 @@ export class InvoiceServiceClass {
           .lineTo(550, yPos + 10)
           .stroke();
         yPos += 20;
-        doc.text('Subtotal:', 350, yPos);
+        doc.text(pl ? 'Suma częściowa:' : 'Subtotal:', 350, yPos);
         doc.text(`${invoice.currency} ${invoice.subtotal.toFixed(2)}`, 460, yPos);
         yPos += 20;
 
@@ -592,21 +597,21 @@ export class InvoiceServiceClass {
         }
 
         doc.font(PDF_FONT.bold);
-        doc.text('Total:', 350, yPos);
+        doc.text(pl ? 'Razem:' : 'Total:', 350, yPos);
         doc.text(`${invoice.currency} ${invoice.total.toFixed(2)}`, 460, yPos);
 
         // Notes
         if (invoice.notes) {
           yPos += 50;
           doc.font(PDF_FONT.regular).fontSize(10);
-          doc.text('Notes:', 50, yPos);
+          doc.text(pl ? 'Uwagi:' : 'Notes:', 50, yPos);
           doc.text(invoice.notes, 50, yPos + 15);
         }
 
         // Footer
         doc.fontSize(8).font(PDF_FONT.regular);
-        doc.text('Thank you for your business!', 50, 700, { align: 'center', width: 500 });
-        doc.text('Payment is due within the terms specified above.', 50, 715, {
+        doc.text(pl ? 'Dziękujemy za współpracę!' : 'Thank you for your business!', 50, 700, { align: 'center', width: 500 });
+        doc.text(pl ? 'Płatność jest wymagana w terminie wskazanym powyżej.' : 'Payment is due within the terms specified above.', 50, 715, {
           align: 'center',
           width: 500,
         });

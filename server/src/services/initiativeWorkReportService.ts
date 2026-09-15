@@ -15,6 +15,7 @@ export const INITIATIVE_WORK_REPORT_TEMPLATES = [
 export type InitiativeWorkReportTemplate = (typeof INITIATIVE_WORK_REPORT_TEMPLATES)[number];
 
 export interface InitiativeWorkReportContent {
+  locale?: 'en' | 'pl';
   generatedAt: string;
   title: string;
   templateId: InitiativeWorkReportTemplate;
@@ -113,8 +114,10 @@ export function selectInitiativeWorkReportSections(content: InitiativeWorkReport
 }
 
 export async function renderInitiativeWorkReportPdf(
-  content: InitiativeWorkReportContent
+  content: InitiativeWorkReportContent,
+  language: 'en' | 'pl' = content.locale || 'en'
 ): Promise<Buffer> {
+  const pl = language === 'pl';
   const doc = new PDFDocument({ size: 'A4', margin: 48, bufferPages: true });
   // Register by path: pdfkit 0.17 accepts the vendored TrueType path in all
   // supported runtimes, while Buffer registration is broken under pnpm/symlinked
@@ -137,25 +140,25 @@ export async function renderInitiativeWorkReportPdf(
     .font(PDF_FONT.regular)
     .fontSize(9)
     .fillColor('#64748b')
-    .text(`Generated ${new Date(content.generatedAt).toISOString()} · ${content.templateId}`);
+    .text(`${pl ? 'Wygenerowano' : 'Generated'} ${new Date(content.generatedAt).toISOString()} · ${content.templateId}`);
   doc.moveDown(1.2);
-  doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Portfolio summary');
+  doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text(pl ? 'Podsumowanie portfela' : 'Portfolio summary');
   doc.font(PDF_FONT.regular).fontSize(10).fillColor('#334155');
-  doc.text(`Initiatives: ${content.summary.initiatives}`);
-  doc.text(`Pending decisions: ${content.summary.pendingDecisions}`);
-  doc.text(`Overdue decisions: ${content.summary.overdueDecisions}`);
+  doc.text(`${pl ? 'Inicjatywy' : 'Initiatives'}: ${content.summary.initiatives}`);
+  doc.text(`${pl ? 'Oczekujące decyzje' : 'Pending decisions'}: ${content.summary.pendingDecisions}`);
+  doc.text(`${pl ? 'Przeterminowane decyzje' : 'Overdue decisions'}: ${content.summary.overdueDecisions}`);
   for (const [status, count] of Object.entries(content.summary.byStatus)) {
     doc.text(`${safeText(status, 'UNKNOWN')}: ${count}`);
   }
 
   if (content.templateId === 'WORKLOAD_CAPACITY' && content.workload) {
     doc.moveDown(1.2);
-    doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Workload by person and week');
+    doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text(pl ? 'Obciążenie według osoby i tygodnia' : 'Workload by person and week');
     doc
       .font(PDF_FONT.regular)
       .fontSize(10)
       .fillColor('#334155')
-      .text(`Overloaded person-weeks: ${content.workload.overloadedCount}`);
+      .text(`${pl ? 'Przeciążone osobotygodnie' : 'Overloaded person-weeks'}: ${content.workload.overloadedCount}`);
     for (const person of content.workload.people) {
       if (doc.y > 700) doc.addPage();
       doc.font(PDF_FONT.bold).fontSize(10).fillColor('#0f172a').text(person.name);
@@ -208,9 +211,9 @@ export async function renderInitiativeWorkReportPdf(
   if (showDecisionOwners) {
     doc.moveDown(1.2);
     if (doc.y > 680) doc.addPage();
-    doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Decision owners');
+    doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text(pl ? 'Właściciele decyzji' : 'Decision owners');
     if (selected.decisionDebtors.length === 0) {
-      doc.font(PDF_FONT.italic).fontSize(10).fillColor('#64748b').text('No pending decisions.');
+      doc.font(PDF_FONT.italic).fontSize(10).fillColor('#64748b').text(pl ? 'Brak oczekujących decyzji.' : 'No pending decisions.');
     }
     for (const debtor of selected.decisionDebtors) {
       if (doc.y > 730) doc.addPage();

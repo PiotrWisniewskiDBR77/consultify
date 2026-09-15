@@ -31,6 +31,21 @@ describe('server payload localization', () => {
     expect(localizeServerPayloadText('Resource not found.', 'en')).toBe('Resource not found.');
   });
 
+  it('localizes real AI pipeline policy errors and preserves interpolated values', () => {
+    expect(localizeServerPayloadText('Model not allowed by policy: gpt-x', 'pl')).toBe(
+      'Model niedozwolony przez politykę: gpt-x'
+    );
+  });
+
+  it('sanitizes uncatalogued English error prose at the authenticated HTTP boundary', () => {
+    expect(
+      localizeServerPayload(
+        { code: 'VALIDATION', error: 'Missing required decision fields: proposal_id' },
+        request('pl')
+      )
+    ).toEqual({ code: 'VALIDATION', error: 'Nie udało się wykonać operacji.' });
+  });
+
   it('preserves non-plain objects instead of changing their JSON contract', () => {
     const date = new Date('2026-09-15T00:00:00.000Z');
     const payload = { date, bytes: Buffer.from('test') };
