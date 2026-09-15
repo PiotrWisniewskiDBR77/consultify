@@ -35,6 +35,7 @@ import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState'
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SecurityPolicy {
   id: string;
   organizationId: string | null;
@@ -340,7 +341,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 Session Policy
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Control session behavior and limits
+                {tlumaczPozaHookiem("superadmin.securityPolicies.controlSessionBehaviorAndLimits", "Control session behavior and limits")}
               </p>
             </div>
           </div>
@@ -461,7 +462,7 @@ export const SecurityPoliciesView: React.FC = () => {
             {/* Allowlist */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                IP Allowlist (if set, only these IPs can access)
+                {tlumaczPozaHookiem("superadmin.securityPolicies.iPAllowlistIfSetOnlyTheseIPs", "IP Allowlist (if set, only these IPs can access)")}
               </label>
               <div className="flex gap-2 mb-2">
                 <input
@@ -502,7 +503,7 @@ export const SecurityPoliciesView: React.FC = () => {
             {/* Blocklist */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                IP Blocklist (these IPs are always blocked)
+                {tlumaczPozaHookiem("superadmin.securityPolicies.iPBlocklistTheseIPsAreAlwaysBlocked", "IP Blocklist (these IPs are always blocked)")}
               </label>
               <div className="flex gap-2 mb-2">
                 <input
@@ -565,8 +566,7 @@ export const SecurityPoliciesView: React.FC = () => {
           <div>
             <h4 className="font-medium text-blue-900 dark:text-blue-300">Global Default Policy</h4>
             <p className="text-sm text-blue-800 dark:text-blue-400 mt-1">
-              These settings apply to all organizations that don't have a custom policy.
-              Organizations can override these settings with their own policy.
+              {tlumaczPozaHookiem("superadmin.securityPolicies.theseSettingsApplyToAllOrganizationsThat", "These settings apply to all organizations that don't have a custom policy. Organizations can override these settings with their own policy.")}
             </p>
           </div>
         </div>
@@ -786,8 +786,7 @@ export const SecurityPoliciesView: React.FC = () => {
           <div>
             <h4 className="font-medium text-blue-900 dark:text-blue-300">Retention & Legal Hold</h4>
             <p className="text-sm text-blue-800 dark:text-blue-400 mt-1">
-              Per-organization data governance: retention period (days), legal hold flag, and data
-              residency region. Legal hold blocks delete/export operations.
+              {tlumaczPozaHookiem("superadmin.securityPolicies.perOrganizationDataGovernanceRetentionPeriodDays", "Per-organization data governance: retention period (days), legal hold flag, and data residency region. Legal hold blocks delete/export operations.")}
             </p>
           </div>
         </div>

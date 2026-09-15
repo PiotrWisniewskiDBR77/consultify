@@ -23,6 +23,8 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ComplianceCheck {
   id: string;
   name: string;
@@ -270,7 +272,7 @@ export const ComplianceTab: React.FC = () => {
             AI Compliance
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Monitor AI compliance status and data residency configuration
+            {tlumaczPozaHookiem("superadmin.compliance.monitorAIComplianceStatusAndDataResidency", "Monitor AI compliance status and data residency configuration")}
           </p>
         </div>
         <button
@@ -329,10 +331,10 @@ export const ComplianceTab: React.FC = () => {
                 <Clock size={20} className="text-slate-600" />
               </div>
               <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                {lastScanTime ? new Date(lastScanTime).toLocaleTimeString() : 'Never'}
+                {lastScanTime ? new Date(lastScanTime).toLocaleTimeString(localeListy()) : 'Never'}
               </div>
               <div className="text-xs text-slate-600 mt-1">
-                {lastScanTime ? new Date(lastScanTime).toLocaleDateString() : ''}
+                {lastScanTime ? new Date(lastScanTime).toLocaleDateString(localeListy()) : ''}
               </div>
             </div>
           </div>

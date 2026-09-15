@@ -12,6 +12,8 @@ import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 import { EmptyState, LoadingState } from '../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const DOC_TYPES = [
   'TERMS_OF_SERVICE',
   'PRIVACY_POLICY',
@@ -54,7 +56,7 @@ const isActive = (doc: LegalPanelDocument) =>
 const formatDate = (value?: string) => {
   if (!value) return '-';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 const matchesPublish = (
@@ -185,7 +187,7 @@ export const LegalPanel: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-c-text">Legal Documents</h2>
           <p className="text-sm text-c-text-secondary">
-            Manage versions, activation status, and publication of legal documents.
+            {tlumaczPozaHookiem("superadmin.legal.manageVersionsActivationStatusAndPublicationOf", "Manage versions, activation status, and publication of legal documents.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -362,7 +364,7 @@ export const LegalPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                    Effective From
+                    {tlumaczPozaHookiem("superadmin.legal.effectiveFrom", "Effective From")}
                   </label>
                   <input
                     type="date"
@@ -391,7 +393,7 @@ export const LegalPanel: React.FC = () => {
                 <textarea
                   value={newDoc.change_summary}
                   onChange={(e) => setNewDoc({ ...newDoc, change_summary: e.target.value })}
-                  placeholder="Brief description of changes in this version..."
+                  placeholder={tlumaczPozaHookiem("superadmin.legal.briefDescriptionOfChangesInThisVersion", "Brief description of changes in this version...")}
                   rows={2}
                   className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text resize-none"
                 />

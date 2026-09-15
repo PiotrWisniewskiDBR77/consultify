@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface KnowledgeAssignment {
   id: string;
   worker_id: string;
@@ -336,8 +337,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             Knowledge Governance
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Assign pills to the worker, edit pill content and sections, and monitor product
-            coverage.
+            {tlumaczPozaHookiem("superadmin.knowledgeAssignment.assignPillsToTheWorkerEditPill", "Assign pills to the worker, edit pill content and sections, and monitor product coverage.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -377,8 +377,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
           <div>
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Coverage Map</h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Shows whether the worker has at least one assigned pill for each available product
-              family.
+              {tlumaczPozaHookiem("superadmin.knowledgeAssignment.showsWhetherTheWorkerHasAtLeast", "Shows whether the worker has at least one assigned pill for each available product family.")}
             </p>
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -527,7 +526,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
               Active Assignments
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Govern whole pills, selected sections, and fallback behavior per worker.
+              {tlumaczPozaHookiem("superadmin.knowledgeAssignment.governWholePillsSelectedSectionsAndFallback", "Govern whole pills, selected sections, and fallback behavior per worker.")}
             </p>
           </div>
         </div>
@@ -598,8 +597,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             <div className="text-center py-12">
               <Brain className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                No knowledge assigned yet. Bootstrap the default pills or add a specific pill
-                manually.
+                {tlumaczPozaHookiem("superadmin.knowledgeAssignment.noKnowledgeAssignedYetBootstrapTheDefault", "No knowledge assigned yet. Bootstrap the default pills or add a specific pill manually.")}
               </p>
             </div>
           )}
@@ -614,8 +612,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 Knowledge Pill Editor
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Create or update the worker’s governed product pills, including section-level
-                content.
+                {tlumaczPozaHookiem("superadmin.knowledgeAssignment.createOrUpdateTheWorkerSGoverned", "Create or update the worker’s governed product pills, including section-level content.")}
               </p>
             </div>
             {editingPillId && (
@@ -624,7 +621,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 className="inline-flex items-center gap-2 px-3 py-1.5 border border-slate-300 dark:border-navy-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300"
               >
                 <X size={13} />
-                Cancel edit
+                {tlumaczPozaHookiem("superadmin.knowledgeAssignment.cancelEdit", "Cancel edit")}
               </button>
             )}
           </div>
@@ -667,7 +664,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
               >
                 <option value="active">Active</option>
-                <option value="draft">Draft</option>
+                <option value="draft">{tlumaczPozaHookiem("superadmin.knowledgeAssignment.draft", "Draft")}</option>
               </select>
             </div>
           </div>
@@ -684,7 +681,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             value={draft.change_notes}
             onChange={(e) => setDraft((current) => ({ ...current, change_notes: e.target.value }))}
             rows={2}
-            placeholder="Change notes for this version"
+            placeholder={tlumaczPozaHookiem("superadmin.knowledgeAssignment.changeNotesForThisVersion", "Change notes for this version")}
             className="mt-3 w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white resize-y"
           />
 
@@ -752,7 +749,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             <div>
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Pill Library</h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Review which pills exist, which products they cover, and whether they are assigned.
+                {tlumaczPozaHookiem("superadmin.knowledgeAssignment.reviewWhichPillsExistWhichProductsThey", "Review which pills exist, which products they cover, and whether they are assigned.")}
               </p>
             </div>
             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -835,7 +832,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
               <div className="text-center py-12">
                 <FileText className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No knowledge pills yet. Create a pill or bootstrap the default product set.
+                  {tlumaczPozaHookiem("superadmin.knowledgeAssignment.noKnowledgePillsYetCreateAPill", "No knowledge pills yet. Create a pill or bootstrap the default product set.")}
                 </p>
               </div>
             )}

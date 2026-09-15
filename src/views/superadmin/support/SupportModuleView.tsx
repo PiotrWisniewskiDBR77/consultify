@@ -13,6 +13,7 @@ import { CustomerHealthView } from './CustomerHealthView';
 import { CustomerSuccessNotesView } from './CustomerSuccessNotesView';
 import { SupportTicketsView } from './SupportTicketsView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 export const SupportModuleView: React.FC = () => {
   const [activeTab, setActiveTab] = useState('tickets');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
@@ -63,7 +64,7 @@ export const SupportModuleView: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         title="Support & Customer Success"
-        subtitle="Manage support tickets, customer success notes, and health checks"
+        subtitle={tlumaczPozaHookiem("superadmin.supportModule.manageSupportTicketsCustomerSuccessNotesAnd", "Manage support tickets, customer success notes, and health checks")}
       >
         {renderContent()}
       </TabLayout>

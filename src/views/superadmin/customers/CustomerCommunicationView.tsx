@@ -14,6 +14,8 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Communication {
   id: string;
   type: 'email' | 'announcement' | 'broadcast';
@@ -43,7 +45,7 @@ const EMPTY_STATS: CommunicationStats = {
 const formatCommunicationDate = (value: string | null) => {
   if (!value) return 'Draft';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 type JsonRecord = Record<string, unknown> & {
@@ -252,7 +254,7 @@ const CustomerCommunicationView: React.FC = () => {
               Communication Center
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mt-1">
-              Send announcements and messages to customers
+              {tlumaczPozaHookiem("superadmin.customerCommunication.sendAnnouncementsAndMessagesToCustomers", "Send announcements and messages to customers")}
             </p>
           </div>
           <InfoButton cardId="superadmin-communication" />
@@ -391,7 +393,7 @@ const CustomerCommunicationView: React.FC = () => {
                   onClick={() => setShowComposeModal(true)}
                   className="mt-4 text-blue-400 hover:text-blue-300"
                 >
-                  Send your first message
+                  {tlumaczPozaHookiem("superadmin.customerCommunication.sendYourFirstMessage", "Send your first message")}
                 </button>
               </div>
             ) : (
@@ -512,7 +514,7 @@ const CustomerCommunicationView: React.FC = () => {
                       onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
                       className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                       rows={5}
-                      placeholder="Write your message..."
+                      placeholder={tlumaczPozaHookiem("superadmin.customerCommunication.writeYourMessage", "Write your message...")}
                     />
                   </div>
                 </div>

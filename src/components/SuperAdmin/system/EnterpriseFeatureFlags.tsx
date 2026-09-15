@@ -39,6 +39,8 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface FeatureFlag {
   id: string;
   flag_key: string;
@@ -150,7 +152,7 @@ const flagMatchesSave = (flag: FeatureFlag, expected: FeatureFlagFormData, id?: 
 
 const formatDate = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 export const EnterpriseFeatureFlags: React.FC = () => {
@@ -396,7 +398,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text">Feature Flags</h2>
           <p className="text-c-text-secondary text-sm">
-            Control feature availability with targeting, A/B testing, and percentage rollouts
+            {tlumaczPozaHookiem("superadmin.enterpriseFeatureFlags.controlFeatureAvailabilityWithTargetingAB", "Control feature availability with targeting, A/B testing, and percentage rollouts")}
           </p>
         </div>
         <button
@@ -570,7 +572,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             variant="new"
             icon={Flag}
             title="No feature flags found"
-            description="Create a flag to control feature availability with targeting, rollouts, or A/B tests."
+            description={tlumaczPozaHookiem("superadmin.enterpriseFeatureFlags.createAFlagToControlFeatureAvailability", "Create a flag to control feature availability with targeting, rollouts, or A/B tests.")}
           />
         ) : (
           filteredFlags.map((flag) => {
@@ -1101,7 +1103,7 @@ const FlagHistoryModal: React.FC<{
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-c-text">{item.change_type}</span>
                     <span className="text-xs text-c-text-muted">
-                      {new Date(item.changed_at).toLocaleString()}
+                      {new Date(item.changed_at).toLocaleString(localeListy())}
                     </span>
                   </div>
                   {item.changed_by && (

@@ -14,6 +14,7 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { EMPTY_VALUE, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface RevenueStats {
   mrr: number;
   arr: number;
@@ -165,7 +166,7 @@ export const SuperAdminRevenueView: React.FC = () => {
           Revenue Dashboard
         </h2>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Financial metrics and usage analytics
+          {tlumaczPozaHookiem("superadmin.superAdminRevenue.financialMetricsAndUsageAnalytics", "Financial metrics and usage analytics")}
         </p>
       </div>
 
@@ -215,7 +216,7 @@ export const SuperAdminRevenueView: React.FC = () => {
             <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <Activity className="w-8 h-8 opacity-80" />
-                <span className="text-sm text-amber-100">This Month</span>
+                <span className="text-sm text-amber-100">{tlumaczPozaHookiem("superadmin.superAdminRevenue.thisMonth", "This Month")}</span>
               </div>
               <p className="text-3xl font-bold mt-4">
                 {formatNumber(usageStats?.totalTokensThisMonth)}
@@ -288,7 +289,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                   <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {formatNumber(usageStats?.totalTokensThisMonth)}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">This month</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{tlumaczPozaHookiem("superadmin.superAdminRevenue.thisMonth2", "This month")}</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
@@ -306,7 +307,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                   <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {formatNumber(usageStats?.activeOrganizations)}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">With usage</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{tlumaczPozaHookiem("superadmin.superAdminRevenue.withUsage", "With usage")}</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">

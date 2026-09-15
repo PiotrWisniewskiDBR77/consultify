@@ -21,6 +21,7 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type PurposeRow = {
   purpose: string;
   kind: string;
@@ -689,7 +690,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
                 className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
               />
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                When set, shows org-specific assignments first (plus global fallbacks).
+                {tlumaczPozaHookiem("superadmin.purposeAssignments.whenSetShowsOrgSpecificAssignmentsFirst", "When set, shows org-specific assignments first (plus global fallbacks).")}
               </div>
             </div>
 
@@ -867,7 +868,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
               />
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Requirements JSON editing will be added after we stabilize the purpose catalog.
+              {tlumaczPozaHookiem("superadmin.purposeAssignments.requirementsJSONEditingWillBeAddedAfter", "Requirements JSON editing will be added after we stabilize the purpose catalog.")}
             </div>
           </div>
         </>

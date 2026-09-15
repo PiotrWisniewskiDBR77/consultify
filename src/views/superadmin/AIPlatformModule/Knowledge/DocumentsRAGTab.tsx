@@ -27,6 +27,7 @@ import { DOCUMENT_CATEGORIES } from '@/views/vault/vaultDocuments';
 import { LoadingState } from '../../../../components/ui/primitives';
 import { Api } from '../../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type VaultScope = 'user' | 'project' | 'organization';
 
 interface Document {
@@ -539,7 +540,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
                   </span>
                 ) : (
                   <span className="text-slate-500 dark:text-slate-400 text-sm">
-                    Drag & drop PDF, DOCX, XLSX, PPTX, TXT, MD, CSV here or click to select
+                    {tlumaczPozaHookiem("superadmin.documentsRAG.dragDropPDFDOCXXLSXPPTXTXT", "Drag & drop PDF, DOCX, XLSX, PPTX, TXT, MD, CSV here or click to select")}
                   </span>
                 )}
               </div>
@@ -631,7 +632,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
           </div>
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-xs mt-3">
-          Files are automatically chunked, embedded, and added to the vector store for AI retrieval.
+          {tlumaczPozaHookiem("superadmin.documentsRAG.filesAreAutomaticallyChunkedEmbeddedAndAdded", "Files are automatically chunked, embedded, and added to the vector store for AI retrieval.")}
         </p>
       </form>
 
@@ -791,7 +792,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Document</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{tlumaczPozaHookiem("superadmin.documentsRAG.editDocument", "Edit Document")}</h2>
               <button
                 onClick={() => {
                   setEditingDoc(null);
@@ -863,7 +864,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
                             </p>
                           ) : (
                             <p>
-                              This change does not expose any document to the whole organization.
+                              {tlumaczPozaHookiem("superadmin.documentsRAG.thisChangeDoesNotExposeAnyDocument", "This change does not expose any document to the whole organization.")}
                             </p>
                           )}
                           <div className="mt-2 flex gap-2">

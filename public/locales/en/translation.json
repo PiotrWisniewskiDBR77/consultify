@@ -3202,7 +3202,8 @@
         "subtitle": "Compliance status of customer organizations",
         "title": "Customer compliance",
         "unknownOrganization": "Unknown organization"
-      }
+      },
+      "operateTenantsThroughOneControlPlaneFor": "Operate tenants through one control plane for lifecycle, users, billing, quotas, and risk"
     },
     "playbookTemplates": {
       "title": "Playbook Templates",
@@ -3385,6 +3386,877 @@
     "settlements": {
       "title": "Partner Settlements",
       "subtitle": "Review historical partner economics"
+    },
+    "analytics": {
+      "monitorSystemPerformanceAndUsage": "Monitor system performance and usage",
+      "systemAnalytics": "System Analytics"
+    },
+    "alertPlaygroundTester": {
+      "verifyYourHMACVerifierWithoutAffectingReal": "Verify your HMAC verifier without affecting real subscriptions or audit trail.",
+      "runStep1FirstToPopulateThe": "Run step 1 first to populate the inbox request.",
+      "acknowledgeTheSecretRevealInStep1": "Acknowledge the secret reveal in step 1 first.",
+      "thisSecretIsAlsoFedBackInto": "This secret is also fed back into step 2 so you can prove the loop closes. The reveal panel auto-clears in 60 seconds."
+    },
+    "backup": {
+      "manageDatabaseBackupsAndDisasterRecovery": "Manage database backups and disaster recovery"
+    },
+    "contentAnalytics": {
+      "failedToLoadAnalyticsData": "Failed to load analytics data",
+      "tryAgain": "Try Again",
+      "overviewOfYourContentModulePerformance": "Overview of your content module performance",
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days"
+    },
+    "contentCategoriesManager": {
+      "createYourFirstCategoryToOrganizeContent": "Create your first category to organize content"
+    },
+    "contentFilters": {
+      "from": "From"
+    },
+    "contentSearch": {
+      "draft": "Draft"
+    },
+    "contentTagsManager": {
+      "createTagsToOrganizeYourContent": "Create tags to organize your content"
+    },
+    "emailConfiguration": {
+      "encryptConnectionWithTLSSSL": "Encrypt connection with TLS/SSL",
+      "chooseYourEmailService": "Choose your email service",
+      "fromEmail": "From Email",
+      "fromName": "From Name",
+      "recommended": "Recommended:",
+      "setUpSPFDKIMAndDMARCRecords": "Set up SPF, DKIM, and DMARC records to improve email deliverability and prevent spoofing."
+    },
+    "emailTemplate": {
+      "briefDescriptionOfThisTemplate": "Brief description of this template...",
+      "enterYourHTMLEmailContentHere": "Enter your HTML email content here...",
+      "theEmailWillBeSentWithTEST": "The email will be sent with [TEST] prefix in the subject line.",
+      "defaultTitle": "Email Title",
+      "defaultGreeting": "Hi",
+      "defaultContent": "Your email content goes here...",
+      "defaultAction": "Call to Action",
+      "defaultRegards": "Best regards,",
+      "defaultTeam": "The Team",
+      "defaultCopyright": "© 2025 Your Company. All rights reserved."
+    },
+    "featureFlags": {
+      "controlFeatureAvailabilityAcrossYourPlatform": "Control feature availability across your platform"
+    },
+    "incidentRunbooks": {
+      "noRunbookMatchedTheCurrentSignalPattern": "No runbook matched the current signal pattern.",
+      "openTheRunbook": "Open the runbook"
+    },
+    "integrations": {
+      "connectConsultifyWithYourExistingTools": "Connect Consultify with your existing tools"
+    },
+    "legal": {
+      "manageVersionsActivationStatusAndPublicationOf": "Manage versions, activation status, and publication of legal documents.",
+      "effectiveFrom": "Effective From",
+      "briefDescriptionOfChangesInThisVersion": "Brief description of changes in this version..."
+    },
+    "modelAuditLog": {
+      "searchByEntityOrUser": "Search by entity or user...",
+      "from": "From",
+      "noAuditEntriesMatchYourFilters": "No audit entries match your filters"
+    },
+    "pricing": {
+      "effectiveFrom": "Effective From",
+      "optionalNotesAboutThisPriceEntry": "Optional notes about this price entry"
+    },
+    "purposeAssignments": {
+      "noModelsAssignedToThisPurpose": "No models assigned to this purpose",
+      "addAModelFromTheDropdownBelow": "Add a model from the dropdown below",
+      "selectAPurposeFromTheListTo": "Select a purpose from the list to manage its assignments",
+      "whenSetShowsOrgSpecificAssignmentsFirst": "When set, shows org-specific assignments first (plus global fallbacks).",
+      "requirementsJSONEditingWillBeAddedAfter": "Requirements JSON editing will be added after we stabilize the purpose catalog."
+    },
+    "modelTierAssignments": {
+      "removeModelFromTier": "Remove model from tier",
+      "noModelsAssignedToThisTier": "No models assigned to this tier"
+    },
+    "operationsHealthDrilldown": {
+      "noProblematicDecksInThisWindow": "No problematic decks in this window.",
+      "loadingDrillDown": "Loading drill-down…",
+      "someInputsWereDegraded": "Some inputs were degraded"
+    },
+    "playbookTemplateAnalytics": {
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "completedSuccessfully": "Completed successfully"
+    },
+    "playbookTemplateComments": {
+      "beTheFirstToLeaveAComment": "Be the first to leave a comment"
+    },
+    "security": {
+      "monitorSecurityEventsAndComplianceStatus": "Monitor security events and compliance status",
+      "enterprisePostureAccessControlIncidentsAndPrivileged": "Enterprise posture, access control, incidents, and privileged session governance"
+    },
+    "subscriberTokenManagement": {
+      "noDashboardTokensIssuedYetForThis": "No dashboard tokens issued yet for this subscription.",
+      "confirmRevocationThisTokenWillBePermanently": "Confirm revocation — this token will be permanently invalidated."
+    },
+    "superAdminAISettings": {
+      "platformWideAIConfigurationAndConstraints": "Platform-wide AI configuration and constraints",
+      "defaultModelAndFallbackChain": "Default model and fallback chain",
+      "pIIDetectionAndEncryption": "PII detection and encryption",
+      "circuitBreakerAndDataResidency": "Circuit breaker and data residency"
+    },
+    "superAdminStatusIndicators": {
+      "activeNow": "Active Now",
+      "pendingFeedback": "Pending Feedback",
+      "failedLogins1h": "Failed Logins (1h)",
+      "failedLogins": "Failed Logins"
+    },
+    "superadminRootClosure": {
+      "tenantsAndCustomers": "Tenants and customers",
+      "aIAndConnectorPlatformOps": "AI and connector platform ops"
+    },
+    "invoices": {
+      "draft": "Draft"
+    },
+    "backupConfig": {
+      "backupsOlderThanThisWillBeDeleted": "Backups older than this will be deleted",
+      "backupUploadedFilesAndDocuments": "Backup uploaded files and documents",
+      "backupActivityAndAuditLogs": "Backup activity and audit logs"
+    },
+    "dataExport": {
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "webhookDeliveries": {
+      "recentWebhookDeliveriesAndTheirStatus": "Recent webhook deliveries and their status"
+    },
+    "webhooks": {
+      "pending": "Pending"
+    },
+    "iPAccessRules": {
+      "supportsCIDRNotationEG192168": "Supports CIDR notation (e.g., 192.168.1.0/24) and wildcards"
+    },
+    "loginAttempts": {
+      "failed": "Failed"
+    },
+    "securityPolicies": {
+      "sessionsWillBeInvalidatedIfIPOr": "Sessions will be invalidated if IP or device changes",
+      "usersMustSetUpMFABeforeAccessing": "Users must set up MFA before accessing the platform",
+      "controlSessionBehaviorAndLimits": "Control session behavior and limits",
+      "iPAllowlistIfSetOnlyTheseIPs": "IP Allowlist (if set, only these IPs can access)",
+      "iPBlocklistTheseIPsAreAlwaysBlocked": "IP Blocklist (these IPs are always blocked)",
+      "theseSettingsApplyToAllOrganizationsThat": "These settings apply to all organizations that don't have a custom policy. Organizations can override these settings with their own policy.",
+      "perOrganizationDataGovernanceRetentionPeriodDays": "Per-organization data governance: retention period (days), legal hold flag, and data residency region. Legal hold blocks delete/export operations."
+    },
+    "enterpriseAnalytics": {
+      "monitorSystemPerformanceAndGenerateInsights": "Monitor system performance and generate insights",
+      "theAnalyticsEndpointDidNotReturnAPI": "The analytics endpoint did not return API chart data for this period.",
+      "theAnalyticsEndpointDidNotReturnAI": "The analytics endpoint did not return AI chart data for this period.",
+      "endpointLevelLatencyTopEndpointsAndError": "Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet.",
+      "theExportButtonsCanDownloadTheCurrently": "The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet.",
+      "theReportingBackendExposesScheduledReportReads": "The reporting backend exposes scheduled report reads here, but no audited create/update workflow is wired to this panel yet.",
+      "createAScheduledReportToReceiveAutomated": "Create a scheduled report to receive automated insights"
+    },
+    "enterpriseApiManagement": {
+      "manageAPIKeysViewUsageAnalyticsAnd": "Manage API keys, view usage analytics, and access documentation",
+      "aPIKeyCreatedSuccessfully": "API Key Created Successfully",
+      "saveThisKeyNowItWonT": "Save this key now - it won't be shown again!",
+      "createYourFirstAPIKeyToGet": "Create your first API key to get started.",
+      "aPIKeyUsageCannotBeInspectedBecause": "API key usage cannot be inspected because the API key list did not load.",
+      "buildPowerfulIntegrationsWithTheConsultifyREST": "Build powerful integrations with the Consultify REST API. Access projects, assessments, reports, and more.",
+      "allAPIRequestsRequireAuthenticationUsingAn": "All API requests require authentication using an API key in the Authorization header.",
+      "aPIRequestsAreRateLimitedBasedOn": "API requests are rate limited based on your key configuration."
+    },
+    "enterpriseAuditLog": {
+      "comprehensiveActivityTrackingForComplianceAndSecurity": "Comprehensive activity tracking for compliance and security",
+      "searchByActionResourceUserRequestID": "Search by action, resource, user, request ID...",
+      "tryAdjustingYourFiltersToSeeMore": "Try adjusting your filters to see more activity.",
+      "activityTimelineLast7Days": "Activity Timeline (Last 7 Days)"
+    },
+    "enterpriseBackup": {
+      "manageDatabaseBackupsAndDisasterRecoveryProcedures": "Manage database backups and disaster recovery procedures",
+      "createYourFirstBackupToGetStarted": "Create your first backup to get started",
+      "retentionEncryptionAndCloudStorageSettingsAre": "Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration endpoint is connected.",
+      "saveSettings": "Save Settings",
+      "noVerifiedDisasterRecoveryTestHistoryIs": "No verified disaster recovery test history is available until the backend job lifecycle is connected."
+    },
+    "enterpriseConfiguration": {
+      "manageSystemSettingsAndEnvironmentConfigurations": "Manage system settings and environment configurations",
+      "sensitiveValueWillBeMasked": "Sensitive value (will be masked)",
+      "rollbackToThisVersion": "Rollback to this version"
+    },
+    "enterpriseFeatureFlags": {
+      "controlFeatureAvailabilityWithTargetingAB": "Control feature availability with targeting, A/B testing, and percentage rollouts",
+      "createAFlagToControlFeatureAvailability": "Create a flag to control feature availability with targeting, rollouts, or A/B tests."
+    },
+    "enterpriseHealthMonitor": {
+      "configureNotificationChannelsEmailSlackPagerDutyIn": "Configure notification channels (Email, Slack, PagerDuty) in the Organization settings to receive alerts."
+    },
+    "enterpriseIntegrationsHub": {
+      "connectConsultifyWithYourExistingToolsAnd": "Connect Consultify with your existing tools and workflows",
+      "browseTheCatalogToAddYourFirst": "Browse the catalog to add your first integration.",
+      "syncNow": "Sync now",
+      "existingWebhookReadsAreAvailableWhenThe": "Existing webhook reads are available when the backend returns data."
+    },
+    "enterpriseSecurity": {
+      "monitorSecurityEventsManageAccessAndEnsure": "Monitor security events, manage access, and ensure compliance",
+      "securityEventsWillAppearHereAsThey": "Security events will appear here as they are detected.",
+      "activeUserSessionsWillAppearHereOnce": "Active user sessions will appear here once someone signs in.",
+      "currentlyUsing": "Currently using",
+      "allowlistMode": "allowlist mode",
+      "onlyIPsMatchingAllowRulesCanAccess": ". Only IPs matching allow rules can access the system. Deny rules take precedence over allow rules.",
+      "forwardSecurityEventsToYourSIEMSolution": "Forward security events to your SIEM solution for centralized monitoring.",
+      "theUIDescribesSIEMForwardingButThere": "The UI describes SIEM forwarding, but there is no audited SuperAdmin SIEM configuration workflow wired here yet."
+    },
+    "aIBudgets": {
+      "thisMonth": "This Month",
+      "hardLimitBlockRequestsWhenExceeded": "Hard limit (block requests when exceeded)",
+      "notificationsAboutBudgetThresholdsAndAnomalies": "Notifications about budget thresholds and anomalies",
+      "alertsWillAppearWhenBudgetsAreAt": "Alerts will appear when budgets are at risk",
+      "restrictWhichAIModelsUsersCanAccess": "Restrict which AI models users can access",
+      "allowAccessToThisModel": "Allow access to this model",
+      "manageAISpendingLimitsAndModelAccess": "Manage AI spending limits and model access"
+    },
+    "aIConfiguration": {
+      "manageAIBehaviorProvidersAndSystemHealth": "Manage AI behavior, providers, and system health",
+      "defineWhichLLMModelToUseFor": "Define which LLM model to use for different complexity levels.",
+      "cost30Days": "Cost (30 days)",
+      "platformWideAIConfigurationTheseSettingsApply": "Platform-wide AI configuration. These settings apply to all organizations.",
+      "providerFailoverAndCircuitBreakerConfiguration": "Provider failover and circuit breaker configuration",
+      "tokenAndRateLimitsForTheEntire": "Token and rate limits for the entire platform",
+      "pIIDetectionEncryptionAndDataResidency": "PII detection, encryption, and data residency",
+      "trackAllChangesToAISettingsAcross": "Track all changes to AI settings across the platform",
+      "loadingGlobalSettings": "Loading global settings..."
+    },
+    "aIDevelopment": {
+      "promptLibraryIntelligenceConfigurationExperimentsAndKnowledge": "Prompt library, intelligence configuration, experiments, and knowledge base"
+    },
+    "aIInfrastructure": {
+      "lLMProvidersModelTiersGlobalSettingsAnd": "LLM providers, model tiers, global settings, and health monitoring"
+    },
+    "aIIntelligence": {
+      "harvardMBAPhDLevelReasoningWith20": "Harvard MBA/PhD level reasoning with 20+ years experience",
+      "semanticInstructionsThatWorkAcrossAllLanguages": "Semantic instructions that work across all languages",
+      "rAGWithOrganizationContextKnowledgeBaseAnd": "RAG with organization context, knowledge base, and web research",
+      "aICanNavigateFillFormsAndExecute": "AI can navigate, fill forms, and execute operations",
+      "patternExtractionAndPersonalizationFromInteractions": "Pattern extraction and personalization from interactions",
+      "chatWithAssistant": "Chat with Assistant",
+      "templateCreationIsManagedThroughTheCanonical": "Template creation is managed through the canonical Prompts Library workflow.",
+      "thisBuilderViewIsReadOnlyFor": "This builder view is read-only for templates until create/edit/test actions are wired to the canonical prompt registry workflow.",
+      "loadingTemplates": "Loading templates...",
+      "editThisPromptInPromptsLibrary": "Edit this prompt in Prompts Library.",
+      "templateTestingIsUnavailableHereUntilIt": "Template testing is unavailable here until it is wired to the canonical prompt registry.",
+      "aILearningPatternsQualityMetricsAndPerformance": "AI learning patterns, quality metrics, and performance trends",
+      "loadingChart": "Loading chart...",
+      "loadingPatterns": "Loading patterns...",
+      "patternsAreExtractedFromUserInteractionsOver": "Patterns are extracted from user interactions over time",
+      "loadingInteractions": "Loading interactions..."
+    },
+    "aIOperations": {
+      "missionControlPerformanceMonitoringCostsSLAAnd": "Mission control, performance monitoring, costs, SLA, and analytics"
+    },
+    "performanceMetrics": {
+      "monitorAISystemPerformanceAndLatencyMetrics": "Monitor AI system performance and latency metrics",
+      "noProviderPerformanceDataForThisPeriod": "No provider performance data for this period."
+    },
+    "pricingRegistry": {
+      "versionedPriceSnapshotsUsedForCostEstimation": "Versioned price snapshots used for cost estimation and historical consistency."
+    },
+    "aIGovernance": {
+      "organizationPolicyContextPolicyAndRuntimeGuardrails": "Organization policy, context policy, and runtime guardrails."
+    },
+    "orgAIPolicy": {
+      "enterprisePolicyEnforcementRegionsProviderTypesOrigins": "Enterprise policy enforcement: regions, provider types, origins, and data classes.",
+      "workflowSaveDraftForEditsSendTo": "Workflow: save draft for edits, send to review, approve, then publish live. Rollback always restores the published version.",
+      "whatChangedInThisPolicyRevision": "What changed in this policy revision?",
+      "defineWhatProvidersRegionsAndDataClasses": "Define what providers, regions and data classes are allowed without editing raw JSON first."
+    },
+    "routingRules": {
+      "defineWhichLLMModelToUseFor": "Define which LLM model to use for different complexity levels.",
+      "suggestionsDerivedFromLiveSignals": "Suggestions (derived from live signals)",
+      "theseAreComputedFromCurrentProvidersHealth": "These are computed from current providers/health. You can convert them into persisted rules.",
+      "createFromSuggestion": "Create from suggestion",
+      "waitTimeBeforeRetryingFailedProvider": "Wait time before retrying failed provider",
+      "whatDoesThisRuleDo": "What does this rule do?"
+    },
+    "modelRegistry": {
+      "manageCompareAndTrackAllAIModels": "Manage, compare, and track all AI models across providers"
+    },
+    "documentsRAG": {
+      "dragDropPDFDOCXXLSXPPTXTXT": "Drag & drop PDF, DOCX, XLSX, PPTX, TXT, MD, CSV here or click to select",
+      "filesAreAutomaticallyChunkedEmbeddedAndAdded": "Files are automatically chunked, embedded, and added to the vector store for AI retrieval.",
+      "editDocument": "Edit Document",
+      "thisChangeDoesNotExposeAnyDocument": "This change does not expose any document to the whole organization."
+    },
+    "strategicDirections": {
+      "defineStrategicGoalsThatGuideAIBehavior": "Define strategic goals that guide AI behavior and recommendations",
+      "addFirstDirection": "Add First Direction",
+      "explainHowTheAIShouldBehaveOr": "Explain how the AI should behave or what it should prioritize..."
+    },
+    "marketInbox": {
+      "reviewVendorCatalogChangesBeforeApplyingThem": "Review vendor catalog changes before applying them to your curated registry.",
+      "syncNow": "Sync now"
+    },
+    "policyEnforcement": {
+      "loadingPolicyFeedback": "Loading policy feedback...",
+      "domainsWhereDesiredAndAppliedStateDiverge": "Domains where desired and applied state diverge.",
+      "trackedModelProvidersWithRuntimeFeedback": "Tracked model providers with runtime feedback.",
+      "connectorRuntimeControlsVisibleFromTheSame": "Connector runtime controls visible from the same policy plane."
+    },
+    "compliance": {
+      "monitorAIComplianceStatusAndDataResidency": "Monitor AI compliance status and data residency configuration"
+    },
+    "aIPlatform": {
+      "lLMConfigurationPromptsExperimentsIntelligenceAndMonitoring": "LLM configuration, prompts, experiments, intelligence, and monitoring"
+    },
+    "aPIManagement": {
+      "whatWillThisKeyBeUsedFor": "What will this key be used for?",
+      "copyThisKeyNowYouWonT": "Copy this key now. You won't be able to see it again!",
+      "manageAPIKeysAndIntegrations": "Manage API keys and integrations",
+      "thisWillRevoke": "This will revoke",
+      "theSecretCannotBeUsedAfterRevocation": ". The secret cannot be used after revocation."
+    },
+    "billingCenter": {
+      "thisMonth": "This Month",
+      "thisMonth2": "This month",
+      "withUsage": "With usage",
+      "leaveEmptyToInheritTheSelectedPlan": "Leave empty to inherit the selected plan package. Fill any field to pin a custom limit for this invoice-managed customer.",
+      "loadingContracts": "Loading contracts...",
+      "manageSubscriptionsTokenPricingAndRevenueAnalytics": "Manage subscriptions, token pricing, and revenue analytics"
+    },
+    "complianceCenter": {
+      "pendingDSARs": "Pending DSARs",
+      "frameworkRequirementsAreReadOnlyHerePersisted": "Framework requirements are read-only here. Persisted DSAR, audit and processing records remain editable through their dedicated flows.",
+      "pending": "Pending",
+      "scheduleYourFirstComplianceAudit": "Schedule your first compliance audit",
+      "documentYourDataProcessingActivities": "Document your data processing activities",
+      "manageRegulatoryComplianceAndAudits": "Manage regulatory compliance and audits",
+      "detailsAboutTheRequest": "Details about the request..."
+    },
+    "configuration": {
+      "platformSettingsBrandingAndLegalDocuments": "Platform settings, branding, and legal documents"
+    },
+    "content": {
+      "managePlaybooksTemplatesAndContentAssets": "Manage playbooks, templates, and content assets"
+    },
+    "customRolesBuilder": {
+      "systemRolesCannotBeModified": "System roles cannot be modified",
+      "selectARoleToViewAndEdit": "Select a role to view and edit permissions",
+      "orCreateANewCustomRole": "Or create a new custom role",
+      "allAvailablePermissionsInTheSystem": "All available permissions in the system",
+      "createRoleFromTemplate": "Create Role from Template",
+      "createAndManageRoleBasedAccessControl": "Create and manage role-based access control",
+      "failedToLoadCustomRoles": "Failed to load custom roles",
+      "whatCanThisRoleDo": "What can this role do?",
+      "setAsDefaultRoleForNewUsers": "Set as default role for new users"
+    },
+    "featureUpdatesAdmin": {
+      "manageGlobalAndOrganizationUpdatesSetGovernance": "Manage global and organization updates, set governance, and watch adoption.",
+      "draft": "Draft",
+      "newUpdate": "New update",
+      "buildTheMessageTargetTheRightAudience": "Build the message, target the right audience, then publish from here.",
+      "publishedUpdatesAreReadOnlyArchiveAnd": "Published updates are read-only. Archive and republish if you need a revised message.",
+      "whatChangedWhoItIsForWhat": "What changed, who it is for, what to do now.",
+      "effectiveFrom": "Effective from",
+      "tryItNow": "Try it now",
+      "noUpdatesMatchTheSelectedFilters": "No updates match the selected filters."
+    },
+    "globalSecurityPosture": {
+      "enterpriseEvidenceForPrivilegedSessionsApprovalDebt": "Enterprise evidence for privileged sessions, approval debt, incidents, MFA/SSO posture, and operator blast radius.",
+      "activeAdminSessionsThatCanReachP33": "Active admin sessions that can reach P33.",
+      "overallControlPlaneStatusFromTheSystem": "Overall control plane status from the system health monitor.",
+      "privilegedActivityIsVisibleThroughAdminSession": "Privileged activity is visible through admin session stats, audit counts, and incident views.",
+      "mFAAndSSOControlsAreSeparatedFrom": "MFA and SSO controls are separated from billing and support operations through capability-based auth.",
+      "securityFailuresRemainFailClosedUnresolvedAudit": "Security failures remain fail-closed: unresolved audit debt and critical incidents stay visible in the operator shell."
+    },
+    "governance": {
+      "unresolvedAuditItemsAcrossTheOperatorPlane": "Unresolved audit items across the operator plane.",
+      "activePrivilegedSessionsWithVisibleMFAJIT": "Active privileged sessions with visible MFA/JIT posture.",
+      "unifiedAuditApprovalExportRetentionAndLegal": "Unified audit, approval, export, retention, and legal evidence plane"
+    },
+    "invoiceCenter": {
+      "thisPeriod": "This period",
+      "pending": "Pending",
+      "draft": "Draft",
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "lastYear": "Last year",
+      "configurePerUnitRatesForOverageBilling": "Configure per-unit rates for overage billing, storage, tokens, and more.",
+      "manageInvoicesAndBilling": "Manage invoices and billing"
+    },
+    "lLMManagement": {
+      "error": "error",
+      "failed": "Failed",
+      "configureAIProvidersRoutingAndMonitorUsage": "Configure AI providers, routing, and monitor usage",
+      "configureWhichModelsServeEachPerformanceTier": "Configure which models serve each performance tier",
+      "incidentsDerivedFromPeriodicProviderHealthChecks": "Incidents derived from periodic provider health checks",
+      "loading": "Loading…",
+      "noIncidentDataAvailableYetHealthEvents": "No incident data available yet (health events start accumulating after the server runs for a while).",
+      "leaveEmptyToReuseTheSourceProvider": "Leave empty to reuse the source provider key, or enter a new one."
+    },
+    "moduleAccessControl": {
+      "grantAccessPerUserOrWholeOrganization": "Grant access per user or whole organization for Wordy, Excele and Prezentacje.",
+      "createUpdateGrant": "Create / Update Grant"
+    },
+    "moduleWaitlist": {
+      "searchByNameEmailOrg": "Search by name, email, org..."
+    },
+    "organizationResourceManager": {
+      "pleaseSelectAnOrganizationToManageIts": "Please select an organization to manage its resources",
+      "loadingResourceData": "Loading resource data...",
+      "newValue": "New Value"
+    },
+    "organizations": {
+      "pending": "Pending",
+      "manageOrganizationsSubscriptionsAndAccessRequests": "Manage organizations, subscriptions, and access requests",
+      "pendingOrganizationRequests": "Pending Organization Requests",
+      "organization": "Organization",
+      "users": "Users",
+      "plan": "Plan",
+      "status": "Status",
+      "active": "Active",
+      "blocked": "Blocked",
+      "discount": "Discount",
+      "created": "Created",
+      "actions": "Actions",
+      "title": "Organizations",
+      "help": "Help",
+      "refresh": "Refresh",
+      "allOrganizations": "All Organizations",
+      "pendingRequests": "Pending Requests",
+      "accessCodes": "Access Codes",
+      "searchPlaceholder": "Search organizations...",
+      "deletionDisabled": "Automated deletion is disabled until retention and legal-hold rules are approved."
+    },
+    "overview": {
+      "systemDashboardAndRealTimeInsights": "System dashboard and real-time insights"
+    },
+    "playbookTemplatesList": {
+      "briefDescriptionOfThisPlaybookTemplate": "Brief description of this playbook template..."
+    },
+    "presentationBenchmarkTrend": {
+      "noHistoryYetOnlyTheGammaReference": "No history yet — only the Gamma reference line is rendered.",
+      "dimensionMissingFromServerResponse": "Dimension missing from server response."
+    },
+    "presentationGovernanceAlertSubscriptions": {
+      "verifyYourHMACVerifierWithoutAffectingSubscriptions": "Verify your HMAC verifier without affecting subscriptions or audit trail",
+      "someInputsWereDegraded": "Some inputs were degraded",
+      "loadingSubscriptions": "Loading subscriptions…",
+      "thisIsTheOnlyTimeYouWill": "This is the only time you will see this secret. Store it in your subscriber app now. The reveal panel auto-closes in 60s.",
+      "rotationImmediatelyInvalidatesThePreviousSecretOutbound": "Rotation immediately invalidates the previous secret. Outbound traffic uses the new secret on the next dispatch.",
+      "iUnderstandThePreviousSecretWillBe": "I understand the previous secret will be invalidated.",
+      "firesASyntheticTransitionPayloadSignedWith": "Fires a synthetic transition payload signed with the current subscription secret. Test deliveries are NOT recorded in the dispatch audit log.",
+      "generateASigningSecretNextWithoutOne": "Generate a signing secret next? Without one, outbound webhooks for this subscription will be unsigned.",
+      "skipForNow": "Skip for now",
+      "thisIsTheOnlyTimeYouWill2": "This is the only time you will see this secret. Store it in your subscriber app now.",
+      "back": "Back"
+    },
+    "presentationGovernanceWatchlist": {
+      "clearActiveSavedSearch": "Clear active saved search",
+      "importPresetsFromJSON": "Import presets from JSON",
+      "importPresetsFromAJSONBundle": "Import presets from a JSON bundle",
+      "couldNotImportBundle": "Could not import bundle",
+      "willCreate": "Will create",
+      "savesTheCurrentTitleQueryAndActive": "Saves the current title query and active filter selections.",
+      "loadingWatchlist": "Loading watchlist…",
+      "someDecksCouldNotBeEvaluated": "Some decks could not be evaluated",
+      "readOnlyViewAggregatedFromPerDeck": "Read-only view. Aggregated from per-deck governance cards. Raw deck content and individual quality gates are not exposed here."
+    },
+    "presentationOperationsHealth": {
+      "loadingOperationsHealth": "Loading operations health…",
+      "readOnlyViewSLOClassificationIsComputed": "Read-only view. SLO classification is computed server-side and not recalculated in this UI. Refresh by pressing",
+      "someInputsWereDegraded": "Some inputs were degraded"
+    },
+    "presentationTelemetry": {
+      "loadingTelemetry": "Loading telemetry…",
+      "countersBelowDefaultToZeroUntilThe": "Counters below default to zero until the backend recovers. No data has been silently fabricated.",
+      "noTelemetryEventsInTheSelectedWindow": "No telemetry events in the selected window.",
+      "noEventTypesRecordedInThisWindow": "No event types recorded in this window.",
+      "readOnlyViewNoCountersAreWritten": "Read-only view. No counters are written or modified from this screen — refresh by pressing"
+    },
+    "presentationTemplateGovernance": {
+      "manageTemplateLifecycleApprovalFlowAndVersion": "Manage template lifecycle, approval flow, and version lineage.",
+      "loadingTemplates": "Loading templates…",
+      "noTemplatesInThisLifecycleStateFor": "No templates in this lifecycle state for your organization.",
+      "loadingGovernanceDetails": "Loading governance details…",
+      "noGovernanceEventsRecordedForThisTemplate": "No governance events recorded for this template yet."
+    },
+    "revenue": {
+      "billingInvoicesPricingSubscriptionsRecognitionForecastsAnd": "Billing, invoices, pricing, subscriptions, recognition, forecasts and payment management"
+    },
+    "sCIMProvisioning": {
+      "tokensForAuthenticatingSCIMRequestsFromYour": "Tokens for authenticating SCIM requests from your IdP",
+      "copyThisTokenNowItWonT": "Copy this token now. It won't be shown again.",
+      "logsWillAppearHereWhenYourIdP": "Logs will appear here when your IdP syncs users",
+      "resolveConflictsFromDuplicateUsersOrGroups": "Resolve conflicts from duplicate users or groups during SCIM sync",
+      "failedToLoadSCIMData": "Failed to load SCIM data"
+    },
+    "sSOConfiguration": {
+      "thisPanelWritesToTheSSORouter": "This panel writes to the SSO router used by `/api/sso/oidc/authorize` and `/api/sso/oidc/callback`. Verify the provider before enforcing SSO.",
+      "copyTheClientIDAndClientSecret": "Copy the Client ID and Client Secret below",
+      "onlyUsersFromTheseDomainsCanAuthenticate": "Only users from these domains can authenticate. Leave empty to allow all domains.",
+      "thisPanelWritesToTheSSORouter2": "This panel writes to the SSO router used by `/api/sso/saml/login` and `/api/sso/saml/callback`. Validate metadata before enforcing SSO.",
+      "routeUsersToTheCorrectOrganizationBased": "Route users to the correct organization based on their email domain"
+    },
+    "subscriptionPlansManager": {
+      "failedToLoadSubscriptionPlansPleaseTry": "Failed to load subscription plans. Please try again.",
+      "createNewPlan": "+ Create New Plan"
+    },
+    "superAdminAIAnalytics": {
+      "monitorAIUsageCostsAndSystemHealth": "Monitor AI usage, costs, and system health across all organizations",
+      "tokensThisMonth": "Tokens This Month"
+    },
+    "superAdminAccessRequests": {
+      "reviewAndApproveRequestsToJoinOrganizations": "Review and approve requests to join organizations",
+      "leaveEmptyWhenApprovingAnOrganizationOnly": "Leave empty when approving an organization-only access request."
+    },
+    "superAdmin": {
+      "pending": "Pending",
+      "liveNow": "Live Now"
+    },
+    "superAdminFeedbackAnalytics": {
+      "spinner": "spinner",
+      "loadingAnalytics": "Loading analytics…",
+      "created_at": "created_at",
+      "and": "and",
+      "updated_at": "updated_at",
+      "forTicketsThatReached": "for tickets that reached",
+      "rESOLVED": "RESOLVED",
+      "inTheLast30Days": "in the last 30 days."
+    },
+    "superAdminFeedback": {
+      "whatChangedInTheWorkflow": "What changed in the workflow?"
+    },
+    "superAdminLegal": {
+      "effectiveFrom": "Effective From"
+    },
+    "superAdminMetrics": {
+      "loadingConversionIntelligence": "Loading conversion intelligence...",
+      "noCriticalWarningsAtThisTime": "No critical warnings at this time."
+    },
+    "superAdminOrgDetails": {
+      "loadingBillingDetails": "Loading billing details...",
+      "userManagementIsAvailableInTheUsers": "User management is available in the \"Users\" section of the sidebar.",
+      "filterByThisOrganizationToManageIts": "Filter by this organization to manage its users."
+    },
+    "superAdminPlans": {
+      "managePricingTiersAndLimits": "Manage pricing tiers and limits"
+    },
+    "superAdminRevenue": {
+      "financialMetricsAndUsageAnalytics": "Financial metrics and usage analytics",
+      "thisMonth": "This Month",
+      "thisMonth2": "This month",
+      "withUsage": "With usage"
+    },
+    "superAdminSignals": {
+      "loading": "Loading…",
+      "systemAlertsClientTicketsAndUserFeedback": "System alerts, client tickets, and user feedback (unread)"
+    },
+    "system": {
+      "operateIntegrationsPlatformHealthObservabilityAndSystem": "Operate integrations, platform health, observability, and system configuration"
+    },
+    "systemSettings": {
+      "fromEmail": "From Email",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "thisSurfaceCanInspectSelectedTablesOnly": "This surface can inspect selected tables only. Inline edits and destructive actions are intentionally unavailable here.",
+      "directDatabaseAccessIsForDebuggingOnly": "Direct database access is for debugging only. Changes here bypass all validation. Use with extreme caution.",
+      "searchInCurrentTable": "Search in current table...",
+      "loadingSettings": "Loading settings..."
+    },
+    "tenantCommandCenter": {
+      "singleOperatorLandingForTenantLifecycleCommercial": "Single operator landing for tenant lifecycle, commercial state, quotas, policy posture, and platform risk.",
+      "selectATenantToInspectCommercialAnd": "Select a tenant to inspect commercial and quota posture.",
+      "commandSummaryAcrossLifecycleBillingQuotasAI": "Command summary across lifecycle, billing, quotas, AI usage, and governance.",
+      "loadingTenantPosture": "Loading tenant posture...",
+      "spentThisPeriod": "Spent this period",
+      "quotasAndBudgets": "Quotas and budgets"
+    },
+    "conversationBrowser": {
+      "backToConversations": "Back to conversations",
+      "noMessagesInThisConversation": "No messages in this conversation.",
+      "unknown": "Unknown",
+      "privacyControlsAreAvailableInsideAConversation": "Privacy controls are available inside a conversation: redact transcript content or delete the conversation entirely."
+    },
+    "evaluations": {
+      "trackBenchmarkRunsRegressionChecksAndReadiness": "Track benchmark runs, regression checks, and readiness gates before release.",
+      "draft": "Draft",
+      "failed": "Failed",
+      "passedAndFailedEvaluationsNowRequireA": "Passed and failed evaluations now require a non-empty dataset, non-empty results, and a score."
+    },
+    "knowledgeAssignment": {
+      "assignPillsToTheWorkerEditPill": "Assign pills to the worker, edit pill content and sections, and monitor product coverage.",
+      "showsWhetherTheWorkerHasAtLeast": "Shows whether the worker has at least one assigned pill for each available product family.",
+      "governWholePillsSelectedSectionsAndFallback": "Govern whole pills, selected sections, and fallback behavior per worker.",
+      "noKnowledgeAssignedYetBootstrapTheDefault": "No knowledge assigned yet. Bootstrap the default pills or add a specific pill manually.",
+      "createOrUpdateTheWorkerSGoverned": "Create or update the worker’s governed product pills, including section-level content.",
+      "cancelEdit": "Cancel edit",
+      "draft": "Draft",
+      "changeNotesForThisVersion": "Change notes for this version",
+      "reviewWhichPillsExistWhichProductsThey": "Review which pills exist, which products they cover, and whether they are assigned.",
+      "noKnowledgePillsYetCreateAPill": "No knowledge pills yet. Create a pill or bootstrap the default product set."
+    },
+    "release": {
+      "createGovernedReleaseEntriesAndActivateA": "Create governed release entries and activate a verified worker version.",
+      "draft": "Draft",
+      "readyReleasesRequireAnActiveProfileAnd": "`ready` releases require an active profile and a passed evaluation with dataset, results, and score."
+    },
+    "workerAnalytics": {
+      "backendBackedSummaryForTheCurrentPublic": "Backend-backed summary for the current public landing Anna funnel.",
+      "conversationsPerDayLast30Days": "Conversations per Day (last 30 days)"
+    },
+    "workerDetail": {
+      "backToList": "Back to list"
+    },
+    "workerPreview": {
+      "generateARealOperatorPreviewUsingThe": "Generate a real operator preview using the active worker profile, governed knowledge, and optional governed web search.",
+      "noWebCitationsWereUsedInThis": "No web citations were used in this preview."
+    },
+    "workerProfile": {
+      "draft": "Draft",
+      "describeTheCommunicationTone": "Describe the communication tone...",
+      "documentTheIntentOfThisWorkerProfile": "Document the intent of this worker profile version, key risk areas, or rollout notes...",
+      "savingCreatesANewProfileVersionAnd": "Saving creates a new profile version and activates it."
+    },
+    "workersList": {
+      "createYourFirstVirtualWorkerToGet": "Create your first virtual worker to get started.",
+      "createNewVirtualWorker": "Create New Virtual Worker"
+    },
+    "index": {
+      "manageAIVirtualEmployeesKnowledgeInstructionsConversations": "Manage AI virtual employees — knowledge, instructions, conversations, and performance"
+    },
+    "whitelabelStudio": {
+      "thisIsHowYourBrandedInterfaceWill": "This is how your branded interface will look.",
+      "heading1TheQuickBrownFox": "Heading 1 - The quick brown fox",
+      "heading2TheQuickBrownFox": "Heading 2 - The quick brown fox",
+      "heading3TheQuickBrownFox": "Heading 3 - The quick brown fox",
+      "bodyTextTheQuickBrownFoxJumps": "Body text - The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.",
+      "smallTextTheQuickBrownFoxJumps": "Small text - The quick brown fox jumps over the lazy dog.",
+      "yourTransformationJourneyStartsHere": "Your transformation journey starts here",
+      "welcomeBackSignInToContinue": "Welcome back! Sign in to continue.",
+      "pendingVerification": "Pending Verification",
+      "addTheFollowingDNSRecords": "Add the following DNS records:",
+      "customizeTheLookAndFeel": "Customize the look and feel"
+    },
+    "analyticsModule": {
+      "dashboardsReportsBusinessMetricsAndPredictiveAnalytics": "Dashboards, reports, business metrics, and predictive analytics"
+    },
+    "businessMetrics": {
+      "trackAndMonitorKeyPerformanceIndicators": "Track and monitor key performance indicators",
+      "createYourFirstKPIToStartTracking": "Create your first KPI to start tracking business performance",
+      "noHistoryDataYetCalculateTheMetric": "No history data yet. Calculate the metric to start tracking.",
+      "createNewMetric": "Create New Metric",
+      "sUMRevenueCOUNTUsers": "SUM(revenue) / COUNT(users)"
+    },
+    "dashboardBuilder": {
+      "createAndCustomizeYourAnalyticsDashboards": "Create and customize your analytics dashboards",
+      "addYourFirstWidget": "Add your first widget",
+      "chooseADashboardFromTheListOr": "Choose a dashboard from the list or create a new one to get started",
+      "createNewDashboard": "Create New Dashboard",
+      "describeYourDashboard": "Describe your dashboard..."
+    },
+    "demoTrialAnalytics": {
+      "noEventsInTheLast30Days": "No events in the last 30 days"
+    },
+    "predictiveAnalytics": {
+      "mLPoweredPredictionsAndForecasting": "ML-powered predictions and forecasting",
+      "trainModelsUsingLivePlatformDataSubscriptions": "Train models using live platform data (subscriptions, users, revenue). Predictions are based on basic statistical calculations.",
+      "createYourFirstModel": "Create your first model",
+      "lastUpdated": "Last Updated",
+      "noPredictionsYetTrainTheModelAnd": "No predictions yet. Train the model and make predictions.",
+      "chooseAModelFromTheListOr": "Choose a model from the list or create a new one",
+      "createNewModel": "Create New Model"
+    },
+    "savedReports": {
+      "createScheduleAndExportReports": "Create, schedule, and export reports",
+      "newReport": "New Report",
+      "selectAReport": "Select a Report",
+      "chooseAReportFromTheListOr": "Choose a report from the list or create a new one",
+      "createNewReport": "Create New Report",
+      "reportName": "Report Name",
+      "monthlyUsersReport": "Monthly Users Report",
+      "describeYourReport": "Describe your report...",
+      "createReport": "Create Report"
+    },
+    "aBTesting": {
+      "manageAIExperimentsAndOptimizePerformance": "Manage AI experiments and optimize performance"
+    },
+    "usageAnalytics": {
+      "comprehensiveInsightsIntoAIUsagePatternsAnd": "Comprehensive insights into AI usage patterns and costs",
+      "loading": "Loading...",
+      "noUsageTrendDataForThisPeriod": "No usage trend data for this period",
+      "noModelUsageRecordedInThisPeriod": "No model usage recorded in this period",
+      "noCapabilityUsageRecordedInThisPeriod": "No capability usage recorded in this period"
+    },
+    "aIPerformance": {
+      "realTimePerformanceMetricsAndAnalytics": "Real-time performance metrics and analytics",
+      "loadingChart": "Loading chart..."
+    },
+    "adminKnowledge": {
+      "dragDropPDFTXTMDHereOr": "Drag & drop PDF, TXT, MD here or click to select",
+      "filesAreAutomaticallyChunkedEmbeddedAndAdded": "Files are automatically chunked, embedded, and added to the \"Collective Intelligence\" vector store.",
+      "deletePendingImplementation": "Delete (Pending Implementation)",
+      "noActiveStrategicDirectionsAddOneTo": "No active strategic directions. Add one to guide the AI.",
+      "theAIWillAnalyzeRecentUserInteractions": "The AI will analyze recent user interactions and feedback log to identify patterns, feature requests, and knowledge gaps.",
+      "howWasThisIdeaApplied": "How was this idea applied?",
+      "editDocument": "Edit Document",
+      "explainHowTheAIShouldBehaveOr": "Explain how the AI should behave or what it should prioritize..."
+    },
+    "bulkOperations": {
+      "importUsersFromACSVFileDownload": "Import users from a CSV file. Download our template for the correct format.",
+      "matchYourCSVColumnsToTheUser": "Match your CSV columns to the user fields. Required fields are marked with *.",
+      "back": "Back",
+      "pleaseWaitWhileWeImportYourUsers": "Please wait while we import your users. This may take a moment.",
+      "importCompletedWithErrors": "Import Completed with Errors",
+      "selectUsersAndAssignRolesInBulk": "Select users and assign roles in bulk",
+      "writeYourMessage": "Write your message...",
+      "downloadUserActivityReport": "Download user activity report",
+      "manageUsersAndDataInBulk": "Manage users and data in bulk"
+    },
+    "promptAssistant": {
+      "askAboutPromptEngineering": "Ask about prompt engineering..."
+    },
+    "promptBlockBuilder": {
+      "clickBlocksInTheLibraryToAdd": "Click blocks in the library to add them"
+    },
+    "promptManagementUI": {
+      "selectAPromptToViewOrEdit": "Select a prompt to view or edit",
+      "createNewPrompt": "Create New Prompt",
+      "briefDescriptionOfThisPrompt": "Brief description of this prompt...",
+      "enterTheSystemPrompt": "Enter the system prompt..."
+    },
+    "promptTestBench": {
+      "runTestsToValidateYourPromptAcross": "Run tests to validate your prompt across languages"
+    },
+    "sLA": {
+      "serviceLevelAgreementMonitoringAndCompliance": "Service Level Agreement monitoring and compliance",
+      "failed": "Failed",
+      "loadingChart": "Loading chart...",
+      "noSLABreachesRecordedInThisPeriod": "No SLA breaches recorded in this period",
+      "failedRequestsPercentage": "Failed requests percentage"
+    },
+    "v8AdminDiagnostics": {
+      "readOnlyGovernedDiagnosticsForHealthMetrics": "Read-only governed diagnostics for health, metrics, and shadow readiness.",
+      "loadingV8Diagnostics": "Loading V8 diagnostics...",
+      "integrityAndDomainReadiness": "Integrity and domain readiness"
+    },
+    "contractManagement": {
+      "manageCustomerContractsAndRenewals": "Manage customer contracts and renewals",
+      "chooseAContractFromTheListTo": "Choose a contract from the list to view details"
+    },
+    "customerAnalytics": {
+      "overviewOfCustomerHealthAndEngagement": "Overview of customer health and engagement"
+    },
+    "customerAutomation": {
+      "createYourFirstRule": "Create your first rule",
+      "defineATriggerAndAnActionConfig": "Define a trigger and an action. Config fields accept JSON objects.",
+      "whatDoesThisRuleDo": "What does this rule do?",
+      "loading": "Loading…"
+    },
+    "customerCommunication": {
+      "sendAnnouncementsAndMessagesToCustomers": "Send announcements and messages to customers",
+      "sendYourFirstMessage": "Send your first message",
+      "writeYourMessage": "Write your message..."
+    },
+    "customerLifecycle": {
+      "trackAndManageCustomerJourneyStages": "Track and manage customer journey stages",
+      "createYourFirstStage": "Create your first stage",
+      "fromStageOptional": "From Stage (optional)",
+      "optionalNotesAboutThisTransition": "Optional notes about this transition"
+    },
+    "adminAuditLogs": {
+      "fromDate": "From Date"
+    },
+    "approvalWorkflows": {
+      "pending": "Pending",
+      "pendingRequests": "Pending Requests",
+      "thisWillDelete": "This will delete",
+      "theWorkflowListMustConfirmTheRemoval": ". The workflow list must confirm the removal before the action is treated as successful."
+    },
+    "auditEventsViewer": {
+      "unifiedV4AuditTrailAllResourceChanges": "Unified V4 audit trail — all resource changes across the platform"
+    },
+    "dLP": {
+      "unknown": "Unknown"
+    },
+    "permissionsMatrix": {
+      "copyAllPermissionsFromOneRoleTo": "Copy all permissions from one role to another. This will replace the target role's permissions."
+    },
+    "securityIncidents": {
+      "describeTheSecurityIncident": "Describe the security incident..."
+    },
+    "threatIntelligence": {
+      "unknown": "Unknown",
+      "describeTheThreat": "Describe the threat..."
+    },
+    "partnerProgramConfig": {
+      "commissionDiscountAccrualAndPayoutAuthoringIs": "Commission, discount, accrual and payout authoring is unavailable under AMD-PRT-ECONOMICS-002. Historical records remain available for review.",
+      "saveDiscountSettings": "Save Discount Settings",
+      "lightweightQualificationLeadsSubmittedFromThePublic": "Lightweight qualification leads submitted from the public recruitment page",
+      "reviewAdvancedPartnerCertificationsThatRequireOperator": "Review advanced partner certifications that require operator approval",
+      "adoptionBlockersAndKnowledgeUsageAcrossThe": "Adoption, blockers, and knowledge usage across the partner rollout",
+      "configurePayoutThresholdsSchedulesAndPaymentMethods": "Configure payout thresholds, schedules, and payment methods",
+      "savePayoutSettings": "Save Payout Settings"
+    },
+    "paymentMethods": {
+      "managePaymentMethodsAndHandlePaymentFailures": "Manage payment methods and handle payment failures",
+      "pendingFailures": "Pending Failures"
+    },
+    "pricingPlansAdvanced": {
+      "managePricingTiersAndFeatureAllocations": "Manage pricing tiers and feature allocations",
+      "createYourFirstPricingPlanToGet": "Create your first pricing plan to get started"
+    },
+    "revenueForecast": {
+      "generateAndAnalyzeRevenuePredictionsUsingMultiple": "Generate and analyze revenue predictions using multiple methods",
+      "noForecastsGeneratedYetClickGenerateForecast": "No forecasts generated yet. Click \"Generate Forecast\" to create your first prediction."
+    },
+    "revenueModule": {
+      "comprehensiveRevenueManagementIncludingPricingSubscriptionsRecognition": "Comprehensive revenue management including pricing, subscriptions, recognition, forecasting, and payments"
+    },
+    "revenueRecognition": {
+      "manageRevenueRecognitionSchedulesAndCompliance": "Manage revenue recognition schedules and compliance",
+      "pending": "Pending",
+      "createRevenueRecognition": "Create Revenue Recognition"
+    },
+    "subscriptionChanges": {
+      "manageSubscriptionUpgradesDowngradesAndCancellations": "Manage subscription upgrades, downgrades, and cancellations",
+      "pending": "Pending"
+    },
+    "deviceManagement": {
+      "unknown": "Unknown",
+      "manageAndMonitorUserDevices": "Manage and monitor user devices",
+      "selectUser": "Select User"
+    },
+    "mFA": {
+      "selectUser": "Select User",
+      "selectAUserToInspectMFAMethods": "Select a user to inspect MFA methods",
+      "loading": "Loading..."
+    },
+    "passwordPolicy": {
+      "loading": "Loading..."
+    },
+    "securityEvents": {
+      "monitorAndManageSecurityEvents": "Monitor and manage security events",
+      "failedLogin": "Failed Login"
+    },
+    "securityModule": {
+      "manageSecuritySettingsIPWhitelistingDevicesMFA": "Manage security settings, IP whitelisting, devices, MFA, and monitor security events"
+    },
+    "customerHealth": {
+      "monitorCustomerHealthAndEngagement": "Monitor customer health and engagement",
+      "loading": "Loading..."
+    },
+    "customerSuccessNotes": {
+      "trackCustomerInteractionsAndSuccessMetrics": "Track customer interactions and success metrics",
+      "loading": "Loading...",
+      "writeTheNote": "Write the note..."
+    },
+    "supportModule": {
+      "manageSupportTicketsCustomerSuccessNotesAnd": "Manage support tickets, customer success notes, and health checks"
+    },
+    "supportTickets": {
+      "manageAndTrackSupportTickets": "Manage and track support tickets",
+      "describeTheIssue": "Describe the issue...",
+      "loadingReplies": "Loading replies..."
     }
   },
   "dynamicTabBar": {

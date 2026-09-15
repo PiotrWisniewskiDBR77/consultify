@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 export const AnalyticsPanel: React.FC = () => {
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -41,9 +42,9 @@ export const AnalyticsPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-c-text mb-2">System Analytics</h2>
+          <h2 className="text-2xl font-bold text-c-text mb-2">{tlumaczPozaHookiem("superadmin.analytics.systemAnalytics", "System Analytics")}</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Monitor system performance and usage
+            {tlumaczPozaHookiem("superadmin.analytics.monitorSystemPerformanceAndUsage", "Monitor system performance and usage")}
           </p>
         </div>
       </div>

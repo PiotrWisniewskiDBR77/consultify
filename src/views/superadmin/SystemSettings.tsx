@@ -33,6 +33,8 @@ import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
 import { SuperAdminStorageDetailModal } from './SuperAdminStorageDetailModal';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type SettingsTab =
   | 'GENERAL'
   | 'SECURITY'
@@ -524,7 +526,7 @@ export const SystemSettings: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
-                From Email
+                {tlumaczPozaHookiem("superadmin.systemSettings.fromEmail", "From Email")}
               </label>
               <div className="flex gap-2">
                 <input
@@ -659,7 +661,7 @@ export const SystemSettings: React.FC = () => {
       sortable: true,
       render: (row: TableRow) => (
         <span className="text-slate-500 dark:text-slate-400 text-xs">
-          {row.lastLogin ? new Date(row.lastLogin as string).toLocaleString() : 'Never'}
+          {row.lastLogin ? new Date(row.lastLogin as string).toLocaleString(localeListy()) : 'Never'}
         </span>
       ),
     },
@@ -779,7 +781,7 @@ export const SystemSettings: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
-                    First Name
+                    {tlumaczPozaHookiem("superadmin.systemSettings.firstName", "First Name")}
                   </label>
                   <input
                     required
@@ -790,7 +792,7 @@ export const SystemSettings: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
-                    Last Name
+                    {tlumaczPozaHookiem("superadmin.systemSettings.lastName", "Last Name")}
                   </label>
                   <input
                     required
@@ -926,7 +928,7 @@ export const SystemSettings: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-slate-500 dark:text-slate-400 text-xs">
-            {row.created_at ? new Date(row.created_at as string).toLocaleString() : '-'}
+            {row.created_at ? new Date(row.created_at as string).toLocaleString(localeListy()) : '-'}
           </span>
         ),
       },
@@ -1052,15 +1054,14 @@ export const SystemSettings: React.FC = () => {
         {/* Warning Banner */}
         <ReadOnlyState
           title="Database viewer is read-only"
-          description="This surface can inspect selected tables only. Inline edits and destructive actions are intentionally unavailable here."
+          description={tlumaczPozaHookiem("superadmin.systemSettings.thisSurfaceCanInspectSelectedTablesOnly", "This surface can inspect selected tables only. Inline edits and destructive actions are intentionally unavailable here.")}
         />
         <div className="bg-danger-500/10 border border-danger-500/30 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="text-danger-400 shrink-0 mt-0.5" size={20} />
           <div>
             <h3 className="font-semibold text-danger-400">Advanced Database Access</h3>
             <p className="text-sm text-danger-300/80 mt-1">
-              Direct database access is for debugging only. Changes here bypass all validation. Use
-              with extreme caution.
+              {tlumaczPozaHookiem("superadmin.systemSettings.directDatabaseAccessIsForDebuggingOnly", "Direct database access is for debugging only. Changes here bypass all validation. Use with extreme caution.")}
             </p>
           </div>
         </div>
@@ -1094,7 +1095,7 @@ export const SystemSettings: React.FC = () => {
               <Search className="text-slate-500 dark:text-slate-400 ml-2" size={20} />
               <input
                 type="text"
-                placeholder="Search in current table..."
+                placeholder={tlumaczPozaHookiem("superadmin.systemSettings.searchInCurrentTable", "Search in current table...")}
                 value={dbSearchTerm}
                 onChange={(e) => setDbSearchTerm(e.target.value)}
                 className="bg-transparent border-none text-slate-900 dark:text-slate-100 focus:ring-0 flex-1 placeholder:text-slate-500 dark:placeholder:text-slate-500 outline-none"
@@ -1188,7 +1189,7 @@ export const SystemSettings: React.FC = () => {
       )}
 
       {loading && activeTab !== 'STORAGE' && activeTab !== 'AUDIT' && activeTab !== 'ADVANCED' ? (
-        <div className="text-slate-500 dark:text-slate-400">Loading settings...</div>
+        <div className="text-slate-500 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.systemSettings.loadingSettings", "Loading settings...")}</div>
       ) : (
         <>
           {activeTab === 'GENERAL' && renderGeneral()}

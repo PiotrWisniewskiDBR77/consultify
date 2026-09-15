@@ -14,6 +14,7 @@ import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { EmailTemplatesView } from './EmailTemplatesView';
 import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ContentModuleProps {
   initialTab?: string;
 }
@@ -70,7 +71,7 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Content"
-      subtitle="Manage playbooks, templates, and content assets"
+      subtitle={tlumaczPozaHookiem("superadmin.content.managePlaybooksTemplatesAndContentAssets", "Manage playbooks, templates, and content assets")}
       actions={<InfoButton cardId={getCardId()} size="sm" />}
     >
       {renderContent()}

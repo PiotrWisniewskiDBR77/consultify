@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { PlaybookTemplateVersionHistory as VersionType } from '../../types';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface PlaybookTemplateVersionHistoryProps {
   templateId: string;
   currentVersion: number;
@@ -196,10 +197,10 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                       <div className="flex items-center gap-4">
                         <div className="text-right text-sm">
                           <div className="text-slate-600 dark:text-slate-500">
-                            {new Date(version.createdAt).toLocaleDateString()}
+                            {new Date(version.createdAt).toLocaleDateString(localeListy())}
                           </div>
                           <div className="text-slate-500 dark:text-slate-400 text-xs">
-                            {new Date(version.createdAt).toLocaleTimeString()}
+                            {new Date(version.createdAt).toLocaleTimeString(localeListy())}
                           </div>
                         </div>
                         {isExpanded ? (

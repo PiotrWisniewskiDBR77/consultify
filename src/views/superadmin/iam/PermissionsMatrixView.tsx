@@ -25,6 +25,7 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface Permission {
   key: string;
   description: string;
@@ -722,8 +723,7 @@ const PermissionsMatrixView: React.FC = () => {
           <Card variant="elevated" className="w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-4">Copy Permissions Between Roles</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Copy all permissions from one role to another. This will replace the target role's
-              permissions.
+              {tlumaczPozaHookiem("superadmin.permissionsMatrix.copyAllPermissionsFromOneRoleTo", "Copy all permissions from one role to another. This will replace the target role's permissions.")}
             </p>
             <div className="space-y-4">
               <div>

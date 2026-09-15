@@ -19,6 +19,8 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { Api } from '../../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type EnforcementRow = {
   id: string;
   domain: string;
@@ -92,7 +94,7 @@ function formatDateTime(value?: string | null): string {
   if (!value) return 'n/a';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'n/a';
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 }
 
 function getDriftSeverity(row: EnforcementRow): 'critical' | 'high' | 'medium' | 'none' {
@@ -282,7 +284,7 @@ export const PolicyEnforcementTab: React.FC = () => {
 
       {initialLoading && !loadError && (
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
-          Loading policy feedback...
+          {tlumaczPozaHookiem("superadmin.policyEnforcement.loadingPolicyFeedback", "Loading policy feedback...")}
         </div>
       )}
 
@@ -314,7 +316,7 @@ export const PolicyEnforcementTab: React.FC = () => {
               {driftCount}
             </div>
             <div className="mt-2 text-xs text-slate-500">
-              Domains where desired and applied state diverge.
+              {tlumaczPozaHookiem("superadmin.policyEnforcement.domainsWhereDesiredAndAppliedStateDiverge", "Domains where desired and applied state diverge.")}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -326,7 +328,7 @@ export const PolicyEnforcementTab: React.FC = () => {
               {providerCount}
             </div>
             <div className="mt-2 text-xs text-slate-500">
-              Tracked model providers with runtime feedback.
+              {tlumaczPozaHookiem("superadmin.policyEnforcement.trackedModelProvidersWithRuntimeFeedback", "Tracked model providers with runtime feedback.")}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -338,7 +340,7 @@ export const PolicyEnforcementTab: React.FC = () => {
               {connectorCount}
             </div>
             <div className="mt-2 text-xs text-slate-500">
-              Connector runtime controls visible from the same policy plane.
+              {tlumaczPozaHookiem("superadmin.policyEnforcement.connectorRuntimeControlsVisibleFromTheSame", "Connector runtime controls visible from the same policy plane.")}
             </div>
           </div>
         </div>

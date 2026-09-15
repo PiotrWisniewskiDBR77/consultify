@@ -10,6 +10,8 @@ import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type OrganizationRow = {
   id: string;
   name: string;
@@ -26,7 +28,7 @@ type CustomerSuccessNoteRow = {
 const formatNoteDate = (value?: string | null) => {
   if (!value) return 'Unknown date';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 type JsonRecord = Record<string, unknown> & {
@@ -342,7 +344,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
             Customer Success Notes
           </h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Track customer interactions and success metrics
+            {tlumaczPozaHookiem("superadmin.customerSuccessNotes.trackCustomerInteractionsAndSuccessMetrics", "Track customer interactions and success metrics")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -383,7 +385,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.customerSuccessNotes.loading", "Loading...")}</div>
       ) : loadError ? null : (
         <div className="space-y-4">
           {notes.length === 0 ? (
@@ -465,7 +467,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
                   onChange={(e) => setNewNote((p) => ({ ...p, content: e.target.value }))}
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                   rows={6}
-                  placeholder="Write the note..."
+                  placeholder={tlumaczPozaHookiem("superadmin.customerSuccessNotes.writeTheNote", "Write the note...")}
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">

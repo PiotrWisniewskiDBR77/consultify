@@ -24,6 +24,8 @@ import { Card } from '../../../components/ui/BaseCard';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface PredictiveModel {
   id: string;
   name: string;
@@ -243,7 +245,7 @@ const PredictiveAnalyticsView: React.FC = () => {
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString();
+    return new Date(dateStr).toLocaleString(localeListy());
   };
 
   if (isLoading) {
@@ -259,7 +261,7 @@ const PredictiveAnalyticsView: React.FC = () => {
             Predictive Analytics
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            ML-powered predictions and forecasting
+            {tlumaczPozaHookiem("superadmin.predictiveAnalytics.mLPoweredPredictionsAndForecasting", "ML-powered predictions and forecasting")}
           </p>
         </div>
         <button
@@ -279,8 +281,7 @@ const PredictiveAnalyticsView: React.FC = () => {
             Statistical models available
           </p>
           <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">
-            Train models using live platform data (subscriptions, users, revenue). Predictions are
-            based on basic statistical calculations.
+            {tlumaczPozaHookiem("superadmin.predictiveAnalytics.trainModelsUsingLivePlatformDataSubscriptions", "Train models using live platform data (subscriptions, users, revenue). Predictions are based on basic statistical calculations.")}
           </p>
         </div>
       </div>
@@ -330,7 +331,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     onClick={() => setShowCreateModal(true)}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm mt-2"
                   >
-                    Create your first model
+                    {tlumaczPozaHookiem("superadmin.predictiveAnalytics.createYourFirstModel", "Create your first model")}
                   </button>
                 </div>
               ) : (
@@ -471,7 +472,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     </p>
                   </div>
                   <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
-                    <span className="text-slate-600 dark:text-slate-400 text-xs">Last Updated</span>
+                    <span className="text-slate-600 dark:text-slate-400 text-xs">{tlumaczPozaHookiem("superadmin.predictiveAnalytics.lastUpdated", "Last Updated")}</span>
                     <p className="text-slate-900 dark:text-white text-sm mt-1">
                       {formatDate(selectedModel.updated_at)}
                     </p>
@@ -537,7 +538,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                 </h4>
                 {predictions.length === 0 ? (
                   <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-4">
-                    No predictions yet. Train the model and make predictions.
+                    {tlumaczPozaHookiem("superadmin.predictiveAnalytics.noPredictionsYetTrainTheModelAnd", "No predictions yet. Train the model and make predictions.")}
                   </p>
                 ) : (
                   <div className="space-y-2 max-h-[200px] overflow-y-auto">
@@ -595,7 +596,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                   Select a Model
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 text-center">
-                  Choose a model from the list or create a new one
+                  {tlumaczPozaHookiem("superadmin.predictiveAnalytics.chooseAModelFromTheListOr", "Choose a model from the list or create a new one")}
                 </p>
               </div>
             </Card>
@@ -608,7 +609,7 @@ const PredictiveAnalyticsView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700 shadow-xl">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              Create New Model
+              {tlumaczPozaHookiem("superadmin.predictiveAnalytics.createNewModel", "Create New Model")}
             </h3>
             <div className="space-y-4">
               <div>

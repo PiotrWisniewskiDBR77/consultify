@@ -32,6 +32,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface LineItem {
   description: string;
   quantity: number;
@@ -130,7 +132,7 @@ export const InvoicesPanel: React.FC = () => {
   };
 
   const formatCurrency = (cents: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency,
     }).format(cents / 100);
@@ -198,7 +200,7 @@ export const InvoicesPanel: React.FC = () => {
             className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="all">All Status</option>
-            <option value="draft">Draft</option>
+            <option value="draft">{tlumaczPozaHookiem("superadmin.invoices.draft", "Draft")}</option>
             <option value="open">Open</option>
             <option value="paid">Paid</option>
             <option value="void">Void</option>
@@ -285,7 +287,7 @@ export const InvoicesPanel: React.FC = () => {
                     <div>
                       <span className="font-medium text-c-text">{invoice.invoice_number}</span>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {new Date(invoice.created_at).toLocaleDateString()}
+                        {new Date(invoice.created_at).toLocaleDateString(localeListy())}
                       </p>
                     </div>
                   </td>
@@ -313,7 +315,7 @@ export const InvoicesPanel: React.FC = () => {
                       <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
                         <Calendar size={14} />
                         <span className="text-sm">
-                          {new Date(invoice.due_date).toLocaleDateString()}
+                          {new Date(invoice.due_date).toLocaleDateString(localeListy())}
                         </span>
                       </div>
                     ) : (

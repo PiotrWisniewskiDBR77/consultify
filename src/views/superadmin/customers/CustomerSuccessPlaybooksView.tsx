@@ -21,6 +21,7 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface Playbook {
   id: string;
   name: string;
@@ -476,7 +477,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
   };
 
   if (isLoading) {

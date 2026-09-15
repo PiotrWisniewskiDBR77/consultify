@@ -48,6 +48,7 @@ import { Card } from './components/shared/Card';
 import { MetricCard } from './components/shared/MetricCard';
 import { SectionHeader } from './components/shared/PageHeader';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type LLMConfigTab = 'providers' | 'routing' | 'usage' | 'health';
 
 const FALLBACK_PROVIDER_MODELS: Record<string, { id: string; label: string; tier?: string }[]> = {
@@ -710,7 +711,7 @@ export const LLMManagementView: React.FC = () => {
                   label={live.latency ? `OK · ${live.latency}ms` : 'OK'}
                 />
               ) : (
-                <StatusBadge variant="error" label="Failed" />
+                <StatusBadge variant="error" label={tlumaczPozaHookiem("superadmin.lLMManagement.failed", "Failed")} />
               );
             return (
               <div className="flex flex-col gap-0.5">
@@ -827,7 +828,7 @@ export const LLMManagementView: React.FC = () => {
               LLM Management
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Configure AI providers, routing, and monitor usage
+              {tlumaczPozaHookiem("superadmin.lLMManagement.configureAIProvidersRoutingAndMonitorUsage", "Configure AI providers, routing, and monitor usage")}
             </p>
           </div>
         </div>
@@ -951,7 +952,7 @@ export const LLMManagementView: React.FC = () => {
               <Card variant="bordered" padding="lg">
                 <SectionHeader
                   title="Model Routing per Tier"
-                  subtitle="Configure which models serve each performance tier"
+                  subtitle={tlumaczPozaHookiem("superadmin.lLMManagement.configureWhichModelsServeEachPerformanceTier", "Configure which models serve each performance tier")}
                 />
                 <div className="space-y-3 mt-4">
                   {[
@@ -1067,11 +1068,11 @@ export const LLMManagementView: React.FC = () => {
               <Card variant="bordered" padding="lg">
                 <SectionHeader
                   title="LLM Downtime Timeline (last 24h)"
-                  subtitle="Incidents derived from periodic provider health checks"
+                  subtitle={tlumaczPozaHookiem("superadmin.lLMManagement.incidentsDerivedFromPeriodicProviderHealthChecks", "Incidents derived from periodic provider health checks")}
                 />
                 <div className="mt-4 space-y-2">
                   {incidentsLoading ? (
-                    <div className="text-sm text-slate-700 dark:text-slate-300">Loading…</div>
+                    <div className="text-sm text-slate-700 dark:text-slate-300">{tlumaczPozaHookiem("superadmin.lLMManagement.loading", "Loading…")}</div>
                   ) : incidentsData?.success ? (
                     <>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -1132,8 +1133,7 @@ export const LLMManagementView: React.FC = () => {
                     </>
                   ) : (
                     <div className="text-sm text-slate-700 dark:text-slate-300">
-                      No incident data available yet (health events start accumulating after the
-                      server runs for a while).
+                      {tlumaczPozaHookiem("superadmin.lLMManagement.noIncidentDataAvailableYetHealthEvents", "No incident data available yet (health events start accumulating after the server runs for a while).")}
                     </div>
                   )}
                 </div>
@@ -1351,7 +1351,7 @@ export const LLMManagementView: React.FC = () => {
                 />
                 {cloningFromProviderId ? (
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Leave empty to reuse the source provider key, or enter a new one.
+                    {tlumaczPozaHookiem("superadmin.lLMManagement.leaveEmptyToReuseTheSourceProvider", "Leave empty to reuse the source provider key, or enter a new one.")}
                   </div>
                 ) : null}
               </div>

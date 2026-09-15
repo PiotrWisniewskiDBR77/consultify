@@ -19,6 +19,7 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface Model {
   id: string;
   name: string;
@@ -371,7 +372,7 @@ export const ModelRegistryTab: React.FC = () => {
             Model Registry
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Manage, compare, and track all AI models across providers
+            {tlumaczPozaHookiem("superadmin.modelRegistry.manageCompareAndTrackAllAIModels", "Manage, compare, and track all AI models across providers")}
           </p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">

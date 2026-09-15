@@ -26,6 +26,8 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { ReadOnlyState } from '../../Admin/AdminState';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface BackupConfig {
   id?: string;
   organization_id: string;
@@ -152,7 +154,7 @@ export const BackupConfigPanel: React.FC = () => {
         break;
     }
 
-    return nextBackup.toLocaleString();
+    return nextBackup.toLocaleString(localeListy());
   };
 
   return (
@@ -294,7 +296,7 @@ export const BackupConfigPanel: React.FC = () => {
                     className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none disabled:opacity-50"
                   />
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Backups older than this will be deleted
+                    {tlumaczPozaHookiem("superadmin.backupConfig.backupsOlderThanThisWillBeDeleted", "Backups older than this will be deleted")}
                   </p>
                 </div>
 
@@ -312,7 +314,7 @@ export const BackupConfigPanel: React.FC = () => {
                         Include Attachments
                       </span>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Backup uploaded files and documents
+                        {tlumaczPozaHookiem("superadmin.backupConfig.backupUploadedFilesAndDocuments", "Backup uploaded files and documents")}
                       </p>
                     </div>
                   </label>
@@ -330,7 +332,7 @@ export const BackupConfigPanel: React.FC = () => {
                         Include Audit Logs
                       </span>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Backup activity and audit logs
+                        {tlumaczPozaHookiem("superadmin.backupConfig.backupActivityAndAuditLogs", "Backup activity and audit logs")}
                       </p>
                     </div>
                   </label>
@@ -359,7 +361,7 @@ export const BackupConfigPanel: React.FC = () => {
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Last Backup</p>
                     <p className="text-c-text font-medium">
                       {config.last_backup_at
-                        ? new Date(config.last_backup_at).toLocaleString()
+                        ? new Date(config.last_backup_at).toLocaleString(localeListy())
                         : 'Never'}
                     </p>
                     {config.last_backup_status && (
@@ -432,7 +434,7 @@ export const BackupConfigPanel: React.FC = () => {
                           )}
                           <div>
                             <p className="text-sm text-c-text">
-                              {new Date(item.timestamp).toLocaleString()}
+                              {new Date(item.timestamp).toLocaleString(localeListy())}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               {item.type}

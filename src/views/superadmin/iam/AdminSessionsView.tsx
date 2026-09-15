@@ -29,6 +29,7 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface AdminSession {
   id: string;
   adminId: string;
@@ -307,7 +308,7 @@ const AdminSessionsView: React.FC = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Unknown date';
     const date = new Date(dateString);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
   };
 
   const isExpired = (expiresAt: string) => {

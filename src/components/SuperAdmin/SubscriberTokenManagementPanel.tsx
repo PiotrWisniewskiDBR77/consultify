@@ -44,6 +44,8 @@ import {
   type TokenStatus,
 } from '../../services/presentationSubscriberTokens';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const REASON_MIN = 5;
 const REASON_MAX = 500;
 
@@ -67,7 +69,7 @@ function formatRelative(iso: string | null): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '—';
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return new Date(ts).toLocaleString();
+  if (diffMs < 0) return new Date(ts).toLocaleString(localeListy());
   const sec = Math.floor(diffMs / 1000);
   if (sec < 60) return `${sec}s ago`;
   const min = Math.floor(sec / 60);
@@ -76,14 +78,14 @@ function formatRelative(iso: string | null): string {
   if (hr < 24) return `${hr}h ago`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString();
+  return new Date(ts).toLocaleDateString(localeListy());
 }
 
 function formatAbsolute(iso: string | null): string {
   if (!iso) return '—';
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '—';
-  return new Date(ts).toLocaleString();
+  return new Date(ts).toLocaleString(localeListy());
 }
 
 function statusBanner(status: TokenFetchStatus | null): string | null {
@@ -283,7 +285,7 @@ const SubscriberTokenManagementPanel: React.FC<SubscriberTokenManagementPanelPro
 
       {!banner && tokens.length === 0 && !loading && (
         <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
-          No dashboard tokens issued yet for this subscription.
+          {tlumaczPozaHookiem("superadmin.subscriberTokenManagement.noDashboardTokensIssuedYetForThis", "No dashboard tokens issued yet for this subscription.")}
         </div>
       )}
 
@@ -477,7 +479,7 @@ const RevokePanel: React.FC<RevokePanelProps> = ({
           disabled={disabled}
           className="h-3.5 w-3.5 rounded border-slate-300 text-danger-600 focus:ring-danger-500"
         />
-        Confirm revocation — this token will be permanently invalidated.
+        {tlumaczPozaHookiem("superadmin.subscriberTokenManagement.confirmRevocationThisTokenWillBePermanently", "Confirm revocation — this token will be permanently invalidated.")}
       </label>
 
       {state.outcome.kind === 'success' && (

@@ -54,6 +54,7 @@ import { SuperAdminUserManagement } from './SuperAdminUserManagement';
 import { SupportModuleView } from './support/SupportModuleView';
 import { TenantCommandCenterView } from './TenantCommandCenterView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface CustomersModuleProps {
   initialTab?: string;
   initialCommercialTab?: string;
@@ -287,7 +288,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Tenant & User Operations"
-      subtitle="Operate tenants through one control plane for lifecycle, users, billing, quotas, and risk"
+      subtitle={tlumaczPozaHookiem("superadmin.customers.operateTenantsThroughOneControlPlaneFor", "Operate tenants through one control plane for lifecycle, users, billing, quotas, and risk")}
     >
       {renderContent()}
     </TabLayout>

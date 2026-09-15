@@ -28,6 +28,8 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AuditLog {
   id: string;
   admin_id: string;
@@ -80,7 +82,7 @@ function formatDateTime(value?: string | null): string {
   if (!value) return 'Unknown date';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown date';
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 }
 
 const safeNumber = (value: unknown, fallback = 0) => {
@@ -701,7 +703,7 @@ const AdminAuditLogsView: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
-                From Date
+                {tlumaczPozaHookiem("superadmin.adminAuditLogs.fromDate", "From Date")}
               </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />

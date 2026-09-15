@@ -13,6 +13,7 @@ import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { SystemSettings } from './SystemSettings';
 import { WhitelabelStudioView } from './WhitelabelStudioView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ConfigurationModuleProps {
   initialTab?: string;
 }
@@ -64,7 +65,7 @@ export const ConfigurationModule: React.FC<ConfigurationModuleProps> = ({ initia
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Configuration"
-      subtitle="Platform settings, branding, and legal documents"
+      subtitle={tlumaczPozaHookiem("superadmin.configuration.platformSettingsBrandingAndLegalDocuments", "Platform settings, branding, and legal documents")}
     >
       {renderContent()}
     </TabLayout>

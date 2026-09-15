@@ -30,6 +30,7 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface RoutingRule {
   id: string;
   name: string;
@@ -585,7 +586,7 @@ export const RoutingRulesTab: React.FC = () => {
               Model Routing per Tier
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Define which LLM model to use for different complexity levels.
+              {tlumaczPozaHookiem("superadmin.routingRules.defineWhichLLMModelToUseFor", "Define which LLM model to use for different complexity levels.")}
             </p>
 
             <div className="space-y-4">
@@ -733,11 +734,10 @@ export const RoutingRulesTab: React.FC = () => {
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Settings size={18} className="text-slate-500" />
-              Suggestions (derived from live signals)
+              {tlumaczPozaHookiem("superadmin.routingRules.suggestionsDerivedFromLiveSignals", "Suggestions (derived from live signals)")}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              These are computed from current providers/health. You can convert them into persisted
-              rules.
+              {tlumaczPozaHookiem("superadmin.routingRules.theseAreComputedFromCurrentProvidersHealth", "These are computed from current providers/health. You can convert them into persisted rules.")}
             </p>
 
             <div className="space-y-3">
@@ -779,7 +779,7 @@ export const RoutingRulesTab: React.FC = () => {
                       } as any)
                     }
                   >
-                    Create from suggestion
+                    {tlumaczPozaHookiem("superadmin.routingRules.createFromSuggestion", "Create from suggestion")}
                   </Button>
                 </div>
               ))}
@@ -818,7 +818,7 @@ export const RoutingRulesTab: React.FC = () => {
                   className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-4 py-2 text-slate-900 dark:text-white opacity-70 cursor-not-allowed"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Wait time before retrying failed provider
+                  {tlumaczPozaHookiem("superadmin.routingRules.waitTimeBeforeRetryingFailedProvider", "Wait time before retrying failed provider")}
                 </p>
               </div>
             </div>
@@ -895,7 +895,7 @@ export const RoutingRulesTab: React.FC = () => {
                   value={ruleForm.description}
                   onChange={(e) => setRuleForm((p) => ({ ...p, description: e.target.value }))}
                   className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
-                  placeholder="What does this rule do?"
+                  placeholder={tlumaczPozaHookiem("superadmin.routingRules.whatDoesThisRuleDo", "What does this rule do?")}
                 />
               </div>
 

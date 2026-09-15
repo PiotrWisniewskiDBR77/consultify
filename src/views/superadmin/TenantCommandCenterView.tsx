@@ -14,6 +14,8 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type OrgSummary = {
   id: string;
   name: string;
@@ -102,7 +104,7 @@ const metricTone = (value: number, warningThreshold: number, criticalThreshold: 
 
 const formatCurrency = (value?: number | null) =>
   typeof value === 'number' && Number.isFinite(value)
-    ? new Intl.NumberFormat(undefined, {
+    ? new Intl.NumberFormat(localeListy(), {
         style: 'currency',
         currency: 'USD',
         maximumFractionDigits: 0,
@@ -111,7 +113,7 @@ const formatCurrency = (value?: number | null) =>
 
 const formatCount = (value?: number | null) =>
   typeof value === 'number' && Number.isFinite(value)
-    ? new Intl.NumberFormat().format(value)
+    ? new Intl.NumberFormat(localeListy()).format(value)
     : 'n/a';
 
 const finiteNumber = (value: unknown): number | null =>
@@ -252,8 +254,7 @@ export const TenantCommandCenterView: React.FC = () => {
             Tenant Command Center
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-3xl">
-            Single operator landing for tenant lifecycle, commercial state, quotas, policy posture,
-            and platform risk.
+            {tlumaczPozaHookiem("superadmin.tenantCommandCenter.singleOperatorLandingForTenantLifecycleCommercial", "Single operator landing for tenant lifecycle, commercial state, quotas, policy posture, and platform risk.")}
           </p>
         </div>
         <button
@@ -347,7 +348,7 @@ export const TenantCommandCenterView: React.FC = () => {
                     Tenant focus queue
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Select a tenant to inspect commercial and quota posture.
+                    {tlumaczPozaHookiem("superadmin.tenantCommandCenter.selectATenantToInspectCommercialAnd", "Select a tenant to inspect commercial and quota posture.")}
                   </p>
                 </div>
                 <select
@@ -413,11 +414,11 @@ export const TenantCommandCenterView: React.FC = () => {
                     {selectedOrg?.name || 'Tenant details'}
                   </h3>
                   <p className="text-sm text-slate-500">
-                    Command summary across lifecycle, billing, quotas, AI usage, and governance.
+                    {tlumaczPozaHookiem("superadmin.tenantCommandCenter.commandSummaryAcrossLifecycleBillingQuotasAI", "Command summary across lifecycle, billing, quotas, AI usage, and governance.")}
                   </p>
                 </div>
                 {detailsLoading && (
-                  <div className="text-xs text-slate-500">Loading tenant posture...</div>
+                  <div className="text-xs text-slate-500">{tlumaczPozaHookiem("superadmin.tenantCommandCenter.loadingTenantPosture", "Loading tenant posture...")}</div>
                 )}
               </div>
 
@@ -454,7 +455,7 @@ export const TenantCommandCenterView: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Spent this period</span>
+                          <span className="text-slate-500">{tlumaczPozaHookiem("superadmin.tenantCommandCenter.spentThisPeriod", "Spent this period")}</span>
                           <span className="font-medium">
                             {formatCurrency(
                               resources?.budget?.spentCurrentPeriod ??
@@ -468,7 +469,7 @@ export const TenantCommandCenterView: React.FC = () => {
                     <div className="rounded-xl border border-slate-200 p-4 dark:border-navy-700">
                       <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <SlidersHorizontal className="h-4 w-4 text-sky-500" />
-                        Quotas and budgets
+                        {tlumaczPozaHookiem("superadmin.tenantCommandCenter.quotasAndBudgets", "Quotas and budgets")}
                       </div>
                       <div className="mt-3 space-y-2 text-sm">
                         <div className="flex justify-between">

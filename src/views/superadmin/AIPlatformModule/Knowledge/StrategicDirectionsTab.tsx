@@ -12,6 +12,8 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { LoadingState } from '../../../../components/ui/primitives';
 import { Api } from '../../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Strategy {
   id: string;
   title: string;
@@ -291,7 +293,7 @@ export const StrategicDirectionsTab: React.FC = () => {
             Strategic Directions
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Define strategic goals that guide AI behavior and recommendations
+            {tlumaczPozaHookiem("superadmin.strategicDirections.defineStrategicGoalsThatGuideAIBehavior", "Define strategic goals that guide AI behavior and recommendations")}
           </p>
         </div>
         <button
@@ -326,7 +328,7 @@ export const StrategicDirectionsTab: React.FC = () => {
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
           >
-            Add First Direction
+            {tlumaczPozaHookiem("superadmin.strategicDirections.addFirstDirection", "Add First Direction")}
           </button>
         </div>
       ) : (
@@ -395,7 +397,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                 </p>
                 {s.target_date && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                    Target: {new Date(s.target_date).toLocaleDateString()}
+                    Target: {new Date(s.target_date).toLocaleDateString(localeListy())}
                   </p>
                 )}
               </div>
@@ -491,7 +493,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                     setStrategyForm({ ...strategyForm, description: e.target.value })
                   }
                   className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 outline-none"
-                  placeholder="Explain how the AI should behave or what it should prioritize..."
+                  placeholder={tlumaczPozaHookiem("superadmin.strategicDirections.explainHowTheAIShouldBehaveOr", "Explain how the AI should behave or what it should prioritize...")}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

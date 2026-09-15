@@ -6,6 +6,8 @@ import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface RevenueRecognition {
   id: string;
   organization_id: string;
@@ -205,7 +207,7 @@ export const RevenueRecognitionView: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: currency,
     }).format(amount);
@@ -229,7 +231,7 @@ export const RevenueRecognitionView: React.FC = () => {
             Revenue Recognition (ASC 606)
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Manage revenue recognition schedules and compliance
+            {tlumaczPozaHookiem("superadmin.revenueRecognition.manageRevenueRecognitionSchedulesAndCompliance", "Manage revenue recognition schedules and compliance")}
           </p>
         </div>
         <button
@@ -282,7 +284,7 @@ export const RevenueRecognitionView: React.FC = () => {
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pendingItems}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">Pending</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.revenueRecognition.pending", "Pending")}</div>
             </CardContent>
           </Card>
           <Card>
@@ -441,7 +443,7 @@ export const RevenueRecognitionView: React.FC = () => {
                           </div>
                           {item.recognized && item.recognized_at && (
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Recognized on {new Date(item.recognized_at).toLocaleDateString()}
+                              Recognized on {new Date(item.recognized_at).toLocaleDateString(localeListy())}
                             </div>
                           )}
                         </div>
@@ -470,7 +472,7 @@ export const RevenueRecognitionView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-xl">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              Create Revenue Recognition
+              {tlumaczPozaHookiem("superadmin.revenueRecognition.createRevenueRecognition", "Create Revenue Recognition")}
             </h3>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>

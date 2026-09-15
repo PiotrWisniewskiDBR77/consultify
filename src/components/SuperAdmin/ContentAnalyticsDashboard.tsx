@@ -18,6 +18,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentAnalyticsDashboard as DashboardData } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ContentAnalyticsDashboardProps {
   organizationId?: string;
 }
@@ -70,12 +72,12 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
     return (
       <div className="text-center py-12">
         <BarChart2 className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-        <p className="text-slate-400 dark:text-slate-500">Failed to load analytics data</p>
+        <p className="text-slate-400 dark:text-slate-500">{tlumaczPozaHookiem("superadmin.contentAnalytics.failedToLoadAnalyticsData", "Failed to load analytics data")}</p>
         <button
           onClick={loadDashboard}
           className="mt-4 px-4 py-2 text-primary-400 hover:text-primary-300"
         >
-          Try Again
+          {tlumaczPozaHookiem("superadmin.contentAnalytics.tryAgain", "Try Again")}
         </button>
       </div>
     );
@@ -92,7 +94,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           <div>
             <h2 className="text-xl font-bold text-c-text">Content Analytics</h2>
             <p className="text-sm text-slate-400 dark:text-slate-500">
-              Overview of your content module performance
+              {tlumaczPozaHookiem("superadmin.contentAnalytics.overviewOfYourContentModulePerformance", "Overview of your content module performance")}
             </p>
           </div>
         </div>
@@ -102,9 +104,9 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             onChange={(e) => setDateRange(e.target.value)}
             className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
+            <option value="7d">{tlumaczPozaHookiem("superadmin.contentAnalytics.last7Days", "Last 7 days")}</option>
+            <option value="30d">{tlumaczPozaHookiem("superadmin.contentAnalytics.last30Days", "Last 30 days")}</option>
+            <option value="90d">{tlumaczPozaHookiem("superadmin.contentAnalytics.last90Days", "Last 90 days")}</option>
             <option value="all">All time</option>
           </select>
           <button
@@ -400,7 +402,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                   </div>
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {new Date(event.createdAt).toLocaleString()}
+                  {new Date(event.createdAt).toLocaleString(localeListy())}
                 </span>
               </div>
             ))}

@@ -52,6 +52,7 @@ import {
 import { Api } from '../../services/api';
 import { formatListCurrency, formatListDate } from '../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface Invoice {
   id: string;
   invoiceNumber: string;
@@ -649,12 +650,12 @@ export const InvoiceCenterView: React.FC = () => {
             <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {stats.paidInvoices}
             </div>
-            <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">This period</div>
+            <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.invoiceCenter.thisPeriod", "This period")}</div>
           </div>
 
           <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 dark:text-slate-400">Pending</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.invoiceCenter.pending", "Pending")}</span>
               <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                 <Clock className="text-amber-500" size={20} />
               </div>
@@ -703,8 +704,8 @@ export const InvoiceCenterView: React.FC = () => {
           className="px-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
         >
           <option value="all">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="pending">Pending</option>
+          <option value="draft">{tlumaczPozaHookiem("superadmin.invoiceCenter.draft", "Draft")}</option>
+          <option value="pending">{tlumaczPozaHookiem("superadmin.invoiceCenter.pending", "Pending")}</option>
           <option value="paid">Paid</option>
           <option value="overdue">Overdue</option>
           <option value="cancelled">Cancelled</option>
@@ -715,10 +716,10 @@ export const InvoiceCenterView: React.FC = () => {
           disabled={!!loadError}
           className="px-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
         >
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="90d">Last 90 days</option>
-          <option value="1y">Last year</option>
+          <option value="7d">{tlumaczPozaHookiem("superadmin.invoiceCenter.last7Days", "Last 7 days")}</option>
+          <option value="30d">{tlumaczPozaHookiem("superadmin.invoiceCenter.last30Days", "Last 30 days")}</option>
+          <option value="90d">{tlumaczPozaHookiem("superadmin.invoiceCenter.last90Days", "Last 90 days")}</option>
+          <option value="1y">{tlumaczPozaHookiem("superadmin.invoiceCenter.lastYear", "Last year")}</option>
           <option value="all">All time</option>
         </select>
         <button
@@ -1019,7 +1020,7 @@ export const InvoiceCenterView: React.FC = () => {
             Usage-Based Pricing Tiers
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Configure per-unit rates for overage billing, storage, tokens, and more.
+            {tlumaczPozaHookiem("superadmin.invoiceCenter.configurePerUnitRatesForOverageBilling", "Configure per-unit rates for overage billing, storage, tokens, and more.")}
           </p>
         </div>
         <button
@@ -1215,7 +1216,7 @@ export const InvoiceCenterView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Invoice Center</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage invoices and billing</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{tlumaczPozaHookiem("superadmin.invoiceCenter.manageInvoicesAndBilling", "Manage invoices and billing")}</p>
         </div>
         <div className="flex items-center gap-2">
           <InfoButton

@@ -12,6 +12,8 @@ import { StandardTable, type TableColumn, type TableRow } from '../../../compone
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type SupportTicketRow = {
   id: string;
   ticket_number?: string;
@@ -33,7 +35,7 @@ type SupportTicketCommentRow = {
 const formatSupportDate = (value?: string | null, fallback = 'Unknown date') => {
   if (!value) return fallback;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 type JsonRecord = Record<string, unknown> & {
@@ -361,7 +363,7 @@ export const SupportTicketsView: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Support Tickets</h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Manage and track support tickets
+            {tlumaczPozaHookiem("superadmin.supportTickets.manageAndTrackSupportTickets", "Manage and track support tickets")}
           </p>
         </div>
         <button
@@ -464,7 +466,7 @@ export const SupportTicketsView: React.FC = () => {
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                   rows={5}
-                  placeholder="Describe the issue..."
+                  placeholder={tlumaczPozaHookiem("superadmin.supportTickets.describeTheIssue", "Describe the issue...")}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -572,7 +574,7 @@ export const SupportTicketsView: React.FC = () => {
             <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">Conversation</div>
             <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-navy-900 space-y-3">
               {commentsLoading ? (
-                <div className="text-sm text-slate-500 dark:text-slate-400">Loading replies...</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.supportTickets.loadingReplies", "Loading replies...")}</div>
               ) : ticketComments.length > 0 ? (
                 ticketComments.map((comment) => (
                   <div

@@ -43,6 +43,8 @@ import {
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ComplianceFramework {
   id: string;
   name: string;
@@ -242,13 +244,13 @@ export const ComplianceCenterView: React.FC = () => {
   const formatDate = (value: any, fallback = 'Unknown date') => {
     if (!value) return fallback;
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString(localeListy());
   };
 
   const formatDateTime = (value: any, fallback = 'Unknown date') => {
     if (!value) return fallback;
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString(localeListy());
   };
 
   const isOverdue = (value: any, status: string) => {
@@ -673,7 +675,7 @@ export const ComplianceCenterView: React.FC = () => {
 
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-slate-500 dark:text-slate-400">Pending DSARs</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.complianceCenter.pendingDSARs", "Pending DSARs")}</span>
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
               <Users className="text-blue-500" size={20} />
             </div>
@@ -912,8 +914,7 @@ export const ComplianceCenterView: React.FC = () => {
 
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-              Framework requirements are read-only here. Persisted DSAR, audit and processing
-              records remain editable through their dedicated flows.
+              {tlumaczPozaHookiem("superadmin.complianceCenter.frameworkRequirementsAreReadOnlyHerePersisted", "Framework requirements are read-only here. Persisted DSAR, audit and processing records remain editable through their dedicated flows.")}
             </div>
             <table
               /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */ className="w-full"
@@ -959,7 +960,7 @@ export const ComplianceCenterView: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
                         <Clock size={12} />
-                        Pending
+                        {tlumaczPozaHookiem("superadmin.complianceCenter.pending", "Pending")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -1328,7 +1329,7 @@ export const ComplianceCenterView: React.FC = () => {
               <FileCheck size={40} className="mx-auto mb-3 text-slate-600" />
               <p className="text-slate-500 dark:text-slate-400 font-medium">No audits scheduled</p>
               <p className="text-sm text-slate-600 dark:text-slate-500">
-                Schedule your first compliance audit
+                {tlumaczPozaHookiem("superadmin.complianceCenter.scheduleYourFirstComplianceAudit", "Schedule your first compliance audit")}
               </p>
             </div>
           )}
@@ -1384,7 +1385,7 @@ export const ComplianceCenterView: React.FC = () => {
             <FileText size={40} className="mx-auto mb-3 text-slate-600" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">No processing records</p>
             <p className="text-sm text-slate-600 dark:text-slate-500">
-              Document your data processing activities
+              {tlumaczPozaHookiem("superadmin.complianceCenter.documentYourDataProcessingActivities", "Document your data processing activities")}
             </p>
           </div>
         )}
@@ -1405,7 +1406,7 @@ export const ComplianceCenterView: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Compliance Center</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Manage regulatory compliance and audits
+            {tlumaczPozaHookiem("superadmin.complianceCenter.manageRegulatoryComplianceAndAudits", "Manage regulatory compliance and audits")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -1547,7 +1548,7 @@ export const ComplianceCenterView: React.FC = () => {
                     }
                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                   >
-                    <option value="pending">Pending</option>
+                    <option value="pending">{tlumaczPozaHookiem("superadmin.complianceCenter.pending", "Pending")}</option>
                     <option value="compliant">Compliant</option>
                     <option value="in_progress">In Progress</option>
                     <option value="non_compliant">Non-Compliant</option>
@@ -1677,7 +1678,7 @@ export const ComplianceCenterView: React.FC = () => {
                   onChange={(e) =>
                     setDsarCreateForm({ ...dsarCreateForm, description: e.target.value })
                   }
-                  placeholder="Details about the request..."
+                  placeholder={tlumaczPozaHookiem("superadmin.complianceCenter.detailsAboutTheRequest", "Details about the request...")}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                 />
               </div>

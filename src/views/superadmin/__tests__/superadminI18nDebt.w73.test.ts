@@ -1,0 +1,104 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+type LocaleTree = Record<string, unknown>;
+
+const repoRoot = process.cwd();
+const locale = (language: 'en' | 'pl'): LocaleTree =>
+  JSON.parse(fs.readFileSync(path.join(repoRoot, `public/locales/${language}/translation.json`), 'utf8'));
+
+const get = (tree: LocaleTree, key: string): unknown =>
+  key.split('.').reduce<unknown>((value, part) => {
+    if (!value || typeof value !== 'object') return undefined;
+    return (value as LocaleTree)[part];
+  }, tree);
+
+const collectFiles = (dir: string): string[] =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const absolute = path.join(dir, entry.name);
+    return entry.isDirectory() ? collectFiles(absolute) : absolute.endsWith('.tsx') ? [absolute] : [];
+  });
+
+describe('W73 K2 SuperAdmin language debt', () => {
+  it('keeps every SuperAdmin key present in EN and PL with a real Polish value', () => {
+    const en = locale('en');
+    const pl = locale('pl');
+    const roots = [
+      path.join(repoRoot, 'src/views/superadmin'),
+      path.join(repoRoot, 'src/components/SuperAdmin'),
+    ];
+    const keys = roots
+      .flatMap(collectFiles)
+      .flatMap((file) => [
+        ...fs.readFileSync(file, 'utf8').matchAll(/tlumaczPozaHookiem\(["'](superadmin\.[^"']+)["']/g),
+      ])
+      .map((match) => match[1]);
+
+    expect(keys.length).toBeGreaterThan(500);
+    const localeInvariantValues = new Set([
+      'superadmin.organizations.plan',
+      'superadmin.organizations.status',
+    ]);
+
+    for (const key of keys) {
+      const english = get(en, key);
+      expect(typeof english, `${key} missing in EN`).toBe('string');
+      expect(typeof get(pl, key), `${key} missing in PL`).toBe('string');
+      if (!localeInvariantValues.has(key)) {
+        expect(get(pl, key), `${key} still equals EN`).not.toBe(english);
+      }
+    }
+  });
+
+  it('preserves domain meaning and technical formula identifiers in Polish', () => {
+    const pl = locale('pl');
+    const value = (key: string) => get(pl, key);
+
+    expect(value('superadmin.moduleAccessControl.createUpdateGrant')).toBe(
+      'Nadaj / zaktualizuj uprawnienie'
+    );
+    expect(value('superadmin.presentationGovernanceAlertSubscriptions.thisIsTheOnlyTimeYouWill')).toContain(
+      'Panel ujawnienia'
+    );
+    expect(value('superadmin.presentationGovernanceAlertSubscriptions.rotationImmediatelyInvalidatesThePreviousSecretOutbound')).toContain(
+      'Rotacja'
+    );
+    expect(value('superadmin.featureUpdatesAdmin.buildTheMessageTargetTheRightAudience')).toContain(
+      'wybierz właściwych odbiorców'
+    );
+    expect(value('superadmin.businessMetrics.sUMRevenueCOUNTUsers')).toBe('{{formula}}');
+    expect(value('superadmin.organizations.pending')).toBe('Oczekująca');
+    expect(value('superadmin.enterpriseApiManagement.aPIRequestsAreRateLimitedBasedOn')).toContain(
+      'Limit liczby żądań API'
+    );
+    expect(value('superadmin.presentationTelemetry.noEventTypesRecordedInThisWindow')).toContain(
+      'nie odnotowano'
+    );
+    expect(
+      fs.readFileSync(
+        path.join(repoRoot, 'src/views/superadmin/analytics/BusinessMetricsView.tsx'),
+        'utf8'
+      )
+    ).toContain("formula: 'SUM(revenue) / COUNT(users)'");
+
+    const superadminPl = JSON.stringify((pl.superadmin ?? {}) as LocaleTree);
+    expect(superadminPl).not.toContain('Przegrany');
+    expect(superadminPl).not.toContain('Panel ościeżnicy');
+    expect(superadminPl).not.toContain('kieruj reklamy');
+    expect(superadminPl).not.toContain('Aż do');
+  });
+
+  it('uses the account locale for every measured date and number formatter in the owned paths', () => {
+    const roots = [
+      path.join(repoRoot, 'src/views/superadmin'),
+      path.join(repoRoot, 'src/components/SuperAdmin'),
+    ];
+    const source = roots.flatMap(collectFiles).map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+
+    expect(source).not.toMatch(/\.toLocale(?:DateString|TimeString|String)\(\s*\)/);
+    expect(source).not.toMatch(/\.toLocale(?:DateString|TimeString|String)\(\s*['"](?:en-US|pl-PL)['"]/);
+    expect(source).not.toMatch(/new Intl\.(?:DateTimeFormat|NumberFormat)\(\s*(?:\)|['"](?:en-US|pl-PL)['"])/);
+  });
+});

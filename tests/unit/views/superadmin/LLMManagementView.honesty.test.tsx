@@ -117,7 +117,7 @@ describe('LLMManagementView honest provider workflows', () => {
     fireEvent.change(container.querySelector('input[type="password"]') as HTMLInputElement, {
       target: { value: 'sk-created' },
     });
-    fireEvent.change(screen.getByPlaceholderText(/własne ID modelu/i), {
+    fireEvent.change(screen.getByPlaceholderText(/own model ID/i), {
       target: { value: 'openai/gpt-4o-mini' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Save Provider/i }));
@@ -135,7 +135,7 @@ describe('LLMManagementView honest provider workflows', () => {
     expect(vi.mocked(Api.getLLMProviders).mock.calls.length).toBeGreaterThanOrEqual(2);
 
     fireEvent.click(screen.getAllByLabelText('Clone Model')[0]);
-    fireEvent.change(screen.getByPlaceholderText(/własne ID modelu/i), {
+    fireEvent.change(screen.getByPlaceholderText(/own model ID/i), {
       target: { value: 'anthropic/claude-sonnet-4-6' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Save Provider/i }));
@@ -178,7 +178,7 @@ describe('LLMManagementView honest provider workflows', () => {
     fireEvent.change(container.querySelector('input[type="password"]') as HTMLInputElement, {
       target: { value: 'sk-created' },
     });
-    fireEvent.change(screen.getByPlaceholderText(/własne ID modelu/i), {
+    fireEvent.change(screen.getByPlaceholderText(/own model ID/i), {
       target: { value: 'openai/gpt-4o-mini' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Save Provider/i }));

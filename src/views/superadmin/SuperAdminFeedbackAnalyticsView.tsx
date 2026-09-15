@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AnalyticsOverview {
   sampleSize: number;
   openCount: number;
@@ -166,7 +168,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
   );
 
   if (loading && !data) {
-    return <LoadingState variant="spinner" className="h-64" label="Loading analytics…" />;
+    return <LoadingState variant="spinner" className="h-64" label={tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.loadingAnalytics", "Loading analytics…")} />;
   }
 
   if (error && !data) {
@@ -237,7 +239,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
             Feedback Analytics
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Generated {new Date(data.generatedAt).toLocaleString()}
+            Generated {new Date(data.generatedAt).toLocaleString(localeListy())}
           </p>
         </div>
         <button
@@ -315,8 +317,8 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
 
       <p className="text-[11px] text-slate-500 dark:text-slate-500">
         Sample size is capped at 5 000 most recent tickets. MTTR is measured as the time between{' '}
-        <code>created_at</code> and <code>updated_at</code> for tickets that reached
-        <code> RESOLVED</code> in the last 30 days.
+        <code>{tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.created_at", "created_at")}</code> {tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.and", "and")} <code>{tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.updated_at", "updated_at")}</code> {tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.forTicketsThatReached", "for tickets that reached")}
+        <code> {tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.rESOLVED", "RESOLVED")}</code> {tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.inTheLast30Days", "in the last 30 days.")}
       </p>
     </div>
   );

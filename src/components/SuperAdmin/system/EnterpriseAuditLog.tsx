@@ -43,6 +43,8 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AuditLog {
   id: string;
   timestamp: string;
@@ -362,7 +364,7 @@ export const EnterpriseAuditLog: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text">Audit Log</h2>
           <p className="text-c-text-secondary text-sm">
-            Comprehensive activity tracking for compliance and security
+            {tlumaczPozaHookiem("superadmin.enterpriseAuditLog.comprehensiveActivityTrackingForComplianceAndSecurity", "Comprehensive activity tracking for compliance and security")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -474,7 +476,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             />
             <input
               type="text"
-              placeholder="Search by action, resource, user, request ID..."
+              placeholder={tlumaczPozaHookiem("superadmin.enterpriseAuditLog.searchByActionResourceUserRequestID", "Search by action, resource, user, request ID...")}
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               disabled={!!loadError}
@@ -625,7 +627,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               variant="new"
               icon={FileText}
               title="No audit logs yet"
-              description="Try adjusting your filters to see more activity."
+              description={tlumaczPozaHookiem("superadmin.enterpriseAuditLog.tryAdjustingYourFiltersToSeeMore", "Try adjusting your filters to see more activity.")}
             />
           ) : (
             logs.map((log) => {
@@ -662,7 +664,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {log.timestamp && !isNaN(new Date(log.timestamp).getTime())
-                                ? new Date(log.timestamp).toLocaleString()
+                                ? new Date(log.timestamp).toLocaleString(localeListy())
                                 : 'Unknown date'}
                             </span>
                             {log.ip_address && (
@@ -913,7 +915,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-c-warning" />
-                  Activity Timeline (Last 7 Days)
+                  {tlumaczPozaHookiem("superadmin.enterpriseAuditLog.activityTimelineLast7Days", "Activity Timeline (Last 7 Days)")}
                 </h3>
                 <div className="flex items-end gap-2 h-32">
                   {analyticsTimeline.series.map(({ date, count }, i) => (
@@ -923,7 +925,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                         style={{ height: `${(count / analyticsTimeline.max) * 100}%` }}
                       />
                       <div className="text-xs text-c-text-muted mt-2">
-                        {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                        {date.toLocaleDateString(localeListy(), { weekday: 'short' })}
                       </div>
                     </div>
                   ))}

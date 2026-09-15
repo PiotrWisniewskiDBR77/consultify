@@ -33,6 +33,7 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '@/components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface UsageTrend {
   date: string;
   requests: number;
@@ -455,7 +456,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             AI Usage Analytics
           </h2>
           <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm mt-1">
-            Comprehensive insights into AI usage patterns and costs
+            {tlumaczPozaHookiem("superadmin.usageAnalytics.comprehensiveInsightsIntoAIUsagePatternsAnd", "Comprehensive insights into AI usage patterns and costs")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -608,11 +609,11 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             {loading ? (
               <div className="h-48 flex items-center justify-center text-slate-500 dark:text-slate-400">
                 <RefreshCw className="animate-spin mr-2" size={20} />
-                Loading...
+                {tlumaczPozaHookiem("superadmin.usageAnalytics.loading", "Loading...")}
               </div>
             ) : trends.length === 0 ? (
               <div className="h-48 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
-                No usage trend data for this period
+                {tlumaczPozaHookiem("superadmin.usageAnalytics.noUsageTrendDataForThisPeriod", "No usage trend data for this period")}
               </div>
             ) : (
               <div className="h-48 flex items-end gap-1">
@@ -660,7 +661,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
               <div className="space-y-3">
                 {modelUsage.length === 0 ? (
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    No model usage recorded in this period
+                    {tlumaczPozaHookiem("superadmin.usageAnalytics.noModelUsageRecordedInThisPeriod", "No model usage recorded in this period")}
                   </div>
                 ) : (
                   modelUsage.map((model) => (
@@ -706,7 +707,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
               <div className="space-y-3">
                 {capabilityUsage.length === 0 ? (
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    No capability usage recorded in this period
+                    {tlumaczPozaHookiem("superadmin.usageAnalytics.noCapabilityUsageRecordedInThisPeriod", "No capability usage recorded in this period")}
                   </div>
                 ) : (
                   capabilityUsage.map((cap) => (

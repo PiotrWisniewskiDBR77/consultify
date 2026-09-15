@@ -17,6 +17,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AIStats {
   tokensToday: number;
   tokensThisMonth: number;
@@ -117,7 +119,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
             AI Analytics Dashboard
           </h1>
           <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
-            Monitor AI usage, costs, and system health across all organizations
+            {tlumaczPozaHookiem("superadmin.superAdminAIAnalytics.monitorAIUsageCostsAndSystemHealth", "Monitor AI usage, costs, and system health across all organizations")}
           </p>
         </div>
         <button
@@ -189,7 +191,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         {/* Tokens This Month */}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens This Month</span>
+            <span className="text-slate-400 dark:text-slate-500 text-sm">{tlumaczPozaHookiem("superadmin.superAdminAIAnalytics.tokensThisMonth", "Tokens This Month")}</span>
             <TrendingUp className="text-green-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -392,7 +394,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
 
       {/* Last Updated */}
       <p className="text-center text-slate-600 dark:text-slate-400 text-xs">
-        Last updated: {stats?.timestamp ? new Date(stats.timestamp).toLocaleString() : 'Unknown'}
+        Last updated: {stats?.timestamp ? new Date(stats.timestamp).toLocaleString(localeListy()) : 'Unknown'}
       </p>
     </div>
   );

@@ -37,6 +37,8 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Integration {
   id: string;
   type: string;
@@ -112,7 +114,7 @@ const normalizeDeliveries = (payload: unknown): WebhookDelivery[] => {
 const formatDateTime = (value?: unknown) => {
   if (!value) return 'Never';
   const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 interface Webhook {
@@ -424,7 +426,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         <div>
           <h2 className="text-2xl font-semibold text-c-text">Integrations Hub</h2>
           <p className="text-c-text-secondary text-sm">
-            Connect Consultify with your existing tools and workflows
+            {tlumaczPozaHookiem("superadmin.enterpriseIntegrationsHub.connectConsultifyWithYourExistingToolsAnd", "Connect Consultify with your existing tools and workflows")}
           </p>
         </div>
       </div>
@@ -539,7 +541,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   variant="new"
                   icon={Link}
                   title="No integrations connected"
-                  description="Browse the catalog to add your first integration."
+                  description={tlumaczPozaHookiem("superadmin.enterpriseIntegrationsHub.browseTheCatalogToAddYourFirst", "Browse the catalog to add your first integration.")}
                 />
               ) : (
                 <div className="space-y-2">
@@ -594,7 +596,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             <button
                               onClick={() => handleSync(integration.type)}
                               className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
-                              title="Sync now"
+                              title={tlumaczPozaHookiem("superadmin.enterpriseIntegrationsHub.syncNow", "Sync now")}
                             >
                               <RefreshCw className="w-4 h-4 text-c-text-muted" />
                             </button>
@@ -653,7 +655,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       variant="new"
                       icon={Webhook}
                       title="No webhooks configured"
-                      description="Existing webhook reads are available when the backend returns data."
+                      description={tlumaczPozaHookiem("superadmin.enterpriseIntegrationsHub.existingWebhookReadsAreAvailableWhenThe", "Existing webhook reads are available when the backend returns data.")}
                     />
                   ) : (
                     <div className="space-y-2">

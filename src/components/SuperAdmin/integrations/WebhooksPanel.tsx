@@ -32,6 +32,8 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { WebhookDeliveriesModal } from './WebhookDeliveriesModal';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface WebhookConfig {
   id: string;
   organization_id: string;
@@ -260,7 +262,7 @@ export const WebhooksPanel: React.FC = () => {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
         <Clock size={14} />
-        Pending
+        {tlumaczPozaHookiem("superadmin.webhooks.pending", "Pending")}
       </span>
     );
   };
@@ -373,7 +375,7 @@ export const WebhooksPanel: React.FC = () => {
 
                   {webhook.last_delivery_at && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
-                      Last delivery: {new Date(webhook.last_delivery_at).toLocaleString()}
+                      Last delivery: {new Date(webhook.last_delivery_at).toLocaleString(localeListy())}
                     </p>
                   )}
                 </div>

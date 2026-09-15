@@ -14,6 +14,7 @@ import TeresaMark from '../../../components/shared/TeresaMark';
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import { WorkerDetail } from './WorkerDetail';
 import { WorkersList } from './WorkersList';
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 export interface VirtualWorkersModuleProps {
   initialTab?: string;
 }
@@ -63,7 +64,7 @@ export const VirtualWorkersModule: React.FC<VirtualWorkersModuleProps> = ({ init
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Virtual Workers"
-      subtitle="Manage AI virtual employees — knowledge, instructions, conversations, and performance"
+      subtitle={tlumaczPozaHookiem("superadmin.index.manageAIVirtualEmployeesKnowledgeInstructionsConversations", "Manage AI virtual employees — knowledge, instructions, conversations, and performance")}
     >
       {renderContent()}
     </TabLayout>

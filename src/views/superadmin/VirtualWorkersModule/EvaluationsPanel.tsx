@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Evaluation {
   id: string;
   name: string;
@@ -92,7 +94,7 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">Evaluations</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Track benchmark runs, regression checks, and readiness gates before release.
+              {tlumaczPozaHookiem("superadmin.evaluations.trackBenchmarkRunsRegressionChecksAndReadiness", "Track benchmark runs, regression checks, and readiness gates before release.")}
             </p>
           </div>
           <button
@@ -117,10 +119,10 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
             onChange={(e) => setStatus(e.target.value)}
             className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
           >
-            <option value="draft">Draft</option>
+            <option value="draft">{tlumaczPozaHookiem("superadmin.evaluations.draft", "Draft")}</option>
             <option value="running">Running</option>
             <option value="passed">Passed</option>
-            <option value="failed">Failed</option>
+            <option value="failed">{tlumaczPozaHookiem("superadmin.evaluations.failed", "Failed")}</option>
           </select>
           <input
             type="number"
@@ -149,8 +151,7 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
         </div>
 
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
-          Passed and failed evaluations now require a non-empty dataset, non-empty results, and a
-          score.
+          {tlumaczPozaHookiem("superadmin.evaluations.passedAndFailedEvaluationsNowRequireA", "Passed and failed evaluations now require a non-empty dataset, non-empty results, and a score.")}
         </p>
 
         {error && (
@@ -193,8 +194,8 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.name}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Created {new Date(item.created_at).toLocaleString()}
-                  {item.run_at ? ` · Last run ${new Date(item.run_at).toLocaleString()}` : ''}
+                  Created {new Date(item.created_at).toLocaleString(localeListy())}
+                  {item.run_at ? ` · Last run ${new Date(item.run_at).toLocaleString(localeListy())}` : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2">

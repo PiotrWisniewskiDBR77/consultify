@@ -32,6 +32,8 @@ import { cn } from '@/utils/cn';
 
 import { LoadingState } from '../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface CommissionRate {
   tier: string;
   tierName: string;
@@ -355,8 +357,7 @@ export const PartnerProgramConfig: React.FC = () => {
           <div>
             <h2 className="font-semibold text-c-text">Partner economics are read-only</h2>
             <p className="mt-1 text-sm text-c-text-secondary">
-              Commission, discount, accrual and payout authoring is unavailable under
-              AMD-PRT-ECONOMICS-002. Historical records remain available for review.
+              {tlumaczPozaHookiem("superadmin.partnerProgramConfig.commissionDiscountAccrualAndPayoutAuthoringIs", "Commission, discount, accrual and payout authoring is unavailable under AMD-PRT-ECONOMICS-002. Historical records remain available for review.")}
             </p>
           </div>
         </div>
@@ -439,7 +440,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   <p className="text-3xl font-bold text-c-text">{tier.rate}%</p>
                   {tier.minRevenue !== undefined && tier.minRevenue > 0 && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Min: €{tier.minRevenue.toLocaleString()} revenue
+                      Min: €{tier.minRevenue.toLocaleString(localeListy())} revenue
                     </p>
                   )}
                 </div>
@@ -563,7 +564,7 @@ export const PartnerProgramConfig: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            Save Discount Settings
+            {tlumaczPozaHookiem("superadmin.partnerProgramConfig.saveDiscountSettings", "Save Discount Settings")}
           </button>
         </div>
       </div>
@@ -579,7 +580,7 @@ export const PartnerProgramConfig: React.FC = () => {
             <div>
               <h2 className="text-lg font-semibold text-c-text">Public Partner Applications</h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
-                Lightweight qualification leads submitted from the public recruitment page
+                {tlumaczPozaHookiem("superadmin.partnerProgramConfig.lightweightQualificationLeadsSubmittedFromThePublic", "Lightweight qualification leads submitted from the public recruitment page")}
               </p>
             </div>
           </div>
@@ -613,7 +614,7 @@ export const PartnerProgramConfig: React.FC = () => {
                     {item.team_size ? <div>Team size: {item.team_size}</div> : null}
                     {item.focus_area ? <div>Focus: {item.focus_area}</div> : null}
                     {item.created_at ? (
-                      <div>Submitted: {new Date(item.created_at).toLocaleString()}</div>
+                      <div>Submitted: {new Date(item.created_at).toLocaleString(localeListy())}</div>
                     ) : null}
                   </div>
 
@@ -665,7 +666,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 {t('superadmin.partnerConfig.reviewQueue', 'Certification Review Queue')}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
-                Review advanced partner certifications that require operator approval
+                {tlumaczPozaHookiem("superadmin.partnerProgramConfig.reviewAdvancedPartnerCertificationsThatRequireOperator", "Review advanced partner certifications that require operator approval")}
               </p>
             </div>
           </div>
@@ -695,7 +696,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   </div>
                   <div className="text-xs text-slate-600">
                     Progress: {item.progress_percent || 0}% • Updated:{' '}
-                    {item.updated_at ? new Date(item.updated_at).toLocaleString() : 'n/a'}
+                    {item.updated_at ? new Date(item.updated_at).toLocaleString(localeListy()) : 'n/a'}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -731,7 +732,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 {t('superadmin.partnerConfig.programSignals', 'Program Signals')}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
-                Adoption, blockers, and knowledge usage across the partner rollout
+                {tlumaczPozaHookiem("superadmin.partnerProgramConfig.adoptionBlockersAndKnowledgeUsageAcrossThe", "Adoption, blockers, and knowledge usage across the partner rollout")}
               </p>
             </div>
           </div>
@@ -788,7 +789,7 @@ export const PartnerProgramConfig: React.FC = () => {
               {t('superadmin.partnerConfig.payoutSettings', 'Payout Settings')}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-500">
-              Configure payout thresholds, schedules, and payment methods
+              {tlumaczPozaHookiem("superadmin.partnerProgramConfig.configurePayoutThresholdsSchedulesAndPaymentMethods", "Configure payout thresholds, schedules, and payment methods")}
             </p>
           </div>
         </div>
@@ -914,7 +915,7 @@ export const PartnerProgramConfig: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            Save Payout Settings
+            {tlumaczPozaHookiem("superadmin.partnerProgramConfig.savePayoutSettings", "Save Payout Settings")}
           </button>
         </div>
       </div>

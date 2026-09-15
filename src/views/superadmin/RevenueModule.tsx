@@ -34,6 +34,7 @@ import {
   SubscriptionChangesView,
 } from './revenue';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface RevenueModuleProps {
   initialTab?: string;
 }
@@ -127,7 +128,7 @@ export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Revenue"
-      subtitle="Billing, invoices, pricing, subscriptions, recognition, forecasts and payment management"
+      subtitle={tlumaczPozaHookiem("superadmin.revenue.billingInvoicesPricingSubscriptionsRecognitionForecastsAnd", "Billing, invoices, pricing, subscriptions, recognition, forecasts and payment management")}
       actions={<InfoButton cardId={TAB_HELP_CARDS[activeTab]} />}
     >
       {renderContent()}

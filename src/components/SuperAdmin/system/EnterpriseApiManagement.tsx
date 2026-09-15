@@ -39,6 +39,7 @@ import { formatListDate, formatListNumber } from '../../../utils/listDateFormat'
 import { DegradedState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ApiKey {
   id: string;
   organizationId?: string;
@@ -464,7 +465,7 @@ export const EnterpriseApiManagement: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text">API Management</h2>
           <p className="text-c-text-secondary text-sm">
-            Manage API keys, view usage analytics, and access documentation
+            {tlumaczPozaHookiem("superadmin.enterpriseApiManagement.manageAPIKeysViewUsageAnalyticsAnd", "Manage API keys, view usage analytics, and access documentation")}
           </p>
         </div>
         <button
@@ -494,9 +495,9 @@ export const EnterpriseApiManagement: React.FC = () => {
             <div className="flex items-start gap-3">
               <Key className="w-5 h-5 text-c-success mt-0.5" />
               <div>
-                <h4 className="font-medium text-c-success">API Key Created Successfully</h4>
+                <h4 className="font-medium text-c-success">{tlumaczPozaHookiem("superadmin.enterpriseApiManagement.aPIKeyCreatedSuccessfully", "API Key Created Successfully")}</h4>
                 <p className="text-sm text-c-text-secondary mt-1 mb-3">
-                  Save this key now - it won't be shown again!
+                  {tlumaczPozaHookiem("superadmin.enterpriseApiManagement.saveThisKeyNowItWonT", "Save this key now - it won't be shown again!")}
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg">
                   <code className="text-sm text-c-text font-mono flex-1 break-all">
@@ -578,7 +579,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               variant="new"
               icon={Key}
               title="No API keys found"
-              description="Create your first API key to get started."
+              description={tlumaczPozaHookiem("superadmin.enterpriseApiManagement.createYourFirstAPIKeyToGet", "Create your first API key to get started.")}
             />
           ) : (
             <div className="space-y-2">
@@ -702,7 +703,7 @@ export const EnterpriseApiManagement: React.FC = () => {
             <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState
                 title="API key usage unavailable"
-                description="API key usage cannot be inspected because the API key list did not load."
+                description={tlumaczPozaHookiem("superadmin.enterpriseApiManagement.aPIKeyUsageCannotBeInspectedBecause", "API key usage cannot be inspected because the API key list did not load.")}
               />
             </div>
           ) : usageLoadError ? (
@@ -841,8 +842,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           <div className="p-6 bg-c-accent-soft rounded-xl border border-c-accent/20">
             <h3 className="text-xl font-bold text-c-text mb-2">Consultify API</h3>
             <p className="text-c-text-secondary mb-4">
-              Build powerful integrations with the Consultify REST API. Access projects,
-              assessments, reports, and more.
+              {tlumaczPozaHookiem("superadmin.enterpriseApiManagement.buildPowerfulIntegrationsWithTheConsultifyREST", "Build powerful integrations with the Consultify REST API. Access projects, assessments, reports, and more.")}
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -874,8 +874,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 Authentication
               </h4>
               <p className="text-sm text-c-text-secondary mb-3">
-                All API requests require authentication using an API key in the Authorization
-                header.
+                {tlumaczPozaHookiem("superadmin.enterpriseApiManagement.allAPIRequestsRequireAuthenticationUsingAn", "All API requests require authentication using an API key in the Authorization header.")}
               </p>
               <div className="p-3 bg-c-surface rounded-lg">
                 <code className="text-sm text-c-info">Authorization: Bearer ck_live_xxx...</code>
@@ -888,7 +887,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 Rate Limits
               </h4>
               <p className="text-sm text-c-text-secondary mb-3">
-                API requests are rate limited based on your key configuration.
+                {tlumaczPozaHookiem("superadmin.enterpriseApiManagement.aPIRequestsAreRateLimitedBasedOn", "API requests are rate limited based on your key configuration.")}
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">

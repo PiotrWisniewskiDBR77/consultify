@@ -10,6 +10,7 @@ import {
   runPlatformOperation,
 } from '../../services/superadminPlatformOperationsApi';
 
+import { localeListy } from '@/utils/listDateFormat';
 type ActionId =
   | 'suspend'
   | 'reactivate'
@@ -325,7 +326,7 @@ export const PlatformOperationsView: React.FC = () => {
                 key={`${item.at}-${index}`}
                 className="rounded-xl border border-c-border bg-c-surface p-3 text-sm text-c-text"
               >
-                <time>{new Date(item.at).toLocaleString()}</time> · {item.action} · {item.target} ·{' '}
+                <time>{new Date(item.at).toLocaleString(localeListy())}</time> · {item.action} · {item.target} ·{' '}
                 {item.result}
                 <p className="text-c-text-secondary">
                   {t('superadmin.platformOperations.reason')}: {item.reason}

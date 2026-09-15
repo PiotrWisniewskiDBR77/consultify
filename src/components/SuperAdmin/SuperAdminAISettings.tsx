@@ -34,6 +34,8 @@ import { LoadingState } from '@/components/shared/states';
 
 import { InfoButton } from '../shared/InfoButton';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SuperAdminSettings {
   id: string;
   defaultProvider: string | null;
@@ -407,7 +409,7 @@ export const SuperAdminAISettings: React.FC = () => {
             Global AI Settings
           </h2>
           <p className="text-c-text-secondary mt-1">
-            Platform-wide AI configuration and constraints
+            {tlumaczPozaHookiem("superadmin.superAdminAISettings.platformWideAIConfigurationAndConstraints", "Platform-wide AI configuration and constraints")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -450,7 +452,7 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-c-text">Provider Configuration</h3>
-              <p className="text-sm text-c-text-secondary">Default model and fallback chain</p>
+              <p className="text-sm text-c-text-secondary">{tlumaczPozaHookiem("superadmin.superAdminAISettings.defaultModelAndFallbackChain", "Default model and fallback chain")}</p>
             </div>
           </div>
 
@@ -634,7 +636,7 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-c-text">Security & Privacy</h3>
-              <p className="text-sm text-c-text-secondary">PII detection and encryption</p>
+              <p className="text-sm text-c-text-secondary">{tlumaczPozaHookiem("superadmin.superAdminAISettings.pIIDetectionAndEncryption", "PII detection and encryption")}</p>
             </div>
           </div>
 
@@ -714,7 +716,7 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-c-text">Resilience & Compliance</h3>
-              <p className="text-sm text-c-text-secondary">Circuit breaker and data residency</p>
+              <p className="text-sm text-c-text-secondary">{tlumaczPozaHookiem("superadmin.superAdminAISettings.circuitBreakerAndDataResidency", "Circuit breaker and data residency")}</p>
             </div>
           </div>
 
@@ -812,7 +814,7 @@ export const SuperAdminAISettings: React.FC = () => {
       {/* Last Updated Info */}
       {settings.updatedAt && (
         <div className="text-center text-sm text-c-text-muted">
-          Last updated: {new Date(settings.updatedAt).toLocaleString()}
+          Last updated: {new Date(settings.updatedAt).toLocaleString(localeListy())}
           {settings.updatedBy && ` by ${settings.updatedBy}`}
         </div>
       )}

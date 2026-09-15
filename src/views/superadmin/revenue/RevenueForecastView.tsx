@@ -7,6 +7,7 @@ import { Api } from '../../../services/api';
 import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 import { formatListCurrency, formatListDate } from '../../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface RevenueForecast {
   id: string;
   forecast_type: 'monthly' | 'quarterly' | 'yearly';
@@ -169,7 +170,7 @@ export const RevenueForecastView: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Revenue Forecasting</h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Generate and analyze revenue predictions using multiple methods
+            {tlumaczPozaHookiem("superadmin.revenueForecast.generateAndAnalyzeRevenuePredictionsUsingMultiple", "Generate and analyze revenue predictions using multiple methods")}
           </p>
         </div>
         <button
@@ -357,7 +358,7 @@ export const RevenueForecastView: React.FC = () => {
 
           {forecasts.length === 0 && (
             <div className="text-center py-8 text-slate-600 dark:text-slate-400">
-              No forecasts generated yet. Click "Generate Forecast" to create your first prediction.
+              {tlumaczPozaHookiem("superadmin.revenueForecast.noForecastsGeneratedYetClickGenerateForecast", "No forecasts generated yet. Click \"Generate Forecast\" to create your first prediction.")}
             </div>
           )}
         </CardContent>

@@ -22,6 +22,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import type { ContentCategory, ContentTag, EmailTemplate, EmailTemplateStatus } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface EmailTemplateEditorProps {
   template: EmailTemplate | null;
   categories: ContentCategory[];
@@ -369,7 +370,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, description: e.target.value }))
                   }
-                  placeholder="Brief description of this template..."
+                  placeholder={tlumaczPozaHookiem("superadmin.emailTemplate.briefDescriptionOfThisTemplate", "Brief description of this template...")}
                   rows={2}
                   className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
                 />
@@ -589,7 +590,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                     setFormData((prev) => ({ ...prev, htmlContent: e.target.value }))
                   }
                   className="flex-1 w-full p-4 bg-c-bg text-slate-300 font-mono text-sm resize-none focus:outline-none"
-                  placeholder="Enter your HTML email content here..."
+                  placeholder={tlumaczPozaHookiem("superadmin.emailTemplate.enterYourHTMLEmailContentHere", "Enter your HTML email content here...")}
                   spellCheck={false}
                 />
               </div>
@@ -669,7 +670,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
               </div>
 
               <p className="text-sm text-slate-400 dark:text-slate-500">
-                The email will be sent with [TEST] prefix in the subject line.
+                {tlumaczPozaHookiem("superadmin.emailTemplate.theEmailWillBeSentWithTEST", "The email will be sent with [TEST] prefix in the subject line.")}
               </p>
             </div>
 
@@ -711,18 +712,18 @@ function getDefaultHtmlTemplate(): string {
 <body style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f3f4f6;">
     <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
         <div style="background: linear-gradient(135deg, #6366F1 0%, #6366F1 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">Email Title</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">${tlumaczPozaHookiem('superadmin.emailTemplate.defaultTitle', 'Email Title')}</h1>
         </div>
         <div style="background: white; border-radius: 0 0 16px 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <p style="font-size: 16px; color: #1F2937; margin-bottom: 24px;">Hi <strong>{{firstName}}</strong>,</p>
-            <p style="margin-bottom: 24px;">Your email content goes here...</p>
+            <p style="font-size: 16px; color: #1F2937; margin-bottom: 24px;">${tlumaczPozaHookiem('superadmin.emailTemplate.defaultGreeting', 'Hi')} <strong>{{firstName}}</strong>,</p>
+            <p style="margin-bottom: 24px;">${tlumaczPozaHookiem('superadmin.emailTemplate.defaultContent', 'Your email content goes here...')}</p>
             <div style="text-align: center; margin: 32px 0;">
-                <a href="{{actionUrl}}" style="display: inline-block; background: linear-gradient(135deg, #6366F1 0%, #6366F1 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Call to Action</a>
+                <a href="{{actionUrl}}" style="display: inline-block; background: linear-gradient(135deg, #6366F1 0%, #6366F1 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">${tlumaczPozaHookiem('superadmin.emailTemplate.defaultAction', 'Call to Action')}</a>
             </div>
-            <p style="margin-top: 24px;">Best regards,<br><strong>The Team</strong></p>
+            <p style="margin-top: 24px;">${tlumaczPozaHookiem('superadmin.emailTemplate.defaultRegards', 'Best regards,')}<br><strong>${tlumaczPozaHookiem('superadmin.emailTemplate.defaultTeam', 'The Team')}</strong></p>
         </div>
         <div style="text-align: center; padding: 24px; color: #9CA3AF; font-size: 12px;">
-            <p style="margin: 0;">© 2025 Your Company. All rights reserved.</p>
+            <p style="margin: 0;">${tlumaczPozaHookiem('superadmin.emailTemplate.defaultCopyright', '© 2025 Your Company. All rights reserved.')}</p>
         </div>
     </div>
 </body>

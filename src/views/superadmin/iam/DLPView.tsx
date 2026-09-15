@@ -25,6 +25,8 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface DLPPolicy {
   id: string;
   name: string;
@@ -107,7 +109,7 @@ const SEVERITY_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 const formatDateTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const safeNumber = (value: unknown, fallback = 0) => {
@@ -411,7 +413,7 @@ const DLPView: React.FC = () => {
         return (
           <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs font-medium">
             <AlertTriangle className="w-3 h-3" />
-            Unknown
+            {tlumaczPozaHookiem("superadmin.dLP.unknown", "Unknown")}
           </span>
         );
     }

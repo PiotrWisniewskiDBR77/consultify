@@ -21,6 +21,7 @@ import React, { useMemo } from 'react';
 
 import type { OperationsHealthReport } from '../../services/presentationOperationsHealth';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 // ---------------------------------------------------------------------------
 // Types — kept structurally identical to the server-side service so the two
 // can be unified into a shared package later without a behavior change.
@@ -385,7 +386,7 @@ const ActiveIncident: React.FC<{
             Manual triage
           </span>
           <span className="text-slate-700 dark:text-slate-200">
-            No runbook matched the current signal pattern.
+            {tlumaczPozaHookiem("superadmin.incidentRunbooks.noRunbookMatchedTheCurrentSignalPattern", "No runbook matched the current signal pattern.")}
           </span>
         </div>
         <p className="text-[12px] text-slate-600 dark:text-slate-300">{classification.reason}</p>
@@ -422,7 +423,7 @@ const ActiveIncident: React.FC<{
       <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-200">
         <ExternalLink size={12} className="mt-0.5 shrink-0" aria-hidden="true" />
         <div className="min-w-0">
-          <div className="font-semibold">Open the runbook</div>
+          <div className="font-semibold">{tlumaczPozaHookiem("superadmin.incidentRunbooks.openTheRunbook", "Open the runbook")}</div>
           <code className="break-all font-mono text-[10px] text-slate-600 dark:text-slate-300">
             {path}
           </code>

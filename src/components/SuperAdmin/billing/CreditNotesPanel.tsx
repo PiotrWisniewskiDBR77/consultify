@@ -23,6 +23,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface CreditNote {
   id: string;
   organization_id: string;
@@ -104,7 +105,7 @@ export const CreditNotesPanel: React.FC = () => {
   };
 
   const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
     }).format(cents / 100);
@@ -248,7 +249,7 @@ export const CreditNotesPanel: React.FC = () => {
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
                       <Calendar size={14} />
                       <span className="text-sm">
-                        {new Date(cn.created_at).toLocaleDateString()}
+                        {new Date(cn.created_at).toLocaleDateString(localeListy())}
                       </span>
                     </div>
                   </td>

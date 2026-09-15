@@ -32,6 +32,7 @@ import { DegradedState } from '@/components/Admin/AdminState';
 
 import { InfoButton } from '../shared/InfoButton';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface LLMProvider {
   id: string;
   name: string;
@@ -576,7 +577,7 @@ export const ModelTierAssignments: React.FC = () => {
                                   handleRemoveFromTier(assignment.provider_id, tier);
                                 }}
                                 className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.03] rounded-lg transition-colors hover:text-danger-600 dark:hover:text-danger-400"
-                                title="Remove model from tier"
+                                title={tlumaczPozaHookiem("superadmin.modelTierAssignments.removeModelFromTier", "Remove model from tier")}
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -585,7 +586,7 @@ export const ModelTierAssignments: React.FC = () => {
                         </Reorder.Group>
                       ) : (
                         <div className="text-center py-6 text-slate-600 dark:text-slate-400">
-                          No models assigned to this tier
+                          {tlumaczPozaHookiem("superadmin.modelTierAssignments.noModelsAssignedToThisTier", "No models assigned to this tier")}
                         </div>
                       )}
 

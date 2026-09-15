@@ -19,6 +19,8 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface LifecycleStage {
   id: string;
   name: string;
@@ -358,7 +360,7 @@ const CustomerLifecycleView: React.FC = () => {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
   };
 
   if (isLoading) {
@@ -375,7 +377,7 @@ const CustomerLifecycleView: React.FC = () => {
               Customer Lifecycle
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mt-1">
-              Track and manage customer journey stages
+              {tlumaczPozaHookiem("superadmin.customerLifecycle.trackAndManageCustomerJourneyStages", "Track and manage customer journey stages")}
             </p>
           </div>
           <InfoButton cardId="superadmin-lifecycle" />
@@ -494,7 +496,7 @@ const CustomerLifecycleView: React.FC = () => {
                   onClick={() => setShowCreateModal(true)}
                   className="text-blue-400 hover:text-blue-300"
                 >
-                  Create your first stage
+                  {tlumaczPozaHookiem("superadmin.customerLifecycle.createYourFirstStage", "Create your first stage")}
                 </button>
               </div>
             ) : (
@@ -777,7 +779,7 @@ const CustomerLifecycleView: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">
-                      From Stage (optional)
+                      {tlumaczPozaHookiem("superadmin.customerLifecycle.fromStageOptional", "From Stage (optional)")}
                     </label>
                     <select
                       value={newTransition.fromStageId}
@@ -820,7 +822,7 @@ const CustomerLifecycleView: React.FC = () => {
                       }
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                       rows={2}
-                      placeholder="Optional notes about this transition"
+                      placeholder={tlumaczPozaHookiem("superadmin.customerLifecycle.optionalNotesAboutThisTransition", "Optional notes about this transition")}
                     />
                   </div>
                 </div>

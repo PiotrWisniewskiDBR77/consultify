@@ -8,6 +8,8 @@ import { Api } from '../../services/api';
 import { Organization } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SuperAdminOrgDetailsModalProps {
   org: Organization;
   onClose: () => void;
@@ -181,7 +183,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
   const formatDate = (value?: string | null, fallback = 'Unknown date') => {
     if (!value) return fallback;
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString(localeListy());
   };
 
   const safeNumber = (value: unknown, fallback = 0) => {
@@ -200,7 +202,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
   const formatInteger = (value: unknown, fallback = '0') => {
     const parsed = safeNumber(value, Number.NaN);
-    return Number.isFinite(parsed) ? Math.round(parsed).toLocaleString() : fallback;
+    return Number.isFinite(parsed) ? Math.round(parsed).toLocaleString(localeListy()) : fallback;
   };
 
   const getUsagePercent = (usedValue: unknown, includedValue: unknown) => {
@@ -314,7 +316,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
     if (loading)
       return (
         <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-          Loading billing details...
+          {tlumaczPozaHookiem("superadmin.superAdminOrgDetails.loadingBillingDetails", "Loading billing details...")}
         </div>
       );
     if (billingLoadError)
@@ -541,8 +543,8 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           {activeTab === 'users' && (
             <div className="text-center py-12 text-slate-500 dark:text-slate-400">
               <Users size={48} className="mx-auto mb-4 opacity-50" />
-              <p>User management is available in the "Users" section of the sidebar.</p>
-              <p className="text-xs mt-2">Filter by this organization to manage its users.</p>
+              <p>{tlumaczPozaHookiem("superadmin.superAdminOrgDetails.userManagementIsAvailableInTheUsers", "User management is available in the \"Users\" section of the sidebar.")}</p>
+              <p className="text-xs mt-2">{tlumaczPozaHookiem("superadmin.superAdminOrgDetails.filterByThisOrganizationToManageIts", "Filter by this organization to manage its users.")}</p>
             </div>
           )}
         </div>

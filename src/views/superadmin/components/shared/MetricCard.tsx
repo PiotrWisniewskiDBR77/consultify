@@ -14,6 +14,7 @@
 import { LucideIcon, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface MetricCardProps {
   label: string;
   value: string | number;
@@ -65,7 +66,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       {/* Value */}
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-semibold text-slate-900 dark:text-slate-50 tabular-nums leading-tight">
-          {typeof value === 'number' ? value.toLocaleString() : value}
+          {typeof value === 'number' ? value.toLocaleString(localeListy()) : value}
         </span>
       </div>
 

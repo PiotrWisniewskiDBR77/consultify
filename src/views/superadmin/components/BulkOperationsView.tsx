@@ -37,6 +37,7 @@ import { StandardTable, type TableColumn, type TableRow } from '../../../compone
 import { EntityStatusChip } from '../../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ImportResult {
   total: number;
   success: number;
@@ -405,7 +406,7 @@ export const BulkOperationsView: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-c-text mb-2">Upload CSV File</h3>
             <p className="text-c-text-muted mb-6">
-              Import users from a CSV file. Download our template for the correct format.
+              {tlumaczPozaHookiem("superadmin.bulkOperations.importUsersFromACSVFileDownload", "Import users from a CSV file. Download our template for the correct format.")}
             </p>
 
             <input
@@ -441,7 +442,7 @@ export const BulkOperationsView: React.FC = () => {
         <div className="bg-c-surface rounded-xl p-6 border border-c-border-subtle">
           <h3 className="text-lg font-semibold text-c-text mb-4">Map CSV Columns</h3>
           <p className="text-c-text-muted mb-6">
-            Match your CSV columns to the user fields. Required fields are marked with *.
+            {tlumaczPozaHookiem("superadmin.bulkOperations.matchYourCSVColumnsToTheUser", "Match your CSV columns to the user fields. Required fields are marked with *.")}
           </p>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -477,7 +478,7 @@ export const BulkOperationsView: React.FC = () => {
               onClick={resetImport}
               className="px-4 py-2 border border-c-border-subtle rounded-lg text-c-text-secondary"
             >
-              Back
+              {tlumaczPozaHookiem("superadmin.bulkOperations.back", "Back")}
             </button>
             <button
               onClick={() => setImportStep('preview')}
@@ -536,7 +537,7 @@ export const BulkOperationsView: React.FC = () => {
               onClick={() => setImportStep('mapping')}
               className="px-4 py-2 border border-c-border-subtle rounded-lg text-c-text-secondary"
             >
-              Back
+              {tlumaczPozaHookiem("superadmin.bulkOperations.back", "Back")}
             </button>
             <button
               onClick={handleStartImport}
@@ -555,7 +556,7 @@ export const BulkOperationsView: React.FC = () => {
           <Loader2 size={48} className="mx-auto mb-4 text-primary-600 animate-spin" />
           <h3 className="text-lg font-semibold text-c-text mb-2">Importing Users...</h3>
           <p className="text-c-text-muted">
-            Please wait while we import your users. This may take a moment.
+            {tlumaczPozaHookiem("superadmin.bulkOperations.pleaseWaitWhileWeImportYourUsers", "Please wait while we import your users. This may take a moment.")}
           </p>
         </div>
       )}
@@ -584,7 +585,7 @@ export const BulkOperationsView: React.FC = () => {
                   <AlertTriangle className="text-amber-600" size={32} />
                 </div>
                 <h3 className="text-lg font-semibold text-c-text mb-2">
-                  Import Completed with Errors
+                  {tlumaczPozaHookiem("superadmin.bulkOperations.importCompletedWithErrors", "Import Completed with Errors")}
                 </h3>
                 <p className="text-c-text-muted">
                   {importResult.success} of {importResult.total} users imported successfully.
@@ -629,7 +630,7 @@ export const BulkOperationsView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-c-text">Bulk Role Assignment</h3>
-          <p className="text-c-text-muted">Select users and assign roles in bulk</p>
+          <p className="text-c-text-muted">{tlumaczPozaHookiem("superadmin.bulkOperations.selectUsersAndAssignRolesInBulk", "Select users and assign roles in bulk")}</p>
         </div>
         <button
           onClick={fetchUsers}
@@ -747,7 +748,7 @@ export const BulkOperationsView: React.FC = () => {
             <label className="block text-sm font-medium text-c-text-secondary mb-2">Message</label>
             <textarea
               rows={6}
-              placeholder="Write your message..."
+              placeholder={tlumaczPozaHookiem("superadmin.bulkOperations.writeYourMessage", "Write your message...")}
               value={emailForm.message}
               onChange={(e) => setEmailForm((prev) => ({ ...prev, message: e.target.value }))}
               className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg"
@@ -810,7 +811,7 @@ export const BulkOperationsView: React.FC = () => {
                   onClick={() => setEmailPreviewOpen(false)}
                   className="px-4 py-2 border border-c-border-subtle rounded-lg text-c-text-secondary"
                 >
-                  Back
+                  {tlumaczPozaHookiem("superadmin.bulkOperations.back", "Back")}
                 </button>
                 <button
                   type="button"
@@ -864,7 +865,7 @@ export const BulkOperationsView: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-c-text">Export Activity Log</h4>
-              <p className="text-sm text-c-text-muted">Download user activity report</p>
+              <p className="text-sm text-c-text-muted">{tlumaczPozaHookiem("superadmin.bulkOperations.downloadUserActivityReport", "Download user activity report")}</p>
             </div>
           </div>
           <button
@@ -929,7 +930,7 @@ export const BulkOperationsView: React.FC = () => {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-c-text">Bulk Operations</h1>
-          <p className="text-c-text-muted mt-1">Manage users and data in bulk</p>
+          <p className="text-c-text-muted mt-1">{tlumaczPozaHookiem("superadmin.bulkOperations.manageUsersAndDataInBulk", "Manage users and data in bulk")}</p>
         </div>
         <InfoButton cardId="superadmin-bulk-ops" position="header-inline" size="md" />
       </div>

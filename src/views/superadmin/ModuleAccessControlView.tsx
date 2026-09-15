@@ -10,6 +10,8 @@ import {
 import { Api } from '@/services/api';
 import { apiGet, apiPost } from '@/services/api/baseClient';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type ScopeType = 'organization' | 'user';
 type ModuleKey = 'wordy' | 'excele' | 'prezentacje';
 
@@ -185,7 +187,7 @@ export const ModuleAccessControlView: React.FC = () => {
         label: 'Updated',
         render: (row: TableRow) => (
           <span className="text-xs text-slate-500">
-            {new Date(row.updated_at).toLocaleString()}
+            {new Date(row.updated_at).toLocaleString(localeListy())}
           </span>
         ),
       },
@@ -217,7 +219,7 @@ export const ModuleAccessControlView: React.FC = () => {
               Module Access Control
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Grant access per user or whole organization for Wordy, Excele and Prezentacje.
+              {tlumaczPozaHookiem("superadmin.moduleAccessControl.grantAccessPerUserOrWholeOrganization", "Grant access per user or whole organization for Wordy, Excele and Prezentacje.")}
             </p>
           </div>
           <button
@@ -233,7 +235,7 @@ export const ModuleAccessControlView: React.FC = () => {
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5 space-y-4">
         <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
           <KeyRound size={16} />
-          Create / Update Grant
+          {tlumaczPozaHookiem("superadmin.moduleAccessControl.createUpdateGrant", "Create / Update Grant")}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">

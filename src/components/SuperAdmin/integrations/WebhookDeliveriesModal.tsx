@@ -25,6 +25,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Delivery {
   id: string;
   webhook_id: string;
@@ -122,7 +124,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
           <div>
             <h3 className="text-lg font-semibold text-c-text">Delivery History</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
-              Recent webhook deliveries and their status
+              {tlumaczPozaHookiem("superadmin.webhookDeliveries.recentWebhookDeliveriesAndTheirStatus", "Recent webhook deliveries and their status")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -186,7 +188,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                           )}
                         </div>
                         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          <span>{new Date(delivery.delivered_at).toLocaleString()}</span>
+                          <span>{new Date(delivery.delivered_at).toLocaleString(localeListy())}</span>
                           <span>{delivery.duration_ms}ms</span>
                         </div>
                       </div>

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface PaymentMethod {
   id: string;
   organization_id: string;
@@ -175,7 +177,7 @@ export const PaymentMethodsView: React.FC = () => {
             Payment Management & Dunning
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Manage payment methods and handle payment failures
+            {tlumaczPozaHookiem("superadmin.paymentMethods.managePaymentMethodsAndHandlePaymentFailures", "Manage payment methods and handle payment failures")}
           </p>
         </div>
       </div>
@@ -212,7 +214,7 @@ export const PaymentMethodsView: React.FC = () => {
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pendingFailures}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">Pending Failures</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.paymentMethods.pendingFailures", "Pending Failures")}</div>
             </CardContent>
           </Card>
           <Card>
@@ -309,7 +311,7 @@ export const PaymentMethodsView: React.FC = () => {
                           {method.payment_type === 'invoice' && <span>Invoice billing</span>}
                         </div>
                         <div className="mt-1 text-xs text-slate-500 dark:text-gray-400">
-                          Added: {new Date(method.created_at).toLocaleDateString()}
+                          Added: {new Date(method.created_at).toLocaleDateString(localeListy())}
                         </div>
                       </div>
                       <button
@@ -372,9 +374,9 @@ export const PaymentMethodsView: React.FC = () => {
                         </div>
                       )}
                       <div className="mt-1 text-xs text-slate-500 dark:text-gray-400">
-                        Attempted: {new Date(failure.attempted_at).toLocaleString()}
+                        Attempted: {new Date(failure.attempted_at).toLocaleString(localeListy())}
                         {failure.resolved_at && (
-                          <span> • Resolved: {new Date(failure.resolved_at).toLocaleString()}</span>
+                          <span> • Resolved: {new Date(failure.resolved_at).toLocaleString(localeListy())}</span>
                         )}
                       </div>
                     </div>

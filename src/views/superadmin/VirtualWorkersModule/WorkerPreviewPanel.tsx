@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface WorkerPreviewPanelProps {
   workerId: string;
   workerSlug: string;
@@ -80,8 +81,7 @@ export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
               Preview Sandbox
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Generate a real operator preview using the active worker profile, governed knowledge,
-              and optional governed web search.
+              {tlumaczPozaHookiem("superadmin.workerPreview.generateARealOperatorPreviewUsingThe", "Generate a real operator preview using the active worker profile, governed knowledge, and optional governed web search.")}
             </p>
           </div>
           <button
@@ -216,7 +216,7 @@ export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
               </h4>
               {preview.webCitations.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No web citations were used in this preview.
+                  {tlumaczPozaHookiem("superadmin.workerPreview.noWebCitationsWereUsedInThis", "No web citations were used in this preview.")}
                 </p>
               ) : (
                 <div className="space-y-3">

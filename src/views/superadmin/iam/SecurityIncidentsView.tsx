@@ -27,6 +27,8 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SecurityIncident {
   id: string;
   incidentType: string;
@@ -243,7 +245,7 @@ const getCreatedIncidentId = (result: unknown) => {
 const formatDateTime = (value: string | null) => {
   if (!value) return 'Unknown date';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const SecurityIncidentsView: React.FC = () => {
@@ -799,7 +801,7 @@ const SecurityIncidentsView: React.FC = () => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the security incident..."
+                  placeholder={tlumaczPozaHookiem("superadmin.securityIncidents.describeTheSecurityIncident", "Describe the security incident...")}
                   className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm h-24 resize-none"
                 />
               </div>

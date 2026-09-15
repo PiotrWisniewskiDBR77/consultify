@@ -13,6 +13,8 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Conversation {
   id: string;
   session_id: string | null;
@@ -71,7 +73,7 @@ function formatDuration(seconds: number | null): string {
 
 function formatDate(dateStr: string): string {
   try {
-    return new Date(dateStr).toLocaleString();
+    return new Date(dateStr).toLocaleString(localeListy());
   } catch {
     return dateStr;
   }
@@ -187,7 +189,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
             className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
           >
             <ArrowLeft size={16} />
-            Back to conversations
+            {tlumaczPozaHookiem("superadmin.conversationBrowser.backToConversations", "Back to conversations")}
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -225,7 +227,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
-            No messages in this conversation.
+            {tlumaczPozaHookiem("superadmin.conversationBrowser.noMessagesInThisConversation", "No messages in this conversation.")}
           </div>
         ) : (
           <div className="space-y-3">
@@ -326,7 +328,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
             <option value="question_answered">Question Answered</option>
             <option value="escalated">Escalated</option>
             <option value="abandoned">Abandoned</option>
-            <option value="unknown">Unknown</option>
+            <option value="unknown">{tlumaczPozaHookiem("superadmin.conversationBrowser.unknown", "Unknown")}</option>
           </select>
           <input
             type="text"
@@ -346,8 +348,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
       </div>
 
       <div className="text-xs text-slate-500 dark:text-slate-400">
-        Privacy controls are available inside a conversation: redact transcript content or delete
-        the conversation entirely.
+        {tlumaczPozaHookiem("superadmin.conversationBrowser.privacyControlsAreAvailableInsideAConversation", "Privacy controls are available inside a conversation: redact transcript content or delete the conversation entirely.")}
       </div>
 
       {error && (

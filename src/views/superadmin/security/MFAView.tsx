@@ -11,6 +11,8 @@ import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type UserRow = {
   id: string;
   email: string;
@@ -27,7 +29,7 @@ type MFAMethodRow = {
 const formatMfaDate = (value?: string | null) => {
   if (!value) return null;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 const asText = (value: unknown, fallback = 'Unknown') => {
@@ -141,7 +143,7 @@ export const MFAView: React.FC = () => {
           onChange={(e) => setSelectedUserId(e.target.value)}
           className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
         >
-          <option value="">Select User</option>
+          <option value="">{tlumaczPozaHookiem("superadmin.mFA.selectUser", "Select User")}</option>
           {users.map((user) => (
             <option key={user.id} value={user.id}>
               {asText(user.email, 'Unknown user')}
@@ -154,10 +156,10 @@ export const MFAView: React.FC = () => {
 
       {!selectedUserId ? (
         <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-          Select a user to inspect MFA methods
+          {tlumaczPozaHookiem("superadmin.mFA.selectAUserToInspectMFAMethods", "Select a user to inspect MFA methods")}
         </div>
       ) : loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.mFA.loading", "Loading...")}</div>
       ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
           {mfaMethods.length === 0 ? (

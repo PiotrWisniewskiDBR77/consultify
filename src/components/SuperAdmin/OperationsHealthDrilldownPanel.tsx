@@ -34,6 +34,8 @@ import {
   type TrendPoint,
 } from '../../services/presentationOperationsHealthDrilldown';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const SLO_LABEL: Record<DrilldownSloId, string> = {
   generation_success_rate: 'Generation success rate',
   export_success_rate: 'Export success rate',
@@ -86,7 +88,7 @@ function isUnitSlo(sloId: DrilldownSloId): 'percent' | 'ms' {
 function formatObserved(sloId: DrilldownSloId, value: number | null): string {
   if (value === null || !Number.isFinite(value)) return '—';
   if (isUnitSlo(sloId) === 'ms') {
-    return `${Math.round(value).toLocaleString()} ms`;
+    return `${Math.round(value).toLocaleString(localeListy())} ms`;
   }
   return `${value.toFixed(1)}%`;
 }
@@ -94,7 +96,7 @@ function formatObserved(sloId: DrilldownSloId, value: number | null): string {
 function formatBucketLabel(point: TrendPoint): string {
   try {
     const start = new Date(point.bucketStart);
-    return start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return start.toLocaleDateString(localeListy(), { month: 'short', day: 'numeric' });
   } catch {
     return point.bucketStart;
   }
@@ -103,7 +105,7 @@ function formatBucketLabel(point: TrendPoint): string {
 function formatClock(date: Date | null): string {
   if (!date) return '—';
   try {
-    return date.toLocaleTimeString();
+    return date.toLocaleTimeString(localeListy());
   } catch {
     return date.toISOString();
   }
@@ -294,7 +296,7 @@ const TopDecksList: React.FC<TopDecksListProps> = ({ decks, sloId }) => {
   if (decks.length === 0) {
     return (
       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-        No problematic decks in this window.
+        {tlumaczPozaHookiem("superadmin.operationsHealthDrilldown.noProblematicDecksInThisWindow", "No problematic decks in this window.")}
       </p>
     );
   }
@@ -344,7 +346,7 @@ const RecentSamplesList: React.FC<RecentSamplesListProps> = ({ samples }) => {
               : 'inconclusive';
         let when = sample.occurredAt;
         try {
-          when = new Date(sample.occurredAt).toLocaleString();
+          when = new Date(sample.occurredAt).toLocaleString(localeListy());
         } catch {
           // keep ISO fallback
         }
@@ -557,7 +559,7 @@ const OperationsHealthDrilldownPanel: React.FC<OperationsHealthDrilldownPanelPro
           {loading && !data && (
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
               <Loader2 size={14} className="animate-spin text-indigo-500" />
-              Loading drill-down…
+              {tlumaczPozaHookiem("superadmin.operationsHealthDrilldown.loadingDrillDown", "Loading drill-down…")}
             </div>
           )}
           {!loading && reasonBanner && (
@@ -579,7 +581,7 @@ const OperationsHealthDrilldownPanel: React.FC<OperationsHealthDrilldownPanelPro
                   role="status"
                   className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                 >
-                  <div className="font-semibold">Some inputs were degraded</div>
+                  <div className="font-semibold">{tlumaczPozaHookiem("superadmin.operationsHealthDrilldown.someInputsWereDegraded", "Some inputs were degraded")}</div>
                   <ul className="mt-0.5 list-disc pl-4 opacity-80">
                     {data.warnings.slice(0, 4).map((w) => (
                       <li key={w} className="font-mono">

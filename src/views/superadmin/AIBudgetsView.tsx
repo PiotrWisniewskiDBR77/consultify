@@ -33,6 +33,8 @@ import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Budget {
   id: string;
   organizationId: string;
@@ -162,7 +164,7 @@ const hasListShape = (value: unknown, keys: string[]) => {
 
 const formatDateTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const getCreatedId = (result: unknown, key: string) => {
@@ -518,7 +520,7 @@ const AIBudgetsView: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <DollarSign className="text-primary-400" size={24} />
             <span className="text-xs text-primary-300 bg-primary-500/20 px-2 py-0.5 rounded">
-              This Month
+              {tlumaczPozaHookiem("superadmin.aIBudgets.thisMonth", "This Month")}
             </span>
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -893,7 +895,7 @@ const AIBudgetsView: React.FC = () => {
                   className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                 />
                 <span className="text-sm text-slate-700 dark:text-gray-200">
-                  Hard limit (block requests when exceeded)
+                  {tlumaczPozaHookiem("superadmin.aIBudgets.hardLimitBlockRequestsWhenExceeded", "Hard limit (block requests when exceeded)")}
                 </span>
               </label>
             </div>
@@ -926,7 +928,7 @@ const AIBudgetsView: React.FC = () => {
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Spending Alerts</h3>
           <p className="text-sm text-slate-600 dark:text-gray-400">
-            Notifications about budget thresholds and anomalies
+            {tlumaczPozaHookiem("superadmin.aIBudgets.notificationsAboutBudgetThresholdsAndAnomalies", "Notifications about budget thresholds and anomalies")}
           </p>
         </div>
         <button
@@ -943,7 +945,7 @@ const AIBudgetsView: React.FC = () => {
           <Bell className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No active alerts</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
-            Alerts will appear when budgets are at risk
+            {tlumaczPozaHookiem("superadmin.aIBudgets.alertsWillAppearWhenBudgetsAreAt", "Alerts will appear when budgets are at risk")}
           </p>
         </div>
       ) : (
@@ -1096,7 +1098,7 @@ const AIBudgetsView: React.FC = () => {
             Model Access Control
           </h3>
           <p className="text-sm text-slate-600 dark:text-gray-400">
-            Restrict which AI models users can access
+            {tlumaczPozaHookiem("superadmin.aIBudgets.restrictWhichAIModelsUsersCanAccess", "Restrict which AI models users can access")}
           </p>
         </div>
         <button
@@ -1204,7 +1206,7 @@ const AIBudgetsView: React.FC = () => {
                   className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                 />
                 <span className="text-sm text-slate-700 dark:text-gray-200">
-                  Allow access to this model
+                  {tlumaczPozaHookiem("superadmin.aIBudgets.allowAccessToThisModel", "Allow access to this model")}
                 </span>
               </label>
             </div>
@@ -1236,7 +1238,7 @@ const AIBudgetsView: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">AI Budget Controls</h2>
           <p className="text-slate-600 dark:text-gray-400 mt-1">
-            Manage AI spending limits and model access
+            {tlumaczPozaHookiem("superadmin.aIBudgets.manageAISpendingLimitsAndModelAccess", "Manage AI spending limits and model access")}
           </p>
         </div>
       </div>

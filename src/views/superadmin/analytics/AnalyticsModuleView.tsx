@@ -10,6 +10,7 @@ import DemoTrialAnalyticsView from './DemoTrialAnalyticsView';
 import PredictiveAnalyticsView from './PredictiveAnalyticsView';
 import SavedReportsView from './SavedReportsView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const tabs: Tab[] = [
   { id: 'dashboards', label: 'Dashboard Builder', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'demo-trial', label: 'Demo & Trial', icon: <FlaskConical className="w-4 h-4" /> },
@@ -59,7 +60,7 @@ const AnalyticsModuleView: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         title="Analytics"
-        subtitle="Dashboards, reports, business metrics, and predictive analytics"
+        subtitle={tlumaczPozaHookiem("superadmin.analyticsModule.dashboardsReportsBusinessMetricsAndPredictiveAnalytics", "Dashboards, reports, business metrics, and predictive analytics")}
       >
         <div className="flex-1 overflow-auto p-6">{renderContent()}</div>
       </TabLayout>

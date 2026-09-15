@@ -20,6 +20,7 @@ import { EmptyState, LoadingState } from '@/components/shared/states';
 
 import type { PriceSnapshot, PriceSource } from './types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -290,7 +291,7 @@ export const PricingPanel: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-c-text-muted mb-1">Effective From</label>
+              <label className="block text-xs text-c-text-muted mb-1">{tlumaczPozaHookiem("superadmin.pricing.effectiveFrom", "Effective From")}</label>
               <input
                 type="date"
                 value={form.effectiveFrom}
@@ -350,7 +351,7 @@ export const PricingPanel: React.FC = () => {
             <input
               value={form.notes}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-              placeholder="Optional notes about this price entry"
+              placeholder={tlumaczPozaHookiem("superadmin.pricing.optionalNotesAboutThisPriceEntry", "Optional notes about this price entry")}
               className="w-full h-9 px-3 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
             />
           </div>

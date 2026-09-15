@@ -19,6 +19,7 @@ import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 import { useToast } from '../../components/ui/use-toast';
 import api from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -333,7 +334,7 @@ export const SubscriptionPlansManager: React.FC = () => {
           <h1>Subscription Plans Management</h1>
         </div>
         <div className="error-state">
-          <p>Failed to load subscription plans. Please try again.</p>
+          <p>{tlumaczPozaHookiem("superadmin.subscriptionPlansManager.failedToLoadSubscriptionPlansPleaseTry", "Failed to load subscription plans. Please try again.")}</p>
           <button
             className="btn-primary"
             onClick={() => queryClient.invalidateQueries({ queryKey: ['subscriptionPlans'] })}
@@ -358,7 +359,7 @@ export const SubscriptionPlansManager: React.FC = () => {
             className="search-input"
           />
           <button className="btn-primary" onClick={handleCreatePlan}>
-            + Create New Plan
+            {tlumaczPozaHookiem("superadmin.subscriptionPlansManager.createNewPlan", "+ Create New Plan")}
           </button>
         </div>
       </div>

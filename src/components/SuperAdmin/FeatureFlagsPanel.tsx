@@ -24,6 +24,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface FeatureFlag {
   id: string;
   flag_key: string;
@@ -116,7 +118,7 @@ export const FeatureFlagsPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text mb-2">Feature Flags</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Control feature availability across your platform
+            {tlumaczPozaHookiem("superadmin.featureFlags.controlFeatureAvailabilityAcrossYourPlatform", "Control feature availability across your platform")}
           </p>
         </div>
         <button
@@ -487,7 +489,7 @@ const FlagHistoryModal: React.FC<{
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-c-text">{item.change_type}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(item.changed_at).toLocaleString()}
+                      {new Date(item.changed_at).toLocaleString(localeListy())}
                     </span>
                   </div>
                   {item.changed_by && (

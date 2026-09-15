@@ -30,6 +30,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface Subscription {
   id: string;
   organization_id: string;
@@ -151,7 +152,7 @@ export const SubscriptionsPanel: React.FC = () => {
   };
 
   const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
     }).format(cents / 100);
@@ -310,12 +311,12 @@ export const SubscriptionsPanel: React.FC = () => {
                     {sub.current_period_end && (
                       <p className="text-sm text-slate-600 dark:text-slate-500">
                         {sub.cancel_at_period_end ? 'Cancels' : 'Renews'}{' '}
-                        {new Date(sub.current_period_end).toLocaleDateString()}
+                        {new Date(sub.current_period_end).toLocaleDateString(localeListy())}
                       </p>
                     )}
                     {sub.trial_end && sub.status === 'trialing' && (
                       <p className="text-sm text-primary-400">
-                        Trial ends {new Date(sub.trial_end).toLocaleDateString()}
+                        Trial ends {new Date(sub.trial_end).toLocaleDateString(localeListy())}
                       </p>
                     )}
                   </div>

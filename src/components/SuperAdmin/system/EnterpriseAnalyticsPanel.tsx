@@ -36,6 +36,7 @@ import { formatListDate, formatListNumber } from '../../../utils/listDateFormat'
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 import { LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface MetricCard {
   id: string;
   title: string;
@@ -320,7 +321,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text">Analytics & Reporting</h2>
           <p className="text-c-text-secondary text-sm">
-            Monitor system performance and generate insights
+            {tlumaczPozaHookiem("superadmin.enterpriseAnalytics.monitorSystemPerformanceAndGenerateInsights", "Monitor system performance and generate insights")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -434,7 +435,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                       ) : (
                         <ReadOnlyState
                           title="API traffic chart unavailable"
-                          description="The analytics endpoint did not return API chart data for this period."
+                          description={tlumaczPozaHookiem("superadmin.enterpriseAnalytics.theAnalyticsEndpointDidNotReturnAPI", "The analytics endpoint did not return API chart data for this period.")}
                         />
                       )}
                     </div>
@@ -459,7 +460,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                       ) : (
                         <ReadOnlyState
                           title="AI usage chart unavailable"
-                          description="The analytics endpoint did not return AI chart data for this period."
+                          description={tlumaczPozaHookiem("superadmin.enterpriseAnalytics.theAnalyticsEndpointDidNotReturnAI", "The analytics endpoint did not return AI chart data for this period.")}
                         />
                       )}
                     </div>
@@ -469,7 +470,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                     <ReadOnlyState
                       title="Performance breakdown unavailable"
-                      description="Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet."
+                      description={tlumaczPozaHookiem("superadmin.enterpriseAnalytics.endpointLevelLatencyTopEndpointsAndError", "Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet.")}
                     />
                   </div>
                 </>
@@ -524,7 +525,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                     <ReadOnlyState
                       title="Custom report builder unavailable"
-                      description="The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet."
+                      description={tlumaczPozaHookiem("superadmin.enterpriseAnalytics.theExportButtonsCanDownloadTheCurrently", "The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet.")}
                     />
                   </div>
                 </>
@@ -550,7 +551,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
               {!scheduledLoadError && (
                 <ReadOnlyState
                   title="Scheduled report creation unavailable"
-                  description="The reporting backend exposes scheduled report reads here, but no audited create/update workflow is wired to this panel yet."
+                  description={tlumaczPozaHookiem("superadmin.enterpriseAnalytics.theReportingBackendExposesScheduledReportReads", "The reporting backend exposes scheduled report reads here, but no audited create/update workflow is wired to this panel yet.")}
                 />
               )}
 
@@ -566,7 +567,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No scheduled reports</p>
                   <p className="text-sm mt-1">
-                    Create a scheduled report to receive automated insights
+                    {tlumaczPozaHookiem("superadmin.enterpriseAnalytics.createAScheduledReportToReceiveAutomated", "Create a scheduled report to receive automated insights")}
                   </p>
                 </div>
               ) : (

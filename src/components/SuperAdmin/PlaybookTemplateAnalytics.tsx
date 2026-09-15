@@ -20,6 +20,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentAnalyticsEvent, PlaybookTemplateStats } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface PlaybookTemplateAnalyticsProps {
   templateId: string;
 }
@@ -109,9 +111,9 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
           onChange={(e) => setDateRange(e.target.value)}
           className="px-3 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="90d">Last 90 days</option>
+          <option value="7d">{tlumaczPozaHookiem("superadmin.playbookTemplateAnalytics.last7Days", "Last 7 days")}</option>
+          <option value="30d">{tlumaczPozaHookiem("superadmin.playbookTemplateAnalytics.last30Days", "Last 30 days")}</option>
+          <option value="90d">{tlumaczPozaHookiem("superadmin.playbookTemplateAnalytics.last90Days", "Last 90 days")}</option>
           <option value="all">All time</option>
         </select>
       </div>
@@ -150,7 +152,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             {stats.successRate !== null ? `${stats.successRate}%` : 'N/A'}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Completed successfully
+            {tlumaczPozaHookiem("superadmin.playbookTemplateAnalytics.completedSuccessfully", "Completed successfully")}
           </div>
         </div>
 
@@ -273,7 +275,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                   </div>
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {new Date(event.createdAt).toLocaleString()}
+                  {new Date(event.createdAt).toLocaleString(localeListy())}
                 </div>
               </div>
             ))}

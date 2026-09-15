@@ -18,6 +18,8 @@ import {
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type SnapshotRow = {
   id: string;
   provider: string;
@@ -93,7 +95,7 @@ function formatDateTime(value?: string | null): string {
   if (!value) return 'n/a';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'n/a';
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 }
 
 export const PricingRegistryTab: React.FC = () => {
@@ -248,7 +250,7 @@ export const PricingRegistryTab: React.FC = () => {
             Pricing Registry
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Versioned price snapshots used for cost estimation and historical consistency.
+            {tlumaczPozaHookiem("superadmin.pricingRegistry.versionedPriceSnapshotsUsedForCostEstimation", "Versioned price snapshots used for cost estimation and historical consistency.")}
           </p>
         </div>
         <button

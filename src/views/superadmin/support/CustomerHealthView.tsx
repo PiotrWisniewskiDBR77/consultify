@@ -10,6 +10,7 @@ import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type OrganizationRow = {
   id: string;
   name: string;
@@ -166,7 +167,7 @@ export const CustomerHealthView: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Customer Health</h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Monitor customer health and engagement
+            {tlumaczPozaHookiem("superadmin.customerHealth.monitorCustomerHealthAndEngagement", "Monitor customer health and engagement")}
           </p>
         </div>
         <select
@@ -186,7 +187,7 @@ export const CustomerHealthView: React.FC = () => {
       {loadError && <DegradedState title="Customer health unavailable" description={loadError} />}
 
       {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.customerHealth.loading", "Loading...")}</div>
       ) : loadError ? null : health ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">

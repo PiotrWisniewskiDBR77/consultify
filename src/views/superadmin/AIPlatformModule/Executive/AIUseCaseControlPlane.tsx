@@ -16,6 +16,7 @@ import { Button } from '@/views/superadmin/components/shared/Button';
 import { Card } from '@/views/superadmin/components/shared/Card';
 import { MetricCard } from '@/views/superadmin/components/shared/MetricCard';
 
+import { localeListy } from '@/utils/listDateFormat';
 type UseCasePurpose = {
   purpose: string;
   entrypoint?: string;
@@ -115,7 +116,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const formatUsd = (value: number) =>
-  new Intl.NumberFormat('en-US', {
+  new Intl.NumberFormat(localeListy(), {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: value < 100 ? 2 : 0,

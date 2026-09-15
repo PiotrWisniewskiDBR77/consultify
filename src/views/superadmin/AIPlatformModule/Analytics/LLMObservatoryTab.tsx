@@ -16,6 +16,7 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { localeListy } from '@/utils/listDateFormat';
 type TimeRange = '24h' | '7d' | '30d' | '90d';
 
 interface ObservatorySummary {
@@ -268,7 +269,7 @@ function formatCompact(value: number): string {
   if (!Number.isFinite(value)) return '0';
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toLocaleString();
+  return value.toLocaleString(localeListy());
 }
 
 function formatUsd(value: number): string {
@@ -288,7 +289,7 @@ function formatRelativeDate(value: string | null): string {
   if (!value) return 'n/a';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'n/a';
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 }
 
 function statusTone(status: string): string {
