@@ -82,6 +82,12 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
         [id, org, `${id}@example.test`, 'user']
       );
     }
+    await pool.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'MEMBER', 'ACTIVE'), ($4, $2, $5, 'ADMIN', 'ACTIVE')
+       ON CONFLICT DO NOTHING`,
+      [`om-s7-member-${SUFFIX}`, ORG, OWNER2, `om-s7-admin-${SUFFIX}`, APPROVER]
+    );
 
     const { default: config } = await import('../../config/Config.js');
     const sign = (id: string, organizationId: string) =>
@@ -159,6 +165,46 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
       .set('Authorization', `Bearer ${token}`);
     return res;
   }
+
+  async function patchName(token: string, sessionId: string, name: string | null, expectedVersion: number) {
+    return request(app)
+      .patch(`/api/method/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name, expectedVersion });
+  }
+
+  it('Z-63 persists names through create/list/PATCH/get with tenant RBAC and CAS', async () => {
+    const created = await createSession(ownerToken, { name: 'Northwind baseline' });
+    expect(created.status).toBe(201);
+    expect(created.body.session).toMatchObject({ name: 'Northwind baseline', version: 1 });
+    const sessionId = created.body.session.id;
+
+    const listed = await listSessions(ownerToken);
+    expect(listed.body.sessions.find((s: any) => s.id === sessionId)?.name).toBe('Northwind baseline');
+
+    const memberDenied = await patchName(owner2Token, sessionId, 'No authority', 1);
+    expect(memberDenied.status).toBe(403);
+    expect(memberDenied.body.code).toBe('METHOD_SESSION_NAME_FORBIDDEN');
+    const tenantHidden = await patchName(otherOrgToken, sessionId, 'Other tenant', 1);
+    expect(tenantHidden.status).toBe(404);
+    expect(tenantHidden.body.code).toBe('METHOD_SESSION_NOT_FOUND');
+
+    const ownerUpdate = await patchName(ownerToken, sessionId, 'Northwind owner', 1);
+    expect(ownerUpdate.status).toBe(200);
+    expect(ownerUpdate.body.session).toMatchObject({ name: 'Northwind owner', version: 2 });
+    const stale = await patchName(ownerToken, sessionId, 'Stale write', 1);
+    expect(stale.status).toBe(409);
+    expect(stale.body).toMatchObject({ code: 'METHOD_SESSION_VERSION_CONFLICT', currentVersion: 2 });
+
+    const adminUpdate = await patchName(approverToken, sessionId, 'Northwind admin', 2);
+    expect(adminUpdate.status).toBe(200);
+    expect(adminUpdate.body.session).toMatchObject({ name: 'Northwind admin', version: 3 });
+    const readback = await request(app)
+      .get(`/api/method/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(readback.status).toBe(200);
+    expect(readback.body.session).toMatchObject({ name: 'Northwind admin', version: 3 });
+  });
 
   // ---------------------------------------------------------------------------
   // 1. tenant isolation — deny-path
