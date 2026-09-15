@@ -1,12 +1,17 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
 
+import express, { type Express } from 'express';
+import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
+import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('../../notificationService.js');
 
 import { materializeInboxItems } from '../../inboxService.js';
+import config from '../../../config/Config.js';
+import taskRoutes from '../../../routes/pmo/tasks.routes.js';
 import { recordMeasurement } from '../../resultsVnext/kpi/kpiMeasurementCommands.js';
 import { evaluatePerformanceStatus } from '../../resultsVnext/kpi/targetGeometryEvaluator.js';
 import { createTaskFromActionCard } from '../actionCardTaskService.js';
@@ -25,6 +30,7 @@ describe.skipIf(!enabled)('M1 KPI deviation → Inbox → action card → My Wor
   const periodStart = '2026-08-01';
   const periodEnd = '2026-08-31';
   let pool: Pool;
+  let app: Express;
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -37,6 +43,11 @@ describe.skipIf(!enabled)('M1 KPI deviation → Inbox → action card → My Wor
       `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,language,created_at)
        VALUES($1,$2,$3,'unused','KPI','Owner','OWNER','active','en',now())`,
       [ownerId, orgId, `${ownerId}@m1.local`]
+    );
+    await pool.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+       VALUES($1,$2,$3,'OWNER','ACTIVE')`,
+      [randomUUID(), orgId, ownerId]
     );
     await pool.query(
       `INSERT INTO rvn_kpi_definitions
@@ -55,6 +66,9 @@ describe.skipIf(!enabled)('M1 KPI deviation → Inbox → action card → My Wor
       `UPDATE rvn_kpi_definitions SET current_definition_version_id=$1 WHERE kpi_id=$2`,
       [versionId, kpiId]
     );
+    app = express();
+    app.use(express.json());
+    app.use('/api/tasks', taskRoutes);
   });
 
   afterAll(async () => {
@@ -156,6 +170,21 @@ describe.skipIf(!enabled)('M1 KPI deviation → Inbox → action card → My Wor
     expect(task.rows[0].description).toContain('Owner: KPI Owner');
     expect(task.rows[0].description).toContain('Period: 2026-08-01 – 2026-08-31');
     expect(task.rows[0].description).not.toContain('Główna przyczyna');
+
+    const token = jwt.sign(
+      { id: ownerId, email: `${ownerId}@m1.local`, role: 'OWNER', organizationId: orgId },
+      config.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
+    const taskDetail = await request(app)
+      .get(`/api/tasks/${first?.task.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Accept-Language', 'en');
+    expect(taskDetail.status).toBe(200);
+    expect(taskDetail.body).toMatchObject({
+      sourceType: 'action_card',
+      sourceId: deviation.card?.id,
+    });
 
     await materializeInboxItems(ownerId, orgId);
     const inboxTask = await pool.query<{ source_entity_id: string }>(

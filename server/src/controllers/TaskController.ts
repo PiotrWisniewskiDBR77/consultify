@@ -1059,6 +1059,8 @@ export class TaskController {
         organizationId: t.organization_id,
         title: getMultilingualText(t.title, lang),
         source: t.source || 'manual',
+        sourceType: t.source_type || null,
+        sourceId: t.source_id || null,
         description: getMultilingualText(t.description, lang),
         status: t.status,
         priority: t.priority,
