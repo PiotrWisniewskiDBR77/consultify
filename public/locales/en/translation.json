@@ -19232,6 +19232,17 @@
       },
       "noData": "No data",
       "noInsights": "No insights generated.",
+      "readout": {
+        "coverage": "{{title}} covers {{total}} initiative(s) with {{blocked}} blocker(s), {{overdue}} overdue decision(s), and {{tasks}} overdue task(s) in the live execution set.",
+        "progressBaseline": "Progress baseline is {{baseline}}, so leadership should treat the current readout as {{baseline}} until missing progress fields are restored.",
+        "baseline": {
+          "incomplete": "incomplete",
+          "directional": "directional"
+        },
+        "blockedWork": "Blocked work is the main drag on delivery confidence; {{blocked}} initiative(s) are already stalled ({{names}}) and need owner-level recovery decisions.",
+        "forecastQuality": "Forecast quality is degraded because {{initiatives}} initiative(s) or {{tasks}} task(s) lack dates, so some timing conclusions should be read as best-effort only.",
+        "budgetPosture": "Budget posture is approximated from {{overspend}} overspend signal(s), blocked work, and progress drag, so finance should validate any severe exception before external communication."
+      },
       "dataQualityPosture": "Data quality posture",
       "freshness": "Freshness",
       "confidence": "Confidence",
@@ -55196,6 +55207,18 @@
     "writeFailed": "The report change was not saved.",
     "doc": {
       "thisWeekAtAGlance": "This week at a glance",
+      "decision": "Decision",
+      "initiative": "Initiative",
+      "owner": "Owner",
+      "age": "Age",
+      "daysOverdue": "{{count}}d overdue",
+      "dueNow": "Due now",
+      "gap": "Gap",
+      "count": "Count",
+      "examples": "Examples",
+      "initiativesWithoutDates": "Initiatives without dates",
+      "unassignedOpenTasks": "Unassigned open tasks",
+      "tasksWithoutDueDate": "Tasks without due date",
       "initiativesRequiringImmediateOperationalReaction": "Initiatives requiring immediate operational reaction.",
       "next7DaysFocus": "Next 7 days focus",
       "tasksAndMilestonesThatCanSilentlySlipThis": "Tasks and milestones that can silently slip this week.",
