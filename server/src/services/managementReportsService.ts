@@ -277,7 +277,11 @@ class ManagementReportsService {
     });
   }
 
-  private async writePptxReport(report: any, filePath: string): Promise<void> {
+  private async writePptxReport(
+    report: any,
+    filePath: string,
+    language: 'en' | 'pl' = 'en'
+  ): Promise<void> {
     const { PptxGenJS } = await loadExportDeps();
     if (!PptxGenJS) throw dependencyMissing('pptxgenjs');
 
@@ -302,7 +306,7 @@ class ManagementReportsService {
     });
 
     const decisionsSlide = pptx.addSlide();
-    decisionsSlide.addText('Decisions Required', {
+    decisionsSlide.addText(language === 'pl' ? 'Wymagane decyzje' : 'Decisions Required', {
       x: 0.6,
       y: 0.6,
       w: 12.5,
@@ -327,7 +331,7 @@ class ManagementReportsService {
     });
 
     const narrativeSlide = pptx.addSlide();
-    narrativeSlide.addText('Executive Narrative', {
+    narrativeSlide.addText(language === 'pl' ? 'Narracja zarządcza' : 'Executive Narrative', {
       x: 0.6,
       y: 0.6,
       w: 12.5,
@@ -1319,7 +1323,7 @@ class ManagementReportsService {
     return { shareToken, expiresAt };
   }
 
-  async generateExport(reportId, format, userId, organizationId) {
+  async generateExport(reportId, format, userId, organizationId, language: 'en' | 'pl' = 'en') {
     const row = await managementReportRepository.getReportByIdForOrganization(
       reportId,
       organizationId
@@ -1349,7 +1353,7 @@ class ManagementReportsService {
     if (format === 'pdf') {
       await this.writePdfReport(report, filePath);
     } else if (format === 'pptx') {
-      await this.writePptxReport(report, filePath);
+      await this.writePptxReport(report, filePath, language);
     } else if (format === 'xlsx') {
       await this.writeXlsxReport(report, filePath);
     }

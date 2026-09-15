@@ -19,11 +19,14 @@ const emailService: typeof import('../emailService.js') = await import('../email
 const ENV_KEYS = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_SECURE', 'SMTP_FROM', 'EMAIL_FROM'];
 const savedEnv: Record<string, string | undefined> = {};
 
-function stubDeps(sendMail: ReturnType<typeof vi.fn>) {
+function stubDeps(sendMail: ReturnType<typeof vi.fn>, language?: 'en' | 'pl') {
   const createTransport = vi.fn(() => ({ sendMail }));
   emailService.setDependencies({
     // settings table intentionally empty: env must drive the config
-    db: { all: (_sql: string, _p: unknown[], cb: Function) => cb(null, []) } as never,
+    db: {
+      all: (_sql: string, _p: unknown[], cb: Function) => cb(null, []),
+      get: (_sql: string, _p: unknown[], cb: Function) => cb(null, language ? { language } : undefined),
+    } as never,
     nodemailer: { createTransport },
     config: {},
   });
@@ -93,5 +96,18 @@ describe('emailService — envelope sender and delivery reporting', () => {
     const ok = await emailService.send({ to: 'user@example.invalid', subject: 'S', html: '<p>x</p>' });
 
     expect(ok).toBe(false);
+  });
+
+  it('localizes a registered subject from the recipient user locale', async () => {
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'x' });
+    stubDeps(sendMail, 'pl');
+
+    await emailService.send({
+      to: 'partner@example.invalid',
+      subject: 'Your Consultify subscription has been canceled',
+      html: '<p>x</p>',
+    });
+
+    expect(sendMail.mock.calls[0][0].subject).toBe('Twoja subskrypcja Consultify została anulowana');
   });
 });

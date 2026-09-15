@@ -11,6 +11,7 @@
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import { localizeServerPayloadText } from '../i18n/serverPayloadLocalizer.js';
 import logger from '../utils/Logger.js';
 import {
   renderTemplate as renderEmailTemplate,
@@ -158,6 +159,24 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     messageId,
   } = options;
 
+  // K4/W73: choose outbound subject copy from the recipient's persisted
+  // locale. An address with no account (for example a first invitation)
+  // follows DEC-461 and remains English.
+  let recipientLocale: 'en' | 'pl' = 'en';
+  try {
+    const recipient = await DbPromise.get<{ language?: string | null }>(
+      db,
+      'SELECT language FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1',
+      [to]
+    );
+    if (recipient?.language === 'pl') recipientLocale = 'pl';
+  } catch (error) {
+    logger.warn('[EMAIL SERVICE] Recipient locale lookup failed; using English subject', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  const resolvedSubject = localizeServerPayloadText(subject, recipientLocale);
+
   // 0. Render Handlebars .hbs template when one exists for `template`.
   //    An explicit `html` always wins (caller opted out of the template).
   //    Any render failure MUST fall back to the previous behaviour and never
@@ -167,7 +186,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     const templatePath = resolveTemplatePath(template);
     if (templatePath) {
       const out = renderEmailTemplate(templatePath, {
-        subject,
+        subject: resolvedSubject,
         recipientName: (data as Record<string, unknown>)?.recipientName,
         ...(data ?? {}),
       });
@@ -241,7 +260,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
   const displayHtml = renderedHtml || `Template: ${template}`;
   logger.info(`\n--- [EMAIL SERVICE] Sending to ${to} ---`);
   logger.info(`Using Host: ${smtpConfig.host || 'Mock (Console)'}`);
-  logger.info(`Subject: ${subject}`);
+  logger.info(`Subject: ${resolvedSubject}`);
   logger.info(`Content: ${displayHtml.substring(0, 100)}...`);
   logger.info('------------------------------------------\n');
 
@@ -252,10 +271,10 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
       await transporter.sendMail({
         from: smtpConfig.from,
         to,
-        subject,
+        subject: resolvedSubject,
         html:
           renderedHtml ||
-          `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
+          `<h1>${resolvedSubject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
         text,
         attachments,
         ...(messageId ? { messageId } : {}),

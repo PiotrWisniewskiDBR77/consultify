@@ -9,6 +9,7 @@ import { deprecationHeader } from './middleware/deprecationHeader.middleware.js'
 import { requireCanonicalExecutionWriter } from './middleware/executionSpineLegacyReadOnly.middleware.js';
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
+import { serverPayloadLocale } from './middleware/serverPayloadLocale.js';
 import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
 import { attachV8Context, requireV8OrgContext } from './middleware/v8Auth.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
@@ -539,6 +540,7 @@ export class ApiGateway {
       // T113: API request logging (no PII) must wrap the whole gateway,
       // otherwise early-mounted high-traffic routes bypass logging entirely.
       app.use(apiLoggingMiddleware);
+      app.use(serverPayloadLocale);
 
       // Demo Mode middleware - switches context and protects against writes.
       // Mount immediately after logging so all gateway routes share the same boundary.

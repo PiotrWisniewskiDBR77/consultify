@@ -34,6 +34,7 @@ export function SingleInsightLayout(
       chartData: c.chart_data,
       insightText: c.insight_text,
       source: c.source,
+      language: meta.language,
       position: { x: g.contentX, y: g.contentY, w: g.contentW, h: g.contentH },
     },
     tokens

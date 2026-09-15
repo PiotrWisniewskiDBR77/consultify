@@ -423,7 +423,8 @@ router.get(
         req.params.id,
         'pdf',
         req.userId,
-        req.organizationId
+        req.organizationId,
+        resolveAiLanguageFromRequest(req) === 'pl' ? 'pl' : 'en'
       );
       return res.json({ success: true, pdfUrl: result.filePath });
     } catch (error: any) {
@@ -458,7 +459,8 @@ router.get(
         req.params.id,
         'pptx',
         req.userId,
-        req.organizationId
+        req.organizationId,
+        resolveAiLanguageFromRequest(req) === 'pl' ? 'pl' : 'en'
       );
       return res.json({ success: true, pptxUrl: result.filePath });
     } catch (error: any) {
@@ -493,7 +495,8 @@ router.get(
         req.params.id,
         'xlsx',
         req.userId,
-        req.organizationId
+        req.organizationId,
+        resolveAiLanguageFromRequest(req) === 'pl' ? 'pl' : 'en'
       );
       return res.json({ success: true, xlsxUrl: result.filePath });
     } catch (error: any) {

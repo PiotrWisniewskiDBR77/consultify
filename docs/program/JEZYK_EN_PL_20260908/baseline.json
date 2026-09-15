@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-15T02:09:22.244Z",
-    "root": "/Users/piotrwisniewski/Developer/codex-wt/a-k1-e2f-bis-w73",
-    "sha": "309a7f398d58e82eaf4f13d67aea385af006a1bd"
+    "data": "2026-09-15T03:29:54.972Z",
+    "root": "/Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73",
+    "sha": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3"
   },
   "suma": {
     "K1": 5,
@@ -18,9 +18,9 @@
     "K4obj": 4343,
     "K5pl": 262,
     "K5en": 7161,
-    "K7": 270,
-    "K8spl": 95,
-    "K8sen": 3183,
+    "K7": 278,
+    "K8spl": 85,
+    "K8sen": 0,
     "K9pPL": 36,
     "K9pMIX": 1,
     "K9pBRAK": 77,
@@ -45,7 +45,7 @@
       "K5en": 95,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 28,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 3,
@@ -69,7 +69,7 @@
       "K5en": 326,
       "K7": 0,
       "K8spl": 2,
-      "K8sen": 42,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -93,7 +93,7 @@
       "K5en": 262,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 88,
+      "K8sen": 0,
       "K9pPL": 1,
       "K9pMIX": 0,
       "K9pBRAK": 4,
@@ -116,8 +116,8 @@
       "K5pl": 52,
       "K5en": 394,
       "K7": 0,
-      "K8spl": 24,
-      "K8sen": 220,
+      "K8spl": 21,
+      "K8sen": 0,
       "K9pPL": 24,
       "K9pMIX": 0,
       "K9pBRAK": 6,
@@ -141,7 +141,7 @@
       "K5en": 302,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 65,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -165,7 +165,7 @@
       "K5en": 347,
       "K7": 0,
       "K8spl": 3,
-      "K8sen": 111,
+      "K8sen": 0,
       "K9pPL": 2,
       "K9pMIX": 0,
       "K9pBRAK": 9,
@@ -189,7 +189,7 @@
       "K5en": 317,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 162,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -213,7 +213,7 @@
       "K5en": 351,
       "K7": 0,
       "K8spl": 4,
-      "K8sen": 146,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -237,7 +237,7 @@
       "K5en": 440,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 315,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 3,
@@ -260,8 +260,8 @@
       "K5pl": 20,
       "K5en": 1170,
       "K7": 8,
-      "K8spl": 3,
-      "K8sen": 447,
+      "K8spl": 0,
+      "K8sen": 0,
       "K9pPL": 5,
       "K9pMIX": 1,
       "K9pBRAK": 12,
@@ -284,8 +284,8 @@
       "K5pl": 14,
       "K5en": 32,
       "K7": 0,
-      "K8spl": 2,
-      "K8sen": 11,
+      "K8spl": 0,
+      "K8sen": 0,
       "K9pPL": 3,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -309,7 +309,7 @@
       "K5en": 62,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 17,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -333,7 +333,7 @@
       "K5en": 172,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 28,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -357,7 +357,7 @@
       "K5en": 352,
       "K7": 174,
       "K8spl": 0,
-      "K8sen": 173,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -381,7 +381,7 @@
       "K5en": 565,
       "K7": 2,
       "K8spl": 3,
-      "K8sen": 33,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 4,
@@ -405,7 +405,7 @@
       "K5en": 126,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 38,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -427,9 +427,9 @@
       "K4obj": 1401,
       "K5pl": 20,
       "K5en": 1848,
-      "K7": 86,
-      "K8spl": 54,
-      "K8sen": 1259,
+      "K7": 94,
+      "K8spl": 52,
+      "K8sen": 0,
       "K9pPL": 1,
       "K9pMIX": 0,
       "K9pBRAK": 27,
@@ -1871,7 +1871,7 @@
     "K8spl": [
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/Gateway.ts:530",
+        "gdzie": "server/src/Gateway.ts:531",
         "tekst": "Ta funkcja jest tymczasowo niedostępna w tym środowisku.",
         "dowod": "diakrytyk:ę,pl:jest,pl:tym"
       },
@@ -1904,18 +1904,6 @@
         "gdzie": "server/src/services/ai/tools/generateDeliverable.ts:186",
         "tekst": "Twoja rola nie pozwala na generowanie artefaktów. Poproś administratora o dostęp.",
         "dowod": "diakrytyk:ó,pl:nie,pl:na"
-      },
-      {
-        "modul": "11 Audits",
-        "gdzie": "server/src/services/auditProgramFixtures/fixtureGenerator.ts:606",
-        "tekst": "Fixture wygenerował ${leafCriterionIds.length} kryteriów-liści, oczekiwano ${EXPECTED_LEAF_CRITERIA}",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "11 Audits",
-        "gdzie": "server/src/services/audits/packValidator.ts:502",
-        "tekst": "Pakiet nie może zostać opublikowany — ${reasons}",
-        "dowod": "diakrytyk:ż,pl:nie,pl:może"
       },
       {
         "modul": "ZZ wspólne",
@@ -2018,160 +2006,21 @@
         "gdzie": "server/src/services/cardContentFormulaValidator.ts:781",
         "tekst": "Sygnał #${i + 1} ma opis <25 słów (§3.9).",
         "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/cardContentFormulaValidator.ts:791",
+        "tekst": "Braki danych: ${missingData.length} (wymagane ≥2).",
+        "dowod": "pl:wymagane,pl-suf:danych"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/cardContentFormulaValidator.ts:804",
+        "tekst": "Użyto evidence_refs, ale mapa dowodów (evidence_map) jest pusta.",
+        "dowod": "diakrytyk:ż,pl:jest"
       }
     ],
-    "K8sen": [
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/Gateway.ts:840",
-        "tekst": "Invalid URL",
-        "dowod": "en:invalid"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/Gateway.ts:884",
-        "tekst": "Failed to fetch URL",
-        "dowod": "en:failed"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/ai/actionDecisionService.ts:91",
-        "tekst": "Missing required decision fields: proposal_id, organization_id, decision, or decided_by_user_id",
-        "dowod": "en:missing,en:required,en:decision"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/actionExecutionAdapter.ts:64",
-        "tekst": "Decision not found: ${decisionId} ",
-        "dowod": "en:decision,en:found"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/actionExecutionAdapter.ts:85",
-        "tekst": "Decision ${decisionId} is ${decision.decision}, but only APPROVED / MODIFIED are executable",
-        "dowod": "en:decision,en:approved"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/actionExecutionAdapter.ts:137",
-        "tekst": "Execution failed: No proposal_snapshot found for decision ${decisionId}",
-        "dowod": "en:failed,en:snapshot,en:found"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/actionExecutionAdapter.ts:188",
-        "tekst": "Unknown or unsupported action type: ${actionType} ",
-        "dowod": "en:unknown,en:action"
-      },
-      {
-        "modul": "12 Meeting",
-        "gdzie": "server/src/ai/actionExecutors/meetingExecutor.ts:70",
-        "tekst": "Dry run: would schedule meeting",
-        "dowod": "en:would"
-      },
-      {
-        "modul": "12 Meeting",
-        "gdzie": "server/src/ai/actionExecutors/meetingExecutor.ts:30",
-        "tekst": "Meeting execution requires organizationId",
-        "dowod": "en-suf:execution"
-      },
-      {
-        "modul": "12 Meeting",
-        "gdzie": "server/src/ai/actionExecutors/meetingExecutor.ts:33",
-        "tekst": "Meeting execution requires title and start_time",
-        "dowod": "en:and,en-suf:execution"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:54",
-        "tekst": "Playbook has no steps to execute",
-        "dowod": "en:has,en:steps"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:293",
-        "tekst": "Dry run: would execute ${steps.length} steps",
-        "dowod": "en:would,en:steps"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:155",
-        "tekst": "AI prompt step requires a prompt",
-        "dowod": "en:step"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:269",
-        "tekst": "Unknown step type: ${step.type}",
-        "dowod": "en:unknown,en:step"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/actionExecutors/taskExecutor.ts:41",
-        "tekst": "organizationId is required to create a task",
-        "dowod": "en:required,en:create,en:task"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/actionExecutors/taskExecutor.ts:89",
-        "tekst": "Dry run: would create task",
-        "dowod": "en:would,en:create,en:task"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/ai/actionProposalEngine.ts:214",
-        "tekst": "Action type not yet executable; kept as proposal only",
-        "dowod": "en:action"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/ai/actionProposalEngine.ts:148",
-        "tekst": "update_status requires taskId and status",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/ai/actionProposalEngine.ts:165",
-        "tekst": "assign_user requires taskId and assigneeId",
-        "dowod": "en:assign,en:and"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/ai/actionProposalEngine.ts:183",
-        "tekst": "set_field requires taskId and field",
-        "dowod": "en:field,en:and"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:47",
-        "tekst": "Run ${runId} not found",
-        "dowod": "en:found"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:163",
-        "tekst": "Missing branch_rules",
-        "dowod": "en:missing"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:399",
-        "tekst": "Run ${runId} not found",
-        "dowod": "en:found"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:465",
-        "tekst": "Run ${runId} not found",
-        "dowod": "en:found"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:64",
-        "tekst": "All steps completed",
-        "dowod": "en:steps,en:completed"
-      }
-    ],
+    "K8sen": [],
     "K9pPL": [
       {
         "modul": "03 Interview",

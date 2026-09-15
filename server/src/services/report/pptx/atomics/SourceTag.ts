@@ -6,6 +6,7 @@ import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js
 
 export interface SourceTagProps {
   source: string;
+  language?: 'en' | 'pl';
   position?: Partial<ElementPosition>;
 }
 
@@ -20,7 +21,7 @@ export function SourceTag(props: SourceTagProps, tokens: DesignTokens): Rendered
   return {
     kind: 'text',
     apply(slide) {
-      slide.addText(`Source: ${props.source}`, {
+      slide.addText(`${props.language === 'pl' ? 'Źródło' : 'Source'}: ${props.source}`, {
         x: pos.x,
         y: pos.y,
         w: pos.w,

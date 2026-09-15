@@ -14,6 +14,9 @@ const req = (language = 'en') =>
     get: (name: string) => (name === 'Accept-Language' ? language : undefined),
   }) as any;
 
+const reqWithProfile = (profileLanguage: string, headerLanguage: string) =>
+  Object.assign(req(headerLanguage), { user: { language: profileLanguage } });
+
 describe('appErrorMapper', () => {
   afterEach(() => {
     process.env.NODE_ENV = 'test';
@@ -30,7 +33,17 @@ describe('appErrorMapper', () => {
 
   it('selects Polish safe messages from Accept-Language', () => {
     process.env.NODE_ENV = 'production';
-    expect(mapAppErrorResponse(Object.assign(new Error('secret'), { statusCode: 403 }), req('pl-PL')).error).toBe('Brak uprawnien do tej operacji.');
+    expect(mapAppErrorResponse(Object.assign(new Error('secret'), { statusCode: 403 }), req('pl-PL')).error).toBe('Brak uprawnień do tej operacji.');
+  });
+
+  it('uses the authenticated user locale before Accept-Language', () => {
+    process.env.NODE_ENV = 'production';
+    expect(
+      mapAppErrorResponse(
+        Object.assign(new Error('secret'), { statusCode: 403 }),
+        reqWithProfile('pl', 'en-US')
+      ).error
+    ).toBe('Brak uprawnień do tej operacji.');
   });
 
   it('preserves an explicit operational AppError message and code', () => {
@@ -40,10 +53,10 @@ describe('appErrorMapper', () => {
   });
 
   it.each([
-    ['PROGRAM_NOT_ACTIVE', 409, 'The OKR program is not active, so a new cycle cannot be opened.', 'Program OKR nie jest aktywny, dlatego nie mozna otworzyc nowego cyklu.'],
-    ['FINANCE_SETTINGS_INVALID', 400, 'The finance settings are invalid.', 'Ustawienia finansowe sa nieprawidlowe.'],
+    ['PROGRAM_NOT_ACTIVE', 409, 'The OKR program is not active, so a new cycle cannot be opened.', 'Program OKR nie jest aktywny, dlatego nie można otworzyć nowego cyklu.'],
+    ['FINANCE_SETTINGS_INVALID', 400, 'The finance settings are invalid.', 'Ustawienia finansowe są nieprawidłowe.'],
     ['NOT_FOUND', 404, 'Template not found.', 'Nie znaleziono szablonu.'],
-    ['COMMAND_CAPABILITY_DENIED', 403, 'You are not authorized to perform this action.', 'Nie masz uprawnien do wykonania tej operacji.'],
+    ['COMMAND_CAPABILITY_DENIED', 403, 'You are not authorized to perform this action.', 'Nie masz uprawnień do wykonania tej operacji.'],
   ])('localizes the %s operational contract without changing its code', (code, status, english, polish) => {
     process.env.NODE_ENV = 'production';
     const error = new AppError('raw English business detail', status, code);

@@ -8,6 +8,10 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
+import {
+  resolveServerErrorLocale,
+  serverErrorMessage,
+} from '../i18n/serverErrorMessages.js';
 import logger from './Logger.js';
 
 /**
@@ -88,14 +92,12 @@ function getErrorMessage(err: unknown): string {
 function detectBodyParserContractError(err: Error & { status?: number | string; type?: string }): {
   statusCode: number;
   code: string;
-  message: string;
 } | null {
   const status = Number(err.status);
   if (status === 413 || err.type === 'entity.too.large') {
     return {
       statusCode: 413,
       code: 'REQUEST_JSON_TOO_LARGE',
-      message: 'Request body exceeds the allowed size.',
     };
   }
 
@@ -103,7 +105,6 @@ function detectBodyParserContractError(err: Error & { status?: number | string; 
     return {
       statusCode: 400,
       code: 'REQUEST_JSON_INVALID',
-      message: 'Request body must be valid JSON.',
     };
   }
 
@@ -113,7 +114,6 @@ function detectBodyParserContractError(err: Error & { status?: number | string; 
 function detectMulterContractError(err: Error & { code?: string; name?: string }): {
   statusCode: number;
   code: string;
-  message: string;
 } | null {
   if (err.name !== 'MulterError') {
     return null;
@@ -123,7 +123,6 @@ function detectMulterContractError(err: Error & { code?: string; name?: string }
     return {
       statusCode: 413,
       code: 'REQUEST_MULTIPART_FILE_TOO_LARGE',
-      message: 'Uploaded file exceeds the allowed size.',
     };
   }
 
@@ -131,7 +130,6 @@ function detectMulterContractError(err: Error & { code?: string; name?: string }
     return {
       statusCode: 413,
       code: 'REQUEST_MULTIPART_TOO_MANY_FILES',
-      message: 'Too many files uploaded in a single request.',
     };
   }
 
@@ -139,14 +137,12 @@ function detectMulterContractError(err: Error & { code?: string; name?: string }
     return {
       statusCode: 400,
       code: 'REQUEST_MULTIPART_UNEXPECTED_FIELD',
-      message: 'Unexpected multipart file field in request.',
     };
   }
 
   return {
     statusCode: 400,
     code: 'REQUEST_MULTIPART_INVALID_PAYLOAD',
-    message: 'Multipart payload is invalid.',
   };
 }
 
@@ -221,18 +217,19 @@ export function errorHandlerMiddleware(
   res: Response,
   _next: NextFunction
 ): void {
+  const responseLocale = resolveServerErrorLocale(req);
   const bodyParserContract = detectBodyParserContractError(err);
   if (bodyParserContract) {
     err.statusCode = bodyParserContract.statusCode;
     err.code = bodyParserContract.code;
-    err.message = bodyParserContract.message;
+    err.message = serverErrorMessage(bodyParserContract.code, responseLocale, bodyParserContract.code);
   }
 
   const multerContract = detectMulterContractError(err);
   if (multerContract) {
     err.statusCode = multerContract.statusCode;
     err.code = multerContract.code;
-    err.message = multerContract.message;
+    err.message = serverErrorMessage(multerContract.code, responseLocale, multerContract.code);
   }
 
   // Safely extract error message
@@ -286,6 +283,11 @@ export function errorHandlerMiddleware(
   // environment, verbose or not.
   const driverError = isDatabaseDriverError(err);
   const safeMessage = driverError ? 'Database request failed' : errorMessage;
+  const localizedSafeMessage = serverErrorMessage(
+    driverError ? 'DB_ERROR' : err.code || 'INTERNAL',
+    responseLocale,
+    safeMessage
+  );
 
   // Local development / automated tests only. Never a hosted deployment: on
   // staging and demo this branch used to hand a normal logged-in user the raw
@@ -315,7 +317,7 @@ export function errorHandlerMiddleware(
       correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
         code: err.code || 'ERROR',
-        message: safeMessage,
+        message: localizedSafeMessage,
         ...(err.details || {}),
         timestamp: new Date().toISOString(),
       },
@@ -327,9 +329,7 @@ export function errorHandlerMiddleware(
       correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
         code: driverError ? 'DATABASE_ERROR' : 'INTERNAL_ERROR',
-        message: driverError
-          ? 'Nie udało się odczytać danych. Spróbuj ponownie lub zgłoś identyfikator korelacji.'
-          : 'Something went very wrong!',
+        message: serverErrorMessage(driverError ? 'DB_ERROR' : 'INTERNAL', responseLocale, safeMessage),
         timestamp: new Date().toISOString(),
       },
     });

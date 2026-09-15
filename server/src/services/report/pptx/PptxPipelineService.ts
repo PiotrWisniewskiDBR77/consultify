@@ -392,7 +392,7 @@ export class PptxPipelineService {
         warnings.push(`Slide ${i + 1} (${slideData.intent}): render failed — ${err.message}`);
 
         // Add a fallback error slide
-        this.addErrorSlide(pptx, i + 1, slideData.intent, err.message, tokens);
+        this.addErrorSlide(pptx, i + 1, slideData.intent, err.message, tokens, report.meta.language);
         renderedCount++;
       }
     }
@@ -632,7 +632,8 @@ export class PptxPipelineService {
     slideNum: number,
     intent: string,
     errorMsg: string,
-    tokens: DesignTokens
+    tokens: DesignTokens,
+    language: 'en' | 'pl'
   ): void {
     const slide = pptx.addSlide({ masterName: 'BLANK' });
 
@@ -645,7 +646,7 @@ export class PptxPipelineService {
       fill: { color: tokens.colors.danger },
     });
 
-    slide.addText(`Slide ${slideNum} — Render Error`, {
+    slide.addText(language === 'pl' ? `Slajd ${slideNum} — błąd renderowania` : `Slide ${slideNum} — Render Error`, {
       x: 0.5,
       y: 0.15,
       w: 9,
@@ -657,7 +658,9 @@ export class PptxPipelineService {
     });
 
     slide.addText(
-      `Intent: ${intent}\n\nError: ${errorMsg}\n\nThis slide could not be rendered. Please check the data and try again.`,
+      language === 'pl'
+        ? `Intencja: ${intent}\n\nBłąd: ${errorMsg}\n\nNie udało się wyrenderować tego slajdu. Sprawdź dane i spróbuj ponownie.`
+        : `Intent: ${intent}\n\nError: ${errorMsg}\n\nThis slide could not be rendered. Please check the data and try again.`,
       {
         x: 0.5,
         y: 1.2,

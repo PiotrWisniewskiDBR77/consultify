@@ -12,6 +12,7 @@ export interface SingleInsightChartProps {
   chartData: ChartDataSet;
   insightText: string;
   source?: string;
+  language?: 'en' | 'pl';
   position: ElementPosition;
 }
 
@@ -117,6 +118,7 @@ export function SingleInsightChart(
       SourceTag(
         {
           source: props.source,
+          language: props.language,
           position: { x: p.x, y: p.y + p.h - sourceH, w: chartW, h: sourceH },
         },
         tokens

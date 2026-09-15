@@ -9,6 +9,7 @@ export interface HeatmapProps {
   axes: AxisScore[];
   scaleMax: number;
   overallScore?: number;
+  language?: 'en' | 'pl';
   position: ElementPosition;
 }
 
@@ -169,7 +170,9 @@ export function Heatmap(props: HeatmapProps, tokens: DesignTokens): RenderedElem
           fill: { color: badgeColor },
           rectRadius: 0.06,
         });
-        slide.addText(`Overall: ${props.overallScore!.toFixed(1)}/${scaleMax}`, {
+        slide.addText(
+          `${props.language === 'pl' ? 'Ogółem' : 'Overall'}: ${props.overallScore!.toFixed(1)}/${scaleMax}`,
+          {
           x: badgeX,
           y: badgeY,
           w: badgeW,
@@ -180,7 +183,8 @@ export function Heatmap(props: HeatmapProps, tokens: DesignTokens): RenderedElem
           bold: true,
           align: 'center',
           valign: 'middle',
-        });
+          }
+        );
       },
     });
   }
