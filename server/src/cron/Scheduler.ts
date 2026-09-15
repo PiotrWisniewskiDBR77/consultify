@@ -21,6 +21,15 @@ let feedbackService: any;
 import logger from '../utils/Logger.js';
 import * as trialCron from './TrialCron.js';
 
+/** Destructive demo cleanup is scheduled only after an explicit operator opt-in. */
+export function isDemoCleanupScheduleEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return ['1', 'true', 'yes', 'on'].includes(
+    String(env.ENABLE_DEMO_SANDBOX_TTL ?? '')
+      .trim()
+      .toLowerCase()
+  );
+}
+
 /**
  * The body of scheduled job 43 (audit independence detector sweep), exported so
  * the flag gate and the single-claim behaviour can be exercised directly
@@ -41,7 +50,10 @@ export async function runAuditIndependenceSchedulerTick(): Promise<void> {
     const result = await runTick();
     if (
       result.claimed &&
-      (result.withViolations > 0 || result.errors > 0 || result.cycleWrapped || !result.progressRecorded)
+      (result.withViolations > 0 ||
+        result.errors > 0 ||
+        result.cycleWrapped ||
+        !result.progressRecorded)
     ) {
       logger.warn('[Scheduler] Audit independence scan tick', {
         scanned: result.scanned,
@@ -103,9 +115,8 @@ export async function runDecisionEscalationSchedulerTick(): Promise<void> {
 export async function runExecutionWorkAnalysisSchedulerTick(): Promise<void> {
   if (process.env.ENABLE_EXECUTION_WORK_ANALYSIS !== 'true') return;
   try {
-    const { generateWeeklyExecutionWorkAnalyses } = await import(
-      '../services/execution/executionWorkAnalysisService.js'
-    );
+    const { generateWeeklyExecutionWorkAnalyses } =
+      await import('../services/execution/executionWorkAnalysisService.js');
     const result = await generateWeeklyExecutionWorkAnalyses();
     logger.info('[Scheduler] Weekly execution work analyses generated', result);
   } catch (err: any) {
@@ -252,20 +263,26 @@ export const Scheduler = {
     // w1a-sprzatanie-20260910 zadanie 3: on staging, demo-session clones
     // (server/src/services/demo/demoSessionService.ts) accumulated for hours
     // because the only cleanup pass was the once-daily job3 at 2:30 AM — a
-    // clone minted at 06:00 sat around until the NEXT day's run. Default here
-    // is hourly; override with `DEMO_CLEANUP_CRON_EXPRESSION` (standard 5-field
-    // cron string) if a different cadence is ever needed. Safe to run this
-    // often: findExpiredDemoCandidates is a pure read gated by TTL + zero real
-    // members + DEMO type + whitelist. TTL reclaim is enabled by default and
-    // can be stopped explicitly with ENABLE_DEMO_SANDBOX_TTL=false.
-    const demoCleanupCron = process.env.DEMO_CLEANUP_CRON_EXPRESSION || '30 * * * *';
-    const job3b = cron.schedule(demoCleanupCron, () => {
-      logger.info('[Scheduler] Running hourly Demo Org Cleanup');
-      trialCron.runDemoCleanup().catch((err: any) => {
-        logger.error('[Scheduler] Hourly Demo Org Cleanup failed:', err?.message || err);
+    // clone minted at 06:00 sat around until the NEXT day's run. When deletion
+    // is explicitly enabled, the dedicated cadence defaults to hourly and can
+    // be overridden with a standard five-field cron expression. With a missing
+    // or false flag no destructive recurring job is registered.
+    const demoCleanupEnabled = isDemoCleanupScheduleEnabled();
+    if (demoCleanupEnabled) {
+      const demoCleanupCron = process.env.DEMO_CLEANUP_CRON_EXPRESSION || '30 * * * *';
+      const job3b = cron.schedule(demoCleanupCron, () => {
+        logger.info('[Scheduler] Running hourly Demo Org Cleanup');
+        trialCron.runDemoCleanup().catch((err: unknown) => {
+          logger.error(
+            '[Scheduler] Hourly Demo Org Cleanup failed:',
+            err instanceof Error ? err.message : String(err)
+          );
+        });
       });
-    });
-    this.jobs.push(job3b);
+      this.jobs.push(job3b);
+    } else {
+      logger.info('[Scheduler] Demo Org Cleanup is OFF (ENABLE_DEMO_SANDBOX_TTL != true)');
+    }
 
     // 4. Usage Counter Cleanup - Run weekly on Sunday at 2:00 AM
     const job4 = cron.schedule('0 2 * * 0', () => {

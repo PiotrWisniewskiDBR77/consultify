@@ -262,7 +262,7 @@ afterAll(async () => {
 }, 60_000);
 
 describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
-  it('defaults ON, respects 24h and caps one run at three tenants', async () => {
+  it('without ENABLE_DEMO_SANDBOX_TTL it does not start cleanup or delete anything', async () => {
     const env = {
       ...process.env,
       DEMO_CLEANUP_TTL_HOURS: '24',
@@ -270,6 +270,26 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
       DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID].join(','),
     };
     delete env.ENABLE_DEMO_SANDBOX_TTL;
+    const before = await Promise.all([OLD_ID, FRESH_ID, ...EXTRA_IDS].map(orgExists));
+    expect(before.every(Boolean)).toBe(true);
+
+    const deleted = await demoService.cleanupExpiredDemos(env, {
+      afterDeleteStep: (table) => executedTables.add(table),
+    });
+
+    expect(deleted).toBe(0);
+    expect(executedTables.size).toBe(0);
+    expect(await Promise.all([OLD_ID, FRESH_ID, ...EXTRA_IDS].map(orgExists))).toEqual(before);
+  }, 30_000);
+
+  it('explicit ON respects 24h and caps one run at three tenants', async () => {
+    const env = {
+      ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
+      DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_LIMIT: '999',
+      DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID].join(','),
+    };
     const candidates = await demoService.findExpiredDemoCandidates(3, env);
     const fixtureCandidates = candidates.filter((row) => row.id.includes(MARK));
     expect(fixtureCandidates).toHaveLength(3);
@@ -325,6 +345,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('protects paid tenants and a fresh tenant even when its session is ended', async () => {
     const env = {
       ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID, ...EXTRA_IDS].join(','),
     };
@@ -338,6 +359,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('re-checks safety under lock and skips a tenant that becomes paid after selection', async () => {
     const env = {
       ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_WHITELIST: [FAULT_ID, OLD_ID, ...EXTRA_IDS].join(','),
     };
@@ -361,6 +383,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('rolls back every earlier DELETE after a deterministic mid-purge failure', async () => {
     const env = {
       ...process.env,
+      ENABLE_DEMO_SANDBOX_TTL: 'true',
       DEMO_CLEANUP_TTL_HOURS: '24',
       DEMO_CLEANUP_WHITELIST: [OLD_ID, RECHECK_ID, ...EXTRA_IDS].join(','),
     };

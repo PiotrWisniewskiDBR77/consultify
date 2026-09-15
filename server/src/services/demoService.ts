@@ -8,8 +8,8 @@
  * accumulate forever.
  *
  * `cleanupExpiredDemos()` reclaims ONLY provably-ephemeral, expired demo
- * scaffolding, never a real customer org. It is enabled by default and can be stopped explicitly with
- * `ENABLE_DEMO_SANDBOX_TTL=false`. Deletion reuses the proven children-first (FK-aware)
+ * scaffolding, never a real customer org. It is opt-in through
+ * `ENABLE_DEMO_SANDBOX_TTL=true`. Deletion reuses the proven children-first (FK-aware)
  * `deleteDemoDatasetForOrganization` purger and runs per-org inside a
  * transaction, with a hard per-run cap of three tenants.
  *
@@ -62,11 +62,8 @@ function parsePositiveInt(value: unknown, fallback: number): number {
 }
 
 function isEnabled(env: NodeJS.ProcessEnv): boolean {
-  // TTL reclaim is an operational safety mechanism, so it is enabled unless an
-  // operator explicitly disables it. This keeps ephemeral demo tenants bounded
-  // without requiring a deployment-time opt-in.
-  const raw = env.ENABLE_DEMO_SANDBOX_TTL;
-  return raw == null || String(raw).trim() === '' ? true : parseBool(raw);
+  // Data deletion is opt-in. Missing, empty and malformed values stay OFF.
+  return parseBool(env.ENABLE_DEMO_SANDBOX_TTL);
 }
 
 function ttlHours(env: NodeJS.ProcessEnv): number {
@@ -240,8 +237,12 @@ export async function cleanupExpiredDemos(
   hooks: DemoCleanupHooks = {}
 ): Promise<number> {
   const enabled = isEnabled(env);
-  const limit = perRunLimit(env);
+  if (!enabled) {
+    logger.info('[DemoService] TTL cleanup OFF; set ENABLE_DEMO_SANDBOX_TTL=true to enable it.');
+    return 0;
+  }
 
+  const limit = perRunLimit(env);
   const candidates = await findExpiredDemoCandidates(limit, env);
 
   if (candidates.length === 0) {
@@ -252,13 +253,8 @@ export async function cleanupExpiredDemos(
   const idList = candidates.map((c) => c.id);
   logger.info(
     `[DemoService] cleanupExpiredDemos: ${candidates.length} expired demo org(s) ` +
-      `[mode=${enabled ? 'DELETE' : 'DRY-RUN'}, limit=${limit}] -> ${idList.join(', ')}`
+      `[mode=DELETE, limit=${limit}] -> ${idList.join(', ')}`
   );
-
-  if (!enabled) {
-    logger.warn('[DemoService] TTL cleanup disabled by ENABLE_DEMO_SANDBOX_TTL. Nothing removed.');
-    return 0;
-  }
 
   let deleted = 0;
   for (const candidate of candidates) {
