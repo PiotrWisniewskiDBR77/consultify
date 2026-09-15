@@ -23,6 +23,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Integration {
   id: string;
   type: string;
@@ -122,7 +124,7 @@ export const IntegrationsPanel: React.FC = () => {
             Integrations Hub
           </h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Connect Consultify with your existing tools
+            {tlumaczPozaHookiem("superadmin.integrations.connectConsultifyWithYourExistingTools", "Connect Consultify with your existing tools")}
           </p>
         </div>
         <button
@@ -203,7 +205,7 @@ export const IntegrationsPanel: React.FC = () => {
                     </div>
                     {integration.last_sync_at && (
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Last sync: {new Date(integration.last_sync_at).toLocaleString()}
+                        Last sync: {new Date(integration.last_sync_at).toLocaleString(localeListy())}
                         {integration.last_sync_status && (
                           <span
                             className={`ml-2 ${

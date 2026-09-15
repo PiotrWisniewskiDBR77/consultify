@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import type { ModelAuditEntry } from './types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -119,7 +121,7 @@ export const ModelAuditLog: React.FC = () => {
     if (diffMin < 60) return `${diffMin}m ago`;
     const diffHr = Math.floor(diffMin / 60);
     if (diffHr < 24) return `${diffHr}h ago`;
-    return d.toLocaleDateString('en-US', {
+    return d.toLocaleDateString(localeListy(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -193,7 +195,7 @@ export const ModelAuditLog: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by entity or user..."
+            placeholder={tlumaczPozaHookiem("superadmin.modelAuditLog.searchByEntityOrUser", "Search by entity or user...")}
             className="w-full pl-10 pr-4 h-9 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-400"
           />
         </div>
@@ -235,7 +237,7 @@ export const ModelAuditLog: React.FC = () => {
       {showFilters && (
         <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
           <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">From</label>
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{tlumaczPozaHookiem("superadmin.modelAuditLog.from", "From")}</label>
             <input
               type="date"
               value={dateFrom}
@@ -260,7 +262,7 @@ export const ModelAuditLog: React.FC = () => {
         {filteredEntries.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center text-slate-500 dark:text-slate-400">
             <FileText size={32} className="mx-auto mb-3 opacity-40" />
-            <p>No audit entries match your filters</p>
+            <p>{tlumaczPozaHookiem("superadmin.modelAuditLog.noAuditEntriesMatchYourFilters", "No audit entries match your filters")}</p>
           </div>
         ) : (
           filteredEntries.map((entry) => {
@@ -340,7 +342,7 @@ export const ModelAuditLog: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                      Full timestamp: {new Date(entry.changedAt).toLocaleString()}
+                      Full timestamp: {new Date(entry.changedAt).toLocaleString(localeListy())}
                     </div>
                   </div>
                 )}

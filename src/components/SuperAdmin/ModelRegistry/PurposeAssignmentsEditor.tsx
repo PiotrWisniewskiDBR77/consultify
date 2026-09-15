@@ -21,6 +21,7 @@ import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import type { HealthStatus, ModelKind, Purpose, PurposeAssignment, PurposeCategory } from './types';
 import { HEALTH_STYLES, KIND_BADGE_STYLES, PURPOSE_CATEGORIES, PURPOSE_KIND_MAP } from './types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -455,8 +456,8 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
                 ) : (
                   <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     <Server size={32} className="mx-auto mb-3 opacity-40" />
-                    <p className="text-sm">No models assigned to this purpose</p>
-                    <p className="text-xs mt-1">Add a model from the dropdown below</p>
+                    <p className="text-sm">{tlumaczPozaHookiem("superadmin.purposeAssignments.noModelsAssignedToThisPurpose", "No models assigned to this purpose")}</p>
+                    <p className="text-xs mt-1">{tlumaczPozaHookiem("superadmin.purposeAssignments.addAModelFromTheDropdownBelow", "Add a model from the dropdown below")}</p>
                   </div>
                 )}
               </div>
@@ -481,7 +482,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
             </>
           ) : (
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center text-slate-500 dark:text-slate-400">
-              <p>Select a purpose from the list to manage its assignments</p>
+              <p>{tlumaczPozaHookiem("superadmin.purposeAssignments.selectAPurposeFromTheListTo", "Select a purpose from the list to manage its assignments")}</p>
             </div>
           )}
         </div>
