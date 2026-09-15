@@ -1,0 +1,12 @@
+Target: 4 files, 20 passed, 0 failed
+Server TypeScript: RC 0
+Frontend TypeScript: 177 errors, 7427 list files; ratchet unchanged
+Frontend build: RC 0, built in 39.77s
+Language ratchet: PASS; no bucket increased
+List canon: PASS; 349 findings, baseline 349
+Artifact canon: PASS; 8 crimson, 0 R2/R3, 117 danger; baselines unchanged
+Diff check versus exact base: PASS, RC 0
+New as-any in product/test delta: 0
+Migrations: 0
+Forbidden paths: 0
+Screenshot: N/A; manifest, middleware authority and prompt-only behavior

@@ -1,0 +1,6 @@
+Command: NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --listFiles
+Result: RC 2 (existing repository debt)
+Errors: 177
+List files: 7427
+W73 ceiling: 177
+Verdict: PASS ratchet; no increase

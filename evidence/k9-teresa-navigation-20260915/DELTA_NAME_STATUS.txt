@@ -1,0 +1,11 @@
+A	docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/K9_TERESA_NAVIGATION_W73/FREEZE_MANIFEST.md
+A	docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/K9_TERESA_NAVIGATION_W73/MELDUNEK.md
+A	server/src/routes/__tests__/aiChatStreamMembershipRole.test.ts
+M	server/src/routes/ai.routes.ts
+M	server/src/services/ai/__tests__/moduleContextGrounding.test.ts
+A	server/src/services/ai/__tests__/teresaNavigationGrounding.test.ts
+M	server/src/services/ai/moduleContextGrounding.ts
+A	server/src/services/ai/teresaNavigationGrounding.ts
+A	server/src/sharedRuntime/routes/teresaNavigationManifest.ts
+M	src/routes/routeConfig.ts
+A	tests/unit/routes/teresaNavigationManifest.test.ts
