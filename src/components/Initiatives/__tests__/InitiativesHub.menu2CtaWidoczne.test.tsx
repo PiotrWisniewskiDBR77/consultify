@@ -217,7 +217,7 @@ describe('Inicjatywy · Menu 2 przy WSZYSTKICH flagach ON [F9 DEC-507]', () => {
  * naprawa faktycznie siedzi. Pomiar wizualny robia zrzuty 1280/1440/1920.
  */
 describe('ModuleNavBar · rzad Menu 2 nie moze wypchnac primary CTA [F9]', () => {
-  it('lewy klaster jest kurczliwy, pasek pigulek przewijalny, prawy klaster `shrink-0`', async () => {
+  it('lewy klaster i pigułki są kurczliwe, a przy 1280 oba klastry zawijają się bez utraty CTA', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const zrodlo = fs.readFileSync(
@@ -225,11 +225,17 @@ describe('ModuleNavBar · rzad Menu 2 nie moze wypchnac primary CTA [F9]', () =>
       'utf-8'
     );
 
-    // MUTACJA: skasowanie ktorejkolwiek z tych trzech klas wywraca test.
-    expect(zrodlo).toContain('<div className="flex min-w-0 items-center gap-3">');
+    // MUTACJA: skasowanie dowolnej części kontraktu znów pozwala wypchnąć
+    // Load albo CTA poza widoczny obszar przy szerokości 1280 px.
+    expect(zrodlo).toContain('flex flex-wrap min-[1360px]:flex-nowrap items-center');
+    expect(zrodlo).toContain(
+      'className="flex min-w-0 basis-full items-center gap-2 min-[1360px]:basis-auto min-[1360px]:gap-3"'
+    );
     expect(zrodlo).toContain(
       'className="app-table-scrollbar flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap"'
     );
-    expect(zrodlo).toContain('flex shrink-0 items-center gap-3 justify-end');
+    expect(zrodlo).toContain(
+      'flex min-w-0 basis-full flex-wrap items-center gap-2 justify-end min-[1360px]:basis-auto min-[1360px]:flex-nowrap'
+    );
   });
 });
