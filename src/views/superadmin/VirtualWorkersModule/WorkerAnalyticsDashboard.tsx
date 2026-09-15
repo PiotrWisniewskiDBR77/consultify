@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AnalyticsData {
   totalConversations: number;
   totalMessages: number;
@@ -154,7 +156,7 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
                 Public Anna Funnel
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Backend-backed summary for the current public landing Anna funnel.
+                {tlumaczPozaHookiem("superadmin.workerAnalytics.backendBackedSummaryForTheCurrentPublic", "Backend-backed summary for the current public landing Anna funnel.")}
               </p>
             </div>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -397,7 +399,7 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
       {data.conversationsPerDay.length > 0 && (
         <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-            Conversations per Day (last 30 days)
+            {tlumaczPozaHookiem("superadmin.workerAnalytics.conversationsPerDayLast30Days", "Conversations per Day (last 30 days)")}
           </h3>
           <div className="flex items-end gap-1 h-32">
             {data.conversationsPerDay
@@ -484,5 +486,5 @@ function formatEventMetadata(metadata: Record<string, unknown>): string {
 function formatTimestamp(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 }

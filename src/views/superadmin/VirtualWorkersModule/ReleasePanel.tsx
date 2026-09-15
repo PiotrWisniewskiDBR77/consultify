@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Release {
   id: string;
   profile_id: string | null;
@@ -133,7 +135,7 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({
       <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-base font-semibold text-slate-900 dark:text-white">Release Control</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Create governed release entries and activate a verified worker version.
+          {tlumaczPozaHookiem("superadmin.release.createGovernedReleaseEntriesAndActivateA", "Create governed release entries and activate a verified worker version.")}
         </p>
 
         {readiness && (
@@ -186,7 +188,7 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({
             onChange={(e) => setStatus(e.target.value)}
             className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
           >
-            <option value="draft">Draft</option>
+            <option value="draft">{tlumaczPozaHookiem("superadmin.release.draft", "Draft")}</option>
             <option value="ready">Ready</option>
           </select>
           <select
@@ -211,8 +213,7 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({
         </div>
 
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          `ready` releases require an active profile and a passed evaluation with dataset, results,
-          and score.
+          {tlumaczPozaHookiem("superadmin.release.readyReleasesRequireAnActiveProfileAnd", "`ready` releases require an active profile and a passed evaluation with dataset, results, and score.")}
         </p>
 
         {error && (
@@ -256,12 +257,12 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({
                   {item.release_type} release
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {new Date(item.created_at).toLocaleString()}
+                  {new Date(item.created_at).toLocaleString(localeListy())}
                   {item.notes ? ` · ${item.notes}` : ''}
                 </p>
                 {item.activated_at && (
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                    Activated {new Date(item.activated_at).toLocaleString()}
+                    Activated {new Date(item.activated_at).toLocaleString(localeListy())}
                   </p>
                 )}
               </div>
