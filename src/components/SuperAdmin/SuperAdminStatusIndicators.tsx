@@ -32,6 +32,7 @@ import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { Api } from '../../services/api';
 import { formatListDate, formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 // Types
 interface PlatformStats {
   timestamp: string;
@@ -437,7 +438,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         isOpen={openPanel === 'users'}
         onToggle={() => togglePanel('users')}
       >
-        <DetailRow label="Active Now" value={stats?.users.activeNow || 0} />
+        <DetailRow label={tlumaczPozaHookiem("superadmin.superAdminStatusIndicators.activeNow", "Active Now")} value={stats?.users.activeNow || 0} />
         <DetailRow label="Total Users" value={stats?.users.totalUsers || 0} />
         <DetailRow label="Organizations" value={stats?.users.totalOrgs || 0} />
         <DetailRow label="Today's Logins" value={stats?.users.todayLogins || 0} />
@@ -480,7 +481,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
           status={stats?.business.overdueInvoices ? 'critical' : 'ok'}
         />
         <DetailRow
-          label="Pending Feedback"
+          label={tlumaczPozaHookiem("superadmin.superAdminStatusIndicators.pendingFeedback", "Pending Feedback")}
           value={stats?.business.pendingFeedback || 0}
           status={(stats?.business.pendingFeedback || 0) > 5 ? 'warning' : 'ok'}
         />
@@ -546,7 +547,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         onToggle={() => togglePanel('security')}
       >
         <DetailRow
-          label="Failed Logins (1h)"
+          label={tlumaczPozaHookiem("superadmin.superAdminStatusIndicators.failedLogins1h", "Failed Logins (1h)")}
           value={stats?.security.failedLoginsLastHour || 0}
           status={(stats?.security.failedLoginsLastHour || 0) > 10 ? 'warning' : 'ok'}
         />
@@ -564,7 +565,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         {stats?.security.failedLoginsList && stats.security.failedLoginsList.length > 0 && (
           <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
             <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
-              Failed Logins
+              {tlumaczPozaHookiem("superadmin.superAdminStatusIndicators.failedLogins", "Failed Logins")}
             </div>
             {stats.security.failedLoginsList.slice(0, 5).map((l, i) => (
               <ListItem

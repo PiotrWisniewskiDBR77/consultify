@@ -26,6 +26,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface BillingStats {
   mrr: number;
   arr: number;
@@ -74,7 +75,7 @@ export const BillingOverviewPanel: React.FC = () => {
   }, [fetchStats]);
 
   const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
     }).format(cents / 100);
@@ -282,7 +283,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0"
               >
                 <span className="text-sm text-slate-600 dark:text-slate-500">
-                  {new Date(day.date).toLocaleDateString('en-US', {
+                  {new Date(day.date).toLocaleDateString(localeListy(), {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',

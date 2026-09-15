@@ -18,6 +18,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface OrgUsage {
   id: string;
   name: string;
@@ -128,7 +129,7 @@ export const UsageStatsPanel: React.FC = () => {
             <span className="text-sm text-slate-600 dark:text-slate-500">AI Calls</span>
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {totals.totalAiCalls.toLocaleString()}
+            {totals.totalAiCalls.toLocaleString(localeListy())}
           </div>
         </div>
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
@@ -205,7 +206,7 @@ export const UsageStatsPanel: React.FC = () => {
                     {org.userCount}
                   </td>
                   <td className="p-4 text-right text-slate-700 dark:text-slate-300">
-                    {org.aiCalls.toLocaleString()}
+                    {org.aiCalls.toLocaleString(localeListy())}
                   </td>
                   <td className="p-4 text-right text-slate-700 dark:text-slate-300">
                     {(org.tokensUsed / 1000).toFixed(1)}k
