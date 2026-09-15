@@ -7,7 +7,7 @@ const harness = vi.hoisted(() => {
   const navigate = vi.fn();
   const clearKickoff = vi.fn();
   const addChatMessage = vi.fn();
-  const startStream = vi.fn(async () => undefined);
+  const startStream = vi.fn(async (_prompt: string): Promise<void> => undefined);
   const featureFlags = new Map<string, boolean>();
   const appState: Record<string, unknown> = {
   currentStreamContent: '',

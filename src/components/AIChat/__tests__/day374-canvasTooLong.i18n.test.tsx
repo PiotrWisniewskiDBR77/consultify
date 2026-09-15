@@ -35,7 +35,7 @@ describe('day374 Canvas too-long Polish translation', () => {
     const result = await requestCanvasQuickAI({
       prompt: 'Skróć',
       selectedText: 'x'.repeat(CANVAS_AI_MESSAGE_MAX_LENGTH),
-      t: testI18n.t.bind(testI18n),
+      t: (key, defaultValue) => String(testI18n.t(key, { defaultValue })),
       language: 'pl',
     });
     expect(result).toEqual({ ok: false, reason: 'too_long', errorLine: polishTooLong });

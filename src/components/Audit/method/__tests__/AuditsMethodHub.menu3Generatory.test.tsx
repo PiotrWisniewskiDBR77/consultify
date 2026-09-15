@@ -103,6 +103,7 @@ const packs: AuditPackSummary[] = [
     sourceVersion: '2018',
     sourceType: 'LICENSED_STANDARD',
     verificationStatus: 'VERIFIED',
+    expertApprovedBy: null,
     publicationStatus: 'published',
     requiredRoles: [],
     criteriaCount: 42,
