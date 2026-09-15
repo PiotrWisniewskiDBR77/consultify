@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Request } from 'express';
 
@@ -43,7 +45,48 @@ describe('server payload localization', () => {
         { code: 'VALIDATION', error: 'Missing required decision fields: proposal_id' },
         request('pl')
       )
-    ).toEqual({ code: 'VALIDATION', error: 'Nie udało się wykonać operacji.' });
+    ).toEqual({ code: 'VALIDATION', error: 'brak wymaganych decision fields: proposal_id' });
+  });
+
+  it('changes every classified b sink for PL without collapsing domain details', () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(
+        path.resolve('docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json'),
+        'utf8'
+      )
+    ) as { entries: Array<{ classification: string; text: string }> };
+    const realSinks = manifest.entries.filter((entry) => entry.classification === 'b');
+    const localized = realSinks.map((entry) => localizeServerPayloadText(entry.text, 'pl') === entry.text
+      ? localizeServerPayload({ error: entry.text }, request('pl')) as { error: string }
+      : { error: localizeServerPayloadText(entry.text, 'pl') });
+    expect(realSinks).toHaveLength(1577);
+    expect(localized.filter((value, index) => value.error === realSinks[index].text)).toHaveLength(0);
+    expect(new Set(localized.map((value) => value.error)).size).toBeGreaterThan(1200);
+    expect(localized.some((value) => value.error === 'Nie udało się wykonać operacji.')).toBe(false);
+  });
+
+  it('keeps runtime:false source honest while translating both expanded OTP outcomes', () => {
+    expect(localizeServerPayloadText('Invalid code. 2 attempts remaining.', 'pl')).toBe(
+      'Nieprawidłowy kod. Pozostało prób: 2.'
+    );
+    expect(localizeServerPayloadText('Invalid code. Please request a new code.', 'pl')).toBe(
+      'Nieprawidłowy kod. Poproś o nowy kod.'
+    );
+  });
+
+  it('localizes the real Meeting executor HTTP 400 payload without changing status/code', () => {
+    const payload = {
+      success: false,
+      error: 'Meeting execution requires organizationId',
+      status: 400,
+      code: 'BAD_REQUEST',
+    };
+    expect(localizeServerPayload(payload, request('pl'))).toEqual({
+      success: false,
+      error: 'Wykonanie spotkania wymaga organizationId',
+      status: 400,
+      code: 'BAD_REQUEST',
+    });
   });
 
   it('preserves non-plain objects instead of changing their JSON contract', () => {

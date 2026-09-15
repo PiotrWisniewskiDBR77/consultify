@@ -12,6 +12,7 @@ import {
   analizujSerwerK8sZawartosc,
   analizujTwLiteraleZawartosc,
   jestKodemSerwerowymK8s,
+  wczytajZlokalizowaneKomunikatyK8s,
   wykryjAngielski,
 } from '../pomiar-jezyka.mjs';
 
@@ -168,12 +169,18 @@ describe('E2f-bis / K8spl i K11', () => {
     expect(analizujSerwerK8sZawartosc(kod)).toMatchObject({ K8sen: 1, K8spl: 0 });
   });
 
-  it('K8s pomija sanitowany Error, ale zachowuje operacyjny ValidationError', () => {
+  it('K8s zachowuje zarówno zwykły Error, jak i operacyjny ValidationError w uczciwym mianowniku', () => {
     const kod = [
       "throw new Error('Internal dependency was not found');",
       "throw new ValidationError('The requested field is invalid');",
     ].join('\n');
-    expect(analizujSerwerK8sZawartosc(kod)).toMatchObject({ K8sen: 1, K8spl: 0 });
+    expect(analizujSerwerK8sZawartosc(kod)).toMatchObject({ K8sen: 2, K8spl: 0 });
+    const localized = wczytajZlokalizowaneKomunikatyK8s();
+    expect(
+      localized.has(
+        "Invalid code. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Please request a new code.'}"
+      )
+    ).toBe(false);
   });
 
   it('K8s nie skleja dwóch apostrofowych literałów przez kolejne linie kodu', () => {

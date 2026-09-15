@@ -175,6 +175,22 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_13: readonly ServerPayloadMessage[] =
     "pl": "Przekroczono budżet AI: ${warning}"
   },
   {
+    "en": "Meeting execution requires organizationId",
+    "pl": "Wykonanie spotkania wymaga organizationId"
+  },
+  {
+    "en": "Meeting execution requires title and start_time",
+    "pl": "Wykonanie spotkania wymaga tytułu i start_time"
+  },
+  {
+    "en": "AI prompt step requires a prompt",
+    "pl": "Krok promptu AI wymaga promptu"
+  },
+  {
+    "en": "Unknown step type: ${step.type}",
+    "pl": "Nieznany typ kroku: ${step.type}"
+  },
+  {
     "en": "${alert.message}${alert.checks?.length ? ",
     "pl": "${alert.message}${alert.checks?.length ? ",
     "runtime": false

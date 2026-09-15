@@ -85,20 +85,52 @@ export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): s
   return value;
 }
 
-function isUntranslatedEnglishProse(value: string): boolean {
-  if (value.length < 6 || /^[A-Z0-9_.:-]+$/.test(value)) return false;
-  if (/[ąćęłńóśźż]/i.test(value)) return false;
-  return /\b(?:the|a|an|is|are|was|were|not|missing|required|failed|invalid|cannot|could|must|found|allowed|error|request|user|organization|project|report|task|operation)\b/i.test(
-    value
-  );
+const ERROR_PHRASE_TRANSLATIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\bmeeting execution\b/gi, 'wykonanie spotkania'],
+  [/\bsimulation engine\b/gi, 'silnik symulacji'],
+  [/\borganization id\b/gi, 'identyfikator organizacji'],
+  [/\borganizationId\b/g, 'organizationId'],
+  [/\bnot found\b/gi, 'nie znaleziono'],
+  [/\bis unavailable\b/gi, 'jest niedostępny'],
+  [/\bunavailable\b/gi, 'niedostępny'],
+  [/\bmissing required\b/gi, 'brak wymaganych'],
+  [/\brequires\b/gi, 'wymaga'],
+  [/\brequired\b/gi, 'wymagany'],
+  [/\bmust be\b/gi, 'musi być'],
+  [/\bcannot\b/gi, 'nie można'],
+  [/\bcould not\b/gi, 'nie udało się'],
+  [/\bfailed to\b/gi, 'nie udało się'],
+  [/\bfailed\b/gi, 'niepowodzenie'],
+  [/\binvalid\b/gi, 'nieprawidłowy'],
+  [/\bunknown\b/gi, 'nieznany'],
+  [/\btitle\b/gi, 'tytuł'],
+  [/\band\b/gi, 'i'],
+  [/\bstatus\b/gi, 'status'],
+  [/\btask\b/gi, 'zadanie'],
+  [/\bproject\b/gi, 'projekt'],
+  [/\breport\b/gi, 'raport'],
+  [/\buser\b/gi, 'użytkownik'],
+  [/\boperation\b/gi, 'operacja'],
+  [/\brequest\b/gi, 'żądanie'],
+  [/\bfield\b/gi, 'pole'],
+  [/\bvalue\b/gi, 'wartość'],
+  [/\btype\b/gi, 'typ'],
+];
+
+function localizeUncataloguedError(value: string): string {
+  let result = value;
+  for (const [pattern, replacement] of ERROR_PHRASE_TRANSLATIONS) {
+    result = result.replace(pattern, replacement);
+  }
+  // Preserve the full diagnostic when no safe lexical rule applies. The
+  // Polish label makes locale explicit without collapsing distinct domain
+  // errors into one lossy sentence; stable identifiers/placeholders survive.
+  return result === value ? `Błąd operacji: ${value}` : result;
 }
 
 export function localizeServerErrorField(value: string, locale: 'en' | 'pl'): string {
   const localized = localizeServerPayloadText(value, locale);
-  if (locale === 'pl' && localized === value && isUntranslatedEnglishProse(value)) {
-    return 'Nie udało się wykonać operacji.';
-  }
-  return localized;
+  return locale === 'pl' && localized === value ? localizeUncataloguedError(value) : localized;
 }
 
 function localizePayload(value: unknown, locale: 'en' | 'pl'): unknown {

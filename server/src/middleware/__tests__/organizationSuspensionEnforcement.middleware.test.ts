@@ -94,8 +94,8 @@ const mockDbGet = vi.fn(
     }
 
     if (text.includes('revoked_tokens')) return undefined;
-    if (text.includes('FROM user_preferences')) {
-      return first === 'profile-pl-user' ? ({ value: 'pl' } as never) : undefined;
+    if (text.includes('SELECT language FROM users')) {
+      return first === 'profile-pl-user' ? ({ language: 'pl' } as never) : undefined;
     }
     if (text.includes('SELECT role FROM users')) {
       const role = DB_USER_ROLE[first];
@@ -230,6 +230,10 @@ describe('DEC-91 organization suspension enforcement in auth middleware', () => 
 
     expect(result.nextCalled).toBe(true);
     expect(result.userLanguage).toBe('pl');
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT language FROM users'),
+      ['profile-pl-user']
+    );
   });
 
   it('refuses an API request from a member of a SUSPENDED organization', async () => {

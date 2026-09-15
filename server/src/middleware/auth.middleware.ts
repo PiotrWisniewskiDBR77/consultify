@@ -988,11 +988,11 @@ const attachUser = async (
 
   let profileLanguage: 'en' | 'pl' | undefined;
   try {
-    const preference = await dbGet<{ value?: unknown }>(
-      `SELECT value FROM user_preferences WHERE user_id = ? AND key = ? LIMIT 1`,
-      [decodedUserId, 'language']
+    const profile = await dbGet<{ language?: unknown }>(
+      `SELECT language FROM users WHERE id = ? LIMIT 1`,
+      [decodedUserId]
     );
-    const raw = typeof preference?.value === 'string' ? preference.value.replace(/^"|"$/g, '') : '';
+    const raw = typeof profile?.language === 'string' ? profile.language : '';
     if (/^pl(?:[-_]|$)/i.test(raw)) profileLanguage = 'pl';
     else if (/^en(?:[-_]|$)/i.test(raw)) profileLanguage = 'en';
   } catch {

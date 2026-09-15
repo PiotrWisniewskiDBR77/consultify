@@ -50,6 +50,7 @@ import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import url from 'node:url';
 import { execFileSync } from 'node:child_process';
+import ts from 'typescript';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -970,18 +971,33 @@ const K8S_POMIJANE = [
   /^server\/src\/database\//,
 ];
 
-function wczytajZlokalizowaneKomunikatyK8s() {
-  const dir = path.join(ROOT, 'server/src/i18n/serverPayloadMessages');
+function wczytajZlokalizowaneKomunikatyK8s(
+  dir = path.join(ROOT, 'server/src/i18n/serverPayloadMessages')
+) {
   if (!fs.existsSync(dir)) return new Set();
   const komunikaty = new Set();
   for (const nazwa of fs.readdirSync(dir).filter((plik) => /^batch\d+\.ts$/.test(plik))) {
     const tresc = fs.readFileSync(path.join(dir, nazwa), 'utf8');
-    const wz = /\{\s*["']?en["']?\s*:\s*("(?:[^"\\]|\\.)*")[\s\S]*?\}/g;
-    let m;
-    while ((m = wz.exec(tresc))) {
-      if (/\bruntime\s*:\s*false\b/.test(m[0])) continue;
-      komunikaty.add(JSON.parse(m[1]));
-    }
+    const source = ts.createSourceFile(nazwa, tresc, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const visit = (node) => {
+      if (ts.isObjectLiteralExpression(node)) {
+        let en = null;
+        let runtime = true;
+        for (const property of node.properties) {
+          if (!ts.isPropertyAssignment(property)) continue;
+          const key = ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)
+            ? property.name.text
+            : '';
+          if (key === 'en' && (ts.isStringLiteral(property.initializer) || ts.isNoSubstitutionTemplateLiteral(property.initializer))) {
+            en = property.initializer.text;
+          }
+          if (key === 'runtime' && property.initializer.kind === ts.SyntaxKind.FalseKeyword) runtime = false;
+        }
+        if (en !== null && runtime) komunikaty.add(en);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
   }
   return komunikaty;
 }
@@ -1674,4 +1690,5 @@ export {
   bezSlownikowDwujezycznych,
   analizujPromptyZawartosc,
   jestPlikiemPromptowym,
+  wczytajZlokalizowaneKomunikatyK8s,
 };
