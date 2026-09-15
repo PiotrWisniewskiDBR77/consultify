@@ -69,6 +69,13 @@ describe('W73 K2 SuperAdmin language debt', () => {
       'wybierz właściwych odbiorców'
     );
     expect(value('superadmin.businessMetrics.sUMRevenueCOUNTUsers')).toBe('{{formula}}');
+    expect(value('superadmin.organizations.pending')).toBe('Oczekująca');
+    expect(value('superadmin.enterpriseApiManagement.aPIRequestsAreRateLimitedBasedOn')).toContain(
+      'Limit liczby żądań API'
+    );
+    expect(value('superadmin.presentationTelemetry.noEventTypesRecordedInThisWindow')).toContain(
+      'nie odnotowano'
+    );
     expect(
       fs.readFileSync(
         path.join(repoRoot, 'src/views/superadmin/analytics/BusinessMetricsView.tsx'),

@@ -571,6 +571,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         ],
         render: (row: TableRow) => {
           const org = row as unknown as Organization;
+          const organizationStatus = String(org.status);
           const isEditing = editingOrgId === org.id;
           return isEditing ? (
             <select
@@ -629,14 +630,14 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             </select>
           ) : (
             <span className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}>
-              {org.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
-              {org.status === 'active'
+              {organizationStatus === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+              {organizationStatus === 'active'
                 ? tlumaczPozaHookiem('superadmin.organizations.active', 'Active')
-                : org.status === 'pending'
+                : organizationStatus === 'pending'
                   ? tlumaczPozaHookiem('superadmin.organizations.pending', 'Pending')
-                  : org.status === 'blocked'
+                  : organizationStatus === 'blocked'
                     ? tlumaczPozaHookiem('superadmin.organizations.blocked', 'Blocked')
-                    : org.status}
+                    : organizationStatus}
             </span>
           );
         },

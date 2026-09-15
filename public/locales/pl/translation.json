@@ -1504,7 +1504,7 @@
       "aPIKeyUsageCannotBeInspectedBecause": "Nie można sprawdzić użycia klucza API, ponieważ lista kluczy API nie została załadowana.",
       "buildPowerfulIntegrationsWithTheConsultifyREST": "Twórz zaawansowane integracje za pomocą Consultify REST API. Uzyskaj dostęp do projektów, ocen, raportów i nie tylko.",
       "allAPIRequestsRequireAuthenticationUsingAn": "Wszystkie żądania API wymagają uwierzytelnienia przy użyciu klucza API w nagłówku Authorization.",
-      "aPIRequestsAreRateLimitedBasedOn": "Żądania API są ograniczone szybkością w zależności od konfiguracji klucza."
+      "aPIRequestsAreRateLimitedBasedOn": "Limit liczby żądań API zależy od konfiguracji klucza."
     },
     "enterpriseAuditLog": {
       "comprehensiveActivityTrackingForComplianceAndSecurity": "Kompleksowe śledzenie aktywności pod kątem zgodności i bezpieczeństwa",
@@ -1747,7 +1747,7 @@
       "newValue": "Nowa wartość"
     },
     "organizations": {
-      "pending": "Oczekujące",
+      "pending": "Oczekująca",
       "manageOrganizationsSubscriptionsAndAccessRequests": "Zarządzaj organizacjami, subskrypcjami i żądaniami dostępu",
       "pendingOrganizationRequests": "Oczekujące żądania organizacji",
       "organization": "Organizacja",
@@ -1811,7 +1811,7 @@
       "loadingTelemetry": "Ładowanie danych telemetrycznych…",
       "countersBelowDefaultToZeroUntilThe": "Liczniki poniżej domyślnie mają wartość zerową do czasu przywrócenia działania zaplecza. Żadne dane nie zostały po cichu sfabrykowane.",
       "noTelemetryEventsInTheSelectedWindow": "Brak zdarzeń telemetrycznych w wybranym oknie.",
-      "noEventTypesRecordedInThisWindow": "W tym oknie nie są rejestrowane żadne typy zdarzeń.",
+      "noEventTypesRecordedInThisWindow": "W tym oknie nie odnotowano żadnych typów zdarzeń.",
       "readOnlyViewNoCountersAreWritten": "Widok tylko do odczytu. Na tym ekranie żadne liczniki nie są zapisywane ani modyfikowane — odśwież, naciskając"
     },
     "presentationTemplateGovernance": {
