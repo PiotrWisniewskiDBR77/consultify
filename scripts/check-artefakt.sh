@@ -221,6 +221,15 @@ if [ "$MODE" != "--update" ]; then
   fi
 fi
 
+# DEC-524: `Menu2AIButton` nie jest już wyjątkiem kolorystycznym AI w powłoce.
+# Strażnik jest celowo wąski: `FieldAIButton` i semantyczna treść AI mają osobny
+# kontrakt; tutaj pilnujemy dokładnie CTA Menu 2 wskazanego w decyzji właściciela.
+menu2_ai_source="src/components/shared/NModeLayout/NModeMenu2.tsx"
+if [ -f "$menu2_ai_source" ] && sed -n '/export const Menu2AIButton/,/^};/p' "$menu2_ai_source" | grep -q 'c-ai'; then
+  echo "✗ check-artefakt: Menu2AIButton używa c-ai; DEC-524 wymaga neutralnego CTA jak PracujZAI." >&2
+  fail=1
+fi
+
 # =====================================================================
 # CZĘŚĆ 2 — REGUŁY KART N (SPEC-N §5.2 / §5B). Raport domyślnie, blok z --strict.
 # =====================================================================

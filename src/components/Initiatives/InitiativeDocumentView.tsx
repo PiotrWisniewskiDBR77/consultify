@@ -178,7 +178,7 @@ import {
   type NModeSection,
   NModeSectionWrapper,
   // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
-  // nic nie jest solid). ETAP 1.2: AI Consultant to teraz Menu2AIButton (fiolet),
+  // nic nie jest solid). AI Consultant używa neutralnego Menu2AIButton (DEC-524),
   // a ToolbarSubtleButton odszedl razem z przyciskiem "Nowy" (akcje -> kebab).
   ToolbarGhostButton,
 } from '../shared/NModeLayout';
@@ -11930,7 +11930,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           // Trzy strefy narzucone przez wspolny `NModeMenu2`:
                           //   LEWA   Sekcje
                           //   SRODEK Edycja | Podglad (srodek GEOMETRYCZNY paska)
-                          //   PRAWA  kebab + Analizuj z AI (fiolet) skrajnie
+                          //   PRAWA  kebab + neutralne Analizuj z AI skrajnie
                           //
                           // ZDJETE (zgloszenie wlasciciela pkt 1 i 3):
                           //   - pigulka nawigacji "Zakres" (Menu3DropdownChip) —

@@ -19,8 +19,8 @@
  * komunikatem, a nie fałszywy sukces.
  *
  * ── KOLOR ────────────────────────────────────────────────────────────────────
- * Akcent AI = FIOLET (`violet-*`, przemapowany w tailwind.config.js:434 na HBS
- * Purple) — spójnie z `Menu2AIButton`. Reszta wyłącznie tokenami `c-*`
+ * Przycisk otwierający panel jest neutralny (DEC-524), spójnie z
+ * `Menu2AIButton` i `PracujZAI`. Wnętrze używa wyłącznie tokenów `c-*`
  * (powierzchnie, obramowania, tekst, sygnały danger/warning/success). ZAKAZ
  * rodziny `primary` (KAŻDY numer = Harvard Crimson) i tokenu akcentu brandowego
  * w powłoce artefaktów — bezpiecznik: `scripts/check-artefakt.sh`,

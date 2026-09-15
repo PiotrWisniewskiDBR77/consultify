@@ -9,7 +9,7 @@
  *      ŚRODEK — DOKŁADNY środek CAŁEGO paska (geometrycznie, nie środek
  *               wolnego miejsca): przełącznik «Edycja | Podgląd»,
  *      PRAWA  — opcjonalnie «How to / Baza wiedzy», a skrajnie po prawej
- *               «Analizuj z AI» w fioletowym stylu AI."
+ *               neutralne «Analizuj z AI»."
  *
  * DLACZEGO KOMPONENT, A NIE OPIS: sześć kart N budowało ten pasek sześć razy
  * ręcznie (<div> + własne przyciski) i każda inaczej — Sekcje raz po lewej, raz
@@ -26,14 +26,8 @@
  * ZAKAZY (CLAUDE.md pułapka nr 1 + skill consultify-artefakty):
  *   • zero rodziny crimson w powłoce (cała skala = czerwień brandowa),
  *   • fokus wyłącznie `c-focus`,
- *   • akcent AI = wyłącznie token `c-ai` (standard n-Type §4.6) — TEN SAM
- *     token, którego używa `AIFieldEnhancer` (przycisk AI przy polu) i
- *     `Callout` (wariant `purple`). ETAP 3 (2026-07-24) naprawił rozjazd: ten
- *     przycisk używał wcześniej surowych klas `violet-*` z tailwind.config.js,
- *     a ta skala jest w tym repo przemapowana na „HBS Purple" — INNY,
- *     bardziej stonowany fiolet niż `c-ai`. Efekt: „Analizuj z AI" w Menu 2 i
- *     przycisk AI przy polu renderowały się dwoma różnymi odcieniami fioletu,
- *     konsekwentnie w całym systemie AI,
+ *   • akcje AI w powłoce są neutralne (DEC-524), tak jak kanoniczny
+ *     `PracujZAI`; token `c-ai` pozostaje dla semantycznych treści AI poza CTA,
  *   • przycisk AI jest OUTLINE (tint), nie solid — solid/filled CTA rezerwuje
  *     SPEC-N §2.3 wyłącznie dla głównego slotu CTA w Menu 1.
  *
@@ -75,7 +69,7 @@ const BTN_BASE =
   'disabled:opacity-40 disabled:cursor-not-allowed ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
-// ── Przycisk AI (FIOLET) ─────────────────────────────────────────────────────
+// ── Przycisk AI (neutralny, DEC-524) ─────────────────────────────────────────
 
 export interface Menu2AIButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** true → spinner zamiast ikony iskierek */
@@ -86,10 +80,8 @@ export interface Menu2AIButtonProps extends React.ButtonHTMLAttributes<HTMLButto
 }
 
 /**
- * „Analizuj z AI" — JEDYNY dozwolony kolor AI w powłoce: token `c-ai`.
- * Outline/tint, nie solid (SPEC-N §2.3 + reguła R1 `check-artefakt.sh`).
- * Token, nie surowa skala `violet-*` (patrz komentarz pliku) — tak samo jak
- * `AIFieldEnhancer` (przycisk AI przy polu) i `Callout` (wariant `purple`).
+ * „Analizuj z AI" — neutralny jak `PracujZAI` (DEC-524). Stan spoczynkowy
+ * używa powierzchni i tekstu wtórnego, a hover wypełnia się neutralnie.
  */
 export const Menu2AIButton: React.FC<Menu2AIButtonProps> = ({
   busy = false,
@@ -107,7 +99,7 @@ export const Menu2AIButton: React.FC<Menu2AIButtonProps> = ({
       data-menu2-slot="ai"
       aria-label={ariaLabel ?? resolvedLabel}
       title={title ?? resolvedLabel}
-      className={`${BTN_BASE} border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 ${className}`}
+      className={`${BTN_BASE} border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text ${className}`}
       {...rest}
     >
       {busy ? (
@@ -255,7 +247,7 @@ export interface NModeMenu2Props {
   modeToggleDisabled?: boolean;
   /** PRAWA (opcjonalnie) — „How to" / „Baza wiedzy". */
   howToButton?: React.ReactNode;
-  /** PRAWA, SKRAJNIE — „Analizuj z AI" (fiolet). Użyj `Menu2AIButton`. */
+  /** PRAWA, SKRAJNIE — neutralne „Analizuj z AI". Użyj `Menu2AIButton`. */
   aiButton?: React.ReactNode;
   /** Primary task CTA. It is the only filled/white action in this compact row. */
   primaryButton?: React.ReactNode;
