@@ -1,18 +1,11 @@
 /**
  * @vitest-environment jsdom
  *
- * Odbiór 05.09 (05-ocena, defekt 3): zestaw kolumn listy ocen rozjeżdżał się
- * z zatwierdzonym obrazem (evidence/grafika/195-przelot-A/assessment-list__PO__light.png):
- *   obraz : NAZWA OCENY | JEDNOSTKA | STATUS | WYNIK | PEWNOŚĆ | WŁAŚCICIEL | AKTUALIZACJA
- *   żywo  : TYP | NAZWA | STATUS | POSTĘP | AUTOR | ZAKTUALIZOWANO
- * oraz `/assessment/drd` lądowało na „Bibliotece" (pięć metodyk) zamiast na
- * liście sesji DRD.
- *
- * RUNDA 3 (05.09): ostatnia różnica — kolumna JEDNOSTKA — zamknięta
- * dwuwarstwowo (server/migrations/20260905_assessment_business_unit.sql +
- * zwrócenie `businessUnit` w obu trasach listy). POSTĘP schodzi na jej miejsce
- * do pstryczka; mapowanie `completionPercent` na wiersz zostaje nietknięte
- * (pilnuje go AssessmentHub.processes-completion.test.tsx).
+ * D7 / DEC-513: the canonical Method Core Output has no business unit,
+ * aggregate score or confidence. Processes must not advertise those columns
+ * from a legacy project-id twin or fill them with em dashes. Progress remains
+ * available through the column picker because it has a canonical session
+ * source (covered by AssessmentHub.processes-completion.test.tsx).
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -124,7 +117,7 @@ function headerTexts(): string[] {
   );
 }
 
-describe('AssessmentHub — kolumny listy ocen wg zatwierdzonego obrazu', () => {
+describe('AssessmentHub — honest Processes columns after D7', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
@@ -137,7 +130,7 @@ describe('AssessmentHub — kolumny listy ocen wg zatwierdzonego obrazu', () => 
     apiMock.listAssessments.mockResolvedValue({ items: [SIRI_ROW, ADMA_ROW] });
   });
 
-  it('domyślnie pokazuje NAZWA OCENY / JEDNOSTKA / STATUS / WYNIK / PEWNOŚĆ / WŁAŚCICIEL / AKTUALIZACJA, a TYP i POSTĘP chowa do pstryczka', async () => {
+  it('omits BUSINESS UNIT / SCORE / CONFIDENCE when Method Core Output cannot supply them', async () => {
     render(
       <MemoryRouter initialEntries={['/assessment']}>
         <AssessmentHub />
@@ -147,55 +140,17 @@ describe('AssessmentHub — kolumny listy ocen wg zatwierdzonego obrazu', () => 
     await screen.findByText('SIRI — hala 2');
     const headers = headerTexts().join(' | ');
 
-    expect(headers).toContain('Nazwa oceny');
-    expect(headers).toContain('Jednostka');
-    expect(headers).toContain('Wynik');
-    expect(headers).toContain('Pewność');
-    expect(headers).toContain('Właściciel');
-    expect(headers).toContain('Aktualizacja');
-    // TYP i POSTĘP wychodzą z domyślnego zestawu (obraz ich nie ma) — zostają
-    // w pstryczku
-    expect(headers).not.toContain('Typ');
-    expect(headers).not.toContain('Postęp');
-    // stare etykiety zniknęły
-    expect(headers).not.toContain('Autor');
-    expect(headers).not.toContain('Zaktualizowano');
-
-    // JEDNOSTKA stoi na drugiej pozycji, jak na obrazie (za checkboxem
-    // zaznaczania, zaraz po NAZWIE OCENY)
-    const dataHeaders = headerTexts().filter((h) => h.length > 0);
-    expect(dataHeaders.indexOf('Jednostka')).toBe(dataHeaders.indexOf('Nazwa oceny') + 1);
-  });
-
-  it('rysuje realną jednostkę z pola `business_unit`, a jej brak jako „—"', async () => {
-    render(
-      <MemoryRouter initialEntries={['/assessment']}>
-        <AssessmentHub />
-      </MemoryRouter>
-    );
-
-    await screen.findByText('SIRI — hala 2');
-    // wiersz SIRI ma jednostkę…
-    expect(screen.getByText('Logistics BU')).toBeInTheDocument();
-    // …a ADMA jej nie ma — myślnik, nigdy atrapa ani pusta komórka
-    const admaRow = screen.getByText('ADMA — linia montażowa').closest('tr');
-    expect(admaRow).not.toBeNull();
-    expect(admaRow?.textContent).toContain('—');
-  });
-
-  it('pokazuje realny WYNIK i PEWNOŚĆ z kolumn bazy, a brak wartości jako „—"', async () => {
-    render(
-      <MemoryRouter initialEntries={['/assessment']}>
-        <AssessmentHub />
-      </MemoryRouter>
-    );
-
-    await screen.findByText('SIRI — hala 2');
-    expect(screen.getByText('3.4')).toBeInTheDocument();
-    expect(screen.getByText('72%')).toBeInTheDocument();
-    // wiersz SIRI nie ma ani wyniku, ani pewności — dwa myślniki, nie zera
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText('0.0')).not.toBeInTheDocument();
+    expect(headers).toContain('Assessment name');
+    expect(headers).toContain('Owner');
+    expect(headers).toContain('Update');
+    expect(headers).not.toMatch(/Business unit|Jednostka/);
+    expect(headers).not.toMatch(/Result|Wynik/);
+    expect(headers).not.toMatch(/Confidence|Pewność/);
+    expect(headers).not.toMatch(/Type|Typ/);
+    expect(headers).not.toMatch(/Progress|Postęp/);
+    expect(screen.queryByText('Logistics BU')).not.toBeInTheDocument();
+    expect(screen.queryByText('3.4')).not.toBeInTheDocument();
+    expect(screen.queryByText('72%')).not.toBeInTheDocument();
   });
 
   it('/assessment/drd wchodzi na listę sesji i zawęża ją do DRD', async () => {
