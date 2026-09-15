@@ -136,7 +136,7 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
     } else if ((selected.critical ?? 0) > 0) {
       pills.push({
         label: t('execution.managementTable.criticalCount', '{{count}} critical', {
-          count: selected.critical,
+          count: selected.critical ?? 0,
         }),
         tone: 'danger',
       });
@@ -144,7 +144,7 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
     if (selected.status === 'available' && (selected.warning ?? 0) > 0) {
       pills.push({
         label: t('execution.managementTable.warningCount', '{{count}} warning', {
-          count: selected.warning,
+          count: selected.warning ?? 0,
         }),
         tone: 'warning',
       });
