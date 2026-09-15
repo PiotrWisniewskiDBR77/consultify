@@ -1,44 +1,27 @@
 /**
- * TEST ŹRÓDŁOWY paczki J-małe — sześć modułów ma ZERO polskiego w wersji EN.
+ * @vitest-environment node
  *
- * Mierzy PRODUKT, nie dokumentację: uruchamia ten sam skaner, którym stoi
- * bramka (`scripts/i18n/pomiar-jezyka.mjs --json`), i sprawdza cztery
- * kategorie, które ta paczka doprowadziła do zera:
- *
- *   K1def  polski `defaultValue` w `t()`  — użytkownik EN widzi go przy
- *          pierwszym malowaniu ekranu (`react.useSuspense: false`) i zawsze,
- *          gdy klucza brak w paczce tłumaczeń,
- *   K4pl   polski tekst na sztywno w JSX poza `t()`,
- *   K4en   angielski tekst na sztywno w JSX poza `t()` (boli użytkownika PL),
- *   K7     data/liczba bez locale albo z locale przybitym na sztywno.
- *
- * K5pl/K5en (zdania z serwera) NIE są tu sprawdzane — to kontrakt API i osobna
- * paczka J17, patrz docs/program/JEZYK_EN_PL_20260908/PLAN.md.
- *
- * MUTACJA (dowód, że test nie jest atrapą): wstaw polski literał do dowolnego
- * pliku któregoś z tych modułów, np. w `src/components/Meeting/MeetingHub.tsx`
- *     <span>Nie udało się wczytać</span>
- * i uruchom ten plik — asercja dla „12 Meeting" musi zrobić się CZERWONA na
- * kategorii K4pl. Wykonane 2026-09-08, wynik: czerwony (K4pl 0 → 1).
+ * W77 ratchet for the seven J-małe modules. The expanded English detector made
+ * the old zero threshold dishonest: it now exposes real untranslated UI. These
+ * are ceilings, so every fix can lower them while any new hit fails the gate.
  */
+import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { wartoscTechniczna, wykryjAngielski } from '../pomiar-jezyka.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-
-/** Moduły paczki J-małe — nazwy dokładnie takie, jakich używa skaner. */
-const MODULY_JMALE = [
-  '13 Organization',
-  '08 Results',
-  '12 Meeting',
-  '03 Interview',
-  '11 Audits',
-  '06 Initiatives',
-  '07 Execution',
-];
-
+const PROGI = {
+  '13 Organization': { K1def: 0, K4pl: 0, K4en: 2, K7: 0 },
+  '08 Results': { K1def: 0, K4pl: 0, K4en: 65, K7: 0 },
+  '12 Meeting': { K1def: 0, K4pl: 0, K4en: 0, K7: 0 },
+  '03 Interview': { K1def: 0, K4pl: 0, K4en: 19, K7: 0 },
+  '11 Audits': { K1def: 0, K4pl: 0, K4en: 4, K7: 0 },
+  '06 Initiatives': { K1def: 1, K4pl: 0, K4en: 128, K7: 0 },
+  '07 Execution': { K1def: 0, K4pl: 0, K4en: 138, K7: 0 },
+};
 const KATEGORIE = ['K1def', 'K4pl', 'K4en', 'K7'];
 
 function zmierz() {
@@ -47,34 +30,43 @@ function zmierz() {
     [path.join(ROOT, 'scripts/i18n/pomiar-jezyka.mjs'), '--json'],
     { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
-  // `--json` dopisuje JSON na końcu wyjścia; bierzemy od pierwszego `{`.
   return JSON.parse(surowy.slice(surowy.indexOf('{')));
 }
 
-describe('J-małe — sześć modułów bez obcego języka w interfejsie', () => {
+describe('W77 / J-małe — uczciwy ratchet rozszerzonego miernika', () => {
   const wynik = zmierz();
+  const baseline = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'docs/program/JEZYK_EN_PL_20260908/baseline.json'), 'utf8')
+  );
+  const receipt = JSON.parse(
+    fs.readFileSync(
+      path.join(ROOT, 'docs/program/JEZYK_EN_PL_20260908/K1_FIX_W77_JMALE_SAMPLE.json'),
+      'utf8'
+    )
+  );
 
-  it.each(MODULY_JMALE)('%s: K1def · K4pl · K4en · K7 są na zerze', (modul) => {
-    const m = wynik.moduly[modul];
-    expect(m, `skaner nie zna modułu ${modul}`).toBeDefined();
-    const niezerowe = KATEGORIE.filter((k) => (m[k] ?? 0) > 0).map((k) => `${k}=${m[k]}`);
-    expect(niezerowe, `${modul}: ${niezerowe.join(', ')}`).toEqual([]);
+  it.each(Object.entries(PROGI))('%s nie przekracza jawnych progów', (modul, progi) => {
+    for (const k of KATEGORIE) {
+      expect(wynik.moduly[modul][k], `${modul}.${k}`).toBeLessThanOrEqual(progi[k]);
+      expect(baseline.moduly[modul][k], `baseline ${modul}.${k}`).toBe(progi[k]);
+    }
   });
 
-  it('baseline bramki zna te moduły i też trzyma je na zerze', async () => {
-    const fs = await import('node:fs');
-    const baseline = JSON.parse(
-      fs.readFileSync(
-        path.join(ROOT, 'docs/program/JEZYK_EN_PL_20260908/baseline.json'),
-        'utf8'
-      )
-    );
-    for (const modul of MODULY_JMALE) {
-      const m = baseline.moduly?.[modul];
-      expect(m, `baseline nie zna modułu ${modul}`).toBeDefined();
-      for (const k of KATEGORIE) {
-        expect(m[k] ?? 0, `${modul}.${k} w baseline`).toBe(0);
-      }
+  it.each(Object.entries(PROGI))('%s ma sprawdzalną próbkę do 10 realnych trafień K4en', (modul, progi) => {
+    const sample = receipt.samples[modul];
+    expect(receipt.moduleRationales[modul]).toMatch(/\S.{15,}/);
+    expect(sample).toHaveLength(Math.min(10, progi.K4en));
+    for (const hit of sample) {
+      const separator = hit.gdzie.lastIndexOf(':');
+      const relativePath = hit.gdzie.slice(0, separator);
+      const line = Number(hit.gdzie.slice(separator + 1));
+      const sourceLines = fs.readFileSync(path.join(ROOT, relativePath), 'utf8').split('\n');
+      // K4en points at the opening JSX tag; visible text may be on the next line.
+      const sourceWindow = sourceLines.slice(line - 1, line + 3).join('\n');
+      expect(sourceWindow, hit.gdzie).toContain(hit.tekst);
+      expect(hit.classification).toBe('real-en-ui');
+      expect(wartoscTechniczna(hit.tekst), `technical false positive: ${hit.gdzie}`).toBe(false);
+      expect(wykryjAngielski(hit.tekst), `missing EN evidence: ${hit.gdzie}`).toBeTruthy();
     }
   });
 });

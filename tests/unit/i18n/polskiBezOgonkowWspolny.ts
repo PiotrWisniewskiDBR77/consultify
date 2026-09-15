@@ -20,6 +20,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(__dirname, '../../..');
+const WYJATKI = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'scripts/i18n/pomiar-jezyka.wyjatki.json'), 'utf8')
+) as {
+  nazwyWlasne: string[];
+  nazwyWlasneFrazy?: string[];
+  pomijaneWartosci: string[];
+};
+const NAZWY_WLASNE = new Set(WYJATKI.nazwyWlasne.map((s) => s.toLowerCase()));
+const FRAZY_WLASNE = (WYJATKI.nazwyWlasneFrazy || []).map(
+  (f) => new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+);
+const POMIJANE_WARTOSCI = WYJATKI.pomijaneWartosci.map((r) => new RegExp(r));
 
 const MAPA_OGONKOW: Record<string, string> = {
   ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
@@ -63,13 +75,18 @@ function splaszcz(obj: Record<string, unknown>, out: string[] = []): string[] {
   return out;
 }
 function slowaZTekstu(tekst: string): string[] {
-  return String(tekst)
+  let oczyszczony = String(tekst);
+  for (const fraza of FRAZY_WLASNE) oczyszczony = oczyszczony.replace(fraza, ' ');
+  return oczyszczony
     .replace(/\{\{[^}]*\}\}/g, ' ')
     .replace(/\$\{[^}]*\}/g, ' ')
     .replace(/<[^>]*>/g, ' ')
     .split(/[^A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]+/)
     .filter(Boolean)
-    .map((w) => w.toLowerCase());
+    .map((w) => w.toLowerCase())
+    // Identycznie jak `pomiar-jezyka.mjs`: i/w/z, angielskie I oraz
+    // jednoliterowe skróty nie mogą samodzielnie dowodzić języka.
+    .filter((w) => w.length >= 2 && !NAZWY_WLASNE.has(w));
 }
 
 function zbudujSlowniki(): { auto: Map<string, string>; en: Set<string> } {
@@ -111,6 +128,7 @@ function jestPolskimSlowem(slowoBezOgonkow: string): boolean {
 export function czyPolskiBezOgonkow(tekst: string): boolean {
   const s = String(tekst).trim();
   if (s.length < 3) return false;
+  if (POMIJANE_WARTOSCI.some((wzorzec) => wzorzec.test(s))) return false;
   for (const w of slowaZTekstu(s)) {
     if (jestPolskimSlowem(zdejmijOgonki(w))) return true;
   }

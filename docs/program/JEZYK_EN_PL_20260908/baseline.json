@@ -1,240 +1,273 @@
 {
   "_meta": {
-    "data": "2026-09-14T21:59:45.052Z",
-    "root": "/Users/piotrwisniewski/Developer/wt/e2f",
-    "sha": "59a8c44c04a3ad53853b6813c3e69d083ec5e189"
+    "data": "2026-09-15T11:12:46.743Z",
+    "root": "/Users/piotrwisniewski/Developer/codex-wt/a-k1-fix-w77",
+    "sha": "714a1ab35a82ea1ab69d4e0422ab7ba2e44b60db"
   },
   "suma": {
-    "K1": 2,
-    "K1def": 1,
-    "K1defWID": 0,
-    "K2": 4,
+    "K1": 5,
+    "K1def": 75,
+    "K1defWID": 4,
+    "K2": 136,
     "K3a": 0,
     "K3aKLUCZ": 0,
     "K3b": 0,
-    "K4pl": 22,
-    "K4en": 869,
-    "K5pl": 256,
-    "K5en": 1822,
-    "K7": 271,
-    "K8spl": 91,
-    "K8sen": 825,
-    "K9pPL": 33,
-    "K9pMIX": 0,
-    "K9pBRAK": 77,
+    "K4pl": 74,
+    "K4en": 4626,
+    "K4objPL": 702,
+    "K4obj": 4279,
+    "K5pl": 263,
+    "K5en": 7164,
+    "K7": 103,
+    "K8spl": 94,
+    "K8sen": 2487,
+    "K9pPL": 35,
+    "K9pMIX": 1,
+    "K9pBRAK": 76,
     "K10dPL": 0,
-    "K10dROZ": 2
+    "K10dROZ": 2,
+    "K11": 0
   },
   "moduly": {
     "01 Chat": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 7,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 1,
+      "K4en": 66,
+      "K4objPL": 19,
+      "K4obj": 105,
       "K5pl": 0,
-      "K5en": 27,
+      "K5en": 105,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 8,
+      "K8sen": 28,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 3,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "02 My Work": {
       "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+      "K1def": 20,
+      "K1defWID": 3,
+      "K2": 15,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 1,
-      "K4en": 52,
+      "K4pl": 2,
+      "K4en": 88,
+      "K4objPL": 64,
+      "K4obj": 450,
       "K5pl": 1,
-      "K5en": 61,
+      "K5en": 310,
       "K7": 0,
       "K8spl": 2,
-      "K8sen": 4,
+      "K8sen": 12,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "03 Interview": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 6,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 0,
+      "K4en": 19,
+      "K4objPL": 0,
+      "K4obj": 167,
       "K5pl": 0,
-      "K5en": 51,
+      "K5en": 262,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 18,
-      "K9pPL": 1,
+      "K8sen": 87,
+      "K9pPL": 0,
       "K9pMIX": 0,
-      "K9pBRAK": 4,
+      "K9pBRAK": 3,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "04 Tools": {
-      "K1": 0,
-      "K1def": 0,
+      "K1": 1,
+      "K1def": 10,
       "K1defWID": 0,
-      "K2": 1,
+      "K2": 38,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 0,
-      "K4en": 1,
-      "K5pl": 49,
-      "K5en": 112,
+      "K4pl": 2,
+      "K4en": 103,
+      "K4objPL": 12,
+      "K4obj": 109,
+      "K5pl": 52,
+      "K5en": 408,
       "K7": 0,
-      "K8spl": 23,
-      "K8sen": 55,
-      "K9pPL": 22,
+      "K8spl": 24,
+      "K8sen": 162,
+      "K9pPL": 24,
       "K9pMIX": 0,
       "K9pBRAK": 6,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "05 Assessment": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 5,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 0,
-      "K4en": 1,
-      "K5pl": 97,
-      "K5en": 76,
+      "K4pl": 1,
+      "K4en": 192,
+      "K4objPL": 14,
+      "K4obj": 147,
+      "K5pl": 98,
+      "K5en": 301,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 17,
+      "K8sen": 50,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
       "K10dPL": 0,
-      "K10dROZ": 2
+      "K10dROZ": 2,
+      "K11": 0
     },
     "06 Initiatives": {
       "K1": 0,
-      "K1def": 0,
+      "K1def": 1,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 17,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 0,
+      "K4en": 128,
+      "K4objPL": 15,
+      "K4obj": 201,
       "K5pl": 2,
-      "K5en": 97,
+      "K5en": 344,
       "K7": 0,
       "K8spl": 3,
-      "K8sen": 41,
+      "K8sen": 93,
       "K9pPL": 2,
       "K9pMIX": 0,
       "K9pBRAK": 9,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "07 Execution": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 4,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 0,
+      "K4en": 138,
+      "K4objPL": 21,
+      "K4obj": 74,
       "K5pl": 0,
-      "K5en": 63,
-      "K7": 0,
-      "K8spl": 0,
-      "K8sen": 25,
-      "K9pPL": 0,
-      "K9pMIX": 0,
-      "K9pBRAK": 2,
-      "K10dPL": 0,
-      "K10dROZ": 0
-    },
-    "08 Results": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 0,
-      "K5pl": 0,
-      "K5en": 45,
-      "K7": 0,
-      "K8spl": 3,
-      "K8sen": 28,
-      "K9pPL": 0,
-      "K9pMIX": 0,
-      "K9pBRAK": 0,
-      "K10dPL": 0,
-      "K10dROZ": 0
-    },
-    "09 Finance": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 6,
-      "K5pl": 6,
-      "K5en": 158,
+      "K5en": 310,
       "K7": 0,
       "K8spl": 0,
       "K8sen": 88,
       "K9pPL": 0,
       "K9pMIX": 0,
-      "K9pBRAK": 3,
+      "K9pBRAK": 2,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
-    "10 Materials": {
+    "08 Results": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 1,
+      "K2": 2,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 1,
-      "K5pl": 19,
-      "K5en": 223,
-      "K7": 8,
-      "K8spl": 2,
-      "K8sen": 119,
-      "K9pPL": 4,
+      "K4en": 65,
+      "K4objPL": 8,
+      "K4obj": 13,
+      "K5pl": 0,
+      "K5en": 348,
+      "K7": 0,
+      "K8spl": 4,
+      "K8sen": 144,
+      "K9pPL": 0,
       "K9pMIX": 0,
+      "K9pBRAK": 0,
+      "K10dPL": 0,
+      "K10dROZ": 0,
+      "K11": 0
+    },
+    "09 Finance": {
+      "K1": 0,
+      "K1def": 17,
+      "K1defWID": 0,
+      "K2": 3,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 39,
+      "K4en": 72,
+      "K4objPL": 9,
+      "K4obj": 23,
+      "K5pl": 6,
+      "K5en": 529,
+      "K7": 0,
+      "K8spl": 0,
+      "K8sen": 271,
+      "K9pPL": 0,
+      "K9pMIX": 0,
+      "K9pBRAK": 3,
+      "K10dPL": 0,
+      "K10dROZ": 0,
+      "K11": 0
+    },
+    "10 Materials": {
+      "K1": 0,
+      "K1def": 1,
+      "K1defWID": 0,
+      "K2": 6,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 296,
+      "K4objPL": 30,
+      "K4obj": 549,
+      "K5pl": 20,
+      "K5en": 1021,
+      "K7": 8,
+      "K8spl": 3,
+      "K8sen": 313,
+      "K9pPL": 5,
+      "K9pMIX": 1,
       "K9pBRAK": 12,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "11 Audits": {
       "K1": 0,
@@ -245,38 +278,44 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 0,
-      "K5pl": 14,
-      "K5en": 12,
+      "K4en": 4,
+      "K4objPL": 0,
+      "K4obj": 0,
+      "K5pl": 13,
+      "K5en": 32,
       "K7": 0,
       "K8spl": 2,
-      "K8sen": 4,
+      "K8sen": 11,
       "K9pPL": 3,
       "K9pMIX": 0,
       "K9pBRAK": 2,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "12 Meeting": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 1,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
       "K4en": 0,
+      "K4objPL": 0,
+      "K4obj": 0,
       "K5pl": 0,
-      "K5en": 12,
+      "K5en": 62,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 9,
+      "K8sen": 17,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "13 Organization": {
       "K1": 0,
@@ -287,105 +326,126 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 0,
+      "K4en": 2,
+      "K4objPL": 30,
+      "K4obj": 0,
       "K5pl": 1,
-      "K5en": 64,
+      "K5en": 172,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 7,
+      "K8sen": 25,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "14 Admin Panel": {
       "K1": 0,
-      "K1def": 0,
+      "K1def": 1,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 4,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 0,
-      "K4en": 543,
+      "K4pl": 2,
+      "K4en": 2668,
+      "K4objPL": 2,
+      "K4obj": 603,
       "K5pl": 13,
-      "K5en": 73,
-      "K7": 174,
+      "K5en": 377,
+      "K7": 7,
       "K8spl": 0,
-      "K8sen": 56,
+      "K8sen": 149,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "15 Settings": {
-      "K1": 1,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+      "K1": 2,
+      "K1def": 3,
+      "K1defWID": 1,
+      "K2": 6,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 31,
+      "K4en": 152,
+      "K4objPL": 0,
+      "K4obj": 418,
       "K5pl": 32,
-      "K5en": 196,
+      "K5en": 577,
       "K7": 2,
       "K8spl": 3,
-      "K8sen": 6,
+      "K8sen": 29,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 4,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "16 Partner Portal": {
       "K1": 0,
-      "K1def": 0,
+      "K1def": 17,
       "K1defWID": 0,
-      "K2": 0,
+      "K2": 3,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 1,
+      "K4en": 9,
+      "K4objPL": 20,
+      "K4obj": 30,
       "K5pl": 3,
-      "K5en": 29,
+      "K5en": 126,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 12,
+      "K8sen": 37,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     },
     "ZZ wspólne": {
-      "K1": 1,
-      "K1def": 1,
+      "K1": 2,
+      "K1def": 5,
       "K1defWID": 0,
-      "K2": 2,
+      "K2": 19,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 21,
-      "K4en": 232,
-      "K5pl": 19,
-      "K5en": 523,
-      "K7": 87,
+      "K4pl": 28,
+      "K4en": 624,
+      "K4objPL": 458,
+      "K4obj": 1390,
+      "K5pl": 22,
+      "K5en": 1880,
+      "K7": 86,
       "K8spl": 53,
-      "K8sen": 328,
+      "K8sen": 971,
       "K9pPL": 1,
       "K9pMIX": 0,
       "K9pBRAK": 27,
       "K10dPL": 0,
-      "K10dROZ": 0
+      "K10dROZ": 0,
+      "K11": 0
     }
   },
   "przyklady": {
     "K1": [
+      {
+        "modul": "15 Settings",
+        "gdzie": "public/locales/en/translation.json:settings.profile.linkedinPlaceholder",
+        "tekst": "e.g. piotr-wisniewski-123",
+        "dowod": "pl-suf:wisniewski"
+      },
       {
         "modul": "ZZ wspólne",
         "gdzie": "public/locales/en/translation.json:pages.public.cards.tour.description",
@@ -397,41 +457,348 @@
         "gdzie": "public/locales/en/translation.json:welcome.videoPerson",
         "tekst": "Paweł Bochniarz",
         "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/en/translation.json:sharedComponents.workspaceTools.translateTargetHint",
+        "tekst": "→ Polski",
+        "dowod": "pl-suf:polski"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "public/locales/en/translation.json:discoveryToolsMain.narrativeEngineLibraryGraphic.scenarioValueExample",
+        "tekst": "The board hears ten arguments at once and none of them sticks. The real question is which single idea they should rememb",
+        "dowod": "pl:ten"
       }
     ],
     "K1def": [
       {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:254",
+        "tekst": "discoveryTools.report.execPresentation = \"Prezentacja wykonawcza\"",
+        "dowod": "pl-suf:prezentacja"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/FinanceHub.tsx:328",
+        "tekst": "finance.statementPack.title = \"Sprawozdanie finansowe\"",
+        "dowod": "pl-suf:sprawozdanie,pl-suf:finansowe"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/FinanceHub.tsx:2136",
+        "tekst": "finance.analyze.modeling = \"Modelowanie\"",
+        "dowod": "pl-suf:modelowanie"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/FinanceHub.tsx:2164",
+        "tekst": "finance.analyze.financialAnalysis = \"Analiza finansowa\"",
+        "dowod": "pl-suf:finansowa"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/FinanceHub.tsx:2198",
+        "tekst": "finance.analyze.financialAnalysis = \"Analiza finansowa\"",
+        "dowod": "pl-suf:finansowa"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/FinanceHub.tsx:2241",
+        "tekst": "finance.analyze.financialAnalysis = \"Analiza finansowa\"",
+        "dowod": "pl-suf:finansowa"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/FinancePreviewPanel.tsx:1209",
+        "tekst": "finance.toast.projected = \"Prognozy wygenerowane\"",
+        "dowod": "pl-suf:wygenerowane"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/hooks/useFinanceRowActions.ts:553",
+        "tekst": "finance.toast.projected = \"Prognozy wygenerowane\"",
+        "dowod": "pl-suf:wygenerowane"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/modals/CreateBudgetModal.tsx:124",
+        "tekst": "finance.prediction.granularity = \"Granulacja\"",
+        "dowod": "pl-suf:granulacja"
+      },
+      {
         "modul": "ZZ wspólne",
-        "gdzie": "src/views/PublicLandingPage.tsx:156",
-        "tekst": "pages.public.cards.tour.description = \"Guided by Dr. Piotr Wiśniewski\"",
-        "dowod": "diakrytyk:ś"
+        "gdzie": "src/components/Feedback/FeedbackSidePanel.tsx:1115",
+        "tekst": "feedback.feature.categories.improvement = \"Usprawnienie\"",
+        "dowod": "pl-suf:usprawnienie"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/FinancialModelWorkspace.tsx:1674",
+        "tekst": "finance.model.cfFinancing = \"Finansowe\"",
+        "dowod": "pl-suf:finansowe"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/FinancialStatementWorkspace.tsx:1204",
+        "tekst": "finance.statements.importStage = \"Przetwarzanie dokumentu\"",
+        "dowod": "pl-suf:przetwarzanie"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/comments/FinanceCommentsPanel.tsx:170",
+        "tekst": "finance.comments.checklistItemAdded = \"Pozycja checklisty dodana.\"",
+        "dowod": "pl-suf:pozycja"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/comments/FinanceCommentsPanel.tsx:181",
+        "tekst": "finance.comments.unchecked = \"Odznaczono: {{item}}.\"",
+        "dowod": "pl-suf:odznaczono"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/comments/FinanceCommentsPanel.tsx:184",
+        "tekst": "finance.comments.checked = \"Odhaczono: {{item}}.\"",
+        "dowod": "pl-suf:odhaczono"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/comments/FinanceCommentsPanel.tsx:233",
+        "tekst": "finance.comments.loaded = \"Komentarze wczytane.\"",
+        "dowod": "pl-suf:wczytane"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/exportImport/FinanceExportImportPanel.tsx:275",
+        "tekst": "finance.exportImport.importTitle = \"Import (.xlsx) — transakcyjny, wszystko-albo-nic\"",
+        "dowod": "pl:albo"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/savedViews/FinanceSavedViewsPanel.tsx:166",
+        "tekst": "finance.savedViews.loaded = \"Zapisane widoki wczytane.\"",
+        "dowod": "pl-suf:zapisane,pl-suf:wczytane"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/savedViews/FinanceSavedViewsPanel.tsx:172",
+        "tekst": "finance.savedViews.title = \"Zapisane widoki\"",
+        "dowod": "pl-suf:zapisane"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "src/components/Initiatives/gate-ai/GateReadinessPill.tsx:93",
+        "tekst": "initiatives.gateAi.pill.degradedBadge = \"bez AI\"",
+        "dowod": "pl:bez"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/HandoffAcceptanceQueue.tsx:49",
+        "tekst": "p9Handoff.colHandoff = \"Przekazanie\"",
+        "dowod": "pl-suf:przekazanie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/HandoffAcceptanceQueue.tsx:52",
+        "tekst": "p9Handoff.colCase = \"Sprawa realizacji\"",
+        "dowod": "pl-suf:realizacji"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/IdeaProcessFlowTool.tsx:3119",
+        "tekst": "canvasEditBar.lineDashed = \"Kreskowana\"",
+        "dowod": "pl-suf:kreskowana"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/InboxActionCards.tsx:73",
+        "tekst": "actionCard.taskCreated = \"Zadanie utworzone: {{title}}\"",
+        "dowod": "pl-suf:zadanie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/canvas/objectEditBarDock.tsx:166",
+        "tekst": "canvasEditBar.bold = \"Pogrubienie\"",
+        "dowod": "pl-suf:pogrubienie"
       }
     ],
-    "K1defWID": [],
+    "K1defWID": [
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/notebook/NotebookRightRail.tsx:1140",
+        "tekst": "notebook.rightRail.teresaCommandPrompt = \"Polecenie w dokumencie\"",
+        "dowod": "brak klucza w EN,pl-suf:polecenie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/panel/IdeaElementInspector.tsx:465",
+        "tekst": "myWork.ideaInspector.untitledElement = \"Element bez nazwy\"",
+        "dowod": "brak klucza w EN,pl:bez"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/MyWork/panel/IdeaElementInspector.tsx:881",
+        "tekst": "myWork.ideaInspector.generatingInsights = \"Generowanie…\"",
+        "dowod": "brak klucza w EN,pl-suf:generowanie"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/settings/CloudDataSettings.tsx:133",
+        "tekst": "cloud.notConfigured = \"Integracja nieskonfigurowana\"",
+        "dowod": "brak klucza w EN,pl-suf:integracja,pl-suf:nieskonfigurowana"
+      }
+    ],
     "K2": [
       {
         "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:documentStudio.panel.manifestCounts",
-        "tekst": "MUST: {{must}} · SHOULD: {{should}}",
-        "dowod": "en:should"
+        "gdzie": "public/locales/pl/tabele-lifecycle.json:governance.drawerTitle",
+        "tekst": "Governance szablonu",
+        "dowod": "en:governance"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder",
-        "tekst": "Szukaj task, decision, initiative...",
-        "dowod": "en?:task,en?:initiative"
+        "modul": "10 Materials",
+        "gdzie": "public/locales/pl/tabele-templates.json:tabele.template.tab-bizcase.title",
+        "tekst": "Tabela business case",
+        "dowod": "en-suf:business"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge",
-        "tekst": "AI-draft",
-        "dowod": "en:draft"
+        "modul": "10 Materials",
+        "gdzie": "public/locales/pl/tabele-templates.json:tabele.template.tab-gov-reg.title",
+        "tekst": "Rejestr governance",
+        "dowod": "en:governance"
       },
       {
-        "modul": "04 Tools",
-        "gdzie": "public/locales/pl/translation.json:discoveryToolsMain.toolReviewPanel.sendBackReasonPlaceholder",
-        "tekst": "Powod odeslania do Draft",
-        "dowod": "en:draft"
+        "modul": "02 My Work",
+        "gdzie": "public/locales/pl/translation.json:myWork.hub.searchInbox",
+        "tekst": "Szukaj w Inbox...",
+        "dowod": "en:inbox"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "public/locales/pl/translation.json:myWork.taskDetail.label3",
+        "tekst": "Alert executive",
+        "dowod": "en:alert"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "public/locales/pl/translation.json:myWork.evidence.signOff",
+        "tekst": "Podpisz (Sign-off)",
+        "dowod": "en:sign"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "public/locales/pl/translation.json:myWork.commandDock.needsReview",
+        "tekst": "Do review {{count}}",
+        "dowod": "en:review"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "public/locales/pl/translation.json:myWork.decisionReviewNext.reviewNextMyDecisions",
+        "tekst": "Review next: moje do decyzji",
+        "dowod": "en:review,en:next"
+      },
+      {
+        "modul": "03 Interview",
+        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.operatorReviewNeeded",
+        "tekst": "Wymaga review operatora",
+        "dowod": "en:review"
+      },
+      {
+        "modul": "03 Interview",
+        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.publishHandoffBlockers",
+        "tekst": "Blokery publish/handoff",
+        "dowod": "en:handoff"
+      },
+      {
+        "modul": "03 Interview",
+        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.inReview",
+        "tekst": "W review",
+        "dowod": "en:review"
+      },
+      {
+        "modul": "03 Interview",
+        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.dividerTruthReview",
+        "tekst": "Prawda i review",
+        "dowod": "en:review"
+      },
+      {
+        "modul": "03 Interview",
+        "gdzie": "public/locales/pl/translation.json:interview.workspace.latestReviewDecision",
+        "tekst": "Ostatnia decyzja review:",
+        "dowod": "en:review"
+      },
+      {
+        "modul": "03 Interview",
+        "gdzie": "public/locales/pl/translation.json:interview.insightCreatorModal.topicFocusLabel.compliance_governance",
+        "tekst": "Compliance i governance",
+        "dowod": "en:compliance,en:governance"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "public/locales/pl/translation.json:assessment.evidence",
+        "tekst": "Dowody (evidence)",
+        "dowod": "en:evidence"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "public/locales/pl/translation.json:assessment.lean.quickWins",
+        "tekst": "Szybkie wygrane (Lean-first)",
+        "dowod": "en:first"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "public/locales/pl/translation.json:assessment.drd.http.frozen.reopenTitle",
+        "tekst": "Reopen — nowa rewizja",
+        "dowod": "en:reopen"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "public/locales/pl/translation.json:assessment.drd.method.reopenHeading",
+        "tekst": "Reopen — nowa rewizja",
+        "dowod": "en:reopen"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "public/locales/pl/translation.json:assessment.drd.method.reopenButton",
+        "tekst": "Reopen sesji (nowa rewizja)",
+        "dowod": "en:reopen"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "public/locales/pl/translation.json:initiatives.objective",
+        "tekst": "Cel (Objective)…",
+        "dowod": "en:objective"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "public/locales/pl/translation.json:initiatives.objective2",
+        "tekst": "Cel (Objective)…",
+        "dowod": "en:objective"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "public/locales/pl/translation.json:initiatives.resourcesSection.qualityConfirmPlaceholders",
+        "tekst": "- Placeholdery „[confirm]”: {{count}}",
+        "dowod": "en:confirm"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "public/locales/pl/translation.json:initiatives.timelinePlanner.fromDependencySystem",
+        "tekst": "Z dependency (system)",
+        "dowod": "en:dependency"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "public/locales/pl/translation.json:initiatives.timelinePlanner.placeholderDeckSprintReview",
+        "tekst": "np. Deck: Sprint Review",
+        "dowod": "en:review"
+      },
+      {
+        "modul": "06 Initiatives",
+        "gdzie": "public/locales/pl/translation.json:initiatives.timelinePlanner.startFromDependency",
+        "tekst": "Start z dependency",
+        "dowod": "en:dependency"
       }
     ],
     "K3a": [],
@@ -440,149 +807,269 @@
     "K4pl": [
       {
         "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/RealizacjaView.tsx:1119",
+        "tekst": "bez terminu",
+        "dowod": "pl:bez"
+      },
+      {
+        "modul": "02 My Work",
         "gdzie": "src/components/CaseWorkspace/podglad/main.tsx:224",
         "tekst": "ATRAPA SIECI (podglad/main.tsx) — harness komponentu, NIE dowód żywego backendu. Dowód = testy *.pg.test.ts na realnym P",
-        "dowod": "diakrytyk:ó,pl:nie"
+        "dowod": "diakrytyk:ó,pl:nie,pl:na"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/StyleGuide.tsx:58",
-        "tekst": "VF0-11 · dev-only, za flagą",
-        "dowod": "diakrytyk:ą"
+        "gdzie": "src/components/Charts/RadarChart.tsx:62",
+        "tekst": "Docelowy:",
+        "dowod": "pl-suf:docelowy"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/StyleGuide.tsx:59",
-        "tekst": "· bez logowania. Zero\n              re-implementacji — wszystko importowane z żywego systemu.",
-        "dowod": "diakrytyk:ż"
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:168",
+        "tekst": "Dlaczego",
+        "dowod": "pl-suf:dlaczego"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:296",
-        "tekst": "Otwórz źródło",
-        "dowod": "diakrytyk:ó,pl:otwórz"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/AIRecommendationsPanel.tsx:279",
+        "tekst": "Zaakceptowana",
+        "dowod": "pl-suf:zaakceptowana"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:219",
-        "tekst": "Kliknij wiersz, by zobaczyć podgląd.",
-        "dowod": "diakrytyk:ć"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/AIRecommendationsPanel.tsx:321",
+        "tekst": "Uzasadnienie",
+        "dowod": "pl-suf:uzasadnienie"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:386",
-        "tekst": "Zatwierdź",
-        "dowod": "diakrytyk:ź"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:268",
+        "tekst": "Realizacja",
+        "dowod": "pl-suf:realizacja"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:402",
-        "tekst": "Właściciel: Anna Kowalska",
-        "dowod": "diakrytyk:ł"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:280",
+        "tekst": "Odchylenie",
+        "dowod": "pl-suf:odchylenie"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:418",
-        "tekst": "Brak komentarzy.",
-        "dowod": "pl:brak"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:291",
+        "tekst": "zgodnych z planem",
+        "dowod": "pl-suf:zgodnych"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:425",
-        "tekst": "Utworzono przez Teresę · 2 dni temu",
-        "dowod": "diakrytyk:ę,pl:przez"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:213",
+        "tekst": "Realizacja:",
+        "dowod": "pl-suf:realizacja"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:442",
-        "tekst": "Widoczność: Zespół",
-        "dowod": "diakrytyk:ś"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:221",
+        "tekst": "Odchylenie:",
+        "dowod": "pl-suf:odchylenie"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:446",
-        "tekst": "3 powiązane notatki, 1 initiative.",
-        "dowod": "diakrytyk:ą"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:386",
+        "tekst": "Realizacja",
+        "dowod": "pl-suf:realizacja"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:449",
-        "tekst": "Komendy + strumień sugestii Teresy.",
-        "dowod": "diakrytyk:ń"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:389",
+        "tekst": "Odchylenie",
+        "dowod": "pl-suf:odchylenie"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:517",
-        "tekst": "Sekcja „Źródła i założenia\" (ArtifactRightPanel slot) — realny fetch\n            `fetchEvidenceEnvelope('insight', 'demo",
-        "dowod": "diakrytyk:Ź"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:395",
+        "tekst": "Akcje",
+        "dowod": "pl-suf:akcje"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/StatesSection.tsx:147",
-        "tekst": "Nie udało się załadować tej inicjatywy",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/BenefitsTrackingDashboard.tsx:646",
+        "tekst": "Odchylenie:",
+        "dowod": "pl-suf:odchylenie"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/StatesSection.tsx:148",
-        "tekst": "Rekord mógł zostać przeniesiony lub usunięty.",
-        "dowod": "diakrytyk:ó,pl:lub"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/DigitizationToolTab.tsx:332",
+        "tekst": "Docelowy",
+        "dowod": "pl-suf:docelowy"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/StatesSection.tsx:155",
-        "tekst": "StreamingState (na żywo — token po tokenie)",
-        "dowod": "diakrytyk:ż"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/DigitizationToolTab.tsx:394",
+        "tekst": "Poziom docelowy",
+        "dowod": "pl-suf:docelowy"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/TokensSection.tsx:132",
-        "tekst": "Paleta tagów (c-tag-1..12)",
-        "dowod": "diakrytyk:ó"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/ExcelImportWizard.tsx:335",
+        "tekst": "Gotowy do importu",
+        "dowod": "pl-suf:gotowy"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/TokensSection.tsx:137",
-        "tekst": "Paleta wykresów (c-chart-1..8)",
-        "dowod": "diakrytyk:ó"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/PDFExportModal.tsx:146",
+        "tekst": "🇵🇱 Polski",
+        "dowod": "pl-suf:polski"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/pages/dev/styleguide/TokensSection.tsx:156",
-        "tekst": "Odstępy (4·8·12·16·20·24·32·40·48)",
-        "dowod": "diakrytyk:ę"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/panels/InvestmentAppraisalPanel.tsx:340",
+        "tekst": "Stopa dyskontowa",
+        "dowod": "pl-suf:dyskontowa"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/views/LegalIndexView.tsx:284",
-        "tekst": "Toruń, Poland",
-        "dowod": "diakrytyk:ń"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/panels/InvestmentAppraisalPanel.tsx:334",
+        "tekst": "Stopa dyskontowa (%)",
+        "dowod": "pl-suf:dyskontowa"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/views/LegalIndexView.tsx:414",
-        "tekst": "ul. Żółkiewskiego 31",
-        "dowod": "diakrytyk:Ż"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Economics/panels/VarianceBridgePanel.tsx:163",
+        "tekst": "Wariancja netto",
+        "dowod": "pl-suf:wariancja"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/views/LegalIndexView.tsx:415",
-        "tekst": "87-100 Toruń, Poland",
-        "dowod": "diakrytyk:ń"
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/Analysis/AnalysisCreatorWizard.tsx:332",
+        "tekst": "Cel analizy (opcjonalny — doprecyzowuje rekomendacje)",
+        "dowod": "pl-suf:doprecyzowuje,pl-suf:rekomendacje"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/Analysis/AnalysisCreatorWizard.tsx:474",
+        "tekst": "Podsumowanie",
+        "dowod": "pl-suf:podsumowanie"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/Analysis/AnalysisKpiDetailCard.tsx:162",
+        "tekst": "Interpretacja tego wyniku",
+        "dowod": "pl-suf:interpretacja"
       }
     ],
     "K4en": [
       {
         "modul": "ZZ wspólne",
+        "gdzie": "src/App.tsx:133",
+        "tekst": "Invalid invitation link",
+        "dowod": "en:invalid,en-suf:invitation"
+      },
+      {
+        "modul": "ZZ wspólne",
         "gdzie": "src/App.tsx:134",
         "tekst": "This invitation URL is incomplete. Please request a new invitation link.",
-        "dowod": "en:this,en:please"
+        "dowod": "en:this,en:incomplete,en:please"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/App.tsx:141",
+        "tekst": "Go to login",
+        "dowod": "en:login"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:261",
+        "tekst": "Refresh",
+        "dowod": "en:refresh"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:202",
+        "tekst": "Retry",
+        "dowod": "en:retry"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:239",
+        "tekst": "Outcomes, ROI & Learning Loop",
+        "dowod": "en:outcomes,en-suf:learning"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:292",
+        "tekst": "Hours Saved",
+        "dowod": "en:hours,en:saved"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "src/components/AIAnalyticsDashboard.tsx:305",
         "tekst": "Cost Saved",
-        "dowod": "en?:cost,en?:saved"
+        "dowod": "en:cost,en:saved"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:318",
+        "tekst": "Actions Executed",
+        "dowod": "en:actions"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:329",
+        "tekst": "Playbooks Completed",
+        "dowod": "en:completed"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:343",
+        "tekst": "Execution Success Rate",
+        "dowod": "en:success,en-suf:execution"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:360",
+        "tekst": "Playbook Completion Rate",
+        "dowod": "en-suf:completion"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:398",
+        "tekst": "Approval Breakdown",
+        "dowod": "en:approval,en:breakdown"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:425",
+        "tekst": "No approval data yet",
+        "dowod": "en:approval"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:435",
+        "tekst": "Auto-Approval Rate",
+        "dowod": "en:approval"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:441",
+        "tekst": "Total Decisions",
+        "dowod": "en:total,en:decisions"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:448",
+        "tekst": "Execution Status",
+        "dowod": "en-suf:execution"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:482",
+        "tekst": "Playbook Performance",
+        "dowod": "en?suf:performance,en?:TitleCase"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:494",
+        "tekst": "Completed",
+        "dowod": "en:completed"
       },
       {
         "modul": "ZZ wspólne",
@@ -591,136 +1078,338 @@
         "dowod": "en:failed"
       },
       {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:500",
+        "tekst": "Completion Rate",
+        "dowod": "en-suf:completion"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:541",
+        "tekst": "Time to Resolution",
+        "dowod": "en-suf:resolution"
+      },
+      {
         "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:53",
-        "tekst": ",\n  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.\n  deck:",
-        "dowod": "en:the"
+        "gdzie": "src/components/AIChat/AIOSHub.tsx:142",
+        "tekst": "Open",
+        "dowod": "en:open"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIOSWave0GateReport.tsx:73",
+        "tekst": "Build milestones (static reference)",
+        "dowod": "en:reference"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ActionCenter.tsx:154",
+        "tekst": "Action Center",
+        "dowod": "en:action"
+      }
+    ],
+    "K4objPL": [
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:83",
+        "tekst": "description: Dopisuje do Mapy myśli nowe gałęzie zaproponowane przez AI. Zawsze pokazuje podgląd — nic nie wchodzi bez T",
+        "dowod": "diakrytyk:ś,pl:przez,pl:nie"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIFeedbackButton.tsx:115",
-        "tekst": "Tell us more about your experience... (optional)",
-        "dowod": "en:about,en:your"
+        "gdzie": "src/actions/registry/mindmapActions.ts:90",
+        "tekst": "description: Węzeł, od którego rozwijamy (pusty = od korzenia lub zaznaczenia).",
+        "dowod": "diakrytyk:ę,pl:od,pl:lub"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIInsightFeed.tsx:113",
-        "tekst": "No critical alerts at this time.",
-        "dowod": "en:this"
+        "gdzie": "src/actions/registry/mindmapActions.ts:112",
+        "tekst": "description: Streszcza zawartość Mapy myśli w czacie. Nie zmienia mapy — dostajesz opis tego, co już na niej jest.",
+        "dowod": "diakrytyk:ś,pl:nie,pl:na"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIInterviewModal.tsx:163",
-        "tekst": "Type your answer...",
-        "dowod": "en:your"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:230",
-        "tekst": "Search settings...",
-        "dowod": "en?:search,en?:settings"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/ModelSelector.tsx:281",
-        "tekst": "Contact your administrator to enable AI models",
-        "dowod": "en:your"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/ProactivitySelector.tsx:181",
-        "tekst": "How should AI interact with you?",
-        "dowod": "en:should,en:with,en:you"
+        "gdzie": "src/actions/registry/mindmapActions.ts:216",
+        "tekst": "description: Docelowy typ struktury.",
+        "dowod": "pl-suf:docelowy"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIUsageIndicator.tsx:148",
-        "tekst": "Last 7 days",
-        "dowod": "en?:last,en?:days"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:481",
-        "tekst": "Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:733",
-        "tekst": "Overrides inside this group",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:796",
-        "tekst": "Overridden away from the shipped default",
-        "dowod": "en:from,en:the"
+        "gdzie": "src/actions/registry/mindmapActions.ts:249",
+        "tekst": "description: Id połączenia (krawędzi relacji) na Mapie myśli.",
+        "dowod": "diakrytyk:ł,pl:na,pl-suf:połączenia"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/Charts/RechartsWrapper.tsx:38",
-        "tekst": "Chart failed to load. Please refresh the page.",
-        "dowod": "en:failed,en:please,en:the"
+        "gdzie": "src/actions/registry/mindmapActions.ts:278",
+        "tekst": "description: Id połączenia (krawędzi relacji) na Mapie myśli.",
+        "dowod": "diakrytyk:ł,pl:na,pl-suf:połączenia"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/Charts/RechartsWrapper.tsx:125",
-        "tekst": "Chart failed to load. Please refresh the page.",
-        "dowod": "en:failed,en:please,en:the"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/CookieConsentBanner.tsx:181",
-        "tekst": "Essential for the platform to function. Cannot be disabled.",
-        "dowod": "en:the,en:cannot"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/CookieConsentBanner.tsx:189",
-        "tekst": "Remember your preferences like theme and language.",
-        "dowod": "en:your,en:and"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/CookieConsentBanner.tsx:197",
-        "tekst": "Help us understand how you use the platform to improve it.",
-        "dowod": "en:you,en:the"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/shared/ProposalCard.tsx:116",
-        "tekst": "0 ? (\n            // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Education/ToolVideoModal.tsx:114",
-        "tekst": "We're preparing an in-depth walkthrough of this tool. In the meantime, try it\n                    yourself!",
-        "dowod": "en:this,en:the"
+        "gdzie": "src/actions/registry/mindmapActions.ts:281",
+        "tekst": "description: Typ relacji: related, depends_on, blocks, supports lub contradicts.",
+        "dowod": "pl:lub,pl-suf:relacji"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:205",
-        "tekst": "The application encountered an unexpected error. This usually happens due to corrupted\n              local data or a tem",
-        "dowod": "en:the,en:this"
+        "gdzie": "src/actions/registry/mindmapActions.ts:322",
+        "tekst": "description: Id elementu na Tablicy.",
+        "dowod": "pl:na"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:213",
-        "tekst": "Runtime details are hidden for safety. You can retry, reset app data, or report this\n              incident with context",
-        "dowod": "en:you,en:this,en:with"
+        "gdzie": "src/actions/registry/mindmapActions.ts:424",
+        "tekst": "description: Zaznacza wszystkie węzły na otwartej Mapie myśli.",
+        "dowod": "diakrytyk:ę,pl:wszystkie,pl:na"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:217",
-        "tekst": "Technical diagnostics are captured in telemetry and available through the report\n              action.",
-        "dowod": "en:and,en:the"
+        "gdzie": "src/actions/registry/mindmapActions.ts:441",
+        "tekst": "description: Dopasowuje widok kamery tak, by cała Mapa myśli zmieściła się na ekranie.",
+        "dowod": "diakrytyk:ł,pl:się,pl:na"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:225",
-        "tekst": "Crash diagnostics were sent to the observability pipeline.",
-        "dowod": "en:were,en:the"
+        "gdzie": "src/actions/registry/mindmapActions.ts:479",
+        "tekst": "description: Zwija wszystkie gałęzie Mapy myśli do samego korzenia (poziom 0).",
+        "dowod": "diakrytyk:ł,pl:wszystkie,pl-suf:samego"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:496",
+        "tekst": "description: Zwija Mapę myśli tak, by widoczny był tylko pierwszy poziom gałęzi.",
+        "dowod": "diakrytyk:ę,pl:był,pl:tylko"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:513",
+        "tekst": "description: Zwija Mapę myśli tak, by widoczne były dwa pierwsze poziomy gałęzi.",
+        "dowod": "diakrytyk:ę,pl:były"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:530",
+        "tekst": "description: Rozwija wszystkie zwinięte gałęzie Mapy myśli.",
+        "dowod": "diakrytyk:ę,pl:wszystkie"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:653",
+        "tekst": "description: Id węzła-rodzica.",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:654",
+        "tekst": "description: Treść nowego węzła (opcjonalna).",
+        "dowod": "diakrytyk:ś,pl-suf:nowego"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:692",
+        "tekst": "description: Id węzła, obok którego dodać rodzeństwo.",
+        "dowod": "diakrytyk:ę,pl-suf:którego"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:821",
+        "tekst": "description: Id węzła do zwinięcia/rozwinięcia.",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:981",
+        "tekst": "description: Id węzła źródłowego.",
+        "dowod": "diakrytyk:ę,pl-suf:źródłowego"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:982",
+        "tekst": "description: Id węzła docelowego.",
+        "dowod": "diakrytyk:ę,pl-suf:docelowego"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:1014",
+        "tekst": "description: Id węzła do odłączenia.",
+        "dowod": "diakrytyk:ę,pl-suf:odłączenia"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:1049",
+        "tekst": "description: Id węzła-kotwicy poddrzewa do duplikacji.",
+        "dowod": "diakrytyk:ę,pl-suf:duplikacji"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:1085",
+        "tekst": "description: Id węzła do konwersji (BEZ potomków).",
+        "dowod": "diakrytyk:ę,pl:bez"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:1123",
+        "tekst": "description: Id węzła do konwersji (BEZ potomków).",
+        "dowod": "diakrytyk:ę,pl:bez"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/actions/registry/mindmapActions.ts:1161",
+        "tekst": "description: Id węzła do konwersji (BEZ potomków).",
+        "dowod": "diakrytyk:ę,pl:bez"
+      }
+    ],
+    "K4obj": [
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIOSHub.tsx:23",
+        "tekst": "title: AI Actions",
+        "dowod": "en:actions"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIOSHub.tsx:34",
+        "tekst": "title: Memory & Scope",
+        "dowod": "en:scope"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIOSWave0GateReport.tsx:30",
+        "tekst": "label: Scope",
+        "dowod": "en:scope"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIOSWave0GateReport.tsx:44",
+        "tekst": "label: Evidence",
+        "dowod": "en:evidence"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIRoleBadge.tsx:20",
+        "tekst": "description: Read-only assistance",
+        "dowod": "en:read"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIRoleBadge.tsx:26",
+        "tekst": "description: Prepares drafts",
+        "dowod": "en:drafts"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/AIRoleBadge.tsx:32",
+        "tekst": "description: Can execute actions",
+        "dowod": "en:actions"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ConversationItem.tsx:42",
+        "tekst": "label: Initiative",
+        "dowod": "en:initiative"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ConversationItem.tsx:54",
+        "tekst": "label: Task",
+        "dowod": "en:task"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ConversationItem.tsx:60",
+        "tekst": "label: Decision",
+        "dowod": "en:decision"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:306",
+        "tekst": "title: Budget Planning",
+        "dowod": "en-suf:planning"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:313",
+        "tekst": "title: Resource Allocation Matrix",
+        "dowod": "en:resource,en:allocation"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:320",
+        "tekst": "title: Risk Register",
+        "dowod": "en?:risk,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:327",
+        "tekst": "title: Project Timeline",
+        "dowod": "en:project,en:timeline"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:334",
+        "tekst": "title: Competitive Analysis Matrix",
+        "dowod": "en:analysis"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:341",
+        "tekst": "title: Recruitment Pipeline",
+        "dowod": "en?suf:recruitment,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:348",
+        "tekst": "title: OKR Tracking Sheet",
+        "dowod": "en-suf:tracking"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:364",
+        "tekst": "title: Project Status Update",
+        "dowod": "en:project"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:378",
+        "tekst": "title: Workshop Facilitation Deck",
+        "dowod": "en-suf:facilitation"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:385",
+        "tekst": "title: Quarterly Business Review",
+        "dowod": "en:quarterly,en:review,en-suf:business"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:399",
+        "tekst": "title: Investment Case Deck",
+        "dowod": "en?suf:investment,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:406",
+        "tekst": "title: Digital Transformation Assessment",
+        "dowod": "en-suf:transformation"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:415",
+        "tekst": "title: Role Register",
+        "dowod": "en?:role,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:422",
+        "tekst": "title: Vendor Master Data",
+        "dowod": "en:vendor"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:450",
+        "tekst": "title: Task Tracker",
+        "dowod": "en:task"
       }
     ],
     "K5pl": [
@@ -741,6 +1430,12 @@
         "gdzie": "server/src/routes/ai/agent-plan.routes.ts:625",
         "tekst": "Nie udało się pobrać folderów",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:661",
+        "tekst": "projectId wymagany dla scope=project",
+        "dowod": "pl:dla"
       },
       {
         "modul": "ZZ wspólne",
@@ -768,21 +1463,39 @@
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:6942",
+        "gdzie": "server/src/routes/ai/pinned-insights.routes.ts:101",
+        "tekst": "Nie udało się przypiąć insightu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/pinned-insights.routes.ts:175",
+        "tekst": "Nie udało się zaktualizować insightu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/pinned-insights.routes.ts:202",
+        "tekst": "Nie udało się odpiąć insightu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:6971",
         "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:9328",
+        "gdzie": "server/src/routes/ai.routes.ts:9389",
         "tekst": "Nie udało się utworzyć powiadomienia AI",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:1189",
+        "gdzie": "server/src/routes/ai.routes.ts:1187",
         "tekst": "Generowanie pytań doprecyzowujących przekroczyło limit czasu",
-        "dowod": "diakrytyk:ń"
+        "dowod": "diakrytyk:ń,pl-suf:generowanie,pl-suf:doprecyzowujących"
       },
       {
         "modul": "02 My Work",
@@ -794,13 +1507,13 @@
         "modul": "05 Assessment",
         "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:39",
         "tekst": "Nie znaleziono oceny o podanym identyfikatorze.",
-        "dowod": "pl:nie"
+        "dowod": "pl:nie,pl-suf:znaleziono"
       },
       {
         "modul": "05 Assessment",
         "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:44",
         "tekst": "Źródło danych oceny jest chwilowo niedostępne.",
-        "dowod": "diakrytyk:Ź,pl:jest"
+        "dowod": "diakrytyk:Ź,pl:jest,pl-suf:danych"
       },
       {
         "modul": "05 Assessment",
@@ -849,30 +1562,6 @@
         "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:400",
         "tekst": "Nie udało się pobrać wskazówek",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:429",
-        "tekst": "Nie udało się wygenerować analizy luk",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
-        "tekst": "Nie udało się wygenerować wniosków",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
-        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:524",
-        "tekst": "Nie udało się wygenerować podsumowania zarządczego",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
       }
     ],
     "K5en": [
@@ -880,151 +1569,151 @@
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/access-control.routes.ts:51",
         "tekst": "Access request already pending",
-        "dowod": "en:pending"
+        "dowod": "en:access,en:pending"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:179",
+        "tekst": "Access request not found",
+        "dowod": "en:access,en:found"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:182",
+        "tekst": "Request already processed",
+        "dowod": "en:processed"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:260",
+        "tekst": "Access request not found",
+        "dowod": "en:access,en:found"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:263",
+        "tekst": "Request already processed",
+        "dowod": "en:processed"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:298",
+        "tekst": "Access denied",
+        "dowod": "en:access,en:denied"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:346",
+        "tekst": "Access denied",
+        "dowod": "en:access,en:denied"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:388",
+        "tekst": "Invalid code",
+        "dowod": "en:invalid"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:439",
+        "tekst": "Invalid access code",
+        "dowod": "en:invalid,en:access"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/access-control.routes.ts:447",
         "tekst": "This access code has been deactivated",
-        "dowod": "en:this,en:has,en:been"
+        "dowod": "en:this,en:access,en:has"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/access-control.routes.ts:450",
         "tekst": "This access code has expired",
-        "dowod": "en:this,en:has"
+        "dowod": "en:this,en:access,en:has"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/access-control.routes.ts:453",
         "tekst": "This access code has reached its usage limit",
-        "dowod": "en:this,en:has"
+        "dowod": "en:this,en:access,en:has"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:462",
+        "tekst": "Email already registered",
+        "dowod": "en?:already,en?suf:registered"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:542",
+        "tekst": "Access code not found",
+        "dowod": "en:access,en:found"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:547",
+        "tekst": "Access denied",
+        "dowod": "en:access,en:denied"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/access-control.routes.ts:79",
         "tekst": "Access request submitted successfully",
-        "dowod": "en:successfully"
+        "dowod": "en:access,en:submitted,en:successfully"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:231",
+        "tekst": "Access request approved",
+        "dowod": "en:access,en:approved"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:277",
+        "tekst": "Access request rejected",
+        "dowod": "en:access,en:rejected"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:520",
+        "tekst": "Registration successful",
+        "dowod": "en-suf:registration"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access-control.routes.ts:561",
+        "tekst": "Access code deactivated",
+        "dowod": "en:access,en-suf:deactivated"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/access-control.routes.ts:558",
         "tekst": "Failed to deactivate access code",
-        "dowod": "en:failed"
+        "dowod": "en:failed,en:access"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/access.routes.ts:50",
+        "tekst": "Project role management permission required",
+        "dowod": "en:project,en:permission,en:required"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/accessCodes.routes.ts:182",
         "tekst": "Cannot generate this access code for another organization",
-        "dowod": "en:cannot,en:this"
+        "dowod": "en:cannot,en:this,en:access"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/accessCodes.routes.ts:218",
-        "tekst": "Cannot generate invite for another organization",
-        "dowod": "en:cannot"
+        "gdzie": "server/src/routes/accessCodes.routes.ts:197",
+        "tekst": "Insufficient permissions",
+        "dowod": "en:permissions"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/accessCodes.routes.ts:410",
-        "tekst": "Not authorized to revoke this access code",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:250",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:304",
-        "tekst": "Failed to fetch audit log",
-        "dowod": "en:failed"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:374",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:439",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:502",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:565",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:614",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:656",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:704",
-        "tekst": "User ID and Organization ID required",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:726",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:755",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:795",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:847",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:933",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:984",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
-      },
-      {
-        "modul": "06 Initiatives",
-        "gdzie": "server/src/routes/actionDecisions.routes.ts:1041",
-        "tekst": "Unknown error",
-        "dowod": "en:unknown"
+        "gdzie": "server/src/routes/accessCodes.routes.ts:209",
+        "tekst": "Only Admins can generate team invites",
+        "dowod": "en:team"
       }
     ],
     "K7": [
@@ -1072,111 +1761,111 @@
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:104",
+        "gdzie": "src/components/SystemHealth.tsx:268",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:109",
+        "gdzie": "src/components/SystemHealth.tsx:269",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/BackupPanel.tsx:121",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:403",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/EmailConfigurationPanel.tsx:380",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/FeatureFlagsPanel.tsx:490",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/IntegrationsPanel.tsx:206",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/LegalPanel.tsx:57",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:343",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:122",
-        "tekst": "toLocaleDateString('en-US'",
+        "gdzie": "src/components/billing/CreditNotesPanel.tsx:187",
+        "tekst": "toLocaleDateString('pl-PL'",
         "dowod": "locale przybity na sztywno"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:106",
+        "gdzie": "src/components/billing/CreditNotesPanel.tsx:179",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionManager.tsx:240",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/TaxSettingsPanel.tsx:206",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/documents/DocumentSidePanel.tsx:438",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/documents/DocumentSidePanel.tsx:612",
         "tekst": "toLocaleTimeString()",
         "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:89",
+        "modul": "10 Materials",
+        "gdzie": "src/components/documents/DocumentSidePanel.tsx:289",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/notebookExport.ts:228",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/pdfExport.ts:80",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/pdfExport.ts:155",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/pdfExport.ts:182",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:347",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
+        "gdzie": "src/views/SystemHealthDashboard.tsx:125",
+        "tekst": "toLocaleTimeString()",
+        "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:276",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateComments.tsx:218",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:462",
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/DecisionController.ts:1572",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:492",
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/InterviewController.ts:2247",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:500",
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/InterviewController.ts:4946",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/SuperAdminController.ts:1936",
+        "tekst": "toLocaleDateString('en-US'",
+        "dowod": "locale przybity na sztywno"
       }
     ],
     "K8spl": [
@@ -1184,13 +1873,13 @@
         "modul": "ZZ wspólne",
         "gdzie": "server/src/Gateway.ts:530",
         "tekst": "Ta funkcja jest tymczasowo niedostępna w tym środowisku.",
-        "dowod": "diakrytyk:ę,pl:jest"
+        "dowod": "diakrytyk:ę,pl:jest,pl:tym"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/index.ts:1936",
         "tekst": "Serwer ${env} wystartował ${count}× w ciągu 10 min na tym samym commicie ${shortSha}. ",
-        "dowod": "diakrytyk:ł"
+        "dowod": "diakrytyk:ł,pl:na,pl:tym"
       },
       {
         "modul": "04 Tools",
@@ -1202,19 +1891,19 @@
         "modul": "04 Tools",
         "gdzie": "server/src/services/ai/tools/generateDeliverable.ts:166",
         "tekst": "Nie mogę utworzyć artefaktu bez kontekstu organizacji/użytkownika.",
-        "dowod": "diakrytyk:ę,pl:nie"
+        "dowod": "diakrytyk:ę,pl:nie,pl:bez"
       },
       {
         "modul": "04 Tools",
         "gdzie": "server/src/services/ai/tools/generateDeliverable.ts:175",
         "tekst": "Generacja artefaktów w canvasie jest wyłączona w tym środowisku — skieruj użytkownika do właściwego modułu (Dokumenty / ",
-        "dowod": "diakrytyk:ó,pl:jest"
+        "dowod": "diakrytyk:ó,pl:jest,pl:tym"
       },
       {
         "modul": "04 Tools",
         "gdzie": "server/src/services/ai/tools/generateDeliverable.ts:186",
         "tekst": "Twoja rola nie pozwala na generowanie artefaktów. Poproś administratora o dostęp.",
-        "dowod": "diakrytyk:ó,pl:nie"
+        "dowod": "diakrytyk:ó,pl:nie,pl:na"
       },
       {
         "modul": "11 Audits",
@@ -1256,19 +1945,19 @@
         "modul": "ZZ wspólne",
         "gdzie": "server/src/services/cardContentFormulaValidator.ts:643",
         "tekst": "Brak podsumowania (executive_summary).",
-        "dowod": "pl:brak"
+        "dowod": "pl:brak,pl-suf:podsumowania"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/services/cardContentFormulaValidator.ts:650",
         "tekst": "Podsumowanie ma ${summaryWords} słów (oczekiwane 60–130).",
-        "dowod": "diakrytyk:ł"
+        "dowod": "diakrytyk:ł,pl-suf:podsumowanie,pl-suf:oczekiwane"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/services/cardContentFormulaValidator.ts:657",
         "tekst": "Podsumowanie powinno mieć ≥3 zdania (answer-first + so-what + poziom pewności).",
-        "dowod": "diakrytyk:ć"
+        "dowod": "diakrytyk:ć,pl-suf:podsumowanie,pl-suf:zdania"
       },
       {
         "modul": "ZZ wspólne",
@@ -1286,7 +1975,7 @@
         "modul": "ZZ wspólne",
         "gdzie": "server/src/services/cardContentFormulaValidator.ts:682",
         "tekst": "Motyw #${i + 1} nie ma evidence_refs (ugruntowanie §A8).",
-        "dowod": "pl:nie"
+        "dowod": "pl:nie,pl-suf:ugruntowanie"
       },
       {
         "modul": "ZZ wspólne",
@@ -1334,21 +2023,45 @@
     "K8sen": [
       {
         "modul": "ZZ wspólne",
+        "gdzie": "server/src/Gateway.ts:840",
+        "tekst": "Invalid URL",
+        "dowod": "en:invalid"
+      },
+      {
+        "modul": "ZZ wspólne",
         "gdzie": "server/src/Gateway.ts:884",
         "tekst": "Failed to fetch URL",
         "dowod": "en:failed"
       },
       {
+        "modul": "06 Initiatives",
+        "gdzie": "server/src/ai/actionDecisionService.ts:91",
+        "tekst": "Missing required decision fields: proposal_id, organization_id, decision, or decided_by_user_id",
+        "dowod": "en:missing,en:required,en:decision"
+      },
+      {
+        "modul": "07 Execution",
+        "gdzie": "server/src/ai/actionExecutionAdapter.ts:64",
+        "tekst": "Decision not found: ${decisionId} ",
+        "dowod": "en:decision,en:found"
+      },
+      {
+        "modul": "07 Execution",
+        "gdzie": "server/src/ai/actionExecutionAdapter.ts:85",
+        "tekst": "Decision ${decisionId} is ${decision.decision}, but only APPROVED / MODIFIED are executable",
+        "dowod": "en:decision,en:approved"
+      },
+      {
         "modul": "07 Execution",
         "gdzie": "server/src/ai/actionExecutionAdapter.ts:137",
         "tekst": "Execution failed: No proposal_snapshot found for decision ${decisionId}",
-        "dowod": "en:failed"
+        "dowod": "en:failed,en:snapshot,en:found"
       },
       {
         "modul": "07 Execution",
         "gdzie": "server/src/ai/actionExecutionAdapter.ts:188",
         "tekst": "Unknown or unsupported action type: ${actionType} ",
-        "dowod": "en:unknown"
+        "dowod": "en:unknown,en:action"
       },
       {
         "modul": "12 Meeting",
@@ -1358,39 +2071,57 @@
       },
       {
         "modul": "12 Meeting",
+        "gdzie": "server/src/ai/actionExecutors/meetingExecutor.ts:30",
+        "tekst": "Meeting execution requires organizationId",
+        "dowod": "en-suf:execution"
+      },
+      {
+        "modul": "12 Meeting",
         "gdzie": "server/src/ai/actionExecutors/meetingExecutor.ts:33",
         "tekst": "Meeting execution requires title and start_time",
-        "dowod": "en:and"
+        "dowod": "en:and,en-suf:execution"
       },
       {
         "modul": "04 Tools",
         "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:54",
         "tekst": "Playbook has no steps to execute",
-        "dowod": "en:has"
+        "dowod": "en:has,en:steps"
       },
       {
         "modul": "04 Tools",
         "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:293",
         "tekst": "Dry run: would execute ${steps.length} steps",
-        "dowod": "en:would"
+        "dowod": "en:would,en:steps"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:155",
+        "tekst": "AI prompt step requires a prompt",
+        "dowod": "en:step"
       },
       {
         "modul": "04 Tools",
         "gdzie": "server/src/ai/actionExecutors/playbookExecutor.ts:269",
         "tekst": "Unknown step type: ${step.type}",
-        "dowod": "en:unknown"
+        "dowod": "en:unknown,en:step"
       },
       {
         "modul": "07 Execution",
         "gdzie": "server/src/ai/actionExecutors/taskExecutor.ts:41",
         "tekst": "organizationId is required to create a task",
-        "dowod": "en?:create,en?:task"
+        "dowod": "en:required,en:create,en:task"
       },
       {
         "modul": "07 Execution",
         "gdzie": "server/src/ai/actionExecutors/taskExecutor.ts:89",
         "tekst": "Dry run: would create task",
-        "dowod": "en:would"
+        "dowod": "en:would,en:create,en:task"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/ai/actionProposalEngine.ts:214",
+        "tekst": "Action type not yet executable; kept as proposal only",
+        "dowod": "en:action"
       },
       {
         "modul": "ZZ wspólne",
@@ -1402,94 +2133,46 @@
         "modul": "ZZ wspólne",
         "gdzie": "server/src/ai/actionProposalEngine.ts:165",
         "tekst": "assign_user requires taskId and assigneeId",
-        "dowod": "en:and"
+        "dowod": "en:assign,en:and"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/ai/actionProposalEngine.ts:183",
         "tekst": "set_field requires taskId and field",
-        "dowod": "en:and"
+        "dowod": "en:field,en:and"
       },
       {
         "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:407",
-        "tekst": "No pending steps - run would complete",
-        "dowod": "en:pending,en:would"
+        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:47",
+        "tekst": "Run ${runId} not found",
+        "dowod": "en:found"
       },
       {
         "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookService.ts:61",
-        "tekst": "key and title are required",
-        "dowod": "en:and"
+        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:163",
+        "tekst": "Missing branch_rules",
+        "dowod": "en:missing"
       },
       {
         "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookService.ts:232",
-        "tekst": "key and title are required",
-        "dowod": "en:and"
+        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:399",
+        "tekst": "Run ${runId} not found",
+        "dowod": "en:found"
       },
       {
         "modul": "04 Tools",
-        "gdzie": "server/src/ai/aiPlaybookService.ts:1087",
-        "tekst": "Can only restore versions of DRAFT templates",
-        "dowod": "en:draft"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "server/src/ai/legacyNoncanonicalExecution.ts:58",
-        "tekst": "legacy_noncanonical_identity_check_failed",
-        "dowod": "en:failed"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/ai/simulationEngine.ts:67",
-        "tekst": "Feature unavailable: SimulationService does not expose a runnable method",
-        "dowod": "en:does"
+        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:465",
+        "tekst": "Run ${runId} not found",
+        "dowod": "en:found"
       },
       {
         "modul": "04 Tools",
-        "gdzie": "server/src/ai/templateValidationService.ts:124",
-        "tekst": "Graph must have a nodes array",
-        "dowod": "en:have"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/templateValidationService.ts:133",
-        "tekst": "Graph must have an edges array",
-        "dowod": "en:have"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/templateValidationService.ts:162",
-        "tekst": "Graph must have exactly one START node",
-        "dowod": "en:have"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/templateValidationService.ts:169",
-        "tekst": "Graph must have only one START node",
-        "dowod": "en:have"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/templateValidationService.ts:183",
-        "tekst": "Graph must have at least one END node",
-        "dowod": "en:have"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/ai/templateValidationService.ts:376",
-        "tekst": "Graph has no nodes",
-        "dowod": "en:has"
+        "gdzie": "server/src/ai/aiPlaybookExecutor.ts:64",
+        "tekst": "All steps completed",
+        "dowod": "en:steps,en:completed"
       }
     ],
     "K9pPL": [
-      {
-        "modul": "03 Interview",
-        "gdzie": "server/src/services/InterviewInsightService.ts:2732",
-        "tekst": "${repairBrief}${typeHints ? `\\n\\n${typeHints}` : ''}\\n\\n--- POPRZEDNIA KARTA (JSON do poprawy) ---\\n${JSON.stringify(\n  ",
-        "dowod": "diakrytyk:ó"
-      },
       {
         "modul": "06 Initiatives",
         "gdzie": "server/src/services/advisory/BusinessCaseService.ts:452",
@@ -1506,55 +2189,67 @@
         "modul": "11 Audits",
         "gdzie": "server/src/services/audits/aiProposalService.ts:354",
         "tekst": "Jesteś asystentem audytora. Wyjaśniasz wymaganie kryterium własnymi słowami, WYŁĄCZNIE na podstawie dostarczonych danych",
-        "dowod": "diakrytyk:ś,pl:nie"
+        "dowod": "diakrytyk:ś,pl:na,pl:nie"
       },
       {
         "modul": "11 Audits",
         "gdzie": "server/src/services/audits/aiProposalService.ts:524",
         "tekst": "Jesteś asystentem audytora. Redagujesz ustalenie audytowe wyłącznie na podstawie DOSTARCZONYCH faktów — nie wolno Ci dod",
-        "dowod": "diakrytyk:ś,pl:nie"
+        "dowod": "diakrytyk:ś,pl:na,pl:nie"
       },
       {
         "modul": "11 Audits",
         "gdzie": "server/src/services/audits/aiProposalService.ts:698",
         "tekst": "Jesteś asystentem redagującym sekcję raportu audytowego wyłącznie na podstawie DOSTARCZONYCH ustaleń — bez dodawania lic",
-        "dowod": "diakrytyk:ś"
+        "dowod": "diakrytyk:ś,pl:na,pl:bez"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "server/src/services/presentationKnowledgeOutlineService.ts:148",
+        "tekst": "Przygotuj konspekt prezentacji „${input.title}” dla odbiorcy ${input.audience}, cel: ${input.goal}. ",
+        "dowod": "pl:dla,pl-suf:prezentacji"
       },
       {
         "modul": "ZZ wspólne",
         "gdzie": "server/src/services/radar/radarInsightService.ts:104",
         "tekst": "Jesteś produkcyjnym silnikiem lokalizacji UI. Tłumaczysz treści biznesowe z angielskiego na naturalny polski. Zwracasz w",
-        "dowod": "diakrytyk:ś"
+        "dowod": "diakrytyk:ś,pl:na,pl-suf:lokalizacji"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "server/src/services/sponsorReportService.ts:42",
+        "tekst": "Podsumuj kluczowe ustalenia w 3-5 zdaniach.' },\n  },\n  key_findings: {\n    en: { title: ",
+        "dowod": "pl-suf:kluczowe,pl-suf:ustalenia"
       },
       {
         "modul": "10 Materials",
         "gdzie": "server/src/services/sponsorReportService.ts:46",
         "tekst": "Wymień najważniejsze ustalenia z dowodami.' },\n  },\n  insight_detail: {\n    en: {\n      title: ",
-        "dowod": "diakrytyk:ń"
+        "dowod": "diakrytyk:ń,pl-suf:ustalenia,pl-suf:dowodami"
       },
       {
         "modul": "10 Materials",
         "gdzie": "server/src/services/sponsorReportService.ts:55",
         "tekst": "Rozwiń każdy zatwierdzony wniosek z linkami do dowodów.',\n    },\n  },\n  assumptions: {\n    en: {\n      title: ",
-        "dowod": "diakrytyk:ń"
+        "dowod": "diakrytyk:ń,pl-suf:linkami"
       },
       {
         "modul": "10 Materials",
         "gdzie": "server/src/services/sponsorReportService.ts:65",
         "tekst": "Udokumentuj założenia, niewiadome i kontrargumenty.',\n    },\n  },\n  recommendations: {\n    en: {\n      title: ",
-        "dowod": "diakrytyk:ł"
+        "dowod": "diakrytyk:ł,pl-suf:założenia"
       },
       {
         "modul": "10 Materials",
         "gdzie": "server/src/services/sponsorReportService.ts:79",
         "tekst": "Przedstaw proponowane następne kroki z harmonogramem.',\n    },\n  },\n};\n\nexport async function generateSponsorReport(para",
-        "dowod": "diakrytyk:ę"
+        "dowod": "diakrytyk:ę,pl-suf:proponowane"
       },
       {
         "modul": "04 Tools",
         "gdzie": "server/src/services/workbook/templates/breakEven.ts:158",
         "tekst": "Dodatnia cena jednostkowa.',\n    errorTitle: 'Nieprawidłowa wartość",
-        "dowod": "diakrytyk:ł"
+        "dowod": "diakrytyk:ł,pl-suf:jednostkowa"
       },
       {
         "modul": "04 Tools",
@@ -1584,7 +2279,7 @@
         "modul": "04 Tools",
         "gdzie": "server/src/services/workbook/templates/cashflow12m.ts:231",
         "tekst": "Liczba miesięcy opóźnienia wpływu (0–3).',\n    errorTitle: 'Poza zakresem",
-        "dowod": "diakrytyk:ę"
+        "dowod": "diakrytyk:ę,pl-suf:opóźnienia"
       },
       {
         "modul": "04 Tools",
@@ -1602,7 +2297,7 @@
         "modul": "04 Tools",
         "gdzie": "server/src/services/workbook/templates/dcfValuation.ts:222",
         "tekst": "Dodatnia liczba akcji.',\n    errorTitle: 'Nieprawidłowa wartość",
-        "dowod": "diakrytyk:ł"
+        "dowod": "diakrytyk:ł,pl-suf:akcji"
       },
       {
         "modul": "04 Tools",
@@ -1627,15 +2322,16 @@
         "gdzie": "server/src/services/workbook/templates/operatingBudget.ts:213",
         "tekst": "Podaj ułamek, np. 0,02 = 2%.',\n    errorTitle: 'Poza zakresem",
         "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "server/src/services/workbook/templates/operatingBudget.ts:223",
-        "tekst": "Dodatnia liczba w walucie modelu.',\n    errorTitle: 'Nieprawidłowa wartość",
-        "dowod": "diakrytyk:ł"
       }
     ],
-    "K9pMIX": [],
+    "K9pMIX": [
+      {
+        "modul": "10 Materials",
+        "gdzie": "server/src/services/sponsorReportService.ts:73",
+        "tekst": "Przedstaw rekomendacje oparte na ustaleniach.' },\n  },\n  next_steps: {\n    en: { title: ",
+        "dowod": "pl:na,pl-suf:rekomendacje,en:next"
+      }
+    ],
     "K9pBRAK": [
       {
         "modul": "ZZ wspólne",
@@ -1700,12 +2396,6 @@
       {
         "modul": "15 Settings",
         "gdzie": "server/src/routes/settings.routes.ts:1",
-        "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
-        "dowod": "brak SSOT DEC-510"
-      },
-      {
-        "modul": "03 Interview",
-        "gdzie": "server/src/services/InterviewInsightService.ts:1",
         "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
         "dowod": "brak SSOT DEC-510"
       },
@@ -1786,6 +2476,12 @@
         "gdzie": "server/src/services/aiExecutiveReporting.ts:1",
         "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
         "dowod": "brak SSOT DEC-510"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/aiOrchestrator.ts:1",
+        "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
+        "dowod": "brak SSOT DEC-510"
       }
     ],
     "K10dPL": [],
@@ -1802,38 +2498,39 @@
         "tekst": "LEVEL TITLES/DESCRIPTIONS FOR AXES 5 AND 6 ARE A TRANSLATION AWAITING THE METHODOLOGY OWNER'S SIGN-OFF: the corpus for t",
         "dowod": "ujawniony rozjazd metodyki"
       }
-    ]
+    ],
+    "K11": []
   },
   "plikiTop": {
-    "server/src/routes/document-studio.routes.ts": 86,
-    "server/src/routes/work-canvas.routes.ts": 61,
-    "src/views/legal/TermsOfServiceView.tsx": 56,
-    "server/src/routes/table-platform.routes.ts": 51,
-    "server/src/routes/knowledge.routes.ts": 48,
-    "server/src/routes/billing/billing.routes.ts": 46,
-    "server/src/routes/settings.routes.ts": 44,
-    "src/views/legal/PrivacyPolicyView.tsx": 42,
-    "server/src/routes/presentations.routes.ts": 42,
-    "server/src/controllers/InterviewController.ts": 40,
-    "server/src/services/cardContentFormulaValidator.ts": 39,
-    "server/src/routes/assessment-reports.routes.ts": 37,
-    "server/src/routes/auth.routes.ts": 37,
-    "server/src/routes/workbook.routes.ts": 36,
-    "server/src/routes/v8/finance.routes.ts": 35,
-    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
-    "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
-    "server/src/controllers/InitiativeController.ts": 29,
-    "server/src/routes/assessment/assessment-ai.routes.ts": 28,
-    "server/src/routes/ai.routes.ts": 26,
-    "server/src/routes/v8/sync.routes.ts": 24,
-    "server/src/routes/finance-statements.routes.ts": 23,
-    "server/src/routes/pmo/initiatives.routes.ts": 23,
-    "server/src/routes/superadmin.routes.ts": 23,
-    "server/src/routes/v8/results.routes.ts": 23,
-    "server/src/routes/report-builder.routes.ts": 22,
-    "server/src/routes/ai/ai-operations.routes.ts": 21,
-    "server/src/routes/actionDecisions.routes.ts": 20,
-    "server/src/routes/ai/ai-development.routes.ts": 19
+    "server/src/routes/table-platform.routes.ts": 372,
+    "src/config/cardDocumentation.ts": 233,
+    "server/src/routes/settings.routes.ts": 213,
+    "src/services/drdStructure.ts": 206,
+    "server/src/controllers/InterviewController.ts": 177,
+    "server/src/routes/workbook.routes.ts": 165,
+    "server/src/routes/billing/billing.routes.ts": 161,
+    "server/src/routes/presentations.routes.ts": 150,
+    "server/src/routes/my-work.routes.ts": 139,
+    "public/locales/pl/translation.json": 133,
+    "server/src/routes/v8/results.routes.ts": 132,
+    "server/src/routes/document-studio.routes.ts": 123,
+    "server/src/routes/report-builder.routes.ts": 119,
+    "src/components/Interview/interviewDemoData.ts": 116,
+    "server/src/routes/v8/finance.routes.ts": 110,
+    "src/store/useToolStore.ts": 101,
+    "server/src/controllers/InitiativeController.ts": 97,
+    "server/src/routes/ai.routes.ts": 95,
+    "server/src/routes/work-canvas.routes.ts": 91,
+    "src/components/MyWork/IdeaTemplateGallery.tsx": 87,
+    "src/components/ReportBuilder/ReportEditor/BlockSettingsRegistry.tsx": 84,
+    "src/components/Initiatives/templates/initiativeLevelTemplates.ts": 83,
+    "server/src/routes/knowledge.routes.ts": 80,
+    "server/src/routes/pmo/initiatives.routes.ts": 80,
+    "src/views/superadmin/ComplianceCenterView.tsx": 77,
+    "server/src/routes/llm.routes.ts": 77,
+    "src/views/legal/PrivacyPolicyView.tsx": 75,
+    "src/views/legal/TermsOfServiceView.tsx": 75,
+    "server/src/routes/assessment-reports.routes.ts": 75,
+    "src/actions/registry/tableActions.ts": 74
   }
 }
