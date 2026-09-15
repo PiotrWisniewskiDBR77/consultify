@@ -223,13 +223,26 @@ function buildReadout(
   const tasks = ctx.tasks.length;
 
   lines.push(
-    `${report.title} covers ${total} initiative(s) with ${blocked} blocker(s), ${overdue} overdue decision(s), and ${tasks} overdue task(s) in the live execution set.`
+    tlumaczPozaHookiem(
+      'execution.report.readout.coverage',
+      '{{title}} covers {{total}} initiative(s) with {{blocked}} blocker(s), {{overdue}} overdue decision(s), and {{tasks}} overdue task(s) in the live execution set.',
+      { title: report.title, total, blocked, overdue, tasks }
+    )
   );
 
   if (ctx.progressPercent !== null) {
     const baseline = ctx.progressPercent < 30 ? 'incomplete' : 'directional';
     lines.push(
-      `Progress baseline is ${baseline}, so leadership should treat the current readout as ${baseline} until missing progress fields are restored.`
+      tlumaczPozaHookiem(
+        'execution.report.readout.progressBaseline',
+        'Progress baseline is {{baseline}}, so leadership should treat the current readout as {{baseline}} until missing progress fields are restored.',
+        {
+          baseline: tlumaczPozaHookiem(
+            `execution.report.readout.baseline.${baseline}`,
+            baseline
+          ),
+        }
+      )
     );
   }
 
@@ -239,7 +252,11 @@ function buildReadout(
       .map((b) => b.name)
       .join(', ');
     lines.push(
-      `Blocked work is the main drag on delivery confidence; ${blocked} initiative(s) are already stalled (${names}) and need owner-level recovery decisions.`
+      tlumaczPozaHookiem(
+        'execution.report.readout.blockedWork',
+        'Blocked work is the main drag on delivery confidence; {{blocked}} initiative(s) are already stalled ({{names}}) and need owner-level recovery decisions.',
+        { blocked, names }
+      )
     );
   }
 
@@ -247,13 +264,21 @@ function buildReadout(
   const noDateTasks = ctx.tasks.filter((t) => !t.dueDate).length;
   if (noDateInitiatives > 0 || noDateTasks > 0) {
     lines.push(
-      `Forecast quality is degraded because ${noDateInitiatives} initiative(s) or ${noDateTasks} task(s) lack dates, so some timing conclusions should be read as best-effort only.`
+      tlumaczPozaHookiem(
+        'execution.report.readout.forecastQuality',
+        'Forecast quality is degraded because {{initiatives}} initiative(s) or {{tasks}} task(s) lack dates, so some timing conclusions should be read as best-effort only.',
+        { initiatives: noDateInitiatives, tasks: noDateTasks }
+      )
     );
   }
 
   const overspend = (ctx.overspendSignals || []).length;
   lines.push(
-    `Budget posture is approximated from ${overspend} overspend signal(s), blocked work, and progress drag, so finance should validate any severe exception before external communication.`
+    tlumaczPozaHookiem(
+      'execution.report.readout.budgetPosture',
+      'Budget posture is approximated from {{overspend}} overspend signal(s), blocked work, and progress drag, so finance should validate any severe exception before external communication.',
+      { overspend }
+    )
   );
 
   return lines;

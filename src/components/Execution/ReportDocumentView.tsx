@@ -34,7 +34,8 @@ import {
  * są module-scope (poza komponentem), więc tłumaczenie idzie przez instancję
  * `i18next`, tak samo jak w `src/utils/listDateFormat.ts`.
  */
-const tr = (klucz: string, domyslny: string): string => tlumaczPozaHookiem(klucz, domyslny) as string;
+const tr = (klucz: string, domyslny: string, opcje?: Record<string, unknown>): string =>
+  tlumaczPozaHookiem(klucz, domyslny, opcje) as string;
 
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -784,7 +785,12 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
         accent="amber"
       >
         <DataTable
-          headers={['Decision', 'Initiative', 'Owner', 'Age']}
+          headers={[
+            tr('executionReports.doc.decision', 'Decision'),
+            tr('executionReports.doc.initiative', 'Initiative'),
+            tr('executionReports.doc.owner', 'Owner'),
+            tr('executionReports.doc.age', 'Age'),
+          ]}
           rows={decRows.map((d) => [
             <ALink id={d.id} type="decision" nav={nav}>
               {d.title}
@@ -800,7 +806,11 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
                     : ''
               }
             >
-              {d.ageDays > 0 ? `${d.ageDays}d overdue` : 'Due now'}
+              {d.ageDays > 0
+                ? tr('executionReports.doc.daysOverdue', '{{count}}d overdue', {
+                    count: d.ageDays,
+                  })
+                : tr('executionReports.doc.dueNow', 'Due now')}
             </span>,
           ])}
         />
@@ -812,10 +822,14 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
         accent="rose"
       >
         <DataTable
-          headers={['Gap', 'Count', 'Examples']}
+          headers={[
+            tr('executionReports.doc.gap', 'Gap'),
+            tr('executionReports.doc.count', 'Count'),
+            tr('executionReports.doc.examples', 'Examples'),
+          ]}
           rows={[
             [
-              'Initiatives without dates',
+              tr('executionReports.doc.initiativesWithoutDates', 'Initiatives without dates'),
               data.missingDates.length,
               data.missingDates
                 .slice(0, 3)
@@ -823,7 +837,7 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
                 .join(', ') || '—',
             ],
             [
-              'Unassigned open tasks',
+              tr('executionReports.doc.unassignedOpenTasks', 'Unassigned open tasks'),
               unassigned.length,
               unassigned
                 .slice(0, 3)
@@ -831,7 +845,7 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
                 .join(', ') || '—',
             ],
             [
-              'Tasks without due date',
+              tr('executionReports.doc.tasksWithoutDueDate', 'Tasks without due date'),
               noDue.length,
               noDue
                 .slice(0, 3)
@@ -1962,7 +1976,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
                 <div className="mb-2 flex items-center gap-2">
                   <Sparkles size={14} className="text-primary-400" />
                   <h3 className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
-                    AI Executive Readout
+                    {tr('execution.report.section.aiReadout', 'AI Executive Readout')}
                   </h3>
                 </div>
                 <AiInsightStrip items={safeReport.aiExecutiveReadout} />

@@ -18412,6 +18412,17 @@
       },
       "noData": "Brak danych",
       "noInsights": "Nie wygenerowano wniosków.",
+      "readout": {
+        "coverage": "Raport {{title}} obejmuje {{total}} inicjatyw, w tym {{blocked}} blokad, {{overdue}} decyzji po terminie i {{tasks}} zaległych zadań w bieżącym zbiorze realizacji.",
+        "progressBaseline": "Baza postępu jest {{baseline}}, dlatego obecny odczyt należy traktować jako {{baseline}} do czasu uzupełnienia brakujących pól postępu.",
+        "baseline": {
+          "incomplete": "niepełna",
+          "directional": "orientacyjna"
+        },
+        "blockedWork": "Zablokowana praca najbardziej obniża pewność dostarczenia; {{blocked}} inicjatyw już stoi ({{names}}) i wymaga decyzji naprawczych właścicieli.",
+        "forecastQuality": "Jakość prognozy jest obniżona, ponieważ {{initiatives}} inicjatyw lub {{tasks}} zadań nie ma dat; część wniosków czasowych jest więc tylko najlepszym dostępnym oszacowaniem.",
+        "budgetPosture": "Stan budżetu oszacowano na podstawie {{overspend}} sygnałów przekroczenia, zablokowanej pracy i opóźnień postępu; finanse powinny potwierdzić każde poważne odchylenie przed komunikacją zewnętrzną."
+      },
       "dataQualityPosture": "Stan jakości danych",
       "freshness": "Aktualność",
       "confidence": "Pewność",
@@ -55567,6 +55578,18 @@
     "writeFailed": "Nie zapisano zmiany raportu.",
     "doc": {
       "thisWeekAtAGlance": "Ten tydzień w skrócie",
+      "decision": "Decyzja",
+      "initiative": "Inicjatywa",
+      "owner": "Właściciel",
+      "age": "Wiek",
+      "daysOverdue": "{{count}} dni po terminie",
+      "dueNow": "Termin dzisiaj",
+      "gap": "Luka",
+      "count": "Liczba",
+      "examples": "Przykłady",
+      "initiativesWithoutDates": "Inicjatywy bez dat",
+      "unassignedOpenTasks": "Otwarte zadania bez przypisania",
+      "tasksWithoutDueDate": "Zadania bez terminu",
       "initiativesRequiringImmediateOperationalReaction": "Inicjatywy wymagające natychmiastowej reakcji operacyjnej.",
       "next7DaysFocus": "Ognisko na najbliższe 7 dni",
       "tasksAndMilestonesThatCanSilentlySlipThis": "Zadania i kamienie milowe, które mogą po cichu obsunąć się w tym tygodniu.",
