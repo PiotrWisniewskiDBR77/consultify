@@ -1046,75 +1046,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       width: '150px',
       dataType: 'number',
     };
-    const businessUnitCol: TableColumn = {
-      id: 'businessUnit',
-      label: t('assessment.hub.table.businessUnit', 'Unit'),
-      width: '170px',
-      sortable: true,
-      render: (row) => {
-        const label = typeof row?.businessUnit === 'string' ? row.businessUnit.trim() : '';
-        return label ? (
-          <span className="text-sm text-c-text">{label}</span>
-        ) : (
-          <span className="text-sm text-c-text-muted">—</span>
-        );
-      },
-    };
-    /* Odbiór 05.09 (05-ocena, defekt 3): zatwierdzony obraz listy ocen ma
-       NAZWA OCENY | JEDNOSTKA | STATUS | WYNIK | PEWNOŚĆ | WŁAŚCICIEL |
-       AKTUALIZACJA. Na żywo było TYP | NAZWA | STATUS | POSTĘP | AUTOR |
-       ZAKTUALIZOWANO. TYP i POSTĘP schodzą z domyślnego zestawu (zostają
-       w pstryczku), WYNIK i PEWNOŚĆ wchodzą z realnych kolumn bazy
-       (`overall_score`, `confidence_avg`), a etykiety NAZWA/AUTOR/
-       ZAKTUALIZOWANO idą po nazwach z obrazu. */
-    /* Runda 3 odbioru: kolumna JEDNOSTKA — ostatnia różnica wobec obrazu.
-       W rundzie 2 jej nie było, bo tabela `assessments` nie miała ŻADNEGO
-       pola jednostki organizacyjnej. Dołożone dwuwarstwowo:
-       server/migrations/20260905_assessment_business_unit.sql (nullowalna
-       kolumna `business_unit`) + zwrócenie jej jako `businessUnit` w obu
-       trasach listy. Brak wartości rysuje „—" — nigdy atrapy. */
-    const scoreCol: TableColumn = {
-      id: 'overallScore',
-      label: t('assessment.hub.table.score', 'Result'),
-      width: '110px',
-      dataType: 'number',
-      align: 'right',
-      sortable: true,
-      render: (row) => {
-        const value = Number(row?.overallScore);
-        return Number.isFinite(value) && row?.overallScore !== null ? (
-          <span className="tabular-nums text-sm text-c-text">{value.toFixed(1)}</span>
-        ) : (
-          <span className="text-sm text-c-text-muted">—</span>
-        );
-      },
-    };
-    const confidenceCol: TableColumn = {
-      id: 'confidenceAvg',
-      label: t('assessment.hub.table.confidence', 'Confidence'),
-      width: '110px',
-      dataType: 'number',
-      align: 'right',
-      sortable: true,
-      render: (row) => {
-        const raw = Number(row?.confidenceAvg);
-        if (!Number.isFinite(raw) || row?.confidenceAvg === null) {
-          return <span className="text-sm text-c-text-muted">—</span>;
-        }
-        // TEST-DANE D-01 (09.09.2026): the old comment here claimed
-        // „confidence_avg jest w skali 0–1" and rendered `Math.round(raw)%`
-        // for anything above 1 — so the first row that ever carried a real
-        // value (3.6) printed „4%". The canonical domain is 1–5, declared by
-        // the server validator (`server/src/validators/assessment.validators.ts`
-        // — `confidenceAvg: z.number().min(1).max(5)`) and used as such by
-        // ToolController's `confidence_avg >= 3` gate. The approved image
-        // shows a percentage, so 1–5 is normalised against its maximum
-        // (3.6 → 72%); values at or below 1 stay readable as a legacy
-        // fraction rather than collapsing to 20%.
-        const percent = raw <= 1 ? Math.round(raw * 100) : Math.round((raw / 5) * 100);
-        return <span className="tabular-nums text-sm text-c-text">{percent}%</span>;
-      },
-    };
+    /* D7 / DEC-513: Method Core Output does not carry business unit, an
+       aggregate score or confidence. The previous columns borrowed those
+       values from a legacy assessment joined only by project id and rendered
+       an em dash for canonical sessions without such a twin. That made the
+       Processes list look complete while its own Output supplied none of the
+       values. Keep the underlying compatibility mapping for previews, but do
+       not advertise these three fields as list columns until Method Core has
+       a canonical source for them. */
     const updatedCol: TableColumn = {
       id: 'updatedAt',
       label: t('assessment.hub.table.updated', 'Updated'),
@@ -1250,7 +1189,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     return [
       { ...frameworkCol, defaultVisible: false },
       { ...nameCol, label: t('assessment.hub.table.assessmentName', 'Assessment name') },
-      businessUnitCol,
       {
         id: 'status',
         label: t('assessment.hub.table.status', 'Status'),
@@ -1263,14 +1201,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           color: s.bgColor,
         })),
       },
-      scoreCol,
-      confidenceCol,
       { ...authorCol, label: t('assessment.hub.table.owner', 'Owner') },
-      /* POSTĘP schodzi z domyślnego zestawu do pstryczka: na obrazie na jego
-         miejscu stoi JEDNOSTKA, a ta jest już zbudowana (migracja + API).
-         Kolumna NIE znika — dalej jest w pstryczku i dalej pilnuje jej test
-         regresji tests/components/assessment/AssessmentHub.processes-completion.test.tsx,
-         bo mapowanie `completionPercent` na wiersz zostaje nietknięte. */
+      /* Progress remains available through the column picker. Its source is
+         canonical session completion and is covered independently. */
       { ...progressCol, defaultVisible: false },
       { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Update') },
     ];

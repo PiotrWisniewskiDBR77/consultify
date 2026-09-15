@@ -137,14 +137,7 @@ describe('AssessmentHub Method Core DRD cutover', () => {
     ).toBeInTheDocument();
   });
 
-  /**
-   * TEST-DANE D-01 (09.09.2026). Live Processes tab showed „DRD · 614e5f28"
-   * with „—" in SCORE and CONFIDENCE while the legacy twin of the very same
-   * diagnosis held the name, overall_score 3 and confidence_avg 3.6.
-   * MUTATION: drop the `legacyTwin` argument in `methodSessionToAssessment`
-   * (or the projectId map in `loadAssessmentListCore`) -> first case RED.
-   */
-  it('D-01: canonical DRD borrows name, score and confidence from its legacy twin (same projectId)', async () => {
+  it('D7: canonical DRD may borrow its legacy name but never exposes twin score/confidence as Output data', async () => {
     listMethodSessionsMock.mockResolvedValue({
       sessions: [{ ...canonicalSession, state: 'frozen', projectId: 'project-1' }],
       total: 1,
@@ -169,10 +162,13 @@ describe('AssessmentHub Method Core DRD cutover', () => {
       await screen.findByText('Northwind 2027 — Operational Maturity Assessment')
     ).toBeInTheDocument();
     expect(screen.queryByText('DRD · method-s')).not.toBeInTheDocument();
-    expect(screen.getByText('3.0')).toBeInTheDocument();
-    // 1–5 domain (server validator: min(1).max(5)) normalised to the approved
-    // percentage view: 3.6 / 5 = 72%. The old code printed „4%".
-    expect(screen.getByText('72%')).toBeInTheDocument();
+    expect(screen.queryByText('3.0')).not.toBeInTheDocument();
+    expect(screen.queryByText('72%')).not.toBeInTheDocument();
+    const headers = Array.from(document.querySelectorAll('th'))
+      .map((th) => th.textContent || '')
+      .join(' | ');
+    expect(headers).not.toContain('Wynik');
+    expect(headers).not.toContain('Pewność');
   });
 
   it('D-01: keeps the id-based fallback label when no legacy twin shares the project', async () => {
