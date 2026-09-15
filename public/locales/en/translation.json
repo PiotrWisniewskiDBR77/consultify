@@ -7596,7 +7596,13 @@
       "untitled2": "Untitled",
       "ideasByTags": "Ideas by Tags",
       "title3": "Open in Process Flow",
-      "toastTeamChat": "Team chat thread created. The idea is now marked Promoted."
+      "toastTeamChat": "Team chat thread created. The idea is now marked Promoted.",
+      "toastReceipt": {
+        "initiative": "Initiative created (ID: {{id}}). Opening it now.",
+        "decision": "Decision created (ID: {{id}}). Opening it now.",
+        "report": "Report created (ID: {{id}}). Opening it now.",
+        "presentation": "Presentation created (ID: {{id}}). Opening it now."
+      }
     },
     "decisionReviewNext": {
       "toastError": "Failed to load queue",
