@@ -249,13 +249,13 @@
     ],
     "07 Execution": [
       {
-        "gdzie": "src/components/Execution/ReportDocumentView.tsx:1964",
-        "tekst": "AI Executive Readout",
-        "dowod": "en?suf:executive,en?:TitleCase",
+        "gdzie": "src/components/FullPilotWorkspace.tsx:109",
+        "tekst": "Project Sponsor",
+        "dowod": "en:project",
         "classification": "real-en-ui"
       },
       {
-        "gdzie": "src/components/Execution/ReportDocumentView.tsx:2019",
+        "gdzie": "src/components/Execution/ReportDocumentView.tsx:2033",
         "tekst": "AI Recommended Actions",
         "dowod": "en:actions",
         "classification": "real-en-ui"
