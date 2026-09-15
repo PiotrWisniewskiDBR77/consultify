@@ -41,7 +41,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
 
     render(<NewAssessmentModal isOpen onClose={vi.fn()} onSuccess={onSuccess} />);
     fireEvent.click(screen.getByRole('button', { name: /Digital Readiness Diagnosis/i }));
-    expect(screen.queryByLabelText('Assessment Name')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Assessment name')).toBeInTheDocument();
     expect(screen.queryByLabelText(/Description/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Start DRD session' }));
 
@@ -52,6 +52,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
         methodPackId: 'drd',
         mode: 'guided_manual',
         projectId: 'project-1',
+        name: expect.stringMatching(/^DRD Assessment - /),
       }),
       'idem-drd-1'
     );
@@ -60,7 +61,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
     expect(onSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'method-session-1',
-        name: 'DRD · method-s',
+        name: expect.stringMatching(/^DRD Assessment - /),
         assessmentType: 'DRD',
       })
     );
@@ -102,7 +103,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
     const businessUnitInput = screen.getByLabelText(/Business unit/i);
     expect(businessUnitInput).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Assessment Name'), {
+    fireEvent.change(screen.getByLabelText('Assessment name'), {
       target: { value: 'SIRI pilot' },
     });
     fireEvent.change(businessUnitInput, { target: { value: 'Logistyka' } });
@@ -125,7 +126,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
 
     render(<NewAssessmentModal isOpen onClose={vi.fn()} onSuccess={onSuccess} />);
     fireEvent.click(screen.getByRole('button', { name: /Smart Industry Readiness Index/i }));
-    fireEvent.change(screen.getByLabelText('Assessment Name'), {
+    fireEvent.change(screen.getByLabelText('Assessment name'), {
       target: { value: 'SIRI pilot 2' },
     });
 

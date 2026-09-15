@@ -325,12 +325,13 @@ function methodSessionToAssessment(
       })
     | undefined;
   const twinName = typeof twin?.name === 'string' ? twin.name.trim() : '';
+  const sessionName = typeof session.name === 'string' ? session.name.trim() : '';
   const twinScore = twin?.overallScore ?? twin?.overall_score ?? null;
   const twinConfidence = twin?.confidenceAvg ?? twin?.confidence_avg ?? null;
   const twinCompletion = twin?.completionPercent ?? twin?.completion_percent ?? null;
   return {
     id: session.id,
-    name: twinName || `DRD · ${session.id.slice(0, 8)}`,
+    name: sessionName || twinName || `DRD · ${session.id.slice(0, 8)}`,
     description: session.domainStage || undefined,
     status: statusByState[session.state],
     type: 'DRD',

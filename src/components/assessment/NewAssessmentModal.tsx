@@ -234,13 +234,13 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
         return;
       }
 
-      if (selectedFramework !== 'DRD' && !assessmentName.trim()) {
-        setError('Please enter an assessment name');
+      if (!assessmentName.trim()) {
+        setError(t('assessment.newModal.nameRequired', 'Please enter an assessment name'));
         return;
       }
 
-      if (selectedFramework !== 'DRD' && assessmentName.trim().length > 200) {
-        setError('Assessment name must be 200 characters or less');
+      if (assessmentName.trim().length > 160) {
+        setError(t('assessment.newModal.nameTooLong', 'Assessment name must be 160 characters or less'));
         return;
       }
 
@@ -258,6 +258,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     methodPackVersion: DRD_METHOD_PACK_VERSION,
                     mode: 'guided_manual',
                     projectId: currentProjectId || null,
+                    name: assessmentName.trim(),
                   },
                   drdIdempotencyKeyRef.current ||
                     (drdIdempotencyKeyRef.current = newIdempotencyKey())
@@ -270,6 +271,9 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   readback.session.methodPackVersion !== DRD_METHOD_PACK_VERSION
                 ) {
                   throw new Error('Canonical DRD session readback mismatch');
+                }
+                if (readback.session.name !== assessmentName.trim()) {
+                  throw new Error('Canonical DRD session name readback mismatch');
                 }
                 drdIdempotencyKeyRef.current = null;
                 return { id: readback.session.id, status: readback.session.state };
@@ -288,7 +292,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
           id: response.id,
           name:
             selectedFramework === 'DRD'
-              ? `DRD · ${response.id.slice(0, 8)}`
+              ? assessmentName.trim()
               : assessmentName.trim(),
           assessmentType: selectedFramework,
           status: response.status || 'DRAFT',
@@ -458,15 +462,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                 </div>
               )}
 
-              {/* Method Core has no persisted display-metadata contract yet.
-                  Do not collect fields that would disappear on cold read. */}
-              {selectedFramework !== 'DRD' && (
-                <div>
+              <div>
                   <label
                     htmlFor="assessment-name"
                     className="block text-sm font-medium text-c-text-secondary mb-2"
                   >
-                    Assessment Name
+                    {t('assessment.newModal.nameLabel', 'Assessment name')}
                   </label>
                   <input
                     ref={nameInputRef}
@@ -474,8 +475,9 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     type="text"
                     value={assessmentName}
                     onChange={(e) => setAssessmentName(e.target.value)}
-                    placeholder="Enter assessment name..."
-                    maxLength={200}
+                    placeholder={t('assessment.newModal.namePlaceholder', 'Enter assessment name…')}
+                    maxLength={160}
+                    required
                     className="
                     w-full h-11 px-4 bg-c-surface-raised border border-c-border-subtle rounded-lg
                     text-c-text placeholder-c-text-muted
@@ -490,11 +492,10 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     <span
                       className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-c-text-muted'}`}
                     >
-                      {assessmentName.length}/200
+                      {assessmentName.length}/160
                     </span>
                   </div>
                 </div>
-              )}
 
               {/* Odbiór 05.09 (05-ocena): opcjonalna jednostka organizacyjna —
                   zasila kolumnę JEDNOSTKA na liście ocen. Method Core (DRD) nie
