@@ -1,59 +1,45 @@
 {
-  "package": "W73-K6",
-  "verdict": "FREEZE_FOR_INDEPENDENT_REVIEW",
+  "package": "W73-K6-v2",
+  "verdict": "FREEZE_FOR_INDEPENDENT_REVIEW_V2",
   "rootBase": "f2628a0d36af85d97bcbe67b820d728c7c2f2f28",
-  "dependencyMerges": [
-    "3441112167",
-    "3dfca08c33"
-  ],
-  "contentSha": "e0a10d6559",
-  "productCommits": [
-    "3bc2ff100b",
-    "c6e3a0cccf",
-    "e0a10d6559"
-  ],
+  "dependencyMerges": ["3441112167", "3dfca08c33"],
+  "contentSha": "7a26319c51",
+  "preFreezeSha": "937a584b46",
+  "productCommits": ["3bc2ff100b", "c6e3a0cccf", "e0a10d6559", "b63dd48ac9", "7a26319c51"],
+  "evidenceCommits": ["3ffa899785", "937a584b46"],
   "measurements": {
-    "reportPositions": [
-      21935,
-      21904
-    ],
-    "K4obj": [
-      4324,
-      4298
-    ],
-    "executionRealK4obj": [
-      26,
-      0
-    ],
-    "MyApprovalsK4en": [
-      2,
-      0
-    ],
-    "wizardStepLiterals": [
-      3,
-      0
-    ]
+    "reportPositions": [21935, 21889],
+    "K4obj": [4324, 4287],
+    "fallbackReportTitles": [11, 0],
+    "executionRealK4obj": [26, 0],
+    "MyApprovalsK4en": [2, 0],
+    "wizardStepLiterals": [3, 0],
+    "wizardCAccent": [16, 16]
   },
   "gates": {
-    "language": "PASS K4en -5 K4objPL -4 K4obj -45 K11 -1",
+    "language": "PASS K4en -5 K4objPL -4 K4obj -56 K11 -1",
     "frontTsc": "RC2 177 errors",
     "frontListFiles": "RC0 7427",
     "serverTsc": "RC0",
-    "build": "RC0",
+    "build": "RC0 10754 modules",
     "canon": "RC0 349",
     "artifact": "RC0 8-0-117",
+    "esbuild": "2/2 PASS",
     "newAsAny": 0,
-    "focusedCandidate": "25 pass 2 fail",
-    "focusedBase": "25 pass 2 fail",
-    "normalizedFailuresIdentical": true,
-    "visual": "PARTIAL composite dev-render EN/PL light, not full Hub shell"
+    "migrations": 0,
+    "k6Behavior": "3/3 PASS",
+    "focusedCandidateV2": "21 pass 2 inherited fail",
+    "focusedBaseComparison": "existing exact logs: 25 pass 2 fail on both 3dfca08c33 and prior candidate; normalized failures identical",
+    "visual": "PASS full MainLayout + ExecutionHub, same fallback report document, EN+PL light",
+    "runtimeLogs": "EN/PL console ERROR=0, HTTP >=400=0"
   },
   "files": {
-    "public/locales/en/translation.json": "ec4dd35ea29bf40d6645e09d55b562a8a7169ada5c5823a7eef6b26424945111",
-    "public/locales/pl/translation.json": "71f205ad7ad0f811a22873de227135865ad5a7afc5ed3664a6b97aee36c51298",
+    "public/locales/en/translation.json": "29781cd19cf6840f3fe8a314b589981a2cde8125e9e559374e292e0632b16bd7",
+    "public/locales/pl/translation.json": "b91c564ccc1bb6c2a406512606aea7234be04d2375bd93f592c15644a99564d7",
     "scripts/triada-allowlist.txt": "710be39a7115f3677cb0479b56d2dada69003c02112d64bd23b1792a2e616d1f",
     "src/components/Execution/BudgetControlPanel.tsx": "82abdc94fa6f52316f3c0c1b1136550cf49cd418fbe6a29794c2e231284df652",
     "src/components/Execution/ExecutionBankViews.tsx": "99691e2c89e81878b642935c618e06f6cc7fcf1ffc1f0b28da0f59e3e381bdca",
+    "src/components/Execution/ExecutionHub.tsx": "0c24f313a96310dbfd500adc7caf6d9960e3014bd8c00f3799e8c20fcaf3a879",
     "src/components/Execution/ExecutionManagementTable.tsx": "ccafb457d3deb87b1b8a1918d25ab72bbd6efa92053cb9577fb0eefea2c3be18",
     "src/components/Execution/Manager/ProblemPreview.tsx": "33978b889dea1fd6bc3d3aaa65f0ebf348eb12d6f3ad930b20c08a0c2954c0fc",
     "src/components/Execution/ManagerModuleView.tsx": "08df1c1f26f0fcb3f76bd08968ba7890ad4b6c3e6ef9650b8f38029cf2d65b6b",
@@ -62,6 +48,12 @@
     "src/components/Execution/executionReports.ts": "14454204514728962de4cd2ed00099230a52d9ab074b8397e550d3946005dfa4",
     "src/components/Onboarding/EnterpriseOnboardingWizard.tsx": "8812054fe40ef23bf5343c2dc0322d7daba393af37476cb04aeb098731c9535f",
     "src/views/MyApprovalsView.tsx": "3de61034fc5e975fb06e29a52244d63c3bcfbde641d457d4e3ee22e7924151a4",
-    "tests/unit/i18n/k6ExecutionLabels.behavior.test.ts": "2a6b7f2edcc4eeda38529523af2d652d7cccbac40b30cda25be0495074e1c12b"
+    "tests/unit/i18n/k6ExecutionLabels.behavior.test.ts": "08ad253532185252db56f77bce4836d1fd3cad3cfea52525bf4addf4436f5266",
+    "evidence/k6-execution-labels-20260915/k6-v2-en-light-execution-hub.png": "56deaca08f6e2ee84c09b62bfda4d228429469b4e03c69e09a04470a5382f615",
+    "evidence/k6-execution-labels-20260915/k6-v2-pl-light-execution-hub.png": "9bfed37a72130d7e097b09109ea1381d0a6bd8f66d0da2cae0f6a033fc524383",
+    "evidence/k6-execution-labels-20260915/k6-v2-en-console.log": "88622db113c68bc83215b16dc39f4f5c918df63e232c23dc42316d972908b63a",
+    "evidence/k6-execution-labels-20260915/k6-v2-pl-console.log": "88622db113c68bc83215b16dc39f4f5c918df63e232c23dc42316d972908b63a",
+    "evidence/k6-execution-labels-20260915/k6-v2-en-network.log": "20d45b4e5ec018f4717a42af1647bb66fd73d2af2056581bdfbfa71ec6c1a32e",
+    "evidence/k6-execution-labels-20260915/k6-v2-pl-network.log": "87b4d1c3e82f1d5b32622aa644aaadc8447ed8bdca85885634438b8a7b8e475e"
   }
 }
