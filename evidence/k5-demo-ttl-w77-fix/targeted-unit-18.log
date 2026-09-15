@@ -1,0 +1,74 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/d-k5-fix-w77
+
+Sourcemap for "/Users/piotrwisniewski/Developer/Consultify/node_modules/node-cron/dist/esm/node-cron.js" points to missing source files
+stdout | server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session — dataset signal is first-hand or admitted unknown > startDemoSession reports its OWN seed outcome and records it 44ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session — dataset signal is first-hand or admitted unknown > ★ a resumed session does NOT report complete: true when no seed ran and nothing is on record 1ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session — dataset signal is first-hand or admitted unknown > a resumed session QUOTES the recorded outcome of the seed that built it 0ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session — dataset signal is first-hand or admitted unknown > ★ a recorded outcome belonging to a DIFFERENT session is not reused 0ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session — dataset signal is first-hand or admitted unknown > ★ DEMO_USE_BASE_ORG reports unknown, not complete — the base org is seeded out of band 0ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session provisioning saga — an incomplete required seed aborts and cleans up > ★ throws DemoDatasetIncompleteError instead of returning a session 1ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session provisioning saga — an incomplete required seed aborts and cleans up > ★ leaves no half-provisioned tenant: dataset purged, no demo_sessions row, no preferences 0ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session provisioning saga — an incomplete required seed aborts and cleans up > ★ says so when the rollback itself failed, instead of claiming a clean abort 0ms
+ ✓ server/src/services/demo/__tests__/demoSessionDatasetSignal.test.ts > demo session provisioning saga — an incomplete required seed aborts and cleans up > ★ resolveOrCreateDemoSession propagates the abort — no session is minted on a failed seed 0ms
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[TrialCron] (hourly) Cleaned up 4 expired demo organization(s)[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts > demo cleanup scheduler flag (DEC-518) > does not start the destructive job without an explicit true value 31ms
+ ✓ server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts > demo cleanup scheduler flag (DEC-518) > starts only for opt-in value true 0ms
+ ✓ server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts > demo cleanup scheduler flag (DEC-518) > starts only for opt-in value TRUE 0ms
+ ✓ server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts > demo cleanup scheduler flag (DEC-518) > starts only for opt-in value 1 0ms
+ ✓ server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts > demo cleanup scheduler flag (DEC-518) > starts only for opt-in value yes 0ms
+ ✓ server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts > demo cleanup scheduler flag (DEC-518) > starts only for opt-in value on 0ms
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[TrialCron] (hourly) Cleaned up 4 expired demo organization(s)[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-15 05:52:01:521 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-15 05:52:01:521 [33mwarn[39m: [33m[TrialCron] DemoService unavailable; demo cleanup disabled:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-15 05:52:01:521 [33mwarn[39m: [33m[TrialCron] DemoService unavailable; skipping hourly demo cleanup[39m
+
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik 209ms
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym 4ms
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca 8ms
+
+ Test Files  3 passed (3)
+      Tests  18 passed (18)
+   Start at  05:52:00
+   Duration  696ms (transform 438ms, setup 316ms, import 251ms, tests 306ms, environment 807ms)

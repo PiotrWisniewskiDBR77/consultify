@@ -1,0 +1,52 @@
+{
+  "status": "READY_FOR_INDEPENDENT_REVIEW",
+  "decision": "DEC-518",
+  "exactBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "contentCommit": "4627bd853bae00865e2bcda48b026961cbfab676",
+  "branch": "codex/d-k5-fix-20260915",
+  "behavior": {
+    "missingFlag": "OFF; hourly destructive job is not registered and cleanup returns before candidate discovery",
+    "explicitTrue": "preserves accepted K5 cleanup behavior"
+  },
+  "postgres": {
+    "container": "cx-d-k5-fix-w77-pg",
+    "host": "127.0.0.1",
+    "port": 6455,
+    "database": "consultify_k5_fix",
+    "disposable": true
+  },
+  "proof": {
+    "realPgAcceptance": "7/7",
+    "priorK5CasesPreserved": "6/6 plus one new missing-env case",
+    "schedulerFlagUnit": "6/6",
+    "otherImporters": "12/12",
+    "dependentTablesExistingAndDeleteExecuted": "49/49",
+    "rollbackRowsPreserved": "5/5",
+    "paidProtected": true,
+    "freshEndedProtected": true,
+    "lockedRecheckProtected": true,
+    "serverTscRc": 0,
+    "frontTscRc": 2,
+    "frontTscErrors": 177,
+    "frontFilesChanged": 0,
+    "languageRc": 0,
+    "diffCheckRc": 0,
+    "newAsAny": 0,
+    "migrationsAdded": 0,
+    "forbiddenFilesChanged": 0
+  },
+  "productHashes": {
+    "server/src/cron/Scheduler.ts": "06036617e0c6766c6583eac3c8698f8cdfd24027c7be736232a11876557f1401",
+    "server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts": "2ba95f7638703f039509b09e8711c0fb9f222ff1047cf77c6115734e95c255ac",
+    "server/src/services/demoService.ts": "32fb9d142d298376746ddc38f9ff5b63f66d89af38862d681666396bf3b7c14d",
+    "tests/acceptance/demoCleanup.e2e.test.ts": "7689ea3652097515d62b19e6449cf480d2bfb1e582e1949cb303819429c32a17"
+  },
+  "evidenceHashes": {
+    "evidence/k5-demo-ttl-w77-fix/acceptance-realpg-7.log": "aa08baa50cddf323e43ce45dbd70ec73fe462ebbcd312f70f10d338cf590b66d",
+    "evidence/k5-demo-ttl-w77-fix/targeted-unit-18.log": "59aba09901c09fd8b61986c314436980b6e0fe643db5d7d906a07a0fe04b10b6",
+    "evidence/k5-demo-ttl-w77-fix/server-tsc.log": "8e487fa073a2a6d56847d53d9ab6f574ddb7f9756b1d70226c8adf0cc773a618",
+    "evidence/k5-demo-ttl-w77-fix/frontend-tsc-summary.log": "215f8871bf43bce352812defe0d934711ad9971250bdd89524a5802496a187a4",
+    "evidence/k5-demo-ttl-w77-fix/language.log": "4cc4878d1448db41c92a37ab922a0b0719149d2b074eef260bc7904f387e8180",
+    "evidence/k5-demo-ttl-w77-fix/scope-and-diff.log": "2559f4b160f2293d37b70dcbf480f693f6a79e4f15aa1ae368238367c2eebb76"
+  }
+}

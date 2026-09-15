@@ -1,0 +1,12 @@
+base=dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe
+product=4627bd853bae00865e2bcda48b026961cbfab676
+changed_files:
+server/src/cron/Scheduler.ts
+server/src/cron/__tests__/demoCleanupSchedulerFlag.test.ts
+server/src/services/demoService.ts
+tests/acceptance/demoCleanup.e2e.test.ts
+migration_delta=0
+frontend_delta=0
+new_as_any=0
+forbidden_delta=0
+diff_check_exit=0

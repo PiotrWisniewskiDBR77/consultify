@@ -1,0 +1,4 @@
+frontend_typecheck_candidate_count=177
+frontend_typecheck_candidate_exit=2
+frontend_product_files_changed=0
+assessment=no frontend regression possible in this package; exact product diff contains no src/ or public/ files
