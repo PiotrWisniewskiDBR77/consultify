@@ -21,6 +21,7 @@ import {
   Database,
   Factory,
   FileText,
+  FolderKanban,
   FolderOutput,
   GitBranch,
   LayoutDashboard,
@@ -120,6 +121,30 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       // /initiatives. Previously AppView.PORTFOLIO_ROADMAP routed to the legacy
       // /portfolio view, breaking the hub-and-spoke flow.
       viewId: AppView.FULL_STEP2_INITIATIVES,
+    },
+    /* 5.5 Projekty (PMO) — Fala F, etap „PMO w interfejsie".
+     *
+     * POWOD (zmierzone na stagingu `c458374bfa`, 15.09.2026): przy
+     * `VITE_PMO_PROJECTS=true` trasa `/projects` renderuje pelny modul
+     * (3 wiersze, API 200), ale `menuConfig.ts` nie mial ANI JEDNEGO
+     * odwolania do projektow — modul byl osiagalny wylacznie przez wpisanie
+     * adresu. Ksztalt „zbudowane, ale niepodlaczone": wlasciwa rzecz jest
+     * w kodzie, brakuje ostatniego przewodu.
+     *
+     * Bramka jest TA SAMA co na trasie (`AppRoutes.tsx`): dosłowne
+     * `import.meta.env.VITE_PMO_PROJECTS === 'true'`. Odczyt musi byc
+     * dosłowny i sasiadujacy — `import.meta` odciete od `.env` castem nie
+     * dostaje podstawienia w `vite dev`/Vitest (pamiec nadzorcy: „Vite:
+     * rozdzielony import.meta.env", 108 flag, ktore nigdy nie czytaly VITE_*).
+     * Przy OFF pozycja NIE ISTNIEJE — parytet z dzisiejszym menu zupelny.
+     *
+     * Kolejnosc: zaraz po Inicjatywach (projekt jest kontenerem inicjatywy,
+     * wiec stoi obok rejestru, przed Wdrozeniem). */
+    import.meta.env.VITE_PMO_PROJECTS === 'true' && {
+      id: 'MODULE_PROJECTS',
+      label: t('sidebar.projects', 'Projects'),
+      icon: React.createElement(FolderKanban, { size: 20 }),
+      viewId: AppView.PROJECTS,
     },
     // 6. Wdrożenie - realizacja zatwierdzonych inicjatyw
     {
