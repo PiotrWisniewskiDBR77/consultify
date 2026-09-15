@@ -65,6 +65,8 @@ interface LaneBackgroundProps {
   flowHeight: number;
   /** Current canvas zoom, so pointer deltas convert back to flow px. */
   zoom: number;
+  /** Left edge reserved for the floating palette, in container pixels. */
+  headerGutter?: number;
   locked: boolean;
   onRename: (id: string, next: string) => void;
   onDelete?: (id: string) => void;
@@ -105,6 +107,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   height,
   flowHeight,
   zoom,
+  headerGutter = 0,
   locked,
   onRename,
   onDelete,
@@ -196,7 +199,11 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
       style={{ top, height, background: `${lane.color}15` }}
     >
       {showHeader && (
-        <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
+        <div
+          className="absolute top-1 z-10 flex items-center gap-1"
+          style={{ left: Math.max(8, headerGutter) }}
+          data-testid={`process-flow-lane-header-${lane.id}`}
+        >
           {onToggleCollapse && (
             <button
               onClick={() => onToggleCollapse(lane.id)}
@@ -374,6 +381,8 @@ export interface LaneSystemProps {
    * tests that render LaneSystem without a ReactFlowProvider).
    */
   viewport?: { x: number; y: number; zoom: number };
+  /** Measured gutter occupied by the floating canvas palette. */
+  headerGutter?: number;
 }
 
 export const LaneSystem: React.FC<LaneSystemProps> = ({
@@ -392,6 +401,7 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
   autoEditLaneId,
   onAutoEditConsumed,
   viewport,
+  headerGutter = 0,
 }) => {
   const layout = laneBandLayout(lanes, LANE_HEIGHT);
   const zoom = viewport && viewport.zoom > 0 ? viewport.zoom : 1;
@@ -415,6 +425,7 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
             height={screen.height}
             flowHeight={band.height}
             zoom={zoom}
+            headerGutter={headerGutter}
             locked={locked}
             isPl={isPl}
             onRename={onRename}
