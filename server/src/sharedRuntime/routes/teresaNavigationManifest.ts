@@ -35,4 +35,3 @@ export const TERESA_NAVIGATION_MANIFEST: readonly TeresaNavigationManifestEntry[
   { id: 'ADMIN', route: '/admin', labelEn: 'Administration', labelPl: 'Administracja', clickPathEn: ['Administration'], clickPathPl: ['Administracja'], roles: ['OWNER', 'ADMIN'] },
   { id: 'SETTINGS', route: '/settings', labelEn: 'Settings', labelPl: 'Ustawienia', clickPathEn: ['Settings'], clickPathPl: ['Ustawienia'] },
 ];
-

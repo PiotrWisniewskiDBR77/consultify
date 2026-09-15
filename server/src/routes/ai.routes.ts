@@ -145,14 +145,21 @@ const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: R
     return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
   }
   try {
-    const membership = await dbGet<{ status?: string }>(
-      `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
+    const membership = await dbGet<{ status?: string; role?: string }>(
+      `SELECT status, role FROM organization_members WHERE user_id=? AND organization_id=?`,
       [userId, organizationId],
       { fallback: false }
     );
     if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
       return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
+    const membershipRole = String(membership?.role || '').trim().toUpperCase();
+    if (!membershipRole) {
+      return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
+    }
+    // The membership row is authoritative for this provider-bearing request.
+    // A still-valid JWT must not retain navigation privileges after a downgrade.
+    req.userRole = membershipRole;
   } catch (error) {
     logger.warn('[AI Stream] membership verification unavailable', {
       userId,

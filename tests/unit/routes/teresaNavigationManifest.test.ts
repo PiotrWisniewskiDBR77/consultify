@@ -8,4 +8,3 @@ describe('P-T13 Teresa navigation manifest mirror', () => {
     expect(serverManifest).toEqual(frontendManifest);
   });
 });
-

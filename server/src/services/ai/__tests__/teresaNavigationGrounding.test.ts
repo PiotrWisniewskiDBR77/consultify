@@ -65,5 +65,37 @@ describe('Teresa navigation grounding — P-T13 variant B', () => {
   it('fails closed without an organization', async () => {
     expect(await buildTeresaNavigationGrounding({ organizationId: '' })).toBeNull();
   });
-});
 
+  it.each([
+    ['en', ['Audits', 'Results', 'Finance', 'Materials', 'Meetings']],
+    ['pl', ['Audyty', 'Wyniki', 'Finanse', 'Materiały', 'Spotkania']],
+  ] as const)('fails closed for organization-gated navigation when flag lookup faults in %s', async (language, hiddenLabels) => {
+    const out = await buildTeresaNavigationGrounding({
+      organizationId: ORG,
+      userRole: 'ADMIN',
+      language,
+      runtimeFlags: { VITE_MODULE_MEETINGS: true },
+      queryFn: vi.fn(async () => {
+        throw new Error('feature_flags unavailable');
+      }),
+    });
+
+    const organizationGatedIds = [
+      'MODULE_AUDITS',
+      'MODULE_BENEFITS',
+      'MODULE_ECONOMICS',
+      'MODULE_PRESENTATIONS',
+      'MODULE_MEETING',
+    ];
+    expect(out?.items.filter((item) => organizationGatedIds.includes(item.id))).toEqual([]);
+    expect(out?.excluded).toEqual(expect.arrayContaining(
+      organizationGatedIds.map((id) => ({ id, reason: 'organization_flag_unverified' }))
+    ));
+    for (const label of hiddenLabels) {
+      expect(out?.systemInstructionAddon).not.toContain(label);
+    }
+    for (const route of ['/audit-programs', '/results', '/finance', '/presentations', '/meetings']) {
+      expect(out?.systemInstructionAddon).not.toContain(route);
+    }
+  });
+});

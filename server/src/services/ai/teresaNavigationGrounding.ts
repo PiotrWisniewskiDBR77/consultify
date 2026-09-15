@@ -3,6 +3,7 @@ import { TERESA_NAVIGATION_MANIFEST } from '../../sharedRuntime/routes/teresaNav
 export type TeresaNavigationUnavailableReason =
   | 'role_required'
   | 'organization_flag_off'
+  | 'organization_flag_unverified'
   | 'runtime_flag_off';
 
 export interface TeresaNavigationGroundingInput {
@@ -48,6 +49,7 @@ export async function buildTeresaNavigationGrounding(
   const role = normalizeRole(input.userRole);
   const language = String(input.language || '').toLowerCase().startsWith('pl') ? 'pl' : 'en';
   const organizationFlags = new Map<string, boolean>();
+  let organizationFlagsVerified = false;
 
   if (input.queryFn) {
     try {
@@ -57,6 +59,7 @@ export async function buildTeresaNavigationGrounding(
           WHERE organization_id = ? AND environment = 'production'`,
         [input.organizationId]
       );
+      organizationFlagsVerified = true;
       for (const row of Array.isArray(rows) ? rows : []) {
         if (!row || typeof row !== 'object') continue;
         const candidate = row as Record<string, unknown>;
@@ -65,8 +68,8 @@ export async function buildTeresaNavigationGrounding(
         }
       }
     } catch {
-      // Missing optional flag storage must not break chat. Static route gates
-      // still apply and unknown organization flags retain their route default.
+      // Chat remains available, but organization-gated navigation fails closed:
+      // an entitlement that cannot be verified must never be described to the user.
     }
   }
 
@@ -79,6 +82,10 @@ export async function buildTeresaNavigationGrounding(
     }
     if (entry.runtimeFlagKey && input.runtimeFlags?.[entry.runtimeFlagKey] !== true) {
       excluded.push({ id: entry.id, reason: 'runtime_flag_off' });
+      continue;
+    }
+    if (entry.organizationFlagKey && !organizationFlagsVerified) {
+      excluded.push({ id: entry.id, reason: 'organization_flag_unverified' });
       continue;
     }
     if (entry.organizationFlagKey && organizationFlags.get(entry.organizationFlagKey) === false) {
@@ -117,4 +124,3 @@ export async function buildTeresaNavigationGrounding(
 }
 
 export default { buildTeresaNavigationGrounding };
-

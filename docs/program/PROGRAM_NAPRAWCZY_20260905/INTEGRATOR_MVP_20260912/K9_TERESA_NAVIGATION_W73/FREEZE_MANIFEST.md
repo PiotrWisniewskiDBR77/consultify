@@ -28,4 +28,3 @@ Frozen behavioral denominator:
 - forbidden paths: 0.
 
 An independent reviewer must verify the exact package commit, inspect role precedence and fail-closed behavior, rerun the 17-test denominator, and confirm that no excluded module label reaches `systemInstructionAddon`.
-

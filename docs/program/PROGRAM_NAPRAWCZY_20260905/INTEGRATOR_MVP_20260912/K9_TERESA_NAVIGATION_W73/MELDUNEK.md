@@ -44,4 +44,3 @@ Screenshots are **N/A**. K9 changes only backend prompt grounding and a data-onl
 - Organization-specific navigation overrides are read only from explicit production `feature_flags` rows scoped to the active organization. An absent row retains the canonical route default.
 - K9 does not add a navigation tool. Teresa can explain the click path and cannot perform the click.
 - The package remains based on exact `f2628a0d36` as assigned. Integration/rebase belongs to CTO.
-
