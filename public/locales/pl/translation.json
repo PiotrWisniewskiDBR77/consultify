@@ -15939,6 +15939,19 @@
         "onDemand": "Na żądanie",
         "sponsor": "Sponsorski"
       },
+      "catalog": {
+        "weeklyExecutionPack": "Tygodniowy pakiet realizacji",
+        "monthlyPmoReview": "Miesięczny przegląd PMO",
+        "programHealthSummary": "Podsumowanie kondycji programu",
+        "blockersRecoveryReport": "Raport blokad i działań naprawczych",
+        "milestoneSlippageReport": "Raport opóźnień kamieni milowych",
+        "capacityUtilizationReport": "Raport wykorzystania zdolności",
+        "budgetVarianceReport": "Raport odchyleń budżetowych",
+        "decisionBacklogApprovalAging": "Zaległe decyzje i czas oczekiwania na zatwierdzenie",
+        "crossInitiativeDependencyReport": "Raport zależności między inicjatywami",
+        "deliveryConfidenceReport": "Raport pewności realizacji",
+        "sponsorReadyOnePager": "Jednostronicowe podsumowanie dla sponsora"
+      },
       "title": "Raporty realizacji",
       "subtitle": "Generuj prosty pakiet tygodniowy i raporty pogłębione bez dokładania narzutu procesowego.",
       "open": "Otwórz Raporty",
