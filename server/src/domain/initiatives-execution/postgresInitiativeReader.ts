@@ -66,9 +66,9 @@ export interface InitiativeCardVersionReadModel {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
-  estimate: { value: string; basis: string } | null;
-  estimatedBy: string | null;
-  estimatedAt: string | null;
+  estimate?: { value: string; basis: string } | null;
+  estimatedBy?: string | null;
+  estimatedAt?: string | null;
   reviewedBy?: string | null;
   publishedBy: string;
   publishedAt: string;
