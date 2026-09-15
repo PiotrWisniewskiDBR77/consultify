@@ -14,6 +14,7 @@ import { MFAView } from './MFAView';
 import { PasswordPolicyView } from './PasswordPolicyView';
 import { SecurityEventsView } from './SecurityEventsView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 export const SecurityModuleView: React.FC = () => {
   const [activeTab, setActiveTab] = useState('ip-whitelist');
 
@@ -50,7 +51,7 @@ export const SecurityModuleView: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         title="Security"
-        subtitle="Manage security settings, IP whitelisting, devices, MFA, and monitor security events"
+        subtitle={tlumaczPozaHookiem("superadmin.securityModule.manageSecuritySettingsIPWhitelistingDevicesMFA", "Manage security settings, IP whitelisting, devices, MFA, and monitor security events")}
       >
         {renderContent()}
       </TabLayout>

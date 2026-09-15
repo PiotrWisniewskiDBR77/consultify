@@ -11,6 +11,7 @@ import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type OrganizationRow = {
   id: string;
   name: unknown;
@@ -275,7 +276,7 @@ export const PasswordPolicyView: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.passwordPolicy.loading", "Loading...")}</div>
       ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-6">
           <div className="grid grid-cols-2 gap-6">

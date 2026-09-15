@@ -12,6 +12,8 @@ import { StandardTable, type TableColumn, type TableRow } from '../../../compone
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type SecurityEventRow = {
   id: string;
   created_at?: unknown;
@@ -26,7 +28,7 @@ type SecurityEventRow = {
 const formatSecurityEventDate = (value?: unknown) => {
   if (!value) return 'Unknown date';
   const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const asText = (value: unknown, fallback: string) => {
@@ -222,7 +224,7 @@ export const SecurityEventsView: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Security Events</h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Monitor and manage security events
+            {tlumaczPozaHookiem("superadmin.securityEvents.monitorAndManageSecurityEvents", "Monitor and manage security events")}
           </p>
         </div>
       </div>
@@ -245,7 +247,7 @@ export const SecurityEventsView: React.FC = () => {
           className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
         >
           <option value="">All Event Types</option>
-          <option value="LOGIN_FAILED">Failed Login</option>
+          <option value="LOGIN_FAILED">{tlumaczPozaHookiem("superadmin.securityEvents.failedLogin", "Failed Login")}</option>
           <option value="LOGIN_SUCCESS">Login Success</option>
           <option value="DATA_EXPORT">Data Export</option>
           <option value="PERMISSION_CHANGE">Permission Change</option>
