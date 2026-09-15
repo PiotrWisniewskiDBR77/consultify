@@ -623,6 +623,9 @@ const Dec495InicjatywyArchiwumScreen = React.lazy(
   () => import('./screens/dec495-inicjatywy-archiwum')
 );
 const F2InicjatywyAnalizaScreen = React.lazy(() => import('./screens/f2-inicjatywy-analiza'));
+const A1InitiativeCardEstimateScreen = React.lazy(
+  () => import('./screens/a1-inicjatywa-card-estimate')
+);
 const Z29InicjatywyRaportPracyScreen = React.lazy(
   () => import('./screens/z29-inicjatywy-raport-pracy')
 );
@@ -859,6 +862,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DEC-495 — REALNY <InitiativesHub> z pstryczkiem „Aktywne / Wszystkie / Archiwalne". Atrapa /api/initiatives odtwarza kontrakt naprawionej trasy (includeArchived/archived). &theme=light|dark',
     render: () => <Dec495InicjatywyArchiwumScreen />,
+  },
+  'a1-inicjatywa-card-estimate': {
+    label:
+      'A-1 / DEC-489 — canonical Initiative N card with persisted estimate and a visible disabled approval action for a viewer without review authority. &theme=light&lang=en',
+    render: () => <A1InitiativeCardEstimateScreen />,
   },
   'f2-inicjatywy-analiza': {
     label:
