@@ -125,7 +125,7 @@ export const DEFAULT_BEAR: ScenarioDrivers = {
 
 /** Non-scenario defaults, also surfaced as parameter descriptors. */
 export const THREE_SCENARIO_GENERAL_DEFAULTS = {
-  companyName: 'Spółka',
+  companyName: 'Company',
   currencyCode: 'PLN' as 'PLN' | 'EUR' | 'USD',
   baseRevenue: 1_000_000,
 } as const;
@@ -604,7 +604,7 @@ function buildComparisonSheet(startYear: number, currencyHint: 'pln' | 'eur' | '
 // ---------------------------------------------------------------------------
 
 export function buildThreeScenarioPnLSchema(params: ThreeScenarioPnLParams = {}): WorkbookSchema {
-  const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
+  const companyName = (params.companyName ?? 'Company').trim() || 'Company';
   const startYear =
     Number.isFinite(params.startYear) && (params.startYear as number) > 0
       ? Math.floor(params.startYear as number)

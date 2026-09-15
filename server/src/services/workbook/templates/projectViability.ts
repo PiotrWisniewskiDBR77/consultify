@@ -85,7 +85,7 @@ export interface ProjectViabilityParams {
 // Exported so the template registry can derive its FE-facing parameter
 // descriptors from the SAME source of truth the builder uses.
 export const PROJECT_VIABILITY_GENERAL_DEFAULTS = {
-  projectName: 'Projekt inwestycyjny',
+  projectName: 'Investment project',
   currencyCode: 'PLN' as 'PLN' | 'EUR' | 'USD',
   investment: 1_000_000,
 } as const;
@@ -596,7 +596,7 @@ function buildWrazliwoscSheet(
 
 export function buildProjectViabilitySchema(params: ProjectViabilityParams = {}): WorkbookSchema {
   const projectName =
-    (params.projectName ?? 'Projekt inwestycyjny').trim() || 'Projekt inwestycyjny';
+    (params.projectName ?? 'Investment project').trim() || 'Investment project';
   const startYear =
     Number.isFinite(params.startYear) && (params.startYear as number) > 0
       ? Math.floor(params.startYear as number)

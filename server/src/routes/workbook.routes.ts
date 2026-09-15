@@ -52,6 +52,7 @@ import {
 } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { resolveLocale } from '../services/ai/languagePolicy.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -1116,9 +1117,58 @@ router.post(
 );
 
 /**
+ * Resolve the workbook-template display locale for a request — DEC-461/F7b
+ * (2026-09-14). EN is the default; PL is opt-in via the first valid candidate,
+ * mirroring the DEC-510 resolver in `services/report/reportLocale.ts`:
+ * explicit request override → users.language → users.locale →
+ * organizations.default_language → 'en'.
+ */
+async function resolveWorkbookTemplateLocale(
+  req: AuthenticatedRequest,
+  user: { id: string; organizationId: string }
+): Promise<import('../services/workbook/templates/index.js').WorkbookLocale> {
+  const { normalizeWorkbookLocale } = await import('../services/workbook/templates/index.js');
+  const explicit = normalizeWorkbookLocale(
+    (req.query?.lang as string | undefined) ?? (req.body as { locale?: unknown } | undefined)?.locale
+  );
+  if (explicit) return explicit;
+
+  try {
+    const userRow = (await dbGet(`SELECT language FROM users WHERE id = ?`, [user.id])) as
+      | { language?: string | null }
+      | undefined;
+    const userLocale = normalizeWorkbookLocale(userRow?.language);
+    if (userLocale) return userLocale;
+  } catch {
+    // Continue to the legacy preference column.
+  }
+  try {
+    const userRow = (await dbGet(`SELECT locale FROM users WHERE id = ?`, [user.id])) as
+      | { locale?: string | null }
+      | undefined;
+    const legacyLocale = normalizeWorkbookLocale(userRow?.locale);
+    if (legacyLocale) return legacyLocale;
+  } catch {
+    // Organization remains valid.
+  }
+  try {
+    const organization = (await dbGet(
+      `SELECT default_language AS "defaultLanguage" FROM organizations WHERE id = ?`,
+      [user.organizationId]
+    )) as { defaultLanguage?: string | null } | undefined;
+    const orgLocale = normalizeWorkbookLocale(organization?.defaultLanguage);
+    if (orgLocale) return orgLocale;
+  } catch {
+    // Fall through to the English default.
+  }
+  return 'en';
+}
+
+/**
  * GET /api/workbook/templates
  * Lists the registered PARAMETRIC model templates (live-formula workbooks) with
  * their self-describing parameter descriptors, so a FE can render a form. C3.
+ * EN first (DEC-461/F7b): resolves the caller's locale and falls back to English.
  */
 router.get(
   '/templates',
@@ -1130,11 +1180,12 @@ router.get(
     }
 
     const { listWorkbookTemplates } = await import('../services/workbook/templates/index.js');
-    const templates = listWorkbookTemplates().map((t) => ({
-      id: t.id,
-      name: t.title,
-      description: t.description,
-      params: t.params,
+    const locale = await resolveWorkbookTemplateLocale(req, user);
+    const templates = listWorkbookTemplates(locale).map((entry) => ({
+      id: entry.id,
+      name: entry.title,
+      description: entry.description,
+      params: entry.params,
     }));
 
     res.json({ templates });

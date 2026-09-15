@@ -35,7 +35,7 @@ describe('benefitsRealization premium workbook', () => {
   });
 
   it('is discoverable and passes deterministic quality critique', () => {
-    expect(WORKBOOK_TEMPLATES.benefitsRealization.title).toContain('Benefits Realization');
+    expect(WORKBOOK_TEMPLATES.benefitsRealization.title()).toContain('Benefits Realization');
     const result = critiqueWorkbook(buildBenefitsRealizationSchema());
     expect(result.passed).toBe(true);
     expect(result.issues).toEqual([]);

@@ -13,7 +13,7 @@ export interface BenefitsRealizationParams {
 }
 
 export const BENEFITS_REALIZATION_DEFAULTS = {
-  programName: 'Program transformacji', currencyCode: 'PLN' as const,
+  programName: 'Transformation program', currencyCode: 'PLN' as const,
   investment: 2_400_000, implementationCost: 300_000, revenueBenefit: 1_800_000, costBenefit: 1_200_000,
   workingCapitalBenefit: 600_000, confidencePct: 0.8, realizationPct: 0.65,
 };

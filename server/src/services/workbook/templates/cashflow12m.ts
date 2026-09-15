@@ -73,7 +73,7 @@ export interface Cashflow12mParams {
 // Exported so the template registry can derive its FE-facing parameter
 // descriptors from the SAME source of truth the builder uses.
 export const CASHFLOW_GENERAL_DEFAULTS = {
-  companyName: 'Spółka',
+  companyName: 'Company',
   currencyCode: 'PLN' as 'PLN' | 'EUR' | 'USD',
   openingBalance: 100_000,
 } as const;
@@ -432,7 +432,7 @@ function buildPodsumowanieSheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
 // ---------------------------------------------------------------------------
 
 export function buildCashflow12mSchema(params: Cashflow12mParams = {}): WorkbookSchema {
-  const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
+  const companyName = (params.companyName ?? 'Company').trim() || 'Company';
   const startYear =
     Number.isFinite(params.startYear) && (params.startYear as number) > 0
       ? Math.floor(params.startYear as number)

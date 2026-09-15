@@ -70,7 +70,7 @@ export interface DcfValuationParams {
 // ---------------------------------------------------------------------------
 
 export const DCF_GENERAL_DEFAULTS = {
-  companyName: 'Spółka',
+  companyName: 'Company',
   currencyCode: 'PLN' as 'PLN' | 'EUR' | 'USD',
   fcf0: 1_000_000,
 } as const;
@@ -431,7 +431,7 @@ function buildWycenaSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'u
 // ---------------------------------------------------------------------------
 
 export function buildDcfValuationSchema(params: DcfValuationParams = {}): WorkbookSchema {
-  const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
+  const companyName = (params.companyName ?? 'Company').trim() || 'Company';
   const valuationYear =
     Number.isFinite(params.valuationYear) && (params.valuationYear as number) > 0
       ? Math.floor(params.valuationYear as number)

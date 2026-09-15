@@ -59,7 +59,7 @@ export interface BreakEvenParams {
 // Exported so the template registry can derive its FE-facing parameter
 // descriptors from the SAME source of truth the builder uses.
 export const BREAK_EVEN_GENERAL_DEFAULTS = {
-  companyName: 'Spółka',
+  companyName: 'Company',
   currencyCode: 'PLN' as 'PLN' | 'EUR' | 'USD',
   unitPrice: 120,
 } as const;
@@ -356,7 +356,7 @@ function buildSensitivitySheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
 // ---------------------------------------------------------------------------
 
 export function buildBreakEvenSchema(params: BreakEvenParams = {}): WorkbookSchema {
-  const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
+  const companyName = (params.companyName ?? 'Company').trim() || 'Company';
 
   const unitPrice = safePositive(params.unitPrice, BREAK_EVEN_GENERAL_DEFAULTS.unitPrice);
   let variableCostPerUnit = safeAmount(

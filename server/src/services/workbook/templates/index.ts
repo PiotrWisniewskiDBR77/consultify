@@ -95,6 +95,9 @@ import {
   UNIT_ECONOMICS_GENERAL_DEFAULTS,
   type UnitEconomicsParams,
 } from './unitEconomics.js';
+import { normalizeWorkbookLocale, t, type WorkbookLocale } from './templateLocale.js';
+
+export { normalizeWorkbookLocale, type WorkbookLocale };
 
 /** Stable identifiers for registered model templates. */
 export type WorkbookTemplateId =
@@ -138,15 +141,23 @@ export interface WorkbookTemplateParam {
   help?: string;
 }
 
-/** A registered template: metadata + descriptors + a params→schema builder. */
+/**
+ * A registered template: metadata + descriptors + a params→schema builder.
+ *
+ * `title`/`description`/`params` are LOCALE-AWARE (DEC-461/F7b, 2026-09-14):
+ * each takes an optional `WorkbookLocale` (default `'en'`) and returns the
+ * resolved string(s) — English is the default value, Polish comes from the
+ * `templateLocale.ts` dictionary. This keeps `buildTemplateParamsSchema`
+ * (which only cares about `name`/`type`/`min`/`max`) locale-independent.
+ */
 export interface WorkbookTemplateEntry<P = any> {
   id: WorkbookTemplateId;
   /** Human-facing title (surfaced to the LLM/UI when choosing a template). */
-  title: string;
+  title: (locale?: WorkbookLocale) => string;
   /** One-line description of what the template models. */
-  description: string;
+  description: (locale?: WorkbookLocale) => string;
   /** Self-describing, FE-renderable parameter list (flat keys). */
-  params: WorkbookTemplateParam[];
+  params: (locale?: WorkbookLocale) => WorkbookTemplateParam[];
   /** Build a complete WorkbookSchema from the template's NATIVE params. */
   build: (params: P) => WorkbookSchema;
   /**
@@ -163,19 +174,19 @@ export interface WorkbookTemplateEntry<P = any> {
 // form defaults never drift from the model defaults.
 // ---------------------------------------------------------------------------
 
-/** The 6 scenario drivers, in vertical order, with PL labels + sane bounds. */
+/** The 6 scenario drivers, in vertical order, with EN labels + sane bounds. */
 const DRIVER_FIELDS: Array<{
   key: keyof ScenarioDrivers;
   label: string;
   min: number;
   max: number;
 }> = [
-  { key: 'revenueGrowthPct', label: 'Wzrost przychodów %/rok', min: -1, max: 5 },
-  { key: 'cogsPct', label: 'COGS % przychodów', min: 0, max: 1 },
-  { key: 'opexPct', label: 'OPEX % przychodów', min: 0, max: 1 },
-  { key: 'daPct', label: 'Amortyzacja (D&A) % przychodów', min: 0, max: 1 },
-  { key: 'interestPct', label: 'Odsetki % przychodów', min: 0, max: 1 },
-  { key: 'taxRatePct', label: 'Stopa podatkowa %', min: 0, max: 1 },
+  { key: 'revenueGrowthPct', label: 'Revenue growth %/year', min: -1, max: 5 },
+  { key: 'cogsPct', label: 'COGS % of revenue', min: 0, max: 1 },
+  { key: 'opexPct', label: 'OPEX % of revenue', min: 0, max: 1 },
+  { key: 'daPct', label: 'Depreciation & amortization (D&A) % of revenue', min: 0, max: 1 },
+  { key: 'interestPct', label: 'Interest % of revenue', min: 0, max: 1 },
+  { key: 'taxRatePct', label: 'Tax rate %', min: 0, max: 1 },
 ];
 
 const SCENARIO_GROUPS: Array<{
@@ -183,46 +194,46 @@ const SCENARIO_GROUPS: Array<{
   label: string;
   defaults: ScenarioDrivers;
 }> = [
-  { prefix: 'base', label: 'Base (bazowy)', defaults: DEFAULT_BASE },
-  { prefix: 'bull', label: 'Bull (optymistyczny)', defaults: DEFAULT_BULL },
-  { prefix: 'bear', label: 'Bear (pesymistyczny)', defaults: DEFAULT_BEAR },
+  { prefix: 'base', label: 'Base (baseline)', defaults: DEFAULT_BASE },
+  { prefix: 'bull', label: 'Bull (optimistic)', defaults: DEFAULT_BULL },
+  { prefix: 'bear', label: 'Bear (pessimistic)', defaults: DEFAULT_BEAR },
 ];
 
-function buildThreeScenarioParams(): WorkbookTemplateParam[] {
+function buildThreeScenarioParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   const params: WorkbookTemplateParam[] = [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: THREE_SCENARIO_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: THREE_SCENARIO_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'startYear',
-      label: 'Pierwszy rok prognozy',
+      label: t(locale, 'First forecast year'),
       type: 'integer',
       default: new Date().getFullYear(),
       min: 2000,
       max: 2100,
       step: 1,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'baseRevenue',
-      label: 'Przychód roku bazowego',
+      label: t(locale, 'Base-year revenue'),
       type: 'currency',
       default: THREE_SCENARIO_GENERAL_DEFAULTS.baseRevenue,
       min: 0,
       step: 1000,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
   ];
 
@@ -230,13 +241,13 @@ function buildThreeScenarioParams(): WorkbookTemplateParam[] {
     for (const drv of DRIVER_FIELDS) {
       params.push({
         name: `${String(scen.prefix)}.${String(drv.key)}`,
-        label: drv.label,
+        label: t(locale, drv.label),
         type: 'percent',
         default: scen.defaults[drv.key],
         min: drv.min,
         max: drv.max,
         step: 0.005,
-        group: scen.label,
+        group: t(locale, scen.label),
       });
     }
   }
@@ -248,107 +259,107 @@ function buildThreeScenarioParams(): WorkbookTemplateParam[] {
 // operatingBudget — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildOperatingBudgetParams(): WorkbookTemplateParam[] {
+function buildOperatingBudgetParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: OPERATING_BUDGET_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: OPERATING_BUDGET_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'startYear',
-      label: 'Rok budżetu',
+      label: t(locale, 'Budget year'),
       type: 'integer',
       default: new Date().getFullYear(),
       min: 2000,
       max: 2100,
       step: 1,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'baseMonthlyRevenue',
-      label: 'Przychód m-c 1',
+      label: t(locale, 'Revenue, month 1'),
       type: 'currency',
       default: OPERATING_BUDGET_GENERAL_DEFAULTS.baseMonthlyRevenue,
       min: 0,
       step: 1000,
-      group: 'Przychody',
+      group: t(locale, 'Revenue'),
     },
     {
       name: 'monthlyRevenueGrowthPct',
-      label: 'Wzrost przychodów m/m %',
+      label: t(locale, 'Revenue growth m/m %'),
       type: 'percent',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.monthlyRevenueGrowthPct,
       min: -1,
       max: 2,
       step: 0.005,
-      group: 'Przychody',
+      group: t(locale, 'Revenue'),
     },
     {
       name: 'variableCostPct',
-      label: 'Koszty zmienne % przychodów',
+      label: t(locale, 'Variable costs % of revenue'),
       type: 'percent',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.variableCostPct,
       min: 0,
       max: 1,
       step: 0.005,
-      group: 'Koszty zmienne',
+      group: t(locale, 'Variable costs'),
     },
     {
       name: 'rentMonthly',
-      label: 'Czynsz (m-c 1)',
+      label: t(locale, 'Rent (month 1)'),
       type: 'currency',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.rentMonthly,
       min: 0,
       step: 100,
-      group: 'Koszty stałe',
+      group: t(locale, 'Fixed costs'),
     },
     {
       name: 'salariesMonthly',
-      label: 'Wynagrodzenia (m-c 1)',
+      label: t(locale, 'Salaries (month 1)'),
       type: 'currency',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.salariesMonthly,
       min: 0,
       step: 100,
-      group: 'Koszty stałe',
+      group: t(locale, 'Fixed costs'),
     },
     {
       name: 'marketingMonthly',
-      label: 'Marketing (m-c 1)',
+      label: t(locale, 'Marketing (month 1)'),
       type: 'currency',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.marketingMonthly,
       min: 0,
       step: 100,
-      group: 'Koszty stałe',
+      group: t(locale, 'Fixed costs'),
     },
     {
       name: 'otherFixedMonthly',
-      label: 'Pozostałe koszty stałe (m-c 1)',
+      label: t(locale, 'Other fixed costs (month 1)'),
       type: 'currency',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.otherFixedMonthly,
       min: 0,
       step: 100,
-      group: 'Koszty stałe',
+      group: t(locale, 'Fixed costs'),
     },
     {
       name: 'fixedCostGrowthPct',
-      label: 'Wzrost kosztów stałych m/m %',
+      label: t(locale, 'Fixed cost growth m/m %'),
       type: 'percent',
       default: OPERATING_BUDGET_DRIVER_DEFAULTS.fixedCostGrowthPct,
       min: -1,
       max: 2,
       step: 0.005,
-      group: 'Koszty stałe',
+      group: t(locale, 'Fixed costs'),
     },
   ];
 }
@@ -357,98 +368,98 @@ function buildOperatingBudgetParams(): WorkbookTemplateParam[] {
 // dcfValuation — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildDcfValuationParams(): WorkbookTemplateParam[] {
+function buildDcfValuationParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: DCF_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: DCF_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'valuationYear',
-      label: 'Rok wyceny (rok 0)',
+      label: t(locale, 'Valuation year (year 0)'),
       type: 'integer',
       default: new Date().getFullYear(),
       min: 2000,
       max: 2100,
       step: 1,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'fcf0',
-      label: 'FCF rok bazowy (rok 0)',
+      label: t(locale, 'Base-year FCF (year 0)'),
       type: 'currency',
       default: DCF_GENERAL_DEFAULTS.fcf0,
       min: 0,
       step: 1000,
-      group: 'Projekcja',
+      group: t(locale, 'Projection'),
     },
     {
       name: 'fcfGrowthPct',
-      label: 'Wzrost FCF (prognoza) % rocznie',
+      label: t(locale, 'FCF growth (forecast) % per year'),
       type: 'percent',
       default: DCF_DRIVER_DEFAULTS.fcfGrowthPct,
       min: -1,
       max: 2,
       step: 0.005,
-      group: 'Projekcja',
+      group: t(locale, 'Projection'),
     },
     {
       name: 'horizonYears',
-      label: 'Horyzont prognozy (lata)',
+      label: t(locale, 'Forecast horizon (years)'),
       type: 'integer',
       default: DCF_DRIVER_DEFAULTS.horizonYears,
       min: 3,
       max: 10,
       step: 1,
-      group: 'Projekcja',
+      group: t(locale, 'Projection'),
     },
     {
       name: 'waccPct',
-      label: 'WACC (stopa dyskontowa) %',
+      label: t(locale, 'WACC (discount rate) %'),
       type: 'percent',
       default: DCF_DRIVER_DEFAULTS.waccPct,
       min: 0.001,
       max: 1,
       step: 0.005,
-      group: 'Dyskontowanie',
+      group: t(locale, 'Discounting'),
     },
     {
       name: 'terminalGrowthPct',
-      label: 'Wzrost terminalny (g) %',
+      label: t(locale, 'Terminal growth (g) %'),
       type: 'percent',
       default: DCF_DRIVER_DEFAULTS.terminalGrowthPct,
       min: -0.5,
       max: 0.5,
       step: 0.005,
-      group: 'Dyskontowanie',
+      group: t(locale, 'Discounting'),
     },
     {
       name: 'netDebt',
-      label: 'Dług netto',
+      label: t(locale, 'Net debt'),
       type: 'currency',
       default: DCF_DRIVER_DEFAULTS.netDebt,
       step: 1000,
-      group: 'Mostek EV → Equity',
+      group: t(locale, 'EV → Equity bridge'),
     },
     {
       name: 'sharesOutstanding',
-      label: 'Liczba akcji',
+      label: t(locale, 'Shares outstanding'),
       type: 'number',
       default: DCF_DRIVER_DEFAULTS.sharesOutstanding,
       min: 1,
       step: 1000,
-      group: 'Mostek EV → Equity',
+      group: t(locale, 'EV → Equity bridge'),
     },
   ];
 }
@@ -457,58 +468,58 @@ function buildDcfValuationParams(): WorkbookTemplateParam[] {
 // breakEven — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildBreakEvenParams(): WorkbookTemplateParam[] {
+function buildBreakEvenParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: BREAK_EVEN_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: BREAK_EVEN_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'unitPrice',
-      label: 'Cena jednostkowa',
+      label: t(locale, 'Unit price'),
       type: 'currency',
       default: BREAK_EVEN_GENERAL_DEFAULTS.unitPrice,
       min: 0.01,
       step: 1,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'variableCostPerUnit',
-      label: 'Koszt zmienny na sztukę',
+      label: t(locale, 'Variable cost per unit'),
       type: 'currency',
       default: BREAK_EVEN_DRIVER_DEFAULTS.variableCostPerUnit,
       min: 0,
       step: 1,
-      group: 'Koszty',
+      group: t(locale, 'Costs'),
     },
     {
       name: 'fixedCosts',
-      label: 'Koszty stałe',
+      label: t(locale, 'Fixed costs'),
       type: 'currency',
       default: BREAK_EVEN_DRIVER_DEFAULTS.fixedCosts,
       min: 0,
       step: 1000,
-      group: 'Koszty',
+      group: t(locale, 'Costs'),
     },
     {
       name: 'plannedVolume',
-      label: 'Planowany wolumen sprzedaży (szt.)',
+      label: t(locale, 'Planned sales volume (units)'),
       type: 'integer',
       default: BREAK_EVEN_DRIVER_DEFAULTS.plannedVolume,
       min: 0,
       step: 100,
-      group: 'Sprzedaż',
+      group: t(locale, 'Sales'),
     },
   ];
 }
@@ -517,88 +528,88 @@ function buildBreakEvenParams(): WorkbookTemplateParam[] {
 // cashflow12m — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildCashflow12mParams(): WorkbookTemplateParam[] {
+function buildCashflow12mParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: CASHFLOW_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: CASHFLOW_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'startYear',
-      label: 'Rok prognozy',
+      label: t(locale, 'Forecast year'),
       type: 'integer',
       default: new Date().getFullYear(),
       min: 2000,
       max: 2100,
       step: 1,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'openingBalance',
-      label: 'Saldo początkowe',
+      label: t(locale, 'Opening balance'),
       type: 'currency',
       default: CASHFLOW_GENERAL_DEFAULTS.openingBalance,
       step: 1000,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'baseMonthlyRevenue',
-      label: 'Przychód m-c 1',
+      label: t(locale, 'Revenue, month 1'),
       type: 'currency',
       default: CASHFLOW_DRIVER_DEFAULTS.baseMonthlyRevenue,
       min: 0,
       step: 1000,
-      group: 'Przychody',
+      group: t(locale, 'Revenue'),
     },
     {
       name: 'monthlyRevenueGrowthPct',
-      label: 'Wzrost przychodów m/m %',
+      label: t(locale, 'Revenue growth m/m %'),
       type: 'percent',
       default: CASHFLOW_DRIVER_DEFAULTS.monthlyRevenueGrowthPct,
       min: -1,
       max: 2,
       step: 0.005,
-      group: 'Przychody',
+      group: t(locale, 'Revenue'),
     },
     {
       name: 'paymentDelayMonths',
-      label: 'Opóźnienie płatności (miesiące)',
+      label: t(locale, 'Payment delay (months)'),
       type: 'integer',
       default: CASHFLOW_DRIVER_DEFAULTS.paymentDelayMonths,
       min: 0,
       max: 3,
       step: 1,
-      group: 'Przychody',
+      group: t(locale, 'Revenue'),
     },
     {
       name: 'monthlyCosts',
-      label: 'Koszty m-c 1',
+      label: t(locale, 'Costs, month 1'),
       type: 'currency',
       default: CASHFLOW_DRIVER_DEFAULTS.monthlyCosts,
       min: 0,
       step: 1000,
-      group: 'Koszty',
+      group: t(locale, 'Costs'),
     },
     {
       name: 'costGrowthPct',
-      label: 'Wzrost kosztów m/m %',
+      label: t(locale, 'Cost growth m/m %'),
       type: 'percent',
       default: CASHFLOW_DRIVER_DEFAULTS.costGrowthPct,
       min: -1,
       max: 2,
       step: 0.005,
-      group: 'Koszty',
+      group: t(locale, 'Costs'),
     },
   ];
 }
@@ -607,69 +618,69 @@ function buildCashflow12mParams(): WorkbookTemplateParam[] {
 // unitEconomics — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildUnitEconomicsParams(): WorkbookTemplateParam[] {
+function buildUnitEconomicsParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: UNIT_ECONOMICS_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: UNIT_ECONOMICS_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'startingMrr',
-      label: 'MRR startowy',
+      label: t(locale, 'Starting MRR'),
       type: 'currency',
       default: UNIT_ECONOMICS_GENERAL_DEFAULTS.startingMrr,
       min: 0,
       step: 1000,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'churnPctMonthly',
-      label: 'Churn m/m %',
+      label: t(locale, 'Churn m/m %'),
       type: 'percent',
       default: UNIT_ECONOMICS_DRIVER_DEFAULTS.churnPctMonthly,
       min: 0.001,
       max: 1,
       step: 0.005,
-      group: 'Metryki wejściowe',
+      group: t(locale, 'Input metrics'),
     },
     {
       name: 'cac',
-      label: 'CAC (koszt pozyskania klienta)',
+      label: t(locale, 'CAC (customer acquisition cost)'),
       type: 'currency',
       default: UNIT_ECONOMICS_DRIVER_DEFAULTS.cac,
       min: 0.01,
       step: 50,
-      group: 'Metryki wejściowe',
+      group: t(locale, 'Input metrics'),
     },
     {
       name: 'grossMarginPct',
-      label: 'Marża brutto %',
+      label: t(locale, 'Gross margin %'),
       type: 'percent',
       default: UNIT_ECONOMICS_DRIVER_DEFAULTS.grossMarginPct,
       min: 0.001,
       max: 1,
       step: 0.005,
-      group: 'Metryki wejściowe',
+      group: t(locale, 'Input metrics'),
     },
     {
       name: 'arpu',
-      label: 'ARPU (przychód / klient / m-c)',
+      label: t(locale, 'ARPU (revenue / customer / month)'),
       type: 'currency',
       default: UNIT_ECONOMICS_DRIVER_DEFAULTS.arpu,
       min: 0.01,
       step: 10,
-      group: 'Metryki wejściowe',
+      group: t(locale, 'Input metrics'),
     },
   ];
 }
@@ -678,51 +689,51 @@ function buildUnitEconomicsParams(): WorkbookTemplateParam[] {
 // loanAmortization — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildLoanAmortizationParams(): WorkbookTemplateParam[] {
+function buildLoanAmortizationParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'companyName',
-      label: 'Nazwa spółki',
+      label: t(locale, 'Company name'),
       type: 'text',
       default: LOAN_AMORTIZATION_GENERAL_DEFAULTS.companyName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: LOAN_AMORTIZATION_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'loanAmount',
-      label: 'Kwota kredytu',
+      label: t(locale, 'Loan amount'),
       type: 'currency',
       default: LOAN_AMORTIZATION_GENERAL_DEFAULTS.loanAmount,
       min: 0.01,
       step: 1000,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'annualInterestRatePct',
-      label: 'Oprocentowanie roczne %',
+      label: t(locale, 'Annual interest rate %'),
       type: 'percent',
       default: LOAN_AMORTIZATION_DRIVER_DEFAULTS.annualInterestRatePct,
       min: 0.0001,
       max: 1,
       step: 0.001,
-      group: 'Warunki kredytu',
+      group: t(locale, 'Loan terms'),
     },
     {
       name: 'termMonths',
-      label: 'Okres (miesiące)',
+      label: t(locale, 'Term (months)'),
       type: 'integer',
       default: LOAN_AMORTIZATION_DRIVER_DEFAULTS.termMonths,
       min: 1,
       max: 360,
       step: 1,
-      group: 'Warunki kredytu',
+      group: t(locale, 'Loan terms'),
     },
   ];
 }
@@ -731,97 +742,97 @@ function buildLoanAmortizationParams(): WorkbookTemplateParam[] {
 // projectViability — parameter descriptors
 // ---------------------------------------------------------------------------
 
-function buildProjectViabilityParams(): WorkbookTemplateParam[] {
+function buildProjectViabilityParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
   return [
     {
       name: 'projectName',
-      label: 'Nazwa projektu',
+      label: t(locale, 'Project name'),
       type: 'text',
       default: PROJECT_VIABILITY_GENERAL_DEFAULTS.projectName,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'currencyCode',
-      label: 'Waluta',
+      label: t(locale, 'Currency'),
       type: 'enum',
       options: ['PLN', 'EUR', 'USD'],
       default: PROJECT_VIABILITY_GENERAL_DEFAULTS.currencyCode,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'startYear',
-      label: 'Pierwszy rok eksploatacji (rok 1)',
+      label: t(locale, 'First year of operation (year 1)'),
       type: 'integer',
       default: new Date().getFullYear() + 1,
       min: 2000,
       max: 2100,
       step: 1,
-      group: 'Ogólne',
+      group: t(locale, 'General'),
     },
     {
       name: 'investment',
-      label: 'Nakład początkowy (inwestycja)',
+      label: t(locale, 'Initial outlay (investment)'),
       type: 'currency',
       default: PROJECT_VIABILITY_GENERAL_DEFAULTS.investment,
       min: 0.01,
       step: 1000,
-      group: 'Inwestycja',
+      group: t(locale, 'Investment'),
     },
     {
       name: 'baseCashFlow',
-      label: 'Przepływ operacyjny brutto — rok 1',
+      label: t(locale, 'Gross operating cash flow — year 1'),
       type: 'currency',
       default: PROJECT_VIABILITY_DRIVER_DEFAULTS.baseCashFlow,
       step: 1000,
-      group: 'Przepływy',
+      group: t(locale, 'Cash flows'),
     },
     {
       name: 'cashFlowGrowthPct',
-      label: 'Wzrost przepływów % rocznie',
+      label: t(locale, 'Cash-flow growth % per year'),
       type: 'percent',
       default: PROJECT_VIABILITY_DRIVER_DEFAULTS.cashFlowGrowthPct,
       min: -1,
       max: 2,
       step: 0.005,
-      group: 'Przepływy',
+      group: t(locale, 'Cash flows'),
     },
     {
       name: 'horizonYears',
-      label: 'Horyzont projektu (lata)',
+      label: t(locale, 'Project horizon (years)'),
       type: 'integer',
       default: PROJECT_VIABILITY_DRIVER_DEFAULTS.horizonYears,
       min: 3,
       max: 15,
       step: 1,
-      group: 'Przepływy',
+      group: t(locale, 'Cash flows'),
     },
     {
       name: 'discountRatePct',
-      label: 'Stopa dyskontowa (wymagana stopa zwrotu)',
+      label: t(locale, 'Discount rate (required rate of return)'),
       type: 'percent',
       default: PROJECT_VIABILITY_DRIVER_DEFAULTS.discountRatePct,
       min: 0.001,
       max: 1,
       step: 0.005,
-      group: 'Dyskontowanie',
+      group: t(locale, 'Discounting'),
     },
     {
       name: 'residualValue',
-      label: 'Wartość rezydualna (koniec horyzontu)',
+      label: t(locale, 'Residual value (end of horizon)'),
       type: 'currency',
       default: PROJECT_VIABILITY_DRIVER_DEFAULTS.residualValue,
       step: 1000,
-      group: 'Dyskontowanie',
+      group: t(locale, 'Discounting'),
     },
     {
       name: 'taxRatePct',
-      label: 'Stopa podatkowa (od przepływu operacyjnego)',
+      label: t(locale, 'Tax rate (on operating cash flow)'),
       type: 'percent',
       default: PROJECT_VIABILITY_DRIVER_DEFAULTS.taxRatePct,
       min: 0,
       max: 1,
       step: 0.005,
-      group: 'Dyskontowanie',
+      group: t(locale, 'Discounting'),
     },
   ];
 }
@@ -830,17 +841,19 @@ function buildProjectViabilityParams(): WorkbookTemplateParam[] {
 // Registry
 // ---------------------------------------------------------------------------
 
-const BENEFITS_REALIZATION_PARAMS: WorkbookTemplateParam[] = [
-  { name: 'programName', label: 'Nazwa programu', type: 'text', default: BENEFITS_REALIZATION_DEFAULTS.programName, group: 'Ogólne' },
-  { name: 'currencyCode', label: 'Waluta', type: 'enum', options: ['PLN', 'EUR', 'USD'], default: BENEFITS_REALIZATION_DEFAULTS.currencyCode, group: 'Ogólne' },
-  { name: 'investment', label: 'Nakład inwestycyjny', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.investment, min: 0, group: 'Wartość' },
-  { name: 'implementationCost', label: 'Koszt wdrożenia', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.implementationCost, min: 0, group: 'Wartość' },
-  { name: 'revenueBenefit', label: 'Korzyść przychodowa', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.revenueBenefit, min: 0, group: 'Wartość' },
-  { name: 'costBenefit', label: 'Redukcja kosztów', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.costBenefit, min: 0, group: 'Wartość' },
-  { name: 'workingCapitalBenefit', label: 'Kapitał obrotowy', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.workingCapitalBenefit, min: 0, group: 'Wartość' },
-  { name: 'confidencePct', label: 'Pewność estymacji', type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.confidencePct, min: 0, max: 1, group: 'Kontrola' },
-  { name: 'realizationPct', label: 'Realizacja planu YTD', type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.realizationPct, min: 0, max: 1, group: 'Kontrola' },
-];
+function buildBenefitsRealizationParams(locale: WorkbookLocale = 'en'): WorkbookTemplateParam[] {
+  return [
+    { name: 'programName', label: t(locale, 'Program name'), type: 'text', default: BENEFITS_REALIZATION_DEFAULTS.programName, group: t(locale, 'General') },
+    { name: 'currencyCode', label: t(locale, 'Currency'), type: 'enum', options: ['PLN', 'EUR', 'USD'], default: BENEFITS_REALIZATION_DEFAULTS.currencyCode, group: t(locale, 'General') },
+    { name: 'investment', label: t(locale, 'Investment outlay'), type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.investment, min: 0, group: t(locale, 'Value') },
+    { name: 'implementationCost', label: t(locale, 'Implementation cost'), type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.implementationCost, min: 0, group: t(locale, 'Value') },
+    { name: 'revenueBenefit', label: t(locale, 'Revenue benefit'), type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.revenueBenefit, min: 0, group: t(locale, 'Value') },
+    { name: 'costBenefit', label: t(locale, 'Cost reduction'), type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.costBenefit, min: 0, group: t(locale, 'Value') },
+    { name: 'workingCapitalBenefit', label: t(locale, 'Working capital'), type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.workingCapitalBenefit, min: 0, group: t(locale, 'Value') },
+    { name: 'confidencePct', label: t(locale, 'Estimation confidence'), type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.confidencePct, min: 0, max: 1, group: t(locale, 'Control') },
+    { name: 'realizationPct', label: t(locale, 'YTD plan realization'), type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.realizationPct, min: 0, max: 1, group: t(locale, 'Control') },
+  ];
+}
 
 /** The registry map: `templateId → entry`. */
 export const WORKBOOK_TEMPLATES: {
@@ -856,93 +869,127 @@ export const WORKBOOK_TEMPLATES: {
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
-    title: 'Rachunek wyników — 3 scenariusze × 3 lata',
-    description:
-      'Parametryczny P&L (Base/Bull/Bear) na 3 lata: przychody→COGS→zysk brutto→OPEX→EBITDA→D&A→EBIT→odsetki→EBT→podatek→zysk netto→marża, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Porównanie.',
-    params: buildThreeScenarioParams(),
+    title: (locale = 'en') => t(locale, 'Income statement — 3 scenarios × 3 years'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric P&L (Base/Bull/Bear) over 3 years: revenue→COGS→gross profit→OPEX→EBITDA→D&A→EBIT→interest→EBT→tax→net profit→margin, every line a formula, inputs on an Assumptions sheet, a Comparison sheet.'
+      ),
+    params: (locale = 'en') => buildThreeScenarioParams(locale),
     build: buildThreeScenarioPnLSchema,
     coerceParams: (flat) => unflattenDotted(flat) as ThreeScenarioPnLParams,
   },
   operatingBudget: {
     id: 'operatingBudget',
-    title: 'Budżet operacyjny — 12 miesięcy',
-    description:
-      'Parametryczny budżet operacyjny 12-miesięczny: przychody→koszty zmienne→marża→koszty stałe (czynsz/wynagrodzenia/marketing/pozostałe)→koszty razem→wynik operacyjny→wynik narastająco→marża %, każda pozycja jako formuła, kolumna RAZEM (rok), wejścia na arkuszu Założenia, arkusz Podsumowanie.',
-    params: buildOperatingBudgetParams(),
+    title: (locale = 'en') => t(locale, 'Operating budget — 12 months'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric 12-month operating budget: revenue→variable costs→margin→fixed costs (rent/salaries/marketing/other)→total costs→operating result→cumulative result→margin %, every line a formula, a TOTAL (year) column, inputs on an Assumptions sheet, a Summary sheet.'
+      ),
+    params: (locale = 'en') => buildOperatingBudgetParams(locale),
     build: buildOperatingBudgetSchema,
   },
   dcfValuation: {
     id: 'dcfValuation',
-    title: 'Wycena DCF (Discounted Cash Flow)',
-    description:
-      'Prosta wycena metodą DCF: projekcja FCF na zadany horyzont→współczynnik dyskontowy→zdyskontowany FCF→wartość rezydualna (Gordon)→Enterprise Value→Equity Value→wartość na akcję, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusze Projekcja FCF i Wycena.',
-    params: buildDcfValuationParams(),
+    title: (locale = 'en') => t(locale, 'DCF valuation (Discounted Cash Flow)'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Simple DCF valuation: FCF projection over the chosen horizon→discount factor→discounted FCF→terminal value (Gordon)→Enterprise Value→Equity Value→value per share, every line a formula, inputs on an Assumptions sheet, FCF Projection and Valuation sheets.'
+      ),
+    params: (locale = 'en') => buildDcfValuationParams(locale),
     build: buildDcfValuationSchema,
   },
   breakEven: {
     id: 'breakEven',
-    title: 'Analiza progu rentowności (Break-Even)',
-    description:
-      'Parametryczna analiza progu rentowności: marża jednostkowa→wolumen BEP→przychód BEP→margines ' +
-      'bezpieczeństwa, tabela wrażliwości wyniku dla kilku poziomów wolumenu, każda pozycja jako formuła, ' +
-      'wejścia na arkuszu Założenia.',
-    params: buildBreakEvenParams(),
+    title: (locale = 'en') => t(locale, 'Break-even analysis (BEP)'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric break-even analysis: unit margin→BEP volume→BEP revenue→margin of safety, a sensitivity table across several volume levels, every line a formula, inputs on an Assumptions sheet.'
+      ),
+    params: (locale = 'en') => buildBreakEvenParams(locale),
     build: buildBreakEvenSchema,
   },
   cashflow12m: {
     id: 'cashflow12m',
-    title: 'Prognoza przepływów pieniężnych — 12 miesięcy',
-    description:
-      'Parametryczna prognoza cash-flow 12-miesięczna: wpływy (przychód z opóźnieniem płatności)→wypływy ' +
-      '(koszty)→przepływ netto m/m→saldo narastające, każda pozycja jako formuła, kolumna RAZEM (rok), ' +
-      'wejścia na arkuszu Założenia, arkusz Podsumowanie.',
-    params: buildCashflow12mParams(),
+    title: (locale = 'en') => t(locale, 'Cash-flow forecast — 12 months'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric 12-month cash-flow forecast: inflows (revenue with payment delay)→outflows (costs)→net flow m/m→cumulative balance, every line a formula, a TOTAL (year) column, inputs on an Assumptions sheet, a Summary sheet.'
+      ),
+    params: (locale = 'en') => buildCashflow12mParams(locale),
     build: buildCashflow12mSchema,
   },
   unitEconomics: {
     id: 'unitEconomics',
-    title: 'Ekonomia jednostkowa SaaS',
-    description:
-      'Parametryczna ekonomia jednostkowa SaaS: LTV=ARPU×marża/churn, LTV/CAC, okres zwrotu CAC=CAC/(ARPU×marża), ' +
-      'NRR, oraz 12-miesięczna projekcja klientów/MRR z churnem m/m, każda pozycja jako formuła, wejścia na ' +
-      'arkuszu Założenia, arkusze Metryki i Projekcja 12m.',
-    params: buildUnitEconomicsParams(),
+    title: (locale = 'en') => t(locale, 'SaaS unit economics'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric SaaS unit economics: LTV=ARPU×margin/churn, LTV/CAC, CAC payback period=CAC/(ARPU×margin), NRR, plus a 12-month customer/MRR projection with m/m churn, every line a formula, inputs on an Assumptions sheet, Metrics and 12m Projection sheets.'
+      ),
+    params: (locale = 'en') => buildUnitEconomicsParams(locale),
     build: buildUnitEconomicsSchema,
   },
   loanAmortization: {
     id: 'loanAmortization',
-    title: 'Harmonogram spłaty kredytu (amortyzacja)',
-    description:
-      'Parametryczny harmonogram kredytu: rata annuitetowa (formuła arytmetyczna, nie PMT), podział raty na ' +
-      'odsetki i kapitał, saldo malejące miesiąc po miesiącu do zera, wiersz RAZEM z sumami i saldem końcowym, ' +
-      'każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Harmonogram.',
-    params: buildLoanAmortizationParams(),
+    title: (locale = 'en') => t(locale, 'Loan amortization schedule'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric loan schedule: annuity payment (arithmetic formula, not PMT), payment split into interest and principal, declining balance month by month to zero, a TOTAL row with sums and closing balance, every line a formula, inputs on an Assumptions sheet, a Schedule sheet.'
+      ),
+    params: (locale = 'en') => buildLoanAmortizationParams(locale),
     build: buildLoanAmortizationSchema,
   },
   projectViability: {
     id: 'projectViability',
-    title: 'Ocena opłacalności projektu (NPV/IRR)',
-    description:
-      'Parametryczna ocena opłacalności projektu: projekcja przepływów pieniężnych netto (rok 0 = ' +
-      'inwestycja, lata 1..N = eksploatacja z podatkiem i wartością rezydualną)→NPV→IRR→wskaźnik ' +
-      'rentowności (PI)→okres zwrotu prosty i zdyskontowany, plus siatka wrażliwości NPV na stopę ' +
-      'dyskontową i poziom przepływów, każda pozycja jako formuła, wejścia na arkuszu Założenia, ' +
-      'arkusze Przepływy, Wyniki i Wrażliwość.',
-    params: buildProjectViabilityParams(),
+    title: (locale = 'en') => t(locale, 'Project viability assessment (NPV/IRR)'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Parametric project viability assessment: net cash-flow projection (year 0 = investment, years 1..N = operations with tax and residual value)→NPV→IRR→profitability index (PI)→simple and discounted payback period, plus an NPV sensitivity grid across discount rate and cash-flow level, every line a formula, inputs on an Assumptions sheet, Cash Flows, Results and Sensitivity sheets.'
+      ),
+    params: (locale = 'en') => buildProjectViabilityParams(locale),
     build: buildProjectViabilitySchema,
   },
   benefitsRealization: {
     id: 'benefitsRealization',
-    title: 'Benefits Realization — wartość programu',
-    description: 'Board-ready model korzyści: kontrolowane założenia i właściciele dowodów, plan risk-adjusted, realizacja YTD, luka, ROI oraz jednokartkowe Executive Summary.',
-    params: BENEFITS_REALIZATION_PARAMS,
+    title: (locale = 'en') => t(locale, 'Benefits Realization — program value'),
+    description: (locale = 'en') =>
+      t(
+        locale,
+        'Board-ready benefits model: controlled assumptions and evidence owners, risk-adjusted plan, YTD realization, gap, ROI and a one-page Executive Summary.'
+      ),
+    params: (locale = 'en') => buildBenefitsRealizationParams(locale),
     build: buildBenefitsRealizationSchema,
   },
 };
 
 /** All registered templates as a list (for enumeration / prompt injection). */
-export function listWorkbookTemplates(): WorkbookTemplateEntry[] {
-  return Object.values(WORKBOOK_TEMPLATES);
+export interface WorkbookTemplateListing {
+  id: WorkbookTemplateId;
+  title: string;
+  description: string;
+  params: WorkbookTemplateParam[];
+}
+
+/**
+ * Enumerate templates with their metadata RESOLVED for `locale` (default `'en'`
+ * — DEC-461/F7b). Callers that need the raw locale-aware entry (to build a
+ * schema, or to re-resolve for a different locale) should read
+ * `WORKBOOK_TEMPLATES` / `getWorkbookTemplate` directly instead.
+ */
+export function listWorkbookTemplates(locale: WorkbookLocale = 'en'): WorkbookTemplateListing[] {
+  return Object.values(WORKBOOK_TEMPLATES).map((entry) => ({
+    id: entry.id,
+    title: entry.title(locale),
+    description: entry.description(locale),
+    params: entry.params(locale),
+  }));
 }
 
 /** Look up a registry entry by id (null for an unknown id). */
@@ -1011,7 +1058,8 @@ export function unflattenDotted(flat: Record<string, unknown>): Record<string, u
  */
 export function buildTemplateParamsSchema(entry: WorkbookTemplateEntry): z.ZodType {
   const shape: Record<string, z.ZodTypeAny> = {};
-  for (const p of entry.params) {
+  // Locale is irrelevant here — `name`/`type`/`min`/`max` never vary by locale.
+  for (const p of entry.params('en')) {
     let field: z.ZodTypeAny;
     switch (p.type) {
       case 'text':
