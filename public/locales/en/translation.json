@@ -17659,6 +17659,19 @@
         "onDemand": "On demand",
         "sponsor": "Sponsor"
       },
+      "catalog": {
+        "weeklyExecutionPack": "Weekly Execution Pack",
+        "monthlyPmoReview": "Monthly PMO Review",
+        "programHealthSummary": "Program Health Summary",
+        "blockersRecoveryReport": "Blockers & Recovery Report",
+        "milestoneSlippageReport": "Milestone Slippage Report",
+        "capacityUtilizationReport": "Capacity Utilization Report",
+        "budgetVarianceReport": "Budget Variance Report",
+        "decisionBacklogApprovalAging": "Decision Backlog & Approval Aging",
+        "crossInitiativeDependencyReport": "Cross-Initiative Dependency Report",
+        "deliveryConfidenceReport": "Delivery Confidence Report",
+        "sponsorReadyOnePager": "Sponsor-Ready One-Pager"
+      },
       "title": "Execution reports",
       "subtitle": "Generate a simple weekly pack and deep-dive reports without adding process overhead.",
       "open": "Open Reports",
