@@ -322,3 +322,106 @@ describe('E1b executionBankModel', () => {
     ).toEqual(['initiative-a', 'initiative-c']);
   });
 });
+
+/**
+ * F12 (2026-09-15) — KSZTAŁT ZAAKCEPTOWANEGO BASELINE'U.
+ *
+ * `nativeAcceptedBaseline` czytał WYŁĄCZNIE `plannedStartDate`/`plannedEndDate`.
+ * POMIAR na żywym stagingu (Northwind, `GET /api/initiatives/runtime-v1/
+ * execution-cases`, 4 sprawy w realizacji — dowód
+ * `cto-codex/fala-f12-20260915/pomiar/SNAPSHOT-execution-cases-przed.json`)
+ * pokazał kształt `{ start, end, requiredFte }` i ZERO kluczy `planned*`.
+ * Skutek na ekranie: „Baseline start" puste, „Baseline finish" pokazujące
+ * przeterminowane `initiatives.baseline_end_date` (29 Jan 2027 dla trzech
+ * różnych inicjatyw), a „Variance" licząca 103 dni zamiast 42.
+ *
+ * DOWÓD MUTACYJNY: przywrócenie `raw.plannedStartDate` bez gałęzi `raw.start`
+ * łamie pierwszy test (BASELINE_MISSING zamiast daty).
+ */
+describe('F12 — baseline z ie_aggregate_state czytany w ZAPISANYM kształcie', () => {
+  const inicjatywa: ExecutionBankInitiativeSource = {
+    id: 'skills',
+    name: 'Skills Matrix and Upskilling',
+    lifecycleStatus: 'IN_EXECUTION',
+    progress: 30,
+    baselineStartDate: null,
+    baselineEndDate: null,
+    currentPlanStartDate: '2026-02-02',
+    currentPlanEndDate: '2026-12-18',
+  };
+  const sprawa = (baseline: Record<string, unknown>): ExecutionBankCaseSource => ({
+    executionCaseId: 'case-skills',
+    initiativeId: 'skills',
+    version: 1,
+    state: 'ACTIVE',
+    handoffPackageId: 'handoff:skills:v4',
+    handoffPackageVersion: 1,
+    acceptedAt: '2026-09-08T14:48:41.790Z',
+    acceptedBaseline: { baseline },
+  });
+
+  it('kształt {start,end} — ten, który naprawdę leży w bazie — daje ZNANY baseline', () => {
+    const [row] = buildExecutionBankRows(
+      [inicjatywa],
+      [sprawa({ start: '2026-02-02', end: '2026-12-18', requiredFte: 0.9 })],
+      { asOf: '2026-09-15' }
+    );
+
+    expect(row.baselineStart.status).toBe('KNOWN');
+    expect(row.baselineStart.value).toBe('2026-02-02');
+    expect(row.baselineFinish.status).toBe('KNOWN');
+    expect(row.baselineFinish.value).toBe('2026-12-18');
+  });
+
+  it('starszy kształt {plannedStartDate,plannedEndDate} działa jak dotąd', () => {
+    const [row] = buildExecutionBankRows(
+      [inicjatywa],
+      [sprawa({ plannedStartDate: '2026-02-02', plannedEndDate: '2026-12-18' })],
+      { asOf: '2026-09-15' }
+    );
+
+    expect(row.baselineStart.value).toBe('2026-02-02');
+    expect(row.baselineFinish.value).toBe('2026-12-18');
+  });
+
+  it('jawny null w kształcie planned* NIE sięga po start/end (brak to decyzja)', () => {
+    const [row] = buildExecutionBankRows(
+      [inicjatywa],
+      [
+        sprawa({
+          plannedStartDate: null,
+          plannedEndDate: null,
+          start: '2026-02-02',
+          end: '2026-12-18',
+        }),
+      ],
+      { asOf: '2026-09-15' }
+    );
+
+    expect(row.baselineStart.status).toBe('UNKNOWN');
+    expect(row.baselineFinish.status).toBe('UNKNOWN');
+  });
+
+  it('odchylenie liczy się od ZAAKCEPTOWANEGO baselinu, nie od przeterminowanej kopii', () => {
+    const [row] = buildExecutionBankRows(
+      [
+        {
+          ...inicjatywa,
+          forecastEndDate: '2026-12-04',
+          forecastStartDate: '2026-02-02',
+        },
+      ],
+      [
+        {
+          ...sprawa({ start: '2026-02-02', end: '2026-12-18', requiredFte: 0.9 }),
+          forecastEndDate: '2026-12-04',
+          forecastObservedAt: '2026-09-14T10:00:00Z',
+        },
+      ],
+      { asOf: '2026-09-15' }
+    );
+
+    expect(row.varianceDays.status).toBe('KNOWN');
+    expect(row.varianceDays.value).toBe(-14);
+  });
+});

@@ -393,6 +393,13 @@ type BaselineEvidencePair = {
 const nonEmptyString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim() ? value.trim() : null;
 
+/**
+ * Obecność KLUCZA, nie prawdziwość wartości — `baseline.plannedEndDate = null`
+ * to świadome „nie ma terminu", a nie zaproszenie do sięgnięcia po `end`.
+ */
+const own = (record: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(record, key);
+
 const positiveInteger = (value: unknown): number | null => {
   if (value == null || value === '' || typeof value === 'boolean') return null;
   const parsed = Number(value);
@@ -458,8 +465,31 @@ const nativeAcceptedBaseline = (
     };
   }
   const raw = baseline as Record<string, unknown>;
-  const rawStart = raw.plannedStartDate;
-  const rawFinish = raw.plannedEndDate;
+  /*
+   * F12 (2026-09-15) — KSZTAŁT ZAPISANEGO BASELINE'U, NIE WYOBRAŻONY.
+   *
+   * Do dzisiaj czytaliśmy WYŁĄCZNIE `plannedStartDate`/`plannedEndDate`.
+   * Zmierzone na żywym stagingu (Northwind, `GET /api/initiatives/runtime-v1/
+   * execution-cases`, 4 sprawy w realizacji, dowód
+   * `fala-f12-20260915/pomiar/SNAPSHOT-execution-cases-przed.json`):
+   * `acceptedBaseline.baseline` ma kształt `{ start, end, requiredFte }` —
+   * ANI JEDNA sprawa nie ma klucza `plannedStartDate`. Efekt: `kind: 'ABSENT'`
+   * dla każdej sprawy w produkcie, czyli natywny baseline z `ie_aggregate_state`
+   * nigdy nie brał udziału w rozstrzygnięciu.
+   *
+   * Co to kosztowało NA EKRANIE (pomiar 15.09, 1440 px): „Baseline start" było
+   * puste, a „Baseline finish" pokazywało PRZETERMINOWANĄ wartość
+   * `initiatives.baseline_end_date` (29 Jan 2027 dla trzech różnych inicjatyw),
+   * przez co kolumna „Variance" liczyła 103 dni tam, gdzie wobec
+   * ZAAKCEPTOWANEGO baseline'u (2027-03-31) jest 42 dni. Zła liczba jest
+   * gorsza od braku liczby — dlatego to defekt, nie kosmetyka.
+   *
+   * Czytamy OBA kształty (kanoniczny zapis handoffu `start`/`end` ma
+   * pierwszeństwo tylko wtedy, gdy wariant `planned*` jest nieobecny), więc
+   * sprawy zapisane starszym kształtem zachowują się dokładnie jak dotąd.
+   */
+  const rawStart = own(raw, 'plannedStartDate') ? raw.plannedStartDate : raw.start;
+  const rawFinish = own(raw, 'plannedEndDate') ? raw.plannedEndDate : raw.end;
   if ((rawStart == null || rawStart === '') && (rawFinish == null || rawFinish === '')) {
     return { kind: 'ABSENT', evidence: missing };
   }

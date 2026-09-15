@@ -29,6 +29,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  COLUMN_MIN_WIDTH_BY_DATA_TYPE,
   FilterableTable,
   getColumnFitFloor,
   isPrimaryColumn,
@@ -189,8 +190,11 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
     const { container } = renderBank();
 
     const title = headerWidth(container, 'initiativeCase');
+    // F12 (15.09): `blockerCount` i `health` zeszly do pstryczka (kolumny bez
+    // zrodla danych na serwerze), wiec najwezsza WIDOCZNA kolumna liczbowa to
+    // `progress`. Sama regula — tytul co najmniej 2x szerszy — bez zmian.
     const numeric = Math.min(
-      headerWidth(container, 'blockerCount'),
+      headerWidth(container, 'progress'),
       headerWidth(container, 'varianceDays'),
       headerWidth(container, 'lifecycleStatus')
     );
@@ -204,10 +208,22 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
 
     // Bez `dataType` każda z nich siadała na 140 px — czyli tyle samo, ile
     // dostawała kolumna nazwy. To była cała skarga właściciela.
-    expect(headerWidth(container, 'blockerCount')).toBeLessThan(140);
-    expect(headerWidth(container, 'lifecycleStatus')).toBeLessThan(140);
+    // F12: `blockerCount`/`health` sa domyslnie schowane, wiec nie ma ich w DOM.
+    expect(headerWidth(container, 'progress')).toBeLessThan(140);
     expect(headerWidth(container, 'varianceDays')).toBeLessThan(140);
-    expect(headerWidth(container, 'health')).toBeLessThan(140);
+    /*
+     * Chip: asercja „ponizej 140" byla NIEAKTUALNA od Z-48 i ten plik stal
+     * CZERWONY na linii jeszcze przed F12 (sprawdzone `git stash`: 1 failed |
+     * 8 passed na `462d44d67b`) — tylko wczesniejszy rzut na schowanej
+     * kolumnie `blockerCount` przerywal test, zanim ta linia doszla do glosu.
+     * Z-48 SWIADOMIE podniosl podloge `status` do 160 px, bo przy 130 px
+     * polska „Zatwierdzona" gubila ogon za paddingiem pastylki. Pilnujemy
+     * wiec tego, co kanon naprawde mowi: chip siada na podlodze STATUSU,
+     * a nie na podlodze tekstu.
+     */
+    expect(headerWidth(container, 'lifecycleStatus')).toBe(
+      COLUMN_MIN_WIDTH_BY_DATA_TYPE.status
+    );
   });
 
   it('liczby i daty są wyrównane do prawej (kanon §3.3)', () => {
@@ -218,8 +234,6 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
       'baselineFinish',
       'forecastFinish',
       'varianceDays',
-      'blockerCount',
-      'updatedAt',
     ]) {
       const th = container.querySelector<HTMLTableCellElement>(`th[data-column-id="${id}"]`);
       expect(th, `kolumna ${id}`).toBeTruthy();
@@ -233,9 +247,12 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
       container.querySelectorAll<HTMLTableCellElement>('th[data-column-id]')
     );
 
-    // 15 kolumn w deklaracji; 3 wtórne (Delivery profile, Pending decisions, Constraint)
-    // sa domyslnie schowane w pstryczku (decyzja CTO 13.09 po uwadze wlasciciela o kolumnach).
-    expect(headers.length).toBe(12);
+    // 15 kolumn w deklaracji; 7 jest domyslnie schowanych w pstryczku:
+    // 3 z decyzji CTO 13.09 (Delivery profile, Pending decisions, Constraint)
+    // i 4 z F12 15.09 (Health, Blockers, Next action, Updated) — te ostatnie,
+    // zeby suma podlog kolumn widocznych zmiescila sie w obszarze tabeli przy
+    // 1280 px. Straznik budzetu: `ExecutionBankViews.columnFit.test.tsx`.
+    expect(headers.length).toBe(8);
     for (const th of headers) {
       const width = Number.parseInt(th.style.width, 10);
       expect(width, th.dataset.columnId).toBeGreaterThanOrEqual(90);
