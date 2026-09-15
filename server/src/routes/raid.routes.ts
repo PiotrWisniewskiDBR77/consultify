@@ -14,6 +14,7 @@ import {
 } from '../services/raidScoringService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { queryString } from '../utils/paramHelpers.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -155,7 +156,8 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    await assertRaidItemInOrganization(req.params.id, orgId);
+    const id = queryString(req, 'id');
+    await assertRaidItemInOrganization(id, orgId);
 
     const { title, description, severity, probability, status, ownerId, dueDate } = req.body;
     const updates: string[] = [];
@@ -193,7 +195,7 @@ router.put(
     if (severity !== undefined || probability !== undefined) {
       const existing = (await dbGet(
         'SELECT probability, impact FROM raid_items WHERE id = ? AND organization_id = ?',
-        [req.params.id, orgId]
+        [id, orgId]
       )) as any;
       const finalProb = probability
         ? String(probability).toUpperCase()
@@ -208,7 +210,7 @@ router.put(
     }
 
     updates.push("updated_at = datetime('now')");
-    params.push(req.params.id, orgId);
+    params.push(id, orgId);
     await dbRun(
       `UPDATE raid_items SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
       params
@@ -223,13 +225,14 @@ router.patch(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    await assertRaidItemInOrganization(req.params.id, orgId);
+    const id = queryString(req, 'id');
+    await assertRaidItemInOrganization(id, orgId);
 
     const { status } = req.body || {};
     if (!status) return res.status(400).json({ error: 'status required' });
     await dbRun(
       `UPDATE raid_items SET status = ?, updated_at = datetime('now') WHERE id = ? AND organization_id = ?`,
-      [String(status).toUpperCase(), req.params.id, orgId]
+      [String(status).toUpperCase(), id, orgId]
     );
     res.json({ success: true });
   })
@@ -241,10 +244,11 @@ router.delete(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    await assertRaidItemInOrganization(req.params.id, orgId);
+    const id = queryString(req, 'id');
+    await assertRaidItemInOrganization(id, orgId);
 
     await dbRun('DELETE FROM raid_items WHERE id = ? AND organization_id = ?', [
-      req.params.id,
+      id,
       orgId,
     ]);
     res.json({ success: true });

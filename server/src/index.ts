@@ -1576,7 +1576,7 @@ const serveIndexHtml = async (req: Request, res: Response): Promise<void> => {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.setHeader('X-Consultify-Cache-Guard', 'staging-cache-kill-v3');
-  res.sendFile(indexPath, (err: Error | null) => {
+  res.sendFile(indexPath, (err?: Error) => {
     if (err) {
       // Same reasoning as above: the failure detail is logged, never returned.
       logger.error(
