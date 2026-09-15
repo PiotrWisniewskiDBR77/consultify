@@ -125,6 +125,7 @@ interface Template {
   name: string;
   description: string;
   category: TemplateCategory;
+  format?: 'pulse' | 'standard' | 'deep_dive' | null;
   status: 'draft' | 'approved';
   visibility: 'global' | 'org' | 'role_based' | 'admin_only';
   isDefault: boolean;
@@ -439,6 +440,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     description: '',
     scope: 'private',
     category: 'CUSTOM',
+    format: 'standard',
     status: 'draft',
     visibility: 'org',
     isDefault: false,
@@ -496,6 +498,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         description: '',
         scope: 'private',
         category: 'CUSTOM',
+        format: 'standard',
         status: 'draft',
         visibility: 'org',
         isDefault: false,
@@ -2045,6 +2048,26 @@ ${sourceText || '(none)'}`;
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                <div className="mb-3">
+                  <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
+                    {t('interview.templateBuilder.format')}
+                  </label>
+                  <Select
+                    value={template.format || 'standard'}
+                    onChange={(value) =>
+                      setTemplate((prev) => ({
+                        ...prev,
+                        format: value as 'pulse' | 'standard' | 'deep_dive',
+                      }))
+                    }
+                    disabled={isApplicationTemplate}
+                    aria-label={t('interview.templateBuilder.format')}
+                    options={['pulse', 'standard', 'deep_dive'].map((value) => ({
+                      value,
+                      label: t(`interview.templateBuilder.formatLabel.${value}`),
+                    }))}
+                  />
+                </div>
                 <div className="mb-3">
                   <label className="block text-[11px] font-medium text-c-text-muted mb-1.5">
                     {t('interview.templateBuilder.timeMin')}

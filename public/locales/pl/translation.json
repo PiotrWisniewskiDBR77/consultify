@@ -7938,6 +7938,8 @@
       "submitted3": "Przesłano",
       "aiScore": "Ocena AI",
       "escalation": "Eskalacja",
+      "aiScorePendingTooltip": "Dostępna po wysłaniu wywiadu przez respondenta i zakończeniu oceny jakości AI.",
+      "escalationPendingTooltip": "Eskalacja nie została uruchomiona.",
       "noAssignments": "Brak przydziałów",
       "couldNotLoadYourInterviews": "Nie udało się załadować wywiadów",
       "degradedMode": "Tryb ograniczony",
@@ -8830,6 +8832,12 @@
       "organization": "Organizacja",
       "availableAnswerTypes": "Dostępne formy odpowiedzi",
       "areaTags": "Obszary",
+      "format": "Format",
+      "formatLabel": {
+        "pulse": "Puls",
+        "standard": "Standardowy",
+        "deep_dive": "Pogłębiony"
+      },
       "questionCount": "Liczba pytań",
       "tolerance": "Dokładność +/-",
       "timeMin": "Czas (min)",

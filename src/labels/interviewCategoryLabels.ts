@@ -30,3 +30,18 @@ export function normalizeTemplateCategory(
 }
 
 export const interviewCategoryLabelEntries = INTERVIEW_CATEGORY_LABELS;
+
+const INTERVIEW_FORMAT_LABELS = {
+  pulse: { pl: 'Puls', en: 'Pulse' },
+  standard: { pl: 'Standardowy', en: 'Standard' },
+  deep_dive: { pl: 'Pogłębiony', en: 'Deep dive' },
+} as const;
+
+export function normalizeTemplateFormat(
+  value: string | null | undefined,
+  isPolish = true
+): string | null {
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/\s+/g, '_');
+  const labels = INTERVIEW_FORMAT_LABELS[normalized as keyof typeof INTERVIEW_FORMAT_LABELS];
+  return labels?.[isPolish ? 'pl' : 'en'] ?? null;
+}

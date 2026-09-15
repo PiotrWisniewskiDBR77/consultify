@@ -14,6 +14,10 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { interviewActionMeta } from './interviewActionMatrix';
+import {
+  normalizeTemplateCategory,
+  normalizeTemplateFormat,
+} from '@/labels/interviewCategoryLabels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -22,6 +26,7 @@ export interface InterviewTemplate {
   name?: string;
   description?: string;
   category?: string;
+  format?: string | null;
   scope?: string;
   isDefault?: boolean;
   questionCount?: number;
@@ -70,7 +75,10 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
   const pills: MetaPill[] = [
     { label: t('interview.templatePreview.template'), className: TEMPLATE_BADGE_CLASS },
     ...((template.category
-      ? [{ label: template.category, className: NEUTRAL_PILL_CLASS }]
+      ? [{ label: normalizeTemplateCategory(template.category, isPolish), className: NEUTRAL_PILL_CLASS }]
+      : []) as MetaPill[]),
+    ...((template.format && normalizeTemplateFormat(template.format, isPolish)
+      ? [{ label: normalizeTemplateFormat(template.format, isPolish)!, className: NEUTRAL_PILL_CLASS }]
       : []) as MetaPill[]),
     ...((template.scope
       ? [{ label: getTemplateSourceLabel(template.scope, t), className: NEUTRAL_PILL_CLASS }]
@@ -218,7 +226,21 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
 }) => {
   const { t } = useTranslation();
   const relationItems: RelationItem[] = [
-    { label: `${t('interview.templatePreview.category')}: ${template.category || '—'}` },
+    {
+      label: `${t('interview.templatePreview.category')}: ${
+        template.category ? normalizeTemplateCategory(template.category, isPolish) : '—'
+      }`,
+    },
+    ...(template.format && normalizeTemplateFormat(template.format, isPolish)
+      ? [
+          {
+            label: `${t('interview.templateBuilder.format')}: ${normalizeTemplateFormat(
+              template.format,
+              isPolish
+            )}`,
+          },
+        ]
+      : []),
     { label: `${t('interview.templatePreview.used')}: ${usageCount}` },
   ];
 

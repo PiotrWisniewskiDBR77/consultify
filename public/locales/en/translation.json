@@ -8799,6 +8799,8 @@
       "submitted3": "Submitted",
       "aiScore": "AI Score",
       "escalation": "Escalation",
+      "aiScorePendingTooltip": "Available after the respondent submits the interview and AI quality review completes.",
+      "escalationPendingTooltip": "No escalation has been triggered.",
       "noAssignments": "No assignments",
       "couldNotLoadYourInterviews": "Could not load your interviews",
       "degradedMode": "Degraded mode",
@@ -9691,6 +9693,12 @@
       "organization": "Organization",
       "availableAnswerTypes": "Available answer types",
       "areaTags": "Area tags",
+      "format": "Format",
+      "formatLabel": {
+        "pulse": "Pulse",
+        "standard": "Standard",
+        "deep_dive": "Deep dive"
+      },
       "questionCount": "Question count",
       "tolerance": "Tolerance +/-",
       "timeMin": "Time (min)",

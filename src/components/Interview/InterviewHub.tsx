@@ -116,7 +116,10 @@ import {
 import { type TableFilters } from '@/components/ui/ResizableTable';
 import { getTypeStyle } from '@/constants/statusColors';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
-import { normalizeTemplateCategory } from '@/labels/interviewCategoryLabels';
+import {
+  normalizeTemplateCategory,
+  normalizeTemplateFormat,
+} from '@/labels/interviewCategoryLabels';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -328,6 +331,7 @@ interface InterviewTemplate {
   description: string;
   questionCount: number;
   category: string;
+  format?: 'pulse' | 'standard' | 'deep_dive' | null;
   isDefault: boolean;
   scope?: TemplateScope;
   audience?: string;
@@ -6021,7 +6025,11 @@ export const InterviewHub: React.FC = () => {
                 <span>
                   {template.questionCount} {t('interview.hub.questions2')}
                 </span>
-                {template.estimatedTimeMinutes && <span>{template.estimatedTimeMinutes} min</span>}
+                {template.format ? (
+                  <span>{normalizeTemplateFormat(template.format, isPolish)}</span>
+                ) : template.estimatedTimeMinutes ? (
+                  <span>{template.estimatedTimeMinutes} min</span>
+                ) : null}
                 <span>{normalizeTemplateCategory(template.category, isPolish)}</span>
               </div>
             </div>
@@ -6815,7 +6823,14 @@ Return ONLY the answer text (no markdown fences).`;
               render: (row: InterviewAssignment) => {
                 const score = row.aiReview?.overallScore;
                 if (typeof score !== 'number') {
-                  return <span className="text-xs text-c-text-muted">—</span>;
+                  return (
+                    <span
+                      className="text-xs text-c-text-muted"
+                      title={t('interview.hub.aiScorePendingTooltip')}
+                    >
+                      —
+                    </span>
+                  );
                 }
                 // #48a — overallScore is on the rubric's 1-5 scale (1 = worst, 5 =
                 // best), not already a 0-100 percentage. Map linearly (1 -> 0%,
@@ -6855,7 +6870,12 @@ Return ONLY the answer text (no markdown fences).`;
                       t('interview.hub.escalated')}
                   </span>
                 ) : (
-                  <span className="text-xs text-c-text-muted">—</span>
+                  <span
+                    className="text-xs text-c-text-muted"
+                    title={t('interview.hub.escalationPendingTooltip')}
+                  >
+                    —
+                  </span>
                 ),
             } as StandardTableColumn,
           ]

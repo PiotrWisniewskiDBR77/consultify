@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   interviewCategoryLabelEntries,
   normalizeTemplateCategory,
+  normalizeTemplateFormat,
 } from '../interviewCategoryLabels';
 
 describe('normalizeTemplateCategory', () => {
@@ -28,6 +29,14 @@ describe('normalizeTemplateCategory', () => {
     expect(normalizeTemplateCategory('COMMERCIAL', false)).toBe('Commercial');
     expect(normalizeTemplateCategory('strategy', true)).toBe('Strategia');
     expect(normalizeTemplateCategory('OPERATIONS', true)).toBe('Operacje');
+  });
+
+  it('renders the separate interview format in both supported locales', () => {
+    expect(normalizeTemplateFormat('Pulse', false)).toBe('Pulse');
+    expect(normalizeTemplateFormat('standard', true)).toBe('Standardowy');
+    expect(normalizeTemplateFormat('Deep Dive', false)).toBe('Deep dive');
+    expect(normalizeTemplateFormat('deep_dive', true)).toBe('Pogłębiony');
+    expect(normalizeTemplateFormat(null, false)).toBeNull();
   });
 
   it('never exposes an unknown raw category', () => {
