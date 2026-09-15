@@ -1,47 +1,49 @@
 {
-  "schemaVersion": 5,
-  "package": "K4 v5 K8sen W73 recursive full Polish sink localization",
+  "schemaVersion": 6,
+  "package": "K4 v6 K8sen W73 schema-version presentation boundary",
   "branch": "codex/c-k4-k8sen-20260915",
   "exactBase": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3",
-  "holdReview": "4c658f01fe448e882d72e7cc4d8705c186ef368c",
-  "testedCandidate": "9cc378cacecf05455e7638af283afa69a67c6fba",
-  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V5",
+  "holdReview": "48da1a415b507584ed369fe0718f7aff7bffa152",
+  "testedCandidate": "b3dabff67dc773a87777d4d1e9d255c0e99cce4a",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V6",
   "measurement": {
     "K8senBeforeV4": 1584,
-    "K8senAfterV5": 0,
-    "realSinkRowsB": 1528,
-    "uniqueRealSinkMessages": 1270,
-    "fullPolishRows": 1528,
+    "classifiedRowsV6": 1585,
+    "K8senAfterV6": 0,
+    "realSinkRowsB": 1529,
+    "uniqueRealSinkMessages": 1271,
+    "fullPolishRows": 1529,
     "technicalCodeRows": 48,
     "parserFragmentRows": 2,
     "otherClassARows": 6,
     "classBPolishEqualsEnglish": 0,
-    "catalogRows": 2118,
-    "catalogUnique": 2118,
+    "catalogRows": 2119,
+    "catalogUnique": 2119,
     "catalogDuplicateKeys": 0,
-    "dynamicClaimOutcomesLocalized": "3/3",
     "realSinksRemaining": 0,
     "unknown": 0
   },
-  "catalog": {
-    "batches": "01-37",
-    "batchLimit": 60,
-    "specificityOrdering": true,
-    "recursiveCapturedPayload": true
+  "schemaVersionBoundary": {
+    "storage": "legacy warnings JSONB marker retained; no migration",
+    "technicalConsumer": "executeProposal receives extracted schema_version_at_creation for stale check",
+    "presentation": "create/get/list replace raw marker with human EN; central payload locale supplies PL",
+    "rawMarkerInServicePayload": 0,
+    "rawMarkerInCard": 0,
+    "preservedProbeVersion": 17,
+    "behavior": "service + payload locale + SchemaProposalCard 74/74 PASS"
   },
   "validation": {
     "ownerMeter": "72/72 PASS retry=0",
-    "ownedFocused": "49/49 PASS retry=0 (8 files)",
-    "localizer": "12/12 PASS; three full DCF payload probes",
-    "combinedFocused": "52/54; only two inherited email sender reds",
-    "exactBaseEmailReproduction": "same two sender failures on exact base",
+    "v6Focused": "74/74 PASS retry=0 (3 files)",
+    "previousOwnedFocused": "49/49 PASS retry=0 (8 files)",
     "serverTypeScriptErrors": 0,
     "frontendTypeScriptErrors": 177,
     "frontendDelta": "none",
-    "languageRatchet": "PASS K8sen 0; six exact technical/parser source shapes classified",
+    "languageRatchet": "PASS K8sen 0",
     "listCanon": "349/349 PASS",
     "artifact": "8/8; R2+R3 0/0; danger 117/117 PASS",
-    "productionBuild": "PASS inherited final v4 content run: 10754 modules; no frontend/product delta after; final v5 server tsc 0"
+    "productionBuild": "PASS 10754 modules, 46.34s, sequential heap 8192MB",
+    "productionBuildLog": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_BUILD_V6.log"
   },
   "inheritedReds": {
     "emailSender": {
@@ -55,20 +57,25 @@
     "forbiddenFilesChanged": false
   },
   "inventoryPolicy": {
-    "count": 81,
+    "count": 85,
     "hash": "sha256",
     "manifestSelfExcluded": true
   },
   "inventory": [
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73.md",
-      "bytes": 3472,
-      "sha256": "c2a40df9bbfe5ad13dd1d1ccef8d463095ef26ec30d335919bc92042f80379d2"
+      "bytes": 4438,
+      "sha256": "4f92d7ec202ff8e48b61e806718536cb3485d7dc3ba3c9a6fe6ca86fb87684a0"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_BUILD_V6.log",
+      "bytes": 278567,
+      "sha256": "cd91b6f5c0fa7c2a3d7e6a6075cb2894d4df19187b3b49c8e45ff81f4a49d54b"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json",
-      "bytes": 579222,
-      "sha256": "8c1075ad51a26d185fb1d3e47e1d1b728b612e01dadfce83e7ef210ec19f0cac"
+      "bytes": 579836,
+      "sha256": "8aa85f0131cd2efec98600e5e3e03492c3c780d009e183e0bbc3f9cf30293427"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_REMAINING_35.json",
@@ -77,8 +84,8 @@
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_TRANSLATION_WORKING.json",
-      "bytes": 198110,
-      "sha256": "244b836ed49f30704ada37b774c2feb2ff94a27d2d0888dc14b0d8d57f5c5338"
+      "bytes": 198259,
+      "sha256": "95beeff458f3c41407e4f50e180286b06dab2a9e22bf6af0fbe1eb7909c794fe"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
@@ -97,8 +104,8 @@
     },
     {
       "path": "scripts/i18n/pomiar-jezyka.wyjatki.json",
-      "bytes": 21341,
-      "sha256": "ed5ee954121753443d2ec8c320a42b904d1a7f18b950f220a6a9a8c678aaf2fc"
+      "bytes": 21658,
+      "sha256": "04d8db65aa6c27503a9759d0de7c9d3520be892a726c8b8cb4acd864bc8c0f82"
     },
     {
       "path": "server/src/Gateway.ts",
@@ -128,7 +135,7 @@
     {
       "path": "server/src/i18n/__tests__/serverPayloadLocalizer.test.ts",
       "bytes": 8793,
-      "sha256": "618d834831a45b694258e2720a07e660fb183ad7b62ca5e94988419d6efa9961"
+      "sha256": "28d38c17de0b2a1c2e6fb04ef578bd5b8b4f63bca68345343c4d618c53c68e17"
     },
     {
       "path": "server/src/i18n/serverErrorMessages.ts",
@@ -322,8 +329,8 @@
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch37.ts",
-      "bytes": 1542,
-      "sha256": "ba9410c2bc969e7129a0b81e65131bb7346bd8ac262e5a647c2acfc6f27c24d1"
+      "bytes": 1710,
+      "sha256": "9d3cbc6d5f33ebd9ada22e326d8160005575cba12e28e070b399456ed32bf58e"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/index.ts",
@@ -456,6 +463,16 @@
       "sha256": "d078a4c5017f51380ef382071bf389c45e10d097af86ac41ee8fab79a5226cb1"
     },
     {
+      "path": "server/src/services/tablePlatform/ChatToSchemaService.ts",
+      "bytes": 29272,
+      "sha256": "a545aea673658d920707550920e9c3158cb237e221e0547a92fd710468b8cfed"
+    },
+    {
+      "path": "server/src/services/tablePlatform/__tests__/smoke.test.ts",
+      "bytes": 21010,
+      "sha256": "fcf5296a42d1d2446265f1ac8b1570d5f6390dc8e276afed1039c6285a4565f6"
+    },
+    {
       "path": "server/src/utils/ErrorHandler.ts",
       "bytes": 10925,
       "sha256": "0c6d44b30229105fb2996d6e131d69e825d9451dd3da11059b9092f03e55c546"
@@ -464,6 +481,11 @@
       "path": "server/src/utils/__tests__/ErrorHandler.locale.test.ts",
       "bytes": 2339,
       "sha256": "02d084dabaf5eb2751faf11785e04a18eee229291ded02625d70514c7800a029"
+    },
+    {
+      "path": "src/components/MyWork/table/__tests__/TablePlatformFrontend.test.tsx",
+      "bytes": 40861,
+      "sha256": "b07322539d3e6f36aa011704c634ea60c61e7ae0df7ef3c6bb46a3cfe751a213"
     }
   ]
 }
