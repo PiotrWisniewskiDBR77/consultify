@@ -741,12 +741,21 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT d.*, u.first_name || ' ' || u.last_name as "requestedByName"
+                SELECT d.*,
+                       COALESCE(d.decision_owner_id,d.assigned_to,d.decision_maker_id,d.created_by)
+                         as requested_by,
+                       COALESCE(d.type,'GENERAL') as decision_type,
+                       u.first_name || ' ' || u.last_name as "requestedByName"
                 FROM decisions d
-                LEFT JOIN users u ON d.requested_by = u.id
+                LEFT JOIN users u
+                  ON COALESCE(d.decision_owner_id,d.assigned_to,d.decision_maker_id,d.created_by) = u.id
                 WHERE d.project_id = ? 
                   AND d.status = 'PENDING'
-                  AND (d.escalation_level >= 2 OR d.decision_type IN ('BUDGET', 'SCOPE', 'STRATEGIC'))
+                  AND (
+                    UPPER(COALESCE(d.escalation_level,'')) IN
+                      ('2','3','HIGH','CRITICAL','STEERING_COMMITTEE','BOARD')
+                    OR UPPER(COALESCE(d.type,'')) IN ('BUDGET','SCOPE','STRATEGIC')
+                  )
                 ORDER BY d.created_at ASC
             `,
         [projectId],
@@ -762,10 +771,11 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT id, title as name, due_date as "plannedDate", status
-                FROM initiatives
-                WHERE project_id = ? AND is_milestone = 1 AND status != 'DONE'
-                ORDER BY due_date ASC
+                SELECT m.id, m.name, m.target_date as "plannedDate", m.status
+                FROM initiative_milestones m
+                JOIN initiatives i ON i.id = m.initiative_id
+                WHERE i.project_id = ? AND UPPER(COALESCE(m.status,'')) != 'DONE'
+                ORDER BY m.target_date ASC NULLS LAST, m.order_index ASC
                 LIMIT 5
             `,
         [projectId],
@@ -781,10 +791,11 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT id, gate_type as name, gate_type as "gateType", target_date as "plannedDate", status
+                SELECT id, gate_type as name, gate_type as "gateType",
+                       CAST(NULL AS TIMESTAMP) as "plannedDate", status
                 FROM stage_gates
-                WHERE project_id = ? AND status != 'PASSED'
-                ORDER BY target_date ASC
+                WHERE project_id = ? AND UPPER(COALESCE(status,'')) != 'PASSED'
+                ORDER BY created_at ASC
                 LIMIT 3
             `,
         [projectId],
