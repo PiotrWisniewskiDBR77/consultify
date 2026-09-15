@@ -623,6 +623,12 @@ const Dec495InicjatywyArchiwumScreen = React.lazy(
   () => import('./screens/dec495-inicjatywy-archiwum')
 );
 const F2InicjatywyAnalizaScreen = React.lazy(() => import('./screens/f2-inicjatywy-analiza'));
+const A1InitiativeCardEstimateScreen = React.lazy(
+  () => import('./screens/a1-inicjatywa-card-estimate')
+);
+const A2InitiativeKpiApprovalScreen = React.lazy(
+  () => import('./screens/a2-inicjatywa-kpi-approval')
+);
 const Z29InicjatywyRaportPracyScreen = React.lazy(
   () => import('./screens/z29-inicjatywy-raport-pracy')
 );
@@ -859,6 +865,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DEC-495 — REALNY <InitiativesHub> z pstryczkiem „Aktywne / Wszystkie / Archiwalne". Atrapa /api/initiatives odtwarza kontrakt naprawionej trasy (includeArchived/archived). &theme=light|dark',
     render: () => <Dec495InicjatywyArchiwumScreen />,
+  },
+  'a1-inicjatywa-card-estimate': {
+    label:
+      'A-1 / DEC-489 — canonical Initiative N card with persisted estimate and a visible disabled approval action for a viewer without review authority. &theme=light&lang=en',
+    render: () => <A1InitiativeCardEstimateScreen />,
+  },
+  'a2-inicjatywa-kpi-approval': {
+    label:
+      'A-2 / DEC-499 — KPI snapshot in the Initiative N-card shell with AI proposal guidance and governed approval status. &theme=light&lang=en',
+    render: () => <A2InitiativeKpiApprovalScreen />,
   },
   'f2-inicjatywy-analiza': {
     label:

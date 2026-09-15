@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import type { InitiativeCardVersionReadModel } from '@/services/initiatives-execution/runtimeApi';
+import { isInitiativesPortfolioAnalysisEnabled } from '@/utils/initiativesPortfolioAnalysisFlag';
 
 const definitions = [
   [
@@ -86,6 +87,8 @@ export interface DefinitionCardDraft {
   quality: string;
   completion: string;
   cardVersion: number;
+  estimateValue?: string;
+  estimateBasis?: string;
 }
 export type DefinitionCardDraftStore = React.MutableRefObject<
   Record<string, Record<string, DefinitionCardDraft>>
@@ -138,8 +141,11 @@ function DefinitionCardContentForInitiative({
   const [quality, setQuality] = useState('UNKNOWN');
   const [completion, setCompletion] = useState('IN_PROGRESS');
   const [rationale, setRationale] = useState('');
+  const [estimateValue, setEstimateValue] = useState('');
+  const [estimateBasis, setEstimateBasis] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const estimateEnabled = isInitiativesPortfolioAnalysisEnabled();
   const editorRef = useRef<HTMLDetailsElement>(null);
   const ownDraftStore = useRef<Record<string, Record<string, DefinitionCardDraft>>>({});
   const store = draftStore ?? ownDraftStore;
@@ -152,6 +158,8 @@ function DefinitionCardContentForInitiative({
       evidence,
       quality,
       completion,
+      estimateValue,
+      estimateBasis,
       cardVersion: drafts.current[key]?.cardVersion ?? current?.cardVersion ?? 0,
       ...patch,
     };
@@ -175,6 +183,8 @@ function DefinitionCardContentForInitiative({
     setEvidence(draft?.evidence ?? (current?.evidenceRefs || []).join('\n'));
     setQuality(draft?.quality ?? current?.quality ?? 'UNKNOWN');
     setCompletion(draft?.completion ?? current?.completion ?? 'IN_PROGRESS');
+    setEstimateValue(draft?.estimateValue ?? current?.estimate?.value ?? '');
+    setEstimateBasis(draft?.estimateBasis ?? current?.estimate?.basis ?? '');
     setRationale('');
   }, [key, cards]);
   useEffect(() => {
@@ -221,6 +231,14 @@ function DefinitionCardContentForInitiative({
             .map((s) => s.trim())
             .filter(Boolean),
           waiverDecisionId: current?.waiverDecisionId || null,
+          ...(estimateEnabled
+            ? {
+                estimate:
+                  estimateValue.trim() && estimateBasis.trim()
+                    ? { value: estimateValue.trim(), basis: estimateBasis.trim() }
+                    : null,
+              }
+            : {}),
         });
       else
         await Api.post(`${base}/cards/${key}/reviews`, {
@@ -285,6 +303,54 @@ function DefinitionCardContentForInitiative({
               ? 'Karta nie została jeszcze opublikowana'
               : 'Card has not been published yet'}
       </p>
+      {estimateEnabled && (
+        <section
+          aria-label={pl ? 'Wycena karty' : 'Card estimate'}
+          className="space-y-2 rounded border border-c-border-subtle bg-c-surface px-3 py-2"
+        >
+          <div>
+            <p className="text-sm font-semibold text-c-text-primary">
+              {pl ? 'Wycena karty' : 'Card estimate'}
+            </p>
+            {current?.estimatedBy && current?.estimatedAt && (
+              <p className="text-xs text-c-text-secondary">
+                {pl ? 'Przygotował(a)' : 'Prepared by'} {current.estimatedBy} ·{' '}
+                {new Intl.DateTimeFormat(pl ? 'pl-PL' : 'en-US', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                }).format(new Date(current.estimatedAt))}
+              </p>
+            )}
+          </div>
+          <label className="block">
+            {pl ? 'Wartość wyceny' : 'Estimate'}
+            <input
+              aria-label={pl ? 'Wartość wyceny' : 'Estimate'}
+              disabled={!canEdit || busy || !cardsLoaded}
+              value={estimateValue}
+              placeholder={pl ? 'np. 40–60 h lub 120 000 PLN' : 'e.g. 40–60 h or PLN 120,000'}
+              onChange={(event) => {
+                retainDraft({ estimateValue: event.target.value });
+                setEstimateValue(event.target.value);
+              }}
+              className="block w-full bg-c-bg border border-c-border p-2"
+            />
+          </label>
+          <label className="block">
+            {pl ? 'Podstawa wyceny' : 'Estimate basis'}
+            <textarea
+              aria-label={pl ? 'Podstawa wyceny' : 'Estimate basis'}
+              disabled={!canEdit || busy || !cardsLoaded}
+              value={estimateBasis}
+              onChange={(event) => {
+                retainDraft({ estimateBasis: event.target.value });
+                setEstimateBasis(event.target.value);
+              }}
+              className="block w-full bg-c-bg border border-c-border p-2"
+            />
+          </label>
+        </section>
+      )}
       {dirty && canReview && (
         <p>
           {pl
@@ -395,25 +461,40 @@ function DefinitionCardContentForInitiative({
               ))}
             </select>
           </label>
-          <button disabled={busy || !version} onClick={() => void act('publish')}>
+          <button
+            disabled={
+              busy ||
+              !version ||
+              (estimateEnabled && (!estimateValue.trim() || !estimateBasis.trim()))
+            }
+            onClick={() => void act('publish')}
+          >
             {pl ? 'Zapisz i przekaż kartę do przeglądu' : 'Save card and request review'}
           </button>
         </>
       )}
-      {canReview &&
+      {(canReview || estimateEnabled) &&
         current?.publishedBy !== actorId &&
         ['REQUESTED', 'CHANGES_REQUESTED'].includes(current?.reviewState || '') && (
           <>
-            <label className="block">
-              {pl ? 'Uzasadnienie przeglądu' : 'Review rationale'}
-              <textarea
-                value={rationale}
-                onChange={(e) => setRationale(e.target.value)}
-                className="block w-full bg-c-bg border border-c-border p-2"
-              />
-            </label>
+            {canReview ? (
+              <label className="block">
+                {pl ? 'Uzasadnienie przeglądu' : 'Review rationale'}
+                <textarea
+                  value={rationale}
+                  onChange={(e) => setRationale(e.target.value)}
+                  className="block w-full bg-c-bg border border-c-border p-2"
+                />
+              </label>
+            ) : (
+              <p className="text-sm text-c-text-secondary">
+                {pl
+                  ? 'Nie masz uprawnienia do zatwierdzenia tej karty.'
+                  : 'You do not have permission to approve this card.'}
+              </p>
+            )}
             <button
-              disabled={busy || dirty || !rationale.trim()}
+              disabled={!canReview || busy || dirty || !rationale.trim()}
               onClick={() => void act('review')}
             >
               {pl ? 'Zaakceptuj treść karty' : 'Accept card content'}

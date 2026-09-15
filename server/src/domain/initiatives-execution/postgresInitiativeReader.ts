@@ -66,6 +66,9 @@ export interface InitiativeCardVersionReadModel {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
+  estimate?: { value: string; basis: string } | null;
+  estimatedBy?: string | null;
+  estimatedAt?: string | null;
   reviewedBy?: string | null;
   publishedBy: string;
   publishedAt: string;
@@ -2175,6 +2178,10 @@ export class PostgresInitiativeReader {
       content_json: Record<string, unknown>;
       evidence_refs_json: string[];
       waiver_decision_id: string | null;
+      estimate_text: string | null;
+      estimate_basis: string | null;
+      estimated_by: string | null;
+      estimated_at: Date | string | null;
       reviewed_by: string | null;
       published_by: string;
       published_at: Date | string;
@@ -2182,7 +2189,8 @@ export class PostgresInitiativeReader {
       `SELECT DISTINCT ON (card_key)
               card_key, card_version, aggregate_version, applicability, completion,
               quality, freshness, review_state, content_json, evidence_refs_json,
-              waiver_decision_id, reviewed_by, published_by, published_at
+              waiver_decision_id, estimate_text, estimate_basis, estimated_by, estimated_at,
+              reviewed_by, published_by, published_at
          FROM ie_initiative_card_versions
         WHERE organization_id = $1 AND initiative_id = $2
         ORDER BY card_key, card_version DESC`,
@@ -2200,6 +2208,17 @@ export class PostgresInitiativeReader {
       content: row.content_json,
       evidenceRefs: row.evidence_refs_json,
       waiverDecisionId: row.waiver_decision_id,
+      estimate:
+        row.estimate_text && row.estimate_basis
+          ? { value: row.estimate_text, basis: row.estimate_basis }
+          : null,
+      estimatedBy: row.estimated_by,
+      estimatedAt:
+        row.estimated_at instanceof Date
+          ? row.estimated_at.toISOString()
+          : row.estimated_at
+            ? String(row.estimated_at)
+            : null,
       reviewedBy: row.reviewed_by,
       publishedBy: row.published_by,
       publishedAt:

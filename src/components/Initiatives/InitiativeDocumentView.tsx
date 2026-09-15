@@ -4,6 +4,7 @@ import { readInitiativeCardDeepLink, readInitiativeDeepLinkId } from '@/utils/in
 import { enumLabel } from '@/utils/enumLabel';
 import { readDefinitionApproval } from '@/services/initiatives-execution/definitionApprovalApi';
 import { DefinitionApprovalContent } from './DefinitionApprovalContent';
+import { InitiativeKpiApprovalCard } from './InitiativeKpiApprovalCard';
 /**
  * InitiativeDocumentView - Dynamic Section Renderer
  *
@@ -8617,6 +8618,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </tbody>
                 </table>
               </div>
+              {isRuntimeOnlyRecord && (
+                <InitiativeKpiApprovalCard
+                  initiativeId={initiativeId}
+                  kpis={localKpis}
+                  readOnly={readMode}
+                />
+              )}
             </div>
           );
           break;

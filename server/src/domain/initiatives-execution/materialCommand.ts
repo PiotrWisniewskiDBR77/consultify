@@ -107,6 +107,11 @@ export interface SourceProposalSnapshot {
   registeredInitiativeId: string | null;
 }
 
+export interface InitiativeCardEstimate {
+  value: string;
+  basis: string;
+}
+
 export interface InitiativeCardSnapshot {
   cardKey: string;
   cardVersion: number;
@@ -118,6 +123,9 @@ export interface InitiativeCardSnapshot {
   content: Record<string, unknown>;
   evidenceRefs: string[];
   waiverDecisionId: string | null;
+  estimate?: InitiativeCardEstimate | null;
+  estimatedBy?: string | null;
+  estimatedAt?: string | null;
   reviewedBy?: string | null;
   publishedBy: string;
 }
@@ -301,6 +309,7 @@ export interface MaterialCommandTransaction {
     content: Record<string, unknown>;
     evidenceRefs: string[];
     waiverDecisionId: string | null;
+    estimate?: InitiativeCardEstimate | null;
     publishedBy: string;
   }): Promise<void>;
   reviewInitiativeCardVersion(input: {
