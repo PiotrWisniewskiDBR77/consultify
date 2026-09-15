@@ -29,6 +29,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SecurityPolicy {
   id?: string;
   organizationId?: string;
@@ -329,7 +330,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
               Bind Session to Device
             </span>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Sessions will be invalidated if IP or device changes
+              {tlumaczPozaHookiem("superadmin.securityPolicies.sessionsWillBeInvalidatedIfIPOr", "Sessions will be invalidated if IP or device changes")}
             </p>
           </div>
         </label>
@@ -405,7 +406,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
               Require MFA for All Users
             </span>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Users must set up MFA before accessing the platform
+              {tlumaczPozaHookiem("superadmin.securityPolicies.usersMustSetUpMFABeforeAccessing", "Users must set up MFA before accessing the platform")}
             </p>
           </div>
         </label>

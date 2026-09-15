@@ -37,6 +37,8 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Backup {
   id: string;
   type: 'full' | 'incremental' | 'differential';
@@ -159,13 +161,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
   const formatDateTime = (value?: string | null) => {
     if (!value) return 'Unknown date';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
   };
 
   const formatDate = (value?: string | null) => {
     if (!value) return 'Never';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
   };
 
   const fetchBackups = useCallback(async () => {
@@ -285,7 +287,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-semibold text-c-text">Backup & Recovery</h2>
           <p className="text-c-text-secondary text-sm">
-            Manage database backups and disaster recovery procedures
+            {tlumaczPozaHookiem("superadmin.enterpriseBackup.manageDatabaseBackupsAndDisasterRecoveryProcedures", "Manage database backups and disaster recovery procedures")}
           </p>
         </div>
         <button
@@ -380,7 +382,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   variant="new"
                   icon={HardDrive}
                   title="No backups available"
-                  description="Create your first backup to get started"
+                  description={tlumaczPozaHookiem("superadmin.enterpriseBackup.createYourFirstBackupToGetStarted", "Create your first backup to get started")}
                 />
               ) : (
                 backups.map((backup) => {
@@ -563,7 +565,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
             <div className="space-y-6">
               <ReadOnlyState
                 title="Backup settings are read-only"
-                description="Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration endpoint is connected."
+                description={tlumaczPozaHookiem("superadmin.enterpriseBackup.retentionEncryptionAndCloudStorageSettingsAre", "Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration endpoint is connected.")}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
@@ -684,7 +686,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   title="Backup settings persistence is not connected"
                   className="px-4 py-2 bg-c-surface text-c-text rounded-lg transition-colors opacity-50 cursor-not-allowed"
                 >
-                  Save Settings
+                  {tlumaczPozaHookiem("superadmin.enterpriseBackup.saveSettings", "Save Settings")}
                 </button>
               </div>
             </div>
@@ -725,8 +727,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
               <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h4 className="font-medium text-c-text mb-2">DR Test History</h4>
                 <p className="text-sm text-c-text-muted">
-                  No verified disaster recovery test history is available until the backend job
-                  lifecycle is connected.
+                  {tlumaczPozaHookiem("superadmin.enterpriseBackup.noVerifiedDisasterRecoveryTestHistoryIs", "No verified disaster recovery test history is available until the backend job lifecycle is connected.")}
                 </p>
               </div>
             </div>

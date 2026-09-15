@@ -31,6 +31,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface Session {
   id: string;
   user_id: string;
@@ -333,7 +334,7 @@ export const SessionManagementPanel: React.FC = () => {
                             <span>Active {formatTimeAgo(session.last_activity)}</span>
                           </div>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Started {new Date(session.created_at).toLocaleDateString()}
+                            Started {new Date(session.created_at).toLocaleDateString(localeListy())}
                           </p>
                         </div>
                         <button

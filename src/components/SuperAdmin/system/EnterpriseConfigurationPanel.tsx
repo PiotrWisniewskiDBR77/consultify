@@ -33,6 +33,8 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 import { LoadingState } from '../../shared/states';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ConfigItem {
   id: string;
   key: string;
@@ -167,7 +169,7 @@ const configMatchesCreate = (
 
 const formatDateTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const normalizeVersions = (data: unknown): ConfigVersion[] => {
@@ -398,7 +400,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text">Configuration Management</h2>
           <p className="text-c-text-secondary text-sm">
-            Manage system settings and environment configurations
+            {tlumaczPozaHookiem("superadmin.enterpriseConfiguration.manageSystemSettingsAndEnvironmentConfigurations", "Manage system settings and environment configurations")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -965,7 +967,7 @@ const ConfigAddModal: React.FC<{
               onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
               className="rounded border-c-border-subtle bg-c-surface text-c-accent dark:text-c-accent"
             />
-            <span className="text-sm text-c-text-secondary">Sensitive value (will be masked)</span>
+            <span className="text-sm text-c-text-secondary">{tlumaczPozaHookiem("superadmin.enterpriseConfiguration.sensitiveValueWillBeMasked", "Sensitive value (will be masked)")}</span>
           </label>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -1070,7 +1072,7 @@ const ConfigHistoryModal: React.FC<{
                   className="mt-2 text-xs text-c-accent dark:text-c-accent hover:text-c-accent dark:hover:text-c-accent flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  Rollback to this version
+                  {tlumaczPozaHookiem("superadmin.enterpriseConfiguration.rollbackToThisVersion", "Rollback to this version")}
                 </button>
               )}
             </div>
