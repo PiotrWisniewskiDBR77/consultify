@@ -1,0 +1,8 @@
+
+> consultinity@0.0.1 check:artefakt
+> bash scripts/check-artefakt.sh
+
+✓ check-artefakt: brak nowych naruszeń crimson w powłoce artefaktów (aktualnie 8, baseline 8 — dług nie rośnie)
+• karty N (SPEC-N §5B): R1 ostrzeżeń 2 · R2+R3 aktualnie 0 / baseline 0 (dług istniejący, ratchet nie rośnie — nie blokuje; szczegóły: --report)
+• danger-* poza kontekstem błędu (P6 §5 krok 7): 117 / baseline 117 (RAPORT — nie blokuje; szczegóły: --report)
+artefakt_rc=0

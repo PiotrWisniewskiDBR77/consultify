@@ -1,0 +1,104 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/c-k5-demo-ttl-fix-w73
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/c-k5-demo-ttl-fix-w73
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[TrialCron] (hourly) Cleaned up 4 expired demo organization(s)[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[TrialCron] (hourly) Cleaned up 4 expired demo organization(s)[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[TrialCron] (hourly) Cleaned up 4 expired demo organization(s)[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[TrialCron] (hourly) Cleaned up 4 expired demo organization(s)[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 21:26:26:2626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [33mwarn[39m: [33m[TrialCron] DemoService unavailable; demo cleanup disabled:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [33mwarn[39m: [33m[TrialCron] DemoService unavailable; demo cleanup disabled:[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [33mwarn[39m: [33m[TrialCron] DemoService unavailable; skipping hourly demo cleanup[39m
+
+stdout | tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca
+2026-09-14 21:26:26:2626 [33mwarn[39m: [33m[TrialCron] DemoService unavailable; skipping hourly demo cleanup[39m
+
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > woła demoService.cleanupExpiredDemos i zwraca jego wynik 288ms
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > NIE woła trialService — ostrzeżenia trialowe zostają na cyklu dziennym 4ms
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts > TrialCron.runDemoCleanup > gdy DemoService jest niedostępny, zwraca 0 i nie rzuca 9ms
+ ✓ tests/unit/backend/cron/trialCronDemoCleanup.test.ts (3 tests) 303ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:26:25
+   Duration  793ms (transform 197ms, setup 110ms, import 8ms, tests 303ms, environment 279ms)
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:26:25
+   Duration  794ms (transform 197ms, setup 110ms, import 8ms, tests 303ms, environment 279ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/c-k5-demo-ttl-fix-w73/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/c-k5-demo-ttl-fix-w73/junit.xml
