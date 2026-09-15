@@ -3597,6 +3597,10 @@
       "whyOnRadar": "Dlaczego to jest na Twoim radarze"
     },
     "manager": "Menedżer",
+    "approvals": {
+      "overdue": "Po terminie",
+      "emptyTitle": "Brak zatwierdzeń"
+    },
     "inbox": {
       "urgency": {
         "critical": "Krytyczne",
@@ -16614,6 +16618,8 @@
       "total": "Elementy",
       "critical": "Krytyczne",
       "warning": "Ostrzeżenia",
+      "criticalCount": "Krytyczne: {{count}}",
+      "warningCount": "Ostrzeżenia: {{count}}",
       "openLane": "Otwórz tor",
       "emptyTitle": "Brak torów zarządczych"
     },
@@ -16722,6 +16728,11 @@
           "handover": "Przekazanie",
           "signOff": "Odbiór",
           "closure": "Zamknięcie"
+        },
+        "derived": {
+          "handover": "Przekazanie: przekaż rezultaty inicjatywy {{name}} do operacji",
+          "signOff": "Odbiór: uzyskaj akceptację sponsora dla inicjatywy {{name}}",
+          "closure": "Zamknięcie: zapisz wnioski i zarchiwizuj inicjatywę {{name}}"
         }
       },
       "addClosureItem": "Dodaj pozycję",
@@ -16737,6 +16748,8 @@
         "heading": "Baseline planu (rebaseline)",
         "saving": "Zapisywanie…",
         "saveCta": "Zapisz baseline",
+        "savedLabel": "Baza odniesienia {{timestamp}}",
+        "fallbackLabel": "Baza odniesienia",
         "needsProject": "Zapis baseline wymaga wybranego projektu."
       },
       "benefits": {
@@ -43262,6 +43275,7 @@
       "gotIt": "Rozumiem"
     },
     "enterpriseWizard": {
+      "progress": "Krok {{current}} z {{total}}",
       "step1": {
         "intro": "To jest ta sama ścieżka aplikacyjna uruchamiana z LP i z produktu.",
         "termsTitle": "Warunki programu",
