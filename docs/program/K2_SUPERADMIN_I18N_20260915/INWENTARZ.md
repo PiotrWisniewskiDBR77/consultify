@@ -1,0 +1,711 @@
+# K2 — inwentarz długu językowego SuperAdmin
+
+- Baza: `f2628a0d36af85d97bcbe67b820d728c7c2f2f28`.
+- Zakres: `src/views/superadmin/**` i `src/components/SuperAdmin/**`.
+- Pomiar wejściowy w zakresie: **K4en 533**, **K7 167**.
+- Pomiar W73 dla całego modułu 14: K4en 543 i K7 174; poza zakresem K2 pozostaje 10 K4en i 7 K7 w `src/components/Admin/**`, `src/views/Admin/**` i `src/views/SystemHealthView.tsx`.
+- Pomiar końcowy w zakresie: **K4en 1**, **K7 0**. Jedyny wpis K4en to fałszywie dodatni klucz obiektu `pending:` w `InvoiceCenterView.tsx:383`.
+
+## Lista wejściowa plik:linia
+
+Format: `kategoria | wynik skanera`.
+- `K4en` | `src/components/SuperAdmin/AlertPlaygroundTester.tsx:248	14 Admin Panel	Verify your HMAC verifier without affecting real subscriptions or audit trail.	en:your`
+- `K4en` | `src/components/SuperAdmin/AlertPlaygroundTester.tsx:388	14 Admin Panel	Run step 1 first to populate the inbox request.	en:the`
+- `K4en` | `src/components/SuperAdmin/AlertPlaygroundTester.tsx:438	14 Admin Panel	Acknowledge the secret reveal in step 1 first.	en:the`
+- `K4en` | `src/components/SuperAdmin/AlertPlaygroundTester.tsx:533	14 Admin Panel	This secret is also fed back into step 2 so you can prove the loop closes. The reveal panel auto-clears in	en:this,en:back,en:into`
+- `K4en` | `src/components/SuperAdmin/AnalyticsPanel.tsx:45	14 Admin Panel	Monitor system performance and usage	en:and`
+- `K4en` | `src/components/SuperAdmin/BackupPanel.tsx:73	14 Admin Panel	Manage database backups and disaster recovery	en:and`
+- `K4en` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:73	14 Admin Panel	Failed to load analytics data	en:failed`
+- `K4en` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:77	14 Admin Panel	Try Again	en:again`
+- `K4en` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:94	14 Admin Panel	Overview of your content module performance	en:your`
+- `K4en` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:105	14 Admin Panel	Last 7 days	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:106	14 Admin Panel	Last 30 days	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:107	14 Admin Panel	Last 90 days	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/ContentCategoriesManager.tsx:440	14 Admin Panel	Create your first category to organize content	en:your`
+- `K4en` | `src/components/SuperAdmin/ContentFilters.tsx:331	14 Admin Panel	From	en:from`
+- `K4en` | `src/components/SuperAdmin/ContentSearch.tsx:399	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/components/SuperAdmin/ContentTagsManager.tsx:276	14 Admin Panel	Create tags to organize your content	en:your`
+- `K4en` | `src/components/SuperAdmin/EmailConfigurationPanel.tsx:266	14 Admin Panel	Encrypt connection with TLS/SSL	en:with`
+- `K4en` | `src/components/SuperAdmin/EmailConfigurationPanel.tsx:447	14 Admin Panel	Choose your email service	en:your`
+- `K4en` | `src/components/SuperAdmin/EmailConfigurationPanel.tsx:496	14 Admin Panel	From Email	en:from`
+- `K4en` | `src/components/SuperAdmin/EmailConfigurationPanel.tsx:508	14 Admin Panel	From Name	en:from`
+- `K4en` | `src/components/SuperAdmin/EmailConfigurationPanel.tsx:576	14 Admin Panel	Set up SPF, DKIM, and DMARC records to improve email deliverability and prevent spoofing.	en:and`
+- `K4en` | `src/components/SuperAdmin/EmailTemplateEditor.tsx:372	14 Admin Panel	Brief description of this template...	en:this`
+- `K4en` | `src/components/SuperAdmin/EmailTemplateEditor.tsx:592	14 Admin Panel	Enter your HTML email content here...	en:your,en:here`
+- `K4en` | `src/components/SuperAdmin/EmailTemplateEditor.tsx:671	14 Admin Panel	The email will be sent with [TEST] prefix in the subject line.	en:the,en:will,en:with`
+- `K4en` | `src/components/SuperAdmin/EmailTemplateEditor.tsx:718	14 Admin Panel	Your email content goes here...	en:your,en:here`
+- `K4en` | `src/components/SuperAdmin/EmailTemplateEditor.tsx:722	14 Admin Panel	The Team	en:the`
+- `K4en` | `src/components/SuperAdmin/EmailTemplateEditor.tsx:725	14 Admin Panel	© 2025 Your Company. All rights reserved.	en:your`
+- `K4en` | `src/components/SuperAdmin/FeatureFlagsPanel.tsx:118	14 Admin Panel	Control feature availability across your platform	en:your`
+- `K4en` | `src/components/SuperAdmin/IncidentRunbooksCard.tsx:387	14 Admin Panel	No runbook matched the current signal pattern.	en:the`
+- `K4en` | `src/components/SuperAdmin/IncidentRunbooksCard.tsx:425	14 Admin Panel	Open the runbook	en:the`
+- `K4en` | `src/components/SuperAdmin/IntegrationsPanel.tsx:124	14 Admin Panel	Connect Consultify with your existing tools	en:with,en:your`
+- `K4en` | `src/components/SuperAdmin/LegalPanel.tsx:394	14 Admin Panel	Brief description of changes in this version...	en:this`
+- `K4en` | `src/components/SuperAdmin/LegalPanel.tsx:187	14 Admin Panel	Manage versions, activation status, and publication of legal documents.	en:and`
+- `K4en` | `src/components/SuperAdmin/LegalPanel.tsx:364	14 Admin Panel	Effective From	en:from`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:196	14 Admin Panel	Search by entity or user...	en?:search,en?:user`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:238	14 Admin Panel	From	en:from`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:263	14 Admin Panel	No audit entries match your filters	en:your`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/PricingPanel.tsx:353	14 Admin Panel	Optional notes about this price entry	en:about,en:this`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/PricingPanel.tsx:293	14 Admin Panel	Effective From	en:from`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/PurposeAssignmentsEditor.tsx:458	14 Admin Panel	No models assigned to this purpose	en:this`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/PurposeAssignmentsEditor.tsx:459	14 Admin Panel	Add a model from the dropdown below	en:from,en:the`
+- `K4en` | `src/components/SuperAdmin/ModelRegistry/PurposeAssignmentsEditor.tsx:484	14 Admin Panel	Select a purpose from the list to manage its assignments	en:from,en:the`
+- `K4en` | `src/components/SuperAdmin/ModelTierAssignments.tsx:579	14 Admin Panel	Remove model from tier	en:from`
+- `K4en` | `src/components/SuperAdmin/ModelTierAssignments.tsx:587	14 Admin Panel	No models assigned to this tier	en:this`
+- `K4en` | `src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:296	14 Admin Panel	No problematic decks in this window.	en:this`
+- `K4en` | `src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:559	14 Admin Panel	Loading drill-down…	en:loading`
+- `K4en` | `src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:582	14 Admin Panel	Some inputs were degraded	en:were`
+- `K4en` | `src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:112	14 Admin Panel	Last 7 days	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:113	14 Admin Panel	Last 30 days	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:114	14 Admin Panel	Last 90 days	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:152	14 Admin Panel	Completed successfully	en:successfully`
+- `K4en` | `src/components/SuperAdmin/PlaybookTemplateComments.tsx:398	14 Admin Panel	Be the first to leave a comment	en:the`
+- `K4en` | `src/components/SuperAdmin/SecurityPanel.tsx:64	14 Admin Panel	Monitor security events and compliance status	en:and`
+- `K4en` | `src/components/SuperAdmin/SubscriberTokenManagementPanel.tsx:285	14 Admin Panel	No dashboard tokens issued yet for this subscription.	en:this`
+- `K4en` | `src/components/SuperAdmin/SubscriberTokenManagementPanel.tsx:479	14 Admin Panel	Confirm revocation — this token will be permanently invalidated.	en:this,en:will`
+- `K4en` | `src/components/SuperAdmin/SuperAdminAISettings.tsx:409	14 Admin Panel	Platform-wide AI configuration and constraints	en:and`
+- `K4en` | `src/components/SuperAdmin/SuperAdminAISettings.tsx:453	14 Admin Panel	Default model and fallback chain	en:and`
+- `K4en` | `src/components/SuperAdmin/SuperAdminAISettings.tsx:637	14 Admin Panel	PII detection and encryption	en:and`
+- `K4en` | `src/components/SuperAdmin/SuperAdminAISettings.tsx:717	14 Admin Panel	Circuit breaker and data residency	en:and`
+- `K4en` | `src/components/SuperAdmin/SuperAdminStatusIndicators.tsx:440	14 Admin Panel	Active Now	en:now`
+- `K4en` | `src/components/SuperAdmin/SuperAdminStatusIndicators.tsx:483	14 Admin Panel	Pending Feedback	en:pending`
+- `K4en` | `src/components/SuperAdmin/SuperAdminStatusIndicators.tsx:549	14 Admin Panel	Failed Logins (1h)	en:failed`
+- `K4en` | `src/components/SuperAdmin/SuperAdminStatusIndicators.tsx:566	14 Admin Panel	Failed Logins	en:failed`
+- `K4en` | `src/components/SuperAdmin/SuperadminRootClosurePanel.tsx:13	14 Admin Panel	Tenants and customers	en:and`
+- `K4en` | `src/components/SuperAdmin/SuperadminRootClosurePanel.tsx:14	14 Admin Panel	AI and connector platform ops	en:and`
+- `K4en` | `src/components/SuperAdmin/billing/InvoicesPanel.tsx:201	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/components/SuperAdmin/data/BackupConfigPanel.tsx:296	14 Admin Panel	Backups older than this will be deleted	en:than,en:this,en:will`
+- `K4en` | `src/components/SuperAdmin/data/BackupConfigPanel.tsx:314	14 Admin Panel	Backup uploaded files and documents	en:and`
+- `K4en` | `src/components/SuperAdmin/data/BackupConfigPanel.tsx:332	14 Admin Panel	Backup activity and audit logs	en:and`
+- `K4en` | `src/components/SuperAdmin/data/DataExportPanel.tsx:199	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/components/SuperAdmin/data/DataExportPanel.tsx:202	14 Admin Panel	Failed	en:failed`
+- `K4en` | `src/components/SuperAdmin/integrations/WebhookDeliveriesModal.tsx:124	14 Admin Panel	Recent webhook deliveries and their status	en:and`
+- `K4en` | `src/components/SuperAdmin/integrations/WebhooksPanel.tsx:262	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/components/SuperAdmin/security/IPAccessRulesPanel.tsx:321	14 Admin Panel	Supports CIDR notation (e.g., 192.168.1.0/24) and wildcards	en:and`
+- `K4en` | `src/components/SuperAdmin/security/LoginAttemptsPanel.tsx:211	14 Admin Panel	Failed	en:failed`
+- `K4en` | `src/components/SuperAdmin/security/LoginAttemptsPanel.tsx:398	14 Admin Panel	Failed	en:failed`
+- `K4en` | `src/components/SuperAdmin/security/SecurityPoliciesPanel.tsx:331	14 Admin Panel	Sessions will be invalidated if IP or device changes	en:will`
+- `K4en` | `src/components/SuperAdmin/security/SecurityPoliciesPanel.tsx:407	14 Admin Panel	Users must set up MFA before accessing the platform	en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:437	14 Admin Panel	The analytics endpoint did not return API chart data for this period.	en:the,en:this`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:462	14 Admin Panel	The analytics endpoint did not return AI chart data for this period.	en:the,en:this`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:472	14 Admin Panel	Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provide	en:and,en:that,en:this`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:527	14 Admin Panel	The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not w	en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:553	14 Admin Panel	The reporting backend exposes scheduled report reads here, but no audited create/update workflow is wired to this panel 	en:the,en:here,en:this`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:322	14 Admin Panel	Monitor system performance and generate insights	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx:568	14 Admin Panel	Create a scheduled report to receive automated insights	en?:create,en?:report`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:581	14 Admin Panel	Create your first API key to get started.	en:your`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:705	14 Admin Panel	API key usage cannot be inspected because the API key list did not load.	en:cannot,en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:466	14 Admin Panel	Manage API keys, view usage analytics, and access documentation	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:497	14 Admin Panel	API Key Created Successfully	en:successfully`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:498	14 Admin Panel	Save this key now - it won't be shown again!	en:this,en:now,en:again`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:843	14 Admin Panel	Build powerful integrations with the Consultify REST API. Access projects, assessments, reports, and more.	en:with,en:the,en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:876	14 Admin Panel	All API requests require authentication using an API key in the Authorization header.	en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseApiManagement.tsx:890	14 Admin Panel	API requests are rate limited based on your key configuration.	en:your`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAuditLog.tsx:477	14 Admin Panel	Search by action, resource, user, request ID...	en?:search,en?:user`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAuditLog.tsx:628	14 Admin Panel	Try adjusting your filters to see more activity.	en:your`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAuditLog.tsx:364	14 Admin Panel	Comprehensive activity tracking for compliance and security	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseAuditLog.tsx:915	14 Admin Panel	Activity Timeline (Last 7 Days)	en?:last,en?:days`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:383	14 Admin Panel	Create your first backup to get started	en:your`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:566	14 Admin Panel	Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:287	14 Admin Panel	Manage database backups and disaster recovery procedures	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:686	14 Admin Panel	Save Settings	en?:save,en?:settings`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:727	14 Admin Panel	No verified disaster recovery test history is available until the backend job lifecycle is connected.	en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx:400	14 Admin Panel	Manage system settings and environment configurations	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx:968	14 Admin Panel	Sensitive value (will be masked)	en:will`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx:1072	14 Admin Panel	Rollback to this version	en:this`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx:573	14 Admin Panel	Create a flag to control feature availability with targeting, rollouts, or A/B tests.	en:with`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx:398	14 Admin Panel	Control feature availability with targeting, A/B testing, and percentage rollouts	en:with,en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx:987	14 Admin Panel	Configure notification channels (Email, Slack, PagerDuty) in the Organization settings to receive aler	en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx:542	14 Admin Panel	Browse the catalog to add your first integration.	en:the,en:your`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx:597	14 Admin Panel	Sync now	en:now`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx:656	14 Admin Panel	Existing webhook reads are available when the backend returns data.	en:when,en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx:426	14 Admin Panel	Connect Consultify with your existing tools and workflows	en:with,en:your,en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:720	14 Admin Panel	Security events will appear here as they are detected.	en:will,en:here`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:807	14 Admin Panel	Active user sessions will appear here once someone signs in.	en:will,en:here`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:1109	14 Admin Panel	The UI describes SIEM forwarding, but there is no audited SuperAdmin SIEM configuration workflow wired here yet.	en:the,en:there,en:here`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:583	14 Admin Panel	Monitor security events, manage access, and ensure compliance	en:and`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:894	14 Admin Panel	. Only IPs matching allow rules can access the system. Deny rules take precedence over allow rules	en:the`
+- `K4en` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:1104	14 Admin Panel	Forward security events to your SIEM solution for centralized monitoring.	en:your`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:520	14 Admin Panel	This Month	en:this`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:895	14 Admin Panel	Hard limit (block requests when exceeded)	en:when`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:928	14 Admin Panel	Notifications about budget thresholds and anomalies	en:about,en:and`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:945	14 Admin Panel	Alerts will appear when budgets are at risk	en:will,en:when`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:1098	14 Admin Panel	Restrict which AI models users can access	en:which`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:1206	14 Admin Panel	Allow access to this model	en:this`
+- `K4en` | `src/views/superadmin/AIBudgetsView.tsx:1238	14 Admin Panel	Manage AI spending limits and model access	en:and`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:885	14 Admin Panel	Cost (30 days)	en?:cost,en?:days`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:1029	14 Admin Panel	Provider failover and circuit breaker configuration	en:and`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:1102	14 Admin Panel	Token and rate limits for the entire platform	en:and,en:the`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:1182	14 Admin Panel	PII detection, encryption, and data residency	en:and`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:1252	14 Admin Panel	Track all changes to AI settings across the platform	en:the`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:552	14 Admin Panel	Manage AI behavior, providers, and system health	en:and`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:814	14 Admin Panel	Define which LLM model to use for different complexity levels.	en:which`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:1006	14 Admin Panel	Platform-wide AI configuration. These settings apply to all organizations.	en:these`
+- `K4en` | `src/views/superadmin/AIConfigurationView.tsx:1269	14 Admin Panel	Loading global settings...	en:loading`
+- `K4en` | `src/views/superadmin/AIDevelopmentModule.tsx:109	14 Admin Panel	Prompt library, intelligence configuration, experiments, and knowledge base	en:and`
+- `K4en` | `src/views/superadmin/AIInfrastructureModule.tsx:86	14 Admin Panel	LLM providers, model tiers, global settings, and health monitoring	en:and`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:204	14 Admin Panel	Harvard MBA/PhD level reasoning with 20+ years experience	en:with`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:210	14 Admin Panel	Semantic instructions that work across all languages	en:that`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:216	14 Admin Panel	RAG with organization context, knowledge base, and web research	en:with,en:and`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:222	14 Admin Panel	AI can navigate, fill forms, and execute operations	en:and`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:234	14 Admin Panel	Pattern extraction and personalization from interactions	en:and,en:from`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:263	14 Admin Panel	Chat with Assistant	en:with`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:447	14 Admin Panel	Template creation is managed through the canonical Prompts Library workflow.	en:the`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:458	14 Admin Panel	This builder view is read-only for templates until create/edit/test actions are wired to the canonical prompt registry w	en:this,en:the`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:496	14 Admin Panel	Edit this prompt in Prompts Library.	en:this`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:503	14 Admin Panel	Template testing is unavailable here until it is wired to the canonical prompt registry.	en:here,en:the`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:464	14 Admin Panel	Loading templates...	en:loading`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:605	14 Admin Panel	AI learning patterns, quality metrics, and performance trends	en:and`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:690	14 Admin Panel	Loading chart...	en:loading`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:723	14 Admin Panel	Loading patterns...	en:loading`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:729	14 Admin Panel	Patterns are extracted from user interactions over time	en:from`
+- `K4en` | `src/views/superadmin/AIIntelligenceView.tsx:770	14 Admin Panel	Loading interactions...	en:loading`
+- `K4en` | `src/views/superadmin/AIOperationsModule.tsx:142	14 Admin Panel	Mission control, performance monitoring, costs, SLA, and analytics	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Analytics/PerformanceMetricsTab.tsx:431	14 Admin Panel	Monitor AI system performance and latency metrics	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Analytics/PerformanceMetricsTab.tsx:538	14 Admin Panel	No provider performance data for this period.	en:this`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Analytics/PricingRegistryTab.tsx:250	14 Admin Panel	Versioned price snapshots used for cost estimation and historical consistency.	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/AIGovernanceTab.tsx:226	14 Admin Panel	Organization policy, context policy, and runtime guardrails.	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx:715	14 Admin Panel	What changed in this policy revision?	en:what,en:this`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx:531	14 Admin Panel	Enterprise policy enforcement: regions, provider types, origins, and data classes.	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx:704	14 Admin Panel	Workflow: save draft for edits, send to review, approve, then publish live. Rollback always restores the publi	en:draft,en:the`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx:726	14 Admin Panel	Define what providers, regions and data classes are allowed without editing raw JSON first.	en:what,en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/PurposeAssignmentsTab.tsx:691	14 Admin Panel	When set, shows org-specific assignments first (plus global fallbacks).	en:when`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/PurposeAssignmentsTab.tsx:869	14 Admin Panel	Requirements JSON editing will be added after we stabilize the purpose catalog.	en:will,en:the`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx:898	14 Admin Panel	What does this rule do?	en:what,en:does,en:this`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx:587	14 Admin Panel	Define which LLM model to use for different complexity levels.	en:which`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx:735	14 Admin Panel	Suggestions (derived from live signals)	en:from`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx:738	14 Admin Panel	These are computed from current providers/health. You can convert them into persisted rules.	en:these,en:from,en:you`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx:781	14 Admin Panel	Create from suggestion	en:from`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx:820	14 Admin Panel	Wait time before retrying failed provider	en:failed`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Development/ModelRegistryTab.tsx:373	14 Admin Panel	Manage, compare, and track all AI models across providers	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx:541	14 Admin Panel	Drag & drop PDF, DOCX, XLSX, PPTX, TXT, MD, CSV here or click to select	en:here`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx:633	14 Admin Panel	Files are automatically chunked, embedded, and added to the vector store for AI retrieval.	en:and,en:the`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx:794	14 Admin Panel	Edit Document	en?:edit,en?:document`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx:865	14 Admin Panel	This change does not expose any document to the whole organization.	en:this,en:does,en:the`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx:494	14 Admin Panel	Explain how the AI should behave or what it should prioritize...	en:the,en:should,en:what`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx:293	14 Admin Panel	Define strategic goals that guide AI behavior and recommendations	en:that,en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx:328	14 Admin Panel	Add First Direction	en?:add,en?:first`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Operations/MarketInboxTab.tsx:284	14 Admin Panel	Review vendor catalog changes before applying them to your curated registry.	en:them,en:your`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Operations/MarketInboxTab.tsx:307	14 Admin Panel	Sync now	en:now`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx:284	14 Admin Panel	Loading policy feedback...	en:loading`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx:316	14 Admin Panel	Domains where desired and applied state diverge.	en:where,en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx:328	14 Admin Panel	Tracked model providers with runtime feedback.	en:with`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx:340	14 Admin Panel	Connector runtime controls visible from the same policy plane.	en:from,en:the`
+- `K4en` | `src/views/superadmin/AIPlatformModule/Security/ComplianceTab.tsx:272	14 Admin Panel	Monitor AI compliance status and data residency configuration	en:and`
+- `K4en` | `src/views/superadmin/AIPlatformModule.tsx:145	14 Admin Panel	LLM configuration, prompts, experiments, intelligence, and monitoring	en:and`
+- `K4en` | `src/views/superadmin/APIManagementView.tsx:340	14 Admin Panel	What will this key be used for?	en:what,en:will,en:this`
+- `K4en` | `src/views/superadmin/APIManagementView.tsx:794	14 Admin Panel	Copy this key now. You won't be able to see it again!	en:this,en:now,en:you`
+- `K4en` | `src/views/superadmin/APIManagementView.tsx:1033	14 Admin Panel	Manage API keys and integrations	en:and`
+- `K4en` | `src/views/superadmin/APIManagementView.tsx:1106	14 Admin Panel	This will revoke	en:this,en:will`
+- `K4en` | `src/views/superadmin/APIManagementView.tsx:1107	14 Admin Panel	. The secret cannot be used after revocation.	en:the,en:cannot`
+- `K4en` | `src/views/superadmin/BillingCenterView.tsx:311	14 Admin Panel	This Month	en:this`
+- `K4en` | `src/views/superadmin/BillingCenterView.tsx:384	14 Admin Panel	This month	en:this`
+- `K4en` | `src/views/superadmin/BillingCenterView.tsx:404	14 Admin Panel	With usage	en:with`
+- `K4en` | `src/views/superadmin/BillingCenterView.tsx:1610	14 Admin Panel	Leave empty to inherit the selected plan package. Fill any field to pin a custom limit for this invoice-ma	en:the,en:this`
+- `K4en` | `src/views/superadmin/BillingCenterView.tsx:1666	14 Admin Panel	Loading contracts...	en:loading`
+- `K4en` | `src/views/superadmin/BillingCenterView.tsx:1742	14 Admin Panel	Manage subscriptions, token pricing, and revenue analytics	en:and`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:1680	14 Admin Panel	Details about the request...	en:about,en:the`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:676	14 Admin Panel	Pending DSARs	en:pending`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:914	14 Admin Panel	Framework requirements are read-only here. Persisted DSAR, audit and processing records remain editable th	en:here,en:and`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:961	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:1330	14 Admin Panel	Schedule your first compliance audit	en:your`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:1386	14 Admin Panel	Document your data processing activities	en:your`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:1407	14 Admin Panel	Manage regulatory compliance and audits	en:and`
+- `K4en` | `src/views/superadmin/ComplianceCenterView.tsx:1550	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/ConfigurationModule.tsx:67	14 Admin Panel	Platform settings, branding, and legal documents	en:and`
+- `K4en` | `src/views/superadmin/ContentModule.tsx:73	14 Admin Panel	Manage playbooks, templates, and content assets	en:and`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:734	14 Admin Panel	What can this role do?	en:what,en:this`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:382	14 Admin Panel	System roles cannot be modified	en:cannot`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:504	14 Admin Panel	Select a role to view and edit permissions	en:and`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:507	14 Admin Panel	Or create a new custom role	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:523	14 Admin Panel	All available permissions in the system	en:the`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:631	14 Admin Panel	Create Role from Template	en:from`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:646	14 Admin Panel	Create and manage role-based access control	en:and`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:681	14 Admin Panel	Failed to load custom roles	en:failed`
+- `K4en` | `src/views/superadmin/CustomRolesBuilder.tsx:779	14 Admin Panel	Set as default role for new users	en?:new,en?:users`
+- `K4en` | `src/views/superadmin/CustomersModule.tsx:290	14 Admin Panel	Operate tenants through one control plane for lifecycle, users, billing, quotas, and risk	en:and`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:442	14 Admin Panel	What changed, who it is for, what to do now.	en:what,en:now`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:648	14 Admin Panel	Try it now	en:now`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:347	14 Admin Panel	Manage global and organization updates, set governance, and watch adoption.	en:and`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:369	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:392	14 Admin Panel	New update	en?:new,en?:update`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:406	14 Admin Panel	Build the message, target the right audience, then publish from here.	en:the,en:from,en:here`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:418	14 Admin Panel	Published updates are read-only. Archive and republish if you need a revised message.	en:and,en:you`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:475	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:618	14 Admin Panel	Effective from	en:from`
+- `K4en` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:693	14 Admin Panel	No updates match the selected filters.	en:the`
+- `K4en` | `src/views/superadmin/GlobalSecurityPostureView.tsx:89	14 Admin Panel	Enterprise evidence for privileged sessions, approval debt, incidents, MFA/SSO posture, and operator blast rad	en:and`
+- `K4en` | `src/views/superadmin/GlobalSecurityPostureView.tsx:112	14 Admin Panel	Active admin sessions that can reach P33.	en:that`
+- `K4en` | `src/views/superadmin/GlobalSecurityPostureView.tsx:155	14 Admin Panel	Overall control plane status from the system health monitor.	en:from,en:the`
+- `K4en` | `src/views/superadmin/GlobalSecurityPostureView.tsx:214	14 Admin Panel	Privileged activity is visible through admin session stats, audit counts, and incident views.	en:and`
+- `K4en` | `src/views/superadmin/GlobalSecurityPostureView.tsx:218	14 Admin Panel	MFA and SSO controls are separated from billing and support operations through capability-based auth.	en:and,en:from`
+- `K4en` | `src/views/superadmin/GlobalSecurityPostureView.tsx:222	14 Admin Panel	Security failures remain fail-closed: unresolved audit debt and critical incidents stay visible in the	en:and,en:the`
+- `K4en` | `src/views/superadmin/GovernanceModule.tsx:275	14 Admin Panel	Unified audit, approval, export, retention, and legal evidence plane	en:and`
+- `K4en` | `src/views/superadmin/GovernanceModule.tsx:133	14 Admin Panel	Unresolved audit items across the operator plane.	en:the`
+- `K4en` | `src/views/superadmin/GovernanceModule.tsx:151	14 Admin Panel	Active privileged sessions with visible MFA/JIT posture.	en:with`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:382	14 Admin Panel	, pending:	en:pending`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:652	14 Admin Panel	This period	en:this`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:657	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:706	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:707	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:718	14 Admin Panel	Last 7 days	en?:last,en?:days`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:719	14 Admin Panel	Last 30 days	en?:last,en?:days`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:720	14 Admin Panel	Last 90 days	en?:last,en?:days`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:721	14 Admin Panel	Last year	en?:last,en?:year`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:1021	14 Admin Panel	Configure per-unit rates for overage billing, storage, tokens, and more.	en:and`
+- `K4en` | `src/views/superadmin/InvoiceCenterView.tsx:1218	14 Admin Panel	Manage invoices and billing	en:and`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:713	14 Admin Panel	Failed	en:failed`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:954	14 Admin Panel	Configure which models serve each performance tier	en:which`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:1070	14 Admin Panel	Incidents derived from periodic provider health checks	en:from`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:829	14 Admin Panel	Configure AI providers, routing, and monitor usage	en:and`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:1074	14 Admin Panel	Loading…	en:loading`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:1134	14 Admin Panel	No incident data available yet (health events start accumulating after the server runs for a while	en:the`
+- `K4en` | `src/views/superadmin/LLMManagementView.tsx:1353	14 Admin Panel	Leave empty to reuse the source provider key, or enter a new one.	en:the`
+- `K4en` | `src/views/superadmin/ModuleAccessControlView.tsx:219	14 Admin Panel	Grant access per user or whole organization for Wordy, Excele and Prezentacje.	en:and`
+- `K4en` | `src/views/superadmin/ModuleAccessControlView.tsx:235	14 Admin Panel	Create / Update Grant	en?:create,en?:update`
+- `K4en` | `src/views/superadmin/ModuleWaitlistView.tsx:235	14 Admin Panel	Search by name, email, org...	en?:search,en?:name`
+- `K4en` | `src/views/superadmin/OrganizationResourceManager.tsx:205	14 Admin Panel	Please select an organization to manage its resources	en:please`
+- `K4en` | `src/views/superadmin/OrganizationResourceManager.tsx:209	14 Admin Panel	Loading resource data...	en:loading`
+- `K4en` | `src/views/superadmin/OrganizationResourceManager.tsx:542	14 Admin Panel	New Value	en?:new,en?:value`
+- `K4en` | `src/views/superadmin/OrganizationsView.tsx:614	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/OrganizationsView.tsx:1044	14 Admin Panel	Manage organizations, subscriptions, and access requests	en:and`
+- `K4en` | `src/views/superadmin/OrganizationsView.tsx:1191	14 Admin Panel	Pending Organization Requests	en:pending`
+- `K4en` | `src/views/superadmin/OverviewModule.tsx:259	14 Admin Panel	System dashboard and real-time insights	en:and`
+- `K4en` | `src/views/superadmin/PlaybookTemplatesListView.tsx:539	14 Admin Panel	Brief description of this playbook template...	en:this`
+- `K4en` | `src/views/superadmin/PresentationBenchmarkTrendView.tsx:360	14 Admin Panel	No history yet — only the Gamma reference line is rendered.	en:the`
+- `K4en` | `src/views/superadmin/PresentationBenchmarkTrendView.tsx:566	14 Admin Panel	Dimension missing from server response.	en:from`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:429	14 Admin Panel	Verify your HMAC verifier without affecting subscriptions or audit trail	en:your`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:452	14 Admin Panel	Some inputs were degraded	en:were`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:509	14 Admin Panel	Loading subscriptions…	en:loading`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:727	14 Admin Panel	This is the only time you will see this secret. Store it in your subscriber app now. The reveal panel auto	en:this,en:the,en:you`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:773	14 Admin Panel	Rotation immediately invalidates the previous secret. Outbound traffic uses the new secret on the next dispa	en:the`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:793	14 Admin Panel	I understand the previous secret will be invalidated.	en:the,en:will`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:844	14 Admin Panel	Fires a synthetic transition payload signed with the current subscription secret. Test deliveries are NOT re	en:with,en:the`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:1151	14 Admin Panel	Generate a signing secret next? Without one, outbound webhooks for this subscription will be unsigne	en:this,en:will`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:1178	14 Admin Panel	Skip for now	en:now`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:1185	14 Admin Panel	This is the only time you will see this secret. Store it in your subscriber app now.	en:this,en:the,en:you`
+- `K4en` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:1215	14 Admin Panel	Back	en:back`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1128	14 Admin Panel	Clear active saved search	en?:saved,en?:search`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1422	14 Admin Panel	Import presets from JSON	en:from`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1423	14 Admin Panel	Import presets from a JSON bundle	en:from`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1447	14 Admin Panel	Could not import bundle	en:could`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1469	14 Admin Panel	Will create	en:will`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1665	14 Admin Panel	Saves the current title query and active filter selections.	en:the,en:and`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:1985	14 Admin Panel	Loading watchlist…	en:loading`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:2072	14 Admin Panel	Some decks could not be evaluated	en:could`
+- `K4en` | `src/views/superadmin/PresentationGovernanceWatchlistView.tsx:2247	14 Admin Panel	Read-only view. Aggregated from per-deck governance cards. Raw deck content and individual quality gates are not	en:from,en:and,en:here`
+- `K4en` | `src/views/superadmin/PresentationOperationsHealthView.tsx:380	14 Admin Panel	Loading operations health…	en:loading`
+- `K4en` | `src/views/superadmin/PresentationOperationsHealthView.tsx:422	14 Admin Panel	Read-only view. SLO classification is computed server-side and not recalculated in this UI. Refresh by pressing	en:and,en:this`
+- `K4en` | `src/views/superadmin/PresentationOperationsHealthView.tsx:442	14 Admin Panel	Some inputs were degraded	en:were`
+- `K4en` | `src/views/superadmin/PresentationTelemetryView.tsx:457	14 Admin Panel	Loading telemetry…	en:loading`
+- `K4en` | `src/views/superadmin/PresentationTelemetryView.tsx:496	14 Admin Panel	Counters below default to zero until the backend recovers. No data has been silently fabricated.	en:the,en:has,en:been`
+- `K4en` | `src/views/superadmin/PresentationTelemetryView.tsx:505	14 Admin Panel	No telemetry events in the selected window.	en:the`
+- `K4en` | `src/views/superadmin/PresentationTelemetryView.tsx:540	14 Admin Panel	No event types recorded in this window.	en:this`
+- `K4en` | `src/views/superadmin/PresentationTelemetryView.tsx:605	14 Admin Panel	Read-only view. No counters are written or modified from this screen — refresh by pressing	en:from,en:this`
+- `K4en` | `src/views/superadmin/PresentationTemplateGovernanceView.tsx:337	14 Admin Panel	Manage template lifecycle, approval flow, and version lineage.	en:and`
+- `K4en` | `src/views/superadmin/PresentationTemplateGovernanceView.tsx:400	14 Admin Panel	Loading templates…	en:loading`
+- `K4en` | `src/views/superadmin/PresentationTemplateGovernanceView.tsx:406	14 Admin Panel	No templates in this lifecycle state for your organization.	en:this,en:your`
+- `K4en` | `src/views/superadmin/PresentationTemplateGovernanceView.tsx:471	14 Admin Panel	Loading governance details…	en:loading`
+- `K4en` | `src/views/superadmin/PresentationTemplateGovernanceView.tsx:653	14 Admin Panel	No governance events recorded for this template yet.	en:this`
+- `K4en` | `src/views/superadmin/RevenueModule.tsx:130	14 Admin Panel	Billing, invoices, pricing, subscriptions, recognition, forecasts and payment management	en:and`
+- `K4en` | `src/views/superadmin/SCIMProvisioningView.tsx:571	14 Admin Panel	Tokens for authenticating SCIM requests from your IdP	en:from,en:your`
+- `K4en` | `src/views/superadmin/SCIMProvisioningView.tsx:665	14 Admin Panel	Copy this token now. It won't be shown again.	en:this,en:now,en:again`
+- `K4en` | `src/views/superadmin/SCIMProvisioningView.tsx:966	14 Admin Panel	Logs will appear here when your IdP syncs users	en:will,en:here,en:when`
+- `K4en` | `src/views/superadmin/SCIMProvisioningView.tsx:1025	14 Admin Panel	Resolve conflicts from duplicate users or groups during SCIM sync	en:from`
+- `K4en` | `src/views/superadmin/SCIMProvisioningView.tsx:1212	14 Admin Panel	Failed to load SCIM data	en:failed`
+- `K4en` | `src/views/superadmin/SSOConfigurationView.tsx:681	14 Admin Panel	This panel writes to the SSO router used by \`/api/sso/oidc/authorize\` and \`/api/sso/oidc/callback\`. Veri	en:this,en:the,en:and`
+- `K4en` | `src/views/superadmin/SSOConfigurationView.tsx:715	14 Admin Panel	Copy the Client ID and Client Secret below	en:the,en:and`
+- `K4en` | `src/views/superadmin/SSOConfigurationView.tsx:778	14 Admin Panel	Only users from these domains can authenticate. Leave empty to allow all domains.	en:from,en:these`
+- `K4en` | `src/views/superadmin/SSOConfigurationView.tsx:822	14 Admin Panel	This panel writes to the SSO router used by \`/api/sso/saml/login\` and \`/api/sso/saml/callback\`. Validate	en:this,en:the,en:and`
+- `K4en` | `src/views/superadmin/SSOConfigurationView.tsx:1031	14 Admin Panel	Route users to the correct organization based on their email domain	en:the`
+- `K4en` | `src/views/superadmin/SecurityModule.tsx:231	14 Admin Panel	Enterprise posture, access control, incidents, and privileged session governance	en:and`
+- `K4en` | `src/views/superadmin/SecurityPoliciesView.tsx:342	14 Admin Panel	Control session behavior and limits	en:and`
+- `K4en` | `src/views/superadmin/SecurityPoliciesView.tsx:463	14 Admin Panel	IP Allowlist (if set, only these IPs can access)	en:these`
+- `K4en` | `src/views/superadmin/SecurityPoliciesView.tsx:504	14 Admin Panel	IP Blocklist (these IPs are always blocked)	en:these`
+- `K4en` | `src/views/superadmin/SecurityPoliciesView.tsx:567	14 Admin Panel	These settings apply to all organizations that don't have a custom policy. Organizations can override thes	en:these,en:that,en:have`
+- `K4en` | `src/views/superadmin/SecurityPoliciesView.tsx:788	14 Admin Panel	Per-organization data governance: retention period (days), legal hold flag, and data residency region. Leg	en:and`
+- `K4en` | `src/views/superadmin/SubscriptionPlansManager.tsx:336	14 Admin Panel	Failed to load subscription plans. Please try again.	en:failed,en:please,en:again`
+- `K4en` | `src/views/superadmin/SubscriptionPlansManager.tsx:360	14 Admin Panel	+ Create New Plan	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/SuperAdminAIAnalyticsView.tsx:119	14 Admin Panel	Monitor AI usage, costs, and system health across all organizations	en:and`
+- `K4en` | `src/views/superadmin/SuperAdminAIAnalyticsView.tsx:192	14 Admin Panel	Tokens This Month	en:this`
+- `K4en` | `src/views/superadmin/SuperAdminAccessRequestsView.tsx:207	14 Admin Panel	Review and approve requests to join organizations	en:and`
+- `K4en` | `src/views/superadmin/SuperAdminAccessRequestsView.tsx:382	14 Admin Panel	Leave empty when approving an organization-only access request.	en:when`
+- `K4en` | `src/views/superadmin/SuperAdminDashboard.tsx:245	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/SuperAdminDashboard.tsx:267	14 Admin Panel	Live Now	en:now`
+- `K4en` | `src/views/superadmin/SuperAdminFeedbackAnalyticsView.tsx:169	14 Admin Panel	Loading analytics…	en:loading`
+- `K4en` | `src/views/superadmin/SuperAdminFeedbackAnalyticsView.tsx:318	14 Admin Panel	for tickets that reached	en:that`
+- `K4en` | `src/views/superadmin/SuperAdminFeedbackAnalyticsView.tsx:319	14 Admin Panel	in the last 30 days.	en:the`
+- `K4en` | `src/views/superadmin/SuperAdminFeedbackView.tsx:1265	14 Admin Panel	What changed in the workflow?	en:what,en:the`
+- `K4en` | `src/views/superadmin/SuperAdminLegalView.tsx:469	14 Admin Panel	Effective From	en:from`
+- `K4en` | `src/views/superadmin/SuperAdminMetricsView.tsx:59	14 Admin Panel	Loading conversion intelligence...	en:loading`
+- `K4en` | `src/views/superadmin/SuperAdminMetricsView.tsx:115	14 Admin Panel	No critical warnings at this time.	en:this`
+- `K4en` | `src/views/superadmin/SuperAdminOrgDetailsModal.tsx:316	14 Admin Panel	Loading billing details...	en:loading`
+- `K4en` | `src/views/superadmin/SuperAdminOrgDetailsModal.tsx:544	14 Admin Panel	User management is available in the "Users" section of the sidebar.	en:the`
+- `K4en` | `src/views/superadmin/SuperAdminOrgDetailsModal.tsx:545	14 Admin Panel	Filter by this organization to manage its users.	en:this`
+- `K4en` | `src/views/superadmin/SuperAdminPlansView.tsx:132	14 Admin Panel	Manage pricing tiers and limits	en:and`
+- `K4en` | `src/views/superadmin/SuperAdminRevenueView.tsx:167	14 Admin Panel	Financial metrics and usage analytics	en:and`
+- `K4en` | `src/views/superadmin/SuperAdminRevenueView.tsx:218	14 Admin Panel	This Month	en:this`
+- `K4en` | `src/views/superadmin/SuperAdminRevenueView.tsx:291	14 Admin Panel	This month	en:this`
+- `K4en` | `src/views/superadmin/SuperAdminRevenueView.tsx:309	14 Admin Panel	With usage	en:with`
+- `K4en` | `src/views/superadmin/SuperAdminSignalsView.tsx:81	14 Admin Panel	Loading…	en:loading`
+- `K4en` | `src/views/superadmin/SuperAdminSignalsView.tsx:138	14 Admin Panel	System alerts, client tickets, and user feedback (unread)	en:and`
+- `K4en` | `src/views/superadmin/SystemModule.tsx:329	14 Admin Panel	Operate integrations, platform health, observability, and system configuration	en:and`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:1055	14 Admin Panel	This surface can inspect selected tables only. Inline edits and destructive actions are intentionally unavailable here.	en:this,en:and,en:here`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:1097	14 Admin Panel	Search in current table...	en?:search,en?:table`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:526	14 Admin Panel	From Email	en:from`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:781	14 Admin Panel	First Name	en?:first,en?:name`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:792	14 Admin Panel	Last Name	en?:last,en?:name`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:1061	14 Admin Panel	Direct database access is for debugging only. Changes here bypass all validation. Use with extreme caution	en:here,en:with`
+- `K4en` | `src/views/superadmin/SystemSettings.tsx:1191	14 Admin Panel	Loading settings...	en:loading`
+- `K4en` | `src/views/superadmin/TenantCommandCenterView.tsx:254	14 Admin Panel	Single operator landing for tenant lifecycle, commercial state, quotas, policy posture, and platform risk.	en:and`
+- `K4en` | `src/views/superadmin/TenantCommandCenterView.tsx:349	14 Admin Panel	Select a tenant to inspect commercial and quota posture.	en:and`
+- `K4en` | `src/views/superadmin/TenantCommandCenterView.tsx:415	14 Admin Panel	Command summary across lifecycle, billing, quotas, AI usage, and governance.	en:and`
+- `K4en` | `src/views/superadmin/TenantCommandCenterView.tsx:420	14 Admin Panel	Loading tenant posture...	en:loading`
+- `K4en` | `src/views/superadmin/TenantCommandCenterView.tsx:457	14 Admin Panel	Spent this period	en:this`
+- `K4en` | `src/views/superadmin/TenantCommandCenterView.tsx:470	14 Admin Panel	Quotas and budgets	en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx:189	14 Admin Panel	Back to conversations	en:back`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx:227	14 Admin Panel	No messages in this conversation.	en:this`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx:329	14 Admin Panel	Unknown	en:unknown`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx:348	14 Admin Panel	Privacy controls are available inside a conversation: redact transcript content or delete the conversation entir	en:the`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx:94	14 Admin Panel	Track benchmark runs, regression checks, and readiness gates before release.	en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx:120	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx:123	14 Admin Panel	Failed	en:failed`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx:151	14 Admin Panel	Passed and failed evaluations now require a non-empty dataset, non-empty results, and a score.	en:and,en:failed,en:now`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:687	14 Admin Panel	Change notes for this version	en:this`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:338	14 Admin Panel	Assign pills to the worker, edit pill content and sections, and monitor product coverage.	en:the,en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:379	14 Admin Panel	Shows whether the worker has at least one assigned pill for each available product family.	en:the,en:has`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:529	14 Admin Panel	Govern whole pills, selected sections, and fallback behavior per worker.	en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:600	14 Admin Panel	No knowledge assigned yet. Bootstrap the default pills or add a specific pill manually.	en:the`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:616	14 Admin Panel	Create or update the worker’s governed product pills, including section-level content.	en:the`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:626	14 Admin Panel	Cancel edit	en?:cancel,en?:edit`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:670	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:754	14 Admin Panel	Review which pills exist, which products they cover, and whether they are assigned.	en:which,en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx:837	14 Admin Panel	No knowledge pills yet. Create a pill or bootstrap the default product set.	en:the`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx:135	14 Admin Panel	Create governed release entries and activate a verified worker version.	en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx:189	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx:213	14 Admin Panel	\`ready\` releases require an active profile and a passed evaluation with dataset, results, and score.	en:and,en:with`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerAnalyticsDashboard.tsx:156	14 Admin Panel	Backend-backed summary for the current public landing Anna funnel.	en:the`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerAnalyticsDashboard.tsx:399	14 Admin Panel	Conversations per Day (last 30 days)	en?:day,en?:last`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerDetail.tsx:87	14 Admin Panel	Back to list	en:back`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerPreviewPanel.tsx:82	14 Admin Panel	Generate a real operator preview using the active worker profile, governed knowledge, and optional governe	en:the,en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerPreviewPanel.tsx:218	14 Admin Panel	No web citations were used in this preview.	en:were,en:this`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerProfileEditor.tsx:283	14 Admin Panel	Describe the communication tone...	en:the`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerProfileEditor.tsx:409	14 Admin Panel	Document the intent of this worker profile version, key risk areas, or rollout notes...	en:the,en:this`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerProfileEditor.tsx:194	14 Admin Panel	Draft	en:draft`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkerProfileEditor.tsx:424	14 Admin Panel	Saving creates a new profile version and activates it.	en:and`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkersList.tsx:111	14 Admin Panel	Create your first virtual worker to get started.	en:your`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/WorkersList.tsx:210	14 Admin Panel	Create New Virtual Worker	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/VirtualWorkersModule/index.tsx:66	14 Admin Panel	Manage AI virtual employees — knowledge, instructions, conversations, and performance	en:and`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:645	14 Admin Panel	Your transformation journey starts here	en:your,en:here`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:656	14 Admin Panel	Welcome back! Sign in to continue.	en:back`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:531	14 Admin Panel	This is how your branded interface will look.	en:this,en:your,en:will`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:606	14 Admin Panel	Heading 1 - The quick brown fox	en:the`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:612	14 Admin Panel	Heading 2 - The quick brown fox	en:the`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:618	14 Admin Panel	Heading 3 - The quick brown fox	en:the`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:621	14 Admin Panel	Body text - The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.	en:the,en:with`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:625	14 Admin Panel	Small text - The quick brown fox jumps over the lazy dog.	en:the`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:779	14 Admin Panel	Pending Verification	en:pending`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:786	14 Admin Panel	Add the following DNS records:	en:the`
+- `K4en` | `src/views/superadmin/WhitelabelStudioView.tsx:932	14 Admin Panel	Customize the look and feel	en:the,en:and`
+- `K4en` | `src/views/superadmin/analytics/AnalyticsModuleView.tsx:62	14 Admin Panel	Dashboards, reports, business metrics, and predictive analytics	en:and`
+- `K4en` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:709	14 Admin Panel	SUM(revenue) / COUNT(users)	en?:revenue,en?:users`
+- `K4en` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:279	14 Admin Panel	Track and monitor key performance indicators	en:and`
+- `K4en` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:405	14 Admin Panel	Create your first KPI to start tracking business performance	en:your`
+- `K4en` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:594	14 Admin Panel	No history data yet. Calculate the metric to start tracking.	en:the`
+- `K4en` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:619	14 Admin Panel	Create New Metric	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/analytics/DashboardBuilderView.tsx:624	14 Admin Panel	Describe your dashboard...	en:your`
+- `K4en` | `src/views/superadmin/analytics/DashboardBuilderView.tsx:378	14 Admin Panel	Create and customize your analytics dashboards	en:and,en:your`
+- `K4en` | `src/views/superadmin/analytics/DashboardBuilderView.tsx:534	14 Admin Panel	Add your first widget	en:your`
+- `K4en` | `src/views/superadmin/analytics/DashboardBuilderView.tsx:585	14 Admin Panel	Choose a dashboard from the list or create a new one to get started	en:from,en:the`
+- `K4en` | `src/views/superadmin/analytics/DashboardBuilderView.tsx:598	14 Admin Panel	Create New Dashboard	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/analytics/DemoTrialAnalyticsView.tsx:192	14 Admin Panel	No events in the last 30 days	en:the`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:261	14 Admin Panel	ML-powered predictions and forecasting	en:and`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:281	14 Admin Panel	Train models using live platform data (subscriptions, users, revenue). Predictions are based on basic statis	en?:users,en?:revenue`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:332	14 Admin Panel	Create your first model	en:your`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:474	14 Admin Panel	Last Updated	en?:last,en?:updated`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:539	14 Admin Panel	No predictions yet. Train the model and make predictions.	en:the,en:and`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:597	14 Admin Panel	Choose a model from the list or create a new one	en:from,en:the`
+- `K4en` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:610	14 Admin Panel	Create New Model	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:779	14 Admin Panel	Monthly Users Report	en?:users,en?:report`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:790	14 Admin Panel	Describe your report...	en:your`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:404	14 Admin Panel	Create, schedule, and export reports	en:and`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:433	14 Admin Panel	New Report	en?:new,en?:report`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:750	14 Admin Panel	Select a Report	en?:select,en?:report`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:753	14 Admin Panel	Choose a report from the list or create a new one	en:from,en:the`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:766	14 Admin Panel	Create New Report	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:771	14 Admin Panel	Report Name	en?:report,en?:name`
+- `K4en` | `src/views/superadmin/analytics/SavedReportsView.tsx:827	14 Admin Panel	Create Report	en?:create,en?:report`
+- `K4en` | `src/views/superadmin/components/ABTestingDashboard.tsx:329	14 Admin Panel	Manage AI experiments and optimize performance	en:and`
+- `K4en` | `src/views/superadmin/components/AI/UsageAnalyticsDashboard.tsx:457	14 Admin Panel	Comprehensive insights into AI usage patterns and costs	en:into,en:and`
+- `K4en` | `src/views/superadmin/components/AI/UsageAnalyticsDashboard.tsx:610	14 Admin Panel	Loading...	en:loading`
+- `K4en` | `src/views/superadmin/components/AI/UsageAnalyticsDashboard.tsx:614	14 Admin Panel	No usage trend data for this period	en:this`
+- `K4en` | `src/views/superadmin/components/AI/UsageAnalyticsDashboard.tsx:662	14 Admin Panel	No model usage recorded in this period	en:this`
+- `K4en` | `src/views/superadmin/components/AI/UsageAnalyticsDashboard.tsx:708	14 Admin Panel	No capability usage recorded in this period	en:this`
+- `K4en` | `src/views/superadmin/components/AIPerformanceDashboard.tsx:392	14 Admin Panel	Real-time performance metrics and analytics	en:and`
+- `K4en` | `src/views/superadmin/components/AIPerformanceDashboard.tsx:522	14 Admin Panel	Loading chart...	en:loading`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:822	14 Admin Panel	Delete (Pending Implementation)	en:pending`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:1302	14 Admin Panel	How was this idea applied?	en:was,en:this`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:1539	14 Admin Panel	Explain how the AI should behave or what it should prioritize...	en:the,en:should,en:what`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:687	14 Admin Panel	Drag & drop PDF, TXT, MD here or click to select	en:here`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:737	14 Admin Panel	Files are automatically chunked, embedded, and added to the "Collective Intelligence" vector store.	en:and,en:the`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:1053	14 Admin Panel	No active strategic directions. Add one to guide the AI.	en:the`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:1070	14 Admin Panel	The AI will analyze recent user interactions and feedback log to identify patterns, feature requests	en:the,en:will,en:and`
+- `K4en` | `src/views/superadmin/components/AdminKnowledgeView.tsx:1338	14 Admin Panel	Edit Document	en?:edit,en?:document`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:750	14 Admin Panel	Write your message...	en:your`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:407	14 Admin Panel	Import users from a CSV file. Download our template for the correct format.	en:from,en:the`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:443	14 Admin Panel	Match your CSV columns to the user fields. Required fields are marked with *.	en:your,en:the,en:with`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:479	14 Admin Panel	Back	en:back`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:538	14 Admin Panel	Back	en:back`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:557	14 Admin Panel	Please wait while we import your users. This may take a moment.	en:please,en:your,en:this`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:586	14 Admin Panel	Import Completed with Errors	en:with`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:632	14 Admin Panel	Select users and assign roles in bulk	en:and`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:812	14 Admin Panel	Back	en:back`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:867	14 Admin Panel	Download user activity report	en?:user,en?:report`
+- `K4en` | `src/views/superadmin/components/BulkOperationsView.tsx:932	14 Admin Panel	Manage users and data in bulk	en:and`
+- `K4en` | `src/views/superadmin/components/PromptAssistantPanel.tsx:433	14 Admin Panel	Ask about prompt engineering...	en:about`
+- `K4en` | `src/views/superadmin/components/PromptBlockBuilder.tsx:370	14 Admin Panel	Click blocks in the library to add them	en:the,en:them`
+- `K4en` | `src/views/superadmin/components/PromptManagementUI.tsx:787	14 Admin Panel	Brief description of this prompt...	en:this`
+- `K4en` | `src/views/superadmin/components/PromptManagementUI.tsx:803	14 Admin Panel	Enter the system prompt...	en:the`
+- `K4en` | `src/views/superadmin/components/PromptManagementUI.tsx:575	14 Admin Panel	Select a prompt to view or edit	en?:select,en?:edit`
+- `K4en` | `src/views/superadmin/components/PromptManagementUI.tsx:580	14 Admin Panel	Create New Prompt	en?:create,en?:new`
+- `K4en` | `src/views/superadmin/components/PromptTestBench.tsx:400	14 Admin Panel	Run tests to validate your prompt across languages	en:your`
+- `K4en` | `src/views/superadmin/components/SLADashboard.tsx:515	14 Admin Panel	Failed	en:failed`
+- `K4en` | `src/views/superadmin/components/SLADashboard.tsx:695	14 Admin Panel	Failed requests percentage	en:failed`
+- `K4en` | `src/views/superadmin/components/SLADashboard.tsx:358	14 Admin Panel	Service Level Agreement monitoring and compliance	en:and`
+- `K4en` | `src/views/superadmin/components/SLADashboard.tsx:545	14 Admin Panel	Loading chart...	en:loading`
+- `K4en` | `src/views/superadmin/components/SLADashboard.tsx:599	14 Admin Panel	No SLA breaches recorded in this period	en:this`
+- `K4en` | `src/views/superadmin/components/V8AdminDiagnosticsPanel.tsx:85	14 Admin Panel	Read-only governed diagnostics for health, metrics, and shadow readiness.	en:and`
+- `K4en` | `src/views/superadmin/components/V8AdminDiagnosticsPanel.tsx:102	14 Admin Panel	Loading V8 diagnostics...	en:loading`
+- `K4en` | `src/views/superadmin/components/V8AdminDiagnosticsPanel.tsx:156	14 Admin Panel	Integrity and domain readiness	en:and`
+- `K4en` | `src/views/superadmin/customers/ContractManagementView.tsx:415	14 Admin Panel	Manage customer contracts and renewals	en:and`
+- `K4en` | `src/views/superadmin/customers/ContractManagementView.tsx:775	14 Admin Panel	Choose a contract from the list to view details	en:from,en:the`
+- `K4en` | `src/views/superadmin/customers/CustomerAnalyticsView.tsx:168	14 Admin Panel	Overview of customer health and engagement	en:and`
+- `K4en` | `src/views/superadmin/customers/CustomerAutomationView.tsx:529	14 Admin Panel	What does this rule do?	en:what,en:does,en:this`
+- `K4en` | `src/views/superadmin/customers/CustomerAutomationView.tsx:409	14 Admin Panel	Create your first rule	en:your`
+- `K4en` | `src/views/superadmin/customers/CustomerAutomationView.tsx:499	14 Admin Panel	Define a trigger and an action. Config fields accept JSON objects.	en:and`
+- `K4en` | `src/views/superadmin/customers/CustomerAutomationView.tsx:690	14 Admin Panel	Loading…	en:loading`
+- `K4en` | `src/views/superadmin/customers/CustomerCommunicationView.tsx:515	14 Admin Panel	Write your message...	en:your`
+- `K4en` | `src/views/superadmin/customers/CustomerCommunicationView.tsx:254	14 Admin Panel	Send announcements and messages to customers	en:and`
+- `K4en` | `src/views/superadmin/customers/CustomerCommunicationView.tsx:393	14 Admin Panel	Send your first message	en:your`
+- `K4en` | `src/views/superadmin/customers/CustomerLifecycleView.tsx:823	14 Admin Panel	Optional notes about this transition	en:about,en:this`
+- `K4en` | `src/views/superadmin/customers/CustomerLifecycleView.tsx:377	14 Admin Panel	Track and manage customer journey stages	en:and`
+- `K4en` | `src/views/superadmin/customers/CustomerLifecycleView.tsx:496	14 Admin Panel	Create your first stage	en:your`
+- `K4en` | `src/views/superadmin/customers/CustomerLifecycleView.tsx:779	14 Admin Panel	From Stage (optional)	en:from`
+- `K4en` | `src/views/superadmin/iam/AdminAuditLogsView.tsx:703	14 Admin Panel	From Date	en:from`
+- `K4en` | `src/views/superadmin/iam/ApprovalWorkflowsView.tsx:393	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/iam/ApprovalWorkflowsView.tsx:427	14 Admin Panel	Pending Requests	en:pending`
+- `K4en` | `src/views/superadmin/iam/ApprovalWorkflowsView.tsx:687	14 Admin Panel	This will delete	en:this,en:will`
+- `K4en` | `src/views/superadmin/iam/ApprovalWorkflowsView.tsx:688	14 Admin Panel	. The workflow list must confirm the removal before the action is treated as successful.	en:the`
+- `K4en` | `src/views/superadmin/iam/AuditEventsViewer.tsx:228	14 Admin Panel	Unified V4 audit trail — all resource changes across the platform	en:the`
+- `K4en` | `src/views/superadmin/iam/DLPView.tsx:413	14 Admin Panel	Unknown	en:unknown`
+- `K4en` | `src/views/superadmin/iam/PermissionsMatrixView.tsx:724	14 Admin Panel	Copy all permissions from one role to another. This will replace the target role's permissions.	en:from,en:this,en:will`
+- `K4en` | `src/views/superadmin/iam/SecurityIncidentsView.tsx:802	14 Admin Panel	Describe the security incident...	en:the`
+- `K4en` | `src/views/superadmin/iam/ThreatIntelligenceView.tsx:875	14 Admin Panel	Describe the threat...	en:the`
+- `K4en` | `src/views/superadmin/iam/ThreatIntelligenceView.tsx:402	14 Admin Panel	Unknown	en:unknown`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:357	14 Admin Panel	Commission, discount, accrual and payout authoring is unavailable under AMD-PRT-ECONOMICS-002. Historical 	en:and`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:565	14 Admin Panel	Save Discount Settings	en?:save,en?:settings`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:581	14 Admin Panel	Lightweight qualification leads submitted from the public recruitment page	en:from,en:the`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:667	14 Admin Panel	Review advanced partner certifications that require operator approval	en:that`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:733	14 Admin Panel	Adoption, blockers, and knowledge usage across the partner rollout	en:and,en:the`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:790	14 Admin Panel	Configure payout thresholds, schedules, and payment methods	en:and`
+- `K4en` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:916	14 Admin Panel	Save Payout Settings	en?:save,en?:settings`
+- `K4en` | `src/views/superadmin/revenue/PaymentMethodsView.tsx:177	14 Admin Panel	Manage payment methods and handle payment failures	en:and`
+- `K4en` | `src/views/superadmin/revenue/PaymentMethodsView.tsx:215	14 Admin Panel	Pending Failures	en:pending`
+- `K4en` | `src/views/superadmin/revenue/PricingPlansAdvancedView.tsx:185	14 Admin Panel	Manage pricing tiers and feature allocations	en:and`
+- `K4en` | `src/views/superadmin/revenue/PricingPlansAdvancedView.tsx:316	14 Admin Panel	Create your first pricing plan to get started	en:your`
+- `K4en` | `src/views/superadmin/revenue/RevenueForecastView.tsx:171	14 Admin Panel	Generate and analyze revenue predictions using multiple methods	en:and`
+- `K4en` | `src/views/superadmin/revenue/RevenueForecastView.tsx:359	14 Admin Panel	No forecasts generated yet. Click "Generate Forecast" to create your first prediction.	en:your`
+- `K4en` | `src/views/superadmin/revenue/RevenueModuleView.tsx:61	14 Admin Panel	Comprehensive revenue management including pricing, subscriptions, recognition, forecasting, and payments	en:and`
+- `K4en` | `src/views/superadmin/revenue/RevenueRecognitionView.tsx:231	14 Admin Panel	Manage revenue recognition schedules and compliance	en:and`
+- `K4en` | `src/views/superadmin/revenue/RevenueRecognitionView.tsx:285	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/revenue/RevenueRecognitionView.tsx:472	14 Admin Panel	Create Revenue Recognition	en?:create,en?:revenue`
+- `K4en` | `src/views/superadmin/revenue/SubscriptionChangesView.tsx:148	14 Admin Panel	Manage subscription upgrades, downgrades, and cancellations	en:and`
+- `K4en` | `src/views/superadmin/revenue/SubscriptionChangesView.tsx:178	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/revenue/SubscriptionChangesView.tsx:230	14 Admin Panel	Pending	en:pending`
+- `K4en` | `src/views/superadmin/security/DeviceManagementView.tsx:167	14 Admin Panel	Unknown	en:unknown`
+- `K4en` | `src/views/superadmin/security/DeviceManagementView.tsx:241	14 Admin Panel	Manage and monitor user devices	en:and`
+- `K4en` | `src/views/superadmin/security/DeviceManagementView.tsx:250	14 Admin Panel	Select User	en?:select,en?:user`
+- `K4en` | `src/views/superadmin/security/MFAView.tsx:144	14 Admin Panel	Select User	en?:select,en?:user`
+- `K4en` | `src/views/superadmin/security/MFAView.tsx:156	14 Admin Panel	Select a user to inspect MFA methods	en?:select,en?:user`
+- `K4en` | `src/views/superadmin/security/MFAView.tsx:160	14 Admin Panel	Loading...	en:loading`
+- `K4en` | `src/views/superadmin/security/PasswordPolicyView.tsx:278	14 Admin Panel	Loading...	en:loading`
+- `K4en` | `src/views/superadmin/security/SecurityEventsView.tsx:224	14 Admin Panel	Monitor and manage security events	en:and`
+- `K4en` | `src/views/superadmin/security/SecurityEventsView.tsx:248	14 Admin Panel	Failed Login	en:failed`
+- `K4en` | `src/views/superadmin/security/SecurityModuleView.tsx:53	14 Admin Panel	Manage security settings, IP whitelisting, devices, MFA, and monitor security events	en:and`
+- `K4en` | `src/views/superadmin/support/CustomerHealthView.tsx:168	14 Admin Panel	Monitor customer health and engagement	en:and`
+- `K4en` | `src/views/superadmin/support/CustomerHealthView.tsx:189	14 Admin Panel	Loading...	en:loading`
+- `K4en` | `src/views/superadmin/support/CustomerSuccessNotesView.tsx:468	14 Admin Panel	Write the note...	en:the`
+- `K4en` | `src/views/superadmin/support/CustomerSuccessNotesView.tsx:344	14 Admin Panel	Track customer interactions and success metrics	en:and`
+- `K4en` | `src/views/superadmin/support/CustomerSuccessNotesView.tsx:386	14 Admin Panel	Loading...	en:loading`
+- `K4en` | `src/views/superadmin/support/SupportModuleView.tsx:66	14 Admin Panel	Manage support tickets, customer success notes, and health checks	en:and`
+- `K4en` | `src/views/superadmin/support/SupportTicketsView.tsx:467	14 Admin Panel	Describe the issue...	en:the`
+- `K4en` | `src/views/superadmin/support/SupportTicketsView.tsx:363	14 Admin Panel	Manage and track support tickets	en:and`
+- `K4en` | `src/views/superadmin/support/SupportTicketsView.tsx:575	14 Admin Panel	Loading replies...	en:loading`
+- `K7` | `src/components/SuperAdmin/ApiManagementPanel.tsx:104	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/ApiManagementPanel.tsx:109	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/BackupPanel.tsx:121	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:403	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/EmailConfigurationPanel.tsx:380	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/FeatureFlagsPanel.tsx:490	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/IntegrationsPanel.tsx:206	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/LegalPanel.tsx:57	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:343	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:122	14 Admin Panel	toLocaleDateString('en-US'	locale przybity na sztywno`
+- `K7` | `src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:106	14 Admin Panel	toLocaleTimeString()	toLocaleTimeString() bez locale`
+- `K7` | `src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:89	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:347	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:276	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateComments.tsx:218	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateReviews.tsx:462	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateReviews.tsx:492	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateReviews.tsx:500	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateVersionHistory.tsx:199	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/PlaybookTemplateVersionHistory.tsx:202	14 Admin Panel	toLocaleTimeString()	toLocaleTimeString() bez locale`
+- `K7` | `src/components/SuperAdmin/SecurityPanel.tsx:151	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/SubscriberTokenManagementPanel.tsx:79	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/SubscriberTokenManagementPanel.tsx:70	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/SubscriberTokenManagementPanel.tsx:86	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/SuperAdminAISettings.tsx:815	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/UsageStatsPanel.tsx:131	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/UsageStatsPanel.tsx:208	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/billing/BillingOverviewPanel.tsx:285	14 Admin Panel	toLocaleDateString('en-US'	locale przybity na sztywno`
+- `K7` | `src/components/SuperAdmin/billing/BillingOverviewPanel.tsx:77	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/components/SuperAdmin/billing/CreditNotesPanel.tsx:251	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/billing/CreditNotesPanel.tsx:107	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/components/SuperAdmin/billing/InvoicesPanel.tsx:288	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/billing/InvoicesPanel.tsx:316	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/billing/InvoicesPanel.tsx:133	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/components/SuperAdmin/billing/SubscriptionsPanel.tsx:313	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/billing/SubscriptionsPanel.tsx:318	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/billing/SubscriptionsPanel.tsx:154	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/components/SuperAdmin/data/BackupConfigPanel.tsx:155	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/data/BackupConfigPanel.tsx:362	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/data/BackupConfigPanel.tsx:435	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/data/DataExportPanel.tsx:282	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/data/DataExportPanel.tsx:271	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/integrations/WebhookDeliveriesModal.tsx:189	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/integrations/WebhooksPanel.tsx:376	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/security/IPAccessRulesPanel.tsx:219	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/security/IPAccessRulesPanel.tsx:224	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/security/LoginAttemptsPanel.tsx:159	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/security/SessionManagementPanel.tsx:336	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseAuditLog.tsx:665	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseAuditLog.tsx:926	14 Admin Panel	toLocaleDateString('en-US'	locale przybity na sztywno`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:168	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx:162	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx:170	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx:153	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx:1104	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx:143	14 Admin Panel	toLocaleTimeString()	toLocaleTimeString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx:149	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx:115	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:161	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx:156	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIBudgetsView.tsx:165	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIConfigurationView.tsx:880	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIConfigurationView.tsx:892	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIConfigurationView.tsx:921	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIIntelligenceView.tsx:648	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIIntelligenceView.tsx:789	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIObservabilityDashboard.tsx:327	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/AIObservabilityDashboard.tsx:208	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Analytics/LLMObservatoryTab.tsx:271	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Analytics/LLMObservatoryTab.tsx:291	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Analytics/PricingRegistryTab.tsx:96	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Configuration/AIGovernanceTab.tsx:439	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx:250	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Executive/AIUseCaseControlPlane.tsx:118	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx:398	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx:95	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Security/ComplianceTab.tsx:335	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/AIPlatformModule/Security/ComplianceTab.tsx:332	14 Admin Panel	toLocaleTimeString()	toLocaleTimeString() bez locale`
+- `K7` | `src/views/superadmin/BillingCenterView.tsx:186	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/ComplianceCenterView.tsx:245	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/ComplianceCenterView.tsx:251	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/FeatureUpdatesAdminView.tsx:758	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/GovernanceModule.tsx:212	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/ModuleAccessControlView.tsx:188	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/ModuleWaitlistView.tsx:106	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/ModuleWaitlistView.tsx:165	14 Admin Panel	toLocaleDateString('en-US'	locale przybity na sztywno`
+- `K7` | `src/views/superadmin/OrganizationResourceManager.tsx:350	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/OrganizationResourceManager.tsx:272	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/OrganizationResourceManager.tsx:275	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/OrganizationsView.tsx:245	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/OrganizationsView.tsx:251	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/PlatformOperationsView.tsx:328	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/PresentationBenchmarkTrendView.tsx:118	14 Admin Panel	toLocaleTimeString()	toLocaleTimeString() bez locale`
+- `K7` | `src/views/superadmin/PresentationBenchmarkTrendView.tsx:460	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:117	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx:108	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/PresentationTemplateGovernanceView.tsx:103	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SSOConfigurationView.tsx:449	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/SSOConfigurationView.tsx:523	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminAIAnalyticsView.tsx:395	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminAccessRequestsView.tsx:191	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminDashboard.tsx:93	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminDashboard.tsx:272	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminFeedbackAnalyticsView.tsx:240	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminMetricsView.tsx:240	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminOrgDetailsModal.tsx:184	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminOrgDetailsModal.tsx:203	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminSignalsView.tsx:24	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SuperAdminStorageDetailModal.tsx:154	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/SystemSettings.tsx:662	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/SystemSettings.tsx:929	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/TenantCommandCenterView.tsx:114	14 Admin Panel	new Intl.NumberFormat()	Intl bez locale`
+- `K7` | `src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx:74	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx:196	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx:197	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx:259	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx:264	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/VirtualWorkersModule/WorkerAnalyticsDashboard.tsx:487	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:602	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:263	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/BusinessMetricsView.tsx:264	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/DemoTrialAnalyticsView.tsx:203	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/PredictiveAnalyticsView.tsx:246	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/SavedReportsView.tsx:389	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/SavedReportsView.tsx:622	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/analytics/SavedReportsView.tsx:632	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/components/AICostDashboard.tsx:156	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/components/AICostDashboard.tsx:254	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/components/AdminKnowledgeView.tsx:572	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/components/AdminKnowledgeView.tsx:784	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/components/AdminKnowledgeView.tsx:909	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/components/PromptAssistantPanel.tsx:323	14 Admin Panel	toLocaleTimeString()	toLocaleTimeString() bez locale`
+- `K7` | `src/views/superadmin/components/PromptManagementUI.tsx:430	14 Admin Panel	toLocaleDateString('pl-PL'	locale przybity na sztywno`
+- `K7` | `src/views/superadmin/components/shared/MetricCard.tsx:68	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/customers/ContractManagementView.tsx:392	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/customers/ContractManagementView.tsx:383	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/views/superadmin/customers/CustomerAnalyticsView.tsx:229	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/customers/CustomerAnalyticsView.tsx:270	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/customers/CustomerAutomationView.tsx:45	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/customers/CustomerCommunicationView.tsx:46	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/customers/CustomerComplianceView.tsx:40	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/customers/CustomerLifecycleView.tsx:361	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/customers/CustomerSuccessPlaybooksView.tsx:479	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/iam/AdminAuditLogsView.tsx:83	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/iam/AdminSessionsView.tsx:310	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/iam/ApprovalWorkflowsView.tsx:374	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/iam/AuditEventsViewer.tsx:32	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/iam/DLPView.tsx:110	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/iam/SecurityIncidentsView.tsx:246	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/iam/ThreatIntelligenceView.tsx:90	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:442	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:616	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/partners/PartnerProgramConfig.tsx:698	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/revenue/PaymentMethodsView.tsx:312	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/revenue/PaymentMethodsView.tsx:375	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/revenue/PaymentMethodsView.tsx:377	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/revenue/PricingPlansAdvancedView.tsx:167	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/views/superadmin/revenue/RevenueRecognitionView.tsx:444	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/revenue/RevenueRecognitionView.tsx:208	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/views/superadmin/revenue/SubscriptionChangesView.tsx:287	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/revenue/SubscriptionChangesView.tsx:297	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/revenue/SubscriptionChangesView.tsx:130	14 Admin Panel	new Intl.NumberFormat('en-US'	Intl z locale na sztywno`
+- `K7` | `src/views/superadmin/security/DeviceManagementView.tsx:41	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/security/MFAView.tsx:30	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/security/SecurityEventsView.tsx:29	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
+- `K7` | `src/views/superadmin/support/CustomerSuccessNotesView.tsx:29	14 Admin Panel	toLocaleDateString()	toLocaleDateString() bez locale`
+- `K7` | `src/views/superadmin/support/SupportTicketsView.tsx:36	14 Admin Panel	toLocaleString()	toLocaleString() bez locale`
