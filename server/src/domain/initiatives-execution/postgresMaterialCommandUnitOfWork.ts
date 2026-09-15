@@ -1492,7 +1492,8 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
          applicability, completion, quality, freshness, review_state, content_json,
          evidence_refs_json, waiver_decision_id, estimate_text, estimate_basis,
          estimated_by, estimated_at, published_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,CURRENT_TIMESTAMP,$17)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,
+               CASE WHEN $14::text IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END,$17)`,
       [
         input.organizationId,
         input.initiativeId,
