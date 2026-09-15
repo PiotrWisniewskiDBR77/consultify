@@ -1,6 +1,6 @@
 # K7 package 1 — gate report
 
-Base: `f2628a0d36af85d97bcbe67b820d728c7c2f2f28`  
+Base: `f2628a0d36af85d97bcbe67b820d728c7c2f2f28`
 Branch: `codex/b-k7-iris-tsc-20260915`
 
 | Gate | Result | Evidence |
@@ -20,5 +20,13 @@ Branch: `codex/b-k7-iris-tsc-20260915`
 | New `as any` | 0 | zero-match diff scan |
 | Forbidden files/workflow | 0 changed | exact diff manifest |
 | Screenshots | not applicable: product/UI bytes are unchanged; screenshots cannot exercise type-only test fixture edits | exact diff manifest |
+
+## HOLD correction rerun
+
+The follow-up commit replaces the two weakened `Promise<unknown>` Interview mocks with
+the exact `V8InterviewApi.getMyAssignments` function type and canonical response fixtures.
+The full front TSC remains 153 errors in 37 files, and the 17-file runtime fingerprint
+remains 117 passed / 7 failed / two async errors, identical to exact base. See
+`MOCK_CONTRACT_FIX_REPORT.md` and the `*-mock-contract-fix.log` evidence files.
 
 The runtime comparison ran from a separate detached worktree at exact base, then that worktree was removed. No test assertion was deleted or weakened. The two red files and their counts are retained in both logs.

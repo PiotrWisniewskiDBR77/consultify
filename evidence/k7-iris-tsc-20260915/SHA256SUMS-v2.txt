@@ -1,0 +1,16 @@
+3ff9a064b5dc27f40141ab7b99871cd595af69975bd1795c996dfd6140d594b8  evidence/k7-iris-tsc-20260915/MANIFEST.txt
+b6244b595403a200247731dc195fd899efb5e67c78ad4b4e6154b395dec11842  evidence/k7-iris-tsc-20260915/artefakt.log
+3e725224e3679755627d371b52c38031972079f06e40ec8e53d3145b2333b4b3  evidence/k7-iris-tsc-20260915/front-build.log
+48c66d355eac8f2ad0a3e3b54d3b3bc173e740d2b541cb9c67f28b83b6f71d79  evidence/k7-iris-tsc-20260915/language.log
+2b7db5d04d04e1a9422657a8c5a05a9890dbbe28fff169d87791e93dda8dbe87  evidence/k7-iris-tsc-20260915/list-canon.log
+b2dc6c0f21c7a93e34c68cad12b7aa42ade7ca5fc33b1da0716e412b54642d0c  evidence/k7-iris-tsc-20260915/server-build-result.txt
+c6b590dfddf5cbae7500d5eb521c2e08177644dbc6fda3a69faacbbeb988896e  evidence/k7-iris-tsc-20260915/server-build.log
+1f904d2e391f889fa95836f315037f02bffada429d796a54e9e894c86d8d2656  evidence/k7-iris-tsc-20260915/tests-package1-exact-base-worktree.log
+3636ae9c0f36edc9c2a1109afc1e0a5984116fd0dca04b0cd4cc4f7b74711fb2  evidence/k7-iris-tsc-20260915/tests-package1-mock-contract-fix.log
+9046e36ce210a7c1f30dcfac3f58a049230be7fc9552a1f71cd2ac0ad84d82aa  evidence/k7-iris-tsc-20260915/tests-package1.log
+7575da357d11071ceaef9720350bdda5d0d67a63b6b6a3f0e072c25273c93ece  evidence/k7-iris-tsc-20260915/tests-red-exact-base.log
+0ca71a77e695617ea081828c9676a3ef85575e0090ebb921a97e90f1b08d134f  evidence/k7-iris-tsc-20260915/tsc-after-by-file.tsv
+62e1b29970678043d0aa031f78c4f3dbc81b1138cd1e49c6a0f4096daf65c790  evidence/k7-iris-tsc-20260915/tsc-after-mock-contract-fix.log
+62e1b29970678043d0aa031f78c4f3dbc81b1138cd1e49c6a0f4096daf65c790  evidence/k7-iris-tsc-20260915/tsc-after-package1.log
+70266a2184af1b7646e5ee3fe897e3054a4b755d8f4ac05a6cfe8a5264aaabab  evidence/k7-iris-tsc-20260915/tsc-before-by-file.tsv
+9f5dd845b8e8b506306b4b82004eb6fc65b45baf083984c2fb43cdb18260be01  evidence/k7-iris-tsc-20260915/tsc-before-incremental.log
