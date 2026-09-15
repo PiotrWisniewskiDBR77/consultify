@@ -53737,6 +53737,13 @@
     "workReportText": "Consultify work report: {{title}}",
     "workReportHtml": "Consultify work report: <strong>{{title}}</strong>"
   },
+  "initiativesPortfolio": {
+    "workingName": "Working portfolio — approved initiatives, as of {{asOf}}",
+    "coverageReason": "The working portfolio does not assess goal coverage.",
+    "overlapReason": "The working portfolio does not assess scope overlap.",
+    "roughDemandReason": "PMO enters role demand in the plan (P15 §4.7 D3').",
+    "membershipRationale": "The working portfolio membership follows the initiative selection in the plan generator."
+  },
   "executionReports": {
     "labels": {
       "status": "Status",

@@ -29,7 +29,7 @@ describe('report locale resources', () => {
   const pl = readLocale('pl');
 
   it('publishes every server report message key as a non-empty EN and PL string', () => {
-    expect(REPORT_MESSAGE_KEYS).toHaveLength(37);
+    expect(REPORT_MESSAGE_KEYS).toHaveLength(42);
 
     for (const key of REPORT_MESSAGE_KEYS) {
       const enValue = readKey(en, key);

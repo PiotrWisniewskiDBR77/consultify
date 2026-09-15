@@ -54107,6 +54107,13 @@
     "workReportText": "Raport z pracy Consultify: {{title}}",
     "workReportHtml": "Raport z pracy Consultify: <strong>{{title}}</strong>"
   },
+  "initiativesPortfolio": {
+    "workingName": "Portfel roboczy — zatwierdzone inicjatywy, stan z {{asOf}}",
+    "coverageReason": "Portfel roboczy nie ocenia pokrycia celów.",
+    "overlapReason": "Portfel roboczy nie ocenia nakładania się zakresów.",
+    "roughDemandReason": "Popyt na role wpisuje PMO w planie (P15 §4.7 D3').",
+    "membershipRationale": "Skład portfela roboczego wynika z wyboru inicjatyw w generatorze planu."
+  },
   "executionReports": {
     "labels": {
       "status": "Status",

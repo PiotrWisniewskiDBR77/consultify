@@ -78,6 +78,29 @@ const MESSAGES = {
     en: 'Consultify work report: <strong>{title}</strong>',
     pl: 'Raport z pracy Consultify: <strong>{title}</strong>',
   },
+  // DEC-461/F8c (2026-09-14): the auto-created working portfolio's display
+  // name (P15-K2/DEC-421). `{asOf}` is the ISO date the portfolio snapshot
+  // was taken; the FE appends `· v{scenarioVersion}` on top of this string.
+  'initiativesPortfolio.workingName': {
+    en: 'Working portfolio — approved initiatives, as of {asOf}',
+    pl: 'Portfel roboczy — zatwierdzone inicjatywy, stan z {asOf}',
+  },
+  'initiativesPortfolio.coverageReason': {
+    en: 'The working portfolio does not assess goal coverage.',
+    pl: 'Portfel roboczy nie ocenia pokrycia celów.',
+  },
+  'initiativesPortfolio.overlapReason': {
+    en: 'The working portfolio does not assess scope overlap.',
+    pl: 'Portfel roboczy nie ocenia nakładania się zakresów.',
+  },
+  'initiativesPortfolio.roughDemandReason': {
+    en: 'PMO enters role demand in the plan (P15 §4.7 D3\u0027).',
+    pl: 'Popyt na role wpisuje PMO w planie (P15 §4.7 D3\u0027).',
+  },
+  'initiativesPortfolio.membershipRationale': {
+    en: 'The working portfolio membership follows the initiative selection in the plan generator.',
+    pl: 'Skład portfela roboczego wynika z wyboru inicjatyw w generatorze planu.',
+  },
 } as const;
 
 export type ReportMessageKey = keyof typeof MESSAGES;

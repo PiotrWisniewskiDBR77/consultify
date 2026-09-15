@@ -4207,8 +4207,50 @@ export function createInitiativesExecutionRuntimeRouter(
    * stanu, bo portfel jest migawką „co było zatwierdzone, gdy PMO planowało".
    */
   const workingPortfolioId = (organizationId: string) => `portfolio-${organizationId}-roboczy`;
-  const workingPortfolioName = (asOf: Date) =>
-    `Portfel roboczy — zatwierdzone inicjatywy, stan z ${asOf.toISOString().slice(0, 10)}`;
+  /**
+   * DEC-461/F8c (2026-09-14): EN first, PL opt-in — mirrors the DEC-510
+   * resolver used elsewhere in this file (`resolveReportLocale`) and the
+   * `resolveWorkbookTemplateLocale` pattern from F7b (workbook.routes.ts):
+   * users.language → users.locale → organizations.default_language → 'en'.
+   * The name is computed at WRITE time (`ensureWorkingPortfolio`) and
+   * persisted into the `portfolio_scenario` aggregate, so it does not change
+   * language on later reads of an already-published portfolio.
+   */
+  const resolveWorkingPortfolioLocale = async (actor: RuntimeActor): Promise<ReportLocale> => {
+    let userLanguage: unknown;
+    let userLocale: unknown;
+    let orgDefaultLanguage: unknown;
+    try {
+      const userRow = (await dbGet(`SELECT language FROM users WHERE id = ?`, [actor.userId])) as
+        | { language?: string | null }
+        | undefined;
+      userLanguage = userRow?.language;
+    } catch {
+      // Fall through to the next candidate.
+    }
+    try {
+      const userRow = (await dbGet(`SELECT locale FROM users WHERE id = ?`, [actor.userId])) as
+        | { locale?: string | null }
+        | undefined;
+      userLocale = userRow?.locale;
+    } catch {
+      // Fall through to the next candidate.
+    }
+    try {
+      const orgRow = (await dbGet(
+        `SELECT default_language AS "defaultLanguage" FROM organizations WHERE id = ?`,
+        [actor.organizationId]
+      )) as { defaultLanguage?: string | null } | undefined;
+      orgDefaultLanguage = orgRow?.defaultLanguage;
+    } catch {
+      // Fall through to the English default.
+    }
+    return resolveReportLocale(userLanguage, userLocale, orgDefaultLanguage);
+  };
+  const workingPortfolioName = (asOf: Date, locale: ReportLocale) =>
+    reportMessage(locale, 'initiativesPortfolio.workingName', {
+      asOf: asOf.toISOString().slice(0, 10),
+    });
   const membershipFingerprint = (
     memberships: Array<{ initiativeId: string; initiativeVersion: number; disposition: string }>
   ) =>
@@ -4235,6 +4277,7 @@ export function createInitiativesExecutionRuntimeRouter(
     clientRequestId: string
   ): Promise<{ scenarioId: string; scenarioVersion: number }> => {
     const scenarioId = workingPortfolioId(actor.organizationId);
+    const locale = await resolveWorkingPortfolioLocale(actor);
     const aggregates = await deps.reader.listInitiativesByIds(
       actor.organizationId,
       windows.map((window) => window.initiativeId)
@@ -4253,20 +4296,20 @@ export function createInitiativesExecutionRuntimeRouter(
       coverage: {
         state: 'UNKNOWN' as const,
         value: null,
-        reason: 'Portfel roboczy nie ocenia pokrycia celów.',
+        reason: reportMessage(locale, 'initiativesPortfolio.coverageReason'),
       },
       overlap: {
         state: 'UNKNOWN' as const,
         value: null,
-        reason: 'Portfel roboczy nie ocenia nakładania się zakresów.',
+        reason: reportMessage(locale, 'initiativesPortfolio.overlapReason'),
       },
       roughDemand: {
         state: 'UNKNOWN' as const,
         value: null,
-        reason: 'Popyt na role wpisuje PMO w planie (P15 §4.7 D3\u0027).',
+        reason: reportMessage(locale, 'initiativesPortfolio.roughDemandReason'),
       },
       confidence: 'UNKNOWN' as const,
-      rationale: 'Skład portfela roboczego wynika z wyboru inicjatyw w generatorze planu.',
+      rationale: reportMessage(locale, 'initiativesPortfolio.membershipRationale'),
     }));
     const existing = await deps.reader.findPortfolioScenario(actor.organizationId, scenarioId);
     if (
@@ -4280,7 +4323,7 @@ export function createInitiativesExecutionRuntimeRouter(
     const asOf = new Date();
     const scenario: PortfolioScenario = {
       scenarioId,
-      name: workingPortfolioName(asOf),
+      name: workingPortfolioName(asOf, locale),
       scenarioVersion: 0,
       status: 'DRAFT',
       scope: {
