@@ -1,0 +1,92 @@
+{
+  "package": "M2 manual Ideas Notebook Documents",
+  "base": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "evidence_commit": "81c74c72a7c11fa41847625815936bc532bba024",
+  "product_commit": "ed6b29c471",
+  "branch": "codex/c-m2-manual-tools-20260915",
+  "verdict": "E1_COMPLETE_STOP_FOR_INDEPENDENT_REVIEW",
+  "validation": {
+    "targeted_vitest": "3/3 PASS",
+    "real_task_readback": {
+      "ideas": "3/3",
+      "notebook": "3/3",
+      "documents": "3/3",
+      "my_work_count": "23->26"
+    },
+    "frontend_tsc": "exit 2, shared environment fingerprint 194 error TS, 0 in M2 files",
+    "esbuild": "PASS per changed product file",
+    "git_diff_check": "PASS"
+  },
+  "known_follow_up": [
+    "Process Flow opens an already-open idea as mindmap",
+    "four conversion targets return generic Done without navigable receipt",
+    "repeat integrated EN+PL traversal in M6"
+  ],
+  "inventory": [
+    {
+      "path": "evidence/s1-14-przejscie/RAPORT.md",
+      "sha256": "43f8521c860e6f741d668ba53ec888ef98533daaa07d207dab805ebcc0ef57ff",
+      "bytes": 8138
+    },
+    {
+      "path": "evidence/s1-14-przejscie/northwind-s1-14-source-note.txt",
+      "sha256": "d4cc5b7c18a12a89fff98ab578fccdb00a38cbb920f0b889dfa5ae383833f16f",
+      "bytes": 147
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/documents-three-ready-no-task-action.png",
+      "sha256": "05dad5065f8e3f3499e6b11f20f8f869dc95d3e51205200212e737bbc393f56f",
+      "bytes": 64125
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/ideas-after-three-task-actions.png",
+      "sha256": "0769408f5ffc0e1b6e30a92b9e241040333ce7437fcbd4c85f2cfff9bd246962",
+      "bytes": 82898
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/ideas-initiative-action-no-visible-result.png",
+      "sha256": "1f7649993a3070352818bc12610d630ab6fbd3fdd9e48571f1af23f7fb7ed7b7",
+      "bytes": 79966
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/local-candidate-document-tasks-readback.png",
+      "sha256": "674e6108119dee989501dade6c502679760d3e72399fa56db1d8dcf5e24de1d2",
+      "bytes": 88929
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/local-candidate-documents-three-task-created.png",
+      "sha256": "e4f71f08ab464965e6426b8b4fd0fc394ef2043d610c16f253d8a2165f642992",
+      "bytes": 61006
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/notebook-three-task-readbacks.png",
+      "sha256": "9c330a6b3df0fde48a084b0f8bc2702ff1def08e5938dbd2f2f88910344be455",
+      "bytes": 56852
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/tasks-ideas-and-notebook-readback.png",
+      "sha256": "a83d11306864b4817f306db37a7508ffed644d95b8b00a9662a9a1824e9021a3",
+      "bytes": 88136
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "sha256": "a62d377aaf52c476c8f12533823460c560ef4f89ce59c4689b1f6654b3697aba",
+      "bytes": 2388951
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "sha256": "288849ebb8bde4c63977fce05a9505325af469f96ac60282712b1b3950002618",
+      "bytes": 2558024
+    },
+    {
+      "path": "src/components/documents/DocumentSidePanel.tsx",
+      "sha256": "c7f2b9edc00342ac9094dc9a513b62c2397b763788e81602597678a98659fa55",
+      "bytes": 31211
+    },
+    {
+      "path": "src/components/documents/__tests__/DocumentSidePanel.uploadBlad.test.tsx",
+      "sha256": "6a7c3b2bf96cf70197e776cdadd213d850129ffb6cec3b64260d9be75fd49c39",
+      "bytes": 4142
+    }
+  ]
+}
