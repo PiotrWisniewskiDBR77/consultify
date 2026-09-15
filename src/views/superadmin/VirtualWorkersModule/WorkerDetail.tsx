@@ -12,6 +12,7 @@ import { WorkerAnalyticsDashboard } from './WorkerAnalyticsDashboard';
 import { WorkerPreviewPanel } from './WorkerPreviewPanel';
 import { WorkerProfileEditor } from './WorkerProfileEditor';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface VirtualWorker {
   id: string;
   slug: string;
@@ -85,7 +86,7 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab,
           onClick={onBack}
           className="mt-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
         >
-          Back to list
+          {tlumaczPozaHookiem("superadmin.workerDetail.backToList", "Back to list")}
         </button>
       </div>
     );

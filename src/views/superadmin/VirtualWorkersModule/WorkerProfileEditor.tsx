@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface VirtualWorker {
   id: string;
   slug: string;
@@ -191,7 +192,7 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
               className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-sm"
             >
               <option value="active">Active</option>
-              <option value="draft">Draft</option>
+              <option value="draft">{tlumaczPozaHookiem("superadmin.workerProfile.draft", "Draft")}</option>
               <option value="disabled">Disabled</option>
             </select>
           </div>
@@ -280,7 +281,7 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
               value={tone}
               onChange={(e) => setTone(e.target.value)}
               rows={2}
-              placeholder="Describe the communication tone..."
+              placeholder={tlumaczPozaHookiem("superadmin.workerProfile.describeTheCommunicationTone", "Describe the communication tone...")}
               className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-sm resize-y"
             />
           </div>
@@ -406,7 +407,7 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
           value={releaseNotes}
           onChange={(e) => setReleaseNotes(e.target.value)}
           rows={4}
-          placeholder="Document the intent of this worker profile version, key risk areas, or rollout notes..."
+          placeholder={tlumaczPozaHookiem("superadmin.workerProfile.documentTheIntentOfThisWorkerProfile", "Document the intent of this worker profile version, key risk areas, or rollout notes...")}
           className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-sm resize-y"
         />
       </section>
@@ -422,7 +423,7 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Profile (new version)'}
         </button>
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          Saving creates a new profile version and activates it.
+          {tlumaczPozaHookiem("superadmin.workerProfile.savingCreatesANewProfileVersionAnd", "Saving creates a new profile version and activates it.")}
         </span>
       </div>
     </div>

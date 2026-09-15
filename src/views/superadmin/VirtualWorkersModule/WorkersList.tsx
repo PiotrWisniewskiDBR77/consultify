@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import TeresaMark from '../../../components/shared/TeresaMark';
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface VirtualWorker {
   id: string;
   slug: string;
@@ -109,7 +110,7 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
               No virtual workers yet
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
-              Create your first virtual worker to get started.
+              {tlumaczPozaHookiem("superadmin.workersList.createYourFirstVirtualWorkerToGet", "Create your first virtual worker to get started.")}
             </p>
           </div>
         )}
@@ -208,7 +209,7 @@ const CreateWorkerForm: React.FC<{
       className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4"
     >
       <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-        Create New Virtual Worker
+        {tlumaczPozaHookiem("superadmin.workersList.createNewVirtualWorker", "Create New Virtual Worker")}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

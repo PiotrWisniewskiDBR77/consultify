@@ -39,6 +39,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface BrandingConfig {
   id?: string;
   organizationId: string;
@@ -528,7 +529,7 @@ export const WhitelabelStudioView: React.FC = () => {
         }}
       >
         <h4 className="text-lg font-semibold mb-3">Preview</h4>
-        <p className="mb-4">This is how your branded interface will look.</p>
+        <p className="mb-4">{tlumaczPozaHookiem("superadmin.whitelabelStudio.thisIsHowYourBrandedInterfaceWill", "This is how your branded interface will look.")}</p>
         <div className="flex gap-3">
           <button
             style={{
@@ -604,26 +605,25 @@ export const WhitelabelStudioView: React.FC = () => {
             style={{ fontFamily: branding.headingFontFamily }}
             className="text-3xl font-bold text-slate-900 dark:text-white"
           >
-            Heading 1 - The quick brown fox
+            {tlumaczPozaHookiem("superadmin.whitelabelStudio.heading1TheQuickBrownFox", "Heading 1 - The quick brown fox")}
           </h1>
           <h2
             style={{ fontFamily: branding.headingFontFamily }}
             className="text-2xl font-semibold text-slate-800 dark:text-slate-200"
           >
-            Heading 2 - The quick brown fox
+            {tlumaczPozaHookiem("superadmin.whitelabelStudio.heading2TheQuickBrownFox", "Heading 2 - The quick brown fox")}
           </h2>
           <h3
             style={{ fontFamily: branding.headingFontFamily }}
             className="text-xl font-semibold text-slate-700 dark:text-slate-300"
           >
-            Heading 3 - The quick brown fox
+            {tlumaczPozaHookiem("superadmin.whitelabelStudio.heading3TheQuickBrownFox", "Heading 3 - The quick brown fox")}
           </h3>
           <p className="text-slate-600 dark:text-slate-400">
-            Body text - The quick brown fox jumps over the lazy dog. Pack my box with five dozen
-            liquor jugs.
+            {tlumaczPozaHookiem("superadmin.whitelabelStudio.bodyTextTheQuickBrownFoxJumps", "Body text - The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.")}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Small text - The quick brown fox jumps over the lazy dog.
+            {tlumaczPozaHookiem("superadmin.whitelabelStudio.smallTextTheQuickBrownFoxJumps", "Small text - The quick brown fox jumps over the lazy dog.")}
           </p>
         </div>
       </div>
@@ -642,7 +642,7 @@ export const WhitelabelStudioView: React.FC = () => {
               type="text"
               value={branding.loginTagline || ''}
               onChange={(e) => updateField('loginTagline', e.target.value)}
-              placeholder="Your transformation journey starts here"
+              placeholder={tlumaczPozaHookiem("superadmin.whitelabelStudio.yourTransformationJourneyStartsHere", "Your transformation journey starts here")}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
@@ -653,7 +653,7 @@ export const WhitelabelStudioView: React.FC = () => {
             <textarea
               value={branding.loginWelcomeMessage || ''}
               onChange={(e) => updateField('loginWelcomeMessage', e.target.value)}
-              placeholder="Welcome back! Sign in to continue."
+              placeholder={tlumaczPozaHookiem("superadmin.whitelabelStudio.welcomeBackSignInToContinue", "Welcome back! Sign in to continue.")}
               rows={3}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
             />
@@ -777,13 +777,13 @@ export const WhitelabelStudioView: React.FC = () => {
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600">
                     <AlertTriangle size={12} />
-                    Pending Verification
+                    {tlumaczPozaHookiem("superadmin.whitelabelStudio.pendingVerification", "Pending Verification")}
                   </span>
                 )}
               </div>
 
               <div className="space-y-2 text-sm">
-                <p className="text-slate-600 dark:text-slate-400">Add the following DNS records:</p>
+                <p className="text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.whitelabelStudio.addTheFollowingDNSRecords", "Add the following DNS records:")}</p>
                 <div className="bg-white dark:bg-navy-800 rounded p-3 font-mono text-xs">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-slate-500 dark:text-slate-400">CNAME Record:</span>
@@ -929,7 +929,7 @@ export const WhitelabelStudioView: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               {organizations.find((o) => o.id === selectedOrg)?.name} - Branding
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">Customize the look and feel</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">{tlumaczPozaHookiem("superadmin.whitelabelStudio.customizeTheLookAndFeel", "Customize the look and feel")}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
