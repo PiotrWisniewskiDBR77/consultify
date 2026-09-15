@@ -12,6 +12,8 @@ import toast from 'react-hot-toast';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { V8InterviewApi, V8InterviewAssignment } from '@/services/api/v8/interview';
+
 import enTranslation from '../../../../public/locales/en/translation.json';
 
 const resolveEnKey = (key: string): string | undefined => {
@@ -73,7 +75,7 @@ const {
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
   setInterviewBreadcrumbs: vi.fn(),
-  getMyAssignments: vi.fn(async (): Promise<unknown> => []),
+  getMyAssignments: vi.fn<typeof V8InterviewApi.getMyAssignments>(),
   getSession: vi.fn(async () => null),
   appStoreState: { currentProjectId: 'proj-1' as string | null },
 }));
@@ -182,7 +184,7 @@ beforeEach(() => {
   setCurrentProjectId.mockReset();
   appStoreState.currentProjectId = 'proj-1';
   getMyAssignments.mockReset();
-  getMyAssignments.mockResolvedValue([]);
+  getMyAssignments.mockResolvedValue({ assignments: [] });
   getSession.mockReset();
   getSession.mockResolvedValue(null);
   setInterviewBreadcrumbs.mockReset();
@@ -243,12 +245,12 @@ describe('InterviewHub smoke — tab rendering', () => {
   });
 
   it('karta-interview: falls back to the assignment\'s embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)', async () => {
-    // Reproduces the exact staging record measured live (ia_91d9fbca…,
+    // Reproduces the staging orphaned-linkage record measured live (ia_91d9fbca…,
     // template lib-tpl-digital-001 "Ocena Dojrzałości Cyfrowej"): the
     // assignment carries both `sessionId` and an embedded `session` summary,
     // but the dedicated session-fetch endpoints 404 for that id (orphaned/
     // stale session row on the backend — data this dyżur cannot touch).
-    const assignment = {
+    const assignment: V8InterviewAssignment = {
       id: 'ia_91d9fbca-5463-48a4-8760-202afece725d',
       organizationId: 'org-1',
       projectId: 'proj-1',
@@ -271,7 +273,7 @@ describe('InterviewHub smoke — tab rendering', () => {
       },
       session: {
         id: 'f7847468-f35c-4552-b2f3-36e60f003d7b',
-        status: null,
+        status: 'unknown', // canonical API response contract is string-valued
         answeredQuestions: 0,
         totalQuestions: 0,
         completenessPercent: 0,

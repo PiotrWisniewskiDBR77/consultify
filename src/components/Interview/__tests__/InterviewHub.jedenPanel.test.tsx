@@ -26,6 +26,8 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { V8InterviewApi, V8InterviewAssignment } from '@/services/api/v8/interview';
+
 import enTranslation from '../../../../public/locales/en/translation.json';
 
 const resolveEnKey = (key: string): string | undefined => {
@@ -95,7 +97,7 @@ const {
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
   setInterviewBreadcrumbs: vi.fn(),
-  getMyAssignments: vi.fn(async (): Promise<unknown> => ({ assignments: [] })),
+  getMyAssignments: vi.fn<typeof V8InterviewApi.getMyAssignments>(),
   getSession: vi.fn(async () => null),
   appStoreState: {
     currentProjectId: 'proj-1' as string | null,
@@ -197,7 +199,7 @@ const renderInbox = () =>
     </MemoryRouter>
   );
 
-const assignment = (id: string, name: string, dueAt: string) => ({
+const assignment = (id: string, name: string, dueAt: string): V8InterviewAssignment => ({
   id,
   organizationId: 'org-1',
   projectId: 'proj-1',
