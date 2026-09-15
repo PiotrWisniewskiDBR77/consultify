@@ -132,7 +132,9 @@ describe('OrganizationGoalsMetricsScreen', () => {
     renderScreen(makeContextSync({ isUnsynced: true }));
 
     expect(
-      screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)
+      // F7 (DEC-461): napis bufora jest teraz kluczem i18n (EN first) —
+      // atrapa `t()` z tests/setup.ts zwraca wartość domyślną, czyli angielską.
+      screen.getByText(/Changes are held locally \(working buffer\)/)
     ).toBeInTheDocument();
   });
 

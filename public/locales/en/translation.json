@@ -33769,7 +33769,8 @@
     },
     "contextStore": {
       "saved": "Saved",
-      "readbackFailed": "The save completed, but the read-back from the server does not match the saved data."
+      "readbackFailed": "The save completed, but the read-back from the server does not match the saved data.",
+      "localBufferNote": "Changes are held locally (working buffer) — click \"Save changes\" to persist them on the server."
     },
     "contextUploader": {
       "forTab": "For: {{tab}}",

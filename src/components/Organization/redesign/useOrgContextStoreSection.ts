@@ -27,8 +27,17 @@ import { useTranslation } from 'react-i18next';
 
 import type { SyncResult } from '../../../hooks/useOrgContextSync';
 
-export const ORG_CONTEXT_STORE_LOCAL_BUFFER_NOTE =
-  'Dane zapisywane są lokalnie (bufor roboczy) — kliknij „Zapisz zmiany", aby zapisać trwale na serwerze.';
+/**
+ * F7 (DEC-461): napis bufora był STAŁĄ POLSKĄ na pięciu ekranach Organizacji,
+ * niezależnie od języka użytkownika/organizacji. Teraz jest to KLUCZ i18n
+ * (EN first), a realny tekst rozstrzyga `t()` wewnątrz haka. Sama stała
+ * zostaje jako klucz, żeby testy/ekrany miały jedno źródło nazwy.
+ */
+export const ORG_CONTEXT_STORE_LOCAL_BUFFER_NOTE_KEY = 'organization.contextStore.localBufferNote';
+
+/** Angielski tekst domyślny (fallback `t()`), używany też przez testy. */
+export const ORG_CONTEXT_STORE_LOCAL_BUFFER_NOTE_EN =
+  'Changes are held locally (working buffer) — click "Save changes" to persist them on the server.';
 
 /** Podzbiór `SyncResult` faktycznie potrzebny ekranom — łatwiejszy do zamockowania w testach. */
 export type OrgContextSyncHandle = Pick<SyncResult, 'saveNow' | 'isSyncing' | 'isUnsynced'>;
@@ -61,7 +70,9 @@ export function useOrgContextStoreSection(
 
   return {
     saving: contextSync?.isSyncing ?? false,
-    completenessNote: contextSync?.isUnsynced ? ORG_CONTEXT_STORE_LOCAL_BUFFER_NOTE : undefined,
+    completenessNote: contextSync?.isUnsynced
+      ? t(ORG_CONTEXT_STORE_LOCAL_BUFFER_NOTE_KEY, ORG_CONTEXT_STORE_LOCAL_BUFFER_NOTE_EN)
+      : undefined,
     handleSave,
   };
 }

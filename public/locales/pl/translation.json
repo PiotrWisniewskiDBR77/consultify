@@ -33886,7 +33886,8 @@
     },
     "contextStore": {
       "saved": "Zapisano",
-      "readbackFailed": "Zapis wykonany, ale odczyt zwrotny z serwera nie zgadza się z zapisanymi danymi."
+      "readbackFailed": "Zapis wykonany, ale odczyt zwrotny z serwera nie zgadza się z zapisanymi danymi.",
+      "localBufferNote": "Dane zapisywane są lokalnie (bufor roboczy) — kliknij „Zapisz zmiany”, aby zapisać trwale na serwerze."
     },
     "contextUploader": {
       "forTab": "Dla: {{tab}}",
