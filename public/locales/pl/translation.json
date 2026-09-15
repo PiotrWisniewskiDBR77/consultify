@@ -6881,6 +6881,12 @@
       "initiatives": "Inicjatywy",
       "assigned": "Przydzielone",
       "pendingReview": "Do przeglądu",
+      "previewAiHints": {
+        "summarize": "Podsumuj",
+        "risks": "Ryzyka",
+        "extractRisks": "Wypisz ryzyka",
+        "nextSteps": "Następne kroki"
+      },
       "couldNotSendReminders": "Nie udało się wysłać przypomnień",
       "couldNotApprove": "Nie udało się zatwierdzić",
       "couldNotSendBack": "Nie udało się zwrócić",
@@ -8881,7 +8887,11 @@
       "copyStats": "Kopiuj metryki",
       "copyId": "Kopiuj ID",
       "generateInsights": "Generuj wnioski",
-      "aiAvailableAfterCompletion": "AI dostępne po zakończeniu sesji"
+      "aiAvailableAfterCompletion": "AI dostępne po zakończeniu sesji",
+      "propertiesLabel": "Przebieg",
+      "property": "Właściwość",
+      "value": "Wartość",
+      "moreActions": "Więcej akcji"
     },
     "assignmentPreview": {
       "progress": "Postęp",

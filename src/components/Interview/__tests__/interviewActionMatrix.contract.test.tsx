@@ -66,6 +66,47 @@ describe('Interview action matrix contract', () => {
     }
   });
 
+  it('keeps the session preview chrome and AI hints in both locale files', () => {
+    const pl = readJson('public/locales/pl/translation.json');
+    const en = readJson('public/locales/en/translation.json');
+    const keys = [
+      'interview.sessionPreview.propertiesLabel',
+      'interview.sessionPreview.property',
+      'interview.sessionPreview.value',
+      'interview.sessionPreview.moreActions',
+      'interview.hub.previewAiHints.summarize',
+      'interview.hub.previewAiHints.risks',
+      'interview.hub.previewAiHints.extractRisks',
+      'interview.hub.previewAiHints.nextSteps',
+    ];
+
+    for (const key of keys) {
+      const plValue = valueAt(pl, key);
+      const enValue = valueAt(en, key);
+      expect(typeof enValue, `EN ${key}`).toBe('string');
+      expect(typeof plValue, `PL ${key}`).toBe('string');
+      expect(String(enValue).trim(), `EN ${key}`).not.toBe('');
+      expect(String(plValue).trim(), `PL ${key}`).not.toBe('');
+      expect(plValue, `${key} needs a real Polish translation`).not.toBe(enValue);
+    }
+  });
+
+  it('uses the resolved list locale for Interview hub dates and translated preview labels', () => {
+    const hub = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Interview/InterviewHub.tsx'),
+      'utf8'
+    );
+    const preview = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Interview/InterviewSessionPreview.tsx'),
+      'utf8'
+    );
+
+    expect(hub).toContain('localeListy()');
+    expect(hub).not.toMatch(/toLocaleDateString\(undefined/);
+    expect(hub).not.toMatch(/new Intl\.RelativeTimeFormat\(isPolish/);
+    expect(preview).not.toMatch(/isPolish\s*\?\s*['\"](?:Przebieg|Właściwość|Wartość|Więcej akcji)/);
+  });
+
   it('is consumed by the row-menu host and every dedicated preview action component', () => {
     const files = [
       'src/components/Interview/InterviewHub.tsx',
