@@ -45,25 +45,25 @@ router.post('/', asyncHandler(async (req: AuthRequest, res: Response) => {
 }));
 
 router.get('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const card = await getActionCard(scope(req), req.params.id);
+  const card = await getActionCard(scope(req), String(req.params.id));
   if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
   res.json({ ok: true, card });
 }));
 
 router.patch('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const card = await updateActionCard(scope(req), req.params.id, req.body);
+  const card = await updateActionCard(scope(req), String(req.params.id), req.body);
   if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
   res.json({ ok: true, card });
 }));
 
 router.post('/:id/close', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const card = await closeActionCard(scope(req), req.params.id);
+  const card = await closeActionCard(scope(req), String(req.params.id));
   if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
   res.json({ ok: true, card });
 }));
 
 router.post('/:id/reopen', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const card = await reopenActionCard(scope(req), req.params.id);
+  const card = await reopenActionCard(scope(req), String(req.params.id));
   if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
   res.json({ ok: true, card });
 }));
@@ -87,7 +87,7 @@ router.post('/:id/reopen', asyncHandler(async (req: AuthRequest, res: Response) 
  */
 router.post('/:id/task', asyncHandler(async (req: AuthRequest, res: Response) => {
   const cardScope = scope(req);
-  const result = await createTaskFromActionCard(cardScope, req.params.id);
+  const result = await createTaskFromActionCard(cardScope, String(req.params.id));
   if (!result) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
   res.status(result.replayed ? 200 : 201).json({
     ok: true,
