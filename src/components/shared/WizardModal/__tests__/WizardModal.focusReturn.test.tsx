@@ -28,6 +28,7 @@ const base = {
   onClose: vi.fn(),
   title: { en: 'Creator', pl: 'Kreator' },
   steps,
+  activeStepIndex: 0,
   onStepChange: vi.fn(),
   onComplete: vi.fn(),
 };
