@@ -94,11 +94,14 @@ describe('AssessmentHub Method Core DRD cutover', () => {
   });
 
   it('shows a canonical Method Core DRD session and opens its canonical editor route', async () => {
-    listMethodSessionsMock.mockResolvedValue({ sessions: [canonicalSession], total: 1 });
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [{ ...canonicalSession, name: 'Northwind DRD 2026' }],
+      total: 1,
+    });
     apiMock.listAssessments.mockResolvedValue({ items: [] });
     renderHub();
 
-    const rowName = await screen.findByText('DRD · method-s');
+    const rowName = await screen.findByText('Northwind DRD 2026');
     expect(listMethodSessionsMock).toHaveBeenCalledWith({
       methodPackId: 'drd',
       limit: 100,
