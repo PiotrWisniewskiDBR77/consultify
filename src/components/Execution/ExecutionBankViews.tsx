@@ -553,11 +553,13 @@ const BankTable = ({
       },
       {
         id: 'varianceDays',
-        label: t('execution.bank.column.variance', 'Variance'),
+        label: t('execution.bank.column.variance', 'Δ days'),
         // `date` (110 px): treść to nie goła liczba, tylko „12 days · forecast"
         // — przy podłodze `number` (90 px) łamała się na trzy linie.
         dataType: 'date',
         align: 'right',
+        // Short, unit-bearing heading fits beside the structural column
+        // controls; the old "Variance" rendered as “VARIAN…”.
         width: '130px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;

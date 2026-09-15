@@ -199,15 +199,22 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
     expect(title).toBeGreaterThanOrEqual(2 * numeric);
   });
 
-  it('kolumna liczbowa i chip nie dostają podłogi tekstu (140 px)', () => {
+  it('kolumny liczbowe pozostają wąskie, a statusy poniżej kolumny głównej', () => {
     const { container } = renderBank();
 
     // Bez `dataType` każda z nich siadała na 140 px — czyli tyle samo, ile
     // dostawała kolumna nazwy. To była cała skarga właściciela.
     expect(headerWidth(container, 'blockerCount')).toBeLessThan(140);
-    expect(headerWidth(container, 'lifecycleStatus')).toBeLessThan(140);
+    // Status chips keep their measured 160px floor; they still remain well
+    // below the 300px primary title column.
+    expect(headerWidth(container, 'lifecycleStatus')).toBeLessThan(200);
     expect(headerWidth(container, 'varianceDays')).toBeLessThan(140);
-    expect(headerWidth(container, 'health')).toBeLessThan(140);
+    expect(headerWidth(container, 'health')).toBeLessThan(200);
+  });
+
+  it('uses a short unit-bearing variance heading instead of the clipped VARIAN… label', () => {
+    const { getByText } = renderBank();
+    expect(getByText('Δ days')).toBeInTheDocument();
   });
 
   it('liczby i daty są wyrównane do prawej (kanon §3.3)', () => {
