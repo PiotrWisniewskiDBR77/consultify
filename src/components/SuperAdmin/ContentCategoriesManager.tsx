@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentCategory } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ContentCategoriesManagerProps {
   contentType?: 'PLAYBOOK' | 'EMAIL' | 'ALL';
   onCategorySelect?: (category: ContentCategory) => void;
@@ -438,7 +439,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
           <FolderOpen className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-slate-400 dark:text-slate-500">No categories yet</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Create your first category to organize content
+            {tlumaczPozaHookiem("superadmin.contentCategoriesManager.createYourFirstCategoryToOrganizeContent", "Create your first category to organize content")}
           </p>
         </div>
       ) : (

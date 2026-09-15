@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ContentSearchProps {
   onSearch: (query: string, filters?: SearchFilters) => void;
   placeholder?: string;
@@ -396,7 +397,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="">All Statuses</option>
-                <option value="DRAFT">Draft</option>
+                <option value="DRAFT">{tlumaczPozaHookiem("superadmin.contentSearch.draft", "Draft")}</option>
                 <option value="PUBLISHED">Published</option>
                 <option value="DEPRECATED">Deprecated</option>
               </select>

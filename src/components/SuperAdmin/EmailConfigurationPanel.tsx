@@ -32,6 +32,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface EmailConfig {
   id?: string;
   organization_id: string;
@@ -264,7 +266,7 @@ export const EmailConfigurationPanel: React.FC = () => {
         <div>
           <span className="text-slate-300">Use TLS</span>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Encrypt connection with TLS/SSL
+            {tlumaczPozaHookiem("superadmin.emailConfiguration.encryptConnectionWithTLSSSL", "Encrypt connection with TLS/SSL")}
           </p>
         </div>
       </label>
@@ -377,7 +379,7 @@ export const EmailConfigurationPanel: React.FC = () => {
 
       {config?.last_verified_at && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
-          Last verified: {new Date(config.last_verified_at).toLocaleString()}
+          Last verified: {new Date(config.last_verified_at).toLocaleString(localeListy())}
         </p>
       )}
     </div>
@@ -445,7 +447,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-c-text">Email Provider</h3>
                     <p className="text-sm text-slate-400 dark:text-slate-500">
-                      Choose your email service
+                      {tlumaczPozaHookiem("superadmin.emailConfiguration.chooseYourEmailService", "Choose your email service")}
                     </p>
                   </div>
                 </div>
@@ -494,7 +496,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">
-                        From Email
+                        {tlumaczPozaHookiem("superadmin.emailConfiguration.fromEmail", "From Email")}
                       </label>
                       <input
                         type="email"
@@ -506,7 +508,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">
-                        From Name
+                        {tlumaczPozaHookiem("superadmin.emailConfiguration.fromName", "From Name")}
                       </label>
                       <input
                         type="text"
@@ -573,8 +575,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                 <Info size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-blue-300">
-                    <strong>Recommended:</strong> Set up SPF, DKIM, and DMARC records to improve
-                    email deliverability and prevent spoofing.
+                    <strong>{tlumaczPozaHookiem("superadmin.emailConfiguration.recommended", "Recommended:")}</strong> {tlumaczPozaHookiem("superadmin.emailConfiguration.setUpSPFDKIMAndDMARCRecords", "Set up SPF, DKIM, and DMARC records to improve email deliverability and prevent spoofing.")}
                   </p>
                 </div>
               </div>

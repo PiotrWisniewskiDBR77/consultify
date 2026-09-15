@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentTag } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ContentTagsManagerProps {
   contentType?: 'PLAYBOOK' | 'EMAIL' | 'ALL';
   onTagSelect?: (tag: ContentTag) => void;
@@ -274,7 +275,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
           <Tag className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-slate-400 dark:text-slate-500">No tags yet</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Create tags to organize your content
+            {tlumaczPozaHookiem("superadmin.contentTagsManager.createTagsToOrganizeYourContent", "Create tags to organize your content")}
           </p>
         </div>
       ) : (

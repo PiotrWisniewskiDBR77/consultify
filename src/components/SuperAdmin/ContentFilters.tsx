@@ -14,6 +14,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentCategory, ContentTag } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 export interface ContentFiltersState {
   contentType: 'PLAYBOOK' | 'EMAIL' | 'ALL';
   status: string[];
@@ -329,7 +330,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  From
+                  {tlumaczPozaHookiem("superadmin.contentFilters.from", "From")}
                 </label>
                 <input
                   type="date"
