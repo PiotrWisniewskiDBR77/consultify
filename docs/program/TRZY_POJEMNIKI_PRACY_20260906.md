@@ -1750,3 +1750,213 @@ Pilotaż: mianownik przeliczony **37 → 46** zgłoszeń (37 + 9 nowych P-P16…
 zmian tą nocą — **32/46**, **+1 zamknięte bez akcji** (P-P22/N7). Skrzynka: **Z-66 nowa** (dług
 i18n E2f: K8spl 91, K8sen 825, K9pPL 33, K9pBRAK 77, K10dROZ 2), **Z-67 nowa** (triaż Pawła,
 P-P16…P-P24, fala F1 blokująca N3/N8/N9), **Z-68 nowa** (podział E2b CTO/Codex).
+
+**EWIDENCJA (uzupełnienie 15.09, po Wpisach 70–74, DEC-513..517, falach F1–F7b/G1/E2b-Settings/
+E2b-Exec/E2b-Exec-bis/E2b-2, targi Northwind).** Linia: `e6a3fc173b` → `33d9d05d87` (F1) →
+`a523058b47` (E2b-Exec, merge) → `40413144f8` (F3) → `652e3c458c` (F4, merge) → `da8e1ece24`
+(E2b-Settings, merge) → `f246a2596e`/`f2628a0d36` (E2b-Exec-bis) → `8767bbdd58` (E2b-2 ACCEPT,
+merge) → `ca21c282e6` (F5, raport DRD) → `571b637462` (F6, paleta) → `391c343d98`→`4bc98a0eb1`→
+`6efc4a5bfa`→`cbe5bab5bb` (F7/1–4, ostatnie polskie stałe) → **`6c34292eb0`** (F7b, szablony
+arkuszy EN first). Staging: `34888b0445` → `bb6735d713` (flagi partii 1, DEC-516) →
+`de73155bc7` (Dockerfile VITE partia 2 + wdrożenie linii) → **`571b637462`** (F6, health
+zmierzone 15.09 03:29 UTC: `curl -s -A Mozilla https://staging.consultify.ai/api/health` →
+`gitSha=571b637462…`). **F7/F7b (`6c34292eb0`) NIE są jeszcze wdrożone na staging** — health
+wciąż pokazuje `571b637462`, weryfikacja na żywo, nie z kodu. Demo: `90833bc94a`, bez zmian
+(zamrożone DEC-503; health 15.09 03:29 UTC potwierdza ten sam SHA). Tagi cofnięcia:
+`rollback-pre-flagi1-20260915` → `34888b0445`, `rollback-pre-linia-20260915` → `bb6735d713`.
+Dowody: `cto-codex/{flagi-20260915,fala-f4-20260915,fala-f5-20260915,fala-f7-20260915,
+fala-e2b-settings-20260914,fala-e2b-exec-20260914,fala-e2b-exec-bis-20260915,wdrozenie-linii-
+20260915}/`.
+
+**Decyzje właściciela 15.09 (~02:00 UTC, KANAL Wpis 70, 13 odpowiedzi) → DEC-513..517:**
+1. Flagi partia 1 na stagingu = **DEC-516**: `VITE_INITIATIVES_FOUR_BUTTONS`,
+   `VITE_INITIATIVES_WORK_REPORT`+`ENABLE_INITIATIVES_WORK_REPORT`,
+   `ENABLE_INTERVIEW_ANSWER_APPROVAL` (+ polityka `organization_ai_policy.policy.interview.
+   answerApproval={enabled:true,mode:"manager"}` wstawiona INSERT dla DBR77 i Northwind, tabela
+   była pusta) — WYKONANE, dwa odstępstwa udokumentowane (`Dockerfile.api` nie miał ARG/ENV dla
+   obu `VITE_*`, naprawione `bb6735d713`; Parking wymagał DODATKOWEJ flagi serwerowej
+   `ENABLE_INITIATIVE_PORTFOLIO_ANALYSIS`, dołożonej poza pierwotnym zleceniem — patrz Z-79).
+   Weryfikacja live: `work-reports/preview` 400 zamiast 404, `answer-approvals` 404
+   `ASSIGNMENT_NOT_FOUND` zamiast 200 pustej listy, `portfolio-dispositions` 200. Dowód:
+   `cto-codex/flagi-20260915/README.md`.
+2. Z-62 sign-off = **DEC-514**: 60 definicji poziomów osi 5–6 (25 tytułów + 53 opisy z fali J3
+   D2) uznane za kanon metodyki; `compileDrdPack.ts` przestaje raportować „AWAITING THE
+   METHODOLOGY OWNER'S SIGN-OFF" dla tych tytułów (zadanie 1 z Wpisu 70, zlecone A/Codex).
+3. Z-63 = **DEC-513** GO: nazwa sesji DRD (`method_sessions.name`, migracja
+   `20262220_method_sessions_name.sql`, `PATCH /api/method/sessions/:id`, pole w kreatorze i
+   liście Processes/Library). Projekt STOP z 14.09 (`docs/program/
+   FALA2_E2B2_Z63_D7_PROJEKT_STOP_20260914.md`) odblokowany decyzją właściciela; zlecone A jako
+   zadanie 2 Wpisu 70 (Codex K9/backlog) — **wykonanie nie potwierdzone w przeczytanych
+   meldunkach 14/15.09; do zweryfikowania w kolejnej sesji** (brak SHA/dowodu commit w źródłach
+   dostępnych temu wpisowi).
+4. P-T13 wariant B (manifest nawigacji `routeConfig.ts` filtrowany rolą/organizacją/flagą,
+   grounding Teresy) — GO, zlecone A jako zadanie 3 Wpisu 70; **DEC-515** dotyczy osobnej sprawy
+   (patrz niżej), nie myl numeracji.
+5. **DEC-515**: `contractMirror` — wariant B (autorytet serwerowy `TransitionAuthority/authority`
+   + `compiledLanguage` w osobnym kontrakcie `server/src/...`; publiczne lustra
+   `src/method-core/contracts/*` ↔ `server/.../contracts/*` zsynchronizowane 1:1;
+   `contractMirrorDrift` ma przejść 7/7 bez osłabiania testu) — decyzja CTO (Wpis 72), osobna
+   paczka po Z-63.
+6. **DEC-517**: duży backlog dla Codexa (K1–K9, KANAL Wpis 73) — decyzja właściciela „więcej
+   pracy u Codexa, mniej u agentów CTO"; agenci CTO ograniczeni do wdrożeń/danych/odbiorów.
+   K1 przyrząd językowy (obiekty/K4obj/K11), K2 superadmin i18n (543 K4en+174 K7), K3 narracja
+   raportu oceny EN, K4 K8sen 825 przesiew, K5 TTL sandboxów demo-session, K6 reszta etykiet
+   Realizacji, K7 dług tsc 177, K8 kolumny list D7 + S1.11 re-tag, K9 manifest nawigacji P-T13.
+7. Pozostałe decyzje 15.09 (bez osobnego numeru DEC, wykonanie CTO): czystka DBR77 „wywal";
+   DBR77 dane → EN; Northwind wszystkie ekrany wypełnione 2–4 pozycjami; Z-9 wolumen dysku;
+   P-T01 adres wsparcia = domena `.ai` (`support@consultify.ai`, literówka nadawcy maili
+   `noreply@consultinity.ai` — patrz Z-75, wciąż OTWARTA); Z-19 kopie dysku; Z-31 mail
+   testowy ze stagingu; Meeting → Fala 2 (poza pojemnikiem 1); promocja na demo po pilotażu
+   testerów = TAK (warunkowa, po odbiorze).
+
+**Wynik falowy 15.09 (dowody `cto-codex/fala-f*-20260915/`, `fala-e2b-*-20260914/`,
+`fala-e2b-exec-bis-20260915/`):**
+- **F3** `40413144f8` — enum `generatorType` w `my-work.routes.ts:6456` bez `process_brief`/
+  `process_savings` (dziura kontraktu front↔trasa); `VSMTimelineBar` NaN.
+- **F4** `652e3c458c` — `IdeaMapWorkspace.tsx:479` efekt boczny na `isChatCollapsed` otwierał
+  panel bumerangiem; „Panel"/„Work with AI" ujednolicone (19 konsumentów `PracujZAI`).
+- **F5** `ca21c282e6` — `LegacyAssessmentReportRedirect.tsx` przepisany: rozstrzyga
+  builder→kreator / raport oceny→`/assessment/outputs/:id/report` / nieznane→stan „Report not
+  available" (i18n) zamiast surowego `ApiError: Report not found`. **To zamyka defekt „raport z
+  ogólnego backlogu 404" zmierzony w Z-59/D-3(e) i potwierdzony ponownie na targach (Z-73
+  niżej).** Testy: 6+2, `check-list-canon` 349=baseline, `check-artefakt` 8-0-117=baseline.
+- **F6** `571b637462` — paleta nie zasłania węzła procesu.
+- **F7/1–4** `391c343d98`/`4bc98a0eb1`/`6efc4a5bfa`/`cbe5bab5bb` — bufor kontekstu organizacji
+  PL na 5 ekranach → i18n; „Arkusz1"/„Pusty arkusz" (`workbook.routes.ts:1335,1373`,
+  `ExceleView.tsx:443,503-506`) → i18n; AI wywiadu po polsku mimo `en`
+  (`InterviewInsightService.ts` prompt naprawczy PISANY po polsku, `managementReports.
+  routes.ts:91` domyślny `pl` z `Accept-Language`) → `withResolvedLocaleInstruction`/
+  `resolveLocale` (DEC-510); SWOT twardo polski (`buildSwotOutput.ts:162,245` + mirror
+  serwerowy) → warianty EN. Bramki: server tsc 0, front tsc 177 (sufit RC), canon 349, artefakt
+  8-0-117, `check:jezyk:ci` spadki K4en -68/K7 -1/K9pPL -1/K9pBRAK -1, zero regresji testów.
+- **F7b** `6c34292eb0` — szablony arkuszy EN first (Materials → Template Library), patrz Z-71.
+- **E2b-Settings** `da8e1ece24` — 02 My Work K4en 52→15, 15 Settings K4en 31→0, +994 kluczy;
+  14 Admin Panel (543 K4en+174 K7, `src/views/superadmin/**`) świadomie POZA zakresem →
+  DEC-517/K2.
+- **E2b-Exec / E2b-Exec-bis** `a523058b47`/`f246a2596e` — 50+50 etykiet Realizacji z obiektów do
+  i18n; przyrząd językowy NIE widzi etykiet w obiektach (`label: '…'`) → DEC-517/K1 (E2f-bis).
+- **E2b-2** (Codex `967a29d4c7`) — **ACCEPT** na linię `8767bbdd58` (Wpis 74); 82P/0F po
+  scaleniu, 10 porażek Wywiadu na linii = dług zastany (identyczne nazwy testów przed i po).
+- **D-3** (Codex `50a5bf7e94`) — **HOLD** (Wpis 74): P1-A (11 testów, atrapa bez
+  `listClaimsPage()`), P1-B (3 testy, „Retry" vs kanoniczne „Try again") = defekty TESTÓW
+  rodzeństwa, nie produktu; backup `origin/backup/cto/odbior-d3-20260915` = `a93fbc03a7`;
+  dyżur D-3-fix wydany.
+
+**Northwind — dosiew i sprzątanie przed targami (dowody `cto-codex/{northwind-full-seed-
+20260915,northwind-2-4-20260915,sprzatanie-northwind-targi-20260915,gotowosc-targi-20260915}/`):**
+- **Z-69 (nowa, zamknięta tego samego dnia).** Dwie sondy w Initiatives („P11 weryfikacja zapisu
+  po czystce", „PROBE W1A 2026-09-10") żyły w silniku zdarzeniowym `ie_*` (nie w klasycznej
+  tabeli `initiatives`, tam ich nigdy nie było) — 4 `ie_aggregate_state` + 9 `ie_audit_events` +
+  9 `ie_command_receipts` + 9 `ie_outbox_events` + 2 `ie_aggregate_relations` usunięte
+  transakcyjnie; rollback SQL zapisany. Weryfikacja żywym API: `initiatives/runtime-v1/
+  initiatives` 8, 0 trafień „PROBE"/„P11". Konto Katarzyna Wójcik usunięte z organizacji
+  Northwind (konto zostaje, ma dane w DBR77).
+- **Z-70 (nowa, otwarta).** Management reports: `reportType STEERING_COMMITTEE` i `RAID` → **500
+  DATABASE_ERROR**; `TEAM_WEEKLY`/`TEAM_MEETING` → **500 INTERNAL_ERROR**. Działa TYLKO
+  `PORTFOLIO_HEALTH`. Dodatkowo defekt językowy: komentarz w `managementReports.routes.ts`
+  mówi wprost „domyślny `pl` (nie `en`)" (`resolveAiLanguageFromRequest`) — bez jawnego
+  `language:'en'` raporty generują się po polsku (to samo źródło co F7/3 wywiadu, naprawione
+  tam tylko dla insightów wywiadu, NIE dla management reports). Komunikat błędu 500 też po
+  polsku („Nie udało się odczytać danych..."). Dowód: `northwind-2-4-20260915/POSTEP.md:167-174`.
+- **Z-71 (nowa, zamknięta 15.09 falą szablonów).** Katalog szablonów systemowych (Materials →
+  Template Library) miał treść PL: `report_builder_templates` 15 wierszy globalnych PL (13+2
+  bez diakrytyków), `tp_base_templates` 1 wiersz PL („Rejestr inicjatyw"), `document_studio_
+  templates` 22 wiersze z `purpose` PL (struktura sekcji już EN w obu wariantach). Odkrycie po
+  drodze: filtr `provenance_status='approved'` sprawia, że katalog widziany DZIŚ przez Irinę
+  pokazuje tylko 6 własnych szablonów Northwind (EN) — 35 wierszy/131 znaków z wcześniejszego
+  audytu (`47-materials-templates`) nie były „approved" w tej samej chwili; mimo to WSZYSTKIE
+  polskie wiersze global/system przetłumaczone (36+6 UPDATE, rollback 1:1 zapisany). Dowód:
+  `cto-codex/szablony-parking-20260915/LOG.md`.
+- **Z-72 (nowa, dotyczy F5 wyżej — potwierdzona na targach, zamknięta F5).** Ekran „gotowość na
+  targi" (`gotowosc-targi-20260915/MELDUNEK.md`, 20 zrzutów) wykrył raport DRD pod
+  `/assessment-reports/<id>` (dwa różne id, w tym błędnie zaszyte w skrypcie dziedziczonym po
+  poprzednim agencie) → **404 + `ApiError: Report not found`, aplikacja cicho pokazuje pusty
+  nietytułowany Report Builder** zamiast czytelnego błędu — dokładnie wzorzec „wołacz istnieje,
+  nie renderuje". **Naprawione falą F5 (`ca21c282e6`, wyżej) — do retestu na żywym SHA po
+  wdrożeniu F5 na staging** (F5 jest na linii `6c34292eb0`, staging jeszcze na `571b637462` —
+  patrz SHA wyżej).
+- **Z-73 (nowa, otwarta — wymaga weryfikacji ręcznej).** Ekran Process Flow z otwartym panelem
+  właściwości: pływające menu narzędzi w lewym górnym rogu canvasu nachodzi na tekst węzła
+  procesu (tekst ucięty, „SELECT" na środku słowa). Niejasne czy to artefakt nagrywania zrzutu
+  (menu kontekstowe zostało otwarte podczas zrzutu) czy realny błąd z-index/warstw canvasu —
+  **nie pokazywać na targach dopóki nie sprawdzone ręcznie, bez automatu**.
+- **Z-74 (nowa, otwarta — sprzeczność do zmierzenia, DEC-517/K6 zbliżone).** `POST /report-
+  runs/:id/transitions {action:'PUBLISH'}` na przebiegu z `workReport` jest odrzucany
+  BEZWARUNKOWO (`initiativesExecutionRuntime.routes.ts:7720`,
+  `run.workReport && payload.action === 'PUBLISH' → 403`), a alternatywa `POST /work-reports/
+  :id/deliver` (Kasia/Irina) zwraca **500 INITIATIVES_EXECUTION_RUNTIME_FAILED** dla obu kont —
+  mimo że Z-31 (14.09 noc, inny report_run, ten sam endpoint) dostarczył 200 i realny mail SMTP.
+  Stan końcowy pozostaje APPROVED, nigdy PUBLISHED przez ten front. Sprzeczność między dwoma
+  pomiarami tego samego endpointu wymaga zmierzenia przyczyny (dane vs kod), nie zgadywania.
+  Dowód: `cto-codex/northwind-2-4-20260915/POSTEP.md:264-273`.
+- **Z-75 (otwarta, z Wpisu 71, P-T01 częściowo zrealizowane).** Nadawca maili ze stagingu =
+  `noreply@consultinity.ai` (literówka domeny). DEC-517 pkt P-T01 ustalił docelowo
+  `support@consultify.ai` dla adresu WSPARCIA — literówka NADAWCY dostarczeń (`SMTP_FROM`/
+  `EMAIL_FROM` czy literał w `EmailService`) pozostaje niezmierzona/niezamknięta w
+  przeczytanych źródłach 15.09.
+- **Z-76 (przypomnienie, patrz Wpis 71/D-3(e)).** `POST /report-definitions/:id/transitions`
+  → 404 dla `scope.projectIds=[]`+`generalBacklogAllowed=true` — przyczyna: `authorizeProjects`
+  odrzuca pustą listę projektów przy transitions, choć create ją akceptuje jako
+  `['GENERAL_BACKLOG']`. Nie potwierdzone jako naprawione w przeczytanych źródłach — **nadal
+  otwarta**, sierota `d473903e-…` w Northwind (usunięta przy sprzątaniu targowym, ale przyczyna
+  kodowa zostaje).
+- **Z-77 (nowa, DEC-517/K1).** Przyrząd językowy (`scripts/i18n/pomiar-jezyka.mjs`) nie widzi
+  etykiet w obiektach (`label:`/`title:`/`placeholder:`/…) ani słów spoza ~100-wyrazowego
+  słownika — zlecone Codexowi jako K1 (kubełki K4obj/K4objPL, K11 „t-w-literale"), warunek
+  wstępny dla uczciwych liczb K2–K4.
+- **Sprzątanie targowe (zamknięte 15.09, `sprzatanie-northwind-targi-20260915/LOG.md`):**
+  rekord testowy Z-31 („[Consultify staging test] CTO Z-31 executive summary test report") w
+  Initiatives → Work report USUNIĘTY (3 agregaty `ie_*`, 12+12+12+3 wiersze, rollback SQL
+  zapisany, zweryfikowane żywym API `report-runs`/`report-definitions` = `{"items":[]}`);
+  Organization Type Northwind `OTHER` → **`MANUFACTURING`** (był rozjazd z `industry=
+  "Manufacturing"`), zmiana przez API (nie bezpośrednio bazą), rollback SQL zapisany.
+- **Wynik pomiaru wolumenu (Etap 7, `northwind-2-4-20260915/POSTEP.md`).** **53 z 56** mierzonych
+  powierzchni ekranowych Northwind mają ≥2 pozycje (S1.7-adjacent, nie S1.7 sam w sobie); 3 poza
+  zasięgiem rozsądnym: Initiatives → Parking (silnik zdarzeniowy, brak uczciwej ścieżki API bez
+  fałszowania sklepu zdarzeń), Load (za flagą OFF), Finance (COMING_SOON w kodzie — patrz
+  niżej). 0 rekordów test/probe/pomiar na 54 zrzutach po sprzątaniu.
+- **Z-78 (przypomnienie, poza zakresem zmian 15.09).** Finance = `COMING_SOON` na sztywno
+  (`betaMenuStatus.ts:80`) — świadomie wyłączony moduł Wave 2, potwierdzone ponownie na
+  zrzutach gotowości targowej (nie defekt, ale nie pokazywać bez zapowiedzi).
+- **Z-79 (przypomnienie, patrz DEC-516 wyżej).** Parking wymaga TRZECH bramek jednocześnie:
+  `VITE_INITIATIVES_FOUR_BUTTONS` (front), `ENABLE_INITIATIVE_PORTFOLIO_ANALYSIS` (serwer,
+  dołożona poza pierwotnym zleceniem), i pełnego łańcucha bramki portfelowej
+  (`portfolio-analyses` → `gates/portfolio/decisions`) — bez trzeciej `GET /portfolio-
+  dispositions` zwraca 200 z pustą listą, nie 404, ale pozostaje puste bez przejścia przez
+  cały łańcuch.
+
+**§5 liczniki (tabela etapów, przeliczone LICZENIEM symboli w wierszach `sed -n '1266,1312p'`,
+nie zgadywaniem): ✅ 3 · 🧪 19 · 🔧 6 · ⬜ 19 (47 etapów) — BEZ ZMIANY względem ostatniego
+przeliczenia (Wpis 68, 15.09 noc). Dzisiejsze fale (F1–F7b, E2b-Settings/Exec/Exec-bis/E2b-2,
+D-3, targi Northwind) dotyczą i18n/locale/higieny danych, nie stanu żadnego wiersza tabeli §5 —
+zgodnie z tym samym wzorcem co poprzednie EWIDENCJE tej nocy. Pilotaż: bez nowego pomiaru
+mianownika 15.09 w przeczytanych źródłach (ostatni: 32/46, Wpis 68).
+
+**Pomiar 16 kryteriów MVP S1.1–S1.16 — aktualizacja 15.09 (dowody jak wyżej):**
+- **S1.15 (zatwierdzanie odpowiedzi Wywiadu) → DOMKNIĘTE.** Kod istniał od 13.09
+  (`ENABLE_INTERVIEW_ANSWER_APPROVAL`); DEC-516 włączyło flagę NA STAGINGU + politykę
+  `answerApproval` dla DBR77 i Northwind; weryfikacja żywa: `answer-approvals` 404
+  `ASSIGNMENT_NOT_FOUND` (nie 200 pustej listy) w obu organizacjach potwierdza aktywną flagę
+  i politykę. Kryterium przechodzi z „kod jest, flaga OFF" na **domknięte za flagą ON na
+  stagingu**.
+- **S1.4 (dokument i prezentacja z szablonu, DBR77) → CZĘŚCIOWO.** Poprawa 15.09: caption/
+  cover szablonów po angielsku (F7b, Z-71) — katalog szablonów systemowych czysty EN. **Nadal
+  otwarte: narracja raportu oceny pozostaje po polsku** (`assessmentNarrativeComposer.ts`,
+  ~390 linii gramatyki PL wylewającej 9 bloków prozy do DOCX EN — zlecone Codexowi jako
+  **DEC-517/K3**). Kryterium NIE jest TAK dopóki K3 nie zamknięty.
+- **S1.6 (Teresa odpowiada ze źródłami w każdym module) → zależne od K9.** Manifest nawigacji
+  P-T13 wariant B (grounding zgodny z tym, co użytkownik faktycznie widzi) zlecony jako
+  DEC-517/K9 — dopóki niedomknięty, S1.6 pozostaje w stanie sprzed 15.09 (CZĘŚCIOWO/nieaktualne
+  po DEC-461).
+- **S1.7 (dane właściciela czyste) → DOMKNIĘTE dla Northwind/DBR77 jako organizacji
+  demonstracyjnych (nie całego S1.7).** Northwind: sondy usunięte (Z-69), rekord testowy Z-31
+  usunięty (sprzątanie targowe), Organization Type poprawiony. DBR77: czystka „wywal"
+  wykonana 14.09 (`czystka-dbr77-20260915/`, apply-del.sql + apply-tr-initiatives.sql +
+  apply-tr-inne.sql, rollbacki zapisane) — usunięcia (30+2+6+6+6+6+3+3 wierszy w pierwszej
+  transakcji, kaskada A2 „[ACCEPTANCE]" 4 wiersze w drugiej, duplikaty inicjatyw w trzeciej,
+  sandboxy w czwartej) + 74 UPDATE tłumaczeń (nazwy/opisy inicjatyw i ROI na EN). **Pozostaje
+  otwarty szerszy problem sandboxów demo-session bez TTL** (39 klonów × ~11,5 tys. wierszy w
+  49 tabelach na stagingu, tylko 20 z 39 sprzątniętych ręcznie w tej czystce) — zlecone jako
+  **DEC-517/K5** (TTL 24h + scheduler). S1.7 więc **domknięte dla treści widocznej klientowi w
+  DBR77/Northwind, NIE dla higieny infrastrukturalnej sandboxów** — rozróżnienie ważne, nie
+  ogłaszać kryterium w pełni TAK.

@@ -2665,3 +2665,56 @@ Settled style measurement corrected the early screenshot interpretation: slide c
 
 ### Integrator — W17 action batches and export quality gate
 SlideSorter Move fix integrated at `57cc0592f9`, built and accepted with normal keyboard/pointer interactions: three writes v5→v8 matched UI/API/PostgreSQL after hard reload and all controls were in bounds. Notebook added nine reload-persistent rich-format actions; twenty registry actions now have runtime proof. Presentation export fixture reached quality `canExport:true`, score70, P1=0 at version10 while approval/export remain open. A protected no-email, role-aware access-code registration path for a distinct ADMIN reviewer was identified and is being exercised locally. No deployment, full Materials/Notebook denominator, professional-file,16-module, S1/S2 or pilot gate is promoted.
+
+### Rejestr 15.09 — Z-69+ do Z-79, DEC-513..517, fale F1–F7b, targi Northwind
+
+Szczegóły pełne (SHA linii/stagingu/demo, 13 decyzji właściciela → DEC-513..517, fale F3/F4/F5/
+F6/F7/F7b/E2b-Settings/E2b-Exec/E2b-Exec-bis/E2b-2/D-3, Z-69..Z-79, przeliczenie §5, pomiar 16
+kryteriów) zapisane w `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, EWIDENCJA „uzupełnienie
+15.09" (na końcu pliku) — nie duplikuję tu treści zgodnie z regułą jeden SSOT na wpis. Skrót:
+
+- Linia `e6a3fc173b` → **`6c34292eb0`** (F7b). Staging `34888b0445` → `bb6735d713` (DEC-516) →
+  `de73155bc7` → **`571b637462`** (F6; health zmierzone 15.09 03:29 UTC — F7/F7b jeszcze NIE na
+  stagingu). Demo `90833bc94a`, bez zmian.
+- **DEC-513** Z-63 GO (nazwa sesji DRD, `method_sessions.name`) — zlecone, **wykonanie
+  niepotwierdzone w źródłach 15.09**, do weryfikacji następnej sesji.
+- **DEC-514** Z-62 sign-off (60 definicji poziomów osi 5–6 EN = kanon metodyki).
+- **DEC-515** contractMirror wariant B (autorytet serwerowy osobno, lustra 1:1,
+  `contractMirrorDrift` 7/7).
+- **DEC-516** flagi partii 1 ON na stagingu (4 zmienne + `ENABLE_INITIATIVE_PORTFOLIO_ANALYSIS`
+  dołożona, polityka `answerApproval` DBR77+Northwind) — dowód `cto-codex/flagi-20260915/`.
+- **DEC-517** backlog Codexa K1–K9 (przyrząd językowy, superadmin i18n, narracja raportu oceny
+  EN, K8sen przesiew, TTL sandboxów demo-session, reszta etykiet Realizacji, dług tsc, kolumny
+  list D7/S1.11, manifest nawigacji P-T13) — agenci CTO ograniczeni do wdrożeń/danych/odbiorów.
+- E2b-2 (Codex `967a29d4c7`) **ACCEPT** na linię `8767bbdd58`; D-3 (Codex `50a5bf7e94`)
+  **HOLD** (14 testów rodzeństwa czerwone — defekt testów, nie produktu) → dyżur D-3-fix.
+- **Z-69 zamknięta** (2 sondy Initiatives w silniku `ie_*`, Northwind, usunięte). **Z-70 nowa**
+  (management reports 500 na STEERING_COMMITTEE/RAID/TEAM_WEEKLY/TEAM_MEETING, domyślny
+  `pl` w komentarzu kodu). **Z-71 zamknięta** (katalog szablonów systemowych PL → EN, 42
+  UPDATE). **Z-72 naprawiona falą F5** (raport DRD 404 → pusty Report Builder cichy, teraz
+  stan czytelny — do retestu po wdrożeniu F5 na staging). **Z-73 nowa, otwarta** (Process Flow,
+  menu nachodzi na węzeł — weryfikacja ręczna wymagana przed targami). **Z-74 nowa, otwarta**
+  (PUBLISH report-run z workReport 403 bezwarunkowo vs `deliver` 500, sprzeczność z wcześniejszym
+  200 z Z-31 — do zmierzenia). **Z-75 nadal otwarta** (nadawca `noreply@consultinity.ai`,
+  literówka domeny, P-T01 częściowo zrealizowane — adres wsparcia `.ai` ustalony, nadawca nie).
+  **Z-76 nadal otwarta** (report-definition `scope.projectIds=[]` 404 na transitions). **Z-77
+  nowa** (przyrząd językowy ślepy na etykiety w obiektach, DEC-517/K1). **Z-78/Z-79
+  przypomnienia** (Finance COMING_SOON świadomie; Parking = 3 bramki naraz).
+- Sprzątanie targowe Northwind (rekord testowy Z-31 usunięty, Organization Type → MANUFACTURING)
+  i czystka DBR77 (5 grup usunięć + 74 UPDATE tłumaczeń) — dowody `cto-codex/{sprzatanie-
+  northwind-targi-20260915,czystka-dbr77-20260915}/`.
+- **§5 liczniki: ✅ 3 · 🧪 19 · 🔧 6 · ⬜ 19 (47 etapów) — przeliczone liczeniem symboli w
+  tabeli, BEZ ZMIANY** względem ostatniego przeliczenia (Wpis 68). Pilotaż: bez nowego pomiaru
+  mianownika 15.09 (ostatni: 32/46).
+- Pomiar 16 kryteriów: **S1.15 → domknięte** (flaga+polityka ON na stagingu, zweryfikowane
+  żywym API); **S1.4 częściowo** (szablony/caption EN zrobione, narracja raportu oceny nadal PL
+  → K3); **S1.6 zależne od K9** (manifest nawigacji P-T13); **S1.7 domknięte dla treści
+  Northwind/DBR77 widocznej klientowi, NIE dla higieny sandboxów demo-session** (39 klonów,
+  20/39 sprzątnięte ręcznie, TTL zlecony jako K5).
+
+Dowody źródłowe tego wpisu: `cto-codex/{flagi-20260915,fala-f4-20260915,fala-f5-20260915,
+fala-f7-20260915,fala-e2b-settings-20260914,fala-e2b-exec-20260914,fala-e2b-exec-bis-20260915,
+z19-kopie-20260915,z31-mail-20260915,northwind-full-seed-20260915,northwind-2-4-20260915,
+czystka-dbr77-20260915,sprzatanie-northwind-targi-20260915,szablony-parking-20260915,
+wdrozenie-linii-20260915,gotowosc-targi-20260915}/`, `cto-codex/KANAL.md` Wpisy 70–74, `git log
+--oneline 34888b0445..6c34292eb0`.
