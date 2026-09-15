@@ -95,7 +95,7 @@ const {
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
   setInterviewBreadcrumbs: vi.fn(),
-  getMyAssignments: vi.fn(async () => ({ assignments: [] })),
+  getMyAssignments: vi.fn(async (): Promise<unknown> => ({ assignments: [] })),
   getSession: vi.fn(async () => null),
   appStoreState: {
     currentProjectId: 'proj-1' as string | null,

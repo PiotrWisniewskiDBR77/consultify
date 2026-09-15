@@ -73,7 +73,7 @@ const {
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
   setInterviewBreadcrumbs: vi.fn(),
-  getMyAssignments: vi.fn(async () => []),
+  getMyAssignments: vi.fn(async (): Promise<unknown> => []),
   getSession: vi.fn(async () => null),
   appStoreState: { currentProjectId: 'proj-1' as string | null },
 }));

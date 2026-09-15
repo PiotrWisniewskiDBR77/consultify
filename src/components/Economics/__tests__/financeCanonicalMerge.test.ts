@@ -4,7 +4,10 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { mergeCanonicalArtifactsIntoFinanceRows } from '../financeCanonicalMerge';
+import {
+  type FinanceMergeableRow,
+  mergeCanonicalArtifactsIntoFinanceRows,
+} from '../financeCanonicalMerge';
 
 describe('mergeCanonicalArtifactsIntoFinanceRows', () => {
   it('analiza tylko kanoniczna trafia na listę (stan zmierzony na DBR77: 0 legacy, 1 kanoniczna)', () => {
@@ -17,7 +20,9 @@ describe('mergeCanonicalArtifactsIntoFinanceRows', () => {
   });
 
   it('wiersze legacy zostają i idą pierwsze', () => {
-    const legacy = [{ id: 'leg-1', title: 'Analiza klasyczna' }];
+    const legacy: Array<FinanceMergeableRow & { id: string; title: string }> = [
+      { id: 'leg-1', title: 'Analiza klasyczna' },
+    ];
     const merged = mergeCanonicalArtifactsIntoFinanceRows(legacy, [
       { id: 'art-9', canonicalArtifactId: 'art-9', title: 'Sierota kanoniczna' },
     ]);
