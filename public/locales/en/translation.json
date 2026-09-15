@@ -6841,6 +6841,7 @@
       "sourceIdea": "Idea",
       "sourceNote": "Note",
       "sourceDecision": "Decision",
+      "sourceDocument": "Document",
       "sourcesAndAssumptions": "Sources and assumptions",
       "noSourceContext": "No source context",
       "actionsHiddenInReadMode": "Actions are hidden in preview mode",

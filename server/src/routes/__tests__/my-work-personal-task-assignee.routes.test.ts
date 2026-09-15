@@ -194,6 +194,8 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
         tags: '[]',
         assigneeId: 'user-99',
         ownerId: 'user-77',
+        sourceType: 'document',
+        sourceId: 'document-42',
       });
 
     const app = createApp();
@@ -206,7 +208,11 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
     const detailSql = mockQueryOne.mock.calls[2]?.[0] as string;
     expect(detailSql).toMatch(/t\.assignee_id as "assigneeId"/);
     expect(detailSql).toMatch(/t\.owner_id as "ownerId"/);
+    expect(detailSql).toMatch(/t\.source_type as "sourceType"/);
+    expect(detailSql).toMatch(/t\.source_id as "sourceId"/);
     expect(res.body.assigneeId).toBe('user-99');
     expect(res.body.ownerId).toBe('user-77');
+    expect(res.body.sourceType).toBe('document');
+    expect(res.body.sourceId).toBe('document-42');
   });
 });

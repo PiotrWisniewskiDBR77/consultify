@@ -1479,7 +1479,9 @@ router.get(
         CAST(t.updated_at AS TEXT) as "versionToken",
         t.completed_at as "completedAt",
         t.assignee_id as "assigneeId",
-        t.owner_id as "ownerId"
+        t.owner_id as "ownerId",
+        t.source_type as "sourceType",
+        t.source_id as "sourceId"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
       LIMIT 1
