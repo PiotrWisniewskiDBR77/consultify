@@ -10,20 +10,18 @@ const source = readFileSync(
 
 describe('InitiativesHub canonical intake navigation', () => {
   it('keeps the owner-approved three-tab information architecture', () => {
-    const canonicalTabs = source.slice(
-      source.indexOf('const CANONICAL_INITIATIVES_TABS'),
-      source.indexOf('export const InitiativesHub')
-    );
-    expect(canonicalTabs).toMatch(/'list',\s*'plan',\s*'capacity'/);
-    expect(canonicalTabs).not.toContain("'candidates'");
-    expect(canonicalTabs).not.toContain("'portfolio'");
+    const start = source.indexOf('const tabs = useMemo(');
+    const visibleTabs = source.slice(start, source.indexOf('useEffect(() => {', start));
+    expect(visibleTabs).toContain("id: 'list' as ModuleTab");
+    expect(visibleTabs).toContain("id: 'plan' as ModuleTab");
+    expect(visibleTabs).toContain("id: 'capacity' as ModuleTab");
+    expect(visibleTabs).not.toContain("id: 'workReport'");
+    expect(visibleTabs).not.toContain("id: 'transitionInbox'");
   });
 
-  it('clears retired proposal context and links a scheduled initiative to Execution', () => {
-    expect(source).toContain("next.delete('sourceProposalId')");
-    expect(source).toContain('onOpenExecution={(executionCaseId, initiativeId) =>');
-    expect(source).toContain(
-      '`/execution?tab=list&mode=initiative&open=${encodeURIComponent(initiativeId)}&executionCaseId=${encodeURIComponent(executionCaseId)}`'
-    );
+  it('keeps flagged report and approval surfaces reachable through Status', () => {
+    expect(source).toContain("id: 'workReport'");
+    expect(source).toContain("id: 'transitionInbox'");
+    expect(source).toContain("const POWIERZCHNIE_Z_PRZELACZNIKA: ModuleTab[] = ['workReport', 'transitionInbox']");
   });
 });

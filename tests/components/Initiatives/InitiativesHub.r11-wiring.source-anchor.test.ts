@@ -1,62 +1,46 @@
-/**
- * R11 — source-anchor guard (no mount; raw source-text assertions, same
- * technique the T20/T21/T23/T24 guard suites use). Two things must both
- * stay true after this package: T27/T28/T29 are wired into InitiativesHub,
- * and T25's prose-preview work is untouched.
- */
-import { readFileSync } from 'fs';
-import path from 'path';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-const HUB_PATH = path.resolve(__dirname, '../../../src/components/Initiatives/InitiativesHub.tsx');
-const source = readFileSync(HUB_PATH, 'utf-8');
+const source = readFileSync(
+  path.resolve(__dirname, '../../../src/components/Initiatives/InitiativesHub.tsx'),
+  'utf8'
+);
 
-describe('R11 InitiativesHub wiring — source anchors', () => {
-  it('imports all three new canonical tables', () => {
-    expect(source).toContain("import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';");
-    expect(source).toContain("import { CandidatesTable } from './CandidatesTable';");
-    expect(source).toContain("import { PortfolioHealthTable } from './PortfolioHealthTable';");
+describe('R11 compatibility after the F9 three-tab cutover', () => {
+  it('keeps exactly the three owner-approved visible Menu 2 destinations', () => {
+    const start = source.indexOf('const tabs = useMemo(');
+    const tabs = source.slice(start, source.indexOf('useEffect(() => {', start));
+    expect(tabs.match(/id: '(?:list|plan|capacity)' as ModuleTab/g)).toHaveLength(3);
   });
 
-  it('mounts InitiativeObservabilityTable + preserved InitiativeObservabilityPanel dashboard under activeTab==="observability"', () => {
-    const start = source.indexOf('// T27 R11:');
-    const end = source.indexOf('// T28 R11:');
-    expect(start).toBeGreaterThan(-1);
-    expect(end).toBeGreaterThan(start);
-    const slice = source.slice(start, end);
-    expect(slice).toContain('<InitiativeObservabilityTable');
-    expect(slice).toContain('<InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />');
+  it('maps observability and portfolio legacy URLs to the Analysis lens', () => {
+    expect(source).toContain(
+      "['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')"
+    );
   });
 
-  it('mounts CandidatesTable (not the retired CandidatesPanel) under activeTab==="candidates"', () => {
-    const start = source.indexOf('// T28 R11:');
-    const end = source.indexOf('// T29 R11:');
-    expect(start).toBeGreaterThan(-1);
-    expect(end).toBeGreaterThan(start);
-    const slice = source.slice(start, end);
-    expect(slice).toContain('<CandidatesTable onAccept={handleAcceptCandidate} />');
-    expect(slice).not.toContain('<CandidatesPanel');
+  it('does not restore Candidates as a top-level pill', () => {
+    const start = source.indexOf('const tabs = useMemo(');
+    const tabs = source.slice(start, source.indexOf('useEffect(() => {', start));
+    expect(tabs).not.toContain("id: 'candidates'");
   });
 
-  it('mounts PortfolioHealthTable + preserved PortfolioHealthView dashboard under activeTab==="portfolioHealth"', () => {
-    const start = source.indexOf('// T29 R11:');
-    const end = source.indexOf("// V3-F02: Analysis tab");
-    expect(start).toBeGreaterThan(-1);
-    expect(end).toBeGreaterThan(start);
-    const slice = source.slice(start, end);
-    expect(slice).toContain('<PortfolioHealthTable onOpenInitiative={openInitiative} />');
-    expect(slice).toContain('<PortfolioHealthView onOpenInitiative={openInitiative} />');
+  it('keeps Portfolio health as a flagged preparation-lens option and real view', () => {
+    expect(source).toContain('<option value="portfolioHealth">');
+    expect(source).toContain("preparationLens === 'portfolioHealth'");
+    expect(source).toContain('<PortfolioHealthView');
   });
 
-  it('T25 preserved: buildInitiativePreviewDetails import and both usage sites intact', () => {
-    expect(source).toContain("import { buildInitiativePreviewDetails } from './initiativePreviewDetails';");
-    expect(source).toContain('const tablePreviewDetailsText = buildInitiativePreviewDetails(');
-    expect(source).toContain('text: tablePreviewDetailsText,');
-    expect(source).toContain('void navigator.clipboard?.writeText(tablePreviewDetailsText);');
+  it('preserves the canonical and legacy initiative list merge', () => {
+    expect(source).toContain('listRegisteredInitiatives()');
+    expect(source).toContain('listLegacyInitiatives({ includeArchived: true })');
   });
 
-  it('CandidatesPanel component import dropped (type-only reuse for AcceptCandidatePayload) — no unused import', () => {
-    expect(source).toContain("import { type AcceptCandidatePayload } from './CandidatesPanel';");
-    expect(source).not.toMatch(/import\s*{\s*type AcceptCandidatePayload,\s*CandidatesPanel/);
+  it('keeps flagged Work report and For approval surfaces in the Status control', () => {
+    expect(source).toContain("id: 'workReport'");
+    expect(source).toContain("id: 'transitionInbox'");
+    expect(source).toContain("const POWIERZCHNIE_Z_PRZELACZNIKA: ModuleTab[] = ['workReport', 'transitionInbox']");
   });
 });
