@@ -8,6 +8,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 export const BackupPanel: React.FC = () => {
   const [backups, setBackups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ export const BackupPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text mb-2">Backup & Recovery</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Manage database backups and disaster recovery
+            {tlumaczPozaHookiem("superadmin.backup.manageDatabaseBackupsAndDisasterRecovery", "Manage database backups and disaster recovery")}
           </p>
         </div>
         <button
@@ -118,7 +120,7 @@ export const BackupPanel: React.FC = () => {
                     )}
                   </div>
                   <p className="text-sm text-slate-400 dark:text-slate-500">
-                    Created: {new Date(backup.started_at).toLocaleString()}
+                    Created: {new Date(backup.started_at).toLocaleString(localeListy())}
                   </p>
                   {backup.size_bytes && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">

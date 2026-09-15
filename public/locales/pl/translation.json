@@ -1143,7 +1143,8 @@
         "subtitle": "Status zgodności organizacji klientów",
         "title": "Zgodność klientów",
         "unknownOrganization": "Nieznana organizacja"
-      }
+      },
+      "operateTenantsThroughOneControlPlaneFor": "Obsługuj najemców za pośrednictwem jednej płaszczyzny kontroli pod kątem cyklu życia, użytkowników, rozliczeń, przydziałów i ryzyka"
     },
     "playbookTemplates": {
       "title": "Szablony Playbooków",
@@ -1326,6 +1327,860 @@
     "settlements": {
       "title": "Rozliczenia z partnerami",
       "subtitle": "Przegląd historycznej ekonomii partnerów"
+    },
+    "analytics": {
+      "monitorSystemPerformanceAndUsage": "Monitoruj wydajność i wykorzystanie systemu",
+      "systemAnalytics": "Analityka systemowa"
+    },
+    "alertPlaygroundTester": {
+      "verifyYourHMACVerifierWithoutAffectingReal": "Zweryfikuj weryfikator HMAC bez wpływu na rzeczywiste subskrypcje lub ścieżkę audytu.",
+      "runStep1FirstToPopulateThe": "Najpierw wykonaj krok 1, aby wypełnić żądanie w skrzynce odbiorczej.",
+      "acknowledgeTheSecretRevealInStep1": "Najpierw potwierdź ujawnienie sekretu w kroku 1.",
+      "thisSecretIsAlsoFedBackInto": "Ten sekret jest również uwzględniany w kroku 2, dzięki czemu można udowodnić, że pętla się zamyka. Panel odsłonięcia czyści się automatycznie w ciągu 60 sekund."
+    },
+    "backup": {
+      "manageDatabaseBackupsAndDisasterRecovery": "Zarządzaj kopiami zapasowymi baz danych i odzyskiwaniem po awarii"
+    },
+    "contentAnalytics": {
+      "failedToLoadAnalyticsData": "Nie udało się załadować danych analitycznych",
+      "tryAgain": "Spróbuj ponownie",
+      "overviewOfYourContentModulePerformance": "Przegląd wydajności modułu treści",
+      "last7Days": "Ostatnie 7 dni",
+      "last30Days": "Ostatnie 30 dni",
+      "last90Days": "Ostatnie 90 dni"
+    },
+    "contentCategoriesManager": {
+      "createYourFirstCategoryToOrganizeContent": "Utwórz pierwszą kategorię, aby uporządkować zawartość"
+    },
+    "contentFilters": {
+      "from": "Z"
+    },
+    "contentSearch": {
+      "draft": "Projekt"
+    },
+    "contentTagsManager": {
+      "createTagsToOrganizeYourContent": "Utwórz tagi, aby uporządkować treść"
+    },
+    "emailConfiguration": {
+      "encryptConnectionWithTLSSSL": "Szyfruj połączenie za pomocą TLS/SSL",
+      "chooseYourEmailService": "Wybierz usługę e-mail",
+      "fromEmail": "Z e-maila",
+      "fromName": "Od imienia",
+      "recommended": "Zalecony:",
+      "setUpSPFDKIMAndDMARCRecords": "Skonfiguruj rekordy SPF, DKIM i DMARC, aby poprawić dostarczalność wiadomości e-mail i zapobiec fałszowaniu."
+    },
+    "emailTemplate": {
+      "briefDescriptionOfThisTemplate": "Krótki opis tego szablonu...",
+      "enterYourHTMLEmailContentHere": "Wpisz tutaj treść wiadomości e-mail w formacie HTML...",
+      "theEmailWillBeSentWithTEST": "Wiadomość e-mail zostanie wysłana z prefiksem [TEST] w temacie.",
+      "defaultTitle": "Tytuł wiadomości",
+      "defaultGreeting": "Cześć",
+      "defaultContent": "Tutaj wpisz treść wiadomości...",
+      "defaultAction": "Wezwanie do działania",
+      "defaultRegards": "Z poważaniem,",
+      "defaultTeam": "Zespół",
+      "defaultCopyright": "© 2025 Twoja firma. Wszelkie prawa zastrzeżone."
+    },
+    "featureFlags": {
+      "controlFeatureAvailabilityAcrossYourPlatform": "Kontroluj dostępność funkcji na swojej platformie"
+    },
+    "incidentRunbooks": {
+      "noRunbookMatchedTheCurrentSignalPattern": "Żaden element Runbook nie pasował do bieżącego wzorca sygnału.",
+      "openTheRunbook": "Otwórz element Runbook"
+    },
+    "integrations": {
+      "connectConsultifyWithYourExistingTools": "Połącz Konsultuj z istniejącymi narzędziami"
+    },
+    "legal": {
+      "manageVersionsActivationStatusAndPublicationOf": "Zarządzaj wersjami, stanem aktywacji i publikacją dokumentów prawnych.",
+      "effectiveFrom": "Obowiązuje od",
+      "briefDescriptionOfChangesInThisVersion": "Krótki opis zmian w tej wersji..."
+    },
+    "modelAuditLog": {
+      "searchByEntityOrUser": "Wyszukaj według podmiotu lub użytkownika...",
+      "from": "Z",
+      "noAuditEntriesMatchYourFilters": "Żadne wpisy audytu nie pasują do wybranych filtrów"
+    },
+    "pricing": {
+      "effectiveFrom": "Obowiązuje od",
+      "optionalNotesAboutThisPriceEntry": "Opcjonalne uwagi dotyczące tego wpisu ceny"
+    },
+    "purposeAssignments": {
+      "noModelsAssignedToThisPurpose": "Brak modeli przypisanych do tego celu",
+      "addAModelFromTheDropdownBelow": "Dodaj model z listy rozwijanej poniżej",
+      "selectAPurposeFromTheListTo": "Wybierz cel z listy, aby zarządzać jego przypisaniami",
+      "whenSetShowsOrgSpecificAssignmentsFirst": "Po ustawieniu najpierw wyświetla przypisania specyficzne dla organizacji (plus globalne rezerwy).",
+      "requirementsJSONEditingWillBeAddedAfter": "Wymagania Edycja JSON zostanie dodana po ustabilizowaniu katalogu przeznaczenia."
+    },
+    "modelTierAssignments": {
+      "removeModelFromTier": "Usuń model z poziomu",
+      "noModelsAssignedToThisTier": "Brak modeli przypisanych do tego poziomu"
+    },
+    "operationsHealthDrilldown": {
+      "noProblematicDecksInThisWindow": "W tym oknie nie ma żadnych problematycznych talii.",
+      "loadingDrillDown": "Ładuję szczegółowe informacje…",
+      "someInputsWereDegraded": "Niektóre dane wejściowe uległy degradacji"
+    },
+    "playbookTemplateAnalytics": {
+      "last7Days": "Ostatnie 7 dni",
+      "last30Days": "Ostatnie 30 dni",
+      "last90Days": "Ostatnie 90 dni",
+      "completedSuccessfully": "Ukończono pomyślnie"
+    },
+    "playbookTemplateComments": {
+      "beTheFirstToLeaveAComment": "Bądź pierwszą osobą, która zostawi komentarz"
+    },
+    "security": {
+      "monitorSecurityEventsAndComplianceStatus": "Monitoruj zdarzenia związane z bezpieczeństwem i stan zgodności",
+      "enterprisePostureAccessControlIncidentsAndPrivileged": "Stan przedsiębiorstwa, kontrola dostępu, incydenty i zarządzanie sesjami uprzywilejowanymi"
+    },
+    "subscriberTokenManagement": {
+      "noDashboardTokensIssuedYetForThis": "Dla tej subskrypcji nie wydano jeszcze żadnych tokenów panelu kontrolnego.",
+      "confirmRevocationThisTokenWillBePermanently": "Potwierdź unieważnienie — ten token zostanie trwale unieważniony."
+    },
+    "superAdminAISettings": {
+      "platformWideAIConfigurationAndConstraints": "Konfiguracja i ograniczenia AI obejmujące całą platformę",
+      "defaultModelAndFallbackChain": "Model domyślny i łańcuch awaryjny",
+      "pIIDetectionAndEncryption": "Wykrywanie i szyfrowanie danych osobowych",
+      "circuitBreakerAndDataResidency": "Wyłącznik automatyczny i miejsce przechowywania danych"
+    },
+    "superAdminStatusIndicators": {
+      "activeNow": "Aktywne teraz",
+      "pendingFeedback": "Oczekuje na opinię",
+      "failedLogins1h": "Nieudane logowanie (1h)",
+      "failedLogins": "Nieudane logowanie"
+    },
+    "superadminRootClosure": {
+      "tenantsAndCustomers": "Najemcy i klienci",
+      "aIAndConnectorPlatformOps": "Operacje na sztucznej inteligencji i platformie łącznikowej"
+    },
+    "invoices": {
+      "draft": "Projekt"
+    },
+    "backupConfig": {
+      "backupsOlderThanThisWillBeDeleted": "Kopie zapasowe starsze niż ta zostaną usunięte",
+      "backupUploadedFilesAndDocuments": "Utwórz kopię zapasową przesłanych plików i dokumentów",
+      "backupActivityAndAuditLogs": "Kopie zapasowe i dzienniki audytu"
+    },
+    "dataExport": {
+      "pending": "Aż do",
+      "failed": "Przegrany"
+    },
+    "webhookDeliveries": {
+      "recentWebhookDeliveriesAndTheirStatus": "Ostatnie dostawy webhooków i ich status"
+    },
+    "webhooks": {
+      "pending": "Aż do"
+    },
+    "iPAccessRules": {
+      "supportsCIDRNotationEG192168": "Obsługuje notację CIDR (np. 192.168.1.0/24) i symbole wieloznaczne"
+    },
+    "loginAttempts": {
+      "failed": "Przegrany"
+    },
+    "securityPolicies": {
+      "sessionsWillBeInvalidatedIfIPOr": "Sesje zostaną unieważnione w przypadku zmiany adresu IP lub urządzenia",
+      "usersMustSetUpMFABeforeAccessing": "Użytkownicy muszą skonfigurować usługę MFA przed uzyskaniem dostępu do platformy",
+      "controlSessionBehaviorAndLimits": "Kontroluj zachowanie sesji i limity",
+      "iPAllowlistIfSetOnlyTheseIPs": "Lista dozwolonych adresów IP (jeśli jest ustawiona, dostęp mają tylko te adresy IP)",
+      "iPBlocklistTheseIPsAreAlwaysBlocked": "Lista blokowanych adresów IP (te adresy IP są zawsze blokowane)",
+      "theseSettingsApplyToAllOrganizationsThat": "Te ustawienia mają zastosowanie do wszystkich organizacji, które nie mają zasad niestandardowych. Organizacje mogą zastąpić te ustawienia własnymi zasadami.",
+      "perOrganizationDataGovernanceRetentionPeriodDays": "Zarządzanie danymi w poszczególnych organizacjach: okres przechowywania (dni), flaga przechowywania danych i region przechowywania danych. Blokada prawna blokuje operacje usuwania/eksportu."
+    },
+    "enterpriseAnalytics": {
+      "monitorSystemPerformanceAndGenerateInsights": "Monitoruj wydajność systemu i generuj spostrzeżenia",
+      "theAnalyticsEndpointDidNotReturnAPI": "Punkt końcowy analizy nie zwrócił danych wykresu API za ten okres.",
+      "theAnalyticsEndpointDidNotReturnAI": "Punkt końcowy analizy nie zwrócił danych wykresu AI za ten okres.",
+      "endpointLevelLatencyTopEndpointsAndError": "Opóźnienie na poziomie punktu końcowego, najważniejsze punkty końcowe i rozkład typów błędów wymagają pól analizy zaplecza, które nie są jeszcze dostępne w tym panelu.",
+      "theExportButtonsCanDownloadTheCurrently": "Przyciski eksportu umożliwiają pobranie aktualnie załadowanej migawki analitycznej, ale przepływ pracy narzędzia do tworzenia raportów niestandardowych nie jest jeszcze połączony z kontrolowanym zapleczem.",
+      "theReportingBackendExposesScheduledReportReads": "Zaplecze raportowania udostępnia tutaj zaplanowane odczyty raportów, ale z tym panelem nie jest jeszcze połączony żaden kontrolowany proces tworzenia/aktualizowania.",
+      "createAScheduledReportToReceiveAutomated": "Utwórz zaplanowany raport, aby otrzymywać automatyczne statystyki"
+    },
+    "enterpriseApiManagement": {
+      "manageAPIKeysViewUsageAnalyticsAnd": "Zarządzaj kluczami API, przeglądaj analizy użytkowania i uzyskuj dostęp do dokumentacji",
+      "aPIKeyCreatedSuccessfully": "Klucz API utworzono pomyślnie",
+      "saveThisKeyNowItWonT": "Zapisz teraz ten klucz – nie będzie on wyświetlany ponownie!",
+      "createYourFirstAPIKeyToGet": "Aby rozpocząć, utwórz swój pierwszy klucz API.",
+      "aPIKeyUsageCannotBeInspectedBecause": "Nie można sprawdzić użycia klucza API, ponieważ lista kluczy API nie została załadowana.",
+      "buildPowerfulIntegrationsWithTheConsultifyREST": "Twórz zaawansowane integracje za pomocą Consultify REST API. Uzyskaj dostęp do projektów, ocen, raportów i nie tylko.",
+      "allAPIRequestsRequireAuthenticationUsingAn": "Wszystkie żądania API wymagają uwierzytelnienia przy użyciu klucza API w nagłówku Authorization.",
+      "aPIRequestsAreRateLimitedBasedOn": "Żądania API są ograniczone szybkością w zależności od konfiguracji klucza."
+    },
+    "enterpriseAuditLog": {
+      "comprehensiveActivityTrackingForComplianceAndSecurity": "Kompleksowe śledzenie aktywności pod kątem zgodności i bezpieczeństwa",
+      "searchByActionResourceUserRequestID": "Szukaj według akcji, zasobu, użytkownika, identyfikatora żądania...",
+      "tryAdjustingYourFiltersToSeeMore": "Spróbuj dostosować filtry, aby zobaczyć więcej aktywności.",
+      "activityTimelineLast7Days": "Oś czasu aktywności (ostatnie 7 dni)"
+    },
+    "enterpriseBackup": {
+      "manageDatabaseBackupsAndDisasterRecoveryProcedures": "Zarządzaj kopiami zapasowymi baz danych i procedurami odzyskiwania po awarii",
+      "createYourFirstBackupToGetStarted": "Aby rozpocząć, utwórz pierwszą kopię zapasową",
+      "retentionEncryptionAndCloudStorageSettingsAre": "Ustawienia przechowywania, szyfrowania i przechowywania w chmurze są wyświetlane jako lokalne ustawienia domyślne do czasu podłączenia punktu końcowego konfiguracji trwałej kopii zapasowej.",
+      "saveSettings": "Zapisz ustawienia",
+      "noVerifiedDisasterRecoveryTestHistoryIs": "Żadna zweryfikowana historia testów odzyskiwania po awarii nie jest dostępna, dopóki cykl życia zadania zaplecza nie zostanie podłączony."
+    },
+    "enterpriseConfiguration": {
+      "manageSystemSettingsAndEnvironmentConfigurations": "Zarządzaj ustawieniami systemu i konfiguracjami środowiska",
+      "sensitiveValueWillBeMasked": "Wartość wrażliwa (będzie maskowana)",
+      "rollbackToThisVersion": "Przywróć tę wersję"
+    },
+    "enterpriseFeatureFlags": {
+      "controlFeatureAvailabilityWithTargetingAB": "Kontroluj dostępność funkcji za pomocą targetowania, testów A/B i procentowego wdrożenia",
+      "createAFlagToControlFeatureAvailability": "Utwórz flagę, aby kontrolować dostępność funkcji za pomocą kierowania, wdrażania i testów A/B."
+    },
+    "enterpriseHealthMonitor": {
+      "configureNotificationChannelsEmailSlackPagerDutyIn": "Skonfiguruj kanały powiadomień (E-mail, Slack, PagerDuty) w ustawieniach Organizacji, aby otrzymywać alerty."
+    },
+    "enterpriseIntegrationsHub": {
+      "connectConsultifyWithYourExistingToolsAnd": "Connect Consultify z istniejącymi narzędziami i przepływami pracy",
+      "browseTheCatalogToAddYourFirst": "Przeglądaj katalog, aby dodać swoją pierwszą integrację.",
+      "syncNow": "Zsynchronizuj teraz",
+      "existingWebhookReadsAreAvailableWhenThe": "Istniejące odczyty elementu webhook są dostępne, gdy zaplecze zwraca dane."
+    },
+    "enterpriseSecurity": {
+      "monitorSecurityEventsManageAccessAndEnsure": "Monitoruj zdarzenia związane z bezpieczeństwem, zarządzaj dostępem i zapewniaj zgodność",
+      "securityEventsWillAppearHereAsThey": "Zdarzenia związane z bezpieczeństwem będą tu wyświetlane po ich wykryciu.",
+      "activeUserSessionsWillAppearHereOnce": "Aktywne sesje użytkowników pojawią się tutaj, gdy ktoś się zaloguje.",
+      "currentlyUsing": "Obecnie używam",
+      "allowlistMode": "tryb listy dozwolonych",
+      "onlyIPsMatchingAllowRulesCanAccess": ". Tylko pasujące adresy IP zezwalają regułom na dostęp do systemu. Reguły Odmowy mają pierwszeństwo przed regułami Zezwalania.",
+      "forwardSecurityEventsToYourSIEMSolution": "Przekazuj zdarzenia związane z bezpieczeństwem do rozwiązania SIEM w celu scentralizowanego monitorowania.",
+      "theUIDescribesSIEMForwardingButThere": "Interfejs użytkownika opisuje przekazywanie SIEM, ale nie ma tu jeszcze podłączonego kontrolowanego przepływu pracy konfiguracji SuperAdmin SIEM."
+    },
+    "aIBudgets": {
+      "thisMonth": "W tym miesiącu",
+      "hardLimitBlockRequestsWhenExceeded": "Twardy limit (blokuj żądania po przekroczeniu)",
+      "notificationsAboutBudgetThresholdsAndAnomalies": "Powiadomienia o progach budżetowych i anomaliach",
+      "alertsWillAppearWhenBudgetsAreAt": "Alerty pojawią się, gdy budżety będą zagrożone",
+      "restrictWhichAIModelsUsersCanAccess": "Ogranicz, do których modeli AI użytkownicy mogą uzyskać dostęp",
+      "allowAccessToThisModel": "Zezwól na dostęp do tego modelu",
+      "manageAISpendingLimitsAndModelAccess": "Zarządzaj limitami wydatków na sztuczną inteligencję i dostępem do modeli"
+    },
+    "aIConfiguration": {
+      "manageAIBehaviorProvidersAndSystemHealth": "Zarządzaj zachowaniem AI, dostawcami i stanem systemu",
+      "defineWhichLLMModelToUseFor": "Zdefiniuj, który model LLM ma być używany dla różnych poziomów złożoności.",
+      "cost30Days": "Koszt (30 dni)",
+      "platformWideAIConfigurationTheseSettingsApply": "Konfiguracja AI na całej platformie. Te ustawienia dotyczą wszystkich organizacji.",
+      "providerFailoverAndCircuitBreakerConfiguration": "Konfiguracja przełączania awaryjnego dostawcy i wyłącznika automatycznego",
+      "tokenAndRateLimitsForTheEntire": "Limity tokenów i stawek dla całej platformy",
+      "pIIDetectionEncryptionAndDataResidency": "Wykrywanie, szyfrowanie i przechowywanie danych umożliwiających identyfikację osób",
+      "trackAllChangesToAISettingsAcross": "Śledź wszystkie zmiany w ustawieniach AI na całej platformie",
+      "loadingGlobalSettings": "Ładowanie ustawień globalnych..."
+    },
+    "aIDevelopment": {
+      "promptLibraryIntelligenceConfigurationExperimentsAndKnowledge": "Biblioteka podpowiedzi, konfiguracja inteligencji, eksperymenty i baza wiedzy"
+    },
+    "aIInfrastructure": {
+      "lLMProvidersModelTiersGlobalSettingsAnd": "Dostawcy LLM, poziomy modeli, ustawienia globalne i monitorowanie stanu"
+    },
+    "aIIntelligence": {
+      "harvardMBAPhDLevelReasoningWith20": "Rozumowanie na poziomie Harvard MBA/PhD z ponad 20-letnim doświadczeniem",
+      "semanticInstructionsThatWorkAcrossAllLanguages": "Instrukcje semantyczne, które działają we wszystkich językach",
+      "rAGWithOrganizationContextKnowledgeBaseAnd": "RAG z kontekstem organizacji, bazą wiedzy i badaniami internetowymi",
+      "aICanNavigateFillFormsAndExecute": "Sztuczna inteligencja może nawigować, wypełniać formularze i wykonywać operacje",
+      "patternExtractionAndPersonalizationFromInteractions": "Ekstrakcja wzorców i personalizacja z interakcji",
+      "chatWithAssistant": "Czatuj z Asystentem",
+      "templateCreationIsManagedThroughTheCanonical": "Tworzeniem szablonów zarządza się poprzez przepływ pracy w kanonicznej bibliotece podpowiedzi.",
+      "thisBuilderViewIsReadOnlyFor": "Ten widok kreatora jest w przypadku szablonów przeznaczony tylko do odczytu, dopóki akcje tworzenia/edycji/testowania nie zostaną połączone z przepływem pracy rejestru kanonicznego monitu.",
+      "loadingTemplates": "Ładowanie szablonów...",
+      "editThisPromptInPromptsLibrary": "Edytuj ten monit w Bibliotece podpowiedzi.",
+      "templateTestingIsUnavailableHereUntilIt": "Testowanie szablonów jest tutaj niedostępne, dopóki nie zostanie połączone z kanonicznym rejestrem podpowiedzi.",
+      "aILearningPatternsQualityMetricsAndPerformance": "Wzorce uczenia się AI, wskaźniki jakości i trendy wydajności",
+      "loadingChart": "Ładowanie wykresu...",
+      "loadingPatterns": "Ładowanie wzorów...",
+      "patternsAreExtractedFromUserInteractionsOver": "Wzorce są wyodrębniane z interakcji użytkowników na przestrzeni czasu",
+      "loadingInteractions": "Ładowanie interakcji..."
+    },
+    "aIOperations": {
+      "missionControlPerformanceMonitoringCostsSLAAnd": "Kontrola misji, monitorowanie wydajności, koszty, SLA i analityka"
+    },
+    "performanceMetrics": {
+      "monitorAISystemPerformanceAndLatencyMetrics": "Monitoruj wskaźniki wydajności i opóźnień systemu AI",
+      "noProviderPerformanceDataForThisPeriod": "Brak danych dotyczących wydajności dostawcy w tym okresie."
+    },
+    "pricingRegistry": {
+      "versionedPriceSnapshotsUsedForCostEstimation": "Wersjonowane migawki cen wykorzystywane do szacowania kosztów i zapewniania spójności historycznej."
+    },
+    "aIGovernance": {
+      "organizationPolicyContextPolicyAndRuntimeGuardrails": "Zasady organizacji, zasady kontekstu i zabezpieczenia środowiska wykonawczego."
+    },
+    "orgAIPolicy": {
+      "enterprisePolicyEnforcementRegionsProviderTypesOrigins": "Egzekwowanie zasad przedsiębiorstwa: regiony, typy dostawców, pochodzenie i klasy danych.",
+      "workflowSaveDraftForEditsSendTo": "Przebieg pracy: zapisz wersję roboczą do edycji, wyślij do recenzji, zatwierdź, a następnie opublikuj na żywo. Funkcja wycofania zawsze przywraca opublikowaną wersję.",
+      "whatChangedInThisPolicyRevision": "Co zmieniło się w tej zmianie zasad?",
+      "defineWhatProvidersRegionsAndDataClasses": "Zdefiniuj dozwolonych dostawców, regiony i klasy danych bez uprzedniej edycji nieprzetworzonego formatu JSON."
+    },
+    "routingRules": {
+      "defineWhichLLMModelToUseFor": "Zdefiniuj, który model LLM ma być używany dla różnych poziomów złożoności.",
+      "suggestionsDerivedFromLiveSignals": "Sugestie (pochodzące z sygnałów na żywo)",
+      "theseAreComputedFromCurrentProvidersHealth": "Są one obliczane na podstawie aktualnych dostawców/zdrowia. Można je przekształcić w utrwalone reguły.",
+      "createFromSuggestion": "Utwórz na podstawie sugestii",
+      "waitTimeBeforeRetryingFailedProvider": "Czas oczekiwania przed ponowną próbą dostawcy, który się nie powiódł",
+      "whatDoesThisRuleDo": "Co robi ta zasada?"
+    },
+    "modelRegistry": {
+      "manageCompareAndTrackAllAIModels": "Zarządzaj, porównuj i śledź wszystkie modele sztucznej inteligencji u dostawców"
+    },
+    "documentsRAG": {
+      "dragDropPDFDOCXXLSXPPTXTXT": "Przeciągnij i upuść PDF, DOCX, XLSX, PPTX, TXT, MD, CSV tutaj lub kliknij, aby wybrać",
+      "filesAreAutomaticallyChunkedEmbeddedAndAdded": "Pliki są automatycznie dzielone na porcje, osadzane i dodawane do magazynu wektorów w celu odzyskania przez sztuczną inteligencję.",
+      "editDocument": "Edytuj dokument",
+      "thisChangeDoesNotExposeAnyDocument": "Zmiana ta nie udostępnia żadnego dokumentu całej organizacji."
+    },
+    "strategicDirections": {
+      "defineStrategicGoalsThatGuideAIBehavior": "Zdefiniuj cele strategiczne, które kierują zachowaniem i rekomendacjami AI",
+      "addFirstDirection": "Dodaj pierwszy kierunek",
+      "explainHowTheAIShouldBehaveOr": "Wyjaśnij, jak sztuczna inteligencja powinna się zachowywać lub jaki powinien być priorytet..."
+    },
+    "marketInbox": {
+      "reviewVendorCatalogChangesBeforeApplyingThem": "Przejrzyj zmiany w katalogu dostawców przed zastosowaniem ich w wybranym rejestrze.",
+      "syncNow": "Zsynchronizuj teraz"
+    },
+    "policyEnforcement": {
+      "loadingPolicyFeedback": "Ładowanie opinii o zasadach...",
+      "domainsWhereDesiredAndAppliedStateDiverge": "Domeny, w których jest to pożądane i stosowane, różnią się stanem.",
+      "trackedModelProvidersWithRuntimeFeedback": "Śledzeni dostawcy modeli z informacjami zwrotnymi w czasie wykonywania.",
+      "connectorRuntimeControlsVisibleFromTheSame": "Elementy sterujące środowiska wykonawczego łącznika widoczne z tej samej płaszczyzny zasad."
+    },
+    "compliance": {
+      "monitorAIComplianceStatusAndDataResidency": "Monitoruj stan zgodności z AI i konfigurację miejsca przechowywania danych"
+    },
+    "aIPlatform": {
+      "lLMConfigurationPromptsExperimentsIntelligenceAndMonitoring": "Konfiguracja LLM, podpowiedzi, eksperymenty, inteligencja i monitorowanie"
+    },
+    "aPIManagement": {
+      "whatWillThisKeyBeUsedFor": "Do czego będzie używany ten klucz?",
+      "copyThisKeyNowYouWonT": "Skopiuj teraz ten klucz. Nie będziesz mógł tego więcej zobaczyć!",
+      "manageAPIKeysAndIntegrations": "Zarządzaj kluczami API i integracjami",
+      "thisWillRevoke": "Spowoduje to unieważnienie",
+      "theSecretCannotBeUsedAfterRevocation": ". Sekretu nie można używać po unieważnieniu."
+    },
+    "billingCenter": {
+      "thisMonth": "W tym miesiącu",
+      "thisMonth2": "W tym miesiącu",
+      "withUsage": "Z użyciem",
+      "leaveEmptyToInheritTheSelectedPlan": "Pozostaw puste, aby odziedziczyć wybrany pakiet planu. Wypełnij dowolne pole, aby przypiąć niestandardowy limit dla tego klienta zarządzanego na podstawie faktury.",
+      "loadingContracts": "Ładowanie umów...",
+      "manageSubscriptionsTokenPricingAndRevenueAnalytics": "Zarządzaj subskrypcjami, cenami tokenów i analizą przychodów"
+    },
+    "complianceCenter": {
+      "pendingDSARs": "Oczekujące DSAR",
+      "frameworkRequirementsAreReadOnlyHerePersisted": "Wymagania ramowe są tutaj dostępne tylko do odczytu. Utrwalone zapisy DSAR, audytu i przetwarzania można edytować za pośrednictwem dedykowanych przepływów.",
+      "pending": "Aż do",
+      "scheduleYourFirstComplianceAudit": "Zaplanuj pierwszy audyt zgodności",
+      "documentYourDataProcessingActivities": "Dokumentuj swoje działania związane z przetwarzaniem danych",
+      "manageRegulatoryComplianceAndAudits": "Zarządzaj zgodnością z przepisami i audytami",
+      "detailsAboutTheRequest": "Szczegóły żądania..."
+    },
+    "configuration": {
+      "platformSettingsBrandingAndLegalDocuments": "Ustawienia platformy, branding i dokumenty prawne"
+    },
+    "content": {
+      "managePlaybooksTemplatesAndContentAssets": "Zarządzaj podręcznikami, szablonami i zasobami treści"
+    },
+    "customRolesBuilder": {
+      "systemRolesCannotBeModified": "Role systemowe nie mogą być modyfikowane",
+      "selectARoleToViewAndEdit": "Wybierz rolę, aby wyświetlić i edytować uprawnienia",
+      "orCreateANewCustomRole": "Lub utwórz nową rolę niestandardową",
+      "allAvailablePermissionsInTheSystem": "Wszystkie dostępne uprawnienia w systemie",
+      "createRoleFromTemplate": "Utwórz rolę z szablonu",
+      "createAndManageRoleBasedAccessControl": "Twórz i zarządzaj kontrolą dostępu opartą na rolach",
+      "failedToLoadCustomRoles": "Nie udało się załadować ról niestandardowych",
+      "whatCanThisRoleDo": "Co może dać ta rola?",
+      "setAsDefaultRoleForNewUsers": "Ustaw jako domyślną rolę dla nowych użytkowników"
+    },
+    "featureUpdatesAdmin": {
+      "manageGlobalAndOrganizationUpdatesSetGovernance": "Zarządzaj aktualizacjami globalnymi i organizacyjnymi, ustalaj zarządzanie i obserwuj wdrażanie.",
+      "draft": "Projekt",
+      "newUpdate": "Nowa aktualizacja",
+      "buildTheMessageTargetTheRightAudience": "Zbuduj przekaz, kieruj reklamy do właściwych odbiorców, a następnie opublikuj je tutaj.",
+      "publishedUpdatesAreReadOnlyArchiveAnd": "Opublikowane aktualizacje są tylko do odczytu. Zarchiwizuj i opublikuj ponownie, jeśli potrzebujesz poprawionej wiadomości.",
+      "whatChangedWhoItIsForWhat": "Co się zmieniło, dla kogo to jest, co teraz zrobić.",
+      "effectiveFrom": "Obowiązuje od",
+      "tryItNow": "Spróbuj teraz",
+      "noUpdatesMatchTheSelectedFilters": "Żadne aktualizacje nie pasują do wybranych filtrów."
+    },
+    "globalSecurityPosture": {
+      "enterpriseEvidenceForPrivilegedSessionsApprovalDebt": "Dowody przedsiębiorstwa dotyczące sesji uprzywilejowanych, długu zatwierdzeń, incydentów, stanu usługi MFA/SSO i promienia wybuchu operatora.",
+      "activeAdminSessionsThatCanReachP33": "Aktywne sesje administracyjne, które mogą osiągnąć P33.",
+      "overallControlPlaneStatusFromTheSystem": "Ogólny stan płaszczyzny kontrolnej z monitora kondycji systemu.",
+      "privilegedActivityIsVisibleThroughAdminSession": "Uprzywilejowana aktywność jest widoczna poprzez statystyki sesji administratora, liczbę audytów i widoki incydentów.",
+      "mFAAndSSOControlsAreSeparatedFrom": "Kontrole MFA i SSO są oddzielone od operacji rozliczeń i pomocy technicznej za pomocą uwierzytelniania opartego na możliwościach.",
+      "securityFailuresRemainFailClosedUnresolvedAudit": "Awarie zabezpieczeń pozostają zamknięte: nierozwiązane problemy z audytem i krytyczne zdarzenia pozostają widoczne w powłoce operatora."
+    },
+    "governance": {
+      "unresolvedAuditItemsAcrossTheOperatorPlane": "Nierozwiązane elementy audytu na płaszczyźnie operatora.",
+      "activePrivilegedSessionsWithVisibleMFAJIT": "Aktywne sesje uprzywilejowane z widoczną postawą MFA/JIT.",
+      "unifiedAuditApprovalExportRetentionAndLegal": "Ujednolicona płaszczyzna audytu, zatwierdzania, eksportu, przechowywania i dowodów prawnych"
+    },
+    "invoiceCenter": {
+      "thisPeriod": "Ten okres",
+      "pending": "Aż do",
+      "draft": "Projekt",
+      "last7Days": "Ostatnie 7 dni",
+      "last30Days": "Ostatnie 30 dni",
+      "last90Days": "Ostatnie 90 dni",
+      "lastYear": "W ubiegłym roku",
+      "configurePerUnitRatesForOverageBilling": "Skonfiguruj stawki jednostkowe dla rozliczeń za nadwyżki, magazynu, tokenów i nie tylko.",
+      "manageInvoicesAndBilling": "Zarządzaj fakturami i rozliczeniami"
+    },
+    "lLMManagement": {
+      "error": "błąd",
+      "failed": "Przegrany",
+      "configureAIProvidersRoutingAndMonitorUsage": "Skonfiguruj dostawców AI, routing i monitoruj wykorzystanie",
+      "configureWhichModelsServeEachPerformanceTier": "Skonfiguruj, które modele obsługują poszczególne warstwy wydajności",
+      "incidentsDerivedFromPeriodicProviderHealthChecks": "Incydenty wynikające z okresowych kontroli stanu dostawcy",
+      "loading": "Załadunek…",
+      "noIncidentDataAvailableYetHealthEvents": "Brak dostępnych danych o zdarzeniach (zdarzenia dotyczące kondycji zaczynają się gromadzić po pewnym czasie działania serwera).",
+      "leaveEmptyToReuseTheSourceProvider": "Pozostaw puste, aby ponownie użyć klucza dostawcy źródłowego, lub wprowadź nowy."
+    },
+    "moduleAccessControl": {
+      "grantAccessPerUserOrWholeOrganization": "Przyznaj dostęp każdemu użytkownikowi lub całej organizacji do programów Wordy, Excele i Prezentacje.",
+      "createUpdateGrant": "Utwórz / zaktualizuj dotację"
+    },
+    "moduleWaitlist": {
+      "searchByNameEmailOrg": "Szukaj według nazwy, adresu e-mail, organizacji..."
+    },
+    "organizationResourceManager": {
+      "pleaseSelectAnOrganizationToManageIts": "Wybierz organizację, która ma zarządzać jej zasobami",
+      "loadingResourceData": "Ładowanie danych zasobów...",
+      "newValue": "Nowa wartość"
+    },
+    "organizations": {
+      "pending": "Aż do",
+      "manageOrganizationsSubscriptionsAndAccessRequests": "Zarządzaj organizacjami, subskrypcjami i żądaniami dostępu",
+      "pendingOrganizationRequests": "Oczekujące żądania organizacji"
+    },
+    "overview": {
+      "systemDashboardAndRealTimeInsights": "Panel systemowy i statystyki w czasie rzeczywistym"
+    },
+    "playbookTemplatesList": {
+      "briefDescriptionOfThisPlaybookTemplate": "Krótki opis tego szablonu podręcznika..."
+    },
+    "presentationBenchmarkTrend": {
+      "noHistoryYetOnlyTheGammaReference": "Nie ma jeszcze historii — renderowana jest tylko linia odniesienia Gamma.",
+      "dimensionMissingFromServerResponse": "Brak wymiaru w odpowiedzi serwera."
+    },
+    "presentationGovernanceAlertSubscriptions": {
+      "verifyYourHMACVerifierWithoutAffectingSubscriptions": "Zweryfikuj weryfikator HMAC bez wpływu na subskrypcje i ścieżkę audytu",
+      "someInputsWereDegraded": "Niektóre dane wejściowe uległy degradacji",
+      "loadingSubscriptions": "Ładowanie subskrypcji…",
+      "thisIsTheOnlyTimeYouWill": "To jedyny raz, kiedy zobaczysz ten sekret. Zapisz go teraz w aplikacji subskrybenta. Panel ościeżnicy zamyka się automatycznie po 60 sekundach.",
+      "rotationImmediatelyInvalidatesThePreviousSecretOutbound": "Obrót natychmiast unieważnia poprzedni sekret. Ruch wychodzący wykorzystuje nowy sekret przy następnej wysyłce.",
+      "iUnderstandThePreviousSecretWillBe": "Rozumiem, że poprzedni sekret zostanie unieważniony.",
+      "firesASyntheticTransitionPayloadSignedWith": "Uruchamia syntetyczny ładunek przejściowy podpisany bieżącym kluczem subskrypcji. Dostawy testowe NIE są rejestrowane w dzienniku kontroli wysyłki.",
+      "generateASigningSecretNextWithoutOne": "Następnie wygenerować sekret podpisu? Bez niego wychodzące webhooki dla tej subskrypcji będą niepodpisane.",
+      "skipForNow": "Pomiń na razie",
+      "thisIsTheOnlyTimeYouWill2": "To jedyny raz, kiedy zobaczysz ten sekret. Zapisz go teraz w aplikacji subskrybenta.",
+      "back": "Z powrotem"
+    },
+    "presentationGovernanceWatchlist": {
+      "clearActiveSavedSearch": "Wyczyść aktywne zapisane wyszukiwanie",
+      "importPresetsFromJSON": "Importuj ustawienia wstępne z JSON",
+      "importPresetsFromAJSONBundle": "Importuj ustawienia wstępne z pakietu JSON",
+      "couldNotImportBundle": "Nie można zaimportować pakietu",
+      "willCreate": "Stworzy",
+      "savesTheCurrentTitleQueryAndActive": "Zapisuje bieżące zapytanie o tytuł i aktywne wybrane filtry.",
+      "loadingWatchlist": "Ładowanie listy obserwowanych…",
+      "someDecksCouldNotBeEvaluated": "Niektórych talii nie udało się ocenić",
+      "readOnlyViewAggregatedFromPerDeck": "Widok tylko do odczytu. Zagregowane na podstawie kart zarządzania dla poszczególnych talii. Surowa zawartość talii i indywidualne bramki jakości nie są tutaj ujawniane."
+    },
+    "presentationOperationsHealth": {
+      "loadingOperationsHealth": "Ładowanie stanu operacji…",
+      "readOnlyViewSLOClassificationIsComputed": "Widok tylko do odczytu. Klasyfikacja SLO jest obliczana po stronie serwera i nie jest przeliczana ponownie w tym interfejsie użytkownika. Odśwież, naciskając",
+      "someInputsWereDegraded": "Niektóre dane wejściowe uległy degradacji"
+    },
+    "presentationTelemetry": {
+      "loadingTelemetry": "Ładowanie danych telemetrycznych…",
+      "countersBelowDefaultToZeroUntilThe": "Liczniki poniżej domyślnie mają wartość zerową do czasu przywrócenia działania zaplecza. Żadne dane nie zostały po cichu sfabrykowane.",
+      "noTelemetryEventsInTheSelectedWindow": "Brak zdarzeń telemetrycznych w wybranym oknie.",
+      "noEventTypesRecordedInThisWindow": "W tym oknie nie są rejestrowane żadne typy zdarzeń.",
+      "readOnlyViewNoCountersAreWritten": "Widok tylko do odczytu. Na tym ekranie nie są zapisywane ani modyfikowane żadne liczniki — odśwież, naciskając"
+    },
+    "presentationTemplateGovernance": {
+      "manageTemplateLifecycleApprovalFlowAndVersion": "Zarządzaj cyklem życia szablonu, przepływem zatwierdzania i pochodzeniem wersji.",
+      "loadingTemplates": "Ładowanie szablonów…",
+      "noTemplatesInThisLifecycleStateFor": "Brak szablonów w tym stanie cyklu życia dla Twojej organizacji.",
+      "loadingGovernanceDetails": "Ładowanie szczegółów zarządzania…",
+      "noGovernanceEventsRecordedForThisTemplate": "Dla tego szablonu nie zarejestrowano jeszcze żadnych zdarzeń związanych z zarządzaniem."
+    },
+    "revenue": {
+      "billingInvoicesPricingSubscriptionsRecognitionForecastsAnd": "Rozliczenia, faktury, ceny, subskrypcje, rozpoznawanie, prognozy i zarządzanie płatnościami"
+    },
+    "sCIMProvisioning": {
+      "tokensForAuthenticatingSCIMRequestsFromYour": "Tokeny do uwierzytelniania żądań SCIM od Twojego dostawcy tożsamości",
+      "copyThisTokenNowItWonT": "Skopiuj teraz ten token. Nie będzie już więcej pokazywany.",
+      "logsWillAppearHereWhenYourIdP": "Dzienniki pojawią się tutaj, gdy Twój dostawca tożsamości zsynchronizuje użytkowników",
+      "resolveConflictsFromDuplicateUsersOrGroups": "Rozwiązuj konflikty ze zduplikowanych użytkowników lub grup podczas synchronizacji SCIM",
+      "failedToLoadSCIMData": "Nie udało się załadować danych SCIM"
+    },
+    "sSOConfiguration": {
+      "thisPanelWritesToTheSSORouter": "Panel ten zapisuje dane do routera SSO używanego przez `/api/sso/oidc/authorize` i `/api/sso/oidc/callback`. Przed wymuszeniem SSO zweryfikuj dostawcę.",
+      "copyTheClientIDAndClientSecret": "Skopiuj poniższy identyfikator klienta i sekret klienta",
+      "onlyUsersFromTheseDomainsCanAuthenticate": "Tylko użytkownicy z tych domen mogą się uwierzytelniać. Pozostaw puste, aby zezwolić na wszystkie domeny.",
+      "thisPanelWritesToTheSSORouter2": "Panel ten zapisuje dane do routera SSO używanego przez `/api/sso/saml/login` i `/api/sso/saml/callback`. Zweryfikuj metadane przed wymuszeniem logowania jednokrotnego.",
+      "routeUsersToTheCorrectOrganizationBased": "Kieruj użytkowników do właściwej organizacji na podstawie ich domeny e-mail"
+    },
+    "subscriptionPlansManager": {
+      "failedToLoadSubscriptionPlansPleaseTry": "Nie udało się wczytać planów subskrypcji. Spróbuj ponownie.",
+      "createNewPlan": "+ Utwórz nowy plan"
+    },
+    "superAdminAIAnalytics": {
+      "monitorAIUsageCostsAndSystemHealth": "Monitoruj wykorzystanie sztucznej inteligencji, koszty i stan systemów we wszystkich organizacjach",
+      "tokensThisMonth": "Tokeny w tym miesiącu"
+    },
+    "superAdminAccessRequests": {
+      "reviewAndApproveRequestsToJoinOrganizations": "Przeglądaj i zatwierdzaj prośby o dołączenie do organizacji",
+      "leaveEmptyWhenApprovingAnOrganizationOnly": "Pozostaw puste podczas zatwierdzania prośby o dostęp tylko do organizacji."
+    },
+    "superAdmin": {
+      "pending": "Aż do",
+      "liveNow": "Na żywo teraz"
+    },
+    "superAdminFeedbackAnalytics": {
+      "spinner": "prządka",
+      "loadingAnalytics": "Ładowanie statystyk…",
+      "created_at": "utworzony_at",
+      "and": "I",
+      "updated_at": "zaktualizowano_at",
+      "forTicketsThatReached": "za bilety, które dotarły",
+      "rESOLVED": "ROZWIĄZANY",
+      "inTheLast30Days": "w ciągu ostatnich 30 dni."
+    },
+    "superAdminFeedback": {
+      "whatChangedInTheWorkflow": "Co się zmieniło w przepływie pracy?"
+    },
+    "superAdminLegal": {
+      "effectiveFrom": "Obowiązuje od"
+    },
+    "superAdminMetrics": {
+      "loadingConversionIntelligence": "Ładowanie analizy konwersji...",
+      "noCriticalWarningsAtThisTime": "W tej chwili nie ma żadnych krytycznych ostrzeżeń."
+    },
+    "superAdminOrgDetails": {
+      "loadingBillingDetails": "Ładowanie szczegółów płatności...",
+      "userManagementIsAvailableInTheUsers": "Zarządzanie użytkownikami jest dostępne w sekcji „Użytkownicy” na pasku bocznym.",
+      "filterByThisOrganizationToManageIts": "Filtruj według tej organizacji, aby zarządzać jej użytkownikami."
+    },
+    "superAdminPlans": {
+      "managePricingTiersAndLimits": "Zarządzaj poziomami cenowymi i limitami"
+    },
+    "superAdminRevenue": {
+      "financialMetricsAndUsageAnalytics": "Wskaźniki finansowe i analizy użytkowania",
+      "thisMonth": "W tym miesiącu",
+      "thisMonth2": "W tym miesiącu",
+      "withUsage": "Z użyciem"
+    },
+    "superAdminSignals": {
+      "loading": "Załadunek…",
+      "systemAlertsClientTicketsAndUserFeedback": "Alerty systemowe, zgłoszenia klientów i opinie użytkowników (nieprzeczytane)"
+    },
+    "system": {
+      "operateIntegrationsPlatformHealthObservabilityAndSystem": "Obsługuj integracje, stan platformy, obserwowalność i konfigurację systemu"
+    },
+    "systemSettings": {
+      "fromEmail": "Z e-maila",
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "thisSurfaceCanInspectSelectedTablesOnly": "Ta powierzchnia może sprawdzać tylko wybrane tabele. Wbudowane zmiany i destrukcyjne działania są tutaj celowo niedostępne.",
+      "directDatabaseAccessIsForDebuggingOnly": "Bezpośredni dostęp do bazy danych służy wyłącznie do debugowania. Zmiany tutaj omijają wszelką weryfikację. Używaj z zachowaniem szczególnej ostrożności.",
+      "searchInCurrentTable": "Szukaj w bieżącej tabeli...",
+      "loadingSettings": "Ładowanie ustawień..."
+    },
+    "tenantCommandCenter": {
+      "singleOperatorLandingForTenantLifecycleCommercial": "Obsługa jednego operatora w odniesieniu do cyklu życia najemcy, stanu komercyjnego, przydziałów, stanu zasad i ryzyka platformy.",
+      "selectATenantToInspectCommercialAnd": "Wybierz najemcę, aby sprawdzić stan handlowy i kwotowy.",
+      "commandSummaryAcrossLifecycleBillingQuotasAI": "Podsumowanie poleceń w całym cyklu życia, rozliczeniach, przydziałach, wykorzystaniu sztucznej inteligencji i zarządzaniu.",
+      "loadingTenantPosture": "Ładowanie stanu najemcy...",
+      "spentThisPeriod": "Spędziłem ten okres",
+      "quotasAndBudgets": "Kwoty i budżety"
+    },
+    "conversationBrowser": {
+      "backToConversations": "Wracając do rozmów",
+      "noMessagesInThisConversation": "Brak wiadomości w tej rozmowie.",
+      "unknown": "Nieznany",
+      "privacyControlsAreAvailableInsideAConversation": "W rozmowie dostępne są opcje kontroli prywatności: zredaguj treść transkrypcji lub całkowicie usuń rozmowę."
+    },
+    "evaluations": {
+      "trackBenchmarkRunsRegressionChecksAndReadiness": "Śledź przebiegi testów porównawczych, kontrole regresji i bramki gotowości przed wydaniem.",
+      "draft": "Projekt",
+      "failed": "Przegrany",
+      "passedAndFailedEvaluationsNowRequireA": "Pozytywne i nieudane oceny wymagają teraz niepustego zbioru danych, niepustych wyników i wyniku."
+    },
+    "knowledgeAssignment": {
+      "assignPillsToTheWorkerEditPill": "Przypisz pigułki pracownikowi, edytuj zawartość i sekcje pigułek oraz monitoruj zasięg produktów.",
+      "showsWhetherTheWorkerHasAtLeast": "Pokazuje, czy pracownik ma przypisaną co najmniej jedną pigułkę dla każdej dostępnej rodziny produktów.",
+      "governWholePillsSelectedSectionsAndFallback": "Zarządzaj całymi pigułkami, wybranymi sekcjami i zachowaniem awaryjnym na pracownika.",
+      "noKnowledgeAssignedYetBootstrapTheDefault": "Nie przypisano jeszcze żadnej wiedzy. Załaduj domyślne pigułki lub dodaj konkretną pigułkę ręcznie.",
+      "createOrUpdateTheWorkerSGoverned": "Utwórz lub zaktualizuj pigułki produktów dla pracowników, w tym zawartość na poziomie sekcji.",
+      "cancelEdit": "Anuluj edycję",
+      "draft": "Projekt",
+      "changeNotesForThisVersion": "Zmień notatki dla tej wersji",
+      "reviewWhichPillsExistWhichProductsThey": "Sprawdź, jakie pigułki istnieją, jakie produkty obejmują i czy są przypisane.",
+      "noKnowledgePillsYetCreateAPill": "Nie ma jeszcze pigułek wiedzy. Utwórz pigułkę lub załaduj domyślny zestaw produktów."
+    },
+    "release": {
+      "createGovernedReleaseEntriesAndActivateA": "Twórz wpisy wersji regulowanych i aktywuj zweryfikowaną wersję roboczą.",
+      "draft": "Projekt",
+      "readyReleasesRequireAnActiveProfileAnd": "„Gotowe” wydania wymagają aktywnego profilu i pozytywnej oceny zawierającej zbiór danych, wyniki i wynik."
+    },
+    "workerAnalytics": {
+      "backendBackedSummaryForTheCurrentPublic": "Podsumowanie wspierane przez backend dla bieżącego publicznego kanału docelowego Anna.",
+      "conversationsPerDayLast30Days": "Rozmowy dziennie (ostatnie 30 dni)"
+    },
+    "workerDetail": {
+      "backToList": "Powrót do listy"
+    },
+    "workerPreview": {
+      "generateARealOperatorPreviewUsingThe": "Wygeneruj podgląd prawdziwego operatora, korzystając z aktywnego profilu pracownika, regulowanej wiedzy i opcjonalnego regulowanego wyszukiwania internetowego.",
+      "noWebCitationsWereUsedInThis": "W tym podglądzie nie wykorzystano żadnych cytatów z Internetu."
+    },
+    "workerProfile": {
+      "draft": "Projekt",
+      "describeTheCommunicationTone": "Opisz ton komunikacji...",
+      "documentTheIntentOfThisWorkerProfile": "Udokumentuj przeznaczenie tej wersji profilu pracownika, kluczowe obszary ryzyka lub uwagi dotyczące wdrożenia...",
+      "savingCreatesANewProfileVersionAnd": "Zapisanie tworzy nową wersję profilu i aktywuje ją."
+    },
+    "workersList": {
+      "createYourFirstVirtualWorkerToGet": "Aby rozpocząć, utwórz pierwszego wirtualnego pracownika.",
+      "createNewVirtualWorker": "Utwórz nowego wirtualnego pracownika"
+    },
+    "index": {
+      "manageAIVirtualEmployeesKnowledgeInstructionsConversations": "Zarządzaj wirtualnymi pracownikami AI — wiedzą, instrukcjami, rozmowami i wydajnością"
+    },
+    "whitelabelStudio": {
+      "thisIsHowYourBrandedInterfaceWill": "Tak będzie wyglądał interfejs Twojej marki.",
+      "heading1TheQuickBrownFox": "Nagłówek 1 - Szybki brązowy lis",
+      "heading2TheQuickBrownFox": "Nagłówek 2 - Szybki brązowy lis",
+      "heading3TheQuickBrownFox": "Nagłówek 3 - Szybki brązowy lis",
+      "bodyTextTheQuickBrownFoxJumps": "Tekst w treści — Szybki brązowy lis przeskakuje leniwego psa. Zapakuj do mojego pudełka pięć tuzinów dzbanków z alkoholem.",
+      "smallTextTheQuickBrownFoxJumps": "Mały tekst - Szybki brązowy lis przeskakuje leniwego psa.",
+      "yourTransformationJourneyStartsHere": "Twoja podróż do transformacji zaczyna się tutaj",
+      "welcomeBackSignInToContinue": "Witamy ponownie! Zaloguj się, aby kontynuować.",
+      "pendingVerification": "Oczekuje na weryfikację",
+      "addTheFollowingDNSRecords": "Dodaj następujące rekordy DNS:",
+      "customizeTheLookAndFeel": "Dostosuj wygląd i styl"
+    },
+    "analyticsModule": {
+      "dashboardsReportsBusinessMetricsAndPredictiveAnalytics": "Pulpity nawigacyjne, raporty, wskaźniki biznesowe i analizy predykcyjne"
+    },
+    "businessMetrics": {
+      "trackAndMonitorKeyPerformanceIndicators": "Śledź i monitoruj kluczowe wskaźniki wydajności",
+      "createYourFirstKPIToStartTracking": "Utwórz swój pierwszy KPI, aby rozpocząć śledzenie wyników biznesowych",
+      "noHistoryDataYetCalculateTheMetric": "Nie ma jeszcze danych historycznych. Oblicz dane, aby rozpocząć śledzenie.",
+      "createNewMetric": "Utwórz nową metrykę",
+      "sUMRevenueCOUNTUsers": "SUM(przychody) / COUNT(użytkownicy)"
+    },
+    "dashboardBuilder": {
+      "createAndCustomizeYourAnalyticsDashboards": "Twórz i dostosowuj pulpity analityczne",
+      "addYourFirstWidget": "Dodaj swój pierwszy widget",
+      "chooseADashboardFromTheListOr": "Aby rozpocząć, wybierz panel kontrolny z listy lub utwórz nowy",
+      "createNewDashboard": "Utwórz nowy pulpit nawigacyjny",
+      "describeYourDashboard": "Opisz swój panel..."
+    },
+    "demoTrialAnalytics": {
+      "noEventsInTheLast30Days": "Brak wydarzeń w ciągu ostatnich 30 dni"
+    },
+    "predictiveAnalytics": {
+      "mLPoweredPredictionsAndForecasting": "Prognozy i prognozowanie oparte na uczeniu maszynowym",
+      "trainModelsUsingLivePlatformDataSubscriptions": "Trenuj modele, korzystając z bieżących danych platformy (subskrypcje, użytkownicy, przychody). Prognozy opierają się na podstawowych obliczeniach statystycznych.",
+      "createYourFirstModel": "Stwórz swój pierwszy model",
+      "lastUpdated": "Ostatnia aktualizacja",
+      "noPredictionsYetTrainTheModelAnd": "Nie ma jeszcze żadnych prognoz. Trenuj model i formułuj prognozy.",
+      "chooseAModelFromTheListOr": "Wybierz model z listy lub utwórz nowy",
+      "createNewModel": "Utwórz nowy model"
+    },
+    "savedReports": {
+      "createScheduleAndExportReports": "Twórz, planuj i eksportuj raporty",
+      "newReport": "Nowy raport",
+      "selectAReport": "Wybierz raport",
+      "chooseAReportFromTheListOr": "Wybierz raport z listy lub utwórz nowy",
+      "createNewReport": "Utwórz nowy raport",
+      "reportName": "Nazwa raportu",
+      "monthlyUsersReport": "Miesięczny raport użytkowników",
+      "describeYourReport": "Opisz swój raport...",
+      "createReport": "Utwórz raport"
+    },
+    "aBTesting": {
+      "manageAIExperimentsAndOptimizePerformance": "Zarządzaj eksperymentami AI i optymalizuj wydajność"
+    },
+    "usageAnalytics": {
+      "comprehensiveInsightsIntoAIUsagePatternsAnd": "Kompleksowy wgląd w wzorce i koszty wykorzystania sztucznej inteligencji",
+      "loading": "Załadunek...",
+      "noUsageTrendDataForThisPeriod": "Brak danych o tendencjach użytkowania w tym okresie",
+      "noModelUsageRecordedInThisPeriod": "W tym okresie nie zarejestrowano żadnego użycia modelu",
+      "noCapabilityUsageRecordedInThisPeriod": "W tym okresie nie zarejestrowano żadnego wykorzystania możliwości"
+    },
+    "aIPerformance": {
+      "realTimePerformanceMetricsAndAnalytics": "Wskaźniki wydajności i analizy w czasie rzeczywistym",
+      "loadingChart": "Ładowanie wykresu..."
+    },
+    "adminKnowledge": {
+      "dragDropPDFTXTMDHereOr": "Przeciągnij i upuść PDF, TXT, MD tutaj lub kliknij, aby wybrać",
+      "filesAreAutomaticallyChunkedEmbeddedAndAdded": "Pliki są automatycznie dzielone na porcje, osadzane i dodawane do magazynu wektorów „Collective Intelligence”.",
+      "deletePendingImplementation": "Usuń (oczekujące na wdrożenie)",
+      "noActiveStrategicDirectionsAddOneTo": "Brak aktywnych kierunków strategicznych. Dodaj jeden, aby kierować sztuczną inteligencją.",
+      "theAIWillAnalyzeRecentUserInteractions": "Sztuczna inteligencja przeanalizuje ostatnie interakcje użytkowników i dziennik opinii, aby zidentyfikować wzorce, prośby o nowe funkcje i luki w wiedzy.",
+      "howWasThisIdeaApplied": "Jak zastosowano ten pomysł?",
+      "editDocument": "Edytuj dokument",
+      "explainHowTheAIShouldBehaveOr": "Wyjaśnij, jak sztuczna inteligencja powinna się zachowywać lub jaki powinien być priorytet..."
+    },
+    "bulkOperations": {
+      "importUsersFromACSVFileDownload": "Importuj użytkowników z pliku CSV. Pobierz nasz szablon dla odpowiedniego formatu.",
+      "matchYourCSVColumnsToTheUser": "Dopasuj kolumny CSV do pól użytkownika. Pola wymagane są oznaczone *.",
+      "back": "Z powrotem",
+      "pleaseWaitWhileWeImportYourUsers": "Poczekaj, aż zaimportujemy Twoich użytkowników. Może to chwilę potrwać.",
+      "importCompletedWithErrors": "Import zakończony z błędami",
+      "selectUsersAndAssignRolesInBulk": "Wybierz użytkowników i przypisz role zbiorczo",
+      "writeYourMessage": "Napisz swoją wiadomość...",
+      "downloadUserActivityReport": "Pobierz raport aktywności użytkownika",
+      "manageUsersAndDataInBulk": "Zbiorczo zarządzaj użytkownikami i danymi"
+    },
+    "promptAssistant": {
+      "askAboutPromptEngineering": "Zapytaj o szybką inżynierię..."
+    },
+    "promptBlockBuilder": {
+      "clickBlocksInTheLibraryToAdd": "Kliknij bloki w bibliotece, aby je dodać"
+    },
+    "promptManagementUI": {
+      "selectAPromptToViewOrEdit": "Wybierz monit do wyświetlenia lub edycji",
+      "createNewPrompt": "Utwórz nowy monit",
+      "briefDescriptionOfThisPrompt": "Krótki opis tego monitu...",
+      "enterTheSystemPrompt": "Wprowadź monit systemowy..."
+    },
+    "promptTestBench": {
+      "runTestsToValidateYourPromptAcross": "Uruchom testy, aby zweryfikować monit w różnych językach"
+    },
+    "sLA": {
+      "serviceLevelAgreementMonitoringAndCompliance": "Monitorowanie i zgodność z umową dotyczącą poziomu usług",
+      "failed": "Przegrany",
+      "loadingChart": "Ładowanie wykresu...",
+      "noSLABreachesRecordedInThisPeriod": "W tym okresie nie zanotowano żadnych naruszeń SLA",
+      "failedRequestsPercentage": "Procent nieudanych żądań"
+    },
+    "v8AdminDiagnostics": {
+      "readOnlyGovernedDiagnosticsForHealthMetrics": "Diagnostyka zarządzana tylko do odczytu pod kątem kondycji, metryk i gotowości w tle.",
+      "loadingV8Diagnostics": "Ładowanie diagnostyki V8...",
+      "integrityAndDomainReadiness": "Integralność i gotowość domenowa"
+    },
+    "contractManagement": {
+      "manageCustomerContractsAndRenewals": "Zarządzaj umowami z klientami i ich odnowieniami",
+      "chooseAContractFromTheListTo": "Wybierz umowę z listy, aby zobaczyć szczegóły"
+    },
+    "customerAnalytics": {
+      "overviewOfCustomerHealthAndEngagement": "Omówienie stanu zdrowia i zaangażowania klientów"
+    },
+    "customerAutomation": {
+      "createYourFirstRule": "Utwórz swoją pierwszą regułę",
+      "defineATriggerAndAnActionConfig": "Zdefiniuj wyzwalacz i akcję. Pola konfiguracyjne akceptują obiekty JSON.",
+      "whatDoesThisRuleDo": "Co robi ta zasada?",
+      "loading": "Załadunek…"
+    },
+    "customerCommunication": {
+      "sendAnnouncementsAndMessagesToCustomers": "Wysyłaj ogłoszenia i wiadomości do klientów",
+      "sendYourFirstMessage": "Wyślij swoją pierwszą wiadomość",
+      "writeYourMessage": "Napisz swoją wiadomość..."
+    },
+    "customerLifecycle": {
+      "trackAndManageCustomerJourneyStages": "Śledź i zarządzaj etapami podróży klienta",
+      "createYourFirstStage": "Stwórz swój pierwszy etap",
+      "fromStageOptional": "Ze sceny (opcjonalnie)",
+      "optionalNotesAboutThisTransition": "Opcjonalne uwagi dotyczące tego przejścia"
+    },
+    "adminAuditLogs": {
+      "fromDate": "Od daty"
+    },
+    "approvalWorkflows": {
+      "pending": "Aż do",
+      "pendingRequests": "Oczekujące żądania",
+      "thisWillDelete": "To zostanie usunięte",
+      "theWorkflowListMustConfirmTheRemoval": ". Lista przepływu pracy musi potwierdzić usunięcie, zanim akcja zostanie uznana za udaną."
+    },
+    "auditEventsViewer": {
+      "unifiedV4AuditTrailAllResourceChanges": "Ujednolicona ścieżka audytu V4 — wszystkie zmiany zasobów na platformie"
+    },
+    "dLP": {
+      "unknown": "Nieznany"
+    },
+    "permissionsMatrix": {
+      "copyAllPermissionsFromOneRoleTo": "Skopiuj wszystkie uprawnienia z jednej roli do drugiej. Spowoduje to zastąpienie uprawnień roli docelowej."
+    },
+    "securityIncidents": {
+      "describeTheSecurityIncident": "Opisz zdarzenie związane z bezpieczeństwem..."
+    },
+    "threatIntelligence": {
+      "unknown": "Nieznany",
+      "describeTheThreat": "Opisz zagrożenie..."
+    },
+    "partnerProgramConfig": {
+      "commissionDiscountAccrualAndPayoutAuthoringIs": "Tworzenie prowizji, rabatów, rozliczeń międzyokresowych i wypłat jest niedostępne w ramach AMD-PRT-ECONOMICS-002. Dane historyczne pozostają dostępne do wglądu.",
+      "saveDiscountSettings": "Zapisz ustawienia rabatów",
+      "lightweightQualificationLeadsSubmittedFromThePublic": "Potencjalni klienci kwalifikacyjni przesłani ze strony rekrutacji publicznej",
+      "reviewAdvancedPartnerCertificationsThatRequireOperator": "Przejrzyj zaawansowane certyfikaty partnerów, które wymagają zgody operatora",
+      "adoptionBlockersAndKnowledgeUsageAcrossThe": "Przyjęcie, blokady i wykorzystanie wiedzy podczas wdrażania partnera",
+      "configurePayoutThresholdsSchedulesAndPaymentMethods": "Skonfiguruj progi wypłat, harmonogramy i metody płatności",
+      "savePayoutSettings": "Zapisz ustawienia wypłat"
+    },
+    "paymentMethods": {
+      "managePaymentMethodsAndHandlePaymentFailures": "Zarządzaj metodami płatności i obsługuj niepowodzenia płatności",
+      "pendingFailures": "Oczekujące awarie"
+    },
+    "pricingPlansAdvanced": {
+      "managePricingTiersAndFeatureAllocations": "Zarządzaj poziomami cenowymi i alokacjami funkcji",
+      "createYourFirstPricingPlanToGet": "Aby rozpocząć, utwórz swój pierwszy plan cenowy"
+    },
+    "revenueForecast": {
+      "generateAndAnalyzeRevenuePredictionsUsingMultiple": "Generuj i analizuj prognozy przychodów przy użyciu wielu metod",
+      "noForecastsGeneratedYetClickGenerateForecast": "Nie wygenerowano jeszcze żadnych prognoz. Kliknij „Generuj prognozę”, aby utworzyć pierwszą prognozę."
+    },
+    "revenueModule": {
+      "comprehensiveRevenueManagementIncludingPricingSubscriptionsRecognition": "Kompleksowe zarządzanie przychodami, w tym ustalanie cen, subskrypcje, rozpoznawanie, prognozowanie i płatności"
+    },
+    "revenueRecognition": {
+      "manageRevenueRecognitionSchedulesAndCompliance": "Zarządzaj harmonogramami uznawania przychodów i zgodnością",
+      "pending": "Aż do",
+      "createRevenueRecognition": "Utwórz rozpoznanie przychodu"
+    },
+    "subscriptionChanges": {
+      "manageSubscriptionUpgradesDowngradesAndCancellations": "Zarządzaj aktualizacjami, obniżkami i anulowaniami subskrypcji",
+      "pending": "Aż do"
+    },
+    "deviceManagement": {
+      "unknown": "Nieznany",
+      "manageAndMonitorUserDevices": "Zarządzaj i monitoruj urządzenia użytkowników",
+      "selectUser": "Wybierz opcję Użytkownik"
+    },
+    "mFA": {
+      "selectUser": "Wybierz opcję Użytkownik",
+      "selectAUserToInspectMFAMethods": "Wybierz użytkownika, aby sprawdzić metody usługi MFA",
+      "loading": "Załadunek..."
+    },
+    "passwordPolicy": {
+      "loading": "Załadunek..."
+    },
+    "securityEvents": {
+      "monitorAndManageSecurityEvents": "Monitoruj i zarządzaj zdarzeniami związanymi z bezpieczeństwem",
+      "failedLogin": "Nieudane logowanie"
+    },
+    "securityModule": {
+      "manageSecuritySettingsIPWhitelistingDevicesMFA": "Zarządzaj ustawieniami zabezpieczeń, białą listą adresów IP, urządzeniami, usługą MFA i monitoruj zdarzenia związane z bezpieczeństwem"
+    },
+    "customerHealth": {
+      "monitorCustomerHealthAndEngagement": "Monitoruj zdrowie i zaangażowanie klientów",
+      "loading": "Załadunek..."
+    },
+    "customerSuccessNotes": {
+      "trackCustomerInteractionsAndSuccessMetrics": "Śledź interakcje z klientami i wskaźniki sukcesu",
+      "loading": "Załadunek...",
+      "writeTheNote": "Napisz notatkę..."
+    },
+    "supportModule": {
+      "manageSupportTicketsCustomerSuccessNotesAnd": "Zarządzaj zgłoszeniami pomocy technicznej, notatkami o sukcesach klientów i kontrolami stanu"
+    },
+    "supportTickets": {
+      "manageAndTrackSupportTickets": "Zarządzaj i śledź zgłoszenia pomocy technicznej",
+      "describeTheIssue": "Opisz problem...",
+      "loadingReplies": "Ładowanie odpowiedzi..."
     }
   },
   "dynamicTabBar": {
@@ -42559,8 +43414,8 @@
   },
   "mindmap": {
     "pracujZAI": {
-      "opisAktywneCentrum": "Propozycje dla aktywnego p\u0142\u00f3tna pojawi\u0105 si\u0119 do zatwierdzenia.",
-      "opisCalyPomysl": "Propozycje dla ca\u0142ego pomys\u0142u pojawi\u0105 si\u0119 do zatwierdzenia."
+      "opisAktywneCentrum": "Propozycje dla aktywnego płótna pojawią się do zatwierdzenia.",
+      "opisCalyPomysl": "Propozycje dla całego pomysłu pojawią się do zatwierdzenia."
     },
     "nodeModel": {
       "myIdea": "Moj pomysl",

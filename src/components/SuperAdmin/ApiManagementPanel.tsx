@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 export const ApiManagementPanel: React.FC = () => {
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,12 +102,12 @@ export const ApiManagementPanel: React.FC = () => {
                   </div>
                   {key.last_used_at && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Last used: {new Date(key.last_used_at).toLocaleString()}
+                      Last used: {new Date(key.last_used_at).toLocaleString(localeListy())}
                     </p>
                   )}
                   {key.expires_at && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Expires: {new Date(key.expires_at).toLocaleString()}
+                      Expires: {new Date(key.expires_at).toLocaleString(localeListy())}
                     </p>
                   )}
                 </div>

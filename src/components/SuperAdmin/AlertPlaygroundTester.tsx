@@ -51,6 +51,7 @@ import {
   verifyPlaygroundInbox,
 } from '../../services/presentationAlertPlayground';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 // 60-second auto-clear matches the secret-reveal contract used by the
 // rotate-secret panel — once the timer fires we drop the secret from
 // memory entirely so it cannot be re-rendered later.
@@ -246,7 +247,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
             Webhook Playground
           </h3>
           <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-            Verify your HMAC verifier without affecting real subscriptions or audit trail.
+            {tlumaczPozaHookiem("superadmin.alertPlaygroundTester.verifyYourHMACVerifierWithoutAffectingReal", "Verify your HMAC verifier without affecting real subscriptions or audit trail.")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -386,7 +387,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
 
         {!dispatchState.plan ? (
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Run step 1 first to populate the inbox request.
+            {tlumaczPozaHookiem("superadmin.alertPlaygroundTester.runStep1FirstToPopulateThe", "Run step 1 first to populate the inbox request.")}
           </p>
         ) : (
           <>
@@ -436,7 +437,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
               </button>
               {!dispatchState.acknowledged && dispatchState.plan.signingSecret && (
                 <span className="text-[11px] text-amber-700 dark:text-amber-300">
-                  Acknowledge the secret reveal in step 1 first.
+                  {tlumaczPozaHookiem("superadmin.alertPlaygroundTester.acknowledgeTheSecretRevealInStep1", "Acknowledge the secret reveal in step 1 first.")}
                 </span>
               )}
               {dispatchState.plan.signingSecret.length === 0 && (
@@ -531,8 +532,7 @@ const DispatchPlanPanel: React.FC<DispatchPlanPanelProps> = ({
               Signing secret (one-time reveal)
             </div>
             <p className="mt-0.5 text-[10px] text-amber-800 dark:text-amber-200">
-              This secret is also fed back into step 2 so you can prove the loop closes. The reveal
-              panel auto-clears in 60 seconds.
+              {tlumaczPozaHookiem("superadmin.alertPlaygroundTester.thisSecretIsAlsoFedBackInto", "This secret is also fed back into step 2 so you can prove the loop closes. The reveal panel auto-clears in 60 seconds.")}
             </p>
           </div>
         </div>
