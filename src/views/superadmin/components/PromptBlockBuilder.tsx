@@ -33,6 +33,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { PromptAssistantApi } from '../../../services/api/promptAssistant.api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface Block {
   code: string;
   name: string;
@@ -367,7 +368,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
               <div className="flex flex-col items-center justify-center h-40 text-slate-600 dark:text-slate-500">
                 <Blocks size={32} className="mb-2 opacity-50" />
                 <p className="text-sm">No blocks selected</p>
-                <p className="text-xs">Click blocks in the library to add them</p>
+                <p className="text-xs">{tlumaczPozaHookiem("superadmin.promptBlockBuilder.clickBlocksInTheLibraryToAdd", "Click blocks in the library to add them")}</p>
               </div>
             ) : (
               selectedBlockDetails.map((block, index) => (

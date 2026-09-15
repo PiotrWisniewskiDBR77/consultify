@@ -25,6 +25,8 @@ import { DOCUMENT_CATEGORIES } from '@/views/vault/vaultDocuments';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type JsonRecord = Record<string, unknown> & {
   data?: JsonRecord | unknown[];
 };
@@ -569,7 +571,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               {c.source || 'Unknown'}
                             </span>
                             <span className="text-xs text-c-text-muted">
-                              {new Date(c.created_at).toLocaleDateString()}
+                              {new Date(c.created_at).toLocaleDateString(localeListy())}
                             </span>
                           </div>
                           {c.status === 'pending' && (
@@ -685,7 +687,7 @@ export const AdminKnowledgeView: React.FC = () => {
                             </span>
                           ) : (
                             <span className="text-c-text-secondary text-sm">
-                              Drag & drop PDF, TXT, MD here or click to select
+                              {tlumaczPozaHookiem("superadmin.adminKnowledge.dragDropPDFTXTMDHereOr", "Drag & drop PDF, TXT, MD here or click to select")}
                             </span>
                           )}
                         </div>
@@ -735,8 +737,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-c-text-muted text-xs mt-2">
-                    Files are automatically chunked, embedded, and added to the "Collective
-                    Intelligence" vector store.
+                    {tlumaczPozaHookiem("superadmin.adminKnowledge.filesAreAutomaticallyChunkedEmbeddedAndAdded", "Files are automatically chunked, embedded, and added to the \"Collective Intelligence\" vector store.")}
                   </p>
                 </form>
 
@@ -781,7 +782,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                   {doc.filename}
                                 </h4>
                                 <p className="text-c-text-muted text-xs">
-                                  {new Date(doc.created_at).toLocaleDateString()}
+                                  {new Date(doc.created_at).toLocaleDateString(localeListy())}
                                 </p>
                                 {doc.category && (
                                   <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-200 rounded">
@@ -819,7 +820,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               </button>
                               <button
                                 className="text-c-text-secondary hover:text-danger-600 transition-colors"
-                                title="Delete (Pending Implementation)"
+                                title={tlumaczPozaHookiem("superadmin.adminKnowledge.deletePendingImplementation", "Delete (Pending Implementation)")}
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -906,7 +907,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       </p>
                       {s.target_date && (
                         <p className="text-xs text-c-text-muted">
-                          Target: {new Date(s.target_date).toLocaleDateString()}
+                          Target: {new Date(s.target_date).toLocaleDateString(localeListy())}
                         </p>
                       )}
                     </div>
@@ -1051,7 +1052,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 {/* Empty State / Add Placeholder */}
                 {strategies.length === 0 && (
                   <div className="col-span-full py-12 text-center text-c-text-muted bg-c-surface-raised border border-dashed border-c-border-subtle rounded-xl">
-                    No active strategic directions. Add one to guide the AI.
+                    {tlumaczPozaHookiem("superadmin.adminKnowledge.noActiveStrategicDirectionsAddOneTo", "No active strategic directions. Add one to guide the AI.")}
                   </div>
                 )}
               </div>
@@ -1068,8 +1069,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     Analyze Global Interactions
                   </h3>
                   <p className="text-c-text-secondary text-sm max-w-md mb-6">
-                    The AI will analyze recent user interactions and feedback log to identify
-                    patterns, feature requests, and knowledge gaps.
+                    {tlumaczPozaHookiem("superadmin.adminKnowledge.theAIWillAnalyzeRecentUserInteractions", "The AI will analyze recent user interactions and feedback log to identify patterns, feature requests, and knowledge gaps.")}
                   </p>
                   <button
                     onClick={generateObservations}
@@ -1299,7 +1299,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <textarea
                   value={linkProjectNotes}
                   onChange={(e) => setLinkProjectNotes(e.target.value)}
-                  placeholder="How was this idea applied?"
+                  placeholder={tlumaczPozaHookiem("superadmin.adminKnowledge.howWasThisIdeaApplied", "How was this idea applied?")}
                   rows={3}
                   className="w-full bg-c-surface border border-c-border-subtle rounded p-3 text-c-text text-sm focus:border-c-focus outline-none transition-colors"
                 />
@@ -1335,7 +1335,7 @@ export const AdminKnowledgeView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-c-text">Edit Document</h2>
+              <h2 className="text-xl font-bold text-c-text">{tlumaczPozaHookiem("superadmin.adminKnowledge.editDocument", "Edit Document")}</h2>
               <button
                 onClick={() => {
                   setEditingDoc(null);
@@ -1536,7 +1536,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     setStrategyForm({ ...strategyForm, description: e.target.value })
                   }
                   className="w-full bg-c-surface border border-c-border-subtle rounded p-3 text-c-text text-sm focus:border-c-focus outline-none transition-colors"
-                  placeholder="Explain how the AI should behave or what it should prioritize..."
+                  placeholder={tlumaczPozaHookiem("superadmin.adminKnowledge.explainHowTheAIShouldBehaveOr", "Explain how the AI should behave or what it should prioritize...")}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

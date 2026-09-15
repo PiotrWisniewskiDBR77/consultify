@@ -12,6 +12,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface CostData {
   totalCost: number;
   currency: string;
@@ -153,7 +154,7 @@ export const AICostDashboard: React.FC = () => {
       change: 0,
       trend: 'neutral',
     },
-    { label: 'Tokens Used', value: totalTokens.toLocaleString(), change: 0, trend: 'neutral' },
+    { label: 'Tokens Used', value: totalTokens.toLocaleString(localeListy()), change: 0, trend: 'neutral' },
     {
       label: 'Avg Cost/Request',
       value: `$${avgCostPerRequest.toFixed(4)}`,
@@ -251,7 +252,7 @@ export const AICostDashboard: React.FC = () => {
                         {provider}
                       </span>
                       <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
-                        {data.tokens.toLocaleString()} tokens
+                        {data.tokens.toLocaleString(localeListy())} tokens
                       </span>
                     </div>
                     <span className="text-green-400 font-semibold">${data.cost.toFixed(2)}</span>

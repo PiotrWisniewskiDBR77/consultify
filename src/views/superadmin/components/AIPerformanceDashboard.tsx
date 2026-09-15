@@ -37,6 +37,7 @@ import { DegradedState } from '../../../components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { formatListNumber, formatListTime } from '../../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface PerformanceMetrics {
   avgResponseTime: number;
   p50ResponseTime: number;
@@ -390,7 +391,7 @@ export function AIPerformanceDashboard() {
             AI Performance Dashboard
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Real-time performance metrics and analytics
+            {tlumaczPozaHookiem("superadmin.aIPerformance.realTimePerformanceMetricsAndAnalytics", "Real-time performance metrics and analytics")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -520,7 +521,7 @@ export function AIPerformanceDashboard() {
               </h3>
               {loading ? (
                 <div className="h-32 flex items-center justify-center text-slate-600 dark:text-slate-400">
-                  Loading chart...
+                  {tlumaczPozaHookiem("superadmin.aIPerformance.loadingChart", "Loading chart...")}
                 </div>
               ) : (
                 <div className="h-32 flex items-end gap-0.5">

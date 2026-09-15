@@ -28,6 +28,8 @@ import { useTranslation } from 'react-i18next';
 
 import { PromptAssistantApi } from '../../../services/api/promptAssistant.api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -320,7 +322,7 @@ How can I help you today?`,
           <div
             className={`text-xs text-slate-600 dark:text-slate-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}
           >
-            {message.timestamp.toLocaleTimeString()}
+            {message.timestamp.toLocaleTimeString(localeListy())}
           </div>
         </div>
       </div>
@@ -430,7 +432,7 @@ How can I help you today?`,
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about prompt engineering..."
+              placeholder={tlumaczPozaHookiem("superadmin.promptAssistant.askAboutPromptEngineering", "Ask about prompt engineering...")}
               className="w-full px-4 py-2.5 pr-12 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
               rows={1}
               style={{ minHeight: '44px', maxHeight: '120px' }}

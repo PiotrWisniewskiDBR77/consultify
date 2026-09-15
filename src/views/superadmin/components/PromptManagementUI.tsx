@@ -44,6 +44,8 @@ import { PromptAssistantPanel } from './PromptAssistantPanel';
 import { PromptBlockBuilder } from './PromptBlockBuilder';
 import { PromptTestBench } from './PromptTestBench';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface PromptTemplate {
   id: string;
   name: string;
@@ -427,7 +429,7 @@ export function PromptManagementUI() {
       return 'Unknown date';
     }
 
-    return date.toLocaleDateString('pl-PL', {
+    return date.toLocaleDateString(localeListy(), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -572,13 +574,13 @@ export function PromptManagementUI() {
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <Wand2 size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Select a prompt to view or edit</p>
+                <p>{tlumaczPozaHookiem("superadmin.promptManagementUI.selectAPromptToViewOrEdit", "Select a prompt to view or edit")}</p>
                 <button
                   onClick={handleCreateNew}
                   className="mt-4 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 transition-colors flex items-center gap-2 mx-auto"
                 >
                   <Plus size={16} />
-                  Create New Prompt
+                  {tlumaczPozaHookiem("superadmin.promptManagementUI.createNewPrompt", "Create New Prompt")}
                 </button>
               </div>
             </div>
@@ -784,7 +786,7 @@ export function PromptManagementUI() {
                         type="text"
                         value={editForm.description || ''}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                        placeholder="Brief description of this prompt..."
+                        placeholder={tlumaczPozaHookiem("superadmin.promptManagementUI.briefDescriptionOfThisPrompt", "Brief description of this prompt...")}
                         className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                       />
                     </div>
@@ -800,7 +802,7 @@ export function PromptManagementUI() {
                           setEditForm({ ...editForm, system_prompt: e.target.value })
                         }
                         rows={8}
-                        placeholder="Enter the system prompt..."
+                        placeholder={tlumaczPozaHookiem("superadmin.promptManagementUI.enterTheSystemPrompt", "Enter the system prompt...")}
                         className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
                       />
                     </div>
