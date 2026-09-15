@@ -66,7 +66,7 @@ describe('Day 274 + A19/A13 — jeden kontrakt listy inicjatyw', () => {
       'REGISTERED_DRAFT'
     );
     expect(
-      resolveInitiativeRegisterLifecycle({ status: 'EXECUTING' } as InitiativeRegisterRow)
+      resolveInitiativeRegisterLifecycle({ status: 'EXECUTING' } as unknown as InitiativeRegisterRow)
     ).toBe('IN_EXECUTION');
   });
 
