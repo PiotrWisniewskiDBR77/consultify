@@ -4504,6 +4504,10 @@
       "whyOnRadar": "Why this is on your radar"
     },
     "manager": "Manager",
+    "approvals": {
+      "overdue": "Overdue",
+      "emptyTitle": "No approvals found"
+    },
     "inbox": {
       "urgency": {
         "critical": "Critical",
@@ -17445,6 +17449,8 @@
       "total": "Items",
       "critical": "Critical",
       "warning": "Warning",
+      "criticalCount": "{{count}} critical",
+      "warningCount": "{{count}} warning",
       "openLane": "Open lane",
       "emptyTitle": "No management lanes"
     },
@@ -17553,6 +17559,11 @@
           "handover": "Handover",
           "signOff": "Sign-off",
           "closure": "Closure"
+        },
+        "derived": {
+          "handover": "Handover: transfer {{name}} deliverables to operations",
+          "signOff": "Sign-off: obtain sponsor acceptance for {{name}}",
+          "closure": "Closure: capture lessons learned & archive {{name}}"
         }
       },
       "addClosureItem": "Add Item",
@@ -17568,6 +17579,8 @@
         "heading": "Plan baseline (rebaseline)",
         "saving": "Saving…",
         "saveCta": "Save baseline",
+        "savedLabel": "Baseline {{timestamp}}",
+        "fallbackLabel": "Baseline",
         "needsProject": "Saving a baseline requires a selected project."
       },
       "benefits": {
@@ -42677,6 +42690,7 @@
       "gotIt": "Got it"
     },
     "enterpriseWizard": {
+      "progress": "Step {{current}} of {{total}}",
       "step1": {
         "intro": "This is the same application path launched from the LP and from the product.",
         "termsTitle": "Program terms",
