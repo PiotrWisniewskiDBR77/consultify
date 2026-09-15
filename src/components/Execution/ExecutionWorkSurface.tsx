@@ -2233,7 +2233,7 @@ export const ExecutionWorkSurface = ({
                       ? [
                           {
                             id: 'update-task',
-                            label: 'Zaktualizuj zadanie',
+                            label: t('execution.work.updateTask', 'Update task'),
                             onClick: openWorkspaceForAction,
                           },
                         ]

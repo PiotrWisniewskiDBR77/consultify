@@ -814,7 +814,7 @@ const buildRaidColumns = (t: (key: string, fallback: string) => string): TableCo
     // potrzebuje ~85 px i ZAWIJAŁO SIĘ na dwie linie (wiersz 65 px zamiast 57).
     // Zmierzone `.local/mierz4.mjs` — defekt widoczny przy JEDNEJ wartości:
     // wiersze bez terminu („—") wyglądały poprawnie i zasłaniały problem.
-    label: t('execution.governance.columns.due', 'Deadline'),
+    label: t('execution.governance.columns.due', 'Due'),
     dataType: 'date',
     sortable: true,
     width: '128px',
@@ -2525,9 +2525,9 @@ export const ExecutionControlSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('execution.governance.columns.due', 'Deadline')}
+              {t('execution.governance.columns.due', 'Due')}
               <input
-                aria-label={t('execution.governance.columns.due', 'Deadline')}
+                aria-label={t('execution.governance.columns.due', 'Due')}
                 type="date"
                 value={newRaid.dueDate}
                 onChange={(event) =>
@@ -2694,14 +2694,14 @@ export const ExecutionControlSurface = ({
                     : row.daysOverdue != null
                       ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'days — change the due date or close the item.')}`
                       : row.rawDueAt
-                        ? t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.')
+                        ? t('execution.decisions.preview.onTime', 'The deadline has not passed yet.')
                         : t('execution.raid.preview.noDue', 'Item has no due date — set one so it can be tracked.')
                   : row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
                     ? t('execution.decisions.preview.resolved', 'The decision has been resolved — this entry cannot be deleted.'
                       )
                     : row.daysOverdue != null
                       ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'days — resolve or escalate.')}`
-                      : t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.'),
+                      : t('execution.decisions.preview.onTime', 'The deadline has not passed yet.'),
             });
             return (
             <StandardPreview
@@ -2792,7 +2792,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'due',
-                          label: t('execution.governance.columns.due', 'Deadline'),
+                          label: t('execution.governance.columns.due', 'Due'),
                           value: row.dueAt,
                         },
                         {
@@ -3345,18 +3345,32 @@ export const ExecutionControlSurface = ({
                       glowa.detailsNote
                     ),
                     properties: [
-                      { id: 'project', label: 'Projekt', value: row.signal.projectId ?? 'UNKNOWN' },
-                      { id: 'fingerprint', label: 'Fingerprint', value: row.signal.fingerprint },
+                      {
+                        id: 'project',
+                        label: t('execution.signals.field.project', 'Project'),
+                        value: row.signal.projectId ?? 'UNKNOWN',
+                      },
+                      {
+                        id: 'fingerprint',
+                        label: t('execution.signals.field.fingerprint', 'Fingerprint'),
+                        value: row.signal.fingerprint,
+                      },
                       {
                         id: 'occurrences',
                         label: t('execution.signals.occurrences', 'Occurrences'),
                         value: String(row.occurrences),
                       },
-                      { id: 'updated', label: 'Aktualizacja', value: row.updatedAt },
+                      {
+                        id: 'updated',
+                        label: t('common.updated', 'Updated'),
+                        value: row.updatedAt,
+                      },
                     ],
                   }}
                   relations={[
-                    { label: `Project ${row.signal.projectId ?? 'UNKNOWN'}` },
+                    {
+                      label: `${t('execution.signals.field.project', 'Project')} ${row.signal.projectId ?? 'UNKNOWN'}`,
+                    },
                     ...Object.entries(row.signal.sourceVersions ?? {}).map(([key, value]) => ({
                       label: `${key} v${value}`,
                     })),
@@ -3487,7 +3501,7 @@ export const ExecutionControlSurface = ({
               onClose={() => setSelectedId(null)}
               meta={glowa.meta}
               details={{
-                label: 'Uzasadnienie i skutek',
+                label: t('execution.intervention.rationaleAndImpact', 'Rationale and impact'),
                 text: zlozProzeBloku3(
                   r.source.hypotheses?.join(', ') || 'UNKNOWN',
                   glowa.detailsNote
@@ -3503,11 +3517,15 @@ export const ExecutionControlSurface = ({
                     label: t('execution.intervention.approver', 'Approver'),
                     value: r.authority || 'UNKNOWN',
                   },
-                  { id: 'sla', label: 'Termin weryfikacji', value: r.slaAt || 'UNKNOWN' },
+                  {
+                    id: 'sla',
+                    label: t('execution.intervention.field.sla', 'Decision deadline'),
+                    value: r.slaAt || 'UNKNOWN',
+                  },
                   {
                     id: 'unknowns',
-                    label: 'Niewiadome',
-                    value: r.source.unknowns?.join(', ') || 'Brak',
+                    label: t('execution.intervention.field.unknowns', 'Unknowns'),
+                    value: r.source.unknowns?.join(', ') || t('common.noneValue', 'None'),
                   },
                 ],
               }}
@@ -3981,7 +3999,7 @@ export const ExecutionControlSurface = ({
                 type="date"
                 autoFocus
                 data-testid="execution-raid-edit-input"
-                aria-label={t('execution.governance.columns.due', 'Deadline')}
+                aria-label={t('execution.governance.columns.due', 'Due')}
                 value={raidEdit.wartosc}
                 onChange={(event) =>
                   setRaidEdit((current) =>
