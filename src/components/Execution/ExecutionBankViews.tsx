@@ -576,8 +576,38 @@ const BankTable = ({
         },
       },
       {
+        /*
+         * F12 (2026-09-15) — KOLUMNA POZA EKRANEM, NIE „UCIĘTY NAGŁÓWEK".
+         *
+         * Skarga z odbioru 15.09 brzmiała „nagłówek VARIAN ucięty". POMIAR
+         * (staging, Northwind, `pomiar/overflow-1440.json`) pokazał co innego:
+         * żaden nagłówek nie jest przycięty w swojej komórce — to TABELA
+         * (`table-fixed`, 1818 px) jest szersza od obszaru (1280 px przy oknie
+         * 1440), więc ogon kolumn stoi za prawą krawędzią, a „VARIANCE" jest
+         * ostatnim napisem, który krawędź przecina w połowie.
+         *
+         * Podłogi kanonu JUŻ działają — zmierzone szerokości (300/160/145/150/
+         * 96/133/139/110/160/95/140/110 + 80) to DOKŁADNIE podłogi dopasowania
+         * `getColumnFitFloor`. Ich obniżanie zostało zmierzone i odrzucone przy
+         * K5-7 (nagłówki łamią się co cztery litery). Suma podłóg trzynastu
+         * kolumn = 1818 px, czyli bank nie mieści się NIGDY — nawet przy 1920.
+         * Jedynym lewarem jest więc liczba kolumn domyślnie widocznych, i tak
+         * też przewidział to autor K5 („które kolumny są zbędne, to decyzja
+         * właściciela — pstryczek kolumn").
+         *
+         * DECYZJA F12: cztery kolumny schodzą do pstryczka (`defaultVisible:
+         * false`), pozostają w tabeli i w podglądzie na jedno kliknięcie.
+         * Wybrane NIE po oku, tylko po zmierzonej zawartości na żywo:
+         * `health`, `blockerCount` i `nextAction` są „—" dla WSZYSTKICH czterech
+         * spraw w realizacji (serwer nie oddaje tych pól w `execution-cases`),
+         * a `updatedAt` powtarza datę przekazania widoczną w podglądzie.
+         * Zostaje osiem kolumn danych o sumie podłóg 1020 px + 80 px kolumny
+         * akcji = 1100 px, czyli mieści się także przy oknie 1280 px
+         * (obszar ≈1120 px). Strażnik: `ExecutionBankViews.columnFit.test.tsx`.
+         */
         id: 'health',
         label: t('execution.bank.column.health', 'Health'),
+        defaultVisible: false,
         // Chip „At risk"/„On track" — ta sama podłoga co Lifecycle.
         dataType: 'status',
         width: '130px',
@@ -597,6 +627,7 @@ const BankTable = ({
       {
         id: 'blockerCount',
         label: t('execution.bank.column.blockers', 'Blockers'),
+        defaultVisible: false,
         dataType: 'number',
         align: 'right',
         width: '95px',
@@ -630,6 +661,7 @@ const BankTable = ({
       {
         id: 'nextAction',
         label: t('execution.bank.column.nextAction', 'Next action'),
+        defaultVisible: false,
         dataType: 'text',
         width: '160px',
         render: (source) => (
@@ -642,6 +674,7 @@ const BankTable = ({
         // mieszkają w strukturalnej kolumnie kebaba. Napis kosztował 160 px
         // podłogi (jądro mierzy nagłówek) zamiast 110 px podłogi typu `date`.
         label: t('execution.bank.column.updated', 'Updated'),
+        defaultVisible: false,
         dataType: 'date',
         align: 'right',
         width: '160px',
