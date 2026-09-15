@@ -10043,7 +10043,7 @@
       "nameTooLong": "Nazwa oceny może mieć maksymalnie 160 znaków",
       "descriptionPlaceholder": "Opisz zakres i cele tej oceny…",
       "descriptionHint": "Opcjonalny kontekst dla tej oceny",
-      "canonicalLabel": "Kanoniczna etykieta sesji zostanie nadana z identyfikatora Method Core.",
+      "canonicalLabel": "Ta nazwa zostanie zapisana z sesją Method Core.",
       "back": "Wstecz",
       "selectFramework": "Wybierz model",
       "newAssessment": "Nowa ocena",

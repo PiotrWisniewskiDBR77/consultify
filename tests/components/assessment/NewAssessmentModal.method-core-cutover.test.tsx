@@ -30,6 +30,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
   it('creates DRD through Method Core, verifies canonical readback, and never calls legacy create', async () => {
     const session = {
       id: 'method-session-1',
+      name: 'Northwind DRD 2026',
       module: 'assessment',
       methodPackId: 'drd',
       methodPackVersion: '2.0.0-methodpack.1',
@@ -42,6 +43,9 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
     render(<NewAssessmentModal isOpen onClose={vi.fn()} onSuccess={onSuccess} />);
     fireEvent.click(screen.getByRole('button', { name: /Digital Readiness Diagnosis/i }));
     expect(screen.getByLabelText('Assessment name')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Assessment name'), {
+      target: { value: 'Northwind DRD 2026' },
+    });
     expect(screen.queryByLabelText(/Description/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Start DRD session' }));
 
@@ -52,7 +56,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
         methodPackId: 'drd',
         mode: 'guided_manual',
         projectId: 'project-1',
-        name: expect.stringMatching(/^DRD Assessment - /),
+        name: 'Northwind DRD 2026',
       }),
       'idem-drd-1'
     );
@@ -61,7 +65,7 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
     expect(onSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'method-session-1',
-        name: expect.stringMatching(/^DRD Assessment - /),
+        name: 'Northwind DRD 2026',
         assessmentType: 'DRD',
       })
     );
