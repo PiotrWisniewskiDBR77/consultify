@@ -1,34 +1,54 @@
 {
   "schema": "consultify-freeze-v1",
-  "package": "K1-fix-W77",
-  "verdict": "E1_GREEN_STOP_REVIEW",
+  "package": "K1-fix-W77-review-fix",
+  "verdict": "P1_COMPLETE_E1_HOLD_INHERITED_TSC",
   "exactBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
-  "contentSha": "e75274e6fb50e371e7a0858bf52a35d4ea4a8117",
+  "contentSha": "b77ac062ed6ffe4325913460be291fe76dad1296",
   "branch": "codex/a-k1-fix-20260915",
   "measurements": {
-    "K4en": 4632,
+    "K4en": 4626,
     "K5en": 7164,
-    "K8sen": 2487
+    "K8sen": 2487,
+    "jMale": {
+      "organization": 2,
+      "results": 65,
+      "meeting": 0,
+      "interview": 19,
+      "audits": 4,
+      "initiatives": 128,
+      "execution": 138
+    }
   },
   "tests": {
     "helperFalsePositive": "12/12",
     "chat": "5/5",
-    "meter": "249/249",
+    "meter": "252/252",
     "jMale": "14/14"
   },
   "gates": {
-    "serverTscErrors": 0,
-    "frontTscErrors": 177,
-    "frontCeiling": 177,
+    "serverTsc": {
+      "status": "HOLD",
+      "errors": 27,
+      "sourceDiff": 0
+    },
+    "frontTsc": {
+      "status": "HOLD",
+      "errors": 194,
+      "requiredCeiling": 177,
+      "sourceDiff": 0
+    },
     "language": "GREEN",
     "canon": "GREEN",
     "artifact": "GREEN",
     "build": "GREEN",
-    "diffCheck": "GREEN",
-    "newFailureNames": 0
+    "diffCheck": "GREEN"
   },
   "forbiddenFilesChanged": 0,
   "migrations": 0,
+  "inventoryExcludes": [
+    "receipt",
+    "freeze-self"
+  ],
   "inventory": [
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73.md",
@@ -40,11 +60,11 @@
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K1_FIX_W77_JMALE_SAMPLE.json",
-      "sha256": "50189e07d9aa0bc14650014deed001bc5f06a195145ba9b3b9db79e409f6483b"
+      "sha256": "d9f71845a9c9e626bfe0b8d5788666326dcd4ccb4a099dad3c3e865a276dbcc2"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
-      "sha256": "98ab6bc3ca4f2a7b28b37b25c4b4686547959ac8fabe87e0b6b2086217733ad5"
+      "sha256": "25a6d66f4a6fe22482dd8f9c6da6fcae78d4ddf631e1a9443b78392443fd8c02"
     },
     {
       "path": "docs/ui-standards/MAPA_JEZYKA.md",
@@ -52,15 +72,15 @@
     },
     {
       "path": "scripts/i18n/__tests__/jezykJmaleModuly.test.mjs",
-      "sha256": "73eb80421278986d3907926719dbe3039c463f428d28a1c615499f8184d57d80"
+      "sha256": "ad815ff1843b8f5ff4413bb0b82537838d05f3c316928c1d15d65ca5eee76204"
     },
     {
       "path": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
-      "sha256": "52666e594dd103fa9f6d7c4745f5d0db145ebf01c0dc12177dfaf5da70d53c35"
+      "sha256": "cb34a40b956ec209d40bafbd2d854f9dd2392679b45c94d3bbb426d9fc724aa0"
     },
     {
       "path": "scripts/i18n/pomiar-jezyka.mjs",
-      "sha256": "bbd9d83e26e211a7a948d97f93cc4f329823cd770eb3b68441fa9b15ff7e60cd"
+      "sha256": "902159904ffade8f1408763400a7c8e3a372e353f4f762e2dcda31b7cad7cf69"
     },
     {
       "path": "scripts/i18n/pomiar-jezyka.wyjatki.json",

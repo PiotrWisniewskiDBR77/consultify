@@ -1,65 +1,53 @@
-# K1-fix W77 — receipt E1
+# K1-fix W77 — receipt po review
 
-**Werdykt autorski: E1 GREEN, STOP do niezależnego review.** Paczka naprawia trzy P1 z Wpisu 77 bez zmian w kodzie produktu i bez dotykania plików zabronionych.
+**Werdykt autorski: P1×2 ZAMKNIĘTE, E1 HOLD na odziedziczonych bramkach TypeScript; STOP do decyzji CTO/review.** Nie ma zmian w kodzie produktu, serwera, zależnościach ani migracjach.
 
 - Exact base: `dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe`.
-- Odtworzony kandydat K1: cztery commity treści z `775947993ef96b1fcbd4e96fa725a48bae9dc7b3`, przeniesione na exact base.
-- Content SHA po naprawie: `e75274e6fb50e371e7a0858bf52a35d4ea4a8117`.
-- Gałąź: `codex/a-k1-fix-20260915`.
+- Content SHA po poprawce review: `b77ac062ed6ffe4325913460be291fe76dad1296`.
+- Branch: `codex/a-k1-fix-20260915`.
 - Backup: `origin/backup/codex/a-k1-fix-20260915`.
 
-## P1. Wspólny detektor
+## Poprawka P1-1 — realne kształty kodu
 
-Helper korzysta z tego samego progu tokenu `>=2`, nazw własnych, fraz własnych i `pomijaneWartosci` co skaner. Nie zmieniono `jezykCzatu.source.test.ts`.
+Pełny i szybki skan korzystają z tego samego `wartoscTechniczna()`. Regresje używają dokładnych fragmentów źródłowych:
 
-- regresja 12 wskazanych false positives: **12/12 GREEN**;
-- dodatni kontrolny tekst PL bez ogonków: **1/1 GREEN**;
-- `jezykCzatu.source.test.ts`: **5/5 GREEN**.
+- `InterviewWorkspace.tsx:135`: generyczna sygnatura `async <T,>(..., message: string): Promise<T>` — pominięta;
+- `ExecutionHub.tsx:4827`: literał `ragLogic` przecięty przez operatory `>0` i `<5%` — pominięty;
+- ręczny audyt ujawnił także przecięcie typu `Partial<T> & Pick<U>` — pominięte.
 
-## P2. J-małe na linii
+Miernik E2f-bis: **252/252 GREEN**, w tym osobne K4en/K5en/K8sen 30 trafień + 30 pominięć oraz dokładne regresje źródłowe.
 
-Progi są jawne i nie maskują wzrostu (`<=` dla bieżącego stanu, baseline wymaga dokładnej zgodności). Trafienia są długiem realnego angielskiego UI. Próbka w `K1_FIX_W77_JMALE_SAMPLE.json` przechowuje do 10 trafień na moduł; gdy mianownik jest mniejszy, przechowuje cały mianownik.
+## Poprawka P1-2 — ręczna klasyfikacja próbki
 
-| Moduł | K4en | Próbka |
-|---|---:|---:|
-| 13 Organization | 2 | 2/2 |
-| 08 Results | 65 | 10/65 |
-| 12 Meeting | 0 | 0/0 |
-| 03 Interview | 21 | 10/21 |
-| 11 Audits | 4 | 4/4 |
-| 06 Initiatives | 128 | 10/128 |
-| 07 Execution | 139 | 10/139 |
+Próbka została wygenerowana ponownie z nowego pełnego reportu, a następnie każda pozycja została sprawdzona w źródle. Test nie ufa już samej deklaracji `classification`: wymaga obecności tekstu w source window, `wartoscTechniczna=false` i realnego dowodu `wykryjAngielski`. JSON zawiera krótkie uzasadnienie osobno dla każdego modułu.
 
-Bramka J-małe: **14/14 GREEN**.
+| Moduł | K4en | Próbka | Uzasadnienie |
+|---|---:|---:|---|
+| 13 Organization | 2 | 2/2 | renderowane opcje ról Member/Viewer |
+| 08 Results | 65 | 10/65 | akcje, etykiety i placeholdery Benefits |
+| 12 Meeting | 0 | 0/0 | pełny mianownik wynosi zero |
+| 03 Interview | 19 | 10/19 | nagłówki, statystyki i empty state; sygnatury usunięte |
+| 11 Audits | 4 | 4/4 | nagłówki i opisy prototypu DRD |
+| 06 Initiatives | 128 | 10/128 | akcje, etykiety kart i placeholdery |
+| 07 Execution | 138 | 10/138 | nagłówki raportów i ekran pilota; ragLogic usunięty |
 
-## P3. Precyzja wszystkich kubełków
+J-małe: **14/14 GREEN**. Końcowy pełny pomiar: K4en `4626`, K5en `7164`, K8sen `2487`.
 
-`wartoscTechniczna()` jest stosowana w K4en, K5en i K8sen, zarówno w skanie pełnym, jak i szybkim. Wieloliniowe literały i tablice/wyrażenia JS nie są zaliczane jako UI.
-
-- K4en: **30/30 realnych trafień + 30/30 pominięć technicznych**;
-- K5en: **30/30 + 30/30**;
-- K8sen: **30/30 + 30/30**;
-- regresja kodu wieloliniowego/tablic: **3/3 pominięcia**;
-- pełny miernik E2f-bis: **249/249 GREEN**.
-
-Końcowy pełny pomiar: K4en `4632`, K5en `7164`, K8sen `2487`. Wskazane false positives `CompetencyCatalog.tsx:14` i `OrganizationAdminPanel.tsx:542` nie występują w raporcie. Pozostałe trafienia są zachowane jako dług zamiast ukryte przez wyjątki.
-
-## Porównanie nazw porażek
-
-Na exact base oba bezpośrednio dotknięte zestawy były zielone (`jezykCzatu` 5/5, J-małe 8/8), więc zbiór nazw porażek wynosił `∅`. Po odtworzeniu odrzuconego K1 pojawiło się osiem nazw: jedna bramka Czat, sześć progów modułowych oraz baseline J-małe. Po naprawie oba zestawy są zielone; **nowe nazwy względem exact base: 0**. Znane sześć porażek `PromptRegistryTab.honesty.test.tsx` pozostaje długiem exact base z W77 i nie jest w zakresie ani w diffie tej paczki.
-
-## Bramki
+## Pozostałe testy i bramki
 
 | Bramka | Wynik |
 |---|---|
-| server TypeScript | `0` błędów, exit 0 |
-| front TypeScript | `177` błędów, próg W77 `<=177` |
+| helper false positives | 12/12 GREEN + dodatni kontrolny PL |
+| `jezykCzatu.source` | 5/5 GREEN |
+| E2f-bis | 252/252 GREEN |
+| J-małe | 14/14 GREEN |
 | `check:jezyk:ci` | GREEN |
-| `check:list-canon --all` | GREEN, 349 = baseline 349 |
-| `check:artefakt` | GREEN, 8 = baseline 8 |
-| build sekwencyjny | GREEN, Vite `built in 39.48s` |
-| `git diff --check dcbd6c052a..HEAD` | GREEN |
-| pliki zabronione | 0 zmian |
-| migracje | 0 |
+| `check:list-canon --all` | GREEN, 349 = baseline |
+| `check:artefakt` | GREEN, 8 = baseline |
+| build sekwencyjny | GREEN, Vite `built in 44.69s` |
+| pełny diff-check | GREEN |
+| forbidden files / migrations | 0 / 0 |
+| server TypeScript | **HOLD: 27 odziedziczonych błędów Express typings** |
+| front TypeScript | **HOLD: 194 przy wymaganym limicie 177** |
 
-Build zgłosił istniejące ostrzeżenia CSS/chunk-size, ale zakończył się powodzeniem. Front TSC zachował dopuszczony dług linii i nie jest deklarowany jako czysty.
+Bieżący wynik frontu 194 jest identyczny z równoległym pomiarem M2 na tym samym współdzielonym toolchainie. Wcześniejszy pomiar 177 i cache-hit server 0 nie odtwarzają się po odświeżeniu cache: dwa kolejne uruchomienia serwera dały 27. `git diff dcbd6c052a..HEAD` nie zawiera plików `src/**`, `server/**`, `package.json` ani `package-lock.json`, więc paczka K1 nie wprowadziła tych nazw porażek. Nie zmieniono zakresu, aby sztucznie zazielenić bramkę.
