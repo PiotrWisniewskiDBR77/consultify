@@ -571,7 +571,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         ],
         render: (row: TableRow) => {
           const org = row as unknown as Organization;
-          const organizationStatus = String(org.status);
           const isEditing = editingOrgId === org.id;
           return isEditing ? (
             <select
@@ -613,6 +612,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         ],
         render: (row: TableRow) => {
           const org = row as unknown as Organization;
+          const organizationStatus = String(org.status);
           const isEditing = editingOrgId === org.id;
           return isEditing ? (
             <select
