@@ -8,6 +8,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 export const SecurityPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'events' | 'compliance'>('events');
   const [events, setEvents] = useState<any[]>([]);
@@ -62,7 +64,7 @@ export const SecurityPanel: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-c-text mb-2">Security & Compliance</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Monitor security events and compliance status
+            {tlumaczPozaHookiem("superadmin.security.monitorSecurityEventsAndComplianceStatus", "Monitor security events and compliance status")}
           </p>
         </div>
       </div>
@@ -148,7 +150,7 @@ export const SecurityPanel: React.FC = () => {
                         )}
                       </div>
                       <p className="text-sm text-slate-400 dark:text-slate-500">
-                        {new Date(event.created_at).toLocaleString()}
+                        {new Date(event.created_at).toLocaleString(localeListy())}
                       </p>
                     </div>
                     {!event.resolved && (

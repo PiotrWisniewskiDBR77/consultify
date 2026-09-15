@@ -16,6 +16,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentComment } from '../../types';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface PlaybookTemplateCommentsProps {
   templateId: string;
   onCommentCountChange?: (count: number) => void;
@@ -215,7 +217,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                 )}
               </div>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {new Date(comment.createdAt).toLocaleString()}
+                {new Date(comment.createdAt).toLocaleString(localeListy())}
               </span>
             </div>
           </div>
@@ -396,7 +398,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
           <MessageSquare className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-slate-600 dark:text-slate-500">No comments yet</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Be the first to leave a comment
+            {tlumaczPozaHookiem("superadmin.playbookTemplateComments.beTheFirstToLeaveAComment", "Be the first to leave a comment")}
           </p>
         </div>
       ) : (

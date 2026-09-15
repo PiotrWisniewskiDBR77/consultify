@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { ContentReview, ContentReviewPriority, ContentReviewStatus } from '../../types';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface PlaybookTemplateReviewsProps {
   templateId: string;
   templateVersion: number;
@@ -459,7 +460,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                           ? `${review.requester.firstName} ${review.requester.lastName}`
                           : 'Unknown'}
                         {' · '}
-                        {new Date(review.requestedAt).toLocaleDateString()}
+                        {new Date(review.requestedAt).toLocaleDateString(localeListy())}
                       </div>
                     </div>
                   </div>
@@ -489,7 +490,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                           <div>
                             <span className="text-slate-600 dark:text-slate-500">Due:</span>{' '}
                             <span className="text-c-text">
-                              {new Date(review.dueDate).toLocaleDateString()}
+                              {new Date(review.dueDate).toLocaleDateString(localeListy())}
                             </span>
                           </div>
                         )}
@@ -497,7 +498,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                           <div>
                             <span className="text-slate-600 dark:text-slate-500">Reviewed:</span>{' '}
                             <span className="text-c-text">
-                              {new Date(review.reviewedAt).toLocaleDateString()}
+                              {new Date(review.reviewedAt).toLocaleDateString(localeListy())}
                             </span>
                           </div>
                         )}
