@@ -40,6 +40,7 @@ import {
   type PresentationTelemetryRollup,
 } from '../../services/presentationTelemetry';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const WINDOW_OPTIONS: number[] = [1, 7, 14, 30, 90];
 const DEFAULT_WINDOW_DAYS = 7;
 
@@ -455,7 +456,7 @@ function renderBody(props: BodyProps): React.ReactElement {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <Loader2 size={16} className="animate-spin text-indigo-500" />
-        Loading telemetry…
+        {tlumaczPozaHookiem("superadmin.presentationTelemetry.loadingTelemetry", "Loading telemetry…")}
       </div>
     );
   }
@@ -494,8 +495,7 @@ function renderBody(props: BodyProps): React.ReactElement {
               Telemetry unavailable: {rollup.reason || 'unknown'}. Working in degraded mode.
             </div>
             <div className="mt-1 text-xs opacity-80">
-              Counters below default to zero until the backend recovers. No data has been silently
-              fabricated.
+              {tlumaczPozaHookiem("superadmin.presentationTelemetry.countersBelowDefaultToZeroUntilThe", "Counters below default to zero until the backend recovers. No data has been silently fabricated.")}
             </div>
           </div>
         </div>
@@ -503,7 +503,7 @@ function renderBody(props: BodyProps): React.ReactElement {
 
       {!isDegraded && isEmpty ? (
         <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-          No telemetry events in the selected window.
+          {tlumaczPozaHookiem("superadmin.presentationTelemetry.noTelemetryEventsInTheSelectedWindow", "No telemetry events in the selected window.")}
         </div>
       ) : (
         <>
@@ -538,7 +538,7 @@ function renderBody(props: BodyProps): React.ReactElement {
             </div>
             {sortedByEventType.length === 0 ? (
               <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
-                No event types recorded in this window.
+                {tlumaczPozaHookiem("superadmin.presentationTelemetry.noEventTypesRecordedInThisWindow", "No event types recorded in this window.")}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -603,8 +603,7 @@ function renderBody(props: BodyProps): React.ReactElement {
           </div>
 
           <p className="text-[11px] text-slate-500 dark:text-slate-500">
-            Read-only view. No counters are written or modified from this screen — refresh by
-            pressing <span className="font-semibold">Load</span>.
+            {tlumaczPozaHookiem("superadmin.presentationTelemetry.readOnlyViewNoCountersAreWritten", "Read-only view. No counters are written or modified from this screen — refresh by pressing")} <span className="font-semibold">Load</span>.
           </p>
         </>
       )}

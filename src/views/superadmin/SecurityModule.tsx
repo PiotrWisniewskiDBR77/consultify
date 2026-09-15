@@ -54,6 +54,7 @@ import SCIMProvisioningView from './SCIMProvisioningView';
 import { SecurityPoliciesView } from './SecurityPoliciesView';
 import { SSOConfigurationView } from './SSOConfigurationView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SecurityModuleProps {
   initialTab?: string;
 }
@@ -228,7 +229,7 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Security"
-      subtitle="Enterprise posture, access control, incidents, and privileged session governance"
+      subtitle={tlumaczPozaHookiem("superadmin.security.enterprisePostureAccessControlIncidentsAndPrivileged", "Enterprise posture, access control, incidents, and privileged session governance")}
       actions={<InfoButton cardId={TAB_HELP_CARDS[activeTab] || 'superadmin-security'} />}
     >
       {renderContent()}

@@ -33,6 +33,7 @@ import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SCIMToken {
   id: string;
   name: string;
@@ -569,7 +570,7 @@ const SCIMProvisioningView: React.FC = () => {
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">SCIM API Tokens</h3>
           <p className="text-sm text-slate-600 dark:text-gray-400">
-            Tokens for authenticating SCIM requests from your IdP
+            {tlumaczPozaHookiem("superadmin.sCIMProvisioning.tokensForAuthenticatingSCIMRequestsFromYour", "Tokens for authenticating SCIM requests from your IdP")}
           </p>
         </div>
         <button
@@ -663,7 +664,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={16} />
                     <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      Copy this token now. It won't be shown again.
+                      {tlumaczPozaHookiem("superadmin.sCIMProvisioning.copyThisTokenNowItWonT", "Copy this token now. It won't be shown again.")}
                     </p>
                   </div>
                 </div>
@@ -964,7 +965,7 @@ const SCIMProvisioningView: React.FC = () => {
           <History className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No sync activity yet</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
-            Logs will appear here when your IdP syncs users
+            {tlumaczPozaHookiem("superadmin.sCIMProvisioning.logsWillAppearHereWhenYourIdP", "Logs will appear here when your IdP syncs users")}
           </p>
         </div>
       ) : (
@@ -1023,7 +1024,7 @@ const SCIMProvisioningView: React.FC = () => {
               Provisioning Conflicts
             </h3>
             <p className="text-sm text-slate-600 dark:text-gray-400">
-              Resolve conflicts from duplicate users or groups during SCIM sync
+              {tlumaczPozaHookiem("superadmin.sCIMProvisioning.resolveConflictsFromDuplicateUsersOrGroups", "Resolve conflicts from duplicate users or groups during SCIM sync")}
             </p>
           </div>
           <button
@@ -1210,7 +1211,7 @@ const SCIMProvisioningView: React.FC = () => {
         <div className="rounded-xl border border-danger-200 dark:border-danger-500/20 bg-danger-50 dark:bg-danger-500/10 p-6 text-danger-700 dark:text-danger-300">
           <div className="flex items-center gap-2 font-medium">
             <AlertTriangle size={18} />
-            Failed to load SCIM data
+            {tlumaczPozaHookiem("superadmin.sCIMProvisioning.failedToLoadSCIMData", "Failed to load SCIM data")}
           </div>
           <p className="mt-2 text-sm">{loadError}</p>
           <button

@@ -42,6 +42,8 @@ import type {
 import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SSOConfig {
   id: string;
   organizationId: string;
@@ -446,7 +448,7 @@ export const SSOConfigurationView: React.FC = () => {
       sortable: true,
       render: (row: TableRow) => (
         <span className="text-sm text-slate-500 dark:text-slate-400">
-          {new Date((row as unknown as SSOConfig).createdAt).toLocaleDateString()}
+          {new Date((row as unknown as SSOConfig).createdAt).toLocaleDateString(localeListy())}
         </span>
       ),
     },
@@ -520,7 +522,7 @@ export const SSOConfigurationView: React.FC = () => {
       sortable: true,
       render: (row: TableRow) => (
         <span className="text-sm text-slate-500 dark:text-slate-400">
-          {row.createdAt ? new Date(row.createdAt as string).toLocaleDateString() : '—'}
+          {row.createdAt ? new Date(row.createdAt as string).toLocaleDateString(localeListy()) : '—'}
         </span>
       ),
     },
@@ -679,8 +681,7 @@ export const SSOConfigurationView: React.FC = () => {
                 OIDC login flow is active
               </h4>
               <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-                This panel writes to the SSO router used by `/api/sso/oidc/authorize` and
-                `/api/sso/oidc/callback`. Verify the provider before enforcing SSO.
+                {tlumaczPozaHookiem("superadmin.sSOConfiguration.thisPanelWritesToTheSSORouter", "This panel writes to the SSO router used by `/api/sso/oidc/authorize` and `/api/sso/oidc/callback`. Verify the provider before enforcing SSO.")}
               </p>
             </div>
           </div>
@@ -712,7 +713,7 @@ export const SSOConfigurationView: React.FC = () => {
                     Add authorized redirect URI:{' '}
                     <code className="bg-blue-100 dark:bg-blue-500/20 px-1 rounded">{`${window.location.origin}/api/sso/google/callback`}</code>
                   </li>
-                  <li>Copy the Client ID and Client Secret below</li>
+                  <li>{tlumaczPozaHookiem("superadmin.sSOConfiguration.copyTheClientIDAndClientSecret", "Copy the Client ID and Client Secret below")}</li>
                 </ol>
               </div>
             </div>
@@ -776,7 +777,7 @@ export const SSOConfigurationView: React.FC = () => {
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Only users from these domains can authenticate. Leave empty to allow all domains.
+              {tlumaczPozaHookiem("superadmin.sSOConfiguration.onlyUsersFromTheseDomainsCanAuthenticate", "Only users from these domains can authenticate. Leave empty to allow all domains.")}
             </p>
           </div>
 
@@ -820,8 +821,7 @@ export const SSOConfigurationView: React.FC = () => {
                 SAML login flow is active
               </h4>
               <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-                This panel writes to the SSO router used by `/api/sso/saml/login` and
-                `/api/sso/saml/callback`. Validate metadata before enforcing SSO.
+                {tlumaczPozaHookiem("superadmin.sSOConfiguration.thisPanelWritesToTheSSORouter2", "This panel writes to the SSO router used by `/api/sso/saml/login` and `/api/sso/saml/callback`. Validate metadata before enforcing SSO.")}
               </p>
             </div>
           </div>
@@ -1029,7 +1029,7 @@ export const SSOConfigurationView: React.FC = () => {
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Domain Mapping</h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Route users to the correct organization based on their email domain
+              {tlumaczPozaHookiem("superadmin.sSOConfiguration.routeUsersToTheCorrectOrganizationBased", "Route users to the correct organization based on their email domain")}
             </p>
           </div>
           <button

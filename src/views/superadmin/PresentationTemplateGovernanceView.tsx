@@ -52,6 +52,8 @@ import {
   transitionTemplateLifecycle,
 } from '../../services/presentationTemplateGovernance';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const LIFECYCLE_TABS: ReadonlyArray<{
   id: TemplateLifecycleState;
   label: string;
@@ -100,7 +102,7 @@ function formatTimestamp(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString();
+  return d.toLocaleString(localeListy());
 }
 
 function tabBadgeTone(active: boolean): string {
@@ -335,7 +337,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold text-c-text">Template Governance</h1>
           <p className="mt-1 text-sm text-c-text-secondary">
-            Manage template lifecycle, approval flow, and version lineage.
+            {tlumaczPozaHookiem("superadmin.presentationTemplateGovernance.manageTemplateLifecycleApprovalFlowAndVersion", "Manage template lifecycle, approval flow, and version lineage.")}
           </p>
         </div>
         <button
@@ -398,12 +400,12 @@ const PresentationTemplateGovernanceView: React.FC = () => {
         {loading ? (
           <div className="flex items-center justify-center px-4 py-8 text-sm text-c-text-muted">
             <Loader2 size={16} className="mr-2 animate-spin" />
-            Loading templates…
+            {tlumaczPozaHookiem("superadmin.presentationTemplateGovernance.loadingTemplates", "Loading templates…")}
           </div>
         ) : rows.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-4 py-8 text-sm text-c-text-muted">
             <FileCheck size={20} className="opacity-60" />
-            <p>No templates in this lifecycle state for your organization.</p>
+            <p>{tlumaczPozaHookiem("superadmin.presentationTemplateGovernance.noTemplatesInThisLifecycleStateFor", "No templates in this lifecycle state for your organization.")}</p>
           </div>
         ) : (
           <ul className="divide-y divide-c-border-subtle">
@@ -469,7 +471,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
                       {governanceLoading ? (
                         <div className="flex items-center text-sm text-c-text-muted">
                           <Loader2 size={14} className="mr-2 animate-spin" />
-                          Loading governance details…
+                          {tlumaczPozaHookiem("superadmin.presentationTemplateGovernance.loadingGovernanceDetails", "Loading governance details…")}
                         </div>
                       ) : governance && governance.templateId === row.id ? (
                         <>
@@ -651,7 +653,7 @@ const EventsPanel: React.FC<EventsPanelProps> = ({ events }) => {
   if (events.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-c-border-subtle px-3 py-3 text-xs text-c-text-muted">
-        No governance events recorded for this template yet.
+        {tlumaczPozaHookiem("superadmin.presentationTemplateGovernance.noGovernanceEventsRecordedForThisTemplate", "No governance events recorded for this template yet.")}
       </div>
     );
   }
