@@ -727,7 +727,10 @@ export class AIPlaybooksController {
       });
     } catch (err: any) {
       logger.error('[AIPlaybooks] Publish template error:', err);
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+      });
     }
   }
 

@@ -310,7 +310,7 @@
     },
     {
       "en": "Invitation is not a canonical admin IAM invitation",
-      "pl": "Zaproszenie nie jest kanonicznym zaproszeniem administratora z uprawnieniami"
+      "pl": "Zaproszenie nie jest kanonicznym zaproszeniem administratora IAM"
     },
     {
       "en": "Email address does not match invitation",
@@ -838,7 +838,7 @@
     },
     {
       "en": "createBenefit: initiativeId is required (initiative_benefits.initiative_id is NOT NULL)",
-      "pl": "createBenefit: wymagany jest identyfikator inicjatywy (initiative_benefits.initiative_id NIE ma wartości NULL)"
+      "pl": "createBenefit: wymagany jest identyfikator inicjatywy (initiative_benefits.initiative_id ma ograniczenie NOT NULL)"
     },
     {
       "en": "handoffFromClosure: organizationId is required",
@@ -974,15 +974,15 @@
     },
     {
       "en": "plan_status_transition_not_allowed:${row.status}->DRAFT",
-      "pl": "plan_status_transition_not_allowed:${row.status}->PROJEKT"
+      "pl": "Niedozwolona zmiana statusu planu: ${row.status} → DRAFT"
     },
     {
       "en": "plan_status_transition_not_allowed:${row.status}->PUBLISHED",
-      "pl": "plan_status_transition_not_allowed:${row.status}->OPUBLIKOWANO"
+      "pl": "Niedozwolona zmiana statusu planu: ${row.status} → PUBLISHED"
     },
     {
       "en": "plan_status_transition_not_allowed:${row.status}->WITHDRAWN",
-      "pl": "plan_status_transition_not_allowed:${row.status}->WYCOFANA"
+      "pl": "Niedozwolona zmiana statusu planu: ${row.status} → WITHDRAWN"
     },
     {
       "en": "node_run_status_transition_not_allowed:${from}->${to}",
@@ -1002,15 +1002,15 @@
     },
     {
       "en": "process_version_status_transition_not_allowed:${row.status}->PUBLISHED",
-      "pl": "process_version_status_transition_not_allowed:${row.status}->OPUBLIKOWANO"
+      "pl": "Niedozwolona zmiana statusu wersji procesu: ${row.status} → PUBLISHED"
     },
     {
       "en": "process_version_status_transition_not_allowed:${row.status}->DEPRECATED",
-      "pl": "process_version_status_transition_not_allowed:${row.status}->przestarzałe"
+      "pl": "Niedozwolona zmiana statusu wersji procesu: ${row.status} → DEPRECATED"
     },
     {
       "en": "process_version_status_transition_not_allowed:${row.status}->ARCHIVED",
-      "pl": "process_version_status_transition_not_allowed:${row.status}->ARCHIWALNE"
+      "pl": "Niedozwolona zmiana statusu wersji procesu: ${row.status} → ARCHIVED"
     },
     {
       "en": "proposal_status_transition_not_allowed:${row.status}->PENDING_REVIEW",
@@ -1026,11 +1026,11 @@
     },
     {
       "en": "proposal_status_transition_not_allowed:${row.status}->EXECUTING",
-      "pl": "proposal_status_transition_not_allowed:${row.status}->WYKONYWANIE"
+      "pl": "Niedozwolona zmiana statusu propozycji: ${row.status} → EXECUTING"
     },
     {
       "en": "proposal_status_transition_not_allowed:${row.status}->APPROVED",
-      "pl": "proposal_status_transition_not_allowed:${row.status}->ZATWIERDZONE"
+      "pl": "Niedozwolona zmiana statusu propozycji: ${row.status} → APPROVED"
     },
     {
       "en": "run_lifecycle_status_transition_not_allowed:${from}->${to}",
@@ -1042,7 +1042,7 @@
     },
     {
       "en": "run_lifecycle_status_transition_not_allowed:${row.status}->RUNNING",
-      "pl": "run_lifecycle_status_transition_not_allowed:${row.status}->DZIAŁA"
+      "pl": "Niedozwolona zmiana statusu cyklu wykonania: ${row.status} → RUNNING"
     },
     {
       "en": "run_lifecycle_status_transition_not_allowed:${row.status}->RETRY_NODE",
@@ -1054,7 +1054,7 @@
     },
     {
       "en": "wait_status_transition_not_allowed:${wait.status}->SATISFIED",
-      "pl": "wait_status_transition_not_allowed:${wait.status}->ZADOWOLONY"
+      "pl": "Niedozwolona zmiana statusu oczekiwania: ${wait.status} → SATISFIED"
     },
     {
       "en": "wait_wrong_type_for_event_resolution:${wait.waitType}",
@@ -1062,7 +1062,7 @@
     },
     {
       "en": "wait_status_transition_not_allowed:${row.status}->SATISFIED",
-      "pl": "wait_status_transition_not_allowed:${row.status}->ZADOWOLONY"
+      "pl": "Niedozwolona zmiana statusu oczekiwania: ${row.status} → SATISFIED"
     },
     {
       "en": "wait_status_transition_not_allowed:${row.status}->${nextStatus}",
@@ -1642,11 +1642,11 @@
     },
     {
       "en": "baselineComputeService: period ${periodId} not found or not a MONTH period",
-      "pl": "baselineComputeService: nie znaleziono okresu ${periodId} lub nie jest to okres MIESIĄC"
+      "pl": "baselineComputeService: nie znaleziono okresu ${periodId} albo okres nie ma typu MONTH"
     },
     {
       "en": "baselineComputeService: no PRIOR_YEAR_SAME_PERIOD REVENUE actual for ${priorYearKey} (period ${periodId})",
-      "pl": "baselineComputeService: nie PRIOR_YEAR_SAME_PERIOD PRZYCHODY rzeczywiste dla ${priorYearKey} (okres ${periodId})"
+      "pl": "baselineComputeService: brak wartości rzeczywistej REVENUE dla PRIOR_YEAR_SAME_PERIOD ${priorYearKey} (okres ${periodId})"
     },
     {
       "en": "baselineComputeService: engine bug — BS does not balance for ${periodId}: assets=${totalAssets} liab+equity=${totalLiabi",
@@ -1686,7 +1686,7 @@
     },
     {
       "en": "compute_jobs enqueue: ON CONFLICT DO NOTHING but no existing row found on read-back",
-      "pl": "compute_jobs kolejka: ON CONFLICT NIC NIE RÓB, ale podczas odczytu zwrotnego nie znaleziono żadnego istniejącego wiersza"
+      "pl": "kolejkowanie compute_jobs: ON CONFLICT DO NOTHING nie zwróciło istniejącego wiersza przy odczycie zwrotnym"
     },
     {
       "en": "compute_jobs succeeded-update returned no row",
@@ -1742,7 +1742,7 @@
     },
     {
       "en": "lineageFreshnessService: freshness UPDATE affected ${updated.changes} rows for version ${targetVersionId} (expected exac",
-      "pl": "lineageFreshnessService: aktualizacja aktualizacji dotyczy ${updated.changes} wierszy dla wersji ${targetVersionId} (oczekiwane dokładnie"
+      "pl": "lineageFreshnessService: operacja UPDATE świeżości objęła ${updated.changes} wierszy wersji ${targetVersionId} (oczekiwano dokładnie"
     },
     {
       "en": "finance_lineage_freshness_events insert returned no row",
@@ -1778,11 +1778,11 @@
     },
     {
       "en": "predictionComputeService: period ${periodId} not found or not a MONTH period",
-      "pl": "przewidywanieComputeService: nie znaleziono okresu ${periodId} lub nie jest to okres MIESIĄC"
+      "pl": "predictionComputeService: nie znaleziono okresu ${periodId} albo okres nie ma typu MONTH"
     },
     {
       "en": "predictionComputeService: no PRIOR_YEAR_SAME_PERIOD REVENUE actual for ${priorYearKey}",
-      "pl": "przewidywanieComputeService: nie PRIOR_YEAR_SAME_PERIOD PRZYCHODY rzeczywiste dla ${priorYearKey}"
+      "pl": "predictionComputeService: brak wartości rzeczywistej REVENUE dla PRIOR_YEAR_SAME_PERIOD ${priorYearKey}"
     },
     {
       "en": "predictionComputeService: overlay engine bug — BS does not balance for ${periodId}: assets=${totalAssets} liab+equity=${",
@@ -2010,23 +2010,23 @@
     },
     {
       "en": "[GDPR] Cannot build INSERT for ${tableName}: no matching columns",
-      "pl": "[RODO] Nie można zbudować INSERT dla ${tableName}: brak pasujących kolumn"
+      "pl": "[GDPR] Nie można zbudować INSERT dla ${tableName}: brak pasujących kolumn"
     },
     {
       "en": "[GDPR] Cannot build SELECT for ${tableName}",
-      "pl": "[RODO] Nie można zbudować SELECT dla ${tableName}"
+      "pl": "[GDPR] Nie można zbudować SELECT dla ${tableName}"
     },
     {
       "en": "[GDPR] data_export_requests table missing (run migrations)",
-      "pl": "[RODO] Brak tabeli data_export_requests (przeprowadź migrację)"
+      "pl": "[GDPR] Brak tabeli data_export_requests (uruchom migracje)"
     },
     {
       "en": "[GDPR] organizationId is required for org-scoped export requests",
-      "pl": "W przypadku żądań eksportu o zasięgu organizacji wymagany jest identyfikator organizacji [RODO]."
+      "pl": "[GDPR] organizationId jest wymagany dla żądań eksportu w zakresie organizacji"
     },
     {
       "en": "[GDPR] account_deletion_requests table missing (run migrations)",
-      "pl": "[RODO] Brak tabeli account_deletion_requests (przeprowadź migrację)"
+      "pl": "[GDPR] Brak tabeli account_deletion_requests (uruchom migracje)"
     },
     {
       "en": "Report not found",
@@ -2550,11 +2550,11 @@
     },
     {
       "en": "IAM audit event was not persisted",
-      "pl": "Zdarzenie kontroli uprawnień nie zostało utrwalone"
+      "pl": "Zdarzenie audytu IAM nie zostało utrwalone"
     },
     {
       "en": "IAM role change was not persisted",
-      "pl": "Zmiana roli uprawnień nie została utrwalona"
+      "pl": "Zmiana roli IAM nie została utrwalona"
     },
     {
       "en": "IAM member removal was not persisted",
@@ -4858,7 +4858,7 @@
     },
     {
       "en": "Valuation must be APPROVED to export",
-      "pl": "Wycena musi zostać ZATWIERDZONA na eksport"
+      "pl": "Wycena musi mieć status APPROVED, aby można ją było wyeksportować"
     },
     {
       "en": "Missing sourceId",
@@ -4942,11 +4942,11 @@
     },
     {
       "en": "Valuation must be APPROVED to generate advisory",
-      "pl": "Aby wygenerować informację doradczą, wycena musi zostać ZATWIERDZONA"
+      "pl": "Wycena musi mieć status APPROVED, aby wygenerować materiał doradczy"
     },
     {
       "en": "Valuation must be APPROVED to generate negotiation pack",
-      "pl": "Aby wygenerować pakiet negocjacyjny, wycena musi zostać ZATWIERDZONA"
+      "pl": "Wycena musi mieć status APPROVED, aby wygenerować pakiet negocjacyjny"
     },
     {
       "en": "Recommendation not found",

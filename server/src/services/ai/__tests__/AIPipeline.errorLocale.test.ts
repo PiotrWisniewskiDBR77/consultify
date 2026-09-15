@@ -29,13 +29,13 @@ describe('AIPipeline user-visible error locale', () => {
     expect(streamed).toContainEqual(
       expect.objectContaining({
         type: 'error',
-        error: expect.objectContaining({ message: 'Capability jest wymagane' }),
+        error: expect.objectContaining({ message: 'Wymagana jest zdolność' }),
       })
     );
     await expect(pipeline.process(invalid)).resolves.toEqual(
       expect.objectContaining({
         success: false,
-        error: expect.objectContaining({ message: 'Capability jest wymagane' }),
+        error: expect.objectContaining({ message: 'Wymagana jest zdolność' }),
       })
     );
   });

@@ -41,6 +41,7 @@ interface CompiledMessage {
   polish: string;
   polishTokens: string[];
   sourceTokens: string[];
+  specificity: number;
 }
 
 function compileMessage(en: string, pl: string): CompiledMessage {
@@ -49,7 +50,7 @@ function compileMessage(en: string, pl: string): CompiledMessage {
   const sourceTokens = source.tokens;
   const polishTokens = polish.tokens;
   if (sourceTokens.length === 0) {
-    return { exact: en, pattern: null, polish: pl, polishTokens, sourceTokens };
+    return { exact: en, pattern: null, polish: pl, polishTokens, sourceTokens, specificity: en.length };
   }
 
   let pattern = '^';
@@ -57,12 +58,19 @@ function compileMessage(en: string, pl: string): CompiledMessage {
     pattern += escapeRegExp(source.staticParts[index]) + '([\\s\\S]+?)';
   }
   pattern += escapeRegExp(source.staticParts.at(-1) ?? '') + '$';
-  return { exact: en, pattern: new RegExp(pattern), polish: pl, polishTokens, sourceTokens };
+  return {
+    exact: en,
+    pattern: new RegExp(pattern),
+    polish: pl,
+    polishTokens,
+    sourceTokens,
+    specificity: source.staticParts.reduce((total, part) => total + part.length, 0),
+  };
 }
 
-const COMPILED = SERVER_PAYLOAD_MESSAGES.filter(({ runtime }) => runtime !== false).map(({ en, pl }) =>
-  compileMessage(en, pl)
-);
+const COMPILED = SERVER_PAYLOAD_MESSAGES.filter(({ runtime }) => runtime !== false)
+  .map(({ en, pl }) => compileMessage(en, pl))
+  .sort((left, right) => Number(Boolean(left.pattern)) - Number(Boolean(right.pattern)) || right.specificity - left.specificity);
 
 export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): string {
   if (locale === 'en') return value;

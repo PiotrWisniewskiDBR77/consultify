@@ -346,7 +346,9 @@ const AIPlaybookService = {
 
     if (!template) throw new Error(`Template ${id} not found`);
     if (template.status === 'PUBLISHED') {
-      throw new Error('Template is already published');
+      const error = new Error('Template is already published');
+      error.code = 'PLAYBOOK_PUBLISHED';
+      throw error;
     }
 
     // For DRAFT: just update to PUBLISHED

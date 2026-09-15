@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-15T03:29:54.972Z",
+    "data": "2026-09-15T05:20:26.375Z",
     "root": "/Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73",
-    "sha": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3"
+    "sha": "067682de577e64bb6e003422dfa07c49d36f3ba8"
   },
   "suma": {
     "K1": 5,
@@ -18,9 +18,9 @@
     "K4obj": 4343,
     "K5pl": 262,
     "K5en": 7161,
-    "K7": 278,
+    "K7": 267,
     "K8spl": 96,
-    "K8sen": 1584,
+    "K8sen": 35,
     "K9pPL": 36,
     "K9pMIX": 1,
     "K9pBRAK": 77,
@@ -45,7 +45,7 @@
       "K5en": 95,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 10,
+      "K8sen": 2,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 3,
@@ -69,7 +69,7 @@
       "K5en": 326,
       "K7": 0,
       "K8spl": 2,
-      "K8sen": 11,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -93,7 +93,7 @@
       "K5en": 262,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 40,
+      "K8sen": 0,
       "K9pPL": 1,
       "K9pMIX": 0,
       "K9pBRAK": 4,
@@ -117,7 +117,7 @@
       "K5en": 394,
       "K7": 0,
       "K8spl": 24,
-      "K8sen": 91,
+      "K8sen": 1,
       "K9pPL": 24,
       "K9pMIX": 0,
       "K9pBRAK": 6,
@@ -141,7 +141,7 @@
       "K5en": 302,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 12,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -165,7 +165,7 @@
       "K5en": 347,
       "K7": 0,
       "K8spl": 3,
-      "K8sen": 59,
+      "K8sen": 0,
       "K9pPL": 2,
       "K9pMIX": 0,
       "K9pBRAK": 9,
@@ -189,7 +189,7 @@
       "K5en": 317,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 47,
+      "K8sen": 1,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -213,7 +213,7 @@
       "K5en": 351,
       "K7": 0,
       "K8spl": 4,
-      "K8sen": 138,
+      "K8sen": 6,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -237,7 +237,7 @@
       "K5en": 440,
       "K7": 0,
       "K8spl": 1,
-      "K8sen": 124,
+      "K8sen": 5,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 3,
@@ -261,7 +261,7 @@
       "K5en": 1170,
       "K7": 8,
       "K8spl": 3,
-      "K8sen": 214,
+      "K8sen": 2,
       "K9pPL": 5,
       "K9pMIX": 1,
       "K9pBRAK": 12,
@@ -285,7 +285,7 @@
       "K5en": 32,
       "K7": 0,
       "K8spl": 2,
-      "K8sen": 8,
+      "K8sen": 0,
       "K9pPL": 3,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -309,7 +309,7 @@
       "K5en": 62,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 9,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -333,7 +333,7 @@
       "K5en": 172,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 12,
+      "K8sen": 3,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -357,7 +357,7 @@
       "K5en": 352,
       "K7": 174,
       "K8spl": 0,
-      "K8sen": 60,
+      "K8sen": 4,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -381,7 +381,7 @@
       "K5en": 565,
       "K7": 2,
       "K8spl": 3,
-      "K8sen": 21,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 4,
@@ -405,7 +405,7 @@
       "K5en": 126,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 27,
+      "K8sen": 0,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -427,9 +427,9 @@
       "K4obj": 1401,
       "K5pl": 20,
       "K5en": 1848,
-      "K7": 94,
+      "K7": 83,
       "K8spl": 54,
-      "K8sen": 701,
+      "K8sen": 11,
       "K9pPL": 1,
       "K9pMIX": 0,
       "K9pBRAK": 27,
@@ -1882,6 +1882,12 @@
         "dowod": "diakrytyk:ł,pl:na,pl:tym"
       },
       {
+        "modul": "09 Finance",
+        "gdzie": "server/src/services/InvoiceService.ts:514",
+        "tekst": "ul. Przemysłowa 12/14",
+        "dowod": "diakrytyk:ł"
+      },
+      {
         "modul": "04 Tools",
         "gdzie": "server/src/services/ai/toolDefinitions.ts:709",
         "tekst": "Pauza zakończona.",
@@ -1904,6 +1910,18 @@
         "gdzie": "server/src/services/ai/tools/generateDeliverable.ts:186",
         "tekst": "Twoja rola nie pozwala na generowanie artefaktów. Poproś administratora o dostęp.",
         "dowod": "diakrytyk:ó,pl:nie,pl:na"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "server/src/services/auditProgramFixtures/fixtureGenerator.ts:606",
+        "tekst": "Fixture wygenerował ${leafCriterionIds.length} kryteriów-liści, oczekiwano ${EXPECTED_LEAF_CRITERIA}",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "server/src/services/audits/packValidator.ts:502",
+        "tekst": "Pakiet nie może zostać opublikowany — ${reasons}",
+        "dowod": "diakrytyk:ż,pl:nie,pl:może"
       },
       {
         "modul": "ZZ wspólne",
@@ -2000,27 +2018,160 @@
         "gdzie": "server/src/services/cardContentFormulaValidator.ts:762",
         "tekst": "Szansa #${i + 1}: tytuł jest kategorią, nie tezą (§3.4).",
         "dowod": "diakrytyk:ł,pl:jest,pl:nie"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/services/cardContentFormulaValidator.ts:781",
-        "tekst": "Sygnał #${i + 1} ma opis <25 słów (§3.9).",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/services/cardContentFormulaValidator.ts:791",
-        "tekst": "Braki danych: ${missingData.length} (wymagane ≥2).",
-        "dowod": "pl:wymagane,pl-suf:danych"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/services/cardContentFormulaValidator.ts:804",
-        "tekst": "Użyto evidence_refs, ale mapa dowodów (evidence_map) jest pusta.",
-        "dowod": "diakrytyk:ż,pl:jest"
       }
     ],
-    "K8sen": [],
+    "K8sen": [
+      {
+        "modul": "04 Tools",
+        "gdzie": "server/src/services/canvasMaterialize.ts:536",
+        "tekst": "Idea materialization read-back failed for ${ideaId} (idea=${Boolean(ideaReadBack.rows[0])}, map=${Boolean(mapReadBack.ro",
+        "dowod": "en:read,en:back,en:failed"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "server/src/services/demo/atelierFinanceOperatorHold.ts:730",
+        "tekst": "[atelier-finance-seed] refusing to acknowledge a NEEDS_OPERATOR hold without a note: state what was found and why it is ",
+        "dowod": "en:acknowledge,en:note,en:what"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/canonical/baselineComputeService.ts:625",
+        "tekst": "baselineComputeService: engine bug — BS does not balance for ${periodId}: assets=${totalAssets} liab+equity=${totalLiabi",
+        "dowod": "en:does"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "server/src/services/finance/canonical/financeImportService.ts:1192",
+        "tekst": "executeStmtLinesOperations applied ${appliedCells} cells, expected ${diff.toAdd.length + diff.toChange.length + diff.toC",
+        "dowod": "en:applied,en-suf:aborting,en-suf:transaction"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/canonical/lineageFreshnessService.ts:358",
+        "tekst": "lineageFreshnessService: edge ${edge.id} targets version ${targetVersionId} which does not exist in organization ${organ",
+        "dowod": "en:which,en:does,en:organization"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/canonical/lineageFreshnessService.ts:413",
+        "tekst": "lineageFreshnessService: freshness UPDATE affected ${updated.changes} rows for version ${targetVersionId} (expected exac",
+        "dowod": "en:rows,en-suf:freshness,en-suf:version"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/canonical/predictionComputeService.ts:375",
+        "tekst": "predictionComputeService: finance_business_versions.source_working_revision_id is not set for ${params.businessVersionId",
+        "dowod": "en:source,en-suf:business,en-suf:working"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/canonical/predictionComputeService.ts:790",
+        "tekst": "predictionComputeService: overlay engine bug — BS does not balance for ${periodId}: assets=${totalAssets} liab+equity=${",
+        "dowod": "en:does"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/canonical/predictionComputeService.ts:844",
+        "tekst": "predictionComputeService: finance_business_versions.source_working_revision_id is not set for the Prediction Scenario ${",
+        "dowod": "en:source,en:the,en-suf:business"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "server/src/services/finance/canonical/valuationComputeService.ts:771",
+        "tekst": "runDcfFcffValuation: ${claimResult.message}",
+        "dowod": "en-suf:rundcffcffvaluation"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "server/src/services/finance/canonical/valuationComputeService.ts:723",
+        "tekst": "runDcfFcffValuation: finance_business_versions.source_working_revision_id is not set for ${params.valuationBusinessVersi",
+        "dowod": "en:source,en-suf:rundcffcffvaluation,en-suf:business"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/finance/collaboration/operationStack.ts:107",
+        "tekst": "OperationStack.push: priorValues.length (${priorValues.length}) must equal operation target count (${targets.length}) fo",
+        "dowod": "en:count,en-suf:operation"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "server/src/services/financialStatementService.ts:9078",
+        "tekst": "[FinancialStatementService] Idempotency reservation conflict for ${organizationId}/${idempotencyKey} but no row found on",
+        "dowod": "en:conflict,en:row,en:found"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "server/src/services/organizationContext/ContextDocumentService.ts:2007",
+        "tekst": "image_openai_vision_http_${response.status}",
+        "dowod": "en-suf:vision"
+      },
+      {
+        "modul": "13 Organization",
+        "gdzie": "server/src/services/organizationContext/OrganizationContextService.ts:2300",
+        "tekst": "[OrgContext] Failed to publish snapshot version for org ${organizationId} after ${MAX_ATTEMPTS} attempts (version conten",
+        "dowod": "en:failed,en:snapshot,en-suf:version"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "server/src/services/resultsVnext/okr/okrAlignmentCommands.ts:494",
+        "tekst": "[proposeAlignment] 23505 on ux_okr_vnext_alignments_live_edge but no winning row found for (${sourceObjectiveId}, ${targ",
+        "dowod": "en:row,en:found,en-suf:winning"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "server/src/services/resultsVnext/okr/okrCheckInCommands.ts:567",
+        "tekst": "[recordCheckIn] 23505 on ux_okr_vnext_checkins_kr_occurrence_original but no winning row found for (${keyResultId}, ${ca",
+        "dowod": "en:row,en:found,en-suf:winning"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "server/src/services/resultsVnext/okr/okrReflectionCommands.ts:608",
+        "tekst": "[recordObjectiveReflection] idempotency conflict on (${organizationId}, ${idempotencyKey}) but existing event row not fo",
+        "dowod": "en:conflict,en:row,en:found"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "server/src/services/resultsVnext/okr/okrReflectionCommands.ts:909",
+        "tekst": "[recordOkrReflectionTeresaDraft] idempotency conflict on (${organizationId}, ${idempotencyKey}) but existing event row n",
+        "dowod": "en:conflict,en:row,en:found"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "server/src/services/resultsVnext/okr/okrReviewCommands.ts:222",
+        "tekst": "[writeReviewEvent] idempotency conflict on (${eventInput.organizationId}, ${eventInput.idempotencyKey}) but existing eve",
+        "dowod": "en:conflict,en:row,en:found"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "server/src/services/resultsVnext/okr/okrSetCommands.ts:394",
+        "tekst": "[createOkrSet] 23505 on ux_okr_vnext_sets_one_per_scope_cycle_owner but no winning row found for (${programId}, ${cycleI",
+        "dowod": "en:scope,en:owner,en:row"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "server/src/services/resultsVnext/platform/atomicWrite.ts:838",
+        "tekst": "[executeAtomicCommand] idempotency conflict on (${organizationId}, ${eventInput.idempotencyKey}) but existing event row ",
+        "dowod": "en:conflict,en:row,en:found"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "server/src/services/resultsVnext/platform/atomicWrite.ts:1079",
+        "tekst": "[executeAtomicCreate] idempotency conflict on (${organizationId}, ${eventInput.idempotencyKey}) but existing event row n",
+        "dowod": "en:conflict,en:row,en:found"
+      },
+      {
+        "modul": "07 Execution",
+        "gdzie": "server/src/services/resultsVnext/platform/financeProjectionConsumer.ts:431",
+        "tekst": "[financeProjectionConsumer] expected an open/investigating reconciliation for link ${link.link_id} after openRoiFinanceR",
+        "dowod": "en:open,en:found,en:none"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts:218",
+        "tekst": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} l",
+        "dowod": "en:last"
+      }
+    ],
     "K9pPL": [
       {
         "modul": "03 Interview",

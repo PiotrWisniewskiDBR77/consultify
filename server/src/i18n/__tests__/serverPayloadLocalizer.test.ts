@@ -39,30 +39,60 @@ describe('server payload localization', () => {
     );
   });
 
-  it('sanitizes uncatalogued English error prose at the authenticated HTTP boundary', () => {
+  it('fully localizes decision-field validation prose while preserving field identifiers', () => {
     expect(
       localizeServerPayload(
         { code: 'VALIDATION', error: 'Missing required decision fields: proposal_id' },
         request('pl')
       )
-    ).toEqual({ code: 'VALIDATION', error: 'brak wymaganych decision fields: proposal_id' });
+    ).toEqual({ code: 'VALIDATION', error: 'Brak wymaganych pól decyzyjnych: proposal_id' });
   });
 
-  it('changes every classified b sink for PL without collapsing domain details', () => {
+  it('matches every classified b sink to its reviewed Polish catalog entry', () => {
     const manifest = JSON.parse(
       fs.readFileSync(
         path.resolve('docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json'),
         'utf8'
       )
     ) as { entries: Array<{ classification: string; text: string }> };
+    const reviewed = JSON.parse(
+      fs.readFileSync(
+        path.resolve('docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_TRANSLATION_WORKING.json'),
+        'utf8'
+      )
+    ) as { entries: Array<{ en: string; pl: string }> };
+    const expected = new Map(reviewed.entries.map(({ en, pl }) => [en, pl]));
     const realSinks = manifest.entries.filter((entry) => entry.classification === 'b');
-    const localized = realSinks.map((entry) => localizeServerPayloadText(entry.text, 'pl') === entry.text
-      ? localizeServerPayload({ error: entry.text }, request('pl')) as { error: string }
-      : { error: localizeServerPayloadText(entry.text, 'pl') });
+    const uniqueRealSinks = [...new Set(realSinks.map((entry) => entry.text))];
+    const results = uniqueRealSinks.map((source) => ({
+      source,
+      expected: expected.get(source),
+      actual: localizeServerPayloadText(source, 'pl'),
+    }));
+
     expect(realSinks).toHaveLength(1577);
-    expect(localized.filter((value, index) => value.error === realSinks[index].text)).toHaveLength(0);
-    expect(new Set(localized.map((value) => value.error)).size).toBeGreaterThan(1200);
-    expect(localized.some((value) => value.error === 'Nie udało się wykonać operacji.')).toBe(false);
+    expect(uniqueRealSinks).toHaveLength(1317);
+    expect(results.filter(({ expected: pl }) => !pl)).toEqual([]);
+    expect(results.filter(({ expected: pl, actual }) => actual !== pl)).toEqual([]);
+    expect(results.filter(({ actual }) => actual.startsWith('Błąd operacji:'))).toEqual([]);
+    const knownEnglishProse = /\b(?:already|missing|required|requires|failed|found|available|unavailable|expired|only|restore|versions|template|invitation|conversation|owners|roles|change|analysis|returned|cannot|should|would|unknown|invalid|fields|organization|operation|request|document|snapshot|report|title|source|target|current|expected|actual|before|after|during|while|without|within|outside|supported|unsupported|complete|completed|engine|feature|values|rows|insert|delete|create)\b/i;
+    const visibleProse = (value: string) =>
+      value
+        .replace(/\$\{[^}]*\}/g, ' ')
+        .replace(/\[[A-Za-z0-9_-]+\]/g, ' ')
+        .replace(/\b[A-Z][A-Z0-9_]{2,}\b/g, ' ')
+        .replace(/\b[A-Za-z0-9]*_[A-Za-z0-9_]+\b/g, ' ')
+        .replace(/\b(?=[A-Za-z0-9]*[a-z])(?=[A-Za-z0-9]*[A-Z])[A-Za-z0-9]+\b/g, ' ');
+    expect(
+      results.filter(({ actual }) => knownEnglishProse.test(visibleProse(actual)))
+    ).toEqual([]);
+    expect(
+      results.filter(({ actual }) =>
+        /\b(?:template is already published|missing required decision fields|can only restore versions|email address does not match invitation|code has expired|only conversation owners can|no scoped session data available)\b/i.test(
+          actual
+        )
+      )
+    ).toEqual([]);
   });
 
   it('keeps runtime:false source honest while translating both expanded OTP outcomes', () => {
