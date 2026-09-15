@@ -892,6 +892,7 @@
     "sending": "Wysyłanie...",
     "exportCSV": "Eksportuj CSV",
     "pending": "Oczekujące",
+    "noneValue": "Brak",
     "notAvailable": "Niedostępne",
     "months": "miesięcy",
     "count": "Liczba",
@@ -15340,6 +15341,10 @@
         "forecast": "Prognoza",
         "actual": "Wykonanie",
         "trackAria": "Oś czasu „{{track}}” dla: {{name}}"
+      },
+      "empty": {
+        "title": "Brak inicjatyw",
+        "description": "Inicjatywy z tego zakresu pojawią się tutaj."
       }
     },
     "review": {
@@ -15579,7 +15584,12 @@
       "actionFailed": "Akcja nie powiodła się",
       "actionWritesDisabledReason": "Zapis przeniesiony do kanonicznego rejestru — w przygotowaniu",
       "preset": {
-        "peopleChange": "Ludzie i zmiana"
+        "peopleChange": "Ludzie i zmiana",
+        "actionQueue": "Kolejka działań",
+        "decisions": "Decyzje",
+        "blockers": "Blokady",
+        "risk": "Ryzyko",
+        "workload": "Obciążenie"
       },
       "tile": {
         "actionQueue": "Kolejka działań",
@@ -15695,6 +15705,28 @@
           "title": "Uzupełnienie odpowiedzialności",
           "subtitle": "Domknięcie luk we właścicielstwie, sponsorze, datach i odpowiedzialności."
         }
+      },
+      "metric": {
+        "items": "Pozycje",
+        "critical": "Krytyczne",
+        "issues": "Problemy",
+        "blocked": "Zablokowane",
+        "risks": "Ryzyka",
+        "gaps": "Luki"
+      },
+      "workspace": {
+        "dueSoon": "Wkrótce wymagane",
+        "dueSoonTitle": "Wkrótce wymagane — pozycje, które zaraz staną się problemami",
+        "decisionPack": "Pakiet decyzji",
+        "decisionPackTitle": "Pakiet decyzji — szybciej domykaj zatwierdzenia i blokady",
+        "recoveryPlan": "Plan naprawczy",
+        "recoveryPlanTitle": "Plan naprawczy — odblokuj i przywróć tempo dostarczania",
+        "watchlist": "Lista obserwowanych",
+        "watchlistTitle": "Lista obserwowanych — pilnuj wczesnych sygnałów ostrzegawczych",
+        "rebalance": "Wyrównanie obciążeń",
+        "rebalanceTitle": "Wyrównanie obciążeń — zdejmij przeciążenie i przywróć równowagę",
+        "ownershipFix": "Domknięcie odpowiedzialności",
+        "ownershipFixTitle": "Domknięcie odpowiedzialności — zamknij luki w nadzorze"
       }
     },
     "managementTable": {
@@ -15805,7 +15837,12 @@
           "title": "Przekazanie do Rezultatów — tylko podgląd",
           "body": "Wyniki zamknięcia (dostarczona wartość, ROI, odchylenia KPI) nie są jeszcze synchronizowane z modułem Rezultaty. To przekazanie jest podglądem na tę wersję; automatyczna synchronizacja z Rezultatami zostanie włączona w kolejnej fazie."
         },
-        "derivedNote": "Wyznaczone z ukończonych inicjatyw — przekazanie PMI/PRINCE2, akceptacja i działania zamknięcia. Dodaj pozycję, aby prowadzić własną listę kontrolną."
+        "derivedNote": "Wyznaczone z ukończonych inicjatyw — przekazanie PMI/PRINCE2, akceptacja i działania zamknięcia. Dodaj pozycję, aby prowadzić własną listę kontrolną.",
+        "category": {
+          "handover": "Przekazanie",
+          "signOff": "Odbiór",
+          "closure": "Zamknięcie"
+        }
       },
       "addClosureItem": "Dodaj pozycję",
       "addKpi": "Dodaj KPI",
@@ -15868,6 +15905,11 @@
       "trend": {
         "none": "Brak pomiarów — trend pojawi się po dwóch",
         "one": "Jeden pomiar — trend od drugiego"
+      },
+      "level": {
+        "low": "niskie",
+        "medium": "średnie",
+        "high": "wysokie"
       }
     },
     "reporting": {
@@ -16984,7 +17026,8 @@
         "approved": "ZATWIERDZONE",
         "conditionallyApproved": "ZATWIERDZONE WARUNKOWO",
         "returned": "ZWRÓCONE"
-      }
+      },
+      "updateTask": "Zaktualizuj zadanie"
     },
     "resources": {
       "columns": {
@@ -17275,6 +17318,8 @@
         "interventionFailed": "Nie udało się utworzyć wniosku o przesunięcie."
       },
       "field": {
+        "fingerprint": "Odcisk sygnału",
+        "project": "Projekt",
         "occurredAt": "Czas wystąpienia",
         "ruleId": "Reguła wykrycia",
         "severity": "Ważność",
@@ -17319,6 +17364,7 @@
       "applyCommand": "Zastosowanie zatwierdzonej komendy",
       "applyConfirmed": "Zastosuj potwierdzoną komendę",
       "approveOption": "Zatwierdź wariant",
+      "rationaleAndImpact": "Uzasadnienie i skutek",
       "approver": "Zatwierdzający",
       "composer": "Projekt interwencji",
       "effectiveClosed": "Skuteczna · zamknięta",
@@ -17554,6 +17600,13 @@
         "title": "Typ pozycji niedostępny",
         "body": "Tego typu pozycji nie da się otworzyć w Realizacji."
       }
+    },
+    "kpi": {
+      "plannedEnd": "Planowany koniec",
+      "initiativesExecuting": "Inicjatywy w realizacji",
+      "initiativesBlocked": "Inicjatywy zablokowane",
+      "overdueTasks": "Zadania po terminie",
+      "pendingDecisions": "Decyzje oczekujące"
     }
   },
   "benefits": {

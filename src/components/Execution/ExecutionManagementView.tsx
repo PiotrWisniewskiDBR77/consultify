@@ -97,31 +97,31 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       },
       {
         id: 'action-queue' as const,
-        label: 'Action Queue',
+        label: t('execution.manager.preset.actionQueue', 'Action Queue'),
         count: metric('action-queue', 'total').value,
         icon: <ClipboardList size={14} className="text-blue-400" />,
       },
       {
         id: 'decisions' as const,
-        label: 'Decisions',
+        label: t('execution.manager.preset.decisions', 'Decisions'),
         count: metric('decisions', 'total').value,
         icon: <Scale size={14} className="text-amber-400" />,
       },
       {
         id: 'blockers' as const,
-        label: 'Blockers',
+        label: t('execution.manager.preset.blockers', 'Blockers'),
         count: metric('blockers', 'total').value,
         icon: <AlertTriangle size={14} className="text-danger-400" />,
       },
       {
         id: 'risk' as const,
-        label: 'Risk',
+        label: t('execution.manager.preset.risk', 'Risk'),
         count: metric('risk', 'total').value,
         icon: <Shield size={14} className="text-danger-400" />,
       },
       {
         id: 'workload' as const,
-        label: 'Workload',
+        label: t('execution.manager.preset.workload', 'Workload'),
         count: metric('workload', 'total').value,
         icon: <Users size={14} className="text-blue-400" />,
       },
@@ -147,13 +147,13 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         ),
         metrics: [
           {
-            label: 'Items',
+            label: t('execution.manager.metric.items', 'Items'),
             id: 'total',
             ...metric('action-queue', 'total'),
             variant: (metric('action-queue', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
-            label: 'Critical',
+            label: t('execution.manager.metric.critical', 'Critical'),
             id: 'critical',
             ...metric('action-queue', 'critical'),
             variant:
@@ -171,14 +171,14 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         ),
         metrics: [
           {
-            label: 'Critical',
+            label: t('execution.manager.metric.critical', 'Critical'),
             id: 'critical',
             ...metric('decisions', 'critical'),
             variant:
               (metric('decisions', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
           {
-            label: 'Issues',
+            label: t('execution.manager.metric.issues', 'Issues'),
             id: 'total',
             ...metric('decisions', 'total'),
             variant: (metric('decisions', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
@@ -195,14 +195,14 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         ),
         metrics: [
           {
-            label: 'Blocked',
+            label: t('execution.manager.metric.blocked', 'Blocked'),
             id: 'critical',
             ...metric('blockers', 'critical'),
             variant:
               (metric('blockers', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
           },
           {
-            label: 'Issues',
+            label: t('execution.manager.metric.issues', 'Issues'),
             id: 'total',
             ...metric('blockers', 'total'),
             variant: (metric('blockers', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
@@ -219,13 +219,13 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         ),
         metrics: [
           {
-            label: 'Issues',
+            label: t('execution.manager.metric.issues', 'Issues'),
             id: 'total',
             ...metric('workload', 'total'),
             variant: (metric('workload', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
-            label: 'Critical',
+            label: t('execution.manager.metric.critical', 'Critical'),
             id: 'critical',
             ...metric('workload', 'critical'),
             variant:
@@ -243,13 +243,13 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         ),
         metrics: [
           {
-            label: 'Risks',
+            label: t('execution.manager.metric.risks', 'Risks'),
             id: 'total',
             ...metric('risk', 'total'),
             variant: (metric('risk', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
-            label: 'Critical',
+            label: t('execution.manager.metric.critical', 'Critical'),
             id: 'critical',
             ...metric('risk', 'critical'),
             variant: (metric('risk', 'critical').numericValue ?? 0) > 0 ? 'critical' : 'default',
@@ -266,13 +266,13 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         ),
         metrics: [
           {
-            label: 'Gaps',
+            label: t('execution.manager.metric.gaps', 'Gaps'),
             id: 'total',
             ...metric('people-change', 'total'),
             variant: (metric('people-change', 'total').numericValue ?? 0) > 0 ? 'warn' : 'default',
           },
           {
-            label: 'Critical',
+            label: t('execution.manager.metric.critical', 'Critical'),
             id: 'critical',
             ...metric('people-change', 'critical'),
             variant:

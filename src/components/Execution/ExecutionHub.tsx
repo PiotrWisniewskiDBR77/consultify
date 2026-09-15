@@ -1330,7 +1330,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: m.id,
         initiativeId: m.initiativeId,
         initiativeName: m.initiativeName,
-        name: 'Planned end',
+        name: t('execution.kpi.plannedEnd', 'Planned end'),
         targetDate: m.targetDate,
         status: m.status,
       }));
@@ -1378,28 +1378,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         highlights: [
           {
             id: 'derived_initiatives_executing',
-            name: 'Initiatives executing',
+            name: t('execution.kpi.initiativesExecuting', 'Initiatives executing'),
             currentValue: execCount,
             targetValue: null,
             unit: null,
           },
           {
             id: 'derived_initiatives_blocked',
-            name: 'Initiatives blocked',
+            name: t('execution.kpi.initiativesBlocked', 'Initiatives blocked'),
             currentValue: blockedCount,
             targetValue: null,
             unit: null,
           },
           {
             id: 'derived_tasks_overdue',
-            name: 'Overdue tasks',
+            name: t('execution.kpi.overdueTasks', 'Overdue tasks'),
             currentValue: overdueTasks,
             targetValue: null,
             unit: null,
           },
           {
             id: 'derived_decisions_pending',
-            name: 'Pending decisions',
+            name: t('execution.kpi.pendingDecisions', 'Pending decisions'),
             currentValue: pendingDecisions,
             targetValue: null,
             unit: null,
@@ -4234,7 +4234,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             </div>
             <div className="text-xs text-c-text-muted">
               {taskBuckets.overdue.length} {t('execution.badges.overdue')} ·{' '}
-              {taskBuckets.dueSoon.length} {t('execution.attention.dueSoonTasks', 'Due soon')}
+              {taskBuckets.dueSoon.length} {t('execution.attention.dueSoonTasks', 'Due Soon')}
             </div>
           </div>
         </div>
@@ -4468,7 +4468,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               : attention === 'overdue_decisions'
                 ? t('execution.attention.overdueDecisions', 'Overdue decisions')
                 : attention === 'due_soon_tasks'
-                  ? t('execution.attention.dueSoonTasks', 'Due soon tasks')
+                  ? t('execution.attention.dueSoonTasks', 'Due Soon')
                   : t('execution.attention.attention', 'Attention'),
           color:
             attention === 'missing_dates'
@@ -4607,7 +4607,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'due_soon_tasks',
-        label: t('execution.attention.dueSoonTasks', 'Due soon tasks'),
+        label: t('execution.attention.dueSoonTasks', 'Due Soon'),
         count: dueSoonTasksCount,
         active: isAttentionActive('due_soon_tasks'),
         disabled: dueSoonTasksCount === 0,

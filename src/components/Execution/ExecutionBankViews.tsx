@@ -695,8 +695,11 @@ const BankTable = ({
       persistKey="execution-bank-e1b"
       density="compact"
       empty={{
-        title: 'No initiatives',
-        description: 'Initiatives in this scope will appear here.',
+        title: tlumaczPozaHookiem('execution.bank.empty.title', 'No initiatives'),
+        description: tlumaczPozaHookiem(
+          'execution.bank.empty.description',
+          'Initiatives in this scope will appear here.'
+        ),
       }}
     />
   );
