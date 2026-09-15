@@ -1,0 +1,22 @@
+PMO Weekly | Weekly PMO operations report: on-time versus late tasks, team capacity
+Steering Report | Fuller steering-committee view: the three axes per initiative, open ri
+Steering Review Deck | Steering-committee deck: RAG and KPI status, milestones and forecast, 
+Recommendation Deck | Recommendation presentation in the pyramid structure: the recommendati
+Findings Readout | Findings readout in the Situation-Complication-Resolution structure: s
+Kickoff Deck | Project kickoff presentation: goal, scope, team, plan and ways of work
+Finance — report financial section | The financial section of a report: ratio families, reconciled figures 
+Program — three-axis report (time, tasks, value) | The flagship delivery report: schedule against plan, task and budget p
+Status Report | Periodic project progress report for the sponsor. Sections: status sum
+Investor pitch | Investor pitch: problem to solution to traction to ask. Layout: cover,
+Executive memo | A concise decision memo for the board. Sections: context, problem, opt
+Audit Report | Structured report from an organizational or process audit. Sections: s
+Sponsor One-Pager | One page for the sponsor: the three axes combined (time, tasks and val
+Board deck | Presentation for the board or supervisory board. Layout: cover, agenda
+Diagnostic deck | Diagnosis of an organization or a process. Layout: thesis, data, analy
+PMO Weekly Status | Recurring team and PMO operations report: summary, delivered, in progr
+Executive Summary | A standalone summary in the pyramid structure: the main conclusion fir
+Business Case | Investment decision document: the problem, the options considered, cos
+Diagnostic Report (DRD) | Structured diagnostic report in the DRD layout: context, method, findi
+Steering Committee Update | Full steering-committee brief: executive summary, RAG status by dimens
+Sponsor One-Page Status | A concise one-page status for the project sponsor: RAG, progress again
+Final Report Deck | Project closure presentation: goals versus results achieved, key lesso
