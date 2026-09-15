@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   CanonicalWorkHardeningPanel,
@@ -11,6 +12,7 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 import { useAppStore } from '@/store/useAppStore';
 export const ExecutionCanonicalWorkQueue = () => {
+  const { t } = useTranslation();
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [work, setWork] = useState<any>({ tasks: [], decisions: [] }),
@@ -40,22 +42,22 @@ export const ExecutionCanonicalWorkQueue = () => {
   const selected = items.find((item: any) => `${item.type}:${item.id}` === selectedKey) ?? null;
   if (state === 'LOADING')
     return (
-      <section aria-label="My canonical execution work" role="status" className="p-4">
-        Loading canonical execution work
+      <section aria-label={t('myWork.executionCanonicalWorkQueue.sectionLabel', 'My canonical execution work')} role="status" className="p-4">
+        {t('myWork.executionCanonicalWorkQueue.loading', 'Loading canonical execution work')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="My canonical execution work" role="alert" className="p-4">
-        Canonical execution work unavailable.
+      <section aria-label={t('myWork.executionCanonicalWorkQueue.sectionLabel', 'My canonical execution work')} role="alert" className="p-4">
+        {t('myWork.executionCanonicalWorkQueue.unavailable', 'Canonical execution work unavailable.')}
       </section>
     );
   if (!(work.tasks?.length || work.decisions?.length || allocations.length)) return null;
   return (
-    <section aria-label="My canonical execution work" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">My Execution work</h3>
+    <section aria-label={t('myWork.executionCanonicalWorkQueue.sectionLabel', 'My canonical execution work')} className="border-b border-c-border p-4">
+      <h3 className="font-semibold">{t('myWork.executionCanonicalWorkQueue.title', 'My Execution work')}</h3>
       <p className="text-xs text-c-text-muted">
-        Same canonical Task, Decision and OperationalAllocation IDs as Execution.
+        {t('myWork.executionCanonicalWorkQueue.subtitle', 'Same canonical Task, Decision and OperationalAllocation IDs as Execution.')}
       </p>
       {items.map((x: any) => (
         <button
@@ -68,7 +70,7 @@ export const ExecutionCanonicalWorkQueue = () => {
             {x.type} · {x.id}
           </strong>
           <span className="ml-2">{x.status}</span>
-          <div className="text-xs text-c-text-muted">Execution Case {x.executionCaseId}</div>
+          <div className="text-xs text-c-text-muted">{t('myWork.executionCanonicalWorkQueue.executionCase', 'Execution Case')} {x.executionCaseId}</div>
         </button>
       ))}
       {selected && selected.type !== 'ALLOCATION' && (

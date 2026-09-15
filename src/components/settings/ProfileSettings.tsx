@@ -459,7 +459,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
       const persistedUser = await Api.getMe();
 
       if (!persistedUser) {
-        throw new Error('Profile save was not confirmed by the server');
+        throw new Error(
+          t('settings.profile.saveNotConfirmedError', 'Profile save was not confirmed by the server')
+        );
       }
 
       const persistedFormState = toFormStateFromUser(persistedUser);
@@ -472,7 +474,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
       );
 
       if (mismatchedField) {
-        throw new Error('Profile changes were not confirmed by the server');
+        throw new Error(
+          t('settings.profile.changesNotConfirmedError', 'Profile changes were not confirmed by the server')
+        );
       }
 
       lastSyncedFormRef.current = persistedFormState;
@@ -482,7 +486,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error: unknown) {
-      setSaveError(normalizeApiErrorMessage(error, 'Failed to save profile settings'));
+      setSaveError(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.profile.saveError', 'Failed to save profile settings')
+        )
+      );
       setSaveStatus('error');
     } finally {
       setIsSaving(false);
@@ -546,7 +555,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 {currentUser.avatarUrl ? (
                   <img
                     src={currentUser.avatarUrl}
-                    alt="Profile"
+                    alt={t('settings.profile.avatarAlt', 'Profile')}
                     className="w-full h-full object-cover"
                   />
                 ) : (

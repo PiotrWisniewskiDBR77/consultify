@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { localeListy } from '@/utils/listDateFormat';
 
 import {
   insertMentionIntoText,
@@ -39,7 +40,7 @@ interface NodeCommentThreadProps {
 function formatTime(iso: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleString(undefined, {
+    return d.toLocaleString(localeListy(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

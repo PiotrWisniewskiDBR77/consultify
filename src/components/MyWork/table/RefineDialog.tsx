@@ -8,6 +8,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -213,7 +214,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                     <div className="min-w-0">
                       <p className="truncate">{entry.message}</p>
                       <p className="text-[9px] text-c-text-secondary">
-                        {new Date(entry.timestamp).toLocaleTimeString([], {
+                        {new Date(entry.timestamp).toLocaleTimeString(localeListy(), {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}

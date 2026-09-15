@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ---------------------------------------------------------------------------
 // Operation type labels
@@ -239,7 +240,7 @@ function formatTimestamp(ts?: string): string {
   if (!ts) return '';
   try {
     const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' });
   } catch {
     return '';
   }

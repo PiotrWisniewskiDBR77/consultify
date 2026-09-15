@@ -17,6 +17,7 @@ import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { ProcessFlowNodeComment } from './nodeComments';
 import { buildProcessFlowComment } from './nodeComments';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface ProcessFlowNodeCommentThreadProps {
   open: boolean;
@@ -34,7 +35,7 @@ interface ProcessFlowNodeCommentThreadProps {
 function formatTime(iso: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleString(undefined, {
+    return d.toLocaleString(localeListy(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

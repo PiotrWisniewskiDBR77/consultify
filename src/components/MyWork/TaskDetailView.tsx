@@ -166,6 +166,7 @@ import { isTaskSectionVisible } from './taskSectionVisibility';
 import { TaskCardV2 } from './TaskCardV2';
 import { isTaskCardV2Enabled } from './taskCardV2Flag';
 import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface TaskDetailViewProps {
   taskId: string | null;
@@ -5790,8 +5791,8 @@ Return ONLY the final comment text.`;
                 draftSavedLabel={
                   lastSavedAt
                     ? isPolish
-                      ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' })}`
+                      : `Saved ${new Date(lastSavedAt).toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' })}`
                     : undefined
                 }
                 onChat={handleOpenChat}

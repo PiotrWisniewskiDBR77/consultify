@@ -15,6 +15,7 @@ import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { WhiteboardNodeComment } from './whiteboardNodeComments';
 import { buildWhiteboardComment } from './whiteboardNodeComments';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface WhiteboardNodeCommentThreadProps {
   open: boolean;
@@ -32,7 +33,7 @@ interface WhiteboardNodeCommentThreadProps {
 function formatTime(iso: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleString(undefined, {
+    return d.toLocaleString(localeListy(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

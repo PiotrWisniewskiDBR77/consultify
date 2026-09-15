@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Api } from '@/services/api';
@@ -19,6 +20,7 @@ import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
 export const OnboardingWizard = () => {
+  const { t } = useTranslation();
   const { setCurrentView, currentUser } = useAppStore();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
@@ -44,7 +46,7 @@ export const OnboardingWizard = () => {
 
   const handleGeneratePlan = async () => {
     if (!context.role || !context.problems) {
-      toast.error('Please fill in the required fields');
+      toast.error(t('settings.onboardingWizard.toast.fillRequired', 'Please fill in the required fields'));
       return;
     }
 
@@ -72,16 +74,23 @@ export const OnboardingWizard = () => {
     } catch (error: any) {
       console.error(error);
       if (error.message?.includes('Rate limit')) {
-        toast.error('Too many requests. Please wait before regenerating.');
+        toast.error(
+          t('settings.onboardingWizard.toast.rateLimited', 'Too many requests. Please wait before regenerating.'),
+        );
       } else if (contextSaved) {
         // S1.14b/B4: the context IS saved (and it is what unlocks the trial AI
         // gate) even when plan generation is unavailable — say so instead of
         // dropping the user back on step 1 as if nothing had happened.
         toast.success(
-          'Your profile is saved and the AI assistant is unlocked. The suggested plan is not available yet.'
+          t(
+            'settings.onboardingWizard.toast.contextSavedNoPlan',
+            'Your profile is saved and the AI assistant is unlocked. The suggested plan is not available yet.',
+          ),
         );
       } else {
-        toast.error('Failed to save your profile. Please try again.');
+        toast.error(
+          t('settings.onboardingWizard.toast.saveContextFailed', 'Failed to save your profile. Please try again.'),
+        );
       }
       setStep(1); // Go back to edit
     } finally {
@@ -91,7 +100,9 @@ export const OnboardingWizard = () => {
 
   const handleAcceptPlan = async () => {
     if (isConsultant) {
-      toast.error('Consultants cannot accept plans. Contact an Admin.');
+      toast.error(
+        t('settings.onboardingWizard.toast.consultantCannotAccept', 'Consultants cannot accept plans. Contact an Admin.'),
+      );
       return;
     }
 
@@ -99,16 +110,16 @@ export const OnboardingWizard = () => {
     try {
       await Api.acceptFirstValuePlan(selectedInitiativeIds, acceptKey);
 
-      toast.success('Plan Accepted! Initiatives created.');
+      toast.success(t('settings.onboardingWizard.toast.planAccepted', 'Plan Accepted! Initiatives created.'));
 
       // Redirect to AI Chat welcome screen
       setCurrentView(AppView.AI_CHAT);
     } catch (error: any) {
       console.error(error);
       if (error.message?.includes('already accepted')) {
-        toast.error('This plan has already been accepted.');
+        toast.error(t('settings.onboardingWizard.toast.planAlreadyAccepted', 'This plan has already been accepted.'));
       } else {
-        toast.error('Failed to accept plan');
+        toast.error(t('settings.onboardingWizard.toast.acceptPlanFailed', 'Failed to accept plan'));
       }
     } finally {
       setLoading(false);
@@ -131,11 +142,13 @@ export const OnboardingWizard = () => {
       <div className="max-w-3xl mx-auto p-8 pt-16">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
-            Let's fast-track your success.
+            {t('settings.onboardingWizard.step1.title', "Let's fast-track your success.")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-lg">
-            Tell us a bit about your situation, and our AI will build a custom "First Value" plan
-            for you.
+            {t(
+              'settings.onboardingWizard.step1.subtitle',
+              'Tell us a bit about your situation, and our AI will build a custom "First Value" plan for you.',
+            )}
           </p>
         </div>
 
@@ -143,7 +156,7 @@ export const OnboardingWizard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Your Role
+                {t('settings.onboardingWizard.step1.roleLabel', 'Your Role')}
               </label>
               <div className="relative">
                 <Users
@@ -153,7 +166,7 @@ export const OnboardingWizard = () => {
                 <input
                   type="text"
                   className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
-                  placeholder="e.g. Program Manager, CTO"
+                  placeholder={t('settings.onboardingWizard.step1.rolePlaceholder', 'e.g. Program Manager, CTO')}
                   value={context.role}
                   onChange={(e) => setContext({ ...context, role: e.target.value })}
                 />
@@ -161,7 +174,7 @@ export const OnboardingWizard = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Industry
+                {t('settings.onboardingWizard.step1.industryLabel', 'Industry')}
               </label>
               <div className="relative">
                 <Briefcase
@@ -171,7 +184,7 @@ export const OnboardingWizard = () => {
                 <input
                   type="text"
                   className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
-                  placeholder="e.g. Fintech, Manufacturing"
+                  placeholder={t('settings.onboardingWizard.step1.industryPlaceholder', 'e.g. Fintech, Manufacturing')}
                   value={context.industry}
                   onChange={(e) => setContext({ ...context, industry: e.target.value })}
                 />
@@ -179,7 +192,7 @@ export const OnboardingWizard = () => {
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Biggest Challenge Right Now
+                {t('settings.onboardingWizard.step1.challengeLabel', 'Biggest Challenge Right Now')}
               </label>
               <div className="relative">
                 <Zap
@@ -188,7 +201,10 @@ export const OnboardingWizard = () => {
                 />
                 <textarea
                   className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
-                  placeholder="e.g. Deadlines are slipping, team communication is siloed..."
+                  placeholder={t(
+                    'settings.onboardingWizard.step1.challengePlaceholder',
+                    'e.g. Deadlines are slipping, team communication is siloed...',
+                  )}
                   rows={3}
                   value={context.problems}
                   onChange={(e) => setContext({ ...context, problems: e.target.value })}
@@ -197,13 +213,14 @@ export const OnboardingWizard = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Urgency Level
+                {t('settings.onboardingWizard.step1.urgencyLabel', 'Urgency Level')}
               </label>
               <select
                 className="w-full p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
                 value={context.urgency}
                 onChange={(e) => setContext({ ...context, urgency: e.target.value })}
               >
+                {/* option text IS the stored value (no separate value= attr) — left untranslated on purpose */}
                 <option>Low</option>
                 <option>Normal</option>
                 <option>High</option>
@@ -212,7 +229,7 @@ export const OnboardingWizard = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Key Goal (The "Win")
+                {t('settings.onboardingWizard.step1.goalLabel', 'Key Goal (The "Win")')}
               </label>
               <div className="relative">
                 <Target
@@ -222,7 +239,10 @@ export const OnboardingWizard = () => {
                 <input
                   type="text"
                   className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
-                  placeholder="e.g. Launch in Q1, Reduce bugs by 50%"
+                  placeholder={t(
+                    'settings.onboardingWizard.step1.goalPlaceholder',
+                    'e.g. Launch in Q1, Reduce bugs by 50%',
+                  )}
                   value={context.targets}
                   onChange={(e) => setContext({ ...context, targets: e.target.value })}
                 />
@@ -241,7 +261,7 @@ export const OnboardingWizard = () => {
               ) : (
                 <Play size={20} fill="currentColor" />
               )}
-              Generate My Strategy
+              {t('settings.onboardingWizard.step1.generateButton', 'Generate My Strategy')}
             </button>
           </div>
         </div>
@@ -261,10 +281,14 @@ export const OnboardingWizard = () => {
           </div>
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          Analyzing your context...
+          {t('settings.onboardingWizard.step2.title', 'Analyzing your context...')}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 animate-pulse">
-          Designing a high-imapct intervention plan for {context.role} in {context.industry}...
+          {t(
+            'settings.onboardingWizard.step2.subtitle',
+            'Designing a high-impact intervention plan for {{role}} in {{industry}}...',
+            { role: context.role, industry: context.industry },
+          )}
         </p>
       </div>
     );
@@ -277,7 +301,7 @@ export const OnboardingWizard = () => {
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-            Recommended Strategy
+            {t('settings.onboardingWizard.step3.recommendedStrategy', 'Recommended Strategy')}
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-navy-900 dark:text-white mb-4">
             {plan.plan_title}
@@ -295,7 +319,7 @@ export const OnboardingWizard = () => {
                 <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">
                   1
                 </div>
-                Strategic Roadmap
+                {t('settings.onboardingWizard.step3.strategicRoadmap', 'Strategic Roadmap')}
               </h3>
               <div className="space-y-4">
                 {plan.steps?.map((step: any, idx: number) => (
@@ -316,7 +340,9 @@ export const OnboardingWizard = () => {
                       <p className="text-slate-600 dark:text-slate-300 mb-2">{step.description}</p>
                       <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium">
                         <Zap size={14} />
-                        Value Add: {step.value_add}
+                        {t('settings.onboardingWizard.step3.valueAdd', 'Value Add: {{value}}', {
+                          value: step.value_add,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -332,10 +358,13 @@ export const OnboardingWizard = () => {
                 <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center text-sm font-bold">
                   2
                 </div>
-                Suggested Initiatives
+                {t('settings.onboardingWizard.step3.suggestedInitiatives', 'Suggested Initiatives')}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                Select the initiatives you want to launch immediately in the platform.
+                {t(
+                  'settings.onboardingWizard.step3.suggestedInitiativesHint',
+                  'Select the initiatives you want to launch immediately in the platform.',
+                )}
               </p>
 
               <div className="space-y-3">
@@ -381,12 +410,21 @@ export const OnboardingWizard = () => {
                   className="w-full bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white font-bold py-3 rounded-xl shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-                  {isConsultant ? 'Read-Only Mode' : 'Accept & Start Execution'}
+                  {isConsultant
+                    ? t('settings.onboardingWizard.step3.readOnlyMode', 'Read-Only Mode')
+                    : t('settings.onboardingWizard.step3.acceptAndStart', 'Accept & Start Execution')}
                 </button>
                 <p className="text-center text-xs text-slate-600 dark:text-slate-500 mt-3">
                   {isConsultant
-                    ? 'Viewing as Consultant — cannot create initiatives.'
-                    : `Adds ${selectedInitiativeIds.length} initiatives to your workspace.`}
+                    ? t(
+                        'settings.onboardingWizard.step3.consultantViewOnly',
+                        'Viewing as Consultant — cannot create initiatives.',
+                      )
+                    : t(
+                        'settings.onboardingWizard.step3.addsInitiatives',
+                        'Adds {{count}} initiatives to your workspace.',
+                        { count: selectedInitiativeIds.length },
+                      )}
                 </p>
               </div>
             </div>

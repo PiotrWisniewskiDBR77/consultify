@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import {
   type ActionContext,
@@ -80,17 +82,35 @@ interface Row extends TableRow {
   status: string;
   source: Effectiveness;
 }
-const columns: TableColumn[] = [
-  { id: 'caseId', label: 'Effectiveness Case', sortable: true },
-  { id: 'initiative', label: 'Initiative', sortable: true },
-  { id: 'lineage', label: 'Exact results lineage', sortable: true },
-  { id: 'owner', label: 'Current authority', sortable: true },
-  { id: 'status', label: 'Status', sortable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'caseId',
+    label: t('myWork.effectivenessClosureQueue.columnEffectivenessCase', 'Effectiveness Case'),
+    sortable: true,
+  },
+  {
+    id: 'initiative',
+    label: t('myWork.effectivenessClosureQueue.columnInitiative', 'Initiative'),
+    sortable: true,
+  },
+  {
+    id: 'lineage',
+    label: t('myWork.effectivenessClosureQueue.columnResultsLineage', 'Exact results lineage'),
+    sortable: true,
+  },
+  {
+    id: 'owner',
+    label: t('myWork.effectivenessClosureQueue.columnCurrentAuthority', 'Current authority'),
+    sortable: true,
+  },
+  { id: 'status', label: t('myWork.effectivenessClosureQueue.columnStatus', 'Status'), sortable: true },
 ];
 const displayValue = (value: number | null, knowledge: Knowledge) =>
   knowledge === 'UNKNOWN' || value === null ? 'UNKNOWN' : String(value);
 
 export const EffectivenessClosureQueue = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [items, setItems] = useState<Effectiveness[]>([]);
   const [observations, setObservations] = useState<any[]>([]);
@@ -146,7 +166,9 @@ export const EffectivenessClosureQueue = () => {
     () =>
       items.map((x) => ({
         id: x.effectivenessCaseId,
-        title: `Effectiveness ${x.initiativeId}`,
+        title: t('myWork.effectivenessClosureQueue.rowTitle', 'Effectiveness {{initiativeId}}', {
+          initiativeId: x.initiativeId,
+        }),
         caseId: x.effectivenessCaseId,
         initiative: x.initiativeId,
         lineage: `${x.resultsAcceptanceRef.resultsCaseId} v${x.resultsAcceptanceRef.version} · ${x.benefitsHandoffPackRef.packId} v${x.benefitsHandoffPackRef.version}`,
@@ -159,7 +181,7 @@ export const EffectivenessClosureQueue = () => {
         status: x.status,
         source: x,
       })),
-    [items]
+    [items, t]
   );
   const selected = rows.find((x) => x.id === selectedId) ?? null;
 
@@ -318,54 +340,122 @@ export const EffectivenessClosureQueue = () => {
       setWrite(e instanceof RuntimeApiError && e.status === 409 ? 'CONFLICT' : 'FAILED');
     }
   };
+
+  const benefitsAndClosureLabel = t(
+    'myWork.effectivenessClosureQueue.title',
+    'Benefits and Closure'
+  );
+
   if (state === 'LOADING')
     return (
-      <section aria-label="Benefits and Closure" role="status" className="p-4">
-        Loading benefits work
+      <section aria-label={benefitsAndClosureLabel} role="status" className="p-4">
+        {t('myWork.effectivenessClosureQueue.loading', 'Loading benefits work')}
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Benefits and Closure" role="alert" className="p-4">
-        Benefits work unavailable.{' '}
+      <section aria-label={benefitsAndClosureLabel} role="alert" className="p-4">
+        {t('myWork.effectivenessClosureQueue.unavailable', 'Benefits work unavailable.')}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
-          Retry
+          {t('myWork.effectivenessClosureQueue.retry', 'Retry')}
         </button>
       </section>
     );
+
+  const creationCards = [
+    {
+      key: 'finance',
+      label: t('myWork.effectivenessClosureQueue.financeReconciliation', 'Finance reconciliation'),
+      id: financeId,
+      setId: setFinanceId as React.Dispatch<React.SetStateAction<string>>,
+      json: financeJson,
+      setJson: setFinanceJson as React.Dispatch<React.SetStateAction<string>>,
+      action: createFinance,
+    },
+    {
+      key: 'observation',
+      label: t('myWork.effectivenessClosureQueue.resultsKpiObservation', 'Results KPI observation'),
+      id: observationId,
+      setId: setObservationId as React.Dispatch<React.SetStateAction<string>>,
+      json: observationJson,
+      setJson: setObservationJson as React.Dispatch<React.SetStateAction<string>>,
+      action: createObservation,
+    },
+    {
+      key: 'effectiveness',
+      label: t('myWork.effectivenessClosureQueue.effectivenessCase', 'Effectiveness Case'),
+      id: effectivenessId,
+      setId: setEffectivenessId as React.Dispatch<React.SetStateAction<string>>,
+      json: effectivenessJson,
+      setJson: setEffectivenessJson as React.Dispatch<React.SetStateAction<string>>,
+      action: createEffectiveness,
+    },
+  ];
+
   return (
-    <section aria-label="Benefits and Closure" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">Benefits, Effectiveness and Closure</h3>
+    <section aria-label={benefitsAndClosureLabel} className="border-b border-c-border p-4">
+      <h3 className="font-semibold">
+        {t('myWork.effectivenessClosureQueue.pageTitle', 'Benefits, Effectiveness and Closure')}
+      </h3>
       <p className="text-xs text-c-text-muted">
-        Measurement, independent review, closure and archive are separate canonical gates.
+        {t(
+          'myWork.effectivenessClosureQueue.subtitle',
+          'Measurement, independent review, closure and archive are separate canonical gates.'
+        )}
       </p>
       {receipt && (
         <div role="status" className="my-3 rounded border border-c-success/40 p-3 text-sm">
-          <strong>{String(receipt.type)} receipt</strong>
+          <strong>
+            {t('myWork.effectivenessClosureQueue.receiptHeading', '{{type}} receipt', {
+              type: String(receipt.type),
+            })}
+          </strong>
           {'snapshotId' in receipt && (
             <div>
               {String(receipt.type) === 'EFFECTIVENESS_SNAPSHOT'
-                ? `Effectiveness Snapshot ${String(receipt.snapshotId)} · ${String(receipt.outcome)} · lifecycle EFFECTIVENESS_REVIEWED`
-                : `Closure Snapshot ${String(receipt.snapshotId)} · CLOSED`}
+                ? t(
+                    'myWork.effectivenessClosureQueue.receiptEffectivenessSnapshot',
+                    'Effectiveness Snapshot {{snapshotId}} · {{outcome}} · lifecycle EFFECTIVENESS_REVIEWED',
+                    { snapshotId: String(receipt.snapshotId), outcome: String(receipt.outcome) }
+                  )
+                : t(
+                    'myWork.effectivenessClosureQueue.receiptClosureSnapshot',
+                    'Closure Snapshot {{snapshotId}} · CLOSED',
+                    { snapshotId: String(receipt.snapshotId) }
+                  )}
             </div>
           )}
           {'archiveId' in receipt && (
-            <div>Archive Manifest {String(receipt.archiveId)} · read-only</div>
+            <div>
+              {t(
+                'myWork.effectivenessClosureQueue.receiptArchive',
+                'Archive Manifest {{archiveId}} · read-only',
+                { archiveId: String(receipt.archiveId) }
+              )}
+            </div>
           )}
         </div>
       )}
       {(write === 'CONFLICT' || write === 'FAILED') && (
         <p role="alert" className="text-c-danger">
           {write === 'CONFLICT'
-            ? 'Source version changed. Reload before acting.'
-            : 'No canonical transition was saved.'}
+            ? t('myWork.effectivenessClosureQueue.conflict', 'Source version changed. Reload before acting.')
+            : t('myWork.effectivenessClosureQueue.failed', 'No canonical transition was saved.')}
         </p>
       )}
       <section
-        aria-label="Results KPI observations"
+        aria-label={t(
+          'myWork.effectivenessClosureQueue.observationsAriaLabel',
+          'Results KPI observations'
+        )}
         className="my-4 rounded border border-c-border p-4"
       >
-        <h4 className="font-medium">Canonical Results KPI observations</h4>
+        <h4 className="font-medium">
+          {t(
+            'myWork.effectivenessClosureQueue.observationsTitle',
+            'Canonical Results KPI observations'
+          )}
+        </h4>
         <ul className="mt-2 space-y-2">
           {observations.map((observation) => (
             <li
@@ -374,7 +464,11 @@ export const EffectivenessClosureQueue = () => {
             >
               <label className="flex items-start gap-2">
                 <input
-                  aria-label={`Select observation ${observation.observationId}`}
+                  aria-label={t(
+                    'myWork.effectivenessClosureQueue.selectObservationAriaLabel',
+                    'Select observation {{id}}',
+                    { id: observation.observationId }
+                  )}
                   type="checkbox"
                   checked={selectedObservationIds.includes(observation.observationId)}
                   onChange={(event) =>
@@ -389,75 +483,67 @@ export const EffectivenessClosureQueue = () => {
                   <strong>
                     {observation.observationId} v{observation.version}
                   </strong>{' '}
-                  · {observation.measurementState} · observed{' '}
-                  {observation.observedValue ?? 'UNKNOWN'} · {observation.knowledgeState} · Finance{' '}
-                  {observation.financeReconciliationRef
-                    ? `${observation.financeReconciliationRef.reconciliationId} v${observation.financeReconciliationRef.version}`
-                    : 'NOT_MEASURED / none'}
+                  ·{' '}
+                  {t(
+                    'myWork.effectivenessClosureQueue.observationSummary',
+                    '{{measurementState}} · observed {{observedValue}} · {{knowledgeState}} · Finance {{finance}}',
+                    {
+                      measurementState: observation.measurementState,
+                      observedValue: observation.observedValue ?? 'UNKNOWN',
+                      knowledgeState: observation.knowledgeState,
+                      finance: observation.financeReconciliationRef
+                        ? `${observation.financeReconciliationRef.reconciliationId} v${observation.financeReconciliationRef.version}`
+                        : t(
+                            'myWork.effectivenessClosureQueue.notMeasuredNone',
+                            'NOT_MEASURED / none'
+                          ),
+                    }
+                  )}
                 </span>
               </label>
             </li>
           ))}
         </ul>
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-          {[
-            [
-              'Finance reconciliation',
-              financeId,
-              setFinanceId,
-              financeJson,
-              setFinanceJson,
-              createFinance,
-            ],
-            [
-              'Results KPI observation',
-              observationId,
-              setObservationId,
-              observationJson,
-              setObservationJson,
-              createObservation,
-            ],
-            [
-              'Effectiveness Case',
-              effectivenessId,
-              setEffectivenessId,
-              effectivenessJson,
-              setEffectivenessJson,
-              createEffectiveness,
-            ],
-          ].map(([label, id, setId, json, setJson, action]) => (
-            <section key={String(label)} className="rounded border border-c-border p-3">
-              <h5 className="text-sm font-semibold">{String(label)}</h5>
+          {creationCards.map((card) => (
+            <section key={card.key} className="rounded border border-c-border p-3">
+              <h5 className="text-sm font-semibold">{card.label}</h5>
               <input
-                aria-label={`${String(label)} ID`}
-                value={String(id)}
-                onChange={(event) =>
-                  (setId as React.Dispatch<React.SetStateAction<string>>)(event.target.value)
-                }
+                aria-label={t('myWork.effectivenessClosureQueue.cardIdAriaLabel', '{{label}} ID', {
+                  label: card.label,
+                })}
+                value={card.id}
+                onChange={(event) => card.setId(event.target.value)}
                 className="mt-2 block w-full rounded border border-c-border bg-c-surface p-2"
               />
               <textarea
-                aria-label={`${String(label)} contract JSON`}
-                value={String(json)}
-                onChange={(event) =>
-                  (setJson as React.Dispatch<React.SetStateAction<string>>)(event.target.value)
-                }
+                aria-label={t(
+                  'myWork.effectivenessClosureQueue.cardContractJsonAriaLabel',
+                  '{{label}} contract JSON',
+                  { label: card.label }
+                )}
+                value={card.json}
+                onChange={(event) => card.setJson(event.target.value)}
                 className="mt-2 block min-h-28 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
               />
-              <button
-                className="btn-secondary mt-2"
-                onClick={() => void (action as () => Promise<void>)()}
-              >
-                {String(label).startsWith('Effectiveness')
-                  ? 'Create with selected exact observations'
-                  : `Create ${String(label)}`}
+              <button className="btn-secondary mt-2" onClick={() => void card.action()}>
+                {card.key === 'effectiveness'
+                  ? t(
+                      'myWork.effectivenessClosureQueue.createWithSelectedObservations',
+                      'Create with selected exact observations'
+                    )
+                  : t('myWork.effectivenessClosureQueue.createCard', 'Create {{label}}', {
+                      label: card.label,
+                    })}
               </button>
             </section>
           ))}
         </div>
         <p className="mt-2 text-xs text-c-text-muted">
-          MEASURED financial observations require an exact AVAILABLE reconciliation. NOT_MEASURED is
-          forced to null + UNKNOWN and cannot invent a value.
+          {t(
+            'myWork.effectivenessClosureQueue.measurementNote',
+            'MEASURED financial observations require an exact AVAILABLE reconciliation. NOT_MEASURED is forced to null + UNKNOWN and cannot invent a value.'
+          )}
         </p>
       </section>
       {rows.length > 0 && (
@@ -469,43 +555,91 @@ export const EffectivenessClosureQueue = () => {
           itemIds={rows.map((x) => x.id)}
           getItemById={(id) => rows.find((x) => x.id === id) ?? null}
           renderPreview={(row) => (
-            <div className="space-y-3 p-4 text-sm" aria-label="Effectiveness Workbench">
-              <p>Effectiveness Case {row.id}</p>
+            <div
+              className="space-y-3 p-4 text-sm"
+              aria-label={t(
+                'myWork.effectivenessClosureQueue.workbenchAriaLabel',
+                'Effectiveness Workbench'
+              )}
+            >
               <p>
-                Results Case {row.source.resultsAcceptanceRef.resultsCaseId} v
-                {row.source.resultsAcceptanceRef.version}
+                {t('myWork.effectivenessClosureQueue.effectivenessCaseId', 'Effectiveness Case {{id}}', {
+                  id: row.id,
+                })}
               </p>
               <p>
-                Benefits Handoff Pack {row.source.benefitsHandoffPackRef.packId} v
-                {row.source.benefitsHandoffPackRef.version}
+                {t(
+                  'myWork.effectivenessClosureQueue.resultsCase',
+                  'Results Case {{resultsCaseId}} v{{version}}',
+                  {
+                    resultsCaseId: row.source.resultsAcceptanceRef.resultsCaseId,
+                    version: row.source.resultsAcceptanceRef.version,
+                  }
+                )}
+              </p>
+              <p>
+                {t(
+                  'myWork.effectivenessClosureQueue.benefitsHandoffPack',
+                  'Benefits Handoff Pack {{packId}} v{{version}}',
+                  {
+                    packId: row.source.benefitsHandoffPackRef.packId,
+                    version: row.source.benefitsHandoffPackRef.version,
+                  }
+                )}
               </p>
               {row.source.measurements.map((m) => (
                 <article key={m.measurementId} className="rounded border border-c-border p-2">
                   <strong>{m.measurementId}</strong>
                   <p>
-                    KPI {m.contractRef.ref} v{m.contractRef.version} · source {m.sourceRef.ref} v
-                    {m.sourceRef.version}
+                    {t(
+                      'myWork.effectivenessClosureQueue.kpiSource',
+                      'KPI {{contractRef}} v{{contractVersion}} · source {{sourceRef}} v{{sourceVersion}}',
+                      {
+                        contractRef: m.contractRef.ref,
+                        contractVersion: m.contractRef.version,
+                        sourceRef: m.sourceRef.ref,
+                        sourceVersion: m.sourceRef.version,
+                      }
+                    )}
                   </p>
                   <p>
-                    Baseline {displayValue(m.baseline, m.knowledgeState)} · current{' '}
-                    {displayValue(m.current, m.knowledgeState)} · target{' '}
-                    {displayValue(m.target, m.knowledgeState)} {m.unit}
-                    {m.currency ? ` ${m.currency}` : ''}
+                    {t(
+                      'myWork.effectivenessClosureQueue.baselineCurrentTarget',
+                      'Baseline {{baseline}} · current {{current}} · target {{target}} {{unit}}{{currency}}',
+                      {
+                        baseline: displayValue(m.baseline, m.knowledgeState),
+                        current: displayValue(m.current, m.knowledgeState),
+                        target: displayValue(m.target, m.knowledgeState),
+                        unit: m.unit,
+                        currency: m.currency ? ` ${m.currency}` : '',
+                      }
+                    )}
                   </p>
                   <p>
-                    {m.formula} · {m.window.start} → {m.window.end} · asOf {m.asOf}
+                    {m.formula} · {m.window.start} → {m.window.end} ·{' '}
+                    {t('myWork.effectivenessClosureQueue.asOf', 'asOf {{asOf}}', { asOf: m.asOf })}
                   </p>
                   <p>
-                    {m.knowledgeState} · confidence {m.confidence} · evidence{' '}
-                    {m.evidenceRefs.join(', ') || 'EVIDENCE_MISSING'}
+                    {t(
+                      'myWork.effectivenessClosureQueue.knowledgeConfidenceEvidence',
+                      '{{knowledgeState}} · confidence {{confidence}} · evidence {{evidence}}',
+                      {
+                        knowledgeState: m.knowledgeState,
+                        confidence: m.confidence,
+                        evidence: m.evidenceRefs.join(', ') || 'EVIDENCE_MISSING',
+                      }
+                    )}
                   </p>
                 </article>
               ))}
               {row.source.status === 'PENDING_REVIEW' && (
                 <label className="block">
-                  Rationale
+                  {t('myWork.effectivenessClosureQueue.rationale', 'Rationale')}
                   <textarea
-                    aria-label="Effectiveness rationale"
+                    aria-label={t(
+                      'myWork.effectivenessClosureQueue.rationaleAriaLabel',
+                      'Effectiveness rationale'
+                    )}
                     value={rationale}
                     onChange={(e) => setRationale(e.target.value)}
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -516,27 +650,40 @@ export const EffectivenessClosureQueue = () => {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label>
                     <input
-                      aria-label="Legal hold"
+                      aria-label={t('myWork.effectivenessClosureQueue.legalHoldAriaLabel', 'Legal hold')}
                       type="checkbox"
                       checked={legalHold}
                       onChange={(e) => setLegalHold(e.target.checked)}
                     />{' '}
-                    Active legal hold
+                    {t('myWork.effectivenessClosureQueue.activeLegalHold', 'Active legal hold')}
                   </label>
-                  {legalHold && <p role="alert">Archive blocked: active legal hold.</p>}
+                  {legalHold && (
+                    <p role="alert">
+                      {t(
+                        'myWork.effectivenessClosureQueue.archiveBlocked',
+                        'Archive blocked: active legal hold.'
+                      )}
+                    </p>
+                  )}
                   <label>
-                    Retention policy ref
+                    {t('myWork.effectivenessClosureQueue.retentionPolicyRef', 'Retention policy ref')}
                     <input
-                      aria-label="Retention policy ref"
+                      aria-label={t(
+                        'myWork.effectivenessClosureQueue.retentionPolicyRefAriaLabel',
+                        'Retention policy ref'
+                      )}
                       value={archive.retentionRef}
                       onChange={(e) => setArchive((x) => ({ ...x, retentionRef: e.target.value }))}
                       className="block w-full rounded border border-c-border bg-c-surface p-2"
                     />
                   </label>
                   <label>
-                    Export ref
+                    {t('myWork.effectivenessClosureQueue.exportRef', 'Export ref')}
                     <input
-                      aria-label="Archive export ref"
+                      aria-label={t(
+                        'myWork.effectivenessClosureQueue.exportRefAriaLabel',
+                        'Archive export ref'
+                      )}
                       value={archive.exportRef}
                       onChange={(e) => setArchive((x) => ({ ...x, exportRef: e.target.value }))}
                       className="block w-full rounded border border-c-border bg-c-surface p-2"
@@ -554,7 +701,7 @@ export const EffectivenessClosureQueue = () => {
                     className="btn-primary"
                     onClick={() => void transition({ action: 'REQUEST_REVIEW' })}
                   >
-                    Request review
+                    {t('myWork.effectivenessClosureQueue.requestReview', 'Request review')}
                   </button>
                 </>
               )}
@@ -585,7 +732,7 @@ export const EffectivenessClosureQueue = () => {
                   disabled={legalHold || !archive.retentionRef || !archive.exportRef}
                   onClick={() => runAction('effectiveness.archive.create', () => void archiveCase())}
                 >
-                  Create Archive Manifest
+                  {t('myWork.effectivenessClosureQueue.createArchiveManifest', 'Create Archive Manifest')}
                 </button>
               )}
             </div>

@@ -110,10 +110,14 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
                   <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4">
                     <Play size={32} className="text-white/60 ml-1" />
                   </div>
-                  <p className="text-white/60 text-lg font-medium mb-2">Video not available</p>
+                  <p className="text-white/60 text-lg font-medium mb-2">
+                    {t('settings.toolVideoModal.videoUnavailableTitle', 'Video not available')}
+                  </p>
                   <p className="text-white/40 text-sm max-w-md text-center px-4">
-                    We're preparing an in-depth walkthrough of this tool. In the meantime, try it
-                    yourself!
+                    {t(
+                      'settings.toolVideoModal.videoUnavailableBody',
+                      "We're preparing an in-depth walkthrough of this tool. In the meantime, try it yourself!",
+                    )}
                   </p>
                 </div>
               )}
@@ -148,14 +152,14 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
                   onClick={onTryTool}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-crimson-700 transition-all shadow-lg"
                 >
-                  Try It Free
+                  {t('settings.toolVideoModal.tryItFree', 'Try It Free')}
                   <ArrowRight size={18} />
                 </button>
                 <button
                   onClick={onClose}
                   className="px-6 py-3 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
-                  Maybe Later
+                  {t('settings.toolVideoModal.maybeLater', 'Maybe Later')}
                 </button>
               </div>
             </div>

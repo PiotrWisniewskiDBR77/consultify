@@ -190,7 +190,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-c-accent dark:text-c-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-c-text mb-2">Start your partner application</h1>
+            <h1 className="text-3xl font-bold text-c-text mb-2">
+              {t('settings.enterpriseOnboardingWizard.step1.title', 'Start your partner application')}
+            </h1>
             <p className="text-c-text-secondary">
               {t('onboarding.enterpriseWizard.step1.intro', 'This is the same application path launched from the LP and from the product.')}
             </p>
@@ -200,7 +202,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-c-accent dark:text-c-accent font-medium">Step 1 of 4</span>
-              <span className="text-c-text-muted">Partner agreement</span>
+              <span className="text-c-text-muted">
+                {t('settings.enterpriseOnboardingWizard.step1.stepName', 'Partner agreement')}
+              </span>
             </div>
             <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
               <div className="h-full bg-c-surface w-1/4 transition-all duration-300" />
@@ -212,10 +216,33 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface">
               <h3 className="font-semibold text-c-text mb-3">{t('onboarding.enterpriseWizard.step1.termsTitle', 'Program terms')}</h3>
               <div className="max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2">
-                <p>By using Consultify, you agree to our enterprise service agreement...</p>
-                <p>• Professional services and AI-powered consulting tools</p>
-                <p>• Data processing and privacy compliance (GDPR compliant)</p>
-                <p>• Subscription terms and billing policies</p>
+                <p>
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.termsIntro',
+                    'By using Consultify, you agree to our enterprise service agreement...',
+                  )}
+                </p>
+                <p>
+                  •{' '}
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.termsBullet1',
+                    'Professional services and AI-powered consulting tools',
+                  )}
+                </p>
+                <p>
+                  •{' '}
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.termsBullet2',
+                    'Data processing and privacy compliance (GDPR compliant)',
+                  )}
+                </p>
+                <p>
+                  •{' '}
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.termsBullet3',
+                    'Subscription terms and billing policies',
+                  )}
+                </p>
               </div>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -234,10 +261,33 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface">
               <h3 className="font-semibold text-c-text mb-3">{t('onboarding.enterpriseWizard.step1.privacyTitle', 'Privacy policy')}</h3>
               <div className="max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2">
-                <p>We respect your privacy and protect your data...</p>
-                <p>• We collect only necessary business information</p>
-                <p>• Your data is encrypted and secure</p>
-                <p>• You control your data - delete anytime</p>
+                <p>
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.privacyIntro',
+                    'We respect your privacy and protect your data...',
+                  )}
+                </p>
+                <p>
+                  •{' '}
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.privacyBullet1',
+                    'We collect only necessary business information',
+                  )}
+                </p>
+                <p>
+                  •{' '}
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.privacyBullet2',
+                    'Your data is encrypted and secure',
+                  )}
+                </p>
+                <p>
+                  •{' '}
+                  {t(
+                    'settings.enterpriseOnboardingWizard.step1.privacyBullet3',
+                    'You control your data - delete anytime',
+                  )}
+                </p>
               </div>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -261,7 +311,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
+                {t('settings.enterpriseOnboardingWizard.processing', 'Processing...')}
               </>
             ) : (
               <>
@@ -351,7 +401,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4">
               <DollarSign className="w-8 h-8 text-c-accent dark:text-c-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-c-text mb-2">Choose your partner track</h1>
+            <h1 className="text-3xl font-bold text-c-text mb-2">
+              {t('settings.enterpriseOnboardingWizard.step2.title', 'Choose your partner track')}
+            </h1>
             <p className="text-c-text-secondary">
               {t('onboarding.enterpriseWizard.step2.intro', 'Choose the entry model that best fits your collaboration plan.')}
             </p>
@@ -361,7 +413,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="mb-12 max-w-2xl mx-auto">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-c-accent dark:text-c-accent font-medium">Step 2 of 4</span>
-              <span className="text-c-text-muted">Partner track</span>
+              <span className="text-c-text-muted">
+                {t('settings.enterpriseOnboardingWizard.step2.stepName', 'Partner track')}
+              </span>
             </div>
             <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
               <div className="h-full bg-c-surface w-2/4 transition-all duration-300" />
@@ -381,7 +435,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               >
                 {tier.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-c-surface text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Most Popular
+                    {t('settings.enterpriseOnboardingWizard.step2.mostPopular', 'Most Popular')}
                   </div>
                 )}
 
@@ -420,12 +474,14 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
+                  {t('settings.enterpriseOnboardingWizard.processing', 'Processing...')}
                 </>
               ) : (
                 <>
-                  Continue with{' '}
-                  {selectedTier ? tiers.find((t) => t.id === selectedTier)?.name : 'Selected Plan'}
+                  {t('settings.enterpriseOnboardingWizard.step2.continueWith', 'Continue with')}{' '}
+                  {selectedTier
+                    ? tiers.find((tier) => tier.id === selectedTier)?.name
+                    : t('settings.enterpriseOnboardingWizard.step2.selectedPlanFallback', 'Selected Plan')}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -445,7 +501,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="w-16 h-16 bg-c-accent-soft rounded-full flex items-center justify-center mx-auto mb-4">
               <CreditCard className="w-8 h-8 text-c-accent dark:text-c-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-c-text mb-2">Payout and billing readiness</h1>
+            <h1 className="text-3xl font-bold text-c-text mb-2">
+              {t('settings.enterpriseOnboardingWizard.step3.title', 'Payout and billing readiness')}
+            </h1>
             <p className="text-c-text-secondary">
               {t('onboarding.enterpriseWizard.step3.intro', 'Set up your billing details now, or continue and finish them later with the partner team.')}
             </p>
@@ -455,7 +513,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-c-accent dark:text-c-accent font-medium">Step 3 of 4</span>
-              <span className="text-c-text-muted">Payout readiness</span>
+              <span className="text-c-text-muted">
+                {t('settings.enterpriseOnboardingWizard.step3.stepName', 'Payout readiness')}
+              </span>
             </div>
             <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
               <div className="h-full bg-c-surface w-3/4 transition-all duration-300" />
@@ -480,9 +540,16 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Placeholder for Stripe Elements */}
           <div className="border-2 border-dashed border-c-border-subtle rounded-xl p-12 mb-8 text-center">
             <CreditCard className="w-16 h-16 text-c-text-secondary dark:text-c-text-muted mx-auto mb-4" />
-            <p className="text-c-text-muted mb-2">Payout and billing setup</p>
+            <p className="text-c-text-muted mb-2">
+              {t('settings.enterpriseOnboardingWizard.step3.placeholderTitle', 'Payout and billing setup')}
+            </p>
             <p className="text-sm text-c-text-secondary dark:text-c-text-muted">
-              (Automated payout setup can be expanded in the next rollout)
+              (
+              {t(
+                'settings.enterpriseOnboardingWizard.step3.placeholderNote',
+                'Automated payout setup can be expanded in the next rollout',
+              )}
+              )
             </p>
           </div>
 
@@ -491,7 +558,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               onClick={handleSkipPayment}
               className="flex-1 border-2 border-c-accent text-c-accent hover:bg-c-accent-soft font-semibold py-4 rounded-xl transition-all"
             >
-              Continue and finish later
+              {t('settings.enterpriseOnboardingWizard.step3.continueLater', 'Continue and finish later')}
             </button>
             <button
               onClick={handleSetupPayment}
@@ -501,11 +568,11 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
+                  {t('settings.enterpriseOnboardingWizard.processing', 'Processing...')}
                 </>
               ) : (
                 <>
-                  Contact partner team
+                  {t('settings.enterpriseOnboardingWizard.step3.contactPartnerTeam', 'Contact partner team')}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -523,7 +590,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-12 h-12 text-c-success" />
         </div>
-        <h1 className="text-3xl font-bold text-c-text mb-4">Partner application completed</h1>
+        <h1 className="text-3xl font-bold text-c-text mb-4">
+          {t('settings.enterpriseOnboardingWizard.step4.title', 'Partner application completed')}
+        </h1>
         <p className="text-lg text-c-text-secondary mb-8">
           {t('onboarding.enterpriseWizard.step4.intro', 'Your workspace is ready for the next step of activation and work in the program.')}
         </p>
@@ -531,7 +600,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           onClick={() => navigate('/app')}
           className="bg-c-text text-c-surface hover:opacity-90 font-semibold px-8 py-4 rounded-xl transition-all inline-flex items-center gap-2"
         >
-          Go to workspace
+          {t('settings.enterpriseOnboardingWizard.step4.goToWorkspace', 'Go to workspace')}
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>

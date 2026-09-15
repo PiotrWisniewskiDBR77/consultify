@@ -6495,6 +6495,13 @@ const IdeaAIGenerateBodySchema = z.object({
     'vsm_future_state',
     // J26 (Kanał 2): rewrite an existing process step in place
     'edit_step',
+    // Fala F3 (15.09): zaimplementowane w ideaAIGeneratorService (GENERATOR_SCHEMAS
+    // process_brief/process_savings + handlery), ale NIGDY nie dopisane do tego
+    // enuma — realne wołacze frontu (Canvas OS „Generate structured brief" oraz
+    // analiza oszczędności w IdeaProcessFlowTool) dostawały 400 „Invalid request
+    // body". Kontrakt klient↔serwer, nie rozluźnienie walidacji.
+    'process_brief',
+    'process_savings',
   ]),
   tool: z.enum(['process_flow', 'mindmap', 'table', 'whiteboard']),
   context: z.object({

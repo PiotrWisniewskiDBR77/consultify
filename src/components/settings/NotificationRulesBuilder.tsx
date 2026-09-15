@@ -404,10 +404,18 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 }
                 className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text text-sm"
               >
-                <option value="instant">Instant (no digest)</option>
-                <option value="hourly">Hourly</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
+                <option value="instant">
+                  {t('settings.notifications.digest.frequencyInstant', 'Instant (no digest)')}
+                </option>
+                <option value="hourly">
+                  {t('settings.notifications.digest.frequencyHourly', 'Hourly')}
+                </option>
+                <option value="daily">
+                  {t('settings.notifications.digest.frequencyDaily', 'Daily')}
+                </option>
+                <option value="weekly">
+                  {t('settings.notifications.digest.frequencyWeekly', 'Weekly')}
+                </option>
               </select>
             </div>
             {digestSettings.frequency !== 'instant' && digestSettings.frequency !== 'hourly' && (
@@ -470,7 +478,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               value={newKeyword}
               onChange={(e) => setNewKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
-              placeholder="Add keyword..."
+              placeholder={t('settings.notifications.keywords.addPlaceholder', 'Add keyword...')}
               disabled={isReadOnly}
               className="px-3 py-1 border border-c-border-subtle dark:border-navy-700 rounded-full text-sm bg-c-surface text-c-text w-32"
             />

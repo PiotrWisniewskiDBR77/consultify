@@ -210,7 +210,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Save Changes
+          {t('settings.aiBehavior.saveChanges', 'Save Changes')}
         </button>
       </div>
 
@@ -218,7 +218,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Wand2 size={20} className="text-pink-500" />
-          AI Features
+          {t('settings.aiBehavior.featuresTitle', 'AI Features')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -226,15 +226,21 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.enableAutoSuggestions}
             onChange={(v) => setSettings({ ...settings, enableAutoSuggestions: v })}
             icon={Lightbulb}
-            title="Auto-Suggestions"
-            description="Get AI suggestions while working"
+            title={t('settings.aiBehavior.autoSuggestionsTitle', 'Auto-Suggestions')}
+            description={t(
+              'settings.aiBehavior.autoSuggestionsDescription',
+              'Get AI suggestions while working'
+            )}
           />
           <ToggleCard
             enabled={settings.enableInComments}
             onChange={(v) => setSettings({ ...settings, enableInComments: v })}
             icon={MessageCircle}
-            title="AI in Comments"
-            description="AI assistance in comment sections"
+            title={t('settings.aiBehavior.commentsTitle', 'AI in Comments')}
+            description={t(
+              'settings.aiBehavior.commentsDescription',
+              'AI assistance in comment sections'
+            )}
           />
           <ToggleCard
             enabled={settings.enableInTasks}
@@ -247,8 +253,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.enableAutocomplete}
             onChange={(v) => setSettings({ ...settings, enableAutocomplete: v })}
             icon={Sparkles}
-            title="Smart Autocomplete"
-            description="AI-powered text completion"
+            title={t('settings.aiBehavior.autocompleteTitle', 'Smart Autocomplete')}
+            description={t(
+              'settings.aiBehavior.autocompleteDescription',
+              'AI-powered text completion'
+            )}
           />
           <ToggleCard
             enabled={settings.enableLearningFromWork}
@@ -264,8 +273,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.enableProactiveInsights}
             onChange={(v) => setSettings({ ...settings, enableProactiveInsights: v })}
             icon={Brain}
-            title="Proactive Insights"
-            description="AI suggests improvements unprompted"
+            title={t('settings.aiBehavior.proactiveInsightsTitle', 'Proactive Insights')}
+            description={t(
+              'settings.aiBehavior.proactiveInsightsDescription',
+              'AI suggests improvements unprompted'
+            )}
           />
         </div>
       </div>
@@ -274,7 +286,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Smile size={20} className="text-amber-500" />
-          AI Personality
+          {t('settings.aiBehavior.personalitySectionTitle', 'AI Personality')}
         </h3>
         <p className="text-sm text-c-text-muted">
           {t('settings.aiBehavior.personalityHint', 'Choose how AI communicates with you')}
@@ -317,11 +329,15 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
 
       {/* Response Style */}
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-c-text">Response Style</h3>
+        <h3 className="text-lg font-semibold text-c-text">
+          {t('settings.aiBehavior.responseStyleTitle', 'Response Style')}
+        </h3>
 
         {/* Response Length */}
         <div className="space-y-3">
-          <label className="font-medium text-c-text">Response Length</label>
+          <label className="font-medium text-c-text">
+            {t('settings.aiBehavior.responseLengthLabel', 'Response Length')}
+          </label>
           <div className="flex gap-3">
             {(['brief', 'moderate', 'detailed'] as const).map((length) => (
               <button
@@ -342,7 +358,9 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
         {/* Formality Slider */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="font-medium text-c-text">Formality Level</label>
+            <label className="font-medium text-c-text">
+              {t('settings.aiBehavior.formalityLevelLabel', 'Formality Level')}
+            </label>
             <span className="text-sm text-pink-600">{settings.formality}%</span>
           </div>
           <input
@@ -354,15 +372,17 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-pink-600"
           />
           <div className="flex justify-between text-xs text-c-text-muted">
-            <span>Casual</span>
-            <span>Formal</span>
+            <span>{t('settings.aiBehavior.formalityCasual', 'Casual')}</span>
+            <span>{t('settings.aiBehavior.formalityFormal', 'Formal')}</span>
           </div>
         </div>
 
         {/* Technical Level Slider */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="font-medium text-c-text">Technical Depth</label>
+            <label className="font-medium text-c-text">
+              {t('settings.aiBehavior.technicalDepthLabel', 'Technical Depth')}
+            </label>
             <span className="text-sm text-pink-600">{settings.technicalLevel}%</span>
           </div>
           <input
@@ -374,8 +394,8 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-pink-600"
           />
           <div className="flex justify-between text-xs text-c-text-muted">
-            <span>Simple</span>
-            <span>Technical</span>
+            <span>{t('settings.aiBehavior.technicalSimple', 'Simple')}</span>
+            <span>{t('settings.aiBehavior.technicalTechnical', 'Technical')}</span>
           </div>
         </div>
       </div>
@@ -384,7 +404,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <BookOpen size={20} className="text-blue-500" />
-          Context Sources
+          {t('settings.aiBehavior.contextSourcesTitle', 'Context Sources')}
         </h3>
         <p className="text-sm text-c-text-muted">
           {t(
@@ -398,8 +418,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.useProjectContext}
             onChange={(v) => setSettings({ ...settings, useProjectContext: v })}
             icon={Briefcase}
-            title="Current Project Context"
-            description="Use current project information"
+            title={t('settings.aiBehavior.projectContextTitle', 'Current Project Context')}
+            description={t(
+              'settings.aiBehavior.projectContextDescription',
+              'Use current project information'
+            )}
           />
           <ToggleCard
             enabled={settings.useHistoricalData}
@@ -412,8 +435,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.useTeamPatterns}
             onChange={(v) => setSettings({ ...settings, useTeamPatterns: v })}
             icon={Brain}
-            title="Team Patterns"
-            description="Use team's collective patterns"
+            title={t('settings.aiBehavior.teamPatternsTitle', 'Team Patterns')}
+            description={t(
+              'settings.aiBehavior.teamPatternsDescription',
+              "Use team's collective patterns"
+            )}
           />
         </div>
       </div>

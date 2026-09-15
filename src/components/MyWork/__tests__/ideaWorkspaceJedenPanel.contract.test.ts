@@ -62,7 +62,12 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
 
   it('Teresa jest ZAKŁADKĄ tego panelu, a globalny dok ustępuje na całej trasie warsztatu', () => {
     expect(inspektor).toContain('data-testid={`idea-panel-tab-${tab.id}`}');
-    expect(workspace).toContain('teresaContent={teresaPanelNode}');
+    // ★ STARE ZACHOWANIE (aktualizacja 2026-09-14, DEC-461 „ODMROZENIE"):
+    // commit `5f309498f376` (06.09, DEC-434/DEC-442 „remove Teresa from idea
+    // workspace”) świadomie zdjął `teresaContent={teresaPanelNode}` — Teresa
+    // przestała być zakładką tego panelu. `teresaPanelNode` zostaje w kodzie
+    // jako martwa zmienna (nadal buduje `UnifiedChatPanel`), więc import
+    // poniżej wciąż jest prawdziwy, ale osadzenie w panelu — już nie.
     expect(workspace).toContain("import('@/components/AIChat/UnifiedChatPanel')");
     const layout = fs.readFileSync(
       path.resolve(__dirname, '../../../layouts/MainLayout.tsx'),
@@ -82,10 +87,11 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
     expect(workspace).toContain('const poprzedniStanCzatu = useRef<boolean>(isChatCollapsed);');
     // „Omów z Teresą" przełącza zakładkę JAWNIE — inaczej przy już otwartym
     // czacie żadne przejście stanu by nie zaszło i przycisk byłby martwy.
-    // 1.1-N2 (DEC-409): trzecie wywołanie to przycisk „AI" w rogu warsztatu
-    // (`IdeaCornerActions`) — jedyne wejście AI w rogu po zdjęciu pigułki
-    // „Teresa" (krok 1) i chipa statusu (krok 2).
-    expect(workspace.match(/ustawZakladkePanelu\('teresa'\)/g)).toHaveLength(3);
+    // ★ STARE ZACHOWANIE (aktualizacja 2026-09-14, DEC-461 „ODMROZENIE"):
+    // commit `89913d900f` (DEC-434/DEC-442 „consolidate idea AI entry”) zdjął
+    // trzecie wywołanie z przycisku „AI” w rogu warsztatu (`IdeaCornerActions`,
+    // wprowadzone DEC-409) — zostały tylko `openChat` i `handleDiscussWithTeresa`.
+    expect(workspace.match(/ustawZakladkePanelu\('teresa'\)/g)).toHaveLength(2);
   });
 
   it('nad płótnem nie pływają karty analizy, a paleta stoi po lewej', () => {

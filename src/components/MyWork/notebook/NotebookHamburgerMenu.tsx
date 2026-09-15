@@ -356,7 +356,9 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
       onClose();
     } catch (error) {
       setExecutionError(
-        error instanceof Error ? error.message : 'The action failed. Your note was not changed.'
+        error instanceof Error
+          ? error.message
+          : i18n.t('notebook.hamburgerMenu.actionFailed', 'The action failed. Your note was not changed.')
       );
       setFailedAction(action);
     } finally {

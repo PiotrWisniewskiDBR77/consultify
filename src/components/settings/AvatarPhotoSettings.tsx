@@ -282,7 +282,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !selectedFile && fileInputRef.current?.click()}
-        aria-label="Upload profile photo"
+        aria-label={t('settings.avatar.uploadAriaLabel', 'Upload profile photo')}
         className={`
                     relative p-8 border-2 border-dashed rounded-xl text-center cursor-pointer
                     transition-all duration-200

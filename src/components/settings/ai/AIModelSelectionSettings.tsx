@@ -241,7 +241,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Save Changes
+          {t('settings.aiModels.saveChanges', 'Save Changes')}
         </button>
       </div>
 
@@ -251,8 +251,12 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           <div className="flex items-center gap-3">
             <DollarSign size={20} className="text-c-accent" />
             <div>
-              <p className="font-medium text-c-text">Estimated Monthly Cost</p>
-              <p className="text-sm text-c-text-muted">Based on average usage patterns</p>
+              <p className="font-medium text-c-text">
+                {t('settings.aiModels.estimatedMonthlyCost', 'Estimated Monthly Cost')}
+              </p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.aiModels.estimatedCostHint', 'Based on average usage patterns')}
+              </p>
             </div>
           </div>
           <div className="text-right">
@@ -290,7 +294,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Default Model Tab */}
       {activeTab === 'models' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-c-text">Select Default AI Model</h3>
+          <h3 className="text-lg font-semibold text-c-text">
+            {t('settings.aiModels.selectDefaultModel', 'Select Default AI Model')}
+          </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {availableModels.map((model) => (
@@ -367,7 +373,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                   onChange={(e) => setSettings({ ...settings, [settingKey]: e.target.value })}
                   className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 >
-                  <option value="">Use Default Model</option>
+                  <option value="">{t('settings.aiModels.useDefaultModel', 'Use Default Model')}</option>
                   {availableModels
                     .filter((m) => m.capabilities.includes(useCase.id))
                     .map((model) => (
@@ -385,13 +391,17 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Advanced Tab */}
       {activeTab === 'advanced' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-c-text">Advanced Settings</h3>
+          <h3 className="text-lg font-semibold text-c-text">
+            {t('settings.aiModels.advancedSettingsTitle', 'Advanced Settings')}
+          </h3>
 
           {/* Temperature Slider */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <label className="font-medium text-c-text">Temperature / Creativity</label>
+                <label className="font-medium text-c-text">
+                  {t('settings.aiModels.temperatureLabel', 'Temperature / Creativity')}
+                </label>
                 <p className="text-sm text-c-text-muted">
                   Higher = more creative, Lower = more focused
                 </p>
@@ -412,9 +422,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-c-accent"
             />
             <div className="flex justify-between text-xs text-c-text-muted">
-              <span>Precise</span>
-              <span>Balanced</span>
-              <span>Creative</span>
+              <span>{t('settings.aiModels.temperaturePrecise', 'Precise')}</span>
+              <span>{t('settings.aiModels.temperatureBalanced', 'Balanced')}</span>
+              <span>{t('settings.aiModels.temperatureCreative', 'Creative')}</span>
             </div>
           </div>
 
@@ -422,8 +432,12 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <label className="font-medium text-c-text">Max Response Tokens</label>
-                <p className="text-sm text-c-text-muted">Maximum length of AI responses</p>
+                <label className="font-medium text-c-text">
+                  {t('settings.aiModels.maxResponseTokensLabel', 'Max Response Tokens')}
+                </label>
+                <p className="text-sm text-c-text-muted">
+                  {t('settings.aiModels.maxResponseTokensHint', 'Maximum length of AI responses')}
+                </p>
               </div>
               <span className="text-lg font-mono text-c-accent">
                 {formatListNumber(settings.maxTokens)}
@@ -439,16 +453,18 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-c-accent"
             />
             <div className="flex justify-between text-xs text-c-text-muted">
-              <span>Short (256)</span>
-              <span>Medium (4K)</span>
-              <span>Long (16K)</span>
+              <span>{t('settings.aiModels.tokensShort', 'Short (256)')}</span>
+              <span>{t('settings.aiModels.tokensMedium', 'Medium (4K)')}</span>
+              <span>{t('settings.aiModels.tokensLong', 'Long (16K)')}</span>
             </div>
           </div>
 
           {/* Stream Response */}
           <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
             <div>
-              <label className="font-medium text-c-text">Stream Responses</label>
+              <label className="font-medium text-c-text">
+                {t('settings.aiModels.streamResponsesLabel', 'Stream Responses')}
+              </label>
               <p className="text-sm text-c-text-muted">Show responses as they're generated</p>
             </div>
             <button
@@ -472,12 +488,34 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         <div className="flex items-start gap-3">
           <Info size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <p className="font-medium mb-1">Model Selection Tips</p>
+            <p className="font-medium mb-1">
+              {t('settings.aiModels.tipsTitle', 'Model Selection Tips')}
+            </p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Use GPT-4 Turbo or Claude 3 Opus for complex reasoning tasks</li>
-              <li>Use GPT-3.5 or Gemini Pro for quick, simple queries to save costs</li>
-              <li>Lower temperature (0.3-0.5) for factual/analytical tasks</li>
-              <li>Higher temperature (0.8-1.2) for creative writing</li>
+              <li>
+                {t(
+                  'settings.aiModels.tipComplexReasoning',
+                  'Use GPT-4 Turbo or Claude 3 Opus for complex reasoning tasks'
+                )}
+              </li>
+              <li>
+                {t(
+                  'settings.aiModels.tipQuickQueries',
+                  'Use GPT-3.5 or Gemini Pro for quick, simple queries to save costs'
+                )}
+              </li>
+              <li>
+                {t(
+                  'settings.aiModels.tipLowerTemperature',
+                  'Lower temperature (0.3-0.5) for factual/analytical tasks'
+                )}
+              </li>
+              <li>
+                {t(
+                  'settings.aiModels.tipHigherTemperature',
+                  'Higher temperature (0.8-1.2) for creative writing'
+                )}
+              </li>
             </ul>
           </div>
         </div>

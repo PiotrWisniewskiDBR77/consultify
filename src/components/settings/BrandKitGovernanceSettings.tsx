@@ -238,7 +238,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
         <div>
           <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
             <ShieldCheck size={18} className="text-blue-500" />
-            Brand Kit Governance
+            {t('settings.brandKitGovernanceSettings.title', 'Brand Kit Governance')}
           </h3>
           <p className="text-c-text-muted text-sm mt-1">
             {t(
@@ -251,7 +251,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
           {!canEdit && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-c-surface-raised text-c-text-secondary border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
               <Lock size={12} />
-              Read-only
+              {t('settings.brandKitGovernanceSettings.readOnly', 'Read-only')}
             </span>
           )}
           {canEdit && (
@@ -329,7 +329,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       {/* Empty 200 OK */}
       {!loading && !loadError && !hasData && (
         <div className={`${cardClass} text-sm text-c-text-secondary`}>
-          No brand kit configured yet.
+          {t('settings.brandKitGovernanceSettings.noBrandKitConfiguredYet', 'No brand kit configured yet.')}
         </div>
       )}
 
@@ -340,13 +340,13 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
               <Palette size={14} className="text-blue-500" />
-              Identity
+              {t('settings.brandKitGovernanceSettings.identity', 'Identity')}
             </h4>
 
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label htmlFor="brandkit-name" className={labelClass}>
-                  Name
+                  {t('settings.brandKitGovernanceSettings.name', 'Name')}
                 </label>
                 <input
                   id="brandkit-name"
@@ -406,7 +406,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                         />
                       </div>
                       {!isValidHex && value && (
-                        <p className="text-xs text-danger-500 mt-1">Invalid hex color</p>
+                        <p className="text-xs text-danger-500 mt-1">{t('settings.brandKitGovernanceSettings.invalidHexColor', 'Invalid hex color')}</p>
                       )}
                     </div>
                   );
@@ -417,12 +417,12 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
 
           {/* Header & Footer */}
           <div className={cardClass}>
-            <h4 className={sectionTitleClass}>Slide Chrome</h4>
+            <h4 className={sectionTitleClass}>{t('settings.brandKitGovernanceSettings.slideChrome', 'Slide Chrome')}</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="brandkit-header-text" className={labelClass}>
-                  Header text
+                  {t('settings.brandKitGovernanceSettings.headerText', 'Header text')}
                 </label>
                 <input
                   id="brandkit-header-text"
@@ -435,7 +435,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
               </div>
               <div>
                 <label htmlFor="brandkit-footer-text" className={labelClass}>
-                  Footer text
+                  {t('settings.brandKitGovernanceSettings.footerText', 'Footer text')}
                 </label>
                 <input
                   id="brandkit-footer-text"
@@ -462,7 +462,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   onChange={(event) => updateField('showPageNumbers', event.target.checked)}
                 />
                 <span>
-                  <span className="block text-sm font-medium text-navy-900">Show page numbers</span>
+                  <span className="block text-sm font-medium text-navy-900">{t('settings.brandKitGovernanceSettings.showPageNumbers', 'Show page numbers')}</span>
                   <span className={helperTextClass}>
                     {t('settings.brandKit.pageNumbersHint', 'Render page numbers in the slide footer.')}
                   </span>
@@ -483,7 +483,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                 />
                 <span>
                   <span className="block text-sm font-medium text-navy-900">
-                    Show confidentiality marker
+                    {t('settings.brandKitGovernanceSettings.showConfidentialityMarker', 'Show confidentiality marker')}
                   </span>
                   <span className={helperTextClass}>
                     {t(
@@ -498,12 +498,12 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
 
           {/* Confidentiality / Legal */}
           <div className={cardClass}>
-            <h4 className={sectionTitleClass}>Confidentiality & Legal</h4>
+            <h4 className={sectionTitleClass}>{t('settings.brandKitGovernanceSettings.confidentialityAndLegal', 'Confidentiality & Legal')}</h4>
 
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label htmlFor="brandkit-default-confidentiality" className={labelClass}>
-                  Default confidentiality
+                  {t('settings.brandKitGovernanceSettings.defaultConfidentiality', 'Default confidentiality')}
                 </label>
                 <select
                   id="brandkit-default-confidentiality"
@@ -521,13 +521,13 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   ))}
                 </select>
                 <p className={helperTextClass}>
-                  Applied to new presentations unless explicitly overridden.
+                  {t('settings.brandKitGovernanceSettings.appliedToNewPresentationsHint', 'Applied to new presentations unless explicitly overridden.')}
                 </p>
               </div>
 
               <div>
                 <label htmlFor="brandkit-disclaimer" className={labelClass}>
-                  Disclaimer text
+                  {t('settings.brandKitGovernanceSettings.disclaimerText', 'Disclaimer text')}
                 </label>
                 <textarea
                   id="brandkit-disclaimer"
@@ -545,7 +545,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
 
               <div>
                 <label htmlFor="brandkit-watermark" className={labelClass}>
-                  Watermark text
+                  {t('settings.brandKitGovernanceSettings.watermarkText', 'Watermark text')}
                 </label>
                 <input
                   id="brandkit-watermark"
@@ -553,7 +553,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   className={textInputClass}
                   value={brandKit.watermark}
                   disabled={inputDisabled}
-                  placeholder="CONFIDENTIAL"
+                  placeholder={t('settings.brandKitGovernanceSettings.watermarkPlaceholder', 'CONFIDENTIAL')}
                   onChange={(event) => updateField('watermark', event.target.value)}
                 />
               </div>

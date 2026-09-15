@@ -12,6 +12,7 @@
 import { Calendar, Check, GripVertical, Plus } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ============================================================================
 // TYPES
@@ -103,7 +104,7 @@ const FocusTaskCard: React.FC<FocusTaskCardProps> = ({ task, onToggle, onClick, 
     if (dNorm.getTime() === tomorrow.getTime()) {
       return t('myWork.focusCockpit.dueTomorrow', 'Tomorrow');
     }
-    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    return d.toLocaleDateString(localeListy(), { day: 'numeric', month: 'short' });
   };
 
   return (

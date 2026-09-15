@@ -1,5 +1,6 @@
 import { ChevronDown, MapPin } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * CRIT-04: Location Filter Component
@@ -23,6 +24,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
   onChange,
   organizationId,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +90,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full mt-1 left-0 z-20 w-56 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg py-1">
             {isLoading ? (
-              <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
+              <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">{t('myWork.locationFilter.loading', 'Loading...')}</div>
             ) : (
               <>
                 <button

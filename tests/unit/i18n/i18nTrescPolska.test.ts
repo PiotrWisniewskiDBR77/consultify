@@ -189,6 +189,16 @@ const IDENTITY_WHITELIST_RAW = [
   // `karta.akcja.problem` (etykieta pola karty działania). Uzasadnienie
   // przy ALLOWED_PROPER_NOUNS niżej.
   'Problem',
+  // ODMROZENIE 15_SETTINGS / 07_MY_WORK_AGENT DEC-510 (14.09.2026) — fala
+  // E2b-Settings. Trzy zapozyczenia trzymane identycznie w polskim zargonie
+  // produktowym, tej samej kategorii co Agent/Panel/Format powyzej:
+  //   'Model'  — etykieta modelu LLM (myWork.aiAnalysisProposalReviewQueue);
+  //              samodzielne polskie slowo ze slownika (lac. modulus);
+  //   'Prompt' — polecenie do modelu; w polskim zargonie AI nieprzetlumaczalne,
+  //              ten sam status co juz zatwierdzony wpis 'Prompt OS' nizej;
+  //   'Proxy'  — termin sieciowy (settings.advancedSecuritySettings); w polskiej
+  //              dokumentacji IT nie tlumaczy sie go, jak 'Webhook'/'Staging'.
+  'Model', 'Prompt', 'Proxy',
   // ODMROZENIE WSPOLNE DEC-461 (11.09.2026) — dług i18n-dlug-2: EN dopisany
   // dla kluczy realnie brakujących w en/translation.json (billing/v8/vector/
   // rap/mels/security/pricing, przekazanie 263). Poniższe wpisy to
@@ -253,6 +263,8 @@ const ALLOWED_PROPER_NOUNS = [
   'Plan', 'Framework', 'Bank', 'Main', 'System', 'Format', 'Trend', 'Panel',
   'Bonus', 'Stripe', 'Wise', 'Media', 'Agent', 'Briefing', 'Limit', 'Canary',
   'Staging', 'Diagram',
+  // DEC-510 (14.09.2026) — uzasadnienie przy IDENTITY_WHITELIST_RAW.
+  'Model', 'Prompt', 'Proxy',
   // N2 karty-b (10/11.09.2026): „Problem" jest dawno przyswojonym polskim
   // słowem (łac. problema) o identycznej pisowni w obu językach — ta sama
   // kategoria co Plan/System/Format/Panel powyżej, nie brak tłumaczenia.

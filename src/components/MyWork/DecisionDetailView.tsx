@@ -181,7 +181,7 @@ import { RelatedContext } from './shared/RelatedContext';
 // Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
 // równolegle edytowany przez inne fronty.
 import { RelatedItemsList } from './shared/RelatedItemsList';
-import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
+import { formatListDate, formatListDateTime, localeListy } from '@/utils/listDateFormat';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
 const DECISION_SECTION_IDS = [
@@ -1806,7 +1806,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const isDirty = hasPublishBaseline && draftSnapshot !== lastPublishedSnapshot;
   const draftSavedLabel = useMemo(() => {
     if (!lastDraftSavedAt) return null;
-    const time = new Date(lastDraftSavedAt).toLocaleTimeString([], {
+    const time = new Date(lastDraftSavedAt).toLocaleTimeString(localeListy(), {
       hour: '2-digit',
       minute: '2-digit',
     });

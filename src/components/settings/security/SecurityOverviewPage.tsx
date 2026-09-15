@@ -105,7 +105,9 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         mfaMvpEnabled ? Api.get('/api/mfa/status') : Promise.resolve({ isEnabled: false }),
       ]);
       if (!sessionsRes || !Array.isArray(historyRes) || !recoveryRes || !mfaRes) {
-        throw new Error('Security overview response was missing required data');
+        throw new Error(
+          t('settings.securityOverview.missingDataError', 'Security overview response was missing required data')
+        );
       }
 
       const sessions = (sessionsRes as ActiveSessionsResponse).sessions ?? [];
@@ -123,7 +125,12 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
       setRecentEvents(historyRes.slice(0, 5));
     } catch (error: unknown) {
-      setLoadError(normalizeApiErrorMessage(error, 'Failed to load security overview'));
+      setLoadError(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.securityOverview.loadError', 'Failed to load security overview')
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -337,7 +344,9 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
+    return Number.isNaN(date.getTime())
+      ? t('settings.securityOverview.unknownDate', 'Unknown date')
+      : formatListDateTime(date);
   };
 
   const colorMap = {
@@ -379,7 +388,10 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         loading={loading}
         className={className}
       >
-        <DegradedState title="Security overview unavailable" description={loadError} />
+        <DegradedState
+          title={t('settings.securityOverview.unavailable', 'Security overview unavailable')}
+          description={loadError}
+        />
       </SettingsSection>
     );
   }
@@ -574,9 +586,12 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                   <div className="flex items-center gap-3">
                     {getStatusIcon(event.status)}
                     <div>
-                      <p className="text-sm text-white">{event.device || 'Unknown Device'}</p>
+                      <p className="text-sm text-white">
+                        {event.device || t('settings.securityOverview.unknownDevice', 'Unknown Device')}
+                      </p>
                       <p className="text-xs text-c-text-muted">
-                        {event.location || 'Unknown'} · {event.ip || ''}
+                        {event.location || t('settings.securityOverview.unknown', 'Unknown')} ·{' '}
+                        {event.ip || ''}
                       </p>
                     </div>
                   </div>

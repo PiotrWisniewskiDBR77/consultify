@@ -122,7 +122,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       setAssigneeId(task.assigneeId || '');
     } catch (error) {
       console.error('Failed to load task', error);
-      toast.error('Failed to load task details');
+      toast.error(t('myWork.taskDetailModal.loadFailed', 'Failed to load task details'));
       onClose();
     } finally {
       setLoading(false);
@@ -131,7 +131,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const handleSave = async () => {
     if (!title.trim()) {
-      toast.error('Title is required');
+      toast.error(t('myWork.taskDetailModal.titleRequired', 'Title is required'));
       return;
     }
 
@@ -152,7 +152,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
       if (taskId) {
         await Api.put(`/tasks/${taskId}`, payload);
-        toast.success('Task updated');
+        toast.success(t('myWork.taskDetailModal.taskUpdated', 'Task updated'));
       } else {
         // Global tasks might not have projectId initially
         const createPayload = { ...payload, projectId: null };
@@ -164,12 +164,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         await Api.post('/tasks', { ...createPayload, idempotencyKey: idem.key });
         // Success: the next create must be a genuinely new row.
         createIdempotencyRef.current = null;
-        toast.success('Task created');
+        toast.success(t('myWork.taskDetailModal.taskCreated', 'Task created'));
       }
       onTaskSaved();
     } catch (error) {
       console.error('Failed to save task', error);
-      toast.error('Failed to save task');
+      toast.error(t('myWork.taskDetailModal.saveFailed', 'Failed to save task'));
     } finally {
       setSaving(false);
     }
@@ -227,7 +227,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text focus:ring-2 focus:ring-c-focus outline-none"
-                  placeholder="Enter task title"
+                  placeholder={t('myWork.taskDetailModal.titlePlaceholder', 'Enter task title')}
                   autoFocus
                 />
               </div>
@@ -243,10 +243,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     onChange={(e) => setStatus(e.target.value)}
                     className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text outline-none"
                   >
-                    <option value="todo">Todo</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="blocked">Blocked</option>
-                    <option value="done">Done</option>
+                    <option value="todo">{t('myWork.taskDetailModal.statusTodo', 'Todo')}</option>
+                    <option value="in_progress">{t('myWork.taskDetailModal.statusInProgress', 'In Progress')}</option>
+                    <option value="blocked">{t('myWork.taskDetailModal.statusBlocked', 'Blocked')}</option>
+                    <option value="done">{t('myWork.taskDetailModal.statusDone', 'Done')}</option>
                   </select>
                 </div>
                 <div>
@@ -258,10 +258,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     onChange={(e) => setPriority(e.target.value)}
                     className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text outline-none"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="low">{t('myWork.taskDetailModal.priorityLow', 'Low')}</option>
+                    <option value="medium">{t('myWork.taskDetailModal.priorityMedium', 'Medium')}</option>
+                    <option value="high">{t('myWork.taskDetailModal.priorityHigh', 'High')}</option>
+                    <option value="urgent">{t('myWork.taskDetailModal.priorityUrgent', 'Urgent')}</option>
                   </select>
                 </div>
               </div>
@@ -286,7 +286,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-1">
-                    <label className="text-sm font-medium text-c-text-secondary">Progress</label>
+                    <label className="text-sm font-medium text-c-text-secondary">{t('myWork.taskDetailModal.progress', 'Progress')}</label>
                     <span className="text-sm font-bold text-blue-600">{progress}%</span>
                   </div>
                   <input
@@ -303,7 +303,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 {status === 'blocked' && (
                   <div className="animate-in fade-in slide-in-from-top-2">
                     <label className="block text-sm font-bold text-danger-600 dark:text-danger-400 mb-1">
-                      Reason for blocking
+                      {t('myWork.taskDetailModal.reasonForBlocking', 'Reason for blocking')}
                     </label>
                     <input
                       type="text"
@@ -326,7 +326,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text focus:ring-2 focus:ring-c-focus outline-none resize-none"
-                  placeholder="Add details..."
+                  placeholder={t('myWork.taskDetailModal.descriptionPlaceholder', 'Add details...')}
                 />
               </div>
 
@@ -335,13 +335,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-sm font-medium text-c-text-secondary flex items-center gap-2">
                     <CheckSquare size={16} />
-                    Subtasks
+                    {t('myWork.taskDetailModal.subtasks', 'Subtasks')}
                   </label>
                   <button
                     onClick={addChecklistItem}
                     className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    + Add Item
+                    {t('myWork.taskDetailModal.addItem', '+ Add Item')}
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -360,11 +360,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         value={item.text}
                         onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
                         className="flex-1 px-2 py-1 text-sm border-b border-transparent focus:border-c-border-subtle text-c-text bg-transparent outline-none"
-                        placeholder="Subtask..."
+                        placeholder={t('myWork.taskDetailModal.subtaskPlaceholder', 'Subtask...')}
                       />
                       <button
                         onClick={() => removeChecklistItem(item.id)}
-                        aria-label={t('myWork.tasks.removeSubtask', 'Remove subtask')}
+                        aria-label={t('myWork.taskDetailModal.removeSubtask', 'Remove subtask')}
                         className="text-c-text-muted hover:text-danger-500"
                       >
                         <X size={14} />
@@ -372,7 +372,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     </div>
                   ))}
                   {checklist.length === 0 && (
-                    <div className="text-xs text-c-text-muted italic">No subtasks</div>
+                    <div className="text-xs text-c-text-muted italic">{t('myWork.taskDetailModal.noSubtasks', 'No subtasks')}</div>
                   )}
                 </div>
               </div>
@@ -381,7 +381,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1 flex items-center gap-2">
                   <LinkIcon size={16} />
-                  Linked Initiative
+                  {t('myWork.taskDetailModal.linkedInitiative', 'Linked Initiative')}
                 </label>
                 <select
                   value={initiativeId}
@@ -402,14 +402,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               {/* Assignee */}
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                  Assignee
+                  {t('myWork.taskDetailModal.assignee', 'Assignee')}
                 </label>
                 <select
                   value={assigneeId}
                   onChange={(e) => setAssigneeId(e.target.value)}
                   className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text text-sm outline-none"
                 >
-                  <option value="">Unassigned</option>
+                  <option value="">{t('myWork.taskDetailModal.unassigned', 'Unassigned')}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.firstName} {user.lastName}
@@ -428,7 +428,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             className="px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised rounded-lg transition-colors"
             disabled={saving}
           >
-            Cancel
+            {t('myWork.taskDetailModal.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -436,7 +436,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             className="px-4 py-2 text-sm font-medium bg-c-text text-c-surface hover:opacity-90 rounded-lg shadow-sm flex items-center gap-2 transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Save Task
+            {t('myWork.taskDetailModal.saveTask', 'Save Task')}
           </button>
         </div>
       </div>

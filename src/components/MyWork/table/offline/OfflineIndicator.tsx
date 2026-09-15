@@ -6,7 +6,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { offlineQueue } from './OfflineQueue';
-import { formatListDateTime } from '@/utils/listDateFormat';
+import { formatListDateTime, localeListy } from '@/utils/listDateFormat';
 
 function formatRelativeTime(t: TFunction, ts: number | null): string {
   if (!ts) return '';
@@ -20,7 +20,7 @@ function formatRelativeTime(t: TFunction, ts: number | null): string {
     return t('myWorkTable.offlineIndicator.hoursAgo', '{{count}}h ago', {
       count: Math.floor(diff / 3_600_000),
     });
-  return new Date(ts).toLocaleDateString(undefined, {
+  return new Date(ts).toLocaleDateString(localeListy(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

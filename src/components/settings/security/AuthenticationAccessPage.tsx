@@ -153,7 +153,10 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       } else {
         setSessions([]);
         setSessionsLoadError(
-          normalizeApiErrorMessage(sessionsRes.reason, 'Failed to load active sessions')
+          normalizeApiErrorMessage(
+            sessionsRes.reason,
+            t('settings.authAccess.loadSessionsError', 'Failed to load active sessions')
+          )
         );
       }
 
@@ -162,7 +165,10 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       } else {
         setLoginHistory([]);
         setLoginHistoryLoadError(
-          normalizeApiErrorMessage(historyRes.reason, 'Failed to load login history')
+          normalizeApiErrorMessage(
+            historyRes.reason,
+            t('settings.authAccess.loadHistoryError', 'Failed to load login history')
+          )
         );
       }
 
@@ -172,11 +178,17 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         setBackupCodesCount(recoveryRes.value.backupCodesCount || 0);
       } else if (recoveryRes.status === 'rejected') {
         setRecoveryLoadError(
-          normalizeApiErrorMessage(recoveryRes.reason, 'Failed to load recovery options')
+          normalizeApiErrorMessage(
+            recoveryRes.reason,
+            t('settings.authAccess.loadRecoveryError', 'Failed to load recovery options')
+          )
         );
       }
     } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(error, 'Failed to load authentication data');
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.authAccess.loadAuthDataError', 'Failed to load authentication data')
+      );
       setSessions([]);
       setLoginHistory([]);
       setRecoveryEmail('');
@@ -283,7 +295,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       setSessionsLoadError(null);
     } catch (error: unknown) {
       setSessions([]);
-      setSessionsLoadError(normalizeApiErrorMessage(error, 'Failed to load active sessions'));
+      setSessionsLoadError(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.authAccess.loadSessionsError', 'Failed to load active sessions')
+        )
+      );
       toast.error(t('settings.securityMessages.sessionsError', 'Failed to load sessions'));
     } finally {
       setLoadingSessions(false);
@@ -302,7 +319,9 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       await Api.put('/settings/recovery', updates);
       const persisted = (await Api.get('/settings/recovery')) as RecoveryOptionsResponse | null;
       if (!persisted) {
-        throw new Error('Recovery options were saved but could not be reloaded');
+        throw new Error(
+          t('settings.authAccess.recoveryReloadError', 'Recovery options were saved but could not be reloaded')
+        );
       }
       setRecoveryEmail(persisted.recoveryEmail || '');
       setRecoveryPhone(persisted.recoveryPhone || '');
@@ -631,7 +650,9 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-c-text">
-                          {session.deviceInfo || session.device || 'Unknown Device'}
+                          {session.deviceInfo ||
+                            session.device ||
+                            t('settings.authAccess.unknownDevice', 'Unknown Device')}
                           {session.browser ? ` · ${session.browser}` : ''}
                         </p>
                         {session.current && (
@@ -641,8 +662,9 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         )}
                       </div>
                       <p className="text-xs text-c-text-muted">
-                        {session.location || session.ipAddress || 'Unknown'} ·{' '}
-                        {session.lastActive || session.lastUsedAt || 'Recently'}
+                        {session.location || session.ipAddress || t('settings.authAccess.unknown', 'Unknown')}{' '}
+                        ·{' '}
+                        {session.lastActive || session.lastUsedAt || t('settings.authAccess.recently', 'Recently')}
                       </p>
                     </div>
                   </div>
@@ -660,7 +682,10 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             })}
 
             {sessionsLoadError && (
-              <DegradedState title="Active sessions unavailable" description={sessionsLoadError} />
+              <DegradedState
+                title={t('settings.authAccess.sessionsUnavailable', 'Active sessions unavailable')}
+                description={sessionsLoadError}
+              />
             )}
 
             {!sessionsLoadError && sessions.length === 0 && (
@@ -684,7 +709,10 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
           </h4>
 
           {loginHistoryLoadError ? (
-            <DegradedState title="Login history unavailable" description={loginHistoryLoadError} />
+            <DegradedState
+              title={t('settings.authAccess.loginHistoryUnavailable', 'Login history unavailable')}
+              description={loginHistoryLoadError}
+            />
           ) : loginHistory.length > 0 ? (
             <div className="space-y-1.5">
               {loginHistory.map((event) => (
@@ -695,9 +723,11 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   <div className="flex items-center gap-3">
                     {getStatusIcon(event.status)}
                     <div>
-                      <p className="text-sm text-c-text">{event.device || 'Unknown Device'}</p>
+                      <p className="text-sm text-c-text">
+                        {event.device || t('settings.authAccess.unknownDevice', 'Unknown Device')}
+                      </p>
                       <p className="text-xs text-c-text-muted">
-                        {event.location || 'Unknown'} · {event.ip || ''}
+                        {event.location || t('settings.authAccess.unknown', 'Unknown')} · {event.ip || ''}
                       </p>
                     </div>
                   </div>
@@ -728,7 +758,10 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
 
           <div className="space-y-3">
             {recoveryLoadError && (
-              <DegradedState title="Recovery options unavailable" description={recoveryLoadError} />
+              <DegradedState
+                title={t('settings.authAccess.recoveryUnavailable', 'Recovery options unavailable')}
+                description={recoveryLoadError}
+              />
             )}
             {!recoveryLoadError && (
               <>

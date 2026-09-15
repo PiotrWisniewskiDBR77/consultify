@@ -1,5 +1,7 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -55,15 +57,30 @@ interface DecisionRow extends TableRow {
   source: PendingScheduleDecision;
 }
 
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Decision', sortable: true, width: '220px' },
-  { id: 'initiativeId', label: 'Initiative', sortable: true },
-  { id: 'plan', label: 'Plan', sortable: true },
-  { id: 'capacity', label: 'Capacity', sortable: true },
-  { id: 'dueAt', label: 'Due', sortable: true },
+const buildColumns = (t: TFunction): TableColumn[] => [
+  {
+    id: 'title',
+    label: t('myWork.scheduleDecisionQueue.columnDecision', 'Decision'),
+    sortable: true,
+    width: '220px',
+  },
+  {
+    id: 'initiativeId',
+    label: t('myWork.scheduleDecisionQueue.columnInitiative', 'Initiative'),
+    sortable: true,
+  },
+  { id: 'plan', label: t('myWork.scheduleDecisionQueue.columnPlan', 'Plan'), sortable: true },
+  {
+    id: 'capacity',
+    label: t('myWork.scheduleDecisionQueue.columnCapacity', 'Capacity'),
+    sortable: true,
+  },
+  { id: 'dueAt', label: t('myWork.scheduleDecisionQueue.columnDue', 'Due'), sortable: true },
 ];
 
 export const ScheduleDecisionQueue: React.FC = () => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [decisions, setDecisions] = useState<PendingScheduleDecision[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -99,7 +116,7 @@ export const ScheduleDecisionQueue: React.FC = () => {
     () =>
       decisions.map((decision) => ({
         id: decision.decisionId,
-        title: 'Schedule Decision',
+        title: t('myWork.scheduleDecisionQueue.rowTitle', 'Schedule Decision'),
         initiativeId: decision.initiativeId,
         dueAt: decision.dueAt,
         plan: `${decision.plan.id} v${decision.plan.version}`,
@@ -107,10 +124,11 @@ export const ScheduleDecisionQueue: React.FC = () => {
         version: decision.version,
         source: decision,
       })),
-    [decisions]
+    [decisions, t]
   );
   const selected = rows.find((row) => row.id === selectedId) ?? null;
   const gateGuard = useGateSignoffGuard('SCHEDULE', selectedId);
+  const none = t('myWork.scheduleDecisionQueue.none', 'None');
 
   const decide = async (outcome: ScheduleOutcome) => {
     if (!selected || !rationale.trim() || !gateGuard.ready || writeState === 'SAVING') return;
@@ -156,24 +174,27 @@ export const ScheduleDecisionQueue: React.FC = () => {
     }
   };
 
+  const scheduleDecisionsLabel = t('myWork.scheduleDecisionQueue.title', 'Schedule decisions');
+
   if (state === 'LOADING')
     return (
-      <section aria-label="Schedule decisions" className="p-4">
+      <section aria-label={scheduleDecisionsLabel} className="p-4">
         <div role="status" className="flex items-center gap-2 text-sm text-c-text-muted">
-          <Loader2 aria-hidden="true" className="animate-spin" size={16} /> Loading Schedule
-          decisions
+          <Loader2 aria-hidden="true" className="animate-spin" size={16} />{' '}
+          {t('myWork.scheduleDecisionQueue.loading', 'Loading Schedule decisions')}
         </div>
       </section>
     );
   if (state === 'ERROR')
     return (
-      <section aria-label="Schedule decisions" className="p-4">
+      <section aria-label={scheduleDecisionsLabel} className="p-4">
         <div role="alert" className="flex items-center justify-between gap-3 text-sm text-c-danger">
           <span className="flex items-center gap-2">
-            <AlertTriangle aria-hidden="true" size={16} /> Schedule decisions are unavailable.
+            <AlertTriangle aria-hidden="true" size={16} />{' '}
+            {t('myWork.scheduleDecisionQueue.unavailable', 'Schedule decisions are unavailable.')}
           </span>
           <button type="button" className="btn-secondary" onClick={() => void load()}>
-            Retry
+            {t('myWork.scheduleDecisionQueue.retry', 'Retry')}
           </button>
         </div>
       </section>
@@ -181,17 +202,22 @@ export const ScheduleDecisionQueue: React.FC = () => {
   if (!rows.length && !receipt) return null;
 
   return (
-    <section aria-label="Schedule decisions" className="border-b border-c-border">
+    <section aria-label={scheduleDecisionsLabel} className="border-b border-c-border">
       <div className="px-4 pt-3">
-        <h3 className="font-semibold text-c-text-primary">Schedule decisions waiting on you</h3>
+        <h3 className="font-semibold text-c-text-primary">
+          {t('myWork.scheduleDecisionQueue.waitingOnYou', 'Schedule decisions waiting on you')}
+        </h3>
         <p className="text-xs text-c-text-muted">
-          Canonical gate queue. Approval schedules the Initiative and freezes a Handoff Package; it
-          does not start Execution.
+          {t(
+            'myWork.scheduleDecisionQueue.subtitle',
+            'Canonical gate queue. Approval schedules the Initiative and freezes a Handoff Package; it does not start Execution.'
+          )}
         </p>
       </div>
       {receipt && (
         <div role="status" className="mx-4 mt-3 rounded-md border border-c-success/40 p-3 text-sm">
-          <strong>{receipt.lifecycleState}</strong> · frozen Handoff Package{' '}
+          <strong>{receipt.lifecycleState}</strong>{' '}
+          {t('myWork.scheduleDecisionQueue.frozenHandoffPackage', '· frozen Handoff Package')}{' '}
           <span className="break-all">{receipt.handoffPackageId}</span> v
           {receipt.handoffPackageVersion}
         </div>
@@ -199,8 +225,14 @@ export const ScheduleDecisionQueue: React.FC = () => {
       {(writeState === 'CONFLICT' || writeState === 'FAILED') && (
         <div role="alert" className="mx-4 mt-2 text-sm text-c-danger">
           {writeState === 'CONFLICT'
-            ? 'This Schedule Decision changed. Reload before deciding.'
-            : 'The Schedule Decision was not changed.'}
+            ? t(
+                'myWork.scheduleDecisionQueue.conflict',
+                'This Schedule Decision changed. Reload before deciding.'
+              )
+            : t(
+                'myWork.scheduleDecisionQueue.failed',
+                'The Schedule Decision was not changed.'
+              )}
         </div>
       )}
       {rows.length > 0 && (
@@ -215,59 +247,82 @@ export const ScheduleDecisionQueue: React.FC = () => {
             <div className="space-y-3 p-4 text-sm">
               <dl className="grid grid-cols-2 gap-3">
                 <div>
-                  <dt className="text-c-text-muted">Canonical Decision ID</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.canonicalDecisionId', 'Canonical Decision ID')}
+                  </dt>
                   <dd className="break-all">{row.id}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Initiative</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.initiative', 'Initiative')}
+                  </dt>
                   <dd>{row.initiativeId}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Portfolio</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.portfolio', 'Portfolio')}
+                  </dt>
                   <dd>
                     {row.source.portfolio.id} v{row.source.portfolio.version}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Plan</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.plan', 'Plan')}
+                  </dt>
                   <dd>{row.plan}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Capacity</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.capacity', 'Capacity')}
+                  </dt>
                   <dd>{row.capacity}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Commitments</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.commitments', 'Commitments')}
+                  </dt>
                   <dd>
                     {Object.entries(row.source.commitmentVersions)
                       .map(([id, version]) => `${id} v${version}`)
-                      .join(', ') || 'None'}
+                      .join(', ') || none}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Window</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.window', 'Window')}
+                  </dt>
                   <dd>
                     {row.source.plan.window.earliest ?? '—'} →{' '}
                     {row.source.plan.window.latest ?? '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Critical periods</dt>
-                  <dd>{row.source.criticalPeriodIds.join(', ') || 'None'}</dd>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.criticalPeriods', 'Critical periods')}
+                  </dt>
+                  <dd>{row.source.criticalPeriodIds.join(', ') || none}</dd>
                 </div>
                 <div>
-                  <dt className="text-c-text-muted">Critical dependencies</dt>
+                  <dt className="text-c-text-muted">
+                    {t('myWork.scheduleDecisionQueue.criticalDependencies', 'Critical dependencies')}
+                  </dt>
                   <dd>
                     {row.source.criticalDependencies
                       .map((item) => `${item.dependencyId}: ${item.state}`)
-                      .join(', ') || 'None'}
+                      .join(', ') || none}
                   </dd>
                 </div>
               </dl>
               <label className="block">
-                <span className="mb-1 block text-c-text-muted">Decision rationale</span>
+                <span className="mb-1 block text-c-text-muted">
+                  {t('myWork.scheduleDecisionQueue.decisionRationale', 'Decision rationale')}
+                </span>
                 <textarea
-                  aria-label="Schedule Decision rationale"
+                  aria-label={t(
+                    'myWork.scheduleDecisionQueue.decisionRationaleAriaLabel',
+                    'Schedule Decision rationale'
+                  )}
                   className="min-h-20 w-full rounded-md border border-c-border bg-c-surface p-2"
                   value={rationale}
                   onChange={(event) => setRationale(event.target.value)}
@@ -275,14 +330,21 @@ export const ScheduleDecisionQueue: React.FC = () => {
               </label>
               {!gateGuard.ready && (
                 <div role="alert" className="text-c-warning">
-                  Schedule decision is fail-closed until its exact Gate Sign-off quorum is
-                  satisfied.
+                  {t(
+                    'myWork.scheduleDecisionQueue.failClosed',
+                    'Schedule decision is fail-closed until its exact Gate Sign-off quorum is satisfied.'
+                  )}
                 </div>
               )}
               <label className="block">
-                <span className="mb-1 block text-c-text-muted">Conditions, one per line</span>
+                <span className="mb-1 block text-c-text-muted">
+                  {t('myWork.scheduleDecisionQueue.conditionsOnePerLine', 'Conditions, one per line')}
+                </span>
                 <textarea
-                  aria-label="Schedule Decision conditions"
+                  aria-label={t(
+                    'myWork.scheduleDecisionQueue.conditionsAriaLabel',
+                    'Schedule Decision conditions'
+                  )}
                   className="min-h-16 w-full rounded-md border border-c-border bg-c-surface p-2"
                   value={conditions}
                   onChange={(event) => setConditions(event.target.value)}
@@ -298,7 +360,7 @@ export const ScheduleDecisionQueue: React.FC = () => {
                 disabled={!rationale.trim() || !gateGuard.ready || writeState === 'SAVING'}
                 onClick={() => void decide('HELD')}
               >
-                Hold
+                {t('myWork.scheduleDecisionQueue.hold', 'Hold')}
               </button>
               <button
                 type="button"
@@ -306,7 +368,7 @@ export const ScheduleDecisionQueue: React.FC = () => {
                 disabled={!rationale.trim() || !gateGuard.ready || writeState === 'SAVING'}
                 onClick={() => void decide('RETURNED')}
               >
-                Return
+                {t('myWork.scheduleDecisionQueue.return', 'Return')}
               </button>
               <button
                 type="button"
@@ -319,7 +381,7 @@ export const ScheduleDecisionQueue: React.FC = () => {
                 }
                 onClick={() => void decide('CONDITIONALLY_APPROVED')}
               >
-                Approve conditionally
+                {t('myWork.scheduleDecisionQueue.approveConditionally', 'Approve conditionally')}
               </button>
               <button
                 type="button"
@@ -327,7 +389,7 @@ export const ScheduleDecisionQueue: React.FC = () => {
                 disabled={!rationale.trim() || !gateGuard.ready || writeState === 'SAVING'}
                 onClick={() => void decide('APPROVED')}
               >
-                Approve schedule
+                {t('myWork.scheduleDecisionQueue.approveSchedule', 'Approve schedule')}
               </button>
             </div>
           )}

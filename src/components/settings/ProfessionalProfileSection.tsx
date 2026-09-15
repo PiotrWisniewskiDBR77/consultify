@@ -417,14 +417,14 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
           />
           <SocialLinkInput
             icon={<Globe size={18} />}
-            label="Website"
+            label={t('settings.professionalProfile.website', 'Website')}
             value={socialLinks.website || ''}
             onChange={(value) => updateSocialLink('website', value)}
             placeholder="https://..."
           />
           <SocialLinkInput
             icon={<Link2 size={18} />}
-            label="Portfolio"
+            label={t('settings.professionalProfile.portfolio', 'Portfolio')}
             value={socialLinks.portfolio || ''}
             onChange={(value) => updateSocialLink('portfolio', value)}
             placeholder="https://..."
@@ -455,6 +455,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   if (isEditing) {
     return (
       <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
@@ -463,14 +464,14 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
             type="text"
             value={cert.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
-            placeholder="Certification Name"
+            placeholder={t('settings.professionalProfile.certificationName', 'Certification Name')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={cert.issuer}
             onChange={(e) => onUpdate({ issuer: e.target.value })}
-            placeholder="Issuing Organization"
+            placeholder={t('settings.professionalProfile.issuingOrganization', 'Issuing Organization')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
@@ -483,21 +484,21 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
             type="date"
             value={cert.expiryDate || ''}
             onChange={(e) => onUpdate({ expiryDate: e.target.value || undefined })}
-            placeholder="Expiry Date (optional)"
+            placeholder={t('settings.professionalProfile.expiryDateOptional', 'Expiry Date (optional)')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={cert.credentialId || ''}
             onChange={(e) => onUpdate({ credentialId: e.target.value })}
-            placeholder="Credential ID (optional)"
+            placeholder={t('settings.professionalProfile.credentialIdOptional', 'Credential ID (optional)')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="url"
             value={cert.credentialUrl || ''}
             onChange={(e) => onUpdate({ credentialUrl: e.target.value })}
-            placeholder="Verification URL (optional)"
+            placeholder={t('settings.professionalProfile.verificationUrlOptional', 'Verification URL (optional)')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
         </div>
@@ -506,13 +507,13 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
             onClick={onSave}
             className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
-            Save
+            {t('settings.professionalProfile.save', 'Save')}
           </button>
           <button
             onClick={onCancel}
             className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
-            Cancel
+            {t('settings.professionalProfile.cancel', 'Cancel')}
           </button>
           <button
             onClick={onDelete}
@@ -532,9 +533,9 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
           <h4 className="font-semibold text-c-text">{cert.name}</h4>
           <p className="text-sm text-c-text-secondary">{cert.issuer}</p>
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
-            <span>Issued: {formatListDate(cert.issueDate)}</span>
+            <span>{t('settings.professionalProfile.issued', 'Issued')}: {formatListDate(cert.issueDate)}</span>
             {cert.expiryDate && (
-              <span>Expires: {formatListDate(cert.expiryDate)}</span>
+              <span>{t('settings.professionalProfile.expires', 'Expires')}: {formatListDate(cert.expiryDate)}</span>
             )}
           </div>
         </div>
@@ -580,6 +581,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   if (isEditing) {
     return (
       <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
@@ -588,21 +590,21 @@ const EducationCard: React.FC<EducationCardProps> = ({
             type="text"
             value={edu.institution}
             onChange={(e) => onUpdate({ institution: e.target.value })}
-            placeholder="Institution Name"
+            placeholder={t('settings.professionalProfile.institutionName', 'Institution Name')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={edu.degree}
             onChange={(e) => onUpdate({ degree: e.target.value })}
-            placeholder="Degree"
+            placeholder={t('settings.professionalProfile.degree', 'Degree')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={edu.fieldOfStudy || ''}
             onChange={(e) => onUpdate({ fieldOfStudy: e.target.value })}
-            placeholder="Field of Study (optional)"
+            placeholder={t('settings.professionalProfile.fieldOfStudyOptional', 'Field of Study (optional)')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <div className="flex items-center gap-2">
@@ -612,7 +614,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
               onChange={(e) => onUpdate({ isCurrent: e.target.checked })}
               className="rounded"
             />
-            <label className="text-sm">Currently studying</label>
+            <label className="text-sm">{t('settings.professionalProfile.currentlyStudying', 'Currently studying')}</label>
           </div>
           <input
             type="date"
@@ -631,7 +633,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
           <textarea
             value={edu.description || ''}
             onChange={(e) => onUpdate({ description: e.target.value })}
-            placeholder="Description (optional)"
+            placeholder={t('settings.professionalProfile.descriptionOptional', 'Description (optional)')}
             rows={3}
             className="md:col-span-2 px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg resize-none"
           />
@@ -641,13 +643,13 @@ const EducationCard: React.FC<EducationCardProps> = ({
             onClick={onSave}
             className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
-            Save
+            {t('settings.professionalProfile.save', 'Save')}
           </button>
           <button
             onClick={onCancel}
             className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
-            Cancel
+            {t('settings.professionalProfile.cancel', 'Cancel')}
           </button>
           <button
             onClick={onDelete}
@@ -670,7 +672,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>{new Date(edu.startDate).getFullYear()}</span>
             {edu.endDate && <span>- {new Date(edu.endDate).getFullYear()}</span>}
-            {edu.isCurrent && <span className="text-green-600">Current</span>}
+            {edu.isCurrent && <span className="text-green-600">{t('settings.professionalProfile.current', 'Current')}</span>}
           </div>
         </div>
         <button
@@ -719,14 +721,14 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             type="text"
             value={work.position}
             onChange={(e) => onUpdate({ position: e.target.value })}
-            placeholder="Position/Title"
+            placeholder={t('settings.professionalProfile.positionTitle', 'Position/Title')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={work.location || ''}
             onChange={(e) => onUpdate({ location: e.target.value })}
-            placeholder="Location (optional)"
+            placeholder={t('settings.professionalProfile.locationOptional', 'Location (optional)')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <div className="flex items-center gap-2">
@@ -736,7 +738,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
               onChange={(e) => onUpdate({ isCurrent: e.target.checked })}
               className="rounded"
             />
-            <label className="text-sm">Current position</label>
+            <label className="text-sm">{t('settings.professionalProfile.currentPosition', 'Current position')}</label>
           </div>
           <input
             type="date"
@@ -755,7 +757,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
           <textarea
             value={work.description || ''}
             onChange={(e) => onUpdate({ description: e.target.value })}
-            placeholder="Description (optional)"
+            placeholder={t('settings.professionalProfile.descriptionOptional', 'Description (optional)')}
             rows={3}
             className="md:col-span-2 px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg resize-none"
           />
@@ -765,13 +767,13 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             onClick={onSave}
             className="px-4 py-2 bg-navy-900 text-white rounded-lg text-sm hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
           >
-            Save
+            {t('settings.professionalProfile.save', 'Save')}
           </button>
           <button
             onClick={onCancel}
             className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
           >
-            Cancel
+            {t('settings.professionalProfile.cancel', 'Cancel')}
           </button>
           <button
             onClick={onDelete}
@@ -794,7 +796,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
             <span>{formatListDate(work.startDate)}</span>
             {work.endDate && <span>- {formatListDate(work.endDate)}</span>}
-            {work.isCurrent && <span className="text-green-600">Current</span>}
+            {work.isCurrent && <span className="text-green-600">{t('settings.professionalProfile.current', 'Current')}</span>}
           </div>
         </div>
         <button

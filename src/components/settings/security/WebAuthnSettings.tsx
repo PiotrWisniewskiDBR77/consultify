@@ -68,7 +68,7 @@ const WebAuthnSettings: React.FC = () => {
       setCredentials(response.data.data || []);
     } catch (err) {
       console.error('[WebAuthn] Fetch error:', err);
-      setError('Failed to load passkeys');
+      setError(t('settings.webauthn.fetchError', 'Failed to load passkeys'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ const WebAuthnSettings: React.FC = () => {
       })) as PublicKeyCredential;
 
       if (!credential) {
-        throw new Error('Failed to create credential');
+        throw new Error(t('settings.webauthn.createCredentialError', 'Failed to create credential'));
       }
 
       const attestationResponse = credential.response as AuthenticatorAttestationResponse;
@@ -151,11 +151,11 @@ const WebAuthnSettings: React.FC = () => {
     } catch (err: any) {
       console.error('[WebAuthn] Registration error:', err);
       if (err.name === 'NotAllowedError') {
-        setError('Registration was cancelled or denied');
+        setError(t('settings.webauthn.registrationCancelled', 'Registration was cancelled or denied'));
       } else if (err.name === 'InvalidStateError') {
-        setError('This authenticator is already registered');
+        setError(t('settings.webauthn.alreadyRegistered', 'This authenticator is already registered'));
       } else {
-        setError(err.message || 'Failed to register passkey');
+        setError(err.message || t('settings.webauthn.registerError', 'Failed to register passkey'));
       }
     } finally {
       setRegistering(false);
@@ -177,7 +177,7 @@ const WebAuthnSettings: React.FC = () => {
       setNewName('');
     } catch (err) {
       console.error('[WebAuthn] Rename error:', err);
-      setError('Failed to rename passkey');
+      setError(t('settings.webauthn.renameError', 'Failed to rename passkey'));
     }
   };
 
@@ -185,7 +185,10 @@ const WebAuthnSettings: React.FC = () => {
   const handleRevoke = async (credentialId: string) => {
     if (
       !confirm(
-        'Are you sure you want to remove this passkey? You will need to use another authentication method.'
+        t(
+          'settings.webauthn.revokeConfirm',
+          'Are you sure you want to remove this passkey? You will need to use another authentication method.'
+        )
       )
     ) {
       return;
@@ -196,7 +199,7 @@ const WebAuthnSettings: React.FC = () => {
       setCredentials(credentials.filter((c) => c.id !== credentialId));
     } catch (err) {
       console.error('[WebAuthn] Revoke error:', err);
-      setError('Failed to remove passkey');
+      setError(t('settings.webauthn.revokeError', 'Failed to remove passkey'));
     }
   };
 
@@ -269,9 +272,14 @@ const WebAuthnSettings: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Passkeys & Security Keys</h3>
+          <h3 className="text-lg font-semibold text-white">
+            {t('settings.webauthn.title', 'Passkeys & Security Keys')}
+          </h3>
           <p className="text-sm text-c-text-secondary mt-1">
-            Use biometrics or security keys for secure passwordless login
+            {t(
+              'settings.webauthn.subtitle',
+              'Use biometrics or security keys for secure passwordless login'
+            )}
           </p>
         </div>
         <button
@@ -280,7 +288,9 @@ const WebAuthnSettings: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text disabled:opacity-50 text-c-surface rounded-lg transition-colors"
         >
           {registering ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
-          {registering ? 'Registering...' : 'Add Passkey'}
+          {registering
+            ? t('settings.webauthn.registering', 'Registering...')
+            : t('settings.webauthn.addPasskey', 'Add Passkey')}
         </button>
       </div>
 
@@ -307,8 +317,10 @@ const WebAuthnSettings: React.FC = () => {
               {t('settings.webauthn.whatArePasskeysTitle', 'What are passkeys?')}
             </p>
             <p className="text-c-text-muted mt-1">
-              Passkeys are a secure replacement for passwords. They use your device's biometrics
-              (Face ID, Touch ID, fingerprint) or a physical security key to verify your identity.
+              {t(
+                'settings.webauthn.whatArePasskeysBody',
+                "Passkeys are a secure replacement for passwords. They use your device's biometrics (Face ID, Touch ID, fingerprint) or a physical security key to verify your identity."
+              )}
             </p>
           </div>
         </div>
@@ -320,8 +332,8 @@ const WebAuthnSettings: React.FC = () => {
       ) : credentials.length === 0 ? (
         <EmptyState
           icon={<Key />}
-          title="No passkeys registered"
-          description="Add a passkey to enable passwordless login"
+          title={t('settings.webauthn.emptyTitle', 'No passkeys registered')}
+          description={t('settings.webauthn.emptyDescription', 'Add a passkey to enable passwordless login')}
         />
       ) : (
         <div className="space-y-3">
@@ -365,13 +377,16 @@ const WebAuthnSettings: React.FC = () => {
                     ) : (
                       <>
                         <h4 className="font-medium text-white">
-                          {credential.deviceName || 'Unnamed Passkey'}
+                          {credential.deviceName || t('settings.webauthn.unnamedPasskey', 'Unnamed Passkey')}
                         </h4>
                         <div className="flex items-center gap-3 text-sm text-c-text-secondary">
-                          <span>Added {formatListDate(credential.createdAt)}</span>
+                          <span>
+                            {t('settings.webauthn.added', 'Added')} {formatListDate(credential.createdAt)}
+                          </span>
                           {credential.lastUsedAt && (
                             <span>
-                              • Last used {formatListDate(credential.lastUsedAt)}
+                              • {t('settings.webauthn.lastUsed', 'Last used')}{' '}
+                              {formatListDate(credential.lastUsedAt)}
                             </span>
                           )}
                         </div>
@@ -382,7 +397,7 @@ const WebAuthnSettings: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {credential.backupEligible && (
                     <span className="px-2 py-1 bg-green-500/10 text-green-400 text-xs rounded">
-                      Synced
+                      {t('settings.webauthn.synced', 'Synced')}
                     </span>
                   )}
                   {editingId !== credential.id && (
@@ -413,11 +428,11 @@ const WebAuthnSettings: React.FC = () => {
 
       {/* Security Tips */}
       <div className="bg-c-surface border border-c-border-strong rounded-xl p-4">
-        <h4 className="font-medium text-white mb-3">Security Tips</h4>
+        <h4 className="font-medium text-white mb-3">{t('settings.webauthn.securityTips', 'Security Tips')}</h4>
         <ul className="space-y-2 text-sm text-c-text-secondary">
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
-            Register passkeys on multiple devices for backup access
+            {t('settings.webauthn.tipMultipleDevices', 'Register passkeys on multiple devices for backup access')}
           </li>
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
@@ -425,7 +440,10 @@ const WebAuthnSettings: React.FC = () => {
           </li>
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
-            Consider using a hardware security key for high-security accounts
+            {t(
+              'settings.webauthn.tipHardwareKey',
+              'Consider using a hardware security key for high-security accounts'
+            )}
           </li>
         </ul>
       </div>

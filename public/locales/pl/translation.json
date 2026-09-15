@@ -51,7 +51,21 @@
     "loading": "Wczytywanie przekazań…",
     "unavailable": "Kolejka przekazań niedostępna.",
     "retry": "Spróbuj ponownie",
-    "returnWithBlockers": "Zwróć z blokerami"
+    "returnWithBlockers": "Zwróć z blokerami",
+    "sectionLabel": "Akceptacje przekazań",
+    "rowTitle": "Akceptacja przekazania",
+    "executionCase": "Sprawa realizacji",
+    "conflict": "Inicjatywa lub pakiet uległy zmianie; wymagane odświeżenie.",
+    "notSaved": "Żadna decyzja nie została zapisana.",
+    "canonicalId": "Identyfikator kanoniczny",
+    "case": "Sprawa",
+    "rolloutLabel": "Wdrożenie:",
+    "pilot": "pilotaż",
+    "waves": "fale",
+    "rationaleAriaLabel": "Uzasadnienie przekazania",
+    "failClosed": "Decyzja przekazania jest zablokowana domyślnie, dopóki nie zostanie spełnione dokładne kworum zatwierdzenia bramy.",
+    "acceptConditionally": "Zaakceptuj warunkowo",
+    "acceptHandoff": "Zaakceptuj przekazanie"
   },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
@@ -940,7 +954,8 @@
     "redo": "Ponów",
     "tableWithPreview": "Obszar roboczy tabeli i podglądu",
     "conflict": "Konflikt",
-    "sections": "Sekcje"
+    "sections": "Sekcje",
+    "backToAutoFit": "Wróć do auto-dopasowania"
   },
   "superadmin": {
     "confirm": {
@@ -4514,7 +4529,8 @@
       "priorityCritical": "Krytyczne",
       "priorityHigh": "Wysoki",
       "priorityMedium": "Średni",
-      "priorityLow": "Niski"
+      "priorityLow": "Niski",
+      "moreActions": "Więcej akcji"
     },
     "tasksList": {
       "possibleDuplicate": "Możliwy duplikat ({{count}})",
@@ -4719,7 +4735,8 @@
       "sourceArtifact": "Artefakt źródłowy",
       "sourceDocuments": "Dokumenty źródłowe",
       "sessionsAndNotes": "Sesje, notatki i wnioski",
-      "moreActions": "Więcej akcji"
+      "moreActions": "Więcej akcji",
+      "showLess": "Pokaż mniej"
     },
     "taskDetail": {
       "label": "Powiadomienie tylko",
@@ -5058,7 +5075,15 @@
       "actionsHiddenInReadMode": "Akcje ukryte w trybie podglądu",
       "created": "Utworzono",
       "blockedPlaceholder": "Co blokuje to zadanie?",
-      "selectInitiative": "Wybierz inicjatywę (opcjonalnie)"
+      "selectInitiative": "Wybierz inicjatywę (opcjonalnie)",
+      "riskAlternativesNotSaved": "Zadanie zapisane, ale nie udało się zapisać ryzyk i alternatyw",
+      "versionConflict": "To zadanie zmieniło się w innej sesji. Twoja wersja robocza została zachowana; otwórz zadanie ponownie, aby zobaczyć najnowszą wersję.",
+      "generatedSectionReady": "Wersja robocza wygenerowana. Sprawdź ją i zapisz zadanie, aby zachować zmiany.",
+      "generatedSectionLocalOnly": "Wersja robocza wygenerowana tylko dla tego widoku. Nie jest uwzględniana przy zapisie zadania na serwerze.",
+      "generatedSectionReferenceOnly": "Sugestie wygenerowane pomocniczo. Nie są uwzględniane przy zapisie zadania.",
+      "generatedSectionSaveNotice": "Sprawdź tę wersję roboczą, a następnie zapisz zadanie, aby ją zachować.",
+      "generatedSectionLocalOnlyNotice": "Ta wersja robocza dotyczy tylko tego widoku i nie jest uwzględniana przy zapisie zadania na serwerze.",
+      "generatedSectionReferenceOnlyNotice": "Te sugestie mają charakter wyłącznie pomocniczy i nie są uwzględniane przy zapisie zadania."
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
@@ -5426,7 +5451,8 @@
       "uploadedCount_few": "Przesłano {{count}} pliki",
       "uploadedCount_many": "Przesłano {{count}} plików",
       "uploadedCount_other": "Przesłano {{count}} plików",
-      "confirmDelete": "Czy na pewno chcesz usunąć \"{{name}}\"?"
+      "confirmDelete": "Czy na pewno chcesz usunąć \"{{name}}\"?",
+      "toastDownloadError": "Nie udało się pobrać załącznika"
     },
     "riskAssessment": {
       "riskAnalysis": "Analiza ryzyka",
@@ -5656,7 +5682,15 @@
       "label2": "Przypisane do mnie",
       "label3": "Jestem właścicielem",
       "today": "Dzisiaj",
-      "weekdaysShort": ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
+      "weekdaysShort": [
+        "Pn",
+        "Wt",
+        "Śr",
+        "Cz",
+        "Pt",
+        "So",
+        "Nd"
+      ],
       "mobileFiltersButton": "Źródła i filtry",
       "mobileFiltersTitle": "Źródła i filtry"
     },
@@ -5924,7 +5958,13 @@
         "whatItIs": "Czym to jest",
         "whyItMatters": "Dlaczego to ma znaczenie",
         "howToThinkAboutIt": "Jak o tym myśleć"
-      }
+      },
+      "talkToTeresa": "Rozmawiaj z Teresą",
+      "saveToNotebook": "Zapisz w notatniku",
+      "createIdea": "Utwórz pomysł",
+      "exploreDeeper": "Zbadaj głębiej",
+      "watchTopic": "Obserwuj temat",
+      "notRelevant": "Nieistotne"
     },
     "shortcuts": {
       "moveUp": "Przesuń zaznaczenie w górę",
@@ -6199,6 +6239,437 @@
       "pendingProposals": "Propozycje oczekujące",
       "pendingApprovals": "Akceptacje oczekujące",
       "accountabilityNote": "Każda interwencja AI jest zapisana z odpowiedzialnością człowieka."
+    },
+    "aiAnalysisProposalReviewQueue": {
+      "cardTarget": "Cel karty",
+      "exactSource": "Dokładne źródło",
+      "confidence": "Pewność",
+      "requestedBy": "Zgłoszone przez",
+      "sectionLabel": "Przeglądy analiz AI",
+      "loading": "Wczytywanie przeglądów analiz AI",
+      "unavailable": "Kolejka przeglądów AI niedostępna.",
+      "title": "Propozycje analiz AI",
+      "disclaimer": "Wynik AI jest propozycją, dopóki niezależny przegląd człowieka nie opublikuje dokładnej prawdy.",
+      "proposalLabel": "Propozycja",
+      "cardRetained": "Karta w{{newVersion}}; w{{oldVersion}} zachowana z pochodzeniem AI",
+      "noTruthChange": "brak zmiany prawdy",
+      "staleConflict": "Karta lub źródło jest nieaktualne. Przegląd zablokowany.",
+      "notSaved": "Przegląd nie został zapisany.",
+      "workbenchLabel": "Panel przeglądu analiz AI",
+      "initiativeVersion": "Inicjatywa",
+      "modelLabel": "Model",
+      "promptLabel": "Prompt",
+      "templateLabel": "szablon",
+      "inputHashLabel": "Skrót danych wejściowych",
+      "confidenceLabel": "pewność",
+      "evidenceLabel": "Dowody",
+      "counterEvidenceLabel": "Dowody przeciwne",
+      "noneDeclared": "Brak zgłoszonych",
+      "humanRationale": "Uzasadnienie człowieka",
+      "rationaleAriaLabel": "Uzasadnienie przeglądu AI",
+      "editedFragmentLabel": "Dokładny edytowany fragment (JSON)",
+      "editedFragmentAriaLabel": "Edytowany fragment AI",
+      "reject": "Odrzuć",
+      "publishHumanEdit": "Opublikuj edycję człowieka",
+      "acceptProposal": "Zaakceptuj propozycję"
+    },
+    "analysisDecisionQueue": {
+      "decision": "Decyzja",
+      "initiative": "Inicjatywa",
+      "gate": "Brama",
+      "requestedBy": "Zgłoszone przez",
+      "due": "Termin",
+      "rowTitle": "Decyzja analizy",
+      "sectionLabel": "Decyzje analiz",
+      "loading": "Wczytywanie decyzji analiz",
+      "unavailable": "Decyzje analiz są niedostępne.",
+      "retry": "Ponów",
+      "title": "Decyzje analiz czekające na Ciebie",
+      "subtitle": "Dedykowana kanoniczna kolejka bramy analizy; nie otwiera starego widoku decyzji.",
+      "conflict": "Ta decyzja analizy uległa zmianie. Odśwież przed ponownym zdecydowaniem.",
+      "failed": "Decyzja analizy nie została zmieniona.",
+      "canonicalDecisionId": "Kanoniczny identyfikator decyzji",
+      "frozenAnalysisCards": "Zamrożone karty analizy",
+      "decisionRationale": "Uzasadnienie decyzji",
+      "rationaleAriaLabel": "Uzasadnienie decyzji analizy",
+      "failClosed": "Decyzja analizy jest zablokowana domyślnie, dopóki nie zostanie spełnione dokładne kworum zatwierdzenia bramy.",
+      "returnAnalysis": "Zwróć analizę",
+      "approveAnalysis": "Zatwierdź analizę"
+    },
+    "definitionDecisionQueue": {
+      "decision": "Decyzja",
+      "initiative": "Inicjatywa",
+      "gate": "Brama",
+      "requestedBy": "Zgłoszone przez",
+      "due": "Termin",
+      "rowTitle": "Decyzja definicji",
+      "sectionLabel": "Decyzje definicji",
+      "loading": "Wczytywanie decyzji definicji",
+      "unavailable": "Decyzje definicji są niedostępne.",
+      "retry": "Ponów",
+      "title": "Decyzje definicji czekające na Ciebie",
+      "subtitle": "Kanoniczne decyzje bramy; zatwierdź lub zwróć z uzasadnieniem człowieka.",
+      "conflict": "Ta decyzja uległa zmianie. Odśwież przed ponownym zdecydowaniem.",
+      "failed": "Decyzja nie została zmieniona. Ponów lub sprawdź inicjatywę.",
+      "frozenCardVersions": "Zamrożone wersje kart",
+      "decisionRationale": "Uzasadnienie decyzji",
+      "failClosed": "Decyzja definicji jest zablokowana domyślnie, dopóki nie zostanie spełnione dokładne kworum zatwierdzenia bramy.",
+      "return": "Zwróć",
+      "approveDefinition": "Zatwierdź definicję"
+    },
+    "executionCanonicalWorkQueue": {
+      "sectionLabel": "Moja kanoniczna praca realizacyjna",
+      "loading": "Wczytywanie kanonicznej pracy realizacyjnej",
+      "unavailable": "Kanoniczna praca realizacyjna niedostępna.",
+      "title": "Moja praca realizacyjna",
+      "subtitle": "Te same kanoniczne identyfikatory zadania, decyzji i alokacji operacyjnej co w Realizacji.",
+      "executionCase": "Sprawa realizacji"
+    },
+    "taskDetailModal": {
+      "loadFailed": "Nie udało się wczytać szczegółów zadania",
+      "titleRequired": "Tytuł jest wymagany",
+      "taskUpdated": "Zadanie zaktualizowane",
+      "taskCreated": "Zadanie utworzone",
+      "saveFailed": "Nie udało się zapisać zadania",
+      "titlePlaceholder": "Wpisz tytuł zadania",
+      "statusTodo": "Do zrobienia",
+      "statusInProgress": "W trakcie",
+      "statusBlocked": "Zablokowane",
+      "statusDone": "Zrobione",
+      "priorityLow": "Niski",
+      "priorityMedium": "Średni",
+      "priorityHigh": "Wysoki",
+      "priorityUrgent": "Pilny",
+      "progress": "Postęp",
+      "reasonForBlocking": "Powód blokady",
+      "descriptionPlaceholder": "Dodaj szczegóły...",
+      "subtasks": "Podzadania",
+      "addItem": "+ Dodaj element",
+      "subtaskPlaceholder": "Podzadanie...",
+      "noSubtasks": "Brak podzadań",
+      "linkedInitiative": "Powiązana inicjatywa",
+      "assignee": "Przypisana osoba",
+      "unassigned": "Nieprzypisane",
+      "cancel": "Anuluj",
+      "saveTask": "Zapisz zadanie",
+      "removeSubtask": "Usuń podzadanie"
+    },
+    "closureDecisionQueue": {
+      "activeLegalHold": "Aktywne zatrzymanie prawne",
+      "archiveBlocked": "Archiwizacja zablokowana: aktywne zatrzymanie prawne.",
+      "archiveTitle": "Zarchiwizuj zamkniętą Inicjatywę",
+      "archiveWorkbenchAriaLabel": "Panel archiwizacji",
+      "columnClosureCase": "Sprawa zamknięcia",
+      "columnEffectivenessSnapshot": "Migawka efektywności",
+      "columnExecutionCase": "Sprawa realizacji",
+      "columnIndependentAuthority": "Niezależna instancja decyzyjna",
+      "columnInitiative": "Inicjatywa",
+      "columnStatus": "Status",
+      "conflict": "Źródło zamknięcia się zmieniło. Odśwież.",
+      "createArchiveManifest": "Utwórz manifest archiwum",
+      "decide": "Zdecyduj o zamknięciu",
+      "decisionWorkbenchAriaLabel": "Panel decyzji o zamknięciu",
+      "effectivenessCaseAriaLabel": "Sprawa efektywności zamknięcia",
+      "exportRef": "Referencja eksportu",
+      "exportRefAriaLabel": "Referencja eksportu archiwum",
+      "failed": "Polecenie zamknięcia nie powiodło się.",
+      "legalHoldAriaLabel": "Zatrzymanie prawne",
+      "legalHoldLabel": "Zatrzymanie prawne",
+      "loading": "Wczytywanie spraw zamknięcia",
+      "outcomeAriaLabel": "Wynik zamknięcia",
+      "previewClosureCase": "Sprawa zamknięcia {{id}} w{{version}}",
+      "previewEffectivenessSnapshot": "Migawka efektywności {{snapshot}}",
+      "previewFollowUps": "Działania następcze {{followUps}}",
+      "previewInitiativeExecution": "Inicjatywa {{initiative}} · Sprawa realizacji {{executionCase}}",
+      "previewLessons": "Wnioski {{lessons}}",
+      "previewLineage": "Powiązania {{lineage}}",
+      "previewRetention": "Retencja {{classification}} · {{ref}} w{{version}} · zatrzymanie prawne {{legalHold}}",
+      "quorumNotSatisfied": "Kworum GateSignoff dla CLOSURE nie jest spełnione.",
+      "rationaleAriaLabel": "Uzasadnienie zamknięcia",
+      "receiptArchive": "Manifest archiwum {{id}} · tylko do odczytu",
+      "requestFieldAriaLabel": "Wniosek o zamknięcie {{field}}",
+      "requestLegalHoldAriaLabel": "Wniosek o zamknięcie legalHold",
+      "requestSubmit": "Złóż niezależny wniosek o zamknięcie",
+      "requestTitle": "Złóż sprawę zamknięcia",
+      "requestWorkbenchAriaLabel": "Panel wniosku o zamknięcie",
+      "retentionPolicyRef": "Referencja polityki retencji",
+      "retentionPolicyRefAriaLabel": "Referencja polityki retencji",
+      "reviewedEffectiveness": "Zweryfikowana efektywność",
+      "selectEffectivenessSnapshot": "Wybierz niezmienną migawkę efektywności",
+      "snapshotIdAriaLabel": "ID migawki zamknięcia",
+      "subtitle": "Niezależna decyzja o zamknięciu po niezmiennej migawce efektywności. Archiwizacja pozostaje osobnym krokiem.",
+      "title": "Sprawy zamknięcia",
+      "unavailable": "Sprawy zamknięcia są niedostępne."
+    },
+    "deliveryResultsAcceptanceQueue": {
+      "acceptDelivery": "Zaakceptuj dostawę",
+      "acceptResults": "Zaakceptuj wyniki",
+      "acceptWithGaps": "Zaakceptuj z lukami",
+      "acceptWithResiduals": "Zaakceptuj z ryzykami rezydualnymi",
+      "baseline": "Punkt odniesienia {{ref}} w{{version}}",
+      "benefitOwner": "Właściciel korzyści {{id}}",
+      "canonicalId": "Kanoniczny identyfikator",
+      "columnAcceptanceGate": "Bramka akceptacji",
+      "columnExactSource": "Dokładne źródło",
+      "columnInitiative": "Inicjatywa",
+      "columnStatus": "Status",
+      "conflict": "Wersja dowodu się zmieniła. Odśwież przed podjęciem decyzji.",
+      "deliverables": "Rezultaty: {{refs}}",
+      "deliveryAcceptance": "Akceptacja dostawy",
+      "executionCase": "Sprawa realizacji {{id}} w{{version}}",
+      "failed": "Decyzja nie została zapisana.",
+      "finance": "Finanse: {{refs}}",
+      "immutableBenefitsHandoffPack": "Niezmienny pakiet przekazania korzyści {{packId}} w{{version}}",
+      "immutableBenefitsHandoffPackShort": "Niezmienny pakiet przekazania korzyści {{packId}} w{{version}}",
+      "initiative": "Inicjatywa {{id}} w{{version}}",
+      "kpiContracts": "Kontrakty KPI: {{refs}}",
+      "loading": "Wczytywanie pracy akceptacyjnej",
+      "milestones": "Kamienie milowe: {{refs}}",
+      "mustRemainDelivered": "Inicjatywa {{id}} musi pozostać w stanie DELIVERED do czasu akceptacji.",
+      "none": "Brak",
+      "openDecisions": "Otwarte decyzje: {{value}}",
+      "openTasks": "Otwarte zadania: {{value}}",
+      "operationalHandover": "Przekazanie operacyjne {{ref}} w{{version}}",
+      "rationale": "Uzasadnienie",
+      "rationaleAriaLabel": "Uzasadnienie akceptacji",
+      "receiptHeading": "Potwierdzenie {{type}} · {{lifecycle}}",
+      "rejectWithBlockers": "Odrzuć z blokerami",
+      "residualRisks": "Ryzyka rezydualne: {{value}}",
+      "resultsAcceptance": "Akceptacja wyników",
+      "resultsCase": "Sprawa wyników {{id}}",
+      "resultsFieldAriaLabel": "Wyniki {{field}}",
+      "retry": "Ponów",
+      "return": "Zwróć",
+      "scope": "Zakres {{ref}} w{{version}}",
+      "stop": "Zatrzymaj",
+      "subtitle": "Niezależne decyzje na podstawie dokładnych, wersjonowanych dowodów realizacji. Bez skrótów w zamykaniu.",
+      "title": "Akceptacja dostawy i wyników",
+      "unavailable": "Praca akceptacyjna jest niedostępna.",
+      "workbenchAriaLabel": "Panel {{gate}}"
+    },
+    "effectivenessClosureQueue": {
+      "activeLegalHold": "Aktywne zatrzymanie prawne",
+      "archiveBlocked": "Archiwizacja zablokowana: aktywne zatrzymanie prawne.",
+      "asOf": "stan na {{asOf}}",
+      "baselineCurrentTarget": "Punkt odniesienia {{baseline}} · bieżąca {{current}} · docelowa {{target}} {{unit}}{{currency}}",
+      "benefitsHandoffPack": "Pakiet przekazania korzyści {{packId}} w{{version}}",
+      "cardContractJsonAriaLabel": "JSON kontraktu {{label}}",
+      "cardIdAriaLabel": "ID {{label}}",
+      "columnCurrentAuthority": "Bieżąca instancja decyzyjna",
+      "columnEffectivenessCase": "Sprawa efektywności",
+      "columnInitiative": "Inicjatywa",
+      "columnResultsLineage": "Dokładne powiązania wyników",
+      "columnStatus": "Status",
+      "conflict": "Wersja źródła się zmieniła. Odśwież przed podjęciem działania.",
+      "createArchiveManifest": "Utwórz manifest archiwum",
+      "createCard": "Utwórz {{label}}",
+      "createWithSelectedObservations": "Utwórz z wybranymi dokładnymi obserwacjami",
+      "effectivenessCase": "Sprawa efektywności",
+      "effectivenessCaseId": "Sprawa efektywności {{id}}",
+      "exportRef": "Referencja eksportu",
+      "exportRefAriaLabel": "Referencja eksportu archiwum",
+      "failed": "Żadne kanoniczne przejście nie zostało zapisane.",
+      "financeReconciliation": "Uzgodnienie finansowe",
+      "knowledgeConfidenceEvidence": "{{knowledgeState}} · pewność {{confidence}} · dowody {{evidence}}",
+      "kpiSource": "KPI {{contractRef}} w{{contractVersion}} · źródło {{sourceRef}} w{{sourceVersion}}",
+      "legalHoldAriaLabel": "Zatrzymanie prawne",
+      "loading": "Wczytywanie pracy nad korzyściami",
+      "measurementNote": "Obserwacje finansowe MEASURED wymagają dokładnego, dostępnego (AVAILABLE) uzgodnienia. NOT_MEASURED jest wymuszane do null + UNKNOWN i nie może zmyślać wartości.",
+      "notMeasuredNone": "NOT_MEASURED / brak",
+      "observationSummary": "{{measurementState}} · zaobserwowano {{observedValue}} · {{knowledgeState}} · Finanse {{finance}}",
+      "observationsAriaLabel": "Obserwacje KPI wyników",
+      "observationsTitle": "Kanoniczne obserwacje KPI wyników",
+      "pageTitle": "Korzyści, efektywność i zamknięcie",
+      "rationale": "Uzasadnienie",
+      "rationaleAriaLabel": "Uzasadnienie efektywności",
+      "receiptArchive": "Manifest archiwum {{archiveId}} · tylko do odczytu",
+      "receiptClosureSnapshot": "Migawka zamknięcia {{snapshotId}} · CLOSED",
+      "receiptEffectivenessSnapshot": "Migawka efektywności {{snapshotId}} · {{outcome}} · cykl życia EFFECTIVENESS_REVIEWED",
+      "receiptHeading": "Potwierdzenie {{type}}",
+      "requestReview": "Złóż wniosek o weryfikację",
+      "resultsCase": "Sprawa wyników {{resultsCaseId}} w{{version}}",
+      "resultsKpiObservation": "Obserwacja KPI wyników",
+      "retentionPolicyRef": "Referencja polityki retencji",
+      "retentionPolicyRefAriaLabel": "Referencja polityki retencji",
+      "retry": "Ponów",
+      "rowTitle": "Efektywność {{initiativeId}}",
+      "selectObservationAriaLabel": "Wybierz obserwację {{id}}",
+      "subtitle": "Pomiar, niezależna weryfikacja, zamknięcie i archiwizacja to osobne kanoniczne bramki.",
+      "title": "Korzyści i zamknięcie",
+      "unavailable": "Praca nad korzyściami jest niedostępna.",
+      "workbenchAriaLabel": "Panel efektywności"
+    },
+    "gateSignoffQueue": {
+      "anyBoundRole": "dowolna powiązana rola",
+      "columnGate": "Bramka",
+      "columnInitiative": "Inicjatywa",
+      "columnPolicyProfile": "Profil polityki",
+      "columnQuorum": "Kworum",
+      "columnSignOff": "Zatwierdzenie",
+      "columnSla": "SLA",
+      "conflict": "Kworum się zmieniło. Odśwież przed ponownym zatwierdzeniem.",
+      "decisionInitiative": "Decyzja / Inicjatywa",
+      "exactDelegation": "Dokładne delegowanie: {{ref}} · w{{version}} · od {{delegatedFrom}}",
+      "failed": "Zatwierdzenie nie zostało zarejestrowane.",
+      "gateSla": "Bramka / SLA",
+      "loading": "Wczytywanie zatwierdzeń bramek",
+      "noEligibleBinding": "Nie masz uprawnionego powiązania roli biznesowej dla tego zatwierdzenia.",
+      "notRequired": "Niewymagane",
+      "policySnapshot": "Migawka polityki",
+      "profileSource": "Profil / źródło",
+      "quorumReadback": "Odczyt kworum",
+      "quorumReceiptSuffix": " · potwierdzenie {{receiptId}}",
+      "receipt": "Zarejestrowano {{outcome}} dla {{gate}}:{{decisionId}}. Zażądano odczytu kworum.",
+      "recordSignOff": "Zarejestruj moje zatwierdzenie",
+      "recordedProgress": "Zarejestrowany postęp:",
+      "recordedProgressValue": "{{signed}}/{{quorum}}. Poszczególne zatwierdzenia są niezmiennym dowodem audytowym i nie można ich tu edytować.",
+      "requesterCannotSign": "Wnioskodawca nie może zatwierdzać",
+      "requiredQuorum": "Wymagane kworum",
+      "requiredQuorumValue": "{{quorum}}; role: {{roles}}",
+      "retry": "Ponów",
+      "rowTitle": "Zatwierdzenie bramki",
+      "separation": "Rozdzielność",
+      "signOffRationale": "Uzasadnienie zatwierdzenia",
+      "signOffRationaleAriaLabel": "Uzasadnienie zatwierdzenia",
+      "signingRole": "Rola zatwierdzająca",
+      "signingRoleAriaLabel": "Rola zatwierdzająca",
+      "subtitle": "Zadania zatwierdzeń przypisane do aktora. To nie jest edytowalna lista zatwierdzeń.",
+      "title": "Zatwierdzenia bramek",
+      "unavailable": "Zatwierdzenia bramek są niedostępne.",
+      "waitingOnYou": "Zatwierdzenia bramek oczekujące na Ciebie",
+      "yourSignOff": "Twoje zatwierdzenie"
+    },
+    "materialChangeQueue": {
+      "approve": "Zatwierdź",
+      "approveConditionally": "Zatwierdź warunkowo",
+      "columnAuthority": "Instancja decyzyjna",
+      "columnClassification": "Klasyfikacja",
+      "columnStatus": "Status",
+      "columnVersionedTarget": "Wersjonowany cel",
+      "completeBlastRadius": "Pełny zasięg wpływu",
+      "conditions": "Warunki",
+      "conditionsAriaLabel": "Warunki zmiany materialnej",
+      "conflict": "Cel jest nieaktualny. Odśwież; publikowanie jest zablokowane.",
+      "contextOpenCanonical": "Kontekst: otwórz kanoniczny obszar roboczy {{workspace}}. Ta kolejka nigdy nie edytuje jego punktu odniesienia w tle.",
+      "decisionRationale": "Uzasadnienie decyzji",
+      "decisionRationaleAriaLabel": "Uzasadnienie zmiany materialnej",
+      "decisionsTitle": "Decyzje o zmianach materialnych",
+      "executionCaseWorkspace": "Sprawa realizacji",
+      "failed": "Żadne przejście nie zostało zapisane.",
+      "loading": "Wczytywanie zmian materialnych",
+      "newHash": "Nowy hash",
+      "oldHash": "Stary hash",
+      "oldToProposedTruth": "Dokładny stan poprzedni → proponowana prawda",
+      "outside": "poza",
+      "planWorkspace": "Plan",
+      "proposal": "Propozycja {{id}}",
+      "publishApprovedChange": "Opublikuj zatwierdzoną zmianę",
+      "receiptProposal": "Propozycja {{proposalId}} · {{action}}",
+      "receiptPublished": " · opublikowano w{{targetVersion}}; poprzednia w{{oldVersion}} pozostaje w historii",
+      "reject": "Odrzuć",
+      "requestReview": "Złóż wniosek o niezależną weryfikację",
+      "retry": "Ponów",
+      "return": "Zwróć",
+      "reversibility": "Odwracalność {{value}}",
+      "rowTitle": "Zmiana materialna {{proposalId}}",
+      "subtitle": "Zatwierdzona prawda i punkty odniesienia zmieniają się wyłącznie przez dokładne, niezależnie zweryfikowane propozycje.",
+      "title": "Zmiany materialne",
+      "tolerance": "Tolerancja {{ref}} w{{version}} · {{withinLabel}} · {{rationale}}",
+      "unavailable": "Zmiany materialne są niedostępne.",
+      "within": "w granicach",
+      "workbenchAriaLabel": "Panel zmiany materialnej"
+    },
+    "portfolioDecisionQueue": {
+      "canonicalDecisionId": "Kanoniczny identyfikator decyzji",
+      "columnDecision": "Decyzja",
+      "columnDue": "Termin",
+      "columnInitiative": "Inicjatywa",
+      "columnProposedDisposition": "Proponowane rozstrzygnięcie",
+      "columnScenarioSnapshot": "Migawka scenariusza",
+      "conditionsOnePerLine": "Warunki (jeden na linię)",
+      "conflict": "Inicjatywa lub Scenariusz Portfela się zmieniły. Odśwież przed podjęciem decyzji.",
+      "dueRequester": "Termin / wnioskodawca",
+      "exactSnapshotJson": "Dokładny JSON migawki",
+      "failed": "Decyzja portfelowa nie została zmieniona.",
+      "frozenCardVersions": "Zamrożone wersje kart",
+      "frozenMembershipSnapshot": "Zamrożona migawka przynależności",
+      "governanceUnavailable": "Projekcja ładu jest niedostępna. Decyzja jest zablokowana bezpiecznie (fail-closed).",
+      "initiativeSnapshot": "Migawka inicjatywy",
+      "loading": "Wczytywanie decyzji portfelowych",
+      "membershipSnapshotAriaLabel": "Migawka przynależności",
+      "mergeTargetInitiativeId": "ID Inicjatywy docelowej scalenia",
+      "mergeTargetInitiativeIdAriaLabel": "ID Inicjatywy docelowej scalenia",
+      "portfolioConditionsAriaLabel": "Warunki portfelowe",
+      "portfolioDecisionRationale": "Uzasadnienie decyzji portfelowej",
+      "portfolioDecisionRationaleAriaLabel": "Uzasadnienie decyzji portfelowej",
+      "portfolioOutcome": "Wynik portfelowy",
+      "portfolioOutcomeAriaLabel": "Wynik portfelowy",
+      "quorumNotSatisfied": "Wymagane kworum GateSignoff nie jest spełnione.",
+      "receiptApproved": "{{status}} · odczyt cyklu życia {{lifecycleState}}",
+      "receiptOther": "{{status}} · cykl życia pozostaje READY_FOR_DECISION",
+      "recordDecision": "Zarejestruj decyzję portfelową",
+      "retry": "Ponów",
+      "rowTitle": "Decyzja portfelowa",
+      "satisfiedQuorum": "Spełnione kworum: {{quorumId}} · w{{version}}",
+      "scenarioSnapshot": "Migawka scenariusza",
+      "subtitle": "Jedna Inicjatywa i jedna zamrożona migawka Scenariusza Portfela na każdą niezależną decyzję.",
+      "title": "Decyzje portfelowe",
+      "unavailable": "Decyzje portfelowe są niedostępne.",
+      "waitingOnYou": "Decyzje portfelowe oczekujące na Ciebie"
+    },
+    "scheduleDecisionQueue": {
+      "approveConditionally": "Zatwierdź warunkowo",
+      "approveSchedule": "Zatwierdź harmonogram",
+      "canonicalDecisionId": "Kanoniczny identyfikator decyzji",
+      "capacity": "Zdolność produkcyjna",
+      "columnCapacity": "Zdolność produkcyjna",
+      "columnDecision": "Decyzja",
+      "columnDue": "Termin",
+      "columnInitiative": "Inicjatywa",
+      "columnPlan": "Plan",
+      "commitments": "Zobowiązania",
+      "conditionsAriaLabel": "Warunki decyzji harmonogramowej",
+      "conditionsOnePerLine": "Warunki, jeden na linię",
+      "conflict": "Ta decyzja harmonogramowa się zmieniła. Odśwież przed podjęciem decyzji.",
+      "criticalDependencies": "Zależności krytyczne",
+      "criticalPeriods": "Okresy krytyczne",
+      "decisionRationale": "Uzasadnienie decyzji",
+      "decisionRationaleAriaLabel": "Uzasadnienie decyzji harmonogramowej",
+      "failClosed": "Decyzja harmonogramowa jest zablokowana bezpiecznie do czasu spełnienia dokładnego kworum zatwierdzenia bramki.",
+      "failed": "Decyzja harmonogramowa nie została zmieniona.",
+      "frozenHandoffPackage": "· zamrożony pakiet przekazania",
+      "hold": "Wstrzymaj",
+      "initiative": "Inicjatywa",
+      "loading": "Wczytywanie decyzji harmonogramowych",
+      "none": "Brak",
+      "plan": "Plan",
+      "portfolio": "Portfel",
+      "retry": "Ponów",
+      "return": "Zwróć",
+      "rowTitle": "Decyzja harmonogramowa",
+      "subtitle": "Kanoniczna kolejka bramek. Zatwierdzenie planuje Inicjatywę i zamraża pakiet przekazania; nie rozpoczyna realizacji.",
+      "title": "Decyzje harmonogramowe",
+      "unavailable": "Decyzje harmonogramowe są niedostępne.",
+      "waitingOnYou": "Decyzje harmonogramowe oczekujące na Ciebie",
+      "window": "Okno"
+    },
+    "focusCockpit": {
+      "dueToday": "Dziś",
+      "dueTomorrow": "Jutro",
+      "toggleTask": "Przełącz zadanie",
+      "lanes": {
+        "myList": "Moja lista (szybkie notatki)",
+        "today": "Dziś",
+        "thisWeek": "Ten tydzień"
+      },
+      "addTask": "Zadanie",
+      "preview": "Podgląd"
+    },
+    "locationFilter": {
+      "loading": "Wczytywanie..."
+    },
+    "personalExecutionBar": {
+      "topTenPercent": "Top 10% zespołu w tym tygodniu"
     }
   },
   "step1": {
@@ -11276,8 +11747,15 @@
         "weekly": "Tygodniowa aktualizacja zespołu",
         "workload": "Obciążenie i dostępność"
       },
-      "cadence": { "onDemand": "Na żądanie", "weekly": "Co tydzień", "monthly": "Co miesiąc" },
-      "scope": { "all": "Wszystkie inicjatywy", "current": "Bieżący projekt" },
+      "cadence": {
+        "onDemand": "Na żądanie",
+        "weekly": "Co tydzień",
+        "monthly": "Co miesiąc"
+      },
+      "scope": {
+        "all": "Wszystkie inicjatywy",
+        "current": "Bieżący projekt"
+      },
       "listTitle": "Raporty z pracy",
       "listDescription": "Zamrożone przebiegi raportu wraz ze stanem akceptacji i doręczenia.",
       "runStatus": {
@@ -18731,7 +19209,24 @@
       },
       "professional": {
         "saved": "Zapisane",
-        "error": "Błąd"
+        "error": "Błąd",
+        "title": "Profil zawodowy",
+        "description": "Pokaż swoje doświadczenie zawodowe i specjalizacje",
+        "bio": "O mnie",
+        "bioPlaceholder": "Napisz o sobie, swoim doświadczeniu i tym, czym się zajmujesz...",
+        "characters": "znaków",
+        "skills": "Umiejętności",
+        "addSkill": "Dodaj umiejętność...",
+        "certifications": "Certyfikaty",
+        "addCert": "Dodaj certyfikat",
+        "noCerts": "Nie dodano jeszcze żadnego certyfikatu",
+        "education": "Wykształcenie",
+        "addEdu": "Dodaj wykształcenie",
+        "noEdu": "Nie dodano jeszcze żadnego wpisu o wykształceniu",
+        "workExperience": "Doświadczenie zawodowe",
+        "addWork": "Dodaj doświadczenie",
+        "noWork": "Nie dodano jeszcze żadnego doświadczenia zawodowego",
+        "socialLinks": "Linki społecznościowe"
       },
       "bio": {
         "saved": "Zapisane",
@@ -18756,7 +19251,11 @@
       "regionalCanonicalHint": "Strefa czasowa, data, godzina, liczba i formaty jednostek są zarządzane razem w Ustawieniach regionalnych.",
       "validation": {
         "firstNameRequired": "Przed zapisaniem wymagane jest imię"
-      }
+      },
+      "avatarAlt": "Profil",
+      "saveNotConfirmedError": "Zapis profilu nie został potwierdzony przez serwer",
+      "changesNotConfirmedError": "Zmiany profilu nie zostały potwierdzone przez serwer",
+      "saveError": "Nie udało się zapisać ustawień profilu"
     },
     "signatures": {
       "title": "Podpisy email",
@@ -18798,7 +19297,32 @@
       "tipConcise": "Zachowaj zwięzłość — podaj tylko niezbędne dane kontaktowe",
       "tipConsistent": "Stosuj jeden format we wszystkich podpisach",
       "tipRole": "Podaj swoją rolę i firmę, żeby dać kontekst zawodowy",
-      "tipLinks": "Dodaj adekwatne linki społecznościowe lub adres portfolio, jeśli to na miejscu"
+      "tipLinks": "Dodaj adekwatne linki społecznościowe lub adres portfolio, jeśli to na miejscu",
+      "toastFillAllFields": "Proszę wypełnić wszystkie pola",
+      "toastCreated": "Podpis utworzony",
+      "toastUpdated": "Podpis zaktualizowany",
+      "toastSaveFailed": "Nie udało się zapisać podpisu",
+      "toastDeleted": "Podpis usunięty",
+      "toastDeleteFailed": "Nie udało się usunąć podpisu",
+      "toastDefaultUpdated": "Domyślny podpis zaktualizowany",
+      "toastSetDefaultFailed": "Nie udało się ustawić jako domyślny",
+      "toastCopied": "Skopiowano do schowka",
+      "newSignature": "Nowy podpis",
+      "createNewTitle": "Utwórz nowy podpis",
+      "nameLabel": "Nazwa podpisu",
+      "contentLabel": "Treść podpisu",
+      "previewLabel": "Podgląd",
+      "previewPlaceholder": "Tutaj pojawi się Twój podpis...",
+      "savingButton": "Zapisywanie...",
+      "saveButton": "Zapisz podpis",
+      "cancelButton": "Anuluj",
+      "defaultBadge": "Domyślny",
+      "previewTitle": "Podgląd",
+      "copyTitle": "Kopiuj",
+      "setDefaultTitle": "Ustaw jako domyślny",
+      "editTitleAttr": "Edytuj",
+      "deleteTitleAttr": "Usuń",
+      "tipsHeading": "Wskazówki dotyczące skutecznych podpisów:"
     },
     "work": {
       "title": "Preferencje pracy",
@@ -19030,7 +19554,8 @@
       "removeTitle": "Usuń zdjęcie profilowe",
       "removeDesc": "Zamiast zdjęcia będą wyświetlane Twoje inicjały",
       "remove": "Usuń zdjęcie",
-      "guideline4": "Profesjonalne zdjęcia pomagają budować zaufanie w zespole"
+      "guideline4": "Profesjonalne zdjęcia pomagają budować zaufanie w zespole",
+      "uploadAriaLabel": "Prześlij zdjęcie profilowe"
     },
     "billing": {
       "plansUnavailable": "Aktualne plany cenowe są chwilowo niedostępne. Odśwież stronę albo spróbuj ponownie, gdy usługi rozliczeń wrócą.",
@@ -19287,7 +19812,23 @@
       "orgLimitBody": "Twoja organizacja ustawiła maksymalny poziom proaktywności na <0>{{level}}</0>. Skontaktuj się z administratorem, jeśli potrzebujesz wyższego.",
       "privacySubtitle": "Zarządzaj tym, jak Twoje dane są przetwarzane i przechowywane.",
       "piiRedactionHint": "Automatycznie wykrywa i zamazuje adresy e-mail, numery telefonów i wzorce kart płatniczych przed wysłaniem do modelu.",
-      "webSearchHint": "Pozwala modelowi szukać w sieci bieżących informacji. Może wydłużyć czas odpowiedzi."
+      "webSearchHint": "Pozwala modelowi szukać w sieci bieżących informacji. Może wydłużyć czas odpowiedzi.",
+      "behavior": {
+        "title": "Zachowanie AI",
+        "description": "Dostosuj sposób, w jaki AI Ci pomaga"
+      },
+      "contextSaved": "Zapisano ustawienia kontekstu AI",
+      "contextError": "Nie udało się zapisać ustawień kontekstu AI",
+      "context": {
+        "title": "Kontekst AI",
+        "description": "Kontroluj, do jakich informacji AI ma dostęp"
+      },
+      "modelsSaved": "Zapisano ustawienia modeli AI",
+      "modelsError": "Nie udało się zapisać ustawień modeli AI",
+      "models": {
+        "title": "Wybór modelu AI",
+        "description": "Wybierz i skonfiguruj modele AI dla różnych zastosowań"
+      }
     },
     "aiUsage": {
       "title": "Przegląd użycia AI",
@@ -19424,7 +19965,13 @@
         "format_html": "HTML",
         "format_html_desc": "Bogate formatowanie",
         "format_plain": "Zwykły tekst",
-        "format_plain_desc": "Prosty format tekstowy"
+        "format_plain_desc": "Prosty format tekstowy",
+        "frequencyInstant": "Natychmiast (bez podsumowania)",
+        "frequencyHourly": "Co godzinę",
+        "frequencyDaily": "Codziennie",
+        "frequencyWeekly": "Co tydzień",
+        "description": "Grupuj powiadomienia w okresowe podsumowania",
+        "time": "Preferowana godzina"
       },
       "sounds": {
         "title": "Dźwięki i powiadomienia pulpitu",
@@ -19471,8 +20018,32 @@
         "active": "Aktywny"
       },
       "vip": {
-        "empty": "Brak prezentacji."
-      }
+        "empty": "Brak prezentacji.",
+        "title": "Kontakty VIP",
+        "description": "Zawsze otrzymuj powiadomienia od tych osób"
+      },
+      "keywords": {
+        "addPlaceholder": "Dodaj słowo kluczowe...",
+        "title": "Priorytetowe słowa kluczowe",
+        "description": "Zawsze powiadamiaj, gdy pojawią się te słowa kluczowe"
+      },
+      "readOnlySave": "Reguły powiadomień są tylko do odczytu, dopóki nie zostanie podłączony zapis trwały",
+      "rules": {
+        "title": "Reguły powiadomień",
+        "description": "Skonfiguruj zaawansowane preferencje powiadomień",
+        "projectRules": "Reguły projektu",
+        "addRule": "Dodaj regułę projektu",
+        "ruleType": "Tryb powiadomień",
+        "priorityFilter": "Filtr priorytetu",
+        "allPriorities": "Wszystkie priorytety",
+        "highMedium": "Tylko wysoki i średni",
+        "highOnly": "Tylko wysoki priorytet",
+        "selectProject": "Wybierz projekt..."
+      },
+      "readOnlyTitle": "Reguły powiadomień są tylko do odczytu",
+      "readOnlyDescription": "Reguły powiadomień projektu, podsumowania, słowa kluczowe i kontakty VIP są widoczne tylko do czasu podłączenia API zapisu trwałego.",
+      "rulesSaved": "Zapisano reguły powiadomień",
+      "rulesError": "Nie udało się zapisać reguł powiadomień"
     },
     "integrations": {
       "title": "Integracje",
@@ -19528,7 +20099,17 @@
       "viewMappings": "Wyświetl mapowania",
       "subtitle": "Podłącz zewnętrzne narzędzia, żeby usprawnić swoją pracę.",
       "orgRequiredBody": "Integracje konfiguruje się na poziomie organizacji. Najpierw utwórz organizację lub do niej dołącz w ustawieniach organizacji.",
-      "channelMappingHint": "Przypisz co najmniej jeden projekt do kanału Slack lub Teams. Opcjonalne adresy webhooków w mapowaniu mogą zastąpić domyślny webhook dla danego projektu."
+      "channelMappingHint": "Przypisz co najmniej jeden projekt do kanału Slack lub Teams. Opcjonalne adresy webhooków w mapowaniu mogą zastąpić domyślny webhook dla danego projektu.",
+      "testConnection": "Testuj połączenie",
+      "appleIdPlaceholder": "twoj@icloud.com",
+      "appleIdEmail": "E-mail Apple ID",
+      "appSpecificPassword": "Hasło aplikacji",
+      "appSpecificHowTo": "Jak wygenerować hasło aplikacji:",
+      "appSpecificStep2": "Logowanie i zabezpieczenia → Hasła aplikacji",
+      "appSpecificStep3": "Wygeneruj hasło o nazwie „Consultify”",
+      "noAuthUrl": "Nie zwrócono adresu autoryzacji",
+      "appleIdHint": "Podaj swój Apple ID i hasło aplikacji.",
+      "configHint": "Podaj wymaganą konfigurację poniżej."
     },
     "availability": {
       "title": "Dostępność i skupienie",
@@ -20140,7 +20721,22 @@
         "ai": "AI",
         "focus": "Skupienie"
       },
-      "connected": "Połączony"
+      "connected": "Połączony",
+      "settingsHistory": {
+        "title": "Historia ustawień",
+        "unavailableTitle": "Historia ustawień niedostępna",
+        "searchPlaceholder": "Szukaj zmian...",
+        "allCategories": "Wszystkie kategorie",
+        "emptyState": "Nie znaleziono zmian ustawień",
+        "beforeLabel": "Przed:",
+        "afterLabel": "Po:",
+        "deviceLabel": "Urządzenie:",
+        "timeLabel": "Czas:",
+        "restoreButton": "Przywróć poprzednią wartość",
+        "totalChanges": "Łączna liczba zmian",
+        "categoriesLabel": "Kategorie",
+        "todayLabel": "Dzisiaj"
+      }
     },
     "accessibility": {
       "saved": "Preferencje dostępności zapisane",
@@ -20382,7 +20978,33 @@
       "answerPlaceholder": "Twoja odpowiedź",
       "pendingVerification": "Oczekuje na weryfikację",
       "geoAlertsTitle": "Alerty geolokalizacyjne",
-      "geoAlertsHint": "Powiadom o logowaniu z nowej lokalizacji"
+      "geoAlertsHint": "Powiadom o logowaniu z nowej lokalizacji",
+      "ipRequired": "Adres IP jest wymagany",
+      "ipAdded": "Dodano regułę IP",
+      "ipError": "Nie udało się dodać reguły IP",
+      "ipDeleted": "Usunięto regułę IP",
+      "deleteError": "Nie udało się usunąć",
+      "answerRequired": "Odpowiedź jest wymagana",
+      "questionAdded": "Dodano pytanie bezpieczeństwa",
+      "questionError": "Nie udało się dodać pytania bezpieczeństwa",
+      "questionDeleted": "Usunięto pytanie bezpieczeństwa",
+      "contactRequired": "Wartość kontaktu jest wymagana",
+      "recoveryAdded": "Dodano kontakt odzyskiwania",
+      "recoveryError": "Nie udało się dodać kontaktu odzyskiwania",
+      "recoveryDeleted": "Usunięto kontakt odzyskiwania",
+      "settingsSaved": "Zapisano ustawienia zabezpieczeń",
+      "settingsError": "Nie udało się zapisać ustawień",
+      "passwordPolicy": "Polityka haseł",
+      "securityQuestions": "Pytania bezpieczeństwa",
+      "suspiciousActivity": "Podejrzana aktywność",
+      "advanced": {
+        "title": "Zaawansowane zabezpieczenia",
+        "description": "Rozszerzone funkcje i mechanizmy bezpieczeństwa"
+      },
+      "ipRules": "Lista dozwolonych / zablokowanych adresów IP",
+      "recovery": "Opcje odzyskiwania",
+      "loginLocations": "Ostatnie lokalizacje logowania",
+      "settings": "Ustawienia bezpieczeństwa"
     },
     "appearance": {
       "label": "Wygląd",
@@ -20516,7 +21138,11 @@
         "toolbarHint": "Wybierz elementy widoczne na górnym pasku narzędzi",
         "quickAccessTitle": "Menu szybkiego dostępu",
         "quickAccessHint": "Dostosuj szybkie akcje w menu +"
-      }
+      },
+      "unavailable": "Preferencje wyglądu niedostępne",
+      "missingPreferencesError": "Odpowiedź preferencji wyglądu nie zawierała preferencji",
+      "loadError": "Nie udało się wczytać preferencji wyglądu",
+      "saveNotConfirmedError": "Zapis ustawień wyglądu nie został potwierdzony przez serwer"
     },
     "sidebar": {
       "title": "USTAWIENIA",
@@ -21028,7 +21654,10 @@
     },
     "preferences": {
       "saved": "Zapisane",
-      "error": "Błąd"
+      "error": "Błąd",
+      "general": {
+        "title": "Preferencje ogólne"
+      }
     },
     "dataControls": {
       "saved": "Zapisane",
@@ -21037,7 +21666,61 @@
       "importTitle": "Importuj dane",
       "importSources": "Z ClickUp, Monday, Asany",
       "important": "Ważne",
-      "deletionWarning": "Usunięcie danych jest trwałe i nieodwracalne. Jeśli potrzebujesz kopii, wyeksportuj dane przed usunięciem."
+      "deletionWarning": "Usunięcie danych jest trwałe i nieodwracalne. Jeśli potrzebujesz kopii, wyeksportuj dane przed usunięciem.",
+      "categoryTasksName": "Zadania",
+      "categoryTasksDescription": "Twoje zadania i podzadania",
+      "categoryProjectsName": "Projekty",
+      "categoryProjectsDescription": "Dane i ustawienia projektów",
+      "categoryMessagesName": "Wiadomości",
+      "categoryMessagesDescription": "Wiadomości bezpośrednie i powiadomienia",
+      "categoryCommentsName": "Komentarze",
+      "categoryCommentsDescription": "Komentarze do zadań i projektów",
+      "categoryFilesName": "Pliki",
+      "categoryFilesDescription": "Przesłane pliki i załączniki",
+      "categoryActivityName": "Dzienniki aktywności",
+      "categoryActivityDescription": "Historia Twojej aktywności",
+      "categoryAiName": "Rozmowy z AI",
+      "categoryAiDescription": "Historia i kontekst rozmów z AI",
+      "retentionKeepForever": "Przechowuj bezterminowo",
+      "retentionDays30": "30 dni",
+      "retentionDays60": "60 dni",
+      "retentionDays90": "90 dni",
+      "retentionMonths6": "6 miesięcy",
+      "retentionYear1": "1 rok",
+      "retentionYears2": "2 lata",
+      "dataRetention": "Przechowywanie danych",
+      "save": "Zapisz",
+      "autoAnonymization": "Automatyczna anonimizacja danych",
+      "autoAnonymizationHint": "Automatycznie anonimizuj stare dane wg harmonogramu",
+      "anonymizationSchedule": "Harmonogram anonimizacji",
+      "weekly": "Co tydzień",
+      "monthly": "Co miesiąc",
+      "quarterly": "Co kwartał",
+      "exportFormat": "Format eksportu",
+      "formatJsonDescription": "Format czytelny maszynowo",
+      "formatCsvDescription": "Zgodny z arkuszami kalkulacyjnymi",
+      "formatPdfDescription": "Raport czytelny dla człowieka",
+      "exportAllMyData": "Eksportuj wszystkie moje dane",
+      "dataCategories": "Kategorie danych",
+      "itemsCount": "{{count}} elementów",
+      "export": "Eksportuj",
+      "clickAgainToConfirm": "Kliknij ponownie, aby potwierdzić",
+      "delete": "Usuń",
+      "deleteConfirmMessage": "Kliknij usuń ponownie, aby trwale usunąć wszystkie dane: {{category}}. Tej operacji nie można cofnąć.",
+      "cancel": "Anuluj",
+      "dataPortability": "Przenośność danych",
+      "portabilityExportInitiated": "Rozpoczęto eksport danych do przeniesienia",
+      "exportForTransfer": "Eksport do przeniesienia",
+      "gdprCompliantPackage": "Pakiet danych zgodny z RODO",
+      "importWizardBeta": "Kreator importu jest w wersji beta — skontaktuj się z pomocą techniczną, aby zacząć",
+      "exportStarted": "Rozpoczęto eksport",
+      "exportQueued": "Eksport dodany do kolejki. Otrzymasz e-mail, gdy będzie gotowy.",
+      "exportError": "Nie udało się wyeksportować danych",
+      "exportAllQueued": "Pełny eksport danych dodany do kolejki. Otrzymasz e-mail, gdy będzie gotowy.",
+      "deleted": "Dane zostały usunięte",
+      "deleteError": "Nie udało się usunąć danych",
+      "title": "Kontrola danych",
+      "description": "Zarządzaj retencją, eksportem i usuwaniem swoich danych"
     },
     "saveFailed": "Nie udało się zapisać",
     "responseStyle": {
@@ -21169,7 +21852,18 @@
       "setUp2fa": "Skonfiguruj uwierzytelnianie dwuetapowe",
       "terminate": "Zakończ",
       "title": "Uwierzytelnianie i dostęp",
-      "twoFactor": "Uwierzytelnianie dwuskładnikowe"
+      "twoFactor": "Uwierzytelnianie dwuskładnikowe",
+      "sessionsUnavailable": "Aktywne sesje niedostępne",
+      "loginHistoryUnavailable": "Historia logowań niedostępna",
+      "recoveryUnavailable": "Opcje odzyskiwania niedostępne",
+      "loadSessionsError": "Nie udało się wczytać aktywnych sesji",
+      "loadHistoryError": "Nie udało się wczytać historii logowań",
+      "loadRecoveryError": "Nie udało się wczytać opcji odzyskiwania",
+      "loadAuthDataError": "Nie udało się wczytać danych uwierzytelniania",
+      "recoveryReloadError": "Opcje odzyskiwania zostały zapisane, ale nie udało się ich ponownie wczytać",
+      "unknownDevice": "Nieznane urządzenie",
+      "unknown": "Nieznane",
+      "recently": "Niedawno"
     },
     "save": "Zapisz zmiany",
     "saving": "Zapisywanie...",
@@ -21223,7 +21917,13 @@
       "updateRegularly": "Regularnie aktualizuj, aby zapewnić najlepsze bezpieczeństwo",
       "viewAll": "Zobacz wszystkie",
       "viewAvailability": "Zobacz dostępność",
-      "viewFullHistory": "Zobacz pełną historię"
+      "viewFullHistory": "Zobacz pełną historię",
+      "unavailable": "Przegląd bezpieczeństwa niedostępny",
+      "missingDataError": "Odpowiedź przeglądu bezpieczeństwa nie zawierała wymaganych danych",
+      "loadError": "Nie udało się wczytać przeglądu bezpieczeństwa",
+      "unknownDate": "Nieznana data",
+      "unknownDevice": "Nieznane urządzenie",
+      "unknown": "Nieznane"
     },
     "pilot": {
       "sectionUnavailableForRole": "Ta sekcja nie jest dostępna w Twojej roli podczas pilota. Skontaktuj się z administratorem, jeśli potrzebujesz dostępu."
@@ -21318,7 +22018,50 @@
     },
     "orgProfile": {
       "subtitle": "Opisz kontekst swojej organizacji, żeby AI mogła podpowiadać wnioski strategiczne",
-      "prioritiesPlaceholder": "np. transformacja cyfrowa, doświadczenie klienta, optymalizacja kosztów"
+      "prioritiesPlaceholder": "np. transformacja cyfrowa, doświadczenie klienta, optymalizacja kosztów",
+      "saveProfile": "Zapisz profil",
+      "aiAnalysis": "Analiza AI",
+      "refresh": "Odśwież",
+      "title": "Profil strategiczny",
+      "completenessLabel": "Kompletność profilu",
+      "sectionIndustry": "Kontekst branżowy",
+      "sectionCompany": "Informacje o firmie",
+      "sectionStrategic": "Kontekst strategiczny",
+      "sectionDigital": "Cyfryzacja i technologia",
+      "sectionMarket": "Rynek i konkurencja",
+      "sectionConstraints": "Ograniczenia i ryzyko",
+      "industryLabel": "Branża *",
+      "selectIndustry": "Wybierz branżę",
+      "industrySubsector": "Podsektor branży",
+      "industrySubsectorPlaceholder": "np. SaaS, Fintech, E-commerce",
+      "companySize": "Wielkość firmy *",
+      "employeeCount": "Liczba pracowników",
+      "foundingYear": "Rok założenia",
+      "headquartersCountry": "Kraj siedziby",
+      "hqCountryPlaceholder": "np. Polska",
+      "competitivePosition": "Pozycja konkurencyjna *",
+      "growthStage": "Etap rozwoju *",
+      "strategicPriorities": "Priorytety strategiczne (oddzielone przecinkami)",
+      "missionStatement": "Misja firmy",
+      "missionPlaceholder": "Jaka jest misja Twojej organizacji?",
+      "digitalMaturity": "Samoocena dojrzałości cyfrowej (1-7)",
+      "cloudAdoption": "Poziom adopcji chmury",
+      "digitalBudget": "Budżet cyfrowy (% całkowitych wydatków IT)",
+      "technologyStack": "Stos technologiczny (oddzielony przecinkami)",
+      "techStackPlaceholder": "np. AWS, React, Python, Kubernetes",
+      "primaryMarkets": "Główne rynki (oddzielone przecinkami)",
+      "primaryMarketsPlaceholder": "np. Polska, DACH, CEE",
+      "customerSegments": "Segmenty klientów (oddzielone przecinkami)",
+      "customerSegmentsPlaceholder": "np. B2B, Enterprise, SMB",
+      "keyCompetitors": "Kluczowi konkurenci (oddzieleni przecinkami)",
+      "keyCompetitorsPlaceholder": "np. Konkurent A, Konkurent B",
+      "marketShare": "Szacowany udział w rynku (%)",
+      "riskAppetite": "Apetyt na ryzyko",
+      "saved": "Profil zapisany pomyślnie",
+      "saveError": "Nie udało się zapisać profilu",
+      "analysisComplete": "Analiza zakończona",
+      "analysisError": "Analiza nie powiodła się",
+      "saveStrategicProfile": "Zapisz profil strategiczny"
     },
     "organization": {
       "loading": "Wczytywanie danych organizacji...",
@@ -21329,10 +22072,70 @@
       "tokenLogReason": "Powód",
       "tokenLogWhen": "Kiedy",
       "inviteIdNote": "* Uwaga: w tym wydaniu użyj identyfikatora użytkownika, jeśli wyszukiwanie po adresie e-mail nie jest skonfigurowane.",
-      "duplicateName": "Masz już organizację o tej nazwie."
+      "duplicateName": "Masz już organizację o tej nazwie.",
+      "loadOrgsError": "Nie udało się wczytać organizacji",
+      "loadOrgDetailsError": "Nie udało się wczytać szczegółów organizacji",
+      "memberAdded": "Członek dodany pomyślnie",
+      "addMemberError": "Nie udało się dodać członka",
+      "billingActivated": "Rozliczenia aktywowane! Tokeny dodane.",
+      "activateBillingError": "Nie udało się aktywować rozliczeń",
+      "nameRequired": "Nazwa organizacji jest wymagana",
+      "createdSuccess": "Organizacja utworzona pomyślnie!",
+      "createOrg": "Utwórz organizację",
+      "createOrgModalTitle": "Utwórz organizację",
+      "orgNameLabel": "Nazwa organizacji",
+      "orgNamePlaceholder": "np. Acme Corporation",
+      "cancel": "Anuluj",
+      "creating": "Tworzenie...",
+      "title": "Ustawienia organizacji",
+      "billingStatus": "Status rozliczeń",
+      "status": "Status",
+      "trialActive": "Okres próbny aktywny",
+      "billingActive": "Rozliczenia aktywne",
+      "activateBilling": "Aktywuj rozliczenia",
+      "tokenBalanceUsage": "Saldo i zużycie tokenów",
+      "availableTokens": "Dostępne tokeny",
+      "trialUsage": "Wykorzystanie okresu próbnego",
+      "recentTokenActivity": "Ostatnia aktywność tokenów",
+      "noTokenActivity": "Brak aktywności tokenów.",
+      "tokenLogType": "Typ",
+      "tokenLogAmount": "Kwota",
+      "teamMembers": "Członkowie zespołu",
+      "addMember": "Dodaj członka",
+      "userIdOrEmail": "ID użytkownika / e-mail",
+      "userIdPlaceholder": "Wpisz ID użytkownika (lub e-mail, jeśli obsługiwany)",
+      "role": "Rola",
+      "roleAdmin": "Administrator",
+      "roleMember": "Członek",
+      "roleConsultant": "Konsultant",
+      "roleViewer": "Obserwator",
+      "sendInvite": "Wyślij zaproszenie",
+      "youSuffix": "(Ty)",
+      "joined": "Dołączył(a)",
+      "noMembers": "Nie znaleziono członków."
     },
     "professionalProfile": {
-      "companyName": "Nazwa firmy"
+      "companyName": "Nazwa firmy",
+      "website": "Strona internetowa",
+      "portfolio": "Portfolio",
+      "certificationName": "Nazwa certyfikatu",
+      "issuingOrganization": "Organizacja wydająca",
+      "expiryDateOptional": "Data wygaśnięcia (opcjonalnie)",
+      "credentialIdOptional": "Numer certyfikatu (opcjonalnie)",
+      "verificationUrlOptional": "Adres weryfikacji (opcjonalnie)",
+      "institutionName": "Nazwa uczelni",
+      "degree": "Stopień/kierunek",
+      "fieldOfStudyOptional": "Kierunek studiów (opcjonalnie)",
+      "descriptionOptional": "Opis (opcjonalnie)",
+      "positionTitle": "Stanowisko",
+      "locationOptional": "Lokalizacja (opcjonalnie)",
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "currentlyStudying": "Obecnie studiuję",
+      "current": "Obecnie",
+      "currentPosition": "Obecne stanowisko",
+      "issued": "Wydano",
+      "expires": "Wygasa"
     },
     "profileCompleteness": {
       "congratulations": "Gratulacje!",
@@ -21362,11 +22165,56 @@
       "personalityHint": "Wybierz, jak AI ma się z Tobą komunikować",
       "contextHint": "Z jakich informacji AI może korzystać, żeby lepiej odpowiadać",
       "historyTitle": "Dane historyczne",
-      "historyDescription": "Ucz się z Twojej dotychczasowej pracy"
+      "historyDescription": "Ucz się z Twojej dotychczasowej pracy",
+      "featuresTitle": "Funkcje AI",
+      "autoSuggestionsTitle": "Automatyczne podpowiedzi",
+      "autoSuggestionsDescription": "Otrzymuj podpowiedzi AI podczas pracy",
+      "commentsTitle": "AI w komentarzach",
+      "commentsDescription": "Wsparcie AI w sekcjach komentarzy",
+      "autocompleteTitle": "Inteligentne autouzupełnianie",
+      "autocompleteDescription": "Uzupełnianie tekstu wspierane przez AI",
+      "proactiveInsightsTitle": "Proaktywne wnioski",
+      "proactiveInsightsDescription": "AI proponuje usprawnienia bez pytania",
+      "personalitySectionTitle": "Osobowość AI",
+      "responseStyleTitle": "Styl odpowiedzi",
+      "responseLengthLabel": "Długość odpowiedzi",
+      "formalityLevelLabel": "Poziom formalności",
+      "formalityCasual": "Swobodny",
+      "formalityFormal": "Formalny",
+      "technicalDepthLabel": "Poziom techniczny",
+      "technicalSimple": "Prosty",
+      "technicalTechnical": "Techniczny",
+      "contextSourcesTitle": "Źródła kontekstu",
+      "projectContextTitle": "Kontekst bieżącego projektu",
+      "projectContextDescription": "Wykorzystaj informacje o bieżącym projekcie",
+      "teamPatternsTitle": "Wzorce zespołu",
+      "teamPatternsDescription": "Wykorzystaj wspólne wzorce zespołu",
+      "saveChanges": "Zapisz zmiany"
     },
     "aiModels": {
       "perUseCaseTitle": "Model do zastosowania",
-      "perUseCaseHint": "Wybierz różne modele do różnych zadań"
+      "perUseCaseHint": "Wybierz różne modele do różnych zadań",
+      "estimatedMonthlyCost": "Szacowany koszt miesięczny",
+      "estimatedCostHint": "Na podstawie przeciętnego użycia",
+      "selectDefaultModel": "Wybierz domyślny model AI",
+      "useDefaultModel": "Użyj domyślnego modelu",
+      "advancedSettingsTitle": "Ustawienia zaawansowane",
+      "temperatureLabel": "Temperatura / kreatywność",
+      "temperaturePrecise": "Precyzyjny",
+      "temperatureBalanced": "Wyważony",
+      "temperatureCreative": "Kreatywny",
+      "maxResponseTokensLabel": "Maks. tokenów odpowiedzi",
+      "maxResponseTokensHint": "Maksymalna długość odpowiedzi AI",
+      "tokensShort": "Krótka (256)",
+      "tokensMedium": "Średnia (4K)",
+      "tokensLong": "Długa (16K)",
+      "streamResponsesLabel": "Odpowiedzi strumieniowe",
+      "tipsTitle": "Wskazówki doboru modelu",
+      "tipComplexReasoning": "Użyj GPT-4 Turbo lub Claude 3 Opus do złożonych zadań wymagających rozumowania",
+      "tipQuickQueries": "Użyj GPT-3.5 lub Gemini Pro do szybkich, prostych zapytań, aby oszczędzić koszty",
+      "tipLowerTemperature": "Niższa temperatura (0,3–0,5) do zadań faktograficznych/analitycznych",
+      "tipHigherTemperature": "Wyższa temperatura (0,8–1,2) do pisania kreatywnego",
+      "saveChanges": "Zapisz zmiany"
     },
     "quickActions": {
       "subtitle": "Skonfiguruj paletę poleceń i szybkie akcje",
@@ -21377,17 +22225,445 @@
       "whenType": "Gdy typ powiadomienia to:",
       "empty": "Brak własnych reguł",
       "addFirst": "Dodaj pierwszą regułę",
-      "digestHint": "Grupuj powiadomienia i odbieraj je jako podsumowanie"
+      "digestHint": "Grupuj powiadomienia i odbieraj je jako podsumowanie",
+      "customRulesTitle": "Niestandardowe reguły powiadomień",
+      "addRule": "Dodaj regułę",
+      "thenLabel": "Wtedy:",
+      "channelAll": "Powiadamiaj na wszystkich kanałach",
+      "channelDesktop": "Tylko na komputerze",
+      "channelMobile": "Tylko na urządzeniu mobilnym",
+      "channelEmail": "Tylko e-mail",
+      "channelNone": "Nie powiadamiaj",
+      "quietHoursTitle": "Godziny ciszy",
+      "startTimeLabel": "Godzina rozpoczęcia",
+      "endTimeLabel": "Godzina zakończenia",
+      "activeDaysLabel": "Aktywne dni",
+      "allowUrgentTitle": "Zezwalaj na pilne powiadomienia",
+      "allowUrgentHint": "Nadal otrzymuj krytyczne powiadomienia w godzinach ciszy",
+      "soundSettingsTitle": "Ustawienia dźwięku",
+      "volumeLabel": "Głośność",
+      "soundPerTypeLabel": "Dźwięk dla typu powiadomienia",
+      "desktopNotificationsTitle": "Powiadomienia na komputerze",
+      "mobileNotificationsTitle": "Powiadomienia mobilne",
+      "digestTitle": "Podsumowanie powiadomień",
+      "frequencyLabel": "Częstotliwość",
+      "frequencyHourly": "Co godzinę",
+      "frequencyDaily": "Codziennie",
+      "frequencyWeekly": "Co tydzień",
+      "deliveryTimeLabel": "Godzina dostarczenia",
+      "includeInDigestLabel": "Uwzględnij w podsumowaniu"
     },
     "webauthn": {
       "unsupportedTitle": "Klucze dostępu nieobsługiwane",
       "unsupportedBody": "Twoja przeglądarka lub urządzenie nie obsługuje kluczy dostępu (WebAuthn). Użyj nowoczesnej przeglądarki: Chrome, Safari, Firefox lub Edge.",
       "renamePlaceholder": "Wpisz nową nazwę",
       "tipRemoveUnused": "Usuń klucze dostępu z urządzeń, których już nie używasz",
-      "whatArePasskeysTitle": "Czym są klucze dostępu?"
+      "whatArePasskeysTitle": "Czym są klucze dostępu?",
+      "fetchError": "Nie udało się wczytać kluczy dostępu",
+      "createCredentialError": "Nie udało się utworzyć poświadczenia",
+      "registrationCancelled": "Rejestracja została anulowana lub odrzucona",
+      "alreadyRegistered": "Ten uwierzytelniacz jest już zarejestrowany",
+      "registerError": "Nie udało się zarejestrować klucza dostępu",
+      "renameError": "Nie udało się zmienić nazwy klucza dostępu",
+      "revokeConfirm": "Czy na pewno chcesz usunąć ten klucz dostępu? Będziesz musiał użyć innej metody uwierzytelniania.",
+      "revokeError": "Nie udało się usunąć klucza dostępu",
+      "title": "Klucze dostępu i klucze bezpieczeństwa",
+      "subtitle": "Używaj biometrii lub kluczy bezpieczeństwa do bezpiecznego logowania bez hasła",
+      "registering": "Rejestrowanie...",
+      "addPasskey": "Dodaj klucz dostępu",
+      "whatArePasskeysBody": "Klucze dostępu to bezpieczna alternatywa dla haseł. Wykorzystują biometrię Twojego urządzenia (Face ID, Touch ID, odcisk palca) lub fizyczny klucz bezpieczeństwa do potwierdzenia Twojej tożsamości.",
+      "emptyTitle": "Brak zarejestrowanych kluczy dostępu",
+      "emptyDescription": "Dodaj klucz dostępu, aby włączyć logowanie bez hasła",
+      "unnamedPasskey": "Klucz dostępu bez nazwy",
+      "added": "Dodano",
+      "lastUsed": "Ostatnio użyty",
+      "synced": "Zsynchronizowany",
+      "securityTips": "Wskazówki bezpieczeństwa",
+      "tipMultipleDevices": "Zarejestruj klucze dostępu na kilku urządzeniach na wypadek utraty dostępu",
+      "tipHardwareKey": "Rozważ użycie sprzętowego klucza bezpieczeństwa dla kont o wysokim poziomie bezpieczeństwa"
     },
     "integrationsMarketplace": {
       "deprecated": "Ten widok zastąpiły Połączone aplikacje w Ustawieniach."
+    },
+    "billingSettings": {
+      "title": "Subskrypcja i rozliczenia",
+      "legalSectionTitle": "Warunki rozliczeń i subskrypcji",
+      "subscriptionAgreementTitle": "Umowa subskrypcyjna",
+      "subscriptionAgreementDesc": "Plany, cennik, kredyty AI",
+      "slaTitle": "Umowa SLA",
+      "slaDesc": "Gwarancje dostępności i wsparcia",
+      "refundPolicyTitle": "Polityka zwrotów",
+      "refundPolicyDesc": "Anulowania i zwroty"
+    },
+    "billingSubscriptionModule": {
+      "billingDataUnavailable": "Dane rozliczeniowe niedostępne",
+      "cancelSubscription": "Anuluj subskrypcję",
+      "currentUsage": "Bieżące zużycie",
+      "teamMembers": "Członkowie zespołu",
+      "projects": "Projekty",
+      "storage": "Przestrzeń dyskowa",
+      "aiTokens": "Tokeny AI",
+      "noInvoicesYet": "Brak faktur.",
+      "noUsageDataAvailable": "Brak danych o zużyciu.",
+      "billingHistory": "Historia rozliczeń",
+      "paymentMethods": "Metody płatności",
+      "addMethod": "Dodaj metodę",
+      "noPaymentMethodsOnFile": "Brak zapisanych metod płatności.",
+      "default": "Domyślna",
+      "subscriptionCancelledToast": "Subskrypcja anulowana.",
+      "heading": "Rozliczenia i subskrypcja"
+    },
+    "generalPreferencesSettings": {
+      "onboardingResetToast": "Onboarding zresetowany. Samouczek pojawi się przy następnym logowaniu.",
+      "resetOnboardingFailedToast": "Nie udało się zresetować onboardingu",
+      "configureApplicationBehavior": "Skonfiguruj zachowanie aplikacji",
+      "startupPreferences": "Preferencje uruchamiania",
+      "defaultStartupView": "Domyślny widok startowy",
+      "showWelcomeMessage": "Pokaż wiadomość powitalną",
+      "displayWelcomeScreenOnStartup": "Wyświetlaj ekran powitalny przy uruchomieniu",
+      "autoSave": "Autozapis",
+      "enableAutoSave": "Włącz autozapis",
+      "autoSaveDescription": "Automatycznie zapisuj zmiany co pewien czas",
+      "saveInterval": "Interwał zapisu",
+      "confirmationDialogs": "Okna potwierdzeń",
+      "tooltipsAndHints": "Podpowiedzi i wskazówki",
+      "resetOnboardingTutorial": "Zresetuj samouczek wprowadzający",
+      "regionalSettings": "Ustawienia regionalne",
+      "dateFormat": "Format daty",
+      "timeFormat": "Format godziny",
+      "weekStartsOn": "Tydzień zaczyna się od"
+    },
+    "personalAnalyticsModule": {
+      "title": "Analityka osobista",
+      "export": "Eksportuj",
+      "tasksCompleted": "Ukończone zadania",
+      "hoursLogged": "Zarejestrowane godziny",
+      "productivityScore": "Wskaźnik produktywności",
+      "focusTime": "Czas skupienia",
+      "activityHeatmap": "Mapa aktywności",
+      "less": "Mniej",
+      "more": "Więcej",
+      "dailyBreakdown": "Podział dzienny",
+      "weeklyGoals": "Cele tygodniowe"
+    },
+    "brandKitGovernanceSettings": {
+      "title": "Zarządzanie zestawem marki",
+      "readOnly": "Tylko do odczytu",
+      "noBrandKitConfiguredYet": "Zestaw marki nie został jeszcze skonfigurowany.",
+      "identity": "Tożsamość",
+      "name": "Nazwa",
+      "invalidHexColor": "Nieprawidłowy kolor hex",
+      "slideChrome": "Elementy slajdu",
+      "headerText": "Tekst nagłówka",
+      "footerText": "Tekst stopki",
+      "showPageNumbers": "Pokaż numery stron",
+      "showConfidentialityMarker": "Pokaż oznaczenie poufności",
+      "confidentialityAndLegal": "Poufność i kwestie prawne",
+      "defaultConfidentiality": "Domyślna poufność",
+      "appliedToNewPresentationsHint": "Stosowane w nowych prezentacjach, chyba że zostanie jawnie zmienione.",
+      "disclaimerText": "Tekst zastrzeżenia",
+      "watermarkText": "Tekst znaku wodnego",
+      "watermarkPlaceholder": "POUFNE"
+    },
+    "aiContext": {
+      "saveChanges": "Zapisz zmiany",
+      "windowSizeTitle": "Rozmiar okna kontekstu",
+      "windowSizeHint": "Ile kontekstu AI może uwzględnić jednocześnie",
+      "projectContextTitle": "Kontekst projektu",
+      "searchProjectsPlaceholder": "Szukaj projektów...",
+      "teamDataTitle": "Dane zespołu",
+      "searchTeamMembersPlaceholder": "Szukaj członków zespołu...",
+      "knowledgeBasesTitle": "Bazy wiedzy",
+      "knowledgeBasesHint": "Dodatkowe źródła wiedzy dla AI",
+      "customKnowledgeSourcesTitle": "Własne źródła wiedzy",
+      "addCustomSourcePlaceholder": "Dodaj własny adres URL lub ścieżkę..."
+    },
+    "advancedSecuritySettings": {
+      "locationUpdateError": "Nie udało się zaktualizować lokalizacji",
+      "activityAcknowledged": "Aktywność potwierdzona",
+      "activityAcknowledgeError": "Nie udało się potwierdzić aktywności",
+      "locationTrusted": "Lokalizacja oznaczona jako zaufana",
+      "locationUntrusted": "Oznaczenie lokalizacji cofnięte",
+      "tabIpRules": "Reguły IP",
+      "tabRecovery": "Odzyskiwanie",
+      "tabLoginLocations": "Lokalizacje logowania",
+      "tabSettings": "Ustawienia",
+      "minimumLength": "Minimalna długość",
+      "charactersCount": "{{count}} znaków",
+      "passwordExpires": "Wygaśnięcie hasła",
+      "daysCount": "{{count}} dni",
+      "never": "Nigdy",
+      "historyCount": "Liczba zapamiętanych haseł",
+      "passwordsCount": "{{count}} haseł",
+      "requireUppercase": "Wymagaj wielkich liter",
+      "requireNumbers": "Wymagaj cyfr",
+      "requireSpecialChars": "Wymagaj znaków specjalnych",
+      "passwordLastChanged": "Ostatnia zmiana hasła:",
+      "expires": "Wygasa:",
+      "addRule": "Dodaj regułę",
+      "ipAddressPlaceholder": "Adres IP lub CIDR",
+      "allow": "Zezwól",
+      "block": "Zablokuj",
+      "descriptionPlaceholder": "Opis (opcjonalnie)",
+      "cancel": "Anuluj",
+      "noIpRules": "Brak skonfigurowanych reguł IP",
+      "addQuestion": "Dodaj pytanie",
+      "customQuestionPlaceholder": "Lub wpisz własne pytanie...",
+      "saveQuestion": "Zapisz pytanie",
+      "answerMasked": "Odpowiedź: ••••••••",
+      "noSecurityQuestions": "Brak skonfigurowanych pytań bezpieczeństwa",
+      "addRecoveryContact": "Dodaj kontakt odzyskiwania",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "trustedPerson": "Zaufana osoba",
+      "namePlaceholder": "Imię i nazwisko",
+      "setAsPrimary": "Ustaw jako główny kontakt odzyskiwania",
+      "addContact": "Dodaj kontakt",
+      "primary": "Główny",
+      "verified": "Zweryfikowany",
+      "noRecoveryContacts": "Brak skonfigurowanych kontaktów odzyskiwania",
+      "proxy": "Proxy",
+      "trusted": "Zaufana",
+      "untrust": "Cofnij zaufanie",
+      "trust": "Ufaj",
+      "noLoginLocations": "Brak zarejestrowanych lokalizacji logowania",
+      "acknowledge": "Potwierdź",
+      "noSuspiciousActivities": "Nie wykryto podejrzanych aktywności",
+      "saveSettings": "Zapisz ustawienia",
+      "singleSessionOnly": "Tylko jedna aktywna sesja",
+      "singleSessionOnlyHint": "Zezwalaj tylko na jedną aktywną sesję naraz",
+      "reauthTimeout": "Czas ponownego uwierzytelnienia",
+      "minutes15": "15 minut",
+      "minutes30": "30 minut",
+      "hour1": "1 godzina",
+      "hours2": "2 godziny",
+      "hours8": "8 godzin",
+      "notificationPreferences": "Preferencje powiadomień",
+      "notifyNewLogin": "Powiadomienia o nowych logowaniach",
+      "notifyPasswordChange": "Powiadomienia o zmianie hasła",
+      "notifySuspiciousActivity": "Powiadomienia o podejrzanej aktywności",
+      "notifyRecoveryChange": "Powiadomienia o zmianie kontaktu odzyskiwania"
+    },
+    "signature": {
+      "title": "Podpisy e-mail",
+      "description": "Twórz i zarządzaj swoimi podpisami e-mail"
+    },
+    "personalAnalytics": {
+      "unavailableDescription": "Analityka produktywności osobistej nie jest jeszcze podłączona do trwałego źródła danych.",
+      "loadError": "Nie udało się wczytać analityki osobistej",
+      "unavailableTitle": "Analityka osobista niedostępna"
+    },
+    "proactivitySelector": {
+      "header": "Proaktywność AI",
+      "subtitle": "Jak AI powinna się z Tobą komunikować?",
+      "orgLimit": "Limit organizacji",
+      "modeHeading": "Tryb: {{title}}",
+      "mode": {
+        "reactive": {
+          "title": "Reaktywny",
+          "shortDescription": "AI czeka na Twoje pytania",
+          "longDescription": "AI milczy, dopóki nie zapytasz. Idealne dla doświadczonych użytkowników, którzy wolą pracować samodzielnie."
+        },
+        "balanced": {
+          "title": "Zrównoważony",
+          "shortDescription": "AI podpowiada, gdy to pomocne",
+          "longDescription": "AI podpowiada, gdy wykryje, że może się to przydać, ale czeka na Twoją inicjatywę w ważniejszych sprawach."
+        },
+        "proactive": {
+          "title": "Proaktywny",
+          "shortDescription": "AI aktywnie wspiera",
+          "longDescription": "AI aktywnie monitoruje Twoją pracę i samodzielnie proponuje pomoc, inicjując rozmowy o potencjalnych problemach."
+        }
+      },
+      "behavior": {
+        "autoSuggest": "Automatyczne podpowiedzi",
+        "nudges": "Proaktywne przypomnienia",
+        "contextualHints": "Podpowiedzi kontekstowe",
+        "initiateConversation": "Inicjowanie rozmów"
+      }
+    },
+    "modelSelector": {
+      "status": {
+        "degraded": "Ograniczona sprawność"
+      },
+      "header": "Modele AI",
+      "clearSelection": "Wyczyść wybór",
+      "hideModel": "Ukryj model",
+      "showModel": "Pokaż model",
+      "emptyTitle": "Brak dostępnych modeli",
+      "emptyBody": "Skontaktuj się z administratorem, aby włączyć modele AI"
+    },
+    "auditLogViewer": {
+      "valueYes": "Tak",
+      "valueNo": "Nie",
+      "header": "Dziennik zmian ustawień",
+      "entriesCount": "{{count}} wpisów",
+      "exportCsv": "Eksportuj CSV",
+      "refresh": "Odśwież",
+      "searchPlaceholder": "Szukaj w ustawieniach...",
+      "levelAll": "Wszystkie poziomy",
+      "levelAdmin": "Administrator",
+      "levelUser": "Użytkownik",
+      "emptyState": "Nie znaleziono wpisów w dzienniku"
+    },
+    "cookieConsentBanner": {
+      "title": "Używamy plików cookie",
+      "body": "Używamy plików cookie, aby poprawić Twoje wrażenia, analizować ruch i personalizować treści. Możesz dostosować swoje preferencje lub zaakceptować wszystkie pliki cookie.",
+      "learnMore": "Dowiedz się więcej",
+      "customize": "Dostosuj",
+      "necessaryOnly": "Tylko niezbędne",
+      "acceptAll": "Akceptuj wszystkie",
+      "savePreferences": "Zapisz preferencje",
+      "category": {
+        "required": "Wymagane",
+        "necessary": {
+          "title": "Bezwzględnie konieczne",
+          "description": "Niezbędne do działania platformy. Nie można ich wyłączyć."
+        },
+        "functional": {
+          "title": "Funkcjonalne",
+          "description": "Zapamiętują Twoje preferencje, takie jak motyw i język."
+        },
+        "analytics": {
+          "title": "Analityczne",
+          "description": "Pomagają nam zrozumieć, jak korzystasz z platformy, aby ją ulepszać."
+        },
+        "marketing": {
+          "title": "Marketingowe",
+          "description": "Służą do spersonalizowanej reklamy. Obecnie nieużywane."
+        }
+      }
+    },
+    "toolVideoModal": {
+      "videoUnavailableTitle": "Wideo niedostępne",
+      "videoUnavailableBody": "Przygotowujemy szczegółowy przewodnik po tym narzędziu. W międzyczasie wypróbuj je samodzielnie!",
+      "tryItFree": "Wypróbuj za darmo",
+      "maybeLater": "Może później"
+    },
+    "welcomeView": {
+      "videoUnsupported": "Twoja przeglądarka nie obsługuje znacznika wideo."
+    },
+    "inviteUserModal": {
+      "seatAddFailed": "Nie udało się dodać miejsca. Spróbuj ponownie lub skontaktuj się z pomocą techniczną.",
+      "sendFailed": "Nie udało się wysłać zaproszenia. Spróbuj ponownie lub skontaktuj się z pomocą techniczną.",
+      "invalidEmail": "Podaj prawidłowy adres e-mail",
+      "selectProject": "Wybierz projekt",
+      "enableAutoSeat": "Włącz opcję „Dodaj miejsce automatycznie”, aby kontynuować, lub skontaktuj się z administratorem w celu zmiany planu.",
+      "header": "Zaproś użytkownika",
+      "seatsFull": "Organizacja osiągnęła maksymalną liczbę miejsc.",
+      "seatsUsed": "Wykorzystano {{used}}/{{max}} miejsc.",
+      "seatsAddPrompt": "Dodaj miejsce za {{price}} USD/miesiąc, aby kontynuować.",
+      "autoAddSeat": "Dodawaj miejsce automatycznie",
+      "autoAddSeatBilling": "Do Twojego rozliczenia zostanie doliczone +{{price}} {{currency}}/miesiąc",
+      "errorCode": "Kod: {{code}}",
+      "emailLabel": "Adres e-mail *",
+      "invitationType": "Rodzaj zaproszenia",
+      "invitationTypeOrg": "Organizacja",
+      "invitationTypeProject": "Projekt",
+      "projectLabel": "Projekt *",
+      "selectProjectOption": "Wybierz projekt",
+      "accountType": "Typ konta",
+      "roleUser": "Użytkownik",
+      "roleAdmin": "Administrator",
+      "roleUserHint": "Może przeglądać przypisane projekty i w nich uczestniczyć",
+      "roleAdminHint": "Może zarządzać ustawieniami organizacji i użytkownikami",
+      "projectRole": "Rola w projekcie",
+      "projectRoleExecutive": "Sponsor / kierownictwo projektu",
+      "projectRoleManager": "Kierownik projektu",
+      "projectRoleTeamLead": "Lider zespołu",
+      "projectRoleTeamMember": "Członek zespołu",
+      "projectRoleStakeholder": "Interesariusz / obserwator",
+      "projectRoleExecutiveHint": "Nadzór strategiczny i sponsoring",
+      "projectRoleManagerHint": "Pełna odpowiedzialność za zarządzanie projektem",
+      "projectRoleTeamLeadHint": "Prowadzi obszar prac lub zespół w ramach projektu",
+      "projectRoleTeamMemberHint": "Realizuje zadania i współtworzy rezultaty",
+      "projectRoleStakeholderHint": "Dostęp tylko do podglądu postępu projektu",
+      "previewHeader": "Podgląd zaproszenia",
+      "previewInvitedWith": "zostanie zaproszony(-a) z",
+      "previewAccountType": "typem konta",
+      "previewAnd": "i",
+      "previewProjectRole": "rolą w projekcie",
+      "previewExpiry": "Zaproszenie wygaśnie za 7 dni.",
+      "cancel": "Anuluj",
+      "addingSeat": "Dodawanie miejsca...",
+      "sending": "Wysyłanie...",
+      "addSeatAndInvite": "Dodaj miejsce i zaproś",
+      "sendInvitation": "Wyślij zaproszenie"
+    },
+    "enterpriseOnboardingWizard": {
+      "processing": "Przetwarzanie...",
+      "step1": {
+        "title": "Rozpocznij wniosek partnerski",
+        "stepName": "Umowa partnerska",
+        "termsIntro": "Korzystając z Consultify, akceptujesz naszą umowę o świadczenie usług dla firm...",
+        "termsBullet1": "Usługi profesjonalne i narzędzia doradcze oparte na AI",
+        "termsBullet2": "Przetwarzanie danych zgodne z przepisami o prywatności (zgodność z RODO)",
+        "termsBullet3": "Warunki subskrypcji i zasady rozliczeń",
+        "privacyIntro": "Szanujemy Twoją prywatność i chronimy Twoje dane...",
+        "privacyBullet1": "Zbieramy wyłącznie niezbędne informacje biznesowe",
+        "privacyBullet2": "Twoje dane są szyfrowane i bezpieczne",
+        "privacyBullet3": "Masz kontrolę nad swoimi danymi - możesz je usunąć w każdej chwili"
+      },
+      "step2": {
+        "title": "Wybierz swoją ścieżkę partnerską",
+        "stepName": "Ścieżka partnerska",
+        "mostPopular": "Najpopularniejszy",
+        "continueWith": "Kontynuuj z planem",
+        "selectedPlanFallback": "Wybrany plan"
+      },
+      "step3": {
+        "title": "Gotowość do wypłat i rozliczeń",
+        "stepName": "Gotowość do wypłat",
+        "placeholderTitle": "Konfiguracja wypłat i rozliczeń",
+        "placeholderNote": "Automatyczna konfiguracja wypłat zostanie rozbudowana w kolejnym wdrożeniu",
+        "continueLater": "Kontynuuj i dokończ później",
+        "contactPartnerTeam": "Skontaktuj się z zespołem partnerskim"
+      },
+      "step4": {
+        "title": "Wniosek partnerski zakończony",
+        "goToWorkspace": "Przejdź do przestrzeni roboczej"
+      }
+    },
+    "onboardingWizard": {
+      "toast": {
+        "fillRequired": "Uzupełnij wymagane pola",
+        "rateLimited": "Zbyt wiele żądań. Poczekaj przed ponowną próbą.",
+        "contextSavedNoPlan": "Twój profil został zapisany, a asystent AI jest już odblokowany. Sugerowany plan nie jest jeszcze dostępny.",
+        "saveContextFailed": "Nie udało się zapisać profilu. Spróbuj ponownie.",
+        "consultantCannotAccept": "Konsultanci nie mogą akceptować planów. Skontaktuj się z administratorem.",
+        "planAccepted": "Plan zaakceptowany! Utworzono inicjatywy.",
+        "planAlreadyAccepted": "Ten plan został już zaakceptowany.",
+        "acceptPlanFailed": "Nie udało się zaakceptować planu"
+      },
+      "step1": {
+        "title": "Przyspieszmy Twój sukces.",
+        "subtitle": "Opowiedz nam trochę o swojej sytuacji, a nasza AI zbuduje dla Ciebie spersonalizowany plan „Pierwszej wartości”.",
+        "roleLabel": "Twoja rola",
+        "rolePlaceholder": "np. Kierownik programu, CTO",
+        "industryLabel": "Branża",
+        "industryPlaceholder": "np. Fintech, Produkcja",
+        "challengeLabel": "Największe wyzwanie w tej chwili",
+        "challengePlaceholder": "np. Terminy się przesuwają, komunikacja w zespole jest rozproszona...",
+        "urgencyLabel": "Poziom pilności",
+        "goalLabel": "Kluczowy cel („sukces”)",
+        "goalPlaceholder": "np. Uruchomienie w Q1, redukcja błędów o 50%",
+        "generateButton": "Wygeneruj moją strategię"
+      },
+      "step2": {
+        "title": "Analizujemy Twój kontekst...",
+        "subtitle": "Tworzymy plan działań o dużym wpływie dla roli {{role}} w branży {{industry}}..."
+      },
+      "step3": {
+        "recommendedStrategy": "Zalecana strategia",
+        "strategicRoadmap": "Mapa drogowa strategii",
+        "valueAdd": "Wartość dodana: {{value}}",
+        "suggestedInitiatives": "Sugerowane inicjatywy",
+        "suggestedInitiativesHint": "Wybierz inicjatywy, które chcesz od razu uruchomić w platformie.",
+        "readOnlyMode": "Tryb tylko do odczytu",
+        "acceptAndStart": "Zaakceptuj i rozpocznij realizację",
+        "consultantViewOnly": "Podgląd jako konsultant — nie można tworzyć inicjatyw.",
+        "addsInitiatives": "Dodaje {{count}} inicjatyw do Twojej przestrzeni roboczej."
+      }
     }
   },
   "showcase": {
@@ -21861,17 +23137,31 @@
         {
           "title": "Inteligencja finansowa",
           "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
-          "bullets": ["Modele finansowe", "Analiza finansowa", "Wycena spółki", "Prognozowanie"]
+          "bullets": [
+            "Modele finansowe",
+            "Analiza finansowa",
+            "Wycena spółki",
+            "Prognozowanie"
+          ]
         },
         {
           "title": "Raporty i prezentacje",
           "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
-          "bullets": ["Raporty", "Prezentacje executive", "Consulting deliverables"]
+          "bullets": [
+            "Raporty",
+            "Prezentacje executive",
+            "Consulting deliverables"
+          ]
         },
         {
           "title": "Moja praca",
           "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
-          "bullets": ["Taski", "Decyzje", "Pomysły", "Notatki"]
+          "bullets": [
+            "Taski",
+            "Decyzje",
+            "Pomysły",
+            "Notatki"
+          ]
         }
       ]
     },
@@ -22030,37 +23320,61 @@
           "badge": "AI Core",
           "title": "Strategiczny doradca AI",
           "description": "AI analizuje organizację, identyfikuje luki i generuje priorytetyzowaną mapę strategiczną — w minuty, nie miesiące.",
-          "highlights": ["Ocena diagnostyczna", "Analiza luk", "Benchmark vs. branża"]
+          "highlights": [
+            "Ocena diagnostyczna",
+            "Analiza luk",
+            "Benchmark vs. branża"
+          ]
         },
         "economics": {
           "badge": "Ekonomia",
           "title": "Modelowanie finansowe i ROI",
           "description": "Buduj business case'y, modeluj scenariusze NPV / IRR i śledź rzeczywiste vs. zakładane zwroty dla każdej inicjatywy.",
-          "highlights": ["Modelowanie NPV / IRR", "Analiza wrażliwości", "Śledzenie ROI na żywo"]
+          "highlights": [
+            "Modelowanie NPV / IRR",
+            "Analiza wrażliwości",
+            "Śledzenie ROI na żywo"
+          ]
         },
         "execution": {
           "badge": "Egzekucja",
           "title": "Zarządzanie inicjatywami",
           "description": "Zamień strategię w egzekucję. Zarządzaj workstreamami, kamieniami milowymi i governance — z AI popychającym Cię ku wpływowi.",
-          "highlights": ["Roadmapa inicjatyw", "Ludzkie bramki zatwierdzenia", "Flagowanie ryzyk"]
+          "highlights": [
+            "Roadmapa inicjatyw",
+            "Ludzkie bramki zatwierdzenia",
+            "Flagowanie ryzyk"
+          ]
         },
         "deliverables": {
           "badge": "Rezultaty",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
-          "highlights": ["Auto-generowane decki", "Silnik narracji", "Śledzenie źródeł"]
+          "highlights": [
+            "Auto-generowane decki",
+            "Silnik narracji",
+            "Śledzenie źródeł"
+          ]
         },
         "chat": {
           "badge": "Czat",
           "title": "Wywiad z ekspertem AI",
           "description": "Zapytaj o cokolwiek w kontekście Twojego biznesu. AI korzysta z 10 000+ frameworków i Twoich danych wewnętrznych.",
-          "highlights": ["Czat kontekstowy", "Biblioteka frameworków", "Odpowiedzi ze źródłami"]
+          "highlights": [
+            "Czat kontekstowy",
+            "Biblioteka frameworków",
+            "Odpowiedzi ze źródłami"
+          ]
         },
         "results": {
           "badge": "Wyniki",
           "title": "Śledzenie wpływu",
           "description": "Połącz inicjatywy z realnymi KPI. Mierz faktycznie dostarczoną wartość i automatycznie flaguj odchylenia.",
-          "highlights": ["Dashboard KPI", "Alerty odchyleń", "Atrybucja wartości"]
+          "highlights": [
+            "Dashboard KPI",
+            "Alerty odchyleń",
+            "Atrybucja wartości"
+          ]
         }
       }
     },
@@ -22615,27 +23929,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Wspólny marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Wspólny marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
@@ -31177,7 +32506,12 @@
       },
       "rootcause": {
         "uploaderTitle": "Sygnały przyczyn źródłowych",
-        "suggestions": ["Raporty incydentów", "Dokumenty 5 Why", "PFMEA", "Diagramy Ishikawy"],
+        "suggestions": [
+          "Raporty incydentów",
+          "Dokumenty 5 Why",
+          "PFMEA",
+          "Diagramy Ishikawy"
+        ],
         "diagnosticLabel": "Pytania diagnostyczne:",
         "diagnosticBody": "Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.",
         "questions": [
@@ -35340,19 +36674,38 @@
           "registered": {
             "title": "Zarejestrowany",
             "description": "Dla rozpoczynających współpracę",
-            "requirements": ["Rejestracja", "Podstawowe szkolenie"],
-            "benefits": ["10% rabat", "Dostęp do materiałów", "Wsparcie email"]
+            "requirements": [
+              "Rejestracja",
+              "Podstawowe szkolenie"
+            ],
+            "benefits": [
+              "10% rabat",
+              "Dostęp do materiałów",
+              "Wsparcie email"
+            ]
           },
           "certified": {
             "title": "Certyfikowany",
             "description": "Dla doświadczonych konsultantów",
-            "requirements": ["Egzamin certyfikacyjny", "Min. 3 projekty"],
-            "benefits": ["12% rabat", "Logo partnera", "Dedykowane wsparcie", "Listing w katalogu"]
+            "requirements": [
+              "Egzamin certyfikacyjny",
+              "Min. 3 projekty"
+            ],
+            "benefits": [
+              "12% rabat",
+              "Logo partnera",
+              "Dedykowane wsparcie",
+              "Listing w katalogu"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "Dla partnerów strategicznych",
-            "requirements": ["10+ projektów", "Case study", "Referencje"],
+            "requirements": [
+              "10+ projektów",
+              "Case study",
+              "Referencje"
+            ],
             "benefits": [
               "14% rabat",
               "Dedykowany opiekun",
@@ -39261,7 +40614,13 @@
         "aiReminderFormFailed": "AI nie wypełniło formularza przypomnienia",
         "aiEscalationFormFailed": "AI nie wypełniło formularza eskalacji",
         "aiConsequenceScenariosFailed": "AI nie wygenerowało scenariuszy konsekwencji",
-        "aiCommentDraftFailed": "AI nie przygotowało treści komentarza"
+        "aiCommentDraftFailed": "AI nie przygotowało treści komentarza",
+        "alternativeDeleteFailed": "Nie udało się usunąć tej opcji na serwerze",
+        "alternativeSyncFailed": "Nie udało się zapisać tej opcji na serwerze",
+        "riskDeleteFailed": "Nie udało się usunąć tego ryzyka na serwerze",
+        "riskSyncFailed": "Nie udało się zapisać tego ryzyka na serwerze",
+        "projectRequired": "Projekt jest wymagany",
+        "saveFirst": "Najpierw zapisz decyzję"
       },
       "ai": {
         "prosConsPrompt": "Dla opcji decyzyjnej wygeneruj 3 konkretne \"za\" i 3 konkretne \"przeciw\". Zwróć wyłącznie JSON: {\"pros\":[\"...\"],\"cons\":[\"...\"]}.\n\nTytuł opcji: {{altTitle}}\nOpis: {{altDescription}}\nKontekst decyzji: {{decisionTitle}}",
@@ -40854,7 +42213,13 @@
     },
     "dependencies": {
       "comingSoon": "Ten moduł pozwoli wizualnie łączyć zadania (Blokuje / Zablokowane przez). Wkrótce, w Fazie 2."
-    }
+    },
+    "edit": "Edytuj zadanie",
+    "new": "Nowe zadanie",
+    "title": "Tytuł",
+    "priority": "Priorytet",
+    "dueDate": "Termin",
+    "description": "Opis"
   },
   "team": {
     "velocity": {
@@ -41246,6 +42611,10 @@
     "increaseBudget": "Zwiększ budżet"
   },
   "mindmap": {
+    "pracujZAI": {
+      "opisAktywneCentrum": "Propozycje dla aktywnego p\u0142\u00f3tna pojawi\u0105 si\u0119 do zatwierdzenia.",
+      "opisCalyPomysl": "Propozycje dla ca\u0142ego pomys\u0142u pojawi\u0105 si\u0119 do zatwierdzenia."
+    },
     "nodeModel": {
       "myIdea": "Moj pomysl",
       "clickToEdit": "Kliknij, aby edytowac"
@@ -43639,7 +45008,9 @@
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji",
       "convertTo": "Konwertuj na",
       "versionHistory": "Historia wersji",
-      "connectionGraph": "Graf powiązań"
+      "connectionGraph": "Graf powiązań",
+      "actionFailed": "Działanie się nie powiodło. Twoja notatka nie została zmieniona.",
+      "actions": "Akcje notatki"
     },
     "presenceStack": {
       "viewingNow": "{{count}} {{unit}} tu teraz"
@@ -47023,7 +48394,12 @@
           "Prototyp / POC",
           "Wywiad z ekspertem"
         ],
-        "issue": ["Hotfix natychmiast", "Eskalacja do sponsora", "Rollback", "Sztab kryzysowy"],
+        "issue": [
+          "Hotfix natychmiast",
+          "Eskalacja do sponsora",
+          "Rollback",
+          "Sztab kryzysowy"
+        ],
         "dependency": [
           "Spotkanie synchronizacyjne",
           "Mock API / stub",
@@ -47187,7 +48563,12 @@
         "continue": "Kontynuujmy pracę nad tą {{nounPl}} od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać."
       },
       "closeLabel": "Zamknij",
-      "quickPrompts": ["Uzupełnij puste pola", "Zsyntetyzuj całość", "Sprawdź jakość", "Co dalej?"],
+      "quickPrompts": [
+        "Uzupełnij puste pola",
+        "Zsyntetyzuj całość",
+        "Sprawdź jakość",
+        "Co dalej?"
+      ],
       "chatUnavailableMessage": "Czat AI jest chwilowo niedostępny. Skorzystaj z akcji powyżej."
     },
     "nModeCardManager": {
@@ -49139,10 +50520,22 @@
       "missionProcess": "Risk mission, scope, success signal i constraints",
       "missionExample": "Jak zabezpieczyć transformację przed opóźnieniami, presją kosztów i zmianą popytu?",
       "cards": [
-        ["Assumptions", "Co musi być prawdą, żeby strategia działała"],
-        ["Risks", "Co może uderzyć w wynik, koszt, czas lub reputację"],
-        ["Scenarios", "Jak różne przyszłości zmieniają decyzję"],
-        ["Moves", "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"]
+        [
+          "Assumptions",
+          "Co musi być prawdą, żeby strategia działała"
+        ],
+        [
+          "Risks",
+          "Co może uderzyć w wynik, koszt, czas lub reputację"
+        ],
+        [
+          "Scenarios",
+          "Jak różne przyszłości zmieniają decyzję"
+        ],
+        [
+          "Moves",
+          "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"
+        ]
       ]
     },
     "portfolioPriorityLibraryGraphic": {
@@ -49152,10 +50545,22 @@
       "missionProcess": "Portfolio mission, scope, constraints i success signal",
       "missionExample": "Które produkty i inicjatywy finansować w kolejnym kwartale przy ograniczonym budżecie?",
       "quadrants": [
-        ["Stars", "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"],
-        ["Znaki zapytania", "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"],
-        ["Dojne krowy", "Stabilna pozycja: utrzymuj i finansuj wzrost"],
-        ["Dogs", "Słaba pozycja: ogranicz, wygasz lub przebuduj"]
+        [
+          "Stars",
+          "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"
+        ],
+        [
+          "Znaki zapytania",
+          "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"
+        ],
+        [
+          "Dojne krowy",
+          "Stabilna pozycja: utrzymuj i finansuj wzrost"
+        ],
+        [
+          "Dogs",
+          "Słaba pozycja: ogranicz, wygasz lub przebuduj"
+        ]
       ],
       "insight": "Rekomendacja nie polega na równym wsparciu wszystkich tematów, tylko na świadomej alokacji: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> inicjatywy portfolio -> deck -> raport"
@@ -49167,10 +50572,22 @@
       "missionProcess": "Growth mission, scope, success signal i constraints",
       "missionExample": "Jak zwiększyć przychód w segmencie premium bez rozmycia marży?",
       "quadrants": [
-        ["Penetracja rynku", "Lepsze wykorzystanie obecnego segmentu i kanałów"],
-        ["Rozwój rynku", "Wejście do nowych segmentów lub geografii"],
-        ["Rozwój produktu", "Nowe propozycje wartości dla obecnych klientów"],
-        ["Dywersyfikacja", "Nowy produkt i nowy rynek, najwyższe ryzyko"]
+        [
+          "Penetracja rynku",
+          "Lepsze wykorzystanie obecnego segmentu i kanałów"
+        ],
+        [
+          "Rozwój rynku",
+          "Wejście do nowych segmentów lub geografii"
+        ],
+        [
+          "Rozwój produktu",
+          "Nowe propozycje wartości dla obecnych klientów"
+        ],
+        [
+          "Dywersyfikacja",
+          "Nowy produkt i nowy rynek, najwyższe ryzyko"
+        ]
       ],
       "insight": "Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.",
       "output": "Source summary -> inicjatywa -> deck -> raport"
@@ -49199,11 +50616,31 @@
       "implicationsTitle": "Implikacje strategiczne",
       "movesTitle": "Most do inicjatyw",
       "forces": [
-        ["Rywalizacja", "4/5", "Wysoka presja cenowa i szybko kopiowane oferty"],
-        ["Nowi gracze", "3/5", "Wejście możliwe, ale wymaga kanału i zaufania"],
-        ["Substytuty", "2/5", "Alternatywy istnieją, lecz nie rozwiązują całego problemu"],
-        ["Siła kupujących", "5/5", "Duzi klienci wymuszają rabaty i warunki SLA"],
-        ["Siła dostawców", "3/5", "Koszty komponentów są zmienne, ale dywersyfikowalne"]
+        [
+          "Rywalizacja",
+          "4/5",
+          "Wysoka presja cenowa i szybko kopiowane oferty"
+        ],
+        [
+          "Nowi gracze",
+          "3/5",
+          "Wejście możliwe, ale wymaga kanału i zaufania"
+        ],
+        [
+          "Substytuty",
+          "2/5",
+          "Alternatywy istnieją, lecz nie rozwiązują całego problemu"
+        ],
+        [
+          "Siła kupujących",
+          "5/5",
+          "Duzi klienci wymuszają rabaty i warunki SLA"
+        ],
+        [
+          "Siła dostawców",
+          "3/5",
+          "Koszty komponentów są zmienne, ale dywersyfikowalne"
+        ]
       ],
       "implicationItems": [
         "Rynek może rosnąć, ale przewaga bez danych i kanału będzie krucha.",
@@ -49231,11 +50668,31 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Odbiorca, cel, sygnał sukcesu", "bg-sky-500"],
-        ["Myśl przewodnia", "Jedno zdanie, które ma zostać", "bg-sky-500"],
-        ["Filary", "Kolumny, które utrzymują dach", "bg-blue-500"],
-        ["Dowody", "Czym każdy filar jest poparty", "bg-amber-500"],
-        ["Narracja & outputy", "Wątki, ruchy, raport, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Odbiorca, cel, sygnał sukcesu",
+          "bg-sky-500"
+        ],
+        [
+          "Myśl przewodnia",
+          "Jedno zdanie, które ma zostać",
+          "bg-sky-500"
+        ],
+        [
+          "Filary",
+          "Kolumny, które utrzymują dach",
+          "bg-blue-500"
+        ],
+        [
+          "Dowody",
+          "Czym każdy filar jest poparty",
+          "bg-amber-500"
+        ],
+        [
+          "Narracja & outputy",
+          "Wątki, ruchy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "houseTitle": "Dom komunikatu",
       "houseHint": "Dach + filary",
@@ -49244,9 +50701,18 @@
       "proofWord": "dowody",
       "legendTitle": "Rezonans u odbiorcy",
       "legend": [
-        ["high", "Wysoki rezonans"],
-        ["medium", "Średni rezonans"],
-        ["low", "Niski rezonans"]
+        [
+          "high",
+          "Wysoki rezonans"
+        ],
+        [
+          "medium",
+          "Średni rezonans"
+        ],
+        [
+          "low",
+          "Niski rezonans"
+        ]
       ],
       "footer": "Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy",
       "pillars": [
@@ -49292,19 +50758,48 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Branża, domeny, priorytety, decyzja", "bg-sky-500"],
-        ["Zdolności", "Mapa zdolności wg domen", "bg-sky-500"],
-        ["Dojrzałość", "Obecna vs docelowa 1-5 + waga", "bg-blue-500"],
-        ["Luki", "Gdzie luka × waga jest największa", "bg-amber-500"],
-        ["Ruchy & outputy", "Build/buy/partner, inicjatywy, raport, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Branża, domeny, priorytety, decyzja",
+          "bg-sky-500"
+        ],
+        [
+          "Zdolności",
+          "Mapa zdolności wg domen",
+          "bg-sky-500"
+        ],
+        [
+          "Dojrzałość",
+          "Obecna vs docelowa 1-5 + waga",
+          "bg-blue-500"
+        ],
+        [
+          "Luki",
+          "Gdzie luka × waga jest największa",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Build/buy/partner, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "ladderTitle": "Drabina dojrzałości",
       "scaleHint": "Skala dojrzałości 1-5",
       "legendTitle": "Rozmiar luki",
       "legend": [
-        ["critical", "Krytyczna luka"],
-        ["moderate", "Umiarkowana luka"],
-        ["minor", "Drobna luka"]
+        [
+          "critical",
+          "Krytyczna luka"
+        ],
+        [
+          "moderate",
+          "Umiarkowana luka"
+        ],
+        [
+          "minor",
+          "Drobna luka"
+        ]
       ],
       "currentLabel": "Obecna",
       "targetLabel": "Docelowa",
@@ -49358,27 +50853,68 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Priorytety, kryteria, cel, ograniczenia", "bg-sky-500"],
-        ["Priorytety", "Lista konkurujących opcji", "bg-sky-500"],
-        ["Ocena", "Wartość vs wysiłek 1-5 + dopasowanie", "bg-blue-500"],
-        ["Macierz", "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna", "bg-amber-500"],
-        ["Ruchy & outputy", "Pursue/defer/drop, inicjatywy, raport, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Priorytety, kryteria, cel, ograniczenia",
+          "bg-sky-500"
+        ],
+        [
+          "Priorytety",
+          "Lista konkurujących opcji",
+          "bg-sky-500"
+        ],
+        [
+          "Ocena",
+          "Wartość vs wysiłek 1-5 + dopasowanie",
+          "bg-blue-500"
+        ],
+        [
+          "Macierz",
+          "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Pursue/defer/drop, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "matrixTitle": "Macierz wartość x wysiłek",
       "scaleHint": "Skala 1-5",
       "axisValue": "Wartość",
       "axisEffort": "Wysiłek",
       "quadrants": [
-        ["Szybkie wygrane", "Wys. wartość, niski wysiłek"],
-        ["Duże zakłady", "Wys. wartość, wysoki wysiłek"],
-        ["Fill-ins", "Nis. wartość, niski wysiłek"],
-        ["Studnia bez dna", "Nis. wartość, wysoki wysiłek"]
+        [
+          "Szybkie wygrane",
+          "Wys. wartość, niski wysiłek"
+        ],
+        [
+          "Duże zakłady",
+          "Wys. wartość, wysoki wysiłek"
+        ],
+        [
+          "Fill-ins",
+          "Nis. wartość, niski wysiłek"
+        ],
+        [
+          "Studnia bez dna",
+          "Nis. wartość, wysoki wysiłek"
+        ]
       ],
       "legendTitle": "Rekomendacja",
       "legend": [
-        ["pursue", "Realizuj (pursue)"],
-        ["defer", "Odłóż (defer)"],
-        ["drop", "Odpuść (drop)"]
+        [
+          "pursue",
+          "Realizuj (pursue)"
+        ],
+        [
+          "defer",
+          "Odłóż (defer)"
+        ],
+        [
+          "drop",
+          "Odpuść (drop)"
+        ]
       ],
       "footer": "Focus & Trade-offs = brief -> priorytety -> wartość vs wysiłek -> macierz -> ruchy -> outputy",
       "bubbles": [
@@ -49424,19 +50960,48 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Ambicja", "Jedno zdanie + zakres + sygnał sukcesu", "bg-violet-500"],
-        ["Sygnały", "Co napędza i ogranicza ambicję", "bg-violet-500"],
-        ["Motywy", "Rozkład na motywy strategiczne", "bg-indigo-500"],
-        ["Cele & horyzont", "Metryka, cel i okno czasowe", "bg-sky-500"],
-        ["Ruchy & outputy", "Priorytety, inicjatywy, raport, deck", "bg-emerald-500"]
+        [
+          "Ambicja",
+          "Jedno zdanie + zakres + sygnał sukcesu",
+          "bg-violet-500"
+        ],
+        [
+          "Sygnały",
+          "Co napędza i ogranicza ambicję",
+          "bg-violet-500"
+        ],
+        [
+          "Motywy",
+          "Rozkład na motywy strategiczne",
+          "bg-indigo-500"
+        ],
+        [
+          "Cele & horyzont",
+          "Metryka, cel i okno czasowe",
+          "bg-sky-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Priorytety, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "cascadeTitle": "Kaskada ambicji",
       "cascadeHint": "Motywy wg horyzontu",
       "legendTitle": "Istotność motywu",
       "legend": [
-        ["high", "Wysoka istotność"],
-        ["medium", "Średnia istotność"],
-        ["low", "Niska istotność"]
+        [
+          "high",
+          "Wysoka istotność"
+        ],
+        [
+          "medium",
+          "Średnia istotność"
+        ],
+        [
+          "low",
+          "Niska istotność"
+        ]
       ],
       "horizonLabels": {
         "short": "Krótki",
@@ -49501,16 +51066,41 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Branża, zakres łańcucha, pozycja, decyzja", "bg-sky-500"],
-        ["Aktywności", "Mapa 5 pierwotnych + 4 wspierających", "bg-sky-500"],
-        ["Wkład", "Koszt, wartość i rola w marży na aktywność", "bg-blue-500"],
-        ["Dźwignie", "Gdzie redukować koszt, gdzie wzmacniać wartość", "bg-amber-500"],
-        ["Ruchy & outputy", "Ruchy, inicjatywy, raport, deck lub idea", "bg-emerald-500"]
+        [
+          "Brief",
+          "Branża, zakres łańcucha, pozycja, decyzja",
+          "bg-sky-500"
+        ],
+        [
+          "Aktywności",
+          "Mapa 5 pierwotnych + 4 wspierających",
+          "bg-sky-500"
+        ],
+        [
+          "Wkład",
+          "Koszt, wartość i rola w marży na aktywność",
+          "bg-blue-500"
+        ],
+        [
+          "Dźwignie",
+          "Gdzie redukować koszt, gdzie wzmacniać wartość",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Ruchy, inicjatywy, raport, deck lub idea",
+          "bg-emerald-500"
+        ]
       ],
       "chainTitle": "Łańcuch wartości",
       "support": "Aktywności wspierające",
       "primary": "Aktywności pierwotne",
-      "supportItems": ["Infrastruktura", "Zasoby ludzkie", "Technologia", "Zaopatrzenie"],
+      "supportItems": [
+        "Infrastruktura",
+        "Zasoby ludzkie",
+        "Technologia",
+        "Zaopatrzenie"
+      ],
       "primaryItems": [
         "Logistyka wejściowa",
         "Operacje",
@@ -49521,9 +51111,18 @@
       "margin": "Marża",
       "legendTitle": "Rola w marży",
       "legend": [
-        ["creator", "Tworzy marżę"],
-        ["neutral", "Neutralna"],
-        ["drain", "Drenuje marżę"]
+        [
+          "creator",
+          "Tworzy marżę"
+        ],
+        [
+          "neutral",
+          "Neutralna"
+        ],
+        [
+          "drain",
+          "Drenuje marżę"
+        ]
       ],
       "footer": "Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy",
       "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
@@ -49931,7 +51530,13 @@
       "outputHintReport": "Dla final source summary gotowego do pokazania.",
       "outputHintPresentation": "Dla komunikacji wizualnej bez ponownego składania narracji.",
       "outputHintIdea": "Dla obiecujących hipotez lub kierunków do dalszej pracy.",
-      "groupLabels": ["Sesja", "Analiza", "Rezultaty", "Współpraca", "Zapisy"],
+      "groupLabels": [
+        "Sesja",
+        "Analiza",
+        "Rezultaty",
+        "Współpraca",
+        "Zapisy"
+      ],
       "finish": "Zakończ",
       "nextStep": "Następny",
       "requestReviewTitleReady": "Wyślij sesję do review",
@@ -52509,7 +54114,11 @@
         "management": "Menedżerski",
         "detailed": "Szczegółowy"
       },
-      "cadence": { "on_demand": "Na żądanie", "weekly": "Co tydzień", "monthly": "Co miesiąc" },
+      "cadence": {
+        "on_demand": "Na żądanie",
+        "weekly": "Co tydzień",
+        "monthly": "Co miesiąc"
+      },
       "fields": {
         "title": "Tytuł raportu",
         "recipients": "Adresaci",

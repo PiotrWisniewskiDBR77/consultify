@@ -22,6 +22,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionPreviewPanel } from './DecisionPreviewPanel';
+import { localeListy } from '@/utils/listDateFormat';
 
 /* ─── Types ─── */
 
@@ -273,14 +274,14 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
             {/* X-axis labels */}
             <div className="flex justify-between px-4 py-2 text-[10px] uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle">
               <span>
-                {rangeStart.toLocaleDateString(undefined, {
+                {rangeStart.toLocaleDateString(localeListy(), {
                   month: 'short',
                   day: 'numeric',
                   year: '2-digit',
                 })}
               </span>
               <span>
-                {rangeEnd.toLocaleDateString(undefined, {
+                {rangeEnd.toLocaleDateString(localeListy(), {
                   month: 'short',
                   day: 'numeric',
                   year: '2-digit',

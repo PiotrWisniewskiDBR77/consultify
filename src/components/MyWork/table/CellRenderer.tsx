@@ -28,6 +28,7 @@ import {
 import { coerceValue } from './PropertyRegistry';
 import type { ColumnDef, ColumnType } from './tableTypes';
 import { evaluateFormula, SELECT_COLORS } from './tableTypes';
+import { localeListy } from '@/utils/listDateFormat';
 
 /**
  * Staly, ciemny atrament plakietek wyboru w tabeli pomyslow. Dobrany tak, by
@@ -604,7 +605,7 @@ const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
   const d = new Date(value);
   const str = isNaN(d.getTime())
     ? String(value)
-    : d.toLocaleDateString(undefined, {
+    : d.toLocaleDateString(localeListy(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
