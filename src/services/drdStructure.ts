@@ -48,6 +48,19 @@ export interface DRDLevel {
   descriptionEN?: string;
 }
 
+/** Project the mixed-source DRD corpus into the viewer's language. */
+export function getLocalizedDRDLevel(
+  level: DRDLevel,
+  language: string | null | undefined
+): Pick<DRDLevel, 'title' | 'description'> {
+  const isPolish = String(language || '').toLowerCase().startsWith('pl');
+  if (isPolish) return { title: level.title, description: level.description };
+  return {
+    title: level.titleEN || level.title,
+    description: level.descriptionEN || level.description,
+  };
+}
+
 export interface DRDArea {
   id: string; // e.g. "1A"
   name: string;
