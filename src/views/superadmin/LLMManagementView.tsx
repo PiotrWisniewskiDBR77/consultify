@@ -711,7 +711,7 @@ export const LLMManagementView: React.FC = () => {
                   label={live.latency ? `OK · ${live.latency}ms` : 'OK'}
                 />
               ) : (
-                <StatusBadge variant={tlumaczPozaHookiem("superadmin.lLMManagement.error", "error")} label={tlumaczPozaHookiem("superadmin.lLMManagement.failed", "Failed")} />
+                <StatusBadge variant="error" label={tlumaczPozaHookiem("superadmin.lLMManagement.failed", "Failed")} />
               );
             return (
               <div className="flex flex-col gap-0.5">

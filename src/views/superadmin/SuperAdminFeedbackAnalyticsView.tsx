@@ -168,7 +168,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
   );
 
   if (loading && !data) {
-    return <LoadingState variant={tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.spinner", "spinner")} className="h-64" label={tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.loadingAnalytics", "Loading analytics…")} />;
+    return <LoadingState variant="spinner" className="h-64" label={tlumaczPozaHookiem("superadmin.superAdminFeedbackAnalytics.loadingAnalytics", "Loading analytics…")} />;
   }
 
   if (error && !data) {
