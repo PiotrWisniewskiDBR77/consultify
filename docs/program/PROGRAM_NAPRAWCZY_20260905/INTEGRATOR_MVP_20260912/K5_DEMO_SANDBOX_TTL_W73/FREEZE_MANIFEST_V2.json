@@ -1,0 +1,31 @@
+{
+  "status": "READY_FOR_RE_REVIEW",
+  "exactBase": "88ac55c8acdef602606cea470eb40f9466eb6c1a",
+  "contentCommit": "517cc884de",
+  "branch": "codex/d-k5-demo-ttl-20260915",
+  "postgres": {
+    "container": "cx-c-k5-fix-w73-pg",
+    "host": "127.0.0.1",
+    "port": 6455,
+    "database": "consultify_k5_fix",
+    "freshMigrations": 918
+  },
+  "proof": {
+    "realPg": "6/6",
+    "dependentTablesExistingAndDeleteExecuted": "49/49",
+    "rollbackRowsPreserved": "5/5",
+    "paidProtected": true,
+    "freshEndedProtected": true,
+    "lockedRecheckProtected": true,
+    "importers": "12/12",
+    "serverTscRc": 0,
+    "frontTscRc": 2,
+    "frontTscErrors": 177,
+    "languageRc": 0,
+    "listCanon": 349,
+    "artifactGate": "8-0-117",
+    "buildRc": 0,
+    "newAsAny": 0,
+    "migrationsAdded": 0
+  }
+}

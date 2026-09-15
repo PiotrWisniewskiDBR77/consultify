@@ -1,4 +1,5 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
+import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { writeSeedInitiativeToCanon } from '../../domain/initiatives-execution/seedCanonicalInitiativeWriter.js';
@@ -2585,7 +2586,10 @@ async function upsertReports(
   return reports.length;
 }
 
-export async function upsertKnowledgeDocs(organizationId: string, locale: DemoLocale): Promise<number> {
+export async function upsertKnowledgeDocs(
+  organizationId: string,
+  locale: DemoLocale
+): Promise<number> {
   if (!(await tableExists('knowledge_docs'))) return 0;
   const hasCategory = await columnExists('knowledge_docs', 'category');
   const hasMetadata = await columnExists('knowledge_docs', 'metadata');
@@ -4179,13 +4183,7 @@ export async function seedAtelierToysDemoDataset(
   const projectMap = await upsertProjects(organizationId, userMap, locale);
   await upsertProjectUsers(projectMap, userMap, locale);
   const { initiativeMap, taskCount, decisionCount, canonicalCount, canonicalFailures } =
-    await upsertInitiatives(
-    organizationId,
-    userMap,
-    projectMap,
-    anchorDate,
-    locale
-  );
+    await upsertInitiatives(organizationId, userMap, projectMap, anchorDate, locale);
   const reportCount = await upsertReports(organizationId, projectMap, userMap, anchorDate, locale);
   const docCount = await upsertKnowledgeDocs(organizationId, locale);
   await upsertPrompts(organizationId, userMap, locale);
@@ -4379,93 +4377,138 @@ export async function getDemoDatasetStats(organizationId: string): Promise<{
   };
 }
 
-export async function deleteDemoDatasetForOrganization(organizationId: string): Promise<void> {
-  const deleteQueries = [
-    ['initiative_dependencies', 'organization_id'],
-    ['initiative_milestones', 'organization_id'],
-    ['decisions', 'organization_id'],
-    ['tasks', 'organization_id'],
-    ['status_reports', 'organization_id'],
-    ['custom_prompts', 'organization_id'],
-    ['assessment_report_section_history', 'report_id', 'assessment_reports', 'organization_id'],
-    ['assessment_report_sections', 'report_id', 'assessment_reports', 'organization_id'],
-    ['assessment_reports', 'organization_id'],
-    ['assessments', 'organization_id'],
-    ['knowledge_chunks', 'doc_id', 'knowledge_docs', 'organization_id'],
-    ['knowledge_docs', 'organization_id'],
-    ['project_users', 'project_id', 'projects', 'organization_id'],
-    ['team_members', 'team_id', 'teams', 'organization_id'],
-    ['teams', 'organization_id'],
-    ['tool_sessions', 'organization_id'],
-    ['sessions', 'project_id', 'projects', 'organization_id'],
-    ['activity_logs', 'organization_id'],
-    ['notifications', 'user_id', 'users', 'organization_id'],
-    ['notebook_pages', 'organization_id'],
-    ['my_idea_maps', 'organization_id'],
-    ['my_idea_edges', 'organization_id'],
-    ['my_ideas', 'organization_id'],
-    ['financial_model_events', 'model_id', 'financial_models', 'organization_id'],
-    ['financial_model_outputs', 'model_id', 'financial_models', 'organization_id'],
-    ['financial_model_validations', 'model_id', 'financial_models', 'organization_id'],
-    ['financial_models', 'organization_id'],
-    ['analysis_financials', 'organization_id'],
-    ['digitization_analyses', 'organization_id'],
-    // FIN-005 Finance golden flow (statement pack -> analysis -> model). Listed
-    // FK-first so a demo dataset delete stays complete: leaving these behind
-    // would strand the exact rows the coherence gate checks for.
-    ['financial_analyses', 'organization_id'],
-    ['financial_statement_values', 'statement_id', 'financial_statements', 'organization_id'],
-    ['financial_statement_ingest_runs', 'organization_id'],
-    ['financial_statements', 'organization_id'],
-    ['financial_statement_packs', 'organization_id'],
-    // Spine: Interviews + Insights (03)
-    ['interview_insight_handoffs', 'organization_id'],
-    ['interview_insight_findings', 'organization_id'],
-    ['interview_insights', 'organization_id'],
-    ['interview_sessions', 'organization_id'],
-    // Spine: Results / KPIs (07)
-    ['project_kpis', 'project_id', 'projects', 'organization_id'],
-    // Spine: Execution / Rollout (06)
-    ['rollout_kpis', 'organization_id'],
-    ['rollout_risks', 'organization_id'],
-    ['rollout_changes', 'organization_id'],
-    ['rollout_closures', 'organization_id'],
-    // Spine: Outputs / Deliverables (09)
-    ['v8_output_exports', 'organization_id'],
-    ['v8_output_artifacts', 'organization_id'],
-    // E7 [ODMROZENIE 05_INITIATIVES DEC-453]: the canonical twin
-    // (`seedCanonicalInitiativeWriter.ts`) writes six org-scoped rows per
-    // seed initiative that this cleanup previously never touched — a
-    // re-seeded organization left orphaned canon rows behind every time.
-    // Before `initiatives`/`projects`/`users` so nothing here still needs
-    // to resolve a project/user id.
-    ['ie_aggregate_relations', 'organization_id'],
-    ['ie_audit_events', 'organization_id'],
-    ['ie_outbox_events', 'organization_id'],
-    ['ie_command_receipts', 'organization_id'],
-    ['ie_aggregate_state', 'organization_id'],
-    ['initiative_candidates', 'organization_id'],
-    ['initiatives', 'organization_id'],
-    ['projects', 'organization_id'],
-    ['users', 'organization_id'],
-    ['organizations', 'id'],
-  ] as const;
+export type DemoDatasetDeleteStep = readonly [
+  table: string,
+  column: string,
+  joinTable?: string,
+  joinColumn?: string,
+];
 
-  for (const query of deleteQueries) {
+export const DEMO_DATASET_DELETE_QUERIES: readonly DemoDatasetDeleteStep[] = [
+  ['task_comments', 'task_id', 'tasks', 'organization_id'],
+  ['initiative_benefits', 'organization_id'],
+  ['initiative_dependencies', 'organization_id'],
+  ['initiative_milestones', 'organization_id'],
+  ['decisions', 'organization_id'],
+  ['tasks', 'organization_id'],
+  ['status_reports', 'organization_id'],
+  ['closure_delivery_receipts', 'organization_id'],
+  ['custom_prompts', 'organization_id'],
+  ['assessment_report_section_history', 'report_id', 'assessment_reports', 'organization_id'],
+  ['assessment_report_sections', 'report_id', 'assessment_reports', 'organization_id'],
+  ['assessment_reports', 'organization_id'],
+  ['assessments', 'organization_id'],
+  ['knowledge_chunks', 'doc_id', 'knowledge_docs', 'organization_id'],
+  ['knowledge_docs', 'organization_id'],
+  ['project_users', 'project_id', 'projects', 'organization_id'],
+  ['team_members', 'team_id', 'teams', 'organization_id'],
+  ['teams', 'organization_id'],
+  ['tool_sessions', 'organization_id'],
+  ['sessions', 'project_id', 'projects', 'organization_id'],
+  ['activity_logs', 'organization_id'],
+  ['notifications', 'user_id', 'users', 'organization_id'],
+  ['notebook_pages', 'organization_id'],
+  ['organization_context_claims', 'organization_id'],
+  ['organization_context_items', 'organization_id'],
+  ['organization_context_snapshots', 'organization_id'],
+  ['presentation_decks', 'organization_id'],
+  ['results_writer_observations', 'organization_id'],
+  ['my_idea_maps', 'organization_id'],
+  ['my_idea_edges', 'organization_id'],
+  ['my_ideas', 'organization_id'],
+  ['financial_model_events', 'model_id', 'financial_models', 'organization_id'],
+  ['financial_model_outputs', 'model_id', 'financial_models', 'organization_id'],
+  ['financial_model_validations', 'model_id', 'financial_models', 'organization_id'],
+  ['financial_models', 'organization_id'],
+  ['analysis_financials', 'organization_id'],
+  ['digitization_analyses', 'organization_id'],
+  // FIN-005 Finance golden flow (statement pack -> analysis -> model). Listed
+  // FK-first so a demo dataset delete stays complete: leaving these behind
+  // would strand the exact rows the coherence gate checks for.
+  ['financial_analyses', 'organization_id'],
+  ['financial_statement_values', 'statement_id', 'financial_statements', 'organization_id'],
+  ['financial_statement_ingest_runs', 'organization_id'],
+  ['financial_statements', 'organization_id'],
+  ['financial_statement_packs', 'organization_id'],
+  // Spine: Interviews + Insights (03)
+  ['interview_insight_handoffs', 'organization_id'],
+  ['interview_insight_findings', 'organization_id'],
+  ['interview_insights', 'organization_id'],
+  ['interview_sessions', 'organization_id'],
+  // Spine: Results / KPIs (07)
+  ['project_kpis', 'project_id', 'projects', 'organization_id'],
+  // Spine: Execution / Rollout (06)
+  ['rollout_kpis', 'organization_id'],
+  ['rollout_risks', 'organization_id'],
+  ['rollout_changes', 'organization_id'],
+  ['rollout_closures', 'organization_id'],
+  // Spine: Outputs / Deliverables (09)
+  ['v8_output_exports', 'organization_id'],
+  ['v8_output_artifacts', 'organization_id'],
+  // E7 [ODMROZENIE 05_INITIATIVES DEC-453]: the canonical twin
+  // (`seedCanonicalInitiativeWriter.ts`) writes six org-scoped rows per
+  // seed initiative that this cleanup previously never touched — a
+  // re-seeded organization left orphaned canon rows behind every time.
+  // Before `initiatives`/`projects`/`users` so nothing here still needs
+  // to resolve a project/user id.
+  ['ie_aggregate_relations', 'organization_id'],
+  ['ie_audit_events', 'organization_id'],
+  ['ie_outbox_events', 'organization_id'],
+  ['ie_command_receipts', 'organization_id'],
+  ['ie_aggregate_state', 'organization_id'],
+  ['initiative_candidates', 'organization_id'],
+  ['initiatives', 'organization_id'],
+  ['projects', 'organization_id'],
+  ['users', 'organization_id'],
+  ['organizations', 'id'],
+] as const;
+
+export interface DemoDatasetDeleteOptions {
+  /** A pinned transaction client makes every existence check and DELETE part
+   * of the caller's single PostgreSQL transaction. */
+  tx?: PinnedTransactionClient;
+  /** Test seam for deterministic fault injection and executed-step receipts. */
+  afterDeleteStep?: (table: string) => void | Promise<void>;
+}
+
+async function cleanupTableExists(
+  tableName: string,
+  tx: PinnedTransactionClient | undefined
+): Promise<boolean> {
+  if (!tx) return tableExists(tableName);
+  const row = await tx.queryOne<{ exists: boolean }>(
+    `SELECT to_regclass(?) IS NOT NULL AS exists`,
+    [`public.${tableName}`]
+  );
+  return Boolean(row?.exists);
+}
+
+export async function deleteDemoDatasetForOrganization(
+  organizationId: string,
+  options: DemoDatasetDeleteOptions = {}
+): Promise<void> {
+  const executeDelete = async (sql: string): Promise<void> => {
+    if (options.tx) {
+      await options.tx.queryRun(sql, [organizationId]);
+      return;
+    }
+    const result = await DbPromise.run(sql, [organizationId], { fallback: false });
+    if (!result.success) throw new Error(result.error || 'Demo dataset DELETE failed');
+  };
+
+  for (const query of DEMO_DATASET_DELETE_QUERIES) {
     const [table, column, joinTable, joinColumn] = query;
-    if (!(await tableExists(table))) continue;
+    if (!(await cleanupTableExists(table, options.tx))) continue;
     if (!joinTable) {
-      await DbPromise.run(`DELETE FROM ${table} WHERE ${column} = ?`, [organizationId], {
-        fallback: true,
-      });
+      await executeDelete(`DELETE FROM ${table} WHERE ${column} = ?`);
+      await options.afterDeleteStep?.(table);
       continue;
     }
-    if (!(await tableExists(joinTable))) continue;
-    await DbPromise.run(
+    if (!(await cleanupTableExists(joinTable, options.tx))) continue;
+    await executeDelete(
       `DELETE FROM ${table}
-       WHERE ${column} IN (SELECT id FROM ${joinTable} WHERE ${joinColumn} = ?)`,
-      [organizationId],
-      { fallback: true }
+       WHERE ${column} IN (SELECT id FROM ${joinTable} WHERE ${joinColumn} = ?)`
     );
+    await options.afterDeleteStep?.(table);
   }
 }
