@@ -1,5 +1,26 @@
 #!/usr/bin/env sh
 
-# Disabled: pre-push checks (lint/typecheck/tests)
+# Disabled: heavy pre-push checks (lint/typecheck/tests)
 # Requested: "remove any check before git push"
+
+# WYJĄTEK (F11, DEC-461, 2026-09-15): bramka flag Dockerfile.api. To NIE jest
+# lint/typecheck/testy — to pojedynczy, tani (~0.1s, bez node_modules poza
+# fs/path) grep zapobiegający dokładnie temu, co uderzyło 14-15.09: flaga
+# VITE_* ustawiona na Railway, ale bez ARG w Dockerfile.api, więc `vite build`
+# jej nie widzi i ekran/flaga po cichu znika z bundla (patrz komentarz
+# BEZPIECZNIK VITE_* w Dockerfile.api, audyt AUDYT.md 15.09 — 11/23 wierszy
+# §5 utknęło w 🔧 z tego jednego powodu). Świadomy wyjątek od "usuń wszystkie
+# checki" — jeśli właściciel chce to też wyłączyć, zmień na `exit 0` tutaj.
+if command -v node >/dev/null 2>&1; then
+  node scripts/check-flagi-dockerfile.mjs
+  FLAGI_DOCKERFILE_STATUS=$?
+  if [ "$FLAGI_DOCKERFILE_STATUS" -ne 0 ]; then
+    echo "" >&2
+    echo "  ⛔ Push zablokowany: flaga VITE_* czytana w src/ nie ma ARG w Dockerfile.api." >&2
+    echo "     Dopisz ARG+ENV (wzór commit bb6735d713) albo dodaj uzasadniony wyjątek do" >&2
+    echo "     scripts/flagi-dockerfile.wyjatki.json." >&2
+    exit 1
+  fi
+fi
+
 exit 0

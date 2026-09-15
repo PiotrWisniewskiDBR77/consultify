@@ -110,6 +110,9 @@ jobs:
       - name: Language consistency ratchet gate (J0, EN/PL — docs/program/JEZYK_EN_PL_20260908/)
         run: npm run check:jezyk:ci
 
+      - name: Dockerfile VITE flag ARG gate (F11, DEC-461 — flaga bez ARG ginie z builda)
+        run: npm run check:flagi:dockerfile
+
       - name: Job duration
         if: always()
         run: |

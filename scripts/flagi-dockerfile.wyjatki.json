@@ -1,0 +1,18 @@
+{
+  "_opis": "Wyjątki bramki scripts/check-flagi-dockerfile.mjs (F11, DEC-461). Flagi VITE_* czytane w src/ z uzasadnieniem, dlaczego NIE dostają ARG/ENV w Dockerfile.api. Każda zmiana wymaga uzasadnienia — bramka nie sprawdza treści `powod`, tylko obecność klucza.",
+  "wyjatki": {
+    "VITE_ANALYTICS_DEBUG": "dev-only przełącznik logowania analytics (src/hooks/usePageTracking.ts), nie funkcja produktowa; bez ARG domyślnie OFF/nieczytelny w buildzie, co jest bezpieczne.",
+    "VITE_API_URL": "dev-only override adresu API dla proxy Vite lokalnie (src/services/api.ts); produkcja/demo używa ścieżki względnej /api (ten sam origin) — celowo NIE wpalane do builda obrazu.",
+    "VITE_APP_ENV": "metadane etykiety środowiska do panelu feedbacku/EnvironmentBadge (informacyjne), nie flaga funkcyjna sterująca kodem.",
+    "VITE_BUILD_AT": "metadane czasu builda do panelu feedbacku, nie flaga funkcyjna.",
+    "VITE_BUILD_SHA": "metadane SHA builda frontu (feedback/chunkLoadRecovery); backend ma już własny ARG APP_BUILD_SHA (bez prefiksu VITE_) w tym samym pliku — brak potrzeby duplikować mechanizmu na froncie.",
+    "VITE_DEV_DIAGNOSTICS": "dev-only przełącznik diagnostyki canvasu (src/utils/canvasDevDiagnosticsFlag.ts), opisany w kodzie jako narzędzie build-time do lokalnego debugowania.",
+    "VITE_FF_": "artefakt regexu — to nie jest realna zmienna import.meta.env, tylko fragment tekstu w komentarzu/teście (src/utils/__tests__/chatV9FeatureFlags.test.ts) opisującym konwencję prefiksów flag.",
+    "VITE_GA_MEASUREMENT_ID": "identyfikator Google Analytics (src/hooks/usePageTracking.ts) z bezpiecznym fallbackiem w kodzie, nie flaga funkcyjna produktu.",
+    "VITE_I18N_DEBUG": "dev-only przełącznik trybu debug i18next (src/i18n.ts), opisany w komentarzu jako włączany ręcznie lokalnie.",
+    "VITE_NAV_DEBUG": "dev-only przełącznik logów nawigacji (src/utils/navigationGuard.ts).",
+    "VITE_SCREAMING_SNAKE": "artefakt regexu — fragment tekstu w komentarzu testu (src/utils/__tests__/chatV9FeatureFlags.test.ts) ilustrujący konwencję nazewnictwa, nie realna zmienna.",
+    "VITE_STORE_DEBUG": "dev-only przełącznik logów store'a (src/store/useConversationStore.ts).",
+    "VITE_X": "artefakt regexu — wartość fixture w teście (src/utils/__tests__/groupChatV9Flags.test.ts), nie realna zmienna import.meta.env."
+  }
+}
