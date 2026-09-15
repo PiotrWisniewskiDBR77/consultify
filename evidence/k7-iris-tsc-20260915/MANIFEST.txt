@@ -1,0 +1,37 @@
+K7 IRIS 6.0 package 1 evidence manifest
+base=f2628a0d36af85d97bcbe67b820d728c7c2f2f28
+baseline_front_tsc=RC2 errors=177 files=54
+candidate_front_tsc=RC2 errors=153 files=37
+delta=-24 errors, -17 files-with-errors
+server_build_tsc=RC0
+front_build=GREEN NODE_OPTIONS=--max-old-space-size=8192
+list_canon=RC0 349/349
+artifact=RC0 8/0/117
+language=RC0
+candidate_runtime=17 files; 15 pass, 2 fail; 117 passed, 7 failed; 2 async errors
+exact_base_runtime=17 files; 15 pass, 2 fail; 117 passed, 7 failed; 2 async errors
+new_as_any=0
+product_files_changed=0
+workflow_files_changed=0
+forbidden_files_changed=0
+screenshots=NOT_APPLICABLE (type-only test contract package; UI bytes identical)
+workflow_threshold=ABSENT; STOP required before adding threshold behavior
+
+changed_files_base_to_candidate:
+src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx
+src/components/AIChat/__tests__/day374-canvasTooLong.i18n.test.tsx
+src/components/Admin/__tests__/ChatV9FlagsIndicator.test.tsx
+src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx
+src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx
+src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx
+src/components/Economics/__tests__/financeCanonicalMerge.test.ts
+src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx
+src/components/Initiatives/__tests__/TransitionInboxSurface.behavior.test.tsx
+src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx
+src/components/Initiatives/sections/__tests__/InitiativeTeamSection.aiProposalNames.test.tsx
+src/components/Interview/__tests__/InterviewHub.jedenPanel.test.tsx
+src/components/Interview/__tests__/InterviewHub.smoke.test.tsx
+src/components/MyWork/Calendar/__tests__/CalendarSidebar.disconnectedCallout.test.tsx
+src/components/MyWork/notebook/__tests__/notebookViewLensPredicates.test.ts
+src/components/ResultsVNext/roi/card/__tests__/roiCardPage.kartaN.test.tsx
+src/components/shared/PreviewPane/__tests__/useJedenPanel.test.tsx

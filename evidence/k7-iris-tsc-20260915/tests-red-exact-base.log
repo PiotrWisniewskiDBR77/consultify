@@ -1,0 +1,543 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73
+
+ × src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > keeps Business Actions hidden with the flag at its default OFF value 27ms
+   → Cannot read properties of undefined (reading 'isSpeaking')
+ × src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > routes Business Actions to the public AI Actions screen when the default-OFF flag is enabled 7ms
+   → Cannot read properties of undefined (reading 'isSpeaking')
+ × src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > sends and consumes the store kickoff with the exact props used by the chat route 7ms
+   → Cannot read properties of undefined (reading 'isSpeaking')
+ × src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > preserves an embedded panel kickoff prop and does not clear the unrelated global handoff 6ms
+   → Cannot read properties of undefined (reading 'isSpeaking')
+ × src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > keeps MainLayout-style consumption delegated to the provided callback 6ms
+   → Cannot read properties of undefined (reading 'isSpeaking')
+ × src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > changes the work panel title and accessible label after opening it 6ms
+   → Cannot read properties of undefined (reading 'isSpeaking')
+ ❯ src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx (6 tests | 6 failed) 61ms
+     × keeps Business Actions hidden with the flag at its default OFF value 27ms
+     × routes Business Actions to the public AI Actions screen when the default-OFF flag is enabled 7ms
+     × sends and consumes the store kickoff with the exact props used by the chat route 7ms
+     × preserves an embedded panel kickoff prop and does not clear the unrelated global handoff 6ms
+     × keeps MainLayout-style consumption delegated to the provided callback 6ms
+     × changes the work panel title and accessible label after opening it 6ms
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > renders the default Inbox (my_assignments) tab without throwing 315ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > switches to and renders the "Sessions" tab without throwing 243ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > switches to and renders the "Assigned" tab without throwing 240ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > switches to and renders the "Templates" tab without throwing 143ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > switches to and renders the "Insights" tab without throwing 135ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > switches to and renders the "Initiatives" tab without throwing 127ms
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > keeps legacy authoring available while a V8 insight failure is visible and never hidden by legacy fallback
+[InterviewHub] Failed to load insights: InterviewCapabilityError: Interview insights capability failed (unavailable)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at async Promise.allSettled (index 1)
+    at loadData (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/InterviewHub.tsx:1101:9) {
+  capability: 'insights',
+  kind: 'unavailable',
+  status: 503,
+  [cause]: { status: 503 }
+}
+
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > keeps legacy authoring available while a V8 insight failure is visible and never hidden by legacy fallback
+[InterviewHub] Failed to load insights: InterviewCapabilityError: Interview insights capability failed (unavailable)
+    at classifyInterviewV8Failure (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/interviewBackendRouting.ts:49:10)
+    at loadInterviewV8Capability (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/interviewBackendRouting.ts:64:11)
+    at async Promise.allSettled (index 1)
+    at loadData (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/InterviewHub.tsx:1101:9) {
+  capability: 'insights',
+  kind: 'unavailable',
+  status: 503,
+  [cause]: { status: 503 }
+}
+
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > shows the initiatives honest empty state with an Insights handoff CTA 139ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > mounts without injecting demo data when shouldAllowDemoData is false 64ms
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)
+An error occurred in the <InterviewWorkspace> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)
+An error occurred in the <InterviewWorkspace> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > keeps legacy authoring available while a V8 insight failure is visible and never hidden by legacy fallback 100ms
+ × src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09) 1149ms
+   → expected "vi.fn()" to be called with arguments: [ ArrayContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
++   [
++     "Interview",
++     "Inbox",
+    ],
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
+-   ],
++   null,
+  ]
+
+  3rd vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
++   [
++     "Interview",
++     "Inbox",
+    ],
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
+-   ],
++   null,
+  ]
+
+
+Number of calls: 4
+
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > reaches the interview-creator-shell wizard from the Insights tab "New insight" button (DEC-2026-08-25-67, DEC-350)
+[InsightCreatorModal] Failed to load context documents: TypeError: __vite_ssr_import_13__.V8InterviewApi.listContextDocuments is not a function
+    at /Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/InsightCreatorModal.tsx:665:45
+    at loadData (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/InsightCreatorModal.tsx:991:15)
+
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > reaches the interview-creator-shell wizard from the Insights tab "New insight" button (DEC-2026-08-25-67, DEC-350)
+[InsightCreatorModal] Failed to load context documents: TypeError: __vite_ssr_import_13__.V8InterviewApi.listContextDocuments is not a function
+    at /Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/InsightCreatorModal.tsx:665:45
+    at loadData (/Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/src/components/Interview/InsightCreatorModal.tsx:991:15)
+
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > reaches the interview-creator-shell wizard from the Insights tab "New insight" button (DEC-2026-08-25-67, DEC-350) 331ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > exposes the shared project create control in the new-session modal for a zero-project tenant 613ms
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > creates a named session only after canonical server readback and renders translated labels
+An error occurred in the <InterviewWorkspace> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > creates a named session only after canonical server readback and renders translated labels
+An error occurred in the <InterviewWorkspace> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > creates a named session only after canonical server readback and renders translated labels 343ms
+ ✓ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > Znalezisko 1.1-Z1: Wnioski TYP chip shows the real analysis-mode label, not a silent "Executive Summary" fallback 209ms
+ ❯ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx (14 tests | 1 failed) 4157ms
+     ✓ renders the default Inbox (my_assignments) tab without throwing  315ms
+     ✓ switches to and renders the "Sessions" tab without throwing 243ms
+     ✓ switches to and renders the "Assigned" tab without throwing 240ms
+     ✓ switches to and renders the "Templates" tab without throwing 143ms
+     ✓ switches to and renders the "Insights" tab without throwing 135ms
+     ✓ switches to and renders the "Initiatives" tab without throwing 127ms
+     ✓ shows the initiatives honest empty state with an Insights handoff CTA 139ms
+     ✓ mounts without injecting demo data when shouldAllowDemoData is false 64ms
+     ✓ keeps legacy authoring available while a V8 insight failure is visible and never hidden by legacy fallback 100ms
+     × karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09) 1149ms
+     ✓ reaches the interview-creator-shell wizard from the Insights tab "New insight" button (DEC-2026-08-25-67, DEC-350)  331ms
+     ✓ exposes the shared project create control in the new-session modal for a zero-project tenant  613ms
+     ✓ creates a named session only after canonical server readback and renders translated labels  343ms
+     ✓ Znalezisko 1.1-Z1: Wnioski TYP chip shows the real analysis-mode label, not a silent "Executive Summary" fallback 209ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > keeps Business Actions hidden with the flag at its default OFF value
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > routes Business Actions to the public AI Actions screen when the default-OFF flag is enabled
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > sends and consumes the store kickoff with the exact props used by the chat route
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > preserves an embedded panel kickoff prop and does not clear the unrelated global handoff
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > keeps MainLayout-style consumption delegated to the provided callback
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > changes the work panel title and accessible label after opening it
+TypeError: Cannot read properties of undefined (reading 'isSpeaking')
+ ❯ UnifiedChatPanel src/components/AIChat/UnifiedChatPanel.tsx:1122:18
+    1120|     window.addEventListener('keydown', onKeyDown);
+    1121|     return () => window.removeEventListener('keydown', onKeyDown);
+    1122|   }, [voiceState.isSpeaking, stopSpeaking]);
+       |                  ^
+    1123|
+    1124|   // Teresa real-time voice — global context (persists across navigati…
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)
+AssertionError: expected "vi.fn()" to be called with arguments: [ ArrayContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
++   [
++     "Interview",
++     "Inbox",
+    ],
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
+-   ],
++   null,
+  ]
+
+  3rd vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
++   [
++     "Interview",
++     "Inbox",
+    ],
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
+-   ],
++   null,
+  ]
+
+
+Number of calls: 4
+
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx:302:39
+    300|     // is ever raised for this flow.
+    301|     await waitFor(() => {
+    302|       expect(setInterviewBreadcrumbs).toHaveBeenCalledWith(
+       |                                       ^
+    303|         expect.arrayContaining([expect.stringContaining('Interview Ses…
+    304|       );
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "useInterviewReviewAccess" export is defined on the "@/hooks/useInterviewPermissions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/hooks/useInterviewPermissions"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ InterviewWorkspace src/components/Interview/InterviewWorkspace.tsx:338:7
+    336|     isLoading: permissionsLoading,
+    337|     refresh: refreshReviewAccess,
+    338|   } = useInterviewReviewAccess(session?.assignmentId);
+       |       ^
+    339|   // Review authority comes from the persisted assignment context, sep…
+    340|   const isReviewerMode =
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+This error originated in "src/components/Interview/__tests__/InterviewHub.smoke.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "useInterviewReviewAccess" export is defined on the "@/hooks/useInterviewPermissions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/hooks/useInterviewPermissions"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ InterviewWorkspace src/components/Interview/InterviewWorkspace.tsx:338:7
+    336|     isLoading: permissionsLoading,
+    337|     refresh: refreshReviewAccess,
+    338|   } = useInterviewReviewAccess(session?.assignmentId);
+       |       ^
+    339|   // Review authority comes from the persisted assignment context, sep…
+    340|   const isReviewerMode =
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+This error originated in "src/components/Interview/__tests__/InterviewHub.smoke.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "creates a named session only after canonical server readback and renders translated labels". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 13 passed (20)
+     Errors  2 errors
+   Start at  23:40:19
+   Duration  12.49s (transform 7.36s, setup 198ms, import 9.65s, tests 4.22s, environment 492ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > keeps Business Actions hidden with the flag at its default OFF value
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > routes Business Actions to the public AI Actions screen when the default-OFF flag is enabled
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > sends and consumes the store kickoff with the exact props used by the chat route
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > preserves an embedded panel kickoff prop and does not clear the unrelated global handoff
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > keeps MainLayout-style consumption delegated to the provided callback
+ FAIL  src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx > UnifiedChatPanel chat route wiring > changes the work panel title and accessible label after opening it
+TypeError: Cannot read properties of undefined (reading 'isSpeaking')
+ ❯ UnifiedChatPanel src/components/AIChat/UnifiedChatPanel.tsx:1122:18
+    1120|     window.addEventListener('keydown', onKeyDown);
+    1121|     return () => window.removeEventListener('keydown', onKeyDown);
+    1122|   }, [voiceState.isSpeaking, stopSpeaking]);
+       |                  ^
+    1123|
+    1124|   // Teresa real-time voice — global context (persists across navigati…
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/components/Interview/__tests__/InterviewHub.smoke.test.tsx > InterviewHub smoke — tab rendering > karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)
+AssertionError: expected "vi.fn()" to be called with arguments: [ ArrayContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
++   [
++     "Interview",
++     "Inbox",
+    ],
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
+-   ],
++   null,
+  ]
+
+  3rd vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
++   [
++     "Interview",
++     "Inbox",
+    ],
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   ArrayContaining [
+-     StringContaining "Interview Session",
+-   ],
++   null,
+  ]
+
+
+Number of calls: 4
+
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/Interview/__tests__/InterviewHub.smoke.test.tsx:302:39
+    300|     // is ever raised for this flow.
+    301|     await waitFor(() => {
+    302|       expect(setInterviewBreadcrumbs).toHaveBeenCalledWith(
+       |                                       ^
+    303|         expect.arrayContaining([expect.stringContaining('Interview Ses…
+    304|       );
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "useInterviewReviewAccess" export is defined on the "@/hooks/useInterviewPermissions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/hooks/useInterviewPermissions"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ InterviewWorkspace src/components/Interview/InterviewWorkspace.tsx:338:7
+    336|     isLoading: permissionsLoading,
+    337|     refresh: refreshReviewAccess,
+    338|   } = useInterviewReviewAccess(session?.assignmentId);
+       |       ^
+    339|   // Review authority comes from the persisted assignment context, sep…
+    340|   const isReviewerMode =
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+This error originated in "src/components/Interview/__tests__/InterviewHub.smoke.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "karta-interview: falls back to the assignment's embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: [vitest] No "useInterviewReviewAccess" export is defined on the "@/hooks/useInterviewPermissions" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/hooks/useInterviewPermissions"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ VitestMocker.createError node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17
+ ❯ Object.get node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16
+ ❯ InterviewWorkspace src/components/Interview/InterviewWorkspace.tsx:338:7
+    336|     isLoading: permissionsLoading,
+    337|     refresh: refreshReviewAccess,
+    338|   } = useInterviewReviewAccess(session?.assignmentId);
+       |       ^
+    339|   // Review authority comes from the persisted assignment context, sep…
+    340|   const isReviewerMode =
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+This error originated in "src/components/Interview/__tests__/InterviewHub.smoke.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "creates a named session only after canonical server readback and renders translated labels". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 13 passed (20)
+     Errors  2 errors
+   Start at  23:40:19
+   Duration  12.51s (transform 7.36s, setup 198ms, import 9.65s, tests 4.22s, environment 492ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-k7-iris-tsc-w73/junit.xml

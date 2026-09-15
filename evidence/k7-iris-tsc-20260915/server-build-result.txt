@@ -1,0 +1,3 @@
+command=npm --prefix server run build
+exit_code=0
+proof=sync-server-runtime-mirrors OK; tsc --build tsconfig.build.json --force completed; build:copy-assets completed

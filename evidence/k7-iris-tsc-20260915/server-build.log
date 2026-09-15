@@ -1,0 +1,9 @@
+
+> server@1.0.0 build
+> cd .. && node scripts/cleanup/sync-server-runtime-mirrors.mjs --check && cd server && tsc --build tsconfig.build.json --force && npm run build:copy-assets
+
+Verified 11 server runtime mirror files.
+
+> server@1.0.0 build:copy-assets
+> mkdir -p dist/src/assets/fonts && cp src/assets/fonts/*.ttf dist/src/assets/fonts/
+

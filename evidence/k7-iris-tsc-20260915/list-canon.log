@@ -1,0 +1,4 @@
+⚠ check-list-canon: staging pusty — nie ma czego sprawdzić z diffa.
+  Przechodzę na PEŁNY skan repo (--all), żeby nie zameldować fałszywej zieleni.
+• Huby list z legacy menu (renderują listę, brak importu StandardModuleBar — R2b): 1 z 7 *Hub.tsx
+✓ check-list-canon: brak NOWYCH naruszeń kanonu tabel (pełny skan repo (fallback z pustego stagingu): 192 plików; naruszeń 349, baseline 349 — dług nie rośnie)
