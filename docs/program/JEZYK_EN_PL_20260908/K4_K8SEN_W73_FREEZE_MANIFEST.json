@@ -1,29 +1,33 @@
 {
-  "schemaVersion": 2,
-  "package": "K4 v2 K8sen W73 HOLD repair",
+  "schemaVersion": 3,
+  "package": "K4 v3 K8sen W73 HOLD repair",
   "branch": "codex/c-k4-k8sen-20260915",
   "exactBase": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3",
-  "holdReview": "80d46c61c211fe1a808ce83237a5b63530b03e8f",
-  "testedCandidate": "63a538e6c2dec742d1aa795e567a16fe3678f1ea",
-  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V2",
+  "holdReview": "0cc005de576095a1fb07f0c581f6f20f93993ed9",
+  "testedCandidate": "6424a54e3d0cdb6545006c65b7ee3ff198fadc81",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V3",
   "measurement": {
-    "honestBeforeK8sen": 1619,
-    "afterK8sen": 1581,
-    "throwsVisible": 1581,
-    "throwsClassifiedA": 2,
-    "throwsClassifiedB": 1579,
+    "K8sen": 1584,
+    "realSinksB": 1577,
+    "localizedPlChanged": 1577,
+    "unchangedPl": 0,
+    "distinctPlOutputs": 1317,
+    "lossyGeneric": 0,
+    "internalA": 7,
     "unclassified": 0,
-    "pdfDocTextBefore": 36,
     "pdfDocTextAfter": 0,
-    "runtimeFalseCountsAsLocalized": false
+    "runtimeFalseRespected": true
   },
   "validation": {
-    "focusedTests": "34/34 PASS retry=0",
+    "ownerMeter": "72/72 PASS retry=0",
+    "focusedTests": "110/110 PASS retry=0",
+    "meetingExecutorAdapterHttp400": "PASS exact PL payload, status/code preserved",
+    "usersLanguageQueryContract": "PASS real verifyToken",
     "serverTypeScriptErrors": 0,
-    "frontendTypeScript": "TIMEOUT_120S_AFTER_0_DIAGNOSTICS",
-    "languageRatchet": "PASS honest residual 1581",
+    "frontendTypeScript": "v2 TIMEOUT_120S_AFTER_0_DIAGNOSTICS; no frontend delta in v3",
+    "languageRatchet": "PASS honest residual 1584",
     "listCanon": "349/349 PASS",
-    "artifact": "crimson 8/8; R2+R3 0/0; danger 117/117 PASS",
+    "artifact": "8/8; R2+R3 0/0; danger 117/117 PASS",
     "productionBuild": "PASS 10754 modules",
     "newAsAny": 0
   },
@@ -33,35 +37,35 @@
     "forbiddenFilesChanged": false
   },
   "inventoryPolicy": {
-    "count": 50,
+    "count": 51,
     "hash": "sha256",
     "manifestSelfExcluded": true
   },
   "inventory": [
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73.md",
-      "bytes": 3126,
-      "sha256": "c3401cf260bde4f3467c1fcbd37324b0a12ef99c45be8ca8ccf914b93e549138"
+      "bytes": 2979,
+      "sha256": "e0408ca1d615996bfca846956096ac53c26ff50f2607a228fc1b43f9f4b3ebba"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json",
-      "bytes": 620981,
-      "sha256": "477b26b829abf6fe10d0b27d1306190c62c7e00fb1223112bc078394d9fe1971"
+      "bytes": 579460,
+      "sha256": "706769de9297b9a08893ae7c6cf449c344958519d57a22ab1c9543643b474266"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
       "bytes": 80297,
-      "sha256": "bfccd033594e755440434e849244ddcf355394d0050964eb677b1804a41d1d4c"
+      "sha256": "a31e2e9e0b7065876e76f1fad9a5aad59cbe760ef7deb4ed411c7549ce834162"
     },
     {
       "path": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
-      "bytes": 6995,
-      "sha256": "876e8d386fc0116e498e85b585991b2f9b9dd417628533d36836fa47ce2f0399"
+      "bytes": 7299,
+      "sha256": "96010d966c2cb6db533a8c11343b842746258a6c7b7f4aa4decc36e714b8e6a8"
     },
     {
       "path": "scripts/i18n/pomiar-jezyka.mjs",
-      "bytes": 79715,
-      "sha256": "dd230000c91a1a89938e64994786bfd9ab29b3d68ff87143ce9224dccd9662c0"
+      "bytes": 80472,
+      "sha256": "944693a0f4daca896cd580dc0f6c5243f966588006be636d9583ce46e0dcb67d"
     },
     {
       "path": "server/src/Gateway.ts",
@@ -69,9 +73,14 @@
       "sha256": "88793822a42b246497438d23bcc863cdd764d2cbc3b4cd50bf4fc8d5815a1994"
     },
     {
+      "path": "server/src/ai/actionExecutors/__tests__/meetingExecutor.httpLocale.test.ts",
+      "bytes": 2045,
+      "sha256": "3539c2e3020dee1dc0e10f8dc5ef9e07f50e9273956313ad185777847062142a"
+    },
+    {
       "path": "server/src/i18n/__tests__/serverPayloadLocalizer.test.ts",
-      "bytes": 2190,
-      "sha256": "44feda107769c043934109eaeeb93a7862f11dbea7eae99f995fc6434c83f17c"
+      "bytes": 4137,
+      "sha256": "1dd0cf980f0c073eb3e418a52e37729926985fb0eecbc5fddd9ddfae24e4decb"
     },
     {
       "path": "server/src/i18n/serverErrorMessages.ts",
@@ -80,8 +89,8 @@
     },
     {
       "path": "server/src/i18n/serverPayloadLocalizer.ts",
-      "bytes": 4413,
-      "sha256": "0cb017b7d6e7dbac18213ad52a8be9449772187042c89a01ca0c5836f88a2f11"
+      "bytes": 5617,
+      "sha256": "1cc89509da2ea52ca50e4a0b4b443b9f350852a6b270372cc5c146937afcd76e"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch01.ts",
@@ -145,8 +154,8 @@
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch13.ts",
-      "bytes": 7624,
-      "sha256": "f6011323b0b9c75d6ea0e0ab00c98a5a5f6f7062700c3db3023b85da2ec7db4c"
+      "bytes": 8069,
+      "sha256": "d6fcfcffe84a8270ec2e44ac475e748afe9f4a510579de911d6dea6c6bdd4603"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/index.ts",
@@ -160,8 +169,8 @@
     },
     {
       "path": "server/src/middleware/__tests__/organizationSuspensionEnforcement.middleware.test.ts",
-      "bytes": 18269,
-      "sha256": "f38585604ab3c8d35d6c492fe7e22c59ae5d53c03aca6b1cc1950b4b8f04ebbb"
+      "bytes": 18415,
+      "sha256": "e4e39aa314fb95e19401f1dd087c6386f350b2c5b7ef051c89d5b38c65668fb1"
     },
     {
       "path": "server/src/middleware/appErrorMapper.ts",
@@ -170,8 +179,8 @@
     },
     {
       "path": "server/src/middleware/auth.middleware.ts",
-      "bytes": 78437,
-      "sha256": "ec96d71fa1d0eaec1a769a4175ff8fee00eb5c06ec55f5b70b15749cd2376a9c"
+      "bytes": 78378,
+      "sha256": "a46ae2b7d359b7a1188735cacb38f4e9d5f76d2490c4039d55feb999765766c0"
     },
     {
       "path": "server/src/middleware/serverPayloadLocale.ts",
