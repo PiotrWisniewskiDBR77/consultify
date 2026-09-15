@@ -36,6 +36,12 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   const [status, setStatus] = useState<V8PartnerOnboardingStatus | null>(null);
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
 
+  const progressLabel = (current: number) =>
+    t('onboarding.enterpriseWizard.progress', ['Step', current, 'of', 4].join(' '), {
+      current,
+      total: 4,
+    });
+
   // Step 1: Terms
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -201,7 +207,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-c-accent dark:text-c-accent font-medium">Step 1 of 4</span>
+              <span className="text-c-accent dark:text-c-accent font-medium">
+                {progressLabel(1)}
+              </span>
               <span className="text-c-text-muted">
                 {t('settings.enterpriseOnboardingWizard.step1.stepName', 'Partner agreement')}
               </span>
@@ -412,7 +420,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-12 max-w-2xl mx-auto">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-c-accent dark:text-c-accent font-medium">Step 2 of 4</span>
+              <span className="text-c-accent dark:text-c-accent font-medium">
+                {progressLabel(2)}
+              </span>
               <span className="text-c-text-muted">
                 {t('settings.enterpriseOnboardingWizard.step2.stepName', 'Partner track')}
               </span>
@@ -512,7 +522,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-c-accent dark:text-c-accent font-medium">Step 3 of 4</span>
+              <span className="text-c-accent dark:text-c-accent font-medium">
+                {progressLabel(3)}
+              </span>
               <span className="text-c-text-muted">
                 {t('settings.enterpriseOnboardingWizard.step3.stepName', 'Payout readiness')}
               </span>

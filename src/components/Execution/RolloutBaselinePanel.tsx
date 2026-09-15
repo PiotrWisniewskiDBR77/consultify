@@ -81,7 +81,9 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
           capturedAt: new Date().toISOString(),
           source: 'cockpit',
         }),
-        label: 'Baseline ' + shortStamp(),
+        label: t('execution.rollout.baseline.savedLabel', 'Baseline {{timestamp}}', {
+          timestamp: shortStamp(),
+        }),
         reason: 'Manual save from the cockpit',
       });
       await load();
@@ -157,7 +159,9 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
                   className="flex flex-col gap-0.5 rounded-lg border border-c-border-subtle p-2"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-c-text">{b.label || 'Baseline'}</span>
+                    <span className="text-sm font-medium text-c-text">
+                      {b.label || t('execution.rollout.baseline.fallbackLabel', 'Baseline')}
+                    </span>
                     <span className="shrink-0 text-xs text-c-text-muted">{baselineDate(b)}</span>
                   </div>
                   {b.reason && <span className="text-xs text-c-text-muted">{b.reason}</span>}

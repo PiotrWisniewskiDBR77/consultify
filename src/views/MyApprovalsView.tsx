@@ -24,7 +24,7 @@ interface MyApprovalsViewProps {
 }
 
 const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) => {
-  // Note: 't' and 'currentUser' are available from useAppStore/useTranslation but not currently used
+  const { t } = useTranslation();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +110,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
       return (
         <span className="px-2 py-1 text-xs font-medium rounded-full bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400">
           <AlertTriangle className="w-3 h-3 inline mr-1" />
-          Overdue
+          {t('myWork.approvals.overdue', 'Overdue')}
         </span>
       );
     }
@@ -212,7 +212,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
           <EmptyState
             icon={<ClipboardList />}
-            title="No approvals found"
+            title={t('myWork.approvals.emptyTitle', 'No approvals found')}
             description={
               statusFilter !== 'ALL'
                 ? `No ${statusFilter.toLowerCase()} approvals assigned to you.`
