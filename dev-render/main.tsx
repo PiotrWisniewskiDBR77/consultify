@@ -479,6 +479,7 @@ const KartaMiernikScreen = React.lazy(() => import('./screens/karta-miernik'));
 const KartaCelOkrScreen = React.lazy(() => import('./screens/karta-cel-okr'));
 const KartaAnalizaRoiScreen = React.lazy(() => import('./screens/karta-analiza-roi'));
 const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
+const M1SkrzynkaKpiScreen = React.lazy(() => import('./screens/m1-skrzynka-kpi'));
 const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
 const MyWorkCalendarDisconnectedScreen = React.lazy(
   () => import('./screens/mywork-calendar-disconnected')
@@ -1432,6 +1433,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '02-moja-praca — Task pełny rekord (double-click, N-mode) — re-eksport karta-task, 145-nowe-ekrany 2026-08-31',
     render: () => <KartaTaskPelnaScreen />,
+  },
+  'm1-skrzynka-kpi': {
+    label: '02-moja-praca — Skrzynka: karta KPI + zadanie (odbior M1 2026-09-15)',
+    render: () => <M1SkrzynkaKpiScreen />,
   },
   'mywork-inbox': {
     label: '02-moja-praca — Skrzynka (zakładka domyślna) — 145-nowe-ekrany 2026-08-31',
