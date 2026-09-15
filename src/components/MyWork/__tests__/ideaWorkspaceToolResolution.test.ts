@@ -20,7 +20,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { CanvasToolType } from '../ideaSelectionTypes';
-import { createDefaultIdeaWorkspaceState } from '../ideaWorkspaceState';
+import {
+  createDefaultIdeaWorkspaceState,
+  patchIdeaWorkspaceState,
+} from '../ideaWorkspaceState';
 
 describe('H2.3 — idea workspace initial tool resolution', () => {
   it('maps an explicit mindmap deep-link to the mindmap tool (never process_flow)', () => {
@@ -54,5 +57,33 @@ describe('H2.3 — idea workspace initial tool resolution', () => {
     expect(createDefaultIdeaWorkspaceState({ id: 'idea-3' }).activeTool).toBe('mindmap');
     expect(createDefaultIdeaWorkspaceState({ id: 'idea-4', data: {} }).activeTool).toBe('mindmap');
     expect(createDefaultIdeaWorkspaceState(null).activeTool).toBe('mindmap');
+  });
+
+  it('materializes Process Flow state for an existing idea even when it equals the doc default', () => {
+    const next = patchIdeaWorkspaceState(
+      {},
+      { id: 'existing-idea', data: { initialTool: 'process_flow' } },
+      { activeTool: 'process_flow' }
+    );
+
+    expect(next['existing-idea']?.activeTool).toBe('process_flow');
+    expect(next).not.toEqual({});
+  });
+
+  it('replaces a stale Mind Map state when Process Flow is explicitly requested', () => {
+    const stale = {
+      'existing-idea': createDefaultIdeaWorkspaceState({
+        id: 'existing-idea',
+        data: { initialTool: 'mindmap' },
+      }),
+    };
+
+    const next = patchIdeaWorkspaceState(
+      stale,
+      { id: 'existing-idea', data: { initialTool: 'process_flow' } },
+      { activeTool: 'process_flow' }
+    );
+
+    expect(next['existing-idea'].activeTool).toBe('process_flow');
   });
 });
