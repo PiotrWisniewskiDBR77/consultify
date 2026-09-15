@@ -25,6 +25,8 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ApprovalWorkflow {
   id: string;
   name: string;
@@ -371,7 +373,7 @@ const ApprovalWorkflowsView: React.FC = () => {
 
   const formatDate = (value: string) => {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
   };
 
   const getStatusBadge = (status: string) => {
@@ -390,7 +392,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         );
       default:
         return (
-          <span className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs">Pending</span>
+          <span className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs">{tlumaczPozaHookiem("superadmin.approvalWorkflows.pending", "Pending")}</span>
         );
     }
   };
@@ -424,7 +426,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 <Clock className="w-5 h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-slate-600 dark:text-slate-500">Pending Requests</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">{tlumaczPozaHookiem("superadmin.approvalWorkflows.pendingRequests", "Pending Requests")}</p>
                 <p className="text-xl font-semibold">
                   {requests.filter((r) => r.status === 'pending').length}
                 </p>
@@ -685,8 +687,7 @@ const ApprovalWorkflowsView: React.FC = () => {
           <Card variant="elevated" className="w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-3">Delete approval workflow?</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              This will delete <span className="font-medium">{workflowPendingDelete.name}</span>.
-              The workflow list must confirm the removal before the action is treated as successful.
+              {tlumaczPozaHookiem("superadmin.approvalWorkflows.thisWillDelete", "This will delete")} <span className="font-medium">{workflowPendingDelete.name}</span>{tlumaczPozaHookiem("superadmin.approvalWorkflows.theWorkflowListMustConfirmTheRemoval", ". The workflow list must confirm the removal before the action is treated as successful.")}
             </p>
             <div className="flex justify-end gap-2 mt-6">
               <button

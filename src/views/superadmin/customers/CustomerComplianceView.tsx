@@ -13,6 +13,7 @@ import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card } from '../components/shared/Card';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface ComplianceItem {
   org_id: string;
   org_name: string;
@@ -37,7 +38,7 @@ type ComplianceSummaryRow = {
 const formatAuditDate = (value: string | null) => {
   if (!value) return null;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 type JsonRecord = Record<string, unknown> & {
