@@ -40,10 +40,33 @@ describe('S1.14b/W11 — describeIdeaConversion', () => {
     expect(describeIdeaConversion('team_chat', {}).href).toBeNull();
   });
 
-  it('leaves the other conversion targets exactly as they were', () => {
-    const outcome = describeIdeaConversion('initiative', { created: { conversationId: 'x' } });
+  it.each([
+    ['initiative', 'initiativeId', 'init-42', '/initiatives?'],
+    ['decision', 'decisionId', 'dec-42', '/my-work?decisionId=dec-42'],
+    ['report', 'reportId', 'rep-42', '/wordy?artifactId=rep-42'],
+    ['presentation', 'presentationId', 'deck-42', '/prezentacje?artifactId=deck-42'],
+  ] as const)(
+    'returns a visible receipt and open link for %s',
+    (target, createdKey, id, expectedPath) => {
+      const outcome = describeIdeaConversion(target, { created: { [createdKey]: id } });
+      expect(outcome.entityId).toBe(id);
+      expect(outcome.toastDefault).toContain(id);
+      expect(outcome.toastDefault).not.toBe('Done');
+      expect(outcome.href).toContain(expectedPath);
+    }
+  );
+
+  it('uses promotedEntityId as the receipt fallback', () => {
+    const outcome = describeIdeaConversion('initiative', { promotedEntityId: 'init-fallback' });
+    expect(outcome.entityId).toBe('init-fallback');
+    expect(outcome.href).toContain('open=init-fallback');
+  });
+
+  it('does not invent an identifier or open link when the server omits the receipt', () => {
+    const outcome = describeIdeaConversion('report', {});
+    expect(outcome.entityId).toBeNull();
     expect(outcome.href).toBeNull();
-    expect(outcome.toastDefault).toBe('Done');
+    expect(outcome.toastDefault).toContain('no identifier');
   });
 });
 

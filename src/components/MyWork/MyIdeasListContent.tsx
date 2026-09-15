@@ -1120,7 +1120,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         // now does what its label says (opens the thread) and the message names
         // the stage change instead of hiding it.
         const outcome = describeIdeaConversion(target, result);
-        toast.success(t(outcome.toastKey, outcome.toastDefault));
+        toast.success(
+          t(outcome.toastKey, {
+            defaultValue: outcome.toastDefault,
+            id: outcome.entityId || '—',
+          })
+        );
         if (!ideaOverride) {
           setConvertIdea(null);
         }
