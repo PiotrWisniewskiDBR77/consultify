@@ -27,6 +27,7 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+  withPgTransaction: async (callback: () => unknown) => callback(),
 }));
 
 vi.mock('../../../../server/src/utils/asyncHandler.js', () => ({
@@ -38,11 +39,32 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../../server/src/services/ai/llmService.js', () => ({
-  llmService: { call: (...args: unknown[]) => mockLlmCall(...args) },
+  llmService: {
+    resolveModelConfig: vi.fn(async () => ({
+      id: 'test-model',
+      modelId: 'test-model',
+      provider: 'test-provider',
+    })),
+    call: (...args: unknown[]) => mockLlmCall(...args),
+  },
 }));
 
 vi.mock('../../../../server/src/utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
+}));
+
+vi.mock('../../../../server/src/services/interviewEvaluationAccess.js', () => ({
+  authorizeInterviewEvaluation: vi.fn(async () => ({
+    session: {
+      id: 's1',
+      organization_id: 'org-1',
+      name: 'Session',
+      owner_id: 'user-1',
+    },
+    assignment: null,
+    projectId: null,
+  })),
+  interviewEvaluationRevision: vi.fn(() => 'stable-test-revision'),
 }));
 
 vi.mock('uuid', () => ({ v4: () => 'uuid-123' }));
