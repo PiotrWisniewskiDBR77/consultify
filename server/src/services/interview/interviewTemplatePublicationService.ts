@@ -2,11 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 
-import {
-  isTruthyFlagSql,
-  LEGACY_FLAG_FALSE,
-  LEGACY_FLAG_TRUE,
-} from './interviewLegacyFlags.js';
+import { isTruthyFlagSql, LEGACY_FLAG_FALSE, LEGACY_FLAG_TRUE } from './interviewLegacyFlags.js';
 
 export class TemplatePublicationError extends Error {
   constructor(
@@ -203,7 +199,7 @@ export async function publishInterviewTemplate(params: {
 
     await tx.query(
       `UPDATE interview_library_templates
-       SET name = ?, description = ?, category = ?, visibility = ?, template_scope = ?,
+       SET name = ?, description = ?, category = ?, format = ?, visibility = ?, template_scope = ?,
            is_default = ?, audience = ?,
            estimated_time_minutes = ?, runtime_mode_default = ?, answer_design_guide = ?,
            area_tags = ?, status = 'approved', version = ?, updated_at = ?
@@ -212,6 +208,7 @@ export async function publishInterviewTemplate(params: {
         name,
         String(params.metadata.description || ''),
         String(params.metadata.category || 'CUSTOM'),
+        params.metadata.format ? String(params.metadata.format) : null,
         String(params.metadata.visibility || existing.visibility || 'org'),
         requestedScope,
         // M03R-002 (P2 review `cb47528a53`): kolumna jest TEXT, a bindowanie
