@@ -6,6 +6,8 @@ import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SubscriptionChange {
   id: string;
   organization_id: string;
@@ -127,7 +129,7 @@ export const SubscriptionChangesView: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
@@ -146,7 +148,7 @@ export const SubscriptionChangesView: React.FC = () => {
             Subscription Changes
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Manage subscription upgrades, downgrades, and cancellations
+            {tlumaczPozaHookiem("superadmin.subscriptionChanges.manageSubscriptionUpgradesDowngradesAndCancellations", "Manage subscription upgrades, downgrades, and cancellations")}
           </p>
         </div>
       </div>
@@ -175,7 +177,7 @@ export const SubscriptionChangesView: React.FC = () => {
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pending}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">Pending</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.subscriptionChanges.pending", "Pending")}</div>
             </CardContent>
           </Card>
           <Card>
@@ -227,7 +229,7 @@ export const SubscriptionChangesView: React.FC = () => {
                 className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
+                <option value="pending">{tlumaczPozaHookiem("superadmin.subscriptionChanges.pending", "Pending")}</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
                 <option value="completed">Completed</option>
@@ -284,7 +286,7 @@ export const SubscriptionChangesView: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-gray-400">
-                      <span>Effective: {new Date(change.effective_date).toLocaleDateString()}</span>
+                      <span>Effective: {new Date(change.effective_date).toLocaleDateString(localeListy())}</span>
                       {change.proration_amount !== 0 && (
                         <span
                           className={
@@ -294,7 +296,7 @@ export const SubscriptionChangesView: React.FC = () => {
                           Proration: {formatCurrency(change.proration_amount)}
                         </span>
                       )}
-                      <span>Requested: {new Date(change.created_at).toLocaleDateString()}</span>
+                      <span>Requested: {new Date(change.created_at).toLocaleDateString(localeListy())}</span>
                     </div>
                   </div>
                   {change.status === 'pending' && (

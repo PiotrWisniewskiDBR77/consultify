@@ -12,6 +12,8 @@ import { StandardTable, type TableColumn, type TableRow } from '../../../compone
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type UserRow = {
   id: string;
   email: unknown;
@@ -38,7 +40,7 @@ const asText = (value: unknown, fallback: string) => {
 const formatDeviceDate = (value?: unknown) => {
   if (!value) return '-';
   const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
 };
 
 type JsonRecord = Record<string, unknown> & {
@@ -165,7 +167,7 @@ const buildColumns = (): TableColumn[] => [
       }
       return (
         <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300">
-          Unknown
+          {tlumaczPozaHookiem("superadmin.deviceManagement.unknown", "Unknown")}
         </span>
       );
     },
@@ -239,7 +241,7 @@ export const DeviceManagementView: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Device Management</h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Manage and monitor user devices
+            {tlumaczPozaHookiem("superadmin.deviceManagement.manageAndMonitorUserDevices", "Manage and monitor user devices")}
           </p>
         </div>
         <select
@@ -247,7 +249,7 @@ export const DeviceManagementView: React.FC = () => {
           onChange={(e) => setSelectedUserId(e.target.value)}
           className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
         >
-          <option value="">Select User</option>
+          <option value="">{tlumaczPozaHookiem("superadmin.deviceManagement.selectUser", "Select User")}</option>
           {users.map((user) => (
             <option key={user.id} value={user.id}>
               {asText(user.email, 'Unknown user')}

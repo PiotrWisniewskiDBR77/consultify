@@ -7,6 +7,7 @@ import { RevenueForecastView } from './RevenueForecastView';
 import { RevenueRecognitionView } from './RevenueRecognitionView';
 import { SubscriptionChangesView } from './SubscriptionChangesView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type RevenueTab = 'pricing' | 'subscriptions' | 'recognition' | 'forecast' | 'payments';
 
 const TAB_HELP_CARDS: Record<RevenueTab, string> = {
@@ -59,8 +60,7 @@ export const RevenueModuleView: React.FC = () => {
               Revenue & Billing Module
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Comprehensive revenue management including pricing, subscriptions, recognition,
-              forecasting, and payments
+              {tlumaczPozaHookiem("superadmin.revenueModule.comprehensiveRevenueManagementIncludingPricingSubscriptionsRecognition", "Comprehensive revenue management including pricing, subscriptions, recognition, forecasting, and payments")}
             </p>
           </div>
           <InfoButton cardId="superadmin-revenue" />

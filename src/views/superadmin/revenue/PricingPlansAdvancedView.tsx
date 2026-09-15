@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface PlanFeature {
   id: string;
   plan_id: string;
@@ -164,7 +166,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: currency || 'USD',
     }).format(amount);
@@ -183,7 +185,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             Advanced Pricing Plans
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Manage pricing tiers and feature allocations
+            {tlumaczPozaHookiem("superadmin.pricingPlansAdvanced.managePricingTiersAndFeatureAllocations", "Manage pricing tiers and feature allocations")}
           </p>
         </div>
         <div className="flex gap-3">
@@ -314,7 +316,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             No pricing plans configured
           </div>
           <p className="text-slate-500 dark:text-gray-400 mt-2">
-            Create your first pricing plan to get started
+            {tlumaczPozaHookiem("superadmin.pricingPlansAdvanced.createYourFirstPricingPlanToGet", "Create your first pricing plan to get started")}
           </p>
         </div>
       )}
