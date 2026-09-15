@@ -99,6 +99,10 @@ vi.mock('@/services/api', () => ({
     patch: vi.fn(async () => ({})),
     delete: vi.fn(async () => ({})),
     getUsers: vi.fn(async () => []),
+    /* F9 (15.09.2026): filtr projektow dociaga KATALOG NAZW, zeby nie drukowac
+       surowych UUID. Atrapa musi go miec, inaczej test mierzy atrape (brak
+       metody), a nie produkt. */
+    getProjects: vi.fn(async () => []),
     generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
   },
   shouldAllowDemoData: () => demoModeState.enabled,

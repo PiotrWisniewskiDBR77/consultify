@@ -70,8 +70,14 @@ describe('Menu 2 · slot filtrów niesie WYŁĄCZNIE filtry', () => {
      */
     const dropdowny = slotFiltrow.match(/<Menu2PresetDropdown\s+compact/g) ?? [];
     const wszystkie = slotFiltrow.match(/<Menu2PresetDropdown/g) ?? [];
-    expect(wszystkie).toHaveLength(3); // Inicjatywy · Plan · Obciążenie
-    expect(dropdowny).toHaveLength(3);
+    /* F9 (15.09.2026): CZWARTY dropdown to ten sam przelacznik „Status"
+       renderowany w skrzynce recenzenta (`transitionInbox`) — bez niego
+       wejscie do skrzynki byloby jednokierunkowe. Niezmiennik, ktorego ten
+       test broni, NIE jest liczba 3, tylko „zaden dropdown Menu 2 nie pokazuje
+       licznika na przycisku" — czyli KAZDY chodzi w trybie `compact`. Dlatego
+       porownujemy zbiory, a nie przepisujemy stalej w dol. */
+    expect(wszystkie).toHaveLength(4); // Inicjatywy · Plan · Obciążenie · Skrzynka
+    expect(dropdowny).toHaveLength(wszystkie.length);
   });
 
   it('natywny select priorytetu ma kanoniczny kształt kontrolki Menu 2', () => {

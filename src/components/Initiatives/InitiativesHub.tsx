@@ -916,7 +916,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   useEffect(() => {
     if (!initiativesFourButtonsEnabled) return undefined;
     let aktualne = true;
-    Api.getProjects()
+    /* `Promise.resolve().then(...)` zamiast golego wolania: efekt jest
+       z zalozenia FAIL-SOFT (brak katalogu nazw nie moze wywrocic rejestru),
+       a gole wolanie rzuca SYNCHRONICZNIE, gdy warstwy `Api` nie ma — wtedy
+       `.catch` nizej juz nic nie lapie i pada caly hub. */
+    Promise.resolve()
+      .then(() => Api.getProjects())
       .then((rows) => {
         if (!aktualne) return;
         const katalog: Record<string, string> = {};
