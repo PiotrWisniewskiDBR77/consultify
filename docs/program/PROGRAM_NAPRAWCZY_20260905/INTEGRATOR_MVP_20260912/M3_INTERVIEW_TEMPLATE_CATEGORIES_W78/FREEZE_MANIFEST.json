@@ -1,0 +1,47 @@
+{
+  "package": "M3-interview-template-categories",
+  "status": "READY FOR CTO REVIEW",
+  "decision": "DEC-519",
+  "exactBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "productCommit": "01ab0287d1",
+  "branch": "codex/d-m3-interview-template-categories-20260915",
+  "migration": "server/migrations/20260915_interview_templates_category.sql",
+  "rollback": "server/migrations/rollback/20260915_interview_templates_category.rollback.sql",
+  "measurements": {
+    "globalV6Templates": 18,
+    "categoryDistribution": {
+      "strategy": 4,
+      "operations": 4,
+      "digital": 2,
+      "data": 1,
+      "finance": 2,
+      "cost": 1,
+      "commercial": 2,
+      "people": 2
+    },
+    "formatDistribution": {
+      "pulse": 2,
+      "standard": 15,
+      "deep_dive": 1
+    },
+    "otherCategory": 0,
+    "secondPassFormatUpdates": 0,
+    "secondPassCategoryUpdates": 0,
+    "rollbackDrops": 0
+  },
+  "verification": {
+    "freshStrictMigrations": "920/920 exit 0",
+    "targetedTests": "17/17",
+    "typescriptVersion": "5.8.3",
+    "sharedNodeModules": true,
+    "serverTsc": {
+      "ctoLine": 0,
+      "candidate": 27
+    },
+    "frontTsc": {
+      "ctoLine": 177,
+      "candidate": "NOT_PROVEN: timeout 120s"
+    },
+    "screenshots": "NOT_PROVEN"
+  }
+}
