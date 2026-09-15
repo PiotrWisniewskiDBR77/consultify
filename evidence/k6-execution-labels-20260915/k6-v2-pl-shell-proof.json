@@ -1,0 +1,10 @@
+{
+  "requestedUrl": "http://127.0.0.1:4214/execution?tab=reports&view=table&documentKind=report&documentId=report%3Aweekly-exec",
+  "finalUrl": "http://127.0.0.1:4214/execution?tab=reports&view=table&documentKind=report&documentId=report%3Aweekly-exec",
+  "language": "pl",
+  "expectedTitle": "Tygodniowy pakiet realizacji",
+  "expectedTitleCount": 1,
+  "mainLayoutVisible": 1,
+  "reportDefinitionsIntercept": "200 { definitions: [] }",
+  "executionControlIntercept": "200 { data: [] }"
+}
