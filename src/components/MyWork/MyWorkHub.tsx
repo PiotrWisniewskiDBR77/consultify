@@ -2154,12 +2154,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           },
         },
       });
-      // The hub feeds IdeaMapWorkspace `activeTool = perIdeaState?.activeTool ||
-      // ideaActiveTool`. The patch below is a no-op for a brand-new id (default
-      // state already equals the patch, so patchIdeaWorkspaceState's "unchanged"
-      // guard drops it), which left the hub falling back to ideaActiveTool='mindmap'
-      // — the root cause of "New Idea always opens a map". Seed the fallback too so
-      // the controlled activeTool prop reflects the chosen tool from the first frame.
+      // Keep the fallback aligned for the first render; the per-idea patch below
+      // also materializes an authoritative state entry for the selected tool.
       setIdeaActiveTool(startTool);
       setIdeaWorkspaceStateById((prev) =>
         patchIdeaWorkspaceState(
@@ -2285,12 +2281,9 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           : null;
 
       if (nextId && nextId !== docId) {
-        // ★ IDE-027: stan warsztatu MUSI przeżyć podmianę identyfikatora, nawet
-        // jeśli nikt nie zmaterializował wpisu pod identyfikatorem roboczym
-        // (strażnik „bez zmian" w patchIdeaWorkspaceState go nie zakłada, gdy
-        // łatka równa się stanowi domyślnemu — czyli DOKŁADNIE przy świeżej
-        // Idei z wybranym narzędziem). Wyliczamy stan z dokumentu SPRZED
-        // nadpisania i podajemy jako awaryjny.
+        // ★ IDE-027: stan warsztatu MUSI przeżyć podmianę identyfikatora.
+        // Wyliczamy stan z dokumentu SPRZED nadpisania i podajemy jako awaryjny
+        // dla starszego/przywróconego stanu bez wpisu per-idea.
         const dokumentPrzed = openDocumentsRef.current.find((d) => d.id === docId) || null;
         const stanPrzed = dokumentPrzed
           ? createDefaultIdeaWorkspaceState(dokumentPrzed as any)
