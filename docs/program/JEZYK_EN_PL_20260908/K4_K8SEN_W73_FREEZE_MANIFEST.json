@@ -1,11 +1,11 @@
 {
-  "schemaVersion": 6,
-  "package": "K4 v6 K8sen W73 schema-version presentation boundary",
+  "schemaVersion": 7,
+  "package": "K4 v6 K8sen W73 schema-version boundary, evidence refreeze",
   "branch": "codex/c-k4-k8sen-20260915",
   "exactBase": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3",
-  "holdReview": "48da1a415b507584ed369fe0718f7aff7bffa152",
-  "testedCandidate": "b3dabff67dc773a87777d4d1e9d255c0e99cce4a",
-  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V6",
+  "holdReview": "1a3d019c0059fffa7fd1a21b4629d1fc15de7c05",
+  "testedCandidate": "573292e4c3070a6d452fa7bcf449a096639cb38b",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V6_EVIDENCE_FIX",
   "measurement": {
     "K8senBeforeV4": 1584,
     "classifiedRowsV6": 1585,
@@ -43,7 +43,9 @@
     "listCanon": "349/349 PASS",
     "artifact": "8/8; R2+R3 0/0; danger 117/117 PASS",
     "productionBuild": "PASS 10754 modules, 46.34s, sequential heap 8192MB",
-    "productionBuildLog": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_BUILD_V6.log"
+    "productionBuildLog": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_BUILD_V6.log",
+    "fullDiffCheck": "PASS exactBase..testedCandidate",
+    "receiptWhitespace": "122 log lines normalized; build content and 10754/46.34s outcome preserved"
   },
   "inheritedReds": {
     "emailSender": {
@@ -69,8 +71,8 @@
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_BUILD_V6.log",
-      "bytes": 278567,
-      "sha256": "cd91b6f5c0fa7c2a3d7e6a6075cb2894d4df19187b3b49c8e45ff81f4a49d54b"
+      "bytes": 278332,
+      "sha256": "21039752164c8415b9ae96a0bd04af977b63a63520afe0548d0014bdbc5db6fd"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json",
