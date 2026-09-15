@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 4,
-  "sourceSha": "WIP_K4_V5",
+  "schemaVersion": 5,
+  "sourceSha": "d0b9ac1b4c5f97c563ae089c0f43403f84c29645",
   "measurement": {
     "K8sen": 1584,
     "runtimeFalseExcludedFromCoverage": true,
@@ -10,7 +10,8 @@
     "fullPolishRows": 1528,
     "mixedOutputs": 0,
     "knownEnglishProse": 0,
-    "technicalLiteralUnique": 46
+    "technicalLiteralUnique": 46,
+    "K8senAfterV5": 0
   },
   "counts": {
     "b:http-error-boundary": 1528,
@@ -27,7 +28,7 @@
     "knownEnglishProse": 0,
     "remaining35Table": "K4_K8SEN_W73_V4_REMAINING_35.json",
     "technicalLiteral": "46 stable machine-code keys excluded from Polish prose denominator",
-    "dynamicNested": "3/3 stable claimForCompute outcomes recursively localized"
+    "dynamicNested": "3/3 stable claimForCompute outcomes recursively localized through full payload; status/code preserved"
   },
   "entries": [
     {

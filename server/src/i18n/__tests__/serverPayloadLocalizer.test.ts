@@ -59,6 +59,17 @@ describe('server payload localization', () => {
     expect(output).not.toContain('Błąd operacji:');
     expect(output).not.toContain('duplicate compute request');
     expect(output).not.toContain('Failed to self-claim');
+    expect(
+      localizeServerPayload(
+        { ok: false, code: 'JOB_NOT_RUNNING', status: 409, message: `runDcfFcffValuation: ${detail}` },
+        request('pl')
+      )
+    ).toEqual({
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      status: 409,
+      message: `Wycena DCF/FCFF: ${localizedDetail}`,
+    });
   });
 
   it('keeps the executable message catalog unique', () => {
