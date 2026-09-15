@@ -36,6 +36,8 @@ Zachowane są wcześniejsze dowody: MeetingExecutor → ActionExecutionAdapter �
 - test lokalizatora: `12/12 PASS`, w tym 3 rzeczywiste payloady DCF;
 - e-mail sender: `3/5`; dwa odziedziczone czerwone testy oczekują gołego adresu, a exact base zwraca nazwę nadawcy z adresem;
 - katalog: `2118/2118` unikalnych kluczy, duplikaty `0`;
+- server TypeScript: `0`; frontend TypeScript: `177`, bez wzrostu;
+- `check:jezyk:ci`: PASS, K8sen `0`;
+- list canon: `349/349` PASS; artefakt: `8/8`, R2+R3 `0/0`, danger `117/117`;
+- produkcyjny build: PASS, `10754` modułów, `46.34 s`, pełny log `K4_K8SEN_W73_BUILD_V6.log`;
 - migracje, deploy i zmiany w plikach zakazanych: `0`.
-
-Wyniki TypeScript, języka, kanonu list, artefaktu i produkcyjnego builda są zapisywane w freeze manifeście po wykonaniu ich na finalnym content SHA.
