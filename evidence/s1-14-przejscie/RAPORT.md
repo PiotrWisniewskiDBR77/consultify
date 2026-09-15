@@ -8,7 +8,7 @@ Gałąź naprawy: `codex/c-m2-manual-tools-20260915`
 
 ## Werdykt
 
-**E1 WIP.** Pomysły, Notatnik i Dokumenty dowodzą po trzy realne zadania z readbackiem na liście My Work. Dokumenty na bieżącym stagingu nie mają żadnej akcji tworzenia zadania. Paczka dodaje do każdego dokumentu akcję `Create task`, zapis przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 3/3 PASS. Lokalny kandydat `dcbd6c052a` na porcie 4214, połączony wyłącznie przez proxy HTTP z API stagingu, utworzył trzy zadania z trzech dokumentów; My Work wzrosło 23→26 i pokazało wszystkie trzy tytuły.
+**E1 COMPLETE / STOP DO REVIEW.** Pomysły, Notatnik i Dokumenty dowodzą po trzy realne zadania z readbackiem na liście My Work. Dokumenty na bieżącym stagingu nie mają żadnej akcji tworzenia zadania. Paczka dodaje do każdego dokumentu akcję `Create task`, zapis przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 3/3 PASS. Lokalny kandydat `dcbd6c052a` na porcie 4214, połączony wyłącznie przez proxy HTTP z API stagingu, utworzył trzy zadania z trzech dokumentów; My Work wzrosło 23→26 i pokazało wszystkie trzy tytuły. Przejście ujawniło też trzy uczciwie zapisane luki do M6: akcja `Process Flow` otworzyła istniejącą kartę w Mind Map, konwersje Initiative/Decision/Presentation/Report kończą się ogólnym `Done` bez nawigacji do utworzonego obiektu, a brak folderów wyłącza jedyną akcję folderu.
 
 ## Pomysły
 
@@ -21,16 +21,18 @@ Gałąź naprawy: `codex/c-m2-manual-tools-20260915`
 | Sort / Filter / View settings | widoczne w StandardTable | kanoniczna tabela |
 | Star | widoczny per wiersz | akcja wiersza |
 | Stage | widoczny per wiersz | akcja wiersza |
-| Open | pozycja Row actions | zinwentaryzowana |
-| Process Flow | pozycja Row actions | zinwentaryzowana |
-| AI Chat | pozycja Row actions | zinwentaryzowana |
-| AI Insights | pozycja Row actions | zinwentaryzowana |
-| Initiative | pozycja Row actions | zinwentaryzowana |
+| Open | działa | otwiera warsztat Mind Map z pełnym panelem i narzędziami |
+| Process Flow | **błąd zachowania** | dla istniejącej karty otworzył URL i aktywny widok `mindmap`, nie Process Flow |
+| AI Chat | działa | otwiera prawy panel Teresa z kontekstem i treścią pomysłu |
+| AI Insights | działa | otwiera ten sam panel z kontekstem analizy; brak automatycznej wysyłki bez decyzji użytkownika |
+| Initiative | **częściowo** | backend odpowiada, UI pokazuje tylko `Done`; brak nawigacji/readbacku obiektu |
 | Tasks | **działa, 3/3** | utworzone: `Supplier quality early-warning signal between quarterly reviews`, `One changeover clock instead of three stopwatches`, `Retire the paper goods-in checklist at Wakefield` |
-| Decision / Team Chat / Presentation / Report | pozycje Row actions | zinwentaryzowane; brak dodatkowych mutacji w tym pomiarze |
+| Decision / Presentation / Report | **częściowo** | backend odpowiada, UI pokazuje tylko `Done`; brak nawigacji/readbacku utworzonego obiektu |
+| Team Chat | działa | tworzy rozmowę i przechodzi do `/chat/<conversationId>` z wiadomością źródłową |
 | Folder | disabled bez folderu | UI uczciwie pokazuje niedostępność |
-| Open preview / Edit | pozycje Row actions | zinwentaryzowane |
-| Delete | pozycja Row actions | nie zatwierdzano usunięcia |
+| Open preview | działa | otwiera kanoniczny panel boczny z właściwościami i akcjami |
+| Edit | działa | prowadzi do edytowalnego warsztatu idei |
+| Delete | działa do bramki | otwiera potwierdzenie; nie zatwierdzano usunięcia |
 
 Dowody: `screens/ideas-after-three-task-actions.png`, `screens/tasks-ideas-and-notebook-readback.png`.
 
@@ -88,9 +90,10 @@ Zmiana obejmuje cztery pliki produktu/testu:
 - `public/locales/en/translation.json` i `public/locales/pl/translation.json`: EN first i polski odpowiednik.
 - `DocumentSidePanel.uploadBlad.test.tsx`: dowód payloadu z `sourceType=document`, `sourceId`, idempotency key oraz widocznego potwierdzenia.
 
-Walidacja: targeted Vitest 3/3 PASS, JSON en/pl parse PASS, `git diff --check` PASS. Pełny front TSC w pierwszej próbie zakończył się kodem 134 wskutek wyczerpania pamięci przy równoległych paczkach; nie jest zaliczony i będzie powtórzony po zwolnieniu zasobów.
+Walidacja: targeted Vitest 3/3 PASS, JSON en/pl parse PASS, esbuild per zmieniony plik PASS, `git diff --check` PASS. Powtórzony pełny front TSC zakończył się kodem 2 i bieżącym współdzielonym fingerprintem 194 `error TS`; dokładnie ten sam wynik odtworzyła równoległa paczka K1 po odświeżeniu współdzielonego toolchainu. Żaden błąd nie wskazuje `DocumentSidePanel.tsx` ani testu M2, więc delta paczki wynosi 0. Historyczny limit 177 nie jest obecnie reprodukowalny w tym środowisku i nie został przedstawiony jako zielony.
 
-## Pozostała bramka
+## Przekazanie do M6
 
-1. Dokończyć kliknięcia bez mutacji lub z anulowaniem potwierdzenia dla pozostałych zinwentaryzowanych pozycji i zapisać wynik `działa / nic / błąd / po polsku`.
-2. Powtórzyć front TSC i porównać z liniowym limitem 177.
+1. Naprawić `Process Flow` dla już otwartej karty: żądane `initialTool=process_flow` przegrywa dziś ze stanem istniejącego dokumentu i route wraca do `/workspace/mindmap`.
+2. Zastąpić ogólne `Done` dla Initiative/Decision/Presentation/Report wynikiem, który pokazuje typ i identyfikator utworzonego obiektu oraz pozwala go otworzyć.
+3. Po naprawie powtórzyć ten sam manualny przebieg na zintegrowanej linii i sprawdzić oba języki.
