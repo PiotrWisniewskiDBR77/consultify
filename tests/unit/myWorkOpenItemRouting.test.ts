@@ -5,6 +5,7 @@ import {
   resolveOpenItemRoute,
 } from '../../src/components/MyWork/openItemRouting';
 import { UKRYTE_DEC406 } from '../../src/components/MyWork/mojaPracaWidocznosc';
+import { getArtifactPath } from '../../src/utils/artifactLinks';
 
 /**
  * DP-2 "global IDE-tabs doc" contract — guards the SSOT used by the MyWorkHub
@@ -46,6 +47,7 @@ describe('mywork-open-item routing (DP-2, po DEC-406)', () => {
       'assessment',
       'meeting',
       'tool',
+      'action_card',
     ]) {
       expect(resolveOpenItemRoute(type)).toBe('navigate');
     }
@@ -64,5 +66,12 @@ describe('mywork-open-item routing (DP-2, po DEC-406)', () => {
 
   it('unknown types default to in-context (safe: stay in My Work)', () => {
     expect(resolveOpenItemRoute('totally-unknown-type')).toBe('in-context');
+  });
+
+  it('opens an action-card source link on the canonical card route', () => {
+    expect(resolveOpenItemRoute('action_card')).toBe('navigate');
+    expect(getArtifactPath('action_card', 'card-17')).toMatch(
+      /^\/action-cards\/card-17\?artifact=action_card%3Acard-17&code=ACT-CARD-17$/
+    );
   });
 });

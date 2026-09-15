@@ -59,9 +59,14 @@ export async function updateActionCard(id: string, patch: Partial<CreateActionCa
  * (`idempotency_key = action-card-task:<id>`), więc drugi klik oddaje TO SAMO
  * zadanie, nigdy drugiego wiersza w Zadaniach.
  */
-export async function createTaskFromActionCard(id: string): Promise<{ id: string; title: string; status: string }> {
+export async function createTaskFromActionCard(id: string): Promise<{
+  id: string;
+  title: string;
+  status: string;
+  source: { type: 'action_card'; id: string; url: string };
+}> {
   const response = await fetch(`/api/action-cards/${encodeURIComponent(id)}/task`, { method: 'POST', credentials: 'include', headers: headers() });
-  return (await read<{ task: { id: string; title: string; status: string } }>(response)).task;
+  return (await read<{ task: { id: string; title: string; status: string; source: { type: 'action_card'; id: string; url: string } } }>(response)).task;
 }
 
 export async function closeActionCard(id: string): Promise<ActionCardModel> {

@@ -2,8 +2,6 @@ import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { getDatabase } from '../database/Database.js';
-import { TaskService } from '../services/TaskService.js';
 import {
   ACTION_CARD_SOURCE_KINDS,
   closeActionCard,
@@ -15,6 +13,7 @@ import {
   type ActionCardSourceKind,
   type ActionCardStatus,
 } from '../services/actionCard/actionCardService.js';
+import { createTaskFromActionCard } from '../services/actionCard/actionCardTaskService.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -86,39 +85,20 @@ router.post('/:id/reopen', asyncHandler(async (req: AuthRequest, res: Response) 
  * UUID, a konta zasiewowe mają identyfikatory tekstowe. Zamiast wywracać
  * żądanie, zadanie powstaje wtedy bez przypisania (nazwisko zostaje w opisie).
  */
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 router.post('/:id/task', asyncHandler(async (req: AuthRequest, res: Response) => {
   const cardScope = scope(req);
-  const card = await getActionCard(cardScope, req.params.id);
-  if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
-
-  const title = (card.actionText || card.problem || 'Karta działania').slice(0, 255);
-  const descriptionParts = [
-    card.problem ? `Problem: ${card.problem}` : null,
-    card.rootCause ? `Główna przyczyna: ${card.rootCause}` : null,
-    card.ownerName ? `Odpowiedzialność: ${card.ownerName}` : null,
-    `Okres: ${card.periodStart} – ${card.periodEnd}`,
-  ].filter(Boolean);
-
-  const taskService = new TaskService((await getDatabase()) as any);
-  const task = await taskService.createTask(
-    {
-      title,
-      description: descriptionParts.join('\n'),
-      status: 'todo',
-      priority: 'high',
-      assigneeId: UUID_RE.test(card.ownerUserId) ? card.ownerUserId : undefined,
-      dueDate: card.dueDate ? `${card.dueDate}T00:00:00.000Z` : undefined,
+  const result = await createTaskFromActionCard(cardScope, req.params.id);
+  if (!result) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
+  res.status(result.replayed ? 200 : 201).json({
+    ok: true,
+    replayed: result.replayed,
+    task: {
+      id: result.task.id,
+      title: result.task.title,
+      status: result.task.status,
+      source: result.source,
     },
-    cardScope.actorUserId,
-    {
-      idempotencyKey: `action-card-task:${card.id}`,
-      sourceType: 'action_card',
-      sourceId: card.id,
-    }
-  );
-  res.status(201).json({ ok: true, task: { id: task.id, title: task.title, status: task.status } });
+  });
 }));
 
 export default router;

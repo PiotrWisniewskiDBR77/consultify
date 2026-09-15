@@ -4,6 +4,7 @@ export type ArtifactType =
   | 'decision'
   | 'initiative'
   | 'task'
+  | 'action_card'
   | 'process'
   | 'role'
   | 'system'
@@ -76,6 +77,13 @@ export const ARTIFACT_IDENTITY: Record<ArtifactType, ArtifactIdentity> = {
     labelEn: 'Task',
     labelPl: 'Zadanie',
     prefix: 'TASK',
+  },
+  action_card: {
+    icon: 'ClipboardCheck',
+    accent: 'amber',
+    labelEn: 'Action card',
+    labelPl: 'Karta działania',
+    prefix: 'ACT',
   },
   process: {
     icon: 'Workflow',
@@ -273,6 +281,8 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'decision':
     case 'notification':
       return '/my-work';
+    case 'action_card':
+      return `/action-cards/${id}`;
     case 'initiative':
       return '/initiatives';
     case 'project':
