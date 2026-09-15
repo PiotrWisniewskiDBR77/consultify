@@ -37,6 +37,7 @@ export function patchIdeaWorkspaceState(
   doc: IdeaWorkspaceDocSeed,
   patch: Partial<IdeaWorkspaceHubState>
 ): Record<string, IdeaWorkspaceHubState> {
+  const hasStoredState = Boolean(current[doc.id]);
   const previous = current[doc.id] || createDefaultIdeaWorkspaceState(doc);
   const nextState = {
     ...previous,
@@ -44,6 +45,7 @@ export function patchIdeaWorkspaceState(
   };
 
   if (
+    hasStoredState &&
     previous.activeTool === nextState.activeTool &&
     previous.activePanel === nextState.activePanel &&
     previous.locked === nextState.locked &&
@@ -62,15 +64,10 @@ export function patchIdeaWorkspaceState(
  * Przenieś stan warsztatu z identyfikatora roboczego na prawdziwy (po zapisie
  * Idei na serwerze).
  *
- * ★ `fallback` NIE JEST OZDOBNIKIEM — bez niego wybór narzędzia ginie (IDE-027).
- * `patchIdeaWorkspaceState` ma strażnika „bez zmian", który NIE ZAKŁADA wpisu,
- * gdy łatka jest równa stanowi domyślnemu. Dla świeżej Idei z wybranym Procesem
- * łatka `{activeTool:'process_flow', activePanel:'tools', …}` jest co do joty
- * równa domyślnemu stanowi wyliczonemu z `data.initialTool` — więc strażnik
- * ją odrzuca i pod `new-idea-<ts>` NIE MA ŻADNEGO WPISU. Wtedy `current[fromId]`
- * jest puste, przeniesienie było ciche, a po podmianie identyfikatora stan
- * odtwarzał się z dokumentu, któremu `handleDocumentSaved` właśnie wyczyścił
- * `data` rekordem z serwera (bez `initialTool`) → 'mindmap'.
+ * ★ `fallback` chroni dokumenty utworzone przed materializacją wpisu stanu
+ * (IDE-027). `patchIdeaWorkspaceState` materializuje teraz pierwszy wpis nawet,
+ * gdy łatka jest równa stanowi domyślnemu, ale fallback pozostaje potrzebny dla
+ * starszego/przywróconego stanu oraz wyścigu zapisu dokumentu.
  *
  * Dlatego przy braku wpisu przenosimy STAN WYLICZONY, a nie nic.
  */
