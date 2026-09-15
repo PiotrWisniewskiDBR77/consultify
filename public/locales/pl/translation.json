@@ -12426,7 +12426,8 @@
       "allPriorities": "Wszystkie priorytety",
       "lifecycle": "Cykl życia",
       "planState": "Stan planu",
-      "capacityConstraint": "Ograniczenie"
+      "capacityConstraint": "Ograniczenie",
+      "unnamedProject": "Projekt bez nazwy"
     },
     "bridge": {
       "contextMissing": "Wymagany jest projekt i właściciel inicjatywy.",

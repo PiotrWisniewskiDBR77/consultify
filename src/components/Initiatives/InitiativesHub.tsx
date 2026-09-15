@@ -162,6 +162,7 @@ import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { Menu2PresetDropdown } from './Menu2PresetDropdown';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
 import { PortfolioHealthView } from './PortfolioHealthView';
+import { resolveProjectFilterLabel } from './projectFilterLabel';
 import { TransitionInboxSurface } from './TransitionInboxSurface';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
@@ -907,6 +908,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     searchQuery,
   ]);
 
+  /* Katalog nazw projektow — JEDNO zapytanie na wejscie do modulu, tylko gdy
+     filtr projektow w ogole istnieje (flaga czterech przyciskow). Fail-soft:
+     blad zostawia pusty katalog, a filtr spada na neutralna etykiete zamiast
+     drukowac UUID. */
+  const [projectNamesById, setProjectNamesById] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!initiativesFourButtonsEnabled) return undefined;
+    let aktualne = true;
+    Api.getProjects()
+      .then((rows) => {
+        if (!aktualne) return;
+        const katalog: Record<string, string> = {};
+        (Array.isArray(rows) ? rows : []).forEach((row: { id?: string; name?: string }) => {
+          const id = String(row?.id || '').trim();
+          const name = String(row?.name || '').trim();
+          if (id && name) katalog[id] = name;
+        });
+        setProjectNamesById(katalog);
+      })
+      .catch(() => undefined);
+    return () => {
+      aktualne = false;
+    };
+  }, [initiativesFourButtonsEnabled]);
+
   // Status counts for dropdown — jedyne miejsce liczenia (podawane w dół).
   const statusCounts: Record<string, number> = useMemo(() => {
     const counts: Record<string, number> = { all: registerCountBase.length };
@@ -921,13 +947,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     allInitiatives.forEach((initiative) => {
       const id = String(initiative.projectId || '').trim();
       if (!id) return;
-      const label = String(initiative.projectName || '').trim() || id;
+      /* F9 (15.09.2026) — filtr projektow pokazywal TRZY SUROWE UUID
+         (staging c458374bfa, `wdrozenie-6-20260915/zrzuty/06-initiatives-l6.txt`).
+         Przyczyna: `initiative.projectName` przychodzi z rejestru puste, a
+         stara linia miala `|| id` jako ostatnia deske ratunku — czyli
+         wprost drukowala identyfikator. Kolejnosc jest teraz: nazwa
+         z rekordu → nazwa z KATALOGU PROJEKTOW (`/api/pmo/projects`, ten sam
+         kontroler co `/api/projects`) → neutralna etykieta. UUID zostaje
+         WYLACZNIE jako `value` opcji, nigdy jako tekst dla czlowieka. */
+      const label = resolveProjectFilterLabel(
+        id,
+        initiative.projectName,
+        projectNamesById,
+        t('initiatives.filters.unnamedProject', 'Unnamed project')
+      );
       projects.set(id, label);
     });
     return [...projects]
       .map(([id, label]) => ({ id, label }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [allInitiatives]);
+  }, [allInitiatives, projectNamesById, t]);
 
   // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =

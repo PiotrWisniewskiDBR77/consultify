@@ -13259,7 +13259,8 @@
       "allPriorities": "All priorities",
       "lifecycle": "Lifecycle",
       "planState": "Plan state",
-      "capacityConstraint": "Constraint"
+      "capacityConstraint": "Constraint",
+      "unnamedProject": "Unnamed project"
     },
     "bridge": {
       "contextMissing": "Project and initiative owner are required.",
