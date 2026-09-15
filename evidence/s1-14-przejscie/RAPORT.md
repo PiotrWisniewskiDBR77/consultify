@@ -8,7 +8,7 @@ Gałąź naprawy: `codex/c-m2-manual-tools-20260915`
 
 ## Werdykt
 
-**PARTIAL / E1 WIP.** Pomysły i Notatnik dowodzą po trzy realne zadania z readbackiem na liście My Work. Dokumenty na bieżącym stagingu nie mają żadnej akcji tworzenia zadania, więc kryterium 3/3 nie może przejść na starej linii. Paczka dodaje do każdego dokumentu akcję `Create task`, zapis przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 3/3 PASS. Dowód live Dokumenty→zadanie wymaga scalenia i uruchomienia kandydata przez CTO.
+**E1 WIP.** Pomysły, Notatnik i Dokumenty dowodzą po trzy realne zadania z readbackiem na liście My Work. Dokumenty na bieżącym stagingu nie mają żadnej akcji tworzenia zadania. Paczka dodaje do każdego dokumentu akcję `Create task`, zapis przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 3/3 PASS. Lokalny kandydat `dcbd6c052a` na porcie 4214, połączony wyłącznie przez proxy HTTP z API stagingu, utworzył trzy zadania z trzech dokumentów; My Work wzrosło 23→26 i pokazało wszystkie trzy tytuły.
 
 ## Pomysły
 
@@ -76,9 +76,9 @@ Dowody: `screens/notebook-three-task-readbacks.png`, `screens/tasks-ideas-and-no
 | Refresh document status | działa | zmienia czas ostatniego odświeżenia |
 | Download | widoczny dla każdego dokumentu | zinwentaryzowany |
 | Delete | widoczny dla każdego dokumentu | nie zatwierdzano usunięcia |
-| Create task | **BRAK na stagingu** | to jest luka S1.14; poprawka w tej paczce dodaje akcję per dokument |
+| Create task | **BRAK na stagingu; działa 3/3 na lokalnym kandydacie** | trzy przyciski pokazały `Task created`; readback My Work 23→26 |
 
-Dokumenty widoczne w pomiarze: Northwind Programme Charter (Ready, 3 chunks), Line 3 Changeover WI (Ready, 2 chunks), `northwind-s1-14-source-note.txt` (Ready, 1 chunk). Dowód: `screens/documents-three-ready-no-task-action.png`.
+Dokumenty widoczne w pomiarze: Northwind Programme Charter (Ready, 3 chunks), Line 3 Changeover WI (Ready, 2 chunks), `northwind-s1-14-source-note.txt` (Ready, 1 chunk). Utworzone zadania: `Review document: Northwind 2027 Operational Maturity - Programme Charter.docx`, `Review document: Standard Work Instruction WI-OPS-118 - Line 3 Changeover.docx`, `Review document: northwind-s1-14-source-note.txt`. Dowody: `screens/documents-three-ready-no-task-action.png`, `screens/local-candidate-documents-three-task-created.png`, `screens/local-candidate-document-tasks-readback.png`.
 
 ## Naprawa Dokumenty → zadanie
 
@@ -92,7 +92,5 @@ Walidacja: targeted Vitest 3/3 PASS, JSON en/pl parse PASS, `git diff --check` P
 
 ## Pozostała bramka
 
-1. Zbudować kandydat M2 i przeklikać na nim trzy `Create task` dla trzech dokumentów.
-2. Otworzyć My Work Tasks i dowieść trzech tytułów oraz pochodzenia `document`.
-3. Dokończyć kliknięcia bez mutacji lub z anulowaniem potwierdzenia dla pozostałych zinwentaryzowanych pozycji i zapisać wynik `działa / nic / błąd / po polsku`.
-4. Powtórzyć front TSC i porównać z liniowym limitem 177.
+1. Dokończyć kliknięcia bez mutacji lub z anulowaniem potwierdzenia dla pozostałych zinwentaryzowanych pozycji i zapisać wynik `działa / nic / błąd / po polsku`.
+2. Powtórzyć front TSC i porównać z liniowym limitem 177.
