@@ -347,7 +347,11 @@ export function draftTemplate(params: DraftTemplateParams): DraftTemplateResult 
     documentType,
     purpose: params.input.purpose.trim(),
     audience,
-    language: params.input.language ?? 'pl',
+    // DEC-461/DEC-510 (F8b, 2026-09-15): EN is the server default. The caller
+    // (route) resolves the author's locale — explicit override → users.language
+    // → users.locale → organizations.default_language — and passes it in;
+    // absent that, a template is authored in English, never in Polish.
+    language: params.input.language ?? 'en',
     languageStyle,
     communicationRegister: register,
     density,
@@ -530,7 +534,7 @@ export function createTemplateFromArtifact(
     documentType,
     purpose: schema.title?.trim() || `${documentType.replace(/_/g, ' ')} template`,
     audience: Array.isArray(schema.audience) ? schema.audience : [],
-    language: schema.language ?? 'pl',
+    language: schema.language ?? 'en',
     languageStyle: schema.languageStyle ?? defaultLanguageStyleFor(category),
     communicationRegister: schema.communicationRegister ?? defaultRegisterFor(category),
     density,

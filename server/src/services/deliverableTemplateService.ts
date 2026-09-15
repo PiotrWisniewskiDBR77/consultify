@@ -945,7 +945,13 @@ export async function createDeliverableTemplate(
   description: string | undefined,
   meta: Record<string, unknown> | undefined,
   orgId: string,
-  userId: string
+  userId: string,
+  /**
+   * Authoring locale — DEC-461/DEC-510 (F8b). The route resolves it from the
+   * author (explicit override → users.language → users.locale →
+   * organizations.default_language); absent that, English.
+   */
+  language: 'pl' | 'en' = 'en'
 ): Promise<DeliverableTemplate> {
   const desc = description ?? null;
   const metaObj = meta ?? {};
@@ -956,11 +962,12 @@ export async function createDeliverableTemplate(
     // see the "document_studio_templates WRITE adapter" block above for the
     // full rationale. Reuses documentTemplateService's draft→revise→approve
     // pipeline rather than a raw INSERT.
-    const purpose = (desc && desc.trim()) || `Szablon: ${name}`;
+    const purpose =
+      (desc && desc.trim()) || (language === 'pl' ? `Szablon: ${name}` : `Template: ${name}`);
     const { template: drafted } = draftDocStudioTemplate({
       organizationId: orgId,
       userId,
-      input: { name, purpose, notes: desc?.trim() || undefined },
+      input: { name, purpose, language, notes: desc?.trim() || undefined },
     });
 
     const sectionBlueprint = docSectionsJsonToBlueprint(metaObj.sections_json);

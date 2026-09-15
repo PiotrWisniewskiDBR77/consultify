@@ -33,6 +33,7 @@ import {
   updateDeliverableTemplate,
 } from '../services/deliverableTemplateService.js';
 import { suggestTemplate } from '../services/deliverableTemplateSuggestService.js';
+import { resolveDocumentTemplateLocale } from '../services/documentStudio/documentTemplateLocale.js';
 import logger from '../utils/Logger.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
@@ -92,11 +93,12 @@ router.get('/templates-provenance/pending', async (req, res) => {
 
 // ── POST create ─────────────────────────────────────────────
 router.post('/templates', async (req, res) => {
-  const { type, name, description, meta } = req.body as {
+  const { type, name, description, meta, language } = req.body as {
     type?: string;
     name?: string;
     description?: string;
     meta?: Record<string, unknown>;
+    language?: unknown;
   };
 
   if (!type || !VALID_TYPES.has(type)) {
@@ -113,13 +115,22 @@ router.post('/templates', async (req, res) => {
   }
 
   try {
+    // DEC-461/DEC-510 (F8b, 2026-09-15): templates used to be authored with
+    // `language = 'pl'` hardcoded. The author's locale now decides, and the
+    // server default is English.
+    const authoringLocale = await resolveDocumentTemplateLocale({
+      explicit: language ?? (req.query?.lang as string | undefined),
+      userId: getUserId(req),
+      organizationId: getOrgId(req),
+    });
     const template = await createDeliverableTemplate(
       type as DeliverableTemplateType,
       name.trim(),
       description,
       meta,
       getOrgId(req),
-      getUserId(req)
+      getUserId(req),
+      authoringLocale
     );
     res.status(201).json({ template });
   } catch (err) {
