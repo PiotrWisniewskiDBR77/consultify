@@ -34,6 +34,7 @@ import { InfoButton } from '../../components/shared/InfoButton';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type FeedbackStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
 type FeedbackViewMode = 'board' | 'list';
 
@@ -1262,7 +1263,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, note: e.target.value }))}
                 rows={2}
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 resize-none"
-                placeholder="What changed in the workflow?"
+                placeholder={tlumaczPozaHookiem("superadmin.superAdminFeedback.whatChangedInTheWorkflow", "What changed in the workflow?")}
               />
             </label>
           </div>

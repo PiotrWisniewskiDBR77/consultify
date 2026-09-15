@@ -6,6 +6,8 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AccessRequest {
   id: string;
   email: string;
@@ -188,7 +190,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
   const formatRequestedAt = (value?: string | null) => {
     if (!value) return 'Unknown date';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
   };
 
   if (loading) {
@@ -205,7 +207,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       <div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white">Access Requests</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Review and approve requests to join organizations
+          {tlumaczPozaHookiem("superadmin.superAdminAccessRequests.reviewAndApproveRequestsToJoinOrganizations", "Review and approve requests to join organizations")}
         </p>
       </div>
 
@@ -380,7 +382,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Leave empty when approving an organization-only access request.
+                  {tlumaczPozaHookiem("superadmin.superAdminAccessRequests.leaveEmptyWhenApprovingAnOrganizationOnly", "Leave empty when approving an organization-only access request.")}
                 </p>
               </div>
             </div>

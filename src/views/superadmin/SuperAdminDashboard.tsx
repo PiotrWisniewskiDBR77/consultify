@@ -27,6 +27,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface SuperAdminStats {
   totalOrgs: number;
   totalUsers: number;
@@ -90,7 +92,7 @@ const MetricPill: React.FC<{
     <div className="min-w-0">
       <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{label}</div>
       <div className="text-lg font-semibold text-slate-900 dark:text-white tabular-nums leading-tight">
-        {typeof value === 'number' ? value.toLocaleString() : value}
+        {typeof value === 'number' ? value.toLocaleString(localeListy()) : value}
       </div>
       {sub && <div className="text-[10px] text-slate-400 dark:text-slate-500">{sub}</div>}
     </div>
@@ -242,7 +244,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         {stats.pendingRequests > 0 && (
           <ActionChip
             icon={Clock}
-            label="Pending"
+            label={tlumaczPozaHookiem("superadmin.superAdmin.pending", "Pending")}
             onClick={onNavigateToOrganizations}
             badge={stats.pendingRequests}
           />
@@ -264,12 +266,12 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         <MetricPill icon={Users} label="Total Users" value={stats.totalUsers} />
         <MetricPill
           icon={Activity}
-          label="Live Now"
+          label={tlumaczPozaHookiem("superadmin.superAdmin.liveNow", "Live Now")}
           value={stats.liveUsers}
           accent={stats.liveUsers > 0}
         />
         <MetricPill icon={Users} label="Active 7d" value={stats.activeUsers7d} />
-        <MetricPill icon={Brain} label="AI Calls 7d" value={stats.aiCalls.toLocaleString()} />
+        <MetricPill icon={Brain} label="AI Calls 7d" value={stats.aiCalls.toLocaleString(localeListy())} />
         <MetricPill icon={Zap} label="Tokens 7d" value={`${(stats.tokens / 1000).toFixed(1)}k`} />
         <MetricPill icon={DollarSign} label="MRR Est" value={`$${stats.revenue.toFixed(0)}`} />
       </div>

@@ -14,6 +14,7 @@ import { Api } from '../../services/api';
 import { LegalDocType } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type SuperAdminLegalViewProps = Record<string, never>;
 
 interface SuperAdminLegalDocument {
@@ -467,7 +468,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Effective From
+                  {tlumaczPozaHookiem("superadmin.superAdminLegal.effectiveFrom", "Effective From")}
                 </label>
                 <input
                   type="date"
