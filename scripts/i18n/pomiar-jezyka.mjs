@@ -626,6 +626,7 @@ function skanujJsx(pliki) {
       // pomijamy to, co i tak jest w t(...) albo to komentarz / import
       if (/\bt\s*\(/.test(linia) && linia.indexOf(tekst.trim()) > linia.indexOf('t(')) return;
       if (/^\s*(\/\/|\*|\/\*|import |export \* )/.test(linia)) return;
+      if (wartoscTechniczna(tekst)) return;
       const pl = wykryjPolski(tekst);
       if (pl) { zapisz('K4pl', modul, `${rel}:${nrLinii}`, tekst.trim(), pl.dowod); return; }
       const en = wykryjAngielski(tekst);
@@ -670,6 +671,7 @@ function analizujJsxZawartosc(trescSurowa) {
     const linia = linie[nrLinii - 1] || '';
     if (/\bt\s*\(/.test(linia) && linia.indexOf(tekst.trim()) > linia.indexOf('t(')) return;
     if (/^\s*(\/\/|\*|\/\*|import |export \* )/.test(linia)) return;
+    if (wartoscTechniczna(tekst)) return;
     const pl = wykryjPolski(tekst);
     if (pl) { w.K4pl += 1; return; }
     const en = wykryjAngielski(tekst);
@@ -718,11 +720,18 @@ const WLASCIWOSCI_TECHNICZNE = /^(id|key|value|type|status|slug|code|kind|varian
 /** wartość, która jest identyfikatorem/kluczem i18n/ścieżką — nie napisem dla człowieka */
 function wartoscTechniczna(tekst) {
   const s = String(tekst).trim();
+  if (/\r|\n/.test(String(tekst))) return true;                    // regex przeciął literał / tablicę JS
   if (/^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9_]+)+$/.test(s)) return true; // klucz i18n: 'execution.bank.title'
   if (/^[a-z0-9]+([-_][a-z0-9]+)+$/.test(s)) return true;           // kebab/snake: 'data-quality'
   if (/^[a-z][a-z0-9_-]*(?:\s*\|\s*[a-z][a-z0-9_-]*)+\.?$/.test(s)) return true; // unia enumów: 'public | authenticated'
   if (/^[@./#]/.test(s)) return true;                               // ścieżka, selektor, import
-  if (/^[A-Za-z]+\(/.test(s)) return true;                          // wywołanie w literale
+  if (/^[A-Za-z]+(?:\.[A-Za-z_$][\w$]*)*\s*\(/.test(s)) return true; // wywołanie / chain: Array.isArray(
+  if (/^\([^)]*:\s*[A-Za-z_$][\w$<>,.[\] |?]*\)\s*(?::|=>)/.test(s)) return true; // sygnatura TS
+  if (/^[A-Za-z_$][\w$]*\)\s*:\s*[A-Za-z_$][\w$<>,.[\] |?]*$/.test(s)) return true; // ogon sygnatury po generyku `>`
+  if (/^!?\([A-Za-z_$][\w$.?]*$/.test(s)) return true;              // początek wyrażenia przeciętego operatorem `<`
+  if (/=>|===|!==|==|\b(?:const|let|var|return|reduce|map|filter)\b|\?\s*[A-Za-z_$]/.test(s)) return true;
+  if (/^[A-Za-z_$][\w$.?]*(?:\s*[+*/-]\s*[A-Za-z_$][\w$.?]*)?\)+$/.test(s)) return true; // ogon wyrażenia po `=>`
+  if (/^[\[\]{}(),.;]+$/.test(s)) return true;
   return false;
 }
 
@@ -800,11 +809,11 @@ function skanujTwLiterale(pliki) {
 // K5 — komunikaty serwera trafiające do UI
 // ---------------------------------------------------------------------------
 const WZORCE_SERWERA = [
-  /\berror\s*:\s*(["'`])([^"'`]{4,200})\1/g,
-  /\bmessage\s*:\s*(["'`])([^"'`]{4,200})\1/g,
-  /throw new (?:Error|HttpError|ApiError|ValidationError)\(\s*(["'`])([^"'`]{4,200})\1/g,
-  /\.(?:min|max|regex|email|url|length|nonempty)\([^,)]*,\s*(["'`])([^"'`]{4,200})\1/g,
-  /required_error\s*:\s*(["'`])([^"'`]{4,200})\1/g,
+  /\berror\s*:\s*(["'`])([^"'`\r\n]{4,200})\1/g,
+  /\bmessage\s*:\s*(["'`])([^"'`\r\n]{4,200})\1/g,
+  /throw new (?:Error|HttpError|ApiError|ValidationError)\(\s*(["'`])([^"'`\r\n]{4,200})\1/g,
+  /\.(?:min|max|regex|email|url|length|nonempty)\([^,)]*,\s*(["'`])([^"'`\r\n]{4,200})\1/g,
+  /required_error\s*:\s*(["'`])([^"'`\r\n]{4,200})\1/g,
 ];
 
 /** nazwa pliku po stronie serwera -> moduł menu (heurystyka po słowie w nazwie) */
@@ -850,7 +859,7 @@ function skanujSerwer(pliki) {
       let m;
       while ((m = wz.exec(tresc))) {
         const tekst = m[2];
-        if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue; // to już kod błędu, nie zdanie
+        if (wartoscTechniczna(tekst)) continue;
         const nrLinii = tresc.slice(0, m.index).split('\n').length;
         const pl = wykryjPolski(tekst);
         if (pl) { zapisz('K5pl', modul, `${rel}:${nrLinii}`, tekst, pl.dowod); continue; }
@@ -869,7 +878,7 @@ function analizujSerwerZawartosc(tresc) {
     let m;
     while ((m = wz.exec(tresc))) {
       const tekst = m[2];
-      if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue;
+      if (wartoscTechniczna(tekst)) continue;
       const pl = wykryjPolski(tekst);
       if (pl) { w.K5pl += 1; continue; }
       const en = wykryjAngielski(tekst);
@@ -966,9 +975,9 @@ const K8S_POMIJANE = [
 /** dodatkowe ujścia widoczne dla użytkownika: e-mail i PDF */
 const WZORCE_SERWERA_K8S = [
   ...WZORCE_SERWERA,
-  /\bsubject\s*:\s*(["'`])([^"'`]{6,200})\1/g,
-  /\b(?:html|htmlBody|textBody|bodyText)\s*:\s*(["'`])([^"'`]{12,200})\1/g,
-  /\.(?:drawText|addText|writeText)\(\s*(["'`])([^"'`]{6,200})\1/g,
+  /\bsubject\s*:\s*(["'`])([^"'`\r\n]{6,200})\1/g,
+  /\b(?:html|htmlBody|textBody|bodyText)\s*:\s*(["'`])([^"'`\r\n]{12,200})\1/g,
+  /\.(?:drawText|addText|writeText)\(\s*(["'`])([^"'`\r\n]{6,200})\1/g,
 ];
 
 /**
@@ -1022,7 +1031,7 @@ function analizujSerwerK8sZawartosc(trescSurowa) {
     let m;
     while ((m = wz.exec(tresc))) {
       const tekst = m[2];
-      if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue; // kod błędu, nie zdanie
+      if (wartoscTechniczna(tekst)) continue;
       const nrLinii = tresc.slice(0, m.index).split('\n').length;
       const pl = wykryjPolski(tekst);
       if (pl) { w.K8spl += 1; w.trafienia.push(['K8spl', nrLinii, tekst, pl.dowod]); continue; }
@@ -1612,6 +1621,9 @@ export {
   bazaKlucza,
   oczysc,
   wartoOceniac,
+  wartoscTechniczna,
+  analizujJsxZawartosc,
+  analizujSerwerZawartosc,
   // E2f (DEC-510) — trzy warstwy poza UI. Wszystkie są czyste: liczą z
   // przekazanej treści/obiektu, nie dotykają dysku i nie wołają process.exit.
   analizujSerwerK8sZawartosc,

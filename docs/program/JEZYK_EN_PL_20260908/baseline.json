@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-15T02:09:22.244Z",
-    "root": "/Users/piotrwisniewski/Developer/codex-wt/a-k1-e2f-bis-w73",
-    "sha": "309a7f398d58e82eaf4f13d67aea385af006a1bd"
+    "data": "2026-09-15T10:53:21.651Z",
+    "root": "/Users/piotrwisniewski/Developer/codex-wt/a-k1-fix-w77",
+    "sha": "eb75e391c579cecfc65cf2abe02b39275ad279d3"
   },
   "suma": {
     "K1": 5,
@@ -12,21 +12,21 @@
     "K3a": 0,
     "K3aKLUCZ": 0,
     "K3b": 0,
-    "K4pl": 81,
-    "K4en": 5516,
-    "K4objPL": 711,
-    "K4obj": 4343,
-    "K5pl": 262,
-    "K5en": 7161,
-    "K7": 270,
-    "K8spl": 95,
-    "K8sen": 3183,
-    "K9pPL": 36,
+    "K4pl": 74,
+    "K4en": 4632,
+    "K4objPL": 702,
+    "K4obj": 4279,
+    "K5pl": 263,
+    "K5en": 7164,
+    "K7": 103,
+    "K8spl": 94,
+    "K8sen": 2487,
+    "K9pPL": 35,
     "K9pMIX": 1,
-    "K9pBRAK": 77,
+    "K9pBRAK": 76,
     "K10dPL": 0,
     "K10dROZ": 2,
-    "K11": 1
+    "K11": 0
   },
   "moduly": {
     "01 Chat": {
@@ -38,11 +38,11 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 89,
+      "K4en": 67,
       "K4objPL": 19,
-      "K4obj": 109,
+      "K4obj": 105,
       "K5pl": 0,
-      "K5en": 95,
+      "K5en": 105,
       "K7": 0,
       "K8spl": 0,
       "K8sen": 28,
@@ -51,7 +51,7 @@
       "K9pBRAK": 3,
       "K10dPL": 0,
       "K10dROZ": 0,
-      "K11": 1
+      "K11": 0
     },
     "02 My Work": {
       "K1": 0,
@@ -62,14 +62,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 2,
-      "K4en": 117,
-      "K4objPL": 65,
-      "K4obj": 454,
+      "K4en": 88,
+      "K4objPL": 64,
+      "K4obj": 450,
       "K5pl": 1,
-      "K5en": 326,
+      "K5en": 310,
       "K7": 0,
       "K8spl": 2,
-      "K8sen": 42,
+      "K8sen": 12,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -86,17 +86,17 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 22,
-      "K4objPL": 1,
-      "K4obj": 170,
+      "K4en": 21,
+      "K4objPL": 0,
+      "K4obj": 167,
       "K5pl": 0,
       "K5en": 262,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 88,
-      "K9pPL": 1,
+      "K8sen": 87,
+      "K9pPL": 0,
       "K9pMIX": 0,
-      "K9pBRAK": 4,
+      "K9pBRAK": 3,
       "K10dPL": 0,
       "K10dROZ": 0,
       "K11": 0
@@ -110,14 +110,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 2,
-      "K4en": 109,
+      "K4en": 103,
       "K4objPL": 12,
       "K4obj": 109,
       "K5pl": 52,
-      "K5en": 394,
+      "K5en": 408,
       "K7": 0,
       "K8spl": 24,
-      "K8sen": 220,
+      "K8sen": 162,
       "K9pPL": 24,
       "K9pMIX": 0,
       "K9pBRAK": 6,
@@ -134,14 +134,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 1,
-      "K4en": 219,
+      "K4en": 192,
       "K4objPL": 14,
       "K4obj": 147,
       "K5pl": 98,
-      "K5en": 302,
+      "K5en": 301,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 65,
+      "K8sen": 50,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -158,14 +158,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 141,
+      "K4en": 128,
       "K4objPL": 15,
-      "K4obj": 203,
+      "K4obj": 201,
       "K5pl": 2,
-      "K5en": 347,
+      "K5en": 344,
       "K7": 0,
       "K8spl": 3,
-      "K8sen": 111,
+      "K8sen": 93,
       "K9pPL": 2,
       "K9pMIX": 0,
       "K9pBRAK": 9,
@@ -182,14 +182,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 161,
-      "K4objPL": 25,
-      "K4obj": 94,
+      "K4en": 139,
+      "K4objPL": 21,
+      "K4obj": 74,
       "K5pl": 0,
-      "K5en": 317,
+      "K5en": 310,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 162,
+      "K8sen": 88,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 2,
@@ -206,14 +206,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 72,
+      "K4en": 65,
       "K4objPL": 8,
       "K4obj": 13,
       "K5pl": 0,
-      "K5en": 351,
+      "K5en": 348,
       "K7": 0,
       "K8spl": 4,
-      "K8sen": 146,
+      "K8sen": 144,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -229,15 +229,15 @@
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 41,
-      "K4en": 88,
+      "K4pl": 39,
+      "K4en": 72,
       "K4objPL": 9,
       "K4obj": 23,
       "K5pl": 6,
-      "K5en": 440,
+      "K5en": 529,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 315,
+      "K8sen": 271,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 3,
@@ -254,14 +254,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 324,
-      "K4objPL": 32,
-      "K4obj": 554,
+      "K4en": 296,
+      "K4objPL": 30,
+      "K4obj": 549,
       "K5pl": 20,
-      "K5en": 1170,
+      "K5en": 1021,
       "K7": 8,
       "K8spl": 3,
-      "K8sen": 447,
+      "K8sen": 313,
       "K9pPL": 5,
       "K9pMIX": 1,
       "K9pBRAK": 12,
@@ -278,10 +278,10 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 10,
+      "K4en": 4,
       "K4objPL": 0,
       "K4obj": 0,
-      "K5pl": 14,
+      "K5pl": 13,
       "K5en": 32,
       "K7": 0,
       "K8spl": 2,
@@ -326,14 +326,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 4,
+      "K4en": 2,
       "K4objPL": 30,
       "K4obj": 0,
       "K5pl": 1,
       "K5en": 172,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 28,
+      "K8sen": 25,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 1,
@@ -350,14 +350,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 2,
-      "K4en": 3298,
+      "K4en": 2668,
       "K4objPL": 2,
-      "K4obj": 614,
+      "K4obj": 603,
       "K5pl": 13,
-      "K5en": 352,
-      "K7": 174,
+      "K5en": 377,
+      "K7": 7,
       "K8spl": 0,
-      "K8sen": 173,
+      "K8sen": 149,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -374,14 +374,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 156,
+      "K4en": 152,
       "K4objPL": 0,
-      "K4obj": 422,
+      "K4obj": 418,
       "K5pl": 32,
-      "K5en": 565,
+      "K5en": 577,
       "K7": 2,
       "K8spl": 3,
-      "K8sen": 33,
+      "K8sen": 29,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 4,
@@ -398,14 +398,14 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 0,
-      "K4en": 13,
+      "K4en": 11,
       "K4objPL": 20,
       "K4obj": 30,
       "K5pl": 3,
       "K5en": 126,
       "K7": 0,
       "K8spl": 0,
-      "K8sen": 38,
+      "K8sen": 37,
       "K9pPL": 0,
       "K9pMIX": 0,
       "K9pBRAK": 0,
@@ -421,15 +421,15 @@
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 33,
-      "K4en": 693,
-      "K4objPL": 459,
-      "K4obj": 1401,
-      "K5pl": 20,
-      "K5en": 1848,
+      "K4pl": 28,
+      "K4en": 624,
+      "K4objPL": 458,
+      "K4obj": 1390,
+      "K5pl": 22,
+      "K5en": 1880,
       "K7": 86,
-      "K8spl": 54,
-      "K8sen": 1259,
+      "K8spl": 53,
+      "K8sen": 971,
       "K9pPL": 1,
       "K9pMIX": 0,
       "K9pBRAK": 27,
@@ -606,7 +606,7 @@
       },
       {
         "modul": "02 My Work",
-        "gdzie": "src/components/MyWork/IdeaProcessFlowTool.tsx:3030",
+        "gdzie": "src/components/MyWork/IdeaProcessFlowTool.tsx:3119",
         "tekst": "canvasEditBar.lineDashed = \"Kreskowana\"",
         "dowod": "pl-suf:kreskowana"
       },
@@ -915,12 +915,6 @@
       },
       {
         "modul": "09 Finance",
-        "gdzie": "src/components/Economics/FinancialMetricsPanel.tsx:208",
-        "tekst": "ROI (Zwrot z inwestycji)",
-        "dowod": "pl-suf:inwestycji"
-      },
-      {
-        "modul": "09 Finance",
         "gdzie": "src/components/Economics/PDFExportModal.tsx:146",
         "tekst": "🇵🇱 Polski",
         "dowod": "pl-suf:polski"
@@ -954,6 +948,12 @@
         "gdzie": "src/components/Finance/Analysis/AnalysisCreatorWizard.tsx:474",
         "tekst": "Podsumowanie",
         "dowod": "pl-suf:podsumowanie"
+      },
+      {
+        "modul": "09 Finance",
+        "gdzie": "src/components/Finance/Analysis/AnalysisKpiDetailCard.tsx:162",
+        "tekst": "Interpretacja tego wyniku",
+        "dowod": "pl-suf:interpretacja"
       }
     ],
     "K4en": [
@@ -1463,6 +1463,24 @@
       },
       {
         "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/pinned-insights.routes.ts:101",
+        "tekst": "Nie udało się przypiąć insightu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/pinned-insights.routes.ts:175",
+        "tekst": "Nie udało się zaktualizować insightu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/pinned-insights.routes.ts:202",
+        "tekst": "Nie udało się odpiąć insightu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
         "gdzie": "server/src/routes/ai.routes.ts:6971",
         "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
@@ -1543,24 +1561,6 @@
         "modul": "05 Assessment",
         "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:400",
         "tekst": "Nie udało się pobrać wskazówek",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:429",
-        "tekst": "Nie udało się wygenerować analizy luk",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
-        "tekst": "Nie udało się wygenerować wniosków",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
-        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       }
     ],
@@ -1761,111 +1761,111 @@
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:104",
+        "gdzie": "src/components/SystemHealth.tsx:268",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:109",
+        "gdzie": "src/components/SystemHealth.tsx:269",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/BackupPanel.tsx:121",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:403",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/EmailConfigurationPanel.tsx:380",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/FeatureFlagsPanel.tsx:490",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/IntegrationsPanel.tsx:206",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/LegalPanel.tsx:57",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:343",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:122",
-        "tekst": "toLocaleDateString('en-US'",
+        "gdzie": "src/components/billing/CreditNotesPanel.tsx:187",
+        "tekst": "toLocaleDateString('pl-PL'",
         "dowod": "locale przybity na sztywno"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:106",
+        "gdzie": "src/components/billing/CreditNotesPanel.tsx:179",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionManager.tsx:240",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/TaxSettingsPanel.tsx:206",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/documents/DocumentSidePanel.tsx:438",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/documents/DocumentSidePanel.tsx:612",
         "tekst": "toLocaleTimeString()",
         "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:89",
+        "modul": "10 Materials",
+        "gdzie": "src/components/documents/DocumentSidePanel.tsx:289",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/notebookExport.ts:228",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/pdfExport.ts:80",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/pdfExport.ts:155",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/utils/pdfExport.ts:182",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:347",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
+        "gdzie": "src/views/SystemHealthDashboard.tsx:125",
+        "tekst": "toLocaleTimeString()",
+        "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:276",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateComments.tsx:218",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:462",
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/DecisionController.ts:1572",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:492",
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/InterviewController.ts:2247",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:500",
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/InterviewController.ts:4946",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/controllers/SuperAdminController.ts:1936",
+        "tekst": "toLocaleDateString('en-US'",
+        "dowod": "locale przybity na sztywno"
       }
     ],
     "K8spl": [
@@ -2174,12 +2174,6 @@
     ],
     "K9pPL": [
       {
-        "modul": "03 Interview",
-        "gdzie": "server/src/services/InterviewInsightService.ts:2732",
-        "tekst": "${repairBrief}${typeHints ? `\\n\\n${typeHints}` : ''}\\n\\n--- POPRZEDNIA KARTA (JSON do poprawy) ---\\n${JSON.stringify(\n  ",
-        "dowod": "diakrytyk:ó,pl:tym"
-      },
-      {
         "modul": "06 Initiatives",
         "gdzie": "server/src/services/advisory/BusinessCaseService.ts:452",
         "tekst": "FAKTY (JEDYNE dozwolone źródło liczb — wklej dosłownie):\\n${factsBlock}\\n\\n",
@@ -2322,6 +2316,12 @@
         "gdzie": "server/src/services/workbook/templates/loanAmortization.ts:189",
         "tekst": "Liczba miesięcy spłaty (1–360).',\n    errorTitle: 'Poza zakresem",
         "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "server/src/services/workbook/templates/operatingBudget.ts:213",
+        "tekst": "Podaj ułamek, np. 0,02 = 2%.',\n    errorTitle: 'Poza zakresem",
+        "dowod": "diakrytyk:ł"
       }
     ],
     "K9pMIX": [
@@ -2396,12 +2396,6 @@
       {
         "modul": "15 Settings",
         "gdzie": "server/src/routes/settings.routes.ts:1",
-        "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
-        "dowod": "brak SSOT DEC-510"
-      },
-      {
-        "modul": "03 Interview",
-        "gdzie": "server/src/services/InterviewInsightService.ts:1",
         "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
         "dowod": "brak SSOT DEC-510"
       },
@@ -2482,6 +2476,12 @@
         "gdzie": "server/src/services/aiExecutiveReporting.ts:1",
         "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
         "dowod": "brak SSOT DEC-510"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/services/aiOrchestrator.ts:1",
+        "tekst": "buduje system prompt bez withResolvedLocaleInstruction",
+        "dowod": "brak SSOT DEC-510"
       }
     ],
     "K10dPL": [],
@@ -2499,45 +2499,38 @@
         "dowod": "ujawniony rozjazd metodyki"
       }
     ],
-    "K11": [
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ResearchSessionsDock.tsx:318",
-        "tekst": "placeholder=\"{t('aios.research.scope', 'Scope and constraints')}\"",
-        "dowod": "t-w-literale"
-      }
-    ]
+    "K11": []
   },
   "plikiTop": {
-    "server/src/routes/table-platform.routes.ts": 376,
-    "server/src/routes/document-studio.routes.ts": 246,
+    "server/src/routes/table-platform.routes.ts": 372,
     "src/config/cardDocumentation.ts": 233,
     "server/src/routes/settings.routes.ts": 213,
     "src/services/drdStructure.ts": 206,
     "server/src/controllers/InterviewController.ts": 177,
-    "server/src/routes/presentations.routes.ts": 172,
     "server/src/routes/workbook.routes.ts": 165,
-    "server/src/routes/my-work.routes.ts": 155,
+    "server/src/routes/billing/billing.routes.ts": 161,
+    "server/src/routes/presentations.routes.ts": 150,
+    "server/src/routes/my-work.routes.ts": 139,
     "public/locales/pl/translation.json": 133,
-    "server/src/routes/v8/results.routes.ts": 133,
-    "server/src/routes/report-builder.routes.ts": 120,
-    "src/components/Interview/interviewDemoData.ts": 118,
-    "server/src/routes/ai.routes.ts": 113,
+    "server/src/routes/v8/results.routes.ts": 132,
+    "server/src/routes/document-studio.routes.ts": 123,
+    "server/src/routes/report-builder.routes.ts": 119,
+    "src/components/Interview/interviewDemoData.ts": 116,
     "server/src/routes/v8/finance.routes.ts": 110,
     "src/store/useToolStore.ts": 101,
     "server/src/controllers/InitiativeController.ts": 97,
-    "src/views/legal/TermsOfServiceView.tsx": 96,
-    "server/src/routes/billing/billing.routes.ts": 96,
+    "server/src/routes/ai.routes.ts": 95,
     "server/src/routes/work-canvas.routes.ts": 91,
-    "src/views/legal/PrivacyPolicyView.tsx": 87,
-    "src/views/superadmin/ComplianceCenterView.tsx": 87,
     "src/components/MyWork/IdeaTemplateGallery.tsx": 87,
     "src/components/ReportBuilder/ReportEditor/BlockSettingsRegistry.tsx": 84,
     "src/components/Initiatives/templates/initiativeLevelTemplates.ts": 83,
-    "server/src/routes/pmo/initiatives.routes.ts": 82,
     "server/src/routes/knowledge.routes.ts": 80,
+    "server/src/routes/pmo/initiatives.routes.ts": 80,
+    "src/views/superadmin/ComplianceCenterView.tsx": 77,
     "server/src/routes/llm.routes.ts": 77,
-    "src/views/superadmin/AIConfigurationView.tsx": 76,
-    "server/src/routes/assessment-reports.routes.ts": 75
+    "src/views/legal/PrivacyPolicyView.tsx": 75,
+    "src/views/legal/TermsOfServiceView.tsx": 75,
+    "server/src/routes/assessment-reports.routes.ts": 75,
+    "src/actions/registry/tableActions.ts": 74
   }
 }

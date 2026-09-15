@@ -8,7 +8,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  analizujJsxZawartosc,
   analizujLiteralyObiektowZawartosc,
+  analizujSerwerK8sZawartosc,
+  analizujSerwerZawartosc,
   analizujTwLiteraleZawartosc,
   jestKodemSerwerowymK8s,
   wykryjAngielski,
@@ -83,6 +86,39 @@ const POMINIECIA = [
   'Program transformacji',
   'Dashboard zarzadu',
   'Monitoring realizacji',
+];
+
+const TECHNICZNE_30 = [
+  '(url: string, opts?: RequestInit): Promise',
+  'Array.isArray(rows) ? rows.reduce',
+  'Object.keys(value).map',
+  'String(value).trim',
+  'Number.parseInt(value)',
+  'Boolean(value)',
+  'JSON.stringify(payload)',
+  'Promise.resolve(value)',
+  'Math.max(current, next)',
+  'rows.map((row) => row.id)',
+  'values.filter((value) => Boolean(value))',
+  'items.reduce((sum, item) => sum + item)',
+  'const result = values.filter(Boolean)',
+  'let current = rows.length',
+  'return items.reduce(sumRows)',
+  'execution.bank.title',
+  'data-quality-posture',
+  'schema_version_at_creation',
+  'public | authenticated',
+  '/organization/settings',
+  '@scope/package',
+  '#component-id',
+  'VALIDATION_ERROR',
+  'HTTP_409_CONFLICT',
+  'camelCaseIdentifier',
+  'calculateScore(input)',
+  'payload.items?.map(transform)',
+  'result?.data ?? fallback',
+  'value === expected',
+  'items.length > 0 ? active : empty',
 ];
 
 describe('E2f-bis / wykryjAngielski — próbka precyzji 30 + 30', () => {
@@ -161,5 +197,52 @@ describe('E2f-bis / K8spl i K11', () => {
       "const ok = t('scope.four');",
     ].join('\n');
     expect(analizujTwLiteraleZawartosc(kod).K11).toBe(3);
+  });
+});
+
+describe('W77 / precyzja K4en 30 trafień + 30 pominięć technicznych', () => {
+  it.each(TRAFIENIA)('K4en wykrywa: %s', (tekst) => {
+    expect(analizujJsxZawartosc(`<span>${tekst}</span>`).K4en).toBe(1);
+  });
+  it.each(TECHNICZNE_30)('K4en pomija kod: %s', (tekst) => {
+    expect(analizujJsxZawartosc(`<span>${tekst}</span>`).K4en).toBe(0);
+  });
+});
+
+describe('W77 / precyzja K5en 30 trafień + 30 pominięć technicznych', () => {
+  it.each(TRAFIENIA)('K5en wykrywa: %s', (tekst) => {
+    expect(analizujSerwerZawartosc(`const payload = { error: '${tekst}' };`).K5en).toBe(1);
+  });
+  it.each(TECHNICZNE_30)('K5en pomija kod: %s', (tekst) => {
+    expect(analizujSerwerZawartosc(`const payload = { error: '${tekst}' };`).K5en).toBe(0);
+  });
+});
+
+describe('W77 / precyzja K8sen 30 trafień + 30 pominięć technicznych', () => {
+  it.each(TRAFIENIA)('K8sen wykrywa: %s', (tekst) => {
+    expect(analizujSerwerK8sZawartosc(`const payload = { error: '${tekst}' };`).K8sen).toBe(1);
+  });
+  it.each(TECHNICZNE_30)('K8sen pomija kod: %s', (tekst) => {
+    expect(analizujSerwerK8sZawartosc(`const payload = { error: '${tekst}' };`).K8sen).toBe(0);
+  });
+});
+
+describe('W77 / wieloliniowe literały i tablice JS', () => {
+  it('nie traktuje kodu rozlanego na linie jako K4en/K5en/K8sen', () => {
+    const jsxArray = [
+      'const columns: Array<',
+      '  { label: string; value: string }',
+      '> = [',
+      "  { label: 'Owner', value: 'ownerId' },",
+      '];',
+    ].join('\n');
+    const serverExpression = [
+      "const payload = { error: 'Array.isArray(rows) ?",
+      "  rows.reduce(totalRows) : emptyRows' };",
+    ].join('\n');
+
+    expect(analizujJsxZawartosc(jsxArray).K4en).toBe(0);
+    expect(analizujSerwerZawartosc(serverExpression).K5en).toBe(0);
+    expect(analizujSerwerK8sZawartosc(serverExpression).K8sen).toBe(0);
   });
 });

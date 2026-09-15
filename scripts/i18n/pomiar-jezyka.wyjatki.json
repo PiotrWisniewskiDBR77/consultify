@@ -196,7 +196,6 @@
     "edytuj",
     "gdy",
     "gotowe",
-    "i",
     "ich",
     "jak",
     "jego",
@@ -255,7 +254,6 @@
     "usuń",
     "utworz",
     "utwórz",
-    "w",
     "wg",
     "wiecej",
     "więcej",
@@ -264,7 +262,6 @@
     "wszystkie",
     "wybierz",
     "wymagane",
-    "z",
     "zaakceptowano",
     "zamknij",
     "zapisano",
@@ -1235,5 +1232,6 @@
     "tsunami",
     "usage",
     "zurich"
-  ]
+  ],
+  "_uwagaJednoliterowe": "i/w/z są celowo poza listą dowodową; tokenizatory pomiaru i wspólnego helpera ignorują tokeny krótsze niż 2, bo kolidują z English I i skrótami kodu."
 }
