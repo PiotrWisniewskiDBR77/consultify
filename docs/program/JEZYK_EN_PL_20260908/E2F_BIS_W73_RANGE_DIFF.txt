@@ -1,0 +1,4 @@
+git range-diff a523058b47bec1793fc9d76539e0123c14b43016..f833b50c1accbea46e2ebe3286e52f009fefe691 f2628a0d36af85d97bcbe67b820d728c7c2f2f28..f49d22f5c19ace7ef8e88812967a8d91b16112a0
+
+1:  dbab29b95d = 1:  474b257452 [ODMROZENIE JEZYK DEC-461] pomiar: slownik EN rozszerzony + kubelki K4obj/K11 (WIP odziedziczony)
+2:  f833b50c1a = 2:  f49d22f5c1 [ODMROZENIE JEZYK DEC-461] pomiar: wyjatki slownika EN (WIP, kolizje role/most/stale)

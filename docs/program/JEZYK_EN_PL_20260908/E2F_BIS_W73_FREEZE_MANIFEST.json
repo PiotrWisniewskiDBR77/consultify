@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 2,
+  "package": "K1 E2f-bis language denominator W73 — P1 remediation",
+  "branch": "codex/a-k1-e2f-bis-20260915",
+  "exactBase": "f2628a0d36af85d97bcbe67b820d728c7c2f2f28",
+  "testedCandidate": "89ee194801",
+  "verdict": "READY_FOR_REPEAT_INDEPENDENT_REVIEW",
+  "priorReview": {
+    "sha": "21479faf33",
+    "verdict": "HOLD",
+    "resolved": [
+      "K4obj restricted to the seven W73 properties",
+      "Tailwind text property false positive regression",
+      "technical enum-union description regression",
+      "baseline and report recalculated"
+    ]
+  },
+  "measurement": {
+    "rejectedCandidate": {
+      "K4obj": 5375,
+      "K4objPL": 866
+    },
+    "correctedCandidate": {
+      "K4obj": 4343,
+      "K4objPL": 711
+    }
+  },
+  "validation": {
+    "focusedTests": {
+      "suite": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
+      "passed": 68,
+      "failed": 0,
+      "retry": 0
+    },
+    "layerTests": {
+      "passed": 9,
+      "failed": 0,
+      "retry": 0
+    },
+    "classificationTests": {
+      "passed": 5,
+      "failed": 0,
+      "retry": 0
+    },
+    "languageRatchet": "PASS",
+    "frontendTypeScript": {
+      "totalExistingErrors": 177,
+      "packageErrors": 0
+    },
+    "listCanon": {
+      "current": 349,
+      "baseline": 349
+    },
+    "artifact": {
+      "crimsonCurrent": 8,
+      "crimsonBaseline": 8,
+      "r2r3Current": 0,
+      "r2r3Baseline": 0,
+      "dangerCurrent": 117,
+      "dangerBaseline": 117
+    },
+    "productionBuild": {
+      "exit": 0,
+      "modules": 10754
+    }
+  },
+  "boundaries": {
+    "productUIChanged": false,
+    "serverChanged": false,
+    "migration": false,
+    "deploy": false
+  },
+  "inventoryPolicy": {
+    "ordering": "lexicographic path",
+    "count": 8,
+    "hashes": "SHA-256 and Git blob over file bytes",
+    "manifestSelfExclusion": "The manifest is listed but its own hashes are null to avoid recursion."
+  },
+  "inventory": [
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73.md",
+      "sha256": "cffbe0c26a35aad6bca92b59e5d6aff3d45607815f07bea0d15b8faaa350c203",
+      "gitBlob": "404ee3847d787aa852c00c4138ad0564ab04e5c2",
+      "bytes": 3211,
+      "selfExcluded": false
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73_FREEZE_MANIFEST.json",
+      "sha256": null,
+      "gitBlob": null,
+      "selfExcluded": true
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73_RANGE_DIFF.txt",
+      "sha256": "46eebcf848471f0590812d5cc7ba5e4ff13cac2b257b6eaf76c3abf06da65b06",
+      "gitBlob": "d77a9c7b49957969e98756d42b07942839684727",
+      "bytes": 430,
+      "selfExcluded": false
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
+      "sha256": "4af6e2904ce8de4b42a621033d377921c776e6137e565099cd912099e8971a8c",
+      "gitBlob": "139f6bcf8e3e97cbdf2b5bf456d1c9c569cc4611",
+      "bytes": 85552,
+      "selfExcluded": false
+    },
+    {
+      "path": "docs/ui-standards/MAPA_JEZYKA.md",
+      "sha256": "939deb1d0180476c631e26e2a28d97b949d7fed4cea44ce15c65afd45189f70c",
+      "gitBlob": "39b61fcbd778c5ee66d1feaa12c695000a49febd",
+      "bytes": 7756,
+      "selfExcluded": false
+    },
+    {
+      "path": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
+      "sha256": "9f16e11848536aeb24d71ac8ac682bde7a1f075f1612467825de1e1d7e7459d5",
+      "gitBlob": "778a04a48dede7aaddb3d993bedb492a52d8015b",
+      "bytes": 5623,
+      "selfExcluded": false
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.mjs",
+      "sha256": "bc87bd1da8a3162cf21beb202dfbdedec8a1108f21ff2cdf6732d178d799db40",
+      "gitBlob": "87298fa3adc103d13f949bdb0611776759607e71",
+      "bytes": 77389,
+      "selfExcluded": false
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.wyjatki.json",
+      "sha256": "3ed5eae7df0aec20530008cd2be2f4b25fc32a1f21d476cd54e0f64e5dd47b40",
+      "gitBlob": "1e72dded4108a9b5e895e96fdc1cdab6d9a8bfeb",
+      "bytes": 20529,
+      "selfExcluded": false
+    }
+  ],
+  "independentReview": "REQUIRED_STOP"
+}
