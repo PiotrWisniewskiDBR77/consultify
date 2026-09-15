@@ -29,6 +29,9 @@ const initialCards = () => [
       outOfScope: ['Other'],
     },
     evidenceRefs: ['source:1'],
+    estimate: { value: '40–60 h', basis: 'Current scope and named team' },
+    estimatedBy: 'owner',
+    estimatedAt: '2026-09-15T12:00:00.000Z',
     publishedBy: 'owner',
   },
   {
@@ -41,6 +44,9 @@ const initialCards = () => [
     reviewState: 'REQUESTED',
     content: { objectives: ['Existing objective'], rationale: 'Existing rationale' },
     evidenceRefs: ['source:2'],
+    estimate: null,
+    estimatedBy: null,
+    estimatedAt: null,
     publishedBy: 'owner',
   },
 ];
@@ -91,8 +97,58 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
 });
 describe('IE01 Definition journey', () => {
+  it('shows the persisted card estimate and a disabled approval action to an unauthorized viewer', async () => {
+    vi.stubEnv('VITE_INITIATIVES_PORTFOLIO_ANALYSIS', 'true');
+    render(
+      <DefinitionCardContent
+        initiativeId="A"
+        actorId="viewer"
+        participants={[]}
+        canEdit={false}
+        canReview={false}
+        selectedCardKey="summary-scope"
+        onChanged={async () => {}}
+      />
+    );
+    const estimate = await screen.findByRole('textbox', { name: 'Estimate' });
+    await waitFor(() => expect(estimate).toHaveValue('40–60 h'));
+    expect(screen.getByText('You do not have permission to approve this card.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept card content' })).toBeDisabled();
+    expect(Api.post).not.toHaveBeenCalled();
+  });
+
+  it('publishes the estimate through the existing canonical card command', async () => {
+    vi.stubEnv('VITE_INITIATIVES_PORTFOLIO_ANALYSIS', 'true');
+    render(
+      <DefinitionCardContent
+        initiativeId="A"
+        actorId="owner"
+        participants={[]}
+        canEdit
+        canReview={false}
+        selectedCardKey="summary-scope"
+        onChanged={async () => {}}
+      />
+    );
+    const estimate = await screen.findByRole('textbox', { name: 'Estimate' });
+    fireEvent.change(estimate, { target: { value: '64 h' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Estimate basis' }), {
+      target: { value: 'Four workshops and synthesis' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save card and request review' }));
+    await waitFor(() =>
+      expect(Api.post).toHaveBeenCalledWith(
+        expect.stringContaining('/summary-scope/publications'),
+        expect.objectContaining({
+          estimate: { value: '64 h', basis: 'Four workshops and synthesis' },
+        })
+      )
+    );
+  });
+
   it('shows the exact blocker and opens its affected outcome field without any write', async () => {
     render(<DefinitionApprovalContent initiativeId="A" />);
     const finding = await screen.findByRole('button', {
