@@ -1783,7 +1783,7 @@ fala-e2b-settings-20260914,fala-e2b-exec-20260914,fala-e2b-exec-bis-20260915,wdr
    D2) uznane za kanon metodyki; `compileDrdPack.ts` przestaje raportować „AWAITING THE
    METHODOLOGY OWNER'S SIGN-OFF" dla tych tytułów (zadanie 1 z Wpisu 70, zlecone A/Codex).
 3. Z-63 = **DEC-513** GO: nazwa sesji DRD (`method_sessions.name`, migracja
-   `20262220_method_sessions_name.sql`, `PATCH /api/method/sessions/:id`, pole w kreatorze i
+   `20262230_method_sessions_name.sql`, `PATCH /api/method/sessions/:id`, pole w kreatorze i
    liście Processes/Library). Projekt STOP z 14.09 (`docs/program/
    FALA2_E2B2_Z63_D7_PROJEKT_STOP_20260914.md`) odblokowany decyzją właściciela; zlecone A jako
    zadanie 2 Wpisu 70 (Codex K9/backlog) — **wykonanie nie potwierdzone w przeczytanych

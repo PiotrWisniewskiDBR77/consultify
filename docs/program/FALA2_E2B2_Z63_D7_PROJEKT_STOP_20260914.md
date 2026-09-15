@@ -4,7 +4,7 @@
 
 ## Proponowany kontrakt
 
-1. Migracja addytywna `server/migrations/20262220_method_sessions_name.sql`:
+1. Migracja addytywna `server/migrations/20262230_method_sessions_name.sql`:
 
    ```sql
    -- Z-63 / DEC-513 (po decyzji CTO)

@@ -134,6 +134,8 @@ export type MethodSaveState =
 
 export interface MethodSession {
   readonly id: string;
+  /** User-visible metadata; NULL/absent keeps the legacy DRD id fallback. */
+  readonly name?: string | null;
   readonly organizationId: string;
   readonly projectId: string | null;
 
