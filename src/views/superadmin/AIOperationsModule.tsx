@@ -24,6 +24,7 @@ import { AICostDashboard } from './components/AICostDashboard';
 import { AIPerformanceDashboard } from './components/AIPerformanceDashboard';
 import { SLADashboard } from './components/SLADashboard';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface AIOperationsModuleProps {
   initialTab?: string;
 }
@@ -139,7 +140,7 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="AI Operations"
-      subtitle="Mission control, performance monitoring, costs, SLA, and analytics"
+      subtitle={tlumaczPozaHookiem("superadmin.aIOperations.missionControlPerformanceMonitoringCostsSLAAnd", "Mission control, performance monitoring, costs, SLA, and analytics")}
       actions={<InfoButton cardId={getHelpCardId()} />}
     >
       {renderContent()}

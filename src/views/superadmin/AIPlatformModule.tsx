@@ -37,6 +37,7 @@ import { PromptManagementUI } from './components/PromptManagementUI';
 import { SLADashboard } from './components/SLADashboard';
 import { LLMManagementView } from './LLMManagementView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface AIPlatformModuleProps {
   initialTab?: string;
 }
@@ -142,7 +143,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="AI Platform"
-      subtitle="LLM configuration, prompts, experiments, intelligence, and monitoring"
+      subtitle={tlumaczPozaHookiem("superadmin.aIPlatform.lLMConfigurationPromptsExperimentsIntelligenceAndMonitoring", "LLM configuration, prompts, experiments, intelligence, and monitoring")}
     >
       {renderContent()}
     </TabLayout>

@@ -21,6 +21,7 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface PerformanceMetric {
   id: string;
   name: string;
@@ -429,7 +430,7 @@ export const PerformanceMetricsTab: React.FC = () => {
             Performance Metrics
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Monitor AI system performance and latency metrics
+            {tlumaczPozaHookiem("superadmin.performanceMetrics.monitorAISystemPerformanceAndLatencyMetrics", "Monitor AI system performance and latency metrics")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -536,7 +537,7 @@ export const PerformanceMetricsTab: React.FC = () => {
               </div>
             ) : providerMetrics.length === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                No provider performance data for this period.
+                {tlumaczPozaHookiem("superadmin.performanceMetrics.noProviderPerformanceDataForThisPeriod", "No provider performance data for this period.")}
               </div>
             ) : (
               <table

@@ -20,6 +20,7 @@ import { toast } from 'react-hot-toast';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface ObservabilityMetrics {
   period: { from: string; to: string };
   requests: { total: number; avgPerDay: number };
@@ -205,7 +206,7 @@ const AIObservabilityDashboard: React.FC = () => {
         <MetricCard
           icon={<BarChart3 className="w-4 h-4" />}
           label="Total Requests"
-          value={metrics.requests.total.toLocaleString()}
+          value={metrics.requests.total.toLocaleString(localeListy())}
           sub={`${metrics.requests.avgPerDay}/day avg`}
         />
         <MetricCard
@@ -324,7 +325,7 @@ const AIObservabilityDashboard: React.FC = () => {
               <span className="text-c-text-muted text-sm">Last Run</span>
               <span className="text-c-text font-medium text-xs">
                 {metrics.evalRegression.lastRunDate
-                  ? new Date(metrics.evalRegression.lastRunDate).toLocaleDateString()
+                  ? new Date(metrics.evalRegression.lastRunDate).toLocaleDateString(localeListy())
                   : 'Never'}
               </span>
             </div>

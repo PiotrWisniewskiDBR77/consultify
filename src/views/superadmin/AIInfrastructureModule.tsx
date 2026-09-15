@@ -20,6 +20,7 @@ import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { LLMHealthPanel } from './components/LLMHealthPanel';
 import { LLMManagementView } from './LLMManagementView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface AIInfrastructureModuleProps {
   initialTab?: string;
 }
@@ -83,7 +84,7 @@ export const AIInfrastructureModule: React.FC<AIInfrastructureModuleProps> = ({ 
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="AI Infrastructure"
-      subtitle="LLM providers, model tiers, global settings, and health monitoring"
+      subtitle={tlumaczPozaHookiem("superadmin.aIInfrastructure.lLMProvidersModelTiersGlobalSettingsAnd", "LLM providers, model tiers, global settings, and health monitoring")}
     >
       {renderContent()}
     </TabLayout>

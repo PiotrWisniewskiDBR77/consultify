@@ -43,6 +43,8 @@ import { PromptAssistantPanel } from './components/PromptAssistantPanel';
 import { PromptBlockBuilder } from './components/PromptBlockBuilder';
 import { PromptTestBench } from './components/PromptTestBench';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type AIIntelligenceTab = 'overview' | 'prompts' | 'blocks' | 'testing' | 'assistant' | 'learning';
 
 interface SystemStats {
@@ -201,25 +203,25 @@ export const AIIntelligenceView: React.FC = () => {
                 <CapabilityCard
                   icon={Brain}
                   title="Strategic Consultant Persona"
-                  description="Harvard MBA/PhD level reasoning with 20+ years experience"
+                  description={tlumaczPozaHookiem("superadmin.aIIntelligence.harvardMBAPhDLevelReasoningWith20", "Harvard MBA/PhD level reasoning with 20+ years experience")}
                   status="active"
                 />
                 <CapabilityCard
                   icon={Globe}
                   title="Language-Independent Prompts"
-                  description="Semantic instructions that work across all languages"
+                  description={tlumaczPozaHookiem("superadmin.aIIntelligence.semanticInstructionsThatWorkAcrossAllLanguages", "Semantic instructions that work across all languages")}
                   status="active"
                 />
                 <CapabilityCard
                   icon={BookOpen}
                   title="Deep Knowledge Integration"
-                  description="RAG with organization context, knowledge base, and web research"
+                  description={tlumaczPozaHookiem("superadmin.aIIntelligence.rAGWithOrganizationContextKnowledgeBaseAnd", "RAG with organization context, knowledge base, and web research")}
                   status="active"
                 />
                 <CapabilityCard
                   icon={Wand2}
                   title="Action Execution"
-                  description="AI can navigate, fill forms, and execute operations"
+                  description={tlumaczPozaHookiem("superadmin.aIIntelligence.aICanNavigateFillFormsAndExecute", "AI can navigate, fill forms, and execute operations")}
                   status="active"
                 />
                 <CapabilityCard
@@ -231,7 +233,7 @@ export const AIIntelligenceView: React.FC = () => {
                 <CapabilityCard
                   icon={GraduationCap}
                   title="Continuous Learning"
-                  description="Pattern extraction and personalization from interactions"
+                  description={tlumaczPozaHookiem("superadmin.aIIntelligence.patternExtractionAndPersonalizationFromInteractions", "Pattern extraction and personalization from interactions")}
                   status="active"
                 />
               </div>
@@ -260,7 +262,7 @@ export const AIIntelligenceView: React.FC = () => {
                 />
                 <QuickAction
                   icon={MessageSquare}
-                  label="Chat with Assistant"
+                  label={tlumaczPozaHookiem("superadmin.aIIntelligence.chatWithAssistant", "Chat with Assistant")}
                   onClick={() => setActiveTab('assistant')}
                 />
               </div>
@@ -444,7 +446,7 @@ const PromptTemplateManager: React.FC = () => {
           </div>
           <button
             disabled
-            title="Template creation is managed through the canonical Prompts Library workflow."
+            title={tlumaczPozaHookiem("superadmin.aIIntelligence.templateCreationIsManagedThroughTheCanonical", "Template creation is managed through the canonical Prompts Library workflow.")}
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             <FileText size={16} />
@@ -455,14 +457,14 @@ const PromptTemplateManager: React.FC = () => {
 
       <ReadOnlyState
         title="Prompt template mutations use Prompts Library"
-        description="This builder view is read-only for templates until create/edit/test actions are wired to the canonical prompt registry workflow."
+        description={tlumaczPozaHookiem("superadmin.aIIntelligence.thisBuilderViewIsReadOnlyFor", "This builder view is read-only for templates until create/edit/test actions are wired to the canonical prompt registry workflow.")}
       />
 
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
           <div className="col-span-2 text-center py-12 text-slate-500 dark:text-slate-400">
-            Loading templates...
+            {tlumaczPozaHookiem("superadmin.aIIntelligence.loadingTemplates", "Loading templates...")}
           </div>
         ) : loadError ? (
           <div className="col-span-2">
@@ -493,14 +495,14 @@ const PromptTemplateManager: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   disabled
-                  title="Edit this prompt in Prompts Library."
+                  title={tlumaczPozaHookiem("superadmin.aIIntelligence.editThisPromptInPromptsLibrary", "Edit this prompt in Prompts Library.")}
                   className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-300 rounded text-xs disabled:opacity-50"
                 >
                   Edit
                 </button>
                 <button
                   disabled
-                  title="Template testing is unavailable here until it is wired to the canonical prompt registry."
+                  title={tlumaczPozaHookiem("superadmin.aIIntelligence.templateTestingIsUnavailableHereUntilIt", "Template testing is unavailable here until it is wired to the canonical prompt registry.")}
                   className="flex-1 px-3 py-1.5 bg-primary-600/20 hover:bg-primary-600/30 text-primary-300 rounded text-xs disabled:opacity-50"
                 >
                   Test
@@ -603,7 +605,7 @@ const LearningSystemDashboard: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Learning Analytics</h2>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            AI learning patterns, quality metrics, and performance trends
+            {tlumaczPozaHookiem("superadmin.aIIntelligence.aILearningPatternsQualityMetricsAndPerformance", "AI learning patterns, quality metrics, and performance trends")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -645,7 +647,7 @@ const LearningSystemDashboard: React.FC = () => {
         <MetricCard
           icon={BarChart3}
           label="Total Interactions"
-          value={metrics.totalInteractions.toLocaleString()}
+          value={metrics.totalInteractions.toLocaleString(localeListy())}
           color="text-blue-400"
         />
         <MetricCard
@@ -688,7 +690,7 @@ const LearningSystemDashboard: React.FC = () => {
         </h3>
         {loading ? (
           <div className="h-40 flex items-center justify-center text-slate-500 dark:text-slate-400">
-            Loading chart...
+            {tlumaczPozaHookiem("superadmin.aIIntelligence.loadingChart", "Loading chart...")}
           </div>
         ) : (
           <div className="h-40 flex items-end gap-1">
@@ -721,13 +723,13 @@ const LearningSystemDashboard: React.FC = () => {
           </h3>
           {loading ? (
             <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-              Loading patterns...
+              {tlumaczPozaHookiem("superadmin.aIIntelligence.loadingPatterns", "Loading patterns...")}
             </p>
           ) : patterns.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-slate-600 dark:text-slate-500">No patterns learned yet</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Patterns are extracted from user interactions over time
+                {tlumaczPozaHookiem("superadmin.aIIntelligence.patternsAreExtractedFromUserInteractionsOver", "Patterns are extracted from user interactions over time")}
               </p>
             </div>
           ) : (
@@ -768,7 +770,7 @@ const LearningSystemDashboard: React.FC = () => {
           </h3>
           {loading ? (
             <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-              Loading interactions...
+              {tlumaczPozaHookiem("superadmin.aIIntelligence.loadingInteractions", "Loading interactions...")}
             </p>
           ) : interactions.length === 0 ? (
             <p className="text-slate-600 dark:text-slate-500 text-center py-8">
@@ -786,7 +788,7 @@ const LearningSystemDashboard: React.FC = () => {
                       {interaction.input?.substring(0, 50)}...
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(interaction.created_at).toLocaleString()}
+                      {new Date(interaction.created_at).toLocaleString(localeListy())}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
