@@ -55,6 +55,7 @@ import {
 } from '../../services/presentationOperationsHealth';
 import type { DrilldownSloId } from '../../services/presentationOperationsHealthDrilldown';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const WINDOW_OPTIONS: number[] = [1, 7, 14, 30];
 const DEFAULT_WINDOW_DAYS = 7;
 const AUTO_REFRESH_INTERVAL_MS = 60_000;
@@ -378,7 +379,7 @@ function renderBody(props: BodyProps): React.ReactElement {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <Loader2 size={16} className="animate-spin text-indigo-500" />
-        Loading operations health…
+        {tlumaczPozaHookiem("superadmin.presentationOperationsHealth.loadingOperationsHealth", "Loading operations health…")}
       </div>
     );
   }
@@ -420,8 +421,7 @@ function renderBody(props: BodyProps): React.ReactElement {
       <IncidentRunbooksCard report={data} />
 
       <p className="text-[11px] text-slate-500 dark:text-slate-500">
-        Read-only view. SLO classification is computed server-side and not recalculated in this UI.
-        Refresh by pressing <span className="font-semibold">Reload</span>.
+        {tlumaczPozaHookiem("superadmin.presentationOperationsHealth.readOnlyViewSLOClassificationIsComputed", "Read-only view. SLO classification is computed server-side and not recalculated in this UI. Refresh by pressing")} <span className="font-semibold">Reload</span>.
       </p>
     </div>
   );
@@ -439,7 +439,7 @@ const WarningsPanel: React.FC<WarningsPanelProps> = ({ warnings }) => {
     >
       <AlertCircle size={14} className="mt-0.5 shrink-0" />
       <div>
-        <div className="font-semibold">Some inputs were degraded</div>
+        <div className="font-semibold">{tlumaczPozaHookiem("superadmin.presentationOperationsHealth.someInputsWereDegraded", "Some inputs were degraded")}</div>
         <ul className="mt-1 list-disc space-y-0.5 pl-5 opacity-80">
           {warnings.slice(0, 6).map((w) => (
             <li key={w} className="font-mono">

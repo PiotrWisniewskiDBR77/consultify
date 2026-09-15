@@ -61,6 +61,8 @@ import {
   type TestDeliveryStatus,
 } from '../../services/presentationGovernanceAlertSubscriptions';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const SECRET_REVEAL_AUTO_HIDE_MS = 60_000;
 
 const TEST_STATUS_TONE: Record<TestDeliveryStatus, string> = {
@@ -105,7 +107,7 @@ function formatRelativeTime(iso: string | null): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '—';
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return new Date(ts).toLocaleString();
+  if (diffMs < 0) return new Date(ts).toLocaleString(localeListy());
   const sec = Math.floor(diffMs / 1000);
   if (sec < 60) return `${sec}s ago`;
   const min = Math.floor(sec / 60);
@@ -114,7 +116,7 @@ function formatRelativeTime(iso: string | null): string {
   if (hr < 24) return `${hr}h ago`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString();
+  return new Date(ts).toLocaleDateString(localeListy());
 }
 
 function statusReason(status: SubscriptionFetchStatus | null): string | null {
@@ -427,7 +429,7 @@ const PresentationGovernanceAlertSubscriptionsView: React.FC = () => {
             Webhook Playground (advanced)
           </span>
           <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
-            Verify your HMAC verifier without affecting subscriptions or audit trail
+            {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.verifyYourHMACVerifierWithoutAffectingSubscriptions", "Verify your HMAC verifier without affecting subscriptions or audit trail")}
           </span>
         </summary>
         <div className="border-t border-slate-200 p-3 dark:border-slate-800">
@@ -449,7 +451,7 @@ const WarningsPanel: React.FC<WarningsPanelProps> = ({ warnings }) => (
   >
     <AlertCircle size={14} className="mt-0.5 shrink-0" />
     <div>
-      <div className="font-semibold">Some inputs were degraded</div>
+      <div className="font-semibold">{tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.someInputsWereDegraded", "Some inputs were degraded")}</div>
       <ul className="mt-1 list-disc space-y-0.5 pl-5 opacity-80">
         {warnings.slice(0, 6).map((w) => (
           <li key={w} className="font-mono">
@@ -507,7 +509,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
     return (
       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <Loader2 size={16} className="animate-spin text-indigo-500" />
-        Loading subscriptions…
+        {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.loadingSubscriptions", "Loading subscriptions…")}
       </div>
     );
   }
@@ -725,8 +727,7 @@ const RotatePanel: React.FC<RotatePanelProps> = ({
               New signing secret generated
             </div>
             <p className="mt-1 text-[11px] text-emerald-800 dark:text-emerald-200">
-              This is the only time you will see this secret. Store it in your subscriber app now.
-              The reveal panel auto-closes in 60s.
+              {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.thisIsTheOnlyTimeYouWill", "This is the only time you will see this secret. Store it in your subscriber app now. The reveal panel auto-closes in 60s.")}
             </p>
           </div>
           <button
@@ -771,8 +772,7 @@ const RotatePanel: React.FC<RotatePanelProps> = ({
             Rotate signing secret
           </div>
           <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
-            Rotation immediately invalidates the previous secret. Outbound traffic uses the new
-            secret on the next dispatch.
+            {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.rotationImmediatelyInvalidatesThePreviousSecretOutbound", "Rotation immediately invalidates the previous secret. Outbound traffic uses the new secret on the next dispatch.")}
           </p>
         </div>
         <button
@@ -791,7 +791,7 @@ const RotatePanel: React.FC<RotatePanelProps> = ({
           onChange={(e) => onAcknowledge(e.target.checked)}
           className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
         />
-        I understand the previous secret will be invalidated.
+        {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.iUnderstandThePreviousSecretWillBe", "I understand the previous secret will be invalidated.")}
       </label>
       {state.error && (
         <div className="rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
@@ -842,8 +842,7 @@ const TestDeliveryPanel: React.FC<TestDeliveryPanelProps> = ({
             Send signed test delivery
           </div>
           <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
-            Fires a synthetic transition payload signed with the current subscription secret. Test
-            deliveries are NOT recorded in the dispatch audit log.
+            {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.firesASyntheticTransitionPayloadSignedWith", "Fires a synthetic transition payload signed with the current subscription secret. Test deliveries are NOT recorded in the dispatch audit log.")}
           </p>
         </div>
         <button
@@ -1149,8 +1148,7 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
               {!oneTimeSecret ? (
                 <>
                   <p className="text-[11px] text-emerald-800 dark:text-emerald-200">
-                    Generate a signing secret next? Without one, outbound webhooks for this
-                    subscription will be unsigned.
+                    {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.generateASigningSecretNextWithoutOne", "Generate a signing secret next? Without one, outbound webhooks for this subscription will be unsigned.")}
                   </p>
                   {errorMessage && (
                     <div className="rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
@@ -1176,15 +1174,14 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
                       onClick={onCreated}
                       className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
-                      Skip for now
+                      {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.skipForNow", "Skip for now")}
                     </button>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="text-[11px] text-emerald-800 dark:text-emerald-200">
-                    This is the only time you will see this secret. Store it in your subscriber app
-                    now.
+                    {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.thisIsTheOnlyTimeYouWill2", "This is the only time you will see this secret. Store it in your subscriber app now.")}
                   </p>
                   <code className="block select-all break-all rounded border border-emerald-200 bg-white px-2 py-1.5 font-mono text-[11px] text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-100">
                     {oneTimeSecret}
@@ -1213,7 +1210,7 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
             disabled={step === 'channel' || step === 'rotate' || submitting}
             className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Back
+            {tlumaczPozaHookiem("superadmin.presentationGovernanceAlertSubscriptions.back", "Back")}
           </button>
           {step !== 'rotate' && step !== 'review' && (
             <button

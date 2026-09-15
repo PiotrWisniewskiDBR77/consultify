@@ -35,6 +35,8 @@ import {
   fetchBenchmarkTrend,
 } from '../../services/presentationBenchmarkTrend';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 const WINDOW_OPTIONS: number[] = [3, 6, 12, 24, 36];
 const DEFAULT_WINDOW_MONTHS = 12;
 
@@ -115,7 +117,7 @@ function statusReason(status: BenchmarkTrendFetchStatus | null): string | null {
 function formatClock(date: Date | null): string {
   if (!date) return '—';
   try {
-    return date.toLocaleTimeString();
+    return date.toLocaleTimeString(localeListy());
   } catch {
     return date.toISOString();
   }
@@ -358,7 +360,7 @@ const DimensionCard: React.FC<DimensionCardProps> = ({ dim, gammaTarget }) => {
 
       {dim.points.length === 0 && (
         <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-500">
-          No history yet — only the Gamma reference line is rendered.
+          {tlumaczPozaHookiem("superadmin.presentationBenchmarkTrend.noHistoryYetOnlyTheGammaReference", "No history yet — only the Gamma reference line is rendered.")}
         </p>
       )}
     </article>
@@ -457,7 +459,7 @@ const PresentationBenchmarkTrendView: React.FC = () => {
           </p>
           {data && (
             <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
-              Generated {new Date(data.generatedAt).toLocaleString()} · spanning {data.windowMonths}{' '}
+              Generated {new Date(data.generatedAt).toLocaleString(localeListy())} · spanning {data.windowMonths}{' '}
               month
               {data.windowMonths === 1 ? '' : 's'} of history
             </p>
@@ -563,7 +565,7 @@ const PresentationBenchmarkTrendView: React.FC = () => {
                     <div className="font-semibold text-slate-700 dark:text-slate-300">
                       {DIMENSION_LABELS[id]}
                     </div>
-                    <div className="mt-1 opacity-80">Dimension missing from server response.</div>
+                    <div className="mt-1 opacity-80">{tlumaczPozaHookiem("superadmin.presentationBenchmarkTrend.dimensionMissingFromServerResponse", "Dimension missing from server response.")}</div>
                   </article>
                 );
               }

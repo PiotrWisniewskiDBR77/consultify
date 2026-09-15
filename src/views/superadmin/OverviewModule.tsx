@@ -19,6 +19,7 @@ import { SuperAdminDashboard } from './SuperAdminDashboard';
 import { SuperAdminMetricsView } from './SuperAdminMetricsView';
 import { SuperAdminSignalsView } from './SuperAdminSignalsView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface OverviewModuleProps {
   onNavigateToSection?: (section: string) => void;
 }
@@ -256,7 +257,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
       activeTab={activeTab}
       onTabChange={setActiveTab}
       title="Overview"
-      subtitle="System dashboard and real-time insights"
+      subtitle={tlumaczPozaHookiem("superadmin.overview.systemDashboardAndRealTimeInsights", "System dashboard and real-time insights")}
       actions={<InfoButton cardId={getHelpCardId()} />}
     >
       {renderContent()}

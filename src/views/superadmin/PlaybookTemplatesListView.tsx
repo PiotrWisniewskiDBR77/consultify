@@ -27,6 +27,7 @@ import { Api } from '../../services/api';
 import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { PlaybookEditorView } from './PlaybookEditorView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 /**
  * PlaybookTemplatesListView
  * Step 13: Visual Playbook Editor
@@ -536,7 +537,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                 <textarea
                   value={newTemplate.description}
                   onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
-                  placeholder="Brief description of this playbook template..."
+                  placeholder={tlumaczPozaHookiem("superadmin.playbookTemplatesList.briefDescriptionOfThisPlaybookTemplate", "Brief description of this playbook template...")}
                   rows={3}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
                 />

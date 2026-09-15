@@ -83,6 +83,7 @@ import {
   type SavedSearchVerdict,
 } from '../../services/presentationWatchlistSavedSearches';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 const LIMIT_OPTIONS: number[] = [10, 25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
 const AUTO_REFRESH_INTERVAL_MS = 30_000;
@@ -1125,7 +1126,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                 <button
                   type="button"
                   onClick={handleClearActiveSavedFilters}
-                  aria-label="Clear active saved search"
+                  aria-label={tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.clearActiveSavedSearch", "Clear active saved search")}
                   className="rounded p-0.5 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <X size={11} />
@@ -1419,8 +1420,8 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                       type="button"
                       role="menuitem"
                       onClick={handleImportButtonClick}
-                      aria-label="Import presets from JSON"
-                      title="Import presets from a JSON bundle"
+                      aria-label={tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.importPresetsFromJSON", "Import presets from JSON")}
+                      title={tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.importPresetsFromAJSONBundle", "Import presets from a JSON bundle")}
                       className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       <FileUp size={12} className="text-indigo-500" />
@@ -1444,7 +1445,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                       role="alert"
                       className="mx-3 mb-2 rounded-md border border-danger-200 bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
                     >
-                      <div className="font-semibold">Could not import bundle</div>
+                      <div className="font-semibold">{tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.couldNotImportBundle", "Could not import bundle")}</div>
                       <ul className="mt-1 list-disc space-y-0.5 pl-4 opacity-90">
                         {importErrors.slice(0, 3).map((e, i) => (
                           <li key={`${i}-${e}`}>{e}</li>
@@ -1467,7 +1468,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                       {importPlan.toCreate.length > 0 && (
                         <div className="mt-1.5">
                           <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                            Will create
+                            {tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.willCreate", "Will create")}
                           </div>
                           <ul className="ml-3 list-disc text-[11px] text-slate-700 dark:text-slate-300">
                             {importPlan.toCreate.slice(0, 5).map((p) => (
@@ -1663,7 +1664,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                         className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                       />
                       <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
-                        Saves the current title query and active filter selections.
+                        {tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.savesTheCurrentTitleQueryAndActive", "Saves the current title query and active filter selections.")}
                       </p>
                       <label className="mt-2 inline-flex select-none items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
                         <input
@@ -1983,7 +1984,7 @@ function renderBody(props: BodyProps): React.ReactElement {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <Loader2 size={16} className="animate-spin text-indigo-500" />
-        Loading watchlist…
+        {tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.loadingWatchlist", "Loading watchlist…")}
       </div>
     );
   }
@@ -2069,7 +2070,7 @@ function renderBody(props: BodyProps): React.ReactElement {
         >
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <div>
-            <div className="font-semibold">Some decks could not be evaluated</div>
+            <div className="font-semibold">{tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.someDecksCouldNotBeEvaluated", "Some decks could not be evaluated")}</div>
             <ul className="mt-1 list-disc space-y-0.5 pl-5 opacity-80">
               {warnings.slice(0, 5).map((w) => (
                 <li key={w}>{w}</li>
@@ -2245,8 +2246,7 @@ function renderBody(props: BodyProps): React.ReactElement {
       )}
 
       <p className="text-[11px] text-slate-500 dark:text-slate-500">
-        Read-only view. Aggregated from per-deck governance cards. Raw deck content and individual
-        quality gates are not exposed here.
+        {tlumaczPozaHookiem("superadmin.presentationGovernanceWatchlist.readOnlyViewAggregatedFromPerDeck", "Read-only view. Aggregated from per-deck governance cards. Raw deck content and individual quality gates are not exposed here.")}
       </p>
     </div>
   );
