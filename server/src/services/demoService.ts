@@ -9,7 +9,7 @@
  *
  * `cleanupExpiredDemos()` reclaims ONLY provably-ephemeral, expired demo
  * scaffolding, never a real customer org. It is enabled by default and can be stopped explicitly with
- * `ENABLE_DEMO_SANDBOX_TTL=false`. Deletion reuses the proven children-first (FK-aware)
+ * `ENABLE_DEMO_SANDBOX_TTL=true`. Deletion reuses the proven children-first (FK-aware)
  * `deleteDemoDatasetForOrganization` purger and runs per-org inside a
  * transaction, with a hard per-run cap of three tenants.
  *
@@ -26,8 +26,8 @@
  *   5. ZERO real human members — no `users` row on the org whose email is NOT a
  *      known seed/test domain. (Session tenant orgs normally have no users at
  *      all; any real user is a hard STOP.)
- *   6. Not in the whitelist (base demo org id + name, `atelier`, `dbr77`, plus
- *      anything in `DEMO_CLEANUP_WHITELIST`).
+ *   6. Its ID is not in the canonical demo-org allowlist. Names are deliberately
+ *      ignored because per-session sandboxes inherit the canonical brand name.
  *
  * Enterprise SaaS Architecture — TypeScript Backend.
  */
@@ -62,11 +62,8 @@ function parsePositiveInt(value: unknown, fallback: number): number {
 }
 
 function isEnabled(env: NodeJS.ProcessEnv): boolean {
-  // TTL reclaim is an operational safety mechanism, so it is enabled unless an
-  // operator explicitly disables it. This keeps ephemeral demo tenants bounded
-  // without requiring a deployment-time opt-in.
-  const raw = env.ENABLE_DEMO_SANDBOX_TTL;
-  return raw == null || String(raw).trim() === '' ? true : parseBool(raw);
+  // DEC-518: destructive cleanup must be explicitly enabled by the operator.
+  return parseBool(env.ENABLE_DEMO_SANDBOX_TTL);
 }
 
 function ttlHours(env: NodeJS.ProcessEnv): number {
@@ -78,21 +75,15 @@ function perRunLimit(env: NodeJS.ProcessEnv): number {
 }
 
 /**
- * Lower-cased whitelist of org ids AND org names that must NEVER be reclaimed.
- * Always protects the canonical demo org (id + name) plus the branded fixtures
- * `atelier` / `dbr77`; extendable via `DEMO_CLEANUP_WHITELIST` (comma list).
+ * Lower-cased organization IDs that must NEVER be reclaimed. Brand names are
+ * not identities: every ephemeral session can legitimately be named
+ * "Atelier Toys". `DEMO_CLEANUP_WHITELIST` therefore accepts IDs only.
  */
 function buildWhitelist(env: NodeJS.ProcessEnv): Set<string> {
   const policy = resolveDemoPolicy(env);
   const values = [
     policy.demoOrgId,
-    policy.demoOrgName,
     policy.defaultDemoOrgId,
-    policy.defaultDemoOrgName,
-    'atelier',
-    'atelier toys',
-    'dbr77',
-    'dbr77 sp. z o.o.',
     ...String(env.DEMO_CLEANUP_WHITELIST ?? '')
       .split(',')
       .map((s) => s.trim()),
@@ -159,7 +150,7 @@ export async function findExpiredDemoCandidates(
   // silently process fewer than the configured maximum.
   const whitelist = [...buildWhitelist(env)];
   const whitelistPlaceholders = whitelist.map(() => '?').join(', ');
-  params.push(...whitelist, ...whitelist);
+  params.push(...whitelist);
 
   const sql = `
     SELECT o.id, o.name, o.organization_type, o.created_at
@@ -170,7 +161,6 @@ export async function findExpiredDemoCandidates(
       AND o.created_at < ?
       AND ${realMemberGuard}
       AND LOWER(o.id) NOT IN (${whitelistPlaceholders})
-      AND LOWER(COALESCE(o.name, '')) NOT IN (${whitelistPlaceholders})
     ORDER BY o.created_at ASC NULLS FIRST
     LIMIT ${Math.max(1, Math.floor(limit))}
   `;
@@ -209,7 +199,7 @@ async function lockAndRecheckCandidate(
 
   const whitelist = [...buildWhitelist(env)];
   const whitelistPlaceholders = whitelist.map(() => '?').join(', ');
-  params.push(...whitelist, ...whitelist);
+  params.push(...whitelist);
 
   return tx.queryOne<DemoCleanupCandidate>(
     `SELECT o.id, o.name, o.organization_type, o.created_at
@@ -225,7 +215,6 @@ async function lockAndRecheckCandidate(
            AND NOT (${seedUserClause})
        )
        AND LOWER(o.id) NOT IN (${whitelistPlaceholders})
-       AND LOWER(COALESCE(o.name, '')) NOT IN (${whitelistPlaceholders})
      FOR UPDATE OF o`,
     params
   );
