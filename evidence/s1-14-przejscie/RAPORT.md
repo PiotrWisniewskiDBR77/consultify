@@ -8,7 +8,7 @@ Gałąź naprawy: `codex/c-m2-manual-tools-20260915`
 
 ## Werdykt
 
-**E1 COMPLETE / STOP DO REVIEW.** Pomysły, Notatnik i Dokumenty dowodzą po trzy realne zadania z readbackiem na liście My Work. Dokumenty na bieżącym stagingu nie mają żadnej akcji tworzenia zadania. Paczka dodaje do każdego dokumentu akcję `Create task`, zapis przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 3/3 PASS. Lokalny kandydat `dcbd6c052a` na porcie 4214, połączony wyłącznie przez proxy HTTP z API stagingu, utworzył trzy zadania z trzech dokumentów; My Work wzrosło 23→26 i pokazało wszystkie trzy tytuły. Przejście ujawniło też trzy uczciwie zapisane luki do M6: akcja `Process Flow` otworzyła istniejącą kartę w Mind Map, konwersje Initiative/Decision/Presentation/Report kończą się ogólnym `Done` bez nawigacji do utworzonego obiektu, a brak folderów wyłącza jedyną akcję folderu.
+**HOLD v2 / STOP DO PONOWNEGO REVIEW.** Pomysły, Notatnik i Dokumenty mają po trzy realne zadania z tytułem, UUID i właścicielem; dwa nowe zrzuty pokazują literalnie wszystkie dziewięć tytułów. Dokumenty na bieżącym stagingu nie mają akcji tworzenia zadania. Paczka dodaje `Create task` przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 6/6 PASS, w tym single-flight, failure→retry z tym samym kluczem i polski wariant. Lokalny kandydat `dcbd6c052a` na porcie 4214, połączony wyłącznie przez proxy HTTP z API stagingu, utworzył trzy zadania z trzech dokumentów; My Work wzrosło 23→26. Panel pełnej karty nie pokazuje `sourceType/sourceId`, więc ta część trwałego pochodzenia pozostaje `NOT_PROVEN`. Ręczne przejście nadal ma niedestrukcyjne pozycje oznaczone tylko jako zinwentaryzowane, dlatego nie nadaję całości werdyktu COMPLETE.
 
 ## Pomysły
 
@@ -34,7 +34,7 @@ Gałąź naprawy: `codex/c-m2-manual-tools-20260915`
 | Edit | działa | prowadzi do edytowalnego warsztatu idei |
 | Delete | działa do bramki | otwiera potwierdzenie; nie zatwierdzano usunięcia |
 
-Dowody: `screens/ideas-after-three-task-actions.png`, `screens/tasks-ideas-and-notebook-readback.png`.
+Dowody: `screens/ideas-after-three-task-actions.png`, `screens/tasks-ideas-and-notebook-readback.png`, `screens/tasks-ideas-literal-readback.png`, `READBACK_9_TASKS.md`.
 
 ## Notatnik
 
@@ -67,7 +67,7 @@ Dowody: `screens/ideas-after-three-task-actions.png`, `screens/tasks-ideas-and-n
 | Note menu: Initiative / Task / Decision | **disabled** | komunikat `Unavailable until the server can return a durable action receipt`; nie użyto tej ścieżki do dowodu Tasks |
 | Note menu: Idea / Assessment / Report / Presentation / Ask AI / Delete | widoczne | Delete bez zatwierdzenia |
 
-Dowody: `screens/notebook-three-task-readbacks.png`, `screens/tasks-ideas-and-notebook-readback.png`.
+Dowody: `screens/notebook-three-task-readbacks.png`, `screens/tasks-ideas-and-notebook-readback.png`, `screens/tasks-nine-literal-readback.png`, `READBACK_9_TASKS.md`.
 
 ## Dokumenty
 
@@ -80,7 +80,7 @@ Dowody: `screens/notebook-three-task-readbacks.png`, `screens/tasks-ideas-and-no
 | Delete | widoczny dla każdego dokumentu | nie zatwierdzano usunięcia |
 | Create task | **BRAK na stagingu; działa 3/3 na lokalnym kandydacie** | trzy przyciski pokazały `Task created`; readback My Work 23→26 |
 
-Dokumenty widoczne w pomiarze: Northwind Programme Charter (Ready, 3 chunks), Line 3 Changeover WI (Ready, 2 chunks), `northwind-s1-14-source-note.txt` (Ready, 1 chunk). Utworzone zadania: `Review document: Northwind 2027 Operational Maturity - Programme Charter.docx`, `Review document: Standard Work Instruction WI-OPS-118 - Line 3 Changeover.docx`, `Review document: northwind-s1-14-source-note.txt`. Dowody: `screens/documents-three-ready-no-task-action.png`, `screens/local-candidate-documents-three-task-created.png`, `screens/local-candidate-document-tasks-readback.png`.
+Dokumenty widoczne w pomiarze: Northwind Programme Charter (Ready, 3 chunks), Line 3 Changeover WI (Ready, 2 chunks), `northwind-s1-14-source-note.txt` (Ready, 1 chunk). Utworzone zadania: `Review document: Northwind 2027 Operational Maturity - Programme Charter.docx`, `Review document: Standard Work Instruction WI-OPS-118 - Line 3 Changeover.docx`, `Review document: northwind-s1-14-source-note.txt`. Dowody: `screens/documents-three-ready-no-task-action.png`, `screens/local-candidate-documents-three-task-created.png`, `screens/local-candidate-document-tasks-readback.png`, `screens/tasks-nine-literal-readback.png`, `READBACK_9_TASKS.md`.
 
 ## Naprawa Dokumenty → zadanie
 
@@ -90,7 +90,7 @@ Zmiana obejmuje cztery pliki produktu/testu:
 - `public/locales/en/translation.json` i `public/locales/pl/translation.json`: EN first i polski odpowiednik.
 - `DocumentSidePanel.uploadBlad.test.tsx`: dowód payloadu z `sourceType=document`, `sourceId`, idempotency key oraz widocznego potwierdzenia.
 
-Walidacja: targeted Vitest 3/3 PASS, JSON en/pl parse PASS, esbuild per zmieniony plik PASS, `git diff --check` PASS. Powtórzony pełny front TSC zakończył się kodem 2 i bieżącym współdzielonym fingerprintem 194 `error TS`; dokładnie ten sam wynik odtworzyła równoległa paczka K1 po odświeżeniu współdzielonego toolchainu. Żaden błąd nie wskazuje `DocumentSidePanel.tsx` ani testu M2, więc delta paczki wynosi 0. Historyczny limit 177 nie jest obecnie reprodukowalny w tym środowisku i nie został przedstawiony jako zielony.
+Walidacja: targeted Vitest 6/6 PASS, w tym single-flight, stabilny retry key i PL; JSON en/pl parse PASS, esbuild per zmieniony plik PASS, `git diff --check` PASS. Powtórzony pełny front TSC zakończył się kodem 2 i bieżącym współdzielonym fingerprintem 194 `error TS`; dokładnie ten sam wynik odtworzyła równoległa paczka K1 po odświeżeniu współdzielonego toolchainu. Żaden błąd nie wskazuje `DocumentSidePanel.tsx` ani testu M2, więc delta paczki wynosi 0. Historyczny limit 177 nie jest obecnie reprodukowalny w tym środowisku i nie został przedstawiony jako zielony.
 
 ## Przekazanie do M6
 

@@ -1,32 +1,36 @@
 {
-  "package": "M2 manual Ideas Notebook Documents",
+  "package": "M2 manual Ideas Notebook Documents v2",
   "base": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
-  "evidence_commit": "81c74c72a7c11fa41847625815936bc532bba024",
-  "product_commit": "ed6b29c471",
+  "content_commit": "ca34916ecc317c0ed3acfc1f3b349c418f5e0077",
+  "independent_review": "45b05f106a",
   "branch": "codex/c-m2-manual-tools-20260915",
-  "verdict": "E1_COMPLETE_STOP_FOR_INDEPENDENT_REVIEW",
+  "verdict": "HOLD_V2_STOP_FOR_RE_REVIEW",
   "validation": {
-    "targeted_vitest": "3/3 PASS",
+    "targeted_vitest": "6/6 PASS",
     "real_task_readback": {
-      "ideas": "3/3",
-      "notebook": "3/3",
-      "documents": "3/3",
-      "my_work_count": "23->26"
+      "ideas": "3/3 title+uuid+owner",
+      "notebook": "3/3 title+uuid+owner",
+      "documents": "3/3 title+uuid+owner",
+      "my_work_count": "23->26",
+      "source_type_id": "NOT_PROVEN in full card"
     },
     "frontend_tsc": "exit 2, shared environment fingerprint 194 error TS, 0 in M2 files",
-    "esbuild": "PASS per changed product file",
     "git_diff_check": "PASS"
   },
-  "known_follow_up": [
-    "Process Flow opens an already-open idea as mindmap",
-    "four conversion targets return generic Done without navigable receipt",
-    "repeat integrated EN+PL traversal in M6"
+  "remaining_hold": [
+    "complete click-result matrix for every non-destructive item",
+    "independent re-review after v2"
   ],
   "inventory": [
     {
       "path": "evidence/s1-14-przejscie/RAPORT.md",
-      "sha256": "43f8521c860e6f741d668ba53ec888ef98533daaa07d207dab805ebcc0ef57ff",
-      "bytes": 8138
+      "sha256": "d4dccd6f9e91a17fe79ced217f00bbdc87275844fd93c87a6b54e7139f9527a6",
+      "bytes": 8418
+    },
+    {
+      "path": "evidence/s1-14-przejscie/READBACK_9_TASKS.md",
+      "sha256": "63f1460e14861aa910b917fa1f891939a5c9ffeed71ead9eb2b32f845b9f82a4",
+      "bytes": 2764
     },
     {
       "path": "evidence/s1-14-przejscie/northwind-s1-14-source-note.txt",
@@ -69,6 +73,16 @@
       "bytes": 88136
     },
     {
+      "path": "evidence/s1-14-przejscie/screens/tasks-ideas-literal-readback.png",
+      "sha256": "fe2e344840a4f980d72dbd0115127112851914ffd6bd0a2ace7bf9eb22dd282d",
+      "bytes": 81008
+    },
+    {
+      "path": "evidence/s1-14-przejscie/screens/tasks-nine-literal-readback.png",
+      "sha256": "b0094c16d6432efdc2440d186b1b2385adc4a9101a2ddb20b430a166c138fdc1",
+      "bytes": 84808
+    },
+    {
       "path": "public/locales/en/translation.json",
       "sha256": "a62d377aaf52c476c8f12533823460c560ef4f89ce59c4689b1f6654b3697aba",
       "bytes": 2388951
@@ -85,8 +99,8 @@
     },
     {
       "path": "src/components/documents/__tests__/DocumentSidePanel.uploadBlad.test.tsx",
-      "sha256": "6a7c3b2bf96cf70197e776cdadd213d850129ffb6cec3b64260d9be75fd49c39",
-      "bytes": 4142
+      "sha256": "f8d30edd89ab11af8c13baccd539fe932a3d3f18c954356ac92cd09b66287e49",
+      "bytes": 8934
     }
   ]
 }
