@@ -131,7 +131,13 @@ export function registerInternalBetaBackupJob(
       now.setUTCMinutes(Math.floor(now.getUTCMinutes() / 15) * 15);
       try {
         const { runBackupTick } = await import('./BackupCron.js');
-        await runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: now.toISOString() });
+        const result = await runBackupTick({
+          scheduleName: 'internal-beta-15m',
+          scheduledFor: now.toISOString(),
+        });
+        if (result.error) {
+          logger.error('[Scheduler] Internal-beta backup tick failed:', result.error);
+        }
       } catch (err: any) {
         logger.error('[Scheduler] Internal-beta backup tick failed:', err?.message || err);
       }
@@ -257,7 +263,7 @@ export const Scheduler = {
     // cron string) if a different cadence is ever needed. Safe to run this
     // often: findExpiredDemoCandidates is a pure read gated by TTL + zero real
     // members + DEMO type + whitelist. TTL reclaim is enabled by default and
-    // can be stopped explicitly with ENABLE_DEMO_SANDBOX_TTL=false.
+    // requires an explicit ENABLE_DEMO_SANDBOX_TTL=true (DEC-518).
     const demoCleanupCron = process.env.DEMO_CLEANUP_CRON_EXPRESSION || '30 * * * *';
     const job3b = cron.schedule(demoCleanupCron, () => {
       logger.info('[Scheduler] Running hourly Demo Org Cleanup');
@@ -831,7 +837,9 @@ export const Scheduler = {
     const job32 = cron.schedule('0 * * * *', async () => {
       try {
         const { runJob } = await import('../jobs/interviewReminderJob.js');
-        const result = await runJob();
+        const result = await runJob({
+          enableEscalation: process.env.ENABLE_INTERVIEW_ESCALATION === 'true',
+        });
         if (result.reminders.sent > 0 || result.escalations.escalated > 0) {
           logger.info(
             `[Scheduler] Interview reminders: ${result.reminders.sent} sent, ${result.escalations.escalated} escalated`

@@ -1070,28 +1070,36 @@ class InterviewAssignmentService {
   /**
    * Check and escalate overdue assignments (called by cron job)
    */
-  async checkAndEscalate(): Promise<{ escalated: number; errors: number }> {
+  async checkAndEscalate(
+    options: { limit?: number; recentDays?: number } = {}
+  ): Promise<{ escalated: number; errors: number }> {
     const db = await this.getDb();
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const limit = Math.max(1, Math.min(options.limit ?? 25, 100));
+    const recentDays = Math.max(1, Math.min(options.recentDays ?? 30, 365));
+    const recentCutoff = new Date(now.getTime() - recentDays * 24 * 60 * 60 * 1000);
     let escalated = 0;
     let errors = 0;
 
     // Get overdue assignments that need escalation
     const assignments = await db.all<any>(
       `SELECT a.*, t.name as template_name, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name, 
-              escalation_target.id as escalation_user_id,
-              escalation_target.email as escalation_email,
-              (escalation_target.first_name || ' ' || escalation_target.last_name) as escalation_name
+              assignment_owner.id as escalation_user_id,
+              assignment_owner.email as escalation_email,
+              (assignment_owner.first_name || ' ' || assignment_owner.last_name) as escalation_name
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
-       LEFT JOIN users escalation_target ON escalation_target.id = COALESCE(a.escalate_to, a.created_by)
+       LEFT JOIN users assignment_owner ON assignment_owner.id = a.created_by
        WHERE ${statusInSql('a.status', ['assigned', 'in_progress', 'sent_back'])}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
-         AND (a.escalated_at IS NULL OR a.escalated_at < ?)`,
-      [oneHourAgo.toISOString(), new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()]
+         AND a.created_at >= ?
+         AND a.escalated_at IS NULL
+       ORDER BY a.due_at ASC
+       LIMIT ${limit}`,
+      [oneHourAgo.toISOString(), recentCutoff.toISOString()]
     );
 
     for (const row of assignments || []) {
@@ -1533,4 +1541,5 @@ export const getOverdueCount = (managerId: string, organizationId: string, optio
 export const sendReminder = (assignmentId: string, senderId: string) =>
   interviewAssignmentService.sendReminder(assignmentId, senderId);
 export const checkAndSendReminders = () => interviewAssignmentService.checkAndSendReminders();
-export const checkAndEscalate = () => interviewAssignmentService.checkAndEscalate();
+export const checkAndEscalate = (options?: { limit?: number; recentDays?: number }) =>
+  interviewAssignmentService.checkAndEscalate(options);
