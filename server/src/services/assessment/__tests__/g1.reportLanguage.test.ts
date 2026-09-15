@@ -1,5 +1,5 @@
 /**
- * [ODMROZENIE 04_ASSESSMENT DEC-510] FALA G1 / kryterium S1.4 —
+ * [ODMROZENIE 04_ASSESSMENT DEC-510] FALA G1 + K3 / kryterium S1.4 —
  * ANGIELSKI RAPORT BEZ POLSKICH OGONKÓW.
  *
  * ★ POMIAR, KTÓRY TEN PLIK PILNUJE. Na żywym raporcie Northwind
@@ -11,22 +11,36 @@
  *   · 1 znak = okładkowe „340 osób” (`formatEmployeeCount`).
  * Te same „osób” dawały jedyny polski znak w PPTX (1/4015) i PDF (1/4442).
  *
- * ZAKRES G1 JEST WĄSKI I JAWNY: tłumaczymy DWA ujścia powyżej, a nie całą
- * prozę silnika narracji. Dlaczego — patrz test „DŁUG JAWNY" na końcu pliku:
- * pozostałe sekcje narracyjne (streszczenie zarządcze, wnioski rozdziałów,
- * komentarze obszarów, linia decyzyjna) to ~390 linii polskiej gramatyki
- * w `assessmentNarrativeComposer.ts` i osobna decyzja produktowa. Ten test
- * NIE udaje, że tego długu nie ma — mierzy go, żeby nie urósł po cichu.
+ * K3/W73 domyka jawny dług pozostawiony przez G1: pozostałe sekcje
+ * narracyjne korzystają ze słownika i reguł gramatycznych wybranego locale.
+ * Dziewięć rodzin bloków niżej przypina zachowanie raportu z findingami.
  *
  * DOWÓD MUTACYJNY: przywrócenie w kompozytorze zaszytego polskiego literału
  * `matrixCaption` (albo `formatHeadcountPL` w miejscu `formatHeadcount`)
  * robi pierwszy test czerwonym.
  */
+import { createHash } from 'node:crypto';
+
 import JSZip from 'jszip';
-import { describe, expect, it } from 'vitest';
+import { PDFParse } from 'pdf-parse';
+import { describe, expect, it, vi } from 'vitest';
+
+// Language proof does not depend on the repository's binary font assets.
+// Standard PDF fonts keep the real renderer path measurable in source-only clones.
+vi.mock('../../../utils/pdfFonts.js', () => ({
+  PDF_FONT: {
+    regular: 'Helvetica',
+    bold: 'Helvetica-Bold',
+    italic: 'Helvetica-Oblique',
+    boldItalic: 'Helvetica-BoldOblique',
+  },
+  registerPdfFonts: (doc: { font(name: string): unknown }) => doc.font('Helvetica'),
+}));
 
 import { renderDocumentSchemaToDocxBuffer } from '../../documentStudio/documentDocxRenderer.js';
 import { buildAssessmentDeckModel } from '../assessmentDeckModel.js';
+import { renderAssessmentDeckPdf } from '../assessmentDeckPdfRenderer.js';
+import { renderAssessmentDeckPptx } from '../assessmentDeckPptxRenderer.js';
 import {
   buildAssessmentDrdReportSchema,
   type AssessmentReportContract,
@@ -55,8 +69,7 @@ const AXIS_IDS = [1, 2, 3, 4, 5, 6, 7] as const;
  * okres), więc KAŻDY polski ogonek w wyniku pochodzi z generatora, nie
  * z danych.
  *
- * Fixture Z findingami żyje niżej, w bloku „DŁUG JAWNY" — i pokazuje, że
- * ocena z treścią leje do angielskiego dokumentu pełną polską narrację.
+ * Fixture z findingami żyje niżej i przypina domknięcie długu przez K3/W73.
  */
 function wejscieBezLuk(overrides: Partial<ReportContractInput> = {}): ReportContractInput {
   return {
@@ -92,7 +105,9 @@ function kontrakt(overrides: Partial<ReportContractInput> = {}): AssessmentRepor
 
 async function tekstDokumentu(contract: AssessmentReportContract, organizationName: string) {
   const zip = await JSZip.loadAsync(
-    await renderDocumentSchemaToDocxBuffer(buildAssessmentDrdReportSchema(contract, organizationName))
+    await renderDocumentSchemaToDocxBuffer(
+      buildAssessmentDrdReportSchema(contract, organizationName)
+    )
   );
   const xml = await zip.file('word/document.xml')?.async('string');
   if (!xml) throw new Error('word/document.xml missing from rendered DOCX');
@@ -170,24 +185,10 @@ describe('G1 / S1.4 — polski raport NIE zmienia się ani o znak', () => {
   });
 });
 
-describe('G1 / S1.4 — DŁUG JAWNY: proza silnika narracji jest nadal polska', () => {
-  /**
-   * To NIE jest test „działa" — to test „wiemy, ile zostało", i jest tu po to,
-   * żeby nikt (łącznie ze mną) nie przeczytał zielonego pliku wyżej jako
-   * „angielski raport jest gotowy".
-   *
-   * Ocena, która MA findingi, dostaje pełną narrację z
-   * `assessmentNarrativeComposer.ts` — i ta narracja jest polska także przy
-   * `language: 'en'`. Zmierzone na tym fixture: streszczenie zarządcze,
-   * wnioski końcowe, komentarz KAŻDEGO obszaru. To ~390 linii polskiej
-   * gramatyki (odmiana przez przypadki w logice, nie w słowniku) i osobna
-   * decyzja produktowa — świadomie poza zakresem G1.
-   *
-   * Gdy ktoś tę narrację przetłumaczy, ten test zrobi się czerwony i każe
-   * zaktualizować meldunek — zamiast pozwolić długowi zniknąć bez śladu.
-   */
-  const zFindingami = (): AssessmentReportContract =>
+describe('K3 / W73 — narracja oceny z findingami jest zgodna z językiem raportu', () => {
+  const zFindingami = (language: 'pl' | 'en' = 'en'): AssessmentReportContract =>
     kontrakt({
+      language,
       findings: AXIS_IDS.map((axisId) => ({
         id: `legacy:assess-g1-nw:${axisId}A`,
         outputId: 'legacy:assess-g1-nw',
@@ -212,34 +213,80 @@ describe('G1 / S1.4 — DŁUG JAWNY: proza silnika narracji jest nadal polska', 
       })),
     });
 
-  it('ocena Z findingami: raport EN nadal niesie polską narrację (stan znany, nie regresja)', async () => {
-    const xml = await tekstDokumentu(zFindingami(), 'Northwind Manufacturing Ltd.');
-    expect(xml).toMatch(POLSKIE_DIAKRYTYKI);
-  });
+  const generatedNarrativeBlocks = (contract: AssessmentReportContract): string[] =>
+    [
+      contract.executiveSummary,
+      contract.criticalGaps,
+      contract.finalConclusions,
+      contract.programDecisionLine.direction,
+      contract.programDecisionLine.priority,
+      contract.programDecisionLine.successCondition,
+      ...contract.chapters.flatMap((chapter) => [
+        chapter.introduction.content,
+        chapter.conclusion.content,
+        chapter.conclusion.decisionLine.direction,
+        chapter.conclusion.decisionLine.priority,
+        chapter.conclusion.decisionLine.successCondition,
+        ...chapter.areaComments.map((area) => area.content),
+      ]),
+    ].filter((value): value is string => typeof value === 'string');
 
-  it('dług jest nazwany po sekcjach — streszczenie, wnioski, komentarze obszarów', () => {
-    const contract = zFindingami();
-    const polskie = (text: string | null | undefined) =>
-      Boolean(text) && new RegExp(POLSKIE_DIAKRYTYKI.source, 'u').test(String(text));
-    expect(polskie(contract.executiveSummary)).toBe(true);
-    expect(polskie(contract.finalConclusions)).toBe(true);
-    // `introduction` bywa `null`, gdy nie mieści się w oknie 120–180 słów —
-    // wtedy renderer drukuje placeholder ZE SŁOWNIKA (już angielski). Nigdy
-    // nie jest angielską prozą: albo polska, albo nic.
-    // `introduction`/`conclusion` bywają `null`, gdy nie mieszczą się w swoim
-    // oknie długości (120–180 / 180–260 słów) — wtedy renderer drukuje
-    // placeholder ZE SŁOWNIKA (już angielski). Nigdy nie są angielską prozą:
-    // albo polska, albo nic. Dlatego asercja jest „null albo polski".
-    for (const slot of [
-      contract.chapters[0].introduction.content,
-      contract.chapters[0].conclusion.content,
-    ]) {
-      expect(slot === null || polskie(slot)).toBe(true);
+  it('9 rodzin bloków narracyjnych EN nie zawiera polskich znaków', () => {
+    const contract = zFindingami('en');
+    const firstChapter = contract.chapters[0];
+    const blocks = {
+      executiveSummary: contract.executiveSummary,
+      criticalGaps: contract.criticalGaps,
+      finalConclusions: contract.finalConclusions,
+      programDirection: contract.programDecisionLine.direction,
+      programPriority: contract.programDecisionLine.priority,
+      chapterCaption: firstChapter.matrix.caption.content,
+      chapterDirection: firstChapter.conclusion.decisionLine.direction,
+      chapterPriority: firstChapter.conclusion.decisionLine.priority,
+      areaComment: firstChapter.areaComments[0].content,
+    };
+    expect(Object.keys(blocks)).toHaveLength(9);
+    const contaminated = Object.entries(blocks)
+      .filter(
+        ([, text]) => typeof text === 'string' && (text.match(POLSKIE_DIAKRYTYKI) ?? []).length > 0
+      )
+      .map(([name]) => name);
+    expect(contaminated).toEqual([]);
+    for (const [name, text] of Object.entries(blocks)) {
+      expect(text, name).toBeTruthy();
     }
-    expect(polskie(contract.chapters[0].areaComments[0].content)).toBe(true);
   });
 
-  it('…ale podpis pod matrycą jest angielski RÓWNIEŻ w ocenie z findingami', () => {
-    expect(zFindingami().chapters[0].matrix.caption.content).toContain('The table covers');
+  it('DOCX EN z findingami ma 0 polskich znaków', async () => {
+    const xml = await tekstDokumentu(zFindingami('en'), 'Northwind Manufacturing Ltd.');
+    expect(xml.match(POLSKIE_DIAKRYTYKI) ?? []).toHaveLength(0);
+  });
+
+  it('PPTX i PDF EN z findingami mają 0 polskich znaków w warstwie tekstowej', async () => {
+    const model = buildAssessmentDeckModel(zFindingami('en'), 'Northwind Manufacturing Ltd.');
+    const pptx = await renderAssessmentDeckPptx(model);
+    const zip = await JSZip.loadAsync(pptx);
+    const slideNames = Object.keys(zip.files).filter((name) =>
+      /^ppt\/slides\/slide\d+\.xml$/u.test(name)
+    );
+    const slideXml = (
+      await Promise.all(slideNames.map((name) => zip.file(name)!.async('string')))
+    ).join('\n');
+
+    const pdf = await renderAssessmentDeckPdf(model);
+    const parser = new PDFParse({ data: pdf });
+    const pdfText = String((await parser.getText()).text ?? '');
+    await parser.destroy();
+
+    expect(slideXml.match(POLSKIE_DIAKRYTYKI) ?? []).toHaveLength(0);
+    expect(pdfText.match(POLSKIE_DIAKRYTYKI) ?? []).toHaveLength(0);
+  });
+
+  it('PL jest snapshotem exact base: 26 bloków, PRZED=PO bajtowo', () => {
+    const blocks = generatedNarrativeBlocks(zFindingami('pl'));
+    expect(blocks).toHaveLength(26);
+    expect(createHash('sha256').update(JSON.stringify(blocks)).digest('hex')).toBe(
+      'dd2ed604dc34e2ae3b9f2c78646e00506ba2dcfdba90e061a641f918ad762074'
+    );
   });
 });

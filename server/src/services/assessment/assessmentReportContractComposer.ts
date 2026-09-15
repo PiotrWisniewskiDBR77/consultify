@@ -60,15 +60,10 @@ export interface ReportContractInput {
    * opcjonalne, bo magazyn zastany (`assessmentLegacyReportContractService`)
    * nie ma zdarzeń `ANSWER_CONFIRMED` i nic o pokryciu nie wie. */
   readonly coverage?: AssessmentReportCoverage | null;
-  /** Język STAŁYCH napisów raportu (nagłówki, etykiety, okładka) — DEC-461:
-   * domyślnie `en`, `pl` tylko na jawne żądanie. Treść narracyjna
-   * (`executiveSummary`, komentarze obszarów…) NIE jest tym objęta — pisze ją
-   * zawsze po polsku `assessmentNarrativeComposer.ts` (poza zakresem S1.4b).
-   * WYJĄTEK od G1 (DEC-510): podpis pod matrycą (`matrix.caption`) jest
-   * tłumaczony, bo jako jedyne zdanie narracji drukuje się w KAŻDYM raporcie,
-   * także takim, który nie ma policzalnych luk.
-   * Opcjonalne, żeby trasa jądra metodycznego (poza zakresem tej naprawy)
-   * mogła nie podawać nic i zachować dotychczasowe polskie renderowanie. */
+  /** Język stałych napisów i narracji raportu — DEC-461/W73. K3 rozszerza
+   * wcześniejszy wariant G1 z podpisu matrycy na wszystkie generowane bloki.
+   * Wołacze eksportu podają locale użytkownika; brak pola zachowuje historyczne
+   * polskie renderowanie dla starszych wołaczy. */
   readonly language?: 'pl' | 'en';
   readonly sessionLabel: {
     readonly displayName: string | null;
@@ -89,6 +84,7 @@ export interface ReportContractInput {
 }
 
 export function composeReportContract(input: ReportContractInput) {
+  const language = input.language ?? 'pl';
   const skipsByUnit = new Map<string, AssessmentSkipReason[]>();
   for (const reason of input.skipReasons) {
     const existing = skipsByUnit.get(reason.unitId);
@@ -124,7 +120,10 @@ export function composeReportContract(input: ReportContractInput) {
       );
       return {
         unitId: finding.unitId,
-        unitNamePL: area?.namePL ?? finding.unitName,
+        unitNamePL:
+          language === 'en'
+            ? (area?.name ?? finding.unitName)
+            : (area?.namePL ?? area?.name ?? finding.unitName),
         currentLevel: finding.currentLevel,
         targetLevel: finding.targetLevel,
         gap: finding.gap,
@@ -136,6 +135,7 @@ export function composeReportContract(input: ReportContractInput) {
     }),
     limitations: input.limitations,
     sourceKind: input.sourceKind,
+    language,
   });
 
   return {
@@ -166,7 +166,7 @@ export function composeReportContract(input: ReportContractInput) {
           ? [
               {
                 unitId: finding.unitId,
-                unitNamePL: area.namePL ?? area.name,
+                unitNamePL: language === 'en' ? area.name : (area.namePL ?? area.name),
                 currentLevel: finding.currentLevel,
                 targetLevel: finding.targetLevel,
                 gap: finding.gap,
@@ -180,7 +180,7 @@ export function composeReportContract(input: ReportContractInput) {
       });
       const aggregateNarrative = composeChapterAggregateNarrative({
         axisId: axis.id,
-        axisNamePL: axis.namePL ?? axis.name,
+        axisNamePL: language === 'en' ? axis.name : (axis.namePL ?? axis.name),
         maxLevel: axis.levelCount,
         totalAreas: axis.areas.length,
         skippedCount: axis.areas.filter((area) => (skipsByUnit.get(area.id) ?? []).length > 0)
@@ -191,7 +191,7 @@ export function composeReportContract(input: ReportContractInput) {
         // [ODMROZENIE 04_ASSESSMENT DEC-510] G1 — podpis pod matrycą jest
         // jedyną prozą kompozytora, która trafia do dokumentu ZAWSZE, więc
         // jako jedyna idzie za `language`. Reszta narracji zostaje polska.
-        language: input.language ?? 'pl',
+        language,
       });
       return {
         axisId: axis.id,
@@ -242,6 +242,7 @@ export function composeReportContract(input: ReportContractInput) {
             evidenceState,
             skipped: skipInfo.skipped,
             assessorNote: input.assessorNotes?.[area.id] ?? null,
+            language,
           });
           return {
             unitId: area.id,
