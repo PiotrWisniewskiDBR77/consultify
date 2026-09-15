@@ -240,6 +240,10 @@ function slowa(tekst) {
   for (const w of oczysc(tekst).split(/[^A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]+/)) {
     if (!w) continue;
     const l = w.toLowerCase();
+    // Jednoliterowe tokeny są zbyt wieloznaczne: polskie spójniki `i`/`w`/`z`
+    // kolidują z angielskim `I`, skrótami kolumn i zmiennymi we fragmentach
+    // kodu. Nie mogą samodzielnie stanowić dowodu języka.
+    if (l.length < 2) continue;
     if (nazwyWlasne.has(l)) continue;
     out.push(l);
   }
@@ -295,7 +299,9 @@ function wykryjPolski(tekst) {
   const diak = czysty.match(DIAKRYTYKI);
   if (diak) dowod.push(`diakrytyk:${diak[0]}`);
   const ws = slowa(tekst);
-  const silne = [...new Set(ws.filter((w) => plSilne.has(w)))];
+  // `sa` bywa polskim zapisem bez ogonka, ale w materiale EN jest również
+  // skrótem spółki. Wymaga drugiego sygnału zamiast samodzielnie dowodzić PL.
+  const silne = [...new Set(ws.filter((w) => plSilne.has(w) && w !== 'sa'))];
   const slabe = [...new Set(ws.filter((w) => plSlabe.has(w)))];
   const morfo = [...new Set(slowaMorfo(tekst).filter((w) => !plSilne.has(w) && sufiksPolski(w)))];
   if (silne.length) dowod.push(...silne.map((w) => `pl:${w}`));
