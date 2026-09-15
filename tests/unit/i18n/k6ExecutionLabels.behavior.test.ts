@@ -31,6 +31,16 @@ describe('K6 bilingual object labels', () => {
     expect(plT('myWork.approvals.overdue')).toBe('Po terminie');
     expect(enT('myWork.approvals.emptyTitle')).toBe('No approvals found');
     expect(plT('myWork.approvals.emptyTitle')).toBe('Brak zatwierdzeń');
+    expect(
+      enT('myWork.approvals.emptyFilteredDescription', {
+        status: enT('myWork.approvals.status.pending'),
+      })
+    ).toBe('No approvals with status pending are assigned to you.');
+    expect(
+      plT('myWork.approvals.emptyFilteredDescription', {
+        status: plT('myWork.approvals.status.pending'),
+      })
+    ).toBe('Nie masz zatwierdzeń o statusie: oczekujące.');
     expect(enT('onboarding.enterpriseWizard.progress', { current: 3, total: 4 })).toBe(
       'Step 3 of 4'
     );

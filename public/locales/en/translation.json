@@ -4506,7 +4506,15 @@
     "manager": "Manager",
     "approvals": {
       "overdue": "Overdue",
-      "emptyTitle": "No approvals found"
+      "emptyTitle": "No approvals found",
+      "emptyDescription": "No approvals are currently assigned to you.",
+      "emptyFilteredDescription": "No approvals with status {{status}} are assigned to you.",
+      "status": {
+        "pending": "pending",
+        "acked": "acknowledged",
+        "done": "completed",
+        "expired": "expired"
+      }
     },
     "inbox": {
       "urgency": {

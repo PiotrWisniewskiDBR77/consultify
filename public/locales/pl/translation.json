@@ -3599,7 +3599,15 @@
     "manager": "Menedżer",
     "approvals": {
       "overdue": "Po terminie",
-      "emptyTitle": "Brak zatwierdzeń"
+      "emptyTitle": "Brak zatwierdzeń",
+      "emptyDescription": "Nie masz obecnie żadnych zatwierdzeń.",
+      "emptyFilteredDescription": "Nie masz zatwierdzeń o statusie: {{status}}.",
+      "status": {
+        "pending": "oczekujące",
+        "acked": "przyjęte",
+        "done": "zakończone",
+        "expired": "wygasłe"
+      }
     },
     "inbox": {
       "urgency": {

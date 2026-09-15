@@ -215,8 +215,20 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             title={t('myWork.approvals.emptyTitle', 'No approvals found')}
             description={
               statusFilter !== 'ALL'
-                ? `No ${statusFilter.toLowerCase()} approvals assigned to you.`
-                : 'No approvals are currently assigned to you.'
+                ? t(
+                    'myWork.approvals.emptyFilteredDescription',
+                    'No approvals with status {{status}} are assigned to you.',
+                    {
+                      status: t(
+                        `myWork.approvals.status.${statusFilter.toLowerCase()}`,
+                        statusFilter.toLowerCase()
+                      ),
+                    }
+                  )
+                : t(
+                    'myWork.approvals.emptyDescription',
+                    'No approvals are currently assigned to you.'
+                  )
             }
           />
         </div>
