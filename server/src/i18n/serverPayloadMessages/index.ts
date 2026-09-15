@@ -11,6 +11,7 @@ import { SERVER_PAYLOAD_MESSAGES_BATCH_04 } from './batch04.js';
 import { SERVER_PAYLOAD_MESSAGES_BATCH_05 } from './batch05.js';
 import { SERVER_PAYLOAD_MESSAGES_BATCH_06 } from './batch06.js';
 import { SERVER_PAYLOAD_MESSAGES_BATCH_07 } from './batch07.js';
+import { SERVER_PAYLOAD_MESSAGES_BATCH_08 } from './batch08.js';
 
 export const SERVER_PAYLOAD_MESSAGES: readonly ServerPayloadMessage[] = [
   ...SERVER_PAYLOAD_MESSAGES_BATCH_01,
@@ -20,4 +21,5 @@ export const SERVER_PAYLOAD_MESSAGES: readonly ServerPayloadMessage[] = [
   ...SERVER_PAYLOAD_MESSAGES_BATCH_05,
   ...SERVER_PAYLOAD_MESSAGES_BATCH_06,
   ...SERVER_PAYLOAD_MESSAGES_BATCH_07,
+  ...SERVER_PAYLOAD_MESSAGES_BATCH_08,
 ];
