@@ -170,6 +170,12 @@ const pad = (n: number) => String(n).padStart(2, '0');
  * produkt dla jednego zespołu konsultantów, nie globalny portal.
  */
 export function formatListDate(value: unknown, fallback = PUSTA_DATA): string {
+  // ISO/database strings already encode the intended calendar day. Reading
+  // their prefix avoids shifting UTC midnight to the previous local day.
+  if (typeof value === 'string') {
+    const isoDay = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/.exec(value);
+    if (isoDay) return `${isoDay[3]}/${isoDay[2]}/${isoDay[1]}`;
+  }
   const d = naDate(value);
   if (!d) return fallback;
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;

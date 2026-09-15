@@ -42,6 +42,10 @@ describe('formatowanie dat w listach', () => {
     expect(formatListDate('2026-07-24T10:00:00Z')).not.toContain('07/24');
   });
 
+  it('data bez czasu zachowuje dzień kalendarzowy także na zachód od UTC', () => {
+    expect(formatListDate('2026-08-08')).toBe('08/08/2026');
+  });
+
   it('ta sama data w dwóch miejscach daje ten sam napis (regresja Interview → Sessions)', () => {
     ustawJezyk('pl');
     const zIso = formatListDate('2026-07-21T00:00:00Z');

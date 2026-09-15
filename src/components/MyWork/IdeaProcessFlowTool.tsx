@@ -65,6 +65,7 @@ import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
+import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 import {
   generateAIProposal,
   generateProcessSummary,
@@ -438,6 +439,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   const currentUser = useAppStore((state) => state.currentUser);
   const isDarkFlow = useIsDark();
   const { dialog: bulkDeleteDialog, confirm: confirmBulkDelete } = useConfirmDialog();
