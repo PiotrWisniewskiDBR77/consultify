@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   computeLaneAwareFitBounds,
+  computePaletteGutter,
   DEFAULT_PROCESS_FLOW_VIEW_STATE,
   isValidViewport,
   normalizeProcessFlowViewState,
@@ -156,5 +157,43 @@ describe('computeLaneAwareFitBounds', () => {
     const bounds = computeLaneAwareFitBounds(nodes, [{}], LANE_HEIGHT);
     expect(bounds.width).toBeGreaterThan(0);
     expect(Number.isFinite(bounds.width)).toBe(true);
+  });
+});
+
+// F6 (DEC-461, defekt zrzut 17-pomysly-process-flow-po.png): the floating
+// tool palette is `position: fixed` over the canvas and covers a node
+// rendered near the canvas's left edge (screenshot: first-step card at
+// screen x≈60-130, exactly where the palette rail sits). `fitView`/a
+// restored viewport must nudge the VIEWPORT — never node data — right by at
+// least the palette's real width + 16px so nothing renders under it.
+describe('computePaletteGutter', () => {
+  it('requires a viewport shift covering the palette width plus the 16px margin', () => {
+    // Palette rail spans screen x 82..128 (its own left inset + ~46px
+    // width, matching CanvasLeftToolbar's icon-button sizing); canvas
+    // container starts at screen x 70 (collapsed app sidebar).
+    const railRect = { left: 82, right: 128 };
+    const containerRect = { left: 70, right: 1100 };
+    // (128 - 70) + 16 = 74 — a node whose flow x=0 lands before this
+    // viewport.x would render under the palette; a node here or further
+    // right renders clear of it.
+    expect(computePaletteGutter(railRect, containerRect)).toBe(74);
+  });
+
+  it('returns 0 when the palette does not reach the canvas left edge (e.g. dragged away)', () => {
+    const railRect = { left: 900, right: 946 };
+    const containerRect = { left: 70, right: 1100 };
+    expect(computePaletteGutter(railRect, containerRect)).toBe(0);
+  });
+
+  it('never returns a negative gutter — clamps at 0', () => {
+    const railRect = { left: -50, right: -10 };
+    const containerRect = { left: 70, right: 1100 };
+    expect(computePaletteGutter(railRect, containerRect)).toBe(0);
+  });
+
+  it('honours a custom margin', () => {
+    const railRect = { left: 82, right: 128 };
+    const containerRect = { left: 70, right: 1100 };
+    expect(computePaletteGutter(railRect, containerRect, 0)).toBe(58);
   });
 });

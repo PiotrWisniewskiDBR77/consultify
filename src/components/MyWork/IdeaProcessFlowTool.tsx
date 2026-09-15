@@ -201,6 +201,7 @@ import { validateFlowWarnings, type ValidationWarning } from './processflow/vali
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
 import {
   computeLaneAwareFitBounds,
+  computePaletteGutter,
   normalizeProcessFlowViewState,
   processFlowViewportStorageKey,
   resolveHydrationViewport,
@@ -2649,6 +2650,61 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     reactFlowInstanceRef.current?.fitBounds(bounds, { padding: 0.2, duration: 300 });
   }, [nodes, lanes]);
 
+  /**
+   * F6 (DEC-461, defekt zrzut 17-pomysly-process-flow-po.png): pływająca
+   * paleta narzędzi (`CanvasLeftToolbar`) jest `position: fixed` NAD
+   * płótnem i celowo NIE rezerwuje gutter-a w trybie 'canvas' (patrz
+   * `railGutter` w `ExecutiveModuleShell/index.tsx`) — płótno ma zostać
+   * pełnej szerokości. Skutek uboczny: `fitView`/przywrócony viewport
+   * potrafi postawić pierwszy węzeł dokładnie pod paletą. Naprawiamy to
+   * przesunięciem VIEWPORTU (nigdy pozycji węzła w danych) w prawo o realnie
+   * zmierzoną szerokość palety (paleta jest przeciągalna — `railPosition`)
+   * + margines. `computePaletteGutter` zwraca 0 gdy paleta nie zasłania
+   * lewej krawędzi (np. przeciągnięta gdzie indziej) — wtedy nic się nie
+   * dzieje. Wołane zarówno po domyślnym `fitView`, jak i po przywróceniu
+   * zapisanego viewportu istniejącej mapy.
+   */
+  const ensureViewportClearsPalette = useCallback(() => {
+    const instance = reactFlowInstanceRef.current;
+    const container = flowContainerRef.current;
+    if (!instance || !container) return;
+    const rail = document.querySelector<HTMLElement>('[data-mels-floating-rail-surface]');
+    if (!rail) return;
+    const railRect = rail.getBoundingClientRect();
+    if (railRect.width === 0) return;
+    const requiredGutter = computePaletteGutter(railRect, container.getBoundingClientRect());
+    if (requiredGutter <= 0) return;
+    const vp = instance.getViewport?.();
+    if (!vp || vp.x >= requiredGutter) return;
+    try {
+      instance.setViewport({ ...vp, x: requiredGutter }, { duration: 0 });
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  /**
+   * The rail's OWN measured width can still change shortly after mount — it
+   * plays a ~200ms slide-in animation (`canvas-left-toolbar-enter`) and its
+   * icon set can grow once async state settles — so a single post-fitView
+   * check can catch it mid-animation and under-measure it, leaving a few px
+   * of residual overlap. A `ResizeObserver` re-checks every time the rail's
+   * own box actually changes, which is exact where a fixed-delay guess isn't;
+   * disconnected after 1s because this is a one-time settle after mount, not
+   * a permanent viewport-fighting observer.
+   */
+  const scheduleEnsureViewportClearsPalette = useCallback(() => {
+    ensureViewportClearsPalette();
+    const rail = document.querySelector<HTMLElement>('[data-mels-floating-rail-surface]');
+    if (!rail || typeof ResizeObserver === 'undefined') {
+      window.setTimeout(ensureViewportClearsPalette, 300);
+      return;
+    }
+    const obs = new ResizeObserver(() => ensureViewportClearsPalette());
+    obs.observe(rail);
+    window.setTimeout(() => obs.disconnect(), 1000);
+  }, [ensureViewportClearsPalette]);
+
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
   // F-K1 fix (G4-KBD-P0, 2026-08-11): `containerRef` scopes the grammar to
   // genuine focus within the canvas (see useIdeasToolKeyboard.ts) — this
@@ -3749,7 +3805,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     } catch {
                       /* ignore */
                     }
+                    // F6: restored viewport can ALSO land a node under the
+                    // palette (existing maps, not only fresh `fitView`) —
+                    // re-check after it settles.
+                    scheduleEnsureViewportClearsPalette();
                   }, 50);
+                } else {
+                  // F6: give the default `fitView` a frame to settle before
+                  // checking whether it left a node under the palette.
+                  scheduleEnsureViewportClearsPalette();
                 }
               }}
               fitView={!pendingViewportRef.current}

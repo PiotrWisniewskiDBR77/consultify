@@ -411,6 +411,9 @@ const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-p
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
 const MeetingsModuleScreen = React.lazy(() => import('./screens/meetings-module'));
 const ProcessFlowCanvasScreen = React.lazy(() => import('./screens/processflow-canvas'));
+const ProcessFlowCanvasSingleNodeScreen = React.lazy(
+  () => import('./screens/processflow-canvas-single-node')
+);
 const WhiteboardCanvasScreen = React.lazy(() => import('./screens/whiteboard-canvas'));
 const IdeaTableTimelineStuckScreen = React.lazy(
   () => import('./screens/idea-table-timeline-stuck')
@@ -2383,6 +2386,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'processflow-canvas': {
     label: 'Fala 8 — Process Flow: krawędzie (strzałka domyślna + smoothstep + etykiety)',
     render: () => <ProcessFlowCanvasScreen />,
+  },
+  'processflow-canvas-single-node': {
+    label:
+      'F6 (DEC-461, zrzut 17) — Process Flow: jeden węzeł przy lewej krawędzi — repro palety zasłaniającej węzeł',
+    render: () => <ProcessFlowCanvasSingleNodeScreen />,
   },
   'whiteboard-canvas': {
     label: 'Fala 8 — Whiteboard: łączniki (4-str uchwyty magnetyczne)',

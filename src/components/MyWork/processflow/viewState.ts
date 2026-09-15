@@ -104,6 +104,47 @@ export function computeLaneAwareFitBounds(
   };
 }
 
+/** Minimal DOM-rect shape `computePaletteGutter` needs (`getBoundingClientRect`
+ * duck-typed down to the two fields it reads) — kept decoupled from `DOMRect`
+ * so this stays unit-testable without jsdom. */
+export interface PaletteGutterRect {
+  left: number;
+  right: number;
+}
+
+/**
+ * F6 (DEC-461, defekt zrzut 17-pomysly-process-flow-po.png): the floating
+ * tool palette (`CanvasLeftToolbar`, `[data-mels-floating-rail-surface]`) is
+ * `position: fixed` and floats OVER the canvas without reserving structural
+ * space — a deliberate canvas-mode decision (see `railGutter` comment in
+ * `ExecutiveModuleShell/index.tsx`: the working surface must stay full
+ * width). Consequence: when `fitView` or a restored viewport places a node
+ * near the canvas's left edge, the palette visually covers it.
+ *
+ * This computes how far the VIEWPORT (never node data) must be nudged right
+ * so nothing renders under the palette: the palette's real right edge
+ * (measured, not guessed — the rail is draggable, see `CanvasLeftToolbar`'s
+ * `railPosition`) relative to the canvas container's left edge, plus a fixed
+ * safety margin. Returns 0 when the palette doesn't overlap the canvas's
+ * left edge (e.g. dragged elsewhere) so an already-clear viewport is left
+ * untouched.
+ */
+export function computePaletteGutter(
+  railRect: PaletteGutterRect,
+  containerRect: PaletteGutterRect,
+  margin = 16
+): number {
+  // Only relevant while the rail is still near the canvas's left edge. Once
+  // dragged elsewhere (right side, far down) it no longer risks covering a
+  // node `fitView` placed near flow x=0, and this formula's assumption
+  // (rail anchored at the left) no longer holds — forcing a gutter off its
+  // unrelated position would wrongly shove an already-clear viewport.
+  const NEAR_LEFT_EDGE_PX = 240;
+  if (railRect.left - containerRect.left > NEAR_LEFT_EDGE_PX) return 0;
+  const gutter = Math.ceil(railRect.right - containerRect.left) + margin;
+  return Math.max(0, gutter);
+}
+
 export interface ProcessFlowViewport {
   x: number;
   y: number;
