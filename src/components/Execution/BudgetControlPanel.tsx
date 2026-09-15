@@ -92,9 +92,9 @@ interface BudgetEntry {
 // ── Config ─────────────────────────────────────────────────────
 
 const STATUS_STYLES = {
-  GREEN: { bg: 'bg-green-500/15', text: 'text-green-400', label: 'On Track' },
-  AMBER: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Warning' },
-  RED: { bg: 'bg-danger-500/15', text: 'text-danger-400', label: 'Over Budget' },
+  GREEN: { bg: 'bg-green-500/15', text: 'text-green-400' },
+  AMBER: { bg: 'bg-amber-500/15', text: 'text-amber-400' },
+  RED: { bg: 'bg-danger-500/15', text: 'text-danger-400' },
 };
 
 // ── Component ──────────────────────────────────────────────────

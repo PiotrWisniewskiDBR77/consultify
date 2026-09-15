@@ -954,7 +954,7 @@ type GanttTrackKind = 'baseline' | 'current-plan' | 'forecast' | 'actual';
 const GANTT_TRACKS: Array<{
   kind: GanttTrackKind;
   labelKey: string;
-  label: string;
+  fallback: string;
   tone: string;
   start: keyof Pick<
     ExecutionBankRow,
@@ -968,7 +968,7 @@ const GANTT_TRACKS: Array<{
   {
     kind: 'baseline',
     labelKey: 'execution.bank.gantt.baseline',
-    label: 'Baseline',
+    fallback: 'Baseline',
     tone: 'fill-slate-400 stroke-slate-500',
     start: 'baselineStart',
     finish: 'baselineFinish',
@@ -976,7 +976,7 @@ const GANTT_TRACKS: Array<{
   {
     kind: 'current-plan',
     labelKey: 'execution.bank.gantt.currentPlan',
-    label: 'Current plan',
+    fallback: 'Current plan',
     tone: 'fill-blue-400 stroke-blue-500',
     start: 'currentPlanStart',
     finish: 'currentPlanFinish',
@@ -984,7 +984,7 @@ const GANTT_TRACKS: Array<{
   {
     kind: 'forecast',
     labelKey: 'execution.bank.gantt.forecast',
-    label: 'Forecast',
+    fallback: 'Forecast',
     tone: 'fill-amber-400 stroke-amber-500',
     start: 'forecastStart',
     finish: 'forecastFinish',
@@ -992,7 +992,7 @@ const GANTT_TRACKS: Array<{
   {
     kind: 'actual',
     labelKey: 'execution.bank.gantt.actual',
-    label: 'Actual',
+    fallback: 'Actual',
     tone: 'fill-emerald-500 stroke-emerald-600',
     start: 'actualStart',
     finish: 'actualFinish',
@@ -1004,7 +1004,7 @@ const GanttTrack = ({
   calendarWindow,
   kind,
   labelKey,
-  label,
+  fallback,
   tone,
   start,
   finish,
@@ -1013,12 +1013,12 @@ const GanttTrack = ({
   calendarWindow: ExecutionCalendarWindow;
   kind: GanttTrackKind;
   labelKey: string;
-  label: string;
+  fallback: string;
   tone: string;
   start: (typeof GANTT_TRACKS)[number]['start'];
   finish: (typeof GANTT_TRACKS)[number]['finish'];
 }) => {
-  const etykieta = tlumaczPozaHookiem(labelKey, label);
+  const etykieta = tlumaczPozaHookiem(labelKey, fallback);
   const startEvidence = row[start];
   const finishEvidence = row[finish];
   const startValue = startEvidence.status === 'KNOWN' ? startEvidence.value : null;
