@@ -50,6 +50,56 @@ afterEach(async () => {
 afterAll(async () => pool.end());
 
 describe('A-1 canonical initiative card estimate on real PostgreSQL', () => {
+  it('keeps the estimate receipt fully null for a card published without an estimate', async () => {
+    const organizationId = randomUUID();
+    const initiativeId = `a1-no-estimate-${randomUUID()}`;
+    const authorId = randomUUID();
+    cleanup.push({ organizationId, initiativeId });
+    await pool.query(
+      `INSERT INTO ie_aggregate_state
+        (organization_id, aggregate_type, aggregate_id, version, payload_json)
+       VALUES ($1, 'initiative', $2, 1, $3::jsonb)`,
+      [
+        organizationId,
+        initiativeId,
+        JSON.stringify({
+          initiativeId,
+          projectId: randomUUID(),
+          lifecycleState: 'REGISTERED_DRAFT',
+        }),
+      ]
+    );
+
+    await publishInitiativeCard(uow, {
+      ...envelope(organizationId, initiativeId, authorId, 1, 'initiative.card.publish'),
+      payload: {
+        cardKey: 'kpi',
+        expectedCardVersion: 0,
+        applicability: 'REQUIRED',
+        completion: 'COMPLETE',
+        quality: 'SUFFICIENT',
+        freshness: 'CURRENT',
+        reviewState: 'REQUESTED',
+        content: { kpiRefs: ['kpi-without-estimate'] },
+        evidenceRefs: [],
+        waiverDecisionId: null,
+      },
+    });
+
+    const published = await pool.query(
+      `SELECT estimate_text, estimate_basis, estimated_by, estimated_at
+         FROM ie_initiative_card_versions
+        WHERE organization_id=$1 AND initiative_id=$2 AND card_version=1`,
+      [organizationId, initiativeId]
+    );
+    expect(published.rows[0]).toEqual({
+      estimate_text: null,
+      estimate_basis: null,
+      estimated_by: null,
+      estimated_at: null,
+    });
+  });
+
   it('persists author/time and carries the same estimate into the independent accepted version', async () => {
     const organizationId = randomUUID();
     const initiativeId = `a1-estimate-${randomUUID()}`;
