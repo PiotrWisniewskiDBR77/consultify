@@ -33896,7 +33896,11 @@
       "recommendedFor": "Rekomendowane dla: {{tab}}",
       "title": "Dokumenty pomocnicze",
       "processed": "Przetworzono: {{message}}",
-      "error": "Błąd: {{message}}"
+      "error": "Błąd: {{message}}",
+      "processedFile": "Przetworzono {{name}}",
+      "uploadFailed": "Wgrywanie nie powiodło się",
+      "processing": "Przetwarzanie…",
+      "uploadCta": "Wgraj dokument"
     }
   },
   "megatrends": {

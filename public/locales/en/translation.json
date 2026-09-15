@@ -33779,7 +33779,11 @@
       "recommendedFor": "Recommended for: {{tab}}",
       "title": "Supporting documents",
       "processed": "Processed: {{message}}",
-      "error": "Error: {{message}}"
+      "error": "Error: {{message}}",
+      "processedFile": "Processed {{name}}",
+      "uploadFailed": "Upload failed",
+      "processing": "Processing…",
+      "uploadCta": "Upload document"
     }
   },
   "megatrends": {

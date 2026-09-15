@@ -27,7 +27,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
     try {
       await Api.uploadDocument(file, { tabName, type: 'context_support' });
       setUploadStatus('success');
-      setStatusMessage(`Przetworzono ${file.name}`);
+      setStatusMessage(t('organization.contextUploader.processedFile', 'Processed {{name}}', { name: file.name }));
       // Reset after 3s
       setTimeout(() => {
         setUploadStatus('idle');
@@ -35,7 +35,11 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
       }, 3000);
     } catch (error: any) {
       setUploadStatus('error');
-      setStatusMessage(error instanceof Error ? error.message : 'Wgrywanie nie powiodło się');
+      setStatusMessage(
+        error instanceof Error
+          ? error.message
+          : t('organization.contextUploader.uploadFailed', 'Upload failed')
+      );
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -135,11 +139,11 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
         className="px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-navy-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-navy-700 rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 shrink-0 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isUploading ? (
-          'Przetwarzanie…'
+          t('organization.contextUploader.processing', 'Processing…')
         ) : (
           <>
             <UploadCloud size={14} className="text-c-text-muted" />
-            Wgraj dokument
+            {t('organization.contextUploader.uploadCta', 'Upload document')}
           </>
         )}
       </button>
