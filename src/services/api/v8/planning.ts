@@ -266,6 +266,14 @@ export interface V8PlanningKpi {
     targetValue?: number | null;
     measurementFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
   };
+  approvedForExecution?: boolean;
+  approvalReceipt?: {
+    state: 'NOT_REQUESTED' | 'REQUESTED' | 'CHANGES_REQUESTED' | 'ACCEPTED';
+    cardVersion: number;
+    reviewedBy?: string | null;
+    publishedBy: string;
+    publishedAt: string;
+  } | null;
 }
 
 export interface V8PlanningBudgetItem {

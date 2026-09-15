@@ -1280,6 +1280,39 @@ export async function getInitiativeKpisRead(
 ): Promise<Record<string, unknown>[] | null> {
   try {
     const assignments = await listInitiativeKpiAssignments(initiativeId, organizationId);
+    const approvalCard = await queryHelpers.queryOne<{
+      card_version: number;
+      review_state: string;
+      content_json: unknown;
+      reviewed_by: string | null;
+      published_by: string;
+      published_at: string | Date;
+    }>(
+      `SELECT card_version, review_state, content_json, reviewed_by, published_by, published_at
+         FROM ie_initiative_card_versions
+        WHERE organization_id = ? AND initiative_id = ? AND card_key = 'kpi'
+        ORDER BY card_version DESC
+        LIMIT 1`,
+      [organizationId, initiativeId]
+    );
+    const approvalContent = (() => {
+      if (!approvalCard?.content_json) return {} as Record<string, unknown>;
+      if (typeof approvalCard.content_json === 'string') {
+        try {
+          return JSON.parse(approvalCard.content_json) as Record<string, unknown>;
+        } catch {
+          return {} as Record<string, unknown>;
+        }
+      }
+      return typeof approvalCard.content_json === 'object' && !Array.isArray(approvalCard.content_json)
+        ? (approvalCard.content_json as Record<string, unknown>)
+        : ({} as Record<string, unknown>);
+    })();
+    const approvedKpiIds = new Set(
+      Array.isArray(approvalContent.kpiRefs)
+        ? approvalContent.kpiRefs.filter((value): value is string => typeof value === 'string')
+        : []
+    );
     return assignments.map((kpi) => ({
       id: kpi.id,
       mappingId: kpi.mappingId,
@@ -1306,6 +1339,20 @@ export async function getInitiativeKpisRead(
       observationStatus: kpi.observationStatus,
       realizationExpectation: kpi.realizationExpectation,
       postImplementationExpectation: kpi.postImplementationExpectation,
+      approvedForExecution:
+        approvalCard?.review_state === 'ACCEPTED' && approvedKpiIds.has(String(kpi.id)),
+      approvalReceipt: approvalCard
+        ? {
+            state: approvalCard.review_state,
+            cardVersion: Number(approvalCard.card_version),
+            reviewedBy: approvalCard.reviewed_by,
+            publishedBy: approvalCard.published_by,
+            publishedAt:
+              approvalCard.published_at instanceof Date
+                ? approvalCard.published_at.toISOString()
+                : String(approvalCard.published_at),
+          }
+        : null,
       trendData: [],
     }));
   } catch (error: any) {

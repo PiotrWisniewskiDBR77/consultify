@@ -453,6 +453,7 @@ export interface InitiativeCardVersionReadModel {
   estimate?: { value: string; basis: string } | null;
   estimatedBy?: string | null;
   estimatedAt?: string | null;
+  reviewedBy?: string | null;
   publishedBy: string;
   publishedAt: string;
 }
