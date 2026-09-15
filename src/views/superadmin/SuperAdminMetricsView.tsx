@@ -16,6 +16,8 @@ import { Button } from './components/shared/Button';
 import { Card, Section } from './components/shared/Card';
 import { SectionHeader } from './components/shared/PageHeader';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 export const SuperAdminMetricsView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [funnels, setFunnels] = useState<any>(null);
@@ -56,7 +58,7 @@ export const SuperAdminMetricsView: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
         <Loader2 className="animate-spin mr-2" size={20} />
-        <span className="text-sm">Loading conversion intelligence...</span>
+        <span className="text-sm">{tlumaczPozaHookiem("superadmin.superAdminMetrics.loadingConversionIntelligence", "Loading conversion intelligence...")}</span>
       </div>
     );
   }
@@ -113,7 +115,7 @@ export const SuperAdminMetricsView: React.FC = () => {
           <div className="space-y-2 max-h-[320px] overflow-y-auto">
             {warnings.length === 0 ? (
               <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-8">
-                No critical warnings at this time.
+                {tlumaczPozaHookiem("superadmin.superAdminMetrics.noCriticalWarningsAtThisTime", "No critical warnings at this time.")}
               </p>
             ) : (
               warnings.map((warning, idx) => (
@@ -237,7 +239,7 @@ export const SuperAdminMetricsView: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                      ${partner.totalRevenue.toLocaleString()}
+                      ${partner.totalRevenue.toLocaleString(localeListy())}
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">
                       {partner.orgCount} conversions

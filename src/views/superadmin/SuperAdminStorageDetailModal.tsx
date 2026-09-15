@@ -12,6 +12,7 @@ import { StandardTable } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
+import { localeListy } from '@/utils/listDateFormat';
 interface StorageModalProps {
   orgId: string;
   orgName: string;
@@ -151,7 +152,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
   const formatDate = (value?: string | null) => {
     if (!value) return 'Unknown date';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString(localeListy());
   };
 
   const getFileName = (file: StorageFile) => file.name || file.path.split('/').pop() || file.path;

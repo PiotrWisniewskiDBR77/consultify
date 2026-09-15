@@ -7,6 +7,8 @@ import { Button } from './components/shared/Button';
 import { Card } from './components/shared/Card';
 import { SectionHeader } from './components/shared/PageHeader';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type SignalType = 'SYSTEM_ALERT' | 'CLIENT_TICKET' | 'USER_FEEDBACK';
 
 type SignalItem = {
@@ -21,7 +23,7 @@ type SignalItem = {
 function formatWhen(value?: string | null) {
   if (!value) return '';
   try {
-    return new Date(value).toLocaleString();
+    return new Date(value).toLocaleString(localeListy());
   } catch {
     return '';
   }
@@ -78,7 +80,7 @@ export const SuperAdminSignalsView: React.FC = () => {
   const renderList = (list: SignalItem[]) => {
     if (loading) {
       return (
-        <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading…</div>
+        <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">{tlumaczPozaHookiem("superadmin.superAdminSignals.loading", "Loading…")}</div>
       );
     }
     if (list.length === 0) {
@@ -136,7 +138,7 @@ export const SuperAdminSignalsView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            System alerts, client tickets, and user feedback (unread)
+            {tlumaczPozaHookiem("superadmin.superAdminSignals.systemAlertsClientTicketsAndUserFeedback", "System alerts, client tickets, and user feedback (unread)")}
           </h2>
         </div>
         <Button variant="secondary" icon={RefreshCw} onClick={fetchSignals} loading={loading}>

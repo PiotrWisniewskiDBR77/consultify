@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -129,7 +130,7 @@ export const SuperAdminPlansView: React.FC = () => {
             <Package className="w-6 h-6 text-indigo-600" />
             Subscription Plans
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage pricing tiers and limits</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{tlumaczPozaHookiem("superadmin.superAdminPlans.managePricingTiersAndLimits", "Manage pricing tiers and limits")}</p>
         </div>
         <button
           onClick={handleNewPlan}

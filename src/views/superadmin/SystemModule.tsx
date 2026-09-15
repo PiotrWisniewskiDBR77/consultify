@@ -56,6 +56,7 @@ import PresentationGovernanceWatchlistView from './PresentationGovernanceWatchli
 import PresentationOperationsHealthView from './PresentationOperationsHealthView';
 import PresentationTemplateGovernanceView from './PresentationTemplateGovernanceView';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface SystemModuleProps {
   initialTab?: string;
 }
@@ -326,7 +327,7 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
       activeTab={activeTab}
       onTabChange={handleTabChange}
       title="Connector Ops"
-      subtitle="Operate integrations, platform health, observability, and system configuration"
+      subtitle={tlumaczPozaHookiem("superadmin.system.operateIntegrationsPlatformHealthObservabilityAndSystem", "Operate integrations, platform health, observability, and system configuration")}
       actions={<InfoButton cardId={helpContentId} />}
     >
       {renderContent()}
