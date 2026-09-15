@@ -46,6 +46,7 @@ import {
   DRDArea,
   DRDAxis,
   DRDLevel,
+  getLocalizedDRDLevel,
 } from '@/services/drdStructure';
 
 type AreaState = {
@@ -948,6 +949,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
   // Fetch canon-grounded AI guidance for one area×level (cached, non-blocking).
   const requestGuidance = React.useCallback((area: DRDArea, level: DRDLevel) => {
+    const localizedLevel = getLocalizedDRDLevel(level, lang);
     const key = `${area.id}#${level.level}`;
     setGuidance((prev) => {
       if (prev[key]?.loading || prev[key]?.data) return prev;
@@ -958,8 +960,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
       dimensionId: area.id,
       dimensionName: nazwaWJezyku(area.namePL, area.name, lang === 'pl'),
       levelNumber: level.level,
-      levelTitle: level.title,
-      levelDescription: level.description,
+      levelTitle: localizedLevel.title,
+      levelDescription: localizedLevel.description,
       // DEC-461: was hardcoded 'pl' — an EN viewer got Polish AI guidance
       // under an English question.
       language: lang,
@@ -1845,6 +1847,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             {/* Make room for the pinned decision bar */}
             <div className="space-y-4 pb-28">
               {(selectedArea?.levels || []).map((lvl) => {
+                const localizedLevel = getLocalizedDRDLevel(lvl, lang);
                 const achieved = state.achievedLevel >= lvl.level;
                 const isImplicit = achieved && (state.achievedLevel || 0) > lvl.level;
                 const isTarget = (state.targetLevel || 0) === lvl.level;
@@ -1880,7 +1883,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <div className="font-semibold text-navy-900 dark:text-white truncate">
-                                {lvl.title}
+                                {localizedLevel.title}
                               </div>
                               <span
                                 className={`text-[11px] px-2 py-0.5 rounded-full border ${
@@ -1936,7 +1939,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         </div>
 
                         <div className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
-                          {lvl.description}
+                          {localizedLevel.description}
                         </div>
                       </div>
                     </div>
