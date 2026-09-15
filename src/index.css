@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Canonical scrollbar-free overflow utility. Content remains keyboard/touch
+ * scrollable; only the browser chrome is suppressed for the seven existing
+ * compact horizontal control rows. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   :root {
     /* Natywne kontrolki (popup <select>, scrollbar, date picker) idą za motywem.

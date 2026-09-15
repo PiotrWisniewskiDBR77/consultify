@@ -391,7 +391,8 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
       {/* Main Navigation Row */}
       <div
-        className={`flex items-center px-4 py-3 gap-3 ${hasTabs ? 'justify-between' : 'justify-end'}`}
+        data-testid="module-nav-main-row"
+        className={`flex flex-wrap min-[1360px]:flex-nowrap items-center px-4 py-3 gap-2 min-[1360px]:gap-3 ${hasTabs ? 'justify-between' : 'justify-end'}`}
       >
         {/* Left: Search + Tabs + Status Filters
          *
@@ -403,7 +404,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
          * ekranie (dowod: wdrozenie-6-20260915/zrzuty/06-initiatives-l6.png).
          * `min-w-0` + `overflow-x-auto` na pasku pigulek nizej przenosi
          * nadmiar do przewijania pigulek, zamiast do wypychania CTA. */}
-        <div className="flex min-w-0 items-center gap-3">
+        <div
+          data-testid="module-nav-left-cluster"
+          className="flex min-w-0 basis-full items-center gap-2 min-[1360px]:basis-auto min-[1360px]:gap-3"
+        >
           {/* Search Toggle */}
           <button
             type="button"
@@ -470,7 +474,8 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
         {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
         <div
-          className={`flex shrink-0 items-center gap-3 justify-end ${hasTabs ? 'ml-auto' : ''}`}
+          data-testid="module-nav-right-cluster"
+          className={`flex min-w-0 basis-full flex-wrap items-center gap-2 justify-end min-[1360px]:basis-auto min-[1360px]:flex-nowrap min-[1360px]:gap-3 ${hasTabs ? 'ml-auto' : ''}`}
         >
           {/* Filters / compact controls (leftmost in the right cluster) */}
           {rightControls}
