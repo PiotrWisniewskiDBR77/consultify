@@ -1,0 +1,13 @@
+M1 verification — 2026-09-15 CDT
+
+Real PostgreSQL identity: 127.0.0.1:6456/consultify_m1
+- deterministic seed run 1: 1 measurement, 1 action card, 1 card Inbox item, 1 task, 1 task Inbox item
+- deterministic seed run 2: identical stable counts and IDs
+- separate readback: identical stable counts and IDs
+- focused RealPG/UI/unit suite: 7 files, 29/29 PASS, --retry=0
+- fourth Inbox source sibling: 2/2 PASS after adding and removing its documented second-user fixture
+- server TypeScript: 0 errors
+- frontend TypeScript: 177 errors, exactly the line ratchet; 0 in M1 changed frontend files
+- node --check scripts/dev/seed-kpi-deviation.mjs: PASS
+
+Discovery retained: the first seed attempt exposed notification schema incompatibility. The durable card flow now logs this optional notification failure and continues; no notification failure can roll back or misreport the already-created card. A second discovery came from running the script with NODE_ENV=test without RUN_DB_TESTS=1, which selected the test mock for TaskService; the documented CTO production invocation is not affected, and final proof explicitly used RUN_DB_TESTS=1/MOCK_DB=false.

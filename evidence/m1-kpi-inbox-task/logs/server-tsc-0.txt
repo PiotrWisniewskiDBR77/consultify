@@ -1,0 +1,2 @@
+npx tsc -p server/tsconfig.json --noEmit --pretty false
+exit 0; errors 0
