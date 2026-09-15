@@ -27,12 +27,13 @@
     "realProductScreenshots": 6
   },
   "backupFailure": {
-    "candidate": "f8d8d0e70a",
-    "remoteRef": "backup/codex/a-d3-debts-z64-20260914-w67-20260914",
+    "candidate": "9c88eacebf44ce2fb6f6acd3b64f5e92940cd68f",
+    "attemptedRef": "backup/codex/a-d3-debts-z64-20260914-w67-review3-20260914",
+    "attempts": 1,
+    "result": "HTTP 408 / empty reply",
+    "currentRemoteRef": "backup/codex/a-d3-debts-z64-20260914-w67-20260914",
     "remoteSha": "87b1045380",
-    "commitsAhead": 6,
-    "httpsErrors": ["HTTP 408", "Empty reply from server"],
-    "sshError": "Permission denied (publickey)",
+    "commitsAhead": 9,
     "status": "BLOCKED_BACKUP"
   },
   "stopOwnerDecision": "contractMirrorDrift",

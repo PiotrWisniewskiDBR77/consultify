@@ -28,8 +28,8 @@ Test zamontowanego `ReportsAndPresentationsHub` klika `Other statuses`, potwierd
 
 `realpg-migrate.log` został dodany jawnie do repo, ponieważ wcześniejszy ledger odwoływał się do lokalnego pliku ignorowanego przez `logs`. Nowy `REFREEZE_W67_REVIEW3_SHA256.txt` obejmuje wyłącznie istniejące wymagane dowody, w tym surowe logi N1 review 3. `shasum -a 256 -c` oraz `git diff --check 59a8c44c04...HEAD` muszą zakończyć się kodem 0 przed przekazaniem.
 
-## Backup — jawna awaria checkpointu
+## Backup — BLOCKED_BACKUP
 
-Dla checkpointu candidate `f8d8d0e70a`, sześć commitów przed zdalnym refem, remote `backup/codex/a-d3-debts-z64-20260914-w67-20260914` pozostał na `87b1045380`. Próby HTTPS zakończyły się `HTTP 408` oraz `Empty reply from server`; próba SSH zakończyła się `Permission denied (publickey)`. Stan checkpointu jest `BLOCKED_BACKUP`, bez twierdzenia o wykonanej kopii. Po nowym refreeze zostanie wykonana jedna ograniczona próba nowego exact backupu; jej wynik będzie zgłoszony w handoffie.
+Jedna próba R3 exact backupu dla `9c88eacebf44ce2fb6f6acd3b64f5e92940cd68f` na ref `backup/codex/a-d3-debts-z64-20260914-w67-review3-20260914` zakończyła się `HTTP 408 / empty reply`. Current remote ref `backup/codex/a-d3-debts-z64-20260914-w67-20260914` pozostaje na `87b1045380`; tip R3 jest 9 commitów ahead. Status: **BLOCKED_BACKUP**.
 
 Independent review tego refreeze: **NOT_RUN**.
