@@ -18,11 +18,6 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_13: readonly ServerPayloadMessage[] =
     "pl": "wartość risk_score musi być między 1 a ${scale}"
   },
   {
-    "en": "runDcfFcffValuation: ${claimResult.message}",
-    "pl": "runDcfFcffValuation: ${claimResult.message}",
-    "runtime": false
-  },
-  {
     "en": "runDcfFcffValuation: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}",
     "pl": "runDcfFcffValuation: completeJobSuccess zgłosił NOT_RUNNING dla zadania ${runningJob.id}: ${completed.message}"
   },

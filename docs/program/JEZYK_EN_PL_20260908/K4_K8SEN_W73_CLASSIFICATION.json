@@ -1,30 +1,33 @@
 {
   "schemaVersion": 4,
-  "sourceSha": "611fd20727e7952a56f7a4a06e17100139007b9a",
+  "sourceSha": "WIP_K4_V5",
   "measurement": {
     "K8sen": 1584,
     "runtimeFalseExcludedFromCoverage": true,
     "runtimeFalseResiduals": 7,
     "K8senAfterV4": 0,
-    "fullPolishUnique": 1317,
-    "fullPolishRows": 1577,
+    "fullPolishUnique": 1270,
+    "fullPolishRows": 1528,
     "mixedOutputs": 0,
-    "knownEnglishProse": 0
+    "knownEnglishProse": 0,
+    "technicalLiteralUnique": 46
   },
   "counts": {
-    "b:http-error-boundary": 1575,
-    "b:system-alert-message": 1,
-    "a:technical-diagnostic": 5,
-    "b:api-error-runtime-expanded": 1,
+    "b:http-error-boundary": 1528,
+    "a:parser-fragment": 2,
+    "a:technical-code": 48,
+    "a:technical-diagnostic": 4,
     "a:internal-background": 2
   },
   "unclassified": 0,
-  "realSinkCount": 1577,
+  "realSinkCount": 1528,
   "behaviorCoverage": {
-    "fullPolish": "1577/1577 rows; 1317/1317 unique",
+    "fullPolish": "1528/1528 localized prose rows; 1270/1270 unique templates",
     "mixedFallback": 0,
     "knownEnglishProse": 0,
-    "remaining35Table": "K4_K8SEN_W73_V4_REMAINING_35.json"
+    "remaining35Table": "K4_K8SEN_W73_V4_REMAINING_35.json",
+    "technicalLiteral": "46 stable machine-code keys excluded from Polish prose denominator",
+    "dynamicNested": "3/3 stable claimForCompute outcomes recursively localized"
   },
   "entries": [
     {
@@ -407,9 +410,9 @@
       "path": "server/src/index.ts",
       "line": 852,
       "text": "${alert.message}${alert.checks?.length ? ",
-      "classification": "b",
-      "sink": "system-alert-message",
-      "reason": "runtime value is covered by executable expanded catalog variants and boundary behavior test"
+      "classification": "a",
+      "sink": "parser-fragment",
+      "reason": "non-runtime partial TypeScript conditional captured by the meter; evaluated alert payload has a separate runtime template"
     },
     {
       "path": "server/src/index.ts",
@@ -495,9 +498,9 @@
       "path": "server/src/services/AuditEventsService.ts",
       "line": 123,
       "text": "AUDIT_WRITE_FAILED: ${legacyErr?.message || message}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/InterviewAssignmentService.ts",
@@ -1735,17 +1738,17 @@
       "path": "server/src/services/backupService.ts",
       "line": 71,
       "text": "BACKUP_OPTIONAL_TABLE_NOT_APPROVED:${table}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 198,
       "text": "BACKUP_SCHEMA_NOT_MIGRATED:${table}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
@@ -1775,97 +1778,97 @@
       "path": "server/src/services/backupService.ts",
       "line": 584,
       "text": "BACKUP_REQUIRED_TABLE_MISSING:${table}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 615,
       "text": "BACKUP_OPTIONAL_TABLE_NOT_ORG_SCOPED:${table}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 629,
       "text": "BACKUP_REQUIRED_TABLE_EXPORT_FAILED:${table}:${err?.message || err}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 716,
       "text": "BACKUP_RECONCILIATION_PERSIST_FAILED:${message}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 991,
       "text": "BACKUP_TABLE_ROW_COUNT_MISMATCH:${entry.name}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 995,
       "text": "BACKUP_TABLE_HASH_MISMATCH:${entry.name}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 1069,
       "text": "RESTORE_TARGET_TABLE_MISSING:${table}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 1093,
       "text": "BACKUP_OWNER_ID_MISSING:${ownerTable}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 1098,
       "text": "RESTORE_OWNER_COUNT_MISMATCH:${ownerTable}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 1107,
       "text": "RESTORE_OWNER_HASH_MISMATCH:${ownerTable}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 1122,
       "text": "RESTORE_COLD_COUNT_MISMATCH:${ownerTable}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/backupService.ts",
       "line": 1131,
       "text": "RESTORE_COLD_HASH_MISMATCH:${ownerTable}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/benefitsRegisterService.ts",
@@ -2135,25 +2138,25 @@
       "path": "server/src/services/caseWorkspace/caseCoreService.ts",
       "line": 612,
       "text": "case_status_transition_not_allowed:${row.case_status}->${targetStatus}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/caseCoreService.ts",
       "line": 639,
       "text": "case_status_event_type_unmapped:${updatedRow.case_status}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/caseCoreService.ts",
       "line": 899,
       "text": "case_closure_axis_not_ready:${axis}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/caseIntakeService.ts",
@@ -2183,9 +2186,9 @@
       "path": "server/src/services/caseWorkspace/casePlanVersionService.ts",
       "line": 1164,
       "text": "plan_status_transition_not_allowed:${row.status}->IN_REVIEW",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/casePlanVersionService.ts",
@@ -2215,33 +2218,33 @@
       "path": "server/src/services/caseWorkspace/nodeRunService.ts",
       "line": 519,
       "text": "node_run_status_transition_not_allowed:${from}->${to}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/nodeRunService.ts",
       "line": 1267,
       "text": "node_run_status_transition_not_allowed:${row.status}->${input.outcome}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/playService.ts",
       "line": 862,
       "text": "process_definition_share_not_a_widening:${row.visibility}->${targetVisibility}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/playService.ts",
       "line": 1183,
       "text": "process_version_status_transition_not_allowed:${row.status}->IN_REVIEW",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/playService.ts",
@@ -2271,9 +2274,9 @@
       "path": "server/src/services/caseWorkspace/proposalApprovalService.ts",
       "line": 936,
       "text": "proposal_status_transition_not_allowed:${row.status}->PENDING_REVIEW",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/proposalApprovalService.ts",
@@ -2287,9 +2290,9 @@
       "path": "server/src/services/caseWorkspace/proposalApprovalService.ts",
       "line": 1175,
       "text": "proposal_status_transition_not_allowed:${row.status}->${nextStatus}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/proposalApprovalService.ts",
@@ -2311,25 +2314,25 @@
       "path": "server/src/services/caseWorkspace/proposalApprovalService.ts",
       "line": 1611,
       "text": "proposal_status_transition_not_allowed:${row.status}->${nextStatus}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/runLifecycleService.ts",
       "line": 481,
       "text": "run_lifecycle_status_transition_not_allowed:${from}->${to}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/runLifecycleService.ts",
       "line": 540,
       "text": "run_lifecycle_status_transition_not_allowed:${row.status}->${path[0]}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/runLifecycleService.ts",
@@ -2343,17 +2346,17 @@
       "path": "server/src/services/caseWorkspace/runLifecycleService.ts",
       "line": 946,
       "text": "run_lifecycle_status_transition_not_allowed:${row.status}->RETRY_NODE",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/runLifecycleService.ts",
       "line": 1175,
       "text": "run_lifecycle_status_transition_not_allowed:${row.status}->COMPENSATION_OUTCOME",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/waitSubscriptionService.ts",
@@ -2367,9 +2370,9 @@
       "path": "server/src/services/caseWorkspace/waitSubscriptionService.ts",
       "line": 926,
       "text": "wait_wrong_type_for_event_resolution:${wait.waitType}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/caseWorkspace/waitSubscriptionService.ts",
@@ -2383,9 +2386,9 @@
       "path": "server/src/services/caseWorkspace/waitSubscriptionService.ts",
       "line": 1388,
       "text": "wait_status_transition_not_allowed:${row.status}->${nextStatus}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/closureDeliveryReceiptService.ts",
@@ -4111,9 +4114,9 @@
       "path": "server/src/services/executionBvpService.ts",
       "line": 389,
       "text": "execution_legacy_writer_retired:${canonical.rows[0].link_id}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/executionRealizationService.ts",
@@ -4679,9 +4682,9 @@
       "path": "server/src/services/finance/canonical/valuationComputeService.ts",
       "line": 771,
       "text": "runDcfFcffValuation: ${claimResult.message}",
-      "classification": "a",
-      "sink": "technical-diagnostic",
-      "reason": "machine/log/internal diagnostic, not an HTTP, SSE, e-mail, or document prose sink"
+      "classification": "b",
+      "sink": "http-error-boundary",
+      "reason": "real DCF result message; outer template and stable nested claim outcome are recursively localized without losing identifiers or status values"
     },
     {
       "path": "server/src/services/finance/canonical/valuationComputeService.ts",
@@ -6119,9 +6122,9 @@
       "path": "server/src/services/materialExport/materialExportPolicyService.ts",
       "line": 22,
       "text": "MAT_EXPORT_ENGINE_NOT_APPROVED:${providerKey}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/mcp/mcpProviderClient.ts",
@@ -8879,9 +8882,9 @@
       "path": "server/src/services/smsService.ts",
       "line": 354,
       "text": "Invalid code. ${remainingAttempts > 0 ? ",
-      "classification": "b",
-      "sink": "api-error-runtime-expanded",
-      "reason": "runtime value is covered by executable expanded catalog variants and boundary behavior test"
+      "classification": "a",
+      "sink": "parser-fragment",
+      "reason": "non-runtime partial TypeScript conditional captured by the meter; two evaluated OTP outcomes have direct localized runtime contracts"
     },
     {
       "path": "server/src/services/smsService.ts",
@@ -9479,17 +9482,17 @@
       "path": "server/src/services/v8/agentAdapterOrchestratorService.ts",
       "line": 68,
       "text": "adapter_governance_denied:${governance.reason}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/agentAdapterOrchestratorService.ts",
       "line": 84,
       "text": "adapter_resource_denied:${resource.reason}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/agentAdapterOrchestratorService.ts",
@@ -9503,33 +9506,33 @@
       "path": "server/src/services/v8/agentProcessTemplateService.ts",
       "line": 247,
       "text": "invalid_agent_template_transition:${current.status}:${input.action}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/agentProposalGovernanceService.ts",
       "line": 489,
       "text": "proposal_supersession_failed:${successorProposalVersionId}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/agentQualityEvaluationService.ts",
       "line": 331,
       "text": "quality_dimension_missing:${dimension}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/agentQualityEvaluationService.ts",
       "line": 336,
       "text": "critical_invariant_missing:${invariant}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/artifactRegistryService.ts",
@@ -10375,41 +10378,41 @@
       "path": "server/src/services/v8/multiAgentWorkManagerService.ts",
       "line": 73,
       "text": "unknown_branch_dependency:${dependency}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/multiAgentWorkManagerService.ts",
       "line": 341,
       "text": "branch_cost_budget_exceeded:${usage.costUsd}:${budget.maxCostUsd}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/multiAgentWorkManagerService.ts",
       "line": 460,
       "text": "work_graph_resource_denied:${resourceReservation.reason}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/multiAgentWorkManagerService.ts",
       "line": 621,
       "text": "work_graph_not_blocked:${graph.status}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/multiAgentWorkManagerService.ts",
       "line": 733,
       "text": "execution_run_not_planning:${run.state}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/multiplayerHardeningService.ts",
@@ -11327,17 +11330,17 @@
       "path": "server/src/services/v8/transformationInitiativeTransitionAdapterService.ts",
       "line": 261,
       "text": "initiative_transition_denied:${JSON.stringify(transition.body)}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/transformationInitiativeTransitionAdapterService.ts",
       "line": 487,
       "text": "initiative_transition_denied:${JSON.stringify(transition.body)}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/v8/versionReplayService.ts",
@@ -12055,9 +12058,9 @@
       "path": "server/src/services/wave8AgentRuntimeService.ts",
       "line": 1464,
       "text": "invalid_schedule_transition:${from}:${input.action}",
-      "classification": "b",
-      "sink": "http-error-boundary",
-      "reason": "HTTP message/error boundary applies catalog or lossless lexical PL mapping; details and identifiers remain distinct"
+      "classification": "a",
+      "sink": "technical-code",
+      "reason": "stable machine-readable error code/envelope preserved literally; not counted as Polish prose coverage"
     },
     {
       "path": "server/src/services/wave9OutcomeRuntimeService.ts",

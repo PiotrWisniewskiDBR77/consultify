@@ -39,7 +39,7 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_36: readonly ServerPayloadMessage[] =
   },
   {
     "en": "runDcfFcffValuation: ${claimResult.message}",
-    "pl": "runDcfFcffValuation: ${claimResult.message}"
+    "pl": "Wycena DCF/FCFF: ${claimResult.message}"
   },
   {
     "en": "runDcfFcffValuation: finance_business_versions.source_working_revision_id is not set for ${params.valuationBusinessVersionId}",
@@ -52,10 +52,6 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_36: readonly ServerPayloadMessage[] =
   {
     "en": "[FinancialStatementService] Idempotency reservation conflict for ${organizationId}/${idempotencyKey} but no row found on re-read",
     "pl": "[FinancialStatementService] konflikt rezerwacji idempotencji dla ${organizationId}/${idempotencyKey}, ale ponowny odczyt nie zwrócił wiersza"
-  },
-  {
-    "en": "image_openai_vision_http_${response.status}",
-    "pl": "image_openai_vision_http_${response.status}"
   },
   {
     "en": "[OrgContext] Failed to publish snapshot version for org ${organizationId} after ${MAX_ATTEMPTS} attempts (version contention).",
@@ -98,24 +94,12 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_36: readonly ServerPayloadMessage[] =
     "pl": "[financeProjectionConsumer] po openRoiFinanceReconciliation oczekiwano otwartego lub analizowanego uzgodnienia dla łącza ${link.link_id}, ale go nie znaleziono"
   },
   {
-    "en": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=NO_CONSUMER_REGISTERED",
-    "pl": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=NO_CONSUMER_REGISTERED"
-  },
-  {
-    "en": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=${message}",
-    "pl": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=${message}"
-  },
-  {
     "en": "[createRoiCase] 23505 on ux_rvn_roi_cases_one_active_per_initiative but no winning row found for initiative ${initiativeId}",
     "pl": "[createRoiCase] błąd 23505 dla ux_rvn_roi_cases_one_active_per_initiative, ale nie znaleziono zwycięskiego wiersza dla inicjatywy ${initiativeId}"
   },
   {
     "en": "[startRoiCasePostInvestmentReview] ROI case ${caseId} compare/benefits-realization view returned null while its own row is locked — internal invariant violated",
     "pl": "[startRoiCasePostInvestmentReview] widok porównania lub realizacji korzyści sprawy ROI ${caseId} zwrócił null, gdy jej wiersz był zablokowany — naruszono wewnętrzny niezmiennik"
-  },
-  {
-    "en": "__schema_version_at_creation:${schemaVersionAtCreation}",
-    "pl": "__schema_version_at_creation:${schemaVersionAtCreation}"
   },
   {
     "en": "Schema was modified since this proposal was created (proposal version: ${proposalSchemaVersion}, current: ${currentSV}). Please regenerate.",

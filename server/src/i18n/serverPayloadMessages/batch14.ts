@@ -150,10 +150,6 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_14: readonly ServerPayloadMessage[] =
     "pl": "${operation} dotyczy ${result.rowCount ?? 0} wierszy"
   },
   {
-    "en": "${alert.message}${alert.checks?.length ? ",
-    "pl": "${alert.message}${alert.checks?.length ? "
-  },
-  {
     "en": "Canonical migrations directory not found for readiness evaluation",
     "pl": "Nie znaleziono kanonicznego katalogu migracji do oceny gotowości"
   },

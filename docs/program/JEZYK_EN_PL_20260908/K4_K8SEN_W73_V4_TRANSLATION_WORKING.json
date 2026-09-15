@@ -149,10 +149,6 @@
       "pl": "${operation} dotyczy ${result.rowCount ?? 0} wierszy"
     },
     {
-      "en": "${alert.message}${alert.checks?.length ? ",
-      "pl": "${alert.message}${alert.checks?.length ? "
-    },
-    {
       "en": "Canonical migrations directory not found for readiness evaluation",
       "pl": "Nie znaleziono kanonicznego katalogu migracji do oceny gotowości"
     },
@@ -191,10 +187,6 @@
     {
       "en": "No canonical map row for idea ${ideaId} in org ${organizationId}",
       "pl": "Brak wiersza mapy kanonicznej dla pomysłu ${ideaId} w organizacji ${organizationId}"
-    },
-    {
-      "en": "AUDIT_WRITE_FAILED: ${legacyErr?.message || message}",
-      "pl": "AUDIT_WRITE_FAILED: ${legacyErr?.message || message}"
     },
     {
       "en": "Cannot delete assignment that has been started",
@@ -761,14 +753,6 @@
       "pl": "[szybki dostęp] odrzucony: punkt końcowy jest wyłączony lub jest to środowisko wykonawcze"
     },
     {
-      "en": "BACKUP_OPTIONAL_TABLE_NOT_APPROVED:${table}",
-      "pl": "BACKUP_OPTIONAL_TABLE_NOT_APPROVED:${table}"
-    },
-    {
-      "en": "BACKUP_SCHEMA_NOT_MIGRATED:${table}",
-      "pl": "BACKUP_SCHEMA_NOT_MIGRATED:${table}"
-    },
-    {
       "en": "BACKUP_ENCRYPTION_KEY is required; unencrypted backups are forbidden",
       "pl": "wymagany jest BACKUP_ENCRYPTION_KEY; niezaszyfrowane kopie zapasowe są zabronione"
     },
@@ -779,54 +763,6 @@
     {
       "en": "Unsupported or unencrypted backup format",
       "pl": "Nieobsługiwany lub niezaszyfrowany format kopii zapasowej"
-    },
-    {
-      "en": "BACKUP_REQUIRED_TABLE_MISSING:${table}",
-      "pl": "BACKUP_REQUIRED_TABLE_MISSING:${table}"
-    },
-    {
-      "en": "BACKUP_OPTIONAL_TABLE_NOT_ORG_SCOPED:${table}",
-      "pl": "BACKUP_OPTIONAL_TABLE_NOT_ORG_SCOPED:${table}"
-    },
-    {
-      "en": "BACKUP_REQUIRED_TABLE_EXPORT_FAILED:${table}:${err?.message || err}",
-      "pl": "BACKUP_REQUIRED_TABLE_EXPORT_FAILED:${table}:${err?.message || err}"
-    },
-    {
-      "en": "BACKUP_RECONCILIATION_PERSIST_FAILED:${message}",
-      "pl": "BACKUP_RECONCILIATION_PERSIST_FAILED:${message}"
-    },
-    {
-      "en": "BACKUP_TABLE_ROW_COUNT_MISMATCH:${entry.name}",
-      "pl": "BACKUP_TABLE_ROW_COUNT_MISMATCH:${entry.name}"
-    },
-    {
-      "en": "BACKUP_TABLE_HASH_MISMATCH:${entry.name}",
-      "pl": "BACKUP_TABLE_HASH_MISMATCH:${entry.name}"
-    },
-    {
-      "en": "RESTORE_TARGET_TABLE_MISSING:${table}",
-      "pl": "RESTORE_TARGET_TABLE_MISSING:${table}"
-    },
-    {
-      "en": "BACKUP_OWNER_ID_MISSING:${ownerTable}",
-      "pl": "BACKUP_OWNER_ID_MISSING:${ownerTable}"
-    },
-    {
-      "en": "RESTORE_OWNER_COUNT_MISMATCH:${ownerTable}",
-      "pl": "RESTORE_OWNER_COUNT_MISMATCH:${ownerTable}"
-    },
-    {
-      "en": "RESTORE_OWNER_HASH_MISMATCH:${ownerTable}",
-      "pl": "RESTORE_OWNER_HASH_MISMATCH:${ownerTable}"
-    },
-    {
-      "en": "RESTORE_COLD_COUNT_MISMATCH:${ownerTable}",
-      "pl": "RESTORE_COLD_COUNT_MISMATCH:${ownerTable}"
-    },
-    {
-      "en": "RESTORE_COLD_HASH_MISMATCH:${ownerTable}",
-      "pl": "RESTORE_COLD_HASH_MISMATCH:${ownerTable}"
     },
     {
       "en": "createBenefit: organizationId is required",
@@ -945,18 +881,6 @@
       "pl": "plecak: krok musi być > 0"
     },
     {
-      "en": "case_status_transition_not_allowed:${row.case_status}->${targetStatus}",
-      "pl": "case_status_transition_not_allowed:${row.case_status}->${targetStatus}"
-    },
-    {
-      "en": "case_status_event_type_unmapped:${updatedRow.case_status}",
-      "pl": "case_status_event_type_unmapped:${updatedRow.case_status}"
-    },
-    {
-      "en": "case_closure_axis_not_ready:${axis}",
-      "pl": "case_closure_axis_not_ready:${axis}"
-    },
-    {
       "en": "intake_${fieldCode}_required",
       "pl": "Pole intake_${fieldCode} jest wymagane"
     },
@@ -967,10 +891,6 @@
     {
       "en": "intake_${fieldCode}_item_too_long",
       "pl": "Element pola intake_${fieldCode} jest zbyt długi"
-    },
-    {
-      "en": "plan_status_transition_not_allowed:${row.status}->IN_REVIEW",
-      "pl": "plan_status_transition_not_allowed:${row.status}->IN_REVIEW"
     },
     {
       "en": "plan_status_transition_not_allowed:${row.status}->DRAFT",
@@ -985,22 +905,6 @@
       "pl": "Niedozwolona zmiana statusu planu: ${row.status} → WITHDRAWN"
     },
     {
-      "en": "node_run_status_transition_not_allowed:${from}->${to}",
-      "pl": "node_run_status_transition_not_allowed:${from}->${to}"
-    },
-    {
-      "en": "node_run_status_transition_not_allowed:${row.status}->${input.outcome}",
-      "pl": "node_run_status_transition_not_allowed:${row.status}->${input.outcome}"
-    },
-    {
-      "en": "process_definition_share_not_a_widening:${row.visibility}->${targetVisibility}",
-      "pl": "process_definition_share_not_a_widening:${row.visibility}->${targetVisibility}"
-    },
-    {
-      "en": "process_version_status_transition_not_allowed:${row.status}->IN_REVIEW",
-      "pl": "process_version_status_transition_not_allowed:${row.status}->IN_REVIEW"
-    },
-    {
       "en": "process_version_status_transition_not_allowed:${row.status}->PUBLISHED",
       "pl": "Niedozwolona zmiana statusu wersji procesu: ${row.status} → PUBLISHED"
     },
@@ -1013,16 +917,8 @@
       "pl": "Niedozwolona zmiana statusu wersji procesu: ${row.status} → ARCHIVED"
     },
     {
-      "en": "proposal_status_transition_not_allowed:${row.status}->PENDING_REVIEW",
-      "pl": "proposal_status_transition_not_allowed:${row.status}->PENDING_REVIEW"
-    },
-    {
       "en": "proposal_status_transition_not_allowed:${row.status}->decision",
       "pl": "proposal_status_transition_not_allowed:${row.status}->decyzja"
-    },
-    {
-      "en": "proposal_status_transition_not_allowed:${row.status}->${nextStatus}",
-      "pl": "proposal_status_transition_not_allowed:${row.status}->${nextStatus}"
     },
     {
       "en": "proposal_status_transition_not_allowed:${row.status}->EXECUTING",
@@ -1033,40 +929,16 @@
       "pl": "Niedozwolona zmiana statusu propozycji: ${row.status} → APPROVED"
     },
     {
-      "en": "run_lifecycle_status_transition_not_allowed:${from}->${to}",
-      "pl": "run_lifecycle_status_transition_not_allowed:${from}->${to}"
-    },
-    {
-      "en": "run_lifecycle_status_transition_not_allowed:${row.status}->${path[0]}",
-      "pl": "run_lifecycle_status_transition_not_allowed:${row.status}->${path[0]}"
-    },
-    {
       "en": "run_lifecycle_status_transition_not_allowed:${row.status}->RUNNING",
       "pl": "Niedozwolona zmiana statusu cyklu wykonania: ${row.status} → RUNNING"
-    },
-    {
-      "en": "run_lifecycle_status_transition_not_allowed:${row.status}->RETRY_NODE",
-      "pl": "run_lifecycle_status_transition_not_allowed:${row.status}->RETRY_NODE"
-    },
-    {
-      "en": "run_lifecycle_status_transition_not_allowed:${row.status}->COMPENSATION_OUTCOME",
-      "pl": "run_lifecycle_status_transition_not_allowed:${row.status}->COMPENSATION_OUTCOME"
     },
     {
       "en": "wait_status_transition_not_allowed:${wait.status}->SATISFIED",
       "pl": "Niedozwolona zmiana statusu oczekiwania: ${wait.status} → SATISFIED"
     },
     {
-      "en": "wait_wrong_type_for_event_resolution:${wait.waitType}",
-      "pl": "wait_wrong_type_for_event_resolution:${wait.waitType}"
-    },
-    {
       "en": "wait_status_transition_not_allowed:${row.status}->SATISFIED",
       "pl": "Niedozwolona zmiana statusu oczekiwania: ${row.status} → SATISFIED"
-    },
-    {
-      "en": "wait_status_transition_not_allowed:${row.status}->${nextStatus}",
-      "pl": "wait_status_transition_not_allowed:${row.status}->${nextStatus}"
     },
     {
       "en": "${LOG_PREFIX} materialized DONE receipt was not persisted",
@@ -1595,10 +1467,6 @@
     {
       "en": "Execution work analysis ${id} was not persisted",
       "pl": "Analiza pracy wykonawczej ${id} nie została utrwalona"
-    },
-    {
-      "en": "execution_legacy_writer_retired:${canonical.rows[0].link_id}",
-      "pl": "execution_legacy_writer_retired:${canonical.rows[0].link_id}"
     },
     {
       "en": "[Execution:Realization] Insert for ${id} succeeded but could not be read back",
@@ -2467,10 +2335,6 @@
     {
       "en": "Version not found",
       "pl": "Nie znaleziono wersji"
-    },
-    {
-      "en": "MAT_EXPORT_ENGINE_NOT_APPROVED:${providerKey}",
-      "pl": "MAT_EXPORT_ENGINE_NOT_APPROVED:${providerKey}"
     },
     {
       "en": "Invalid provider config (baseUrl/mcpPath)",
@@ -3685,10 +3549,6 @@
       "pl": "Dane wyjściowe modelu interpretera są nieprawidłowe JSON: ${err instanceof Error ? err.message : String(err)}"
     },
     {
-      "en": "Invalid code. ${remainingAttempts > 0 ? ",
-      "pl": "Nieprawidłowy kod. ${remainingAttempts > 0 ? "
-    },
-    {
       "en": "Twilio client not available",
       "pl": "Klient Twilio jest niedostępny"
     },
@@ -3941,32 +3801,8 @@
       "pl": "Nie można bezpośrednio przekonwertować organizacji demonstracyjnej. Najpierw rozpocznij okres próbny."
     },
     {
-      "en": "adapter_governance_denied:${governance.reason}",
-      "pl": "adapter_governance_denied:${governance.reason}"
-    },
-    {
-      "en": "adapter_resource_denied:${resource.reason}",
-      "pl": "adapter_resource_denied:${resource.reason}"
-    },
-    {
       "en": "adapter_invocation_${existing.status}",
       "pl": "Wywołanie adaptera ma status ${existing.status}"
-    },
-    {
-      "en": "invalid_agent_template_transition:${current.status}:${input.action}",
-      "pl": "invalid_agent_template_transition:${current.status}:${input.action}"
-    },
-    {
-      "en": "proposal_supersession_failed:${successorProposalVersionId}",
-      "pl": "proposal_supersession_failed:${successorProposalVersionId}"
-    },
-    {
-      "en": "quality_dimension_missing:${dimension}",
-      "pl": "quality_dimension_missing:${dimension}"
-    },
-    {
-      "en": "critical_invariant_missing:${invariant}",
-      "pl": "critical_invariant_missing:${invariant}"
     },
     {
       "en": "Failed to register governed table sheet artifact",
@@ -4343,26 +4179,6 @@
     {
       "en": "Unsupported proposal operation: ${String(step.op)}",
       "pl": "Nieobsługiwana operacja propozycji: ${String(step.op)}"
-    },
-    {
-      "en": "unknown_branch_dependency:${dependency}",
-      "pl": "unknown_branch_dependency:${dependency}"
-    },
-    {
-      "en": "branch_cost_budget_exceeded:${usage.costUsd}:${budget.maxCostUsd}",
-      "pl": "branch_cost_budget_exceeded:${usage.costUsd}:${budget.maxCostUsd}"
-    },
-    {
-      "en": "work_graph_resource_denied:${resourceReservation.reason}",
-      "pl": "work_graph_resource_denied:${resourceReservation.reason}"
-    },
-    {
-      "en": "work_graph_not_blocked:${graph.status}",
-      "pl": "work_graph_not_blocked:${graph.status}"
-    },
-    {
-      "en": "execution_run_not_planning:${run.state}",
-      "pl": "execution_run_not_planning:${run.state}"
     },
     {
       "en": "Facilitation session ${sessionId} not found in organization ${organizationId}",
@@ -4757,10 +4573,6 @@
       "pl": "Zastosowana propozycja mobilizacji nieczytelna"
     },
     {
-      "en": "initiative_transition_denied:${JSON.stringify(transition.body)}",
-      "pl": "initiative_transition_denied:${JSON.stringify(transition.body)}"
-    },
-    {
       "en": "Source snapshot ${fromSnapshotId} not found in organization ${organizationId}",
       "pl": "Nie znaleziono migawki źródłowej ${fromSnapshotId} w organizacji ${organizationId}"
     },
@@ -5003,10 +4815,6 @@
     {
       "en": "Unknown Wave 8 agent: ${input.agentId}",
       "pl": "Nieznany agent fali 8: ${input.agentId}"
-    },
-    {
-      "en": "invalid_schedule_transition:${from}:${input.action}",
-      "pl": "invalid_schedule_transition:${from}:${input.action}"
     },
     {
       "en": "Wave 9 ${label} is required",
@@ -5267,6 +5075,10 @@
     {
       "en": "Expected array of database rows",
       "pl": "Oczekiwana tablica wierszy bazy danych"
+    },
+    {
+      "en": "runDcfFcffValuation: ${claimResult.message}",
+      "pl": "Wycena DCF/FCFF: ${claimResult.message}"
     }
   ]
 }

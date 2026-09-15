@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Request } from 'express';
 
+import { SERVER_PAYLOAD_MESSAGES } from '../serverPayloadMessages/index.js';
 import { localizeServerPayload, localizeServerPayloadText } from '../serverPayloadLocalizer.js';
 
 function request(profileLanguage: string, headerLanguage = 'en-US'): Request {
@@ -39,6 +40,31 @@ describe('server payload localization', () => {
     );
   });
 
+  it.each([
+    [
+      "Job job-1 is 'succeeded' but has no committed compute_job_outputs row (data inconsistency) — refusing to report a false success for a duplicate request",
+      "Zadanie job-1 ma status 'succeeded', ale nie ma zatwierdzonego wiersza compute_job_outputs (niespójność danych) — odmowa zgłoszenia fałszywego sukcesu dla powtórzonego żądania",
+    ],
+    [
+      "Job job-2 (idempotency key already in use) is 'running', not 'queued' or 'succeeded' — a duplicate compute request cannot resume it (original may still be running, or it is terminally failed/cancelled)",
+      "Zadanie job-2 (klucz idempotencji jest już używany) ma status 'running', a nie 'queued' ani 'succeeded' — powtórzone żądanie obliczeń nie może go wznowić (pierwotne może nadal działać albo zakończyło się statusem 'failed'/'cancelled')",
+    ],
+    [
+      "Failed to self-claim job job-3 — row is no longer 'queued' (concurrent claim raced this call, or it went terminal between enqueue and claim)",
+      "Nie udało się przejąć zadania job-3 — wiersz nie ma już statusu 'queued' (równoległe przejęcie wyprzedziło to wywołanie albo zadanie osiągnęło stan końcowy między enqueue a claim)",
+    ],
+  ])('recursively localizes a real DCF claim failure without losing its detail', (detail, localizedDetail) => {
+    const output = localizeServerPayloadText(`runDcfFcffValuation: ${detail}`, 'pl');
+    expect(output).toBe(`Wycena DCF/FCFF: ${localizedDetail}`);
+    expect(output).not.toContain('Błąd operacji:');
+    expect(output).not.toContain('duplicate compute request');
+    expect(output).not.toContain('Failed to self-claim');
+  });
+
+  it('keeps the executable message catalog unique', () => {
+    expect(SERVER_PAYLOAD_MESSAGES).toHaveLength(new Set(SERVER_PAYLOAD_MESSAGES.map(({ en }) => en)).size);
+  });
+
   it('fully localizes decision-field validation prose while preserving field identifiers', () => {
     expect(
       localizeServerPayload(
@@ -54,7 +80,10 @@ describe('server payload localization', () => {
         path.resolve('docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json'),
         'utf8'
       )
-    ) as { entries: Array<{ classification: string; text: string }> };
+    ) as {
+      measurement: { fullPolishRows: number; fullPolishUnique: number };
+      entries: Array<{ classification: string; text: string }>;
+    };
     const reviewed = JSON.parse(
       fs.readFileSync(
         path.resolve('docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_TRANSLATION_WORKING.json'),
@@ -70,15 +99,24 @@ describe('server payload localization', () => {
       actual: localizeServerPayloadText(source, 'pl'),
     }));
 
-    expect(realSinks).toHaveLength(1577);
-    expect(uniqueRealSinks).toHaveLength(1317);
+    expect(manifest.measurement).toMatchObject({ fullPolishRows: 1528, fullPolishUnique: 1270 });
+    expect(realSinks).toHaveLength(manifest.measurement.fullPolishRows);
+    expect(uniqueRealSinks).toHaveLength(manifest.measurement.fullPolishUnique);
     expect(results.filter(({ expected: pl }) => !pl)).toEqual([]);
     expect(results.filter(({ expected: pl, actual }) => actual !== pl)).toEqual([]);
+    expect(results.filter(({ source, expected: pl }) => source === pl)).toEqual([]);
+    const placeholders = (value: string) => (value.match(/\$\{[^}]*\}/g) || []).sort();
+    expect(results.filter(({ source, actual }) =>
+      JSON.stringify(placeholders(source)) !== JSON.stringify(placeholders(actual))
+    )).toEqual([]);
     expect(results.filter(({ actual }) => actual.startsWith('Błąd operacji:'))).toEqual([]);
     const knownEnglishProse = /\b(?:already|missing|required|requires|failed|found|available|unavailable|expired|only|restore|versions|template|invitation|conversation|owners|roles|change|analysis|returned|cannot|should|would|unknown|invalid|fields|organization|operation|request|document|snapshot|report|title|source|target|current|expected|actual|before|after|during|while|without|within|outside|supported|unsupported|complete|completed|engine|feature|values|rows|insert|delete|create)\b/i;
     const visibleProse = (value: string) =>
       value
-        .replace(/\$\{[^}]*\}/g, ' ')
+        // Preserve placeholder presence in the assertion. Dynamic prose-bearing
+        // captures require a direct runtime probe above; they cannot disappear
+        // from this scan and manufacture a static full-PL result.
+        .replace(/\$\{[^}]*\}/g, ' DYNAMIC_CAPTURE ')
         .replace(/\[[A-Za-z0-9_-]+\]/g, ' ')
         .replace(/\b[A-Z][A-Z0-9_]{2,}\b/g, ' ')
         .replace(/\b[A-Za-z0-9]*_[A-Za-z0-9_]+\b/g, ' ')

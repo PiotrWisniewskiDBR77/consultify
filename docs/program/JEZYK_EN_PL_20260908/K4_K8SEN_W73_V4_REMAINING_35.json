@@ -151,9 +151,9 @@
       ],
       "classification": "b",
       "sink": "user-visible propagation boundary",
-      "reason": "service error can propagate through an API/structured result boundary",
-      "resolution": "full EN/PL catalog entry added in batch36",
-      "pl": "runDcfFcffValuation: ${claimResult.message}"
+      "reason": "real DCF result boundary; outer text and captured claimResult.message are localized recursively",
+      "resolution": "outer template corrected in batch36; three stable nested claim outcomes added in batch37; runtime probes cover all outcomes",
+      "pl": "Wycena DCF/FCFF: ${claimResult.message}"
     },
     {
       "path": "server/src/services/finance/canonical/valuationComputeService.ts",

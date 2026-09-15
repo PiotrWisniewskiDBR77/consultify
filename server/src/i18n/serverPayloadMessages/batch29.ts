@@ -86,10 +86,6 @@ export const SERVER_PAYLOAD_MESSAGES_BATCH_29: readonly ServerPayloadMessage[] =
     "pl": "Dane wyjściowe modelu interpretera są nieprawidłowe JSON: ${err instanceof Error ? err.message : String(err)}"
   },
   {
-    "en": "Invalid code. ${remainingAttempts > 0 ? ",
-    "pl": "Nieprawidłowy kod. ${remainingAttempts > 0 ? "
-  },
-  {
     "en": "Twilio client not available",
     "pl": "Klient Twilio jest niedostępny"
   },

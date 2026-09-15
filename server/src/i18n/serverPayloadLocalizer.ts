@@ -72,8 +72,9 @@ const COMPILED = SERVER_PAYLOAD_MESSAGES.filter(({ runtime }) => runtime !== fal
   .map(({ en, pl }) => compileMessage(en, pl))
   .sort((left, right) => Number(Boolean(left.pattern)) - Number(Boolean(right.pattern)) || right.specificity - left.specificity);
 
-export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): string {
+function localizeServerPayloadTextAtDepth(value: string, locale: 'en' | 'pl', depth: number): string {
   if (locale === 'en') return value;
+  if (depth > 8) return value;
 
   for (const message of COMPILED) {
     if (!message.pattern) {
@@ -82,7 +83,12 @@ export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): s
     }
     const matched = message.pattern.exec(value);
     if (!matched || message.sourceTokens.length !== message.polishTokens.length) continue;
-    const values = new Map(message.sourceTokens.map((token, index) => [token, matched[index + 1]]));
+    const values = new Map(
+      message.sourceTokens.map((token, index) => [
+        token,
+        localizeServerPayloadTextAtDepth(matched[index + 1], locale, depth + 1),
+      ])
+    );
     const polish = templateParts(message.polish);
     let result = '';
     for (let index = 0; index < polish.tokens.length; index += 1) {
@@ -91,6 +97,10 @@ export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): s
     return result + (polish.staticParts.at(-1) ?? '');
   }
   return value;
+}
+
+export function localizeServerPayloadText(value: string, locale: 'en' | 'pl'): string {
+  return localizeServerPayloadTextAtDepth(value, locale, 0);
 }
 
 const ERROR_PHRASE_TRANSLATIONS: ReadonlyArray<readonly [RegExp, string]> = [
