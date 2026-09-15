@@ -8,7 +8,7 @@ const originalFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   const path = new URL(raw, window.location.origin).pathname;
-  if (path.endsWith('/initiatives/runtime-v1/initiatives/a1-demo/cards')) {
+  if (path.endsWith('/initiatives/runtime-v1/initiatives/a3-demo/cards')) {
     return new Response(
       JSON.stringify({
         initiativeVersion: 7,
@@ -45,7 +45,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   return originalFetch(input, init);
 };
 
-export default function A1InitiativeCardEstimateScreen() {
+export default function A3InitiativeCardEstimateScreen() {
   const [activeSection, setActiveSection] = React.useState('definition');
   return (
     <AppProviders>
@@ -59,7 +59,7 @@ export default function A1InitiativeCardEstimateScreen() {
             title: 'Customer onboarding recovery',
             onTitleChange: () => undefined,
             titleReadOnly: true,
-            artifactId: 'INIT-A1-DEMO',
+            artifactId: 'INIT-A3-DEMO',
             artifactType: 'initiative',
             onSave: () => undefined,
             onClose: () => undefined,
@@ -79,7 +79,7 @@ export default function A1InitiativeCardEstimateScreen() {
               alwaysShow: true,
               component: (
                 <DefinitionCardContent
-                  initiativeId="a1-demo"
+                  initiativeId="a3-demo"
                   actorId="portfolio-viewer"
                   participants={[]}
                   canEdit={false}
