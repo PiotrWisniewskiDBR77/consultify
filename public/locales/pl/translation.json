@@ -9557,7 +9557,10 @@
         "contentHash": "Skrót treści (hash)",
         "outputVersion": "Wersja Outputu"
       },
-      "sessionRecordBanner": "Ten raport powstał z <1>zapisu sesji oceny</1> — obszary, poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego, niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie zamrożony, liczby mogą się jeszcze zmienić."
+      "sessionRecordBanner": "Ten raport powstał z <1>zapisu sesji oceny</1> — obszary, poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego, niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie zamrożony, liczby mogą się jeszcze zmienić.",
+      "notAvailableTitle": "Raport niedostępny",
+      "notAvailableDescription": "Ten link nie prowadzi już do raportu, który moglibyśmy otworzyć. Otwórz ocenę, z której pochodzi, aby zobaczyć jej aktualne wyniki.",
+      "notAvailableBack": "Wróć do raportów oceny"
     },
     "lean": {
       "overallDashboard": "Dashboard ogólny oceny",
@@ -38653,7 +38656,10 @@
       "recentActionsCount": "{{count}} ostatnich akcji"
     },
     "report": {
-      "noItems": "Brak pozycji."
+      "noItems": "Brak pozycji.",
+      "loadFailed": "Nie udało się wczytać raportu",
+      "backToList": "Wróć do listy raportów",
+      "notFound": "Nie znaleziono raportu audytu."
     },
     "actionCards": {
       "aria": "Karty działania — Audyty"
@@ -42622,8 +42628,8 @@
   },
   "mindmap": {
     "pracujZAI": {
-      "opisAktywneCentrum": "Propozycje dla aktywnego p\u0142\u00f3tna pojawi\u0105 si\u0119 do zatwierdzenia.",
-      "opisCalyPomysl": "Propozycje dla ca\u0142ego pomys\u0142u pojawi\u0105 si\u0119 do zatwierdzenia."
+      "opisAktywneCentrum": "Propozycje dla aktywnego płótna pojawią się do zatwierdzenia.",
+      "opisCalyPomysl": "Propozycje dla całego pomysłu pojawią się do zatwierdzenia."
     },
     "nodeModel": {
       "myIdea": "Moj pomysl",

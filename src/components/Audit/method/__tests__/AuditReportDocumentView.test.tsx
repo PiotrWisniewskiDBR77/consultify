@@ -282,6 +282,6 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
   it('shows an error state with retry when the report or its payload cannot be loaded (e.g. 404 / missing payload)', async () => {
     mockedGetReport.mockResolvedValue(null);
     render(<AuditReportDocumentView reportId="missing" />);
-    await waitFor(() => expect(screen.getByText(/Nie udało się wczytać raportu/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Could not load the report/i)).toBeInTheDocument());
   });
 });

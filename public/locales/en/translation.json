@@ -10408,7 +10408,10 @@
         "contentHash": "Content hash",
         "outputVersion": "Output version"
       },
-      "sessionRecordBanner": "This report was produced from the <1>assessment session record</1> — the areas and the current and target levels come from answers saved in the workshop, not from a frozen, immutable Output of the method kernel. The axis structure, area names and level descriptions come from the methodology in the version compiled into this application. Until the result is frozen, the numbers may still change."
+      "sessionRecordBanner": "This report was produced from the <1>assessment session record</1> — the areas and the current and target levels come from answers saved in the workshop, not from a frozen, immutable Output of the method kernel. The axis structure, area names and level descriptions come from the methodology in the version compiled into this application. Until the result is frozen, the numbers may still change.",
+      "notAvailableTitle": "Report not available",
+      "notAvailableDescription": "This report link no longer points to a report we can open. Open the assessment it came from to see its current results.",
+      "notAvailableBack": "Back to assessment reports"
     },
     "lean": {
       "overallDashboard": "Overall Assessment Dashboard",
@@ -38091,7 +38094,10 @@
       "recentActionsCount": "{{count}} recent actions"
     },
     "report": {
-      "noItems": "No items."
+      "noItems": "No items.",
+      "loadFailed": "Could not load the report",
+      "backToList": "Back to reports",
+      "notFound": "The audit report was not found."
     },
     "actionCards": {
       "aria": "Action cards — Audits"

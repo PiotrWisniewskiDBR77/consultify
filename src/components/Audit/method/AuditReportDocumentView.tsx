@@ -113,6 +113,8 @@ import {
 } from '@/components/standard/ArtifactRightPanel';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
+import { useTranslation } from 'react-i18next';
+
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
@@ -530,6 +532,7 @@ function collectFindingLabels(sections: AuditReportDocumentSection[] | undefined
 
 export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = ({ reportId }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const isPolish = true; // treść dokumentu (reportRenderer.ts) jest ZAWSZE PL — chrom ekranu podąża za tym
 
   const [report, setReport] = useState<AuditReportSummary | null>(null);
@@ -642,7 +645,8 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     setPresentationError(null);
     getReport(reportId)
       .then(async (reportResult) => {
-        if (!reportResult) throw new Error(isPolish ? 'Raport nie został znaleziony.' : 'Report not found.');
+        if (!reportResult)
+          throw new Error(t('audit.report.notFound', 'The audit report was not found.'));
         const payload = reportResult.payload as unknown as AuditReportDocument | undefined;
         if (!payload || !Array.isArray(payload.sections)) {
           throw new Error(
@@ -673,11 +677,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             ? isPolish
               ? 'Brak uprawnień do tego raportu w tej organizacji.'
               : 'You do not have permission to view this report.'
-            : e?.message || (isPolish ? 'Nie udało się wczytać raportu' : 'Failed to load the report');
+            : e?.message || t('audit.report.loadFailed', 'Could not load the report');
         setError(message);
       })
       .finally(() => setLoading(false));
-  }, [reportId, isPolish]);
+  }, [reportId, isPolish, t]);
 
   useEffect(() => {
     load();
@@ -1224,11 +1228,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     return (
       <div className="p-6">
         <ErrorState
-          title={isPolish ? 'Nie udało się wczytać raportu' : 'Could not load the report'}
+          title={t('audit.report.loadFailed', 'Could not load the report')}
           description={error || undefined}
           onRetry={load}
           onBack={goBack}
-          backLabel={isPolish ? 'Wróć do listy raportów' : 'Back to reports'}
+          backLabel={t('audit.report.backToList', 'Back to reports')}
         />
       </div>
     );
