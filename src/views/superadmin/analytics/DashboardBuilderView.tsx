@@ -28,6 +28,7 @@ import { Card } from '../../../components/ui/BaseCard';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface Widget {
   id: string;
   type: 'metric' | 'chart' | 'table' | 'list' | 'pie' | 'line';
@@ -376,7 +377,7 @@ const DashboardBuilderView: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Builder</h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Create and customize your analytics dashboards
+            {tlumaczPozaHookiem("superadmin.dashboardBuilder.createAndCustomizeYourAnalyticsDashboards", "Create and customize your analytics dashboards")}
           </p>
         </div>
         <button
@@ -532,7 +533,7 @@ const DashboardBuilderView: React.FC = () => {
                         onClick={() => setShowWidgetModal(true)}
                         className="mt-3 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                       >
-                        Add your first widget
+                        {tlumaczPozaHookiem("superadmin.dashboardBuilder.addYourFirstWidget", "Add your first widget")}
                       </button>
                     )}
                   </div>
@@ -583,7 +584,7 @@ const DashboardBuilderView: React.FC = () => {
                   Select a Dashboard
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 text-center">
-                  Choose a dashboard from the list or create a new one to get started
+                  {tlumaczPozaHookiem("superadmin.dashboardBuilder.chooseADashboardFromTheListOr", "Choose a dashboard from the list or create a new one to get started")}
                 </p>
               </div>
             </Card>
@@ -596,7 +597,7 @@ const DashboardBuilderView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-md border border-slate-200 dark:border-navy-700 shadow-xl">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              Create New Dashboard
+              {tlumaczPozaHookiem("superadmin.dashboardBuilder.createNewDashboard", "Create New Dashboard")}
             </h3>
             <div className="space-y-4">
               <div>
@@ -621,7 +622,7 @@ const DashboardBuilderView: React.FC = () => {
                     setNewDashboard({ ...newDashboard, description: e.target.value })
                   }
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Describe your dashboard..."
+                  placeholder={tlumaczPozaHookiem("superadmin.dashboardBuilder.describeYourDashboard", "Describe your dashboard...")}
                   rows={3}
                 />
               </div>

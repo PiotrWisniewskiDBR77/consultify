@@ -26,6 +26,8 @@ import { Card } from '../../../components/ui/BaseCard';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface BusinessMetric {
   id: string;
   name: string;
@@ -260,8 +262,8 @@ const BusinessMetricsView: React.FC = () => {
   const formatValue = (value?: number, unit?: string) => {
     if (value === undefined || value === null) return '-';
     if (unit === '%') return `${value.toFixed(1)}%`;
-    if (unit === '$') return `$${value.toLocaleString()}`;
-    return value.toLocaleString();
+    if (unit === '$') return `$${value.toLocaleString(localeListy())}`;
+    return value.toLocaleString(localeListy());
   };
 
   if (isLoading) {
@@ -277,7 +279,7 @@ const BusinessMetricsView: React.FC = () => {
             Business Metrics & KPIs
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Track and monitor key performance indicators
+            {tlumaczPozaHookiem("superadmin.businessMetrics.trackAndMonitorKeyPerformanceIndicators", "Track and monitor key performance indicators")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -403,7 +405,7 @@ const BusinessMetricsView: React.FC = () => {
                 No Metrics Yet
               </h3>
               <p className="text-slate-600 dark:text-slate-400 text-center mb-4">
-                Create your first KPI to start tracking business performance
+                {tlumaczPozaHookiem("superadmin.businessMetrics.createYourFirstKPIToStartTracking", "Create your first KPI to start tracking business performance")}
               </p>
               <button
                 onClick={() => setShowCreateModal(true)}
@@ -592,14 +594,14 @@ const BusinessMetricsView: React.FC = () => {
             </div>
             {history.length === 0 ? (
               <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-4">
-                No history data yet. Calculate the metric to start tracking.
+                {tlumaczPozaHookiem("superadmin.businessMetrics.noHistoryDataYetCalculateTheMetric", "No history data yet. Calculate the metric to start tracking.")}
               </p>
             ) : (
               <div className="space-y-2">
                 {history.slice(0, 10).map((h, idx) => (
                   <div key={h.id} className="flex items-center justify-between text-sm">
                     <span className="text-slate-600 dark:text-slate-400">
-                      {new Date(h.calculated_at).toLocaleDateString()}
+                      {new Date(h.calculated_at).toLocaleDateString(localeListy())}
                     </span>
                     <span className="text-slate-900 dark:text-white font-medium">
                       {formatValue(h.value, selectedMetric.unit)}
@@ -617,7 +619,7 @@ const BusinessMetricsView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700 shadow-xl">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              Create New Metric
+              {tlumaczPozaHookiem("superadmin.businessMetrics.createNewMetric", "Create New Metric")}
             </h3>
             <div className="space-y-4">
               <div>
@@ -706,7 +708,7 @@ const BusinessMetricsView: React.FC = () => {
                     setNewMetric({ ...newMetric, calculationFormula: e.target.value })
                   }
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-sm"
-                  placeholder="SUM(revenue) / COUNT(users)"
+                  placeholder={tlumaczPozaHookiem("superadmin.businessMetrics.sUMRevenueCOUNTUsers", "SUM(revenue) / COUNT(users)")}
                 />
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   SQL-like formula for automatic calculation

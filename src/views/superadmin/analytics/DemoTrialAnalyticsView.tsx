@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Api from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Summary {
   last7Days: { demo: number; trialStart: number; paid: number };
   last30Days: Record<string, number>;
@@ -190,7 +192,7 @@ const DemoTrialAnalyticsView: React.FC = () => {
               {recentEvents.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                    No events in the last 30 days
+                    {tlumaczPozaHookiem("superadmin.demoTrialAnalytics.noEventsInTheLast30Days", "No events in the last 30 days")}
                   </td>
                 </tr>
               ) : (
@@ -200,7 +202,7 @@ const DemoTrialAnalyticsView: React.FC = () => {
                     className="border-t border-slate-200 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800/30"
                   >
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
-                      {e.createdAt ? new Date(e.createdAt).toLocaleString() : '—'}
+                      {e.createdAt ? new Date(e.createdAt).toLocaleString(localeListy()) : '—'}
                     </td>
                     <td className="px-4 py-2">
                       <span

@@ -43,6 +43,7 @@ import api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { formatListNumber, localeListy } from '../../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface ExperimentVariant {
   id: string;
   name: string;
@@ -327,7 +328,7 @@ export function ABTestingDashboard() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">A/B Testing</h1>
               <p className="text-slate-500 dark:text-slate-400">
-                Manage AI experiments and optimize performance
+                {tlumaczPozaHookiem("superadmin.aBTesting.manageAIExperimentsAndOptimizePerformance", "Manage AI experiments and optimize performance")}
               </p>
             </div>
           </div>

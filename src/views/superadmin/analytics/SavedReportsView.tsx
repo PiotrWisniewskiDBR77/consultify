@@ -26,6 +26,8 @@ import { Card } from '../../../components/ui/BaseCard';
 import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Report {
   id: string;
   name: string;
@@ -386,7 +388,7 @@ const SavedReportsView: React.FC = () => {
     if (!dateStr) return 'Never';
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return 'Unknown date';
-    return date.toLocaleString();
+    return date.toLocaleString(localeListy());
   };
 
   const controlsDisabled = !!loadError;
@@ -402,7 +404,7 @@ const SavedReportsView: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Saved Reports</h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Create, schedule, and export reports
+            {tlumaczPozaHookiem("superadmin.savedReports.createScheduleAndExportReports", "Create, schedule, and export reports")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -431,7 +433,7 @@ const SavedReportsView: React.FC = () => {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
-            New Report
+            {tlumaczPozaHookiem("superadmin.savedReports.newReport", "New Report")}
           </button>
         </div>
       </div>
@@ -619,7 +621,7 @@ const SavedReportsView: React.FC = () => {
                     {executionResult.total_revenue !== undefined && (
                       <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-center">
                         <p className="text-2xl font-bold text-green-400">
-                          ${executionResult.total_revenue?.toLocaleString()}
+                          ${executionResult.total_revenue?.toLocaleString(localeListy())}
                         </p>
                         <span className="text-xs text-slate-600 dark:text-slate-400">
                           Total Revenue
@@ -629,7 +631,7 @@ const SavedReportsView: React.FC = () => {
                     {executionResult.total_tokens !== undefined && (
                       <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-center">
                         <p className="text-2xl font-bold text-blue-400">
-                          {executionResult.total_tokens?.toLocaleString()}
+                          {executionResult.total_tokens?.toLocaleString(localeListy())}
                         </p>
                         <span className="text-xs text-slate-600 dark:text-slate-400">
                           Total Tokens
@@ -748,10 +750,10 @@ const SavedReportsView: React.FC = () => {
               <div className="flex flex-col items-center justify-center h-64">
                 <FileText className="w-16 h-16 text-slate-600 dark:text-slate-400 mb-4" />
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  Select a Report
+                  {tlumaczPozaHookiem("superadmin.savedReports.selectAReport", "Select a Report")}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 text-center">
-                  Choose a report from the list or create a new one
+                  {tlumaczPozaHookiem("superadmin.savedReports.chooseAReportFromTheListOr", "Choose a report from the list or create a new one")}
                 </p>
               </div>
             </Card>
@@ -764,19 +766,19 @@ const SavedReportsView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700 shadow-xl">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              Create New Report
+              {tlumaczPozaHookiem("superadmin.savedReports.createNewReport", "Create New Report")}
             </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
-                  Report Name
+                  {tlumaczPozaHookiem("superadmin.savedReports.reportName", "Report Name")}
                 </label>
                 <input
                   type="text"
                   value={newReport.name}
                   onChange={(e) => setNewReport({ ...newReport, name: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
-                  placeholder="Monthly Users Report"
+                  placeholder={tlumaczPozaHookiem("superadmin.savedReports.monthlyUsersReport", "Monthly Users Report")}
                 />
               </div>
               <div>
@@ -787,7 +789,7 @@ const SavedReportsView: React.FC = () => {
                   value={newReport.description}
                   onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
-                  placeholder="Describe your report..."
+                  placeholder={tlumaczPozaHookiem("superadmin.savedReports.describeYourReport", "Describe your report...")}
                   rows={2}
                 />
               </div>
@@ -825,7 +827,7 @@ const SavedReportsView: React.FC = () => {
                 disabled={!newReport.name}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                Create Report
+                {tlumaczPozaHookiem("superadmin.savedReports.createReport", "Create Report")}
               </button>
             </div>
           </div>
