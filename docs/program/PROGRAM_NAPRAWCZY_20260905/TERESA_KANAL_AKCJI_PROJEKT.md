@@ -1,9 +1,12 @@
 # DEC-526 — kanał akcji Teresy (projekt do decyzji CTO)
 
-**Status:** READY FOR CTO DECISION — STOP przed kodem produktu  
-**Zakres:** Wpis 83, Fala 2 po fali B (analiza portfela A3/A4)  
-**Baza audytu:** `df3428e7e027124a60dfdc0b7ae1ba3a76c4facc`  
-**Flaga docelowa:** `ENABLE_TERESA_ACTIONS`, domyślnie `OFF`  
+**Status:** READY FOR CTO DECISION — STOP przed kodem produktu
+
+**Zakres:** Wpis 83, Fala 2 po fali B (analiza portfela A3/A4)
+
+**Baza audytu:** `df3428e7e027124a60dfdc0b7ae1ba3a76c4facc`
+
+**Flaga docelowa:** `ENABLE_TERESA_ACTIONS`, domyślnie `OFF`
 **Zasada nadrzędna:** Teresa może zaproponować tylko akcję obecną w manifeście
 bieżącego użytkownika. Żadna akcja nie wywołuje skutku przed jawnym
 potwierdzeniem. Mutacja przechodzi przez istniejące API i jego autoryzację;
