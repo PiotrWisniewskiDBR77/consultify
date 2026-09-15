@@ -407,7 +407,7 @@ export function renderSteeringMarkdown(data: SteeringData): Record<string, strin
     r === 'GREEN' ? '🟢' : r === 'AMBER' ? '🟡' : r === 'RED' ? '🔴' : '⚪';
 
   const header = [
-    `# Raport Steering — ${threeAxis.scope.level}`,
+    `# ${TITLE_BY_KIND.steering} — ${threeAxis.scope.level}`,
     '',
     `**Stan na:** ${threeAxis.asOf}`,
     `**Werdykt programu:** ${ragEmoji(threeAxis.program.rag)} ${threeAxis.program.rag}`,
@@ -621,9 +621,21 @@ const REPORT_TYPE_BY_KIND: Record<PmReportKind, string> = {
   'pmo-weekly': 'PMO_WEEKLY',
 };
 
+/**
+ * DEC-461 (F8b, 2026-09-15): report-pack titles are ENGLISH. These strings name
+ * the artifact in the Materials Template Library and in Outputs, where there is
+ * no per-request locale on the read path (the title is snapshotted into
+ * `v8_output_artifacts.title_snapshot`) — a Polish title here would be
+ * permanently Polish for every viewer.
+ *
+ * KNOWN OPEN ITEM, deliberately out of scope for F8b: the markdown BODY these
+ * packs render (`buildSponsorOnePager` / `buildSteering` / `buildPmoWeekly`
+ * below) is still Polish end to end. That is a separate, much larger item — it
+ * needs the DEC-510 locale resolver threaded through the builders, not a rename.
+ */
 const TITLE_BY_KIND: Record<PmReportKind, string> = {
   'sponsor-onepager': 'Sponsor One-Pager',
-  steering: 'Raport Steering',
+  steering: 'Steering Report',
   'pmo-weekly': 'PMO Weekly',
 };
 
@@ -677,7 +689,7 @@ export async function publishPmReport(
     sourceId: params.projectId || params.programId || params.organizationId,
     sourceName: title,
     title,
-    description: `${TITLE_BY_KIND[kind]} — wygenerowany z programManagementReportsService, zakres: ${scopeLabel}.`,
+    description: `${TITLE_BY_KIND[kind]} — generated for scope: ${scopeLabel}.`,
     createdBy: params.createdBy,
     templateId: TEMPLATE_ID_BY_KIND[kind],
     config: {

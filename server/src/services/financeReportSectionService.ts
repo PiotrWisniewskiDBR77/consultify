@@ -1521,7 +1521,11 @@ export async function publishFinanceReportSectionSnapshot(
     sourceId: params.packId,
     sourceName: title,
     title,
-    description: `Sekcja finansowa (wskaźniki Z111 + reconcile R1-R8 + koszyk EV) — wygenerowana z financeReportSectionService, pakiet ${params.packId}.`,
+    // DEC-461 (F8b, 2026-09-15): this description is client-facing — it shows on
+    // the artifact card. It used to leak internal engineering vocabulary
+    // ("wskaźniki Z111 + reconcile R1-R8 + koszyk EV"). One sentence, in
+    // English, saying what the reader gets.
+    description: `Financial section of the report: ratio families, reconciled figures and the valuation range, computed from your data (pack ${params.packId}).`,
     createdBy: params.createdBy,
     periodFrom: params.periodFrom,
     periodTo: params.periodTo,

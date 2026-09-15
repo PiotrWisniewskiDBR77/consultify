@@ -655,7 +655,9 @@ export async function publishThreeAxisSnapshot(
     sourceId: params.projectId || params.programId || params.organizationId,
     sourceName: title,
     title,
-    description: `Raport 3 osi (czas × zadania × wartość) — wygenerowany z threeAxisReportService, zakres: ${scopeLabel}.`,
+    // DEC-461 (F8b, 2026-09-15): client-facing card text — EN, no internal
+    // contract references.
+    description: `Three-axis delivery report: schedule, tasks and value — scope: ${scopeLabel}.`,
     createdBy: params.createdBy,
     periodFrom: params.periodFrom,
     periodTo: params.periodTo,
