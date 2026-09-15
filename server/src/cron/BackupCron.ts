@@ -54,6 +54,20 @@ interface Dependencies {
   sentry: SentryConfig;
 }
 
+function describeError(error: unknown): string {
+  if (error instanceof Error) {
+    const cause = (error as Error & { cause?: unknown }).cause;
+    const head = error.message.trim() || error.name || 'Unknown backup error';
+    return cause === undefined ? head : `${head}; cause=${describeError(cause)}`;
+  }
+  if (typeof error === 'string' && error.trim()) return error.trim();
+  try {
+    return JSON.stringify(error) || 'Unknown backup error';
+  } catch {
+    return 'Unknown backup error';
+  }
+}
+
 // ==========================================
 // BACKUP CRON
 // ==========================================
@@ -88,7 +102,7 @@ class BackupCron {
     reason?: string;
     type?: 'full';
     options?: { organizationId?: string; actorId?: string; tables?: string[] };
-  }): Promise<{ claimed: boolean; backupId?: string; backup?: { id: string; [key: string]: unknown } }> {
+  }): Promise<{ claimed: boolean; backupId?: string; backup?: { id: string; [key: string]: unknown }; error?: string }> {
     const deps = await this.ensureDeps();
     const claim = await deps.backupService.claimBackupRun(input);
     if (!claim.claimed || !claim.receiptId || !claim.leaseToken || !claim.fence) return { claimed: false };
@@ -143,7 +157,8 @@ class BackupCron {
       }
       return { claimed: true, backupId: result.id, backup: result };
     } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const message = describeError(error);
+      const err = error instanceof Error ? error : new Error(message);
       this.failureCount++;
       this.lastError = err;
       if (createdBackupId) {
@@ -151,9 +166,9 @@ class BackupCron {
       }
       await deps.backupService.finishBackupRun({
         receiptId: claim.receiptId, leaseToken: claim.leaseToken, fence: claim.fence,
-        status: 'FAILED', error: err.message,
+        status: 'FAILED', error: message,
       }).catch((receiptError) => logger.error('[BackupCron] Failed receipt could not be finalized', receiptError));
-      logger.error('[BackupCron] Scheduled backup failed:', err);
+      logger.error(`[BackupCron] Scheduled backup failed: ${message}`);
       try {
         deps.sentry?.captureException(err, {
           tags: { component: 'backup', job: input.scheduleName, failureCount: String(this.failureCount) },
@@ -165,7 +180,7 @@ class BackupCron {
       if (this.failureCount >= 3) {
         logger.error(`[BackupCron] CRITICAL: ${this.failureCount} consecutive backup failures.`);
       }
-      return { claimed: true };
+      return { claimed: true, error: message };
     } finally {
       this.running = false;
       this.idleWaiters.splice(0).forEach((resolve) => resolve());
