@@ -20,6 +20,7 @@ import type {
   InsightTheme,
 } from '../InterviewInsightService.js';
 import { getById as getInsightById } from '../InterviewInsightService.js';
+import { oczyscZnaleziska } from '../interviewInsightProse.js';
 import {
   buildP10HandoffToInitiativesSkeleton,
   canPublishFinding,
@@ -853,9 +854,13 @@ function lockedBackfillSource(row: LockedBackfillInsightRow): BackfillInsightSou
     organizationId: String(row.organization_id),
     createdBy: row.created_by == null ? '' : String(row.created_by),
     sourceSessionIds: safeArray<unknown>(row.source_session_ids).map(String),
-    themes: safeArray<InsightTheme>(row.themes_json),
-    issues: safeArray<InsightIssue>(row.issues_json),
-    opportunities: safeArray<InsightOpportunity>(row.opportunities_json),
+    // F10 / P-J02 pkt 3 — znaleziska backfillu biorą `statement` wprost z
+    // `description` tematu/problemu/szansy, więc surowe `[answer_id: …]`
+    // wjechałoby do wiersza Findings. Ten sam sanitizer co w
+    // `InterviewInsightService` (jeden przepis, nie drugi).
+    themes: oczyscZnaleziska(safeArray<InsightTheme>(row.themes_json)),
+    issues: oczyscZnaleziska(safeArray<InsightIssue>(row.issues_json)),
+    opportunities: oczyscZnaleziska(safeArray<InsightOpportunity>(row.opportunities_json)),
     evidenceMap: safeArray<NonNullable<Insight['evidenceMap']>[number]>(row.evidence_map_json),
     status: row.status,
   };
