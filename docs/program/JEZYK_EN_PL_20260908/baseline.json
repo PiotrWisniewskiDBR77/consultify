@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-15T01:47:59.087Z",
+    "data": "2026-09-15T02:09:22.244Z",
     "root": "/Users/piotrwisniewski/Developer/codex-wt/a-k1-e2f-bis-w73",
-    "sha": "f49d22f5c19ace7ef8e88812967a8d91b16112a0"
+    "sha": "309a7f398d58e82eaf4f13d67aea385af006a1bd"
   },
   "suma": {
     "K1": 5,
@@ -14,8 +14,8 @@
     "K3b": 0,
     "K4pl": 81,
     "K4en": 5516,
-    "K4objPL": 866,
-    "K4obj": 5375,
+    "K4objPL": 711,
+    "K4obj": 4343,
     "K5pl": 262,
     "K5en": 7161,
     "K7": 270,
@@ -40,7 +40,7 @@
       "K4pl": 0,
       "K4en": 89,
       "K4objPL": 19,
-      "K4obj": 167,
+      "K4obj": 109,
       "K5pl": 0,
       "K5en": 95,
       "K7": 0,
@@ -63,8 +63,8 @@
       "K3b": 0,
       "K4pl": 2,
       "K4en": 117,
-      "K4objPL": 87,
-      "K4obj": 513,
+      "K4objPL": 65,
+      "K4obj": 454,
       "K5pl": 1,
       "K5en": 326,
       "K7": 0,
@@ -88,7 +88,7 @@
       "K4pl": 0,
       "K4en": 22,
       "K4objPL": 1,
-      "K4obj": 223,
+      "K4obj": 170,
       "K5pl": 0,
       "K5en": 262,
       "K7": 0,
@@ -111,8 +111,8 @@
       "K3b": 0,
       "K4pl": 2,
       "K4en": 109,
-      "K4objPL": 15,
-      "K4obj": 172,
+      "K4objPL": 12,
+      "K4obj": 109,
       "K5pl": 52,
       "K5en": 394,
       "K7": 0,
@@ -135,8 +135,8 @@
       "K3b": 0,
       "K4pl": 1,
       "K4en": 219,
-      "K4objPL": 22,
-      "K4obj": 168,
+      "K4objPL": 14,
+      "K4obj": 147,
       "K5pl": 98,
       "K5en": 302,
       "K7": 0,
@@ -160,7 +160,7 @@
       "K4pl": 0,
       "K4en": 141,
       "K4objPL": 15,
-      "K4obj": 271,
+      "K4obj": 203,
       "K5pl": 2,
       "K5en": 347,
       "K7": 0,
@@ -183,8 +183,8 @@
       "K3b": 0,
       "K4pl": 0,
       "K4en": 161,
-      "K4objPL": 27,
-      "K4obj": 105,
+      "K4objPL": 25,
+      "K4obj": 94,
       "K5pl": 0,
       "K5en": 317,
       "K7": 0,
@@ -207,8 +207,8 @@
       "K3b": 0,
       "K4pl": 0,
       "K4en": 72,
-      "K4objPL": 14,
-      "K4obj": 17,
+      "K4objPL": 8,
+      "K4obj": 13,
       "K5pl": 0,
       "K5en": 351,
       "K7": 0,
@@ -231,8 +231,8 @@
       "K3b": 0,
       "K4pl": 41,
       "K4en": 88,
-      "K4objPL": 47,
-      "K4obj": 66,
+      "K4objPL": 9,
+      "K4obj": 23,
       "K5pl": 6,
       "K5en": 440,
       "K7": 0,
@@ -255,8 +255,8 @@
       "K3b": 0,
       "K4pl": 0,
       "K4en": 324,
-      "K4objPL": 45,
-      "K4obj": 643,
+      "K4objPL": 32,
+      "K4obj": 554,
       "K5pl": 20,
       "K5en": 1170,
       "K7": 8,
@@ -280,7 +280,7 @@
       "K4pl": 0,
       "K4en": 10,
       "K4objPL": 0,
-      "K4obj": 1,
+      "K4obj": 0,
       "K5pl": 14,
       "K5en": 32,
       "K7": 0,
@@ -327,8 +327,8 @@
       "K3b": 0,
       "K4pl": 0,
       "K4en": 4,
-      "K4objPL": 31,
-      "K4obj": 2,
+      "K4objPL": 30,
+      "K4obj": 0,
       "K5pl": 1,
       "K5en": 172,
       "K7": 0,
@@ -351,8 +351,8 @@
       "K3b": 0,
       "K4pl": 2,
       "K4en": 3298,
-      "K4objPL": 3,
-      "K4obj": 679,
+      "K4objPL": 2,
+      "K4obj": 614,
       "K5pl": 13,
       "K5en": 352,
       "K7": 174,
@@ -376,7 +376,7 @@
       "K4pl": 0,
       "K4en": 156,
       "K4objPL": 0,
-      "K4obj": 503,
+      "K4obj": 422,
       "K5pl": 32,
       "K5en": 565,
       "K7": 2,
@@ -399,8 +399,8 @@
       "K3b": 0,
       "K4pl": 0,
       "K4en": 13,
-      "K4objPL": 28,
-      "K4obj": 67,
+      "K4objPL": 20,
+      "K4obj": 30,
       "K5pl": 3,
       "K5en": 126,
       "K7": 0,
@@ -423,8 +423,8 @@
       "K3b": 0,
       "K4pl": 33,
       "K4en": 693,
-      "K4objPL": 512,
-      "K4obj": 1778,
+      "K4objPL": 459,
+      "K4obj": 1401,
       "K5pl": 20,
       "K5en": 1848,
       "K7": 86,
@@ -1262,66 +1262,6 @@
     ],
     "K4obj": [
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/actions/registry/sharedActions.ts:472",
-        "tekst": "description: initiative | task_set | decision | report | presentation",
-        "dowod": "en:initiative,en:task,en:decision"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/actions/registry/tableActions.ts:1702",
-        "tekst": "description: public|organization|authenticated.",
-        "dowod": "en:organization,en-suf:authenticated"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:213",
-        "tekst": "name: Auto-Approved",
-        "dowod": "en:approved"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:214",
-        "tekst": "name: Manual Approved",
-        "dowod": "en:approved"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:215",
-        "tekst": "name: Rejected",
-        "dowod": "en:rejected"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:220",
-        "tekst": "name: Success",
-        "dowod": "en:success"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:221",
-        "tekst": "name: Failed",
-        "dowod": "en:failed"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:96",
-        "tekst": "text: text-c-text-secondary dark:text-c-text-secondary",
-        "dowod": "en:secondary"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:106",
-        "tekst": "text: text-c-text-secondary dark:text-c-text-secondary",
-        "dowod": "en:secondary"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:131",
-        "tekst": "text: text-c-text-secondary dark:text-c-text-secondary",
-        "dowod": "en:secondary"
-      },
-      {
         "modul": "01 Chat",
         "gdzie": "src/components/AIChat/AIOSHub.tsx:23",
         "tekst": "title: AI Actions",
@@ -1329,45 +1269,9 @@
       },
       {
         "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:24",
-        "tekst": "subtitle: Approval, AIRun ledger, audit and rollback controls.",
-        "dowod": "en:approval,en:and"
-      },
-      {
-        "modul": "01 Chat",
         "gdzie": "src/components/AIChat/AIOSHub.tsx:34",
         "tekst": "title: Memory & Scope",
         "dowod": "en:scope"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:35",
-        "tekst": "subtitle: Anna/Teresa memory, assistantScope, private mode and retention.",
-        "dowod": "en:and,en-suf:retention"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:46",
-        "tekst": "subtitle: Connector catalog, OAuth/session lifecycle and governed connector runs.",
-        "dowod": "en:lifecycle,en:and,en-suf:session"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:57",
-        "tekst": "subtitle: Specialized agents, tool scope, schedules, notifications and eval hooks.",
-        "dowod": "en:scope,en:notifications,en:and"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:68",
-        "tekst": "subtitle: Outcome contracts, evidence, provider health and final acceptance.",
-        "dowod": "en:outcome,en:evidence,en:and"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:79",
-        "tekst": "subtitle: Deep research sessions, evidence reports and first-class artifacts.",
-        "dowod": "en:evidence,en:reports,en:and"
       },
       {
         "modul": "01 Chat",
@@ -1401,15 +1305,111 @@
       },
       {
         "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AddFilesMenu.tsx:141",
-        "tekst": "name: Google Drive",
-        "dowod": "en?:drive,en?:TitleCase"
-      },
-      {
-        "modul": "01 Chat",
         "gdzie": "src/components/AIChat/ConversationItem.tsx:42",
         "tekst": "label: Initiative",
         "dowod": "en:initiative"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ConversationItem.tsx:54",
+        "tekst": "label: Task",
+        "dowod": "en:task"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ConversationItem.tsx:60",
+        "tekst": "label: Decision",
+        "dowod": "en:decision"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:306",
+        "tekst": "title: Budget Planning",
+        "dowod": "en-suf:planning"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:313",
+        "tekst": "title: Resource Allocation Matrix",
+        "dowod": "en:resource,en:allocation"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:320",
+        "tekst": "title: Risk Register",
+        "dowod": "en?:risk,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:327",
+        "tekst": "title: Project Timeline",
+        "dowod": "en:project,en:timeline"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:334",
+        "tekst": "title: Competitive Analysis Matrix",
+        "dowod": "en:analysis"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:341",
+        "tekst": "title: Recruitment Pipeline",
+        "dowod": "en?suf:recruitment,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:348",
+        "tekst": "title: OKR Tracking Sheet",
+        "dowod": "en-suf:tracking"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:364",
+        "tekst": "title: Project Status Update",
+        "dowod": "en:project"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:378",
+        "tekst": "title: Workshop Facilitation Deck",
+        "dowod": "en-suf:facilitation"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:385",
+        "tekst": "title: Quarterly Business Review",
+        "dowod": "en:quarterly,en:review,en-suf:business"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:399",
+        "tekst": "title: Investment Case Deck",
+        "dowod": "en?suf:investment,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:406",
+        "tekst": "title: Digital Transformation Assessment",
+        "dowod": "en-suf:transformation"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:415",
+        "tekst": "title: Role Register",
+        "dowod": "en?:role,en?:TitleCase"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:422",
+        "tekst": "title: Vendor Master Data",
+        "dowod": "en:vendor"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:450",
+        "tekst": "title: Task Tracker",
+        "dowod": "en:task"
       }
     ],
     "K5pl": [
@@ -2511,21 +2511,20 @@
   "plikiTop": {
     "server/src/routes/table-platform.routes.ts": 376,
     "server/src/routes/document-studio.routes.ts": 246,
-    "src/services/drdStructure.ts": 239,
     "src/config/cardDocumentation.ts": 233,
     "server/src/routes/settings.routes.ts": 213,
-    "src/store/useToolStore.ts": 181,
+    "src/services/drdStructure.ts": 206,
     "server/src/controllers/InterviewController.ts": 177,
     "server/src/routes/presentations.routes.ts": 172,
     "server/src/routes/workbook.routes.ts": 165,
-    "src/components/Interview/interviewDemoData.ts": 159,
     "server/src/routes/my-work.routes.ts": 155,
     "public/locales/pl/translation.json": 133,
     "server/src/routes/v8/results.routes.ts": 133,
     "server/src/routes/report-builder.routes.ts": 120,
+    "src/components/Interview/interviewDemoData.ts": 118,
     "server/src/routes/ai.routes.ts": 113,
     "server/src/routes/v8/finance.routes.ts": 110,
-    "src/services/consultingTemplatesRegistry.ts": 99,
+    "src/store/useToolStore.ts": 101,
     "server/src/controllers/InitiativeController.ts": 97,
     "src/views/legal/TermsOfServiceView.tsx": 96,
     "server/src/routes/billing/billing.routes.ts": 96,
@@ -2536,8 +2535,9 @@
     "src/components/ReportBuilder/ReportEditor/BlockSettingsRegistry.tsx": 84,
     "src/components/Initiatives/templates/initiativeLevelTemplates.ts": 83,
     "server/src/routes/pmo/initiatives.routes.ts": 82,
-    "src/components/Discovery/DiscoveryToolsHub.tsx": 80,
-    "src/views/SettingsView.tsx": 80,
-    "server/src/routes/knowledge.routes.ts": 80
+    "server/src/routes/knowledge.routes.ts": 80,
+    "server/src/routes/llm.routes.ts": 77,
+    "src/views/superadmin/AIConfigurationView.tsx": 76,
+    "server/src/routes/assessment-reports.routes.ts": 75
   }
 }
