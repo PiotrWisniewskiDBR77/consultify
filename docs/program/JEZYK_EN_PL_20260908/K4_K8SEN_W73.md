@@ -1,44 +1,39 @@
-# K4 v3 — K8sen W73: verified propagation mapping
+# K4 v4 — pełne polskie komunikaty realnych ujść serwera
 
-**Werdykt E1: READY FOR INDEPENDENT REVIEW V3.** HOLD `0cc005de576095a1fb07f0c581f6f20f93993ed9` został naprawiony: wszystkie realne ujścia klasy `(b)` zmieniają treść dla PL bez wspólnego, stratnego komunikatu; parser respektuje zagnieżdżone `runtime:false`; principal czyta `users.language`; pełny miernik ma 72/72 PASS.
+**Werdykt E1: READY FOR INDEPENDENT REVIEW V4.** HOLD `7b5d27650f899a40c07f91fb62f3f3e539579572` został naprawiony: wszystkie 1577 wierszy klasy `(b)` mają pełny polski wynik, 630 fallbacków z angielską treścią zniknęło, a końcowy residual K8sen wynosi `0`.
 
-## Mianownik i zachowanie
+## Mianownik i pokrycie zachowania
 
-Uczciwy residual K8sen wynosi `1584`. Nie jest zerowany i nadal obejmuje 1577 wyjątków oraz 7 wpisów `runtime:false`/diagnostycznych. Pełna klasyfikacja ma:
+Pełna klasyfikacja v3 zachowuje mianownik `1577` realnych wierszy oraz `1317` unikalnych komunikatów. Katalog v4 jest podzielony na pliki `batch14`–`batch36`; każdy ma najwyżej 60 wpisów. Test zachowania wymaga dla każdego z 1317 unikalnych źródeł dokładnego wyniku PL z zatwierdzonego katalogu, braku prefiksu `Błąd operacji:` i braku znanych angielskich fraz po usunięciu placeholderów oraz identyfikatorów technicznych. Wynik: `1577/1577`, unikalne `1317/1317`, mixed fallback `0`, known-English prose `0`.
 
-- `b:http-error-boundary=1575`;
-- `b:system-alert-message=1`;
-- `b:api-error-runtime-expanded=1`;
-- `a:internal-background=2`;
-- `a:technical-diagnostic=5`;
-- `unknown=0`.
+Parametry `${...}`, identyfikatory pól i stałe statusów pozostają niezmienione. Dopasowania szablonowe są sortowane według swoistości, dlatego ogólny wzorzec nie przechwytuje bardziej szczegółowego komunikatu.
 
-Pomiar zachowania dla całej klasy `(b)` daje `1577/1577` treści zmienionych dla PL, `unchanged=0`, `1317` odrębnych wyników oraz `0` użyć dawnego wspólnego tekstu `Nie udało się wykonać operacji.`. Katalog zachowuje precyzyjne tłumaczenia; fallback wykonuje bezstratne podstawienia leksykalne i zachowuje domenowe identyfikatory, wartości oraz pełną diagnostykę zamiast zwijać wszystkie błędy do jednego zdania.
+## Ostatnie 35 pozycji
 
-Bezpośrednia regresja prowadzi `Meeting execution requires organizationId` przez prawdziwy `MeetingExecutor`, `ActionExecutionAdapter` i granicę payloadu HTTP 400. Wynik PL to `Wykonanie spotkania wymaga organizationId`; `status=400` i `code=BAD_REQUEST` pozostają bez zmian.
+Pełna tabela per literał znajduje się w `K4_K8SEN_W73_V4_REMAINING_35.json`. Z 35 pozycji pozostających po pierwszym katalogu:
 
-## runtime:false
+- 29 było realnymi ujściami propagacji i dostało pełne EN/PL w `batch36`;
+- 6 to dokładnie wskazane techniczne kody lub diagnostyki crona/workera; dostały wpis per literał, bez szerokiego wyjątku pomiarowego;
+- `unknown=0`, realne ujścia bez tłumaczenia `0`, końcowy K8sen `0`.
 
-Regex zastąpiono parserem AST TypeScript. Loader czyta całe `ObjectLiteralExpression`, więc zagnieżdżone `${...}` nie urywa obiektu przed `runtime:false`. Źródło `Invalid code. ${remainingAttempts ...}` wróciło do K8sen. Oba realne warianty runtime mają osobne wykonywalne wpisy:
+## Dowody zachowania
 
-- `Invalid code. 2 attempts remaining.` → `Nieprawidłowy kod. Pozostało prób: 2.`;
-- `Invalid code. Please request a new code.` → `Nieprawidłowy kod. Poproś o nowy kod.`.
+Realna ścieżka Superadmin prowadzi `AIPlaybookService.publishTemplate()` przez `AIPlaybooksController.publishTemplate()` i middleware `serverPayloadLocale`. Dla profilu PL źródło `Template is already published` daje `Szablon został już opublikowany`, bez angielskiej frazy, przy zachowaniu HTTP `500` oraz `code=PLAYBOOK_PUBLISHED`.
 
-## Kanoniczny principal
+Zachowane zostały wcześniejsze dowody: MeetingExecutor → ActionExecutionAdapter → HTTP 400, AIPipeline execute/stream PL, canonical `users.language`, parser AST dla zagnieżdżonego `runtime:false` i PDF `doc.text`.
 
-`verifyToken` czyta `SELECT language FROM users WHERE id = ? LIMIT 1`, zgodnie z account-level SSOT i zapisem UI. Test uruchamia prawdziwy eksportowany middleware, sprawdza dokładne zapytanie oraz `AuthenticatedUser.language='pl'`. Kolejność resolvera pozostaje: profil, `Accept-Language`, EN.
+## Bramki
 
-## Zachowane poprawki v2
-
-AIPipeline lokalizuje `process()` i `processStream()` z `request.options.language`. PDF `doc.text` pozostaje `36 → 0`, z locale dla Management Reports, Initiative Work Report, Document Studio, Status Report, Unified Export, Partner Toolkit i Invoice.
-
-## Dowody
-
-- pełny właścicielski miernik K1: `72/72 PASS`, `--retry=0`;
-- zbiorczy focused: `110/110 PASS`, 7 plików, `--retry=0`;
-- coverage klasy `(b)`: `1577/1577`, unchanged `0`, distinct `1317`, lossy generic `0`;
+- właścicielski miernik K1: `72/72 PASS`, `--retry=0`;
+- K4-owned focused: `43/43 PASS`, 7 plików;
+- zbiorczy focused z e-mailem: `46/48`, jedyne dwa czerwone testy sendera są odziedziczone;
+- exact-base `775947993ef96b1fcbd4e96fa725a48bae9dc7b3`: ten sam plik sendera daje `2 failed | 2 passed`; nazwy obu czerwieni są identyczne;
+- kandydat dodaje tylko test locale subject do pliku e-mail i lookup locale/subject do usługi; nie zmienia `smtpConfig.from` ani dwóch starych asercji;
 - server TypeScript: `0`;
-- `check:jezyk:ci`: PASS, residual K8sen `1584`;
-- `check:list-canon`: `349/349` PASS;
-- `check:artefakt`: `8/8`, R2+R3 `0/0`, danger `117/117` PASS;
-- migracji i deployu brak.
+- frontend TypeScript: `177` diagnostyk, próg W73 zachowany, brak delty frontendowej;
+- `check:jezyk:ci`: PASS, K8sen `0`;
+- list canon: `349/349` PASS;
+- artefakt: `8/8`, R2+R3 `0/0`, danger `117/117` PASS;
+- production build: PASS, `10754` modułów, 34.35 s (pojedynczo, heap 8192 MB).
+
+Migracji, deployu i zmian w plikach zakazanych nie ma.

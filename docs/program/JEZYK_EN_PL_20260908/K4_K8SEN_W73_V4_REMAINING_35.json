@@ -1,0 +1,560 @@
+{
+  "count": 35,
+  "entries": [
+    {
+      "path": "server/src/services/canvasMaterialize.ts",
+      "line": 536,
+      "text": "Idea materialization read-back failed for ${ideaId} (idea=${Boolean(ideaReadBack.rows[0])}, map=${Boolean(mapReadBack.rows[0])})",
+      "evidence": [
+        "en:read",
+        "en:back",
+        "en:failed",
+        "en-suf:materialization"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "Odczyt zwrotny materializacji pomysłu ${ideaId} nie powiódł się (pomysł=${Boolean(ideaReadBack.rows[0])}, mapa=${Boolean(mapReadBack.rows[0])})"
+    },
+    {
+      "path": "server/src/services/demo/atelierFinanceOperatorHold.ts",
+      "line": 730,
+      "text": "[atelier-finance-seed] refusing to acknowledge a NEEDS_OPERATOR hold without a note: state what was found and why it is safe to proceed.",
+      "evidence": [
+        "en:acknowledge",
+        "en:note",
+        "en:what",
+        "en:was",
+        "en:found",
+        "en:and",
+        "en-suf:refusing"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[atelier-finance-seed] odmowa potwierdzenia blokady NEEDS_OPERATOR bez notatki: opisz, co znaleziono i dlaczego można bezpiecznie kontynuować."
+    },
+    {
+      "path": "server/src/services/finance/canonical/baselineComputeService.ts",
+      "line": 625,
+      "text": "baselineComputeService: engine bug — BS does not balance for ${periodId}: assets=${totalAssets} liab+equity=${totalLiabilitiesEquity} diff=${Math.abs(totalAssets - totalLiabilitiesEquity)}",
+      "evidence": [
+        "en:does"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "baselineComputeService: błąd silnika — BS nie bilansuje się dla ${periodId}: aktywa=${totalAssets} zobowiązania+kapitał=${totalLiabilitiesEquity} różnica=${Math.abs(totalAssets - totalLiabilitiesEquity)}"
+    },
+    {
+      "path": "server/src/services/finance/canonical/financeImportService.ts",
+      "line": 1192,
+      "text": "executeStmtLinesOperations applied ${appliedCells} cells, expected ${diff.toAdd.length + diff.toChange.length + diff.toClear.length} — aborting transaction",
+      "evidence": [
+        "en:applied",
+        "en-suf:aborting",
+        "en-suf:transaction"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "executeStmtLinesOperations zastosowało ${appliedCells} komórek, oczekiwano ${diff.toAdd.length + diff.toChange.length + diff.toClear.length} — transakcja zostaje przerwana"
+    },
+    {
+      "path": "server/src/services/finance/canonical/lineageFreshnessService.ts",
+      "line": 358,
+      "text": "lineageFreshnessService: edge ${edge.id} targets version ${targetVersionId} which does not exist in organization ${organizationId}",
+      "evidence": [
+        "en:which",
+        "en:does",
+        "en:organization",
+        "en-suf:version"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "lineageFreshnessService: krawędź ${edge.id} wskazuje wersję ${targetVersionId}, która nie istnieje w organizacji ${organizationId}"
+    },
+    {
+      "path": "server/src/services/finance/canonical/lineageFreshnessService.ts",
+      "line": 413,
+      "text": "lineageFreshnessService: freshness UPDATE affected ${updated.changes} rows for version ${targetVersionId} (expected exactly 1)",
+      "evidence": [
+        "en:rows",
+        "en-suf:freshness",
+        "en-suf:version"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "lineageFreshnessService: operacja UPDATE świeżości objęła ${updated.changes} wierszy wersji ${targetVersionId} (oczekiwano dokładnie 1)"
+    },
+    {
+      "path": "server/src/services/finance/canonical/predictionComputeService.ts",
+      "line": 375,
+      "text": "predictionComputeService: finance_business_versions.source_working_revision_id is not set for ${params.businessVersionId}",
+      "evidence": [
+        "en:source",
+        "en-suf:business",
+        "en-suf:working",
+        "en-suf:revision"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "predictionComputeService: finance_business_versions.source_working_revision_id nie jest ustawione dla ${params.businessVersionId}"
+    },
+    {
+      "path": "server/src/services/finance/canonical/predictionComputeService.ts",
+      "line": 790,
+      "text": "predictionComputeService: overlay engine bug — BS does not balance for ${periodId}: assets=${totalAssets} liab+equity=${totalLiabilitiesEquity} diff=${Math.abs(totalAssets - totalLiabilitiesEquity)}",
+      "evidence": [
+        "en:does"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "predictionComputeService: błąd silnika nakładki — BS nie bilansuje się dla ${periodId}: aktywa=${totalAssets} zobowiązania+kapitał=${totalLiabilitiesEquity} różnica=${Math.abs(totalAssets - totalLiabilitiesEquity)}"
+    },
+    {
+      "path": "server/src/services/finance/canonical/predictionComputeService.ts",
+      "line": 844,
+      "text": "predictionComputeService: finance_business_versions.source_working_revision_id is not set for the Prediction Scenario ${params.businessVersionId}",
+      "evidence": [
+        "en:source",
+        "en:the",
+        "en-suf:business",
+        "en-suf:working",
+        "en-suf:revision",
+        "en-suf:prediction"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "predictionComputeService: finance_business_versions.source_working_revision_id nie jest ustawione dla scenariusza prognozy ${params.businessVersionId}"
+    },
+    {
+      "path": "server/src/services/finance/canonical/valuationComputeService.ts",
+      "line": 771,
+      "text": "runDcfFcffValuation: ${claimResult.message}",
+      "evidence": [
+        "en-suf:rundcffcffvaluation"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "runDcfFcffValuation: ${claimResult.message}"
+    },
+    {
+      "path": "server/src/services/finance/canonical/valuationComputeService.ts",
+      "line": 723,
+      "text": "runDcfFcffValuation: finance_business_versions.source_working_revision_id is not set for ${params.valuationBusinessVersionId}",
+      "evidence": [
+        "en:source",
+        "en-suf:rundcffcffvaluation",
+        "en-suf:business",
+        "en-suf:working",
+        "en-suf:revision"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "runDcfFcffValuation: finance_business_versions.source_working_revision_id nie jest ustawione dla ${params.valuationBusinessVersionId}"
+    },
+    {
+      "path": "server/src/services/finance/collaboration/operationStack.ts",
+      "line": 107,
+      "text": "OperationStack.push: priorValues.length (${priorValues.length}) must equal operation target count (${targets.length}) for operation ${operation.operationId}",
+      "evidence": [
+        "en:count",
+        "en-suf:operation"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "OperationStack.push: priorValues.length (${priorValues.length}) musi być równe liczbie celów operacji (${targets.length}) dla operacji ${operation.operationId}"
+    },
+    {
+      "path": "server/src/services/financialStatementService.ts",
+      "line": 9078,
+      "text": "[FinancialStatementService] Idempotency reservation conflict for ${organizationId}/${idempotencyKey} but no row found on re-read",
+      "evidence": [
+        "en:conflict",
+        "en:row",
+        "en:found",
+        "en:read",
+        "en-suf:reservation"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[FinancialStatementService] konflikt rezerwacji idempotencji dla ${organizationId}/${idempotencyKey}, ale ponowny odczyt nie zwrócił wiersza"
+    },
+    {
+      "path": "server/src/services/organizationContext/ContextDocumentService.ts",
+      "line": 2007,
+      "text": "image_openai_vision_http_${response.status}",
+      "evidence": [
+        "en-suf:vision"
+      ],
+      "classification": "a",
+      "sink": "internal-technical",
+      "reason": "technical machine code persisted as an image provider failure key; no HTTP/email/document prose",
+      "resolution": "exact per-literal technical catalog registration; no broad exclusion rule",
+      "pl": "image_openai_vision_http_${response.status}"
+    },
+    {
+      "path": "server/src/services/organizationContext/OrganizationContextService.ts",
+      "line": 2300,
+      "text": "[OrgContext] Failed to publish snapshot version for org ${organizationId} after ${MAX_ATTEMPTS} attempts (version contention).",
+      "evidence": [
+        "en:failed",
+        "en:snapshot",
+        "en-suf:version",
+        "en-suf:contention"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[OrgContext] Nie udało się opublikować wersji migawki organizacji ${organizationId} po ${MAX_ATTEMPTS} próbach (konflikt wersji)."
+    },
+    {
+      "path": "server/src/services/resultsVnext/okr/okrAlignmentCommands.ts",
+      "line": 494,
+      "text": "[proposeAlignment] 23505 on ux_okr_vnext_alignments_live_edge but no winning row found for (${sourceObjectiveId}, ${targetObjectiveId})",
+      "evidence": [
+        "en:row",
+        "en:found",
+        "en-suf:winning"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[proposeAlignment] błąd 23505 dla ux_okr_vnext_alignments_live_edge, ale nie znaleziono zwycięskiego wiersza dla (${sourceObjectiveId}, ${targetObjectiveId})"
+    },
+    {
+      "path": "server/src/services/resultsVnext/okr/okrCheckInCommands.ts",
+      "line": 567,
+      "text": "[recordCheckIn] 23505 on ux_okr_vnext_checkins_kr_occurrence_original but no winning row found for (${keyResultId}, ${cadenceOccurrenceId})",
+      "evidence": [
+        "en:row",
+        "en:found",
+        "en-suf:winning"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[recordCheckIn] błąd 23505 dla ux_okr_vnext_checkins_kr_occurrence_original, ale nie znaleziono zwycięskiego wiersza dla (${keyResultId}, ${cadenceOccurrenceId})"
+    },
+    {
+      "path": "server/src/services/resultsVnext/okr/okrReflectionCommands.ts",
+      "line": 608,
+      "text": "[recordObjectiveReflection] idempotency conflict on (${organizationId}, ${idempotencyKey}) but existing event row not found",
+      "evidence": [
+        "en:conflict",
+        "en:row",
+        "en:found",
+        "en-suf:recordobjectivereflection",
+        "en-suf:existing"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[recordObjectiveReflection] konflikt idempotencji dla (${organizationId}, ${idempotencyKey}), ale nie znaleziono istniejącego wiersza zdarzenia"
+    },
+    {
+      "path": "server/src/services/resultsVnext/okr/okrReflectionCommands.ts",
+      "line": 909,
+      "text": "[recordOkrReflectionTeresaDraft] idempotency conflict on (${organizationId}, ${idempotencyKey}) but existing event row not found",
+      "evidence": [
+        "en:conflict",
+        "en:row",
+        "en:found",
+        "en-suf:existing"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[recordOkrReflectionTeresaDraft] konflikt idempotencji dla (${organizationId}, ${idempotencyKey}), ale nie znaleziono istniejącego wiersza zdarzenia"
+    },
+    {
+      "path": "server/src/services/resultsVnext/okr/okrReviewCommands.ts",
+      "line": 222,
+      "text": "[writeReviewEvent] idempotency conflict on (${eventInput.organizationId}, ${eventInput.idempotencyKey}) but existing event row not found",
+      "evidence": [
+        "en:conflict",
+        "en:row",
+        "en:found",
+        "en-suf:existing"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[writeReviewEvent] konflikt idempotencji dla (${eventInput.organizationId}, ${eventInput.idempotencyKey}), ale nie znaleziono istniejącego wiersza zdarzenia"
+    },
+    {
+      "path": "server/src/services/resultsVnext/okr/okrSetCommands.ts",
+      "line": 394,
+      "text": "[createOkrSet] 23505 on ux_okr_vnext_sets_one_per_scope_cycle_owner but no winning row found for (${programId}, ${cycleId}, ${scopeType}, ${scopeId}, ${ownerUserId})",
+      "evidence": [
+        "en:scope",
+        "en:owner",
+        "en:row",
+        "en:found",
+        "en-suf:winning"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[createOkrSet] błąd 23505 dla ux_okr_vnext_sets_one_per_scope_cycle_owner, ale nie znaleziono zwycięskiego wiersza dla (${programId}, ${cycleId}, ${scopeType}, ${scopeId}, ${ownerUserId})"
+    },
+    {
+      "path": "server/src/services/resultsVnext/platform/atomicWrite.ts",
+      "line": 838,
+      "text": "[executeAtomicCommand] idempotency conflict on (${organizationId}, ${eventInput.idempotencyKey}) but existing event row not found",
+      "evidence": [
+        "en:conflict",
+        "en:row",
+        "en:found",
+        "en-suf:existing"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[executeAtomicCommand] konflikt idempotencji dla (${organizationId}, ${eventInput.idempotencyKey}), ale nie znaleziono istniejącego wiersza zdarzenia"
+    },
+    {
+      "path": "server/src/services/resultsVnext/platform/atomicWrite.ts",
+      "line": 1079,
+      "text": "[executeAtomicCreate] idempotency conflict on (${organizationId}, ${eventInput.idempotencyKey}) but existing event row not found",
+      "evidence": [
+        "en:conflict",
+        "en:row",
+        "en:found",
+        "en-suf:existing"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[executeAtomicCreate] konflikt idempotencji dla (${organizationId}, ${eventInput.idempotencyKey}), ale nie znaleziono istniejącego wiersza zdarzenia"
+    },
+    {
+      "path": "server/src/services/resultsVnext/platform/financeProjectionConsumer.ts",
+      "line": 431,
+      "text": "[financeProjectionConsumer] expected an open/investigating reconciliation for link ${link.link_id} after openRoiFinanceReconciliation, found none",
+      "evidence": [
+        "en:open",
+        "en:found",
+        "en:none",
+        "en-suf:investigating",
+        "en-suf:reconciliation",
+        "en-suf:openroifinancereconciliation"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[financeProjectionConsumer] po openRoiFinanceReconciliation oczekiwano otwartego lub analizowanego uzgodnienia dla łącza ${link.link_id}, ale go nie znaleziono"
+    },
+    {
+      "path": "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts",
+      "line": 218,
+      "text": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=NO_CONSUMER_REGISTERED",
+      "evidence": [
+        "en:last"
+      ],
+      "classification": "a",
+      "sink": "internal-technical",
+      "reason": "internal outbox cron dead-letter diagnostic stored for operators",
+      "resolution": "exact per-literal technical catalog registration; no broad exclusion rule",
+      "pl": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=NO_CONSUMER_REGISTERED"
+    },
+    {
+      "path": "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts",
+      "line": 269,
+      "text": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=${message}",
+      "evidence": [
+        "en:last"
+      ],
+      "classification": "a",
+      "sink": "internal-technical",
+      "reason": "internal outbox cron dead-letter diagnostic stored for operators",
+      "resolution": "exact per-literal technical catalog registration; no broad exclusion rule",
+      "pl": "event_id=${event.event_id} event_type=${event.event_type} org=${event.organization_id} attempts=${failResult.attempts} last_error=${message}"
+    },
+    {
+      "path": "server/src/services/resultsVnext/roi/roiCaseCommands.ts",
+      "line": 450,
+      "text": "[createRoiCase] 23505 on ux_rvn_roi_cases_one_active_per_initiative but no winning row found for initiative ${initiativeId}",
+      "evidence": [
+        "en:initiative",
+        "en:row",
+        "en:found",
+        "en-suf:winning"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[createRoiCase] błąd 23505 dla ux_rvn_roi_cases_one_active_per_initiative, ale nie znaleziono zwycięskiego wiersza dla inicjatywy ${initiativeId}"
+    },
+    {
+      "path": "server/src/services/resultsVnext/roi/roiPirCommands.ts",
+      "line": 529,
+      "text": "[startRoiCasePostInvestmentReview] ROI case ${caseId} compare/benefits-realization view returned null while its own row is locked — internal invariant violated",
+      "evidence": [
+        "en:benefits",
+        "en:view",
+        "en:row",
+        "en-suf:realization",
+        "en-suf:violated"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "[startRoiCasePostInvestmentReview] widok porównania lub realizacji korzyści sprawy ROI ${caseId} zwrócił null, gdy jej wiersz był zablokowany — naruszono wewnętrzny niezmiennik"
+    },
+    {
+      "path": "server/src/services/tablePlatform/ChatToSchemaService.ts",
+      "line": 446,
+      "text": "__schema_version_at_creation:${schemaVersionAtCreation}",
+      "evidence": [
+        "en-suf:version",
+        "en-suf:creation"
+      ],
+      "classification": "a",
+      "sink": "internal-technical",
+      "reason": "internal schema version marker parsed by ChatToSchemaService",
+      "resolution": "exact per-literal technical catalog registration; no broad exclusion rule",
+      "pl": "__schema_version_at_creation:${schemaVersionAtCreation}"
+    },
+    {
+      "path": "server/src/services/tablePlatform/ChatToSchemaService.ts",
+      "line": 508,
+      "text": "Schema was modified since this proposal was created (proposal version: ${proposalSchemaVersion}, current: ${currentSV}). Please regenerate.",
+      "evidence": [
+        "en:was",
+        "en:this",
+        "en:created",
+        "en:please",
+        "en-suf:version"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "Schemat został zmieniony po utworzeniu tej propozycji (wersja propozycji: ${proposalSchemaVersion}, bieżąca: ${currentSV}). Wygeneruj ponownie."
+    },
+    {
+      "path": "server/src/services/tablePlatform/RelationService.ts",
+      "line": 108,
+      "text": "Cardinality violation: field ${fromFieldId} allows only one-to-one links (existing: ${cnt}, adding: ${toRecordIds.length})",
+      "evidence": [
+        "en:field",
+        "en-suf:violation",
+        "en-suf:existing",
+        "en-suf:adding"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "Naruszenie kardynalności: pole ${fromFieldId} dopuszcza wyłącznie łącza jeden do jednego (istniejące: ${cnt}, dodawane: ${toRecordIds.length})"
+    },
+    {
+      "path": "server/src/services/tablePlatform/RelationService.ts",
+      "line": 119,
+      "text": "Cardinality violation: target record ${toRecordId} is already linked from another record (one-to-many constraint on field ${fromFieldId})",
+      "evidence": [
+        "en:record",
+        "en:from",
+        "en:constraint",
+        "en:field",
+        "en-suf:violation"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "Naruszenie kardynalności: rekord docelowy ${toRecordId} jest już połączony z innym rekordem (ograniczenie jeden do wielu w polu ${fromFieldId})"
+    },
+    {
+      "path": "server/src/services/v8/artifactRegistryService.ts",
+      "line": 4301,
+      "text": "Execution run ${current.executionRunId} must be proposals_ready, waiting_for_review, approved_for_apply or applying before materialization",
+      "evidence": [
+        "en:ready",
+        "en:review",
+        "en:approved",
+        "en:apply",
+        "en:before",
+        "en-suf:execution",
+        "en-suf:waiting",
+        "en-suf:applying",
+        "en-suf:materialization"
+      ],
+      "classification": "b",
+      "sink": "user-visible propagation boundary",
+      "reason": "service error can propagate through an API/structured result boundary",
+      "resolution": "full EN/PL catalog entry added in batch36",
+      "pl": "Przebieg wykonania ${current.executionRunId} musi mieć status proposals_ready, waiting_for_review, approved_for_apply lub applying przed materializacją"
+    },
+    {
+      "path": "server/src/workers/aiWorker.ts",
+      "line": 18,
+      "text": "Failed to load AiService: ${error instanceof Error ? error.message : String(error)}",
+      "evidence": [
+        "en:failed"
+      ],
+      "classification": "a",
+      "sink": "internal-technical",
+      "reason": "worker bootstrap diagnostic emitted before a task is accepted",
+      "resolution": "exact per-literal technical catalog registration; no broad exclusion rule",
+      "pl": "Nie udało się załadować AiService: ${error instanceof Error ? error.message : String(error)}"
+    },
+    {
+      "path": "server/src/workers/aiWorker.ts",
+      "line": 124,
+      "text": "Unknown task type: ${taskType}",
+      "evidence": [
+        "en:unknown",
+        "en:task"
+      ],
+      "classification": "a",
+      "sink": "internal-technical",
+      "reason": "worker queue diagnostic for an unsupported internal task type",
+      "resolution": "exact per-literal technical catalog registration; no broad exclusion rule",
+      "pl": "Nieznany typ zadania: ${taskType}"
+    }
+  ],
+  "summary": {
+    "reviewed": 35,
+    "localizedClassB": 29,
+    "technicalClassA": 6,
+    "unknown": 0,
+    "realUserSinksRemaining": 0
+  }
+}
