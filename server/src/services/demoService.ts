@@ -21,10 +21,8 @@
  *   2. `organization_type = 'DEMO'` (belt-and-suspenders; session orgs are
  *      always seeded as DEMO — see demoSeedService.upsertOrg).
  *   3. `billing_status` is not a paying state (never touch anything that pays).
- *   4. EXPIRED: created_at older than the TTL (default 24h — the demo-session
- *      lifetime) OR its demo_session is expired/ended OR its demo_session_tenant
- *      TTL has elapsed. The created_at fallback also reclaims orphans whose
- *      session row is already gone.
+ *   4. `created_at` is older than the absolute TTL (default 24h). Session state
+ *      never shortens that minimum lifetime.
  *   5. ZERO real human members — no `users` row on the org whose email is NOT a
  *      known seed/test domain. (Session tenant orgs normally have no users at
  *      all; any real user is a hard STOP.)
@@ -35,6 +33,10 @@
  */
 
 import { resolveDemoPolicy } from '../config/demoPolicy.js';
+import {
+  type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
+} from '../database/PostgresDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { SEED_EMAIL_DOMAINS } from '../utils/superadminSeedFilter.js';
@@ -137,28 +139,9 @@ export async function findExpiredDemoCandidates(
   const idClause = idPatterns.map(() => `o.id LIKE ?`).join(' OR ');
   idPatterns.forEach((p) => params.push(p));
 
-  // (4) expiry: created_at older than TTL (always available)…
+  // (4) Absolute TTL: session state may never shorten the minimum lifetime.
   const cutoffIso = new Date(Date.now() - ttlHours(env) * 60 * 60 * 1000).toISOString();
-  const expiryClauses: string[] = ['o.created_at < ?'];
   params.push(cutoffIso);
-
-  // …plus linked demo_session / demo_session_tenant expiry when those tables exist.
-  const nowIso = new Date().toISOString();
-  if (await DbPromise.tableExists('demo_sessions')) {
-    expiryClauses.push(
-      `EXISTS (SELECT 1 FROM demo_sessions ds
-               WHERE ds.session_org_id = o.id
-                 AND (ds.expires_at < ? OR LOWER(COALESCE(ds.status,'')) = 'ended'))`
-    );
-    params.push(nowIso);
-  }
-  if (await DbPromise.tableExists('demo_session_tenants')) {
-    expiryClauses.push(
-      `EXISTS (SELECT 1 FROM demo_session_tenants dt
-               WHERE dt.tenant_org_id = o.id AND dt.ttl_expires_at < ?)`
-    );
-    params.push(nowIso);
-  }
 
   // (5) zero REAL human members — block if any non-seed-domain user is attached.
   const seedUserClause = SEED_EMAIL_DOMAINS.map(() => `LOWER(COALESCE(u.email,'')) LIKE ?`).join(
@@ -184,7 +167,7 @@ export async function findExpiredDemoCandidates(
     WHERE (${idClause})
       AND COALESCE(o.organization_type, '') = 'DEMO'
       AND LOWER(COALESCE(o.billing_status, '')) NOT IN ('paid', 'active', 'past_due')
-      AND (${expiryClauses.join(' OR ')})
+      AND o.created_at < ?
       AND ${realMemberGuard}
       AND LOWER(o.id) NOT IN (${whitelistPlaceholders})
       AND LOWER(COALESCE(o.name, '')) NOT IN (${whitelistPlaceholders})
@@ -192,7 +175,7 @@ export async function findExpiredDemoCandidates(
     LIMIT ${Math.max(1, Math.floor(limit))}
   `;
 
-  const rows = await DbPromise.all<DemoCleanupCandidate>(sql, params, { fallback: true });
+  const rows = await DbPromise.all<DemoCleanupCandidate>(sql, params, { fallback: false });
 
   return rows || [];
 }
@@ -201,11 +184,61 @@ export async function findExpiredDemoCandidates(
 // CLEANUP
 // ==========================================
 
+export interface DemoCleanupHooks {
+  /** Test seam: change safety state after discovery but before the lock/re-check. */
+  beforeCandidateTransaction?: (candidate: DemoCleanupCandidate) => void | Promise<void>;
+  /** Test seam: collect executed steps or inject a deterministic mid-purge fault. */
+  afterDeleteStep?: (table: string, organizationId: string) => void | Promise<void>;
+}
+
+async function lockAndRecheckCandidate(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  env: NodeJS.ProcessEnv
+): Promise<DemoCleanupCandidate | null> {
+  const params: unknown[] = [organizationId];
+  const idPatterns = ephemeralIdPatterns(env);
+  const idClause = idPatterns.map(() => `o.id LIKE ?`).join(' OR ');
+  params.push(...idPatterns);
+  params.push(new Date(Date.now() - ttlHours(env) * 60 * 60 * 1000).toISOString());
+
+  const seedUserClause = SEED_EMAIL_DOMAINS.map(() => `LOWER(COALESCE(u.email,'')) LIKE ?`).join(
+    ' OR '
+  );
+  params.push(...SEED_EMAIL_DOMAINS.map((domain) => `%@${domain.toLowerCase()}`));
+
+  const whitelist = [...buildWhitelist(env)];
+  const whitelistPlaceholders = whitelist.map(() => '?').join(', ');
+  params.push(...whitelist, ...whitelist);
+
+  return tx.queryOne<DemoCleanupCandidate>(
+    `SELECT o.id, o.name, o.organization_type, o.created_at
+     FROM organizations o
+     WHERE o.id = ?
+       AND (${idClause})
+       AND COALESCE(o.organization_type, '') = 'DEMO'
+       AND LOWER(COALESCE(o.billing_status, '')) NOT IN ('paid', 'active', 'past_due')
+       AND o.created_at < ?
+       AND NOT EXISTS (
+         SELECT 1 FROM users u
+         WHERE u.organization_id = o.id
+           AND NOT (${seedUserClause})
+       )
+       AND LOWER(o.id) NOT IN (${whitelistPlaceholders})
+       AND LOWER(COALESCE(o.name, '')) NOT IN (${whitelistPlaceholders})
+     FOR UPDATE OF o`,
+    params
+  );
+}
+
 /**
  * Reclaim expired demo scaffolding.
  * @returns number of demo orgs actually deleted (0 in dry-run).
  */
-export async function cleanupExpiredDemos(env: NodeJS.ProcessEnv = process.env): Promise<number> {
+export async function cleanupExpiredDemos(
+  env: NodeJS.ProcessEnv = process.env,
+  hooks: DemoCleanupHooks = {}
+): Promise<number> {
   const enabled = isEnabled(env);
   const limit = perRunLimit(env);
 
@@ -230,20 +263,32 @@ export async function cleanupExpiredDemos(env: NodeJS.ProcessEnv = process.env):
   let deleted = 0;
   for (const candidate of candidates) {
     try {
-      // deleteDemoDatasetForOrganization removes children first and the org row
-      // last (FK-aware). Wrap the whole per-org purge in a transaction so a
-      // failure mid-way rolls back cleanly and never leaves a half-deleted org.
-      await DbPromise.run('BEGIN', [], { fallback: true });
-      await deleteDemoDatasetForOrganization(candidate.id);
-      await DbPromise.run('COMMIT', [], { fallback: true });
-      deleted += 1;
-      logger.info(`[DemoService] reclaimed demo org ${candidate.id} (${candidate.name ?? '—'})`);
-    } catch (error: unknown) {
-      try {
-        await DbPromise.run('ROLLBACK', [], { fallback: true });
-      } catch {
-        /* rollback best-effort */
+      await hooks.beforeCandidateTransaction?.(candidate);
+      const reclaimed = await withPinnedPostgresTransaction(async (tx) => {
+        // Repeat every safety predicate under a row lock immediately before
+        // deletion. PostgreSQL FK inserts must also take a lock on this row,
+        // so a new member cannot slip between this check and organization DELETE.
+        const locked = await lockAndRecheckCandidate(tx, candidate.id, env);
+        if (!locked) return false;
+
+        await deleteDemoDatasetForOrganization(candidate.id, {
+          tx,
+          afterDeleteStep: (table) => hooks.afterDeleteStep?.(table, candidate.id),
+        });
+        const survivor = await tx.queryOne<{ id: string }>(
+          `SELECT id FROM organizations WHERE id = ?`,
+          [candidate.id]
+        );
+        if (survivor) throw new Error(`Organization ${candidate.id} survived cleanup`);
+        return true;
+      });
+      if (reclaimed) {
+        deleted += 1;
+        logger.info(`[DemoService] reclaimed demo org ${candidate.id} (${candidate.name ?? '—'})`);
+      } else {
+        logger.warn(`[DemoService] skipped demo org ${candidate.id}: safety re-check failed`);
       }
+    } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`[DemoService] failed to reclaim demo org ${candidate.id}: ${err.message}`);
     }

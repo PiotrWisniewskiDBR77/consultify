@@ -25,7 +25,26 @@ const EXTRA_IDS = [0, 1, 2].map((n) => `ateliertoys-demo-session-${MARK}extra-${
 const WHITELISTED_ID = `ateliertoys-demo-session-${MARK}whitelisted`;
 const HUMAN_ID = `ateliertoys-demo-session-${MARK}human`;
 const HUMAN_USER_ID = `${HUMAN_ID}--user`;
-const ALL_IDS = [OLD_ID, FRESH_ID, WHITELISTED_ID, HUMAN_ID, ...EXTRA_IDS];
+const PAID_ID = `ateliertoys-demo-session-${MARK}paid`;
+const FAULT_ID = `ateliertoys-demo-session-${MARK}fault`;
+const RECHECK_ID = `ateliertoys-demo-session-${MARK}recheck`;
+const FRESH_ENDED_ID = `ateliertoys-demo-session-${MARK}fresh-ended`;
+const BASE_ID = `${MARK}base-org`;
+const BASE_USER_ID = `${MARK}base-user`;
+const ALL_IDS = [
+  OLD_ID,
+  FRESH_ID,
+  WHITELISTED_ID,
+  HUMAN_ID,
+  PAID_ID,
+  FAULT_ID,
+  RECHECK_ID,
+  FRESH_ENDED_ID,
+  ...EXTRA_IDS,
+  BASE_ID,
+];
+
+const executedTables = new Set<string>();
 
 const DIRECT_ORG_TABLES = [
   'activity_logs',
@@ -116,22 +135,49 @@ beforeAll(async () => {
   await withClient(async (client) => {
     const insertOrg = `INSERT INTO organizations
       (id, name, plan, status, billing_status, organization_type, is_active, created_at)
-      VALUES ($1, $2, 'demo', 'active', NULL, 'DEMO', 1, $3)`;
+      VALUES ($1, $2, 'demo', 'active', $4, 'DEMO', 1, $3)`;
     await client.query(insertOrg, [
       OLD_ID,
       `${MARK} expired sandbox`,
       new Date(Date.now() - 25 * 60 * 60 * 1000),
+      null,
     ]);
-    await client.query(insertOrg, [FRESH_ID, `${MARK} fresh sandbox`, new Date()]);
+    await client.query(insertOrg, [FRESH_ID, `${MARK} fresh sandbox`, new Date(), null]);
     await client.query(insertOrg, [
       WHITELISTED_ID,
       'Atelier',
       new Date(Date.now() - 25 * 60 * 60 * 1000),
+      null,
     ]);
     await client.query(insertOrg, [
       HUMAN_ID,
       `${MARK} human-owned sandbox`,
       new Date(Date.now() - 25 * 60 * 60 * 1000),
+      null,
+    ]);
+    await client.query(insertOrg, [
+      PAID_ID,
+      `${MARK} paid sandbox`,
+      new Date(Date.now() - 25 * 60 * 60 * 1000),
+      'paid',
+    ]);
+    await client.query(insertOrg, [
+      FAULT_ID,
+      `${MARK} rollback sandbox`,
+      new Date(Date.now() - 25 * 60 * 60 * 1000),
+      null,
+    ]);
+    await client.query(insertOrg, [
+      RECHECK_ID,
+      `${MARK} recheck sandbox`,
+      new Date(Date.now() - 25 * 60 * 60 * 1000),
+      null,
+    ]);
+    await client.query(insertOrg, [
+      FRESH_ENDED_ID,
+      `${MARK} fresh ended sandbox`,
+      new Date(),
+      null,
     ]);
     await client.query(
       `INSERT INTO users (id, organization_id, email, first_name, last_name, role, status)
@@ -143,8 +189,27 @@ beforeAll(async () => {
         id,
         `${MARK} expired batch candidate`,
         new Date(Date.now() - 25 * 60 * 60 * 1000),
+        null,
       ]);
     }
+
+    await client.query(
+      `INSERT INTO organizations
+       (id, name, plan, status, billing_status, organization_type, is_active, created_at)
+       VALUES ($1, $2, 'demo', 'active', NULL, 'INTERNAL', 1, NOW())`,
+      [BASE_ID, `${MARK} session base`]
+    );
+    await client.query(
+      `INSERT INTO users (id, organization_id, email, first_name, last_name, role, status)
+       VALUES ($1, $2, $3, 'Demo', 'Controller', 'owner', 'active')`,
+      [BASE_USER_ID, BASE_ID, `${MARK}controller@example.com`]
+    );
+    await client.query(
+      `INSERT INTO demo_sessions
+       (id, user_id, base_org_id, session_org_id, status, anchor_date, expires_at, ended_at)
+       VALUES ($1, $2, $3, $4, 'ended', NOW(), NOW() - INTERVAL '1 hour', NOW())`,
+      [`${MARK}ended-session`, BASE_USER_ID, BASE_ID, FRESH_ENDED_ID]
+    );
 
     // Representative parent/child graph. The denominator audit below checks the
     // complete 49-table plan, while these rows prove actual child-first removal.
@@ -168,6 +233,27 @@ beforeAll(async () => {
       `INSERT INTO task_comments (id, task_id, user_id, content) VALUES ($1, $2, $3, 'K5 child row')`,
       [`${OLD_ID}--comment`, taskId, userId]
     );
+
+    const faultUserId = `${FAULT_ID}--user`;
+    const faultProjectId = `${FAULT_ID}--project`;
+    const faultTaskId = `${FAULT_ID}--task`;
+    await client.query(
+      `INSERT INTO users (id, organization_id, email, first_name, last_name, role, status)
+       VALUES ($1, $2, $3, 'Demo', 'Fault', 'owner', 'active')`,
+      [faultUserId, FAULT_ID, `${MARK}fault@example.com`]
+    );
+    await client.query(
+      `INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, 'K5 rollback project')`,
+      [faultProjectId, FAULT_ID]
+    );
+    await client.query(
+      `INSERT INTO tasks (id, project_id, organization_id, title) VALUES ($1, $2, $3, 'K5 rollback task')`,
+      [faultTaskId, faultProjectId, FAULT_ID]
+    );
+    await client.query(
+      `INSERT INTO task_comments (id, task_id, user_id, content) VALUES ($1, $2, $3, 'rollback')`,
+      [`${FAULT_ID}--comment`, faultTaskId, faultUserId]
+    );
   });
 }, 60_000);
 
@@ -177,7 +263,12 @@ afterAll(async () => {
 
 describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('defaults ON, respects 24h and caps one run at three tenants', async () => {
-    const env = { ...process.env, DEMO_CLEANUP_TTL_HOURS: '24', DEMO_CLEANUP_LIMIT: '999' };
+    const env = {
+      ...process.env,
+      DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_LIMIT: '999',
+      DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID].join(','),
+    };
     delete env.ENABLE_DEMO_SANDBOX_TTL;
     const candidates = await demoService.findExpiredDemoCandidates(3, env);
     const fixtureCandidates = candidates.filter((row) => row.id.includes(MARK));
@@ -185,7 +276,9 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
     expect(fixtureCandidates.map((row) => row.id)).toContain(OLD_ID);
     expect(fixtureCandidates.map((row) => row.id)).not.toContain(FRESH_ID);
 
-    const deleted = await demoService.cleanupExpiredDemos(env);
+    const deleted = await demoService.cleanupExpiredDemos(env, {
+      afterDeleteStep: (table) => executedTables.add(table),
+    });
     expect(deleted).toBe(3);
     expect(await orgExists(OLD_ID)).toBe(false);
     expect(await orgExists(FRESH_ID)).toBe(true);
@@ -196,13 +289,9 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
   it('leaves zero rows for the reclaimed sandbox in all 49 dependent tables', async () => {
     await withClient(async (client) => {
       let checked = 0;
-      const unavailable: string[] = [];
       for (const table of DIRECT_ORG_TABLES) {
-        if (!(await tableExists(client, table))) {
-          unavailable.push(table);
-          checked += 1;
-          continue;
-        }
+        expect(await tableExists(client, table), `${table} must exist`).toBe(true);
+        expect(executedTables.has(table), `${table} DELETE must execute`).toBe(true);
         const result = await client.query(
           `SELECT COUNT(*)::int AS count FROM ${table} WHERE organization_id = $1`,
           [OLD_ID]
@@ -211,11 +300,9 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
         checked += 1;
       }
       for (const [table, foreignKey, parent] of CHILD_TABLES) {
-        if (!(await tableExists(client, table)) || !(await tableExists(client, parent))) {
-          unavailable.push(table);
-          checked += 1;
-          continue;
-        }
+        expect(await tableExists(client, table), `${table} must exist`).toBe(true);
+        expect(await tableExists(client, parent), `${parent} must exist`).toBe(true);
+        expect(executedTables.has(table), `${table} DELETE must execute`).toBe(true);
         const result = await client.query(
           `SELECT COUNT(*)::int AS count FROM ${table} child
            WHERE NOT EXISTS (SELECT 1 FROM ${parent} parent WHERE parent.id = child.${foreignKey})`
@@ -224,7 +311,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
         checked += 1;
       }
       console.info(
-        `[K5] cleanup plan audited: 49 dependents; absent in disposable schema=${unavailable.join(',') || 'none'}`
+        `[K5] cleanup plan audited: ${checked} existing dependents, all DELETEs executed`
       );
       const org = await client.query(
         `SELECT COUNT(*)::int AS count FROM organizations WHERE id = $1`,
@@ -235,6 +322,76 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
     });
   }, 60_000);
 
+  it('protects paid tenants and a fresh tenant even when its session is ended', async () => {
+    const env = {
+      ...process.env,
+      DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID, ...EXTRA_IDS].join(','),
+    };
+    const candidates = await demoService.findExpiredDemoCandidates(3, env);
+    expect(candidates.map((row) => row.id)).not.toContain(PAID_ID);
+    expect(candidates.map((row) => row.id)).not.toContain(FRESH_ENDED_ID);
+    expect(await orgExists(PAID_ID)).toBe(true);
+    expect(await orgExists(FRESH_ENDED_ID)).toBe(true);
+  });
+
+  it('re-checks safety under lock and skips a tenant that becomes paid after selection', async () => {
+    const env = {
+      ...process.env,
+      DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_WHITELIST: [FAULT_ID, OLD_ID, ...EXTRA_IDS].join(','),
+    };
+    expect((await demoService.findExpiredDemoCandidates(3, env)).map((row) => row.id)).toContain(
+      RECHECK_ID
+    );
+    const deleted = await demoService.cleanupExpiredDemos(env, {
+      beforeCandidateTransaction: async (candidate) => {
+        if (candidate.id !== RECHECK_ID) return;
+        await withClient(async (client) => {
+          await client.query(`UPDATE organizations SET billing_status = 'paid' WHERE id = $1`, [
+            RECHECK_ID,
+          ]);
+        });
+      },
+    });
+    expect(deleted).toBe(0);
+    expect(await orgExists(RECHECK_ID)).toBe(true);
+  });
+
+  it('rolls back every earlier DELETE after a deterministic mid-purge failure', async () => {
+    const env = {
+      ...process.env,
+      DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_WHITELIST: [OLD_ID, RECHECK_ID, ...EXTRA_IDS].join(','),
+    };
+    const deleted = await demoService.cleanupExpiredDemos(env, {
+      afterDeleteStep: (table, organizationId) => {
+        if (organizationId === FAULT_ID && table === 'tasks') {
+          throw new Error('K5 deterministic fault after tasks DELETE');
+        }
+      },
+    });
+    expect(deleted).toBe(0);
+    await withClient(async (client) => {
+      const counts = await Promise.all([
+        client.query(`SELECT COUNT(*)::int count FROM organizations WHERE id = $1`, [FAULT_ID]),
+        client.query(`SELECT COUNT(*)::int count FROM users WHERE organization_id = $1`, [
+          FAULT_ID,
+        ]),
+        client.query(`SELECT COUNT(*)::int count FROM projects WHERE organization_id = $1`, [
+          FAULT_ID,
+        ]),
+        client.query(`SELECT COUNT(*)::int count FROM tasks WHERE organization_id = $1`, [
+          FAULT_ID,
+        ]),
+        client.query(`SELECT COUNT(*)::int count FROM task_comments WHERE task_id = $1`, [
+          `${FAULT_ID}--task`,
+        ]),
+      ]);
+      expect(counts.map((result) => result.rows[0]?.count)).toEqual([1, 1, 1, 1, 1]);
+    });
+  });
+
   it('explicit OFF disables deletion', async () => {
     const before = await Promise.all(EXTRA_IDS.map(orgExists));
     expect(before.some(Boolean)).toBe(true);
@@ -242,6 +399,7 @@ describe('K5: demo sandbox TTL cleanup (real PostgreSQL)', () => {
       ...process.env,
       ENABLE_DEMO_SANDBOX_TTL: 'false',
       DEMO_CLEANUP_TTL_HOURS: '24',
+      DEMO_CLEANUP_WHITELIST: [FAULT_ID, RECHECK_ID].join(','),
     });
     expect(deleted).toBe(0);
     expect(await Promise.all(EXTRA_IDS.map(orgExists))).toEqual(before);
