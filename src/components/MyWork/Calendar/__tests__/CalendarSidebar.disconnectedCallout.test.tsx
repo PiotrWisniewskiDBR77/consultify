@@ -56,7 +56,7 @@ vi.mock('react-i18next', () => ({
 
 import { CalendarSidebar } from '../CalendarSidebar';
 
-const baseProps = {
+const baseProps: React.ComponentProps<typeof CalendarSidebar> = {
   filter: { sources: ['task', 'initiative', 'decision', 'consultify', 'google', 'outlook'] },
   onFilterChange: vi.fn(),
   currentDate: new Date('2026-09-06T00:00:00.000Z'),

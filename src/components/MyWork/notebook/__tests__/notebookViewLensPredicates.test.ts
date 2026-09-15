@@ -117,7 +117,7 @@ describe('matchesView', () => {
   });
 
   it('"fresh" delegates to isFreshPage', () => {
-    expect(matchesView(page({ captureSource: 'file' }), 'fresh', notOrphaned)).toBe(true);
+    expect(matchesView(page({ captureSource: 'upload' }), 'fresh', notOrphaned)).toBe(true);
     expect(matchesView(page({}), 'fresh', notOrphaned)).toBe(false);
   });
 

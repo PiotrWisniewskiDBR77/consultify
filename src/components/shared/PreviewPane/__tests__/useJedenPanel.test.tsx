@@ -119,7 +119,7 @@ describe('useJedenPanel', () => {
 
   it('KONTRAKT DEC-404: hook nie eksponuje już zakładki ani wejścia do Teresy', () => {
     const panel = renderHook(() => useJedenPanel(), { wrapper: wrapperAt('/my-work') });
-    const api = panel.result.current as Record<string, unknown>;
+    const api = panel.result.current as unknown as Record<string, unknown>;
     // MUTACJA: przywróć `zakladka`/`otworzTerese`/`ustawZakladke` → RED.
     expect(api.zakladka).toBeUndefined();
     expect(api.otworzTerese).toBeUndefined();
