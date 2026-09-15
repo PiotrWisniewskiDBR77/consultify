@@ -24,28 +24,28 @@ interface ProblemPreviewProps {
 
 const SEVERITY_COLORS: Record<
   ProblemSeverity,
-  { bg: string; text: string; border: string; labelKey: string; label: string }
+  { bg: string; text: string; border: string; labelKey: string; fallback: string }
 > = {
   critical: {
     bg: 'bg-danger-50 dark:bg-danger-900/20',
     text: 'text-danger-700 dark:text-danger-400',
     border: 'border-danger-200 dark:border-danger-800/40',
     labelKey: 'execution.manager.severity.critical',
-    label: 'Critical',
+    fallback: 'Critical',
   },
   warning: {
     bg: 'bg-amber-50 dark:bg-amber-900/20',
     text: 'text-amber-700 dark:text-amber-400',
     border: 'border-amber-200 dark:border-amber-800/40',
     labelKey: 'execution.manager.severity.warning',
-    label: 'Warning',
+    fallback: 'Warning',
   },
   info: {
     bg: 'bg-blue-50 dark:bg-blue-900/20',
     text: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-200 dark:border-blue-800/40',
     labelKey: 'execution.manager.severity.info',
-    label: 'Info',
+    fallback: 'Info',
   },
 };
 
@@ -104,7 +104,7 @@ export function ProblemPreview({
             <span
               className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded ${sev.bg} ${sev.text} border ${sev.border}`}
             >
-              {t(sev.labelKey, sev.label)}
+              {t(sev.labelKey, sev.fallback)}
             </span>
             <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 dark:bg-navy-800 text-c-text-secondary">
               {typeLabel}

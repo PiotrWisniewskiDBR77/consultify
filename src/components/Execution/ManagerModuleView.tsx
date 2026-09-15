@@ -107,52 +107,38 @@ const THIRD_WORKSPACE_CONFIG: Record<
   {
     mode: ManagementWorkspaceMode;
     labelKey: string;
-    label: string;
     titleKey: string;
-    title: string;
   }
 > = {
   'action-queue': {
     mode: 'due-soon',
     labelKey: 'execution.manager.workspace.dueSoon',
-    label: 'Due Soon',
     titleKey: 'execution.manager.workspace.dueSoonTitle',
-    title: 'Due Soon — items about to become active issues',
   },
   decisions: {
     mode: 'decision-pack',
     labelKey: 'execution.manager.workspace.decisionPack',
-    label: 'Decision Pack',
     titleKey: 'execution.manager.workspace.decisionPackTitle',
-    title: 'Decision Pack — resolve approvals and blockers faster',
   },
   blockers: {
     mode: 'recovery-plan',
     labelKey: 'execution.manager.workspace.recoveryPlan',
-    label: 'Recovery Plan',
     titleKey: 'execution.manager.workspace.recoveryPlanTitle',
-    title: 'Recovery Plan — unblock and recover delivery flow',
   },
   risk: {
     mode: 'watchlist',
     labelKey: 'execution.manager.workspace.watchlist',
-    label: 'Watchlist',
     titleKey: 'execution.manager.workspace.watchlistTitle',
-    title: 'Watchlist — monitor early warning signals',
   },
   workload: {
     mode: 'rebalance',
     labelKey: 'execution.manager.workspace.rebalance',
-    label: 'Rebalance',
     titleKey: 'execution.manager.workspace.rebalanceTitle',
-    title: 'Rebalance — reduce overload and restore capacity balance',
   },
   'people-change': {
     mode: 'ownership-fix',
     labelKey: 'execution.manager.workspace.ownershipFix',
-    label: 'Ownership Fix',
     titleKey: 'execution.manager.workspace.ownershipFixTitle',
-    title: 'Ownership Fix — close accountability and governance gaps',
   },
 };
 
@@ -344,10 +330,10 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
           onClick={toggleThirdWorkspace}
           disabled={loading || rows.length === 0}
           className={getMenu3AiButtonClass(workspaceMode === thirdWorkspace.mode)}
-          title={t(thirdWorkspace.titleKey, thirdWorkspace.title)}
+          title={t(thirdWorkspace.titleKey)}
         >
           <Sparkles size={12} />
-          {t(thirdWorkspace.labelKey, thirdWorkspace.label)}
+          {t(thirdWorkspace.labelKey)}
         </button>
       </>
     );
@@ -356,10 +342,8 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
     loading,
     onRegisterActions,
     rows.length,
-    thirdWorkspace.label,
     thirdWorkspace.labelKey,
     thirdWorkspace.mode,
-    thirdWorkspace.title,
     thirdWorkspace.titleKey,
     toggleActionPlan,
     toggleAiTriage,
