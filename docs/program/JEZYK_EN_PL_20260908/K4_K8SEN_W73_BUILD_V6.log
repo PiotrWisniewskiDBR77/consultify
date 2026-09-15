@@ -24,7 +24,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^
 3  |  @tailwind utilities;
    |  ^^^^^^^^^^^^^^^^^^^^
-4  |  
+4  |
    |  ^
 5  |  @layer base {
    |  ^^^^^^^^^^^^^
@@ -88,7 +88,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 35 |      --radius: 0.75rem; /* hig-md = 12px, global default */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-36 |  
+36 |
    |  ^
 37 |      /* ========================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -396,7 +396,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 189|      --c-chart-8-rgb: 95 116 136;
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-190|  
+190|
    |  ^
 191|      /* ========================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -428,7 +428,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
 205|      --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-206|  
+206|
    |  ^
 207|      /* ========================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -482,7 +482,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^
 232|        0 25px 50px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.06); /* == hig-2xl */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-233|  
+233|
    |  ^
 234|      /* ========================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -506,7 +506,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 244|      --state-selected: color-mix(in srgb, var(--c-text) 8%, transparent);
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-245|  
+245|
    |  ^
 246|      /* Naprawa G06 „podgląd — kontrast" (dyżur 2026-09-03): --c-text-muted i
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -540,7 +540,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 261|    }
    |  ^^^
-262|  
+262|
    |  ^
 263|    .dark {
    |  ^^^^^^^^^
@@ -594,7 +594,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 288|      --ring: 220 82% 65%; /* focus ring = lifted blue #5B8DEF — never crimson (focus ≠ error) */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-289|  
+289|
    |  ^
 290|      /* ========================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -824,7 +824,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 403|      --c-chart-8-rgb: 147 166 188;
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-404|  
+404|
    |  ^
 405|      /* VF0-5 ELEVATION — dark overrides (== hig-dark-md / hig-hover-dark /
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -846,7 +846,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 414|       * already reads var(--c-text), which resolves to the dark value here. */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-415|  
+415|
    |  ^
 416|      /* Naprawa G06 „podgląd — kontrast" (dyżur 2026-09-03) — patrz komentarz
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -868,7 +868,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 425|  }
    |  ^
-426|  
+426|
    |  ^
 427|  @layer base {
    |  ^^^^^^^^^^^^^
@@ -878,7 +878,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 430|    }
    |  ^^^
-431|  
+431|
    |  ^
 432|    body {
    |  ^^^^^^^^
@@ -886,7 +886,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 434|    }
    |  ^^^
-435|  
+435|
    |  ^
 436|    /* Naprawa G06 „podgląd — kontrast" (dyżur 2026-09-03, marker 35afcb15fd):
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -924,7 +924,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 453|    }
    |  ^^^
-454|  
+454|
    |  ^
 455|    /* MW-DROBIAZGI (03.09) — rodzeństwo naprawy G06 wyżej, ale INNY mechanizm:
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -978,7 +978,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 480|    }
    |  ^^^
-481|  
+481|
    |  ^
 482|    .app-table-scrollbar {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -988,7 +988,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 485|    }
    |  ^^^
-486|  
+486|
    |  ^
 487|    .dark .app-table-scrollbar {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -996,7 +996,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 489|    }
    |  ^^^
-490|  
+490|
    |  ^
 491|    .app-table-scrollbar::-webkit-scrollbar {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1006,7 +1006,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^
 494|    }
    |  ^^^
-495|  
+495|
    |  ^
 496|    .app-table-scrollbar::-webkit-scrollbar-track {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1014,7 +1014,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 498|    }
    |  ^^^
-499|  
+499|
    |  ^
 500|    .app-table-scrollbar::-webkit-scrollbar-thumb {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1028,7 +1028,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 505|    }
    |  ^^^
-506|  
+506|
    |  ^
 507|    .dark .app-table-scrollbar::-webkit-scrollbar-thumb {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1036,7 +1036,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 509|    }
    |  ^^^
-510|  
+510|
    |  ^
 511|    .app-table-scrollbar::-webkit-scrollbar-thumb:hover {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1044,7 +1044,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 513|    }
    |  ^^^
-514|  
+514|
    |  ^
 515|    /* Japanese language font - Noto Sans JP for full character support */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1062,7 +1062,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 522|  }
    |  ^
-523|  
+523|
    |  ^
 524|  /* Admin Module Styles - Clean Enterprise Design */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1076,7 +1076,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 529|    }
    |  ^^^
-530|  
+530|
    |  ^
 531|    /* Admin Metric Card - Stats display (v2.0: hover bg-only, no border) */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1086,7 +1086,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 534|    }
    |  ^^^
-535|  
+535|
    |  ^
 536|    .admin-metric-label {
    |  ^^^^^^^^^^^^^^^^^^^^^^^
@@ -1094,7 +1094,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 538|    }
    |  ^^^
-539|  
+539|
    |  ^
 540|    .admin-metric-value {
    |  ^^^^^^^^^^^^^^^^^^^^^^^
@@ -1102,7 +1102,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 542|    }
    |  ^^^
-543|  
+543|
    |  ^
 544|    .admin-metric-subtitle {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1110,7 +1110,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 546|    }
    |  ^^^
-547|  
+547|
    |  ^
 548|    /* Admin Section Headers (v2.0: spacing separator, no border) */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1120,7 +1120,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 551|    }
    |  ^^^
-552|  
+552|
    |  ^
 553|    .admin-section-title {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1128,7 +1128,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 555|    }
    |  ^^^
-556|  
+556|
    |  ^
 557|    /* Admin Table Styles */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1138,7 +1138,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 560|    }
    |  ^^^
-561|  
+561|
    |  ^
 562|    .admin-table thead {
    |  ^^^^^^^^^^^^^^^^^^^^^^
@@ -1146,7 +1146,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 564|    }
    |  ^^^
-565|  
+565|
    |  ^
 566|    .admin-table th {
    |  ^^^^^^^^^^^^^^^^^^^
@@ -1154,7 +1154,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 568|    }
    |  ^^^
-569|  
+569|
    |  ^
 570|    .admin-table td {
    |  ^^^^^^^^^^^^^^^^^^^
@@ -1162,7 +1162,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 572|    }
    |  ^^^
-573|  
+573|
    |  ^
 574|    .admin-table tbody tr:hover {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1170,7 +1170,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 576|    }
    |  ^^^
-577|  
+577|
    |  ^
 578|    .admin-table tbody tr:last-child td {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1178,7 +1178,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^
 580|    }
    |  ^^^
-581|  
+581|
    |  ^
 582|    /* Admin List Items with separator */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1188,7 +1188,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 585|    }
    |  ^^^
-586|  
+586|
    |  ^
 587|    .admin-list-item {
    |  ^^^^^^^^^^^^^^^^^^^^
@@ -1196,7 +1196,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 589|    }
    |  ^^^
-590|  
+590|
    |  ^
 591|    /* Admin Button Styles */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1206,7 +1206,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 594|    }
    |  ^^^
-595|  
+595|
    |  ^
 596|    .admin-btn-primary {
    |  ^^^^^^^^^^^^^^^^^^^^^^
@@ -1214,7 +1214,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 598|    }
    |  ^^^
-599|  
+599|
    |  ^
 600|    .admin-btn-subtle {
    |  ^^^^^^^^^^^^^^^^^^^^^
@@ -1222,7 +1222,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 602|    }
    |  ^^^
-603|  
+603|
    |  ^
 604|    /* DEC-120/A9 — .btn-primary/.btn-secondary: used 53x across four Execution
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1250,7 +1250,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 616|    }
    |  ^^^
-617|  
+617|
    |  ^
 618|    .btn-secondary {
    |  ^^^^^^^^^^^^^^^^^^
@@ -1258,7 +1258,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 620|    }
    |  ^^^
-621|  
+621|
    |  ^
 622|    /* Admin Status Badges */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1268,7 +1268,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 625|    }
    |  ^^^
-626|  
+626|
    |  ^
 627|    .admin-badge-success {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1276,7 +1276,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 629|    }
    |  ^^^
-630|  
+630|
    |  ^
 631|    .admin-badge-warning {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1284,7 +1284,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 633|    }
    |  ^^^
-634|  
+634|
    |  ^
 635|    .admin-badge-error {
    |  ^^^^^^^^^^^^^^^^^^^^^^
@@ -1292,7 +1292,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 637|    }
    |  ^^^
-638|  
+638|
    |  ^
 639|    .admin-badge-info {
    |  ^^^^^^^^^^^^^^^^^^^^^
@@ -1300,7 +1300,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 641|    }
    |  ^^^
-642|  
+642|
    |  ^
 643|    /* Admin Data Grid - Better visual separation */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1310,7 +1310,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^
 646|    }
    |  ^^^
-647|  
+647|
    |  ^
 648|    .admin-data-item {
    |  ^^^^^^^^^^^^^^^^^^^^
@@ -1318,7 +1318,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 650|    }
    |  ^^^
-651|  
+651|
    |  ^
 652|    /* Admin Stats Row with clear dividers */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1328,7 +1328,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 655|    }
    |  ^^^
-656|  
+656|
    |  ^
 657|    .admin-stats-row > * {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1336,7 +1336,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 659|    }
    |  ^^^
-660|  
+660|
    |  ^
 661|    @keyframes menu3AiCue {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1364,7 +1364,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^
 673|    }
    |  ^^^
-674|  
+674|
    |  ^
 675|    @keyframes menu3AiRing {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1392,7 +1392,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^
 687|    }
    |  ^^^
-688|  
+688|
    |  ^
 689|    @keyframes menu3AiIconCue {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1432,7 +1432,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^
 707|    }
    |  ^^^
-708|  
+708|
    |  ^
 709|    .menu3-ai-button {
    |  ^^^^^^^^^^^^^^^^^^^^
@@ -1440,7 +1440,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^
 711|    }
    |  ^^^
-712|  
+712|
    |  ^
 713|    .menu3-ai-opportunity:not(:disabled) {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1448,7 +1448,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 715|    }
    |  ^^^
-716|  
+716|
    |  ^
 717|    .menu3-ai-opportunity:not(:disabled)::after {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1466,7 +1466,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 724|    }
    |  ^^^
-725|  
+725|
    |  ^
 726|    .menu3-ai-opportunity:not(:disabled) > svg:first-child {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1478,7 +1478,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 730|  }
    |  ^
-731|  
+731|
    |  ^
 732|  /* ==========================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1486,7 +1486,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 734|   * ========================================== */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-735|  
+735|
    |  ^
 736|  @media print {
    |  ^^^^^^^^^^^^^^
@@ -1498,7 +1498,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 740|    }
    |  ^^^
-741|  
+741|
    |  ^
 742|    /* Reset backgrounds */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1514,7 +1514,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 748|    }
    |  ^^^
-749|  
+749|
    |  ^
 750|    /* Force white backgrounds for cards */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1526,7 +1526,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 754|    }
    |  ^^^
-755|  
+755|
    |  ^
 756|    /* Remove shadows for print */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1544,7 +1544,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 763|    }
    |  ^^^
-764|  
+764|
    |  ^
 765|    /* Ensure section breaks */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1556,7 +1556,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
 769|    }
    |  ^^^
-770|  
+770|
    |  ^
 771|    /* Cover page full page */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1566,7 +1566,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 774|    }
    |  ^^^
-775|  
+775|
    |  ^
 776|    /* Smaller margins for print */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1580,7 +1580,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 781|    }
    |  ^^^
-782|  
+782|
    |  ^
 783|    /* Better typography for print */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1594,7 +1594,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 788|    }
    |  ^^^
-789|  
+789|
    |  ^
 790|    /* Reduce heading sizes */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1618,7 +1618,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 800|  }
    |  ^
-801|  
+801|
    |  ^
 802|  /*
    |  ^^
@@ -1654,7 +1654,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 818|  }
    |  ^
-819|  
+819|
    |  ^
 820|  html[data-feedback-redact-active='1'] [data-feedback-redact]::before {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1666,7 +1666,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 824|  }
    |  ^
-825|  
+825|
    |  ^
 826|  /* ============================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1680,7 +1680,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 831|   * ============================================================================ */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-832|  
+832|
    |  ^
 833|  /* ---- SET-08: Accent color override ----------------------------------------
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1758,7 +1758,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 870|  }
    |  ^
-871|  
+871|
    |  ^
 872|  /* ---- SET-09: UI density ---------------------------------------------------
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1794,7 +1794,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
 888|  }
    |  ^
-889|  
+889|
    |  ^
 890|  /* ---- SET-10: Accessibility -------------------------------------------------
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1802,7 +1802,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 892|   * matching rules so those toggles visibly work. */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-893|  
+893|
    |  ^
 894|  /* Base font size / line-height / letter-spacing / font-family vars */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1826,7 +1826,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 904|  }
    |  ^
-905|  
+905|
    |  ^
 906|  /* Wave 3 semantic screen system: one width, type scale and component rhythm
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1848,7 +1848,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^
 915|  }
    |  ^
-916|  
+916|
    |  ^
 917|  .type-page-title {
    |  ^^^^^^^^^^^^^^^^^^
@@ -1858,7 +1858,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 920|  }
    |  ^
-921|  
+921|
    |  ^
 922|  .type-section-title {
    |  ^^^^^^^^^^^^^^^^^^^^^
@@ -1866,7 +1866,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 924|  }
    |  ^
-925|  
+925|
    |  ^
 926|  .type-card-title {
    |  ^^^^^^^^^^^^^^^^^^
@@ -1874,7 +1874,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 928|  }
    |  ^
-929|  
+929|
    |  ^
 930|  .type-body,
    |  ^^^^^^^^^^^
@@ -1886,7 +1886,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^
 934|  }
    |  ^
-935|  
+935|
    |  ^
 936|  .type-helper {
    |  ^^^^^^^^^^^^^^
@@ -1896,7 +1896,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
 939|  }
    |  ^
-940|  
+940|
    |  ^
 941|  .type-caption {
    |  ^^^^^^^^^^^^^^^
@@ -1906,7 +1906,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^
 944|  }
    |  ^
-945|  
+945|
    |  ^
 946|  .type-breadcrumb {
    |  ^^^^^^^^^^^^^^^^^^
@@ -1922,7 +1922,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^
 952|  }
    |  ^
-953|  
+953|
    |  ^
 954|  :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1932,7 +1932,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^
 957|  }
    |  ^
-958|  
+958|
    |  ^
 959|  /* Historical roots used local 3xl/4xl widths. At the domain boundary they are
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1948,7 +1948,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 965|  }
    |  ^
-966|  
+966|
    |  ^
 967|  :is(.settings-domain-content, .organization-domain-content, .admin-domain-content)
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1958,7 +1958,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^
 970|  }
    |  ^
-971|  
+971|
    |  ^
 972|  :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) p {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1966,7 +1966,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^
 974|  }
    |  ^
-975|  
+975|
    |  ^
 976|  /* Historical micro-copy must not fall below the documented caption floor. */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1980,7 +1980,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 981|  }
    |  ^
-982|  
+982|
    |  ^
 983|  /* Headings use sentence/title case. Uppercase remains available for compact
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1994,7 +1994,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 988|  }
    |  ^
-989|  
+989|
    |  ^
 990|  /* Equivalent bounded surfaces share the canonical 12px radius even when an
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2008,7 +2008,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
 995|  }
    |  ^
-996|  
+996|
    |  ^
 997|  /* Shared card-heading hierarchy for the three settings-style domains. */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2026,7 +2026,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^
 1004|  }
    |  ^
-1005|  
+1005|
    |  ^
 1006|  :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h3 {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2042,7 +2042,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
 1012|  }
    |  ^
-1013|  
+1013|
    |  ^
 1014|  :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h4 {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2058,7 +2058,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
 1020|  }
    |  ^
-1021|  
+1021|
    |  ^
 1022|  @media (max-width: 1023px) {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2072,7 +2072,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 1027|  }
    |  ^
-1028|  
+1028|
    |  ^
 1029|  @media (max-width: 639px) {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2084,7 +2084,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^
 1033|    }
    |  ^^^
-1034|  
+1034|
    |  ^
 1035|    .type-section-title,
    |  ^^^^^^^^^^^^^^^^^^^^^^
@@ -2096,7 +2096,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^
 1039|    }
    |  ^^^
-1040|  
+1040|
    |  ^
 1041|    .domain-screen-container {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2106,7 +2106,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 1044|  }
    |  ^
-1045|  
+1045|
    |  ^
 1046|  /* High contrast: strengthen text + borders, remove low-opacity muting */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2166,7 +2166,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1074|  }
    |  ^
-1075|  
+1075|
    |  ^
 1076|  /* Reduce motion: force-kill animations + transitions */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2186,7 +2186,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1084|  }
    |  ^
-1085|  
+1085|
    |  ^
 1086|  /* Underline links everywhere */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2196,7 +2196,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1089|  }
    |  ^
-1090|  
+1090|
    |  ^
 1091|  /* Colorblind correction filters (SVG matrices defined inline via filter()).
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2220,7 +2220,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1101|  }
    |  ^
-1102|  
+1102|
    |  ^
 1103|  /* Cursor size: scale the pointer via a larger SVG cursor */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2238,7 +2238,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^
 1110|  }
    |  ^
-1111|  
+1111|
    |  ^
 1112|  /* Text spacing (WCAG 1.4.12 style spacing bump) */
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2262,7 +2262,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^
 1122|  }
    |  ^
-1123|  
+1123|
    |  ^
 1124|  /* Caret width */
    |  ^^^^^^^^^^^^^^^^^
@@ -2286,7 +2286,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^
 1134|  }
    |  ^
-1135|  
+1135|
    |  ^
 1136|  /* Focus indicators — the keyboard baseline is always on.
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2344,7 +2344,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1163|  }
    |  ^
-1164|  
+1164|
    |  ^
 1165|  /* Focus indicators — enhanced focus highlight + style variants.
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2378,7 +2378,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^
 1180|  }
    |  ^
-1181|  
+1181|
    |  ^
 1182|  /* Piotr's frozen editor decision: typing canvases/composers do not receive the
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2450,7 +2450,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^
 1216|  }
    |  ^
-1217|  
+1217|
    |  ^
 1218|  /* ============================================================================
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2542,7 +2542,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 1262|  }
    |  ^
-1263|  
+1263|
    |  ^
 1264|  /* CHAT-OWN-012 — restrained idle affordance around the Teresa composer.
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2550,7 +2550,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1266|     sending nor recording, so it never impersonates an operation state.
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-1267|  
+1267|
    |  ^
 1268|     NAPRAWA 2026-08-30 (defekt zmierzony na zrzutach 01-czat-kanwy): orbita NIE
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2622,7 +2622,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 1302|  }
    |  ^
-1303|  
+1303|
    |  ^
 1304|  @keyframes chat-composer-idle-orbit {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2634,7 +2634,7 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^
 1308|  }
    |  ^
-1309|  
+1309|
    |  ^
 1310|  @media (prefers-reduced-motion: reduce) {
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2666,14 +2666,14 @@ warn - The `min-*` and `max-*` variants are not supported with a `screens` confi
    |  ^^^^^^^^^^^^^
 1324|  }
    |  ^
-1325|  
+1325|
    |  ^
 ✓ 10754 modules transformed.
 rendering chunks...
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/SteeringCommitteeReport.tsx is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ManagementReportsView.tsx but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportsHub.tsx, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/TeamMeetingReport.tsx is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ManagementReportsView.tsx but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportsHub.tsx, dynamic import will not move module into another chunk.
 
 [esbuild css minify]
@@ -2748,25 +2748,25 @@ rendering chunks...
             ╵                                      ~~
 
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/executionReportModel.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionReportE4Surface.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionReportE4Surface.tsx but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionReportsSurface.tsx, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/canvasDocumentProposal.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/UnifiedChatPanel.tsx but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/TeresaDocumentProposalCard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/WorkCanvasDocumentPanel.tsx, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/canvasDiffOps.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/useCanvasAIStream.ts but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/canvasPatchOps.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/useCanvasAIStream.ts, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/canvasProvenanceLog.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/useCanvasAIStream.ts but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/MyWorkHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/AICategorizeTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/AICopilotMode.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/CrossTableRelations.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/CrossTableRelations.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/ExportToPresentation.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/IdeaScoringModel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/InlineAIFill.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/InlineAIFill.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/RowDetailPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/VoiceImageInput.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/AIContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/AIContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OAuthCallback.tsx but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/App.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/actions/registry/runtimeHelpers.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/actions/registry/sharedActions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ActionCenter.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/AddFilesMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasPresentationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ChatSignalsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CloudFilePicker.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ConversationActions.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/EditableSpreadsheetGrid.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/ExceleParametricTemplates.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/ExceleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/PrezentacjeView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/TabeleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/tabele/loadTabelePreview.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/useKimiArtifactPipeline.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/useWorkbookStudioController.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/MessageRenderer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/MoveToProjectModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ProjectMembersModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ResearchSessionsDock.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/TeresaProposalCard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/UnifiedChatPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/Wave5ArtifactRuntimePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/Wave6ContextLearningPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/Wave7ConnectorAdminPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/Wave8AgentCatalogPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/WorkCanvasDocumentPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/signalsFeed/useSignalsFeed.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/AuditComplianceTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/ModelsProvidersTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/PersonasPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AIMissionControl.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminAIControlCenterPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminAuditIntegrityPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminAuditLogPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminBillingFinOpsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminCommandCenterPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminComplianceEvidencePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminHealthPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminIamPolicyPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminIncidentHistoryPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminMembersRolesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminOrganizationDefaultsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminRiskSummaryPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminScimGroupSyncCard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminScimLifecyclePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminSecurityPolicyPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminSsoSelfServiceCard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/AuditReportDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/AuditsMethodHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/auditsMethodApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/workspace/workspaceApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Benefits/BudgetWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Benefits/FinancialAnalysisWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Benefits/ValuationWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Discovery/DiscoveryToolsHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Discovery/hooks/useDiscoverySync.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/GenericToolDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/KnownToolDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/KnownToolPreviewV3.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/MyWorkTraceDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/ToolDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/ToolSessionPreviewV3.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/report/ToolOutputsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/shared/createInitiativeFromMove.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/steps/SummaryStep.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInputExplorationPhase.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInsightsPhase.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/tools/DynamicSWOT/TeresaSwotProposals.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/FinanceHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/FinancePreviewPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/hooks/useFinanceData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/hooks/useFinanceRowActions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/hooks/useFinanceSelection.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/modals/CreateModelModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/modals/CreateValuationModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/modals/LinkInitiativeModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/panels/InvestmentAppraisalPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/panels/ValueOfficePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/panels/VarianceBridgePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/BenefitsRegisterPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/CutoverRunbookPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionControlSurface.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionTimelineView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionWorkSurface.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ManagerModuleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/RolloutBaselinePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/RolloutStagesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/RolloutTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/executionReportModel.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Feedback/FeedbackSidePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Finance/ExportToOutputDialog.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Finance/FinancialModelWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Finance/FinancialStatementImportWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Finance/FinancialStatementPackWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Finance/FinancialStatementWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Finance/Valuation/ValuationWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/DefinitionApprovalContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/DefinitionCardContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Generator/GeneratorInicjatywModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Generator/adapters/assessment.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Generator/adapters/audit.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Generator/adapters/interview.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Generator/adapters/tool.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativeCardProfilePicker.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativeCompactPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativeDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativeFullView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativesHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativesTimelineView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Wizard/InitiativeCharterWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Wizard/InitiativeGeneratorModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Wizard/InitiativeWizardModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/Wizard/useProposeCards.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/calendar/InitiativeCalendar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/AttachmentsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/CommentsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/DecisionsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/DependenciesSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/GateReadinessSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/InitiativeGatesWorkflowTable.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/InitiativeTeamComposerModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/InitiativeTeamSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/KpisSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/LinkedItemsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/ResourcesSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/StakeholdersSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/TargetStateSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/TasksMilestonesSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/TimelinePlanner.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/TimelineSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/AssignInterviewModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/ConversationalPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InsightCreatorModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InsightViewer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InterviewHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InterviewSingleQuestionRuntime.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InterviewWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/QuestionsList.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/TemplateBuilder.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/LLMSelector.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Landing/DemoModeModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Meeting/MeetingHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Meeting/MeetingObjectPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Calendar/CalendarAttendeesField.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Calendar/CalendarCreateEventModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Calendar/CalendarView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Calendar/useCalendarData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/CalendarV2/duplicateCalendarEvent.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/CommandPalette.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/ConvertToOutputMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/CreateProgramModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/CreateProjectModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionPreviewPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionsKanbanBoard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionsPanelContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionsTimelineView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Executive/ExecutiveDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Executive/managerSnapshot.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Focus/FocusView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Home/useHomeData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Home/useRadarBriefing.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Home/useRadarData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Home/useRadarTriageData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaAINudgeStrip.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaAISuggestionsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaContextPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaExportMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaGhostCards.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaMapWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaNodeDetailDrawer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaProcessFlowTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaRecommendationMap.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaTableTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaTemplateGallery.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaWhiteboardTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/InboxContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/MyIdeasListContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/MyProjects.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/MyTasksListContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/MyWorkHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/NotebookContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/NotebookLibraryContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/NotificationDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/ProjectStageGatesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/TaskDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/TasksCalendarView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/TasksKanbanBoard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/canvas/useIdeaMapSync.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/canvas/workspaceGraphRuntime.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/hooks/useFavoriteIdeas.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/hooks/useRecentIdeas.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AIAutoClustering.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AIBlindSpotsDetector.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AICompetitiveLandscape.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AIDependencyDetector.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AIPriorityRecommender.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AISentimentOverlay.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/AIWhatIfScenarios.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/ActivityFeed.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/BranchSummaryPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/DocumentToMap.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/ExportPowerPoint.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/InterviewToMap.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/NodeCommentThread.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/NodeDetailDrawer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/SnapshotHistory.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/UnifiedNodeDetailDrawer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/useMindMapPersistence.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mindmap/useMindMapQuickActions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/AIChatInlinePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/AICommandPrompt.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/AIInlineResponse.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/ConvertChecklistModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NewPageModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookAttachmentsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookBacklinksBar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookContextPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookGraphView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookInlineAIMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookMentionMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookQuickCapture.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/NotebookSearchDialog.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/notebook/PulseItemPickerModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/panel/IdeaPanelActivity.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/panel/IdeaPanelComments.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/panel/IdeaPanelHistory.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/shared/DelegationModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/shared/DependenciesSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/shared/PostDecisionFollowUp.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/AITableAssistant.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/ActivityFeed.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/AuditTrailPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/CollaborationPresence.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/connectors/useConnectors.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/useTablePersistence.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/useTableQuickActions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/useIdeaConfidentialityGate.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/whiteboard/whiteboardImageUpload.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Onboarding/EnterpriseOnboardingWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Onboarding/useFirstRunOnboarding.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/KnowledgeGraphExplorer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/OrgContextSummaryBanner.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/redesign/OrganizationDirectionConstraintsScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/redesign/OrganizationIdentityOperatingScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/redesign/OrganizationReadinessScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Partner/PartnerCanonicalRuntimePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Partner/PartnerRuntimeSummaryStrip.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Presentations/DeckBuilder/DeckBuilder.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Presentations/DeckBuilder/ShareModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Presentations/DeckBuilder/deckCommentsApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Profile/MFASetup.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/BlockTypesManager.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ExportSharePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/QualityGatesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportAgentChat.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportEditor/BlockPalette.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportEditor/EscalationBanner.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportEditor/ReportEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportEditor/ReviewPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportsComposer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/TemplatePickerModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/TemplatesManager.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ManagementReportsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportGeneratorDrawer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportScheduleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportTemplatesView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportingAutomationWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ReportsHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportsAndPresentations/SaveAsTemplateModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportsAndPresentations/useRapData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportsAndPresentations/useTrustState.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/kpiApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/kpiScorecards/kpiScorecardApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/kpiTool/kpiDeviationApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/kpiTool/kpiInitiativeImpactApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/legacy/legacyArchiveApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/okr/okrAdminApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/okr/okrApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/okr/okrCheckInApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/okr/okrObjectiveApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/okr/okrWorkspaceApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/okr/p7k/okrReportApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/reports/managementReportsApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/roi/roiApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/teresa/teresaProposalApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Studio/StudioLinkModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Studio/StudioSidebar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Studio/hooks/useStudioAI.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Studio/hooks/useStudioDocument.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/LegalPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/SuperAdminSignalCenter.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/SuperAdminStatusIndicators.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/UsageStatsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/data/DataExportPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseApiManagement.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseAuditLog.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SystemHealth.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/TaskDropdown.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/ActivityLogPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/AssessmentHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/AssessmentSessionPreviewV3.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/ImportedReportDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/NewAssessmentModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/manage/AssessmentManagePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/manage/InitiativesManagementPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/manage/ReportsManagementPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/modals/NewAssessmentReportModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/modals/ReportTemplatePickerModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/permissions/useAssessmentPermissions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/billing/CreditNotesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/billing/InvoiceTemplateEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/billing/SubscriptionAnalytics.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/billing/TaxSettingsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/documents/DocumentSidePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/GlobalAccessBanners.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/MfaEnrollmentBanner.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/NotificationDropdown.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/SuperAdminSidebar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/navigation/Sidebar/Sidebar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIAutoCompleteSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIBehaviorSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIMemorySettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIModelParametersSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIPrivacySettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIPromptLibrarySettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AIUsageDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/APIAccessSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AccessibilitySettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AvailabilitySettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/AvatarPhotoSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/CalendarSyncSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/ConnectedAppsSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/DashboardPreferencesSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/DataControlsSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/DesktopSoundsSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/DeveloperSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/EmailDigestSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/EmailSignaturesSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/KeyboardShortcutsSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/LanguageSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/NotificationSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/PrivacySettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/ProfileSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/RegionalSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/SettingsOwnershipPanels.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/ThemeSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/VoiceSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/WebhooksSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/WorkPreferencesSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/WorkingHoursSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/advanced/SettingsExportImport.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/advanced/SettingsHistory.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/advanced/SettingsTemplates.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/security/AuthenticationAccessPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/security/SecurityOverviewPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/AIFieldEnhancer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/NModeSections/AttachmentsLinksCanvas.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/RequiredProjectPicker.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/UserManagementCore.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/artifact-actions/ArtifactActionPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/colorPatterns/useBrandKitColors.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ui/composed/CommandPalette.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/discovery/useOrganizationContext.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useAIStream.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useCloudIntegrations.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useDashboardPreferences.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useDemo.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useDemoSession.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useEffectiveAccess.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useFeatureFlags.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useInitiativeNames.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useInterviewPermissions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useNotificationSnooze.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useOrgContextSync.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/v10/useV10TeresaRuntime.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/routes/AppRoutes.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/routes/LegacyAssessmentReportRedirect.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/adminAiIncidentsApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/ai/generujTrescPola.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/ai/unified.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api/cardValidators.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api/gateAi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api/initiativeSimilar.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api/v8/results.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/cardAnalysis/cardAnalysisService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/chatActionHandler.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/chatSuggestionsPreference.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/conversionService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/deliverablesBundle.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/deliverablesGeneration.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/executionReports/executionReportsApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/feedbackLearningService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/financeExportService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/financeValuationApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/ideaAIGenerator.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/initiativeService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/initiativeWriteTruth.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/initiatives-execution/definitionApprovalApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/initiatives/lifecycleApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/initiatives/proposeCandidates.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/initiatives/suggestedChanges.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/languagePreference.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/materialData.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/memoryService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/organizationGovernedContextApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationAlertPlayground.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationAuditLog.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationBenchmarkTrend.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationGovernance.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationGovernanceAlertSubscriptions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationGovernanceWatchlist.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationOperationsHealth.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationOperationsHealthDrilldown.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationRuntimeEvents.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationSubscriberTokens.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationTemplateArchitect.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationTemplateGovernance.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationWatchlistPresets.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/presentationWatchlistSavedSearches.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/toolSessionApi.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/traceabilityService.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useAIActionsStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useChatProjectStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useContextBuilderStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useConversationStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useDiscoveryStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/usePMOStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useProposalLifecycleStore.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/utils/sheetArtifactOpen.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/utils/spreadsheetArtifactIdentity.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/utils/tabeleArtifactOpen.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AcceptInvitationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ActionProposalView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AssessmentSessionEditorView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AuthView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ContextBuilder/modules/OrganizationProfileModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ContextBuilder/modules/StrategicSynthesisModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ContextBuilder/shared/ContextDocUploader.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/FullROIView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OnboardingWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OrgSetupWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ProjectIntelligenceView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/PublicArtifactView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ReportBuilderView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/SharedConversationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/StatusPageView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/TrialEntryView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/AdminLLMMultipliers.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/AdminLLMView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/AdminMarginConfig.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/AdminTokenPackages.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/ApiKeysManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/HelpAnalyticsDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/TokenBillingManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/docs/DocsArticleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/partner/ClientAccessView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/partner/PartnerPortalView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/partner/ProviderHomeView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/partner/sections/EarningsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/partner/sections/ReferralToolsSection.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIBudgetsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIIntelligenceView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/AIPlatformModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Analytics/LLMObservatoryTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Analytics/PerformanceMetricsTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Analytics/PricingRegistryTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Configuration/AIGovernanceTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Configuration/PurposeAssignmentsTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Development/PromptRegistryTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Operations/MarketInboxTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Security/ComplianceTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/APIManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/BillingCenterView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/ComplianceCenterView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/CustomRolesBuilder.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/CustomersModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/GlobalSecurityPostureView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/GovernanceModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/InvoiceCenterView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/LLMManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/ModuleAccessControlView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/OrganizationResourceManager.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/OrganizationsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SCIMProvisioningView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SSOConfigurationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SecurityPoliciesView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminFeedbackAnalyticsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminFeedbackBacklogView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminFeedbackView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminLegalView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminOrgDetailsModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminStorageDetailModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SystemSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/TenantCommandCenterView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/InsightsPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/WorkerAnalyticsDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/WorkerDetail.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/WorkerPreviewPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/WorkerProfileEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/VirtualWorkersModule/WorkersList.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/WhitelabelStudioView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/analytics/SavedReportsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/components/ABTestingDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/components/AICostDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/components/AdminKnowledgeView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/components/BulkOperationsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/components/PromptManagementUI.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/ContractManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/CustomerAnalyticsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/CustomerAutomationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/CustomerCommunicationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/CustomerComplianceView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/CustomerLifecycleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/customers/CustomerSuccessPlaybooksView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/AdminAuditLogsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/AdminSessionsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/ApprovalWorkflowsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/AuditEventsViewer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/DLPView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/PermissionsMatrixView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/SecurityIncidentsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/iam/ThreatIntelligenceView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/partners/PartnerProgramConfig.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/revenue/PartnerSettlementsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/revenue/PaymentMethodsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/revenue/PricingPlansAdvancedView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/revenue/RevenueForecastView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/revenue/RevenueRecognitionView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/revenue/SubscriptionChangesView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/security/DeviceManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/security/IPWhitelistView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/security/MFAView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/security/PasswordPolicyView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/security/SecurityEventsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/support/CustomerHealthView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/support/CustomerSuccessNotesView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/support/SupportTicketsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/vault/ClientDocumentsVault.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/vault/VaultDocumentPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/vault/VaultDocumentsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/vault/VaultSafesTable.tsx, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/store/useAppStore.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api/baseClient.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/apiUtils.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/chatSuggestionsPreference.ts but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/App.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ChatHistorySidebar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CitationList.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CoThinkerMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/EnhancedChatInput.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/ExceleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/PrezentacjeView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/TabeleView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/KimiWorkspace/useKimiArtifactPipeline.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/NextModelChip.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/OutputToolSelector.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/ToolsMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/UnifiedChatPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/WorkCanvasDocumentPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIFreezeBanner.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/AccessLimitsTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/AuditComplianceTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/FeaturesPrivacyTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AI/PolicyGovernanceTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/AdminMembersRolesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/ChatV9FlagsIndicator.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/ChatV9FlagsOverlay.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Admin/ChatV9FlagsResetHandler.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/AuditsMethodHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/workspace/CriterionWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Audit/method/workspace/v2/CriterionWorkspaceV2.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Discovery/DiscoveryToolsHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Discovery/hooks/useDiscoverySync.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/KnownToolDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DiscoveryTools/ToolDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/DocumentStudio/DocumentStudioIntakeForm.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Economics/FinanceHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionControlSurface.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Execution/ExecutionWorkSurface.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Feedback/FeedbackSidePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Feedback/FeedbackToggleButton.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Help/FeatureUpdatesPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Help/HelpSidePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Help/HelpToggleButton.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativeDocumentView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/InitiativesHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Initiatives/sections/OperationalForecastEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/AssignInterviewModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InsightViewer.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InterviewHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Interview/InterviewWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/LLMSelector.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Landing/EntryTopBar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Landing/InfoSections.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Landing/MarketingLayout.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Meeting/MeetingHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionPreviewPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionsKanbanBoard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionsPanelContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/DecisionsTimelineView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Executive/ExecutiveDashboard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/Focus/FocusView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaMapWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaProcessFlowTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaRecommendationMap.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaTableTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/IdeaWhiteboardTool.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/InboxContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/MyWorkHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/NotebookContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/NotebookLibraryContent.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/NotificationDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/TaskDetailView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/mentionAutocomplete.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/panel/IdeaElementInspector.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/shared/PostDecisionFollowUp.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/MyWork/table/RowDetailPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Onboarding/OnboardingFirstLoginCTA.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Onboarding/useFirstRunOnboarding.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/redesign/OrganizationDirectionConstraintsScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/redesign/OrganizationIdentityOperatingScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Organization/redesign/OrganizationReadinessScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Presentations/DeckBuilder/DeckBuilder.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ProtectedRoute.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ReportBuilder/ReportEditor/ReportEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/Reports/Management/ManagementReportsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/ResultsKpiRegistryPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/ResultsVNext/roi/RoiCaseLearnWorkspace.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/RouterSync.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SuperAdmin/ModelRegistry/ModelCatalogTable.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/SystemHealth.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/TaskDropdown.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/AssessmentHub.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/NewAssessmentModal.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/drd/DrdHttpMethodWorkspaceScreen.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/assessment/permissions/useAssessmentPermissions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/demo/DemoSessionManager.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/documents/DocumentSidePanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/documents/DocumentToggleButton.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/DemoModeBanner.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/EnvironmentBadge.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/GlobalAccessBanners.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/NotificationDropdown.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/SplitLayout.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/SuperAdminSidebar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/layout/UserProfileMenu.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/navigation/BottomNavigation.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/navigation/Sidebar/Sidebar.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/navigation/Sidebar/useSidebarState.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/LanguageSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/settings/ThemeSettings.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/PreviewPane/useJedenPanel.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/shared/WorkspaceTools.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/AIContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/AccessPolicyContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/HelpContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/OrgContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/contexts/TeresaVoiceContext.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useAIStream.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useBreadcrumbs.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useDemo.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useDemoSession.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useEffectiveAccess.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useInitiativeNames.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useInterviewPermissions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useOpenChatWithContext.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useOrganizationMemberNames.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/usePermissions.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/useUserCan.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/hooks/v10/useV10TeresaRuntime.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/layouts/MainLayout.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/pages/dev/StyleGuide.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/providers/AppProviders.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/providers/V8Provider.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/routes/AppRoutes.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/ai/gemini.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/demoSessionAdoption.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AcceptInvitationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ActionProposalView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AppIntroView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AppPricingView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AssessmentSessionEditorView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/AuditsShowcasePage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ContextBuilder/modules/OrganizationProfileModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ContextBuilder/modules/StrategicSynthesisModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ContextBuilder/modules/TransformationScenarios.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ExecutiveView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/FullROIView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OAuthCallback.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OnboardingWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OrgSetupWizard.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/OrganizationView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ProductEntryPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ProjectIntelligenceView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ResourcesPage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/SettingsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/ToolsShowcasePage.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/AIModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/AdminSettingsModule.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/ApiKeysManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/OrgAISettingsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/admin/OwnershipManagementView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/auth/ResetPasswordView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/superadmin/SuperAdminView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/vault/VaultDocumentsView.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/views/vault/VaultSafesTable.tsx, dynamic import will not move module into another chunk.
 
-[plugin vite:reporter] 
+[plugin vite:reporter]
 (!) /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/aiProviderErrorCopy.ts is dynamically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/services/api.ts but also statically imported by /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/AiProviderErrorNotice.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/CanvasEditor/useCanvasAIStream.ts, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/UnifiedChatPanel.tsx, /Users/piotrwisniewski/Developer/codex-wt/c-k4-k8sen-w73/src/components/AIChat/teresaRuntimeCopy.ts, dynamic import will not move module into another chunk.
 
 dist/index.html                                                          4.34 kB
