@@ -71,4 +71,3 @@ outside the local disposable RealPG fixtures is part of this package.
   trend reads. Today `metricsAggregator.buildDailySnapshots()` is commented and
   the job emits only the start log. Enabling it requires an idempotent snapshot
   key and a RealPG rerun test.
-
