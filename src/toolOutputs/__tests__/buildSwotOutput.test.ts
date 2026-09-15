@@ -129,16 +129,46 @@ describe('buildSwotOutput — most sesja → Output', () => {
     expect(odmienNapiecia(25)).toBe('napięć');
   });
 
-  it('K1 nie wypuszcza surowego enumu postawy do klienta', () => {
+  // F7 (DEC-461): K1/K4 były STAŁĄ POLSKĄ i trafiały do NIEZMIENNEGO Outputu,
+  // więc organizacja `en` dostawała polskie wnioski w raporcie i prezentacji.
+  // Domyślka to teraz `'en'`; polski wyłącznie przy jawnym `locale: 'pl'`.
+  it('K1 domyślnie po angielsku (DEC-461) i bez surowego enumu postawy', () => {
     const { output } = buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] });
+    const k1 = output.conclusions[0].k1Fact;
+    expect(k1).toContain('posture: attack');
+    expect(k1).toContain('1 tension');
+    expect(k1).not.toContain('Podstawa:');
+  });
+
+  it('K1 po polsku przy locale: pl — bez surowego enumu postawy', () => {
+    const { output } = buildSwotOutput({
+      ...BASE,
+      items,
+      tensions,
+      moves: [validMove()],
+      locale: 'pl',
+    });
     const k1 = output.conclusions[0].k1Fact;
     expect(k1).toContain('postawa: atak');
     expect(k1).not.toContain('attack');
     expect(k1).toContain('1 napięcie');
   });
 
-  it('K4 nie wypuszcza surowego enumu wpływu do klienta', () => {
+  it('K4 domyślnie po angielsku (DEC-461), bez surowego enumu wpływu', () => {
     const { output } = buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] });
+    const k4 = output.conclusions[0].k4Effect;
+    expect(k4).toContain('Expected impact: high');
+    expect(k4).not.toContain('Oczekiwany wpływ');
+  });
+
+  it('K4 po polsku przy locale: pl — bez surowego enumu wpływu', () => {
+    const { output } = buildSwotOutput({
+      ...BASE,
+      items,
+      tensions,
+      moves: [validMove()],
+      locale: 'pl',
+    });
     const k4 = output.conclusions[0].k4Effect;
     expect(k4).toContain('wysoki');
     expect(k4).not.toContain('high');

@@ -78,7 +78,17 @@ export interface BuildSwotOutputInput {
   /** `tool_sessions.version` w chwili budowy — lineage, patrz types.ts. */
   sourceRevision?: number;
   createdBy?: string;
+  /**
+   * F7 (DEC-461): K1/K4 były budowane ze STAŁYCH POLSKICH napisów („Podstawa:",
+   * „Oczekiwany wpływ:") i trafiały do niezmiennego Outputu, więc organizacja
+   * EN dostawała polskie wnioski SWOT w raporcie i prezentacji. Domyślka to
+   * `'en'` (DEC-510); polski tylko wtedy, gdy wołający realnie rozstrzygnął `pl`.
+   */
+  locale?: SwotOutputLocale;
 }
+
+/** Język treści Outputu SWOT. Domyślnie `'en'`. */
+export type SwotOutputLocale = 'pl' | 'en';
 
 export interface BuildSwotOutputResult {
   output: ToolOutput;
@@ -93,6 +103,7 @@ export interface BuildSwotOutputResult {
  * Wynik jest zawsze w statusie `draft` — zatwierdza człowiek, osobnym krokiem.
  */
 export function buildSwotOutput(input: BuildSwotOutputInput): BuildSwotOutputResult {
+  const locale: SwotOutputLocale = input.locale === 'pl' ? 'pl' : 'en';
   // 1. Tylko pozycje zaakceptowane. To jest reguła silnika, nie nasza.
   const accepted = input.items.filter((i) => isAcceptedSwotItem(i));
   const acceptedIds = new Set(accepted.map((i) => i.id));
@@ -153,14 +164,12 @@ export function buildSwotOutput(input: BuildSwotOutputInput): BuildSwotOutputRes
     conclusions.push({
       id: move.id,
       // K1 — fakt zbudowany z policzalnych własności sesji, nie z narracji.
-      k1Fact: buildK1(move, sourceTensionIds, tensions),
+      k1Fact: buildK1(move, sourceTensionIds, tensions, locale),
       k2Meaning: move.rationale,
       k3Actions: [move.firstStep, move.title].filter((x): x is string => Boolean(x)).slice(0, 3),
       // Brak pola expectedEffect na SWOTMove — efekt składamy z wpływu
       // i roli odpowiedzialnej. K4 musi mieć adresata, nie „organizację".
-      k4Effect: move.ownerRole
-        ? `Oczekiwany wpływ: ${IMPACT_PL[move.expectedImpact] ?? move.expectedImpact}. Odpowiedzialna rola: ${move.ownerRole}.`
-        : `Oczekiwany wpływ: ${IMPACT_PL[move.expectedImpact] ?? move.expectedImpact}.`,
+      k4Effect: buildK4(move, locale),
       tradeoff: {
         chosen: tradeoff?.chosen ?? move.title,
         // W2 rozróżnia „co odroczone" (tradeoff.deferred) od „co odrzucone"
@@ -218,12 +227,44 @@ const POSTURE_PL: Record<string, string> = {
   protect: 'ochrona ekspozycji',
 };
 
+/** Postawa napięcia po angielsku — ta sama reguła, EN first. */
+const POSTURE_EN: Record<string, string> = {
+  attack: 'attack',
+  repair: 'repair',
+  defend: 'defend',
+  protect: 'exposure protection',
+};
+
 /** Wpływ po polsku — surowy enum na powierzchni klienckiej to defekt. */
 export const IMPACT_PL: Record<string, string> = {
   high: 'wysoki',
   medium: 'średni',
   low: 'niski',
 };
+
+/** Wpływ po angielsku — domyślna powierzchnia kliencka (DEC-461). */
+export const IMPACT_EN: Record<string, string> = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+};
+
+/**
+ * K4: oczekiwany efekt ruchu. Angielski jest domyślny — polski tylko wtedy,
+ * gdy wołający realnie rozstrzygnął `pl` (patrz `BuildSwotOutputInput.locale`).
+ */
+function buildK4(move: SWOTMove, locale: SwotOutputLocale): string {
+  if (locale === 'pl') {
+    const impact = IMPACT_PL[move.expectedImpact] ?? move.expectedImpact;
+    return move.ownerRole
+      ? `Oczekiwany wpływ: ${impact}. Odpowiedzialna rola: ${move.ownerRole}.`
+      : `Oczekiwany wpływ: ${impact}.`;
+  }
+  const impact = IMPACT_EN[move.expectedImpact] ?? move.expectedImpact;
+  return move.ownerRole
+    ? `Expected impact: ${impact}. Accountable role: ${move.ownerRole}.`
+    : `Expected impact: ${impact}.`;
+}
 
 /**
  * K1: FAKT policzony z sesji, nigdy z modelu językowego.
@@ -235,13 +276,22 @@ export const IMPACT_PL: Record<string, string> = {
 function buildK1(
   move: SWOTMove,
   sourceTensionIds: string[],
-  tensions: OutputTension[]
+  tensions: OutputTension[],
+  locale: SwotOutputLocale = 'en'
 ): string {
   const linked = tensions.filter((t) => sourceTensionIds.includes(t.id));
+  const pl = locale === 'pl';
   if (linked.length === 0) {
-    return `Ruch „${move.title}" nie ma napięcia źródłowego w zaakceptowanym materiale.`;
+    return pl
+      ? `Ruch „${move.title}" nie ma napięcia źródłowego w zaakceptowanym materiale.`
+      : `Move "${move.title}" has no source tension in the accepted material.`;
   }
   const weight = linked.reduce((n, t) => n + t.priority, 0);
-  const postures = [...new Set(linked.map((t) => POSTURE_PL[t.posture] ?? t.posture))].join(', ');
-  return `Podstawa: ${linked.length} ${odmienNapiecia(linked.length)} o łącznej wadze ${weight} (postawa: ${postures}).`;
+  const postureMap = pl ? POSTURE_PL : POSTURE_EN;
+  const postures = [...new Set(linked.map((t) => postureMap[t.posture] ?? t.posture))].join(', ');
+  if (pl) {
+    return `Podstawa: ${linked.length} ${odmienNapiecia(linked.length)} o łącznej wadze ${weight} (postawa: ${postures}).`;
+  }
+  const noun = linked.length === 1 ? 'tension' : 'tensions';
+  return `Basis: ${linked.length} ${noun} with a combined weight of ${weight} (posture: ${postures}).`;
 }

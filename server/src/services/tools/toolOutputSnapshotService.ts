@@ -54,6 +54,7 @@ import {
   SWOT_ENGINE_VERSION,
 } from '../../sharedRuntime/toolOutputs/buildSwotOutput.js';
 import { computeOutputHash } from '../../sharedRuntime/toolOutputs/outputLifecycle.js';
+import { resolveLocale } from '../ai/languagePolicy.js';
 import {
   approve as approveOutput,
   reopen as reopenOutput,
@@ -241,7 +242,14 @@ function buildOutputForSession(
   session: ToolOutputSourceSession,
   outputId: string,
   now: string,
-  actor: Actor
+  actor: Actor,
+  /**
+   * F7 (DEC-461): treść K1/K4 w Outputcie SWOT była STAŁĄ POLSKĄ, więc
+   * organizacja EN dostawała polskie wnioski w raporcie i prezentacji.
+   * Domyślka `'en'`; `'pl'` tylko gdy wołający realnie rozstrzygnął locale
+   * (resolver DEC-510 w `ensureToolOutputSnapshot`).
+   */
+  locale: 'pl' | 'en' = 'en'
 ): ToolOutput {
   const answers = safeParse<Record<string, unknown>>(session.answers_json, {});
   const sourceRevision = session.version ?? undefined;
@@ -269,6 +277,7 @@ function buildOutputForSession(
       moves,
       sourceRevision,
       createdBy: actor.id,
+      locale,
     });
     // TLS-BVP-001: dynamic-swot is the one tool type this guard is scoped
     // to (see EmptyToolOutputError's doc comment above for why here, and
@@ -425,7 +434,13 @@ const isMissingTableError = (err: unknown): boolean => {
 export async function ensureToolOutputSnapshot(
   session: ToolOutputSourceSession,
   actor: Actor,
-  now: string
+  now: string,
+  /**
+   * F7 (DEC-461): język treści snapshotu. Brak wartości = rozstrzygnięcie
+   * resolverem DEC-510 z tożsamości aktora/organizacji sesji
+   * (users.language → users.locale → organizations.default_language → 'en').
+   */
+  locale?: 'pl' | 'en'
 ): Promise<ToolOutput> {
   let existing: ToolOutputRow | null = null;
   try {
@@ -441,7 +456,13 @@ export async function ensureToolOutputSnapshot(
   if (existing) return rowToOutput(existing);
 
   const outputId = uuidv4();
-  let built = buildOutputForSession(session, outputId, now, actor);
+  const resolvedLocale =
+    locale ??
+    ((await resolveLocale({
+      userId: actor.id ?? null,
+      organizationId: session.organization_id ?? null,
+    })) as 'pl' | 'en');
+  let built = buildOutputForSession(session, outputId, now, actor, resolvedLocale);
   built = submitForReview(built);
   built = approveOutput(built, actor.id, now);
 
