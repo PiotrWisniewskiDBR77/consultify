@@ -11,6 +11,7 @@ vi.unmock('../../notificationService.js');
 
 import { materializeInboxItems } from '../../inboxService.js';
 import config from '../../../config/Config.js';
+import myWorkRoutes from '../../../routes/my-work.routes.js';
 import taskRoutes from '../../../routes/pmo/tasks.routes.js';
 import { recordMeasurement } from '../../resultsVnext/kpi/kpiMeasurementCommands.js';
 import { evaluatePerformanceStatus } from '../../resultsVnext/kpi/targetGeometryEvaluator.js';
@@ -69,6 +70,7 @@ describe.skipIf(!enabled)('M1 KPI deviation → Inbox → action card → My Wor
     app = express();
     app.use(express.json());
     app.use('/api/tasks', taskRoutes);
+    app.use('/api/my-work', myWorkRoutes);
   });
 
   afterAll(async () => {
@@ -182,6 +184,14 @@ describe.skipIf(!enabled)('M1 KPI deviation → Inbox → action card → My Wor
       .set('Accept-Language', 'en');
     expect(taskDetail.status).toBe(200);
     expect(taskDetail.body).toMatchObject({
+      sourceType: 'action_card',
+      sourceId: deviation.card?.id,
+    });
+    const myWorkTaskDetail = await request(app)
+      .get(`/api/my-work/personal-tasks/${first?.task.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(myWorkTaskDetail.status).toBe(200);
+    expect(myWorkTaskDetail.body).toMatchObject({
       sourceType: 'action_card',
       sourceId: deviation.card?.id,
     });
