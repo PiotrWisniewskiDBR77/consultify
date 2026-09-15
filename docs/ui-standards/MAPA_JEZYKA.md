@@ -1,7 +1,7 @@
 # MAPA JĘZYKA — gdzie w Consultify rozstrzyga się język i kto tego pilnuje
 
-Fala **E2f** (DEC-510, Wpis 48 pkt E2f), pomiar na linii `origin/integracja/20260911`
-(SHA `59a8c44c04`), 2026-09-14.
+Fala **E2f/E2f-bis** (DEC-510/DEC-461, Wpis 48 i Wpis 73), pomiar bazowy
+E2f-bis na linii `f2628a0d36`, 2026-09-15.
 
 Powód powstania tego dokumentu: „bałagan językowy w każdej warstwie" wracał, bo
 bramka `check:jezyk:ci` widziała **tylko UI** (pliki `public/locales/**`, `src/**`
@@ -21,7 +21,7 @@ dokument opisuje MECHANIZM, nie stan.
 |---|---------|-----------|-------------------------------|------------------|-----------|
 | 1 | Klucze tłumaczeń | `public/locales/{en,pl}/*.json` | i18next, klucz obecny w OBU językach | `K1` `K2` `K3a` `K3aKLUCZ` `K3b` | Front |
 | 2 | Wartości domyślne w kodzie | `src/**` — `t('klucz', 'Tekst')` | `defaultValue` po angielsku + klucz w `en` | `K1def` `K1defWID` | Front |
-| 3 | Tekst na sztywno w JSX | `src/**/*.tsx` poza `t()` | każdy napis widoczny na ekranie przez `t()` | `K4pl` `K4en` | Front |
+| 3 | Tekst na sztywno w JSX i obiektach UI | `src/**/*.{ts,tsx}` poza `t()`; także `label`/`title`/`placeholder`/`header`/`description`/`tooltip`/`emptyText` | każdy napis widoczny na ekranie przez `t()`; identyfikatory, ścieżki i SCREAMING_CASE są wyłączone | `K4pl` `K4en` `K4objPL` `K4obj` `K11` | Front |
 | 4 | Odpowiedzi HTTP z warstwy wejścia | `server/src/{routes,middleware,validators,schemas,controllers}` | zwracać `key` + `params`, tłumaczyć na kliencie | `K5pl` `K5en` | Backend |
 | 5 | **Serwer poza warstwą wejścia** | `server/src/**` reszta: `services/`, `method-core/`, `jobs/`, maile, PDF | słownik dwujęzyczny per locale joba — wzór: `services/report/reportLocale.ts` (`MESSAGES`) i `method-core/outputs/EventDerivedOutputBridge.ts` (`TEKSTY_OUTPUTU`) | **`K8spl` `K8sen`** | Backend |
 | 6 | **Prompty AI (Teresa i narzędzia)** | `server/src/**`, `src/services/**`, `src/lib/**` | prompt po angielsku + `withResolvedLocaleInstruction(prompt, locale)` z `services/ai/languagePolicy.ts` (SSOT DEC-510) | **`K9pPL` `K9pMIX` `K9pBRAK`** | AI / Backend |
@@ -44,6 +44,11 @@ Warstwy 5–7 (pogrubione) dołożyła fala E2f. Warstwy 1–4 i 8 istniały od 
 * **Testy, mocki, `_backup/`, `scripts/`.**
 * **K5 i K8s są rozłączne** — K8s bierze dokładnie tę część `server/src`,
   której K5 nie rusza. Nic nie jest liczone dwa razy.
+* **K8s obejmuje `services/assessment` i `services/actionCard`.** Wyłączone są
+  nadal testy, mocki, kopie i pliki polityki języka; katalog produktu nie jest
+  powodem wyłączenia.
+* **`K11` mierzy `t()` zamknięte w literale.** Napisy `"{t(...)}` nie wywołują
+  tłumaczenia i są osobnym długiem, nawet jeśli sam klucz istnieje.
 
 ---
 
@@ -53,6 +58,10 @@ Warstwy 5–7 (pogrubione) dołożyła fala E2f. Warstwy 1–4 i 8 istniały od 
   (ten sam od J0; E2f dołożył nowe kubełki, nie nowy plik).
   Zawiera `suma` (per kategoria), `moduly` (16 pozycji menu × kategoria),
   `przyklady` (do 25 na kategorię) i `_meta.sha`.
+* **Zmiana semantyki w E2f-bis:** rozszerzenie słownika i nowe kubełki zmieniły
+  mianownik. Baseline został przeliczony na linii `f2628a0d36`; porównywanie
+  nowych liczb ze starym detektorem nie mierzy spłaty długu. Próba precyzji i
+  tabela starego/nowego mianownika są w `E2F_BIS_W73.md`.
 * **Przegenerowanie (świadome, tylko przy spadku):** `npm run check:jezyk:baseline`.
 * **Bramka pełna (CI):** `npm run check:jezyk:ci` — pełny skan repo,
   porównanie z baseline **per SUMA i per MODUŁ**. Kod wyjścia `1`, gdy
