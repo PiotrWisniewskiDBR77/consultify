@@ -1,36 +1,59 @@
 {
-  "package": "M2 manual Ideas Notebook Documents v2",
+  "package": "M2 manual Ideas Notebook Documents v3",
   "base": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
-  "content_commit": "ca34916ecc317c0ed3acfc1f3b349c418f5e0077",
-  "independent_review": "45b05f106a",
+  "content_commit": "f290c2608dc2c7f7458e8ab38f51883f908d6b97",
+  "independent_review": "CTO_OWNS_REVIEW_PER_ENTRY_78",
   "branch": "codex/c-m2-manual-tools-20260915",
-  "verdict": "HOLD_V2_STOP_FOR_RE_REVIEW",
+  "verdict": "READY_FOR_CTO_REVIEW_WITH_EXPLICIT_NOT_TESTED",
   "validation": {
-    "targeted_vitest": "6/6 PASS",
-    "real_task_readback": {
+    "targeted_vitest": "14/14 PASS",
+    "realpg_source_receipt": "1/1 PASS; MOCK_DB=false; vitest.acceptance.config.ts",
+    "task_readback": {
       "ideas": "3/3 title+uuid+owner",
       "notebook": "3/3 title+uuid+owner",
       "documents": "3/3 title+uuid+owner",
-      "my_work_count": "23->26",
-      "source_type_id": "NOT_PROVEN in full card"
+      "document_source_candidate": "API + UI label + source link PASS"
     },
-    "frontend_tsc": "exit 2, shared environment fingerprint 194 error TS, 0 in M2 files",
+    "typescript_version": "5.8.3 via shared node_modules symlink",
+    "typescript_same_environment": {
+      "base_front": "TIMEOUT_120 NOT_PROVEN",
+      "candidate_front": "TIMEOUT_120 NOT_PROVEN",
+      "base_server": "TIMEOUT_120 NOT_PROVEN",
+      "candidate_server": "TIMEOUT_120 NOT_PROVEN"
+    },
+    "commit_hooks": "PASS canon/triada/artefakt/flags/language",
     "git_diff_check": "PASS"
   },
-  "remaining_hold": [
-    "complete click-result matrix for every non-destructive item",
-    "independent re-review after v2"
+  "staging_writes_before_entry_78": {
+    "organization": "Northwind",
+    "account": "Irina Lebedjuk",
+    "task_ids": [
+      "ad9124b4-1fc8-4210-a531-a88edf504512",
+      "e0fafe06-08f9-4536-a894-0a11b95df68f",
+      "554f155d-1b54-46a4-9609-66e30547ea30"
+    ]
+  },
+  "known_limits": [
+    "state-changing/destructive controls are NOT_TESTED after CTO Entry 78",
+    "exports are NOT_PROVEN after browser timeout/reset",
+    "three M6 behavior gaps remain explicitly transferred",
+    "integrated staging behavior awaits CTO merge/deploy"
   ],
   "inventory": [
     {
       "path": "evidence/s1-14-przejscie/RAPORT.md",
-      "sha256": "d4dccd6f9e91a17fe79ced217f00bbdc87275844fd93c87a6b54e7139f9527a6",
-      "bytes": 8418
+      "sha256": "bb69f630d502b9b0f95e430806f97591d8b0992064aa65cbd23709f3a5e6e101",
+      "bytes": 8451
+    },
+    {
+      "path": "evidence/s1-14-przejscie/MANUAL_CLICK_MATRIX_V3.md",
+      "sha256": "dece3f5d0e80280c188af0633b8e348cc41a2bc0dc7d9e2bb68a5c90dfa4eaa9",
+      "bytes": 6836
     },
     {
       "path": "evidence/s1-14-przejscie/READBACK_9_TASKS.md",
-      "sha256": "63f1460e14861aa910b917fa1f891939a5c9ffeed71ead9eb2b32f845b9f82a4",
-      "bytes": 2764
+      "sha256": "b8ca92958aaf5792694dcdf6d6c86b6b85b3e9d5fa13451a77b6359bc28180cb",
+      "bytes": 2923
     },
     {
       "path": "evidence/s1-14-przejscie/northwind-s1-14-source-note.txt",
@@ -84,13 +107,13 @@
     },
     {
       "path": "public/locales/en/translation.json",
-      "sha256": "a62d377aaf52c476c8f12533823460c560ef4f89ce59c4689b1f6654b3697aba",
-      "bytes": 2388951
+      "sha256": "8f8935809d28159d244009f2443ceb923a48d8bfb738d222a4d791cefe305a7b",
+      "bytes": 2388987
     },
     {
       "path": "public/locales/pl/translation.json",
-      "sha256": "288849ebb8bde4c63977fce05a9505325af469f96ac60282712b1b3950002618",
-      "bytes": 2558024
+      "sha256": "edd117b0ba69c67cea0ef937b753ea9842dd28ba9da9871295f9da4e18cad0b9",
+      "bytes": 2558060
     },
     {
       "path": "src/components/documents/DocumentSidePanel.tsx",
@@ -101,6 +124,31 @@
       "path": "src/components/documents/__tests__/DocumentSidePanel.uploadBlad.test.tsx",
       "sha256": "f8d30edd89ab11af8c13baccd539fe932a3d3f18c954356ac92cd09b66287e49",
       "bytes": 8934
+    },
+    {
+      "path": "server/src/routes/my-work.routes.ts",
+      "sha256": "3f3095a17c50ca81bb096b573016c6e322a6ddccfbf81a14e8904712cd2c7197",
+      "bytes": 384275
+    },
+    {
+      "path": "server/src/routes/__tests__/my-work-personal-task-assignee.routes.test.ts",
+      "sha256": "f3d4c4e49ff03ea1806472371d0ef2442330927b52fa733d2ccd401d0a91a2bc",
+      "bytes": 8404
+    },
+    {
+      "path": "src/components/MyWork/TaskDetailView.tsx",
+      "sha256": "d7d7b0a61b48b6a9f848a0cedf0f8ce99466b5f3459374484451dcaa3358ae5f",
+      "bytes": 428083
+    },
+    {
+      "path": "src/components/MyWork/__tests__/TaskDetailView.ownerScoped.test.tsx",
+      "sha256": "2b16e24e204f3cffdb97532febf02247d59d19bb77c8ab8ce1d56babff6e643b",
+      "bytes": 7476
+    },
+    {
+      "path": "tests/acceptance/m2-personal-task-source.e2e.test.ts",
+      "sha256": "b48c6528ed6e9cd111fad7d9a4f45db03a43b6816eaad8c21cda07482937ae66",
+      "bytes": 2022
     }
   ]
 }

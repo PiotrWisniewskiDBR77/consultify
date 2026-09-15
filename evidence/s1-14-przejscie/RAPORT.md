@@ -8,7 +8,7 @@ Gałąź naprawy: `codex/c-m2-manual-tools-20260915`
 
 ## Werdykt
 
-**HOLD v2 / STOP DO PONOWNEGO REVIEW.** Pomysły, Notatnik i Dokumenty mają po trzy realne zadania z tytułem, UUID i właścicielem; dwa nowe zrzuty pokazują literalnie wszystkie dziewięć tytułów. Dokumenty na bieżącym stagingu nie mają akcji tworzenia zadania. Paczka dodaje `Create task` przez kanoniczne `Api.createPersonalTask`, `sourceType=document`, `sourceId=<document id>`, idempotency key, stan powodzenia i widoczny błąd. Test komponentu: 6/6 PASS, w tym single-flight, failure→retry z tym samym kluczem i polski wariant. Lokalny kandydat `dcbd6c052a` na porcie 4214, połączony wyłącznie przez proxy HTTP z API stagingu, utworzył trzy zadania z trzech dokumentów; My Work wzrosło 23→26. Panel pełnej karty nie pokazuje `sourceType/sourceId`, więc ta część trwałego pochodzenia pozostaje `NOT_PROVEN`. Ręczne przejście nadal ma niedestrukcyjne pozycje oznaczone tylko jako zinwentaryzowane, dlatego nie nadaję całości werdyktu COMPLETE.
+**READY FOR CTO REVIEW v3, z jawnymi pozycjami NOT_TESTED/NOT_PROVEN.** Pełny spis kontrolek i wynik każdej pozycji znajduje się w `MANUAL_CLICK_MATRIX_V3.md`; bezpieczne kontrolki wywołano, a zapisujące/destrukcyjne pozycje zatrzymano zgodnie z późniejszym Wpisem 78. Paczka domyka brakujący przewód Dokument → Zadanie → Źródło: owner scoped API zwraca trwałe `sourceType/sourceId`, karta pokazuje `Document/Dokument`, a link źródła przekazuje dokładny UUID dokumentu. Testy celowane 14/14 i RealPG 1/1 przechodzą. Trzy zadania zapisane wcześniej przez lokalny frontend do API stagingu są jawnie przypisane do Northwind / Irina Lebedjuk wraz z UUID poniżej. Niezależny review przejął CTO; własny review nie jest deklarowany.
 
 ## Pomysły
 
@@ -84,13 +84,16 @@ Dokumenty widoczne w pomiarze: Northwind Programme Charter (Ready, 3 chunks), Li
 
 ## Naprawa Dokumenty → zadanie
 
-Zmiana obejmuje cztery pliki produktu/testu:
+Zmiana v2/v3 obejmuje produkt, kontrakt API, i18n i testy:
 
 - `DocumentSidePanel.tsx`: akcja `Create task`, pojedynczy lot, idempotency key, pochodzenie dokumentu, stan `Task created`, widoczny powód błędu.
 - `public/locales/en/translation.json` i `public/locales/pl/translation.json`: EN first i polski odpowiednik.
 - `DocumentSidePanel.uploadBlad.test.tsx`: dowód payloadu z `sourceType=document`, `sourceId`, idempotency key oraz widocznego potwierdzenia.
+- `my-work.routes.ts`: owner scoped detail zwraca `sourceType/sourceId`.
+- `TaskDetailView.tsx` + en/pl: czytelna etykieta Document/Dokument i istniejący link do dokładnego `sourceId`.
+- testy route/UI/RealPG: trwały odczyt źródła oraz zachowanie linku.
 
-Walidacja: targeted Vitest 6/6 PASS, w tym single-flight, stabilny retry key i PL; JSON en/pl parse PASS, esbuild per zmieniony plik PASS, `git diff --check` PASS. Powtórzony pełny front TSC zakończył się kodem 2 i bieżącym współdzielonym fingerprintem 194 `error TS`; dokładnie ten sam wynik odtworzyła równoległa paczka K1 po odświeżeniu współdzielonego toolchainu. Żaden błąd nie wskazuje `DocumentSidePanel.tsx` ani testu M2, więc delta paczki wynosi 0. Historyczny limit 177 nie jest obecnie reprodukowalny w tym środowisku i nie został przedstawiony jako zielony.
+Walidacja v3: targeted Vitest 14/14 PASS (DocumentSidePanel 6, owner scoped route 4, TaskDetailView 4), RealPG z `MOCK_DB=false` i acceptance config 1/1 PASS, JSON en/pl parse PASS, `git diff --check` PASS. TypeScript 5.8.3 jest wspólny przez symlink do `~/Developer/Consultify/node_modules`; czysta baza `dcbd6c052a` nie ukończyła front ani server TSC w twardym limicie 120 s (`TIMEOUT_120`, bez wiarygodnej liczby). Kandydat nie jest przedstawiany jako zielony TSC; wcześniejsze 194/27 pochodziło z innego przebiegu środowiskowego i nie służy jako porównanie delty.
 
 ## Przekazanie do M6
 
