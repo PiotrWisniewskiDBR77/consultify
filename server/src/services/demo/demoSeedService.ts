@@ -4381,11 +4381,14 @@ export async function getDemoDatasetStats(organizationId: string): Promise<{
 
 export async function deleteDemoDatasetForOrganization(organizationId: string): Promise<void> {
   const deleteQueries = [
+    ['task_comments', 'task_id', 'tasks', 'organization_id'],
+    ['initiative_benefits', 'organization_id'],
     ['initiative_dependencies', 'organization_id'],
     ['initiative_milestones', 'organization_id'],
     ['decisions', 'organization_id'],
     ['tasks', 'organization_id'],
     ['status_reports', 'organization_id'],
+    ['closure_delivery_receipts', 'organization_id'],
     ['custom_prompts', 'organization_id'],
     ['assessment_report_section_history', 'report_id', 'assessment_reports', 'organization_id'],
     ['assessment_report_sections', 'report_id', 'assessment_reports', 'organization_id'],
@@ -4401,6 +4404,11 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     ['activity_logs', 'organization_id'],
     ['notifications', 'user_id', 'users', 'organization_id'],
     ['notebook_pages', 'organization_id'],
+    ['organization_context_claims', 'organization_id'],
+    ['organization_context_items', 'organization_id'],
+    ['organization_context_snapshots', 'organization_id'],
+    ['presentation_decks', 'organization_id'],
+    ['results_writer_observations', 'organization_id'],
     ['my_idea_maps', 'organization_id'],
     ['my_idea_edges', 'organization_id'],
     ['my_ideas', 'organization_id'],

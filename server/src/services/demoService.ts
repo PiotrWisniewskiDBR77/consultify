@@ -8,11 +8,10 @@
  * accumulate forever.
  *
  * `cleanupExpiredDemos()` reclaims ONLY provably-ephemeral, expired demo
- * scaffolding, never a real customer org. It is DRY-RUN by default (logs the
- * candidate set and returns 0) and only deletes when `DEMO_CLEANUP_ENABLED` is
- * explicitly truthy. Deletion reuses the proven children-first (FK-aware)
+ * scaffolding, never a real customer org. It is enabled by default and can be stopped explicitly with
+ * `ENABLE_DEMO_SANDBOX_TTL=false`. Deletion reuses the proven children-first (FK-aware)
  * `deleteDemoDatasetForOrganization` purger and runs per-org inside a
- * transaction, with a hard per-run cap.
+ * transaction, with a hard per-run cap of three tenants.
  *
  * SAFE-DELETE criterion — an org is a candidate ONLY when ALL hold:
  *   1. Its id matches the ephemeral demo-session pattern
@@ -46,7 +45,7 @@ import { deleteDemoDatasetForOrganization } from './demo/demoSeedService.js';
 // ==========================================
 
 const DEFAULT_TTL_HOURS = 24; // demo-session lifetime (DEMO_SESSION_DURATION_MS)
-const DEFAULT_PER_RUN_LIMIT = 50;
+const MAX_PER_RUN_LIMIT = 3;
 
 function parseBool(value: unknown): boolean {
   const v = String(value ?? '')
@@ -61,7 +60,11 @@ function parsePositiveInt(value: unknown, fallback: number): number {
 }
 
 function isEnabled(env: NodeJS.ProcessEnv): boolean {
-  return parseBool(env.DEMO_CLEANUP_ENABLED);
+  // TTL reclaim is an operational safety mechanism, so it is enabled unless an
+  // operator explicitly disables it. This keeps ephemeral demo tenants bounded
+  // without requiring a deployment-time opt-in.
+  const raw = env.ENABLE_DEMO_SANDBOX_TTL;
+  return raw == null || String(raw).trim() === '' ? true : parseBool(raw);
 }
 
 function ttlHours(env: NodeJS.ProcessEnv): number {
@@ -69,7 +72,7 @@ function ttlHours(env: NodeJS.ProcessEnv): number {
 }
 
 function perRunLimit(env: NodeJS.ProcessEnv): number {
-  return parsePositiveInt(env.DEMO_CLEANUP_LIMIT, DEFAULT_PER_RUN_LIMIT);
+  return Math.min(MAX_PER_RUN_LIMIT, parsePositiveInt(env.DEMO_CLEANUP_LIMIT, MAX_PER_RUN_LIMIT));
 }
 
 /**
@@ -98,7 +101,13 @@ function buildWhitelist(env: NodeJS.ProcessEnv): Set<string> {
 /** Ephemeral demo-session org id LIKE patterns (deduped). */
 function ephemeralIdPatterns(env: NodeJS.ProcessEnv): string[] {
   const policy = resolveDemoPolicy(env);
-  const patterns = new Set<string>([`${policy.demoOrgId}-session-%`, 'demo-org-session-%']);
+  const patterns = new Set<string>([
+    // Current session tenants: <brand>-demo-session-<user>-<timestamp>.
+    '%-demo-session-%',
+    // Compatibility with tenants minted by the older demo service.
+    `${policy.demoOrgId}-session-%`,
+    'demo-org-session-%',
+  ]);
   return [...patterns];
 }
 
@@ -162,6 +171,13 @@ export async function findExpiredDemoCandidates(
     )`;
   SEED_EMAIL_DOMAINS.forEach((d) => params.push(`%@${d.toLowerCase()}`));
 
+  // Apply the whitelist before LIMIT. Filtering it in application code after
+  // LIMIT allowed a protected tenant to consume a batch slot and made cleanup
+  // silently process fewer than the configured maximum.
+  const whitelist = [...buildWhitelist(env)];
+  const whitelistPlaceholders = whitelist.map(() => '?').join(', ');
+  params.push(...whitelist, ...whitelist);
+
   const sql = `
     SELECT o.id, o.name, o.organization_type, o.created_at
     FROM organizations o
@@ -170,19 +186,15 @@ export async function findExpiredDemoCandidates(
       AND LOWER(COALESCE(o.billing_status, '')) NOT IN ('paid', 'active', 'past_due')
       AND (${expiryClauses.join(' OR ')})
       AND ${realMemberGuard}
+      AND LOWER(o.id) NOT IN (${whitelistPlaceholders})
+      AND LOWER(COALESCE(o.name, '')) NOT IN (${whitelistPlaceholders})
     ORDER BY o.created_at ASC NULLS FIRST
     LIMIT ${Math.max(1, Math.floor(limit))}
   `;
 
   const rows = await DbPromise.all<DemoCleanupCandidate>(sql, params, { fallback: true });
 
-  // (6) whitelist filter (id + name) in app code — cheap and readable.
-  const whitelist = buildWhitelist(env);
-  return (rows || []).filter((r) => {
-    const idL = String(r.id ?? '').toLowerCase();
-    const nameL = String(r.name ?? '').toLowerCase();
-    return !whitelist.has(idL) && !whitelist.has(nameL);
-  });
+  return rows || [];
 }
 
 // ==========================================
@@ -211,9 +223,7 @@ export async function cleanupExpiredDemos(env: NodeJS.ProcessEnv = process.env):
   );
 
   if (!enabled) {
-    logger.warn(
-      '[DemoService] DRY-RUN — set DEMO_CLEANUP_ENABLED=true to actually delete. Nothing removed.'
-    );
+    logger.warn('[DemoService] TTL cleanup disabled by ENABLE_DEMO_SANDBOX_TTL. Nothing removed.');
     return 0;
   }
 
