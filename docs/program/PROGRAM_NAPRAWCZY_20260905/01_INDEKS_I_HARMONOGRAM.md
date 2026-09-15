@@ -2816,3 +2816,28 @@ z19-kopie-20260915,z31-mail-20260915,northwind-full-seed-20260915,northwind-2-4-
 czystka-dbr77-20260915,sprzatanie-northwind-targi-20260915,szablony-parking-20260915,
 wdrozenie-linii-20260915,gotowosc-targi-20260915}/`, `cto-codex/KANAL.md` Wpisy 70–74, `git log
 --oneline 34888b0445..6c34292eb0`.
+
+### Rejestr 15.09 wieczór — DEC-532 akcept nr 2 (Bank Realizacji, 4 widoki) + A-1/A-2 na linii
+
+Szczegóły pełne (obrazy, SHA fali F12, uwagi do kolejki, stan A-1/A-2/N1/K6) zapisane w
+`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`, EWIDENCJA „DEC-532" (na końcu pliku) — nie
+duplikuję tu treści zgodnie z regułą jeden SSOT na wpis. Skrót:
+
+- **DEC-532** — akcept nr 2 (kolejka DEC-530): właściciel „Tak" na Bank realizacji w czterech
+  widokach (lista/kanban/oś czasu/kalendarz), fala **F12** `59f192c9f6`, dane Northwind żywe.
+  Dowód: `~/Developer/cto-codex/akcept-1-2-20260915/AKCEPT.md` (sekcja „Akcept nr 2 — DEC-532").
+  §5 wiersz **B-E1** → **✅ DEC-532**; pozycja 2 zdjęta z „Kolejki akceptów" (zostaje 9: 3–11);
+  3 uwagi z F12 dopisane do kolejki (12–14): przewijanie poziome przy 1280 px, horyzont osi
+  czasu/kalendarza nie sięga końca 2027, kolumna VARIANCE łamie się na 2 linie.
+- **A-1 (wycena karty N) + A-2 (zatwierdzanie KPI)** na linii: merge `ad6c78abb3`, odbiór CTO
+  ACCEPT (`~/Developer/cto-codex/odbior-fala2-1-20260915/POSTEP.md`). §5 wiersze A3/A4:
+  🔧 → 🧪 NA LINII (jeszcze NIE na stagingu), flaga `VITE_INITIATIVES_PORTFOLIO_ANALYSIS`
+  default OFF.
+- **N1/DEC-524** (Menu2AIButton neutralny CTA) — wykonanie odnotowane, merge `3e285fa8e2`.
+- **K6 v3** (etykiety Realizacji, DEC-517/K6) — **ZAMKNIĘTE**, merge `50ab6ef914` →
+  `59f192c9f6` (dociągnięcie F12) → `85c102ff40`.
+- **§5 liczniki po DEC-532: ✅ 11 · 🧪 11 · 🔧 19 · ⬜ 6 (47 etapów)** — przeliczone
+  `~/Developer/cto-codex/audyt-47-20260915/policz.sh`. PRZED: ✅ 10 · 🧪 10 · 🔧 21 · ⬜ 6.
+
+Dowody źródłowe tego wpisu: `~/Developer/cto-codex/{akcept-1-2-20260915,fala-f12-20260915,
+odbior-fala2-1-20260915,audyt-47-20260915}/`.

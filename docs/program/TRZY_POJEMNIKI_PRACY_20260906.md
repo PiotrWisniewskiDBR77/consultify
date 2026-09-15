@@ -1259,8 +1259,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 
 ---
 
-## §5 Tabela zbiorcza — **✅ 10 · 🧪 10 · 🔧 21 · ⬜ 6 (47 etapów)**
-### pomiar kodu 15.09.2026 (DEC-529) + akcepty właściciela z 15.09 02:00 UTC (DEC-516/DEC-530)
+## §5 Tabela zbiorcza — **✅ 11 · 🧪 11 · 🔧 19 · ⬜ 6 (47 etapów)**
+### pomiar kodu 15.09.2026 (DEC-529) + akcepty właściciela z 15.09 02:00 UTC (DEC-516/DEC-530) + akcept nr 2 15.09 ~23:45 UTC (DEC-532) — przeliczone `policz.sh`, patrz EWIDENCJA DEC-532 niżej
 
 | Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | STAN | SHA/DEC | DATA |
 |---|---|---|---|---|---|---|---|---|---|
@@ -1269,8 +1269,8 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga ON) — **było ⬜ błędnie** | `InitiativesHub.tsx:3034-3049`, `api.ts:3591` | 15.09 |
 | Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) — **obraz:** `zrzuty-fala-b2-20260914/01-analiza-rekomendacje-{light,dark}.png` (harness) + żywy `flagi-20260915/zrzuty/02-inicjatywy-analiza-portfela.png`. **Otwarte mimo ✅:** na stagingu stan pusty (dane), pełna tabela widziana tylko w harnessie | DEC-516 · `https://staging.consultify.ai/initiatives` → Menu 3 „Initiative analysis" · `GET /api/initiatives/runtime-v1/portfolio-scenarios` = **200** (scenariusz `portfolio-468b234c…-roboczy`, PUBLISHED) | 15.09 (akcept) |
 | Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) (ekran parkingu, jaki jest) — **obraz:** `zrzuty-fala-b2-20260914/02-parking-powod-warunek-*.png` + `03-lista-parkingu-*.png`, żywy `flagi-20260915/zrzuty/03-inicjatywy-parking-po-naprawie.png`. **Otwarte mimo ✅ (osobno, NIE było na obrazie):** „ponowna propozycja" = 0 kodu — `returnCondition` zapisywany, nikt go nie konsumuje | DEC-516 · `https://staging.consultify.ai/initiatives` → Menu 3 „Parking" · `GET /api/initiatives/runtime-v1/portfolio-dispositions` = **200** `{"dispositions":[]}` | 15.09 (akcept) |
-| Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | 🔧 kod jest, blokuje `ENABLE_INITIATIVE_APPROVAL_V2` (brak na stagingu) — **było ⬜ błędnie** | `cardRegistry.ts:1-28`, `DefinitionApprovalContent.tsx:99`; wycena bez pisarza `InitiativeDocumentView.tsx:3470-3533` | 15.09 |
-| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | 🔧 UI wołany, API 404 dla rejestru runtime-v1 | `KpisSection.tsx:123/350`, `initiativeKpiAssignmentService.ts:254-266` · `ENABLE_INITIATIVE_UNIFIED_READ` brak | 15.09 |
+| Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie (A-1 wycena) | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | 🧪 NA LINII (jeszcze NIE na stagingu) — **A-1 wycena karty N scalona `ad6c78abb3`** (odbiór CTO ACCEPT, `~/Developer/cto-codex/odbior-fala2-1-20260915/POSTEP.md`), flaga `VITE_INITIATIVES_PORTFOLIO_ANALYSIS` **default OFF**, ARG+ENV w `Dockerfile.api` — **było 🔧 blokowane flagą `ENABLE_INITIATIVE_APPROVAL_V2`** | `cardRegistry.ts:1-28`, `DefinitionApprovalContent.tsx:99`; wycena `InitiativeDocumentView.tsx:3470-3533`; merge `ad6c78abb3` (`8d765403af` → linia) | 15.09 |
+| Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie (A-2 zatwierdzanie KPI) | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | 🧪 NA LINII (jeszcze NIE na stagingu) — **A-2 zatwierdzanie KPI scalone `ad6c78abb3`** (odbiór CTO ACCEPT, RealPG 2/2 PASS), flaga `VITE_INITIATIVES_PORTFOLIO_ANALYSIS` **default OFF** — **było 🔧 API 404**. **Zastrzeżenie z odbioru (P1, nie blokuje tej zmiany stanu):** `approvedForExecution`/`approvalReceipt` typowane, ale **0 konsumentów w UI Realizacji** — widoczność potwierdzona tylko na poziomie read modelu/RealPG, nie ekranu | `KpisSection.tsx:123/350`, `initiativeKpiAssignmentService.ts:254-266`; merge `ad6c78abb3` | 15.09 |
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | 🔧 silnik pełny, flaga `VITE_INITIATIVES_PLAN` **bez ARG** — **było ⬜ „atrapa" błędnie** | `planDependencyAnalysisService.ts:208-236`, `criticalPathService.ts:128-280`, trasa `:4854` | 15.09 |
 | Inicjatywy | Plan | PL2 akcept obserwacji AI + komentarz | Codex P2 | PL1 | D | lista obserwacji, jedna zaakceptowana | 🔧 panel + walidacja są; komentarz nie przelicza; flaga bez ARG — **było ⬜ błędnie** | `PlanDependencyAnalysisPanel.tsx:259`, `planAnalysisProposal.ts:202-279` | 15.09 |
 | Inicjatywy | Plan | PL3 oś czasu 1/3/6/12 + kolor zamrożenia | Codex P2 | Gantt kanoniczny | D | oś czasu 3 mies. z zamrożoną pozycją | 🧪 NA STAGINGU (bez flagi) — **było ⬜ „atrapa" błędnie** | `PlanCard.tsx:720-748`, `InitiativeGantt.tsx:410-420` | 15.09 |
@@ -1282,7 +1282,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | 🧪 w PDF raportu — **było ⬜ błędnie** (to nie sam licznik) | `postgresInitiativeReader.ts:258-292` `authorityName`+`overdue`+`oldestDueAt` | 15.09 |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ atrapa żyje i ma wołacza | `InitiativePreparationReadView.tsx` ← `InitiativesHub.tsx:136,2209` | 15.09 |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🔧 **NIE widać** — `VITE_EXEC_RISK_SIGNAL` bez ARG (było 🧪 zawyżone) | `executionRiskSignal.ts:1-160` ← `ExecutionHub.tsx:975,6149` | 15.09 |
-| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | 🧪 NA STAGINGU (bez flagi) — jedyny wiersz Realizacji faktycznie widoczny | `ExecutionBankViews.tsx:246,708,853,1123` ← `ExecutionHub.tsx:6146` | 15.09 |
+| Realizacja | Bank | B-E1 pozycja na osi czasu + 4 widoki | Codex F2-2 | Gantt kanoniczny | B | bank w widoku Gantta | ✅ ZAAKCEPTOWANE — **akcept nr 2, DEC-532** (właściciel „Tak", 15.09 ~23:45 UTC, formularz CTO) — **obraz:** `~/Developer/cto-codex/fala-f12-20260915/zrzuty/01-04-*.png` (4 widoki: lista/kanban/oś czasu/kalendarz, 1440×900, EN jasny, dane Northwind ŻYWE ze stagingu przez proxy). Na stagingu od wdrożenia 10. Dowód: `~/Developer/cto-codex/akcept-1-2-20260915/AKCEPT.md`. **Otwarte mimo ✅ (osobne znaleziska z F12, do kolejki):** przy 1280 px bank przewija się poziomo (8 kolumn = 1213 px podłóg > obszar ~1120 px); domyślny horyzont osi czasu/kalendarza (~3 mies.) nie sięga końca 2027 (inicjatywy poza `1m/3m` wpadają do „Outside visible range" — trzeba ręcznie przełączyć na 12m); kolumna VARIANCE łamie się na 2 linie przy części szerokości | fala **F12** `59f192c9f6` (ff `d467f4ed90..59f192c9f6`) · DEC-532 · `ExecutionBankViews.tsx:246,708,853,1123` ← `ExecutionHub.tsx:6146` | 15.09 (akcept) |
 | Realizacja | Praca | P-E2a generator 3 okien czasu | Codex F2-2 | silnik raportów | D | analiza tygodnia | 🔧 kod kompletny front+serwer, `VITE_EXECUTION_WORK_ANALYSIS` bez ARG — **było ⬜ błędnie** | `workAnalysisModel.ts:22-27`, `executionReports.routes.ts:497-522` ← `ExecutionHub.tsx:5870` | 15.09 |
 | Realizacja | Praca | P-E2b kadencja tygodniowa / na żądanie | Codex F2-2 | harmonogram P1 | D | (część P-E2a) | 🔧 cron zarejestrowany, wyłączony zmienną — **było ⬜ błędnie** | `Scheduler.ts:102-119,1072` (job47, `0 5 * * 1`) | 15.09 |
 | Realizacja | Praca | P-E2c eskalacja/delegacja/zmiana zasobów | Codex F2-2 | DEC-485/486 | D | akcja + wynik po zmianie | 🔧 **ekran ISTNIEJE** — teza „bez ekranu" obalona; blokuje brak ARG | `WorkIntelligenceReport.tsx:450-486`, `managerActionExecutionService.ts:221-556` | 15.09 |
@@ -1405,7 +1405,7 @@ Zasada (reguła 9 CLAUDE.md — zakaz masowego włączania): **jeden ekran dzien
 EN + motyw jasny, w PEŁNEJ powłoce aplikacji (Menu 1/2/3 + treść), z żywego stagingu, nie z harnessu.**
 Zrzut robi i ogląda CTO, zanim zobaczy go właściciel (reguła 7). Właściciel odpowiada Tak/Nie.
 Baza: dziesięć wierszy **🧪** z AUDYT.md (`~/Developer/cto-codex/audyt-47-20260915/AUDYT.md`)
-+ jedna pozycja spoza tabeli (zmiana w JUŻ zaakceptowanym ekranie — **zdjęta 15.09, DEC-531**) i jedna z Wywiadu (Z-34). **Stan 15.09 22:50 UTC: pozycja 1 ZDJĘTA** — właściciel odpowiedział „Tak" na Menu 2 Inicjatyw po zmianie steru (**DEC-531**, dowód `~/Developer/cto-codex/akcept-1-2-20260915/AKCEPT.md`); w kolejce zostaje **dziesięć** pozycji, numeracja poniżej bez zmian (2–11), żeby odwołania nie gniły.
++ jedna pozycja spoza tabeli (zmiana w JUŻ zaakceptowanym ekranie — **zdjęta 15.09, DEC-531**) i jedna z Wywiadu (Z-34). **Stan 15.09 22:50 UTC: pozycja 1 ZDJĘTA** — właściciel odpowiedział „Tak" na Menu 2 Inicjatyw po zmianie steru (**DEC-531**, dowód `~/Developer/cto-codex/akcept-1-2-20260915/AKCEPT.md`). **Stan 15.09 ~23:45 UTC: pozycja 2 (B-E1) TEŻ ZDJĘTA** — właściciel odpowiedział „Tak" na Bank Realizacji w 4 widokach po fali F12 (**akcept nr 2, DEC-532**, dowód `~/Developer/cto-codex/akcept-1-2-20260915/AKCEPT.md`); w kolejce zostaje **dziewięć** pozycji, numeracja poniżej bez zmian (3–11), żeby odwołania nie gniły. Uwagi z F12 (przewijanie poziome 1280 px, horyzont osi czasu/kalendarza, VARIANCE na 2 liniach) dopisane niżej jako nowe pozycje kolejki.
 Wszystkie pozycje kolejki są dziś widoczne — **żadna nie czeka na `ARG` w `Dockerfile.api`**.
 **Aktualizacja tego samego dnia:** brak `ARG` przestał być blokerem *na linii* — fala **F11**
 (`d13dfc758b`) dołożyła `ARG`+`ENV` dla **15** flag `VITE_*` i bramkę `check:flagi:dockerfile`
@@ -1416,7 +1416,6 @@ nadal jeden ekran dziennie (reguła 9: zakaz masowego włączania).
 
 | # | Data | Wiersz | Co pokazać (JEDEN obraz, EN/jasny, w powłoce) | URL | Flaga, która musi być ON | Co blokuje zrzut dziś |
 |---|---|---|---|---|---|---|
-| 2 | **16.09** | **B-E1** pozycja na osi czasu + 4 widoki | Bank Realizacji w czterech widokach (lista · kanban · kalendarz · Gantt), jeden obraz z przełącznikiem widoków | `/execution` (Bank) | **żadna** (bez flagi — jedyny wiersz Realizacji faktycznie widoczny) | kolumny PROGRESS/FORECAST/VARIANCE puste i „VARIAN" ucięty (`wdrozenie-6.../MELDUNEK.md` w. 07) — **naprawić PRZED zrzutem**, inaczej pokazujemy zepsuty ekran |
 | 3 | **16.09** | **H1f** skrzynka v2 — etykiety i18n | skrzynka „For approval": lista + podgląd z etykietami statusów z `initiativeStatusLabels.ts` (bez surowych kodów), jasny | `/initiatives?tab=transitionInbox` | `VITE_TRANSITION_INBOX` | zrzuty v2 istnieją, ale są z **harnessu** (`zrzuty-z27-skrzynka-20260914/v2/`); na żywo skrzynka jest PUSTA → potrzebna jedna propozycja przejścia w Northwind (dane, nie kod) |
 | 4 | 17.09 | **L3** filtr projektami | lista Inicjatyw z rozwiniętym filtrem „Project": „All projects · Digital & Automation Roadmap · Operational Excellence Programme · Portfolio — direct initiatives" — nazwy, zero UUID | `/initiatives` | `VITE_INITIATIVES_FOUR_BUTTONS` | filtr to natywny `<select>` — opcje są overlayem systemowym, nie łapią się na zrzut Playwrighta (`wdrozenie-7.../README.md`); trzeba zrzutu z realnej przeglądarki albo zamiany na `SelectField` |
 | 5 | 17.09 | **PL3** oś czasu 1/3/6/12 + kolor zamrożenia | Plan: przełącznik horyzontu na „3 mies." + Gantt z pozycją zamrożoną (navy) | `/initiatives?tab=plan` | **żadna** (kod poza blokiem flagi) | dane: potrzebna inicjatywa z `frozenId` w Northwind |
@@ -1426,6 +1425,9 @@ nadal jeden ekran dziennie (reguła 9: zakaz masowego włączania).
 | 9 | 18.09 | **H2** `initiative_handoffs` zapis/odczyt | ten sam artefakt w nowej fazie — podgląd inicjatywy z historią przekazania | `/initiatives` → podgląd | **żadna** | pomiar na żywej bazie (czy tabela ma wiersze) NIEWYKONANY — zrobić przed zrzutem |
 | 10 | po 18.09 | **RP2** „kto zalega / na czyje decyzje czekamy" | sekcja zaległości w raporcie z pracy | `/initiatives?tab=workReport` | `VITE_INITIATIVES_WORK_REPORT` + `ENABLE_INITIATIVES_WORK_REPORT` | **dziś istnieje TYLKO w PDF**, nie ma widoku w UI — najpierw kod, potem obraz |
 | 11 | po 18.09 | *(poza §5)* **Z-34 / S1.15** panel zatwierdzania odpowiedzi Wywiadu | panel recenzenta z odpowiedzią do zatwierdzenia/odesłania, EN | `/interview` → przydział | `ENABLE_INTERVIEW_ANSWER_APPROVAL` (ON) + polityka org | Northwind nie ma przydziału z odpowiedziami, a tworzenie rekordu testowego na stagingu jest zakazane → potrzebny **zasiew danych demo**, nie sonda |
+| 12 | po 18.09 | *(znalezisko F12, poza §5)* **B-E1 przy 1280 px** | Bank Realizacji przewija się poziomo przy oknie 1280 px (8 kolumn = 1213 px podłóg > ~1120 px obszaru) | `/execution` (Bank), okno 1280 px | **żadna** | decyzja właściciela: zejść niżej wymaga zdjęcia kolumny „Owner" albo „Execution phase" z domyślnego widoku (`fala-f12-20260915/POSTEP.md` §2) |
+| 13 | po 18.09 | *(znalezisko F12, poza §5)* **B-E1 horyzont osi czasu/kalendarza** | domyślny horyzont (~3 mies., tygodniowy) nie sięga końca 2027 — inicjatywy z prognozą w 2027 wpadają do „Outside visible range"; zrzuty akceptu nr 2 zrobione świadomie na 12m | `/execution` (Bank) → oś czasu / kalendarz | **żadna** | decyzja: zmienić domyślny horyzont czy zostawić 12m jako ręczny wybór — do ustalenia z właścicielem |
+| 14 | po 18.09 | *(znalezisko F12, poza §5)* **B-E1 kolumna VARIANCE łamie się na 2 linie** | nagłówek/wartość VARIANCE zawija się na dwie linie przy części szerokości mimo mieszczenia się w podłodze | `/execution` (Bank) | **żadna** | pomiar szczegółowy nie wykonany w F12 (poza zakresem naprawy nagłówka „VARIAN…") — do zmierzenia osobno |
 
 **Wniosek operacyjny:** siedem z jedenastu pozycji nie blokuje kod, tylko **brak danych na stagingu**
 (pusta skrzynka, brak zamrożonej pozycji, brak przydziału Wywiadu, dwa konta do czworga oczu).
@@ -2123,3 +2125,47 @@ mianownika 15.09 w przeczytanych źródłach (ostatni: 32/46, Wpis 68).
   **DEC-517/K5** (TTL 24h + scheduler). S1.7 więc **domknięte dla treści widocznej klientowi w
   DBR77/Northwind, NIE dla higieny infrastrukturalnej sandboxów** — rozróżnienie ważne, nie
   ogłaszać kryterium w pełni TAK.
+
+---
+
+**EWIDENCJA DEC-532 (uzupełnienie 15.09 ~23:45–24:00 UTC, akcept nr 2 + odbiór A-1/A-2 + N1/K6).**
+
+- **Akcept nr 2 — DEC-532.** Właściciel odpowiedział **„Tak"** na pytanie o Bank Realizacji w
+  czterech widokach (lista/kanban/oś czasu/kalendarz), fala **F12** `59f192c9f6` (ff
+  `d467f4ed90..59f192c9f6` na `origin/integracja/20260911`), dane Northwind żywe ze stagingu
+  (proxy `dist/` kandydata → API stagingu, wzór F5/F8a). Obraz: `~/Developer/cto-codex/
+  fala-f12-20260915/zrzuty/01-04-*.png`. Dowód: `~/Developer/cto-codex/akcept-1-2-20260915/
+  AKCEPT.md` (sekcja „Akcept nr 2 — DEC-532"). §5 wiersz **B-E1** → **✅ DEC-532**. **Na stagingu
+  od wdrożenia 10** (kod na linii od F12; zrzuty akceptu zrobione z `dist/` kandydata przez
+  proxy do żywego API stagingu, staging sam NIE był przebudowywany w chwili F12 — health po
+  wdrożeniu 10 do potwierdzenia osobno). Pozycja 2 zdjęta z „Kolejki akceptów" (zostaje 9:
+  3–11), numeracja bez zmian; dopisane 3 nowe pozycje kolejki (12–14) z uwag F12: przewijanie
+  poziome przy 1280 px (8 kolumn = 1213 px), domyślny horyzont osi czasu/kalendarza (~3 mies.)
+  nie sięga końca 2027 (osobne znalezisko, nie naprawiane w F12), kolumna VARIANCE łamie się na
+  2 linie.
+- **A-1 (wycena karty N) i A-2 (zatwierdzanie KPI) są na linii.** Merge `ad6c78abb3` na
+  `origin/integracja/20260911` (linia `462d44d67b`→`8d765403af`→`ad6c78abb3`), odbiór CTO
+  **ACCEPT** (`~/Developer/cto-codex/odbior-fala2-1-20260915/POSTEP.md`): 32 pliki +1427/-22,
+  nowe `as any` = 0, migracja `20262240_initiative_card_estimate` fresh strict = 921/0 drugi
+  przebieg, RealPG 2/2 PASS 0 skipped, testy delty 38/1 (FAIL zastany, ten sam na linii), TSC
+  front 193=linia/server 22/22, `check-list-canon` 349, `check-artefakt` 8/0/117. Flaga
+  `VITE_INITIATIVES_PORTFOLIO_ANALYSIS`, **default OFF**, ARG+ENV w `Dockerfile.api`. §5 wiersze
+  **A3** (karty N + wycena) i **A4** (zbieranie KPI) → **🔧 → 🧪 NA LINII** (jeszcze NIE na
+  stagingu — rozróżnienie ważne, „na linii" ≠ „na stagingu"). **Zastrzeżenie z odbioru (P1,
+  nie blokuje zmiany stanu):** `approvedForExecution`/`approvalReceipt` nie mają ani jednego
+  konsumenta w UI Realizacji — widoczność potwierdzona tylko na poziomie read modelu/RealPG.
+- **N1 / DEC-524 — wykonanie odnotowane.** `Menu2AIButton` neutralny (CTA „Analyze with AI"
+  bez `c-ai`), merge `3e285fa8e2` (linia `8d765403af`→`3e285fa8e2`), `scripts/check-artefakt.sh`
+  wzmocniony nowym wąskim strażnikiem, zero rozluźnienia; własny zrzut EN light+dark, 0 page
+  errors (`~/Developer/cto-codex/odbior-fala2-1-20260915/POSTEP.md`). Poza tabelą §5 (higiena
+  artefaktu, nie etap produktowy) — odnotowane tu jako wykonane, zgodne z DEC-524.
+- **K6 v3 → K6 ZAMKNIĘTE.** Merge K6 `50ab6ef914` + dociągnięcie F12 Banku (wspólny plik
+  `ExecutionBankViews.tsx`, auto-merge, testy Banku 34/34 PASS po scaleniu) → `59f192c9f6` →
+  `85c102ff40`. 82 pliki/660 testów, 21 czerwieni identyczne na linii (delta 0), front TSC
+  193=linia, artefakt 8/0/117, build PASS, bramka językowa spadki (K4en −6, K4obj −36). K6
+  (etykiety Realizacji, DEC-517/K6) zamknięte tym scaleniem.
+- **§5 liczniki po DEC-532 (`policz.sh` na `TRZY_POJEMNIKI_PRACY_20260906.md`): ✅ 11 · 🧪 11 ·
+  🔧 19 · ⬜ 6 (47 etapów).** PRZED (Wpis 68/nagłówek §5 sprzed DEC-532): ✅ 10 · 🧪 10 · 🔧 21 ·
+  ⬜ 6. Zmiana: ✅ +1 (B-E1 → DEC-532), 🧪 +1 netto (−1 B-E1 wyszedł do ✅, +2 A3/A4 weszły z
+  🔧), 🔧 −2 (A3, A4). Dowody źródłowe tego wpisu: `~/Developer/cto-codex/{akcept-1-2-20260915,
+  fala-f12-20260915,odbior-fala2-1-20260915,audyt-47-20260915}/`.
