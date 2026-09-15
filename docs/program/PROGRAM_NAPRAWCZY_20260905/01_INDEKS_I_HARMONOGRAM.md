@@ -319,6 +319,53 @@ tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
 ## 15.09.2026
 
+**DEC-530 (CTO na mandacie, 15.09) — akcepty 5 obrazów z 15.09 (DEC-516) uznane za ✅ etapów §5;
+kolejka akceptów 1 ekran dziennie.**
+Właściciel 15.09 ~02:00 UTC odpowiedział **„Akceptuję wszystkie"** na pięć obrazów wysłanych do
+Tak/Nie (KANAL Wpis 70): cztery przyciski Inicjatyw (DEC-505), skrzynka recenzenta + bramka GO
+(DEC-507), Raport z pracy (RP1), PMO projekty (S5 E3), zatwierdzanie odpowiedzi Wywiadu (Z-34/S1.15).
+Audyt DEC-529 zostawił ✅ = 3, **bo nie miał tego akceptu zapisanego jako DEC** — nie dlatego, że
+akceptu nie było. Ta decyzja zapisuje go i przenosi na ✅ **siedem** wierszy §5, których obraz
+właściciel zaakceptował i które są dziś widoczne na stagingu przy włączonych flagach:
+**L2 · A1 · A2 · RP1 · H1b · H1e · PMO E3**. Dowód per wiersz = nazwa zaakceptowanego obrazu +
+URL stagingu + zmierzona odpowiedź API (konto Irina, `~/Developer/cto-codex/irina-20260914/DOSTEP.md`)
+— wszystko w §5 `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`.
+
+**Liczniki §5 (skrypt `policz.sh` po symbolach): ✅ 3 → 10 · 🧪 15 → 10 · 🔧 23 → 21 · ⬜ 6 (47).**
+MVP-rdzeń: L1, L2, U1, U2 = **4/4 ✅**.
+
+**✅ dotyczy ekranu, jaki właściciel widział — nie całego zakresu wiersza.** Otwarte MIMO ✅
+(wypisane w §5, żeby akcept nie zamiótł długu): prowenencja maszynowa we froncie skrzynki (H1b —
+audyt zdegradował go do 🔧 właśnie z tego powodu, a prowenencji **nie było na zaakceptowanym
+obrazie**), „ponowna propozycja" w parkingu (A2, 0 kodu), archiwizacja wołająca API (L2, dziś sam
+toast), kolumny bramek w liście projektów (PMO E3).
+
+**Zastrzeżenie zapisane świadomie:** ster wejścia do „Work report" i „For approval" zmienił się
+**po** akcepcie (`6e3924cc38`, `df3428e7e0` — Menu 2 ma trzy pigułki, obie powierzchnie są pozycjami
+przełącznika „Status"). To zmiana w ekranie już zaakceptowanym → **pozycja 1 kolejki akceptów na 16.09**.
+Z-34/S1.15 nie jest wierszem §5 (to kryterium MVP, zamknięte pomiarem API); panelu zatwierdzania
+nikt nie widział na ŻYWYM stagingu — trafia do kolejki.
+
+**Kolejka akceptów — nowa sekcja w §5, reguła: JEDEN ekran dziennie**, jeden obraz, EN + jasny,
+w pełnej powłoce, z żywego stagingu (nie z harnessu); CTO robi i ogląda zrzut przed właścicielem
+(reguła 7 CLAUDE.md), właściciel odpowiada Tak/Nie. Pierwsze trzy na **16.09**: (1) Menu 2 Inicjatyw
+po zmianie steru, (2) B-E1 Bank w czterech widokach, (3) H1f skrzynka v2 z etykietami i18n.
+**Kolejka nie czeka na `ARG`** — wszystkie jej pozycje są dziś widoczne. Sam bloker `ARG` zdjęty
+**na linii** tego samego dnia falą **F11** (`d13dfc758b`: `ARG`+`ENV` dla 15 flag `VITE_*` + bramka
+`check:flagi:dockerfile` w pre-push i CI); F11 **nie jest jeszcze na stagingu** i nie włącza żadnej
+flagi. Po jej wdrożeniu + 6 zmiennych serwerowych do kolejki wejdzie 14 wierszy 🔧 (PL1/PL2,
+OB1–OB4, B-E0, P-E2a/b/c, RA-E4a–d) — nadal jeden ekran dziennie.
+Siedem z jedenastu pozycji kolejki blokuje **brak danych na stagingu**, nie kod → najtańszy ruch to
+jedna paczka zasiewu Northwind pod te scenariusze.
+
+**Pomiar stagingu przy tej decyzji:** `/api/health` 15.09 21:23 UTC = **`9badae5335`** (wdrożenie 8
+weszło; audyt DEC-529 mierzył jeszcze `df3428e7e0`, które jest przodkiem — delta 4 commity
+Wywiad/a11y, żaden plik z 47 wierszy). Flagi `VITE_*` sprawdzone w ŻYWYM bundlu, nie w panelu
+Railway (`VITE_PMO_PROJECTS:"true"`, `fourButtonsWorkspace`, `initiatives-archive-scope`,
+`initiatives.tabs.workReport`, `initiatives.tabs.transitionInbox`, `MODULE_PROJECTS`).
+Dowody: `~/Developer/cto-codex/{flagi-20260915,wdrozenie-6-20260915,wdrozenie-7-20260915,
+audyt-47-20260915}/`.
+
 **DEC-529 (CTO na mandacie, 15.09) — §5 przeliczone pomiarem kodu; od teraz statusy zmienia tylko dowód.**
 §5 `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` (47 etapów) przeliczona **pomiarem kodu na linii
 `9badae5335` i na żywym stagingu `df3428e7e0`**, nie meldunkiem wykonawcy. Pełny dowód per wiersz:

@@ -1259,15 +1259,16 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 
 ---
 
-## §5 Tabela zbiorcza — **przeliczona pomiarem kodu 15.09.2026 (DEC-529)**
+## §5 Tabela zbiorcza — **✅ 10 · 🧪 10 · 🔧 21 · ⬜ 6 (47 etapów)**
+### pomiar kodu 15.09.2026 (DEC-529) + akcepty właściciela z 15.09 02:00 UTC (DEC-516/DEC-530)
 
 | Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | STAN | SHA/DEC | DATA |
 |---|---|---|---|---|---|---|---|---|---|
 | Inicjatywy | Lista | L1 rdzeń (lista/kanban/kalendarz/Gantt) | — | — | — | TAK 13.09 (DEC-481) | ✅ ZAAKCEPTOWANE | DEC-481 | 13.09 |
-| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | agent CTO | — | A | lista z pstryczkiem ON/OFF | 🧪 NA STAGINGU (flaga ON) — **defekt: archiwizacja to sam toast** | `InitiativesHub.tsx:1795-1808` · `574eb6e20c` | 15.09 |
+| Inicjatywy | Lista | L2 pstryczek Archiwum/Aktualne | agent CTO | — | A | lista z pstryczkiem ON/OFF | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) — **obraz:** `flagi-20260915/zrzuty/01-inicjatywy-lista.png` (żywy staging) + `wdrozenie-7-20260915/zrzuty/02-initiatives-lista.png`. **Otwarte mimo ✅:** archiwizacja to sam toast (`InitiativesHub.tsx:1795-1808`) — defekt zachowania, nie obrazu | DEC-516 · `9badae5335` · `https://staging.consultify.ai/initiatives` · `GET /api/initiatives` = **200** (14 wierszy) | 15.09 (akcept) |
 | Inicjatywy | Lista | L3 filtr projektami | Codex P4 | PMO E3 | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga ON) — **było ⬜ błędnie** | `InitiativesHub.tsx:3034-3049`, `api.ts:3591` | 15.09 |
-| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | 🧪 NA STAGINGU (flaga **ON**) | `portfolioConsultingAnalysis.ts:146-152`, trasy `:3779/:3880` · `GET /portfolio-scenarios`=200 | 15.09 |
-| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | 🔧 niepełny — „ponowna propozycja" = 0 kodu | `InitiativeParkingView.tsx:42-48` · `GET /portfolio-dispositions`=200 | 15.09 |
+| Inicjatywy | Analiza | A1 analiza portfela, 5 kryteriów + „dlaczego AI" | Codex P4 | — | B | tabela analizy + karta uzasadnienia | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) — **obraz:** `zrzuty-fala-b2-20260914/01-analiza-rekomendacje-{light,dark}.png` (harness) + żywy `flagi-20260915/zrzuty/02-inicjatywy-analiza-portfela.png`. **Otwarte mimo ✅:** na stagingu stan pusty (dane), pełna tabela widziana tylko w harnessie | DEC-516 · `https://staging.consultify.ai/initiatives` → Menu 3 „Initiative analysis" · `GET /api/initiatives/runtime-v1/portfolio-scenarios` = **200** (scenariusz `portfolio-468b234c…-roboczy`, PUBLISHED) | 15.09 (akcept) |
+| Inicjatywy | Analiza | A2 parking z powodem + ponowna propozycja | Codex P4 | A1 | B | lista parkingu z powodami | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) (ekran parkingu, jaki jest) — **obraz:** `zrzuty-fala-b2-20260914/02-parking-powod-warunek-*.png` + `03-lista-parkingu-*.png`, żywy `flagi-20260915/zrzuty/03-inicjatywy-parking-po-naprawie.png`. **Otwarte mimo ✅ (osobno, NIE było na obrazie):** „ponowna propozycja" = 0 kodu — `returnCondition` zapisywany, nikt go nie konsumuje | DEC-516 · `https://staging.consultify.ai/initiatives` → Menu 3 „Parking" · `GET /api/initiatives/runtime-v1/portfolio-dispositions` = **200** `{"dispositions":[]}` | 15.09 (akcept) |
 | Inicjatywy | Analiza | A3 karty N + wycena + zatwierdzenie | Codex P4 | silnik zatwierdzeń | B | karta N z wyceną | 🔧 kod jest, blokuje `ENABLE_INITIATIVE_APPROVAL_V2` (brak na stagingu) — **było ⬜ błędnie** | `cardRegistry.ts:1-28`, `DefinitionApprovalContent.tsx:99`; wycena bez pisarza `InitiativeDocumentView.tsx:3470-3533` | 15.09 |
 | Inicjatywy | Analiza | A4 zbieranie KPI w inicjatywie | Codex P4 | RA-E4c | B | karta KPI z podpowiedzią AI | 🔧 UI wołany, API 404 dla rejestru runtime-v1 | `KpisSection.tsx:123/350`, `initiativeKpiAssignmentService.ts:254-266` · `ENABLE_INITIATIVE_UNIFIED_READ` brak | 15.09 |
 | Inicjatywy | Plan | PL1 silnik ścieżek krytycznych | Codex P2 | — | D | — | 🔧 silnik pełny, flaga `VITE_INITIATIVES_PLAN` **bez ARG** — **było ⬜ „atrapa" błędnie** | `planDependencyAnalysisService.ts:208-236`, `criticalPathService.ts:128-280`, trasa `:4854` | 15.09 |
@@ -1277,7 +1278,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Inicjatywy | Obciążenie | OB2 deklaracja dostępności tygodniowej | Codex P3 | PMO (docelowo) | E | formularz + przeliczona mapa | 🔧 **NIE widać** — jak OB1 (było 🧪 zawyżone) | `InitiativeWorkloadSurface.tsx:172-233,506-535` | 15.09 |
 | Inicjatywy | Obciążenie | OB3 generator raportów obciążenia | Codex P3 | silnik raportów P1 | E | raport obciążenia zespołu | 🔧 **NIE widać** — podwójna flaga (było 🧪 zawyżone) | `InitiativeWorkloadSurface.tsx:254-297`, bramka `:9708-9710` | 15.09 |
 | Inicjatywy | Obciążenie | OB4 AI przesuwa (tylko projektowanie) | Codex P3 | OB1-3 | E | propozycje AI + blokada na biegnącym | 🔧 **NIE widać**; „AI" to reguła, nie model (było 🧪 zawyżone) | `workloadCapacityService.ts:1090`, trasa `:1790-1826` `RULE_BASED_AI` | 15.09 |
-| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | 🧪 NA STAGINGU (flaga ON, ARG jest) | `InitiativeWorkReportView.tsx:349-397`, 6 szablonów `initiativeWorkReportService.ts:6-13` · `POST /work-reports/preview`=400 | 15.09 |
+| Inicjatywy | Raport z pracy | RP1 kreator + 5 szablonów + PDF + wysyłka | Codex P1 | poczta (Q1) | C | raport + realny PDF | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) — **obraz:** `zrzuty-p1-kanon-20260914/01-lista-kreator-zwiniety-{light,dark}.png` … `05-flaga-off-*` (14 zrzutów, w powłoce) + żywy `wdrozenie-6-20260915/zrzuty/19-initiatives-workreport-l6.png` (układ 1:1 z obrazem, tylko EN). **Uwaga:** ster wejścia zmieniony PO akcepcie (`6e3924cc38`, `df3428e7e0`) — „Work report" jest dziś pozycją przełącznika „Status", nie pigułką Menu 2 → **pozycja 1 kolejki akceptów** | DEC-516 · `https://staging.consultify.ai/initiatives?tab=workReport` · `POST …/runtime-v1/work-reports/preview` = **400 VALIDATION_FAILED** (trasa i bramka flagi żyją) | 15.09 (akcept) |
 | Inicjatywy | Raport z pracy | RP2 „kto zalega / na czyje decyzje czekamy" | Codex P1 | RP1 | C | raport z sekcją zaległości | 🧪 w PDF raportu — **było ⬜ błędnie** (to nie sam licznik) | `postgresInitiativeReader.ts:258-292` `authorityName`+`overdue`+`oldestDueAt` | 15.09 |
 | Inicjatywy | Raport z pracy | RP3 usunięcie atrapy `InitiativePreparationReadView` | Codex P1 | RP1-2 | C | — (higiena) | ⬜ atrapa żyje i ma wołacza | `InitiativePreparationReadView.tsx` ← `InitiativesHub.tsx:136,2209` | 15.09 |
 | Realizacja | Bank | B-E0 ryzyko: 3 osie × 4 poziomy, kolor+tekst+ikona | Opus (fala B) | DEC-487 | B | bank z pastylkami ryzyka | 🔧 **NIE widać** — `VITE_EXEC_RISK_SIGNAL` bez ARG (było 🧪 zawyżone) | `executionRiskSignal.ts:1-160` ← `ExecutionHub.tsx:975,6149` | 15.09 |
@@ -1295,17 +1296,17 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Realizacja | Raporty | RA-E4d PDF + wysyłka | Codex F2-2 | poczta (Q1) | C | (część RA-E4a) | 🔧 mechanika kompletna, blokuje ARG | `ExecutionReportE4Surface.tsx:412,420-429`, `reportRun.ts:198,376-379` | 15.09 |
 | Realizacja | przewód | H1 bramka 409 lifecycle-gate-decisions | Opus | — | B | 2xx zamiast 409 | 🧪 NA STAGINGU (flaga **ON**, nie OFF) | `initiatives.routes.ts:4005`, `initiativeTransitionService.ts:931` · `ENABLE_LIFECYCLE_GO_GATE=true` | 15.09 |
 | Realizacja | przewód | H2 `initiative_handoffs` realny zapis/odczyt | Opus | H1 | B | ten sam artefakt w nowej fazie | 🧪 NA STAGINGU (bez własnej flagi) | `stageHandoffService.ts:304`, `initiativeTransitionConditions.ts:135` | 15.09 |
-| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | 🔧 skrzynka widać, **prowenencja nie renderowana** (to był sens wiersza) | `TransitionInboxSurface.tsx:12,89` ← `InitiativesHub.tsx:2012` · `VITE_TRANSITION_INBOX`=**ON** | 15.09 |
+| Realizacja | przewód | H1b front prowenencji maszynowej (`sourceDigest`/`a05ApprovalReceiptRef`) + `GET lifecycle-transition-proposals` + skrzynka recenzenta (`TransitionInboxSurface`) | Opus | H1 | B3 | ekran recenzji z prowenencją, nie 409 | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) **dla ekranu skrzynki, jaki jest** — **obraz:** `zrzuty-z27-skrzynka-20260914/v2/01-skrzynka-lista-{light,dark}.png`, `02-skrzynka-podglad-*`, `03-skrzynka-flaga-off-*` + żywy `wdrozenie-6-20260915/zrzuty/20-initiatives-inbox-l6.png`. **Otwarte mimo ✅ (NIE było na zaakceptowanym obrazie):** prowenencja maszynowa (`sourceDigest`/`a05ApprovalReceiptRef`) liczona przez serwer, **nie renderowana przez front** (`TransitionInboxSurface.tsx:12`); na żywo skrzynka pusta — lista z wierszami widziana tylko w harnessie | DEC-516 · DEC-507 · `https://staging.consultify.ai/initiatives?tab=transitionInbox` · `GET /api/initiatives/lifecycle-transition-proposals` = **200** `{"proposals":[]}` · `VITE_TRANSITION_INBOX`=ON, ARG `Dockerfile.api:230` | 15.09 (akcept) |
 | Realizacja | przewód | H1c parytet kod/etap w 4 miejscach zapisu (`coerceInitiativeStatusForWrite`, `EXPECTED_BY_TARGET`, readback adaptera, guard `expectedCurrentStatus`) | Opus | H1, DEC-506 | B3 | dowód RealPG APPROVED/SCHEDULED → IN_EXECUTION + wiersz `initiative_handoffs` | 🧪 NA STAGINGU — komplet 4 miejsc | `initiativeLifecycleCanon.ts:286`, `…AdapterService.ts:32,46,256,483`, guard `:561-570` | 15.09 |
 | Realizacja | przewód | H1d naprawa martwej bramki GO/NO-GO (`initiativeTransitionService` porównuje kody P12 z etykietami legacy `SCHEDULED`/`EXECUTING`/`DONE`; `execution_started_at`/`review_requested_at` nieustawiane) | Opus | H1, H1c | B3 | reguła H16/INI-005 „decyzja GO aktualna przy starcie" faktycznie blokuje | 🧪 NA STAGINGU (flaga **ON**, nie OFF) | `initiativeTransitionService.ts:135,928-931,1023-1074` | 15.09 |
-| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | 🧪 NA STAGINGU — komplet, czeka akcept | `initiativeTransitionConditions.ts:116-125`, i18n EN `:16083` / PL `:15256` | 15.09 |
+| Realizacja | przewód | H1e `CURRENT_GO_DECISION` w wierszu START macierzy przy `ENABLE_LIFECYCLE_GO_GATE=ON` + i18n `CLOSURE_WORK_INCOMPLETE` (warunek włączenia bramki, DEC-507) | Sonnet | H1d, DEC-507 | B3 | START macierzy z warunkiem GO aktualnej decyzji; komunikat CLOSURE po polsku/angielsku | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) (warunek włączenia bramki wg DEC-507 spełniony i włączony) — **obraz:** ten sam co H1b (DEC-507, skrzynka + bramka GO) | DEC-516 · DEC-507 · `ENABLE_LIFECYCLE_GO_GATE`=ON na stagingu · i18n EN `translation.json:16083` / PL `:15256` · `initiativeTransitionConditions.ts:116-125` | 15.09 (akcept) |
 | Realizacja | przewód | H1f poprawki skrzynki v2 po oku CTO (pigułki Menu 3 wyłączone dla `transitionInbox` w `commandRowContent`, surowe kody przejść/obszaru → etykiety i18n przez `initiativeStatusLabels.ts` wydzielone z `InitiativePreviewV3`, 9 brakujących kluczy `initiatives.status.*` dołożonych) | Sonnet | H1b, Z-27 | B4 | zrzuty jasny+ciemny lista/podgląd/OFF (`~/Developer/cto-codex/zrzuty-z27-skrzynka-20260914/v2/`) wysłane właścicielowi | 🧪 NA STAGINGU (flaga **ON**); kluczy `initiatives.status.*` jest **19**, nie 9 | `InitiativesHub.tsx:2934,3215-3231`, `initiativeStatusLabels.ts` (5 powierzchni) | 15.09 |
 | Realizacja | przewód | D-j dyżur Codexa — 4 rodziny martwych porównań legacy poza `initiativeTransitionService` (ten sam kształt jak H1d) | Codex | H1d, KANAL wpis 31 | B | zamiana literałów legacy na kody P12/etapy w `ExecutionReportCron.ts:26`, `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037/1047/1124/1169` | 🔧 **defekt żywy**: warunki zawsze fałszywe (cron ślepy, ROI nie klasyfikuje) | `cron/ExecutionReportCron.ts:25` (nie `services/`), `transformationCaseService.ts:6288/6459/6676`, `resultsROIService.ts:1127`, `planningPortfolioReadService.ts:1037-1169` | 15.09 |
 | Realizacja | wygaszenie | W1 usunięcie Zasoby/Rollout/Summary | Codex F2-2 | Q4 | D | — (higiena) | 🔧 zakładki zdjęte, deep-linki + 4 gałęzie renderu żyją | `executionModuleTabs.ts:14,31`, `ExecutionHub.tsx:6191,6243,6301,6494` | 15.09 |
 | Realizacja | uwagi | U1 kontrakt `relations.emptyLabel` | Sonnet | — | A | — | ✅ ZAAKCEPTOWANE (Szampan D3) | `6a6966b1bb` · `PreviewRelations.tsx:40,161,185` | 14.09 |
 | Realizacja | uwagi | U2 „What's next" w podglądzie Decisions | Sonnet | — | A | zamknięte kanonem (strefa nieobecna z zasady, Decisions bez konwersji) | ✅ ZAAKCEPTOWANE (kanon: strefa nieobecna z zasady) | zrzuty `zrzuty-u2-decisions-20260914/`; uwaga: `dd4fc82b38` to merge linii, nie commit zmiany | 15.09 |
 | Wspólne | — | Silnik raportów (jeden) | Codex P1 | poczta | C | (w obrazie RP1) | 🔧 **nie jest jeden**: 15 plików tras `report*`, ~140 serwisów `*[Rr]eport*`, 12 z własnym `generateReport` | `report-builder.routes.ts` ← `Gateway.ts:269,1200` | 15.09 |
-| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | 🧪 NA STAGINGU (flaga **ON**); **Z-43 kolumny bramek NIEWYKONANE** | `AppRoutes.tsx:1062`, `MyWork/MyProjects.tsx` (0 trafień `gate` w kolumnach) · `/projects` | 15.09 |
+| Wspólne | — | PMO E3 projekty w UI | Codex F2-3 | — | F | lista przefiltrowana projektem | ✅ ZAAKCEPTOWANE (DEC-516, akcept właściciela 15.09 02:00 UTC, na stagingu ON od wdrożenia 6/7) — **obraz:** `zrzuty-s5-pmo-20260914/en/v2/01-en-jasny-lista-podglad.png`, `02-en-ciemny-*`, `07-en-jasny-header-pelny.png`, `08-en-jasny-1280px.png` + żywy `wdrozenie-6-20260915/zrzuty/16-projects-PMO-l6.png` (3 wiersze). **Otwarte mimo ✅:** Z-43 dotyczyło szerokości kolumn panelu bramek (zrobione); **kolumn bramek w samej liście nadal nie ma** — bramki żyją w `ProjectStageGatesPanel` | DEC-516 · `https://staging.consultify.ai/projects` (pozycja „Projects" w menu bocznym: `menuConfig.ts:143`, obecna w żywym chunku `MainLayout-CYiHXr6i.js`) · `GET /api/pmo/projects` = **200** (3 projekty, nazwa systemowa EN po migracji `20262220_f9`) | 15.09 (akcept) |
 | Wspólne | — | S5 E3b PMO czworo oczu `passGate` (Z-24: `requested_by`≠`approved_by`, ciało 403) | Codex | S5 PMO E3, Z-24 | F | 403 z komunikatem, brak samo-zatwierdzenia | 🧪 NA STAGINGU | `stageGateService.ts:509`, `StageGateController.ts:186-193` · `POST /api/stage-gates/:projectId/pass/:gateType` | 15.09 |
 | Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | 🔧 pomiar zrobiony, **adopcja 2/5**, 1 martwy — **było ⬜** | `InitiativeGantt.tsx:87` (2 wołacze); `GanttView.tsx`, `RoadmapGantt.tsx`, `TimelinePlanner.tsx:3843` żywe; `Reports/GanttChart.tsx` MARTWY | 15.09 |
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ 0 kodu; gałęzi `codex/kontrakty-pracy-konsultanta-etap2-20260914` nie ma | grep `consultantWorkContract`/`workContract` = 0 | 15.09 |
@@ -1313,14 +1314,41 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 
 **Liczniki §5 (47 etapów) — PRZELICZONE POMIAREM KODU 15.09.2026, nie meldunkiem.**
 Liczone skryptem po symbolach (`~/Developer/cto-codex/audyt-47-20260915/policz.sh`), pełny dowód
-per wiersz w `~/Developer/cto-codex/audyt-47-20260915/AUDYT.md`. Linia `9badae5335`, staging `df3428e7e0`
-(staging jest przodkiem linii; różnica na `src`/`server`/`Dockerfile.api` = 8 plików, więc **cały
-mierzony kod jest na stagingu**).
+per wiersz w `~/Developer/cto-codex/audyt-47-20260915/AUDYT.md`. Linia `ede0921b20`, **staging
+`9badae5335`** (`/api/health` 15.09 21:23 UTC; wdrożenie 8 weszło — audyt mierzył jeszcze
+`df3428e7e0`, które jest jego przodkiem: delta = 4 commity Wywiad/a11y, żaden plik z 47 wierszy).
 
 | | ✅ | 🧪 | 🔧 | ⬜ | 👁 | 🚀 | ⛔ | razem |
 |---|---|---|---|---|---|---|---|---|
 | **PRZED** (symbole w tabeli, 14.09) | 3 | 19 | 6 | 19 | 0 | 0 | 0 | 47 |
-| **PO** (pomiar 15.09) | **3** | **15** | **23** | **6** | 0 | 0 | 0 | 47 |
+| **PO POMIARZE KODU** (15.09, DEC-529) | 3 | 15 | 23 | 6 | 0 | 0 | 0 | 47 |
+| **PO AKCEPTACH** (15.09 02:00 UTC, DEC-516/DEC-530) | **10** | **10** | **21** | **6** | 0 | 0 | 0 | 47 |
+
+**Siedem wierszy weszło na ✅ za DEC-516** (właściciel: „Akceptuję wszystkie" na 5 obrazach,
+15.09 ~02:00 UTC — KANAL Wpis 70; flagi włączone partiami 1 i 2, wdrożenia 6–8):
+**L2** (pstryczek Current/Archive — był na obrazie 4 przycisków), **A1**, **A2**, **RP1**,
+**H1b**, **H1e**, **PMO E3**. Każdy zmierzony na ŻYWYM stagingu kontem Iriny
+(`~/Developer/cto-codex/irina-20260914/DOSTEP.md`, GET/POST-walidacyjny, User-Agent przeglądarkowy):
+`GET /api/initiatives` 200 · `…/portfolio-scenarios` 200 · `…/portfolio-dispositions` 200 ·
+`POST …/work-reports/preview` 400 VALIDATION_FAILED (bramka flagi przepuszcza) ·
+`GET …/lifecycle-transition-proposals` 200 · `GET /api/pmo/projects` 200 (3 projekty) ·
+`GET /api/v8/interview/assignments/<nieistniejący>/answer-approvals` 404 ASSIGNMENT_NOT_FOUND
+(dowód, że `ENABLE_INTERVIEW_ANSWER_APPROVAL` jest ON — przy OFF byłoby 200 `{approvals:[]}`).
+Flagi `VITE_*` potwierdzone w ŻYWYM bundlu, nie w panelu Railway: `VITE_PMO_PROJECTS:"true"`
+w obiekcie env (`assets/App-IXxVuN9_.js`), `fourButtonsWorkspace` 3 / `initiatives-archive-scope` 1 /
+`initiatives.tabs.workReport` 1 / `initiatives.tabs.transitionInbox` 1 w
+`assets/InitiativesHub-CVFje-Rf.js`, `MODULE_PROJECTS` + `sidebar.projects` w `assets/MainLayout-CYiHXr6i.js`.
+
+**Czego ✅ NIE obejmuje** (świadomie wypisane, żeby akcept nie zamiótł długu):
+prowenencja maszynowa we froncie skrzynki (H1b — nie było jej na zaakceptowanym obrazie),
+„ponowna propozycja" w parkingu (A2 — 0 kodu), archiwizacja wołająca API (L2 — dziś sam toast),
+kolumny bramek w liście projektów (PMO E3). To zostaje otwarte MIMO ✅.
+
+**Z-34 / S1.15 (zatwierdzanie odpowiedzi Wywiadu)** nie jest wierszem §5 — to kryterium MVP;
+jest **ZAMKNIĘTE** w tabeli 16 kryteriów niżej (flaga + polityka org ON, ceremonia mierzalna).
+Zastrzeżenie: panelu zatwierdzania **nikt nie widział na żywym stagingu** (Northwind nie ma
+przydziału z odpowiedziami; `flagi-20260915/README.md`, „Czego NIE udało się pokazać") —
+zaakceptowany obraz był z ewidencji Codexa → pozycja w kolejce akceptów niżej.
 
 *Nagłówek §5 deklarował wcześniej „✅ 2 · 🧪 17 · 🔧 7 · ⬜ 21" — to nie zgadzało się z symbolami we
 własnej tabeli. Kolumna PRZED podaje symbole, nie deklarację.*
@@ -1331,7 +1359,9 @@ własnej tabeli. Kolumna PRZED podaje symbole, nie deklarację.*
 - **🧪 19 → 15**: cztery wiersze meldowane jako „NA STAGINGU" **nie są widoczne** (OB1–OB4), dwa
   zmieniły charakter w dół (B-E0, H1b).
 - **🔧 6 → 23**: tu zatrzymuje się cała praca.
-- **✅ 3 → 3**: **15.09 ani jeden etap §5 nie dostał akceptu właściciela.**
+- **✅ 3 → 3 → 10**: pomiar kodu sam z siebie nie daje akceptu. Dziesięć ✅ jest dopiero po
+  zapisaniu słowa właściciela z 15.09 02:00 UTC jako DEC (DEC-516/DEC-530) — audyt DEC-529 tego
+  zapisu nie miał i dlatego zostawił 3.
 
 **Jedna przyczyna trzyma 11 z 23 wierszy 🔧 — brak `ARG`/`ENV` w `Dockerfile.api`.** `vite build`
 wpala `VITE_*` w czasie budowy; bez `ARG` zmienna z Railway nie dociera i front dostaje `undefined`
@@ -1359,8 +1389,44 @@ przenosi **14 wierszy**: PL1, PL2, OB1–OB4, B-E0, P-E2a/b/c, RA-E4a/b/c/d. Plu
 `pre-push`: „każda `VITE_*` czytana w `src/` ma `ARG` w `Dockerfile.api`". **To NIE zamienia ich w ✅** —
 dopiero wtedy zaczyna się kolejka zrzutów do akceptu, jeden ekran po drugim (zakaz masowego włączania).
 
-Z tego do **MVP** (rdzeń + pilotaż) należą tylko L1, L2, U1, U2 (3 ✅, 1 🧪); pozostałe **43 etapy to
-FALA 2** (0 ✅, 14 🧪, 23 🔧, 6 ⬜).
+Z tego do **MVP** (rdzeń + pilotaż) należą L1, L2, U1, U2 — **4 ✅, 0 🧪**; pozostałe **43 etapy to
+FALA 2** (6 ✅, 10 🧪, 21 🔧, 6 ⬜).
+
+---
+
+### Kolejka akceptów (1 ekran dziennie)
+
+Zasada (reguła 9 CLAUDE.md — zakaz masowego włączania): **jeden ekran dziennie, jeden obraz,
+EN + motyw jasny, w PEŁNEJ powłoce aplikacji (Menu 1/2/3 + treść), z żywego stagingu, nie z harnessu.**
+Zrzut robi i ogląda CTO, zanim zobaczy go właściciel (reguła 7). Właściciel odpowiada Tak/Nie.
+Baza: dziesięć wierszy **🧪** z AUDYT.md (`~/Developer/cto-codex/audyt-47-20260915/AUDYT.md`)
++ jedna pozycja spoza tabeli (zmiana w JUŻ zaakceptowanym ekranie) i jedna z Wywiadu (Z-34).
+Wszystkie pozycje kolejki są dziś widoczne — **żadna nie czeka na `ARG` w `Dockerfile.api`**.
+**Aktualizacja tego samego dnia:** brak `ARG` przestał być blokerem *na linii* — fala **F11**
+(`d13dfc758b`) dołożyła `ARG`+`ENV` dla **15** flag `VITE_*` i bramkę `check:flagi:dockerfile`
+(pre-push + CI). To jeszcze **nie jest na stagingu** i **żadnej flagi nie włącza** — wartości
+zostają OFF do akceptu. Po wdrożeniu F11 + sześciu zmiennych serwerowych do kolejki wejdzie
+**14 wierszy 🔧**: PL1, PL2, OB1–OB4, B-E0, P-E2a/b/c, RA-E4a–d. Dopiero wtedy — jeden po drugim,
+nadal jeden ekran dziennie (reguła 9: zakaz masowego włączania).
+
+| # | Data | Wiersz | Co pokazać (JEDEN obraz, EN/jasny, w powłoce) | URL | Flaga, która musi być ON | Co blokuje zrzut dziś |
+|---|---|---|---|---|---|---|
+| 1 | **16.09** | *(poza §5)* **Menu 2 Inicjatyw — nowy ster** | pasek modułu: 3 pigułki (Initiatives · Plan · Load) + rozwinięty przełącznik „Status" z pozycjami „Work report" i „For approval" + widoczne CTA „New initiative" przy 1440 px | `/initiatives` | `VITE_INITIATIVES_FOUR_BUTTONS` + `VITE_INITIATIVES_WORK_REPORT` + `VITE_TRANSITION_INBOX` (wszystkie ON) | **nic — zrzut gotowy** (`wdrozenie-7-20260915/zrzuty/04-initiatives-status.png`). To zmiana ekranu, który właściciel JUŻ zaakceptował (`6e3924cc38`, `df3428e7e0`) → musi ją zobaczyć, zanim ✅ dla RP1/H1b będzie pełne |
+| 2 | **16.09** | **B-E1** pozycja na osi czasu + 4 widoki | Bank Realizacji w czterech widokach (lista · kanban · kalendarz · Gantt), jeden obraz z przełącznikiem widoków | `/execution` (Bank) | **żadna** (bez flagi — jedyny wiersz Realizacji faktycznie widoczny) | kolumny PROGRESS/FORECAST/VARIANCE puste i „VARIAN" ucięty (`wdrozenie-6.../MELDUNEK.md` w. 07) — **naprawić PRZED zrzutem**, inaczej pokazujemy zepsuty ekran |
+| 3 | **16.09** | **H1f** skrzynka v2 — etykiety i18n | skrzynka „For approval": lista + podgląd z etykietami statusów z `initiativeStatusLabels.ts` (bez surowych kodów), jasny | `/initiatives?tab=transitionInbox` | `VITE_TRANSITION_INBOX` | zrzuty v2 istnieją, ale są z **harnessu** (`zrzuty-z27-skrzynka-20260914/v2/`); na żywo skrzynka jest PUSTA → potrzebna jedna propozycja przejścia w Northwind (dane, nie kod) |
+| 4 | 17.09 | **L3** filtr projektami | lista Inicjatyw z rozwiniętym filtrem „Project": „All projects · Digital & Automation Roadmap · Operational Excellence Programme · Portfolio — direct initiatives" — nazwy, zero UUID | `/initiatives` | `VITE_INITIATIVES_FOUR_BUTTONS` | filtr to natywny `<select>` — opcje są overlayem systemowym, nie łapią się na zrzut Playwrighta (`wdrozenie-7.../README.md`); trzeba zrzutu z realnej przeglądarki albo zamiany na `SelectField` |
+| 5 | 17.09 | **PL3** oś czasu 1/3/6/12 + kolor zamrożenia | Plan: przełącznik horyzontu na „3 mies." + Gantt z pozycją zamrożoną (navy) | `/initiatives?tab=plan` | **żadna** (kod poza blokiem flagi) | dane: potrzebna inicjatywa z `frozenId` w Northwind |
+| 6 | 17.09 | **H1c** parytet kod/etap w 4 miejscach | to nie ekran — dowód RealPG: APPROVED/SCHEDULED → IN_EXECUTION + wiersz w `initiative_handoffs`; obraz = podgląd inicjatywy PO przejściu | `/initiatives` → podgląd | `ENABLE_LIFECYCLE_GO_GATE` | wykonanie przejścia na stagingu wymaga roli PROJECT_SPONSOR/STEERING_COMMITTEE (Z-24) — Irina ma ADMIN |
+| 7 | 18.09 | **H1** + **H1d** bramka GO realnie blokuje | komunikat blokady przy próbie startu bez aktualnej decyzji GO (`CLOSURE_WORK_INCOMPLETE` / warunek `CURRENT_GO_DECISION`), EN | `/initiatives` → podgląd → start | `ENABLE_LIFECYCLE_GO_GATE` (ON) | scenariusz ról jak w #6; bez tego nie da się pokazać BLOKADY, a nie samego przycisku |
+| 8 | 18.09 | **S5 E3b** czworo oczu `passGate` | 403 `SEPARATION_OF_DUTIES_REQUIRED` z czytelnym komunikatem w panelu bramek projektu | `/projects` → podgląd projektu | `VITE_PMO_PROJECTS` | trasa żyje (`POST /api/stage-gates/:id/pass/:gate` = 400 walidacji), ale potrzebne dwa konta (requested_by ≠ approved_by) |
+| 9 | 18.09 | **H2** `initiative_handoffs` zapis/odczyt | ten sam artefakt w nowej fazie — podgląd inicjatywy z historią przekazania | `/initiatives` → podgląd | **żadna** | pomiar na żywej bazie (czy tabela ma wiersze) NIEWYKONANY — zrobić przed zrzutem |
+| 10 | po 18.09 | **RP2** „kto zalega / na czyje decyzje czekamy" | sekcja zaległości w raporcie z pracy | `/initiatives?tab=workReport` | `VITE_INITIATIVES_WORK_REPORT` + `ENABLE_INITIATIVES_WORK_REPORT` | **dziś istnieje TYLKO w PDF**, nie ma widoku w UI — najpierw kod, potem obraz |
+| 11 | po 18.09 | *(poza §5)* **Z-34 / S1.15** panel zatwierdzania odpowiedzi Wywiadu | panel recenzenta z odpowiedzią do zatwierdzenia/odesłania, EN | `/interview` → przydział | `ENABLE_INTERVIEW_ANSWER_APPROVAL` (ON) + polityka org | Northwind nie ma przydziału z odpowiedziami, a tworzenie rekordu testowego na stagingu jest zakazane → potrzebny **zasiew danych demo**, nie sonda |
+
+**Wniosek operacyjny:** siedem z jedenastu pozycji nie blokuje kod, tylko **brak danych na stagingu**
+(pusta skrzynka, brak zamrożonej pozycji, brak przydziału Wywiadu, dwa konta do czworga oczu).
+Najtańszy ruch, który odblokowuje kolejkę na cały tydzień, to **jedna paczka zasiewu Northwind**
+pod te scenariusze — tańsza niż osobne dyżury per ekran.
 
 ---
 
