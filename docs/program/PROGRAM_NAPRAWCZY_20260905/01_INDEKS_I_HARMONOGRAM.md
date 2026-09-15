@@ -317,6 +317,37 @@ gałęzi już scalonych do rc2 (dysk pełny). (4) Codex dostaje duże zadania fa
 Znaczniki odmrożenia muszą wskazywać moduł z `docs/program/MVP_FINAL_ZAMROZONE.json` — Finanse nie są
 tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
+## 15.09.2026
+
+**DEC-529 (CTO na mandacie, 15.09) — §5 przeliczone pomiarem kodu; od teraz statusy zmienia tylko dowód.**
+§5 `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` (47 etapów) przeliczona **pomiarem kodu na linii
+`9badae5335` i na żywym stagingu `df3428e7e0`**, nie meldunkiem wykonawcy. Pełny dowód per wiersz:
+`~/Developer/cto-codex/audyt-47-20260915/AUDYT.md`; liczniki liczy skrypt `policz.sh` po symbolach.
+
+**Reguła obowiązująca od teraz:** *status etapu w §5 zmienia WYŁĄCZNIE dowód — `plik:linia` dla kodu
+i wołacza oraz URL trasy/ekranu na stagingu (albo nazwa flagi z jej stanem i `ARG` w `Dockerfile.api`).
+Meldunek wykonawcy („zrobione", „wdrożone", „na stagingu") nie jest dowodem i sam nie przesuwa statusu.*
+Awans do ✅ wymaga numeru DEC akceptu właściciela na zrzucie — nie wystarczy 🧪.
+
+**Wynik przeliczenia:** PRZED ✅ 3 · 🧪 19 · 🔧 6 · ⬜ 19 → PO **✅ 3 · 🧪 15 · 🔧 23 · ⬜ 6**.
+Trzynaście wierszy ⬜ miało w kodzie więcej, niż mówił rejestr; cztery wiersze 🧪 (OB1–OB4) i dwa
+kolejne (B-E0, H1b) były **zawyżone** — na stagingu ich nie widać. **Ani jeden etap nie awansował do ✅.**
+
+**Przyczyna systemowa:** brak `ARG`/`ENV` w `Dockerfile.api` — **15 realnych flag produktowych
+`VITE_*` czytanych w `src/` nie ma `ARG`**, więc front dostaje `undefined` niezależnie od zmiennej na
+Railway. Bezpiecznik do `pre-push`: „każda `VITE_*` czytana w `src/` ma `ARG` w `Dockerfile.api`".
+**Najgroźniejszy przypadek: `VITE_MODULE_MEETINGS=true` jest ustawione na stagingu i nie działa** —
+stąd zgłoszenie P-T23 i ósmy ekran kryterium S1.5.
+
+**Do §5 dołożona druga tabela „Pojemnik 1 — co realnie ubywa"**: 16 kryteriów MVP (9/16 → **10/16**;
+jedyny realny ubytek 15.09 to **S1.15** — `ENABLE_INTERVIEW_ANSWER_APPROVAL=true` i ceremonia mierzalnie
+działa), 46 zgłoszeń pilotażu (**19 rozliczonych / 27 otwartych**) i dług językowy z
+`docs/program/JEZYK_EN_PL_20260908/baseline.json` (K4pl **22**, K8spl **91**, K9pPL **33**).
+
+**Do dopisania w rejestrze (jeszcze nie ma):** 8 zgłoszeń z 14–15.09 — P-P25, P-P26, P-J01, P-J02,
+P-T23, P-I01, P-I02, P-I03 (`~/Developer/cto-codex/feedback-triaz-20260915/TRIAZ.md`); 4 z nich to nie-defekty.
+
+
 ## 14.09.2026
 
 **Stan poranny 14.09:** staging = demo = `90833bc94a`; linia `0de4dc9c66`; tag `staging-deployed` = `90833bc94a`. Pilotaż w bazie stagingu: logowania od 13.09 tylko Paweł (7×, ostatnie 03:39 UTC 14.09) i Justyna (2×); Tomasz J./Tomasz L./Katarzyna 0 logowań (Tomek testował na koncie gmail, poza organizacją DBR77), Iriny brak konta; 0 rekordów, 0 `feedback_items`. O 03:42 UTC circuit breaker AI OPEN (deepseek 10 błędów, openai 11) w rozmowie Pawła z Teresą + 9/11 wywołań 404 na `/api/v8/*` — diagnoza u Szampana (gałąź `integracja/kandydat-pilot-blokery-20260913`). Dysk: 15→66 GiB po usunięciu 13 worktree `wt/*` (kopie na `origin/backup/*`, gałęzie lokalne zostały) + cache + 6 sierocych wolumenów. Dwie sesje nadzorcze równolegle: Szampan domyka paczkę 5 (scalona `d73ccb90a7`, odbiór w toku), pilot-blokery, drobne (`b9164136fa`), higienę DBR77 dry-run; sesja 14.09 (CTO Fable) = jedyny push/workflow/tag/rejestr/KANAL. DEC-494 (13.09) = TAK na podglądy — K5 zamknięte.
