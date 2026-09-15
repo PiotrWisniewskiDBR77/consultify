@@ -1,52 +1,52 @@
 {
-  "schemaVersion": 4,
-  "package": "K4 v4 K8sen W73 full Polish sink localization",
+  "schemaVersion": 5,
+  "package": "K4 v5 K8sen W73 recursive full Polish sink localization",
   "branch": "codex/c-k4-k8sen-20260915",
   "exactBase": "775947993ef96b1fcbd4e96fa725a48bae9dc7b3",
-  "holdReview": "7b5d27650f899a40c07f91fb62f3f3e539579572",
-  "testedCandidate": "611fd20727e7952a56f7a4a06e17100139007b9a",
-  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V4",
+  "holdReview": "4c658f01fe448e882d72e7cc4d8705c186ef368c",
+  "testedCandidate": "9cc378cacecf05455e7638af283afa69a67c6fba",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_V5",
   "measurement": {
     "K8senBeforeV4": 1584,
-    "K8senAfterV4": 0,
-    "realSinkRowsB": 1577,
-    "uniqueRealSinkMessages": 1317,
-    "fullPolishRows": 1577,
-    "mixedOutputs": 0,
-    "knownEnglishProse": 0,
-    "lastResidualReviewed": 35,
-    "lastResidualLocalizedB": 29,
-    "lastResidualTechnicalA": 6,
-    "realSinksRemaining": 0
+    "K8senAfterV5": 0,
+    "realSinkRowsB": 1528,
+    "uniqueRealSinkMessages": 1270,
+    "fullPolishRows": 1528,
+    "technicalCodeRows": 48,
+    "parserFragmentRows": 2,
+    "otherClassARows": 6,
+    "classBPolishEqualsEnglish": 0,
+    "catalogRows": 2118,
+    "catalogUnique": 2118,
+    "catalogDuplicateKeys": 0,
+    "dynamicClaimOutcomesLocalized": "3/3",
+    "realSinksRemaining": 0,
+    "unknown": 0
   },
   "catalog": {
-    "batches": "14-36",
+    "batches": "01-37",
     "batchLimit": 60,
-    "batchCounts": "14-34:60; 35:58; 36:35",
-    "specificityOrdering": true
+    "specificityOrdering": true,
+    "recursiveCapturedPayload": true
   },
   "validation": {
     "ownerMeter": "72/72 PASS retry=0",
-    "ownedFocused": "43/43 PASS retry=0 (7 files)",
-    "combinedFocused": "46/48; only two inherited email sender reds",
-    "exactBaseEmailReproduction": "775947993e: 2 failed / 2 passed, same two sender names",
-    "superadminPublish": "PASS exact full PL, HTTP 500 and PLAYBOOK_PUBLISHED preserved",
-    "meetingExecutorAdapterHttp400": "PASS exact PL payload, status/code preserved",
-    "usersLanguageQueryContract": "PASS real verifyToken",
+    "ownedFocused": "49/49 PASS retry=0 (8 files)",
+    "localizer": "12/12 PASS; three full DCF payload probes",
+    "combinedFocused": "52/54; only two inherited email sender reds",
+    "exactBaseEmailReproduction": "same two sender failures on exact base",
     "serverTypeScriptErrors": 0,
     "frontendTypeScriptErrors": 177,
     "frontendDelta": "none",
-    "languageRatchet": "PASS K8sen 0",
+    "languageRatchet": "PASS K8sen 0; six exact technical/parser source shapes classified",
     "listCanon": "349/349 PASS",
     "artifact": "8/8; R2+R3 0/0; danger 117/117 PASS",
-    "productionBuild": "PASS 10754 modules, 34.35s, sequential heap 8192MB"
+    "productionBuild": "PASS inherited final v4 content run: 10754 modules; no frontend/product delta after; final v5 server tsc 0"
   },
   "inheritedReds": {
     "emailSender": {
       "count": 2,
-      "baseTestSha256": "dc22ba3e64dbcaa45fcf9ab6f5b39cfa85543330b05170e8e559ac53d627d6e7",
-      "candidateTestSha256": "a651f057acdeb1570f01dd44cec1e972c88131d1ac5ba42df664ae01e8067cd3",
-      "reason": "base and candidate both receive display-name envelope while legacy assertions expect bare mailbox; K4 changes locale subject only"
+      "reason": "exact base and candidate receive display-name envelope while legacy assertions expect bare mailbox; K4 does not change smtpConfig.from"
     }
   },
   "boundaries": {
@@ -55,30 +55,30 @@
     "forbiddenFilesChanged": false
   },
   "inventoryPolicy": {
-    "count": 79,
+    "count": 81,
     "hash": "sha256",
     "manifestSelfExcluded": true
   },
   "inventory": [
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73.md",
-      "bytes": 3023,
-      "sha256": "67b4d3da611d3558c8daa89a1174a8dc81d1d3ce95faab1cc6a3a0bd8f0468a2"
+      "bytes": 3472,
+      "sha256": "c2a40df9bbfe5ad13dd1d1ccef8d463095ef26ec30d335919bc92042f80379d2"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_CLASSIFICATION.json",
-      "bytes": 579733,
-      "sha256": "9016de326d6940e006d17bc002403ecb4d8f9e30a00258e86ba1b44e497b9ba2"
+      "bytes": 579222,
+      "sha256": "8c1075ad51a26d185fb1d3e47e1d1b728b612e01dadfce83e7ef210ec19f0cac"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_REMAINING_35.json",
-      "bytes": 26780,
-      "sha256": "7e8833b970976203f6b92653e0b64750815791a1176937f738c4fd13e47a49f5"
+      "bytes": 26885,
+      "sha256": "519d32399c26db51d2fb6eab5845419165a2c4b3529b1896a6f6b797f4198f78"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/K4_K8SEN_W73_V4_TRANSLATION_WORKING.json",
-      "bytes": 205091,
-      "sha256": "1ceee648aca9941e7b8b1118232402a82d9e029d430fe9f7ad53be6ef4bbf637"
+      "bytes": 198110,
+      "sha256": "244b836ed49f30704ada37b774c2feb2ff94a27d2d0888dc14b0d8d57f5c5338"
     },
     {
       "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
@@ -94,6 +94,11 @@
       "path": "scripts/i18n/pomiar-jezyka.mjs",
       "bytes": 80472,
       "sha256": "944693a0f4daca896cd580dc0f6c5243f966588006be636d9583ce46e0dcb67d"
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.wyjatki.json",
+      "bytes": 21341,
+      "sha256": "ed5ee954121753443d2ec8c320a42b904d1a7f18b950f220a6a9a8c678aaf2fc"
     },
     {
       "path": "server/src/Gateway.ts",
@@ -122,8 +127,8 @@
     },
     {
       "path": "server/src/i18n/__tests__/serverPayloadLocalizer.test.ts",
-      "bytes": 5719,
-      "sha256": "a8d79cc79a83517db5acd0c0abc7755aadf4c477a93658654438b94caac42e04"
+      "bytes": 8793,
+      "sha256": "618d834831a45b694258e2720a07e660fb183ad7b62ca5e94988419d6efa9961"
     },
     {
       "path": "server/src/i18n/serverErrorMessages.ts",
@@ -132,8 +137,8 @@
     },
     {
       "path": "server/src/i18n/serverPayloadLocalizer.ts",
-      "bytes": 5901,
-      "sha256": "0d1d56f306813c9991141732666be3bdc1931911de06ff0ebab094ca05d3e749"
+      "bytes": 6189,
+      "sha256": "b4372ef6ea482bf2e684b0130514f30c05dfbe9053408457fd1cb06a03a5a58f"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch01.ts",
@@ -197,13 +202,13 @@
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch13.ts",
-      "bytes": 8069,
-      "sha256": "d6fcfcffe84a8270ec2e44ac475e748afe9f4a510579de911d6dea6c6bdd4603"
+      "bytes": 7925,
+      "sha256": "e413f7383f350a5a6e9e412be0f548124e1f5c13dea413940ffef6a298ccd9d2"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch14.ts",
-      "bytes": 8905,
-      "sha256": "f854f559ebeb61b68a9b6bc83d3677d096dc3de29e211e1de3638b2942052374"
+      "bytes": 8787,
+      "sha256": "ecea7e07300cf66063ff1b64f3247025a9f5063653c33bb0f766ef72b8474dba"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch15.ts",
@@ -277,8 +282,8 @@
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch29.ts",
-      "bytes": 8785,
-      "sha256": "84617f49bbf4806a5d66a2d81fb2b8b84b499e3da742873b0c50ebfeb4333c57"
+      "bytes": 8663,
+      "sha256": "a2fc87d58ef3e739c69c9244f217595ee37c3fb21e3222a2f41a4f07bdb26a9e"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch30.ts",
@@ -312,13 +317,18 @@
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/batch36.ts",
-      "bytes": 10803,
-      "sha256": "0438920b346f0404d6c822c941d754c556c2f32dede7ecc4aeddb2a2cbd55431"
+      "bytes": 9875,
+      "sha256": "9901c2adad18cf485c7a8f74311751bfbdca77e108512edf04a16ff35abc74ba"
+    },
+    {
+      "path": "server/src/i18n/serverPayloadMessages/batch37.ts",
+      "bytes": 1542,
+      "sha256": "ba9410c2bc969e7129a0b81e65131bb7346bd8ac262e5a647c2acfc6f27c24d1"
     },
     {
       "path": "server/src/i18n/serverPayloadMessages/index.ts",
-      "bytes": 3914,
-      "sha256": "29532d3c0b7130bf96d63ca3e9349f80a022cb7e5cbc7259d4dad515be40b5f8"
+      "bytes": 4018,
+      "sha256": "7ec2a7a7ad85a93c351c3c828ca7997243b81f58c122ead29555ad1976e8b0a8"
     },
     {
       "path": "server/src/middleware/__tests__/appErrorMapper.test.ts",
