@@ -708,7 +708,11 @@ const BusinessMetricsView: React.FC = () => {
                     setNewMetric({ ...newMetric, calculationFormula: e.target.value })
                   }
                   className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-sm"
-                  placeholder={tlumaczPozaHookiem("superadmin.businessMetrics.sUMRevenueCOUNTUsers", "SUM(revenue) / COUNT(users)")}
+                  placeholder={tlumaczPozaHookiem(
+                    'superadmin.businessMetrics.sUMRevenueCOUNTUsers',
+                    'SUM(revenue) / COUNT(users)',
+                    { formula: 'SUM(revenue) / COUNT(users)' }
+                  )}
                 />
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   SQL-like formula for automatic calculation

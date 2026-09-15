@@ -67,9 +67,6 @@ type OrganizationRow = Organization & {
   organization_name?: string;
 };
 
-const DESTRUCTIVE_DELETION_DISABLED_COPY =
-  'Automated deletion is disabled until retention and legal-hold rules are approved.';
-
 type JsonRecord = Record<string, unknown> & {
   data?: JsonRecord | unknown[];
 };
@@ -123,6 +120,7 @@ const getAccessCodesPayload = (value: unknown) =>
   getListPayload<AccessCode>(value, ['codes', 'accessCodes', 'items']);
 
 export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUsers }) => {
+  const activeLocale = localeListy();
   const [activeTab, setActiveTab] = useState<ActiveTab>('organizations');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -534,7 +532,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     () => [
       {
         id: 'organization',
-        label: 'Organization',
+        label: tlumaczPozaHookiem('superadmin.organizations.organization', 'Organization'),
         sortable: true,
         sortAccessor: (row: TableRow) => getOrgName(row as unknown as Organization),
         render: (row: TableRow) => {
@@ -551,7 +549,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       },
       {
         id: 'users',
-        label: 'Users',
+        label: tlumaczPozaHookiem('superadmin.organizations.users', 'Users'),
         align: 'right',
         sortable: true,
         sortAccessor: (row: TableRow) => (row as unknown as Organization).user_count,
@@ -563,7 +561,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       },
       {
         id: 'plan',
-        label: 'Plan',
+        label: tlumaczPozaHookiem('superadmin.organizations.plan', 'Plan'),
         filterable: true,
         filterOptions: [
           { value: 'free', label: 'Free' },
@@ -596,12 +594,21 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       },
       {
         id: 'status',
-        label: 'Status',
+        label: tlumaczPozaHookiem('superadmin.organizations.status', 'Status'),
         filterable: true,
         filterOptions: [
-          { value: 'active', label: 'Active' },
-          { value: 'pending', label: 'Pending' },
-          { value: 'blocked', label: 'Blocked' },
+          {
+            value: 'active',
+            label: tlumaczPozaHookiem('superadmin.organizations.active', 'Active'),
+          },
+          {
+            value: 'pending',
+            label: tlumaczPozaHookiem('superadmin.organizations.pending', 'Pending'),
+          },
+          {
+            value: 'blocked',
+            label: tlumaczPozaHookiem('superadmin.organizations.blocked', 'Blocked'),
+          },
         ],
         render: (row: TableRow) => {
           const org = row as unknown as Organization;
@@ -612,21 +619,31 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
               className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
             >
-              <option value="active">Active</option>
+              <option value="active">
+                {tlumaczPozaHookiem('superadmin.organizations.active', 'Active')}
+              </option>
               <option value="pending">{tlumaczPozaHookiem("superadmin.organizations.pending", "Pending")}</option>
-              <option value="blocked">Blocked</option>
+              <option value="blocked">
+                {tlumaczPozaHookiem('superadmin.organizations.blocked', 'Blocked')}
+              </option>
             </select>
           ) : (
             <span className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}>
               {org.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
-              {org.status}
+              {org.status === 'active'
+                ? tlumaczPozaHookiem('superadmin.organizations.active', 'Active')
+                : org.status === 'pending'
+                  ? tlumaczPozaHookiem('superadmin.organizations.pending', 'Pending')
+                  : org.status === 'blocked'
+                    ? tlumaczPozaHookiem('superadmin.organizations.blocked', 'Blocked')
+                    : org.status}
             </span>
           );
         },
       },
       {
         id: 'discount',
-        label: 'Discount',
+        label: tlumaczPozaHookiem('superadmin.organizations.discount', 'Discount'),
         render: (row: TableRow) => {
           const org = row as unknown as Organization;
           const isEditing = editingOrgId === org.id;
@@ -661,7 +678,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       },
       {
         id: 'created',
-        label: 'Created',
+        label: tlumaczPozaHookiem('superadmin.organizations.created', 'Created'),
         sortable: true,
         sortAccessor: (row: TableRow) => (row as unknown as Organization).created_at,
         render: (row: TableRow) => (
@@ -672,7 +689,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       },
       {
         id: 'actions',
-        label: 'Actions',
+        label: tlumaczPozaHookiem('superadmin.organizations.actions', 'Actions'),
         align: 'right',
         render: (row: TableRow) => {
           const org = row as unknown as Organization;
@@ -733,7 +750,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         },
       },
     ],
-    [editingOrgId, editForm, processingId, onViewUsers]
+    [activeLocale, editingOrgId, editForm, processingId, onViewUsers]
   );
 
   const organizationRowMenu = (row: TableRow): StandardRowMenu => {
@@ -1041,7 +1058,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
               <Building2 size={20} className="text-c-text" />
             </div>
-            Organizations
+            {tlumaczPozaHookiem('superadmin.organizations.title', 'Organizations')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
             {tlumaczPozaHookiem("superadmin.organizations.manageOrganizationsSubscriptionsAndAccessRequests", "Manage organizations, subscriptions, and access requests")}
@@ -1053,7 +1070,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             position="header-inline"
             size="md"
             showLabel
-            label="Help"
+            label={tlumaczPozaHookiem('superadmin.organizations.help', 'Help')}
           />
           <button
             onClick={fetchData}
@@ -1061,7 +1078,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 rounded-lg text-sm transition-colors border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-white/10 disabled:opacity-60"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh
+            {tlumaczPozaHookiem('superadmin.organizations.refresh', 'Refresh')}
           </button>
         </div>
       </div>
@@ -1101,7 +1118,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           }`}
         >
           <Building2 size={16} />
-          All Organizations
+          {tlumaczPozaHookiem('superadmin.organizations.allOrganizations', 'All Organizations')}
           <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">
             {organizations.length}
           </span>
@@ -1115,7 +1132,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           }`}
         >
           <Clock size={16} />
-          Pending Requests
+          {tlumaczPozaHookiem('superadmin.organizations.pendingRequests', 'Pending Requests')}
           {pendingRequestsCount > 0 && (
             <span className="ml-1 bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold">
               {pendingRequestsCount}
@@ -1131,7 +1148,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           }`}
         >
           <Key size={16} />
-          Access Codes
+          {tlumaczPozaHookiem('superadmin.organizations.accessCodes', 'Access Codes')}
         </button>
       </div>
 
@@ -1147,7 +1164,10 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               />
               <input
                 type="text"
-                placeholder="Search organizations..."
+                placeholder={tlumaczPozaHookiem(
+                  'superadmin.organizations.searchPlaceholder',
+                  'Search organizations...'
+                )}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={!!loadErrors.organizations}
@@ -1160,7 +1180,10 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             role="status"
             className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200"
           >
-            {DESTRUCTIVE_DELETION_DISABLED_COPY}
+            {tlumaczPozaHookiem(
+              'superadmin.organizations.deletionDisabled',
+              'Automated deletion is disabled until retention and legal-hold rules are approved.'
+            )}
           </div>
 
           {/* Organizations Table */}

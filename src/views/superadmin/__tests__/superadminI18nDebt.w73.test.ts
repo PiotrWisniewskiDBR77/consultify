@@ -37,12 +37,50 @@ describe('W73 K2 SuperAdmin language debt', () => {
       .map((match) => match[1]);
 
     expect(keys.length).toBeGreaterThan(500);
+    const localeInvariantValues = new Set([
+      'superadmin.organizations.plan',
+      'superadmin.organizations.status',
+    ]);
+
     for (const key of keys) {
       const english = get(en, key);
       expect(typeof english, `${key} missing in EN`).toBe('string');
       expect(typeof get(pl, key), `${key} missing in PL`).toBe('string');
-      expect(get(pl, key), `${key} still equals EN`).not.toBe(english);
+      if (!localeInvariantValues.has(key)) {
+        expect(get(pl, key), `${key} still equals EN`).not.toBe(english);
+      }
     }
+  });
+
+  it('preserves domain meaning and technical formula identifiers in Polish', () => {
+    const pl = locale('pl');
+    const value = (key: string) => get(pl, key);
+
+    expect(value('superadmin.moduleAccessControl.createUpdateGrant')).toBe(
+      'Nadaj / zaktualizuj uprawnienie'
+    );
+    expect(value('superadmin.presentationGovernanceAlertSubscriptions.thisIsTheOnlyTimeYouWill')).toContain(
+      'Panel ujawnienia'
+    );
+    expect(value('superadmin.presentationGovernanceAlertSubscriptions.rotationImmediatelyInvalidatesThePreviousSecretOutbound')).toContain(
+      'Rotacja'
+    );
+    expect(value('superadmin.featureUpdatesAdmin.buildTheMessageTargetTheRightAudience')).toContain(
+      'wybierz właściwych odbiorców'
+    );
+    expect(value('superadmin.businessMetrics.sUMRevenueCOUNTUsers')).toBe('{{formula}}');
+    expect(
+      fs.readFileSync(
+        path.join(repoRoot, 'src/views/superadmin/analytics/BusinessMetricsView.tsx'),
+        'utf8'
+      )
+    ).toContain("formula: 'SUM(revenue) / COUNT(users)'");
+
+    const superadminPl = JSON.stringify((pl.superadmin ?? {}) as LocaleTree);
+    expect(superadminPl).not.toContain('Przegrany');
+    expect(superadminPl).not.toContain('Panel ościeżnicy');
+    expect(superadminPl).not.toContain('kieruj reklamy');
+    expect(superadminPl).not.toContain('Aż do');
   });
 
   it('uses the account locale for every measured date and number formatter in the owned paths', () => {

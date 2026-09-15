@@ -3807,7 +3807,24 @@
     "organizations": {
       "pending": "Pending",
       "manageOrganizationsSubscriptionsAndAccessRequests": "Manage organizations, subscriptions, and access requests",
-      "pendingOrganizationRequests": "Pending Organization Requests"
+      "pendingOrganizationRequests": "Pending Organization Requests",
+      "organization": "Organization",
+      "users": "Users",
+      "plan": "Plan",
+      "status": "Status",
+      "active": "Active",
+      "blocked": "Blocked",
+      "discount": "Discount",
+      "created": "Created",
+      "actions": "Actions",
+      "title": "Organizations",
+      "help": "Help",
+      "refresh": "Refresh",
+      "allOrganizations": "All Organizations",
+      "pendingRequests": "Pending Requests",
+      "accessCodes": "Access Codes",
+      "searchPlaceholder": "Search organizations...",
+      "deletionDisabled": "Automated deletion is disabled until retention and legal-hold rules are approved."
     },
     "overview": {
       "systemDashboardAndRealTimeInsights": "System dashboard and real-time insights"
