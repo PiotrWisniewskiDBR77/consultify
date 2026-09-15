@@ -28,7 +28,32 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { ensureProjectOwnerMembership } from './projectOwnerMembershipService.js';
 
-export const SYSTEM_PORTFOLIO_PROJECT_NAME = 'Portfel — inicjatywy bezpośrednie';
+/**
+ * Etykieta WYSWIETLANA kontenera systemowego inicjatyw.
+ *
+ * ★ To NIE jest klucz wyszukiwania. Kluczem jest kolumna `is_system`
+ * (partial unique index `uq_projects_org_system_portfolio`, migracja 912) —
+ * patrz `resolveOrCreateSystemPortfolioProject` nizej, ktory SELECTuje po
+ * `organization_id` + `is_system`, nigdy po nazwie. Dlatego zmiana tej stalej
+ * (i migracja 20262220 przestawiajaca istniejace wiersze) NIE MOZE
+ * wyprodukowac duplikatu: unikat trzyma indeks, nie tekst.
+ *
+ * EN-first (DEC-461, wlasciciel 10.09.2026): oprogramowanie i dane pokazowe po
+ * angielsku. Stara polska etykieta zostaje ponizej WYLACZNIE po to, zeby
+ * migracja danych i ewentualny rollback mialy jeden adres prawdy zamiast
+ * przepisanego z pamieci literalu.
+ */
+export const SYSTEM_PORTFOLIO_PROJECT_NAME = 'Portfolio — direct initiatives';
+
+/** Etykiety uzywane przed F9 (15.09.2026) — tylko do migracji/rollbacku. */
+export const SYSTEM_PORTFOLIO_PROJECT_LEGACY_NAMES = [
+  'Portfel — inicjatywy bezpośrednie',
+] as const;
+
+/** Opis kontenera — jak wyzej, etykieta dla czlowieka, nie klucz. */
+export const SYSTEM_PORTFOLIO_PROJECT_DESCRIPTION =
+  'System container for initiatives created without an assigned project (Zwornik Delta C). ' +
+  'Move them to the right project via "Unassigned" → assign.';
 
 /** Real, grep-able flag check — NOT a phantom. Default ON per D-J. */
 export function isRequireInitiativeProjectEnabled(): boolean {
@@ -79,7 +104,7 @@ export async function resolveOrCreateSystemPortfolioProject(
         id,
         orgId,
         SYSTEM_PORTFOLIO_PROJECT_NAME,
-        'Kontener systemowy dla inicjatyw utworzonych bez przypisanego projektu (Zwornik Delta C). Przenieś je do właściwego projektu przez „Nieprzypisane” → przypisz.',
+        SYSTEM_PORTFOLIO_PROJECT_DESCRIPTION,
         opts.createdBy ?? null,
       ]
     );
@@ -164,6 +189,8 @@ export async function resolveInitiativeProjectId(
 
 export default {
   SYSTEM_PORTFOLIO_PROJECT_NAME,
+  SYSTEM_PORTFOLIO_PROJECT_LEGACY_NAMES,
+  SYSTEM_PORTFOLIO_PROJECT_DESCRIPTION,
   isRequireInitiativeProjectEnabled,
   resolveOrCreateSystemPortfolioProject,
   resolveInitiativeProjectId,
