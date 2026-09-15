@@ -315,49 +315,49 @@ export function renderSponsorOnePagerMarkdown(data: SponsorOnePagerData): Record
   const header = [
     `# Sponsor One-Pager — ${threeAxis.scope.level}`,
     '',
-    `**Stan na:** ${threeAxis.asOf}`,
-    `**Werdykt programu:** ${ragEmoji(threeAxis.program.rag)} ${threeAxis.program.rag}`,
+    `**As of:** ${threeAxis.asOf}`,
+    `**Program verdict:** ${ragEmoji(threeAxis.program.rag)} ${threeAxis.program.rag}`,
   ].join('\n');
 
   const threeAxisSnapshot = [
-    '## Trzy osie (agregat programu)',
+    '## Three axes (program aggregate)',
     '',
-    `- **T (czas):** ${bar(threeAxis.program.T.pct)}`,
-    `- **Z (zadania):** ${bar(threeAxis.program.Z.pct)}`,
-    `- **W (wartość, zlana — patrz sekcja D12 poniżej):** ${bar(threeAxis.program.W.pct)}`,
+    `- **T (time):** ${bar(threeAxis.program.T.pct)}`,
+    `- **Z (tasks):** ${bar(threeAxis.program.Z.pct)}`,
+    `- **W (blended value — see D12 below):** ${bar(threeAxis.program.W.pct)}`,
     '',
-    '### D12 — wartość finansowa vs KPI operacyjny (osobne perspektywy)',
+    '### D12 — financial value vs operational KPI (separate perspectives)',
     valueSplit
       ? [
-          `- **Wartość finansowa (PLN/USD/EUR/...):** ${bar(valueSplit.financial.pct)}`,
-          `- **KPI operacyjny (%, count, godziny, ...):** ${bar(valueSplit.operational.pct)}`,
+          `- **Financial value (PLN/USD/EUR/...):** ${bar(valueSplit.financial.pct)}`,
+          `- **Operational KPI (%, count, hours, ...):** ${bar(valueSplit.operational.pct)}`,
           valueSplit.unattributedLedgerDelta !== 0
-            ? `- ⚠️ Korekty nieprzypisane (value_ledger, brak kpi_id w schemacie): ${round1(valueSplit.unattributedLedgerDelta)}`
+            ? `- ⚠️ Unattributed adjustments (value_ledger has no kpi_id): ${round1(valueSplit.unattributedLedgerDelta)}`
             : '',
         ]
           .filter(Boolean)
           .join('\n')
-      : '_Brak danych o KPI._',
+      : '_No KPI data._',
   ].join('\n');
 
   const alertsSection = [
-    '## Top 3 alerty',
+    '## Top 3 alerts',
     '',
     topAlerts.length
       ? topAlerts
           .map((a) => `- **${a.severity.toUpperCase()}** — ${a.initiativeName}: ${a.message}`)
           .join('\n')
-      : '_Brak aktywnych alertów (overdue/blocked)._',
+      : '_No active overdue or blocked alerts._',
   ].join('\n');
 
   const decisionsSection = [
-    '## Decyzje czekające',
+    '## Pending decisions',
     '',
     pendingDecisions.length
       ? pendingDecisions
-          .map((d) => `- **${d.title}** (${d.type})${d.deadline ? ` — termin: ${d.deadline}` : ''}`)
+          .map((d) => `- **${d.title}** (${d.type})${d.deadline ? ` — due: ${d.deadline}` : ''}`)
           .join('\n')
-      : '_Brak decyzji czekających na akceptację._',
+      : '_No decisions are waiting for approval._',
   ].join('\n');
 
   return {
@@ -409,11 +409,11 @@ export function renderSteeringMarkdown(data: SteeringData): Record<string, strin
   const header = [
     `# ${TITLE_BY_KIND.steering} — ${threeAxis.scope.level}`,
     '',
-    `**Stan na:** ${threeAxis.asOf}`,
-    `**Werdykt programu:** ${ragEmoji(threeAxis.program.rag)} ${threeAxis.program.rag}`,
+    `**As of:** ${threeAxis.asOf}`,
+    `**Program verdict:** ${ragEmoji(threeAxis.program.rag)} ${threeAxis.program.rag}`,
   ].join('\n');
 
-  const overviewHeader = '| Inicjatywa | T | Z | W | RAG |\n|---|---|---|---|---|';
+  const overviewHeader = '| Initiative | T | Z | W | RAG |\n|---|---|---|---|---|';
   const rows = threeAxis.rows
     .map(
       (r) =>
@@ -421,41 +421,41 @@ export function renderSteeringMarkdown(data: SteeringData): Record<string, strin
     )
     .join('\n');
   const threeAxisByInitiative = [
-    '## Trzy osie per inicjatywa',
+    '## Three axes by initiative',
     '',
     overviewHeader,
     rows || '| — | — | — | — | — |',
   ].join('\n');
 
   const risksSection = [
-    '## Ryzyka otwarte',
+    '## Open risks',
     '',
     risks.length
       ? risks
           .map(
             (r: any) =>
-              `- **${String(r.severity || '').toUpperCase()}** — ${r.title} (${r.risk_type}) — właściciel: ${r.ownerName}`
+              `- **${String(r.severity || '').toUpperCase()}** — ${r.title} (${r.risk_type}) — owner: ${r.ownerName}`
           )
           .join('\n')
       : scopeChanges === null && !risks.length
-        ? '_Zakres raportu = program/organizacja — ryzyka śledzone per-projekt; podaj `projectId`, by je zobaczyć._'
-        : '_Brak otwartych ryzyk._',
+        ? '_Report scope is program/organization. Risks are tracked per project; provide `projectId` to include them._'
+        : '_No open risks._',
   ].join('\n');
 
   const scopeSection = [
-    '## Zmiany zakresu (30 dni)',
+    '## Scope changes (30 days)',
     '',
     scopeChanges
       ? [
-          `- Łącznie zmian: ${scopeChanges.totalChanges} (niekontrolowanych: ${scopeChanges.totalUncontrolled})`,
-          `- Wskaźnik kontroli: ${scopeChanges.controlRate}%`,
-          `- Wg typu: ${
+          `- Total changes: ${scopeChanges.totalChanges} (uncontrolled: ${scopeChanges.totalUncontrolled})`,
+          `- Control rate: ${scopeChanges.controlRate}%`,
+          `- By type: ${
             Object.entries(scopeChanges.byChangeType)
               .map(([k, v]) => `${k}=${v}`)
               .join(', ') || '—'
           }`,
         ].join('\n')
-      : '_Zakres raportu = program/organizacja — zmiany zakresu śledzone per-projekt; podaj `projectId`, by je zobaczyć._',
+      : '_Report scope is program/organization. Scope changes are tracked per project; provide `projectId` to include them._',
   ].join('\n');
 
   return {
@@ -552,43 +552,43 @@ export function renderPmoWeeklyMarkdown(data: PmoWeeklyData): Record<string, str
   const onTimePct =
     taskStats.doneCount > 0 ? round1((taskStats.doneOnTime / taskStats.doneCount) * 100) : null;
 
-  const header = ['# PMO Weekly', '', `**Stan na:** ${new Date().toISOString()}`].join('\n');
+  const header = ['# PMO Weekly', '', `**As of:** ${new Date().toISOString()}`].join('\n');
 
   const tasksSection = [
-    '## Zadania — on-time / late',
+    '## Tasks — on time / late',
     '',
-    `- Zamknięte w terminie: ${taskStats.doneOnTime}/${taskStats.doneCount}` +
+    `- Completed on time: ${taskStats.doneOnTime}/${taskStats.doneCount}` +
       (onTimePct !== null ? ` (${onTimePct}%)` : ''),
-    `- Otwarte po terminie: ${taskStats.openLate}/${taskStats.openTotal}`,
+    `- Open and overdue: ${taskStats.openLate}/${taskStats.openTotal}`,
   ].join('\n');
 
   const capacitySection = [
-    '## Obciążenia (workload)',
+    '## Workload',
     '',
-    `- Wykorzystanie średnie: ${capacity.summary.avgUtilization}%`,
-    `- Pojemność łączna: ${capacity.summary.totalCapacity}h, przydzielone: ${capacity.summary.totalAllocated}h, backlog: ${capacity.summary.totalBacklog}h`,
+    `- Average utilization: ${capacity.summary.avgUtilization}%`,
+    `- Total capacity: ${capacity.summary.totalCapacity}h, allocated: ${capacity.summary.totalAllocated}h, backlog: ${capacity.summary.totalBacklog}h`,
     '',
     overloads.length
       ? [
-          '### Przeciążeni (overload)',
+          '### Overallocated people',
           ...overloads
             .slice(0, 10)
             .map(
               (o) =>
-                `- **${o.severity.toUpperCase()}** — ${o.name}: +${o.overloadHours}h ponad pojemność`
+                `- **${o.severity.toUpperCase()}** — ${o.name}: +${o.overloadHours}h over capacity`
             ),
         ].join('\n')
-      : '_Brak przeciążonych osób w bieżącym tygodniu._',
+      : '_No one is overallocated this week._',
   ].join('\n');
 
   const cycleTimeSection = [
     '## Cycle-time (per status)',
     '',
     cycleTime.length
-      ? ['| Status | Śr. dni | Liczba przejść |', '|---|---|---|']
+      ? ['| Status | Avg. days | Transitions |', '|---|---|---|']
           .concat(cycleTime.map((c) => `| ${c.status} | ${c.avgDays} | ${c.count} |`))
           .join('\n')
-      : '_Brak historii statusów (initiative_status_history) do policzenia cycle-time._',
+      : '_No status history (initiative_status_history) is available to calculate cycle time._',
   ].join('\n');
 
   return {
@@ -628,10 +628,9 @@ const REPORT_TYPE_BY_KIND: Record<PmReportKind, string> = {
  * `v8_output_artifacts.title_snapshot`) — a Polish title here would be
  * permanently Polish for every viewer.
  *
- * KNOWN OPEN ITEM, deliberately out of scope for F8b: the markdown BODY these
- * packs render (`buildSponsorOnePager` / `buildSteering` / `buildPmoWeekly`
- * below) is still Polish end to end. That is a separate, much larger item — it
- * needs the DEC-510 locale resolver threaded through the builders, not a rename.
+ * The markdown BODY is English-first as well (M6 / DEC-461). A future
+ * request-locale contract may add Polish rendering without persisting a
+ * viewer-dependent title or body into the shared artifact.
  */
 const TITLE_BY_KIND: Record<PmReportKind, string> = {
   'sponsor-onepager': 'Sponsor One-Pager',
@@ -673,10 +672,10 @@ export async function publishPmReport(
   params: PublishPmReportParams
 ): Promise<PublishPmReportResult> {
   const scopeLabel = params.projectId
-    ? `projekt ${params.projectId}`
+    ? `project ${params.projectId}`
     : params.programId
       ? `program ${params.programId}`
-      : 'organizacja';
+      : 'organization';
   const title =
     params.title ||
     `${TITLE_BY_KIND[kind]} — ${scopeLabel} (${new Date().toISOString().slice(0, 10)})`;
