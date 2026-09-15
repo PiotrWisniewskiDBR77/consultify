@@ -392,6 +392,37 @@ export const ROUTES = {
 } as const;
 
 /**
+ * Canonical, user-facing navigation vocabulary supplied to Teresa.
+ *
+ * The paths deliberately reference `ROUTES` instead of repeating URL strings.
+ * The backend image cannot import frontend code, so it consumes a checked mirror
+ * in `server/src/sharedRuntime/routes/teresaNavigationManifest.ts`; the drift
+ * contract fails when either side changes alone.
+ *
+ * P-T13 / DEC-513 follow-up: this is navigation knowledge, not a navigation
+ * tool. Teresa may describe a click path from the filtered list, but must never
+ * claim that she opened a screen herself (see `navigationHonesty.ts`).
+ */
+export const TERESA_NAVIGATION_MANIFEST = [
+  { id: 'AI_CHAT', route: ROUTES.AI_CHAT, labelEn: 'Chat', labelPl: 'Czat', clickPathEn: ['Chat'], clickPathPl: ['Czat'] },
+  { id: 'MY_WORK', route: ROUTES.MY_WORK, labelEn: 'My Work', labelPl: 'Moja praca', clickPathEn: ['My Work'], clickPathPl: ['Moja praca'] },
+  { id: 'INTERVIEW', route: ROUTES.INTERVIEW, labelEn: 'Interview', labelPl: 'Wywiad', clickPathEn: ['Interview'], clickPathPl: ['Wywiad'] },
+  { id: 'TOOLS', route: ROUTES.DISCOVERY_TOOLS.ROOT, labelEn: 'Tools', labelPl: 'Narzędzia', clickPathEn: ['Tools'], clickPathPl: ['Narzędzia'] },
+  { id: 'TOOLS_ASSESSMENT', route: ROUTES.ASSESSMENT.OVERVIEW, labelEn: 'Assessment', labelPl: 'Ocena', clickPathEn: ['Assessment'], clickPathPl: ['Ocena'] },
+  { id: 'MODULE_AUDITS', route: '/audit-programs', labelEn: 'Audits', labelPl: 'Audyty', clickPathEn: ['Audits'], clickPathPl: ['Audyty'], organizationFlagKey: 'MODULE_AUDITS' },
+  { id: 'MODULE_INITIATIVES', route: ROUTES.INITIATIVES, labelEn: 'Initiatives', labelPl: 'Inicjatywy', clickPathEn: ['Initiatives'], clickPathPl: ['Inicjatywy'] },
+  { id: 'MODULE_EXECUTION', route: ROUTES.EXECUTION, labelEn: 'Execution', labelPl: 'Realizacja', clickPathEn: ['Execution'], clickPathPl: ['Realizacja'] },
+  { id: 'MODULE_BENEFITS', route: ROUTES.RESULTS, labelEn: 'Results', labelPl: 'Wyniki', clickPathEn: ['Results'], clickPathPl: ['Wyniki'], organizationFlagKey: 'MODULE_BENEFITS' },
+  { id: 'MODULE_ECONOMICS', route: ROUTES.FINANCE, labelEn: 'Finance', labelPl: 'Finanse', clickPathEn: ['Finance'], clickPathPl: ['Finanse'], organizationFlagKey: 'MODULE_ECONOMICS', availability: 'coming_soon' },
+  { id: 'MODULE_PRESENTATIONS', route: ROUTES.PRESENTATIONS, labelEn: 'Materials', labelPl: 'Materiały', clickPathEn: ['Materials'], clickPathPl: ['Materiały'], organizationFlagKey: 'MODULE_PRESENTATIONS' },
+  { id: 'MODULE_MEETING', route: ROUTES.MEETINGS.ROOT, labelEn: 'Meetings', labelPl: 'Spotkania', clickPathEn: ['Meetings'], clickPathPl: ['Spotkania'], runtimeFlagKey: 'VITE_MODULE_MEETINGS', organizationFlagKey: 'MODULE_MEETING' },
+  { id: 'PROJECTS', route: ROUTES.PROJECTS, labelEn: 'Projects', labelPl: 'Projekty', clickPathEn: ['My Work', 'Projects'], clickPathPl: ['Moja praca', 'Projekty'] },
+  { id: 'ORGANIZATION', route: ROUTES.ORGANIZATION.PROFILE, labelEn: 'Organization', labelPl: 'Organizacja', clickPathEn: ['Organization'], clickPathPl: ['Organizacja'] },
+  { id: 'ADMIN', route: ROUTES.ADMIN.ROOT, labelEn: 'Administration', labelPl: 'Administracja', clickPathEn: ['Administration'], clickPathPl: ['Administracja'], roles: ['OWNER', 'ADMIN'] },
+  { id: 'SETTINGS', route: ROUTES.SETTINGS.ROOT, labelEn: 'Settings', labelPl: 'Ustawienia', clickPathEn: ['Settings'], clickPathPl: ['Ustawienia'] },
+] as const;
+
+/**
  * Maps AppView enum to route paths
  * Used for backward compatibility during migration
  */

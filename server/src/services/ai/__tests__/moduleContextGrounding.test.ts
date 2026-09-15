@@ -215,3 +215,62 @@ describe('buildModuleContextGrounding — uczciwe no_sources', () => {
     expect(out!.citations.map((c) => c.title)).toContain('Decyzja: Decyzja X');
   });
 });
+
+describe('buildModuleContextGrounding — admin/settings bez sekretów', () => {
+  it('admin otrzymuje metadane organizacji i zagregowane role po angielsku', async () => {
+    const fn = vi.fn(async (sql: string) => {
+      if (sql.includes('FROM organizations')) {
+        return [{ id: ORG, name: 'Northwind', status: 'ACTIVE', default_language: 'en', default_timezone: 'UTC' }];
+      }
+      if (sql.includes('FROM organization_members')) {
+        return [{ id: 'ADMIN', role: 'ADMIN', status: 'ACTIVE', member_count: 2 }];
+      }
+      if (sql.includes('FROM feature_flags')) {
+        return [{ id: 'MODULE_AUDITS', flag_key: 'MODULE_AUDITS', enabled: true, updated_at: '2026-09-15' }];
+      }
+      return [];
+    });
+    const out = await buildModuleContextGrounding({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      language: 'en',
+      screenContext: { currentScreen: '/admin' },
+      queryFn: fn,
+    });
+
+    expect(out?.systemInstructionAddon).toContain('Organization settings');
+    expect(out?.systemInstructionAddon).toContain('Roles and memberships');
+    expect(out?.systemInstructionAddon).toContain('Organization flags');
+    expect(out?.systemInstructionAddon).toContain('MODULE_AUDITS');
+    expect(out?.systemInstructionAddon).toContain('Administration: Administration (/admin)');
+    expect(out?.citations.map((citation) => citation.reference)).toEqual(
+      expect.arrayContaining(['admin/overview/' + ORG, 'admin/people/ADMIN'])
+    );
+  });
+
+  it('settings pokazuje bezpieczne preferencje i klucze sekcji po polsku, bez wartości', async () => {
+    const secret = 'smtp-password-must-not-leak';
+    const fn = vi.fn(async (sql: string) => {
+      if (sql.includes('FROM users')) return [{ id: USER, language: 'pl', timezone: 'Europe/Warsaw' }];
+      if (sql.includes('FROM organization_settings')) {
+        return [{ id: 'security', setting_key: 'security', updated_at: '2026-09-15', setting_value: secret }];
+      }
+      return [];
+    });
+    const out = await buildModuleContextGrounding({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'MEMBER',
+      language: 'pl',
+      screenContext: { currentScreen: '/settings/profile' },
+      queryFn: fn,
+    });
+
+    expect(out?.systemInstructionAddon).toContain('Preferencje użytkownika');
+    expect(out?.systemInstructionAddon).toContain('Dostępne sekcje ustawień organizacji');
+    expect(out?.systemInstructionAddon).toContain('Ustawienia: Ustawienia (/settings)');
+    expect(out?.systemInstructionAddon).not.toContain(secret);
+    expect(fn.mock.calls.some(([sql]) => String(sql).includes('setting_value'))).toBe(false);
+  });
+});

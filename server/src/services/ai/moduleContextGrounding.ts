@@ -31,6 +31,7 @@ import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 import type { AiLanguage } from './languagePolicy.js';
+import { buildTeresaNavigationGrounding } from './teresaNavigationGrounding.js';
 
 export type ModuleContextKey =
   | 'chat'
@@ -75,6 +76,10 @@ export interface ModuleContextGroundingInput {
   screenContext?: Record<string, unknown> | null;
   projectId?: string | null;
   language?: AiLanguage;
+  /** Rola zweryfikowana przez middleware; steruje wpisami admin w manifeście nawigacji. */
+  userRole?: string | null;
+  /** Serwerowe odpowiedniki flag buildowych, nigdy wartości podsłane przez klienta. */
+  runtimeFlags?: Readonly<Record<string, boolean>>;
   /** `privateMode` albo `knowledgeSources.organizationData === false` → nie wolno czytać danych org. */
   allowOrganizationData?: boolean;
   /** Wstrzykiwalne na potrzeby testów (bez realnej bazy). */
@@ -204,6 +209,16 @@ export async function buildModuleContextGrounding(
   const lines: string[] = [];
   const citations: ModuleContextCitation[] = [];
   const counts: Record<string, number> = {};
+
+  const navigationGrounding = await buildTeresaNavigationGrounding({
+    organizationId,
+    userRole: input.userRole,
+    language: input.language,
+    runtimeFlags: input.runtimeFlags,
+    queryFn: query,
+  });
+  counts.navigationRoutes = navigationGrounding?.items.length || 0;
+  counts.navigationExcluded = navigationGrounding?.excluded.length || 0;
 
   const pushCitation = (
     kind: string,
@@ -367,6 +382,89 @@ export async function buildModuleContextGrounding(
       (r) => `branża: ${r.industry || '—'}; skala: ${r.company_size || '—'}; pracownicy: ${r.employee_count ?? '—'}; przychód: ${r.annual_revenue ?? '—'}; kompletność: ${r.completeness_percent ?? '—'}%; luki: ${truncate(r.open_gaps || '', 180)}`);
   }
 
+  // [ODMROZENIE 01_ORGANIZATION DEC-513] Administracja dostaje wyłącznie
+  // bezpieczne metadane i zagregowane role. Bez e-maili, wartości ustawień,
+  // tokenów, sekretów ani treści polityk.
+  if (moduleKey === 'admin' && ['OWNER', 'ADMIN'].includes(String(input.userRole || '').toUpperCase())) {
+    const organizationRows = await safeQuery(
+      `SELECT id, name, status, default_language, default_timezone
+         FROM organizations WHERE id = ? LIMIT 1`,
+      [organizationId]
+    );
+    pushRows(
+      input.language === 'pl' ? 'Ustawienia organizacji' : 'Organization settings',
+      'admin_organization',
+      'admin/overview',
+      organizationRows,
+      (row) => row.name || (input.language === 'pl' ? 'Organizacja' : 'Organization'),
+      (row) => `status: ${row.status || '—'}; language: ${row.default_language || '—'}; timezone: ${row.default_timezone || '—'}`
+    );
+    const roleRows = await safeQuery(
+      `SELECT role AS id, role, status, COUNT(*) AS member_count
+         FROM organization_members
+        WHERE organization_id = ?
+        GROUP BY role, status ORDER BY role, status`,
+      [organizationId]
+    );
+    pushRows(
+      input.language === 'pl' ? 'Role i członkostwa' : 'Roles and memberships',
+      'admin_roles',
+      'admin/people',
+      roleRows,
+      (row) => `${row.role || 'MEMBER'} · ${row.status || '—'}`,
+      (row) => `${input.language === 'pl' ? 'liczba' : 'count'}: ${row.member_count ?? 0}`
+    );
+    const flagRows = await safeQuery(
+      `SELECT flag_key AS id, flag_key, enabled, updated_at
+         FROM feature_flags
+        WHERE organization_id = ? AND environment = 'production'
+        ORDER BY flag_key LIMIT 50`,
+      [organizationId]
+    );
+    pushRows(
+      input.language === 'pl' ? 'Flagi organizacji' : 'Organization flags',
+      'admin_flags',
+      'admin/overview/flags',
+      flagRows,
+      (row) => String(row.flag_key || (input.language === 'pl' ? 'Flaga' : 'Flag')),
+      (row) => `${input.language === 'pl' ? 'włączona' : 'enabled'}: ${row.enabled === true || row.enabled === 1 || row.enabled === 't' ? 'true' : 'false'}`
+    );
+  }
+
+  // [ODMROZENIE 13_CHAT DEC-513] Ustawienia użytkownika i lista sekcji
+  // organizacyjnych są adresowalne, ale wartości `setting_value` celowo nie
+  // trafiają do promptu — mogą zawierać konfigurację wrażliwą.
+  if (moduleKey === 'settings') {
+    const userRows = await safeQuery(
+      `SELECT id, language, timezone
+         FROM users WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [userId, organizationId]
+    );
+    pushRows(
+      input.language === 'pl' ? 'Preferencje użytkownika' : 'User preferences',
+      'user_settings',
+      'settings/profile',
+      userRows,
+      () => input.language === 'pl' ? 'Profil użytkownika' : 'User profile',
+      (row) => `language: ${row.language || '—'}; timezone: ${row.timezone || '—'}`
+    );
+    const settingRows = await safeQuery(
+      `SELECT setting_key AS id, setting_key, updated_at
+         FROM organization_settings
+        WHERE organization_id = ?
+        ORDER BY setting_key LIMIT 30`,
+      [organizationId]
+    );
+    pushRows(
+      input.language === 'pl' ? 'Dostępne sekcje ustawień organizacji' : 'Available organization setting sections',
+      'organization_settings',
+      'settings/organization',
+      settingRows,
+      (row) => String(row.setting_key || (input.language === 'pl' ? 'Ustawienie' : 'Setting')),
+      (row) => `${input.language === 'pl' ? 'zaktualizowano' : 'updated'}: ${row.updated_at || '—'}`
+    );
+  }
+
   // ---------------------------------------------------------------- inicjatywy
   const wantsInitiatives =
     moduleKey === 'initiatives' || moduleKey === 'execution' || moduleKey === 'chat' || moduleKey === 'org_overview';
@@ -508,6 +606,7 @@ export async function buildModuleContextGrounding(
         'Say plainly that the module has no data, in the response language required below.',
         'Nie zastępuj danych modułu ogólnym profilem organizacji, pamięcią ani przykładowymi danymi.',
         'Nie wymyślaj źródeł; liczba użytych źródeł ma pozostać równa 0.',
+        navigationGrounding?.systemInstructionAddon || '',
       ].join('\n'),
     };
   }
@@ -523,6 +622,8 @@ export async function buildModuleContextGrounding(
     '- Opierając się na konkretnym rekordzie, podaj jego znacznik inline: [M1], [M2], …',
     '- Nie wymyślaj rekordów, których tu nie ma, i nie zmyślaj liczb.',
     '- Jeśli pytanie dotyczy czegoś, czego w tym bloku nie ma — powiedz to wprost.',
+    '',
+    navigationGrounding?.systemInstructionAddon || '',
   ].join('\n');
 
   return { moduleKey, systemInstructionAddon, citations, counts };

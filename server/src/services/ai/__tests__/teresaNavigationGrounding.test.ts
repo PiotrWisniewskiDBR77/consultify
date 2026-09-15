@@ -1,0 +1,69 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { buildTeresaNavigationGrounding } from '../teresaNavigationGrounding.js';
+
+const ORG = 'org-navigation-test';
+
+describe('Teresa navigation grounding — P-T13 variant B', () => {
+  it('does not name modules hidden by role, organization or runtime flag', async () => {
+    const queryFn = vi.fn(async () => [
+      { flag_key: 'MODULE_AUDITS', enabled: false },
+    ]);
+    const out = await buildTeresaNavigationGrounding({
+      organizationId: ORG,
+      userRole: 'MEMBER',
+      language: 'en',
+      runtimeFlags: { VITE_MODULE_MEETINGS: false },
+      queryFn,
+    });
+
+    expect(out).not.toBeNull();
+    expect(out?.items.some((item) => item.id === 'ADMIN')).toBe(false);
+    expect(out?.items.some((item) => item.id === 'MODULE_AUDITS')).toBe(false);
+    expect(out?.items.some((item) => item.id === 'MODULE_MEETING')).toBe(false);
+    expect(out?.systemInstructionAddon).not.toContain('Administration');
+    expect(out?.systemInstructionAddon).not.toContain('Audits');
+    expect(out?.systemInstructionAddon).not.toContain('Meetings');
+    expect(out?.excluded).toEqual(expect.arrayContaining([
+      { id: 'ADMIN', reason: 'role_required' },
+      { id: 'MODULE_AUDITS', reason: 'organization_flag_off' },
+      { id: 'MODULE_MEETING', reason: 'runtime_flag_off' },
+    ]));
+    expect(queryFn).toHaveBeenCalledWith(expect.stringContaining('organization_id = ?'), [ORG]);
+  });
+
+  it('gives an English click path only for an available admin module', async () => {
+    const out = await buildTeresaNavigationGrounding({
+      organizationId: ORG,
+      userRole: 'ADMIN',
+      language: 'en-US',
+      runtimeFlags: { VITE_MODULE_MEETINGS: true },
+      queryFn: vi.fn(async () => [{ flag_key: 'MODULE_AUDITS', enabled: true }]),
+    });
+
+    expect(out?.systemInstructionAddon).toContain('Administration: Administration (/admin)');
+    expect(out?.systemInstructionAddon).toContain('Meetings: Meetings (/meetings)');
+    expect(out?.systemInstructionAddon).toContain('Finance: Finance (/finance) — planned, not available yet');
+    expect(out?.systemInstructionAddon).toContain('Do not claim that you open the screen');
+  });
+
+  it('localizes safe labels, click paths and unavailability reason to Polish', async () => {
+    const out = await buildTeresaNavigationGrounding({
+      organizationId: ORG,
+      userRole: 'OWNER',
+      language: 'pl-PL',
+      runtimeFlags: { VITE_MODULE_MEETINGS: true },
+      queryFn: vi.fn(async () => []),
+    });
+
+    expect(out?.systemInstructionAddon).toContain('NAWIGACJA DOSTĘPNA UŻYTKOWNIKOWI');
+    expect(out?.systemInstructionAddon).toContain('Administracja: Administracja (/admin)');
+    expect(out?.systemInstructionAddon).toContain('Projekty: Moja praca → Projekty (/projects)');
+    expect(out?.systemInstructionAddon).toContain('Finanse: Finanse (/finance) — planowane, jeszcze niedostępne');
+  });
+
+  it('fails closed without an organization', async () => {
+    expect(await buildTeresaNavigationGrounding({ organizationId: '' })).toBeNull();
+  });
+});
+

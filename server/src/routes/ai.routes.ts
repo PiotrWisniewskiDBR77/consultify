@@ -4287,6 +4287,12 @@ router.post(
             screenContext: (screenContext as any) || null,
             projectId,
             language,
+            // Prefer the raw verified claim: some legacy middleware maps a
+            // platform SUPERADMIN onto a tenant-shaped req.user role.
+            userRole: String(req.userRole || req.user?.role || ''),
+            runtimeFlags: {
+              VITE_MODULE_MEETINGS: process.env.VITE_MODULE_MEETINGS === 'true',
+            },
             allowOrganizationData: true,
           });
           if (moduleGrounding) {
