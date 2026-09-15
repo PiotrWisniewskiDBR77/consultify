@@ -1,0 +1,7 @@
+DEBUG [vite] connecting...
+DEBUG [vite] connected.
+INFO %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+LOG [Metrics] App initialized
+LOG [Metrics] App initialized
+INFO [stability:auth] {marker: token_service_init_once}
+LOG [routeConfig] Route validation passed: All AppView values have mappings
