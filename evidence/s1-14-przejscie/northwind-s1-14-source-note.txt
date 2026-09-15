@@ -1,0 +1,3 @@
+Northwind S1.14 manual traversal evidence source.
+Owner: Irina Lebedjuk.
+Purpose: verify that a user document can create a traceable My Work task.
