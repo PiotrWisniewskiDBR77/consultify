@@ -319,6 +319,26 @@ tam wymienione, więc dla nich wystarcza `WSPOLNE`.
 
 ## 15.09.2026
 
+**DEC-531 (akcept właściciela, 15.09 22:50 UTC) — Menu 2 Inicjatyw po zmianie steru: TAK.**
+Pozycja **1 kolejki akceptów** (DEC-530) — jedyna pozycja „spoza §5", czyli zmiana w ekranie JUŻ
+zaakceptowanym: Menu 2 Inicjatyw ma trzy pigułki (Initiatives · Plan · Load), a „Work report" i
+„For approval" są dziś pozycjami przełącznika „Status" (`6e3924cc38`, `df3428e7e0`; fala F9, staging
+`9badae5335`, org Northwind, EN + motyw jasny, 1440×900, w pełnej powłoce, z żywego stagingu).
+Pytanie do Tak/Nie: „3 pigułki w Menu 2, raport z pracy i skrzynka For approval wewnątrz przełącznika
+Status, filtr projektów z nazwami". Odpowiedź właściciela: **„Tak"**.
+Dowód: `~/Developer/cto-codex/akcept-1-2-20260915/AKCEPT.md` + obraz
+`~/Developer/cto-codex/wdrozenie-7-20260915/zrzuty/02-initiatives-lista.png` (rozwinięty przełącznik
+„Status" z „Work report"/„For approval" widać na `04-initiatives-status.png` z tego samego przelotu).
+**Skutek w §5** (`docs/program/TRZY_POJEMNIKI_PRACY_20260906.md`): zastrzeżenie „ster wejścia zmieniony
+po akcepcie" przy **RP1** i **H1b** ZDJĘTE → ✅ tych wierszy jest pełne; pozycja 1 zdjęta z kolejki
+akceptów (zostaje 10 pozycji, numeracja 2–11 bez zmian).
+**Liczniki §5 przeliczone skryptem `~/Developer/cto-codex/audyt-47-20260915/policz.sh`: 47 etapów —
+✅ 10 · 🧪 10 · 🔧 21 · ⬜ 6 · 👁 0 · 🚀 0 · ⛔ 0 — bez zmiany wobec DEC-530** (akcept nr 1 zdejmuje
+zastrzeżenie i pozycję kolejki, nie zmienia symbolu żadnego etapu).
+**Otwarte MIMO ✅ zostaje bez zmian** (DEC-530): prowenencja maszynowa we froncie skrzynki (H1b),
+„ponowna propozycja" w parkingu (A2), archiwizacja wołająca API (L2), kolumny bramek w liście
+projektów (PMO E3). Następny akcept kolejki: pozycja 2 (B-E1 Bank w czterech widokach).
+
 **DEC-530 (CTO na mandacie, 15.09) — akcepty 5 obrazów z 15.09 (DEC-516) uznane za ✅ etapów §5;
 kolejka akceptów 1 ekran dziennie.**
 Właściciel 15.09 ~02:00 UTC odpowiedział **„Akceptuję wszystkie"** na pięć obrazów wysłanych do
