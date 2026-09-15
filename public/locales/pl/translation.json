@@ -16078,6 +16078,11 @@
         "governanceDecisionMaking": "Decyzja nadzorcza",
         "closure": "Zamknięcie"
       }
+    },
+    "gantt": {
+      "noDates": "Brak dat",
+      "outsideHorizon": "Poza horyzontem",
+      "clippedToHorizon": "przycięte do horyzontu"
     }
   },
   "execution": {
