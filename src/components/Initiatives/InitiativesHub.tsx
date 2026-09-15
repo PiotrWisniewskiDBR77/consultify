@@ -18,7 +18,6 @@ import {
   ExternalLink,
   Filter,
   GitBranch,
-  Inbox,
   Lightbulb,
   List,
   MoreVertical,
@@ -967,15 +966,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             },
           ]
         : []),
-      ...(TRANSITION_INBOX_ENABLED
-        ? [
-            {
-              id: 'transitionInbox' as ModuleTab,
-              label: t('initiatives.tabs.transitionInbox', 'For approval'),
-              icon: <Inbox size={16} />,
-            },
-          ]
-        : []),
+      /* F9 (15.09.2026) — „For approval" (DEC-507) NIE jest tu pigulka.
+         Zmierzone na stagingu c458374bfa: przy wszystkich flagach ON rzad
+         Menu 2 mial PIEC pigulek (Initiatives · Plan · Load · Work report ·
+         For approval) i wypychal primary CTA „New initiative" poza 1440x900.
+         Skrzynka recenzenta zyje teraz jako POZYCJA w istniejacym
+         przelaczniku „Status" (Menu 2, `Menu2PresetDropdown` nizej) — ten sam
+         wzorzec co DEC-420: pelna lista w dropdownie Menu 2, ≤3 chipy w
+         Menu 3. Adres `?tab=transitionInbox` dziala bez zmian
+         (`CANONICAL_INITIATIVES_TABS` wciaz go zna). */
     ],
     [t]
   );
@@ -2915,7 +2914,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       label: getLocalizedStatusLabel(status, t),
       count: statusCounts[status] ?? 0,
     })),
+    /* F9 DEC-507: skrzynka recenzenta przejsc cyklu zycia. Nie jest statusem
+       rejestru, wiec nie ma licznika z `statusCounts` — jest OSOBNA
+       POWIERZCHNIA, do ktorej ten sam przelacznik prowadzi i z ktorej tym
+       samym przelacznikiem sie wraca (wybor „All" wraca na liste). */
+    ...(TRANSITION_INBOX_ENABLED
+      ? [
+          {
+            id: 'transitionInbox',
+            label: t('initiatives.tabs.transitionInbox', 'For approval'),
+          },
+        ]
+      : []),
   ];
+
+  /* Wybor w przelaczniku „Status": id `transitionInbox` przelacza POWIERZCHNIE
+     (zakladka bez pigulki), kazde inne id filtruje rejestr i — gdy stoimy w
+     skrzynce — wraca na liste. Jedno wejscie i jedno wyjscie, bez piatej
+     pigulki i bez martwego adresu. */
+  const handleLifecycleDropdownChange = (id: string) => {
+    if (id === 'transitionInbox') {
+      handleMainTabChange('transitionInbox');
+      return;
+    }
+    if (activeTab === 'transitionInbox') handleMainTabChange('list');
+    setActiveStatusFilter(id === 'all' ? null : id);
+    setActiveLifecyclePreset(null);
+  };
 
   /**
    * Menu 2 · slot filtrów — WYŁĄCZNIE filtry (porządek pasków 08.09.2026).
@@ -2995,14 +3020,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             label={t('initiatives.filters.status', 'Status')}
             options={lifecycleDropdownOptions}
             value={activeStatusFilter ?? 'all'}
-            onChange={(id) => {
-              setActiveStatusFilter(id === 'all' ? null : id);
-              setActiveLifecyclePreset(null);
-            }}
+            onChange={handleLifecycleDropdownChange}
             data-testid="initiatives-lifecycle-dropdown"
           />
           {initiativesFourButtonsEnabled ? fourButtonsScopeToggle : scopeToggle}
         </>
+      )}
+      {/* F9 DEC-507: w skrzynce recenzenta zostaje SAM przelacznik „Status" —
+          bez niego wejscie byloby jednokierunkowe (kanon: kazde wejscie ma
+          wyjscie tym samym sterem). Reszta filtrow rejestru tu nie dziala,
+          wiec jej tu nie ma. */}
+      {activeTab === 'transitionInbox' && TRANSITION_INBOX_ENABLED && (
+        <Menu2PresetDropdown
+          compact
+          label={t('initiatives.filters.status', 'Status')}
+          options={lifecycleDropdownOptions}
+          value="transitionInbox"
+          onChange={handleLifecycleDropdownChange}
+          data-testid="initiatives-lifecycle-dropdown"
+        />
       )}
       {activeTab === 'plan' && (
         <Menu2PresetDropdown

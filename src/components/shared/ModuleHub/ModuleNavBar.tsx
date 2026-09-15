@@ -393,8 +393,17 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
       <div
         className={`flex items-center px-4 py-3 gap-3 ${hasTabs ? 'justify-between' : 'justify-end'}`}
       >
-        {/* Left: Search + Tabs + Status Filters */}
-        <div className="flex items-center gap-3">
+        {/* Left: Search + Tabs + Status Filters
+         *
+         * F9 (15.09.2026) — `min-w-0`. POWOD MECHANICZNY, nie estetyczny:
+         * bez niego lewy klaster ma domyslne `min-width:auto` (tresc), wiec
+         * przy piatej pigulce Menu 2 (`For approval`, DEC-507) rzad rosl
+         * ponad szerokosc okna i WYPYCHAL prawy klaster — czyli primary CTA
+         * („New initiative") — poza 1440x900. Przycisk byl w DOM, ale nie na
+         * ekranie (dowod: wdrozenie-6-20260915/zrzuty/06-initiatives-l6.png).
+         * `min-w-0` + `overflow-x-auto` na pasku pigulek nizej przenosi
+         * nadmiar do przewijania pigulek, zamiast do wypychania CTA. */}
+        <div className="flex min-w-0 items-center gap-3">
           {/* Search Toggle */}
           <button
             type="button"
@@ -422,7 +431,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
           {/* Main Tabs — V3-A03: Level A pill (rounded-full) */}
           <div
-            className="flex items-center gap-1.5"
+            className="app-table-scrollbar flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap"
             role="tablist"
             aria-label={t('moduleHub.sections', 'Module sections')}
           >
@@ -460,7 +469,9 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         </div>
 
         {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
-        <div className={`flex items-center gap-3 justify-end ${hasTabs ? 'ml-auto' : ''}`}>
+        <div
+          className={`flex shrink-0 items-center gap-3 justify-end ${hasTabs ? 'ml-auto' : ''}`}
+        >
           {/* Filters / compact controls (leftmost in the right cluster) */}
           {rightControls}
 
