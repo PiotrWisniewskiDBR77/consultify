@@ -17047,7 +17047,7 @@
         "progress": "Progress",
         "baselineFinish": "Baseline finish",
         "forecastFinish": "Forecast finish",
-        "variance": "Variance",
+        "variance": "Δ days",
         "health": "Health",
         "blockers": "Blockers",
         "pendingDecisions": "Pending decisions",
