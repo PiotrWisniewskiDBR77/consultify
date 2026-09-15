@@ -147,6 +147,74 @@ const enSilne = new Set(WYJATKI.angielskieSilne);
 const enSlabe = new Set(WYJATKI.angielskieSlabe);
 
 /**
+ * E2f-bis (DEC-461/DEC-510) — ROZSZERZONE wykrywanie angielskiego.
+ *
+ * POWÓD, zmierzony: `wykryjAngielski()` opierał się WYŁĄCZNIE na słowniku
+ * (44 „silne" + 56 „słabych"). Sonda z fali E2b-Exec na realnych napisach
+ * modułu Realizacja: „Team Member", „Diagnosis", „Overallocated",
+ * „Missing dates", „Execution Workbench" — ZERO trafień. Dlatego wiersz
+ * „07 Execution" pokazywał K4en = 0 przy ~200 realnych kandydatach na ekranie.
+ * To był artefakt przyrządu, nie czystość modułu.
+ *
+ * Nowe sygnały (precyzja przed czułością — słaby sygnał sam nie wystarcza):
+ *   SILNY  — słowo ze słownika ALBO końcówka nieobecna w polszczyźnie
+ *            (-tion/-sion/-ness/-ship/-ally/-ility/-ivity/-ated/-ating/-ing/-sis)
+ *   SŁABY  — słowo ze słownika słabego, końcówka dwuznaczna
+ *            (-ed/-ers/-ive/-ous/-ful/-less/-able/-ity/-ance/-ment), albo
+ *            fraza Title Case; potrzeba DWÓCH różnych sygnałów słabych.
+ *
+ * `sufiksyWyjatki` to zapora na zapożyczenia, które w polskim UI są polskie:
+ * „monitoring", „dokument", „element", „moment", „segment" — bez niej polski
+ * ekran zostałby policzony jako angielski.
+ */
+const SUF_EN_SILNE = (WYJATKI.angielskieSufiksySilne || []).map((w) => ({
+  re: new RegExp(w.wzorzec),
+  min: w.minDlugosc || 0,
+}));
+const SUF_EN_SLABE = (WYJATKI.angielskieSufiksySlabe || []).map((w) => ({
+  re: new RegExp(w.wzorzec),
+  min: w.minDlugosc || 0,
+}));
+const sufiksyWyjatki = new Set((WYJATKI.sufiksyWyjatki || []).map((s) => s.toLowerCase()));
+
+/**
+ * Końcówki fleksyjne, których angielszczyzna NIE MA. Jedno takie słowo znaczy,
+ * że zdanie jest po polsku — nawet jeśli zawiera zapożyczenie.
+ *
+ * POWÓD, zmierzony: po samym rozszerzeniu słownika angielskiego K2 („EN
+ * w plikach PL") skoczyło 4 -> 123. Próbka pokazała, że to NIE są angielskie
+ * napisy, tylko polskie zdania z żargonem: „Podsumowanie Gap Analysis",
+ * „Eskalacja z preview — wymaga reakcji", „Spadek health score". Zapora
+ * morfologiczna sprowadziła to z powrotem do realnych trafień.
+ */
+const SUF_PL = (WYJATKI.polskieSufiksy || []).map((w) => ({
+  re: new RegExp(w.wzorzec),
+  min: w.minDlugosc || 0,
+}));
+const sufiksyPlWyjatki = new Set((WYJATKI.polskieSufiksyWyjatki || []).map((s) => s.toLowerCase()));
+function sufiksPolski(w) {
+  if (sufiksyPlWyjatki.has(w)) return false;
+  return SUF_PL.some((x) => w.length >= x.min && x.re.test(w));
+}
+
+function sufiksSilny(w) {
+  if (sufiksyWyjatki.has(w)) return false;
+  return SUF_EN_SILNE.some((x) => w.length >= x.min && x.re.test(w));
+}
+function sufiksSlaby(w) {
+  if (sufiksyWyjatki.has(w)) return false;
+  return SUF_EN_SLABE.some((x) => w.length >= x.min && x.re.test(w));
+}
+
+/** fraza Title Case: >=2 słowa ASCII, każde z wielkiej litery, zero polskich znaków */
+const WZ_TITLE_CASE = /^(?:[A-Z][a-z]+|[A-Z]{2,5})(?:[ \t-]+(?:[A-Z][a-z]+|[A-Z]{2,5}|[a-z]{1,3}))+$/;
+function frazaTitleCase(tekst) {
+  const czysty = oczysc(tekst).trim().replace(/[.:,;!?]+$/, '');
+  if (DIAKRYTYKI.test(czysty)) return false;
+  return WZ_TITLE_CASE.test(czysty);
+}
+
+/**
  * Frazy wielowyrazowe uznane za nazwy własne — wycinane PRZED tokenizacją, bo
  * tokenizator dzieli po znakach niebędących literami i „what-if" rozpadłby się
  * na „what" + „if" (oba w słowniku angielskim).
@@ -178,6 +246,36 @@ function slowa(tekst) {
   return out;
 }
 
+/**
+ * Słowa uprawnione do dowodu MORFOLOGICZNEGO (sufiksowego), a nie słownikowego.
+ *
+ * POWÓD, zmierzony: dowód z samej końcówki wywracał się na NAZWACH WŁASNYCH.
+ * Na pliku `public/locales/en/translation.json` przyrząd zgłosił jako „polski
+ * tekst w pliku EN": „Dr. Kowalski commented on ROI analysis", „Munich,
+ * Germany", „Bartosz Sotomski", „Gate D: Overreach" — 10 z 12 trafień K1 było
+ * fałszywych, bo `-ski`/`-ich`/`-ach` pasuje i do polskiej fleksji, i do
+ * nazwiska czy angielskiego słowa.
+ *
+ * Reguła (precyzja przed czułością): końcówka liczy się tylko dla słowa
+ * pisanego MAŁĄ literą albo stojącego na POCZĄTKU napisu. Wielka litera
+ * w środku zdania to pozycja nazwy własnej, nie fleksji. „Prezentacja
+ * wykonawcza" (pierwsze słowo) nadal liczy, „Dr. Kowalski" już nie.
+ */
+function slowaMorfo(tekst) {
+  const out = [];
+  let pierwsze = true;
+  for (const w of oczysc(tekst).split(/[^A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]+/)) {
+    if (!w) continue;
+    const l = w.toLowerCase();
+    const naPoczatku = pierwsze;
+    pierwsze = false;
+    if (nazwyWlasne.has(l)) continue;
+    if (!naPoczatku && w[0] !== l[0]) continue; // wielka litera w środku = nazwa własna
+    out.push(l);
+  }
+  return out;
+}
+
 /** czy wartość w ogóle nadaje się do oceny językowej */
 function wartoOceniac(tekst) {
   const s = String(tekst).trim();
@@ -199,7 +297,9 @@ function wykryjPolski(tekst) {
   const ws = slowa(tekst);
   const silne = [...new Set(ws.filter((w) => plSilne.has(w)))];
   const slabe = [...new Set(ws.filter((w) => plSlabe.has(w)))];
+  const morfo = [...new Set(slowaMorfo(tekst).filter((w) => !plSilne.has(w) && sufiksPolski(w)))];
   if (silne.length) dowod.push(...silne.map((w) => `pl:${w}`));
+  if (morfo.length) dowod.push(...morfo.slice(0, 2).map((w) => `pl-suf:${w}`));
   if (dowod.length === 0 && slabe.length >= 2) dowod.push(...slabe.slice(0, 2).map((w) => `pl?:${w}`));
   return dowod.length ? { jezyk: 'pl', dowod } : null;
 }
@@ -210,12 +310,30 @@ function wykryjAngielski(tekst) {
   // polskie diakrytyki albo silne polskie słowo => to jednak polski, nie flagujemy
   if (DIAKRYTYKI.test(oczysc(tekst))) return null;
   if (ws.some((w) => plSilne.has(w))) return null;
-  const silne = [...new Set(ws.filter((w) => enSilne.has(w)))];
-  const slabe = [...new Set(ws.filter((w) => enSlabe.has(w)))];
+  if (ws.filter((w) => plSlabe.has(w)).length >= 2) return null;
+  // fleksja polska => zdanie jest polskie, choćby niosło angielski żargon
+  // UWAGA: tu świadomie NIE filtrujemy po wielkości liter (inaczej niż przy
+  // dowodzie „to jest polskie"). Zapora ma być NAJCZULSZA, bo jej fałszywe
+  // zadziałanie kosztuje jedno pominięcie, a jej brak — fałszywe oskarżenie
+  // polskiego napisu o angielszczyznę („Plan Komunikacji", „Top Priorytety").
+  if (ws.some((w) => sufiksPolski(w))) return null;
+
+  const silneSlowa = [...new Set(ws.filter((w) => enSilne.has(w)))];
+  const silneSuf = [...new Set(ws.filter((w) => !enSilne.has(w) && sufiksSilny(w)))];
   const dowod = [];
-  if (silne.length) dowod.push(...silne.map((w) => `en:${w}`));
-  if (dowod.length === 0 && slabe.length >= 2) dowod.push(...slabe.slice(0, 2).map((w) => `en?:${w}`));
-  return dowod.length ? { jezyk: 'en', dowod } : null;
+  if (silneSlowa.length) dowod.push(...silneSlowa.map((w) => `en:${w}`));
+  if (silneSuf.length) dowod.push(...silneSuf.map((w) => `en-suf:${w}`));
+  if (dowod.length) return { jezyk: 'en', dowod };
+
+  // sygnały słabe — trzeba DWÓCH różnych
+  const slabe = [];
+  for (const w of [...new Set(ws)]) {
+    if (enSlabe.has(w)) slabe.push(`en?:${w}`);
+    else if (sufiksSlaby(w)) slabe.push(`en?suf:${w}`);
+  }
+  if (frazaTitleCase(tekst)) slabe.push('en?:TitleCase');
+  if (slabe.length >= 2) return { jezyk: 'en', dowod: slabe.slice(0, 3) };
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -298,6 +416,8 @@ const KATEGORIE = {
   K3b: 'klucz jest w EN, brak w PL (fallback pokaże angielski)',
   K4pl: 'polski tekst na sztywno w JSX/TSX (poza t())',
   K4en: 'angielski tekst na sztywno w JSX/TSX (poza t())',
+  K4objPL: 'polski literał w WŁAŚCIWOŚCI obiektu UI (label/title/header/… kolumn, pigułek, menu)',
+  K4obj: 'angielski literał w WŁAŚCIWOŚCI obiektu UI (label/title/header/… kolumn, pigułek, menu)',
   K5pl: 'polskie zdania z serwera do UI',
   K5en: 'angielskie zdania z serwera do UI',
   K7: 'daty/liczby/waluty bez locale albo z locale na sztywno',
@@ -308,6 +428,7 @@ const KATEGORIE = {
   K9pBRAK: 'plik buduje system prompt, ale nie dopina withResolvedLocaleInstruction',
   K10dPL: 'method pack DRD: polski tekst w compileDrdPack(\'en\') (cel 0)',
   K10dROZ: 'method pack DRD: report.discrepancies (ujawnione rozjazdy metodyki)',
+  K11: 't() zamknięte w literale — na ekran idzie surowe \"{t(...)}\" zamiast tłumaczenia',
 };
 
 function aktualnySha() {
@@ -560,6 +681,111 @@ function analizujJsxZawartosc(trescSurowa) {
     licz(m.index, kandydat);
   }
   return w;
+}
+
+// ---------------------------------------------------------------------------
+// K4obj / K4objPL — literały etykiet w OBIEKTACH, nie w JSX
+//
+// POWÓD, zmierzony (fala E2b-Exec, INWENTARZ §3): zrzut `bank-pl-light.png`
+// pokazał 9 angielskich nagłówków kolumn i angielską plakietkę cyklu życia na
+// koncie POLSKIM. Żaden z dwóch ówczesnych skanerów ich nie widział, bo to nie
+// jest tekst JSX ani atrybut, tylko WŁAŚCIWOŚĆ OBIEKTU:
+//     { id: 'lifecycle', label: 'Lifecycle', width: 120 }
+// w tablicy definicji kolumn `StandardTable`. Skala zmierzona w samym module
+// Realizacja: 123 takie literały w 13 plikach.
+//
+// Ujścia (nazwy właściwości) siedzą w `pomiar-jezyka.wyjatki.json`
+// (`wlasciwosciUjsciaUI`), żeby dało się je poprawiać bez ruszania skanera.
+// Nazwy TECHNICZNE (id/key/value/type/status/href/path/icon/variant/...) są
+// wykluczone twardo poniżej — to nie są napisy dla człowieka.
+// ---------------------------------------------------------------------------
+const WLASCIWOSCI_UI = (WYJATKI.wlasciwosciUjsciaUI || []).filter(
+  (n) => !/^(id|key|value|type|status|name)$/.test(n) || n === 'name',
+);
+const WZ_WLASCIWOSC_UI = new RegExp(
+  `(?:^|[\\{,\\s])(${WLASCIWOSCI_UI.join('|')})\\s*:\\s*(["'\`])((?:[^"'\`\\\\\\n]|\\\\.){3,160})\\2`,
+  'g',
+);
+/** nazwy właściwości NIGDY nieuznawane za ujście UI (identyfikatory, enumy, ścieżki) */
+const WLASCIWOSCI_TECHNICZNE = /^(id|key|value|type|status|slug|code|kind|variant|icon|color|path|route|href|url|to|testId|dataKey|field|accessor|sortKey|className|ns|namespace|i18nKey|locale|format|role|scope)$/;
+/** wartość, która jest identyfikatorem/kluczem i18n/ścieżką — nie napisem dla człowieka */
+function wartoscTechniczna(tekst) {
+  const s = String(tekst).trim();
+  if (/^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9_]+)+$/.test(s)) return true; // klucz i18n: 'execution.bank.title'
+  if (/^[a-z0-9]+([-_][a-z0-9]+)+$/.test(s)) return true;           // kebab/snake: 'data-quality'
+  if (/^[@./#]/.test(s)) return true;                               // ścieżka, selektor, import
+  if (/^[A-Za-z]+\(/.test(s)) return true;                          // wywołanie w literale
+  return false;
+}
+
+function analizujLiteralyObiektowZawartosc(trescSurowa) {
+  const w = { K4obj: 0, K4objPL: 0, trafienia: [] };
+  if (!trescSurowa) return w;
+  const tresc = bezKomentarzyBlokowych(trescSurowa);
+  const linie = tresc.split('\n');
+  WZ_WLASCIWOSC_UI.lastIndex = 0;
+  let m;
+  while ((m = WZ_WLASCIWOSC_UI.exec(tresc))) {
+    const wlasciwosc = m[1];
+    const tekst = m[3];
+    if (WLASCIWOSCI_TECHNICZNE.test(wlasciwosc)) continue;
+    if (wartoscTechniczna(tekst)) continue;
+    const nrLinii = tresc.slice(0, m.index).split('\n').length;
+    const linia = linie[nrLinii - 1] || '';
+    if (/^\s*(\/\/|\*|\/\*|import |export \* )/.test(linia)) continue;
+    // `label: t('klucz', 'Tekst')` — to już przechodzi przez t(), liczy K1def
+    if (/\bt\s*\(/.test(linia) && linia.indexOf(tekst) > linia.indexOf('t(')) continue;
+    const pl = wykryjPolski(tekst);
+    if (pl) { w.K4objPL += 1; w.trafienia.push(['K4objPL', nrLinii, `${wlasciwosc}: ${tekst}`, pl.dowod]); continue; }
+    const en = wykryjAngielski(tekst);
+    if (en) { w.K4obj += 1; w.trafienia.push(['K4obj', nrLinii, `${wlasciwosc}: ${tekst}`, en.dowod]); }
+  }
+  return w;
+}
+
+function skanujLiteralyObiektow(pliki) {
+  for (const rel of pliki) {
+    const w = analizujLiteralyObiektowZawartosc(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    const modul = modulZeSciezki(rel);
+    for (const [kat, nrLinii, tekst, dowod] of w.trafienia) {
+      zapisz(kat, modul, `${rel}:${nrLinii}`, tekst, dowod);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// K11 — t() zamknięte w literale
+//
+// `placeholder="{t('aios.research.scope', 'Scope and constraints')}"` NIE jest
+// wywołaniem — to napis. Użytkownik widzi na ekranie dosłownie klamrę z kodem.
+// Ratchet: stan bazy (patrz baseline.json), cel 0.
+// ---------------------------------------------------------------------------
+const WZ_T_W_LITERALE = /(["'`])\{\s*t\s*\(/g;
+
+function analizujTwLiteraleZawartosc(trescSurowa) {
+  const w = { K11: 0, trafienia: [] };
+  if (!trescSurowa) return w;
+  const tresc = bezKomentarzyBlokowych(trescSurowa);
+  WZ_T_W_LITERALE.lastIndex = 0;
+  let m;
+  while ((m = WZ_T_W_LITERALE.exec(tresc))) {
+    const nrLinii = tresc.slice(0, m.index).split('\n').length;
+    const linia = (tresc.split('\n')[nrLinii - 1] || '').trim();
+    if (/^(\/\/|\*|\/\*)/.test(linia)) continue;
+    w.K11 += 1;
+    w.trafienia.push(['K11', nrLinii, linia.slice(0, 160), ['t-w-literale']]);
+  }
+  return w;
+}
+
+function skanujTwLiterale(pliki) {
+  for (const rel of pliki) {
+    const w = analizujTwLiteraleZawartosc(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    const modul = rel.startsWith('server/') ? modulSerwera(rel) : modulZeSciezki(rel);
+    for (const [kat, nrLinii, tekst, dowod] of w.trafienia) {
+      zapisz(kat, modul, `${rel}:${nrLinii}`, tekst, dowod);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1194,6 +1420,14 @@ async function trybSzybki(baselinePath) {
         dodaj(modul, 'K4en', noweJsx.K4en - stareJsx.K4en);
       }
 
+      // K4obj/K4objPL — literały w właściwościach obiektów. Liczone dla .ts
+      // TAKŻE, bo definicje kolumn/pigułek siedzą często w plikach `*.ts`
+      // (np. `executionColumns.ts`), nie tylko w komponentach `.tsx`.
+      const noweObj = analizujLiteralyObiektowZawartosc(nowaTresc);
+      const stareObj = analizujLiteralyObiektowZawartosc(staraTresc);
+      dodaj(modul, 'K4obj', noweObj.K4obj - stareObj.K4obj);
+      dodaj(modul, 'K4objPL', noweObj.K4objPL - stareObj.K4objPL);
+
       const noweDaty = analizujDatyZawartosc(nowaTresc);
       const stareDaty = analizujDatyZawartosc(staraTresc);
       dodaj(modul, 'K7', noweDaty.K7 - stareDaty.K7);
@@ -1224,6 +1458,12 @@ async function trybSzybki(baselinePath) {
       const stareK8 = analizujSerwerK8sZawartosc(staraTresc);
       dodaj(modul, 'K8spl', noweK8.K8spl - stareK8.K8spl);
       dodaj(modul, 'K8sen', noweK8.K8sen - stareK8.K8sen);
+    }
+    {
+      const modulK11 = rel.startsWith('server/') ? modulSerwera(rel) : modulZeSciezki(rel);
+      const noweT = analizujTwLiteraleZawartosc(nowaTresc);
+      const stareT = analizujTwLiteraleZawartosc(staraTresc);
+      dodaj(modulK11, 'K11', noweT.K11 - stareT.K11);
     }
     if (jestPlikiemPromptowym(rel)) {
       const modul = rel.startsWith('server/') ? modulSerwera(rel) : modulZeSciezki(rel);
@@ -1266,8 +1506,11 @@ async function trybPelny(baselinePath, bazowyPrzekazany, przytnijPrzykladyDo25 =
   skanujTlumaczenia();
   skanujDefaultyWidoczne();
   skanujJsx(listujPliki(path.join(ROOT, 'src'), (n) => n.endsWith('.tsx')));
+  const plikiSrc = listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n));
+  skanujLiteralyObiektow(plikiSrc);
   skanujSerwer(KATALOGI_SERWERA.flatMap((k) => listujPliki(path.join(ROOT, 'server/src', k), (n) => n.endsWith('.ts'))));
   const plikiSerwera = listujPliki(path.join(ROOT, 'server/src'), (n) => n.endsWith('.ts'));
+  skanujTwLiterale([...plikiSrc, ...plikiSerwera]);
   skanujSerwerK8s(plikiSerwera);
   skanujPrompty([
     ...plikiSerwera,
@@ -1365,6 +1608,12 @@ export {
   // przekazanej treści/obiektu, nie dotykają dysku i nie wołają process.exit.
   analizujSerwerK8sZawartosc,
   jestKodemSerwerowymK8s,
+  // E2f-bis (DEC-461) — nowe kubełki i nowe sygnały wykrywania angielskiego.
+  analizujLiteralyObiektowZawartosc,
+  analizujTwLiteraleZawartosc,
+  sufiksSilny,
+  sufiksSlaby,
+  frazaTitleCase,
   bezSlownikowDwujezycznych,
   analizujPromptyZawartosc,
   jestPlikiemPromptowym,
