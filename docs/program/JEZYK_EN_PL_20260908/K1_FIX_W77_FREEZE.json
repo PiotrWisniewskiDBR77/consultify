@@ -1,0 +1,78 @@
+{
+  "schema": "consultify-freeze-v1",
+  "package": "K1-fix-W77",
+  "verdict": "E1_GREEN_STOP_REVIEW",
+  "exactBase": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "contentSha": "e75274e6fb50e371e7a0858bf52a35d4ea4a8117",
+  "branch": "codex/a-k1-fix-20260915",
+  "measurements": {
+    "K4en": 4632,
+    "K5en": 7164,
+    "K8sen": 2487
+  },
+  "tests": {
+    "helperFalsePositive": "12/12",
+    "chat": "5/5",
+    "meter": "249/249",
+    "jMale": "14/14"
+  },
+  "gates": {
+    "serverTscErrors": 0,
+    "frontTscErrors": 177,
+    "frontCeiling": 177,
+    "language": "GREEN",
+    "canon": "GREEN",
+    "artifact": "GREEN",
+    "build": "GREEN",
+    "diffCheck": "GREEN",
+    "newFailureNames": 0
+  },
+  "forbiddenFilesChanged": 0,
+  "migrations": 0,
+  "inventory": [
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73.md",
+      "sha256": "cffbe0c26a35aad6bca92b59e5d6aff3d45607815f07bea0d15b8faaa350c203"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/E2F_BIS_W73_RANGE_DIFF.txt",
+      "sha256": "46eebcf848471f0590812d5cc7ba5e4ff13cac2b257b6eaf76c3abf06da65b06"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/K1_FIX_W77_JMALE_SAMPLE.json",
+      "sha256": "50189e07d9aa0bc14650014deed001bc5f06a195145ba9b3b9db79e409f6483b"
+    },
+    {
+      "path": "docs/program/JEZYK_EN_PL_20260908/baseline.json",
+      "sha256": "98ab6bc3ca4f2a7b28b37b25c4b4686547959ac8fabe87e0b6b2086217733ad5"
+    },
+    {
+      "path": "docs/ui-standards/MAPA_JEZYKA.md",
+      "sha256": "939deb1d0180476c631e26e2a28d97b949d7fed4cea44ce15c65afd45189f70c"
+    },
+    {
+      "path": "scripts/i18n/__tests__/jezykJmaleModuly.test.mjs",
+      "sha256": "73eb80421278986d3907926719dbe3039c463f428d28a1c615499f8184d57d80"
+    },
+    {
+      "path": "scripts/i18n/__tests__/pomiar-jezyka.e2f-bis.test.mjs",
+      "sha256": "52666e594dd103fa9f6d7c4745f5d0db145ebf01c0dc12177dfaf5da70d53c35"
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.mjs",
+      "sha256": "bbd9d83e26e211a7a948d97f93cc4f329823cd770eb3b68441fa9b15ff7e60cd"
+    },
+    {
+      "path": "scripts/i18n/pomiar-jezyka.wyjatki.json",
+      "sha256": "3cdbe5c2e29ed6607e7a5365677220f3874889a9e99dc800112e9d122621b439"
+    },
+    {
+      "path": "tests/unit/i18n/polskiBezOgonkowWspolny.test.ts",
+      "sha256": "72cf0b88e1e19d79b7b3f7657767c58405b974775b5aacd5ea28231fe4bbabc1"
+    },
+    {
+      "path": "tests/unit/i18n/polskiBezOgonkowWspolny.ts",
+      "sha256": "f06467670ab185dbd6465d684470aea2646c1c2923895107d4e92ade6bd54f0a"
+    }
+  ]
+}
