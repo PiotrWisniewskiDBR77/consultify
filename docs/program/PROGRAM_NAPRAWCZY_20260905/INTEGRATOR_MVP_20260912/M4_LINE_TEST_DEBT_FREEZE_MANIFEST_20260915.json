@@ -1,0 +1,25 @@
+{
+  "package": "M4_LINE_TEST_DEBT",
+  "date": "2026-09-15",
+  "baseSha": "dcbd6c052a15f6ef65a6ec698bb0cbda4a7902fe",
+  "productSha": "4290c7721e",
+  "branch": "codex/a-m4-line-test-debt-20260915",
+  "backupRef": "origin/backup/codex/a-m4-line-test-debt-20260915",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW",
+  "focusedTests": {
+    "files": 11,
+    "passed": 74,
+    "failed": 0,
+    "retry": 0
+  },
+  "rawNulBytes": 0,
+  "serverTypecheck": {
+    "status": "BASELINE_RED",
+    "errors": 27,
+    "m4ServerSourceFilesChanged": 0
+  },
+  "independentReview": {
+    "status": "NOT_RUN",
+    "reason": "Sub-agent account usage limit until 2026-09-21 06:24"
+  }
+}
