@@ -21,6 +21,7 @@ import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 type InboxRow = {
   id: string;
   source: string;
@@ -282,7 +283,7 @@ export const MarketInboxTab: React.FC = () => {
             Market Inbox (OpenRouter)
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Review vendor catalog changes before applying them to your curated registry.
+            {tlumaczPozaHookiem("superadmin.marketInbox.reviewVendorCatalogChangesBeforeApplyingThem", "Review vendor catalog changes before applying them to your curated registry.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -305,7 +306,7 @@ export const MarketInboxTab: React.FC = () => {
             className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white transition-colors flex items-center gap-2"
           >
             <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-            Sync now
+            {tlumaczPozaHookiem("superadmin.marketInbox.syncNow", "Sync now")}
           </button>
           <button
             onClick={load}

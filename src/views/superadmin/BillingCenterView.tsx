@@ -39,6 +39,8 @@ import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 type BillingTab =
   | 'overview'
   | 'plans'
@@ -183,7 +185,7 @@ const buildOrganizationPlanPayload = (formData: any) => ({
 const formatCompactNumber = (value: unknown) => {
   const parsed = safeNumber(value, Number.NaN);
   if (!Number.isFinite(parsed)) return EMPTY_VALUE;
-  return parsed.toLocaleString();
+  return parsed.toLocaleString(localeListy());
 };
 
 const OverviewTab: React.FC = () => {
@@ -308,7 +310,7 @@ const OverviewTab: React.FC = () => {
             <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <Activity className="w-7 h-7 opacity-80" />
-                <span className="text-xs text-amber-100">This Month</span>
+                <span className="text-xs text-amber-100">{tlumaczPozaHookiem("superadmin.billingCenter.thisMonth", "This Month")}</span>
               </div>
               <p className="text-3xl font-bold mt-3">
                 {formatNumber(usageStats?.totalTokensThisMonth)}
@@ -381,7 +383,7 @@ const OverviewTab: React.FC = () => {
                   <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                     {formatNumber(usageStats?.totalTokensThisMonth)}
                   </p>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">This month</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">{tlumaczPozaHookiem("superadmin.billingCenter.thisMonth2", "This month")}</p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
@@ -401,7 +403,7 @@ const OverviewTab: React.FC = () => {
                   <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                     {formatNumber(usageStats?.activeOrganizations)}
                   </p>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">With usage</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">{tlumaczPozaHookiem("superadmin.billingCenter.withUsage", "With usage")}</p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
@@ -1608,8 +1610,7 @@ const ContractsTab: React.FC = () => {
               Manual limit overrides
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Leave empty to inherit the selected plan package. Fill any field to pin a custom limit
-              for this invoice-managed customer.
+              {tlumaczPozaHookiem("superadmin.billingCenter.leaveEmptyToInheritTheSelectedPlan", "Leave empty to inherit the selected plan package. Fill any field to pin a custom limit for this invoice-managed customer.")}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1664,7 +1665,7 @@ const ContractsTab: React.FC = () => {
         </div>
         {loading ? (
           <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
-            Loading contracts...
+            {tlumaczPozaHookiem("superadmin.billingCenter.loadingContracts", "Loading contracts...")}
           </div>
         ) : loadError ? (
           <div className="p-6">
@@ -1740,7 +1741,7 @@ export const BillingCenterView: React.FC = () => {
             Billing Center
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Manage subscriptions, token pricing, and revenue analytics
+            {tlumaczPozaHookiem("superadmin.billingCenter.manageSubscriptionsTokenPricingAndRevenueAnalytics", "Manage subscriptions, token pricing, and revenue analytics")}
           </p>
         </div>
         <InfoButton

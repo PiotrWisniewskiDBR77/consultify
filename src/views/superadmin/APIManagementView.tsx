@@ -39,6 +39,7 @@ import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { formatListDate, formatListNumber } from '../../utils/listDateFormat';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 interface APIKey {
   id: string;
   organizationId: string;
@@ -337,7 +338,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What will this key be used for?"
+              placeholder={tlumaczPozaHookiem("superadmin.aPIManagement.whatWillThisKeyBeUsedFor", "What will this key be used for?")}
               rows={2}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
             />
@@ -792,7 +793,7 @@ export const APIManagementView: React.FC = () => {
                 API Key Created: {newlyCreatedKey.name}
               </h3>
               <p className="text-sm text-emerald-800 dark:text-emerald-400 mt-1">
-                Copy this key now. You won't be able to see it again!
+                {tlumaczPozaHookiem("superadmin.aPIManagement.copyThisKeyNowYouWonT", "Copy this key now. You won't be able to see it again!")}
               </p>
               <div className="flex items-center gap-2 mt-3">
                 <code className="flex-1 px-4 py-2 bg-white dark:bg-navy-900 rounded-lg text-sm font-mono text-slate-900 dark:text-white border border-emerald-200 dark:border-emerald-500/30">
@@ -1031,7 +1032,7 @@ export const APIManagementView: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">API Management</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Manage API keys and integrations
+            {tlumaczPozaHookiem("superadmin.aPIManagement.manageAPIKeysAndIntegrations", "Manage API keys and integrations")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -1104,8 +1105,7 @@ export const APIManagementView: React.FC = () => {
               Revoke API key?
             </h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              This will revoke <span className="font-medium">{keyPendingRevoke.name}</span>. The
-              secret cannot be used after revocation.
+              {tlumaczPozaHookiem("superadmin.aPIManagement.thisWillRevoke", "This will revoke")} <span className="font-medium">{keyPendingRevoke.name}</span>{tlumaczPozaHookiem("superadmin.aPIManagement.theSecretCannotBeUsedAfterRevocation", ". The secret cannot be used after revocation.")}
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
