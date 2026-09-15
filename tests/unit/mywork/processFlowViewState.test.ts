@@ -196,4 +196,46 @@ describe('computePaletteGutter', () => {
     const containerRect = { left: 70, right: 1100 };
     expect(computePaletteGutter(railRect, containerRect, 0)).toBe(58);
   });
+
+  // ── F8a: PRAWDZIWE prostokąty z REALNEJ powłoki ──────────────────────────
+  // Zmierzone na stagingu `6c34292eb0` (org Northwind, konto Iriny, 1440×900,
+  // My Work → Ideas → „Protect the planned maintenance window…" → Open Flow);
+  // surowe wartości: `~/Developer/cto-codex/fala-f8a-20260915/pomiar/m5-badge.json`.
+  //   kontener płótna (.react-flow)                 left = 64
+  //   pasek palety [data-mels-floating-rail-surface] 76 … 130
+  //   plakietka trybu „SELECT" (mode badge)         131 … 176
+  //   węzeł „Protect the planned maintenance…"      140 … 290  ← pod plakietką
+  // Dev-render tego nie miał: tam kontener zaczynał się na 0, a plakietki nie
+  // było wcale — dlatego F6 przeszła testy i poległa na żywym ekranie.
+  describe('F8a — realne prostokąty powłoki (rail 76–130, plakietka 131–176, kontener 64)', () => {
+    const containerRect = { left: 64, right: 1088 };
+    const railRect = { left: 76, right: 130 };
+    const modeBadgeRect = { left: 131, right: 176 };
+
+    it('sam pasek daje rynnę 82 — czyli DOKŁADNIE stan, który zostawił węzeł pod plakietką', () => {
+      // 130 - 64 + 16 = 82 → węzeł na ekranie x = 64 + 82 = 146, a plakietka
+      // sięga 176. To jest defekt ze zrzutu 57, wyrażony liczbą.
+      expect(computePaletteGutter(railRect, containerRect)).toBe(82);
+      expect(containerRect.left + 82).toBeLessThan(modeBadgeRect.right);
+    });
+
+    it('pasek + plakietka dają rynnę 128 — węzeł startuje 16 px ZA całą paletą', () => {
+      const gutter = computePaletteGutter([railRect, modeBadgeRect], containerRect);
+      // 176 - 64 + 16 = 128
+      expect(gutter).toBe(128);
+      // Dowód wprost w jednostkach ekranu: lewa krawędź węzła minus prawa
+      // krawędź najdalszego elementu palety = margines 16 px.
+      expect(containerRect.left + gutter - modeBadgeRect.right).toBe(16);
+    });
+
+    it('bierze NAJWIĘKSZĄ rynnę niezależnie od kolejności prostokątów', () => {
+      expect(computePaletteGutter([modeBadgeRect, railRect], containerRect)).toBe(128);
+    });
+
+    it('pomija elementy palety przeciągnięte z dala od lewej krawędzi', () => {
+      const daleko = { left: 900, right: 946 };
+      expect(computePaletteGutter([railRect, daleko], containerRect)).toBe(82);
+      expect(computePaletteGutter([daleko], containerRect)).toBe(0);
+    });
+  });
 });

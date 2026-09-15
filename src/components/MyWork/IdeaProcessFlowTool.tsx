@@ -343,6 +343,20 @@ const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
 const NODE_BOX_W = 160;
 const NODE_BOX_H = 48;
 
+/**
+ * F8a: WSZYSTKIE `position: fixed` powierzchnie, które paleta narzędzi rysuje
+ * NAD płótnem i które mogą zasłonić węzeł przy lewej krawędzi. Fala F6 znała
+ * tylko pierwszą z nich; plakietka trybu jest osobnym portalem (ta sama
+ * warstwa `z-context-menu`, nieprzezroczyste tło) i w realnej powłoce sięga
+ * 46 px dalej w prawo niż sam pasek — to ona ucinała etykietę węzła na
+ * zrzucie `57-F6-process-flow.png`. Kolejność bez znaczenia: bierzemy
+ * największą rynnę.
+ */
+const PALETTE_OVERLAY_SELECTORS = [
+  '[data-mels-floating-rail-surface]',
+  '[data-testid="canvas-left-toolbar-mode-badge"]',
+] as const;
+
 // ── Auto-layout with dagre ───────────────────────────────────────────────────
 
 function autoLayout(nodes: Node[], edges: Edge[], lanes: Lane[]): Node[] {
@@ -2668,11 +2682,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const instance = reactFlowInstanceRef.current;
     const container = flowContainerRef.current;
     if (!instance || !container) return;
-    const rail = document.querySelector<HTMLElement>('[data-mels-floating-rail-surface]');
-    if (!rail) return;
-    const railRect = rail.getBoundingClientRect();
-    if (railRect.width === 0) return;
-    const requiredGutter = computePaletteGutter(railRect, container.getBoundingClientRect());
+    // F8a: paleta to NIE tylko pasek. Mierzymy KAŻDY jej `position: fixed`
+    // element leżący nad płótnem — pasek ORAZ nieprzezroczystą plakietkę
+    // trybu („SELECT"), która siedzi 6 px na prawo od paska i w realnej
+    // powłoce sięga 46 px dalej niż on (zmierzone: pasek 76–130,
+    // plakietka 131–176; węzeł startował na 140, czyli pod plakietką).
+    const rects = PALETTE_OVERLAY_SELECTORS.flatMap((selector) => {
+      const el = document.querySelector<HTMLElement>(selector);
+      if (!el) return [];
+      const rect = el.getBoundingClientRect();
+      return rect.width === 0 || rect.height === 0 ? [] : [rect];
+    });
+    if (rects.length === 0) return;
+    const requiredGutter = computePaletteGutter(rects, container.getBoundingClientRect());
     if (requiredGutter <= 0) return;
     const vp = instance.getViewport?.();
     if (!vp || vp.x >= requiredGutter) return;
@@ -2695,14 +2717,25 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
    */
   const scheduleEnsureViewportClearsPalette = useCallback(() => {
     ensureViewportClearsPalette();
-    const rail = document.querySelector<HTMLElement>('[data-mels-floating-rail-surface]');
-    if (!rail || typeof ResizeObserver === 'undefined') {
-      window.setTimeout(ensureViewportClearsPalette, 300);
-      return;
-    }
+    // F8a: plakietka trybu jest ustawiana w `useLayoutEffect` + `requestAnimationFrame`
+    // + `animationend` paska (patrz `CanvasLeftToolbar`), więc w chwili pierwszego
+    // sprawdzenia często JESZCZE NIE ISTNIEJE — sam ResizeObserver na pasku jej nie
+    // złapie (pasek się nie zmienia, gdy plakietka dochodzi obok). Dokładamy kilka
+    // kontrolnych przebiegów w oknie ~1,5 s: to jednorazowe dojście po montażu, nie
+    // stały obserwator walczący z viewportem użytkownika.
+    const timeouts = [120, 350, 700, 1200, 1500].map((delay) =>
+      window.setTimeout(ensureViewportClearsPalette, delay)
+    );
+    if (typeof ResizeObserver === 'undefined') return;
     const obs = new ResizeObserver(() => ensureViewportClearsPalette());
-    obs.observe(rail);
-    window.setTimeout(() => obs.disconnect(), 1000);
+    for (const selector of PALETTE_OVERLAY_SELECTORS) {
+      const el = document.querySelector<HTMLElement>(selector);
+      if (el) obs.observe(el);
+    }
+    window.setTimeout(() => {
+      obs.disconnect();
+      for (const id of timeouts) window.clearTimeout(id);
+    }, 1600);
   }, [ensureViewportClearsPalette]);
 
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)

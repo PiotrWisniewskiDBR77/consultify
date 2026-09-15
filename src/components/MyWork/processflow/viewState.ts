@@ -128,9 +128,25 @@ export interface PaletteGutterRect {
  * safety margin. Returns 0 when the palette doesn't overlap the canvas's
  * left edge (e.g. dragged elsewhere) so an already-clear viewport is left
  * untouched.
+ *
+ * ★ POPRAWKA F8a (2026-09-15, ZMIERZONE w REALNEJ powłoce na stagingu
+ * `6c34292eb0`, org Northwind, konto Iriny — dowody
+ * `~/Developer/cto-codex/fala-f8a-20260915/pomiar/m5-badge.json`). Fala F6
+ * mierzyła WYŁĄCZNIE `[data-mels-floating-rail-surface]` (zmierzony prawy
+ * brzeg **130 px**) i na tym poprzestawała. Paleta ma jednak DRUGI, osobny
+ * element `position: fixed` w tej samej warstwie `z-context-menu`:
+ * nieprzezroczystą plakietkę trybu `[data-testid="canvas-left-toolbar-mode-badge"]`
+ * (`CanvasLeftToolbar.tsx`, `modeBadgePos` = `rail.right + 6`), której
+ * zmierzony prawy brzeg to **176 px**. Rynna z samego raila (82 px) stawiała
+ * węzeł na x=146, czyli 30 px POD plakietką „SELECT" — i dokładnie tak
+ * wyglądał zrzut `57-F6-process-flow.png` (ucięta etykieta „…ntenance").
+ *
+ * Dlatego funkcja przyjmuje TERAZ cały zbiór prostokątów palety i bierze
+ * największą rynnę: paleta to wszystko, co paleta rysuje nad płótnem, a nie
+ * tylko jej pasek. Pojedynczy prostokąt nadal działa (stary kontrakt).
  */
 export function computePaletteGutter(
-  railRect: PaletteGutterRect,
+  paletteRects: PaletteGutterRect | readonly PaletteGutterRect[],
   containerRect: PaletteGutterRect,
   margin = 16
 ): number {
@@ -140,8 +156,15 @@ export function computePaletteGutter(
   // (rail anchored at the left) no longer holds — forcing a gutter off its
   // unrelated position would wrongly shove an already-clear viewport.
   const NEAR_LEFT_EDGE_PX = 240;
-  if (railRect.left - containerRect.left > NEAR_LEFT_EDGE_PX) return 0;
-  const gutter = Math.ceil(railRect.right - containerRect.left) + margin;
+  const rects = Array.isArray(paletteRects)
+    ? (paletteRects as readonly PaletteGutterRect[])
+    : [paletteRects as PaletteGutterRect];
+
+  let gutter = 0;
+  for (const rect of rects) {
+    if (rect.left - containerRect.left > NEAR_LEFT_EDGE_PX) continue;
+    gutter = Math.max(gutter, Math.ceil(rect.right - containerRect.left) + margin);
+  }
   return Math.max(0, gutter);
 }
 
