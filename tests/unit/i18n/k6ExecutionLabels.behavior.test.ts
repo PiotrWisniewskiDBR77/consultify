@@ -48,4 +48,29 @@ describe('K6 bilingual object labels', () => {
       'Przekazanie: przekaż rezultaty inicjatywy ERP do operacji'
     );
   });
+
+  it('translates every visible fallback report title into real English and Polish copy', async () => {
+    const enT = await translator('en');
+    const plT = await translator('pl');
+    const keys = [
+      'weeklyExecutionPack',
+      'monthlyPmoReview',
+      'programHealthSummary',
+      'blockersRecoveryReport',
+      'milestoneSlippageReport',
+      'capacityUtilizationReport',
+      'budgetVarianceReport',
+      'decisionBacklogApprovalAging',
+      'crossInitiativeDependencyReport',
+      'deliveryConfidenceReport',
+      'sponsorReadyOnePager',
+    ];
+
+    for (const key of keys) {
+      const path = `execution.reports.catalog.${key}`;
+      expect(enT(path)).not.toBe(path);
+      expect(plT(path)).not.toBe(path);
+      expect(plT(path)).not.toBe(enT(path));
+    }
+  });
 });

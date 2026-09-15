@@ -4811,7 +4811,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const fallbackBase: CatalogEntry[] = [
       {
         id: 'weekly-exec',
-        title: 'Weekly Execution Pack',
+        title: t('execution.reports.catalog.weeklyExecutionPack'),
         audience: 'PMO, Team Leads',
         cadence: 'Weekly',
         scope: 'All active initiatives in current execution cycle',
@@ -4847,7 +4847,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'monthly-pmo',
-        title: 'Monthly PMO Review',
+        title: t('execution.reports.catalog.monthlyPmoReview'),
         audience: 'PMO Director, Sponsors',
         cadence: 'Monthly',
         scope: 'Full portfolio month-over-month trends',
@@ -4878,7 +4878,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'program-health',
-        title: 'Program Health Summary',
+        title: t('execution.reports.catalog.programHealthSummary'),
         audience: 'Steering Committee',
         cadence: 'Bi-weekly',
         scope: 'Per-initiative RAG and aggregate program health',
@@ -4918,7 +4918,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'blockers-recovery',
-        title: 'Blockers & Recovery Report',
+        title: t('execution.reports.catalog.blockersRecoveryReport'),
         audience: 'PMO, Delivery Managers',
         cadence: 'On demand',
         scope: 'All blocked initiatives and downstream blast radius',
@@ -4953,7 +4953,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'milestone-slippage',
-        title: 'Milestone Slippage Report',
+        title: t('execution.reports.catalog.milestoneSlippageReport'),
         audience: 'PMO, Sponsors',
         cadence: 'Weekly',
         scope: 'All milestones with baseline vs forecast drift',
@@ -4983,7 +4983,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'capacity-utilization',
-        title: 'Capacity Utilization Report',
+        title: t('execution.reports.catalog.capacityUtilizationReport'),
         audience: 'Resource Managers, PMO',
         cadence: 'Monthly',
         scope: 'Per-person and per-team workload vs capacity',
@@ -5007,7 +5007,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'budget-variance',
-        title: 'Budget Variance Report',
+        title: t('execution.reports.catalog.budgetVarianceReport'),
         audience: 'Finance, Sponsors',
         cadence: 'Monthly',
         scope: 'Planned vs actual budget per initiative',
@@ -5033,7 +5033,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'decision-backlog',
-        title: 'Decision Backlog & Approval Aging',
+        title: t('execution.reports.catalog.decisionBacklogApprovalAging'),
         audience: 'PMO, Decision Owners',
         cadence: 'Weekly',
         scope: 'All pending decisions and approval age',
@@ -5064,7 +5064,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'cross-dependency',
-        title: 'Cross-Initiative Dependency Report',
+        title: t('execution.reports.catalog.crossInitiativeDependencyReport'),
         audience: 'PMO, Architects',
         cadence: 'Bi-weekly',
         scope: 'Inter-initiative dependency graph and cascade risk',
@@ -5090,7 +5090,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'delivery-confidence',
-        title: 'Delivery Confidence Report',
+        title: t('execution.reports.catalog.deliveryConfidenceReport'),
         audience: 'Steering Committee, Sponsors',
         cadence: 'Monthly',
         scope: 'Risk-adjusted delivery forecast with confidence scoring',
@@ -5124,7 +5124,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'sponsor-onepager',
-        title: 'Sponsor-Ready One-Pager',
+        title: t('execution.reports.catalog.sponsorReadyOnePager'),
         audience: 'Executive Sponsors',
         cadence: 'On demand',
         scope: 'Concise executive summary of portfolio state',
