@@ -135,9 +135,31 @@ export const WizardModal: React.FC<WizardModalProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
 
-  // Move focus into the panel when it opens (basic focus management).
+  // Move focus into the panel when it opens, and ODDAJ JE z powrotem elementowi,
+  // który modal otworzył, gdy się zamyka.
+  //
+  // ★ F10 / P-J02 pkt 2 (bloker testerki 15.09: „część okien się nie otwiera").
+  // Zmierzone na żywym stagingu (`/interview?tab=insights` → „New insight"):
+  // modal OTWIERA się i ZAMYKA poprawnie (Escape), ale po zamknięciu
+  // `document.activeElement` = `BODY` — fokus przepada, a użytkownik klawiatury
+  // ląduje na początku strony i „okno nie otwiera się" przy kolejnym Enterze,
+  // bo przycisk nie jest już aktywnym elementem. Kontrakt a11y tej powłoki był
+  // spisany od początku (`InsightCreatorModal.a11y.test.tsx`: „close on Escape,
+  // and return focus to the trigger") — brakowało implementacji w domyślnej
+  // powłoce `WizardModal`, przez którą idzie dziś Kreator Wniosków.
+  const wyzwalaczRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    if (open) panelRef.current?.focus();
+    if (open) {
+      const aktywny = document.activeElement;
+      wyzwalaczRef.current = aktywny instanceof HTMLElement ? aktywny : null;
+      panelRef.current?.focus();
+      return;
+    }
+    const cel = wyzwalaczRef.current;
+    wyzwalaczRef.current = null;
+    // Wyzwalacz mógł zniknąć z drzewa razem z zamknięciem — wtedy nic nie
+    // wymuszamy (skok na losowy element byłby gorszy od braku skoku).
+    if (cel && cel.isConnected) cel.focus();
   }, [open]);
 
   const headingId = useMemo(

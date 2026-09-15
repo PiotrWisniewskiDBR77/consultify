@@ -9114,6 +9114,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         : 'card opened in Preview mode'
                   }
                   uzupelnijSekcje={zrodlaPracujZAI.sekcja}
+                  /* ★ F10 / P-J01 (bloker testerki 15.09, `/interview` PL):
+                     `zbudujZrodlaPracujZAI` buduje OBA źródła (`sekcja` +
+                     `dokument`), ale karta Wniosku podłączała tylko `sekcja`.
+                     Skutek zmierzony na żywym stagingu (Edycja, wniosek draft):
+                     „Uzupełnij cały dokument" wyszarzone z powodem
+                     `brakGeneratora` („No generator for this card") — mimo że
+                     generator stoi dwie linie wyżej. Trzy karty-rodzeństwo
+                     (Zadanie `TaskDetailView:5866`, Decyzja
+                     `DecisionDetailView:6286`, Powiadomienie
+                     `NotificationDetailView:3262`) podłączają oba od początku —
+                     Wniosek był jedynym wyjątkiem. Zapis nadal WYŁĄCZNIE przez
+                     „Zatwierdź" w podglądzie propozycji (`PracujZAI.zatwierdz`). */
+                  uzupelnijDokument={zrodlaPracujZAI.dokument}
                 />
               }
               overflowKebab={

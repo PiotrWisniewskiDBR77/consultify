@@ -30,6 +30,11 @@ import {
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
 import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
+import {
+  oczyscListeZdan,
+  oczyscProzeWniosku,
+  oczyscZnaleziska,
+} from './interviewInsightProse.js';
 import { canonicalizeContextDocumentStatus } from './organizationContext/ContextDocumentService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 import { P10_CONFIDENCE_LEVELS, P10_NO_OVERCLAIM_RULES } from './v8/interviewInsightCanon.js';
@@ -2398,6 +2403,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
 ${crossSessionInstructions}
 Rules:
 - Ground every theme, issue, and opportunity in specific answer_ids from the data.
+- answer_ids belong ONLY in evidence_refs and evidence_map. NEVER write an answer_id, an [answer_id: ...] tag, or any UUID inside executive_summary, title, description, divergence_note, signals, or missing_data — those fields are read by a human and an ID there is unreadable noise. Name the person or role instead (e.g. "(Sources: Head of Quality)").
 - "signals" capture tensions, gaps, contradictions, or emerging patterns that don't fit neatly into themes/issues.
 - Include at least one entry in evidence_map for each answer that contributed to a theme or issue.
 - Preserve perspective nuance: if executives, managers, frontline users, or departments see a topic differently, encode that in perspective_labels and divergence_note instead of flattening it into one claim.
@@ -2452,15 +2458,19 @@ Rules:
 
     return {
       schema_version: typeof parsed.schema_version === 'string' ? parsed.schema_version : undefined,
-      executive_summary: String(parsed.executive_summary || ''),
-      themes: Array.isArray(parsed.themes) ? mapCrossSession(parsed.themes) : [],
-      issues: Array.isArray(parsed.issues) ? mapCrossSession(parsed.issues) : [],
+      // F10 / P-J02 pkt 3: proza wraca BEZ surowych `[answer_id: …]` — te same
+      // identyfikatory stoją obok w `evidence_refs`/`evidence_map`, więc w
+      // zdaniu są śmieciem („znaki, które nie są literami"). Struktura dowodów
+      // nietknięta — czyścimy wyłącznie pola czytane przez człowieka.
+      executive_summary: oczyscProzeWniosku(String(parsed.executive_summary || '')),
+      themes: Array.isArray(parsed.themes) ? oczyscZnaleziska(mapCrossSession(parsed.themes)) : [],
+      issues: Array.isArray(parsed.issues) ? oczyscZnaleziska(mapCrossSession(parsed.issues)) : [],
       opportunities: Array.isArray(parsed.opportunities)
-        ? mapCrossSession(parsed.opportunities)
+        ? oczyscZnaleziska(mapCrossSession(parsed.opportunities))
         : [],
-      signals: Array.isArray(parsed.signals) ? parsed.signals : [],
+      signals: Array.isArray(parsed.signals) ? oczyscZnaleziska(parsed.signals) : [],
       evidence_map: Array.isArray(parsed.evidence_map) ? parsed.evidence_map : [],
-      missing_data: Array.isArray(parsed.missing_data) ? parsed.missing_data : [],
+      missing_data: Array.isArray(parsed.missing_data) ? oczyscListeZdan(parsed.missing_data) : [],
       material_quality:
         parsed.material_quality && typeof parsed.material_quality === 'object'
           ? parsed.material_quality
@@ -3359,13 +3369,19 @@ ${answerText}
           })()
         : undefined,
       content,
-      executiveSummary: row.executive_summary || undefined,
-      themes: safeJsonArray<InsightTheme>(row.themes_json),
-      issues: safeJsonArray<InsightIssue>(row.issues_json),
-      opportunities: safeJsonArray<InsightOpportunity>(row.opportunities_json),
-      signals: safeJsonArray<InsightSignal>(row.signals_json),
+      // F10 / P-J02 pkt 3 — ten sam sanitizer na ODCZYCIE, żeby wnioski
+      // wygenerowane PRZED naprawą (m.in. „Justyna wnioski",
+      // `ii_b5a80a46-91a2-4d3b-8d88-7bb885b78222`) wyświetliły się czysto bez
+      // migracji danych. `evidenceMap` celowo bez czyszczenia — tam ID to dana.
+      executiveSummary: row.executive_summary
+        ? oczyscProzeWniosku(row.executive_summary)
+        : undefined,
+      themes: oczyscZnaleziska(safeJsonArray<InsightTheme>(row.themes_json)),
+      issues: oczyscZnaleziska(safeJsonArray<InsightIssue>(row.issues_json)),
+      opportunities: oczyscZnaleziska(safeJsonArray<InsightOpportunity>(row.opportunities_json)),
+      signals: oczyscZnaleziska(safeJsonArray<InsightSignal>(row.signals_json)),
       evidenceMap: safeJsonArray<InsightEvidenceMapEntry>(row.evidence_map_json),
-      missingData: safeJsonArray<string>(row.missing_data_json),
+      missingData: oczyscListeZdan(safeJsonArray<string>(row.missing_data_json)),
       analysisScope,
       materialQuality:
         Object.keys(safeJsonObject<Partial<InsightMaterialQuality>>(row.material_quality_json, {}))
