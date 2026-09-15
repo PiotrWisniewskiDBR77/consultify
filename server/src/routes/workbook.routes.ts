@@ -53,6 +53,7 @@ import {
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { resolveLocale } from '../services/ai/languagePolicy.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
@@ -1331,8 +1332,20 @@ router.post(
 
     await ensureWorkbookSchema();
 
+    // F7 (DEC-461): domyślny tytuł i nazwa zakładki były STAŁĄ POLSKĄ
+    // („Pusty arkusz", „Arkusz1") — nowy arkusz w organizacji EN dostawał
+    // polskie napisy w samym pliku .xlsx. Teraz: jawna wartość z żądania
+    // wygrywa (front podaje ją z i18n), a domyślka idzie z resolvera DEC-510
+    // (users.language → users.locale → organizations.default_language → 'en').
     const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
-    const title = rawTitle || 'Pusty arkusz';
+    const rawSheetName = typeof req.body?.sheetName === 'string' ? req.body.sheetName.trim() : '';
+    const blankLocale = await resolveLocale(req as never);
+    const blankDefaults =
+      blankLocale === 'pl'
+        ? { title: 'Pusty arkusz', sheetName: 'Arkusz1' }
+        : { title: 'Untitled spreadsheet', sheetName: 'Sheet1' };
+    const title = rawTitle || blankDefaults.title;
+    const sheetName = rawSheetName || blankDefaults.sheetName;
     const sourcePack =
       req.body?.sourcePack &&
       typeof req.body.sourcePack === 'object' &&
@@ -1370,7 +1383,7 @@ router.post(
 
     const schema: WorkbookSchema = {
       title,
-      sheets: [{ name: 'Arkusz1', columns: blankColumns, rows: blankRows }],
+      sheets: [{ name: sheetName, columns: blankColumns, rows: blankRows }],
     };
 
     const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');

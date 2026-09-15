@@ -122,12 +122,15 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
 
     // Immediately shows the "creating" spinner.
     expect(screen.getByTestId('excele-blank-creating')).toBeInTheDocument();
-    expect(screen.getByText('Tworzenie pustego arkusza…')).toBeInTheDocument();
+    expect(screen.getByText('Creating an empty spreadsheet…')).toBeInTheDocument();
 
     // POST /workbook/blank fires.
     await waitFor(() => {
+      // F7 (DEC-461): tytuł i nazwa zakładki idą teraz z i18n (EN first) —
+      // atrapa `t()` w tests/setup.ts zwraca wartość domyślną, czyli angielską.
       expect(mockState.apiPostMock).toHaveBeenCalledWith('/workbook/blank', {
-        title: 'Pusty arkusz',
+        title: 'Untitled spreadsheet',
+        sheetName: 'Sheet1',
       });
     });
 
@@ -137,7 +140,7 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('excele-blank-creating')).not.toBeInTheDocument();
     });
-    expect(screen.queryByText('Tworzenie pustego arkusza…')).not.toBeInTheDocument();
+    expect(screen.queryByText('Creating an empty spreadsheet…')).not.toBeInTheDocument();
 
     // The real workbook shell renders instead.
     await waitFor(() => {
@@ -160,11 +163,11 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
     expect(screen.queryByTestId('excele-blank-creating')).not.toBeInTheDocument();
     expect(
       screen.getByText(
-        'Nie udało się utworzyć pustego arkusza. Spróbuj ponownie albo wróć do Materiałów.'
+        'Could not create an empty spreadsheet. Try again or go back to Materials.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Spróbuj ponownie' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wróć do Materiałów' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Materials' })).toBeInTheDocument();
 
     // The failed state persists — it does not silently revert to "creating"
     // or disappear on its own once the toast would have faded.
@@ -172,7 +175,7 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
     expect(screen.getByTestId('excele-blank-failed')).toBeInTheDocument();
   });
 
-  it('retries the creation when the user clicks "Spróbuj ponownie"', async () => {
+  it('retries the creation when the user clicks "Try again"', async () => {
     mockState.apiPostMock
       .mockRejectedValueOnce(new Error('network down'))
       .mockResolvedValueOnce({ data: { id: 'wb-2' } });
@@ -187,7 +190,7 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
       expect(screen.getByTestId('excele-blank-failed')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
     await waitFor(() => {
       expect(mockState.apiPostMock).toHaveBeenCalledTimes(2);

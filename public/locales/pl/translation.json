@@ -39717,6 +39717,15 @@
       "xlsx_clipboard_copy": "Kopiuj",
       "xlsx_clipboard_cut": "Wytnij",
       "xlsx_clipboard_paste": "Wklej"
+    },
+    "blank": {
+      "back": "Wróć do Materiałów",
+      "createFailed": "Nie udało się utworzyć pustego arkusza.",
+      "creating": "Tworzenie pustego arkusza…",
+      "failedMessage": "Nie udało się utworzyć pustego arkusza. Spróbuj ponownie albo wróć do Materiałów.",
+      "retry": "Spróbuj ponownie",
+      "sheetName": "Arkusz1",
+      "title": "Pusty arkusz"
     }
   },
   "aiActions": {

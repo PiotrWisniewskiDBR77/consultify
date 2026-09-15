@@ -39155,6 +39155,15 @@
       "unavailableBody": "The share link is invalid, revoked or has expired.",
       "unavailableTitle": "This workbook is unavailable",
       "untitled": "Untitled workbook"
+    },
+    "blank": {
+      "back": "Back to Materials",
+      "createFailed": "Could not create an empty spreadsheet.",
+      "creating": "Creating an empty spreadsheet…",
+      "failedMessage": "Could not create an empty spreadsheet. Try again or go back to Materials.",
+      "retry": "Try again",
+      "sheetName": "Sheet1",
+      "title": "Untitled spreadsheet"
     }
   },
   "aiActions": {

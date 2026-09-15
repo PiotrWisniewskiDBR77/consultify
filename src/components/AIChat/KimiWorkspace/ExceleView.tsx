@@ -440,13 +440,20 @@ export const ExceleView: React.FC = () => {
     setCreatingBlank(true);
     setBlankCreateFailed(false);
     try {
-      const res = await Api.post('/workbook/blank', { title: 'Pusty arkusz' });
+      // F7 (DEC-461): tytuł i nazwa zakładki były STAŁĄ POLSKĄ („Pusty arkusz",
+      // „Arkusz1") niezależnie od języka organizacji/użytkownika. Front podaje
+      // je teraz z i18n (EN first); serwer ma własną domyślkę z locale użytkownika
+      // (workbook.routes.ts) na wypadek wołania bez tych pól.
+      const res = await Api.post('/workbook/blank', {
+        title: t('excele.blank.title', 'Untitled spreadsheet'),
+        sheetName: t('excele.blank.sheetName', 'Sheet1'),
+      });
       const payload = (res as { data?: { id?: string } } | null)?.data;
       const workbookId = payload?.id;
       if (workbookId) {
         navigate(`/excele?artifactId=${encodeURIComponent(workbookId)}`);
       } else {
-        toast.error('Nie udało się utworzyć pustego arkusza.');
+        toast.error(t('excele.blank.createFailed', 'Could not create an empty spreadsheet.'));
         setBlankCreateFailed(true);
       }
     } catch {
@@ -455,12 +462,12 @@ export const ExceleView: React.FC = () => {
       // this catch fires deterministically rather than hanging forever. The
       // bug was downstream: nothing here used to give the failure a
       // permanent, visible state — see `blankCreateFailed` above.
-      toast.error('Nie udało się utworzyć pustego arkusza.');
+      toast.error(t('excele.blank.createFailed', 'Could not create an empty spreadsheet.'));
       setBlankCreateFailed(true);
     } finally {
       setCreatingBlank(false);
     }
-  }, [creatingBlank, navigate]);
+  }, [creatingBlank, navigate, t]);
 
   // Materiały wspólny launcher — `?entry=blank`: materializuj pustą siatkę
   // automatycznie, bez wymagania drugiego kliknięcia „Czysto" na tym ekranie.
@@ -493,12 +500,15 @@ export const ExceleView: React.FC = () => {
     return (
       <BlankCreationState
         status={blankCreateFailed ? 'failed' : 'creating'}
-        creatingLabel="Tworzenie pustego arkusza…"
-        failedMessage="Nie udało się utworzyć pustego arkusza. Spróbuj ponownie albo wróć do Materiałów."
+        creatingLabel={t('excele.blank.creating', 'Creating an empty spreadsheet…')}
+        failedMessage={t(
+          'excele.blank.failedMessage',
+          'Could not create an empty spreadsheet. Try again or go back to Materials.'
+        )}
         onRetry={() => void handleCreateEmptyGrid()}
-        retryLabel="Spróbuj ponownie"
+        retryLabel={t('excele.blank.retry', 'Try again')}
         onBack={() => navigate('/presentations?tab=sheets')}
-        backLabel="Wróć do Materiałów"
+        backLabel={t('excele.blank.back', 'Back to Materials')}
         testId="excele-blank"
       />
     );
