@@ -1,0 +1,500 @@
+===== tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx RC=1 passed=1 failed=1 =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-k2-superadmin-w73
+
+ ✓ tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx > Partner economics approved-out UI > keeps operator review while hiding commission, discount and payout authoring 89ms
+ × tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx > Partner economics approved-out UI > renders settlement history without any approved-out mutation affordance 7ms
+   → useLocation() may be used only in the context of a <Router> component.
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  22:41:27
+   Duration  1.32s (transform 525ms, setup 103ms, import 763ms, tests 97ms, environment 248ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx > Partner economics approved-out UI > renders settlement history without any approved-out mutation affordance
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ PartnerSettlementsView src/views/superadmin/revenue/PartnerSettlementsView.tsx:215:22
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+===== tests/frontend/resource-management-components.test.tsx RC=1 passed=0 failed=1 =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-k2-superadmin-w73
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  22:41:28
+   Duration  573ms (transform 58ms, setup 98ms, import 0ms, tests 0ms, environment 248ms)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/frontend/resource-management-components.test.tsx [ tests/frontend/resource-management-components.test.tsx ]
+Error: Failed to resolve import "@/views/admin/BudgetDashboard" from "tests/frontend/resource-management-components.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/piotrwisniewski/Developer/codex-wt/b-k2-superadmin-w73/tests/frontend/resource-management-components.test.tsx:10:0
+  4  |  const __vi_import_2__ = await import("@tanstack/react-query");
+  5  |  const __vi_import_3__ = await import("@/views/superadmin/SubscriptionPlansManager");
+  6  |  const __vi_import_4__ = await import("@/views/admin/BudgetDashboard");
+     |                                       ^
+  7  |  const __vi_import_5__ = await import("@/components/ui/ToastNotification");
+  8  |  const __vi_import_6__ = await import("@/services/api");
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23
+ ❯ node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+===== tests/integration/routes/settings-admin-superadmin.p31-33.test.ts RC=1 passed=78 failed=1 =====
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-k2-superadmin-w73
+
+stdout | tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings.routes exports a router with key/value CRUD
+2026-09-14 22:41:29:4129 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 22:41:29:4129 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 22:41:29:4129 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 22:41:29:4129 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 22:41:29:4129 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings.routes exports a router with key/value CRUD
+2026-09-14 22:41:30:4130 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings.routes exports a router with key/value CRUD
+2026-09-14 22:41:30:4130 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings.routes exports a router with key/value CRUD 1626ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings route file has preference endpoints 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings route supports audit log 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings routes expose persisted AI privacy and prompt library preferences 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings routes expose account recovery read-back instead of a missing route 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings route supports GDPR export/deletion 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings route supports integrations hub 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > SettingsView frontend exists with sidebar sections 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > legacy api.ts no longer contains settings stub block 2ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > AI settings service supports superadmin→org→user merge 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > Gateway mounts /api/settings 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — taxonomy + preferences > settings legacy entry resolver redirects old paths to real mounted sections 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > admin middleware enforces admin role 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > admin-data routes exist with security events and sessions 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > admin audit service exists 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > admin session service exists 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > AdminView frontend exists 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > active admin completeness flows use shared AdminApi and current organization context 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > AdminSettingsModule defines the team-only tenant admin shell 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > organization members route supports invite/role/remove 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit + members/roles + security > Gateway mounts admin routes 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > superadmin middleware enforces SUPERADMIN role via DB check 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > superadmin routes have tenant/user/org operations 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > superadmin routes have integration/connector operations 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > superadmin routes have compliance/legal operations 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > superadmin routes have feature roadmap 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > billing user-plans client paths align to the superadmin backend route 2ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > V8 admin feature flags routes exist with superadmin guard 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > feature flags route separates user runtime evaluation from superadmin management 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > confirmAction middleware exists for destructive ops 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > requireAudit middleware exists for policy updates 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > SuperAdminView frontend exists with sidebar 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > prompt assistant flows use the shared prompt assistant api client 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > SuperAdminController handles cross-tenant operations 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > Gateway mounts /api/superadmin 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > Gateway mounts ai observability under /api/admin/ai-observability 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > Gateway no longer exposes resource management through the generic /api/admin prefix 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > billing admin routes are guarded by verifySuperAdmin and billing capability 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > core docs routes use canonical superadmin authz with ai_ops capability 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — root control plane + guardrails > analytics superadmin routes exist 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > Ownership boundaries across P30-P33 > P30 trust endpoint routes writes to Admin (P32) 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > Ownership boundaries across P30-P33 > role guards distinguish admin vs superadmin 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > Ownership boundaries across P30-P33 > RBAC middleware supports role-based routing 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > settingsRegistryService exports registry with 3 scopes 9ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > each registry key has impact metadata fields 2ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > tenant and tenant-enforced keys route writes to Admin (P32) 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > unknown settings keys are blocked with a refresh hint 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > personal-scoped keys allow any role to write 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > buildDenialResponse returns proper 403 with guidance 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > buildDenialResponse returns 404 for not_found 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > buildDenialResponse returns 503 for resolver_unavailable 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > registry includes P30 read-only tenant defaults 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6) > module preferences keys exist in registry 1ms
+ × tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit IA alignment (§2.3.1) > Admin navigation exposes the seven canonical domains 8ms
+   → expected 'import {\n  Activity,\n  AlertTriangl…' to contain 'c(\'platform-operations\''
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit IA alignment (§2.3.1) > AdminSettingsModule exposes seven first-class sections and maps legacy aliases 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — audit events on members ops > organizations.routes wires audit to addMember 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — audit events on members ops > organizations.routes wires audit to updateMemberRole 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — audit events on members ops > organizations.routes wires audit to removeMember 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — integration status model (§2.3.4) > integrationStatusService exports 4-status model 5ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — integration status model (§2.3.4) > normalizeStatus maps raw values to canonical statuses 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — integration status model (§2.3.4) > getRemediationPath returns guidance for each status 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have suspend tenant endpoint 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have reactivate tenant endpoint 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have force-reset MFA endpoint 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have platform MFA override 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have platform SSO override 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have suspend AI model 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have emergency connector kill-switch 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have bulk data export 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have tenant data purge with type-to-confirm 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have suspend virtual worker 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > superadmin routes have emergency tenant lockdown 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — gated actions (§2.3.2) > all gated actions use requireConfirmation + requireAudit 1ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — fail-closed audit (§2.3.2 guardrail) > confirmAction middleware returns 503 on audit failure 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — sidebar IA alignment (§2.3.1) > SuperAdminSidebar has Tenant & User Ops branch 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — sidebar IA alignment (§2.3.1) > SuperAdminSidebar has AI Operations branch 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — sidebar IA alignment (§2.3.1) > SuperAdminSidebar has Connector Ops branch 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — sidebar IA alignment (§2.3.1) > SuperAdminSidebar has Governance & Compliance branch 0ms
+ ✓ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P33 Superadmin — sidebar IA alignment (§2.3.1) > SuperAdminSidebar has Platform Security branch 0ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 78 passed (79)
+   Start at  22:41:29
+   Duration  2.22s (transform 1.22s, setup 95ms, import 23ms, tests 1.68s, environment 234ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/routes/settings-admin-superadmin.p31-33.test.ts > P32 Admin — cockpit IA alignment (§2.3.1) > Admin navigation exposes the seven canonical domains
+AssertionError: expected 'import {\n  Activity,\n  AlertTriangl…' to contain 'c(\'platform-operations\''
+
+- Expected
++ Received
+
+- c('platform-operations'
++ import {
++   Activity,
++   AlertTriangle,
++   Bot,
++   Building2,
++   ClipboardCheck,
++   Clock,
++   CreditCard,
++   FileClock,
++   FileText,
++   Gauge,
++   Globe,
++   KeyRound,
++   Lock,
++   Network,
++   Receipt,
++   ScrollText,
++   ShieldCheck,
++   SlidersHorizontal,
++   Sparkles,
++   UserCheck,
++   Users,
++   WalletCards,
++ } from 'lucide-react';
++
++ import type {
++   DomainNavigationChild,
++   DomainNavigationModule,
++ } from '../settings/shared/DomainNavigation';
++
++ export type AdminDomain = 'team' | 'billing' | 'ai' | 'security' | 'audit' | 'command' | 'health';
++ export type AdminScreen =
++   | 'members'
++   | 'invitations'
++   | 'roles-permissions'
++   | 'teams'
++   | 'guests-external'
++   | 'access-requests'
++   | 'access-reviews'
++   | 'ownership'
++   | 'overview'
++   | 'plan-limits'
++   | 'usage-costs'
++   | 'payment-methods'
++   | 'invoices'
++   | 'seats-licences'
++   | 'billing-details'
++   | 'budgets-alerts'
++   | 'plan-history'
++   | 'policy-autonomy'
++   | 'personas'
++   | 'models-providers'
++   | 'ai-limits-budgets'
++   | 'data-privacy'
++   | 'quality-evaluations'
++   | 'ai-incidents'
++   | 'configuration-versions'
++   | 'ai-operations'
++   | 'ai-audit'
++   | 'security-policy'
++   | 'sso'
++   | 'scim-lifecycle'
++   | 'sessions'
++   | 'api-access'
++   | 'domains'
++   | 'service-accounts'
++   | 'security-alerts'
++   | 'break-glass'
++   | 'risk-summary'
++   | 'events'
++   | 'high-risk-changes'
++   | 'compliance-evidence'
++   | 'retention-export'
++   | 'integrity'
++   | 'legal-hold'
++   | 'export-history'
++   | 'attention-queue'
++   | 'agent-trace'
++   | 'audit'
++   | 'dlp'
++   | 'residency'
++   | 'retention'
++   | 'ai-policy'
++   | 'benchmark'
++   | 'cost-capacity'
++   | 'organization-defaults'
++   | 'service-status'
++   | 'dependencies'
++   | 'diagnostics'
++   | 'incident-history'
++   | 'queues-jobs'
++   | 'sla-slo'
++   | 'platform-operations';
++
++ export interface AdminLocation {
++   domain: AdminDomain;
++   screen: AdminScreen;
++ }
++
++ /**
++  * Etykieta ekranu = KLUCZ i18n + angielski `defaultValue`.
++  *
++  * Do 09.09 ten plik trzymał DWA równoległe słowniki napisów (`ADMIN_DOMAINS`
++  * po polsku i `ADMIN_SCREEN_EN`/`ADMIN_DOMAIN_EN` po angielsku) i przełączał
++  * je funkcją `getAdminDomains(language)`. Żaden z nich nie przechodził przez
++  * i18n, więc 136 napisów całego menu panelu było poza tłumaczeniami — i poza
++  * zasięgiem przyrządu pomiarowego, bo to plik `.ts`, a nie `.tsx`.
++  * Teraz jest jedno źródło: klucz + angielski default (reguła §2.3 PLAN.md),
++  * polski wyłącznie w `public/locales/pl/translation.json`.
++  */
++ const c = (id: AdminScreen, labelKey: string, label: string, icon = FileText) => ({
++   id,
++   labelKey,
++   label,
++   icon,
++ });
++
++ /** Wpis nawigacji nosi KLUCZ i18n obok angielskiego napisu domyślnego. */
++ export type AdminNavScreen = DomainNavigationChild<AdminScreen> & { labelKey: string };
++ export type AdminNavDomain = Omit<DomainNavigationModule<AdminDomain, AdminScreen>, 'children'> & {
++   labelKey: string;
++   children: AdminNavScreen[];
++ };
++
++ export const ADMIN_DOMAINS: AdminNavDomain[] = [
++   {
++     id: 'team',
++     labelKey: 'admin.nav.domain.team',
++     label: 'Team & Access',
++     children: [
++       c('members', 'admin.nav.screen.members', 'Members', Users),
++       c('invitations', 'admin.nav.screen.invitations', 'Invitations', UserCheck),
++       c(
++         'roles-permissions',
++         'admin.nav.screen.roles-permissions',
++         'Roles & Permissions',
++         ShieldCheck
++       ),
++       c('teams', 'admin.nav.screen.teams', 'Teams', Users),
++       c('guests-external', 'admin.nav.screen.guests-external', 'Guests & External Access', Network),
++       c('access-requests', 'admin.nav.screen.access-requests', 'Access Requests', FileClock),
++       c('access-reviews', 'admin.nav.screen.access-reviews', 'Access Reviews', UserCheck),
++       c('ownership', 'admin.nav.screen.ownership', 'Ownership', Building2),
++     ],
++   },
++   {
++     id: 'billing',
++     labelKey: 'admin.nav.domain.billing',
++     label: 'Billing & Plans',
++     children: [
++       c('overview', 'admin.nav.screen.overview', 'Overview', Gauge),
++       c('plan-limits', 'admin.nav.screen.plan-limits', 'Plan & Limits', CreditCard),
++       c('usage-costs', 'admin.nav.screen.usage-costs', 'Usage & Costs', Activity),
++       c('payment-methods', 'admin.nav.screen.payment-methods', 'Payment Methods', WalletCards),
++       c('invoices', 'admin.nav.screen.invoices', 'Invoices', Receipt),
++       c('seats-licences', 'admin.nav.screen.seats-licences', 'Seats & Licences', Users),
++       c('billing-details', 'admin.nav.screen.billing-details', 'Billing Details', Building2),
++       c('budgets-alerts', 'admin.nav.screen.budgets-alerts', 'Budgets & Alerts', AlertTriangle),
++       c('plan-history', 'admin.nav.screen.plan-history', 'Plan Change History', FileClock),
++     ],
++   },
++   {
++     id: 'ai',
++     labelKey: 'admin.nav.domain.ai',
++     label: 'AI Control',
++     children: [
++       c('policy-autonomy', 'admin.nav.screen.policy-autonomy', 'Policy & Autonomy', ShieldCheck),
++       c('personas', 'admin.nav.screen.personas', 'Personas', Bot),
++       c('models-providers', 'admin.nav.screen.models-providers', 'Models & Providers', Sparkles),
++       c(
++         'ai-limits-budgets',
++         'admin.nav.screen.ai-limits-budgets',
++         'Limits & Budgets',
++         SlidersHorizontal
++       ),
++       c('data-privacy', 'admin.nav.screen.data-privacy', 'Data & Privacy', ShieldCheck),
++       c(
++         'quality-evaluations',
++         'admin.nav.screen.quality-evaluations',
++         'Quality Evaluations',
++         Activity
++       ),
++       c('ai-incidents', 'admin.nav.screen.ai-incidents', 'AI Incidents', AlertTriangle),
++       c(
++         'configuration-versions',
++         'admin.nav.screen.configuration-versions',
++         'Configuration Versions',
++         FileClock
++       ),
++       c('ai-operations', 'admin.nav.screen.ai-operations', 'AI Operations', SlidersHorizontal),
++       c('ai-audit', 'admin.nav.screen.ai-audit', 'AI Audit', ScrollText),
++     ],
++   },
++   {
++     id: 'security',
++     labelKey: 'admin.nav.domain.security',
++     label: 'Security & Identity',
++     children: [
++       c('security-policy', 'admin.nav.screen.security-policy', 'Security Policy', ShieldCheck),
++       c('sso', 'admin.nav.screen.sso', 'SSO', KeyRound),
++       c('scim-lifecycle', 'admin.nav.screen.scim-lifecycle', 'SCIM & Lifecycle', Users),
++       c('sessions', 'admin.nav.screen.sessions', 'Sessions', Activity),
++       c('api-access', 'admin.nav.screen.api-access', 'API Access', KeyRound),
++       c('domains', 'admin.nav.screen.domains', 'Domains', Network),
++       c('service-accounts', 'admin.nav.screen.service-accounts', 'Service Accounts', Bot),
++       c('security-alerts', 'admin.nav.screen.security-alerts', 'Security Alerts', AlertTriangle),
++       c('break-glass', 'admin.nav.screen.break-glass', 'Break-glass', KeyRound),
++       c('risk-summary', 'admin.nav.screen.risk-summary', 'Risk Summary', Gauge),
++     ],
++   },
++   {
++     id: 'audit',
++     labelKey: 'admin.nav.domain.audit',
++     label: 'Audit Log',
++     children: [
++       c('events', 'admin.nav.screen.events', 'Events', ScrollText),
++       c(
++         'high-risk-changes',
++         'admin.nav.screen.high-risk-changes',
++         'High-risk Changes',
++         AlertTriangle
++       ),
++       c(
++         'compliance-evidence',
++         'admin.nav.screen.compliance-evidence',
++         'Compliance Evidence',
++         ShieldCheck
++       ),
++       c('retention-export', 'admin.nav.screen.retention-export', 'Retention & Export', FileText),
++       c('integrity', 'admin.nav.screen.integrity', 'Integrity', ShieldCheck),
++       c('legal-hold', 'admin.nav.screen.legal-hold', 'Legal Hold', FileClock),
++       c('export-history', 'admin.nav.screen.export-history', 'Export History', FileClock),
++     ],
++   },
++   {
++     id: 'command',
++     labelKey: 'admin.nav.domain.command',
++     label: 'Admin Command Center',
++     children: [
++       c('overview', 'admin.nav.screen.overview', 'Overview', Gauge),
++       c('attention-queue', 'admin.nav.screen.attention-queue', 'Attention Queue', AlertTriangle),
++       c('cost-capacity', 'admin.nav.screen.cost-capacity', 'Cost & Capacity', Activity),
++       c(
++         'organization-defaults',
++         'admin.nav.screen.organization-defaults',
++         'Organization Defaults',
++         SlidersHorizontal
++       ),
++       c('agent-trace', 'admin.nav.screen.agent-trace', 'Agent Trace', Bot),
++       c('audit', 'admin.nav.screen.audit', 'SOC2 Audit', ScrollText),
++       c('dlp', 'admin.nav.screen.dlp', 'DLP', Lock),
++       c('residency', 'admin.nav.screen.residency', 'Data Residency', Globe),
++       c('retention', 'admin.nav.screen.retention', 'Retention', Clock),
++       c('ai-policy', 'admin.nav.screen.ai-policy', 'AI Policy', Sparkles),
++       c('benchmark', 'admin.nav.screen.benchmark', 'Consulting Benchmark', ClipboardCheck),
++     ],
++   },
++   {
++     id: 'health',
++     labelKey: 'admin.nav.domain.health',
++     label: 'System Health',
++     children: [
++       c('service-status', 'admin.nav.screen.service-status', 'Service Status', Activity),
++       c('dependencies', 'admin.nav.screen.dependencies', 'Dependencies', Network),
++       c('diagnostics', 'admin.nav.screen.diagnostics', 'Diagnostics', SlidersHorizontal),
++       c('incident-history', 'admin.nav.screen.incident-history', 'Incident History', AlertTriangle),
++       c('queues-jobs', 'admin.nav.screen.queues-jobs', 'Queues & Jobs', FileClock),
++       c('sla-slo', 'admin.nav.screen.sla-slo', 'SLA / SLO', Gauge),
++       c(
++         'platform-operations',
++         'admin.nav.screen.platform-operations',
++         'Platform Operations',
++         KeyRound
++       ),
++     ],
++   },
++ ];
++
++ export const ADMIN_DEFAULTS: Record<AdminDomain, AdminScreen> = {
++   team: 'members',
++   billing: 'overview',
++   ai: 'policy-autonomy',
++   security: 'security-policy',
++   audit: 'events',
++   command: 'overview',
++   health: 'service-status',
++ };
++
++ type AdminLabelTranslator = (key: string, defaultValue: string) => string;
++
++ /**
++  * Jedyne wejście do etykiet menu panelu. Przyjmuje tłumacza (`t`), nie kod
++  * języka: nazwy mają iść przez i18n, a nie przez `if (język === 'pl')`.
++  */
++ export function getAdminDomains(t: AdminLabelTranslator) {
++   return ADMIN_DOMAINS.map((domain) => ({
++     ...domain,
++     label: t(domain.labelKey, domain.label),
++     children: domain.children.map((screen) => ({
++       ...screen,
++       label: t(screen.labelKey, screen.label),
++     })),
++   }));
++ }
++
+
+ ❯ tests/integration/routes/settings-admin-superadmin.p31-33.test.ts:484:21
+    482|       expect(content).toContain(`id: '${domain}'`);
+    483|     }
+    484|     expect(content).toContain("c('platform-operations'");
+       |                     ^
+    485|   });
+    486|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

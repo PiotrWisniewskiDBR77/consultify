@@ -1,0 +1,5 @@
+COMMAND: node scripts/i18n/pomiar-jezyka.mjs --report evidence/k2-superadmin-i18n-20260915/POMIAR_PO_V3.txt
+RC: 0
+OWNED K4en: 1
+src/views/superadmin/InvoiceCenterView.tsx:383	14 Admin Panel	, pending:	en:pending
+OWNED K7: 0

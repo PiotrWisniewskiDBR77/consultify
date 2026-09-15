@@ -1,0 +1,13 @@
+K2 V3 FINAL GATES
+base=f2628a0d36af85d97bcbe67b820d728c7c2f2f28
+npm run check:jezyk:ci => RC 0; K4en -600; K7 -168
+node scripts/i18n/pomiar-jezyka.mjs --report .../POMIAR_PO_V3.txt => RC 0; owned K4en 1 (technical pending:); owned K7 0
+npx vitest run src/views/superadmin/__tests__/superadminI18nDebt.w73.test.ts --retry=0 --reporter=verbose => RC 0; 3/3
+full importer per-file run, 96 files, --retry=0 => 93 files RC0; 639 GREEN / 3 exact-base-identical RED
+NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --listFiles --incremental => RC 2; 177 errors; 7310 files; owned K2 0
+NODE_OPTIONS=--max-old-space-size=4096 npx tsc -p server/tsconfig.json --noEmit --pretty false => RC 0
+esbuild full product delta => RC 0; 180/180
+bash scripts/check-list-canon.sh => RC 0; 349 baseline 349
+bash scripts/check-artefakt.sh => RC 0; 8 / 0 / 117
+NODE_OPTIONS=--max-old-space-size=8192 npm run build => RC 0; 10754 modules; built in 52.73s
+Organizations PL pending screenshot => RC 0; console errors 0; network 4xx/5xx 0; visible status Oczekująca
