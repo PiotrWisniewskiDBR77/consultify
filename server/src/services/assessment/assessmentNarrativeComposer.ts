@@ -1,10 +1,11 @@
 import type { MethodFindingRecord } from '../../method-core/outputs/MethodOutputService.js';
+import { priorityForGap, resolveDrdLevelLabelPL } from './assessmentDrdReportSchemaService.js';
 import {
-  EVIDENCE_STATE_PL,
-  priorityForGap,
-  resolveDrdLevelLabelPL,
-} from './assessmentDrdReportSchemaService.js';
-import { reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
+  assessmentNarrativeI18n,
+  reportI18n,
+  type AssessmentNarrativeFindingText,
+  type ReportLanguage,
+} from './assessmentReportI18n.js';
 
 export const CONFIDENCE_PL = Object.freeze({
   low: 'niska',
@@ -21,20 +22,6 @@ export const CONFIDENCE_PL = Object.freeze({
  */
 export type NarrativeSourceKind = 'method-core' | 'legacy';
 
-const SOURCE_PHRASE: Record<NarrativeSourceKind, { dopelniacz: string; miejscownik: string }> =
-  Object.freeze({
-    'method-core': { dopelniacz: 'zamrożonego Outputu', miejscownik: 'zamrożonym Outputcie' },
-    legacy: { dopelniacz: 'zapisanej oceny', miejscownik: 'zapisanej ocenie' },
-  });
-
-/** Cytat rekomendacji z findingu albo uczciwe stwierdzenie jej braku. Magazyn
- * zastany nie niesie rekomendacji — pusty cudzysłów „" w dokumencie klienckim
- * byłby gorszy niż jawne „bez zapisanej rekomendacji". */
-function cytatRekomendacji(recommendation: string): string {
-  const trimmed = recommendation.trim();
-  return trimmed ? `rekomendacja: „${trimmed}”` : 'bez zapisanej rekomendacji';
-}
-
 export interface AssessmentNarrativeProvenance {
   readonly unitId: string;
   readonly sourceFields: readonly string[];
@@ -45,8 +32,9 @@ export interface AssessmentNarrativeProvenance {
 
 export interface AreaNarrativeContext {
   readonly axisId: number;
-  readonly evidenceState: keyof typeof EVIDENCE_STATE_PL;
+  readonly evidenceState: 'evidenced' | 'incomplete' | 'declared' | 'not_assessed';
   readonly skipped?: boolean;
+  readonly language?: ReportLanguage;
   /**
    * Notatka oceniającego zapisana przy obszarze w magazynie ZASTANYM
    * (`assessments.answers_json` → `areas.<id>.levelNotes[<poziom>]`). To jest
@@ -76,6 +64,10 @@ export interface AggregateFinding {
   readonly evidenceCount: number;
   readonly recommendation: string;
   readonly expectedOutcome: string | null;
+}
+
+function narrativeFinding(finding: AggregateFinding): AssessmentNarrativeFindingText {
+  return { ...finding, unitName: finding.unitNamePL };
 }
 
 export interface ChapterAggregateNarrative {
@@ -197,17 +189,14 @@ export function composeChapterAggregateNarrative(input: {
   readonly findings: readonly AggregateFinding[];
   readonly frozenDate: string;
   readonly sourceKind?: NarrativeSourceKind;
-  /**
-   * [ODMROZENIE 04_ASSESSMENT DEC-510] G1 / S1.4 — dotyczy WYŁĄCZNIE
-   * `matrixCaption`. Reszta prozy tej funkcji pozostaje polska niezależnie od
-   * tej wartości (świadomie: tłumaczenie całej narracji silnika to osobna
-   * decyzja produktowa — patrz meldunek G1). Domyślnie `'pl'`, żeby żaden
-   * istniejący wołacz nie zmienił zachowania ani o znak.
-   */
+  /** [ODMROZENIE 04_ASSESSMENT DEC-510] G1/K3 — locale całej generowanej
+   * narracji. Domyślnie `'pl'`, żeby istniejący wołacz zachował zachowanie. */
   readonly language?: ReportLanguage;
 }): ChapterAggregateNarrative {
-  const zrodlo = SOURCE_PHRASE[input.sourceKind ?? 'method-core'];
-  const matrixCaption = reportI18n(input.language ?? 'pl').matrixCaptionSentence({
+  const language = input.language ?? 'pl';
+  const grammar = assessmentNarrativeI18n(language);
+  const source = grammar.source[input.sourceKind ?? 'method-core'];
+  const matrixCaption = reportI18n(language).matrixCaptionSentence({
     totalAreas: input.totalAreas,
     axisId: input.axisId,
     maxLevel: input.maxLevel,
@@ -270,26 +259,39 @@ export function composeChapterAggregateNarrative(input: {
     .filter((finding) => finding.gap === maxGap)
     .sort((left, right) => left.unitId.localeCompare(right.unitId));
   const introduction = withinValidated(
-    `Oś ${input.axisId}, ${input.axisNamePL}, obejmuje ${input.totalAreas} obszarów. Oceniono ${input.findings.length} z ${input.totalAreas} obszarów, a liczba pominięć wynosi ${input.skippedCount}. Poziomy obecne mieszczą się od ${Math.min(...current)} do ${Math.max(...current)}, natomiast poziomy docelowe od ${Math.min(...target)} do ${Math.max(...target)}. Stan udokumentowany dotyczy ${states.evidenced} obszarów, stan niepełny ${states.incomplete}, a stan zadeklarowany ${states.declared}. Luki mieszczą się od ${Math.min(...gaps)} do ${Math.max(...gaps)}. Największą lukę ${maxGap} mają: ${leaders.map((finding) => `${finding.unitId} ${finding.unitNamePL}`).join(', ')}. Zapisane poziomy obszarów to: ${input.findings.map((finding) => `${finding.unitId} od ${finding.currentLevel ?? 'nieustalonego'} do ${finding.targetLevel ?? 'nieustalonego'}, luka ${finding.gap ?? 'nieustalona'}`).join('; ')}. Dane pochodzą z ${zrodlo.dopelniacz}. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.`,
+    grammar.chapterIntroduction({
+      axisId: input.axisId,
+      axisName: input.axisNamePL,
+      totalAreas: input.totalAreas,
+      assessed: input.findings.length,
+      skipped: input.skippedCount,
+      states,
+      current,
+      target,
+      gaps,
+      maxGap,
+      leaders: leaders.map(narrativeFinding),
+      findings: input.findings.map(narrativeFinding),
+      sourceGenitive: source.genitive,
+    }),
     120,
     180,
     allowedNumbers
   );
   const posortowane = [...input.findings].sort(
-    (left, right) =>
-      (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
+    (left, right) => (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
   );
   const oknoWnioskow = OKNA[input.sourceKind ?? 'method-core'].chapterConclusion;
   const zbudujWnioski = (liczbaCytatow: number): string => {
     const cited = posortowane.slice(0, liczbaCytatow);
-    return `Na osi ${input.axisId} oceniono ${input.findings.length} z ${input.totalAreas} obszarów. Największa luka wynosi ${maxGap}, a liczba pominięć wynosi ${input.skippedCount}. ${cited
-      .map(
-        (finding) =>
-          `${finding.unitId} ${finding.unitNamePL}: poziom obecny ${finding.currentLevel ?? 'nieustalony'}, poziom docelowy ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}, pewność ${CONFIDENCE_PL[finding.confidence]}, liczba dowodów ${finding.evidenceCount}. ${finding.recommendation.trim() ? `Rekomendacja ${finding.unitId}: „${finding.recommendation.trim()}”` : `Obszar ${finding.unitId} nie ma zapisanej rekomendacji`}.${finding.expectedOutcome ? ` Oczekiwany rezultat ${finding.unitId}: „${finding.expectedOutcome}”.` : ''}`
-      )
-      .join(
-        ' '
-      )} Zapisane poziomy i luki wynoszą: ${input.findings.map((finding) => `${finding.unitId}: ${finding.currentLevel ?? 'nieustalony'} do ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}`).join('; ')}. Wnioski cytują treść zapisaną w findingach i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.`;
+    return grammar.chapterConclusion({
+      axisId: input.axisId,
+      totalAreas: input.totalAreas,
+      skipped: input.skippedCount,
+      maxGap,
+      cited: cited.map(narrativeFinding),
+      findings: input.findings.map(narrativeFinding),
+    });
   };
   const conclusion = withinValidated(
     najwiecejCytatow(
@@ -308,11 +310,11 @@ export function composeChapterAggregateNarrative(input: {
     matrixCaption,
     conclusion,
     decisionLine: {
-      direction: `Skoncentrować działania na obszarze ${primary.unitId} o największej luce ${maxGap} na osi ${input.axisId}.`,
-      priority: `Priorytet ${priorityForGap(maxGap)} wynika z największej luki ${maxGap} na osi ${input.axisId}.`,
+      direction: grammar.chapterDirection(primary.unitId, maxGap, input.axisId),
+      priority: grammar.chapterPriority(priorityForGap(maxGap, language), maxGap, input.axisId),
       horizon: null,
       successCondition: primary.expectedOutcome
-        ? `Warunek sukcesu dla ${primary.unitId}: ${withoutTerminalPeriod(primary.expectedOutcome)}.`
+        ? grammar.successCondition(primary.unitId, withoutTerminalPeriod(primary.expectedOutcome))
         : null,
     },
   };
@@ -324,8 +326,11 @@ export function composeProgramAggregateNarrative(input: {
   readonly findings: readonly AggregateFinding[];
   readonly limitations: readonly string[];
   readonly sourceKind?: NarrativeSourceKind;
+  readonly language?: ReportLanguage;
 }): ProgramAggregateNarrative {
-  const zrodlo = SOURCE_PHRASE[input.sourceKind ?? 'method-core'];
+  const language = input.language ?? 'pl';
+  const grammar = assessmentNarrativeI18n(language);
+  const source = grammar.source[input.sourceKind ?? 'method-core'];
   if (input.findings.length === 0) {
     return {
       executiveSummary: null,
@@ -348,9 +353,7 @@ export function composeProgramAggregateNarrative(input: {
    */
   const maPoliczalnaLuke = gaps.length > 0;
   const maxGap = maPoliczalnaLuke ? Math.max(...gaps) : null;
-  const zdanieOZakresieLuk = maPoliczalnaLuke
-    ? `Luki mieszczą się od ${Math.min(...gaps)} do ${Math.max(...gaps)}`
-    : 'Żaden obszar nie ma policzalnej luki';
+  const zdanieOZakresieLuk = grammar.gapRange(gaps);
   const critical = input.findings.filter((finding) => (finding.gap ?? 0) >= 3);
   const leaders = [...input.findings]
     .sort(
@@ -379,30 +382,32 @@ export function composeProgramAggregateNarrative(input: {
     ]),
   ];
   const executiveSummary = withinValidated(
-    `Ocena obejmuje ${input.axisCount} osi i ${input.totalAreas} obszarów. Finding istnieje dla ${input.findings.length} obszarów. Stan udokumentowany dotyczy ${evidenced} obszarów, stan niepełny ${incomplete}, a stan zadeklarowany ${declared}. ${zdanieOZakresieLuk}, a liczba luk krytycznych wynosi ${critical.length}. Trzy pierwsze obszary po uporządkowaniu malejąco według luki to ${leaders.map((finding) => `${finding.unitId} ${finding.unitNamePL} z luką ${finding.gap ?? 'nieustaloną'}`).join(', ')}. Ich poziomy obecne to ${leaders.map((finding) => `${finding.unitId}: ${finding.currentLevel ?? 'nieustalony'}`).join(', ')}, a docelowe ${leaders.map((finding) => `${finding.unitId}: ${finding.targetLevel ?? 'nieustalony'}`).join(', ')}. Zestawienie opiera się na ${zrodlo.miejscownik}, poziomach, lukach i stanach dowodowych. Jest to obraz policzalny, ograniczony do danych obecnych w zaakceptowanym kontrakcie raportu. Nie korzysta z benchmarku branżowego i nie dodaje oceny jakościowej poza zamrożonymi etykietami priorytetu oraz wiarygodności.`,
+    grammar.programSummary({
+      axisCount: input.axisCount,
+      totalAreas: input.totalAreas,
+      findings: input.findings.map(narrativeFinding),
+      states: { evidenced, incomplete, declared },
+      gapRange: zdanieOZakresieLuk,
+      criticalCount: critical.length,
+      leaders: leaders.map(narrativeFinding),
+      sourceLocative: source.locative,
+    }),
     120,
     150,
     allowedNumbers
   );
   const oknoLuk = OKNA[input.sourceKind ?? 'method-core'].criticalGaps;
   const posortowaneKrytyczne = [...critical].sort(
-    (left, right) =>
-      (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
+    (left, right) => (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
   );
   const zbudujLuki = (liczbaCytatow: number): string => {
     const wybrane = posortowaneKrytyczne.slice(0, liczbaCytatow);
-    return `Liczba obszarów z luką co najmniej 3 wynosi ${critical.length}. Największa luka wynosi ${maxGap}. ${wybrane
-      .map(
-        (finding) =>
-          `${finding.unitId} ${finding.unitNamePL}, luka ${finding.gap}, ${cytatRekomendacji(finding.recommendation)}.`
-      )
-      .join(' ')} Dla tych obszarów zapisano poziomy obecne ${wybrane
-      .map((finding) => `${finding.unitId}: ${finding.currentLevel}`)
-      .join(', ')} i docelowe ${wybrane
-      .map((finding) => `${finding.unitId}: ${finding.targetLevel}`)
-      .join(
-        ', '
-      )}. Każdy cytat zachowuje treść zapisaną w findingu i jego identyfikator. Treść jest cytowana z findingów bez parafrazy. Kolejność wynika wyłącznie z wielkości luki i identyfikatora obszaru; nie zawiera benchmarku ani prognozy.`;
+    return grammar.criticalGaps({
+      findings: wybrane.map(narrativeFinding),
+      criticalCount: critical.length,
+      maxGap,
+      recommendationQuote: grammar.recommendationQuote,
+    });
   };
   const criticalGaps = posortowaneKrytyczne.length
     ? withinValidated(
@@ -418,26 +423,24 @@ export function composeProgramAggregateNarrative(input: {
       )
     : null;
   const posortowaneWszystkie = [...input.findings].sort(
-    (left, right) =>
-      (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
+    (left, right) => (right.gap ?? -1) - (left.gap ?? -1) || left.unitId.localeCompare(right.unitId)
   );
   const usableLimitations = input.limitations.filter(usable);
-  const limitationsClause = usableLimitations.length
-    ? ` Ograniczenia ${zrodlo.dopelniacz}: ${usableLimitations.map((limitation) => `„${limitation}”`).join('; ')}.`
-    : '';
+  const limitationsClause = grammar.limitationsClause(source.genitive, usableLimitations);
   const oknoSyntezy = OKNA[input.sourceKind ?? 'method-core'].finalConclusions;
   const zbudujSyntze = (liczbaCytatow: number): string => {
     const selected = posortowaneWszystkie.slice(0, liczbaCytatow);
-    return `W całym programie oceniono ${input.findings.length} z ${input.totalAreas} obszarów w ${input.axisCount} osiach. ${zdanieOZakresieLuk}, a liczba luk krytycznych wynosi ${critical.length}. Stan udokumentowany dotyczy ${evidenced} obszarów, niepełny ${incomplete}, a zadeklarowany ${declared}. ${selected
-      .map(
-        (finding) =>
-          `${finding.unitId} ${finding.unitNamePL}: poziom obecny ${finding.currentLevel ?? 'nieustalony'}, docelowy ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}; ${cytatRekomendacji(finding.recommendation)}` +
-          (finding.expectedOutcome ? `; oczekiwany rezultat: „${finding.expectedOutcome}”` : '') +
-          '.'
-      )
-      .join(
-        ' '
-      )}${limitationsClause} Synteza nie dodaje porównań rynkowych, horyzontu czasowego ani prognozy. Wszystkie liczby pochodzą z findingów albo z policzalnych mianowników kontraktu.`;
+    return grammar.finalConclusions({
+      axisCount: input.axisCount,
+      totalAreas: input.totalAreas,
+      findingCount: input.findings.length,
+      findings: selected.map(narrativeFinding),
+      states: { evidenced, incomplete, declared },
+      gapRange: zdanieOZakresieLuk,
+      criticalCount: critical.length,
+      limitationsClause,
+      recommendationQuote: grammar.recommendationQuote,
+    });
   };
   const finalConclusions = withinValidated(
     najwiecejCytatow(
@@ -458,15 +461,12 @@ export function composeProgramAggregateNarrative(input: {
     decisionLine: {
       // Bez policzalnej luki nie ma z czego wyprowadzić kierunku ani priorytetu
       // — honest `null` (schemat wydrukuje uczciwe „brak treści"), nie `-Infinity`.
-      direction: maxGap === null
-        ? null
-        : `Skoncentrować program na obszarze ${primary.unitId} oraz pozostałych lukach o wartości ${maxGap}.`,
-      priority: maxGap === null
-        ? null
-        : `Priorytet ${priorityForGap(maxGap)} wynika z największej luki ${maxGap} w całym programie.`,
+      direction: maxGap === null ? null : grammar.programDirection(primary.unitId, maxGap),
+      priority:
+        maxGap === null ? null : grammar.programPriority(priorityForGap(maxGap, language), maxGap),
       horizon: null,
       successCondition: primary.expectedOutcome
-        ? `Warunek sukcesu dla ${primary.unitId}: ${withoutTerminalPeriod(primary.expectedOutcome)}.`
+        ? grammar.successCondition(primary.unitId, withoutTerminalPeriod(primary.expectedOutcome))
         : null,
     },
   };
@@ -477,10 +477,11 @@ function addOptional(
   sourceFields: string[],
   field: string,
   value: string | null,
-  prefix: string
+  prefix: 'prerequisite' | 'expectedOutcome' | 'rootCauseHypothesis',
+  language: ReportLanguage
 ): void {
   if (!usable(value)) return;
-  sentences.push(`${prefix}: ${value.trim()}`);
+  sentences.push(assessmentNarrativeI18n(language).optional(prefix, value.trim()));
   sourceFields.push(field);
 }
 
@@ -490,38 +491,45 @@ export function composeAreaNarrative(
 ): ComposedAreaNarrative | null {
   if (!finding || context.skipped) return null;
 
+  const language = context.language ?? 'pl';
+  const grammar = assessmentNarrativeI18n(language);
+
   const currentLabel =
     finding.currentLevel === null
       ? null
-      : resolveDrdLevelLabelPL(context.axisId, finding.currentLevel);
+      : resolveDrdLevelLabelPL(context.axisId, finding.currentLevel, language);
   const targetLabel =
     finding.targetLevel === null
       ? null
-      : resolveDrdLevelLabelPL(context.axisId, finding.targetLevel);
+      : resolveDrdLevelLabelPL(context.axisId, finding.targetLevel, language);
   const evidenceCount = finding.supportingEvidence.length;
   const contradictionCount = finding.contradictingEvidence.length;
   const sourceFields = ['currentLevel', 'targetLevel', 'gap', 'confidence', 'supportingEvidence'];
-  const facts = [
-    `Stan faktyczny: poziom obecny ${finding.currentLevel ?? 'nieustalony'}${currentLabel ? ` — ${currentLabel}` : ''}; liczba dowodów: ${evidenceCount}.`,
-    `Ocena i wiarygodność: pewność ${CONFIDENCE_PL[finding.confidence]}, stan dowodów ${EVIDENCE_STATE_PL[context.evidenceState]}${contradictionCount > 0 ? `, liczba dowodów przeciwnych: ${contradictionCount}` : ''}.`,
-  ];
+  const facts = grammar.areaFacts({
+    currentLevel: finding.currentLevel,
+    currentLabel,
+    evidenceCount,
+    confidence: grammar.confidence[finding.confidence],
+    evidenceState: grammar.evidenceState[context.evidenceState],
+    contradictionCount,
+  });
   if (contradictionCount > 0) sourceFields.push('contradictingEvidence');
 
   const assessorNote = usable(context.assessorNote) ? context.assessorNote.trim() : null;
   if (assessorNote) {
-    facts.push(`Notatka oceniającego: ${assessorNote}`);
+    facts.push(grammar.assessorNote(assessorNote));
     sourceFields.push('levelNotes');
   }
 
   if (!usable(finding.businessMeaning) || !usable(finding.recommendation)) {
     facts.push(
-      `Luka: ${finding.gap ?? 'nieustalona'}; priorytet: ${priorityForGap(finding.gap)}; poziom docelowy ${finding.targetLevel ?? 'nieustalony'}${targetLabel ? ` — ${targetLabel}` : ''}.`,
-      `Brak treści wymaganej do pełnego komentarza: ${[
-        !usable(finding.businessMeaning) ? 'znaczenie dla przedsiębiorstwa' : null,
-        !usable(finding.recommendation) ? 'najbliższy krok' : null,
-      ]
-        .filter(Boolean)
-        .join(' oraz ')}.`
+      grammar.areaGap({
+        gap: finding.gap,
+        priority: priorityForGap(finding.gap, language),
+        targetLevel: finding.targetLevel,
+        targetLabel,
+      }),
+      grammar.areaMissing(!usable(finding.businessMeaning), !usable(finding.recommendation))
     );
     const text = facts.join(' ');
     return {
@@ -541,12 +549,12 @@ export function composeAreaNarrative(
     };
   }
 
-  facts.push(`Znaczenie dla przedsiębiorstwa: ${finding.businessMeaning.trim()}`);
+  facts.push(grammar.businessMeaning(finding.businessMeaning.trim()));
   sourceFields.push('businessMeaning');
   const gapParts = [
-    `poziom docelowy ${finding.targetLevel ?? 'nieustalony'}${targetLabel ? ` — ${targetLabel}` : ''}`,
-    `luka ${finding.gap ?? 'nieustalona'}`,
-    `priorytet ${priorityForGap(finding.gap)}`,
+    grammar.targetLevelPart(finding.targetLevel, targetLabel),
+    grammar.gapPart(finding.gap),
+    grammar.priorityPart(priorityForGap(finding.gap, language)),
   ];
   if (usable(finding.riskOrOpportunity)) {
     gapParts.push(withoutTerminalPeriod(finding.riskOrOpportunity));
@@ -556,24 +564,26 @@ export function composeAreaNarrative(
     gapParts.push(withoutTerminalPeriod(finding.priorityRationale));
     sourceFields.push('priorityRationale');
   }
-  facts.push(`Luka i sens poziomu docelowego: ${gapParts.join('; ')}.`);
+  facts.push(grammar.targetMeaning(gapParts));
 
-  facts.push(`Najbliższy krok: ${finding.recommendation.trim()}`);
+  facts.push(grammar.nextStep(finding.recommendation.trim()));
   sourceFields.push('recommendation');
-  addOptional(facts, sourceFields, 'prerequisite', finding.prerequisite, 'Warunek');
+  addOptional(facts, sourceFields, 'prerequisite', finding.prerequisite, 'prerequisite', language);
   addOptional(
     facts,
     sourceFields,
     'expectedOutcome',
     finding.expectedOutcome,
-    'Oczekiwany rezultat'
+    'expectedOutcome',
+    language
   );
   addOptional(
     facts,
     sourceFields,
     'rootCauseHypothesis',
     finding.rootCauseHypothesis,
-    'Hipoteza przyczyny'
+    'rootCauseHypothesis',
+    language
   );
 
   const text = facts.join(' ');

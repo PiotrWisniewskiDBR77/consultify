@@ -1,0 +1,39 @@
+{
+  "package": "K3-assessment-narrative-locale",
+  "status": "READY_FOR_CODEX_REVIEW",
+  "exactBase": "f2628a0d36af85d97bcbe67b820d728c7c2f2f28",
+  "contentCommit": "b827e65fee",
+  "branch": "codex/c-k3-assessment-narrative-20260915",
+  "measurements": {
+    "narrativeFamilies": 9,
+    "baseFamiliesWithPolishDiacritics": 8,
+    "candidateFamiliesWithPolishDiacritics": 0,
+    "plBlocks": 26,
+    "plBeforeAfterSha256": "dd2ed604dc34e2ae3b9f2c78646e00506ba2dcfdba90e061a641f918ad762074",
+    "candidateDocxPolishDiacritics": 0,
+    "candidatePptxPolishDiacritics": 0,
+    "candidatePdfPolishDiacritics": 0,
+    "newAsAny": 0,
+    "migrations": 0
+  },
+  "tests": {
+    "k3Candidate": "12/12",
+    "k3ExactBase": "9/12; expected RED in three EN acceptance tests",
+    "importersCandidate": "36/36",
+    "importersExactBase": "36/36",
+    "serverTsc": 0,
+    "languageRatchet": 0,
+    "build": 0
+  },
+  "sha256": {
+    "server/src/services/assessment/assessmentNarrativeComposer.ts": "1b503532a524529f0307a5bc6da52ac7288cfadafe9040d9307084b01df80e45",
+    "server/src/services/assessment/assessmentReportContractComposer.ts": "3160de276b5abbf69b8562ca5fa2f3e8746f7874bd94c9a43fbe7accfcf54ec0",
+    "server/src/services/assessment/assessmentReportI18n.ts": "8218b1074a82d28094bceebe71b17afd841805c460a35a0b91e853642ae0b1e7",
+    "server/src/services/assessment/__tests__/g1.reportLanguage.test.ts": "d48d63d003c3c3bdc1b3c73c84a7f61ead181c3307e49e555812903ce171c44f",
+    "evidence/k3-assessment-narrative/logs/base-g1-k3-red.txt": "c3067646f8ea7250403df416dcde3b4f17279ec6e9068146cea504fbbaae4b84",
+    "evidence/k3-assessment-narrative/logs/candidate-g1-k3.txt": "f2a0a32712993728c66df690d6d2660393731f029eb01db5e1876dcf8d34d0e4",
+    "evidence/k3-assessment-narrative/logs/server-tsc.txt": "965c1762debc8c5a9482570ec9a9a0d6506d4b361f279ce4cb715810e8c3708d",
+    "evidence/k3-assessment-narrative/logs/check-jezyk-ci.txt": "48c66d355eac8f2ad0a3e3b54d3b3bc173e740d2b541cb9c67f28b83b6f71d79",
+    "evidence/k3-assessment-narrative/logs/build.txt": "93e1661effc59310afc51f73c42cd2e618ae616d64dbb35d200ef1662be73b3c"
+  }
+}
