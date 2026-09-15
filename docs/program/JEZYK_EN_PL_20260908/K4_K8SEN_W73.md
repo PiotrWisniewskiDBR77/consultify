@@ -18,6 +18,8 @@ Bezpośrednie testy pełnego payloadu dla wszystkich `3/3` wyników wymagają pe
 
 Katalog wykonawczy ma `2118` wierszy i `2118` unikalnych kluczy EN. Usunięto 7 dokładnych duplikatów; właściwe wpisy `runtime:false` pozostają w pomiarze źródłowym. Test katalogu wymusza unikalność. Test całego mianownika wymusza dokładne mapowanie katalogu, zachowanie multizbioru placeholderów oraz brak znanej angielskiej prozy. Placeholder nie jest usuwany z asercji; dynamiczna treść ma oddzielny test zachowania.
 
+Sześć pozycji `(a)` ma dokładne, zakotwiczone wzorce w konfiguracji miernika: dwa fragmenty parsera oraz cztery techniczne formaty kodu/diagnostyki. Nie ma wykluczenia ścieżki ani wzorca wieloznacznego obejmującego inne komunikaty.
+
 Zachowane są wcześniejsze dowody: MeetingExecutor → ActionExecutionAdapter → HTTP 400, Superadmin publish, AIPipeline execute/stream, canonical `users.language`, parser AST dla zagnieżdżonego `runtime:false` i PDF `doc.text`.
 
 ## Bramki przed refreeze

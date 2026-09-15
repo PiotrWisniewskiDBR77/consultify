@@ -158,7 +158,13 @@
     "^[A-Z0-9_.:-]+$",
     "^[0-9\\s.,%+-]+$",
     "^\\{\\{[^}]+\\}\\}$",
-    "^[a-z][a-zA-Z0-9]*$"
+    "^[a-z][a-zA-Z0-9]*$",
+    "^\\$\\{alert\\.message\\}\\$\\{alert\\.checks\\?\\.length",
+    "^image_openai_vision_http_\\$\\{response\\.status\\}$",
+    "^event_id=\\$\\{event\\.event_id\\} event_type=\\$\\{event\\.event_type\\} org=\\$\\{event\\.organization_id\\} attempts=\\$\\{failResult\\.attempts\\} last_error=NO_CONSUMER_REGISTERED$",
+    "^event_id=\\$\\{event\\.event_id\\} event_type=\\$\\{event\\.event_type\\} org=\\$\\{event\\.organization_id\\} attempts=\\$\\{failResult\\.attempts\\} last_error=\\$\\{message\\}$",
+    "^Invalid code\\. \\$\\{remainingAttempts > 0",
+    "^__schema_version_at_creation:\\$\\{schemaVersionAtCreation\\}$"
   ],
   "pomijaneKlucze": [
     "^_",
@@ -1235,5 +1241,6 @@
     "tsunami",
     "usage",
     "zurich"
-  ]
+  ],
+  "_uwagaK4K8senTechniczne": "K4 v5: six exact runtime source shapes classified literal-by-literal as parser fragments or technical diagnostics/codes; no wildcard path exclusion."
 }
