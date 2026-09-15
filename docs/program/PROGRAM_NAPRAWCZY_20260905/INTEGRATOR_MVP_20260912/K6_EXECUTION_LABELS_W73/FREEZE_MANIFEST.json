@@ -1,0 +1,67 @@
+{
+  "package": "W73-K6",
+  "verdict": "FREEZE_FOR_INDEPENDENT_REVIEW",
+  "rootBase": "f2628a0d36af85d97bcbe67b820d728c7c2f2f28",
+  "dependencyMerges": [
+    "3441112167",
+    "3dfca08c33"
+  ],
+  "contentSha": "e0a10d6559",
+  "productCommits": [
+    "3bc2ff100b",
+    "c6e3a0cccf",
+    "e0a10d6559"
+  ],
+  "measurements": {
+    "reportPositions": [
+      21935,
+      21904
+    ],
+    "K4obj": [
+      4324,
+      4298
+    ],
+    "executionRealK4obj": [
+      26,
+      0
+    ],
+    "MyApprovalsK4en": [
+      2,
+      0
+    ],
+    "wizardStepLiterals": [
+      3,
+      0
+    ]
+  },
+  "gates": {
+    "language": "PASS K4en -5 K4objPL -4 K4obj -45 K11 -1",
+    "frontTsc": "RC2 177 errors",
+    "frontListFiles": "RC0 7427",
+    "serverTsc": "RC0",
+    "build": "RC0",
+    "canon": "RC0 349",
+    "artifact": "RC0 8-0-117",
+    "newAsAny": 0,
+    "focusedCandidate": "25 pass 2 fail",
+    "focusedBase": "25 pass 2 fail",
+    "normalizedFailuresIdentical": true,
+    "visual": "PARTIAL composite dev-render EN/PL light, not full Hub shell"
+  },
+  "files": {
+    "public/locales/en/translation.json": "ec4dd35ea29bf40d6645e09d55b562a8a7169ada5c5823a7eef6b26424945111",
+    "public/locales/pl/translation.json": "71f205ad7ad0f811a22873de227135865ad5a7afc5ed3664a6b97aee36c51298",
+    "scripts/triada-allowlist.txt": "710be39a7115f3677cb0479b56d2dada69003c02112d64bd23b1792a2e616d1f",
+    "src/components/Execution/BudgetControlPanel.tsx": "82abdc94fa6f52316f3c0c1b1136550cf49cd418fbe6a29794c2e231284df652",
+    "src/components/Execution/ExecutionBankViews.tsx": "99691e2c89e81878b642935c618e06f6cc7fcf1ffc1f0b28da0f59e3e381bdca",
+    "src/components/Execution/ExecutionManagementTable.tsx": "ccafb457d3deb87b1b8a1918d25ab72bbd6efa92053cb9577fb0eefea2c3be18",
+    "src/components/Execution/Manager/ProblemPreview.tsx": "33978b889dea1fd6bc3d3aaa65f0ebf348eb12d6f3ad930b20c08a0c2954c0fc",
+    "src/components/Execution/ManagerModuleView.tsx": "08df1c1f26f0fcb3f76bd08968ba7890ad4b6c3e6ef9650b8f38029cf2d65b6b",
+    "src/components/Execution/RolloutBaselinePanel.tsx": "915ede49484e7e7728f26ee10d2e11605f1de8e44ac24f793f05465195b81404",
+    "src/components/Execution/RolloutTab.tsx": "0eeea9d47dc667f4e3b74a3760bc6ab26b1877018861810aee366b7fddfc5f20",
+    "src/components/Execution/executionReports.ts": "14454204514728962de4cd2ed00099230a52d9ab074b8397e550d3946005dfa4",
+    "src/components/Onboarding/EnterpriseOnboardingWizard.tsx": "8812054fe40ef23bf5343c2dc0322d7daba393af37476cb04aeb098731c9535f",
+    "src/views/MyApprovalsView.tsx": "3de61034fc5e975fb06e29a52244d63c3bcfbde641d457d4e3ee22e7924151a4",
+    "tests/unit/i18n/k6ExecutionLabels.behavior.test.ts": "2a6b7f2edcc4eeda38529523af2d652d7cccbac40b30cda25be0495074e1c12b"
+  }
+}
