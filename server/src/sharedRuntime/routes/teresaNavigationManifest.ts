@@ -30,7 +30,7 @@ export const TERESA_NAVIGATION_MANIFEST: readonly TeresaNavigationManifestEntry[
   { id: 'MODULE_ECONOMICS', route: '/finance', labelEn: 'Finance', labelPl: 'Finanse', clickPathEn: ['Finance'], clickPathPl: ['Finanse'], organizationFlagKey: 'MODULE_ECONOMICS', availability: 'coming_soon' },
   { id: 'MODULE_PRESENTATIONS', route: '/presentations', labelEn: 'Materials', labelPl: 'Materiały', clickPathEn: ['Materials'], clickPathPl: ['Materiały'], organizationFlagKey: 'MODULE_PRESENTATIONS' },
   { id: 'MODULE_MEETING', route: '/meetings', labelEn: 'Meetings', labelPl: 'Spotkania', clickPathEn: ['Meetings'], clickPathPl: ['Spotkania'], runtimeFlagKey: 'VITE_MODULE_MEETINGS', organizationFlagKey: 'MODULE_MEETING' },
-  { id: 'PROJECTS', route: '/projects', labelEn: 'Projects', labelPl: 'Projekty', clickPathEn: ['My Work', 'Projects'], clickPathPl: ['Moja praca', 'Projekty'] },
+  { id: 'PROJECTS', route: '/projects', labelEn: 'Projects', labelPl: 'Projekty', clickPathEn: ['My Work', 'Projects'], clickPathPl: ['Moja praca', 'Projekty'], runtimeFlagKey: 'VITE_PMO_PROJECTS' },
   { id: 'ORGANIZATION', route: '/organization/profile', labelEn: 'Organization', labelPl: 'Organizacja', clickPathEn: ['Organization'], clickPathPl: ['Organizacja'] },
   { id: 'ADMIN', route: '/admin', labelEn: 'Administration', labelPl: 'Administracja', clickPathEn: ['Administration'], clickPathPl: ['Administracja'], roles: ['OWNER', 'ADMIN'] },
   { id: 'SETTINGS', route: '/settings', labelEn: 'Settings', labelPl: 'Ustawienia', clickPathEn: ['Settings'], clickPathPl: ['Ustawienia'] },

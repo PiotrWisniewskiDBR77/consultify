@@ -7,4 +7,15 @@ describe('P-T13 Teresa navigation manifest mirror', () => {
   it('keeps the backend mirror identical to routeConfig source of truth', () => {
     expect(serverManifest).toEqual(frontendManifest);
   });
+
+  it('mirrors every runtime-gated manifest route found in AppRoutes', () => {
+    expect(
+      frontendManifest
+        .filter((entry) => 'runtimeFlagKey' in entry)
+        .map((entry) => [entry.id, entry.route, entry.runtimeFlagKey])
+    ).toEqual([
+      ['MODULE_MEETING', '/meetings', 'VITE_MODULE_MEETINGS'],
+      ['PROJECTS', '/projects', 'VITE_PMO_PROJECTS'],
+    ]);
+  });
 });

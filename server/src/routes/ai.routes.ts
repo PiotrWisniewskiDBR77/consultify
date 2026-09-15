@@ -4299,6 +4299,7 @@ router.post(
             userRole: String(req.userRole || req.user?.role || ''),
             runtimeFlags: {
               VITE_MODULE_MEETINGS: process.env.VITE_MODULE_MEETINGS === 'true',
+              VITE_PMO_PROJECTS: process.env.VITE_PMO_PROJECTS === 'true',
             },
             allowOrganizationData: true,
           });

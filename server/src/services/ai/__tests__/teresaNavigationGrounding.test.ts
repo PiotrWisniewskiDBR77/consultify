@@ -37,7 +37,7 @@ describe('Teresa navigation grounding — P-T13 variant B', () => {
       organizationId: ORG,
       userRole: 'ADMIN',
       language: 'en-US',
-      runtimeFlags: { VITE_MODULE_MEETINGS: true },
+      runtimeFlags: { VITE_MODULE_MEETINGS: true, VITE_PMO_PROJECTS: true },
       queryFn: vi.fn(async () => [{ flag_key: 'MODULE_AUDITS', enabled: true }]),
     });
 
@@ -52,7 +52,7 @@ describe('Teresa navigation grounding — P-T13 variant B', () => {
       organizationId: ORG,
       userRole: 'OWNER',
       language: 'pl-PL',
-      runtimeFlags: { VITE_MODULE_MEETINGS: true },
+      runtimeFlags: { VITE_MODULE_MEETINGS: true, VITE_PMO_PROJECTS: true },
       queryFn: vi.fn(async () => []),
     });
 
@@ -64,6 +64,41 @@ describe('Teresa navigation grounding — P-T13 variant B', () => {
 
   it('fails closed without an organization', async () => {
     expect(await buildTeresaNavigationGrounding({ organizationId: '' })).toBeNull();
+  });
+
+  it.each([
+    ['en', 'Projects', 'My Work → Projects'],
+    ['pl', 'Projekty', 'Moja praca → Projekty'],
+  ] as const)('hides Projects label, click path and route when its runtime flag is OFF in %s', async (language, label, clickPath) => {
+    const out = await buildTeresaNavigationGrounding({
+      organizationId: ORG,
+      userRole: 'MEMBER',
+      language,
+      runtimeFlags: { VITE_MODULE_MEETINGS: false, VITE_PMO_PROJECTS: false },
+      queryFn: vi.fn(async () => []),
+    });
+
+    expect(out?.items.some((item) => item.id === 'PROJECTS')).toBe(false);
+    expect(out?.excluded).toContainEqual({ id: 'PROJECTS', reason: 'runtime_flag_off' });
+    expect(out?.systemInstructionAddon).not.toContain(label);
+    expect(out?.systemInstructionAddon).not.toContain(clickPath);
+    expect(out?.systemInstructionAddon).not.toContain('/projects');
+  });
+
+  it.each([
+    ['en', 'Projects: My Work → Projects (/projects)'],
+    ['pl', 'Projekty: Moja praca → Projekty (/projects)'],
+  ] as const)('shows Projects according to the UI route gate when its server runtime flag is ON in %s', async (language, expectedLine) => {
+    const out = await buildTeresaNavigationGrounding({
+      organizationId: ORG,
+      userRole: 'MEMBER',
+      language,
+      runtimeFlags: { VITE_MODULE_MEETINGS: false, VITE_PMO_PROJECTS: true },
+      queryFn: vi.fn(async () => []),
+    });
+
+    expect(out?.items).toContainEqual(expect.objectContaining({ id: 'PROJECTS', route: '/projects' }));
+    expect(out?.systemInstructionAddon).toContain(expectedLine);
   });
 
   it.each([

@@ -76,13 +76,16 @@ describe('/chat/stream authoritative membership role', () => {
       userRole: request.userRole,
       language: 'en',
       screenContext: { currentScreen: '/admin' },
-      runtimeFlags: { VITE_MODULE_MEETINGS: true },
+      runtimeFlags: { VITE_MODULE_MEETINGS: true, VITE_PMO_PROJECTS: false },
       queryFn,
     });
 
     expect(grounding?.systemInstructionAddon).not.toContain('Administration');
     expect(grounding?.systemInstructionAddon).not.toContain('/admin');
     expect(grounding?.citations.some((citation) => citation.reference.startsWith('admin/'))).toBe(false);
+    expect(grounding?.systemInstructionAddon).not.toContain('Projects');
+    expect(grounding?.systemInstructionAddon).not.toContain('/projects');
+    expect(grounding?.citations.some((citation) => citation.reference.includes('projects'))).toBe(false);
     expect(queryFn.mock.calls.some(([sql]) => String(sql).includes('FROM organizations'))).toBe(false);
     expect(queryFn.mock.calls.some(([sql]) => String(sql).includes('FROM organization_members'))).toBe(false);
   });
