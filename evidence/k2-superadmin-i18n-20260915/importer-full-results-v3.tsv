@@ -1,4 +1,4 @@
-test_file	rc	passed	failed	seconds	base_blob	candidate_blob	base_relation
+test_file	rc	reporter_pass_events_INCORRECT_FOR_ASSERTIONS	reporter_fail_events_INCORRECT_FOR_ASSERTIONS	seconds	base_blob	candidate_blob	base_relation
 src/__tests__/superadmin/SSOConfigurationView.test.tsx	0	2	0	1.93	e0ce729825c9d46e432a4304890b07f12805380f	e0ce729825c9d46e432a4304890b07f12805380f	IDENTICAL
 src/views/superadmin/__tests__/OrganizationsView.deleteApprovedOut.test.tsx	0	2	0	1.72	d0446cc855497ec2a43743fd0498d84229c2ccf6	d0446cc855497ec2a43743fd0498d84229c2ccf6	IDENTICAL
 src/views/superadmin/__tests__/PlatformOperationsView.day15.test.tsx	0	7	0	1.9	b52cf2c99d9838a8483741240c6bd78829d75fee	b52cf2c99d9838a8483741240c6bd78829d75fee	IDENTICAL

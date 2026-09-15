@@ -4,7 +4,7 @@
 
 Pełna delta względem exact base `f2628a0d36af85d97bcbe67b820d728c7c2f2f28` obejmuje **180 plików TSX** w dozwolonych ścieżkach produktu. Statyczne rozwiązanie importów znalazło **93 bezpośrednie testy-importery**, które pokrywają 83/180 zmienionych plików; dla 97/180 nie znaleziono bezpośredniego importera. Do przebiegu dodano własny test kontraktowy K2 oraz dwa zastane source-contract, razem **96 plików testowych**.
 
-Finalny przebieg per plik z `--retry=0`: **93/96 plików RC 0**, **639 GREEN / 3 RED**. Wszystkie trzy RED mają byte-identyczny test oraz byte-identyczną bezpośrednią przyczynę na bazie i kandydacie. K2 nie przedstawia ich jako zielonych.
+Finalny przebieg per plik z `--retry=0`: **93/96 plików RC 0**, **546 zielonych asercji / 2 czerwone asercje / 1 czerwony suite przed zebraniem testów**. Wszystkie trzy RED mają byte-identyczny test oraz byte-identyczną bezpośrednią przyczynę na bazie i kandydacie. K2 nie przedstawia ich jako zielonych.
 
 ## Artefakty mianownika
 
@@ -16,7 +16,7 @@ Finalny przebieg per plik z `--retry=0`: **93/96 plików RC 0**, **639 GREEN / 3
 Detektor zebrał pełne `git diff --name-only f2628a0d36..HEAD` w `src/views/superadmin/**` i `src/components/SuperAdmin/**`, następnie rozwiązał statyczne importy względne, `@/` i `src/` z rozszerzeniami `.ts/.tsx` oraz `index.ts/index.tsx` we wszystkich plikach `*.test.*` i `*.spec.*` pod `src/` i `tests/`. Każdy znaleziony importer uruchomiono osobnym poleceniem:
 
 ```sh
-npx vitest run <dokładny-plik> --retry=0 --reporter=verbose
+npx vitest run <dokładny-plik> --retry=0 --reporter=json --outputFile=<osobny-json>
 ```
 
 Każde polecenie miało limit 120 sekund. Żaden plik nie osiągnął timeoutu.

@@ -5,7 +5,7 @@
 ## Tożsamość
 
 - Exact base: `f2628a0d36af85d97bcbe67b820d728c7c2f2f28`.
-- Finalny commit treści produktu, testów i dowodów: `e5a7636bc0f6d86681cae20e8b19b503497fbf56`.
+- Finalny commit treści produktu, testów i dowodów: `e5a7636bc01029a9e344acc570e86963a0b29f62`.
 - Commit kodu zamykający semantykę PL: `43d2c78363`.
 - Commit przywracający limit TSC: `c3107d9fda`.
 - Commit testu EN-first: `43a747402b`.
@@ -22,10 +22,10 @@
 
 ## Pełna bramka
 
-- Front TSC: RC 2; **177 błędów = limit/baseline W73 177**; 7310 plików; błędy w ścieżkach K2: 0. Pełne diagnostyki: `evidence/k2-superadmin-i18n-20260915/front-tsc-v3-summary.txt`.
+- Front TSC: RC 2; **177 błędów = limit/baseline W73 177**; 7425 ścieżek `--listFiles` wszystkich rozszerzeń; błędy w ścieżkach K2: 0. Odtwarzalny przebieg bez cache: `evidence/k2-superadmin-i18n-20260915/front-tsc-v4-summary.txt`; wartość 7310 w v3 jest oznaczona jako cache/filter artifact i nie stanowi mianownika.
 - Server TSC: RC 0.
 - Esbuild pełnej delty produktu: 180/180 GREEN.
-- Importery: 180 zmienionych TSX, 93 bezpośrednie testy-importery, 96 plików w przebiegu; 93 pliki RC0, 639 GREEN / 3 RED. Trzy RED są exact-base-identical i opisane w `IMPORTER_DELTA_MANIFEST_V3.md`.
+- Importery: 180 zmienionych TSX, 93 bezpośrednie testy-importery, 96 plików w przebiegu; 93 pliki RC0, 546 zielonych asercji, 2 czerwone asercje i 1 czerwony suite przed zebraniem testów. Trzy niezielone pliki są exact-base-identical i opisane w `IMPORTER_DELTA_MANIFEST_V3.md`.
 - `check-list-canon`: RC 0; 349 = baseline 349.
 - `check-artefakt`: RC 0; 8 / 0 / 117, bez wzrostu.
 - Build: RC 0; 10 754 moduły; 52,73 s; bez pipe.

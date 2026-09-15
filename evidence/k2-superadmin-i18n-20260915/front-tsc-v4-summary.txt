@@ -1,9 +1,9 @@
-SUPERSEDED CACHE/FILTER ARTIFACT: the 7310 value counted only .ts/.tsx paths and is not the acceptance denominator. Use front-tsc-v4-summary.txt (7425 all extensions).
-COMMAND: NODE_OPTIONS=--max-old-space-size=8192 perl -e 'alarm shift; exec @ARGV' 120 npx tsc --noEmit --pretty false --listFiles --incremental --tsBuildInfoFile /tmp/k2-front-v3c.tsbuildinfo
+COMMAND: NODE_OPTIONS=--max-old-space-size=8192 perl -e 'alarm shift; exec @ARGV' 120 npx tsc --noEmit --pretty false --listFiles --incremental false
 RC: 2
 ERRORS: 177
-LISTED_FILES_TS_TSX_ONLY_CACHE_FILTER_ARTIFACT: 7310
+LISTED_PATHS_ALL_EXTENSIONS: 7425
 OWNED_K2_ERRORS: 0
+COUNT_METHOD: every absolute --listFiles path, including .ts, .tsx, .cts, .mts and .json; diagnostics excluded
 
 DIAGNOSTICS:
 src/components/Admin/__tests__/ChatV9FlagsIndicator.test.tsx(137,23): error TS2345: Argument of type 'string' is not assignable to parameter of type 'boolean'.
@@ -13,7 +13,7 @@ src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx(220,48): 
 src/components/AIChat/__tests__/UnifiedChatPanel.przewodyChat.test.tsx(239,48): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
 src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx(334,90): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
 src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx(408,11): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
-src/components/AIChat/UnifiedChatPanel.tsx(2071,13): error TS2559: Type '{ aiProviderError: { adminDiagnostic?: string | undefined; code: AiErrorCode; }; }' has no properties in common with type '{ citations?: Citation[] | undefined; actions?: ResponseAction[] | undefined; toolCalls?: any[] | undefined; thinkingSteps?: { id: string; title: string; content: string; status: "pending" | ... 1 more ... | "completed"; }[] | undefined; ... 12 more ...; initiativeHandoff?: { ...; } | undefined; }'.
+src/components/AIChat/UnifiedChatPanel.tsx(2071,13): error TS2559: Type '{ aiProviderError: { adminDiagnostic?: string | undefined; code: AiErrorCode; }; }' has no properties in common with type '{ citations?: Citation[] | undefined; actions?: ResponseAction[] | undefined; toolCalls?: any[] | undefined; thinkingSteps?: { id: string; title: string; content: string; status: "completed" | ... 1 more ... | "pending"; }[] | undefined; ... 12 more ...; initiativeHandoff?: { ...; } | undefined; }'.
 src/components/AIChat/WorkCanvasDocumentPanel.tsx(2501,7): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
 src/components/AIChat/WorkCanvasDocumentPanel.tsx(2662,9): error TS2322: Type 'TFunction<"translation", undefined>' is not assignable to type 'CanvasQuickT'.
 src/components/assessment/AssessmentHub.tsx(1007,9): error TS2322: Type '(TableColumn | { id: string; label: string; width: string; filterable: true; dataType: "status"; filterOptions: { value: string; label: string | undefined; color: string; }[]; render: (row: any) => Element; })[] | (TableColumn | { ...; })[]' is not assignable to type 'TableColumn[]'.
@@ -78,7 +78,7 @@ src/components/Economics/FinanceHub.tsx(3584,69): error TS7006: Parameter 'lineC
 src/components/Economics/FinanceHub.tsx(3584,79): error TS7006: Parameter 'taxonomyNames' implicitly has an 'any' type.
 src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx(51,5): error TS2769: No overload matches this call.
 src/components/Execution/ExecutionReportsSurface.tsx(639,42): error TS2352: Conversion of type 'TFunctionDetailedResult<$SpecialObject, never>' to type 'string' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-src/components/Execution/ExecutionResourcesSurface.tsx(1155,23): error TS2322: Type '"success" | "warn"' is not assignable to type '"neutral" | "danger" | "warning" | "success" | "info" | undefined'.
+src/components/Execution/ExecutionResourcesSurface.tsx(1155,23): error TS2322: Type '"success" | "warn"' is not assignable to type '"neutral" | "success" | "info" | "warning" | "danger" | undefined'.
 src/components/Execution/ExecutionWorkloadView.tsx(311,27): error TS2367: This comparison appears to be unintentional because the types '"PROPOSED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "CLOSED" | "REJECTED"' and '"IN_EXECUTION"' have no overlap.
 src/components/Finance/exportImport/FinanceExportImportPanel.tsx(18,31): error TS2305: Module '"react-i18next"' has no exported member 'TFunction'.
 src/components/InitiativeCard.tsx(87,7): error TS1117: An object literal cannot have multiple properties with the same name.
