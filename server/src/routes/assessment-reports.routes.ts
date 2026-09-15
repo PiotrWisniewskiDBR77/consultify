@@ -23,6 +23,7 @@ import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/asse
 import ReportBuilderService from '../services/reportBuilderService.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
+import { queryString } from '../utils/paramHelpers.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
@@ -3159,7 +3160,7 @@ const eksportOceny = (
     try {
       const organizationId = requireRequestOrganizationId(req, res);
       if (!organizationId) return;
-      const { assessmentId } = req.params;
+      const assessmentId = queryString(req, 'assessmentId');
       const language = await resolveAssessmentReportLanguage(req, organizationId);
 
       const { assessmentLegacyReportContractService } = await import(

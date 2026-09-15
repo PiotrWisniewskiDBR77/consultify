@@ -9,6 +9,7 @@ import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { queryString } from '../utils/paramHelpers.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -134,10 +135,11 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await contextBelongsToOrg(req.params.id, req.user?.organizationId))) {
+    const id = queryString(req, 'id');
+    if (!(await contextBelongsToOrg(id, req.user?.organizationId))) {
       return res.status(404).json({ error: 'Context not found' });
     }
-    await dbRun('DELETE FROM ai_contexts WHERE id = ?', [req.params.id]);
+    await dbRun('DELETE FROM ai_contexts WHERE id = ?', [id]);
     res.json({ success: true });
   })
 );

@@ -10,6 +10,7 @@ import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { queryString } from '../utils/paramHelpers.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -80,7 +81,7 @@ router.put(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const id = queryString(req, 'id');
     const userId = req.user?.id;
     if (!(await permissionRequestBelongsToOrg(id, req.user?.organizationId))) {
       return res.status(404).json({ error: 'Permission request not found' });
@@ -101,7 +102,7 @@ router.put(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const id = queryString(req, 'id');
     const userId = req.user?.id;
     const { rejectionReason } = req.body;
     if (!(await permissionRequestBelongsToOrg(id, req.user?.organizationId))) {

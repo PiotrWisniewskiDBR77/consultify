@@ -28,3 +28,18 @@ export function getRequiredStringParam(
   }
   return result;
 }
+
+type RequestParameterSource = {
+  params?: Record<string, unknown>;
+  query?: Record<string, unknown>;
+};
+
+/**
+ * Read a scalar route or query parameter without leaking Express' array type
+ * into route handlers. Route parameters take precedence over query values.
+ */
+export function queryString(req: RequestParameterSource, key: string): string {
+  const raw = req.params?.[key] ?? req.query?.[key];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return typeof value === 'string' ? value : '';
+}

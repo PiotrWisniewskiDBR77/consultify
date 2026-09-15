@@ -47,6 +47,7 @@ import { Router, type Request, type Response } from 'express';
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { getAxisForArea } from '../data/drdStructure.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { queryString } from '../utils/paramHelpers.js';
 
 import {
   isMethodEventType,
@@ -561,6 +562,7 @@ router.post(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
+    const sessionId = queryString(req, 'sessionId');
     const actorUserId = requireActor(req, res);
     if (!actorUserId) return;
     const idempotencyKey = requireIdempotencyKey(req, res);
@@ -569,7 +571,7 @@ router.post(
       res.status(403).json({ error: 'TENANT_CONTEXT_MISMATCH', code: 'TENANT_CONTEXT_MISMATCH' });
       return;
     }
-    if (!(await requireSessionWriteRole(res, organizationId, req.params.sessionId, actorUserId))) {
+    if (!(await requireSessionWriteRole(res, organizationId, sessionId, actorUserId))) {
       return;
     }
 
@@ -588,7 +590,7 @@ router.post(
     try {
       const { skipReason, replayed } = await assessmentSkipReasonService.record({
         organizationId,
-        sessionId: req.params.sessionId,
+        sessionId,
         unitId: body.unitId,
         questionId: body.questionId,
         level: Number(body.level),
@@ -608,16 +610,13 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const unitId = isNonEmptyString(req.query.unitId) ? req.query.unitId : undefined;
+    const sessionId = queryString(req, 'sessionId');
+    const unitId = queryString(req, 'unitId') || undefined;
+    const includeSuperseded = queryString(req, 'includeSuperseded') === 'true';
     try {
-      const includeSuperseded = req.query.includeSuperseded === 'true';
       const skipReasons = includeSuperseded
-        ? await assessmentSkipReasonService.listHistory(organizationId, req.params.sessionId)
-        : await assessmentSkipReasonService.listActive(
-            organizationId,
-            req.params.sessionId,
-            unitId
-          );
+        ? await assessmentSkipReasonService.listHistory(organizationId, sessionId)
+        : await assessmentSkipReasonService.listActive(organizationId, sessionId, unitId);
       res.status(200).json({ skipReasons });
     } catch (error) {
       sendAssessmentSkipReasonError(res, error);
@@ -630,11 +629,12 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
+    const sessionId = queryString(req, 'sessionId');
     try {
       const reportContract = await assessmentReportContractService.build(
         organizationId,
-        req.params.sessionId,
-        isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
+        sessionId,
+        queryString(req, 'outputId') || undefined
       );
       res.status(200).json({ reportContract });
     } catch (error) {
@@ -648,11 +648,12 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
+    const sessionId = queryString(req, 'sessionId');
     try {
       const reportContract = await assessmentReportContractService.build(
         organizationId,
-        req.params.sessionId,
-        isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined
+        sessionId,
+        queryString(req, 'outputId') || undefined
       );
 
       // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 (`b7ac5351`) — nie wydajemy
@@ -708,7 +709,7 @@ router.get(
           outputType: 'report',
           artifactFamily: 'document',
           originRuntime: 'assessment_report',
-          originRecordId: req.params.sessionId,
+          originRecordId: sessionId,
           // Tytuł czytelny dla człowieka, nie nazwa pliku: w Materiałach
           // wiersz stoi obok dokumentów nazwanych zdaniem, a `Raport_DRD_
           // <uuid>_<data>` wygląda tam jak śmieć po eksporcie.
