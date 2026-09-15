@@ -32,6 +32,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface LoginAttempt {
   id: string;
   user_email: string;
@@ -156,7 +158,7 @@ export const LoginAttemptsPanel: React.FC = () => {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleString();
+    return new Date(date).toLocaleString(localeListy());
   };
 
   const filteredAttempts = attempts.filter((attempt) => {
@@ -208,7 +210,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <XCircle size={18} className="text-danger-400" />
-            <span className="text-sm text-slate-600 dark:text-slate-500">Failed</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">{tlumaczPozaHookiem("superadmin.loginAttempts.failed", "Failed")}</span>
           </div>
           <span className="text-2xl font-bold text-c-text">{stats.loginAttempts.failed}</span>
           <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">/ 7 days</span>
@@ -395,7 +397,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-danger-400">
                           <XCircle size={16} />
-                          <span className="text-sm">Failed</span>
+                          <span className="text-sm">{tlumaczPozaHookiem("superadmin.loginAttempts.failed", "Failed")}</span>
                         </div>
                         {attempt.failure_reason && (
                           <span className="text-xs text-slate-500 dark:text-slate-400">

@@ -30,6 +30,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface IPRule {
   id: string;
   organization_id: string;
@@ -216,12 +218,12 @@ export const IPAccessRulesPanel: React.FC = () => {
           <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1">
               <Clock size={12} />
-              {new Date(rule.created_at).toLocaleDateString()}
+              {new Date(rule.created_at).toLocaleDateString(localeListy())}
             </span>
             {rule.expires_at && (
               <span className="flex items-center gap-1 text-amber-400">
                 <AlertTriangle size={12} />
-                Expires {new Date(rule.expires_at).toLocaleDateString()}
+                Expires {new Date(rule.expires_at).toLocaleDateString(localeListy())}
               </span>
             )}
             {rule.created_by_email && (
@@ -318,7 +320,7 @@ export const IPAccessRulesPanel: React.FC = () => {
             <li>
               <strong>Allowlist</strong> rules restrict access to only listed IPs (if any exist)
             </li>
-            <li>Supports CIDR notation (e.g., 192.168.1.0/24) and wildcards</li>
+            <li>{tlumaczPozaHookiem("superadmin.iPAccessRules.supportsCIDRNotationEG192168", "Supports CIDR notation (e.g., 192.168.1.0/24) and wildcards")}</li>
           </ul>
         </div>
       </div>

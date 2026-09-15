@@ -29,6 +29,8 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { ReadOnlyState } from '../../Admin/AdminState';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface ExportRequest {
   id: string;
   organization_id: string;
@@ -196,10 +198,10 @@ export const DataExportPanel: React.FC = () => {
             className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="">All Status</option>
-            <option value="pending">Pending</option>
+            <option value="pending">{tlumaczPozaHookiem("superadmin.dataExport.pending", "Pending")}</option>
             <option value="processing">Processing</option>
             <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
+            <option value="failed">{tlumaczPozaHookiem("superadmin.dataExport.failed", "Failed")}</option>
           </select>
         </div>
 
@@ -268,7 +270,7 @@ export const DataExportPanel: React.FC = () => {
                   <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1.5">
                       <Calendar size={12} />
-                      Created {new Date(request.created_at).toLocaleString()}
+                      Created {new Date(request.created_at).toLocaleString(localeListy())}
                     </span>
                     {request.file_size && (
                       <span className="flex items-center gap-1.5">
@@ -279,7 +281,7 @@ export const DataExportPanel: React.FC = () => {
                     {request.file_expires_at && (
                       <span className="flex items-center gap-1.5 text-amber-400">
                         <Clock size={12} />
-                        Expires {new Date(request.file_expires_at).toLocaleDateString()}
+                        Expires {new Date(request.file_expires_at).toLocaleDateString(localeListy())}
                       </span>
                     )}
                   </div>
