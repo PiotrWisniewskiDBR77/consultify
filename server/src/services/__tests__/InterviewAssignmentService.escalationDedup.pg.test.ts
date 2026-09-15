@@ -77,7 +77,7 @@ describe.skipIf(!enabled)(
         `INSERT INTO interview_assignments
            (id, organization_id, assignee_user_id, template_id, template_version, status,
             due_at, created_by, escalate_to, escalation_count, created_at)
-         VALUES ($1, $2, $3, 'tmpl-h1-esc', 1, 'assigned', $4, $5, $5, 0, NOW())`,
+         VALUES ($1, $2, $3, 'tmpl-h1-esc', 1, 'assigned', $4, $5, 'ghost-user', 0, NOW())`,
         [assignmentId, org, assignee, threeDaysAgo, manager]
       );
     });
