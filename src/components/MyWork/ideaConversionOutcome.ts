@@ -10,6 +10,8 @@
  * action had just created.
  */
 
+import { getArtifactPath } from '@/utils/artifactLinks';
+
 export type IdeaConversionTarget =
   | 'initiative'
   | 'task_set'
@@ -19,8 +21,15 @@ export type IdeaConversionTarget =
   | 'presentation';
 
 export interface IdeaConversionResult {
-  created?: { conversationId?: string | null } | null;
+  created?: {
+    conversationId?: string | null;
+    initiativeId?: string | null;
+    decisionId?: string | null;
+    reportId?: string | null;
+    presentationId?: string | null;
+  } | null;
   promotedEntityId?: string | null;
+  outputId?: string | null;
   [key: string]: unknown;
 }
 
@@ -31,6 +40,40 @@ export interface IdeaConversionOutcome {
   toastDefault: string;
   /** Where the action should take the user, or null to stay on the list. */
   href: string | null;
+  /** Exact identifier returned by the conversion receipt. */
+  entityId: string | null;
+}
+
+type ReceiptTarget = 'initiative' | 'decision' | 'report' | 'presentation';
+
+const RECEIPT_LABELS: Record<ReceiptTarget, string> = {
+  initiative: 'Initiative',
+  decision: 'Decision',
+  report: 'Report',
+  presentation: 'Presentation',
+};
+
+function conversionEntityId(
+  target: ReceiptTarget,
+  result: IdeaConversionResult | null | undefined
+): string {
+  const createdId =
+    target === 'initiative'
+      ? result?.created?.initiativeId
+      : target === 'decision'
+        ? result?.created?.decisionId
+        : target === 'report'
+          ? result?.created?.reportId
+          : result?.created?.presentationId;
+  return String(createdId || result?.outputId || result?.promotedEntityId || '').trim();
+}
+
+function conversionHref(target: ReceiptTarget, entityId: string): string | null {
+  if (!entityId) return null;
+  if (target === 'decision') {
+    return `/my-work?decisionId=${encodeURIComponent(entityId)}`;
+  }
+  return getArtifactPath(target, entityId);
 }
 
 export function describeIdeaConversion(
@@ -45,6 +88,25 @@ export function describeIdeaConversion(
       toastKey: 'myWork.ideasList.toastTeamChat',
       toastDefault: 'Team chat thread created. The idea is now marked Promoted.',
       href: conversationId ? `/chat/${encodeURIComponent(conversationId)}` : null,
+      entityId: conversationId || null,
+    };
+  }
+
+  if (
+    target === 'initiative' ||
+    target === 'decision' ||
+    target === 'report' ||
+    target === 'presentation'
+  ) {
+    const entityId = conversionEntityId(target, result);
+    const label = RECEIPT_LABELS[target];
+    return {
+      toastKey: `myWork.ideasList.toastReceipt.${target}`,
+      toastDefault: entityId
+        ? `${label} created (ID: ${entityId}). Opening it now.`
+        : `${label} conversion completed, but the server returned no identifier.`,
+      href: conversionHref(target, entityId),
+      entityId: entityId || null,
     };
   }
 
@@ -52,5 +114,6 @@ export function describeIdeaConversion(
     toastKey: 'myWork.ideasList.toastSuccess4',
     toastDefault: 'Done',
     href: null,
+    entityId: null,
   };
 }

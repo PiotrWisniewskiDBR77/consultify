@@ -6708,7 +6708,13 @@
       "untitled2": "Bez tytułu",
       "ideasByTags": "Pomysły wg tagów",
       "title3": "Otwórz w Process Flow",
-      "toastTeamChat": "Wątek czatu zespołu utworzony. Pomysł ma teraz etap Promoted."
+      "toastTeamChat": "Wątek czatu zespołu utworzony. Pomysł ma teraz etap Promoted.",
+      "toastReceipt": {
+        "initiative": "Utworzono inicjatywę (ID: {{id}}). Otwieram ją.",
+        "decision": "Utworzono decyzję (ID: {{id}}). Otwieram ją.",
+        "report": "Utworzono raport (ID: {{id}}). Otwieram go.",
+        "presentation": "Utworzono prezentację (ID: {{id}}). Otwieram ją."
+      }
     },
     "decisionReviewNext": {
       "toastError": "Nie udało się załadować kolejki",
