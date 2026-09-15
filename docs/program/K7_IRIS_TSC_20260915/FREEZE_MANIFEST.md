@@ -2,8 +2,8 @@
 
 Status: **E1 / STOP for independent re-review**
 Exact base: `f2628a0d36af85d97bcbe67b820d728c7c2f2f28`
-Content commit: `5d0dae612c522abc4451a0bfbf6af334af10f57f`
-Content tree: `8ed15f04c9e63d4fc5622af3a2f56ffb0448a222`
+Corrected product commit: `4a5f5a4e41bcd211b9012ab176416cbf3bc07f03`
+Corrected product tree: `5dbf9df3910235838eff43bd3030e5155dba800b`
 Branch: `codex/b-k7-iris-tsc-20260915`
 
 The content commit contains the complete code, inventory, gate logs and exact-base runtime comparison. This receipt is a later docs-only commit, so its own SHA is deliberately not self-referenced. The exact backup ref must resolve to the receipt commit reported with the delivery.
