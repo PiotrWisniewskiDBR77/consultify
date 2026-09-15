@@ -28,6 +28,8 @@ import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { Card, CardWithHeader } from '../components/shared/Card';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface Threat {
   id: string;
   threatType: string;
@@ -87,7 +89,7 @@ const THREAT_TYPES = [
 
 const formatDateTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(localeListy());
 };
 
 const safeNumber = (value: unknown, fallback = 0) => {
@@ -400,7 +402,7 @@ const ThreatIntelligenceView: React.FC = () => {
         return (
           <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs font-medium">
             <AlertTriangle className="w-3 h-3" />
-            Unknown
+            {tlumaczPozaHookiem("superadmin.threatIntelligence.unknown", "Unknown")}
           </span>
         );
     }
@@ -872,7 +874,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the threat..."
+                  placeholder={tlumaczPozaHookiem("superadmin.threatIntelligence.describeTheThreat", "Describe the threat...")}
                   className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm h-20 resize-none"
                 />
               </div>

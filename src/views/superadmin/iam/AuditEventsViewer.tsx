@@ -11,6 +11,8 @@ import { StandardTable, type TableColumn, type TableRow } from '../../../compone
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+import { localeListy } from '@/utils/listDateFormat';
 interface AuditEvent {
   id: string;
   actor_id: string;
@@ -29,7 +31,7 @@ function formatDateTime(value?: string | null): string {
   if (!value) return 'Unknown date';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown date';
-  return date.toLocaleString();
+  return date.toLocaleString(localeListy());
 }
 
 function safeNumber(value: unknown, fallback = 0): number {
@@ -226,7 +228,7 @@ const AuditEventsViewer: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Audit Events</h2>
           <p className="text-sm text-slate-500">
-            Unified V4 audit trail — all resource changes across the platform
+            {tlumaczPozaHookiem("superadmin.auditEventsViewer.unifiedV4AuditTrailAllResourceChanges", "Unified V4 audit trail — all resource changes across the platform")}
           </p>
         </div>
         <button
