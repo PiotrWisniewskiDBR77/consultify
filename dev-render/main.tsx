@@ -449,6 +449,7 @@ const Wave5InternalCrimsonScreen = React.lazy(() => import('./screens/wave5-inte
 const ZwornikProjectsScreen = React.lazy(() => import('./screens/zwornik-projects'));
 const Z41PmoProjektyScreen = React.lazy(() => import('./screens/z41-pmo-projekty'));
 const Z41PmoProjektyOffScreen = React.lazy(() => import('./screens/z41-pmo-projekty-off'));
+const D3CounterDriftW67Screen = React.lazy(() => import('./screens/d3-counter-drift-w67'));
 const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
@@ -2434,6 +2435,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Z-41 (14.09) — S5 PMO E3: REALNY <AppRoutes/> na /projects przy VITE_PMO_PROJECTS OFF (domyślnie) — dowód przekierowania na /my-work. &lang=pl|en &theme=light|dark',
     render: () => <Z41PmoProjektyOffScreen />,
+  },
+  'd3-counter-drift-w67': {
+    label: 'D-3 W67 — N1/N2/N4 counter consistency BEFORE/AFTER EN',
+    render: () => <D3CounterDriftW67Screen />,
   },
   'settings-crimson-neutralized': {
     label: 'Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)',

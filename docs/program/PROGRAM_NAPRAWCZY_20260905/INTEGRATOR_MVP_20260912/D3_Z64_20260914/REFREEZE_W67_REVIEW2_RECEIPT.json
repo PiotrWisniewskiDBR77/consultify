@@ -1,0 +1,48 @@
+{
+  "package": "A/D D-3 + Z-64 + W67 review 2",
+  "date": "2026-09-14",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_WITH_STOP_OWNER_DECISION",
+  "exactBase": "59a8c44c04",
+  "contentTip": "eeb81b944c",
+  "branch": "codex/a-d3-debts-z64-20260914",
+  "z64": {
+    "visibilityPremise": "NOT_REPRODUCED",
+    "mountedBase": { "passed": 7, "failed": 0 },
+    "mountedCandidate": { "passed": 7, "failed": 0 },
+    "realPgBase": { "passed": 14, "failed": 1, "adminVisibility": "PASS", "failure": "missing METHOD_SESSION_ORG_FORBIDDEN" },
+    "realPgCandidate": { "passed": 15, "failed": 0 },
+    "actualFixes": ["cross-tenant error code", "offline abort retry state"]
+  },
+  "n1": {
+    "total": 43,
+    "pillCount": 3,
+    "pills": { "draft": 8, "ready": 34, "otherStatuses": 1 },
+    "sumMatchesTotal": true
+  },
+  "screenshots": {
+    "realProductModules": ["ReportsAndPresentationsHub", "AuditLibraryTab", "GovernedContextWorkspace"],
+    "base": 3,
+    "candidate": 3,
+    "language": "en",
+    "viewport": "1440x900",
+    "pageErrors": 0
+  },
+  "verification": {
+    "focused": { "files": 9, "passed": 72, "failed": 0 },
+    "realPostgres": { "files": 3, "passed": 31, "failed": 0 },
+    "frontendTypeScriptErrors": 177,
+    "frontendTypeScriptBaseline": 177,
+    "serverTypeScriptErrors": 0,
+    "esbuild": { "passed": 3, "failed": 0 },
+    "diffCheckExit": 0
+  },
+  "stopOwnerDecision": {
+    "code": "contractMirrorDrift",
+    "passed": 3,
+    "failed": 4,
+    "recommendedVariant": "B"
+  },
+  "migrations": false,
+  "deploy": false,
+  "independentReview": "NOT_RUN"
+}

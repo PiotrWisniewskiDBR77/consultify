@@ -1,0 +1,218 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > oba komplety plików istnieją 33ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa events.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+ × server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa session.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 2ms
+   → ROZJAZD KONTRAKTU w session.ts.
+Kopia server/src/method-core/contracts/session.ts przestała odpowiadać oryginałowi src/method-core/contracts/session.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " *"
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ × server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa methodPack.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 1ms
+   → ROZJAZD KONTRAKTU w methodPack.ts.
+Kopia server/src/method-core/contracts/methodPack.ts przestała odpowiadać oryginałowi src/method-core/contracts/methodPack.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " * broken production builds."
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa teresa.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+ × server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa index.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+   → ROZJAZD KONTRAKTU w index.ts.
+Kopia server/src/method-core/contracts/index.ts przestała odpowiadać oryginałowi src/method-core/contracts/index.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " * Shared Method Kernel — public contract surface."
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ × server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia nie dokłada niczego poza nagłówkiem (żadnego kodu przed treścią) 2ms
+   → kopia session.ts ma kod przed treścią kontraktu: "import type { MethodActorKind } from './events.js';\n\n/**\n * Kernel session states. Closed set.\n *\n * Assessment's canoni": expected 'import type { MethodActorKind } from …' to be '' // Object.is equality
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts (7 tests | 4 failed) 40ms
+     ✓ oba komplety plików istnieją 33ms
+     ✓ kopia serwerowa events.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+     × kopia serwerowa session.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 2ms
+     × kopia serwerowa methodPack.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 1ms
+     ✓ kopia serwerowa teresa.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+     × kopia serwerowa index.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+     × kopia nie dokłada niczego poza nagłówkiem (żadnego kodu przed treścią) 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa session.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić)
+Error: ROZJAZD KONTRAKTU w session.ts.
+Kopia server/src/method-core/contracts/session.ts przestała odpowiadać oryginałowi src/method-core/contracts/session.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " *"
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:52:15
+     50|         const tail = mirrorLines.slice(-sourceLines.length);
+     51|         const firstDiff = sourceLines.findIndex((l, i) => l !== tail[i…
+     52|         throw new Error(
+       |               ^
+     53|           `ROZJAZD KONTRAKTU w ${name}.ts.\n` +
+     54|             `Kopia server/src/method-core/contracts/${name}.ts przesta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa methodPack.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić)
+Error: ROZJAZD KONTRAKTU w methodPack.ts.
+Kopia server/src/method-core/contracts/methodPack.ts przestała odpowiadać oryginałowi src/method-core/contracts/methodPack.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " * broken production builds."
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:52:15
+     50|         const tail = mirrorLines.slice(-sourceLines.length);
+     51|         const firstDiff = sourceLines.findIndex((l, i) => l !== tail[i…
+     52|         throw new Error(
+       |               ^
+     53|           `ROZJAZD KONTRAKTU w ${name}.ts.\n` +
+     54|             `Kopia server/src/method-core/contracts/${name}.ts przesta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa index.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić)
+Error: ROZJAZD KONTRAKTU w index.ts.
+Kopia server/src/method-core/contracts/index.ts przestała odpowiadać oryginałowi src/method-core/contracts/index.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " * Shared Method Kernel — public contract surface."
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:52:15
+     50|         const tail = mirrorLines.slice(-sourceLines.length);
+     51|         const firstDiff = sourceLines.findIndex((l, i) => l !== tail[i…
+     52|         throw new Error(
+       |               ^
+     53|           `ROZJAZD KONTRAKTU w ${name}.ts.\n` +
+     54|             `Kopia server/src/method-core/contracts/${name}.ts przesta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia nie dokłada niczego poza nagłówkiem (żadnego kodu przed treścią)
+AssertionError: kopia session.ts ma kod przed treścią kontraktu: "import type { MethodActorKind } from './events.js';\n\n/**\n * Kernel session states. Closed set.\n *\n * Assessment's canoni": expected 'import type { MethodActorKind } from …' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ import type { MethodActorKind } from './events.js';
++
++ /**
++  * Kernel session states. Closed set.
++  *
++  * Assessment's canonical lifecycle maps as:
++  *   Draft            → 'draft'
++  *   Prepared         → 'prepared'
++  *   In interview     → 'active'
++  *   Evidence pending → 'active'      (sub-stage; blocks freeze, not work)
++  *
+
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:80:9
+     78|         withoutComments,
+     79|         `kopia ${name}.ts ma kod przed treścią kontraktu: ${JSON.strin…
+     80|       ).toBe('');
+       |         ^
+     81|     }
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  17:40:34
+   Duration  536ms (transform 65ms, setup 101ms, import 7ms, tests 40ms, environment 277ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa session.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić)
+Error: ROZJAZD KONTRAKTU w session.ts.
+Kopia server/src/method-core/contracts/session.ts przestała odpowiadać oryginałowi src/method-core/contracts/session.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " *"
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:52:15
+     50|         const tail = mirrorLines.slice(-sourceLines.length);
+     51|         const firstDiff = sourceLines.findIndex((l, i) => l !== tail[i…
+     52|         throw new Error(
+       |               ^
+     53|           `ROZJAZD KONTRAKTU w ${name}.ts.\n` +
+     54|             `Kopia server/src/method-core/contracts/${name}.ts przesta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa methodPack.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić)
+Error: ROZJAZD KONTRAKTU w methodPack.ts.
+Kopia server/src/method-core/contracts/methodPack.ts przestała odpowiadać oryginałowi src/method-core/contracts/methodPack.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " * broken production builds."
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:52:15
+     50|         const tail = mirrorLines.slice(-sourceLines.length);
+     51|         const firstDiff = sourceLines.findIndex((l, i) => l !== tail[i…
+     52|         throw new Error(
+       |               ^
+     53|           `ROZJAZD KONTRAKTU w ${name}.ts.\n` +
+     54|             `Kopia server/src/method-core/contracts/${name}.ts przesta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa index.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić)
+Error: ROZJAZD KONTRAKTU w index.ts.
+Kopia server/src/method-core/contracts/index.ts przestała odpowiadać oryginałowi src/method-core/contracts/index.ts.
+Pierwsza różnica ok. linii 1 oryginału:
+  oryginał: "/**"
+  kopia   : " * Shared Method Kernel — public contract surface."
+NAPRAWA: skopiuj treść oryginału pod nagłówek MIRROR w pliku serwerowym.
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:52:15
+     50|         const tail = mirrorLines.slice(-sourceLines.length);
+     51|         const firstDiff = sourceLines.findIndex((l, i) => l !== tail[i…
+     52|         throw new Error(
+       |               ^
+     53|           `ROZJAZD KONTRAKTU w ${name}.ts.\n` +
+     54|             `Kopia server/src/method-core/contracts/${name}.ts przesta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia nie dokłada niczego poza nagłówkiem (żadnego kodu przed treścią)
+AssertionError: kopia session.ts ma kod przed treścią kontraktu: "import type { MethodActorKind } from './events.js';\n\n/**\n * Kernel session states. Closed set.\n *\n * Assessment's canoni": expected 'import type { MethodActorKind } from …' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ import type { MethodActorKind } from './events.js';
++
++ /**
++  * Kernel session states. Closed set.
++  *
++  * Assessment's canonical lifecycle maps as:
++  *   Draft            → 'draft'
++  *   Prepared         → 'prepared'
++  *   In interview     → 'active'
++  *   Evidence pending → 'active'      (sub-stage; blocks freeze, not work)
++  *
+
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:80:9
+     78|         withoutComments,
+     79|         `kopia ${name}.ts ma kod przed treścią kontraktu: ${JSON.strin…
+     80|       ).toBe('');
+       |         ^
+     81|     }
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  17:40:34
+   Duration  541ms (transform 65ms, setup 101ms, import 7ms, tests 40ms, environment 277ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

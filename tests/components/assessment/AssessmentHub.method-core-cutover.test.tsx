@@ -110,6 +110,29 @@ describe('AssessmentHub Method Core DRD cutover', () => {
     expect(navigateMock).toHaveBeenCalledWith('/assessment/drd/method-session-12345678');
   });
 
+  it('shows an externally created same-org session after an ADMIN page refresh without client owner filtering', async () => {
+    let sessions: typeof canonicalSession[] = [];
+    listMethodSessionsMock.mockImplementation(async () => ({ sessions, total: sessions.length }));
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
+
+    const firstMount = renderHub();
+    await waitFor(() => expect(listMethodSessionsMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('DRD · method-s')).toBeNull();
+
+    // The OWNER creates outside the already mounted ADMIN view. A page refresh
+    // remounts the hub and repeats the canonical organization-scoped read.
+    sessions = [{ ...canonicalSession, ownerUserId: 'different-owner-in-the-same-org' }];
+    firstMount.unmount();
+    renderHub();
+
+    expect(await screen.findByText('DRD · method-s')).toBeInTheDocument();
+    expect(listMethodSessionsMock).toHaveBeenLastCalledWith({
+      methodPackId: 'drd',
+      limit: 100,
+      offset: 0,
+    });
+  });
+
   it('keeps non-DRD legacy rows but never lets a legacy DRD id masquerade as canonical', async () => {
     listMethodSessionsMock.mockResolvedValue({ sessions: [], total: 0 });
     apiMock.listAssessments.mockResolvedValue({

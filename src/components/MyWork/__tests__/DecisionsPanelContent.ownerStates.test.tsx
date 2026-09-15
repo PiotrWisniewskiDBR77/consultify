@@ -9,6 +9,10 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('@/services/api', () => ({ Api: api }));
+vi.mock('@/services/initiatives-execution/definitionApprovalApi', () => ({
+  listDefinitionApprovals: vi.fn(async () => ({ items: [] })),
+  readDefinitionApproval: vi.fn(),
+}));
 vi.mock('@/i18n', () => ({ default: { language: 'en' } }));
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => ({ currentUser: { id: 'user-1' } }),

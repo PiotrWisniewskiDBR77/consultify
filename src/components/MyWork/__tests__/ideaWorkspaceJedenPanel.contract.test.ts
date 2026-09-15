@@ -69,6 +69,8 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
     // jako martwa zmienna (nadal buduje `UnifiedChatPanel`), więc import
     // poniżej wciąż jest prawdziwy, ale osadzenie w panelu — już nie.
     expect(workspace).toContain("import('@/components/AIChat/UnifiedChatPanel')");
+    expect(workspace).not.toContain('teresaCommands={teresaCommands}');
+    expect(workspace).not.toContain('onDiscussWithTeresa={handleTeresaDiscuss}');
     const layout = fs.readFileSync(
       path.resolve(__dirname, '../../../layouts/MainLayout.tsx'),
       'utf8'

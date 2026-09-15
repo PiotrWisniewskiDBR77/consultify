@@ -33,6 +33,25 @@ const STATUS_KEY_SCOPES: ReadonlySet<MaterialsStatusCountScope> = new Set([
   'outputs_sheets',
 ]);
 
+/** Compact Menu 3 keeps two named statuses and groups every remaining status. */
+export const MATERIALS_MENU3_NAMED_STATUSES = ['draft', 'ready'] as const;
+export const MATERIALS_OTHER_STATUSES_FILTER = '__other_statuses__';
+
+export function isMaterialsOtherStatus(status: unknown): boolean {
+  const normalized = String(status ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    normalized.length > 0 &&
+    !MATERIALS_MENU3_NAMED_STATUSES.some((represented) => represented === normalized)
+  );
+}
+
+export function matchesMaterialsStatusFilter(status: unknown, filter: unknown): boolean {
+  if (filter === MATERIALS_OTHER_STATUSES_FILTER) return isMaterialsOtherStatus(status);
+  return String(status ?? '') === String(filter ?? '');
+}
+
 /** Które pole niesie status w danym zbiorze wierszy. */
 export function statusFieldForScope(scope: MaterialsStatusCountScope): 'statusKey' | 'status' {
   return STATUS_KEY_SCOPES.has(scope) ? 'statusKey' : 'status';
@@ -51,4 +70,16 @@ export function countRowsByStatus(
     acc[value] = (acc[value] || 0) + 1;
     return acc;
   }, {});
+}
+
+/** Count rows whose status is not represented by the compact Menu 3 status pills. */
+export function countUnrepresentedStatuses(
+  counts: Readonly<Record<string, number>>,
+  representedStatuses: ReadonlyArray<string>
+): number {
+  const represented = new Set(representedStatuses.map((value) => value.toLowerCase()));
+  return Object.entries(counts).reduce(
+    (total, [status, count]) => total + (represented.has(status.toLowerCase()) ? 0 : count),
+    0
+  );
 }

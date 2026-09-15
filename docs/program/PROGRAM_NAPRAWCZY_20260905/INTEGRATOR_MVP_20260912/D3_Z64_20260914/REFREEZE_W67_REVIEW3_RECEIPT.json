@@ -1,0 +1,43 @@
+{
+  "package": "A/D D-3 + Z-64 + W67 review 3",
+  "date": "2026-09-14",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_WITH_STOP_OWNER_DECISION_AND_BLOCKED_BACKUP",
+  "exactBase": "59a8c44c04",
+  "productTip": "3598bc2356",
+  "evidenceTip": "fafd9c372b",
+  "branch": "codex/a-d3-debts-z64-20260914",
+  "n1": {
+    "total": 43,
+    "pillCount": 3,
+    "pills": { "draft": 8, "ready": 34, "otherStatuses": 1 },
+    "otherIsInteractive": true,
+    "residualStatuses": ["generated", "editing", "exported", "shared", "archived"],
+    "clickFiltersToResidualOnly": true,
+    "secondClickRestoresAll": true,
+    "hubTests": { "passed": 22, "failed": 0 },
+    "helperTests": { "passed": 8, "failed": 0 },
+    "esbuild": { "passed": 4, "failed": 0 }
+  },
+  "retainedVerification": {
+    "focused": { "passed": 72, "failed": 0 },
+    "realPostgres": { "passed": 31, "failed": 0 },
+    "serverTypeScriptErrors": 0,
+    "frontendTypeScriptErrors": 177,
+    "frontendTypeScriptBaseline": 177,
+    "realProductScreenshots": 6
+  },
+  "backupFailure": {
+    "candidate": "9c88eacebf44ce2fb6f6acd3b64f5e92940cd68f",
+    "attemptedRef": "backup/codex/a-d3-debts-z64-20260914-w67-review3-20260914",
+    "attempts": 1,
+    "result": "HTTP 408 / empty reply",
+    "currentRemoteRef": "backup/codex/a-d3-debts-z64-20260914-w67-20260914",
+    "remoteSha": "87b1045380",
+    "commitsAhead": 9,
+    "status": "BLOCKED_BACKUP"
+  },
+  "stopOwnerDecision": "contractMirrorDrift",
+  "migrations": false,
+  "deploy": false,
+  "independentReview": "NOT_RUN"
+}

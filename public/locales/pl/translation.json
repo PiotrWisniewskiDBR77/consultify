@@ -4060,7 +4060,7 @@
       "subPrograms": "Podprogramy",
       "initiatives4": "inicjatyw",
       "noProjectsYet": "Brak projektów",
-      "projectsCreatedInThe": "Projekty utworzone w module Initiatives pojawią się tutaj.",
+      "projectsCreatedInThe": "Projekty utworzone tutaj pojawią się na tej liście.",
       "project2": "Projekt",
       "members2": "osób",
       "initiatives5": "inicjatyw",
@@ -4117,7 +4117,6 @@
       },
       "approvalRoles": {
         "BUSINESS_AUTHORITY": "Osoba zatwierdzająca biznesowo",
-        "GATE_AUTHORITY": "Osoba zatwierdzająca bramkę",
         "DOMAIN_AUTHORITY": "Osoba zatwierdzająca merytorycznie",
         "GATE_REQUESTER": "Wnioskodawca bramki etapu"
       },
@@ -4187,7 +4186,7 @@
           "closure": "Bramka zamknięcia"
         },
         "states": {
-          "passed": "Zatwierdzona",
+          "passed": "Zatwierdzony",
           "ready": "Gotowa",
           "not_ready": "Niegotowa",
           "upcoming": "Nadchodząca"
@@ -4198,7 +4197,7 @@
       "noTasksForThis": "Brak zadań dla tego projektu.",
       "emptyState": {
         "title": "Brak projektów",
-        "description": "Projekty utworzone w module Initiatives pojawią się tutaj."
+        "description": "Projekty utworzone tutaj pojawią się na tej liście."
       },
       "loadError": "Nie udało się wczytać projektów",
       "table": {
@@ -32944,6 +32943,8 @@
       "emptyConflicts": "Brak sprzecznych wartości w widocznych twierdzeniach.",
       "conflictSummary": "Twierdzenia oparte na {{count}} źródłach są sprzeczne. Oceń każdą propozycję przed publikacją.",
       "claims": "Twierdzenia",
+      "showingClaims": "Wyświetlam {{shown}} z {{total}}",
+      "showingAllClaims": "Wyświetlam wszystkie: {{total}}",
       "emptyClaims": "W tej organizacji nie ma oczekujących twierdzeń opartych na źródłach.",
       "versions": "Opublikowane wersje",
       "selectLatest": "Wybierz teraz najnowszą",
@@ -35879,7 +35880,8 @@
         "editing": "W edycji",
         "exported": "Wyeksportowany",
         "shared": "Udostępniony",
-        "deprecated": "Wycofany"
+        "deprecated": "Wycofany",
+        "other": "Pozostałe statusy"
       },
       "drafts": "Robocze",
       "statusLabel": "Status"

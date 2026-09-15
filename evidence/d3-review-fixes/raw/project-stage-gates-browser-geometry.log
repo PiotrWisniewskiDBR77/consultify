@@ -1,0 +1,51 @@
+
+Running 1 test using 1 worker
+
+(node:82197) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82197) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport (24.8s)
+
+
+  1) [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('project-stage-gates-panel').getByText('Zatwierdzony', { exact: true }).first()
+    Expected: visible
+    Received: hidden
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('project-stage-gates-panel').getByText('Zatwierdzony', { exact: true }).first()[22m
+    [2m    14 × locator resolved to <span class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-[var(--c-success)]">…</span>[22m
+    [2m       - unexpected value "hidden"[22m
+
+
+      19 |
+      20 |   const panel = page.getByTestId('project-stage-gates-panel');
+    > 21 |   await expect(panel.getByText('Zatwierdzony', { exact: true }).first()).toBeVisible();
+         |                                                                          ^
+      22 |
+      23 |   const measurement = await panel.evaluate((root) => {
+      24 |     const list = root.querySelector<HTMLElement>('[data-testid="project-stage-gates-mobile-list"]');
+        at /Users/piotrwisniewski/Developer/codex-wt/a-d3-review-fixes-w67/tests/e2e/project-stage-gates-mobile-geometry.spec.ts:21:74
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/project-stage-gates-mobile-a3285-s-inside-the-table-viewport-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/project-stage-gates-mobile-a3285-s-inside-the-table-viewport-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/project-stage-gates-mobile-a3285-s-inside-the-table-viewport-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/project-stage-gates-mobile-a3285-s-inside-the-table-viewport-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/project-stage-gates-mobile-geometry.spec.ts:15:1 › PL360 keeps both columns and exact approved status inside the table viewport

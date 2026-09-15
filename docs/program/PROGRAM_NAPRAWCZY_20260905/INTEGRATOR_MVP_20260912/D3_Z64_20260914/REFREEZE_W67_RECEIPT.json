@@ -1,0 +1,42 @@
+{
+  "package": "A/D D-3 + Z-64 + W67",
+  "date": "2026-09-14",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_WITH_STOP_OWNER_DECISION",
+  "exactBase": "59a8c44c04",
+  "contentTip": "9c4402896aecc5fda62e6e7625b632c19197850d",
+  "branch": "codex/a-d3-debts-z64-20260914",
+  "tests": {
+    "focused": { "files": 19, "passed": 99, "failed": 0 },
+    "realPostgres": { "files": 3, "passed": 31, "failed": 0 },
+    "chromiumPl360": { "passed": 1, "failed": 0 },
+    "myWorkTestOnly": { "passed": 25, "failed": 0 },
+    "contractMirrorStop": { "passed": 3, "failed": 4 }
+  },
+  "typecheck": {
+    "frontendErrors": 177,
+    "frontendBaselineErrors": 177,
+    "serverErrors": 0
+  },
+  "esbuild": { "passed": 11, "failed": 0 },
+  "browserMeasurement": {
+    "viewport": { "left": 62, "right": 318, "width": 256 },
+    "listClientWidth": 254,
+    "listScrollWidth": 254,
+    "approvedStatus": "Zatwierdzony",
+    "approvedStatusLeft": 183,
+    "approvedStatusRight": 280.46875
+  },
+  "w67": {
+    "n1": { "all": 43, "draft": 8, "ready": 34, "otherStatuses": 1 },
+    "n2": { "listCriteria": 9, "detailCriteria": 9 },
+    "n4": { "totalClaims": 727, "shownClaims": 200, "limit": 200 }
+  },
+  "stopOwnerDecision": {
+    "code": "contractMirrorDrift",
+    "reason": "real contract boundary change",
+    "recommendedVariant": "B"
+  },
+  "migrations": false,
+  "deploy": false,
+  "independentReview": "NOT_RUN"
+}

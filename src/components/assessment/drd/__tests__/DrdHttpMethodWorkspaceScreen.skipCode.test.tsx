@@ -190,13 +190,13 @@ async function renderAtInterviewFocus(): Promise<{ storage: Storage }> {
  * DOM path proven for the legacy screen in
  * `DrdMethodWorkspaceScreen.skipAndResolution.test.tsx`. */
 function triggerSkip(code: string): void {
-  fireEvent.click(screen.getByRole('button', { name: /Pomiń z uzasadnieniem/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Skip with a reason/i }));
   fireEvent.change(screen.getByTestId('skip-reason-select'), { target: { value: code } });
-  fireEvent.click(screen.getByRole('button', { name: /Potwierdź/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Confirm/i }));
 }
 
 function breadcrumbText(): string {
-  return screen.getByRole('navigation', { name: /Ścieżka pytania/i }).textContent ?? '';
+  return screen.getByRole('navigation', { name: /Question path/i }).textContent ?? '';
 }
 
 beforeEach(() => {

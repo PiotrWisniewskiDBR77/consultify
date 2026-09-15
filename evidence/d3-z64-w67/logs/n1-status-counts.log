@@ -1,0 +1,28 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > „Dokumenty" liczą po statusKey (a nie po nieistniejącym status) 62ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > suma chipów równa się liczbie wierszy (żaden wiersz nie ginie) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > każdy klucz statusu z REPORT_STATUS_META daje niezerowy licznik, gdy taki wiersz istnieje 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > szablony i prezentacje dalej liczą po polu status (zero regresji) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > pole źródłowe jest jawne per zakładka 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > jawnie wylicza kategorię statusów niewidocznych w kompaktowych pigułkach 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts > countRowsByStatus — liczniki statusów Menu 3 > puste/nieznane statusy nie tworzą chipa-śmiecia 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/statusCounts.test.ts (7 tests) 65ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:19:57
+   Duration  822ms (transform 72ms, setup 149ms, import 13ms, tests 65ms, environment 501ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:19:57
+   Duration  823ms (transform 72ms, setup 149ms, import 13ms, tests 65ms, environment 501ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

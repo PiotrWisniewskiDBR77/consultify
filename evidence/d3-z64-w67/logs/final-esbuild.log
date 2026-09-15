@@ -1,0 +1,56 @@
+===== src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx =====
+
+  ../../../../../tmp/d3-final-client-0.js  3.7mb ⚠️
+
+⚡ Done in 564ms
+===== src/components/Audit/method/tabs/AuditLibraryTab.tsx =====
+
+  ../../../../../tmp/d3-final-client-1.js  2.7mb ⚠️
+
+⚡ Done in 171ms
+===== src/components/MyWork/ProjectStageGatesPanel.tsx =====
+
+  ../../../../../tmp/d3-final-client-2.js  2.2mb ⚠️
+
+⚡ Done in 152ms
+===== src/components/Organization/GovernedContextWorkspace.tsx =====
+
+  ../../../../../tmp/d3-final-client-3.js  2.1mb ⚠️
+
+⚡ Done in 127ms
+===== src/components/assessment/library/AssessmentLibraryTab.tsx =====
+
+  ../../../../../tmp/d3-final-client-4.js  2.6mb ⚠️
+
+⚡ Done in 146ms
+===== src/services/organizationGovernedContextApi.ts =====
+
+  ../../../../../tmp/d3-final-client-5.js  1.6mb ⚠️
+
+⚡ Done in 42ms
+===== dev-render/screens/d3-counter-drift-w67.tsx =====
+
+  ../../../../../tmp/d3-final-client-6.js  1.3mb ⚠️
+
+⚡ Done in 149ms
+===== server/src/method-core/__tests__/httpSessionsListing.integration.test.ts =====
+
+  ../../../../../tmp/d3-final-server-0.js  4.9mb ⚠️
+
+⚡ Done in 197ms
+===== server/src/routes/method-core.routes.ts =====
+
+  ../../../../../tmp/d3-final-server-1.js  4.9mb ⚠️
+
+⚡ Done in 107ms
+===== server/src/routes/organization-context.routes.ts =====
+
+  ../../../../../tmp/d3-final-server-2.js  4.5mb ⚠️
+
+⚡ Done in 105ms
+===== server/src/services/organizationContext/OrganizationContextService.ts =====
+
+  ../../../../../tmp/d3-final-server-3.js  4.5mb ⚠️
+
+⚡ Done in 99ms
+PASS client=7 server=4 total=11

@@ -120,12 +120,11 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
   const columns = useMemo<TableColumn[]>(
     () => [
       {
-        // ── SZEROKOŚĆ (Z-43, 14.09): 230+170=400px > 285px dostępne w panelu
-        // podglądu (zmierzone Playwright na `min-width` 340px kanonu preview:
-        // `.overflow-x-auto` viewport = 285.19px). Tabela była SZERSZA niż
-        // kontener, więc `overflow-x-auto` bez przewinięcia obcinał prawą
-        // krawędź kolumny „Status" w połowie znaku ("Passed"→"Pas",
-        // "Not ready"→"Not", "Upcoming"→"Upc") — to była OKLUZJA przez
+        // ── SZEROKOŚĆ (Z-43/Z-48, 14.09): 230+170=400px > przestrzeń panelu.
+        // Ponowny pomiar Playwright przy 360 px pokazał realny viewport tabeli
+        // 222 px. Tabela była SZERSZA niż
+        // kontener i dodatkowo zaczynała się przed lewą krawędzią viewportu
+        // ("BRAMKA"→"AMKA"). To była OKLUZJA przez
         // przepełnienie, nie zawijanie tekstu.
         //
         // ŚWIADOMIE BEZ `primary: true`. Ta mini-tabela ma tylko DWIE
@@ -137,9 +136,9 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
         // więc żadna wartość `width` poniżej 200px nie miała żadnego efektu
         // — zmierzone: `width:'120px'` i `width:'150px'` dawały identyczny
         // renderowany nagłówek 200px). Bez `primary` kolumna dostaje zwykłą
-        // podłogę typu `text` (140px), a 140+130=270px < 285px dostępne —
-        // tabela mieści się bez przewijania na całym zakresie panelu
-        // (`clamp(340px, 28%, 480px)`).
+        // podłogę typu `text` (140px). Desktop zachowuje kanoniczną tabelę,
+        // a na mobilnym breakpointcie panel przechodzi na listę rekordów; nie obchodzimy
+        // ani nie cofamy globalnej podłogi statusu.
         id: 'gateType',
         label: t('myWork.projects.stageGates.gate', 'Gate'),
         width: '140px',
@@ -161,7 +160,9 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
         id: 'state',
         label: t('myWork.projects.stageGates.status', 'Status'),
         width: '130px',
-        dataType: 'status',
+        // Compact preview owns the semantic pill. The global status floor is
+        // 160 px; using it here would exceed the desktop preview budget.
+        dataType: 'text',
         render: (tableRow: TableRow) => {
           const row = tableRow as unknown as ProjectStageGateRow;
           const scheme =
@@ -172,7 +173,7 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
                 : 'text-c-text-secondary';
           return (
             // Plakietka (ikona+tekst) na WŁASNEJ linii z `whitespace-nowrap` —
-            // przy wąskiej kolumnie (120px) etykieta stanu ("Not ready",
+            // przy wąskiej kolumnie etykieta stanu ("Not ready",
             // PL "Nadchodząca") nie może się złamać w połowie wyrazu.
             // Przycisk „Pass gate"/„Zatwierdź bramkę" idzie na DRUGĄ linię
             // (bez nowrap — najdłuższa etykieta PL ma prawo zawinąć się na
@@ -214,7 +215,10 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
   );
 
   return (
-    <div className="mt-2.5 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+    <div
+      data-testid="project-stage-gates-panel"
+      className="mt-2.5 min-w-0 rounded-xl border border-c-border-subtle bg-c-surface p-3"
+    >
       <div className="mb-2 flex items-center gap-2">
         <LockKeyhole size={14} className="text-c-text-secondary" />
         <h4 className="text-xs font-bold uppercase tracking-wide text-c-text-secondary">
@@ -233,13 +237,73 @@ export const ProjectStageGatesPanel: React.FC<{ projectId: string; requesterId?:
         </button>
       </div>
       {error ? <p className="mb-2 text-xs text-danger-500">{error}</p> : null}
-      <StandardTable
-        columns={columns}
-        data={rows as unknown as TableRow[]}
-        loading={loading}
-        persistKey="mywork.projects.stage-gates"
-        minTableWidth="auto"
-      />
+      <div className="hidden sm:block">
+        <StandardTable
+          columns={columns}
+          data={rows as unknown as TableRow[]}
+          loading={loading}
+          persistKey="mywork.projects.stage-gates"
+          minTableWidth="auto"
+        />
+      </div>
+      <ul
+        data-testid="project-stage-gates-mobile-list"
+        className="divide-y divide-c-border-subtle overflow-hidden rounded-lg border border-c-border-subtle sm:hidden"
+      >
+        {rows.map((row) => {
+          const scheme =
+            row.state === 'PASSED'
+              ? 'text-[var(--c-success)]'
+              : row.state === 'NOT_READY'
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-c-text-secondary';
+          return (
+            <li
+              key={row.id}
+              data-testid="project-stage-gate-mobile-row"
+              className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(126px,auto)] gap-2 p-2"
+            >
+              <span className="min-w-0 text-xs text-c-text">
+                <span className="block break-words font-medium">
+                  {t(`myWork.projects.stageGates.names.${gateLabelKey[row.gateType]}`)}
+                </span>
+                <span className="mt-0.5 block break-words text-[10px] text-c-text-muted">
+                  {t(`myWork.projects.stageGates.phases.${row.fromPhase.toLowerCase()}`)} →{' '}
+                  {t(`myWork.projects.stageGates.phases.${row.toPhase.toLowerCase()}`)}
+                </span>
+              </span>
+              <span className="flex min-w-0 flex-col items-start gap-1">
+                <span
+                  data-testid="project-stage-gate-mobile-status"
+                  className={`inline-flex max-w-full items-center gap-1.5 whitespace-nowrap text-xs font-medium ${scheme}`}
+                >
+                  {row.state === 'PASSED' ? <CheckCircle2 size={13} /> : <CircleDot size={13} />}
+                  {t(`myWork.projects.stageGates.states.${row.state.toLowerCase()}`)}
+                </span>
+                <button
+                  type="button"
+                  disabled={!row.actionable || passing !== null || !requesterId}
+                  onClick={() => void passGate(row.gateType)}
+                  className="inline-flex min-h-7 max-w-full items-center gap-1 rounded-full border border-c-border px-2 py-1 text-left text-[10px] font-medium leading-tight text-c-text disabled:opacity-40"
+                  title={
+                    !requesterId
+                      ? t(
+                          'myWork.projects.stageGates.requesterMissing',
+                          'Assign a project manager or PMO requester before approving this gate'
+                        )
+                      : row.missingElements.map(criterionLabel).join(', ') || undefined
+                  }
+                >
+                  <LockKeyhole size={11} className="shrink-0" />
+                  {passing === row.gateType
+                    ? t('common.saving', 'Saving…')
+                    : t('myWork.projects.stageGates.pass', 'Pass gate')}
+                </button>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
       {nextGate?.missingElements.length ? (
         <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
           {t('myWork.projects.stageGates.missing', 'Missing before the next gate')}: {' '}

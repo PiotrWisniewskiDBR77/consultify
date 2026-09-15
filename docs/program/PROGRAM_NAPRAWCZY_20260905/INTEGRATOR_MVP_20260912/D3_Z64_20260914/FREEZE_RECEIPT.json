@@ -1,0 +1,41 @@
+{
+  "package": "A/D D-3 + Z-64",
+  "date": "2026-09-14",
+  "verdict": "READY_FOR_INDEPENDENT_REVIEW_WITH_STOP_OWNER_DECISION",
+  "base": "59a8c44c04",
+  "contentTip": "e88085b785",
+  "branch": "codex/a-d3-debts-z64-20260914",
+  "tests": {
+    "focusedD3": {
+      "passed": 59,
+      "files": 12
+    },
+    "p1AndZ64Ui": {
+      "passed": 16
+    },
+    "z64RealPg": {
+      "passed": 15
+    },
+    "serverTscErrors": 0,
+    "frontendTscErrors": 177,
+    "frontendBaselineErrors": 177,
+    "esbuild": {
+      "passed": 4
+    }
+  },
+  "stop": {
+    "code": "STOP_OWNER_DECISION",
+    "subject": "contractMirrorDrift",
+    "failed": 4,
+    "passed": 3,
+    "unsafeSyncCommit": "d539d76e7f",
+    "auditRevertCommit": "f924fd8266"
+  },
+  "evidence": [
+    "evidence/d3-z64/screens/pmo-stage-gate-pl-360-light.png",
+    "evidence/d3-z64/screens/pmo-stage-gate-pl-360-light.json"
+  ],
+  "migrations": false,
+  "deploy": false,
+  "independentReview": "NOT_RUN"
+}

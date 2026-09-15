@@ -35,17 +35,18 @@ describe('MYW-IDEAS-010 candidate→initiative path is no longer tool-gated', ()
     // The FIRST occurrence is the active melsCanvasEnabled-branch panel —
     // the dead legacy branch further down (unreachable: melsCanvasEnabled
     // is hardcoded true) is intentionally out of scope for this fix.
-    const firstPanelGate = source.indexOf("{activeTool === 'process_flow' && (");
-    const activeBranchEnd = source.indexOf('\n  return (\n    <div\n      ref={workspaceRootRef}');
-    expect(activeBranchEnd).toBeGreaterThan(0);
-    // Either there is no such gate before the active branch ends (fixed),
-    // or if one exists it must be strictly after the active branch (dead code).
-    if (firstPanelGate !== -1) {
-      expect(firstPanelGate).toBeGreaterThan(activeBranchEnd);
-    }
+    const candidateStart = source.indexOf('MYW-IDEAS-010: previously gated');
+    const candidateEnd = source.indexOf('{/* P-T14', candidateStart);
+    expect(candidateStart).toBeGreaterThan(0);
+    expect(candidateEnd).toBeGreaterThan(candidateStart);
+    expect(source.slice(candidateStart, candidateEnd)).not.toMatch(
+      /\{activeTool === 'process_flow'\s*&&\s*\(/
+    );
   });
 
   it('shows the candidate panel for any real idea in the active render path', () => {
-    expect(source).toContain('{Boolean(realId) && (\n          <div className="absolute bottom-4 right-4');
+    expect(source).toContain(
+      '{Boolean(realId) &&\n          gniazdoAnalizyPlotna &&\n          createPortal('
+    );
   });
 });

@@ -169,7 +169,7 @@ describe('„Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania',
   it('„Zapytaj Teresę" pod pomocą do pytania woła ten sam dok (jedna Teresa, nie drugi czat)', async () => {
     await renderAtInterviewFocus();
 
-    const helpButtons = screen.getAllByRole('button', { name: /Zapytaj Teresę/i });
+    const helpButtons = screen.getAllByRole('button', { name: /Ask Teresa/i });
     expect(helpButtons.length).toBeGreaterThanOrEqual(2);
     fireEvent.click(helpButtons[0]);
 
@@ -180,12 +180,12 @@ describe('„Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania',
   it('„Pokaż różnicę L-1/L/L+1" pyta o porównanie poziomów, nie o wyjaśnienie', async () => {
     await renderAtInterviewFocus();
 
-    fireEvent.click(screen.getByRole('button', { name: /Pokaż różnicę/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Show the L-1\/L\/L\+1 difference/i }));
 
     await waitFor(() => expect(hoisted.openChatWithContext).toHaveBeenCalledTimes(1));
     const ctx = hoisted.openChatWithContext.mock.calls[0][0].contextData;
     expect(ctx.topic).toBe('compare_levels');
-    expect(ctx.teresaPrompt).toMatch(/różnic/i);
+    expect(ctx.teresaPrompt).toMatch(/difference/i);
   });
 
   it('sesja tylko do odczytu NIE odbiera prawa do zapytania Teresy (to akcja czytająca)', async () => {

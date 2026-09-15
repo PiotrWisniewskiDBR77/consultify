@@ -1,0 +1,40 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof
+
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > shows a canonical Method Core DRD session and opens its canonical editor route 74ms
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails
+[AssessmentHub] Core assessment load warning: Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails
+[AssessmentHub] Core assessment load warning: Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD
+[AssessmentHub] Core assessment load warning: DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.
+
+stderr | tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD
+[AssessmentHub] Core assessment load warning: DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.
+
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > shows an externally created same-org session after an ADMIN page refresh without client owner filtering 48ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps non-DRD legacy rows but never lets a legacy DRD id masquerade as canonical 21ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > keeps canonical DRD visible with an explicit warning when only legacy loading fails 22ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > D-01: canonical DRD borrows name, score and confidence from its legacy twin (same projectId) 20ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > D-01: keeps the id-based fallback label when no legacy twin shares the project 20ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx > AssessmentHub Method Core DRD cutover > fails closed when Method Core cannot load and does not restore cached legacy DRD 12ms
+ ✓ tests/components/assessment/AssessmentHub.method-core-cutover.test.tsx (7 tests) 218ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:06:57
+   Duration  1.89s (transform 948ms, setup 93ms, import 1.29s, tests 218ms, environment 220ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:06:57
+   Duration  1.89s (transform 948ms, setup 93ms, import 1.29s, tests 218ms, environment 220ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-base-proof/junit.xml

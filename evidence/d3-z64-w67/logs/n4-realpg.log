@@ -1,0 +1,77 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-14 17:20:06:206 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 17:20:07:207 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-14 17:20:07:207 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_d3","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6454/consultify_d3 host=127.0.0.1 port=6454 database=consultify_d3 source=app:pool-config
+2026-09-14 17:20:07:207 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 17:20:07:207 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved
+2026-09-14 17:20:07:207 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > two simultaneous approve/reject calls on the same claim resolve to exactly one decision
+2026-09-14 17:20:07:207 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > two simultaneous approve/reject calls on the same claim resolve to exactly one decision
+2026-09-14 17:20:07:207 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > migration created the append-only snapshot table with its DB-level guarantees 51ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved 18ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > excludes a restricted-visibility claim from the default (non-admin) governed claims read, includes it when includeRestricted=true 6ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > tenant negative: org A cannot approve org B claims, and org B never sees org A claims 3ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > rejects a direct empty publish before writing a snapshot version 3ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > approves pending claims, then publishes v1 excluding still-unapproved claims and carrying exact refs (claim id + file_hash + version) 24ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > immutability: a direct UPDATE against a published snapshot version is rejected by the DB trigger 3ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > reopen: publishing v2 does not change v1 — same content_hash, byte-identical snapshot_json 12ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > tenant negative: org B cannot read org A pinned snapshot versions 1ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > two simultaneous approve/reject calls on the same claim resolve to exactly one decision 22ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > hard-deleting the cited source document is DETECTABLE on the pinned read, and does not alter the stored snapshot content 20ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts > ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres) > canonicalizeForHash sorts object keys recursively (order-independent hashing) 0ms
+ ✓ server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts (12 tests) 364ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  17:20:05
+   Duration  1.78s (transform 556ms, setup 149ms, import 829ms, tests 364ms, environment 331ms)
+
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  17:20:05
+   Duration  1.78s (transform 556ms, setup 149ms, import 829ms, tests 364ms, environment 331ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

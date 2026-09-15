@@ -4963,7 +4963,7 @@
       "subPrograms": "Sub-programs",
       "initiatives4": "initiatives",
       "noProjectsYet": "No projects yet",
-      "projectsCreatedInThe": "Projects created in the Initiatives module will appear here.",
+      "projectsCreatedInThe": "Projects created here will appear in this list.",
       "project2": "Project",
       "members2": "members",
       "initiatives5": "initiatives",
@@ -5020,7 +5020,6 @@
       },
       "approvalRoles": {
         "BUSINESS_AUTHORITY": "Business approver",
-        "GATE_AUTHORITY": "Stage-gate approver",
         "DOMAIN_AUTHORITY": "Domain approver",
         "GATE_REQUESTER": "Stage-gate requester"
       },
@@ -5101,7 +5100,7 @@
       "noTasksForThis": "No tasks for this project yet.",
       "emptyState": {
         "title": "No projects yet",
-        "description": "Projects created in the Initiatives module will appear here."
+        "description": "Projects created here will appear in this list."
       },
       "loadError": "Failed to load projects",
       "table": {
@@ -32827,6 +32826,8 @@
       "emptyConflicts": "No conflicting visible claim values.",
       "conflictSummary": "{{count}} sourced claims disagree. Review each proposal before publishing.",
       "claims": "Claims",
+      "showingClaims": "Showing {{shown}} of {{total}}",
+      "showingAllClaims": "Showing all {{total}}",
       "emptyClaims": "No sourced claims are waiting in this organization.",
       "versions": "Published versions",
       "selectLatest": "Select latest now",
@@ -35719,7 +35720,8 @@
         "editing": "Editing",
         "exported": "Exported",
         "shared": "Shared",
-        "deprecated": "Deprecated"
+        "deprecated": "Deprecated",
+        "other": "Other statuses"
       },
       "drafts": "Drafts",
       "statusLabel": "Status"

@@ -1,0 +1,22 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/Organization/redesign/__tests__/OrganizationSourcesClaimsScreen.test.tsx > OrganizationSourcesClaimsScreen > scala dawne trzy ekrany Źródeł (Pliki + Twierdzenia + Konflikty-duplikat) w jeden ekran 40ms
+ ✓ src/components/Organization/redesign/__tests__/OrganizationSourcesClaimsScreen.test.tsx (1 test) 43ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:20:04
+   Duration  1.07s (transform 286ms, setup 139ms, import 457ms, tests 43ms, environment 329ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:20:04
+   Duration  1.07s (transform 286ms, setup 139ms, import 457ms, tests 43ms, environment 329ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

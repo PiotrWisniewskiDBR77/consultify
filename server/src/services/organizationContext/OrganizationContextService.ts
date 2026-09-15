@@ -2076,15 +2076,13 @@ export class OrganizationContextService {
        FROM organization_context_claims c
        JOIN organization_context_items i ON i.id = c.item_id
        LEFT JOIN organization_context_claim_reviews r ON r.claim_id = c.id
-       WHERE c.organization_id = ? AND c.status = 'active'
+       WHERE c.organization_id = ? AND c.status = 'active'${opts?.includeRestricted ? '' : " AND COALESCE(i.visibility_scope, 'organization') != 'restricted'"}
        ORDER BY c.created_at DESC
        LIMIT ?`,
       [organizationId, limit]
     );
 
-    return rows
-      .filter((row) => opts?.includeRestricted || row.visibility_scope !== 'restricted')
-      .map((row) => {
+    return rows.map((row) => {
         const decision = resolveClaimApproval(row);
         return {
           claimId: row.claim_id,
@@ -2103,6 +2101,23 @@ export class OrganizationContextService {
           createdAt: row.created_at,
         };
       });
+  }
+
+  async countGovernedClaims(
+    organizationId: string,
+    opts?: { includeRestricted?: boolean }
+  ): Promise<number> {
+    const visibilitySql = opts?.includeRestricted
+      ? ''
+      : " AND COALESCE(i.visibility_scope, 'organization') != 'restricted'";
+    const row = await safeGet<{ count?: number | string }>(
+      `SELECT COUNT(*) as count
+       FROM organization_context_claims c
+       JOIN organization_context_items i ON i.id = c.item_id
+       WHERE c.organization_id = ? AND c.status = 'active'${visibilitySql}`,
+      [organizationId]
+    );
+    return Number(row?.count ?? 0);
   }
 
   /**

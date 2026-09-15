@@ -19,9 +19,10 @@ type HarnessState = 'ready' | 'empty' | 'loading' | 'error';
 
 const params = new URLSearchParams(window.location.search);
 const state = (params.get('state') || 'ready') as HarnessState;
+const w67Fixture = params.get('fixture') === 'w67';
 const originalFetch = window.fetch.bind(window);
 
-const outputRows = [
+const day267Rows = [
   {
     artifactId: 'day267-document-index',
     artifactFamily: 'document',
@@ -83,6 +84,33 @@ const outputRows = [
     authority: 'workbook',
   },
 ];
+
+const outputRows = w67Fixture
+  ? [
+      ...Array.from({ length: 8 }, (_, index) => ({
+        ...day267Rows[0],
+        artifactId: `w67-draft-${index + 1}`,
+        originRecordId: `w67-draft-${index + 1}`,
+        resolvedTitle: `Draft material ${index + 1}`,
+        originStatus: 'draft',
+        deliveryState: 'draft',
+      })),
+      ...Array.from({ length: 34 }, (_, index) => ({
+        ...day267Rows[0],
+        artifactId: `w67-ready-${index + 1}`,
+        originRecordId: `w67-ready-${index + 1}`,
+        resolvedTitle: `Ready material ${index + 1}`,
+      })),
+      {
+        ...day267Rows[0],
+        artifactId: 'w67-archived-1',
+        originRecordId: 'w67-archived-1',
+        resolvedTitle: 'Archived material',
+        originStatus: 'archived',
+        deliveryState: 'archived',
+      },
+    ]
+  : day267Rows;
 
 const templateRows = ['report', 'presentation', 'sheet'].map((outputType, index) => ({
   artifactId: `day267-template-index-${index + 1}`,

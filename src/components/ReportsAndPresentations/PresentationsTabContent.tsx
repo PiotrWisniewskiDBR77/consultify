@@ -28,6 +28,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '../standard';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
+import { matchesMaterialsStatusFilter } from './statusCounts';
 import { displayLabel } from './TrustStatePreviewSection';
 import {
   type ArtifactSourceRef,
@@ -113,7 +114,9 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     }
     for (const f of activeFilters) {
       if (f.column === 'sourceType') data = data.filter((item) => item.sourceType === f.value);
-      if (f.column === 'status') data = data.filter((item) => item.status === f.value);
+      if (f.column === 'status') {
+        data = data.filter((item) => matchesMaterialsStatusFilter(item.status, f.value));
+      }
       /* DEC-423b: dropdown „Widoczność" w Menu 2 stoi teraz nad KAŻDĄ zakładką,
          więc ta też musi go realnie honorować — bez tych dwóch linii wybór z
          listy nic by nie robił (filtr-widmo). Wiersze prezentacji niosą

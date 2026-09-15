@@ -133,6 +133,8 @@ describe.skipIf(!REAL_DB)('ORG-BVP-001 — mounted organization golden path (rea
       .get('/api/organization-context/governed/claims')
       .set(auth(ownerToken));
     expect(claims.status).toBe(200);
+    expect(claims.body).toMatchObject({ total: 1, limit: 200 });
+    expect(claims.body.claims).toHaveLength(1);
     const proposed = claims.body.claims.find(
       (claim: any) => claim.claimPath === 'evidence.documentExtraction'
     );

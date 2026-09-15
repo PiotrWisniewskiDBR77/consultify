@@ -13,7 +13,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { REPORT_STATUS_META, type UnifiedOutputRow } from '../types';
-import { countRowsByStatus, statusFieldForScope } from '../statusCounts';
+import {
+  countRowsByStatus,
+  countUnrepresentedStatuses,
+  matchesMaterialsStatusFilter,
+  MATERIALS_OTHER_STATUSES_FILTER,
+  statusFieldForScope,
+} from '../statusCounts';
 
 function docRow(statusKey: string): Partial<UnifiedOutputRow> {
   return { kind: 'document', statusKey, title: 't', originRecordId: 'x' };
@@ -54,6 +60,23 @@ describe('countRowsByStatus — liczniki statusów Menu 3', () => {
     expect(statusFieldForScope('outputs_documents')).toBe('statusKey');
     expect(statusFieldForScope('templates')).toBe('status');
     expect(statusFieldForScope('presentations')).toBe('status');
+  });
+
+  it('jawnie wylicza kategorię statusów niewidocznych w kompaktowych pigułkach', () => {
+    const counts = { draft: 8, ready: 34, generated: 1 };
+    const other = countUnrepresentedStatuses(counts, ['draft', 'ready']);
+    expect(counts.draft + counts.ready + other).toBe(43);
+    expect(other).toBe(1);
+  });
+
+  it('filtr Other obejmuje wyłącznie statusy poza Draft i Ready', () => {
+    expect(
+      ['draft', 'ready', 'generated', 'editing', 'exported', 'shared', 'archived'].filter((status) =>
+        matchesMaterialsStatusFilter(status, MATERIALS_OTHER_STATUSES_FILTER)
+      )
+    ).toEqual(['generated', 'editing', 'exported', 'shared', 'archived']);
+    expect(matchesMaterialsStatusFilter('draft', 'draft')).toBe(true);
+    expect(matchesMaterialsStatusFilter('ready', 'draft')).toBe(false);
   });
 
   it('puste/nieznane statusy nie tworzą chipa-śmiecia', () => {

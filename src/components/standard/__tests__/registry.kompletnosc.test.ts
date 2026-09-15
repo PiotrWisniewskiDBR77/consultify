@@ -22,6 +22,8 @@ const OCZEKIWANE_W_REJESTRZE = [
   'insight',
   'task',
   'initiative',
+  'idea',
+  'interview_template',
   // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] Trzy karty modułu Wyniki weszły
   // do rejestru 06.09.2026 — do tego dnia `metric` i `objective` stały wśród
   // „jawnych wyjątków" niżej, a analizy ROI nie było nigdzie. Właściciel
@@ -57,7 +59,6 @@ const OCZEKIWANE_W_REJESTRZE = [
 
 const JAWNE_WYJATKI = {
   note: 'NotebookContent ma własny dokumentowy model poza rejestrem',
-  idea: 'IdeaMapWorkspace jest warsztatem płótnowym poza rejestrem',
   'audit-criterion': 'CriterionWorkspaceV2 jest rekordem audytu poza rejestrem',
   'audit-report': 'AuditReportDocumentView jest dokumentem raportu poza rejestrem',
   'assessment-report': 'AssessmentReportContractView ma osobny kontrakt raportu',
@@ -75,12 +76,12 @@ describe('P10 — kompletność rejestru kart N', () => {
     expect(EXECUTION_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['metrics', 'content']);
     expect(MANAGEMENT_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['report']);
   });
-  it('zawiera wszystkie 35 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434)', () => {
+  it('zawiera wszystkie 37 kart wskazanych przez KartaNKey', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
-  it('ma jawny, niepusty powód dla każdej z 6 kart poza rejestrem', () => {
-    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(6);
+  it('ma jawny, niepusty powód dla każdej z 5 kart poza rejestrem', () => {
+    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(5);
     for (const powod of Object.values(JAWNE_WYJATKI)) expect(powod.trim()).not.toBe('');
   });
 
@@ -99,6 +100,6 @@ describe('P10 — kompletność rejestru kart N', () => {
     // z B + 21 nowych z C = 35) i usuwa z wyjątków WSZYSTKO, co po sumowaniu trafiło
     // do rejestru po którejkolwiek stronie (`tool-document`, `presentation`,
     // `vault-document`) — zostaje 6 prawdziwych wyjątków, więc 35 + 6 = 41.
-    expect(pokryte.size).toBe(41);
+    expect(pokryte.size).toBe(42);
   });
 });

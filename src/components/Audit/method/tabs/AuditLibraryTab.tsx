@@ -50,6 +50,20 @@ import {
   type AuditPackSummary,
 } from '../auditsMethodApi';
 
+export function countAuditCriteriaTree(criteria: readonly unknown[]): number {
+  return criteria.reduce<number>(
+    (total, criterion) => {
+      const childrenValue =
+        criterion && typeof criterion === 'object'
+          ? (criterion as { children?: unknown }).children
+          : undefined;
+      const children = Array.isArray(childrenValue) ? childrenValue : [];
+      return total + 1 + countAuditCriteriaTree(children);
+    },
+    0
+  );
+}
+
 export interface AuditLibraryTabProps {
   packs: AuditPackSummary[];
   loading: boolean;
@@ -428,7 +442,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         {
           id: 'criteriaCount',
           label: isPolish ? 'Liczba kryteriów' : 'Criteria count',
-          value: String(detail.criteria.length || detail.criteriaCount),
+          value: String(Math.max(countAuditCriteriaTree(detail.criteria), detail.criteriaCount)),
           mono: true,
         },
       ]

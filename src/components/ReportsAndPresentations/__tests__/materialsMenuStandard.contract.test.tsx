@@ -90,7 +90,25 @@ vi.mock('../useRapData', () => ({
 
 // Treść zakładek nie jest przedmiotem tego kontraktu — liczy się pasek.
 vi.mock('../OutputsAggregateTabContent', () => ({
-  OutputsAggregateTabContent: () => <div data-testid="tab-content-aggregate" />,
+  OutputsAggregateTabContent: ({
+    rows,
+    activeFilters,
+  }: {
+    rows: Array<{ title: string; statusKey: string }>;
+    activeFilters: Array<{ column: string; value: unknown }>;
+  }) => {
+    const status = activeFilters.find((filter) => filter.column === 'status')?.value;
+    const visibleRows = status
+      ? rows.filter((row) => matchesMaterialsStatusFilter(row.statusKey, status))
+      : rows;
+    return (
+      <div data-testid="tab-content-aggregate">
+        {visibleRows.map((row) => (
+          <span key={row.title}>{row.title}</span>
+        ))}
+      </div>
+    );
+  },
 }));
 vi.mock('../PresentationsTabContent', () => ({
   PresentationsTabContent: () => <div data-testid="tab-content-presentations" />,
@@ -126,6 +144,7 @@ vi.mock('@/store/useConversationStore', () => ({
 }));
 
 import { ReportsAndPresentationsHub } from '../ReportsAndPresentationsHub';
+import { matchesMaterialsStatusFilter } from '../statusCounts';
 
 const outputRow = (
   id: string,
@@ -260,7 +279,7 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
   });
 
   it.each(TABS.slice(1, 4))(
-    'zakładka $nazwa: Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy)',
+    'zakładka $nazwa: Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem',
     async ({ url }) => {
       renderHubAt(url);
       await screen.findByTestId('reports-presentations-hub');
@@ -268,10 +287,45 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
       const chipy = menu3Chips();
       expect(chipy.length).toBeGreaterThan(0);
       expect(chipy.length).toBeLessThanOrEqual(3);
-      expect(screen.getByTestId('materials-menu3-chip-all')).toBeInTheDocument();
+      expect(screen.queryByTestId('materials-menu3-chip-all')).toBeNull();
+      expect(screen.getByTestId('materials-menu3-total')).toBeInTheDocument();
       expect(screen.getByTestId('materials-menu3-chip-draft')).toBeInTheDocument();
     }
   );
+
+  it('43 wiersze mają dokładnie 3 pigułki 8 + 34 + 1 oraz osobny total All 43', async () => {
+    rapData.outputs = [
+      ...Array.from({ length: 8 }, (_, index) =>
+        outputRow(`draft-${index}`, 'document', 'draft', 'private')
+      ),
+      ...Array.from({ length: 34 }, (_, index) =>
+        outputRow(`ready-${index}`, 'document', 'ready', 'organization')
+      ),
+      outputRow('generated-1', 'document', 'generated', 'organization'),
+    ];
+    renderHubAt('/materials?tab=documents');
+    await screen.findByTestId('reports-presentations-hub');
+
+    const chipy = menu3Chips();
+    expect(chipy).toHaveLength(3);
+    expect(screen.getByTestId('materials-menu3-total')).toHaveTextContent('All43');
+    expect(screen.getByTestId('materials-menu3-chip-draft')).toHaveTextContent('8');
+    expect(screen.getByTestId('materials-menu3-chip-ready')).toHaveTextContent('34');
+    expect(screen.getByTestId('materials-menu3-chip-other')).toHaveTextContent('1');
+    expect(8 + 34 + 1).toBe(43);
+
+    const other = screen.getByTestId('materials-menu3-chip-other');
+    expect(other.tagName).toBe('BUTTON');
+    fireEvent.click(other);
+    expect(screen.getByText('Materiał generated-1')).toBeInTheDocument();
+    expect(screen.queryByText('Materiał draft-0')).toBeNull();
+    expect(screen.queryByText('Materiał ready-0')).toBeNull();
+
+    fireEvent.click(other);
+    expect(screen.getByText('Materiał generated-1')).toBeInTheDocument();
+    expect(screen.getByText('Materiał draft-0')).toBeInTheDocument();
+    expect(screen.getByText('Materiał ready-0')).toBeInTheDocument();
+  });
 
   it('Biblioteka wzorców: Menu 3 = formaty + źródła, Menu 2 bez dropdownu Widoczność', async () => {
     renderHubAt('/materials?tab=templates');

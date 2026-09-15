@@ -121,7 +121,20 @@ describe('TaskDetailView Risk & Alternatives save regression', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     mocks.get.mockImplementation(async (url: string) => {
       if (url.includes('/risk-alternatives')) {
-        return { data: { risks: [], alternatives: [] } };
+        return {
+          data: {
+            risks: [
+              {
+                id: 'risk-existing',
+                title: 'Existing risk',
+                probability: 'medium',
+                impact: 'medium',
+                mitigation: '',
+              },
+            ],
+            alternatives: [],
+          },
+        };
       }
       if (url.includes('/object-attachments/')) return { data: { data: [] } };
       if (url === '/users') return { data: [] };

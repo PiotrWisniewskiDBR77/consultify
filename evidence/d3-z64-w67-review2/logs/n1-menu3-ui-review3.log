@@ -1,0 +1,43 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64
+
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 40ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 14ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 12ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Biblioteka wzorców': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > dropdown Status niesie pozycję „Robocze" (dawny przycisk „Pokaż robocze") 95ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem 11ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': Menu 3 ma najwyżej 3 kategorie statusu, a total jest osobnym podsumowaniem 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > 43 wiersze mają dokładnie 3 pigułki 8 + 34 + 1 oraz osobny total All 43 22ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: Menu 3 = formaty + źródła, Menu 2 bez dropdownu Widoczność 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: pstryczek Galeria|Tabela stoi w Menu 2, nie w treści 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: CTA „Nowy wzorzec" jest ZAMROŻONY (disabled + powód) 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': CTA NIE jest zamrożony 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': CTA NIE jest zamrożony 11ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': CTA NIE jest zamrożony 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': CTA NIE jest zamrożony 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Arkusze: segment „Arkusze | Źródła danych" nie jest renderowany (Fala 2 · 3.17) 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx (22 tests) 349ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  18:58:33
+   Duration  1.65s (transform 638ms, setup 91ms, import 901ms, tests 349ms, environment 224ms)
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  18:58:33
+   Duration  1.65s (transform 638ms, setup 91ms, import 901ms, tests 349ms, environment 224ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/a-d3-z64-w64/junit.xml

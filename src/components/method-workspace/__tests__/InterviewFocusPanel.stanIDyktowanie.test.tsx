@@ -153,7 +153,7 @@ describe('(C) „Podyktuj" — rozpoznany tekst dopisuje się do pola odpowiedzi
     expect(toggle.getAttribute('data-stt-provider')).toBe('web');
 
     fireEvent.click(toggle);
-    expect(screen.getByTestId('voice-channel-toggle')).toHaveTextContent('Słucham…');
+    expect(screen.getByTestId('voice-channel-toggle')).toHaveTextContent('Listening…');
     expect(lastRecognition).toBeTruthy();
     expect(lastRecognition!.lang).toBe('pl-PL');
 

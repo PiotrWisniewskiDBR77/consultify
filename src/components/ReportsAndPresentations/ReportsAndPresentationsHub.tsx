@@ -63,7 +63,13 @@ import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
-import { countRowsByStatus, type MaterialsStatusCountScope } from './statusCounts';
+import {
+  countRowsByStatus,
+  countUnrepresentedStatuses,
+  MATERIALS_MENU3_NAMED_STATUSES,
+  MATERIALS_OTHER_STATUSES_FILTER,
+  type MaterialsStatusCountScope,
+} from './statusCounts';
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
 import {
   TEMPLATE_SCOPE_ORDER,
@@ -707,6 +713,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     () => countRowsByStatus(tabRows, statusCountScope),
     [tabRows, statusCountScope]
   );
+  const otherStatusCount = countUnrepresentedStatuses(
+    tabStatusCounts,
+    MATERIALS_MENU3_NAMED_STATUSES
+  );
 
   /**
    * Pełna lista statusów zakładki — JEDNO źródło dla dropdownu Status (Menu 2)
@@ -829,6 +839,15 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           count: tabStatusCounts[String(o.value).toLowerCase()] || 0,
         }))
         .filter((o) => o.count > 0 || o.id === statusDropdownValue),
+      ...(otherStatusCount > 0 || statusDropdownValue === MATERIALS_OTHER_STATUSES_FILTER
+        ? [
+            {
+              id: MATERIALS_OTHER_STATUSES_FILTER,
+              label: t('rap.filters.status.other', 'Other statuses'),
+              count: otherStatusCount,
+            },
+          ]
+        : []),
     ];
 
     const visibilityOptions = [
@@ -1020,6 +1039,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     tabRows,
     tabStatusCounts,
     tabStatusOptions,
+    otherStatusCount,
     templatesGalleryEnabled,
     templatesInnerView,
     templatesView,
@@ -1206,15 +1226,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
      * Dokumenty 5 chipów, Prezentacje 7, Arkusze martwy chip „Tabela 26"
      * (nieklikalny licznik, który niczego nie filtrował).
      */
-    const MENU_3_STATUSES = ['draft', 'ready'];
+    const MENU_3_STATUSES = MATERIALS_MENU3_NAMED_STATUSES;
     const statusActive = (value: string) =>
       activeFilters.some((f) => f.column === 'status' && String(f.value).toLowerCase() === value);
+    const otherStatusesActive = statusActive(MATERIALS_OTHER_STATUSES_FILTER);
 
     return (
       <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
-        {allChip(!activeFilters.some((f) => f.column === 'status'), tabRows.length, () =>
-          setSinglePreset('status', null)
-        )}
+        <div
+          className="flex h-8 items-baseline gap-1 border-r border-c-border-subtle pr-3 text-xs text-c-text-secondary"
+          data-testid="materials-menu3-total"
+        >
+          <span>{t('common.all', 'All')}</span>
+          <strong className="tabular-nums text-c-text">{tabRows.length}</strong>
+        </div>
         {MENU_3_STATUSES.map((value) => {
           const option = tabStatusOptions.find((o) => o.value === value);
           if (!option) return null;
@@ -1238,6 +1263,29 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             </button>
           );
         })}
+        {otherStatusCount > 0 ? (
+          <button
+            type="button"
+            onClick={() =>
+              setSinglePreset(
+                'status',
+                otherStatusesActive ? null : MATERIALS_OTHER_STATUSES_FILTER,
+                t('rap.filters.status.other', 'Other statuses'),
+                'bg-slate-500'
+              )
+            }
+            className={otherStatusesActive ? chipActive : chipInactive}
+            aria-pressed={otherStatusesActive}
+            title={t('rap.filters.status.other', 'Other statuses')}
+            data-testid="materials-menu3-chip-other"
+          >
+            <span className="h-2 w-2 rounded-full bg-slate-500" />
+            <span>{t('rap.filters.status.other', 'Other statuses')}</span>
+            <span className={otherStatusesActive ? badgeActive : badgeInactive}>
+              {otherStatusCount}
+            </span>
+          </button>
+        ) : null}
       </div>
     );
   }, [
@@ -1249,6 +1297,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     tabRows,
     tabStatusCounts,
     tabStatusOptions,
+    otherStatusCount,
     templatesAfterSearch,
     templatesView,
   ]);
