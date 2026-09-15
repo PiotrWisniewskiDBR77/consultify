@@ -203,7 +203,7 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
     expect(title).toBeGreaterThanOrEqual(2 * numeric);
   });
 
-  it('kolumna liczbowa i chip nie dostają podłogi tekstu (140 px)', () => {
+  it('kolumny liczbowe pozostają wąskie, a statusy poniżej kolumny głównej', () => {
     const { container } = renderBank();
 
     // Bez `dataType` każda z nich siadała na 140 px — czyli tyle samo, ile
@@ -224,6 +224,11 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
     expect(headerWidth(container, 'lifecycleStatus')).toBe(
       COLUMN_MIN_WIDTH_BY_DATA_TYPE.status
     );
+  });
+
+  it('uses a short unit-bearing variance heading instead of the clipped VARIAN… label', () => {
+    const { getByText } = renderBank();
+    expect(getByText('Δ days')).toBeInTheDocument();
   });
 
   it('liczby i daty są wyrównane do prawej (kanon §3.3)', () => {

@@ -2696,7 +2696,14 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
+        <Route
+          path="/assessment-reports/:reportId"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.assessments', 'Assessments')] }>
+              <LegacyAssessmentReportRedirect />
+            </MainLayout>
+          }
+        />
         {/* Report Builder — deliverable reports */}
         <Route
           path={ROUTES.REPORTS.BUILDER}
