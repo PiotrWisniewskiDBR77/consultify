@@ -134,10 +134,20 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
         tone: 'neutral',
       });
     } else if ((selected.critical ?? 0) > 0) {
-      pills.push({ label: `${selected.critical} critical`, tone: 'danger' });
+      pills.push({
+        label: t('execution.managementTable.criticalCount', '{{count}} critical', {
+          count: selected.critical ?? 0,
+        }),
+        tone: 'danger',
+      });
     }
     if (selected.status === 'available' && (selected.warning ?? 0) > 0) {
-      pills.push({ label: `${selected.warning} warning`, tone: 'warning' });
+      pills.push({
+        label: t('execution.managementTable.warningCount', '{{count}} warning', {
+          count: selected.warning ?? 0,
+        }),
+        tone: 'warning',
+      });
     }
     if (selected.status === 'available' && selected.critical === 0 && selected.warning === 0) {
       pills.push({ label: isPolish ? 'Zdrowe' : 'Healthy', tone: 'success' });

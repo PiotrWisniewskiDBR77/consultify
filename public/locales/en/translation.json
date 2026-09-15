@@ -4505,6 +4505,18 @@
       "whyOnRadar": "Why this is on your radar"
     },
     "manager": "Manager",
+    "approvals": {
+      "overdue": "Overdue",
+      "emptyTitle": "No approvals found",
+      "emptyDescription": "No approvals are currently assigned to you.",
+      "emptyFilteredDescription": "No approvals with status {{status}} are assigned to you.",
+      "status": {
+        "pending": "pending",
+        "acked": "acknowledged",
+        "done": "completed",
+        "expired": "expired"
+      }
+    },
     "inbox": {
       "urgency": {
         "critical": "Critical",
@@ -17460,6 +17472,8 @@
       "total": "Items",
       "critical": "Critical",
       "warning": "Warning",
+      "criticalCount": "{{count}} critical",
+      "warningCount": "{{count}} warning",
       "openLane": "Open lane",
       "emptyTitle": "No management lanes"
     },
@@ -17568,6 +17582,11 @@
           "handover": "Handover",
           "signOff": "Sign-off",
           "closure": "Closure"
+        },
+        "derived": {
+          "handover": "Handover: transfer {{name}} deliverables to operations",
+          "signOff": "Sign-off: obtain sponsor acceptance for {{name}}",
+          "closure": "Closure: capture lessons learned & archive {{name}}"
         }
       },
       "addClosureItem": "Add Item",
@@ -17583,6 +17602,8 @@
         "heading": "Plan baseline (rebaseline)",
         "saving": "Saving…",
         "saveCta": "Save baseline",
+        "savedLabel": "Baseline {{timestamp}}",
+        "fallbackLabel": "Baseline",
         "needsProject": "Saving a baseline requires a selected project."
       },
       "benefits": {
@@ -17661,6 +17682,19 @@
         "biweekly": "Bi-weekly",
         "onDemand": "On demand",
         "sponsor": "Sponsor"
+      },
+      "catalog": {
+        "weeklyExecutionPack": "Weekly Execution Pack",
+        "monthlyPmoReview": "Monthly PMO Review",
+        "programHealthSummary": "Program Health Summary",
+        "blockersRecoveryReport": "Blockers & Recovery Report",
+        "milestoneSlippageReport": "Milestone Slippage Report",
+        "capacityUtilizationReport": "Capacity Utilization Report",
+        "budgetVarianceReport": "Budget Variance Report",
+        "decisionBacklogApprovalAging": "Decision Backlog & Approval Aging",
+        "crossInitiativeDependencyReport": "Cross-Initiative Dependency Report",
+        "deliveryConfidenceReport": "Delivery Confidence Report",
+        "sponsorReadyOnePager": "Sponsor-Ready One-Pager"
       },
       "title": "Execution reports",
       "subtitle": "Generate a simple weekly pack and deep-dive reports without adding process overhead.",
@@ -19222,6 +19256,17 @@
       },
       "noData": "No data",
       "noInsights": "No insights generated.",
+      "readout": {
+        "coverage": "{{title}} covers {{total}} initiative(s) with {{blocked}} blocker(s), {{overdue}} overdue decision(s), and {{tasks}} overdue task(s) in the live execution set.",
+        "progressBaseline": "Progress baseline is {{baseline}}, so leadership should treat the current readout as {{baseline}} until missing progress fields are restored.",
+        "baseline": {
+          "incomplete": "incomplete",
+          "directional": "directional"
+        },
+        "blockedWork": "Blocked work is the main drag on delivery confidence; {{blocked}} initiative(s) are already stalled ({{names}}) and need owner-level recovery decisions.",
+        "forecastQuality": "Forecast quality is degraded because {{initiatives}} initiative(s) or {{tasks}} task(s) lack dates, so some timing conclusions should be read as best-effort only.",
+        "budgetPosture": "Budget posture is approximated from {{overspend}} overspend signal(s), blocked work, and progress drag, so finance should validate any severe exception before external communication."
+      },
       "dataQualityPosture": "Data quality posture",
       "freshness": "Freshness",
       "confidence": "Confidence",
@@ -42692,6 +42737,7 @@
       "gotIt": "Got it"
     },
     "enterpriseWizard": {
+      "progress": "Step {{current}} of {{total}}",
       "step1": {
         "intro": "This is the same application path launched from the LP and from the product.",
         "termsTitle": "Program terms",
@@ -55185,6 +55231,18 @@
     "writeFailed": "The report change was not saved.",
     "doc": {
       "thisWeekAtAGlance": "This week at a glance",
+      "decision": "Decision",
+      "initiative": "Initiative",
+      "owner": "Owner",
+      "age": "Age",
+      "daysOverdue": "{{count}}d overdue",
+      "dueNow": "Due now",
+      "gap": "Gap",
+      "count": "Count",
+      "examples": "Examples",
+      "initiativesWithoutDates": "Initiatives without dates",
+      "unassignedOpenTasks": "Unassigned open tasks",
+      "tasksWithoutDueDate": "Tasks without due date",
       "initiativesRequiringImmediateOperationalReaction": "Initiatives requiring immediate operational reaction.",
       "next7DaysFocus": "Next 7 days focus",
       "tasksAndMilestonesThatCanSilentlySlipThis": "Tasks and milestones that can silently slip this week.",

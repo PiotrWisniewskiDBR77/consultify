@@ -1,0 +1,44 @@
+{
+  "package": "K6 v3 W79 execution labels",
+  "status": "READY FOR CTO REVIEW",
+  "frozenAt": "2026-09-15T13:16:40-05:00",
+  "branch": "codex/a-k6-execution-labels-v3-w79-20260915",
+  "baseK1Stack": "ff61eff4427c2b95d494069bd4ec212d3451e13d",
+  "implementationHead": "4369a4aff95f1bc7d42a406f99e12a7d25f247ae",
+  "declaredCrossModuleScope": [
+    "src/components/Onboarding/EnterpriseOnboardingWizard.tsx",
+    "src/views/MyApprovalsView.tsx"
+  ],
+  "verification": {
+    "languageTests": {
+      "k6Behavior": "4/4 PASS",
+      "detectorPrecision": "255/255 PASS",
+      "jSmall": "14/14 PASS",
+      "executionSource": "4/4 PASS",
+      "myWorkSource": "4/4 PASS",
+      "settingsSource": "5/5 PASS"
+    },
+    "executionLanguageCounts": {
+      "base": { "K4en": 138, "K4obj": 74, "total": 637 },
+      "candidate": { "K4en": 137, "K4obj": 38, "total": 600 },
+      "candidatePolishUi": { "K1def": 0, "K4pl": 0, "K7": 0 }
+    },
+    "directImporterFiles": {
+      "passed": 25,
+      "baselineRed": 5,
+      "baselineAndCandidateFailedTests": 12,
+      "regressionDelta": 0
+    },
+    "esbuild": "12/12 PASS",
+    "typescript": {
+      "environment": "actual owner node_modules symlink; TypeScript 5.8.3",
+      "base": { "frontend": "NOT_PROVEN: rc134 before diagnostics", "server": 22 },
+      "candidate": { "frontend": "NOT_PROVEN: rc134 before diagnostics", "server": 22 },
+      "serverDelta": 0,
+      "frontendDelta": "NOT_PROVEN"
+    },
+    "currentStackScreenshots": "NOT_PROVEN",
+    "stagingWrites": 0
+  },
+  "review": "CTO owned under KANAL.md W78/W79"
+}
