@@ -38772,7 +38772,8 @@
         "createFailed": "Failed to add follow-up",
         "updateFailed": "Failed to update follow-up",
         "deleteFailed": "Failed to delete follow-up"
-      }
+      },
+      "fromMinutes": "From the minutes — not yet recorded"
     },
     "delete": {
       "title": "Delete meeting",
@@ -38905,6 +38906,9 @@
       "minutes": "Minutes",
       "sectionDecisions": "Decisions & actions",
       "actionItems": "Actions",
+      "noteStatusProposed": "Awaiting approval",
+      "noteStatusApproved": "Approved",
+      "noteStatusRejected": "Rejected",
       "propStatus": "Status",
       "propLocation": "Location",
       "propNotes": "Notes (Minutes)",

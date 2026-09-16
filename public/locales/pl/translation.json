@@ -39406,7 +39406,8 @@
         "createFailed": "Nie udało się dodać follow-upu",
         "updateFailed": "Nie udało się zaktualizować follow-upu",
         "deleteFailed": "Nie udało się usunąć follow-upu"
-      }
+      },
+      "fromMinutes": "Z protokołu — jeszcze niezapisane"
     },
     "delete": {
       "title": "Usuń spotkanie",
@@ -39539,6 +39540,9 @@
       "minutes": "Protokół",
       "sectionDecisions": "Decyzje i działania",
       "actionItems": "Działania",
+      "noteStatusProposed": "Oczekuje na zatwierdzenie",
+      "noteStatusApproved": "Zatwierdzona",
+      "noteStatusRejected": "Odrzucona",
       "propStatus": "Stan",
       "propLocation": "Lokalizacja",
       "propNotes": "Notatki (Protokół)",

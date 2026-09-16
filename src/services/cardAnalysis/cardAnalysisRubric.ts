@@ -127,6 +127,11 @@ export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriteri
   'finance-analysis': STRUCTURAL_COMPLETENESS,
   'execution-report': STRUCTURAL_COMPLETENESS,
   'execution-work-doc': STRUCTURAL_COMPLETENESS,
+  // [ODMROZENIE WSPOLNE DEC-573] `meeting` weszła do `KartaNKey`
+  // (registry.ts, MEETING-1b) — bez własnych, bespoke kryteriów (kanon jej
+  // nie opisuje, patrz `CARD_DESCRIPTORS.meeting` niżej), więc dostaje ten
+  // sam ogólny próg strukturalny co pozostałe dokumenty pełnostronicowe.
+  meeting: STRUCTURAL_COMPLETENESS,
   action: [
     {
       id: 'action-problem', pl: 'konkretny problem', en: 'specific problem',
@@ -1136,6 +1141,9 @@ const CARD_DESCRIPTORS: Record<CardAnalysisArtifactType, readonly KanonicznaKart
   'finance-analysis': [],
   'execution-report': [],
   'execution-work-doc': [],
+  // [ODMROZENIE WSPOLNE DEC-573] Patrz komentarz przy `meeting` w
+  // `ARTIFACT_CRITERIA` wyżej — kanon nie opisuje jeszcze tej karty.
+  meeting: [],
   action: [],
   idea: [],
   interview_template: [],
