@@ -21,7 +21,6 @@ import { decodeHtmlEntities } from './htmlEntities.js';
  * HTML entities map for XSS prevention
  */
 const HTML_ENTITIES: Record<string, string> = {
-  '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
 };
@@ -36,15 +35,16 @@ const HTML_ENTITIES: Record<string, string> = {
  * already contains escaped entities — e.g. because a prior save escaped it
  * and the client echoed the escaped string back verbatim on the next
  * save/PATCH without decoding it first — escaping again used to compound
- * without bound (`&` -> `&amp;` -> `&amp;amp;` -> ... on every edit cycle).
+ * markup entities without bound (`&lt;` -> `&amp;lt;` -> ... on every edit cycle).
  * We decode any pre-existing entities back to plain text FIRST, then escape
  * exactly once. This makes sanitization idempotent (repeated saves converge
  * to a single escape level, never grow) for ALL text fields across ALL
  * modules, while preserving the exact same escaped-storage/security
- * guarantee for HTML markup delimiters. Quotes, apostrophes and backticks are
- * data in a JSON request, not markup delimiters, and must survive a save/read
- * round-trip byte-for-byte. Output encoding remains the responsibility of the
- * renderer for its concrete HTML/attribute/JavaScript context.
+ * guarantee for HTML markup delimiters. Ampersands, quotes, apostrophes and
+ * backticks are data in a JSON request, not markup delimiters, and must survive
+ * a save/read round-trip byte-for-byte. Output encoding remains the
+ * responsibility of the renderer for its concrete HTML/attribute/JavaScript
+ * context.
  */
 export function sanitizeString(input: unknown): string {
   if (input === null || input === undefined) return '';
@@ -55,7 +55,7 @@ export function sanitizeString(input: unknown): string {
   // - Escaping `/` or `=` breaks legitimate data (URLs, tokens, base64).
   // - Keep escaping to the minimal set needed to neutralize HTML contexts.
   const decoded = decodeHtmlEntities(input);
-  return decoded.replace(/[&<>]/g, (char) => HTML_ENTITIES[char] || char);
+  return decoded.replace(/[<>]/g, (char) => HTML_ENTITIES[char] || char);
 }
 
 /**
