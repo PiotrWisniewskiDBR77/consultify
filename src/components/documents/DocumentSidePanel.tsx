@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CheckSquare,
   ChevronDown,
   ChevronRight,
   Download,
@@ -24,6 +25,7 @@ import { useAIContext } from '../../contexts/AIContext';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, Document } from '../../types';
+import { type IdempotencyState, resolveIdempotencyKey } from '../../utils/createIdempotencyKey';
 
 interface DocumentSidePanelProps {
   projectId?: string;
@@ -56,6 +58,10 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
    */
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [acknowledgingDocId, setAcknowledgingDocId] = useState<string | null>(null);
+  const [creatingTaskDocId, setCreatingTaskDocId] = useState<string | null>(null);
+  const [createdTaskByDocId, setCreatedTaskByDocId] = useState<Record<string, string>>({});
+  const [taskErrorByDocId, setTaskErrorByDocId] = useState<Record<string, string>>({});
+  const taskIdempotencyByDocId = React.useRef<Record<string, IdempotencyState | null>>({});
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['recent']));
 
@@ -177,6 +183,48 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Download error:', error);
+    }
+  };
+
+  const handleCreateTask = async (doc: Document) => {
+    if (creatingTaskDocId) return;
+    const title = t('documents.reviewTaskTitle', 'Review document: {{name}}', {
+      name: doc.originalName || doc.filename,
+    });
+    const payload = {
+      title,
+      description: t(
+        'documents.reviewTaskDescription',
+        'Review the source document and record the required follow-up.'
+      ),
+      tags: ['from-document'],
+      sourceType: 'document',
+      sourceId: doc.id,
+    };
+    const idempotency = resolveIdempotencyKey(
+      taskIdempotencyByDocId.current[doc.id] || null,
+      payload
+    );
+    taskIdempotencyByDocId.current[doc.id] = idempotency;
+    setCreatingTaskDocId(doc.id);
+    setTaskErrorByDocId((current) => ({ ...current, [doc.id]: '' }));
+    try {
+      const created = await Api.createPersonalTask({ ...payload, idempotencyKey: idempotency.key });
+      const taskId = String(created?.id || '').trim();
+      if (!taskId) throw new Error('Task response did not include an id');
+      setCreatedTaskByDocId((current) => ({ ...current, [doc.id]: taskId }));
+      taskIdempotencyByDocId.current[doc.id] = null;
+    } catch (error) {
+      console.error('Document task creation error:', error);
+      setTaskErrorByDocId((current) => ({
+        ...current,
+        [doc.id]:
+          error instanceof Error && error.message
+            ? error.message
+            : t('documents.taskCreateFailed', 'The task could not be created.'),
+      }));
+    } finally {
+      setCreatingTaskDocId(null);
     }
   };
 
@@ -573,6 +621,22 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                   {/* Actions */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      type="button"
+                      onClick={() => void handleCreateTask(doc)}
+                      disabled={creatingTaskDocId !== null || Boolean(createdTaskByDocId[doc.id])}
+                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors disabled:opacity-60"
+                      title={t('documents.createTask', 'Create task')}
+                    >
+                      {creatingTaskDocId === doc.id ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <CheckSquare size={12} />
+                      )}
+                      {createdTaskByDocId[doc.id]
+                        ? t('documents.taskCreated', 'Task created')
+                        : t('documents.createTask', 'Create task')}
+                    </button>
+                    <button
                       onClick={() => handleDownload(doc)}
                       className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                       title={t('documents.download')}
@@ -598,6 +662,17 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                       <Trash2 size={12} />
                     </button>
                   </div>
+                  {taskErrorByDocId[doc.id] ? (
+                    <p role="alert" className="mt-1 text-[10px] text-c-danger">
+                      {t(
+                        'documents.taskCreateFailedWithReason',
+                        'Task creation failed: {{reason}}',
+                        {
+                          reason: taskErrorByDocId[doc.id],
+                        }
+                      )}
+                    </p>
+                  ) : null}
                 </div>
               ))}
             </div>

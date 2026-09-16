@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -109,6 +109,14 @@ const OWNED_TASK = {
   versionToken: 'v1',
 };
 
+const DOCUMENT_TASK = {
+  ...OWNED_TASK,
+  id: 'task-document-1',
+  title: 'Review source document',
+  sourceType: 'document',
+  sourceId: 'document-42',
+};
+
 const FOREIGN_TASK = {
   id: 'task-foreign-1',
   title: 'Azure DevOps project configuration',
@@ -147,6 +155,25 @@ describe('TaskDetailView ownerScoped switch (E1c/F1)', () => {
     );
     expect(mocks.getPersonalTask).toHaveBeenCalledWith('task-owned-1');
     expect(mocks.getTask).not.toHaveBeenCalled();
+  });
+
+  it('shows a document source in the task preview and opens its durable source id', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    mocks.getPersonalTask.mockResolvedValue(DOCUMENT_TASK);
+
+    render(<TaskDetailView taskId="task-document-1" onClose={vi.fn()} />);
+
+    await waitFor(() => expect(screen.getByText('Document')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Relations' }));
+    const sourceLink = screen.getByRole('button', { name: 'Document' });
+    fireEvent.click(sourceLink);
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'mywork-open-item',
+        detail: expect.objectContaining({ type: 'document', id: 'document-42' }),
+      })
+    );
   });
 
   it('RED before the fix / GREEN after: ownerScoped=false opens a task NOT owned by the viewer via canonical Api.getTask, instead of 404-ing on Api.getPersonalTask', async () => {

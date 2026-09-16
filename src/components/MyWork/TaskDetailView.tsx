@@ -5385,6 +5385,7 @@ Return ONLY the final comment text.`;
       if (sourceType === 'decision') return t('myWork.taskDetail.sourceDecision', 'Decision');
       if (sourceType === 'action_card')
         return t('myWork.taskDetail.sourceActionCard', 'Action card');
+      if (sourceType === 'document') return t('myWork.taskDetail.sourceDocument', 'Document');
       return sourceType;
     })();
     const SourceIcon =

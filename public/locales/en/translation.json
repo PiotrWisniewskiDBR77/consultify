@@ -6855,6 +6855,7 @@
       "sourceNote": "Note",
       "sourceDecision": "Decision",
       "sourceActionCard": "Action card",
+      "sourceDocument": "Document",
       "sourcesAndAssumptions": "Sources and assumptions",
       "noSourceContext": "No source context",
       "actionsHiddenInReadMode": "Actions are hidden in preview mode",
@@ -39583,7 +39584,13 @@
     },
     "uploadNeedsProject": "This view has no project selected, so the file cannot be added to project documents. Upload it under “My documents”, or open the panel from a project.",
     "uploadFailed": "Upload of “{{name}}” failed. The file was not saved.",
-    "uploadFailedWithReason": "Upload of “{{name}}” failed: {{reason}}"
+    "uploadFailedWithReason": "Upload of “{{name}}” failed: {{reason}}",
+    "createTask": "Create task",
+    "taskCreated": "Task created",
+    "reviewTaskTitle": "Review document: {{name}}",
+    "reviewTaskDescription": "Review the source document and record the required follow-up.",
+    "taskCreateFailed": "The task could not be created.",
+    "taskCreateFailedWithReason": "Task creation failed: {{reason}}"
   },
   "intelligence": {
     "analyzing": "Analyzing…",
