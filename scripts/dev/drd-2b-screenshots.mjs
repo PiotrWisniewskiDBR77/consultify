@@ -11,7 +11,7 @@ try {
   for (const theme of ['light', 'dark']) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(
-      `http://127.0.0.1:4216/?screen=u19-drd-trzy-kolumny&lang=en&theme=${theme}`,
+      `http://127.0.0.1:4216/?screen=u19-drd-trzy-kolumny&lang=en&theme=${theme}&uwagi=0`,
       { waitUntil: 'networkidle' }
     );
     await page.getByTestId('drd-level-interview-v2').waitFor();

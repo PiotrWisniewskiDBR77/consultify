@@ -20,11 +20,13 @@
   "screenshots": [
     {
       "path": "evidence/drd-2b-w103/drd-2b-en-light-1440x900.png",
-      "sha256": "420074be62910012618bf12b4309dd848d86ae217c2b969d8e49006eebf8a21f"
+      "sha256": "dd560d1986ee7ef61bf53b83962249a5bc57d4428136284b317193136e15c01d",
+      "harnessChrome": false
     },
     {
       "path": "evidence/drd-2b-w103/drd-2b-en-dark-1440x900.png",
-      "sha256": "c302c3b6e000367bc41356eb117805251b9748e1437758936d443b86f0131c48"
+      "sha256": "c866fc710d8f29098f897f1ae360fd609e7c1311062ba31ec8b31bb88990fbab",
+      "harnessChrome": false
     }
   ],
   "review": {
