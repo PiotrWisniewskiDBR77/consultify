@@ -1,0 +1,38 @@
+{
+  "package": "DRD-2b W103",
+  "decision": "DEC-552",
+  "verdict": "READY FOR CTO REVIEW",
+  "base": "85541745e8226562b75ab318e1efe1f8178b5097",
+  "implementationCommit": "a076ad5181",
+  "branch": "codex/drd-2b-w103-20260916",
+  "featureFlag": {
+    "name": "VITE_DRD_INTERVIEW_V2",
+    "default": false,
+    "offParity": "preserved by omitting maxLevel from default navigator nodes"
+  },
+  "tests": {
+    "focused": "13/13 PASS, retry=0",
+    "runtimeImporters": "20/20 PASS",
+    "knownLocaleTest": "base 3 FAIL / 4 PASS; candidate 3 FAIL / 4 PASS; delta 0",
+    "frontendTsc": "0 -> 0",
+    "serverTsc": "0 -> 0"
+  },
+  "screenshots": [
+    {
+      "path": "evidence/drd-2b-w103/drd-2b-en-light-1440x900.png",
+      "sha256": "420074be62910012618bf12b4309dd848d86ae217c2b969d8e49006eebf8a21f"
+    },
+    {
+      "path": "evidence/drd-2b-w103/drd-2b-en-dark-1440x900.png",
+      "sha256": "c302c3b6e000367bc41356eb117805251b9748e1437758936d443b86f0131c48"
+    }
+  ],
+  "review": {
+    "firstVerdict": "HOLD 1xP1: OFF parity",
+    "resolution": "maxLevel is emitted only for V2; explicit OFF/ON test added",
+    "finalVerdict": "PASS"
+  },
+  "migration": false,
+  "stagingWrite": false,
+  "deploy": false
+}
