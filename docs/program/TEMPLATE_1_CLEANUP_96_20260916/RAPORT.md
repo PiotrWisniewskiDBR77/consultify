@@ -25,7 +25,7 @@ Po preflight:
 - ustawia dokładnie jeden aktywny default `RESULTS_KPI_REPORT`;
 - kończy readbackiem: 60 źródeł wygaszonych, 22 pozycje proven aktywne, 13 profili przebudowanych jako draft.
 
-`20262271` ogranicza kontrolę „duplicate active base card” do trzech kanonicznych par origin runtime/id. Ponowny przebieg po przypisaniu rodzin przez czystkę nie myli profili rodziny z kartą bazową.
+**Sprostowanie CTO 16.09 (DEC-575, wariant 2).** Pakiet pierwotnie zmieniał bajty `20262271`, żeby ograniczyć kontrolę „duplicate active base card” do trzech kanonicznych par origin runtime/id. `20262271` jest już zastosowana na stagingu i demo, więc zmiana bajtów po fakcie wywracała `runLedgerPreflight` (`HistoricalMutationError`) i blokowała całe wdrożenie. Bajty `20262271` zostały przywrócone do stanu z `70d366f158`; kontrola pozostaje w wersji po `template_family_ref`. Nowy plik migracji nie powstał, bo ryzyko fałszywego alarmu istnieje wyłącznie przy ponownym uruchomieniu `20262271` PO `20262272`, czego realny łańcuch migracji nigdy nie wykonuje (migracja jest zapisana jako `success` i nie jest odtwarzana).
 
 Rollback `rollback/20262272_template_library_cleanup_96.down.sql` usuwa wyłącznie rekordy utworzone przez migrację, odtwarza wszystkie before-image i usuwa indeks tylko wtedy, gdy nie istniał przed migracją.
 
@@ -35,7 +35,7 @@ Rollback `rollback/20262272_template_library_cleanup_96.down.sql` usuwa wyłącz
 - Fresh direct rerun `20262272`: kontrolowany no-op, RC=0; backup nie istnieje, artefakty/linki 0/0.
 - Lokalny import sześciu CSV staging, następnie `20262271 → 20262272`: RC=0; readback 60/22/13.
 - Drugi `20262272`: RC=0; hashe sześciu tabel po pierwszym i drugim apply identyczne (`staging-final-idempotency.diff` ma 0 B).
-- Ponowny `20262271` po czystce: RC=0, bez fałszywego „duplicate active base card”.
+- Ponowny `20262271` po czystce: dowód **NIEAKTUALNY** — dotyczył cofniętych bajtów (patrz sprostowanie CTO wyżej). Realny łańcuch nigdy nie uruchamia `20262271` po `20262272`.
 - #53: stara karta `is_draft=0`, `ready`, źródło aktywne; nowa karta `is_draft=1`, `draft`, lifecycle `draft`.
 - Początkowe drafty Northwind: **22/22 nadal `is_draft=1`, 0 podniesionych do aktywnych**.
 - Rollback: RC=0; hashe sześciu tabel przed apply i po rollbacku identyczne (`staging-final-rollback.diff` ma 0 B).

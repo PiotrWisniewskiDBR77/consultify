@@ -500,18 +500,11 @@ RAISE NOTICE 'TEMPLATE-1 manual drafts preserved: before %, after %',
   END IF;
 
   IF EXISTS (
-    SELECT l.organization_id, l.origin_runtime, l.origin_record_id
-      FROM v8_artifact_origin_links l
-      JOIN v8_output_artifacts a
-        ON a.artifact_id = l.artifact_id
-       AND a.organization_id = l.organization_id
-     WHERE (l.origin_runtime, l.origin_record_id) IN (
-       ('document_template','doc-template-system-en-client_final_report'),
-       ('presentation_template','dbr77-deck-board'),
-       ('sheet_template','2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1')
-     )
-       AND a.is_draft = 0
-     GROUP BY l.organization_id, l.origin_runtime, l.origin_record_id
+    SELECT organization_id, template_family_ref
+     FROM v8_output_artifacts
+     WHERE template_family_ref IN ('DOC-BASE','DECK-BASE','SHEET-BASE')
+       AND is_draft = 0
+     GROUP BY organization_id, template_family_ref
     HAVING count(*) > 1
   ) THEN
     RAISE EXCEPTION 'TEMPLATE-1 readback: duplicate active base card';
