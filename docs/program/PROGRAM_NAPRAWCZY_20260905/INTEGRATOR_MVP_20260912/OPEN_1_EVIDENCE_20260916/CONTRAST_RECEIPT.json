@@ -1,0 +1,109 @@
+{
+  "measuredAt": "2026-09-16T13:08:34.259Z",
+  "standard": "WCAG 2.x normal text >= 4.5:1",
+  "verdict": "PASS",
+  "minRatio": 4.76,
+  "semanticRule": "No measured control combines same semantic hue background and text.",
+  "measurements": [
+    {
+      "label": "Assessment status filter: Draft",
+      "theme": "light",
+      "text": "Draft0",
+      "foreground": "rgb(100, 116, 139)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 4.76,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200 bg-transparent text-c-text-muted hover:bg-state-hover hover:text-slate-900 dark:border-white/10 dark:hover:text-slate-200"
+    },
+    {
+      "label": "Assessment status filter: Approved",
+      "theme": "light",
+      "text": "Approved2",
+      "foreground": "rgb(100, 116, 139)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 4.76,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200 bg-transparent text-c-text-muted hover:bg-state-hover hover:text-slate-900 dark:border-white/10 dark:hover:text-slate-200"
+    },
+    {
+      "label": "Assessment CTA: Open session",
+      "theme": "light",
+      "text": "Open session",
+      "foreground": "rgb(51, 65, 85)",
+      "background": "rgb(254, 255, 255)",
+      "ratio": 10.31,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex w-full items-center justify-center gap-1.5 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]"
+    },
+    {
+      "label": "Execution Decision CTA: Open",
+      "theme": "light",
+      "text": "Open",
+      "foreground": "rgb(71, 85, 105)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 7.56,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed"
+    },
+    {
+      "label": "Execution Work CTA: Open",
+      "theme": "light",
+      "text": "Open",
+      "foreground": "rgb(71, 85, 105)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 7.56,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed"
+    },
+    {
+      "label": "Assessment status filter: Draft",
+      "theme": "dark",
+      "text": "Draft0",
+      "foreground": "rgb(138, 153, 176)",
+      "background": "rgb(15, 23, 42)",
+      "ratio": 6.18,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200 bg-transparent text-c-text-muted hover:bg-state-hover hover:text-slate-900 dark:border-white/10 dark:hover:text-slate-200"
+    },
+    {
+      "label": "Assessment status filter: Approved",
+      "theme": "dark",
+      "text": "Approved2",
+      "foreground": "rgb(138, 153, 176)",
+      "background": "rgb(15, 23, 42)",
+      "ratio": 6.18,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200 bg-transparent text-c-text-muted hover:bg-state-hover hover:text-slate-900 dark:border-white/10 dark:hover:text-slate-200"
+    },
+    {
+      "label": "Assessment CTA: Open session",
+      "theme": "dark",
+      "text": "Open session",
+      "foreground": "rgb(226, 232, 240)",
+      "background": "rgb(26, 35, 55)",
+      "ratio": 12.68,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex w-full items-center justify-center gap-1.5 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]"
+    },
+    {
+      "label": "Execution Decision CTA: Open",
+      "theme": "dark",
+      "text": "Open",
+      "foreground": "rgb(184, 196, 214)",
+      "background": "rgb(15, 23, 41)",
+      "ratio": 10.17,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed"
+    },
+    {
+      "label": "Execution Work CTA: Open",
+      "theme": "dark",
+      "text": "Open",
+      "foreground": "rgb(184, 196, 214)",
+      "background": "rgb(15, 23, 41)",
+      "ratio": 10.17,
+      "sameHueBackgroundAndText": false,
+      "className": "inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed"
+    }
+  ]
+}

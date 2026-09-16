@@ -252,6 +252,24 @@ const MOCK_METHOD_SESSIONS = [
         { status: 200, headers: { 'content-type': 'application/json' } }
       );
     }
+    if (method === 'GET' && /\/api\/method\/outputs(\?.*)?$/.test(url)) {
+      return new Response(JSON.stringify({ outputs: [], total: 0 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (method === 'GET' && /\/api\/assessments(\?.*)?$/.test(url)) {
+      return new Response(JSON.stringify({ assessments: MOCK_ASSESSMENTS }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (method === 'GET' && /\/api\/conclusions(\?.*)?$/.test(url)) {
+      return new Response(JSON.stringify({ conclusions: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
     return originalFetch(input, init);
   }) as typeof window.fetch;
 }

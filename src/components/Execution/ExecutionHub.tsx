@@ -111,6 +111,7 @@ import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV
 import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
 import { InitiativeLifecycleActions } from '../Initiatives/lifecycle/InitiativeLifecycleActions';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
+import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   FilterChip,
   HubWorkAreaLoadError,
@@ -5926,15 +5927,24 @@ Please return:
       // aktywna (ten sam wzorzec co `report:`/`execution-intelligence:`
       // wyżej).
       if (activeDocumentId.startsWith('work:')) {
-        const [, , ...workIdParts] = activeDocumentId.split(':');
+        const [, executionCaseId, ...workIdParts] = activeDocumentId.split(':');
+        if (executionCaseId) {
+          return (
+            <ExecutionWorkSurface
+              activePreset="all"
+              onCountsChange={menu3CountHandlers.work}
+              documentId={workIdParts.join(':')}
+              onRegisterFilterControl={setWorkFilterControl}
+              onRegisterPrimaryCta={setWorkPrimaryCta}
+              onRegisterMenu3Control={setWorkMenu3Control}
+            />
+          );
+        }
         return (
-          <ExecutionWorkSurface
-            activePreset="all"
-            onCountsChange={menu3CountHandlers.work}
-            documentId={workIdParts.join(':')}
-            onRegisterFilterControl={setWorkFilterControl}
-            onRegisterPrimaryCta={setWorkPrimaryCta}
-            onRegisterMenu3Control={setWorkMenu3Control}
+          <TaskDetailView
+            taskId={workIdParts.join(':')}
+            ownerScoped={false}
+            onClose={() => handleCloseDocument(activeDocumentId)}
           />
         );
       }

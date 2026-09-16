@@ -65,6 +65,29 @@ export interface LegacyAssessmentListRow {
   readonly progress?: number | null;
 }
 
+export type AssessmentSessionFramework = 'drd' | 'siri' | 'adma' | 'cmmi' | 'lean';
+
+export type LegacyAssessmentOutputListItem = MethodOutputListItem & {
+  /** Route segment consumed by the existing AssessmentSessionEditorView. */
+  readonly sessionFramework: AssessmentSessionFramework;
+};
+
+export function frameworkSesjiOceny(
+  row: Pick<LegacyAssessmentListRow, 'id' | 'type'>
+): AssessmentSessionFramework | null {
+  if (!row.id?.trim()) return null;
+  const framework = String(row.type ?? '')
+    .trim()
+    .toLowerCase();
+  return framework === 'drd' ||
+    framework === 'siri' ||
+    framework === 'adma' ||
+    framework === 'cmmi' ||
+    framework === 'lean'
+    ? framework
+    : null;
+}
+
 /** Pojedynczy obszar w `answers.drd.areas` (kształt zapisywany przez warsztat DRD). */
 export interface LegacyDrdArea {
   readonly achievedLevel?: number | null;
@@ -199,11 +222,14 @@ export function idOcenyZWierszaZastanego(rowId: string): string | null {
  * lista pokaże „—", zamiast udawać, że wynik został zamrożony. */
 export function projektujOceneZastanaNaWierszListy(
   row: LegacyAssessmentListRow
-): MethodOutputListItem {
+): LegacyAssessmentOutputListItem {
+  const sessionFramework = frameworkSesjiOceny(row);
+  if (!sessionFramework) throw new Error('Assessment session does not have a supported live route');
   return {
     id: idWierszaZastanego(row.id),
     organizationId: row.organizationId ?? null,
-    sessionId: null,
+    sessionId: row.id,
+    sessionFramework,
     module: 'assessment',
     methodPackId: DRD_METHOD_PACK_ID,
     methodPackVersion: null,
@@ -288,9 +314,10 @@ export function zastrzezeniaOcenyZastanej(): string[] {
   ];
 }
 
-export function projektujOceneZastanaNaOutput(
-  assessment: LegacyAssessmentDetail
-): { output: FullAssessmentOutput; notatkiObszarow: Record<string, string> } {
+export function projektujOceneZastanaNaOutput(assessment: LegacyAssessmentDetail): {
+  output: FullAssessmentOutput;
+  notatkiObszarow: Record<string, string>;
+} {
   const { current, target, notes } = odczytajPoziomyZOdpowiedzi(assessment.answers);
   const gap = policzLuki(current, target);
   const utworzono = assessment.created_at ?? assessment.updated_at ?? '';

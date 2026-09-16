@@ -98,6 +98,11 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/organizations.api', () => ({
   OrganizationApi: { getOrganizationMembers: getOrganizationMembers },
 }));
+vi.mock('@/components/MyWork/Decision/DecisionWorkspace', () => ({
+  DecisionWorkspace: ({ decisionId }: { decisionId: string }) => (
+    <div data-testid="decision-workspace">{decisionId}</div>
+  ),
+}));
 
 const { listInterventions, listManagementSignals, listCapacityOptions } = vi.hoisted(() => ({
   listInterventions: vi.fn(),
@@ -145,6 +150,9 @@ const DECYZJE = [
   // Rozstrzygnięte — nie należą do rejestru „do rozstrzygnięcia".
   { id: 'done-1', title: 'Decyzja zatwierdzona', status: 'APPROVED', isOverdue: false },
   { id: 'done-2', title: 'Decyzja odrzucona', status: 'REJECTED', isOverdue: false },
+  { id: 'tool-review', title: 'Technical review', status: 'PENDING', decisionType: 'TOOL_REVIEW' },
+  { id: 'tool-approve', title: 'Technical approval', status: 'PENDING', decisionType: 'TOOL_APPROVE' },
+  { id: 'tool-generate', title: 'Technical generation', status: 'PENDING', decisionType: 'TOOL_GENERATE' },
 ];
 
 /** 16 pozycji RAID, żadna z terminem (dokładnie jak na pomiarze). */
@@ -241,6 +249,9 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     expect(wierszeZ('Decyzja')).toHaveLength(27);
     expect(screen.getByText('Decyzja zatwierdzona')).toBeInTheDocument();
     expect(screen.getByText('Decyzja odrzucona')).toBeInTheDocument();
+    expect(screen.queryByText('Technical review')).toBeNull();
+    expect(screen.queryByText('Technical approval')).toBeNull();
+    expect(screen.queryByText('Technical generation')).toBeNull();
   });
 
   it('decyzja ARCHIWALNA (CANCELLED) nie wchodzi do rejestru', async () => {
@@ -399,5 +410,16 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
     screen.getByText('Decyzja po terminie 0').click();
     await waitFor(() => expect(screen.getAllByText('Dni po terminie').length).toBeGreaterThan(1));
+  });
+
+  it('OPEN-1 otwiera kartę po decision.id, bez szukania inicjatywy', async () => {
+    zamontuj('decyzje');
+    await screen.findByText('Decyzja po terminie 0');
+    const row = wierszeZ('Decyzja po terminie 0')[0];
+    fireEvent.click(row.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement);
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: /Otwórz decyzję|Open decision/i })
+    );
+    expect(await screen.findByTestId('decision-workspace')).toHaveTextContent('esc-0');
   });
 });

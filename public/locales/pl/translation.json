@@ -11125,6 +11125,7 @@
     },
     "outputs": {
       "rowMenu": {
+        "openSession": "Otwórz sesję",
         "openReport": "Pokaż raport",
         "openPresentation": "Pokaż jako prezentację"
       },

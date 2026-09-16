@@ -118,6 +118,9 @@ const realFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (/\/api\/tasks(\?|$)/.test(url)) return json(TASKS);
+  if (/\/api\/initiatives\/runtime-v1\/execution-cases(\?|$)/.test(url)) {
+    return json({ items: [], total: 0 });
+  }
   if (/\/api\/decisions(\?|$)/.test(url)) return json(DECISIONS);
   if (/\/api\/raid(\?|$)/.test(url)) return json(RAID);
   if (url.includes(`/organizations/${ORG_ID}/members`)) return json(MEMBERS);

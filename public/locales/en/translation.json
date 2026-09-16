@@ -11974,6 +11974,7 @@
     },
     "outputs": {
       "rowMenu": {
+        "openSession": "Open session",
         "openReport": "Show report",
         "openPresentation": "Show as presentation"
       },

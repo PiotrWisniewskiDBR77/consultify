@@ -19,6 +19,7 @@ import ocenaZastana from './fixtures/ocena-zastana-drd.json';
 import raportZastany from './fixtures/raport-zastany-drd.json';
 
 import {
+  frameworkSesjiOceny,
   idOcenyZWierszaZastanego,
   idWierszaZastanego,
   odczytajPoziomyZOdpowiedzi,
@@ -45,11 +46,23 @@ describe('projekcja ocen zastanych — lista Outputów', () => {
       // Nic nie udaje zamrożenia.
       expect(w.frozenAt).toBeNull();
       expect(w.contentHash).toBeNull();
+      expect(w.sessionId).toBeTruthy();
+      expect(w.sessionFramework).toBe('drd');
     }
   });
 
+  it('nie wystawia rekordu bez żywej, obsługiwanej trasy sesji', () => {
+    expect(frameworkSesjiOceny({ id: '', type: 'DRD' })).toBeNull();
+    expect(frameworkSesjiOceny({ id: 'assess-1', type: null })).toBeNull();
+    expect(frameworkSesjiOceny({ id: 'assess-1', type: 'UNKNOWN' })).toBeNull();
+    expect(frameworkSesjiOceny({ id: 'assess-1', type: 'SIRI' })).toBe('siri');
+  });
+
   it('scalanie: przy PUSTYM magazynie kanonicznym lista i tak ma 4 wiersze (to jest naprawa)', () => {
-    const scalone = scalOcenyZastaneZOutputami([], wierszeZastane.map(projektujOceneZastanaNaWierszListy));
+    const scalone = scalOcenyZastaneZOutputami(
+      [],
+      wierszeZastane.map(projektujOceneZastanaNaWierszListy)
+    );
     // ★ ASERCJA MUTACYJNA: `return kanoniczne` zamiast scalania → 0, test pada.
     expect(scalone).toHaveLength(4);
   });

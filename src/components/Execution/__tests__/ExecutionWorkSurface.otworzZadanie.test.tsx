@@ -127,10 +127,11 @@ beforeEach(() => {
   readExecutionWork.mockResolvedValue({ tasks: [], decisions: [] });
 });
 
+const openDocument = vi.fn();
 const zamontuj = () =>
   render(
     <MemoryRouter>
-      <ExecutionWorkSurface activePreset="all" />
+      <ExecutionWorkSurface activePreset="all" onOpenDocument={openDocument} />
     </MemoryRouter>
   );
 
@@ -139,8 +140,8 @@ const wiersz = (tytul: string) =>
     (tr.textContent || '').includes(tytul)
   ) as HTMLElement;
 
-describe('E1b/R1 — „Otwórz zadanie" (wiersz z /api/tasks) nie ucieka do /my-work', () => {
-  it('kebab „Otwórz zadanie" otwiera podgląd w miejscu, bez nawigacji i bez 404', async () => {
+describe('OPEN-1/U-38 — „Otwórz zadanie" przekazuje rekord do kanonicznej karty', () => {
+  it('kebab „Otwórz zadanie" otwiera dokument modułu bez nawigacji do /my-work', async () => {
     zamontuj();
     await waitFor(() =>
       expect(screen.getByText('Zadanie cudzego wykonawcy')).toBeInTheDocument()
@@ -153,21 +154,12 @@ describe('E1b/R1 — „Otwórz zadanie" (wiersz z /api/tasks) nie ucieka do /my
     const pozycjaOtworz = await screen.findByRole('menuitem', { name: 'Open task' });
     fireEvent.click(pozycjaOtworz);
 
-    // Panel podglądu wiersza (StandardPreview embedded) pokazuje się W
-    // MIEJSCU — treść karty (blok treści, właściwości) widoczna bez żadnej
-    // nawigacji poza `/execution`, zero 404.
-    //
-    // K5-5: kotwicą był tu napis „Check completeness and the next step." —
-    // domyślne ZDANIE z karty meta, które właściciel odrzucił przy odbiorze
-    // (blok 2 ma nieść stan, nie prozę; `executionPreviewHead.tsx`). Test
-    // sprawdzał obecność podglądu przez treść, której kanon tam nie chce,
-    // więc kotwicą jest teraz nagłówek bloku treści — element powłoki, a nie
-    // przypadkowy napis.
-    await waitFor(() => expect(screen.getByText('Work details')).toBeInTheDocument());
-    expect(screen.getByText('Without initiative')).toBeInTheDocument();
+    await waitFor(() => expect(openDocument).toHaveBeenCalledTimes(1));
+    expect(openDocument.mock.calls[0][0]).toMatchObject({
+      id: ZADANIE_CUDZE.id,
+      origin: 'tasks',
+      executionCaseId: '',
+    });
     expect(navigateSpy).not.toHaveBeenCalled();
-    // Gdyby handler nadal próbował ładować kartę przez `TaskDetailView` →
-    // `Api.getPersonalTask`, ta metoda nie istnieje w atrapie i wywołanie
-    // rzuciłoby błąd (niezłapany w tym teście) zamiast cichego 404.
   });
 });

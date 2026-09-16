@@ -1302,6 +1302,10 @@ export const ExecutionWorkSurface = ({
     // Zero nowego ekranu, zero nowego przycisku — ten sam podgląd, który
     // otwiera wiersz jednym kliknięciem.
     if (row.origin === 'tasks') {
+      if (onOpenDocument && !documentId) {
+        onOpenDocument(row);
+        return;
+      }
       setSelectedId(row.id);
       setShowWorkspace(false);
       setEdycjaPodgladu(null);

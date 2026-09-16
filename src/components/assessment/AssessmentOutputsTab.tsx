@@ -37,7 +37,7 @@
  * mirroring the existing `TableTabStrip` pattern used elsewhere in this repo
  * for in-surface tab strips.
  */
-import { FileText, GitBranch, Lightbulb, Package, Presentation } from 'lucide-react';
+import { ExternalLink, FileText, GitBranch, Lightbulb, Package, Presentation } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +55,7 @@ import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArti
 import { formatListDate } from '@/utils/listDateFormat';
 
 import {
+  frameworkSesjiOceny,
   idOcenyZWierszaZastanego,
   type LegacyAssessmentListRow,
   projektujOceneZastanaNaWierszListy,
@@ -113,7 +114,7 @@ async function pobierzOcenyZastane(): Promise<MethodOutputListItem[]> {
     if (!res.ok) return [];
     const body = (await res.json()) as { assessments?: LegacyAssessmentListRow[] };
     return (body.assessments ?? [])
-      .filter((row) => typeof row?.id === 'string' && row.id.length > 0)
+      .filter((row) => frameworkSesjiOceny(row) !== null)
       .map(projektujOceneZastanaNaWierszListy);
   } catch {
     return [];
@@ -186,6 +187,16 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
 
   const [lineageSessionId, setLineageSessionId] = useState<string | null>(null);
   const [generatorOtwarty, setGeneratorOtwarty] = useState(false);
+
+  const openAssessmentSession = useCallback(
+    (row: TableRow) => {
+      const sessionId = typeof row.sessionId === 'string' ? row.sessionId : '';
+      const framework = typeof row.sessionFramework === 'string' ? row.sessionFramework : '';
+      if (!sessionId || !framework) return;
+      navigate(`/assessment/${encodeURIComponent(framework)}/${encodeURIComponent(sessionId)}`);
+    },
+    [navigate]
+  );
 
   // Deliberately no dependency on `t` (react-i18next's `t` isn't guaranteed
   // referentially stable, and isn't in this suite's mock) — closes only over
@@ -518,6 +529,14 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         };
       }
       if (sessionId) {
+        if (typeof row.sessionFramework === 'string') {
+          primary.push({
+            id: 'open-session',
+            label: t('assessment.outputs.rowMenu.openSession'),
+            icon: ExternalLink,
+            onClick: () => openAssessmentSession(row),
+          });
+        }
         primary.push({
           id: 'view-lineage',
           label: t('assessment.outputs.rowMenu.viewLineage', 'View lineage'),
@@ -559,7 +578,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         },
       };
     },
-    [t, isPolish, navigate]
+    [t, isPolish, navigate, openAssessmentSession]
   );
 
   const showLineage = lineageSessionId !== null;
@@ -604,6 +623,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
               jedenPanel.otworz();
               setSelectedOutputId(String(row.id));
             }}
+            onRowDoubleClick={(row) => {
+              if (typWierszaWnioskow(String(row.id)) === 'zapis-sesji') openAssessmentSession(row);
+            }}
             rowMenu={rowMenu}
             rowDescription={() => null}
             empty={{
@@ -643,6 +665,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
             <StandardPreview
               title={selectedRow.scope || (isPolish ? 'Bez tytułu' : 'Untitled output')}
               onClose={() => setSelectedOutputId(null)}
+              onOpenFull={typWybranego === 'zapis-sesji' && selectedRow.sessionFramework
+                ? () => openAssessmentSession(selectedRow)
+                : undefined}
               loading={detailLoading}
               meta={{
                 pills: metaPills,
@@ -743,6 +768,15 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                     ];
                   }
                   if (selectedRow.sessionId) {
+                    if (typWybranego === 'zapis-sesji' && selectedRow.sessionFramework) {
+                      informational.push({
+                        id: 'open-session',
+                        variant: 'neutral',
+                        label: t('assessment.outputs.rowMenu.openSession'),
+                        icon: ExternalLink,
+                        onClick: () => openAssessmentSession(selectedRow),
+                      });
+                    }
                     informational.push({
                       id: 'view-lineage',
                       variant: 'neutral',

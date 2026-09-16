@@ -3,6 +3,7 @@ import {
   CalendarClock,
   CheckCircle2,
   CircleSlash,
+  ExternalLink,
   ShieldAlert,
   UserCog,
   Wrench,
@@ -12,6 +13,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { DecisionWorkspace } from '@/components/MyWork/Decision/DecisionWorkspace';
 import { StandardPreview } from '@/components/standard';
 import { Menu2PresetDropdown } from '@/components/standard/Menu2PresetDropdown';
 import { ReasonDialog } from '@/components/standard/ReasonDialog';
@@ -384,6 +386,11 @@ const signalFieldLabels = (t: (key: string, fallback: string) => string): Record
  * trzeciemu rejestrowi.
  */
 const controlPresets = ['decyzje', 'ryzyka', 'sygnaly'] as const;
+
+export const isToolLifecycleDecision = (decision: { decisionType?: unknown; type?: unknown }) =>
+  ['TOOL_REVIEW', 'TOOL_APPROVE', 'TOOL_GENERATE'].includes(
+    String(decision.decisionType ?? decision.type ?? '').toUpperCase()
+  );
 
 /** Filtr terminu z Menu 2 — wspólny dla decyzji, RAID i sygnałów. */
 const filtryTerminu = ['wszystkie', 'po-terminie'] as const;
@@ -1019,6 +1026,7 @@ export const ExecutionControlSurface = ({
     // 1.12-R1 (C): realne rejestry — decyzje (/api/decisions) i RAID (/api/raid).
     [governanceRows, setGovernanceRows] = useState<GovernanceRow[]>([]),
     [selectedGovernanceId, setSelectedGovernanceId] = useState<string | null>(null),
+    [openedDecisionId, setOpenedDecisionId] = useState<string | null>(null),
     [newDecisionOpen, setNewDecisionOpen] = useState(false),
     // P16/R3: formularz „Nowa decyzja" ma cztery pola, bo tyle wymaga kontrakt
     // (`sourceId` = inicjatywa, `dueDate` = „potrzebna do dnia", decydent).
@@ -1196,6 +1204,7 @@ export const ExecutionControlSurface = ({
        * usunął z pola widzenia.
        */
       .filter((decision) => !isArchivedDecision(decision))
+      .filter((decision) => !isToolLifecycleDecision(decision))
       .map((decision) => {
         const escalationStep = Number(decision.escalationStep ?? 0) || 0;
         return {
@@ -1961,6 +1970,12 @@ export const ExecutionControlSurface = ({
       const naMaksie = Number(wiersz.escalationStep ?? 0) >= ESCALATION_STEP_MAX;
       menu.primary = [
         {
+          id: 'decision-open',
+          label: t('execution.work.openDecision'),
+          icon: ExternalLink,
+          onClick: wiersz.decisionId ? () => setOpenedDecisionId(wiersz.decisionId as string) : undefined,
+        },
+        {
           id: 'decision-escalate',
           label: t('execution.decisions.actions.escalate', 'Escalate'),
           icon: ArrowUpCircle,
@@ -2300,6 +2315,15 @@ export const ExecutionControlSurface = ({
     // `t` poza zależnościami z tego samego powodu co wyżej (pętla efekt↔host).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterPrimaryCta, activeGovernancePreset, canDecide, executionInitiatives]);
+  if (openedDecisionId) {
+    return (
+      <DecisionWorkspace
+        decisionId={openedDecisionId}
+        onClose={() => setOpenedDecisionId(null)}
+      />
+    );
+  }
+
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
@@ -2626,10 +2650,14 @@ export const ExecutionControlSurface = ({
            * `openDisabledReason`) pokazuje przycisk WYŁĄCZONY z powodem, zamiast
            * pomijać go w milczeniu.
            */
-          openDisabledReason={t(
-            'execution.governance.preview.noFullCard',
-            'This entry lives only in the register — there is no full card to open.'
-          )}
+          {...(selectedGovernance?.kind === 'DECISION' && selectedGovernance.decisionId
+            ? { onOpenFull: () => setOpenedDecisionId(selectedGovernance.decisionId as string) }
+            : {
+                openDisabledReason: t(
+                  'execution.governance.preview.noFullCard',
+                  'This entry lives only in the register — there is no full card to open.'
+                ),
+              })}
           renderPreview={(row) => {
             /*
              * K5-5 — bloki 1–2 przez `buildExecutionPreviewHead`. Zdania z tego
@@ -2953,6 +2981,10 @@ export const ExecutionControlSurface = ({
             data={visibleGovernanceRows}
             selectedRowId={selectedGovernanceId}
             onRowClick={(row) => setSelectedGovernanceId(row.id)}
+            onRowDoubleClick={(rawRow) => {
+              const row = rawRow as GovernanceRow;
+              if (row.kind === 'DECISION' && row.decisionId) setOpenedDecisionId(row.decisionId);
+            }}
             rowMenu={buildGovernanceRowMenu}
             persistKey={
               // Zestaw kolumn zmienia się razem z presetem, więc szerokości i

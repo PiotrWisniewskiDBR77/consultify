@@ -1830,7 +1830,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // static, non-interactive info badges instead (kanon §A2 "Bez liczników w
   // Menu 2 (liczniki mieszkają w Menu 3)"). Reuses `getStatusesForModule`
   // (same source as StatusDropdown) instead of a bespoke status list.
-  const menu3StatusChipsEnabled = isEnabled('assessmentMenu3StatusChips');
   const statusChipOptions = useMemo(() => getStatusesForModule(statusContext), [statusContext]);
   const statusFilterChips = useMemo(
     () =>
@@ -1951,7 +1950,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // `libraryStatusFilter` — usunięty stąd; filtrowanie katalogu metodyk
   // zostaje wyłącznie w kolumnach OBSZAR/STATUS nagłówka tabeli
   // (`AssessmentLibraryTab`, `filterable: true`), zgodnie z kanonem.
-  const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
+  const hubMenu3Chips = activeTab === 'outputs' ? hubMenu3InfoChips : statusFilterChips;
 
   /**
    * P-20 (Piotr, OBR-84…86, 2026-07-27): „Nie wiem, po co powstały te trzy
@@ -2062,11 +2061,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // only the canonical contextual AI action in Menu 3").
   const hubCommandRowContent = useMemo(
     () =>
-      activeTab === 'library' ||
-      activeTab === 'processes' ||
-      activeTab === 'outputs' ||
-      activeTab === 'reports' ||
-      activeTab === 'initiatives'
+      activeTab === 'library'
         ? bulkCommandRowContent
         : (bulkCommandRowContent ?? (
             <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
