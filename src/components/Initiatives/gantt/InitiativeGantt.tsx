@@ -57,7 +57,13 @@ type GanttZoom = 'day' | 'week' | 'month';
 const TYPE_BAR: Record<ScheduleItemType, string> = {
   task: 'bg-c-tag-1 hover:opacity-90 cursor-grab active:cursor-grabbing',
   milestone: 'bg-c-tag-2 hover:opacity-90',
-  phase: 'bg-c-tag-3 hover:opacity-90',
+  // F13: faza to JEDYNY typ w osi czasu planu portfela, wiec jej kolor jest tym,
+  // ktory widac na ekranie planu. `c-tag-3` (violet #9d5bd2) czytal sie jak kolor
+  // AI/marki i dawal bialemu tekstowi tylko ~3:1. Pasek Gantta to WYPELNIENIE
+  // slupka wykresu, wiec kanonicznym zrodlem jest paleta `c-chart-*` (§15.1,
+  // blue-first, nigdy alarm): `c-chart-1` #2f6f95 = 5.48:1 pod bialy tekst i
+  // czytelnie odrozniony od granatu pozycji zamrozonych.
+  phase: 'bg-c-chart-1 hover:opacity-90',
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -136,6 +142,19 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     [filtered]
   );
   const undated = useMemo(() => filtered.filter((i) => parse(i.start) == null), [filtered]);
+  /**
+   * F13: pozycja ZAMROZONA (w realizacji) bez dat musi byc widoczna W OSI jako
+   * jawny brak okna, a nie zniknac do chipow pod wykresem — inaczej czyta sie
+   * jak „nie ma jej w planie". Pozostale bezdatowe zostaja chipami (bez zmiany).
+   */
+  const frozenUndated = useMemo(
+    () => undated.filter((i) => frozenSet.has(i.id)),
+    [undated, frozenSet]
+  );
+  const undatedChips = useMemo(
+    () => undated.filter((i) => !frozenSet.has(i.id)),
+    [undated, frozenSet]
+  );
 
   const range = useMemo(() => {
     const explicitStart = parse(rangeStart ?? null);
@@ -285,6 +304,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   }
 
   const totalMs = range.weeks * 7 * DAY_MS;
+  const rangeEndMs = range.min + totalMs;
   const totalDays = totalMs / DAY_MS;
   const gridMinWidth = Math.max(480, Math.round(totalDays * PX_PER_DAY[zoom]));
   const pctNum = (ms: number) => Math.max(0, ((ms - range.min) / totalMs) * 100);
@@ -292,7 +312,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   // Column ticks per zoom unit.
   const cols: Array<{ ms: number; label: string }> = [];
-  const endMs = range.min + totalMs;
+  const endMs = rangeEndMs;
   if (zoom === 'day') {
     for (let ms = range.min; ms < endMs; ms += DAY_MS) {
       cols.push({ ms, label: new Date(ms).toLocaleDateString(undefined, { day: '2-digit' }) });
@@ -404,12 +424,52 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             const ov = overrides.get(item.id);
             const effS = ov?.s ?? s;
             const effE = ov?.e ?? e;
-            const left = pct(effS);
-            const width = `${(Math.max(effE - effS, DAY_MS) / totalMs) * 100}%`;
             const saving = ov?.saving;
             const frozen = frozenSet.has(item.id);
             const canDrag = item.sourceKind === 'task' && Boolean(onReschedule) && !frozen;
             const isCritical = criticalSet.has(item.id);
+            /**
+             * F13 — PRZYCIECIE DO HORYZONTU. Wczesniej `left` bylo zaciskane do 0
+             * (pctNum), ale `width` liczylo sie z PELNEJ dlugosci okna. Okno
+             * zaczynajace sie przed poczatkiem horyzontu (np. inicjatywa w
+             * realizacji od lutego) dostawalo wiec pasek od 0% o szerokosci
+             * calego okna — na ekranie „ciagnie sie przez cala os", jakby nie
+             * mialo dat. Rysujemy wylacznie CZESC WSPOLNA okna i horyzontu.
+             */
+            const startsBefore = effS < range.min;
+            const endsAfter = effE > rangeEndMs;
+            const visS = Math.max(effS, range.min);
+            const visE = Math.min(Math.max(effE, effS + DAY_MS), rangeEndMs);
+            /**
+             * „Poza horyzontem" = czesc wspolna KROTSZA NIZ DZIEN, nie zwykle
+             * porownanie koncow. Os siega ~2 tygodnie za `rangeEnd`, wiec okno
+             * zaczynajace sie tuz przed jej koncem dawalo left≈100% i pasek
+             * kilkugodzinny — na ekranie PUSTY wiersz, czytany jak brak danych
+             * (tak wygladal horyzont 3m dla „Scrap Reduction Programme":
+             * start 2027-01-04T00:00Z przy osi konczacej sie 2027-01-04T05:00Z).
+             * Kamien milowy (start == koniec) ma z definicji DAY_MS, wiec
+             * prog „< 1 dzien" go nie zjada.
+             */
+            const outside = visE - visS < DAY_MS;
+            const left = pct(visS);
+            const width = `${Math.max(0, ((visE - visS) / totalMs) * 100)}%`;
+            if (outside) {
+              return (
+                <div
+                  key={item.id}
+                  className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
+                >
+                  <div
+                    className="absolute top-1.5 left-0 h-5 inline-flex items-center gap-1 rounded border border-dashed border-c-border-strong bg-c-surface-raised px-1.5"
+                    title={`${item.title} • ${t('initiatives.gantt.outsideHorizon', 'Outside horizon')}`}
+                  >
+                    <span className="text-[10px] text-c-text-secondary truncate">
+                      {item.title} · {t('initiatives.gantt.outsideHorizon', 'Outside horizon')}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={item.id}
@@ -422,7 +482,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
                     isCritical ? 'ring-2 ring-c-danger ring-offset-1 ring-offset-c-surface' : ''
                   }`}
                   style={{ left, width, minWidth: '8px' }}
-                  title={`${item.title}${isCritical ? ' • critical path' : ''}${frozen ? ' • frozen in execution' : ''}${saving ? ' (saving…)' : ''}`}
+                  title={`${item.title}${isCritical ? ' • critical path' : ''}${frozen ? ' • frozen in execution' : ''}${startsBefore || endsAfter ? ` • ${t('initiatives.gantt.clippedToHorizon', 'clipped to horizon')}` : ''}${saving ? ' (saving…)' : ''}`}
                   onPointerDown={
                     canDrag ? (ev) => handlePointerDown(ev, item, effS, effE) : undefined
                   }
@@ -434,16 +494,33 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
               </div>
             );
           })}
+
+          {/* F13: zamrozone bez dat — jawny znacznik w wierszu, nigdy pelny pasek. */}
+          {frozenUndated.map((item) => (
+            <div
+              key={item.id}
+              className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
+            >
+              <div
+                className="absolute top-1.5 left-0 h-5 inline-flex items-center gap-1 rounded border border-dashed border-c-border-strong bg-c-surface-raised px-1.5"
+                title={`${item.title} • ${t('initiatives.gantt.noDates', 'No dates')}`}
+              >
+                <span className="text-[10px] text-c-text-secondary truncate">
+                  {item.title} · {t('initiatives.gantt.noDates', 'No dates')}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {undated.length > 0 && (
+      {undatedChips.length > 0 && (
         <div className="px-3 py-2 border-t border-c-border">
           <div className="text-[11px] font-medium text-c-text-muted mb-1">
-            {t('initiatives.calendarView.undated')} ({undated.length})
+            {t('initiatives.calendarView.undated')} ({undatedChips.length})
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {undated.map((it) => (
+            {undatedChips.map((it) => (
               <span
                 key={it.id}
                 className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-c-surface-raised text-[11px] text-c-text-secondary"

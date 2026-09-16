@@ -16902,6 +16902,11 @@
         "governanceDecisionMaking": "Governance decision",
         "closure": "Closure"
       }
+    },
+    "gantt": {
+      "noDates": "No dates",
+      "outsideHorizon": "Outside horizon",
+      "clippedToHorizon": "clipped to horizon"
     }
   },
   "execution": {
