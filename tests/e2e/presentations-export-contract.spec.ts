@@ -24,6 +24,9 @@ const browserExportHarness = `
         throw error;
       }
       const blob = await response.blob();
+      let warnings = [];
+      const warningHeader = response.headers.get('X-Presentation-Quality-Warnings');
+      if (warningHeader) warnings = JSON.parse(decodeURIComponent(warningHeader));
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -31,7 +34,7 @@ const browserExportHarness = `
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(url);
-      return { format, extension: endpoint.extension };
+      return { format, extension: endpoint.extension, warnings };
     }
 
     document.getElementById('export-pptx').addEventListener('click', async () => {
@@ -45,7 +48,8 @@ const browserExportHarness = `
 
     document.getElementById('export-blocked').addEventListener('click', async () => {
       try {
-        await exportPresentationDeck('deck-blocked', 'VTS Blocked', 'pptx');
+        const result = await exportPresentationDeck('deck-blocked', 'VTS Review', 'pptx');
+        document.getElementById('status').textContent = JSON.stringify({ ok: true, result });
       } catch (error) {
         document.getElementById('status').textContent = JSON.stringify({
           ok: false,
@@ -82,44 +86,29 @@ test.describe('presentation export browser contract', () => {
     await expect(page.locator('#status')).toContainText('"ok":true');
   });
 
-  test('surfaces quality gate blockers without fake success download', async ({ page }) => {
+  test('downloads with advisory review findings in the response header', async ({ page }) => {
     await page.route('**/presentation-export-harness', async (route) => {
       await route.fulfill({ status: 200, contentType: 'text/html', body: browserExportHarness });
     });
     await page.route('**/api/presentations/decks/deck-blocked/download', async (route) => {
       await route.fulfill({
-        status: 422,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: false,
-          error: 'Deck is blocked by quality gates.',
-          code: 'QUALITY_GATE_BLOCKED',
-          result: 'BLOCKED_P1',
-          scorecard: { p0: 0, p1: 1, p2: 0, passVocabulary: 'BLOCKED_P1' },
-          gates: [
-            {
-              id: 'missing-source',
-              priority: 'P1',
-              severity: 'error',
-              message: 'Missing source traceability.',
-              cardIndex: 2,
-            },
-          ],
-        }),
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        headers: {
+          'X-Presentation-Quality-Warnings': encodeURIComponent(JSON.stringify([
+            { id: 'missing-source', message: 'Missing source traceability.', cardIndex: 2 }
+          ])),
+        },
+        body: 'pptx-binary-with-review-findings',
       });
     });
     await page.goto('/presentation-export-harness');
 
-    let downloaded = false;
-    page.on('download', () => {
-      downloaded = true;
-    });
+    const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export Blocked' }).click();
-
-    await expect(page.locator('#status')).toContainText('QUALITY_GATE_BLOCKED');
-    await expect(page.locator('#status')).toContainText('BLOCKED_P1');
-    await expect(page.locator('#status')).toContainText('"scorecard"');
-    await expect(page.locator('#status')).toContainText('"priority":"P1"');
-    expect(downloaded).toBe(false);
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('VTS Review.pptx');
+    await expect(page.locator('#status')).toContainText('"ok":true');
+    await expect(page.locator('#status')).toContainText('Missing source traceability.');
   });
 });

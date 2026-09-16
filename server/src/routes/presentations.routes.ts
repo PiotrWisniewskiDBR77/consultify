@@ -101,6 +101,7 @@ import {
   completePresentationExport,
   failPresentationExport,
 } from '../services/presentationExport/presentationExportReceiptService.js';
+import { boardDeckExportService } from '../services/export/BoardDeckExportService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -192,7 +193,6 @@ import {
   buildPdfLayoutTruncationMarker,
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { wykryjPrzepelnienie } from '../services/report/pptx/deckOverflowDetector.js';
-import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
@@ -201,7 +201,11 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import logger from '../utils/Logger.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir } from '../utils/storagePaths.js';
-import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
+import {
+  canOverrideQualityGate,
+  enforceQualityGateForExport,
+  setQualityWarningHeaders,
+} from './presentationExportGate.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
@@ -612,9 +616,11 @@ export async function ensureCurrentPptxExport(
     : path.join(exportsDir('presentations'), `${String(deck?.id || 'presentation')}.pptx`);
   const generate =
     dependencies?.generate ??
-    (async (unifiedJson: any, options: any) => {
-      const pipeline = new PptxPipelineService();
-      return pipeline.generateFromUnifiedJson(unifiedJson, options);
+    (async (_unifiedJson: any, _options: any) => {
+      const deckDocument = normalizeDeckDocument(deck);
+      if (!deckDocument) throw new Error('The current deck has no renderable document.');
+      const buffer = await boardDeckExportService.exportPresentationDeck({ deck: deckDocument });
+      return { buffer, slideCount: deckDocument.cards.length, warnings: [] };
     });
   const persist =
     dependencies?.persist ??
@@ -2832,37 +2838,14 @@ router.get(
     }
 
     const quality = isDraftExport
-      ? { ok: true as const, report: null }
+      ? { ok: true as const, report: null, warnings: [] }
       : await enforceQualityGateForExport({
           organizationId: orgId,
           deckId: String(req.params.id || ''),
           format: 'pptx',
           allowOverride: canOverrideQualityGate(req),
         });
-    if (!quality.ok) {
-      await recordPresentationRuntimeEvent({
-        organizationId: orgId,
-        deckId: String(req.params.id || ''),
-        userId,
-        eventType: 'export_blocked',
-        status: quality.report?.result || 'blocked',
-        scope: 'global',
-        metadata: {
-          format: 'pptx',
-          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
-        },
-      });
-      await recordPresentationExportRecord({
-        organizationId: orgId,
-        userId,
-        deckId: String(req.params.id || ''),
-        format: 'pptx',
-        status: 'blocked',
-        qualityReport: quality.report,
-        errorCategory: 'quality_gate_blocked',
-      });
-      return res.status(quality.status ?? 422).json(quality.payload);
-    }
+    setQualityWarningHeaders(res, quality);
 
     // MAT-MVP-PPT-001 — freeze + hash the source and open a governed export
     // receipt BEFORE rendering. The existing `presentation_export_records`
@@ -3110,37 +3093,14 @@ router.get(
     }
 
     const quality = isDraftExport
-      ? { ok: true as const, report: null }
+      ? { ok: true as const, report: null, warnings: [] }
       : await enforceQualityGateForExport({
           organizationId: orgId,
           deckId: String(deckId || ''),
           format: 'pdf',
           allowOverride: canOverrideQualityGate(req),
         });
-    if (!quality.ok) {
-      await recordPresentationRuntimeEvent({
-        organizationId: orgId,
-        deckId: String(deckId || ''),
-        userId,
-        eventType: 'export_blocked',
-        status: quality.report?.result || 'blocked',
-        scope: 'global',
-        metadata: {
-          format: 'pdf',
-          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
-        },
-      });
-      await recordPresentationExportRecord({
-        organizationId: orgId,
-        userId,
-        deckId: String(deckId || ''),
-        format: 'pdf',
-        status: 'blocked',
-        qualityReport: quality.report,
-        errorCategory: 'quality_gate_blocked',
-      });
-      return res.status(quality.status ?? 422).json(quality.payload);
-    }
+    setQualityWarningHeaders(res, quality);
 
     const cards = getDeckCards(deck);
     const limitCheck = enforceExportLimits(deck, cards);
@@ -3908,30 +3868,7 @@ router.post(
       format: 'html',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
-      await recordPresentationRuntimeEvent({
-        organizationId: orgId,
-        deckId: String(deckId || ''),
-        userId,
-        eventType: 'export_blocked',
-        status: quality.report?.result || 'blocked',
-        scope: 'global',
-        metadata: {
-          format: 'html',
-          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
-        },
-      });
-      await recordPresentationExportRecord({
-        organizationId: orgId,
-        userId,
-        deckId: String(deckId || ''),
-        format: 'html',
-        status: 'blocked',
-        qualityReport: quality.report,
-        errorCategory: 'quality_gate_blocked',
-      });
-      return res.status(quality.status ?? 422).json(quality.payload);
-    }
+    setQualityWarningHeaders(res, quality);
 
     const { exportDeckAsHtml } = await import('../services/presentationHtmlExportService.js');
     const deckData = normalizeDeckDocument(deck);
@@ -7949,30 +7886,7 @@ router.post(
       format: 'png',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
-      await recordPresentationRuntimeEvent({
-        organizationId: orgId,
-        deckId: String(deckId || ''),
-        userId,
-        eventType: 'export_blocked',
-        status: quality.report?.result || 'blocked',
-        scope: 'global',
-        metadata: {
-          format: 'png',
-          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
-        },
-      });
-      await recordPresentationExportRecord({
-        organizationId: orgId,
-        userId,
-        deckId: String(deckId || ''),
-        format: 'png',
-        status: 'blocked',
-        qualityReport: quality.report,
-        errorCategory: 'quality_gate_blocked',
-      });
-      return res.status(quality.status ?? 422).json(quality.payload);
-    }
+    setQualityWarningHeaders(res, quality);
 
     // AMD-MAT-POLICY-001: preserve the existing quality decision above, then
     // fail before rendering/receipt because sharp/SVG is outside the frozen

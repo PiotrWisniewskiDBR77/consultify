@@ -15,6 +15,7 @@ const handlers = {
   onRunFromStart: vi.fn(),
   onPresenter: vi.fn(),
 };
+const onExportPptx = vi.fn();
 
 function renderView(artifactStudioMode: boolean) {
   Object.defineProperty(window, 'innerWidth', {
@@ -26,6 +27,7 @@ function renderView(artifactStudioMode: boolean) {
       artifactStudioMode={artifactStudioMode}
       title="Investment decision"
       topBarHandlers={handlers}
+      onExportPptx={onExportPptx}
       leftRail={<div>Slides structure</div>}
       canvas={<div>Deck canvas</div>}
       menu3Slot={<div>Context menu 3</div>}
@@ -66,6 +68,8 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
     // artefaktu (SPEC-A), nie jako pigułka Menu 2.
     expect(panel).toContainElement(screen.getByRole('button', { name: /Comments/ }));
     expect(screen.getByRole('button', { name: 'Present' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Export PPTX' }));
+    expect(onExportPptx).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Presentation options' })).toBeInTheDocument();
     expect(screen.getByTestId('deck-builder-mels-view')).toHaveAttribute(
       'data-artifact-studio',

@@ -1,5 +1,5 @@
 /**
- * P0.4 — Route-level contract for presentation export quality-gate enforcement.
+ * P0.4 — Route-level contract for advisory presentation review findings.
  *
  * The module-level contract for `enforceQualityGateForExport` / `canOverrideQualityGate`
  * is already pinned by `tests/integration/presentations/export-quality-gate.regression.test.ts`
@@ -9,9 +9,8 @@
  * end-to-end — not just the helper in isolation.
  *
  * Covers (Harvard/wdrozenie-100/_NARZEDZIE_PREZENTACJE_AUDYT_I_PLAN_2026-07-04.md, P0.4):
- *  (a) export with a failing quality gate -> 422 QUALITY_GATE_BLOCKED
- *  (b) ?overrideQualityGate=true with a role OUTSIDE OVERRIDE_ROLES -> gate still enforced
- *  (c) ?overrideQualityGate=true with an allowed role (ADMIN/OWNER/SUPERADMIN) -> gate bypassed
+ * A review result may be non-passing, but the route continues to the export
+ * engine and exposes the findings in response headers for every role.
  *
  * Mocking strategy mirrors `tests/unit/backend/routes/presentations.routes.org-guard.test.ts`:
  * boot the real router behind a minimal Express app, mock only the auth
@@ -144,21 +143,22 @@ describe('P0.4 — POST /presentations/decks/:deckId/export/png quality-gate con
     mockUser = { id: 'user-1', role: 'OWNER', organizationId: 'org-A' };
   });
 
-  it('(a) blocked deck without override -> 422 QUALITY_GATE_BLOCKED', async () => {
+  it('(a) review finding without override is advisory', async () => {
     mockCheckGates.mockResolvedValue(blockedGateReport());
     const app = await buildApp();
 
     const res = await request(app).post('/presentations/decks/deck-1/export/png');
 
-    expect(res.status).toBe(422);
-    expect(res.body).toMatchObject({
-      success: false,
-      code: 'QUALITY_GATE_BLOCKED',
-      format: 'png',
-    });
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('EXPORT_ENGINE_NOT_APPROVED');
+    expect(res.headers['x-presentation-quality-result']).toBe('BLOCKED_P1');
+    expect(res.headers['x-presentation-quality-warning-count']).toBe('1');
+    expect(res.headers['access-control-expose-headers']).toContain(
+      'X-Presentation-Quality-Warnings'
+    );
   });
 
-  it('(b) blocked deck + ?overrideQualityGate=true with a role OUTSIDE OVERRIDE_ROLES -> gate still enforced (422)', async () => {
+  it('(b) legacy override query is irrelevant for a non-admin', async () => {
     mockUser = { id: 'user-2', role: 'PROJECT_MANAGER', organizationId: 'org-A' };
     mockCheckGates.mockResolvedValue(blockedGateReport());
     const app = await buildApp();
@@ -167,11 +167,11 @@ describe('P0.4 — POST /presentations/decks/:deckId/export/png quality-gate con
       '/presentations/decks/deck-1/export/png?overrideQualityGate=true'
     );
 
-    expect(res.status).toBe(422);
-    expect(res.body.code).toBe('QUALITY_GATE_BLOCKED');
+    expect(res.status).toBe(503);
+    expect(res.headers['x-presentation-quality-warning-count']).toBe('1');
   });
 
-  it('(b2) blocked deck + ?overrideQualityGate=true with USER role -> gate still enforced (422)', async () => {
+  it('(b2) USER also reaches the exporter with warning metadata', async () => {
     mockUser = { id: 'user-3', role: 'USER', organizationId: 'org-A' };
     mockCheckGates.mockResolvedValue(blockedGateReport());
     const app = await buildApp();
@@ -180,12 +180,12 @@ describe('P0.4 — POST /presentations/decks/:deckId/export/png quality-gate con
       '/presentations/decks/deck-1/export/png?overrideQualityGate=true'
     );
 
-    expect(res.status).toBe(422);
-    expect(res.body.code).toBe('QUALITY_GATE_BLOCKED');
+    expect(res.status).toBe(503);
+    expect(res.headers['x-presentation-quality-warning-count']).toBe('1');
   });
 
   it.each(['ADMIN', 'OWNER', 'SUPERADMIN'])(
-    '(c) blocked deck + ?overrideQualityGate=true with %s -> gate bypassed (not 422)',
+    '(c) %s receives the same warning contract',
     async (role) => {
       mockUser = { id: 'user-4', role, organizationId: 'org-A' };
       mockCheckGates.mockResolvedValue(blockedGateReport());
@@ -197,9 +197,9 @@ describe('P0.4 — POST /presentations/decks/:deckId/export/png quality-gate con
 
       // The quality gate was bypassed, but restricted MAT policy still denies
       // the unapproved sharp/SVG engine before rendering or receipt creation.
-      expect(res.status).not.toBe(422);
       expect(res.status).toBe(503);
       expect(res.body.code).toBe('EXPORT_ENGINE_NOT_APPROVED');
+      expect(res.headers['x-presentation-quality-warning-count']).toBe('1');
     }
   );
 
