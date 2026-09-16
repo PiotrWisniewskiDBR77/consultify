@@ -1209,12 +1209,21 @@ export const MeetingObjectPage: React.FC = () => {
             />
           ) : decisionRecords.length || approvedNoteDecisions.length ? (
             <div className="space-y-2">
+              {/* [U-51] Te wiersze pochodza z zatwierdzonej notatki, a NIE z
+                  rejestru `meeting_decisions` — dokladnie ta roznica, ktora
+                  licznik w prawym panelu nazywa „N in minutes, not yet
+                  recorded". Bez tej etykiety lista i licznik znow mowilyby
+                  dwie rozne rzeczy o tym samym wierszu. */}
               {approvedNoteDecisions.map((decision) => (
                 <div
                   key={decision.key}
                   className="rounded-xl border border-c-border-subtle px-3 py-2"
+                  data-testid="meeting-decision-from-minutes"
                 >
                   <div className="text-sm text-c-text-secondary">{decision.label}</div>
+                  <div className="mt-1 text-xs text-c-text-muted">
+                    {t('meeting.decisionRecords.fromMinutes', 'From the minutes — not yet recorded')}
+                  </div>
                 </div>
               ))}
               {decisionRecords.map((decision) => {

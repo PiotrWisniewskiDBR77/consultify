@@ -38702,7 +38702,8 @@
         "createFailed": "Failed to record decision",
         "updateFailed": "Failed to update decision",
         "deleteFailed": "Failed to delete decision"
-      }
+      },
+      "fromMinutes": "From the minutes — not yet recorded"
     },
     "followUp": {
       "title": "Add follow-up",

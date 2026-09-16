@@ -39336,7 +39336,8 @@
         "createFailed": "Nie udało się zapisać decyzji",
         "updateFailed": "Nie udało się zaktualizować decyzji",
         "deleteFailed": "Nie udało się usunąć decyzji"
-      }
+      },
+      "fromMinutes": "Z protokołu — jeszcze niezapisane"
     },
     "followUp": {
       "title": "Dodaj follow-up",
