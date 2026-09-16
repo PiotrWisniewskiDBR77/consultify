@@ -1,0 +1,7 @@
+BEGIN
+psql:/tmp/20262271.sql:512: NOTICE:  relation "template_1_20262271_backup" already exists, skipping
+psql:/tmp/20262271.sql:512: NOTICE:  column "language" of relation "tp_base_templates" already exists, skipping
+psql:/tmp/20262271.sql:512: NOTICE:  TEMPLATE-1 language baseline: 48 rows, 1 already measured as en; legacy rows remain unchanged
+psql:/tmp/20262271.sql:512: NOTICE:  TEMPLATE-1 manual drafts preserved: before 1, after 1
+DO
+COMMIT

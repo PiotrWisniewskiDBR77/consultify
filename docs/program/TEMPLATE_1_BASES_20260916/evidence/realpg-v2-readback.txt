@@ -1,0 +1,16 @@
+orgs=29
+linked_cards=87
+drafts=1
+active=86
+origin_links=87
+cross_org_or_missing=0
+tp_base_templates=48
+language_en=1
+language_unknown=47
+manual_draft_artifact=09b7e011-c7d5-438d-97ee-85244a4d6fe9
+manual_draft_is_draft=1
+manual_draft_delivery_state=draft
+deck_roles=8
+sheet_sha=506d1ade58e98a31ba2d1e04c495dcddf7398ff51edffb015d11e4730e592b63
+sheet_autofilter=A6:K12
+sheet_freeze=C7

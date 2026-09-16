@@ -1,0 +1,5 @@
+font-list-aptos:
+font-match-aptos:
+Verdana.ttf: "Verdana" "Regular"
+font-match-aptos-display:
+Verdana.ttf: "Verdana" "Regular"

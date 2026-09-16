@@ -1,0 +1,4 @@
+BEGIN
+psql:/tmp/20262271.sql:512: NOTICE:  TEMPLATE-1 no-op: canonical DOC-BASE source is missing; runtime seeder remains authoritative
+DO
+COMMIT
