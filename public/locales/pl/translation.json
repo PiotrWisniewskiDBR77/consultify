@@ -23144,7 +23144,8 @@
       "youSuffix": "(Ty)",
       "joined": "Dołączył(a)",
       "noMembers": "Nie znaleziono członków.",
-      "createOrgNoPermission": "Nową organizację może utworzyć wyłącznie właściciel lub administrator organizacji. Poproś administratora o zaproszenie."
+      "createOrgNoPermission": "Nową organizację może utworzyć wyłącznie właściciel lub administrator organizacji. Poproś administratora o zaproszenie.",
+      "createdAndSwitched": "Organizacja utworzona — jesteś teraz w {{name}}"
     },
     "professionalProfile": {
       "companyName": "Nazwa firmy",

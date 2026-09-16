@@ -364,9 +364,6 @@ const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work')
 const U2RealizacjaDecyzjeScreen = React.lazy(() => import('./screens/u2-realizacja-decyzje'));
 const Pt15WywiadZalacznikiScreen = React.lazy(() => import('./screens/pt15-wywiad-zalaczniki'));
 const Pt06UstawieniaSuwakiScreen = React.lazy(() => import('./screens/pt06-ustawienia-suwaki'));
-const FeedbackK21OrganizacjaScreen = React.lazy(
-  () => import('./screens/feedback-k21-organizacja')
-);
 const FeedbackK21bCreateOrgScreen = React.lazy(
   () => import('./screens/feedback-k21b-create-org')
 );
@@ -2187,11 +2184,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5-5 — góra podglądów Realizacji (bloki 1–2) po wyrównaniu do kanonu: REALNY <ExecutionHub initialTab="work"> z zadaniem ZAMKNIĘTYM i OTWARTYM (osoba + termin); Menu 1 przełącza na Risk management i Reports. &lang=en&theme=light|dark',
     render: () => <K5PreviewWorkScreen />,
-  },
-  'feedback-k21-organizacja': {
-    label:
-      'K-21 (zgłoszenie #61, Tomek) — REALNY <OrganizationSettings> z JEDNĄ organizacją: wejście „Create Organization" poza gałęzią zero-org. &role=ADMIN|CONSULTANT&lang=en|pl&theme=light|dark',
-    render: () => <FeedbackK21OrganizacjaScreen />,
   },
   'feedback-k21b-create-org': {
     label:
