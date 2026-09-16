@@ -44,7 +44,7 @@ export interface DeckReviewPanelProps {
   onClose?: () => void;
   onJumpToCard?: (cardIndex: number) => void;
   /** Optional AI repair for a single slide (DeckBuilder: handleRewriteCard). */
-  onFixWithAi?: (cardIndex: number) => void;
+  onFixWithAi?: (cardIndex: number, instruction: string) => void;
   displayMode?: 'overlay' | 'embedded';
 }
 
@@ -119,6 +119,7 @@ export const DeckReviewPanel: React.FC<DeckReviewPanelProps> = ({
     const hasSlide = typeof finding.cardIndex === 'number' && finding.cardIndex >= 0;
     const slideNumber = hasSlide ? (finding.cardIndex as number) + 1 : null;
     const Icon = group === 'attention' ? AlertTriangle : Info;
+    const instruction = describeFinding(finding, t);
     return (
       <li
         key={finding.id}
@@ -135,7 +136,7 @@ export const DeckReviewPanel: React.FC<DeckReviewPanelProps> = ({
               group === 'attention' ? 'text-c-warning' : 'text-c-text-secondary'
             }`}
           />
-          <p className="text-xs leading-relaxed text-c-text">{describeFinding(finding, t)}</p>
+          <p className="text-xs leading-relaxed text-c-text">{instruction}</p>
         </div>
         {(slideNumber || onFixWithAi) && (
           <div className="mt-2 flex flex-wrap items-center gap-2 pl-6">
@@ -158,7 +159,7 @@ export const DeckReviewPanel: React.FC<DeckReviewPanelProps> = ({
             {slideNumber && onFixWithAi && (
               <button
                 type="button"
-                onClick={() => onFixWithAi(finding.cardIndex as number)}
+                onClick={() => onFixWithAi(finding.cardIndex as number, instruction)}
                 className="inline-flex min-h-8 items-center gap-1 rounded-md border border-c-border px-2 text-[11px] font-medium text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <Sparkles size={12} aria-hidden className="text-c-ai" />

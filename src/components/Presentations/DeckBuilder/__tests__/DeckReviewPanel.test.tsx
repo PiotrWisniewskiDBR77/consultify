@@ -103,6 +103,9 @@ describe('DeckReviewPanel', () => {
       <DeckReviewPanel deckId="deck-1" isOpen totalSlides={6} onFixWithAi={onFixWithAi} />
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Fix with AI' }));
-    expect(onFixWithAi).toHaveBeenCalledWith(2);
+    expect(onFixWithAi).toHaveBeenCalledWith(
+      2,
+      'This slide has only a heading — add evidence or a visual.'
+    );
   });
 });

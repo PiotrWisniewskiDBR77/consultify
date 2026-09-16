@@ -1,9 +1,8 @@
 /**
  * Presentation export quality-gate helpers (M19).
  *
- * Extracted from presentations.routes.ts so the security-relevant role-gate and
- * the 422 enforcement contract are unit-testable without loading the full route
- * module (pdfkit / sharp / DB). Behaviour is identical to the prior inline code.
+ * Extracted from presentations.routes.ts so the review-warning contract is
+ * unit-testable without loading the full route module (pdfkit / sharp / DB).
  *
  * L-02 regression-guard: quality-gate override is ADMIN/OWNER/SUPERADMIN only —
  * a non-admin passing ?overrideQualityGate=true must NOT bypass the gate.
@@ -29,21 +28,37 @@ export async function enforceQualityGateForExport(params: {
 }) {
   const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
   const report = await checkDeckQualityGates(params.organizationId, params.deckId);
-  if (!report.canExport && !params.allowOverride) {
-    return {
-      ok: false as const,
-      status: 422,
-      report,
-      payload: {
-        success: false,
-        error: 'Deck is blocked by quality gates.',
-        code: 'QUALITY_GATE_BLOCKED',
-        result: report.result,
-        scorecard: report.scorecard,
-        gates: report.gates,
-        format: params.format,
-      },
-    };
-  }
-  return { ok: true as const, report };
+  const warnings = report.canExport ? [] : report.gates;
+
+  // DEC-543: review findings are advisory. `allowOverride` remains in the
+  // signature for backwards-compatible callers, but no role or query flag is
+  // required to export. The structured payload is used by JSON/preflight
+  // callers; binary routes expose the same warnings in response headers.
+  return {
+    ok: true as const,
+    status: 200 as const,
+    report,
+    warnings,
+    payload: {
+      success: true,
+      format: params.format,
+      result: report.result,
+      scorecard: report.scorecard,
+      warnings,
+    },
+  };
+}
+
+export function setQualityWarningHeaders(
+  res: { setHeader(name: string, value: string): unknown },
+  quality: { report: { result?: string } | null; warnings?: unknown[] }
+): void {
+  const warnings = quality.warnings ?? [];
+  res.setHeader('X-Presentation-Quality-Result', quality.report?.result || 'NOT_REVIEWED');
+  res.setHeader('X-Presentation-Quality-Warning-Count', String(warnings.length));
+  res.setHeader('X-Presentation-Quality-Warnings', encodeURIComponent(JSON.stringify(warnings)));
+  res.setHeader(
+    'Access-Control-Expose-Headers',
+    'X-Presentation-Quality-Result, X-Presentation-Quality-Warning-Count, X-Presentation-Quality-Warnings'
+  );
 }

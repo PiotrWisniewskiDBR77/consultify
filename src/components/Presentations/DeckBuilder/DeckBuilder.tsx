@@ -1024,7 +1024,12 @@ const DeckBuilderForDeck: React.FC = () => {
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
-        await exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format });
+        const result = await exportPresentationDeck({
+          deckId: deck.deck_id,
+          title: deck.title,
+          format,
+        });
+        if (result.warnings.length > 0) setReviewPanelOpen(true);
         toast.success(t('presentations.exportedAs', { format: format.toUpperCase() }));
       } catch (err: any) {
         // U-43/DEC-543: the front no longer decides whether an export may run.
@@ -1582,7 +1587,9 @@ const DeckBuilderForDeck: React.FC = () => {
               'Present from beginning'
             ),
             presenter: t('presentations.builder.present.presenterView', 'Presenter view'),
+            exportPptx: t('presentations.builder.export.pptx', 'Export PPTX'),
           }}
+          onExportPptx={() => void handleExport('pptx')}
           topBarHandlers={{
             onTheme: () => setThemeSwitcherOpen(true),
             onHistory: () => setVersionHistoryOpen((v) => !v),
@@ -1819,7 +1826,9 @@ const DeckBuilderForDeck: React.FC = () => {
                     displayMode="embedded"
                     totalSlides={deck?.cards.length}
                     onJumpToCard={setActiveCardIndex}
-                    onFixWithAi={(cardIndex) => void handleRewriteCard(cardIndex)}
+                    onFixWithAi={(cardIndex, instruction) =>
+                      void handleRewriteCard(cardIndex, instruction)
+                    }
                   />
                 }
               />
@@ -2031,7 +2040,9 @@ const DeckBuilderForDeck: React.FC = () => {
                   totalSlides={deck?.cards.length}
                   onClose={() => setReviewPanelOpen(false)}
                   onJumpToCard={setActiveCardIndex}
-                  onFixWithAi={(cardIndex) => void handleRewriteCard(cardIndex)}
+                  onFixWithAi={(cardIndex, instruction) =>
+                    void handleRewriteCard(cardIndex, instruction)
+                  }
                 />
               ) : null}
               <ShareAnalyticsPanel
@@ -2339,7 +2350,9 @@ const DeckBuilderForDeck: React.FC = () => {
             totalSlides={deck?.cards.length}
             onClose={() => setReviewPanelOpen(false)}
             onJumpToCard={setActiveCardIndex}
-            onFixWithAi={(cardIndex) => void handleRewriteCard(cardIndex)}
+            onFixWithAi={(cardIndex, instruction) =>
+              void handleRewriteCard(cardIndex, instruction)
+            }
           />
 
           {/* G3: Share Analytics Panel */}

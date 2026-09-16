@@ -71,6 +71,7 @@ export interface DeckBuilderTopBarChipsLabels {
   runFromCurrent?: string;
   runFromStart?: string;
   presenter?: string;
+  exportPptx?: string;
 }
 
 export interface DeckBuilderTopBarChipsHandlers {
@@ -136,6 +137,7 @@ const DEFAULT_LABELS: Required<Omit<DeckBuilderTopBarChipsLabels, 'internalLabel
   runFromCurrent: 'From current slide',
   runFromStart: 'Present from beginning',
   presenter: 'Presenter view',
+  exportPptx: 'Export PPTX',
 };
 
 const VERDICT_TONE: Record<NonNullable<DeckGovernanceVerdict>, TopBarChipDotTone> = {
