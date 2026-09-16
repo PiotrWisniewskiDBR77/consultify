@@ -85,6 +85,12 @@ const FLAGS = {
     localStorage: 'ff.results_vnext_legacy_archive',
     env: 'VITE_RESULTS_VNEXT_LEGACY_ARCHIVE_ENABLED',
   },
+  /** U-41 / KPI-1 usability repair; default-OFF until visual acceptance. */
+  kpiUsabilityU41: {
+    query: 'ff_resultsVNextKpiUsabilityU41',
+    localStorage: 'ff.results_vnext_kpi_usability_u41',
+    env: 'VITE_RESULTS_VNEXT_KPI_USABILITY_U41',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsVNextFlag = keyof typeof FLAGS;
@@ -183,7 +189,7 @@ export function isResultsVNextFlagEnabled(
   // zostaje nietknięty — to jest właśnie ścieżka, którą właściciel ma
   // obejrzeć ekran świadomie. Po akcepcie: skasować ten wyjątek jednym
   // commitem (i wtedy zakładka wejdzie na demo razem z resztą profilu).
-  const wyjetyZProfiluDemo = flag === 'resultsLegacyArchive';
+  const wyjetyZProfiluDemo = flag === 'resultsLegacyArchive' || flag === 'kpiUsabilityU41';
   if (!wyjetyZProfiluDemo && isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
@@ -207,6 +213,7 @@ export function isResultsVNextFlagEnabled(
   // OFF. resultsLegacyArchive: jawnie wyjęty spod profilu demo wyżej, czeka
   // na odrębny odbiór.
   if (flag === 'resultsLegacyArchive') return false;
+  if (flag === 'kpiUsabilityU41') return false;
   return false;
 }
 

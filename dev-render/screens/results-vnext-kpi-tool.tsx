@@ -58,6 +58,7 @@ OrganizationApi.getOrganizationMembers = (async () => [
 ]) as typeof OrganizationApi.getOrganizationMembers;
 
 const params = new URLSearchParams(window.location.search);
+const isPolishHarness = (params.get('lang') || 'pl').startsWith('pl');
 const view = params.get('view') === 'case' ? 'case' : 'tool';
 const state = params.get('state') || 'ready';
 const caseState = params.get('caseState') || 'open';
@@ -65,10 +66,13 @@ const severity = params.get('severity') === 'critical' ? 'critical' : 'warning';
 const escalated = params.get('escalated') === '1';
 const suppressImpacts = params.get('impacts') === '0';
 const flagOff = params.get('ff') === 'off';
+const registryFailure = params.get('registry');
+const kpiStatus = params.get('kpiStatus') === 'suspended' ? 'suspended' : 'active';
 
 if (!flagOff) {
   try {
     window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
+    window.localStorage.setItem('ff.results_vnext_kpi_usability_u41', '1');
   } catch {
     // no-op — dev-render only
   }
@@ -77,14 +81,55 @@ if (!flagOff) {
 const KPI_ID = 'kpi-1';
 const CASE_ID = 'case-1';
 
+// KPI-1 / U-41 visual proof: the production picker reads both initiative
+// registries. Keep the browser fixture at the transport boundary so the
+// screenshot exercises the same merge-and-name path as the application.
+const realFetch = window.fetch.bind(window);
+window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  if (url.includes('/api/initiatives/runtime-v1/initiatives')) {
+    if (registryFailure === 'runtime-error') return new Response('{}', { status: 503 });
+    return new Response(
+      JSON.stringify({
+        initiatives: [
+          {
+            initiative: {
+              initiativeId: 'init-linia-modernizacja',
+              title: 'Packaging line modernization',
+            },
+          },
+        ],
+        nextCursor: null,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  if (url.endsWith('/api/initiatives')) {
+    if (registryFailure === 'legacy-error') return new Response('{}', { status: 503 });
+    return new Response(
+      JSON.stringify([
+        { id: 'init-energy', title: 'Plant energy optimization' },
+      ]),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  if (url.includes('/api/action-cards?')) {
+    return new Response(JSON.stringify({ cards: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  return realFetch(input, init);
+}) as typeof window.fetch;
+
 const KPI = {
   kpiId: KPI_ID,
   organizationId: 'org-dbr77-demo',
   kpiCode: 'OEE-LINIA-PAKOWANIA',
-  status: 'active' as const,
+  status: kpiStatus,
   currentDefinitionVersionId: 'ver-1',
-  primaryProcessId: 'proc-produkcja-1',
-  responsePolicyId: 'policy-1',
+  primaryProcessId: isPolishHarness ? 'Pakowanie i wysyłka' : 'Packaging and dispatch',
+  responsePolicyId: isPolishHarness ? 'Cotygodniowy przegląd odchyleń' : 'Weekly deviation review',
   ownerUserId: 'user-piotr-demo',
   rowVersion: 3,
   createdBy: 'user-piotr-demo',
@@ -109,7 +154,7 @@ const DEFINITION_VERSION = {
   kpiId: KPI_ID,
   organizationId: 'org-dbr77-demo',
   versionNumber: 1,
-  name: 'OEE linii pakowania',
+  name: isPolishHarness ? 'OEE linii pakowania' : 'Packaging line OEE',
   description: 'Ogólna efektywność wyposażenia (OEE) linii pakowania — dostępność × wydajność × jakość.',
   unit: '%',
   targetGeometry: 'threshold_min' as const,

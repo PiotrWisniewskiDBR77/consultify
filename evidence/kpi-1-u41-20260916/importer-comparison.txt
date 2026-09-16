@@ -1,0 +1,14 @@
+base_unique_failing_names=26
+candidate_unique_failing_names=21
+new_failing_names=0
+resolved_failing_names=5
+
+[new]
+(none)
+
+[resolved]
+tests/components/ResultsVNext/KpiToolPage.test.tsx > KpiToolPage — /results/kpi/:kpiId (klasa L full tool) > Deviations section lists the real case and clicking it requests navigation to the exact subview route
+tests/components/ResultsVNext/KpiToolPage.test.tsx > KpiToolPage — /results/kpi/:kpiId (klasa L full tool) > enables activation when the current definition version is approved
+tests/components/ResultsVNext/KpiToolPage.test.tsx > KpiToolPage — /results/kpi/:kpiId (klasa L full tool) > golden flow renders with NO explicit flag override — this is now the default path
+tests/components/ResultsVNext/KpiToolPage.test.tsx > KpiToolPage — /results/kpi/:kpiId (klasa L full tool) > golden flow: loads the KPI, shows real latest measurement, performance+data-quality shown as two independent chips
+tests/components/ResultsVNext/KpiToolPage.test.tsx > KpiToolPage — /results/kpi/:kpiId (klasa L full tool) > shows an honest error state with Retry when the KPI fetch fails, and Retry re-fetches

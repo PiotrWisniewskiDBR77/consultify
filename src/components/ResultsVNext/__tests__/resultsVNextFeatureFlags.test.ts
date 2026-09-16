@@ -128,6 +128,17 @@ describe('isResultsVNextFlagEnabled', () => {
     });
   });
 
+  describe('kpiUsabilityU41', () => {
+    it('stays OFF by default and supports an explicit local review opt-in', () => {
+      expect(isResultsVNextFlagEnabled('kpiUsabilityU41')).toBe(false);
+      window.localStorage.setItem(RESULTS_VNEXT_FLAG_KEYS.kpiUsabilityU41.localStorage, '1');
+      expect(isResultsVNextFlagEnabled('kpiUsabilityU41')).toBe(true);
+      expect(RESULTS_VNEXT_FLAG_KEYS.kpiUsabilityU41.env).toBe(
+        'VITE_RESULTS_VNEXT_KPI_USABILITY_U41'
+      );
+    });
+  });
+
   describe('resultsVNextHostAllowsDefaultOn', () => {
     it('is true off public production and false on it — the guard kpiRegistry now uses', () => {
       expect(resultsVNextHostAllowsDefaultOn('localhost')).toBe(true);

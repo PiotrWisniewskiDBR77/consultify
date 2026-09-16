@@ -99,6 +99,10 @@ import { ActionCardList } from '@/components/standard/ActionCardList';
 import type { ActionCardModel } from '@/components/standard/ActionCard.types';
 import { closeActionCard, reopenActionCard, createTaskFromActionCard, listActionCards } from '@/services/actionCards';
 import { EmptyState } from '@/components/shared/states';
+import {
+  listLegacyInitiatives,
+  listRegisteredInitiatives,
+} from '@/services/initiatives-execution/runtimeApi';
 
 import { HonestValueCell } from '../HonestValue';
 import {
@@ -229,6 +233,12 @@ function formatDate(iso: string | null | undefined, isPolish: boolean): string {
   return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function deviationCaseName(kase: DeviationCaseDto, isPolish: boolean): string {
+  const severity = deviationSeverityLabel(kase.severity, isPolish);
+  const detected = formatDate(kase.detectedAt, isPolish);
+  return isPolish ? `Odchylenie ${severity} · ${detected}` : `${severity} deviation · ${detected}`;
+}
+
 function honestNumber(value: number | null, isPolish: boolean): React.ReactNode {
   return <HonestValueCell isPolish={isPolish} value={value} align="right" />;
 }
@@ -300,6 +310,7 @@ export const KpiToolPage: React.FC = () => {
   const navigate = useNavigate();
   const { kpiId } = useParams<{ kpiId: string }>();
   const enabled = isResultsVNextFlagEnabled('kpiRegistry');
+  const kpiU41Enabled = isResultsVNextFlagEnabled('kpiUsabilityU41');
 
   // ── POZIOM 3 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05) ──
   // Karta N wskaźnika otwarta Z LISTY ZESTAWIENIA (poziom 2) niesie id tego
@@ -368,6 +379,12 @@ export const KpiToolPage: React.FC = () => {
   const [historyEntries, setHistoryEntries] = useState<KpiHistoryEntryDto[] | 'loading'>('loading');
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [impactBusy, setImpactBusy] = useState(false);
+  const [initiativeChoices, setInitiativeChoices] = useState<Array<{ id: string; name: string }> | 'loading'>(
+    kpiU41Enabled ? 'loading' : []
+  );
+  const [initiativeRegistryFailures, setInitiativeRegistryFailures] = useState<
+    Array<'runtime' | 'legacy'>
+  >([]);
 
   // "Record reviewed attribution" dialog (replaces `window.prompt` — RN-G3
   // prompt-removal pass, 2026-08-11, extended scope). Kept OUTSIDE
@@ -527,6 +544,48 @@ export const KpiToolPage: React.FC = () => {
     if (!enabled) return;
     loadInitiativeImpacts();
   }, [enabled, loadInitiativeImpacts]);
+
+  const loadInitiativeChoices = useCallback(async () => {
+    if (!enabled || !kpiU41Enabled) return;
+    setInitiativeChoices('loading');
+    setInitiativeRegistryFailures([]);
+    const [runtimeResult, legacyResult] = await Promise.allSettled([
+      listRegisteredInitiatives(),
+      listLegacyInitiatives(),
+    ]);
+    const failures: Array<'runtime' | 'legacy'> = [];
+    if (runtimeResult.status === 'rejected') failures.push('runtime');
+    if (legacyResult.status === 'rejected') failures.push('legacy');
+    const byId = new Map<string, string>();
+    if (runtimeResult.status === 'fulfilled') {
+      for (const record of runtimeResult.value.initiatives) {
+        byId.set(record.initiative.initiativeId, record.initiative.title);
+      }
+    }
+    if (legacyResult.status === 'fulfilled') {
+      for (const row of legacyResult.value) {
+        const name = row.name?.trim() || row.title?.trim();
+        if (name && !byId.has(row.id)) byId.set(row.id, name);
+      }
+    }
+    setInitiativeRegistryFailures(failures);
+    setInitiativeChoices(
+      [...byId.entries()]
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    );
+  }, [enabled, kpiU41Enabled]);
+
+  useEffect(() => {
+    void loadInitiativeChoices();
+  }, [loadInitiativeChoices]);
+
+  useEffect(() => {
+    if (!enabled || !kpiU41Enabled) return;
+    console.info(
+      '[KpiToolPage] Corrective actions are read per deviation case; no aggregate corrective-actions endpoint is available.'
+    );
+  }, [enabled, kpiU41Enabled]);
 
   useEffect(() => {
     if (!enabled || !kpiId) return;
@@ -997,6 +1056,11 @@ export const KpiToolPage: React.FC = () => {
   // ONLY thing the H1 ever shows.
   const kpiTitle =
     (definitionVersion !== 'loading' && definitionVersion?.name) || kpi.name || kpi.kpiCode;
+  const initiativeNameById = new Map<string, string>(
+    initiativeChoices === 'loading'
+      ? []
+      : initiativeChoices.map((initiative) => [initiative.id, initiative.name])
+  );
 
   const header: NModeHeaderConfig = {
     title: kpiTitle,
@@ -1025,13 +1089,15 @@ export const KpiToolPage: React.FC = () => {
         : [],
   };
 
-  // `process`/`responsePolicy` stay raw ids on purpose — grepped
+  // `process`/`responsePolicy` have no backing registry/table — grepped
   // `resultsVnextKpi.validators.ts`/`kpiTypes.ts`/`KpiDraftFormModal.tsx`:
   // both are free-form strings with NO backing registry/table anywhere in
   // production (no processes/policies list, no name join, no picker), unlike
   // `ownerUserId` (real org members) or `currentDefinitionVersionId` (real
   // `GET /kpi/:kpiId/version` join, already fetched into `definitionVersion`
-  // below for the Contract section) — showing a name here would be invented.
+  // below for the Contract section). The fields are free-form strings, so U-41
+  // shows their complete business labels when the writer stored labels; it
+  // does not pretend that an opaque id has a resolvable name.
   const definitionVersionDisplay =
     definitionVersion && definitionVersion !== 'loading' &&
     definitionVersion.definitionVersionId === kpi.currentDefinitionVersionId
@@ -1040,8 +1106,8 @@ export const KpiToolPage: React.FC = () => {
 
   const propertyRows: ArtifactPropertyRow[] = [
     { id: 'owner', label: t('Właściciel', 'Owner'), value: resolveMemberName(kpi.ownerUserId) },
-    { id: 'process', label: t('Proces', 'Process'), value: shortId(kpi.primaryProcessId) },
-    { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: shortId(kpi.responsePolicyId) },
+    { id: 'process', label: t('Proces', 'Process'), value: kpiU41Enabled ? (kpi.primaryProcessId ?? '—') : shortId(kpi.primaryProcessId) },
+    { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: kpiU41Enabled ? (kpi.responsePolicyId ?? '—') : shortId(kpi.responsePolicyId) },
     { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
     {
       id: 'cardSets',
@@ -1457,7 +1523,9 @@ export const KpiToolPage: React.FC = () => {
                   data-testid={`kpi-deviation-case-row-${c.caseId}`}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-c-text">{shortId(c.caseId)}</span>
+                    <span className="text-xs font-medium text-c-text">
+                      {kpiU41Enabled ? deviationCaseName(c, isPolish) : shortId(c.caseId)}
+                    </span>
                     <StatusChip label={deviationCaseStatusLabel(c.status, isPolish)} tone={DEVIATION_CASE_STATUS_TONE[c.status]} />
                     <StatusChip label={deviationSeverityLabel(c.severity, isPolish)} tone={DEVIATION_SEVERITY_TONE[c.severity]} />
                     {c.escalated ? <StatusChip label={escalatedOverlayLabel(isPolish)} tone="danger" /> : null}
@@ -1510,7 +1578,11 @@ export const KpiToolPage: React.FC = () => {
             {initiativeImpacts.map((imp) => (
               <li key={imp.impactId} className="rounded-xl border border-c-border-subtle p-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs font-medium text-c-text">{shortId(imp.initiativeId)}</span>
+                  <span className="text-xs font-medium text-c-text">
+                    {kpiU41Enabled
+                      ? (initiativeNameById.get(imp.initiativeId) ?? t('Nieznana inicjatywa', 'Unknown initiative'))
+                      : shortId(imp.initiativeId)}
+                  </span>
                   <StatusChip label={initiativeKpiImpactStatusLabel(imp.status, isPolish)} tone={INITIATIVE_KPI_IMPACT_STATUS_TONE[imp.status]} />
                 </div>
                 <p className="mt-1 text-[11px] text-c-text-muted">
@@ -1571,13 +1643,50 @@ export const KpiToolPage: React.FC = () => {
 
         <div className="rounded-xl border border-c-border-subtle p-4 space-y-2">
           <p className={LABEL_CLASS}>{t('Zaproponuj wpływ inicjatywy', 'Propose an initiative impact')}</p>
-          <input
-            value={proposeInitiativeId}
-            onChange={(e) => setProposeInitiativeId(e.target.value)}
-            placeholder={t('ID inicjatywy', 'Initiative id')}
-            className={FIELD_CLASS}
-            data-testid="kpi-tool-propose-initiative-id"
-          />
+          {kpiU41Enabled && initiativeRegistryFailures.length > 0 ? (
+            <div role="alert" className="rounded-lg border border-c-warning/30 bg-c-warning/10 p-3 text-xs text-c-text-secondary">
+              <p>
+                {initiativeRegistryFailures.length === 2
+                  ? t('Nie udało się wczytać rejestrów inicjatyw.', 'Could not load the initiative registries.')
+                  : initiativeRegistryFailures[0] === 'runtime'
+                    ? t('Nie udało się wczytać bieżącego rejestru inicjatyw.', 'Could not load the current initiative registry.')
+                    : t('Nie udało się wczytać starszego rejestru inicjatyw.', 'Could not load the legacy initiative registry.')}
+              </p>
+              <button type="button" className={`${GHOST_BUTTON_CLASS} mt-2`} onClick={() => void loadInitiativeChoices()}>
+                {t('Spróbuj ponownie', 'Retry')}
+              </button>
+            </div>
+          ) : null}
+          {kpiU41Enabled ? (
+            <select
+              value={proposeInitiativeId}
+              onChange={(e) => setProposeInitiativeId(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="kpi-tool-propose-initiative-id"
+              disabled={initiativeChoices === 'loading' || initiativeChoices.length === 0}
+            >
+              <option value="">
+                {initiativeChoices === 'loading'
+                  ? t('Ładowanie inicjatyw…', 'Loading initiatives…')
+                  : initiativeChoices.length === 0
+                    ? t('Brak dostępnych inicjatyw', 'No initiatives available')
+                    : t('Wybierz inicjatywę', 'Select an initiative')}
+              </option>
+              {initiativeChoices !== 'loading'
+                ? initiativeChoices.map((initiative) => (
+                    <option key={initiative.id} value={initiative.id}>{initiative.name}</option>
+                  ))
+                : null}
+            </select>
+          ) : (
+            <input
+              value={proposeInitiativeId}
+              onChange={(e) => setProposeInitiativeId(e.target.value)}
+              placeholder={t('ID inicjatywy', 'Initiative id')}
+              className={FIELD_CLASS}
+              data-testid="kpi-tool-propose-initiative-id"
+            />
+          )}
           <div className="grid grid-cols-2 gap-2">
             <input
               value={proposeContributionValue}
@@ -1664,12 +1773,14 @@ export const KpiToolPage: React.FC = () => {
     alwaysShow: true,
     component: (
       <div className="space-y-3">
-        <GapNotice>
-          {t(
-            'Brak zbiorczego GET dla działań korygujących ponad wszystkimi sprawami tego KPI (kpiDeviationRepository.listCorrectiveActions istnieje, ale żaden route go nie wystawia — patrz kpiDeviation.routes.ts, sekcja „DESIGN NOTE"). Działania żyją WEWNĄTRZ każdej sprawy odchylenia — otwórz sprawę poniżej.',
-            'No aggregate GET exists for corrective actions across this KPI\'s cases (kpiDeviationRepository.listCorrectiveActions exists but no route exposes it — see kpiDeviation.routes.ts "DESIGN NOTE"). Actions live INSIDE each deviation case — open a case below.'
-          )}
-        </GapNotice>
+        {!kpiU41Enabled ? (
+          <GapNotice>
+            {t(
+              'Brak zbiorczego GET dla działań korygujących ponad wszystkimi sprawami tego KPI (kpiDeviationRepository.listCorrectiveActions istnieje, ale żaden route go nie wystawia — patrz kpiDeviation.routes.ts, sekcja „DESIGN NOTE"). Działania żyją WEWNĄTRZ każdej sprawy odchylenia — otwórz sprawę poniżej.',
+              'No aggregate GET exists for corrective actions across this KPI\'s cases (kpiDeviationRepository.listCorrectiveActions exists but no route exposes it — see kpiDeviation.routes.ts "DESIGN NOTE"). Actions live INSIDE each deviation case — open a case below.'
+            )}
+          </GapNotice>
+        ) : null}
         {Array.isArray(deviationCases) && deviationCases.filter((c) => c.status !== 'closed').length > 0 ? (
           <ul className="space-y-1.5">
             {deviationCases
@@ -1682,7 +1793,7 @@ export const KpiToolPage: React.FC = () => {
                     onClick={() => navigate(`${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`)}
                   >
                     {t('Otwórz sprawę ', 'Open case ')}
-                    {shortId(c.caseId)} ({deviationCaseStatusLabel(c.status, isPolish)})
+                    {kpiU41Enabled ? deviationCaseName(c, isPolish) : shortId(c.caseId)} ({deviationCaseStatusLabel(c.status, isPolish)})
                   </button>
                 </li>
               ))}
@@ -1841,7 +1952,7 @@ export const KpiToolPage: React.FC = () => {
       : kpi.status === 'active'
         ? 'TRACKING'
         : kpi.status === 'suspended'
-          ? 'BLOCKED'
+          ? kpiU41Enabled ? 'PENDING_REVIEW' : 'BLOCKED'
           : 'DRAFT';
 
   return (
@@ -1855,7 +1966,7 @@ export const KpiToolPage: React.FC = () => {
       testId="results-vnext-kpi-tool-chrome"
     >
     <div className="flex h-full min-h-0 flex-col" data-testid="results-vnext-kpi-tool-page">
-      <ArtifactBreadcrumb items={breadcrumbItems} />
+      {!kpiU41Enabled ? <ArtifactBreadcrumb items={breadcrumbItems} /> : null}
       <PasekZapisuAI stan={zapisAI.stan} isPolish={isPolish} onZamknij={zapisAI.wyczysc} />
       <div className="min-h-0 flex-1">
       <NModeShell
