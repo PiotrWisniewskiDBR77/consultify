@@ -10698,6 +10698,7 @@
       }
     },
     "drd": {
+      "level": "Poziom",
       "whyThisMatters": {
         "title": "Dlaczego o to pytamy",
         "ariaLabel": "Dlaczego to pytanie"
@@ -10986,6 +10987,8 @@
         "decision": "Decyzja dla poziomu {{level}}",
         "saving": "Zapisywanie…",
         "saveNext": "Zapisz i przejdź dalej",
+        "saveFailed": "Nie udało się zapisać tego poziomu. Twoja odpowiedź pozostała w polu. Spróbuj ponownie.",
+        "helpTaskFailed": "Decyzja została zapisana, ale nie udało się utworzyć zadania pomocy. Powiadom właściciela dowodu.",
         "helpTaskTitle": "Potrzebny dowód: {{area}}, poziom {{level}}",
         "helpTaskDescription": "Rozwiąż otwarte pytanie o dowód dla sesji DRD {{sessionId}}, obszaru {{area}}, poziomu {{level}}.",
         "helpBlocker": "Otwarte prośby o pomoc z dowodem: {{count}}"

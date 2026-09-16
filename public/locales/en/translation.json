@@ -11549,6 +11549,7 @@
       }
     },
     "drd": {
+      "level": "Level",
       "whyThisMatters": {
         "title": "Why we ask this",
         "ariaLabel": "Why this question"
@@ -11835,6 +11836,8 @@
         "decision": "Level {{level}} decision",
         "saving": "Saving…",
         "saveNext": "Save & next level",
+        "saveFailed": "We could not save this level. Your answer remains in the field. Try again.",
+        "helpTaskFailed": "Your decision was saved, but the help task could not be created. Please notify the evidence owner.",
         "helpTaskTitle": "Evidence needed: {{area}}, level {{level}}",
         "helpTaskDescription": "Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.",
         "helpBlocker": "{{count}} open evidence help request(s)"

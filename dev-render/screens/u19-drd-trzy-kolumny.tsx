@@ -47,7 +47,7 @@ export default function U19DrdTrzyKolumnyScreen(): React.ReactElement {
     readiness={readiness} mode="guided_manual" onModeChange={() => {}} onExit={() => {}}
     saveState="CLEAN" saveLastSavedAt={null} saveErrorMessage={null} onSaveNow={() => {}} onSaveRetry={() => {}} onSaveStay={() => {}}
     viewMode="interview" onViewModeChange={() => {}}
-    navigatorProps={{ nodes: buildNavigatorNodes(events, 'en'), activeUnitId: AREA_ID, onSelect: () => {} }}
+    navigatorProps={{ nodes: buildNavigatorNodes(events, 'en', { includeAreaMaxLevel: true }), activeUnitId: AREA_ID, onSelect: () => {} }}
     interviewProps={{} as never} teresaProps={{} as never} matrixProps={{} as never} reportContent={null}
     interviewContent={<DrdLevelInterviewWorkspace
       axis={axis} area={area} levels={levels} questions={questions} events={events}
@@ -55,6 +55,6 @@ export default function U19DrdTrzyKolumnyScreen(): React.ReactElement {
       answerText={answer} canWrite onAnswerChange={(_questionId, text) => setAnswer(text)} onSelectLevel={setSelectedLevel}
       onSaveDecision={saveDecision} onEvidenceDrop={() => {}} onAskTeresa={() => {}}
     />}
-    aiButton={<button type="button" className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary"><Sparkles size={13}/>{t('toolContextPanel.workWithAi')}</button>}
+    aiButton={<button type="button" className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary"><Sparkles size={13}/>{t('discoveryToolsMain.toolContextPanel.workWithAi')}</button>}
   /></div>;
 }

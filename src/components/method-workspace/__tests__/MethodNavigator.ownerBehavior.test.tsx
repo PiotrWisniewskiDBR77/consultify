@@ -35,6 +35,18 @@ const nodes = [
 ];
 
 describe('MethodNavigator — owner-approved compact axis navigation', () => {
+  it('shows current/max for DRD areas instead of mistaking target for the denominator', () => {
+    const drdNodes = [
+      node('axis-1', 'Digital Processes', null, 1),
+      { ...node('1A', 'Sales Processes', 'axis-1', 1), currentLevel: 1, targetLevel: 5, maxLevel: 7 },
+    ];
+    render(<MethodNavigator nodes={drdNodes} activeUnitId="1A" onSelect={vi.fn()} />);
+
+    const area = screen.getByRole('treeitem', { name: /Sales Processes/ });
+    expect(area).toHaveTextContent('1 / 7');
+    expect(area).not.toHaveTextContent('1 / 5');
+  });
+
   it('expands only the root containing the active area', () => {
     render(<MethodNavigator nodes={nodes} activeUnitId="1A" onSelect={vi.fn()} />);
 

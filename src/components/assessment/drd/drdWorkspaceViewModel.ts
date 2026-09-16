@@ -156,7 +156,8 @@ export function unitAnswerStates(
  */
 export function buildNavigatorNodes(
   events: readonly MethodEvent[],
-  lang: DrdPackLanguage = currentDrdPackLanguage()
+  lang: DrdPackLanguage = currentDrdPackLanguage(),
+  options: { includeAreaMaxLevel?: boolean } = {}
 ): MethodNavigatorNode[] {
   const pack = getDrdPack(lang);
   const poPolsku = lang === 'pl';
@@ -202,6 +203,9 @@ export function buildNavigatorNodes(
         parentId: `axis-${axis.id}`,
         order: idx,
         currentLevel: progression.currentLevel,
+        ...(options.includeAreaMaxLevel
+          ? { maxLevel: Math.max(...area.levels.map((level) => level.level)) }
+          : {}),
         targetLevel: target,
         evidenceState: evidenceStateFor(events, area.id, progression.blockedAtLevel),
         answerRollup: rollupAnswerState(unitAnswerStates(events, area.id)),

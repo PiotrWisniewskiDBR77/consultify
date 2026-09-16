@@ -9,6 +9,29 @@ import { nazwaWJezyku } from './drdNazwa';
 
 export type DrdLevelDecision = 'yes' | 'no' | 'help';
 
+export class DrdHelpTaskAfterDecisionError extends Error {
+  constructor(cause?: unknown) {
+    super('DRD_HELP_TASK_FAILED_AFTER_DECISION', { cause });
+    this.name = 'DrdHelpTaskAfterDecisionError';
+  }
+}
+
+export async function persistDrdLevelDecision(input: {
+  decision: DrdLevelDecision;
+  recordAnswer: () => Promise<void>;
+  createHelpTask?: () => Promise<void>;
+}): Promise<void> {
+  // The assessment event is the source of truth. A secondary task must never
+  // be allowed to fail first and erase the consultant's level decision.
+  await input.recordAnswer();
+  if (input.decision !== 'help' || !input.createHelpTask) return;
+  try {
+    await input.createHelpTask();
+  } catch (error) {
+    throw new DrdHelpTaskAfterDecisionError(error);
+  }
+}
+
 const HELP_MARKER = '[DRD_NEED_HELP]';
 
 export function drdLevelDecisions(events: readonly MethodEvent[], unitId: string): Map<number, DrdLevelDecision> {
@@ -82,6 +105,7 @@ export function DrdLevelInterviewWorkspace({
   const isPolish = (i18n.language || 'en').toLowerCase().startsWith('pl');
   const [decision, setDecision] = useState<DrdLevelDecision | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<'save' | 'helpTask' | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const decisions = useMemo(() => drdLevelDecisions(events, area.id), [events, area.id]);
   const level = levels.find((item) => item.level === selectedLevel) ?? levels[0];
@@ -97,9 +121,12 @@ export function DrdLevelInterviewWorkspace({
   const save = async () => {
     if (!decision || !canWrite) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await onSaveDecision(decision, answerText);
       setDecision(null);
+    } catch (error) {
+      setSaveError(error instanceof DrdHelpTaskAfterDecisionError ? 'helpTask' : 'save');
     } finally {
       setSaving(false);
     }
@@ -187,6 +214,13 @@ export function DrdLevelInterviewWorkspace({
             </div></div>
             <button type="button" disabled={!decision || saving || !canWrite} onClick={() => void save()} className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}>{saving ? t('assessment.drd.levelInterview.saving', 'Saving…') : t('assessment.drd.levelInterview.saveNext', 'Save & next level')}</button>
           </div>
+          {saveError && (
+            <p className="mt-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert" data-testid="drd-level-save-error">
+              {saveError === 'helpTask'
+                ? t('assessment.drd.levelInterview.helpTaskFailed', 'Your decision was saved, but the help task could not be created. Please notify the evidence owner.')
+                : t('assessment.drd.levelInterview.saveFailed', 'We could not save this level. Your answer remains in the field. Try again.')}
+            </p>
+          )}
         </div>
       </div>
     </div>

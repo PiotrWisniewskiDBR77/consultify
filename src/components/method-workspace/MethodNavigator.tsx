@@ -130,7 +130,11 @@ const NodeRow: React.FC<{
         {isLeaf && (
           <span className="shrink-0 text-[10px] text-c-text-muted tabular-nums">
             {node.currentLevel ?? '—'}
-            {node.targetLevel !== null ? ` / ${node.targetLevel}` : ''}
+            {node.maxLevel != null
+              ? ` / ${node.maxLevel}`
+              : node.targetLevel !== null
+                ? ` / ${node.targetLevel}`
+                : ''}
           </span>
         )}
         {isLeaf && node.openQuestionCount > 0 && (

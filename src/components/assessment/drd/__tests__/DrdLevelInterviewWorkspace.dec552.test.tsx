@@ -3,10 +3,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MethodEvent, MethodLevel, MethodQuestion } from '@/method-core/contracts';
+import { buildNavigatorNodes } from '../drdWorkspaceViewModel';
 import {
   DRD_HELP_JUSTIFICATION_MARKER,
+  DrdHelpTaskAfterDecisionError,
   DrdLevelInterviewWorkspace,
   drdLevelDecisions,
+  persistDrdLevelDecision,
   pickDrdEvidenceOwnerId,
 } from '../DrdLevelInterviewWorkspace';
 
@@ -40,6 +43,18 @@ const baseProps = {
 };
 
 describe('DRD-2 DEC-552 level interview', () => {
+  it('preserves current/target nodes by default and adds Sales Processes max=7 only for V2', () => {
+    const off = buildNavigatorNodes([event(1, 'confirmed')], 'en');
+    const on = buildNavigatorNodes([event(1, 'confirmed')], 'en', { includeAreaMaxLevel: true });
+
+    expect(off.find((node) => node.unitId === '1A')).not.toHaveProperty('maxLevel');
+    expect(on.find((node) => node.unitId === '1A')).toMatchObject({
+      name: 'Sales Processes',
+      currentLevel: 1,
+      maxLevel: 7,
+    });
+  });
+
   it('projects the last Yes/No/Help decision per level', () => {
     const result = drdLevelDecisions([
       event(1, 'confirmed'), event(2, 'no'), event(2, 'dont_know', `${DRD_HELP_JUSTIFICATION_MARKER} owner task`),
@@ -71,5 +86,39 @@ describe('DRD-2 DEC-552 level interview', () => {
 
     rerender(<DrdLevelInterviewWorkspace {...baseProps} events={[event(2, 'no')]} selectedLevel={2} />);
     expect(screen.getByRole('button', { name: /L3/ })).toBeDisabled();
+  });
+
+  it('keeps the answer visible and explains a failed save', async () => {
+    const onSaveDecision = vi.fn(async () => {
+      throw new Error('network down');
+    });
+    render(<DrdLevelInterviewWorkspace {...baseProps} onSaveDecision={onSaveDecision} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save & next level' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'We could not save this level. Your answer remains in the field. Try again.'
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('Northwind evidence');
+  });
+
+  it('records Help before creating its task and preserves the decision when the task fails', async () => {
+    const calls: string[] = [];
+
+    await expect(
+      persistDrdLevelDecision({
+        decision: 'help',
+        recordAnswer: async () => {
+          calls.push('recordAnswer');
+        },
+        createHelpTask: async () => {
+          calls.push('POST /tasks');
+          throw new Error('task service unavailable');
+        },
+      })
+    ).rejects.toBeInstanceOf(DrdHelpTaskAfterDecisionError);
+
+    expect(calls).toEqual(['recordAnswer', 'POST /tasks']);
   });
 });

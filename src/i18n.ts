@@ -88,6 +88,10 @@ export const LANGUAGE_DIRECTION: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
  */
 const zapamietanyJezykKonta = readStoredAccountLanguage();
 
+export const warnMissingTranslationKey = (languages: readonly string[], namespace: string, key: string): void => {
+  console.warn(`[i18n] Missing translation key: ${namespace}:${key} (${languages.join(', ') || 'unknown language'})`);
+};
+
 i18n
   .use(HttpBackend)
   .use(LanguageDetector)
@@ -126,6 +130,10 @@ i18n
     // IMPORTANT: i18next debug logs (especially missingKey) can significantly slow down the app.
     // Keep it OFF by default. Enable explicitly via: VITE_I18N_DEBUG=true
     debug: import.meta.env.VITE_I18N_DEBUG === 'true',
+    // Development must expose a raw-key regression at the moment it renders.
+    // Production stays quiet; the focused parity tests remain the release gate.
+    saveMissing: import.meta.env.DEV,
+    missingKeyHandler: import.meta.env.DEV ? warnMissingTranslationKey : undefined,
     returnNull: false,
     returnEmptyString: false,
 

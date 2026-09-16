@@ -64,6 +64,8 @@ export interface MethodNavigatorNode {
   readonly parentId: string | null;
   readonly order: number;
   readonly currentLevel: number | null;
+  /** Method-specific upper bound used for honest current/max progress (for example DRD 1/7). */
+  readonly maxLevel?: number | null;
   readonly targetLevel: number | null;
   readonly evidenceState: MethodEvidenceState;
   /**

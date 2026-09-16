@@ -46,6 +46,7 @@ import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
 import {
   DRD_HELP_JUSTIFICATION_MARKER,
+  persistDrdLevelDecision,
   DrdLevelInterviewWorkspace,
   drdLevelDecisions,
   pickDrdEvidenceOwnerId,
@@ -668,10 +669,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    *  plakietka pytań i poziom ogniskowy Wywiadu). */
   const sesjaZamrozona = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
   const navigatorNodes = useMemo(() => {
-    const nodes = buildNavigatorNodes(events);
+    const nodes = buildNavigatorNodes(events, undefined, {
+      includeAreaMaxLevel: drdInterviewV2,
+    });
     if (!sesjaZamrozona) return nodes;
     return nodes.map((node) => ({ ...node, openQuestionCount: 0 }));
-  }, [events, sesjaZamrozona]);
+  }, [drdInterviewV2, events, sesjaZamrozona]);
   const activeAxis = DRD_STRUCTURE.find((a) => a.id === activeAxisId) ?? DRD_STRUCTURE[0];
   const matrixRows = useMemo(
     () => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels),
@@ -1055,42 +1058,43 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     async (decision: DrdLevelDecision, text: string) => {
       const questionId = focusQuestions[0]?.questionId;
       if (!questionId || !runtime || !canWrite || !state?.session) return;
-
-      if (decision === 'help') {
-        const roleRoster = await Api.get(`/method/sessions/${state.session.id}/roles`);
-        const evidenceOwnerId = pickDrdEvidenceOwnerId(roleRoster, state.session.ownerUserId);
-        await Api.post('/tasks', {
-          title: t('assessment.drd.levelInterview.helpTaskTitle', 'Evidence needed: {{area}}, level {{level}}', {
-            area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
-            level: focusLevelFallback,
-          }),
-          description: t(
-            'assessment.drd.levelInterview.helpTaskDescription',
-            'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
-            { sessionId: state.session.id, area: activeArea.id, level: focusLevelFallback }
-          ),
-          status: 'todo',
-          priority: 'medium',
-          projectId: state.session.projectId ?? null,
-          assigneeId: evidenceOwnerId,
-          source: 'assessment',
-          sourceType: 'method_session',
-          sourceId: state.session.id,
-          idempotencyKey: `drd-help:${state.session.id}:${activeArea.id}:${focusLevelFallback}`,
-        });
-      }
-
       const answerState = decision === 'yes' ? 'confirmed' : decision === 'no' ? 'no' : 'dont_know';
-      await runtime.recordAnswer({
-        unitId: activeArea.id,
-        level: focusLevelFallback,
-        questionId,
-        answerState,
-        text,
-        justification:
-          decision === 'help'
-            ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
-            : undefined,
+      await persistDrdLevelDecision({
+        decision,
+        recordAnswer: () => runtime.recordAnswer({
+          unitId: activeArea.id,
+          level: focusLevelFallback,
+          questionId,
+          answerState,
+          text,
+          justification:
+            decision === 'help'
+              ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
+              : undefined,
+        }),
+        createHelpTask: decision === 'help' ? async () => {
+          const roleRoster = await Api.get(`/method/sessions/${state.session.id}/roles`);
+          const evidenceOwnerId = pickDrdEvidenceOwnerId(roleRoster, state.session.ownerUserId);
+          await Api.post('/tasks', {
+            title: t('assessment.drd.levelInterview.helpTaskTitle', 'Evidence needed: {{area}}, level {{level}}', {
+              area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+              level: focusLevelFallback,
+            }),
+            description: t(
+              'assessment.drd.levelInterview.helpTaskDescription',
+              'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
+              { sessionId: state.session.id, area: activeArea.id, level: focusLevelFallback }
+            ),
+            status: 'todo',
+            priority: 'medium',
+            projectId: state.session.projectId ?? null,
+            assigneeId: evidenceOwnerId,
+            source: 'assessment',
+            sourceType: 'method_session',
+            sourceId: state.session.id,
+            idempotencyKey: `drd-help:${state.session.id}:${activeArea.id}:${focusLevelFallback}`,
+          });
+        } : undefined,
       });
 
       if (decision === 'yes') {
