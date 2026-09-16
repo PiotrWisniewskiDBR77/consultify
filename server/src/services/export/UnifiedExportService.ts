@@ -33,6 +33,22 @@ import {
   type StructToken,
   tokenizeMarkdown,
 } from './markdownStructTokenize.js';
+import {
+  BOARD_DECK_LAYOUT_ROLES,
+  type BoardDeckSource,
+  renderBoardDeckPptx,
+} from './pptx/BoardDeckRenderer.js';
+
+export { BOARD_DECK_LAYOUT_ROLES };
+
+export type {
+  BoardDeckChart,
+  BoardDeckDecisionOption,
+  BoardDeckLayoutRole,
+  BoardDeckSlide,
+  BoardDeckSource,
+  BoardDeckTable,
+} from './pptx/BoardDeckRenderer.js';
 
 export interface ExportSlide {
   title: string;
@@ -704,6 +720,15 @@ class UnifiedExportService {
         }
       });
     });
+  }
+
+  /**
+   * Board-ready deck contract used by EXPORT-1. It keeps the established
+   * UnifiedExportService as the public boundary while the eight approved
+   * layouts live in a format-specific renderer.
+   */
+  async exportBoardDeckPptx(src: BoardDeckSource): Promise<Buffer> {
+    return renderBoardDeckPptx(src);
   }
 }
 
