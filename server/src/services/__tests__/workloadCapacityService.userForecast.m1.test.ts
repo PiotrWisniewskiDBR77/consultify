@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../utils/DbPromise.js', () => {
   const all = vi.fn();
   const get = vi.fn();
-  return { default: { all, get, run: vi.fn() }, all, get };
+  return {
+    default: { all, get, run: vi.fn() },
+    all,
+    get,
+    isSilenceableMissingRelationError: (message: string) =>
+      message.includes('no such table') || message.includes('does not exist'),
+  };
 });
 
 import DbPromise from '../../utils/DbPromise.js';
@@ -74,6 +80,30 @@ describe('M1a getUserForecast', () => {
     expect(week.unknownTaskIds).toEqual(['missing-estimate']);
   });
 
+  it('keeps a Friday timestamp-without-time-zone Date in its local week', async () => {
+    mockedGet.mockResolvedValueOnce({
+      weekly_capacity_hours: 40,
+      availability_percent: 100,
+    } as never);
+    mockedAll.mockResolvedValueOnce([] as never).mockResolvedValueOnce([
+      {
+        task_id: 'friday-start',
+        estimated_hours: 88,
+        started_at: null,
+        created_at: new Date(2026, 8, 18, 17),
+        due_date: new Date(2026, 9, 16, 17),
+      },
+    ] as never);
+
+    const [week] = await getUserForecast('org-1', 'user-1', {
+      asOf: '2026-09-14',
+      weekCount: 1,
+    });
+
+    expect(week.taskIds).toEqual(['friday-start']);
+    expect(week.allocatedHours).toBeGreaterThan(0);
+  });
+
   it('prefers explicit task allocations and preserves their task provenance', async () => {
     mockedGet.mockResolvedValueOnce({
       weekly_capacity_hours: 32,
@@ -84,7 +114,7 @@ describe('M1a getUserForecast', () => {
         {
           week_start: '2026-09-14',
           hours: 12,
-          task_ids: ['allocated-task'],
+          task_id: 'allocated-task',
         },
       ] as never)
       .mockResolvedValueOnce([
@@ -119,6 +149,54 @@ describe('M1a getUserForecast', () => {
       allocatedHours: 40,
       taskIds: ['allocated-task'],
     });
+    expect(mockedAll.mock.calls[0][0]).not.toContain('ARRAY_AGG');
+  });
+
+  it('preserves an explicitly declared zero capacity instead of replacing it with 40h', async () => {
+    mockedGet.mockResolvedValueOnce({
+      weekly_capacity_hours: 0,
+      availability_percent: 100,
+    } as never);
+    mockedAll.mockResolvedValueOnce([] as never).mockResolvedValueOnce([
+      {
+        task_id: 'task-8h',
+        estimated_hours: 8,
+        started_at: '2026-09-14',
+        created_at: '2026-09-14',
+        due_date: '2026-09-18',
+      },
+    ] as never);
+
+    const [week] = await getUserForecast('org-1', 'user-1', {
+      asOf: '2026-09-14',
+      weekCount: 1,
+    });
+
+    expect(week.capacityHours).toBe(0);
+    expect(week.availableHours).toBe(0);
+    expect(week.allocatedHours).toBe(8);
+  });
+
+  it('rejects an oversized initiative scope instead of silently truncating it', async () => {
+    const initiativeIds = Array.from({ length: 101 }, (_, index) => `initiative-${index}`);
+    await expect(getUserForecast('org-1', 'user-1', { initiativeIds })).rejects.toThrow(
+      'M1_INITIATIVE_SCOPE_INVALID'
+    );
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(mockedAll).not.toHaveBeenCalled();
+  });
+
+  it('does not turn a real task allocation query failure into fallback demand', async () => {
+    mockedGet.mockResolvedValueOnce({
+      weekly_capacity_hours: 40,
+      availability_percent: 100,
+    } as never);
+    mockedAll.mockRejectedValueOnce(new Error('permission denied for task_allocations'));
+
+    await expect(
+      getUserForecast('org-1', 'user-1', { asOf: '2026-09-14', weekCount: 1 })
+    ).rejects.toThrow('permission denied for task_allocations');
+    expect(mockedAll).toHaveBeenCalledTimes(1);
   });
 
   it('fails closed when the user is outside the organization scope', async () => {

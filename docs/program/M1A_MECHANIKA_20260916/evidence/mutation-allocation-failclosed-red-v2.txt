@@ -1,0 +1,45 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-v2-20260916
+
+stdout | server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > does not turn a real task allocation query failure into fallback demand
+2026-09-16 13:11:24:1124 [31merror[39m: [31m[workloadCapacityService] getUserForecast.task_allocations[39m {"error":"permission denied for task_allocations","orgId":"org-1","userId":"user-1"}
+
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps an unquantified task UNKNOWN instead of reporting known zero
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps a Friday timestamp-without-time-zone Date in its local week
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > preserves an explicitly declared zero capacity instead of replacing it with 40h
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > rejects an oversized initiative scope instead of silently truncating it
+ × server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > does not turn a real task allocation query failure into fallback demand 69ms
+   → promise resolved "[]" instead of rejecting
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > fails closed when the user is outside the organization scope
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > does not turn a real task allocation query failure into fallback demand
+AssertionError: promise resolved "[]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[]
+
+ ❯ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts:198:5
+    196|     await expect(
+    197|       getUserForecast('org-1', 'user-1', { asOf: '2026-09-14', weekCou…
+    198|     ).rejects.toThrow('permission denied for task_allocations');
+       |     ^
+    199|     expect(mockedAll).toHaveBeenCalledTimes(1);
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  13:11:22
+   Duration  1.89s (transform 466ms, setup 639ms, import 258ms, tests 73ms, environment 683ms)
+
