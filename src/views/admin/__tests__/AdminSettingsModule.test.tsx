@@ -162,9 +162,10 @@ vi.mock('../../../components/ui/scroll-area', () => ({
   ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const currentUser = { id: 'u1', organizationId: 'org-a', role: 'ADMIN' } as unknown as User;
+const adminUser = { id: 'u1', organizationId: 'org-a', role: 'ADMIN' } as unknown as User;
+const ownerUser = { id: 'u2', organizationId: 'org-a', role: 'OWNER' } as unknown as User;
 
-const renderAt = (path: string) =>
+const renderAt = (path: string, currentUser: User = adminUser) =>
   render(
     <MemoryRouter initialEntries={[path]}>
       <AdminSettingsModule currentUser={currentUser} />
@@ -189,8 +190,16 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/team/access-requests');
     expect(screen.getByTestId('panel-access-requests')).toBeInTheDocument();
   });
-  it('wires team/roles-permissions', () => {
-    renderAt('/admin/team/roles-permissions');
+  it('does not expose owner-only role management to ADMIN in navigation or via deep link', () => {
+    renderAt('/admin/team/roles-permissions', adminUser);
+    expect(screen.queryByRole('button', { name: 'Roles & Permissions' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('panel-roles')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('admin.team.roles-permissions.ownerOnly');
+  });
+
+  it('exposes and wires team/roles-permissions for OWNER', () => {
+    renderAt('/admin/team/roles-permissions', ownerUser);
+    expect(screen.getByRole('button', { name: 'Roles & Permissions' })).toBeInTheDocument();
     expect(screen.getByTestId('panel-roles')).toBeInTheDocument();
   });
 
@@ -455,19 +464,19 @@ describe('Admin audit export identity context', () => {
   it('updates actor and role in the same organization instead of retaining memoized authority', () => {
     const view = render(
       <MemoryRouter initialEntries={['/admin/audit/retention-export']}>
-        <AdminSettingsModule currentUser={currentUser} />
+        <AdminSettingsModule currentUser={adminUser} />
       </MemoryRouter>
     );
     expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-actor', 'u1');
     view.rerender(
       <MemoryRouter initialEntries={['/admin/audit/retention-export']}>
-        <AdminSettingsModule currentUser={{ ...currentUser, id: 'u2' }} />
+        <AdminSettingsModule currentUser={{ ...adminUser, id: 'u2' }} />
       </MemoryRouter>
     );
     expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-actor', 'u2');
     view.rerender(
       <MemoryRouter initialEntries={['/admin/audit/retention-export']}>
-        <AdminSettingsModule currentUser={{ ...currentUser, id: 'u2', role: UserRole.USER }} />
+        <AdminSettingsModule currentUser={{ ...adminUser, id: 'u2', role: UserRole.USER }} />
       </MemoryRouter>
     );
     expect(screen.getByTestId('panel-audit')).toHaveAttribute('data-role', 'USER');

@@ -78,6 +78,18 @@ const PRIMARY_SECTIONS: AdminSettingsSection[] = [
 // Fail closed until the backend exposes a verified Platform Operator capability.
 const CAN_ACCESS_PLATFORM_OPERATIONS = false;
 
+/**
+ * Project-role management is deliberately OWNER-only (DEC-2026-08-25-17 in
+ * effectiveAccessService). Keep the shell aligned with the API so ADMIN does
+ * not discover this boundary by triggering a forbidden request.
+ */
+export const canManageProjectRoles = (role: User['role']): boolean => {
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
+  return normalized === 'OWNER' || normalized === 'SUPERADMIN' || normalized === 'SUPER_ADMIN';
+};
+
 const SECTION_META: Record<
   AdminSettingsSection,
   { titleKey: string; titleDefault: string; subtitleKey: string; subtitleDefault: string }
@@ -271,6 +283,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   );
 
   const resolvedLocation = rawResolvedLocation;
+  const canAccessProjectRoles = canManageProjectRoles(currentUser.role);
   // No backend capability contract currently proves Platform Operator access.
   // Fail closed for navigation, deep links, and data fetching.
 
@@ -324,6 +337,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
               'Platform operations are outside customer administration and require an explicit Platform Operator capability.'
             )}
           </p>
+        </section>
+      );
+    }
+    if (resolvedLocation.screen === 'roles-permissions' && !canAccessProjectRoles) {
+      return (
+        <section role="alert" className="rounded-xl border border-c-border bg-c-surface p-5">
+          {t('admin.team.roles-permissions.ownerOnly')}
         </section>
       );
     }
@@ -541,6 +561,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     currentUser.organizationId,
     currentUser.id,
     currentUser.role,
+    canAccessProjectRoles,
     handleLocationChange,
     i18n?.language,
     i18n?.resolvedLanguage,
@@ -576,6 +597,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
             onLocationChange={handleLocationChange}
             onBack={handleBackToDashboard}
             canAccessPlatformOperations={CAN_ACCESS_PLATFORM_OPERATIONS}
+            canManageProjectRoles={canAccessProjectRoles}
           />
         </div>
 
