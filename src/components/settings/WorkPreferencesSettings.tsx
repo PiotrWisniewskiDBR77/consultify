@@ -492,7 +492,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('autoSnoozeOverdue', !preferences.autoSnoozeOverdue)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.autoSnoozeOverdue ? 'bg-indigo-600' : 'bg-c-surface-raised'
+                preferences.autoSnoozeOverdue ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -518,7 +518,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('enableFocusMode', !preferences.enableFocusMode)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableFocusMode ? 'bg-yellow-500' : 'bg-c-surface-raised'
+                preferences.enableFocusMode ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -688,7 +688,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 updatePreference('showCompletedTasks', !preferences.showCompletedTasks)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showCompletedTasks ? 'bg-navy-900' : 'bg-c-surface-raised'
+                preferences.showCompletedTasks ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -713,7 +713,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('showSubtasks', !preferences.showSubtasks)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showSubtasks ? 'bg-navy-900' : 'bg-c-surface-raised'
+                preferences.showSubtasks ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

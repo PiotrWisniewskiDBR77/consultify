@@ -298,7 +298,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                     setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                   }
                   className={`relative w-12 h-6 rounded-full transition-colors ${
-                    (settings as any)[item.key] ? 'bg-blue-600' : 'bg-c-surface-raised'
+                    (settings as any)[item.key] ? 'bg-c-focus-solid' : 'bg-c-border'
                   }`}
                 >
                   <span

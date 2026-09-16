@@ -103,7 +103,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
   const labelClass = 'text-xs font-medium text-c-text-muted';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-c-focus' : 'bg-c-surface-raised'
+      enabled ? 'bg-c-focus-solid' : 'bg-c-border'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
     `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;

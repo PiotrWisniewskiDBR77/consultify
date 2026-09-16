@@ -379,7 +379,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             onClick={() => setDigestSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
             disabled={isReadOnly}
             className={`w-12 h-6 rounded-full transition-colors ${
-              digestSettings.enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
+              digestSettings.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
             }`}
           >
             <div

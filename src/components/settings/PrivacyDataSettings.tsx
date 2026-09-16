@@ -323,7 +323,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('showOnlineStatus', !preferences.showOnlineStatus)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showOnlineStatus ? 'bg-emerald-600' : 'bg-c-surface-raised'
+                preferences.showOnlineStatus ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -350,7 +350,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 updatePreference('showActivityStatus', !preferences.showActivityStatus)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showActivityStatus ? 'bg-emerald-600' : 'bg-c-surface-raised'
+                preferences.showActivityStatus ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -373,7 +373,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('showLastSeen', !preferences.showLastSeen)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showLastSeen ? 'bg-emerald-600' : 'bg-c-surface-raised'
+                preferences.showLastSeen ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -408,7 +408,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('shareAnalytics', !preferences.shareAnalytics)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.shareAnalytics ? 'bg-c-focus' : 'bg-c-surface-raised'
+                preferences.shareAnalytics ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -433,7 +433,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('improveAI', !preferences.improveAI)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.improveAI ? 'bg-c-focus' : 'bg-c-surface-raised'
+                preferences.improveAI ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -464,7 +464,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 )
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.allowThirdPartyIntegrations ? 'bg-c-focus' : 'bg-c-surface-raised'
+                preferences.allowThirdPartyIntegrations ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -499,7 +499,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('productUpdates', !preferences.productUpdates)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.productUpdates ? 'bg-amber-500' : 'bg-c-surface-raised'
+                preferences.productUpdates ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -524,7 +524,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('marketingEmails', !preferences.marketingEmails)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.marketingEmails ? 'bg-amber-500' : 'bg-c-surface-raised'
+                preferences.marketingEmails ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -548,7 +548,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 updatePreference('newsletterSubscribed', !preferences.newsletterSubscribed)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.newsletterSubscribed ? 'bg-amber-500' : 'bg-c-surface-raised'
+                preferences.newsletterSubscribed ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

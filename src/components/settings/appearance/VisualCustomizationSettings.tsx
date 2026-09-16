@@ -446,7 +446,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             <button
               onClick={() => setSettings({ ...settings, animations: !settings.animations })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.animations ? 'bg-navy-900' : 'bg-c-surface-raised'
+                settings.animations ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

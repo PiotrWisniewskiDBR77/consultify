@@ -335,7 +335,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
           <button
             onClick={() => setSettings({ ...settings, includeTeamData: !settings.includeTeamData })}
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.includeTeamData ? 'bg-green-600' : 'bg-c-surface-raised'
+              settings.includeTeamData ? 'bg-c-focus-solid' : 'bg-c-border'
             }`}
           >
             <span
@@ -470,7 +470,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings.knowledgeBases as any)[kb.key] ? 'bg-navy-900' : 'bg-c-surface-raised'
+                  (settings.knowledgeBases as any)[kb.key] ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span

@@ -210,7 +210,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         <button
           onClick={() => onChange(!value)}
           className={`relative w-12 h-6 rounded-full transition-colors ${
-            value ? 'bg-navy-900' : 'bg-c-surface-raised'
+            value ? 'bg-c-focus-solid' : 'bg-c-border'
           }`}
         >
           <span

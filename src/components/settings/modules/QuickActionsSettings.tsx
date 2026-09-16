@@ -106,7 +106,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
           </div>
           <button
             onClick={() => setCommandPaletteEnabled(!commandPaletteEnabled)}
-            className={`relative w-12 h-6 rounded-full ${commandPaletteEnabled ? 'bg-blue-600' : 'bg-c-surface-raised'}`}
+            className={`relative w-12 h-6 rounded-full ${commandPaletteEnabled ? 'bg-c-focus-solid' : 'bg-c-border'}`}
           >
             <span
               className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow ${commandPaletteEnabled ? 'left-7' : 'left-1'}`}
@@ -135,7 +135,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
                   onClick={() =>
                     setActions(actions.map((a, j) => (j === i ? { ...a, enabled: !a.enabled } : a)))
                   }
-                  className={`relative w-10 h-5 rounded-full ${action.enabled ? 'bg-blue-600' : 'bg-c-surface-raised'}`}
+                  className={`relative w-10 h-5 rounded-full ${action.enabled ? 'bg-c-focus-solid' : 'bg-c-border'}`}
                 >
                   <span
                     className={`absolute top-0.5 w-4 h-4 rounded-full bg-c-surface shadow ${action.enabled ? 'left-5' : 'left-0.5'}`}

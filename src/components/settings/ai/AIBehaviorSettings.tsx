@@ -174,7 +174,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
         <button
           onClick={() => onChange(!enabled)}
           className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
-            enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
+            enabled ? 'bg-c-focus-solid' : 'bg-c-border'
           }`}
         >
           <span

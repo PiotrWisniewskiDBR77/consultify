@@ -1080,7 +1080,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  securitySettings.single_session_only ? 'bg-danger-500' : 'bg-c-surface-raised'
+                  securitySettings.single_session_only ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span

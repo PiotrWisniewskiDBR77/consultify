@@ -343,7 +343,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                 setDoNotDisturbHours((prev: any) => ({ ...prev, enabled: !prev.enabled }))
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                doNotDisturbHours.enabled ? 'bg-indigo-600' : 'bg-c-surface-raised'
+                doNotDisturbHours.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

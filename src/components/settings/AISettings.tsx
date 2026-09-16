@@ -1895,8 +1895,8 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
 const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
   <button
     onClick={onChange}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black ${
-      enabled ? 'bg-blue-600' : 'bg-c-surface'
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-c-surface ${
+      enabled ? 'bg-c-focus-solid' : 'bg-c-border'
     }`}
   >
     <span

@@ -442,7 +442,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <button
               onClick={() => setQuietHours({ ...quietHours, enabled: !quietHours.enabled })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                quietHours.enabled ? 'bg-amber-600' : 'bg-c-surface-raised'
+                quietHours.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -543,7 +543,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 setSoundSettings({ ...soundSettings, enabled: !soundSettings.enabled })
               }
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                soundSettings.enabled ? 'bg-blue-600' : 'bg-c-surface-raised'
+                soundSettings.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -630,7 +630,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  deviceSettings.desktop.enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
+                  deviceSettings.desktop.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span
@@ -695,7 +695,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  deviceSettings.mobile.enabled ? 'bg-green-600' : 'bg-c-surface-raised'
+                  deviceSettings.mobile.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span
@@ -757,7 +757,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 setDigestSettings({ ...digestSettings, enabled: !digestSettings.enabled })
               }
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                digestSettings.enabled ? 'bg-amber-600' : 'bg-c-surface-raised'
+                digestSettings.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
