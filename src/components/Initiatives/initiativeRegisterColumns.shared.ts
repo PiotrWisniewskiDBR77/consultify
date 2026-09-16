@@ -17,6 +17,7 @@ import { INITIATIVE_LIFECYCLE } from '@/contracts/initiatives-execution/foundati
 import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 
 import { nextStepForLifecycle } from './initiativeRegisterProjection';
+import { pmoDueDate, pmoNextStep, pmoResponsible, pmoStageLabel } from './pmoQueues';
 
 export const INITIATIVE_REGISTER_COLUMN_IDS = [
   'name',
@@ -121,6 +122,8 @@ export interface InitiativeRegisterColumnOptions {
   t?: (key: string, fallback: string) => string;
   /** Test/host override; defaults to the build-time DEC-539 flag. */
   stages12Enabled?: boolean;
+  /** PMO-1a governance columns. Default false preserves the frozen register. */
+  pmoQueuesEnabled?: boolean;
 }
 
 export type InitiativeRegisterRow = PortfolioInitiative & {
@@ -568,6 +571,58 @@ export const createInitiativeRegisterColumns = (
       },
     },
   ];
+
+  if (options.pmoQueuesEnabled) {
+    const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
+    const governanceColumns: TableColumn[] = [
+      base[0],
+      {
+        id: 'pmoStage',
+        label: tr('initiatives.pmo.columns.stage', 'Stage'),
+        width: '180px',
+        render: (raw) => {
+          const label = pmoStageLabel(raw as InitiativeRegisterRow, isPolish);
+          return h('span', { className: 'block truncate text-xs text-c-text', title: label }, label);
+        },
+      },
+      {
+        id: 'pmoResponsible',
+        label: tr('initiatives.pmo.columns.responsible', 'Responsible'),
+        width: '190px',
+        render: (raw) => {
+          const label = pmoResponsible(raw as InitiativeRegisterRow, isPolish);
+          return h('span', { className: 'block truncate text-xs text-c-text', title: label }, label);
+        },
+      },
+      {
+        id: 'pmoDue',
+        label: tr('initiatives.pmo.columns.due', 'Due'),
+        width: '125px',
+        sortable: true,
+        sortAccessor: (raw) => {
+          const due = pmoDueDate(raw as InitiativeRegisterRow);
+          return due ? new Date(due).getTime() : Number.POSITIVE_INFINITY;
+        },
+        render: (raw) => {
+          const due = pmoDueDate(raw as InitiativeRegisterRow);
+          const label = due ? formatListDate(due, '—') : '—';
+          return h('span', { className: 'text-xs tabular-nums text-c-text', title: label }, label);
+        },
+      },
+      {
+        id: 'pmoNextStep',
+        label: tr('initiatives.pmo.columns.nextStep', 'Next step'),
+        width: '260px',
+        render: (raw) => {
+          const label = pmoNextStep(raw as InitiativeRegisterRow);
+          return h('span', { className: 'block truncate text-xs text-c-text-secondary', title: label }, label);
+        },
+      },
+    ];
+    if (!options.includeSource) return governanceColumns;
+    const source = base.find((column) => column.id === 'source');
+    return source ? [...governanceColumns, source] : governanceColumns;
+  }
 
   if (!options.includeSource) return base;
 

@@ -6,7 +6,10 @@ import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
 import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
-import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
+import {
+  getInitiativeStatusChipTone,
+  getLocalizedStatusLabel,
+} from '@/services/initiativeLifecycle';
 import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -20,7 +23,6 @@ import {
   type InitiativeRegisterColumnOptions,
   type InitiativeRegisterRow,
 } from './initiativeRegisterColumns.shared';
-
 
 /**
  * "Planowane okno" w danych demo/rejestrze jest jednym stringiem
@@ -79,9 +81,10 @@ export const CanonicalInitiativeRegister = ({
   const { t } = useTranslation();
   const stages12Enabled = isInitiativesStages12Enabled();
   const includeSource = !!columnOptions?.includeSource;
+  const pmoQueuesEnabled = !!columnOptions?.pmoQueuesEnabled;
   const columns = useMemo(
-    () => createCanonicalInitiativeRegisterColumns({ includeSource, t, stages12Enabled }),
-    [includeSource, t, stages12Enabled]
+    () => createCanonicalInitiativeRegisterColumns({ includeSource, pmoQueuesEnabled, t, stages12Enabled }),
+    [includeSource, pmoQueuesEnabled, t, stages12Enabled]
   );
   const layoutRows = useMemo(
     () => rows.map((row) => ({ ...row, title: row.title || row.name })),
@@ -104,9 +107,9 @@ export const CanonicalInitiativeRegister = ({
                   ? enumLabel('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(initiative, true), t)
                   : '') ||
                 getLocalizedStatusLabel(
-                String(initiative.status) as Parameters<typeof getLocalizedStatusLabel>[0],
-                t
-              ),
+                  String(initiative.status) as Parameters<typeof getLocalizedStatusLabel>[0],
+                  t
+                ),
             tone: getInitiativeStatusChipTone(initiative.status, { onHold: initiative.onHold }),
           },
           {
@@ -150,7 +153,9 @@ export const CanonicalInitiativeRegister = ({
           {
             id: 'gate',
             label: t('initiatives.columns.gateName', 'Next gate'),
-            value: initiative.gateName ? enumLabel('initiativeGateName', initiative.gateName, t) : '—',
+            value: initiative.gateName
+              ? enumLabel('initiativeGateName', initiative.gateName, t)
+              : '—',
           },
           {
             id: 'readiness',
@@ -247,8 +252,11 @@ export const CanonicalInitiativeRegister = ({
         onRowClick={(raw) => onSelect(raw as CanonicalInitiativeRow)}
         onRowDoubleClick={(raw) => onOpen(raw as CanonicalInitiativeRow)}
         rowDescription={(raw) => (raw as CanonicalInitiativeRow).summary || null}
-        rowClassName={(raw) => (raw as CanonicalInitiativeRow).archived ? 'opacity-60' : ''}
-        defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+        rowClassName={(raw) => ((raw as CanonicalInitiativeRow).archived ? 'opacity-60' : '')}
+        defaultSort={{
+          columnId: pmoQueuesEnabled ? 'pmoDue' : 'updatedAt',
+          direction: pmoQueuesEnabled ? 'asc' : 'desc',
+        }}
         persistKey={persistKey}
         empty={{
           icon: Lightbulb,

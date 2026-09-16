@@ -748,11 +748,23 @@ const Z30InicjatywyObciazenieScreen = React.lazy(
   () => import('./screens/z30-inicjatywy-obciazenie')
 );
 const Z42RealizacjaRaportyScreen = React.lazy(() => import('./screens/z42-realizacja-raporty'));
+const Pmo1KolejkiScreen = React.lazy(() => import('./screens/pmo1-kolejki'));
+const Pmo1PrzejscieEtapuScreen = React.lazy(
+  () => import('./screens/pmo1-przejscie-etapu')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'u43-deck-review': {
     label: 'Deck Builder · Review (U-43 / DEC-543)',
     render: () => <U43DeckReviewScreen />,
+  },
+  'pmo1-kolejki': {
+    label: 'PMO-1a · five initiative governance queues · EN light/dark',
+    render: () => <Pmo1KolejkiScreen />,
+  },
+  'pmo1-przejscie-etapu': {
+    label: 'PMO-1a · initiative stage transition panel · EN light/dark',
+    render: () => <Pmo1PrzejscieEtapuScreen />,
   },
   'u19-drd-trzy-kolumny': {
     label: 'DRD U-19 · Northwind · DEC-552',

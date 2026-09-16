@@ -5,6 +5,7 @@ import { enumLabel } from '@/utils/enumLabel';
 import { readDefinitionApproval } from '@/services/initiatives-execution/definitionApprovalApi';
 import { DefinitionApprovalContent } from './DefinitionApprovalContent';
 import { InitiativeKpiApprovalCard } from './InitiativeKpiApprovalCard';
+import { PmoStageTransitionPanel } from './PmoStageTransitionPanel';
 /**
  * InitiativeDocumentView - Dynamic Section Renderer
  *
@@ -75,6 +76,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+const PMO_QUEUES_ENABLED = import.meta.env.VITE_PMO_QUEUES === 'true';
 
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
@@ -262,6 +265,7 @@ import {
   wybierzDostepneSekcjeBoarduInicjatywy,
 } from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
+import { ClosureSection } from './sections/ClosureSection';
 import { ResourcesSection } from './sections/ResourcesSection';
 import { TasksMilestonesSection } from './sections/TasksMilestonesSection';
 import {
@@ -5798,6 +5802,39 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         cHidden: raidItems.length === 0,
         component: null,
       },
+      ...(PMO_QUEUES_ENABLED
+        ? [
+            {
+              id: 'closure',
+              icon: CheckCircle2,
+              label: { en: 'Closure', pl: 'Zamknięcie' },
+              component: (
+                <ClosureSection
+                  sectionType={{
+                    id: 'closure',
+                    key: 'closure',
+                    name: 'Closure',
+                    namePl: 'Zamknięcie',
+                    description: null,
+                    descriptionPl: null,
+                    category: 'control',
+                    columnPosition: 'right',
+                    defaultOrder: 190,
+                    icon: null,
+                    iconColor: null,
+                    iconBg: null,
+                    componentKey: 'closure',
+                    isSystem: true,
+                    isActive: true,
+                  }}
+                  expanded
+                  onToggle={() => {}}
+                  readonly={!canEditCards}
+                />
+              ),
+            } satisfies NModeSection,
+          ]
+        : []),
       // --- Cele i mierniki ---
       {
         id: 'target-state-scope',
@@ -6028,18 +6065,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // existing renderers after the legacy filter instead of manufacturing
     // placeholder cards in the canonical projection.
     const runtimeNativeSections = sectionPresentation.filter(
-      (section) => section.id === 'milestones' || section.id === 'timeline'
+      (section) =>
+        section.id === 'milestones' || section.id === 'timeline' || section.id === 'closure'
     );
+    const baseSections = isRuntimeOnlyRecord
+      ? [
+          ...availableContractSections,
+          ...runtimeNativeSections.filter(
+            (section) =>
+              !availableContractSections.some((candidate) => candidate.id === section.id)
+          ),
+        ]
+      : availableContractSections;
+    const closureSection = sectionPresentation.find((section) => section.id === 'closure');
     return withGroup(
-      isRuntimeOnlyRecord
-        ? [
-            ...availableContractSections,
-            ...runtimeNativeSections.filter(
-              (section) =>
-                !availableContractSections.some((candidate) => candidate.id === section.id)
-            ),
-          ]
-        : availableContractSections
+      closureSection && !baseSections.some((section) => section.id === 'closure')
+        ? [...baseSections, closureSection]
+        : baseSections
     );
   }, [
     isPolish,
@@ -6059,6 +6101,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     initiativeSectionsCompleteEnabled,
     pendingSuggestedChangesCount,
     isRuntimeOnlyRecord,
+    canEditCards,
   ]);
 
   // ==========================================
@@ -10546,6 +10589,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         0 || !!sourceTitle;
 
     return [
+      ...(PMO_QUEUES_ENABLED
+        ? [
+            {
+              id: 'stage-transition',
+              label: t('initiatives.pmo.stageTransition', 'Stage transition'),
+              icon: GitBranch,
+              defaultOpen: true,
+              children: (
+                <PmoStageTransitionPanel
+                  initiativeId={initiativeId}
+                  expectedVersion={initiative?.canonicalVersion ?? null}
+                  reviewerUserId={sponsorId || null}
+                />
+              ),
+            } as ArtifactRightPanelSection,
+          ]
+        : []),
       {
         id: 'actions',
         label: t('initiatives.panel.actions', 'Actions'),
@@ -10914,6 +10974,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     canUseAi,
     initiative,
     initiativeId,
+    sponsorId,
     nModePropertyFields,
     nModeComments,
     nModeActivityEntries,
