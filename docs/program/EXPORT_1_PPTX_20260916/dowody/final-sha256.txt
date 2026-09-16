@@ -1,0 +1,4 @@
+northwind-board-deck.pptx bytes=212013 sha256=1f683eab12f1a71b84c454413d1a24f1af61bc41599aad876dc352f3d959778c
+northwind-board-deck-slide-6.png bytes=97557 sha256=594255905e16563d820f2a2aec4b8470fb87647050ea525410d76b637a631802
+northwind-board-deck-slide-7.png bytes=70572 sha256=fe27a5a171c269a84cf6a60daec864e9ef5f4525ee63293cf9686d2eb28839e7
+northwind-board-deck-slide-8.png bytes=94332 sha256=51683d43e902293787018dff49a9345f597afee889490afda8ad248bdd3f23fc

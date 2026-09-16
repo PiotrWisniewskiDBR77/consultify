@@ -1,13 +1,20 @@
+import { readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { unifiedExportService } from '../src/services/export/UnifiedExportService.js';
 
-const outputDir = path.resolve(process.cwd(), '../docs/program/EXPORT_1_PPTX_20260916/dowody');
+const outputDir = path.resolve(process.cwd(), 'docs/program/EXPORT_1_PPTX_20260916/dowody');
+const dumpSnapshot = JSON.parse(
+  readFileSync(path.join(outputDir, 'northwind-dump-20260911.json'), 'utf8')
+);
+const oee = dumpSnapshot.oeeLine3;
+const mes = dumpSnapshot.initiatives.mesLine3;
+const warehouse = dumpSnapshot.initiatives.warehouseAutomation;
 
 const buffer = await unifiedExportService.exportBoardDeckPptx({
   title: 'Northwind 2027 — Operational Maturity Assessment',
-  organizationName: 'Northwind Manufacturing Ltd.',
+  organizationName: dumpSnapshot.organization.name,
   date: '16 September 2026',
   confidentiality: 'Confidential',
   slides: [
@@ -88,7 +95,9 @@ const buffer = await unifiedExportService.exportBoardDeckPptx({
           ['Operations analyst', 'Plant Operations', 1, 26, 'OEE and downtime reason codes'],
           ['Quality engineer', 'Engineering & Quality', 0.6, 20, 'Supplier NC / SPC files'],
           ['Data engineer', 'Digital and Data', 1, 24, 'Shared production/quality data layer'],
+          ['OT security lead', 'Digital and Data', 0.3, 12, 'OT/IT segmentation hardening'],
         ],
+        totalRow: ['Total', '5 roles', 3.3, 108, 'Peak demand falls in Q4 2026'],
         columnWidths: [2.2, 2.2, 0.8, 0.8, 5.35],
       },
       source: 'Consultify initiatives and teams; Northwind Manufacturing Ltd.',
@@ -98,13 +107,18 @@ const buffer = await unifiedExportService.exportBoardDeckPptx({
       kicker: 'Line 3 performance',
       title: 'OEE recovered 5.4 points in six months — still short of target',
       chart: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        series: [{ name: 'OEE — Line 3', values: [70.8, 71.6, 72.9, 74.1, 75.4, 76.2] }],
-        target: 78,
-        unit: '%',
+        categories: oee.measurements.map((measurement: { period: string }) => measurement.period),
+        series: [
+          {
+            name: 'OEE — Line 3',
+            values: oee.measurements.map((measurement: { value: number }) => measurement.value),
+          },
+        ],
+        target: oee.target,
+        unit: oee.unit,
       },
       keyMessage: '76.2% latest; the remaining gap is stable and measurable.',
-      source: 'Northwind KPI measurements · Jan–Jun 2026',
+      source: `Northwind ${oee.code} measurements · Jan–Jun 2026 · dump 11.09`,
     },
     {
       role: 'decision',
@@ -114,16 +128,23 @@ const buffer = await unifiedExportService.exportBoardDeckPptx({
         {
           label: 'Option A',
           title: 'Data foundation first',
+          meta: `£${mes.budget / 1000}k · MES Line 3`,
           body: 'Sequence MES rollout and a shared data layer ahead of everything else.',
           recommended: true,
         },
         {
           label: 'Option B',
           title: 'Run both in parallel',
+          meta: `£${(mes.budget + warehouse.budget) / 1000}k · MES + Warehouse`,
           body: 'Keep the automation pilot on current data and accept higher rework risk.',
         },
       ],
       recommendation: 'Approve Option A and hold the automation envelope unchanged.',
+      decisionMeta: {
+        owner: 'Board — Operations & Capital Committee',
+        dueBy: '30 October 2026 (before summer shutdown planning)',
+        linkedRaid: mes.risk,
+      },
     },
   ],
 });

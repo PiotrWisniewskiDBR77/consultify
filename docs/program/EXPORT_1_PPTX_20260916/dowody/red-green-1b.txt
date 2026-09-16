@@ -1,0 +1,24 @@
+RED before W128 fix
+table_rows=5
+table_row_height_variants=1
+table_row_height_emu=886968
+chart_series=1
+chart_literal_arial_hits=4
+slide_master_literal_arial_hits=9
+decision_option_meta=missing
+decision_owner_due_raid=missing
+recommended_option_fill=missing
+so_what_label=missing
+
+GREEN after W128 fix
+table_rows=7
+table_row_height_variants=2
+table_max_row_height_emu=566928
+chart_series=2
+chart_shows_values=true
+all_xml_literal_arial_hits=0
+decision_option_meta=present
+decision_owner_due_raid=present
+recommended_option_fill=present
+so_what_label=present
+parity_status=PASS

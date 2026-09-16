@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T13:22:13.431Z",
+  "generatedAt": "2026-09-16T17:51:27.006Z",
   "expectedRoles": [
     "cover",
     "agenda",
@@ -18,15 +18,102 @@
     "charts": 1,
     "tables": 1,
     "themeAptos": false,
-    "literalRunFonts": [
-      "Arial"
+    "literalFonts": [
+      "Calibri Light",
+      "游ゴシック Light",
+      "맑은 고딕",
+      "等线 Light",
+      "新細明體",
+      "Times New Roman",
+      "Angsana New",
+      "Nyala",
+      "Vrinda",
+      "Shruti",
+      "MoolBoran",
+      "Tunga",
+      "Raavi",
+      "Euphemia",
+      "Plantagenet Cherokee",
+      "Microsoft Yi Baiti",
+      "Microsoft Himalaya",
+      "MV Boli",
+      "Mangal",
+      "Gautami",
+      "Latha",
+      "Estrangelo Edessa",
+      "Kalinga",
+      "Kartika",
+      "DokChampa",
+      "Iskoola Pota",
+      "Mongolian Baiti",
+      "Microsoft Uighur",
+      "Sylfaen",
+      "Arial",
+      "Leelawadee UI",
+      "Microsoft JhengHei",
+      "Javanese Text",
+      "Segoe UI",
+      "Myanmar Text",
+      "Ebrima",
+      "Nirmala UI",
+      "Phagspa",
+      "Microsoft Tai Le",
+      "Microsoft New Tai Lue",
+      "Calibri",
+      "游ゴシック",
+      "等线",
+      "Cordia New",
+      "DaunPenh",
+      "+mn-lt",
+      "+mn-ea",
+      "+mn-cs",
+      "+mj-lt",
+      "+mj-ea",
+      "+mj-cs"
     ],
+    "literalArialHits": 505,
     "coBranding": {
       "consultify": true,
       "dbr77": true,
       "client": true
     },
     "brandCrimsonHits": 0,
+    "composition": {
+      "tableRows": 7,
+      "tableRowHeightVariants": 1,
+      "tableMaxRowHeight": 0,
+      "chartSeries": 2,
+      "chartShowsValues": true,
+      "decisionFields": [
+        "DECISION OWNER",
+        "DUE BY",
+        "LINKED RAID"
+      ],
+      "decisionOptionMeta": true,
+      "decisionRecommendedFill": false,
+      "positions": {
+        "table": {
+          "x": 0.06,
+          "y": 0.24533333333333332
+        },
+        "chart": {
+          "x": 0.06,
+          "y": 0.25422222222222224
+        },
+        "decisionOwner": {
+          "x": 0.06,
+          "y": 0.7644444444444445
+        },
+        "dueBy": {
+          "x": 0.35333333333333333,
+          "y": 0.7644444444444445
+        },
+        "linkedRaid": {
+          "x": 0.6466666666666666,
+          "y": 0.7644444444444445
+        }
+      }
+    },
     "dominantColors": {
       "101828": 31,
       "667085": 26,
@@ -43,28 +130,117 @@
     }
   },
   "actual": {
-    "bytes": 190641,
+    "bytes": 212013,
     "slides": 8,
     "layouts": 1,
     "masters": 1,
     "charts": 1,
     "tables": 1,
     "themeAptos": true,
-    "literalRunFonts": [],
+    "literalFonts": [
+      "Aptos Display",
+      "游ゴシック Light",
+      "맑은 고딕",
+      "等线 Light",
+      "新細明體",
+      "Times New Roman",
+      "Angsana New",
+      "Nyala",
+      "Vrinda",
+      "Shruti",
+      "MoolBoran",
+      "Tunga",
+      "Raavi",
+      "Euphemia",
+      "Plantagenet Cherokee",
+      "Microsoft Yi Baiti",
+      "Microsoft Himalaya",
+      "MV Boli",
+      "Mangal",
+      "Gautami",
+      "Latha",
+      "Estrangelo Edessa",
+      "Kalinga",
+      "Kartika",
+      "DokChampa",
+      "Iskoola Pota",
+      "Mongolian Baiti",
+      "Microsoft Uighur",
+      "Sylfaen",
+      "+mn-lt",
+      "Leelawadee UI",
+      "Microsoft JhengHei",
+      "Javanese Text",
+      "Segoe UI",
+      "Myanmar Text",
+      "Ebrima",
+      "Nirmala UI",
+      "Phagspa",
+      "Microsoft Tai Le",
+      "Microsoft New Tai Lue",
+      "Aptos",
+      "游ゴシック",
+      "等线",
+      "Cordia New",
+      "DaunPenh",
+      "+mn-ea",
+      "+mn-cs",
+      "+mj-lt",
+      "+mj-ea",
+      "+mj-cs"
+    ],
+    "literalArialHits": 0,
     "coBranding": {
       "consultify": true,
       "dbr77": true,
       "client": true
     },
     "brandCrimsonHits": 0,
+    "composition": {
+      "tableRows": 7,
+      "tableRowHeightVariants": 2,
+      "tableMaxRowHeight": 566928,
+      "chartSeries": 2,
+      "chartShowsValues": true,
+      "decisionFields": [
+        "DECISION OWNER",
+        "DUE BY",
+        "LINKED RAID"
+      ],
+      "decisionOptionMeta": true,
+      "decisionRecommendedFill": true,
+      "positions": {
+        "table": {
+          "x": 0.07125,
+          "y": 0.20666666666666667
+        },
+        "chart": {
+          "x": 0.07125,
+          "y": 0.21333333333333335
+        },
+        "decisionOwner": {
+          "x": 0.07125,
+          "y": 0.7813333333333333
+        },
+        "dueBy": {
+          "x": 0.355,
+          "y": 0.7813333333333333
+        },
+        "linkedRaid": {
+          "x": 0.63875,
+          "y": 0.7813333333333333
+        }
+      }
+    },
     "dominantColors": {
-      "101828": 36,
-      "667085": 18,
-      "D8DEE8": 117,
-      "FFFFFF": 36,
-      "2563EB": 26,
-      "1B2A41": 20,
-      "F1F4F8": 10,
+      "101828": 39,
+      "667085": 23,
+      "D8DEE8": 152,
+      "1B2A41": 35,
+      "FFFFFF": 30,
+      "2563EB": 27,
+      "F1F4F8": 20,
+      "DCE6FA": 6,
       "8FA3C0": 3,
       "7FA8F5": 2,
       "C8D4E6": 2,
@@ -79,10 +255,15 @@
     "nativeTableCount": true,
     "approvedPalette": true,
     "aptosTheme": true,
-    "themeDrivenRuns": true,
+    "zeroLiteralArial": true,
     "coBranding": true,
-    "zeroBrandCrimson": true
+    "zeroBrandCrimson": true,
+    "tableComposition": true,
+    "chartComposition": true,
+    "decisionComposition": true,
+    "normalizedKeyPositionsWithinTolerance": true
   },
+  "positionTolerance": 0.05,
   "status": "PASS",
-  "note": "The reference uses literal Arial runs. W118 supersedes that font mechanism: the implementation uses Aptos in the PPTX theme and no literal run font names; renderer substitution is evidenced separately on a machine without Aptos."
+  "note": "The reference uses literal Arial. W118 supersedes that font mechanism: the implementation uses Aptos in the PPTX theme and has zero literal Arial in all PPTX XML, including charts and masters; renderer substitution is evidenced separately on a machine without Aptos."
 }
