@@ -15,9 +15,9 @@ describe('ModuleNavBar responsive Menu 2', () => {
     render(
       <ModuleNavBar
         tabs={[
-          { id: 'initiatives', label: 'Initiatives' },
-          { id: 'plan', label: 'Plan' },
-          { id: 'load', label: 'Load' },
+          { id: 'initiatives', label: 'Initiatives', icon: null },
+          { id: 'plan', label: 'Plan', icon: null },
+          { id: 'load', label: 'Load', icon: null },
         ]}
         activeTab="initiatives"
         onTabChange={noop}
