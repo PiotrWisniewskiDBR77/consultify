@@ -15,6 +15,7 @@ import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.j
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { queryString } from '../../utils/paramHelpers.js';
 
 const router = Router();
 const FEATURE_NAME = 'project-members';
@@ -74,7 +75,7 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { projectId } = req.params;
+    const projectId = queryString(req, 'projectId');
 
     try {
       if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
@@ -118,7 +119,7 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { projectId } = req.params;
+    const projectId = queryString(req, 'projectId');
     const { userId, role = 'MEMBER', permissions } = req.body;
     const requesterId = req.user?.id;
 
@@ -190,7 +191,8 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { projectId, memberId } = req.params;
+    const projectId = queryString(req, 'projectId');
+    const memberId = queryString(req, 'memberId');
     const { role, permissions } = req.body;
 
     try {
@@ -261,7 +263,8 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { projectId, memberId } = req.params;
+    const projectId = queryString(req, 'projectId');
+    const memberId = queryString(req, 'memberId');
 
     try {
       if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
@@ -330,7 +333,7 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { projectId } = req.params;
+    const projectId = queryString(req, 'projectId');
     const { email, role = 'MEMBER', message } = req.body;
     const requesterId = req.user?.id;
 

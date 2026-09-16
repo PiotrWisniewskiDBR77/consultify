@@ -50,6 +50,7 @@ import {
 } from '../services/results/resultsWriterObservationService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { queryString } from '../utils/paramHelpers.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -923,7 +924,7 @@ router.post(
   asyncHandler(async (req, res) => {
     if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
-    const { caseId } = req.params;
+    const caseId = queryString(req, 'caseId');
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
