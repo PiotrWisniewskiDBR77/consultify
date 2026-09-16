@@ -1,0 +1,4 @@
+BEGIN
+NOTICE:  TEMPLATE-1b readback: deprecated 60, active proven 22, rebuilt draft 13
+DO
+COMMIT

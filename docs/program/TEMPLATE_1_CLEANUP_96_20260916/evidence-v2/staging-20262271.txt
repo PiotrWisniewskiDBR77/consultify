@@ -1,0 +1,5 @@
+BEGIN
+NOTICE:  TEMPLATE-1 language baseline: 49 rows, 0 already measured as en; legacy rows remain unchanged
+NOTICE:  TEMPLATE-1 manual drafts preserved: before 1, after 1
+DO
+COMMIT

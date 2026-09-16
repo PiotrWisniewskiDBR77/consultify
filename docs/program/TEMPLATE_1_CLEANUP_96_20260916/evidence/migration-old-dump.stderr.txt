@@ -1,2 +1,0 @@
-ERROR:  TEMPLATE-1b preflight: source must resolve exactly once for inventory rows [1,2]
-CONTEXT:  PL/pgSQL function inline_code_block line 26 at RAISE

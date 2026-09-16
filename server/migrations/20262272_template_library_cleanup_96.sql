@@ -7,6 +7,36 @@
 
 BEGIN;
 
+DO $migration$
+DECLARE
+  denominator INTEGER;
+  keep_count INTEGER;
+  rebuild_count INTEGER;
+  deprecate_count INTEGER;
+  unresolved TEXT;
+  source_deprecated INTEGER;
+  snapshot_deprecated INTEGER;
+  active_kept INTEGER;
+  draft_rebuild INTEGER;
+  backup_initialized BOOLEAN;
+BEGIN
+  IF to_regclass('public.document_studio_templates') IS NULL
+     OR to_regclass('public.report_builder_templates') IS NULL
+     OR to_regclass('public.presentation_templates') IS NULL
+     OR to_regclass('public.tp_base_templates') IS NULL
+     OR to_regclass('public.v8_output_artifacts') IS NULL
+     OR to_regclass('public.v8_artifact_origin_links') IS NULL THEN
+    RAISE NOTICE 'TEMPLATE-1b no-op: required template tables are absent';
+    RETURN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM document_studio_templates WHERE template_id='doc-template-system-en-client_final_report' AND status='approved')
+     OR NOT EXISTS (SELECT 1 FROM presentation_templates WHERE id='dbr77-deck-board' AND lifecycle_state='approved')
+     OR NOT EXISTS (SELECT 1 FROM tp_base_templates WHERE id='2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1'::uuid AND status='approved') THEN
+    RAISE NOTICE 'TEMPLATE-1b no-op: approved bases from 20262271 are absent';
+    RETURN;
+  END IF;
+
 CREATE TEMP TABLE tmp_template96 (
   nr INTEGER PRIMARY KEY,
   decision TEXT NOT NULL CHECK (decision IN ('KEEP','REBUILD','DEPRECATE')),
@@ -122,14 +152,6 @@ VALUES
   (95,'REBUILD','SHEET-BASE','sheet_template','0a757a44-2ef4-466a-9231-dff14b89e515'),
   (96,'REBUILD','SHEET-BASE','sheet_template','b245853a-b52f-4e73-9a3d-43b9e72ed98d');
 
-DO $$
-DECLARE
-  denominator INTEGER;
-  keep_count INTEGER;
-  rebuild_count INTEGER;
-  deprecate_count INTEGER;
-  unresolved TEXT;
-BEGIN
   SELECT count(*), count(*) FILTER (WHERE decision='KEEP'),
          count(*) FILTER (WHERE decision='REBUILD'),
          count(*) FILTER (WHERE decision='DEPRECATE')
@@ -216,18 +238,97 @@ BEGIN
   IF unresolved IS NOT NULL THEN
     RAISE EXCEPTION 'TEMPLATE-1b preflight: every inventory row requires an existing linked snapshot; failed rows [%]', unresolved;
   END IF;
-END $$;
+
+
+-- Persist immutable before-images exactly once. A failed transaction leaves no backup.
+CREATE TABLE IF NOT EXISTS template_1_20262272_backup (
+  entity_type TEXT NOT NULL,
+  entity_key TEXT NOT NULL,
+  _backup JSONB NOT NULL,
+  backed_up_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (entity_type, entity_key)
+);
+
+SELECT EXISTS (
+  SELECT 1 FROM template_1_20262272_backup
+   WHERE entity_type='migration_state' AND entity_key='initialized'
+) INTO backup_initialized;
+
+IF NOT backup_initialized THEN
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT 'document_studio_template',s.template_id,to_jsonb(s)
+    FROM document_studio_templates s JOIN tmp_template96 i
+      ON i.runtime='document_template' AND i.source_id=s.template_id
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT 'report_builder_template',s.id,to_jsonb(s)
+    FROM report_builder_templates s JOIN tmp_template96 i
+      ON i.runtime='report_template' AND i.source_id=s.id
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT 'presentation_template',s.id,to_jsonb(s)
+    FROM presentation_templates s JOIN tmp_template96 i
+      ON i.runtime='presentation_template' AND i.source_id=s.id
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT 'presentation_template',s.id,to_jsonb(s)
+    FROM presentation_templates s WHERE s.id='pt-drd-presentation-v2'
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT 'sheet_template',s.id::text,to_jsonb(s)
+    FROM tp_base_templates s JOIN tmp_template96 i
+      ON i.runtime='sheet_template' AND i.source_id=s.id::text
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT DISTINCT 'output_artifact',a.artifact_id,to_jsonb(a)
+    FROM v8_output_artifacts a JOIN v8_artifact_origin_links l
+      ON l.artifact_id=a.artifact_id AND l.organization_id=a.organization_id
+    JOIN tmp_template96 i ON i.runtime=l.origin_runtime AND i.source_id=l.origin_record_id
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT DISTINCT 'output_artifact',a.artifact_id,to_jsonb(a)
+    FROM v8_output_artifacts a JOIN v8_artifact_origin_links l
+      ON l.artifact_id=a.artifact_id AND l.organization_id=a.organization_id
+   WHERE l.origin_runtime='presentation_template'
+     AND l.origin_record_id='pt-drd-presentation-v2'
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT DISTINCT 'origin_link',l.link_id,to_jsonb(l)
+    FROM v8_artifact_origin_links l JOIN tmp_template96 i
+      ON i.runtime=l.origin_runtime AND i.source_id=l.origin_record_id
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  SELECT 'origin_link',l.link_id,to_jsonb(l)
+    FROM v8_artifact_origin_links l
+   WHERE l.origin_runtime='presentation_template'
+     AND l.origin_record_id='pt-drd-presentation-v2'
+  ON CONFLICT DO NOTHING;
+
+  INSERT INTO template_1_20262272_backup (entity_type,entity_key,_backup)
+  VALUES ('migration_state','initialized',jsonb_build_object(
+    'version',2,
+    'resultsKpiIndexPreexisting',to_regclass('public.idx_report_builder_templates_one_active_results_kpi_default') IS NOT NULL
+  ));
+END IF;
 
 -- Lock all resolved sources and inventory snapshots after the full preflight.
-SELECT 1 FROM document_studio_templates s JOIN tmp_template96 i
+PERFORM 1 FROM document_studio_templates s JOIN tmp_template96 i
   ON i.runtime='document_template' AND i.source_id=s.template_id FOR UPDATE;
-SELECT 1 FROM report_builder_templates s JOIN tmp_template96 i
+PERFORM 1 FROM report_builder_templates s JOIN tmp_template96 i
   ON i.runtime='report_template' AND i.source_id=s.id FOR UPDATE;
-SELECT 1 FROM presentation_templates s JOIN tmp_template96 i
+PERFORM 1 FROM presentation_templates s JOIN tmp_template96 i
   ON i.runtime='presentation_template' AND i.source_id=s.id FOR UPDATE;
-SELECT 1 FROM tp_base_templates s JOIN tmp_template96 i
+PERFORM 1 FROM tp_base_templates s JOIN tmp_template96 i
   ON i.runtime='sheet_template' AND i.source_id=s.id::text FOR UPDATE;
-SELECT 1 FROM v8_output_artifacts a JOIN v8_artifact_origin_links l
+PERFORM 1 FROM v8_output_artifacts a JOIN v8_artifact_origin_links l
   ON l.artifact_id=a.artifact_id AND l.organization_id=a.organization_id
   JOIN tmp_template96 i ON i.runtime=l.origin_runtime AND i.source_id=l.origin_record_id
   FOR UPDATE;
@@ -367,11 +468,13 @@ ON CONFLICT (organization_id,origin_runtime,origin_record_id) DO UPDATE SET
   artifact_id=EXCLUDED.artifact_id,is_primary_origin=1;
 
 -- Snapshot layer: KEEP stays active; DEPRECATE is hidden; REBUILD is draft
--- until live-object acceptance. Base rows #15/#81 remain active.
+-- until live-object acceptance. Base rows #15/#81 remain active. Row #53 is
+-- additive: its existing report card stays active while the new deck is draft.
 UPDATE v8_output_artifacts a
    SET template_family_ref=i.family,
-       is_draft=CASE WHEN i.decision='KEEP' OR i.nr IN (15,81) THEN 0 ELSE 1 END,
+       is_draft=GREATEST(a.is_draft, CASE WHEN i.decision='KEEP' OR i.nr IN (15,81) THEN 0 ELSE 1 END),
        delivery_state=CASE WHEN i.decision='DEPRECATE' THEN 'archived'
+                           WHEN a.is_draft=1 THEN a.delivery_state
                            WHEN i.decision='KEEP' OR i.nr IN (15,81) THEN 'ready' ELSE 'draft' END,
        origin_summary_json=(
          CASE WHEN a.origin_summary_json IS NOT NULL AND a.origin_summary_json LIKE '{%'
@@ -386,7 +489,8 @@ UPDATE v8_output_artifacts a
        last_transition_at=TIMESTAMP '2026-09-16 00:00:00'::text
   FROM v8_artifact_origin_links l JOIN tmp_template96 i
     ON i.runtime=l.origin_runtime AND i.source_id=l.origin_record_id
- WHERE a.artifact_id=l.artifact_id AND a.organization_id=l.organization_id;
+ WHERE a.artifact_id=l.artifact_id AND a.organization_id=l.organization_id
+   AND i.nr <> 53;
 
 -- Exactly one active RESULTS_KPI_REPORT default.
 UPDATE report_builder_templates SET is_default=TRUE,is_active=TRUE
@@ -398,13 +502,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_report_builder_templates_one_active_result
   WHERE source_type='RESULTS_KPI_REPORT' AND report_type='RESULTS_KPI_REPORT'
     AND is_default=TRUE AND is_active=TRUE;
 
-DO $$
-DECLARE
-  source_deprecated INTEGER;
-  snapshot_deprecated INTEGER;
-  active_kept INTEGER;
-  draft_rebuild INTEGER;
-BEGIN
   SELECT
     (SELECT count(*) FROM document_studio_templates s JOIN tmp_template96 i ON i.runtime='document_template' AND i.source_id=s.template_id WHERE i.decision='DEPRECATE' AND s.status='deprecated') +
     (SELECT count(*) FROM report_builder_templates s JOIN tmp_template96 i ON i.runtime='report_template' AND i.source_id=s.id WHERE i.decision='DEPRECATE' AND NOT s.is_active) +
@@ -453,6 +550,9 @@ BEGIN
   IF (SELECT count(*) FROM report_builder_templates WHERE source_type='RESULTS_KPI_REPORT' AND report_type='RESULTS_KPI_REPORT' AND is_default AND is_active) <> 1 THEN
     RAISE EXCEPTION 'TEMPLATE-1b readback: active RESULTS_KPI_REPORT default must equal one';
   END IF;
-END $$;
+
+  RAISE NOTICE 'TEMPLATE-1b readback: deprecated %, active proven %, rebuilt draft %',
+    source_deprecated,active_kept,draft_rebuild;
+END $migration$;
 
 COMMIT;
