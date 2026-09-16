@@ -87,6 +87,9 @@ export interface WeekForecast {
   capacityHours: number;
   allocatedHours: number;
   availableHours: number;
+  taskIds: string[];
+  unknownTaskIds: string[];
+  knowledgeState: 'KNOWN' | 'UNKNOWN';
 }
 
 export type OverloadWindow = 'day' | 'week' | 'month';
@@ -136,6 +139,23 @@ function formatDate(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+/** Parse a database date as a calendar day without UTC-to-local day rollback. */
+function parseCalendarDate(value: string | Date | null): Date | null {
+  if (!value) return null;
+  const text = value instanceof Date ? value.toISOString() : String(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
+  if (!match) return null;
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  if (
+    parsed.getFullYear() !== Number(match[1]) ||
+    parsed.getMonth() !== Number(match[2]) - 1 ||
+    parsed.getDate() !== Number(match[3])
+  )
+    return null;
+  parsed.setHours(0, 0, 0, 0);
+  return parsed;
 }
 
 // [ODMROZENIE 06_EXECUTION DEC-453] P16-R0: `addDays` przesuwa datę przez pole
@@ -294,76 +314,153 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   };
 }
 
-export async function getUserForecast(orgId: string, userId: string): Promise<WeekForecast[]> {
-  const allocRows = await DbPromise.all<{ allocation_percent: number }>(
-    `SELECT COALESCE(allocation_percent, 100) as allocation_percent
-     FROM project_members
-     WHERE user_id = ? AND project_id IN (SELECT id FROM projects WHERE organization_id = ?)`,
+export async function getUserForecast(
+  orgId: string,
+  userId: string,
+  options: {
+    asOf?: Date | string;
+    weekCount?: number;
+    initiativeIds?: string[];
+  } = {}
+): Promise<WeekForecast[]> {
+  const profile = await DbPromise.get<{
+    weekly_capacity_hours: number | string | null;
+    availability_percent: number | null;
+  }>(
+    `SELECT weekly_capacity_hours, availability_percent
+       FROM users WHERE id=? AND organization_id=?`,
     [userId, orgId]
   );
+  if (!profile) throw new Error('M1_USER_NOT_FOUND');
 
-  let weeklyCapacity: number = CAPACITY_POLICY.weeklyHoursPerFte;
-  if (allocRows.length > 0) {
-    weeklyCapacity = allocRows.reduce(
-      (sum, r) =>
-        sum +
-        (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) *
-          CAPACITY_POLICY.weeklyHoursPerFte,
-      0
+  const rawCapacity = Number(profile.weekly_capacity_hours);
+  const weeklyCapacity =
+    Number.isFinite(rawCapacity) && rawCapacity > 0
+      ? rawCapacity
+      : CAPACITY_POLICY.weeklyHoursPerFte;
+  const availability = clampAllocationPercent(profile.availability_percent ?? 100);
+  const anchor =
+    options.asOf instanceof Date
+      ? new Date(options.asOf)
+      : typeof options.asOf === 'string'
+        ? (parseCalendarDate(options.asOf) ?? new Date(options.asOf))
+        : new Date();
+  if (Number.isNaN(anchor.getTime())) throw new Error('M1_FORECAST_ANCHOR_INVALID');
+  const weekCount = Math.min(104, Math.max(1, Number(options.weekCount) || 4));
+  const weekStarts = buildWeekStarts(anchor, weekCount);
+  const weekSet = new Set(weekStarts);
+  const scope = [
+    ...new Set((options.initiativeIds ?? []).map((value) => String(value).trim()).filter(Boolean)),
+  ].slice(0, 100);
+  const scopeSql = scope.length
+    ? ` AND t.initiative_id IN (${scope.map(() => '?').join(',')})`
+    : '';
+
+  const explicit = new Map<string, { hours: number; taskIds: string[] }>();
+  try {
+    const allocationRows = await DbPromise.all<{
+      week_start: string | Date;
+      hours: number | string;
+      task_ids: string[] | string | null;
+    }>(
+      `SELECT ta.week_start, COALESCE(SUM(ta.allocated_hours),0) AS hours,
+              ARRAY_AGG(DISTINCT ta.task_id) AS task_ids
+         FROM task_allocations ta
+         JOIN tasks t ON t.id=ta.task_id AND t.organization_id=ta.organization_id
+        WHERE ta.user_id=? AND ta.organization_id=?
+          AND ta.week_start IN (${weekStarts.map(() => '?').join(',')})${scopeSql}
+        GROUP BY ta.week_start`,
+      [userId, orgId, ...weekStarts, ...scope]
     );
-  }
-
-  const today = new Date();
-  const weeks: WeekForecast[] = [];
-
-  for (let w = 0; w < 4; w++) {
-    const weekStart = getMonday(new Date(today.getTime() + w * 7 * 24 * 60 * 60 * 1000));
-    const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-    const wsStr = formatDate(weekStart);
-    const weStr = formatDate(weekEnd);
-
-    let allocated = 0;
-
-    try {
-      const allocRow = await DbPromise.get<{ hours: number }>(
-        `SELECT COALESCE(SUM(allocated_hours), 0) as hours
-         FROM task_allocations
-         WHERE user_id = ? AND organization_id = ? AND week_start = ?`,
-        [userId, orgId, wsStr]
-      );
-      allocated = Number(allocRow?.hours || 0);
-    } catch (err) {
-      // task_allocations may not exist yet; fall back to estimated_hours —
-      // silenceable; anything else logs.
-      logIfNotSilenceableMissingRelation('getUserForecast: task_allocations lookup failed', err, {
-        orgId,
-        userId,
-        weekStart: wsStr,
-      });
+    for (const row of allocationRows) {
+      const weekStart =
+        row.week_start instanceof Date
+          ? row.week_start.toISOString().slice(0, 10)
+          : String(row.week_start).slice(0, 10);
+      const taskIds = Array.isArray(row.task_ids)
+        ? row.task_ids.map(String)
+        : String(row.task_ids || '')
+            .replace(/^\{|\}$/g, '')
+            .split(',')
+            .filter(Boolean);
+      explicit.set(weekStart, { hours: Number(row.hours) || 0, taskIds: taskIds.sort() });
     }
-
-    if (allocated === 0) {
-      const estRow = await DbPromise.get<{ hours: number }>(
-        `SELECT COALESCE(SUM(estimated_hours), 0) / 4.0 as hours
-         FROM tasks
-         WHERE assignee_id = ? AND organization_id = ?
-           AND lower(coalesce(status,'')) NOT IN ('done','completed','validated','cancelled')
-           AND (due_date IS NULL OR due_date >= ?)
-           AND (started_at IS NULL OR started_at <= ?)`,
-        [userId, orgId, wsStr, weStr]
-      );
-      allocated = Number(estRow?.hours || 0);
-    }
-
-    weeks.push({
-      weekStart: wsStr,
-      capacityHours: round1(weeklyCapacity),
-      allocatedHours: round1(allocated),
-      availableHours: round1(Math.max(0, weeklyCapacity - allocated)),
+  } catch (err) {
+    logIfNotSilenceableMissingRelation('getUserForecast.task_allocations', err, {
+      orgId,
+      userId,
     });
   }
 
-  return weeks;
+  const taskRows = await DbPromise.all<{
+    task_id: string;
+    estimated_hours: number | string | null;
+    started_at: string | Date | null;
+    created_at: string | Date | null;
+    due_date: string | Date | null;
+  }>(
+    `SELECT t.id AS task_id, t.estimated_hours, t.started_at, t.created_at, t.due_date
+       FROM tasks t
+      WHERE t.assignee_id=? AND t.organization_id=?
+        AND LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','validated','cancelled')${scopeSql}
+      ORDER BY t.id`,
+    [userId, orgId, ...scope]
+  );
+  const fallbackByWeekTask = new Map<string, Map<string, number>>();
+  const unknownTaskIds = new Map<string, Set<string>>(
+    weekStarts.map((weekStart) => [weekStart, new Set<string>()])
+  );
+  for (const task of taskRows) {
+    const taskId = String(task.task_id);
+    const due = parseCalendarDate(task.due_date);
+    const estimate = Number(task.estimated_hours);
+    if (!due) {
+      for (const ids of unknownTaskIds.values()) ids.add(taskId);
+      continue;
+    }
+    const start = parseCalendarDate(task.started_at) ?? parseCalendarDate(task.created_at) ?? due;
+    const distribution = spreadTaskHoursByWeek(
+      start,
+      due,
+      Number.isFinite(estimate) && estimate > 0 ? estimate : 1
+    );
+    for (const [weekStart, hours] of distribution) {
+      if (!weekSet.has(weekStart)) continue;
+      if (!Number.isFinite(estimate) || estimate <= 0) {
+        unknownTaskIds.get(weekStart)?.add(taskId);
+        continue;
+      }
+      const taskHours = fallbackByWeekTask.get(weekStart) ?? new Map<string, number>();
+      taskHours.set(taskId, (taskHours.get(taskId) || 0) + hours);
+      fallbackByWeekTask.set(weekStart, taskHours);
+    }
+  }
+
+  return weekStarts.map((weekStart) => {
+    const allocated = explicit.get(weekStart);
+    const explicitlyAllocatedTaskIds = new Set(allocated?.taskIds ?? []);
+    const fallbackTasks = [...(fallbackByWeekTask.get(weekStart) ?? [])].filter(
+      ([taskId]) => !explicitlyAllocatedTaskIds.has(taskId)
+    );
+    const demand =
+      (allocated?.hours ?? 0) + fallbackTasks.reduce((sum, [, hours]) => sum + hours, 0);
+    const taskIds = [
+      ...new Set([...(allocated?.taskIds ?? []), ...fallbackTasks.map(([taskId]) => taskId)]),
+    ].sort();
+    const unknown = [...(unknownTaskIds.get(weekStart) ?? [])]
+      .filter((taskId) => !explicitlyAllocatedTaskIds.has(taskId))
+      .sort();
+    const capacity = weeklySupplyHours(weekStart, weeklyCapacity, availability);
+    return {
+      weekStart,
+      capacityHours: capacity,
+      allocatedHours: round1(demand),
+      availableHours: round1(Math.max(0, capacity - demand)),
+      taskIds,
+      unknownTaskIds: unknown,
+      knowledgeState: unknown.length ? 'UNKNOWN' : 'KNOWN',
+    };
+  });
 }
 
 export async function getOverloadAlerts(

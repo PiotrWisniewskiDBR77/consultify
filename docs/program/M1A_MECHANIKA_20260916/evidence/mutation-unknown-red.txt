@@ -1,0 +1,47 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-20260916
+
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > spreads hours over working days and keeps task provenance in each cell 58ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > uses created_at as the explicit temporary fallback when started_at is absent 1ms
+ × server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > returns UNKNOWN instead of zero when a contributing task has no estimate 9ms
+   → expected { periodId: 'W1', …(5) } to match object { periodId: 'W1', …(2) }
+(3 matching properties omitted from actual)
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > does not invent a period for a task without a due date 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps weekend-only work in the period containing the due date 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > treats a plan end-of-day timestamp as an inclusive calendar date 0ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > reads only the explicit organization and initiative scope 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > rejects an invalid scope or period contract before reading data 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > returns UNKNOWN instead of zero when a contributing task has no estimate
+AssertionError: expected { periodId: 'W1', …(5) } to match object { periodId: 'W1', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "demandHours": null,
++   "demandHours": 0,
+    "knowledgeState": "UNKNOWN",
+    "periodId": "W1",
+  }
+
+ ❯ server/src/services/__tests__/planTaskDemandService.test.ts:92:29
+     90|
+     91|     expect(result.knowledgeState).toBe('UNKNOWN');
+     92|     expect(result.cells[0]).toMatchObject({
+       |                             ^
+     93|       periodId: 'W1',
+     94|       demandHours: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  11:11:39
+   Duration  2.41s (transform 282ms, setup 524ms, import 51ms, tests 76ms, environment 700ms)
+
+exit=1

@@ -1,0 +1,52 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-20260916
+
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > spreads hours over working days and keeps task provenance in each cell 42ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > uses created_at as the explicit temporary fallback when started_at is absent 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > returns UNKNOWN instead of zero when a contributing task has no estimate 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > does not invent a period for a task without a due date 0ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps weekend-only work in the period containing the due date 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > treats a plan end-of-day timestamp as an inclusive calendar date 0ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > reads only the explicit organization and initiative scope 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > rejects an invalid scope or period contract before reading data 1ms
+ ✓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks 31ms
+ ✓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps an unquantified task UNKNOWN instead of reporting known zero 1ms
+ ✓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance 1ms
+ ✓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > fails closed when the user is outside the organization scope 1ms
+ ✓ server/src/services/__tests__/workloadCapacityService.initiativeScope.test.ts > getExecutionResourcePlan initiative scope > binds project and initiative statuses inside the tenant-scoped task query 35ms
+ ✓ server/src/services/__tests__/workloadCapacityService.initiativeScope.test.ts > getExecutionResourcePlan initiative scope > proposes a planning move without mutating assignments 2ms
+ ✓ server/src/services/__tests__/workloadCapacityService.initiativeScope.test.ts > getExecutionResourcePlan initiative scope > returns no proposal when the requested canonical status is already executing 1ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityOverview > measures allocation against the current week window (unit-consistent utilization) 34ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityOverview > reports undated backlog SEPARATELY and never folds it into utilization 1ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityOverview > handles a member with no window tasks and no due dates (backlog only) 0ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityOverview > returns an empty, well-formed overview when there are 0 members 1ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityOverview > exposes a valid Mon..Sun capacity window 0ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityOverview > flags overload only when WINDOW allocation exceeds capacity (not lifetime backlog) 0ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getOverloadAlerts > surfaces backlogHours on alerts and scales to the requested window 2ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getOverloadAlerts > emits no alert when window allocation is within capacity even with large backlog 0ms
+ ✓ tests/unit/services/workloadCapacityService.test.ts > workloadCapacityService.getCapacityTimeline > uses an explicit stable anchor and returns identical cold readbacks 1ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > domyslna podaz to 40 h x 100 %, gdy profil osoby nic nie mowi (a NIE 0) 33ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > oblozenie i luka licza sie z realnego popytu, a przeciazenie wychodzi na wierzch 1ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > etat z profilu przelicza podaz przez dostepnosc (40 h x 50 % = 20 h) 0ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > zadanie PO TERMINIE nie wchodzi do popytu tygodnia — idzie do zaleglosci 0ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > zaleglosc to JEDNA liczba na osobe — tylko w wierszu biezacego tygodnia 2ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > zadanie BEZ terminu nie jest zgadywane na tydzien i NIE jest zalegloscia 0ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > rozklad rowny: 10 h na oknie pon-pt to 2 h dziennie i caly tydzien 0ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > rozklad rowny: zadanie przez dwa tygodnie dzieli sie proporcjonalnie 0ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > popyt tygodnia bierze UDZIAL zadania, nie cale zadanie w tygodniu terminu 1ms
+ ✓ server/src/services/__tests__/executionResourcePlan.test.ts > getExecutionResourcePlan > podaz = dni robocze tygodnia x godziny dzienne osoby (profil 20 h -> 20 h) 1ms
+stdout | server/src/services/__tests__/workloadCapacityService.buildWeekStarts.test.ts
+2026-09-16 09:36:26:3626 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-16 09:36:26:3626 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-16 09:36:26:3626 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-16 09:36:26:3626 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-16 09:36:26:3626 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/services/__tests__/workloadCapacityService.buildWeekStarts.test.ts > workloadCapacityService.buildWeekStarts (P16-R0) > zwraca 8 RÓŻNYCH poniedziałków od 2026-09-07, bez duplikatu na zmianie czasu 25.10 30ms
+ ✓ server/src/services/__tests__/workloadCapacityService.buildWeekStarts.test.ts > workloadCapacityService.buildWeekStarts (P16-R0) > kolejne poniedziałki różnią się dokładnie o 7 dni kalendarzowych (nie o godziny zegarowe) 1ms
+ ✓ server/src/services/__tests__/workloadCapacityService.buildWeekStarts.test.ts > workloadCapacityService.buildWeekStarts (P16-R0) > mutacja dokumentacyjna: arytmetyka milisekundowa `+7*24h` dubluje tydzień 19.10/26.10 0ms
+
+ Test Files  6 passed (6)
+      Tests  37 passed (37)
+   Start at  09:36:24
+   Duration  1.65s (transform 911ms, setup 1.78s, import 1.14s, tests 248ms, environment 4.23s)
