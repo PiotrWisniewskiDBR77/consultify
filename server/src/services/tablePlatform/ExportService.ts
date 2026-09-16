@@ -138,6 +138,7 @@ export interface CsvExportOptions {
   tableId: string;
   viewId?: string;
   fieldIds?: string[];
+  organizationName?: string;
 }
 
 async function streamCsvExport(
@@ -188,223 +189,49 @@ async function streamCsvExport(
 // XLSX Export
 // ---------------------------------------------------------------------------
 
-const XLSX_COLUMN_WIDTHS: Record<string, number> = {
-  singleLineText: 20,
-  single_line_text: 20,
-  longText: 30,
-  long_text: 30,
-  number: 12,
-  currency: 14,
-  percent: 10,
-  date: 15,
-  createdTime: 18,
-  lastModifiedTime: 18,
-  created_time: 18,
-  last_modified_time: 18,
-  checkbox: 8,
-  singleSelect: 16,
-  single_select: 16,
-  multiSelect: 22,
-  multi_select: 22,
-  email: 22,
-  url: 25,
-  phone: 14,
-  linkedRecord: 22,
-  linked_record: 22,
-  attachment: 20,
-};
-
-// X2 WIRED (W4): when the premium deliverables tier is active AND the table has
-// styled fields (singleSelect colors, CF-eligible numeric columns), use the
-// ExcelJS WorkbookBuilder for full-fidelity output (colored chips, conditional
-// formatting, type-aware number formats). FAIL-OPEN: any WorkbookBuilder failure
-// falls back to the existing SheetJS path byte-for-byte.
 async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
-  const { tableId, viewId, fieldIds } = options;
+  const { tableId, viewId, fieldIds, organizationName = 'Organization' } = options;
   const fields = await loadFields(tableId, fieldIds);
-
-  // ── X2: Premium ExcelJS path (flag-gated, fail-open) ──────────────────────
-  try {
-    const { resolveDeliverableTier } = await import('../deliverableGenerationTier.js');
-    if (resolveDeliverableTier({}) === 'PREMIUM') {
-      const hasStyledFields = fields.some(
-        (f) =>
-          f.type === 'singleSelect' ||
-          f.type === 'single_select' ||
-          f.type === 'multiSelect' ||
-          f.type === 'multi_select' ||
-          f.type === 'currency' ||
-          f.type === 'percent' ||
-          f.type === 'rating'
-      );
-      if (hasStyledFields) {
-        const { buildWorkbookBuffer, tableSchemaToWorkbook } =
-          await import('../workbook/WorkbookBuilder.js');
-
-        // Collect all rows (same pagination loop as the SheetJS path below).
-        const allRows: Record<string, unknown>[] = [];
-        let cursor: string | undefined;
-        let hasMore = true;
-
-        while (hasMore) {
-          const batch = await viewQueryEngine.executeQuery({
-            tableId,
-            viewId,
-            pageSize: EXPORT_BATCH_SIZE,
-            cursor,
-          });
-          for (const record of batch.records) {
-            const data = (record as any).data ?? record;
-            const row: Record<string, unknown> = {};
-            for (const f of fields) {
-              row[f.id] = data[f.id] ?? data[f.name] ?? null;
-            }
-            allRows.push(row);
-          }
-          cursor = batch.cursor;
-          hasMore = batch.hasMore;
-        }
-
-        // Map ExportField[] → TableField[] (WorkbookBuilder interface).
-        const tableFields = fields.map((f) => ({
-          key: f.id,
-          header: f.name,
-          type: f.type,
-          options: Array.isArray((f.options as any)?.choices)
-            ? (f.options as any).choices.map((c: any) => ({
-                label: String(c.name ?? c.label ?? ''),
-                color: c.color ? String(c.color) : undefined,
-              }))
-            : undefined,
-        }));
-
-        const tableName = await getTableName(tableId);
-        const workbookSchema = tableSchemaToWorkbook(
-          { fields: tableFields, seedRows: allRows },
-          { title: tableName, author: 'Consultify' }
-        );
-        return await buildWorkbookBuffer(workbookSchema);
-      }
-    }
-  } catch {
-    // FAIL-OPEN: WorkbookBuilder failed → fall through to SheetJS path.
-  }
-
-  // ── STANDARD: SheetJS path ─────────────────────────────────────────────────
-  let XLSX: any;
-  try {
-    XLSX = await import('xlsx');
-  } catch {
-    throw new Error('xlsx package is not available');
-  }
-
-  // fields already loaded above.
-
-  const rows: unknown[][] = [];
-  // Neutralize formula-injection in XLSX cells too (aoa_to_sheet writes values
-  // verbatim, so a leading =/+/-/@ would land as a live formula).
-  rows.push(fields.map((f) => neutralizeFormula(f.name)));
-
+  const rows: Record<string, { value?: unknown; formula?: string }>[] = [];
   let cursor: string | undefined;
   let hasMore = true;
-
   while (hasMore) {
-    const queryOpts: QueryOptions = {
+    const batch = await viewQueryEngine.executeQuery({
       tableId,
       viewId,
       pageSize: EXPORT_BATCH_SIZE,
       cursor,
-    };
-
-    const batch = await viewQueryEngine.executeQuery(queryOpts);
-
+    });
     for (const record of batch.records) {
       const data = (record as any).data ?? record;
-      rows.push(
-        fields.map((f) => neutralizeFormula(formatFieldValue(data[f.id] ?? data[f.name], f)))
-      );
+      const row: Record<string, { value?: unknown; formula?: string }> = {};
+      for (const field of fields) {
+        const raw = data[field.id] ?? data[field.name] ?? null;
+        row[field.id] = { value: raw };
+      }
+      rows.push(row);
     }
-
     cursor = batch.cursor;
     hasMore = batch.hasMore;
   }
-
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-
-  // Auto-column-width: measure actual content length
-  const colWidths = fields.map((f, colIdx) => {
-    let maxLen = f.name.length;
-    for (let r = 1; r < rows.length && r < 100; r++) {
-      const val = rows[r][colIdx];
-      const len = val != null ? String(val).length : 0;
-      if (len > maxLen) maxLen = len;
-    }
-    const typeDefault = XLSX_COLUMN_WIDTHS[f.type] ?? 16;
-    return Math.min(Math.max(maxLen + 2, typeDefault), 60);
+  const { buildCanonicalXlsxBuffer } = await import('../export/CanonicalXlsxExportService.js');
+  const tableName = await getTableName(tableId);
+  return buildCanonicalXlsxBuffer({
+    title: tableName,
+    organizationName,
+    source: 'Consultify → Table Studio',
+    sheets: [
+      {
+        name: 'Data',
+        columns: fields.map((field) => ({
+          key: field.id,
+          header: field.name,
+          type: field.type,
+        })),
+        rows,
+      },
+    ],
   });
-  ws['!cols'] = colWidths.map((w) => ({ wch: w }));
-
-  // Freeze header row
-  ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
-
-  // Header row formatting: bold + background color
-  for (let c = 0; c < fields.length; c++) {
-    const cellRef = XLSX.utils.encode_cell({ r: 0, c });
-    if (ws[cellRef]) {
-      ws[cellRef].s = {
-        font: { bold: true, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '4472C4' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: {
-          bottom: { style: 'thin', color: { rgb: '2F5496' } },
-        },
-      };
-    }
-  }
-
-  // Number formatting for numeric columns
-  for (let c = 0; c < fields.length; c++) {
-    const fieldType = fields[c].type;
-    if (fieldType === 'currency' || fieldType === 'number' || fieldType === 'percent') {
-      for (let r = 1; r < rows.length; r++) {
-        const cellRef = XLSX.utils.encode_cell({ r, c });
-        if (ws[cellRef]) {
-          const numVal = parseFloat(String(ws[cellRef].v));
-          if (!isNaN(numVal)) {
-            ws[cellRef].v = numVal;
-            ws[cellRef].t = 'n';
-            if (fieldType === 'currency') {
-              ws[cellRef].z = '#,##0.00';
-            } else if (fieldType === 'percent') {
-              ws[cellRef].z = '0.00%';
-            } else {
-              ws[cellRef].z = '#,##0.##';
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Alternating row colors for readability
-  for (let r = 1; r < rows.length; r++) {
-    if (r % 2 === 0) {
-      for (let c = 0; c < fields.length; c++) {
-        const cellRef = XLSX.utils.encode_cell({ r, c });
-        if (ws[cellRef]) {
-          ws[cellRef].s = {
-            ...(ws[cellRef].s || {}),
-            fill: { fgColor: { rgb: 'F2F7FB' } },
-          };
-        }
-      }
-    }
-  }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Data');
-
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@
  *   - in-memory workbookCache short-circuit (freshly generated, not yet queried)
  */
 import express from 'express';
+import ExcelJS from 'exceljs';
 import request from 'supertest';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
@@ -36,6 +37,16 @@ vi.mock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
 
 const queryOneMock = vi.fn();
 const queryRunMock = vi.fn().mockResolvedValue(undefined);
+
+const binaryParser = (
+  response: NodeJS.ReadableStream,
+  callback: (error: Error | null, body?: Buffer) => void
+) => {
+  const chunks: Buffer[] = [];
+  response.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+  response.on('end', () => callback(null, Buffer.concat(chunks)));
+  response.on('error', (error) => callback(error as Error));
+};
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: (...args: unknown[]) => queryRunMock(...args),
@@ -152,7 +163,10 @@ describe('GET /api/workbook/:id/schema', () => {
     mockUser.organizationId = 'org-2';
     queryOneMock.mockResolvedValueOnce(null);
 
-    const res = await request(app).get(`/workbook/${created.body.id}/download`);
+    const res = await request(app)
+      .get(`/workbook/${created.body.id}/download`)
+      .buffer(true)
+      .parse(binaryParser);
     expect(res.status).toBe(404);
     expect(queryOneMock).toHaveBeenCalledWith(expect.any(String), [created.body.id, 'org-2']);
   });
@@ -204,11 +218,18 @@ describe('GET /api/workbook/:id/schema', () => {
       quality_report_json: JSON.stringify({ issues: [] }),
     });
 
-    const res = await request(app).get(`/workbook/${created.body.id}/download`);
+    const res = await request(app)
+      .get(`/workbook/${created.body.id}/download`)
+      .buffer(true)
+      .parse(binaryParser);
     expect(res.status).toBe(200);
     expect(res.headers['x-artifact-export-mode']).toBe('draft');
     expect(res.headers['x-artifact-draft']).toBe('true');
     expect(res.headers['content-disposition']).toContain('Governed_workbook-DRAFT.xlsx');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(res.body as Buffer);
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Sheet1', 'Summary']);
+    expect(workbook.getWorksheet('Summary')!.getCell('B4').type).toBe(ExcelJS.ValueType.Formula);
   });
 
   it('fails closed when a final export lacks current approval', async () => {
