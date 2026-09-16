@@ -34,7 +34,14 @@ describe('STAGE-1 / DEC-539', () => {
     expect(sql).toContain('ADD COLUMN IF NOT EXISTS lifecycle_stage TEXT');
     expect(sql).toContain('initiatives_lifecycle_stage_check');
     expect(sql).toContain('sync_initiative_lifecycle_stage');
+    expect(sql).toContain('sync_initiative_stage_from_aggregate');
+    expect(sql).toContain('ie_aggregate_initiative_stage_sync');
     expect(sql).toContain("lifecycle_stage_source = 'mapped'");
+    expect(sql).toContain('DISABLE TRIGGER initiatives_lifecycle_stage_sync');
+    expect(sql).toContain("WHEN 'PENDING_APPROVAL' THEN 'READY_FOR_DECISION'");
+    expect(sql).toContain("WHEN 'CLOSED' THEN 'CLOSED'");
+    expect(sql).toContain("NEW.lifecycle_stage_source := 'writer'");
+    expect(sql).toContain('STAGE-1 backfill changed initiatives.status');
     expect(sql).toContain('UPDATE initiatives SET lifecycle_stage = NULL');
     expect(sql).not.toMatch(/DROP COLUMN/i);
   });

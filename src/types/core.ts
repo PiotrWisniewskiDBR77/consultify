@@ -865,6 +865,11 @@ export interface PortfolioInitiative {
   archived?: boolean;
   /** V8 planning read: normalized PMO status when raw DB value needed coercion */
   displayStatus?: string;
+  /** DEC-539 persisted twelve-stage truth; `status` stays the compatibility projection. */
+  lifecycleStage?: string | null;
+  lifecycle_stage?: string | null;
+  lifecycleStageSource?: 'aggregate' | 'mapped' | 'writer' | null;
+  canonicalLifecyclePresentation?: boolean;
   p11LifecycleState?: string;
   statusReadDrift?: boolean;
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -2672,6 +2677,9 @@ export interface FullInitiative {
   priority: 'High' | 'Medium' | 'Low' | 'Critical';
   complexity: 'High' | 'Medium' | 'Low'; // Keep for compatibility
   status: InitiativeStatus;
+  /** DEC-539 persisted stage supplied by list/read APIs. */
+  lifecycleStage?: string | null;
+  lifecycle_stage?: string | null;
   currentStage?: string;
   plannedStartDate?: string;
   plannedEndDate?: string;

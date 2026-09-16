@@ -696,6 +696,11 @@ class ReportInitiativeService {
           savedIds.push(__r.id);
         } else {
           const lifecycleTarget = resolveInitiativeStageWriteTarget(initiative.status);
+          if (!lifecycleTarget) {
+            throw new Error(
+              `Refusing unknown initiative lifecycle status "${String(initiative.status)}"`
+            );
+          }
           await this.db.run(
             `INSERT INTO initiatives (
               id, project_id, organization_id, title, description,

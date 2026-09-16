@@ -80,6 +80,7 @@ import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/in
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
 import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
+import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 import { enumLabel } from '@/utils/enumLabel';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
@@ -291,6 +292,11 @@ const TRANSITION_INBOX_ENABLED = import.meta.env.VITE_TRANSITION_INBOX === 'true
    istniejacej zakladki `capacity` (zero nowych soczewek w Menu 3 — kanon 3 pigulek).
    Flaga domyslnie OFF: przy OFF `capacity` renderuje CapacityScenarioSurface jak na linii. */
 const INITIATIVES_WORKLOAD_ENABLED = isInitiativesWorkloadEnabled();
+const INITIATIVES_STAGES_12_ENABLED = isInitiativesStages12Enabled();
+export const resolveInitiativesMenu3Statuses = (stages12Enabled: boolean) =>
+  stages12Enabled
+    ? (['READY_FOR_DECISION', 'IN_EXECUTION'] as const)
+    : ([InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.IN_EXECUTION] as const);
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   'list',
   'plan',
@@ -730,7 +736,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }
             if (
               activeStatusFilter &&
-              resolveInitiativeRegisterLifecycle(initiative as any) !== activeStatusFilter
+              (INITIATIVES_STAGES_12_ENABLED
+                ? resolveInitiativeRegisterLifecycle(initiative)
+                : initiative.status) !== activeStatusFilter
             )
               return false;
             if (activeLifecyclePreset) {
@@ -948,7 +956,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const statusCounts: Record<string, number> = useMemo(() => {
     const counts: Record<string, number> = { all: registerCountBase.length };
     registerCountBase.forEach((i) => {
-      const stage = resolveInitiativeRegisterLifecycle(i as any);
+      const stage = INITIATIVES_STAGES_12_ENABLED
+        ? resolveInitiativeRegisterLifecycle(i)
+        : i.status;
       if (stage) counts[stage] = (counts[stage] || 0) + 1;
     });
     return counts;
@@ -2165,8 +2175,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     // Filter by status if active
     const filteredInitiatives = activeStatusFilter
-      ? initiatives.filter(
-          (i) => resolveInitiativeRegisterLifecycle(i as any) === activeStatusFilter
+      ? initiatives.filter((i) =>
+          INITIATIVES_STAGES_12_ENABLED
+            ? resolveInitiativeRegisterLifecycle(i) === activeStatusFilter
+            : i.status === activeStatusFilter
         )
       : initiatives;
 
@@ -2769,7 +2781,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // (`rightControls`). Wybór: „Do decyzji" (kolejka wymagająca akcji
   // właściciela) i „W realizacji" (aktywna praca) — to dwa stany o
   // największej wartości decyzyjnej po samym „Wszystkie".
-  const menu3Statuses = ['READY_FOR_DECISION', 'IN_EXECUTION'] as const;
+  const menu3Statuses = resolveInitiativesMenu3Statuses(INITIATIVES_STAGES_12_ENABLED);
 
   /**
    * Menu 3 · lewa strona (chipy filtrów z licznikami).
@@ -2816,7 +2828,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               data-testid={`initiatives-menu3-chip-${status}`}
             >
               <span className="h-2 w-2 rounded-full bg-c-text-muted" />
-              <span>{enumLabel('initiativeLifecycle', status, t)}</span>
+              <span>
+                {INITIATIVES_STAGES_12_ENABLED
+                  ? enumLabel('initiativeLifecycle', status, t)
+                  : getLocalizedStatusLabel(status as InitiativeStatus, t)}
+              </span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
               </span>
@@ -2962,11 +2978,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Aktywne/Wszystkie oraz filtry projektu i priorytetu, stąd "72" obok "63" i "60").
   const lifecycleDropdownOptions = [
     { id: 'all', label: t('common.all', 'All'), count: statusCounts.all ?? 0 },
-    ...INITIATIVE_LIFECYCLE.map((status) => ({
-      id: status,
-      label: enumLabel('initiativeLifecycle', status, t),
-      count: statusCounts[status] ?? 0,
-    })),
+    ...(INITIATIVES_STAGES_12_ENABLED
+      ? [...INITIATIVE_LIFECYCLE, InitiativeStatus.PROPOSED, InitiativeStatus.REJECTED].map(
+          (status) => ({
+            id: status,
+            label: (INITIATIVE_LIFECYCLE as readonly string[]).includes(status)
+              ? enumLabel('initiativeLifecycle', status, t)
+              : getLocalizedStatusLabel(status as InitiativeStatus, t),
+            count: statusCounts[status] ?? 0,
+          })
+        )
+      : Object.values(InitiativeStatus).map((status) => ({
+          id: status,
+          label: getLocalizedStatusLabel(status, t),
+          count: statusCounts[status] ?? 0,
+        }))),
     /* F9: powierzchnie za flagami. Nie sa statusami rejestru, wiec nie maja
        licznika z `statusCounts` — sa OSOBNYMI POWIERZCHNIAMI, do ktorych ten
        sam przelacznik prowadzi i z ktorych tym samym przelacznikiem sie wraca

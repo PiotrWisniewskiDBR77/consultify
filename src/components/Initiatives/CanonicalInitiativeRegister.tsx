@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
+import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
 import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
@@ -75,6 +76,7 @@ export const CanonicalInitiativeRegister = ({
   onEmptyAction,
 }: CanonicalInitiativeRegisterProps) => {
   const { t } = useTranslation();
+  const stages12Enabled = isInitiativesStages12Enabled();
   const includeSource = !!columnOptions?.includeSource;
   const columns = useMemo(
     () => createCanonicalInitiativeRegisterColumns({ includeSource, t }),
@@ -97,7 +99,7 @@ export const CanonicalInitiativeRegister = ({
             // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
             label: initiative.onHold
               ? t('initiatives.status.ON_HOLD', 'On hold')
-              : (isKnownEnumValue('initiativeLifecycle', String(initiative.displayStatus))
+              : (stages12Enabled && isKnownEnumValue('initiativeLifecycle', String(initiative.displayStatus))
                   ? enumLabel('initiativeLifecycle', String(initiative.displayStatus), t)
                   : '') ||
                 getLocalizedStatusLabel(

@@ -152,6 +152,7 @@ import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
 } from '@/utils/initiativeWorkflowStatus';
+import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 
 import { InitiativeStatus } from '../../types/initiative';
@@ -1515,7 +1516,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       (initiative as any)?.lifecycle ||
       ''
   ).toUpperCase();
-  const statusPillLabel = persistedLifecycleStage
+  const statusPillLabel =
+    isInitiativesStages12Enabled() &&
+    status !== InitiativeStatus.REJECTED &&
+    status !== InitiativeStatus.PROPOSED &&
+    persistedLifecycleStage
     ? enumLabel('initiativeLifecycle', persistedLifecycleStage, t)
     : definitionApprovalV2 && initiative?.documentOrigin === 'initiatives-runtime-v1'
       ? enumLabel('initiativeLifecycle', String(initiative.lifecycle || 'UNKNOWN'), t)

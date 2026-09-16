@@ -100,6 +100,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { formatListDate, localeListy } from '@/utils/listDateFormat';
+import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
@@ -2280,9 +2281,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             name: initiative.name,
             description: initiative.description,
             lifecycleStatus: String(
-              (initiative as any).lifecycleStage ||
-                (initiative as any).lifecycle_stage ||
-                initiative.status
+              isInitiativesStages12Enabled()
+                ? initiative.lifecycleStage || initiative.lifecycle_stage || initiative.status
+                : initiative.status
             ),
             projectId: initiative.projectId ?? null,
             priority: initiative.priority ?? null,
