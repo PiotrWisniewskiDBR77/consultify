@@ -298,12 +298,13 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     getPublishedKpiScorecardSnapshot(scorecard.scorecardId)
       .catch(() => null)
       .then((snapshot) => {
-        if (!cancelled) setReportPeriodLabel(resolveKpiReportPeriodLabel(scorecard, snapshot));
+        if (!cancelled)
+          setReportPeriodLabel(resolveKpiReportPeriodLabel(scorecard, snapshot, isPolish));
       });
     return () => {
       cancelled = true;
     };
-  }, [enabled, scorecard]);
+  }, [enabled, isPolish, scorecard]);
 
   const runLifecycleAction = useCallback(
     async (row: KpiScorecardDto, action: 'activate' | 'suspend' | 'archive') => {

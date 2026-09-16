@@ -462,6 +462,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
 export function resolveKpiReportPeriodLabel(
   scorecard: KpiScorecardDto,
   publishedSnapshot: { reviewPeriodStart: string; reviewPeriodEnd: string } | null,
+  isPolish: boolean,
   now: Date = new Date()
 ): string | null {
   const granularity: 'month' | 'quarter' | 'year' =
@@ -472,7 +473,7 @@ export function resolveKpiReportPeriodLabel(
         : 'month';
   const anchorDate = publishedSnapshot ? new Date(publishedSnapshot.reviewPeriodStart) : now;
   if (Number.isNaN(anchorDate.getTime())) return null;
-  return kpiReportPeriodLabel(kpiPeriodKeyForDate(anchorDate, granularity));
+  return kpiReportPeriodLabel(kpiPeriodKeyForDate(anchorDate, granularity), isPolish);
 }
 
 // ==========================================
