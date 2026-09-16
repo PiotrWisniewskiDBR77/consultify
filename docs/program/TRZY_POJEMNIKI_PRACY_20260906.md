@@ -1405,7 +1405,7 @@ ujęte w pojemniku 1 jako już zaakceptowane elementy ścieżki właściciela in
 | 81 | Proces | E2E-1b nocna macierz wariantów | ⬜ | P | U-03 · DEC-573 | Fala 2 |
 | 82 | Wiele | M6 higiena | 🔧 | S1.7 | U-01/U-02/U-04 · DEC-571 | Pojemnik 1 |
 | 83 | Dane | SR-1 SHOWCASE-ROLL | ⬜ | S1.7 | U-01/U-02/U-04 · DEC-573 | Pojemnik 1 |
-| 84 | Wspólne | CRON-2 eskalacja decyzji | 🔧 | S1.8 | DEC-573 | Pojemnik 1 |
+| 84 | Wspólne | CRON-2 eskalacja decyzji | 🔧 (scalone `85541745e8`, wdrożenie 13) | S1.8 | DEC-573 | Pojemnik 1 |
 | 85 | Wspólne | I18N-1 renderery bez PL | ⬜ | S1.4 | U-30 · DEC-461 | Pojemnik 1 |
 
 | Zakres | ✅ | 🧪 | 🔧 | ⬜ | Razem |
@@ -1413,8 +1413,14 @@ ujęte w pojemniku 1 jako już zaakceptowane elementy ścieżki właściciela in
 | §5 pomiar bazowy | 11 | 11 | 19 | 6 | 47 |
 | PLAN §4 po deduplikacji | 0 | 1 | 4 | 33 | 38 |
 | **Połączona macierz** | **11** | **12** | **23** | **39** | **85** |
-| **Pojemnik 1 (MVP)** | **4** | **1** | **9** | **25** | **39** |
-| **Fala 2** | **7** | **11** | **14** | **14** | **46** |
+| **Pojemnik 1 (MVP)** | **6** | **1** | **9** | **23** | **39** |
+| **Fala 2** | **5** | **11** | **14** | **16** | **46** |
+
+**Przeliczone parserem po 85 wierszach tabeli wyżej (DOCS-PLAN-b, 16.09.2026):** Pojemnik 1 —
+✅6 · 🧪1 · 🔧9 · ⬜23 (39); Fala 2 — ✅5 · 🧪11 · 🔧14 · ⬜16 (46); suma ✅11 · 🧪12 · 🔧23 · ⬜39 = 85.
+Wiersze „Pojemnik 1 (MVP)" i „Fala 2" powyżej były niezgodne z liczbą symboli w kolumnie STAN
+per wiersz (4/1/9/25 i 7/11/14/14) — poprawione na wynik pomiaru; wiersz „Połączona macierz" był
+już zgodny i bez zmian.
 
 ### PROMOCJA_DEMO (DEC-572)
 
@@ -1563,7 +1569,7 @@ pod te scenariusze — tańsza niż osobne dyżury per ekran.
 | S1.6 | Teresa ze źródłami w 16 modułach | OTWARTE 12/16 | **OTWARTE 12/16** | `admin` i `settings` nadal **bez gałęzi gruntowania** (grep `case 'admin'` w `moduleContextGrounding.ts` = 0) |
 | S1.7 | Moje dane czyste | OTWARTE | **OTWARTE — duży ubytek** | czystka DBR77 15.09 **wykonana** (`czystka-dbr77-20260915/apply-del-wynik.txt`: DELETE 35 + 4 + 4 + 5 + 9, COMMIT) — duplikaty inicjatyw, stuby SWOT/QA, `finance_periods`; Northwind **wykonana** (`DELETE 2`, rekord „P11 weryfikacja zapisu" usunięty). Zostaje: ocena 100 % w DBR77, 3 wnioski-śmiecie, 2 „(Fork)", 37 klonów `*-demo-session-*` |
 | S1.8 | Strażniki zielone, dług nie rośnie | ZAMKNIĘTE | **ZAMKNIĘTE** | ratchet językowy trzyma (baseline niżej) |
-| S1.9 | Demo ma własną bazę i przećwiczoną promocję | ZAMKNIĘTE | **ZAMKNIĘTE** | demo `trolley`, staging `thomas`; promocja 17.09 (DEC-520) |
+| S1.9 | Demo ma własną bazę i przećwiczoną promocję | ZAMKNIĘTE | **ZAMKNIĘTE** | demo `trolley`, staging `thomas`; promocja 17.09 (DEC-520) — uchylona DEC-572: bez sztywnej daty; 17.09 = techniczne odświeżenie demo |
 | S1.10 | Trzy decyzje podjęte i zapisane | ZAMKNIĘTE | **ZAMKNIĘTE** | — |
 | S1.11 | 16 modułów zamrożonych tagiem | OTWARTE (570 odmrożeń) | **OTWARTE — gorzej** | `MVP_FINAL_ZAMROZONE.json` nadal **15 modułów**, `_zaktualizowano: 2026-09-10`, **`10_FINANCE` nie istnieje**; commitów `[ODMROZENIE …]` od `90833bc94a` = **512**; tagów `mvp-wlasciciel-*` = 0 |
 | S1.12 | Przekazanie dla pojemnika 2 napisane | ZAMKNIĘTE* | **ZAMKNIĘTE*** | ostatnie przekazanie dalej z 13.09; 14–15.09 żyje tylko w rejestrze i KANALE |

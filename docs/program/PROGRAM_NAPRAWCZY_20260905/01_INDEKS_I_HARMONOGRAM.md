@@ -2886,3 +2886,4 @@ odbior-fala2-1-20260915,audyt-47-20260915}/`.
 - **DEC-571** — Wszystkie makiety z 16.09 zaakceptowane; budowa 1:1 z obrazów.
 - **DEC-572** — PLAN 85 etapów obowiązuje; promocja produktu nie ma daty, a 17.09 jest technicznym odświeżeniem demo przez CTO z `85541745e8`, flagami OFF, tagiem cofnięcia i żywym `_RUNBOOK_COFANIA`.
 - **DEC-573** — Fala 2 biegnie równolegle w torze B: EXPORT-1, TEMPLATE-1 i mechanika bez ekranów; ekrany dopiero po akceptach właściciela.
+- **DEC-574** — KPI-1: odmrożenie `09_RESULTS` (higiena ekranu KPI, Wyniki).
