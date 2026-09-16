@@ -255,7 +255,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   onTitleChange,
   onBack,
   backLabel,
-  moduleLabel = 'Prezentacje',
+  moduleLabel,
   topBarHandlers,
   topBarState,
   topBarLabels,
@@ -622,7 +622,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   const shell = (
     <ExecutiveModuleShell
       moduleKey="prezentacje"
-      moduleLabel={moduleLabel}
+      moduleLabel={moduleLabel ?? t('presentations.builder.moduleLabel')}
       title={title}
       onTitleChange={onTitleChange}
       onBack={onBack}
