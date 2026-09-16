@@ -6,7 +6,6 @@
  */
 
 import bcrypt from 'bcryptjs';
-import * as docxModule from 'docx';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
@@ -19,27 +18,11 @@ import {
   getProfilesForSourceType,
   INVOCATION_PROFILES,
 } from '../config/reportInvocationProfiles.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { exportReportToNotion } from '../services/ai/integrationHubService.js';
-
-const {
-  AlignmentType,
-  BorderStyle,
-  Document,
-  Footer,
-  Header,
-  HeadingLevel,
-  Packer,
-  PageNumber,
-  Paragraph,
-  Table,
-  TableCell,
-  TableRow,
-  TextRun,
-  WidthType,
-} = docxModule as any;
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
 import {
@@ -51,6 +34,7 @@ import {
   buildThreeAxisReport,
   publishThreeAxisSnapshot,
 } from '../services/execution/threeAxisReportService.js';
+import { exportReportBuilderDocx } from '../services/export/docx/ReportBuilderDocxExportService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
@@ -83,7 +67,6 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir, uploadsDir } from '../utils/storagePaths.js';
-import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 // ==========================================
 // HELPER: Auto-version + Notify on status change
@@ -3548,296 +3531,17 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
   await fs.promises.writeFile(filePath, html, 'utf8');
 };
 
-/**
- * Parse inline markdown (bold, italic, code, links) into TextRun children.
- */
-const parseInlineMarkdown = (text: string): any[] => {
-  const runs: any[] = [];
-  const regex = /(\*\*\*(.*?)\*\*\*|\*\*(.*?)\*\*|\*(.*?)\*|`(.*?)`|\[(.*?)\]\((.*?)\))/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      runs.push(new TextRun(text.slice(lastIndex, match.index)));
-    }
-    if (match[2]) {
-      runs.push(new TextRun({ text: match[2], bold: true, italics: true }));
-    } else if (match[3]) {
-      runs.push(new TextRun({ text: match[3], bold: true }));
-    } else if (match[4]) {
-      runs.push(new TextRun({ text: match[4], italics: true }));
-    } else if (match[5]) {
-      runs.push(new TextRun({ text: match[5], font: 'Courier New', size: 20 }));
-    } else if (match[6]) {
-      runs.push(new TextRun({ text: match[6], underline: {} }));
-    }
-    lastIndex = regex.lastIndex;
-  }
-  if (lastIndex < text.length) {
-    runs.push(new TextRun(text.slice(lastIndex)));
-  }
-  return runs.length > 0 ? runs : [new TextRun(text)];
-};
-
-/**
- * Parse a markdown table block (array of lines starting with |) into a docx Table.
- */
-const parseMarkdownTable = (tableLines: string[]): any => {
-  const rows: string[][] = [];
-  for (const line of tableLines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('|') && !trimmed.match(/^\|[\s-:|]+\|$/)) {
-      const cells = trimmed
-        .split('|')
-        .slice(1, -1)
-        .map((c) => c.trim());
-      if (cells.length > 0) rows.push(cells);
-    }
-  }
-
-  if (rows.length === 0) {
-    return new Table({
-      rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('')] })] })],
-    });
-  }
-
-  const thinBorder = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
-  const borders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
-
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: rows.map(
-      (cells, rowIdx) =>
-        new TableRow({
-          children: cells.map(
-            (cellText) =>
-              new TableCell({
-                borders,
-                children: [
-                  new Paragraph({
-                    children:
-                      rowIdx === 0
-                        ? [new TextRun({ text: cellText, bold: true, size: 20 })]
-                        : parseInlineMarkdown(cellText),
-                  }),
-                ],
-              })
-          ),
-        })
-    ),
+const writeReportBuilderDocx = async (
+  report: any,
+  sections: any[],
+  filePath: string,
+  organizationId: string
+) => {
+  const buffer = await exportReportBuilderDocx({
+    organizationId,
+    report,
+    sections,
   });
-};
-
-const markdownToDocxParagraphs = (markdown: string): any[] => {
-  const text = String(markdown || '');
-  const lines = text.split('\n');
-  const out: any[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const raw = lines[i];
-    const line = raw.replace(/\r/g, '');
-
-    // Collect markdown table blocks
-    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
-      const tableLines: string[] = [];
-      while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
-        tableLines.push(lines[i]);
-        i++;
-      }
-      if (tableLines.length >= 2) {
-        out.push(parseMarkdownTable(tableLines));
-      }
-      continue;
-    }
-
-    i++;
-
-    if (!line.trim()) {
-      out.push(new Paragraph({ text: '' }));
-      continue;
-    }
-
-    // Headings
-    if (line.startsWith('### ')) {
-      out.push(new Paragraph({ text: line.slice(4).trim(), heading: HeadingLevel.HEADING_3 }));
-      continue;
-    }
-    if (line.startsWith('## ')) {
-      out.push(new Paragraph({ text: line.slice(3).trim(), heading: HeadingLevel.HEADING_2 }));
-      continue;
-    }
-    if (line.startsWith('# ')) {
-      out.push(new Paragraph({ text: line.slice(2).trim(), heading: HeadingLevel.HEADING_1 }));
-      continue;
-    }
-
-    // Bullets
-    if (/^[-*]\s+/.test(line)) {
-      out.push(
-        new Paragraph({
-          children: parseInlineMarkdown(line.replace(/^[-*]\s+/, '').trim()),
-          bullet: { level: 0 },
-        })
-      );
-      continue;
-    }
-
-    // Numbered lists
-    if (/^\d+\.\s+/.test(line)) {
-      out.push(
-        new Paragraph({
-          children: parseInlineMarkdown(line.replace(/^\d+\.\s+/, '').trim()),
-          numbering: { reference: 'default-numbering', level: 0 },
-        })
-      );
-      continue;
-    }
-
-    // Horizontal rule
-    if (/^[-*_]{3,}$/.test(line.trim())) {
-      out.push(
-        new Paragraph({
-          text: '',
-          border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' } },
-        })
-      );
-      continue;
-    }
-
-    // Regular paragraph with inline formatting
-    out.push(new Paragraph({ children: parseInlineMarkdown(line) }));
-  }
-
-  return out;
-};
-
-const writeReportBuilderDocx = async (report: any, sections: any[], filePath: string) => {
-  const title = report.title || report.name || 'Report';
-  const subtitleParts: string[] = [];
-  if (report.organizationName) subtitleParts.push(String(report.organizationName));
-  if (report.sourceFramework) subtitleParts.push(String(report.sourceFramework));
-  if (report.sourceName) subtitleParts.push(String(report.sourceName));
-
-  const enabledSections = (sections || [])
-    .filter((s) => s && s.enabled)
-    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
-
-  const children: any[] = [];
-
-  // Cover page
-  children.push(
-    new Paragraph({
-      text: String(title),
-      heading: HeadingLevel.TITLE,
-      alignment: AlignmentType.CENTER,
-    })
-  );
-  if (subtitleParts.length) {
-    children.push(
-      new Paragraph({
-        text: subtitleParts.join(' • '),
-        alignment: AlignmentType.CENTER,
-      })
-    );
-  }
-  children.push(
-    new Paragraph({
-      text: new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      alignment: AlignmentType.CENTER,
-    })
-  );
-  children.push(new Paragraph({ text: '' }));
-
-  // Table of Contents
-  if (enabledSections.length >= 3) {
-    children.push(new Paragraph({ text: 'Table of Contents', heading: HeadingLevel.HEADING_1 }));
-    for (let idx = 0; idx < enabledSections.length; idx++) {
-      const secTitle = enabledSections[idx].title || enabledSections[idx].sectionKey || 'Section';
-      children.push(
-        new Paragraph({
-          children: [new TextRun({ text: `${idx + 1}. ${secTitle}`, size: 22 })],
-          spacing: { after: 60 },
-        })
-      );
-    }
-    children.push(new Paragraph({ text: '' }));
-  }
-
-  // Body sections
-  for (const section of enabledSections) {
-    const sectionTitle = section.title || section.sectionKey || 'Section';
-    children.push(
-      new Paragraph({
-        text: String(sectionTitle),
-        heading: HeadingLevel.HEADING_1,
-      })
-    );
-    const content = section.editedContent || section.generatedContent || '';
-    children.push(...markdownToDocxParagraphs(String(content)));
-    children.push(new Paragraph({ text: '' }));
-  }
-
-  // Customizable header/footer from report metadata
-  const orgName = report.organizationName || '';
-  const headerText = orgName ? `${title} — ${orgName}` : String(title);
-  const footerLabel = orgName ? `${orgName} • Confidential` : 'Consultify Report';
-
-  const doc = new Document({
-    numbering: {
-      config: [
-        {
-          reference: 'default-numbering',
-          levels: [
-            {
-              level: 0,
-              format: 'decimal' as any,
-              text: '%1.',
-              alignment: AlignmentType.LEFT,
-            },
-          ],
-        },
-      ],
-    },
-    sections: [
-      {
-        headers: {
-          default: new Header({
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: headerText, size: 18, color: '666666' })],
-                alignment: AlignmentType.LEFT,
-              }),
-            ],
-          }),
-        },
-        footers: {
-          default: new Footer({
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({ text: footerLabel, size: 16, color: '999999' }),
-                  new TextRun('  •  Page '),
-                  new TextRun({ children: [PageNumber.CURRENT] }),
-                  new TextRun(' of '),
-                  new TextRun({ children: [PageNumber.TOTAL_PAGES] }),
-                ],
-                alignment: AlignmentType.RIGHT,
-              }),
-            ],
-          }),
-        },
-        children,
-      },
-    ],
-  });
-
-  const buffer = await Packer.toBuffer(doc);
   await fs.promises.writeFile(filePath, buffer);
 };
 
@@ -4095,7 +3799,7 @@ const exportDocx = async (req: Request, res: Response) => {
     const filePath = path.join(exportDir, fileName);
 
     // Generate real DOCX (client-ready) instead of HTML-in-.doc
-    await writeReportBuilderDocx(reportData.report, reportData.sections, filePath);
+    await writeReportBuilderDocx(reportData.report, reportData.sections, filePath, organizationId);
 
     const stats = await fs.promises.stat(filePath);
 
@@ -4105,7 +3809,15 @@ const exportDocx = async (req: Request, res: Response) => {
       format: 'docx',
       filePath,
       fileSize: stats.size,
-      language: 'pl',
+      language: String(
+        (reportData.report as any).language ||
+          reportData.sections?.find((section: any) => section?.language)?.language ||
+          'en'
+      )
+        .toLowerCase()
+        .startsWith('pl')
+        ? 'pl'
+        : 'en',
       exportedBy: userId,
     });
     await recordCanonicalExportTrace({
@@ -4428,7 +4140,12 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     if (format === 'pdf') {
       await writeReportBuilderPdf(reportData.report, reportData.sections, filePath);
     } else if (format === 'docx') {
-      await writeReportBuilderDocx(reportData.report, reportData.sections, filePath);
+      await writeReportBuilderDocx(
+        reportData.report,
+        reportData.sections,
+        filePath,
+        organizationId
+      );
     } else if (format === 'pptx') {
       // Reuse the same v1/v2 logic as export endpoint, but save to disk and upload.
       let buffer: Buffer;

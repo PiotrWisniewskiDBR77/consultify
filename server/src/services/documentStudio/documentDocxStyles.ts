@@ -108,6 +108,18 @@ export const DRD_REPORT_PALETTE = Object.freeze({
   white: 'FFFFFF',
 } as const);
 
+/** Owner-accepted 16.09 client final report palette. */
+export const CLIENT_FINAL_REPORT_PALETTE = Object.freeze({
+  navy: '1B2A41',
+  accent: '2563EB',
+  ink: '101828',
+  muted: '667085',
+  line: 'D8DEE8',
+  zebra: 'F1F4F8',
+  accentFill: 'DBE7FF',
+  white: 'FFFFFF',
+} as const);
+
 /** A4 geometry measured from the owner-accepted DRD report. */
 export const DRD_REPORT_GEOMETRY = Object.freeze({
   pageWidthTwips: 11906,
@@ -124,6 +136,10 @@ export const DRD_REPORT_GEOMETRY = Object.freeze({
 /** Existing optional color-template slot is the additive DRD profile selector. */
 export function isDrdReportProfile(schema: DocumentSchema): boolean {
   return schema.formattingSchema.colorTemplateId === 'drd-report';
+}
+
+export function isClientFinalReportProfile(schema: DocumentSchema): boolean {
+  return schema.formattingSchema.colorTemplateId === 'consultify-client-final';
 }
 
 /**
@@ -395,6 +411,11 @@ export function buildDocxStyleConfig(
   // paragraph inherits a real `w:lang` value unless a future inline run
   // deliberately overrides it.
   const documentLanguage = schema.language.toLowerCase().startsWith('pl') ? 'pl-PL' : 'en-US';
+  const clientFinalProfile = isClientFinalReportProfile(schema);
+  const headingNavy = clientFinalProfile ? CLIENT_FINAL_REPORT_PALETTE.navy : DOCX_PALETTE.navy;
+  const headingAccent = clientFinalProfile ? CLIENT_FINAL_REPORT_PALETTE.accent : DOCX_PALETTE.teal;
+  const bodyInk = clientFinalProfile ? CLIENT_FINAL_REPORT_PALETTE.ink : DOCX_PALETTE.ink;
+  const muted = clientFinalProfile ? CLIENT_FINAL_REPORT_PALETTE.muted : DOCX_PALETTE.muted;
 
   // Slice E15.5.formatting.render — when the schema carries a
   // `headingStylesDetailed` override (E15.5 substrate), apply it on
@@ -446,7 +467,7 @@ export function buildDocxStyleConfig(
         font: fonts.heading,
         size: sizing.title,
         bold: true,
-        color: DOCX_PALETTE.navyInk,
+        color: clientFinalProfile ? CLIENT_FINAL_REPORT_PALETTE.navy : DOCX_PALETTE.navyInk,
       },
       paragraph: { spacing: { before: 600, after: 200 }, alignment: 'center' },
     },
@@ -460,7 +481,7 @@ export function buildDocxStyleConfig(
         font: fonts.body,
         size: sizing.subtitle,
         italics: true,
-        color: DOCX_PALETTE.muted2,
+        color: muted,
       },
       paragraph: { spacing: { after: 80 }, alignment: 'center' },
     },
@@ -470,11 +491,11 @@ export function buildDocxStyleConfig(
       basedOn: 'Normal',
       next: 'BodyText',
       quickFormat: true,
-      run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
+      run: { font: fonts.heading, size: sizing.heading1, bold: true, color: headingNavy },
       paragraph: {
         spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
         border: {
-          bottom: { color: DOCX_PALETTE.teal, space: 6, style: 'single', size: 8 },
+          bottom: { color: headingAccent, space: 6, style: 'single', size: 8 },
         },
       },
     },
@@ -488,7 +509,7 @@ export function buildDocxStyleConfig(
         font: fonts.heading,
         size: sizing.heading2,
         bold: true,
-        color: DOCX_PALETTE.navySoft,
+        color: clientFinalProfile ? CLIENT_FINAL_REPORT_PALETTE.navy : DOCX_PALETTE.navySoft,
       },
       paragraph: {
         spacing: { before: sizing.spacing.h2Before, after: sizing.spacing.h2After },
@@ -500,7 +521,7 @@ export function buildDocxStyleConfig(
       basedOn: 'Normal',
       next: 'BodyText',
       quickFormat: true,
-      run: { font: fonts.heading, size: sizing.heading3, bold: true, color: DOCX_PALETTE.ink3 },
+      run: { font: fonts.heading, size: sizing.heading3, bold: true, color: bodyInk },
       paragraph: {
         spacing: { before: sizing.spacing.h3Before, after: sizing.spacing.h3After },
       },
@@ -511,8 +532,13 @@ export function buildDocxStyleConfig(
       basedOn: 'Normal',
       next: 'BodyText',
       quickFormat: true,
-      run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
-      paragraph: { spacing: { after: sizing.spacing.bodyAfter } },
+      run: { font: fonts.body, size: sizing.body, color: bodyInk },
+      paragraph: {
+        spacing: clientFinalProfile
+          ? { line: 276, after: 140 }
+          : { after: sizing.spacing.bodyAfter },
+        ...(clientFinalProfile ? { alignment: 'both' } : {}),
+      },
     },
     {
       id: DOCX_STYLE_IDS.BLOCK_QUOTE,
@@ -533,7 +559,7 @@ export function buildDocxStyleConfig(
       name: 'Caption',
       basedOn: 'Normal',
       next: 'BodyText',
-      run: { font: fonts.body, size: sizing.caption, italics: true, color: DOCX_PALETTE.muted },
+      run: { font: fonts.body, size: sizing.caption, italics: true, color: muted },
       paragraph: { spacing: { before: 60, after: 120 } },
     },
     {
@@ -557,7 +583,7 @@ export function buildDocxStyleConfig(
       name: 'Callout',
       basedOn: 'BodyText',
       next: 'BodyText',
-      run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
+      run: { font: fonts.body, size: sizing.body, color: bodyInk },
       paragraph: {
         spacing: { before: 80, after: 120 },
         indent: { left: 240 },
@@ -572,7 +598,7 @@ export function buildDocxStyleConfig(
       name: 'Source List',
       basedOn: 'BodyText',
       next: 'SourceList',
-      run: { font: fonts.body, size: sizing.body, color: DOCX_PALETTE.ink },
+      run: { font: fonts.body, size: sizing.body, color: bodyInk },
       paragraph: { spacing: { after: 60 } },
     },
     {
@@ -581,7 +607,7 @@ export function buildDocxStyleConfig(
       basedOn: 'Heading1',
       next: 'BodyText',
       quickFormat: true,
-      run: { font: fonts.heading, size: sizing.heading1, bold: true, color: DOCX_PALETTE.navy },
+      run: { font: fonts.heading, size: sizing.heading1, bold: true, color: headingNavy },
       paragraph: {
         spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After },
       },

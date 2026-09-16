@@ -32,10 +32,16 @@
 // `routes/report-builder.routes.ts`). We use the same namespace + cast pattern
 // so the renderer stays type-safe at call sites without forking the `docx`
 // types.
-import * as docxModule from 'docx';
-import { imageSize } from 'image-size';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
+import * as docxModule from 'docx';
+import { imageSize } from 'image-size';
+
+import {
+  formatReportDate,
+  normalizeReportLanguage,
+  reportI18n,
+} from '../assessment/assessmentReportI18n.js';
 import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
   formatAppendixHeading,
@@ -47,14 +53,16 @@ import {
   buildDocxStyleConfig,
   clampHeadingText,
   clampTableColumns,
-  DRD_REPORT_GEOMETRY,
-  DRD_REPORT_PALETTE,
-  DRD_DOCX_STYLE_IDS,
+  CLIENT_FINAL_REPORT_PALETTE,
   DOCX_PALETTE,
   DOCX_STYLE_IDS,
   DOCX_TITLE_MAX_CHARS,
   DOCX_TONE_COLOR,
   DOCX_TONE_FILL,
+  DRD_DOCX_STYLE_IDS,
+  DRD_REPORT_GEOMETRY,
+  DRD_REPORT_PALETTE,
+  isClientFinalReportProfile,
   isDrdReportProfile,
   resolveDocxFonts,
   resolveFormattingClass,
@@ -68,11 +76,6 @@ import {
   type DocumentSection,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
-import {
-  formatReportDate,
-  normalizeReportLanguage,
-  reportI18n,
-} from '../assessment/assessmentReportI18n.js';
 
 /**
  * Optional render-time inputs that the orchestrator (export pipeline)
@@ -506,10 +509,9 @@ function headingLevelForSection(
 
 function buildAssumptionMarker(font: string, language: string): TextRun {
   return new TextRun({
-    text:
-      language.toLowerCase().startsWith('pl')
-        ? '  [Założenie — wymaga źródła]'
-        : '  [Assumption — needs source]',
+    text: language.toLowerCase().startsWith('pl')
+      ? '  [Założenie — wymaga źródła]'
+      : '  [Assumption — needs source]',
     italics: true,
     color: DOCX_PALETTE.amberInk,
     size: 18,
@@ -607,9 +609,15 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
         // Only the FIRST materialized paragraph may carry the block's page
         // break; repeating it would push every list item onto its own page.
         pageBreakBefore: index === 0 ? pageBreakBefore : undefined,
-        numbering: bullet || numbered
-          ? { reference: numbered ? DOCX_NUMBERING_REFERENCE.DECIMAL : DOCX_NUMBERING_REFERENCE.BULLET, level: 0 }
-          : undefined,
+        numbering:
+          bullet || numbered
+            ? {
+                reference: numbered
+                  ? DOCX_NUMBERING_REFERENCE.DECIMAL
+                  : DOCX_NUMBERING_REFERENCE.BULLET,
+                level: 0,
+              }
+            : undefined,
         children,
       });
     });
@@ -901,6 +909,7 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   // single "+N more" column (DeckStyler/WorkbookStyler width-clamp analogue).
   const columnCount = Math.max(headers.length, ...rows.map((r) => r.length), 0);
   const drdProfile = isDrdReportProfile(ctx.schema);
+  const clientFinalProfile = isClientFinalReportProfile(ctx.schema);
   const clamp = drdProfile
     ? {
         overflowed: false,
@@ -947,13 +956,20 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
     tableRows.push(
       new TableRow({
         tableHeader: true,
+        cantSplit: clientFinalProfile || undefined,
         children: headers.map(
           (cell, columnIndex) =>
             // Navy header band + white bold text — the DOCX analogue of
             // WorkbookStyler's navy header fill and DeckStyler's dominant band.
             new TableCell({
               ...drdCellOptions(columnIndex),
-              shading: { fill: drdProfile ? DRD_REPORT_PALETTE.fillHead : DOCX_PALETTE.navy },
+              shading: {
+                fill: drdProfile
+                  ? DRD_REPORT_PALETTE.fillHead
+                  : clientFinalProfile
+                    ? CLIENT_FINAL_REPORT_PALETTE.navy
+                    : DOCX_PALETTE.navy,
+              },
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
@@ -963,7 +979,11 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
                       bold: true,
                       font: ctx.bodyFont,
                       size: 20,
-                      color: drdProfile ? DRD_REPORT_PALETTE.navyDark : DOCX_PALETTE.white,
+                      color: drdProfile
+                        ? DRD_REPORT_PALETTE.navyDark
+                        : clientFinalProfile
+                          ? CLIENT_FINAL_REPORT_PALETTE.white
+                          : DOCX_PALETTE.white,
                     }),
                   ],
                 }),
@@ -979,8 +999,15 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
     const zebra = !drdProfile && rowIndex % 2 === 1;
     tableRows.push(
       new TableRow({
+        cantSplit: clientFinalProfile || undefined,
         children: row.map((cell, columnIndex) => {
-          const fill = cell.fill ?? (zebra ? DOCX_PALETTE.zebraFill : null);
+          const fill =
+            cell.fill ??
+            (zebra
+              ? clientFinalProfile
+                ? CLIENT_FINAL_REPORT_PALETTE.zebra
+                : DOCX_PALETTE.zebraFill
+              : null);
           return new TableCell({
             ...drdCellOptions(columnIndex),
             ...(fill ? { shading: { fill } } : {}),
@@ -1264,7 +1291,25 @@ function renderSection(
   const heading = new Paragraph({
     style: styleIdForHeadingLevel(level),
     heading: headingLevelForSection(level),
-    children: [new TextRun({ text: headingText, font: ctx.headingFont })],
+    children: isClientFinalReportProfile(ctx.schema)
+      ? (() => {
+          const match = /^(\d+\.|Appendix [A-Z]+ —)\s*(.*)$/.exec(headingText);
+          return match
+            ? [
+                new TextRun({
+                  text: `${match[1]} `,
+                  font: ctx.headingFont,
+                  color: CLIENT_FINAL_REPORT_PALETTE.accent,
+                }),
+                new TextRun({
+                  text: match[2],
+                  font: ctx.headingFont,
+                  color: CLIENT_FINAL_REPORT_PALETTE.navy,
+                }),
+              ]
+            : [new TextRun({ text: headingText, font: ctx.headingFont })];
+        })()
+      : [new TextRun({ text: headingText, font: ctx.headingFont })],
     pageBreakBefore: drdKicker ? undefined : options.pageBreakBefore === true ? true : undefined,
     // A section heading must travel with at least the first paragraph/table.
     // Without this explicit pagination hint Word/LibreOffice may leave a
@@ -1441,6 +1486,173 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
     ]
   );
   return out;
+}
+
+function clientFinalOrganizationName(schema: DocumentSchema): string {
+  const header = schema.formattingSchema.headers.content?.trim() || '';
+  const parts = header
+    .split('·')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return parts.length > 1 ? parts[parts.length - 1] : 'Client';
+}
+
+function renderClientFinalCoverBlock(
+  ctx: RenderContext,
+  options: DocumentRenderOptions = {}
+): (Paragraph | Table)[] {
+  const schema = ctx.schema;
+  const organizationName = clientFinalOrganizationName(schema);
+  const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now());
+  const dateText = generatedAt.toLocaleDateString(schema.language === 'pl' ? 'pl-PL' : 'en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  const source = schema.sourceRefs[0];
+  const logo =
+    (options.coverLogoAsset ? buildCoverLogoParagraph(options.coverLogoAsset) : null) ??
+    new Paragraph({
+      alignment: AlignmentType.RIGHT,
+      spacing: { before: 80, after: 1280 },
+      border: {
+        top: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+        bottom: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+        left: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+        right: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+      },
+      children: [
+        new TextRun({
+          text: '[ CLIENT LOGO ]',
+          font: ctx.bodyFont,
+          color: CLIENT_FINAL_REPORT_PALETTE.muted,
+          size: 18,
+        }),
+      ],
+    });
+  const metadata = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        cantSplit: true,
+        children: [
+          ['PREPARED FOR', schema.audience.join(', ') || organizationName],
+          ['PREPARED BY', 'Consultify · DBR77'],
+          [
+            'SOURCE',
+            source
+              ? `${source.sourceTitle || source.sourceType} (${source.sourceId})`
+              : 'Source pack required',
+          ],
+        ].map(
+          ([label, value]) =>
+            new TableCell({
+              borders: {
+                top: { style: 'nil', size: 0, color: CLIENT_FINAL_REPORT_PALETTE.white },
+                bottom: { style: 'nil', size: 0, color: CLIENT_FINAL_REPORT_PALETTE.white },
+                left: { style: 'nil', size: 0, color: CLIENT_FINAL_REPORT_PALETTE.white },
+                right: { style: 'nil', size: 0, color: CLIENT_FINAL_REPORT_PALETTE.white },
+              },
+              children: [
+                new Paragraph({
+                  spacing: { after: 45 },
+                  children: [
+                    new TextRun({
+                      text: label,
+                      font: ctx.bodyFont,
+                      bold: true,
+                      size: 16,
+                      color: CLIENT_FINAL_REPORT_PALETTE.muted,
+                    }),
+                  ],
+                }),
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: value,
+                      font: ctx.bodyFont,
+                      size: 19,
+                      color: CLIENT_FINAL_REPORT_PALETTE.ink,
+                    }),
+                  ],
+                }),
+              ],
+            })
+        ),
+      }),
+    ],
+  });
+  return [
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: 'Consultify · DBR77',
+          font: ctx.bodyFont,
+          bold: true,
+          size: 19,
+          color: CLIENT_FINAL_REPORT_PALETTE.navy,
+        }),
+      ],
+    }),
+    logo,
+    new Paragraph({
+      spacing: { after: 180 },
+      children: [
+        new TextRun({
+          text: 'C L I E N T   F I N A L   R E P O R T',
+          font: ctx.bodyFont,
+          bold: true,
+          size: 18,
+          color: CLIENT_FINAL_REPORT_PALETTE.accent,
+        }),
+      ],
+    }),
+    new Paragraph({
+      spacing: { after: 220 },
+      children: [
+        new TextRun({
+          text: clampHeadingText(schema.title, DOCX_TITLE_MAX_CHARS),
+          font: ctx.headingFont,
+          bold: true,
+          size: 60,
+          color: CLIENT_FINAL_REPORT_PALETTE.navy,
+        }),
+      ],
+    }),
+    new Paragraph({
+      spacing: { after: 240 },
+      border: {
+        bottom: { color: CLIENT_FINAL_REPORT_PALETTE.accent, style: 'single', size: 18 },
+      },
+      children: [new TextRun({ text: '', font: ctx.bodyFont })],
+    }),
+    new Paragraph({
+      spacing: { after: 80 },
+      children: [
+        new TextRun({
+          text: organizationName,
+          font: ctx.bodyFont,
+          size: 28,
+          color: CLIENT_FINAL_REPORT_PALETTE.ink,
+        }),
+      ],
+    }),
+    new Paragraph({
+      spacing: { after: 80 },
+      children: [
+        new TextRun({
+          text: `${dateText}  ·  Version ${schema.templateRef?.templateVersion || '1.0'}  ·  Confidential`,
+          font: ctx.bodyFont,
+          size: 19,
+          color: CLIENT_FINAL_REPORT_PALETTE.muted,
+        }),
+      ],
+    }),
+    new Paragraph({ spacing: { after: 920 }, children: [] }),
+    metadata,
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
 }
 
 // W3 (nadzorca 2026-08-28): DRD cover dates render in a LONG form
@@ -1759,14 +1971,24 @@ async function renderDocumentSchemaToDocxBufferInternal(
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;
   const drdProfile = isDrdReportProfile(schema);
+  const clientFinalProfile = formatting.colorTemplateId === 'consultify-client-final';
 
   const sectionChildren: unknown[] = [];
   if (formatting.coverPage) {
     sectionChildren.push(
-      ...(isDrdReportProfile(schema) ? renderDrdCoverBlock(ctx) : renderCoverBlock(ctx, options))
+      ...(isDrdReportProfile(schema)
+        ? renderDrdCoverBlock(ctx)
+        : clientFinalProfile
+          ? renderClientFinalCoverBlock(ctx, options)
+          : renderCoverBlock(ctx, options))
     );
   }
-  if (formatting.toc) sectionChildren.push(...renderTocBlock(ctx));
+  if (formatting.toc) {
+    sectionChildren.push(...renderTocBlock(ctx));
+    if (formatting.colorTemplateId === 'consultify-client-final') {
+      sectionChildren.push(new Paragraph({ children: [new PageBreak()] }));
+    }
+  }
 
   // Partition into body + appendix groups so appendices always land
   // at the end of the document under the configured numbering scheme,
@@ -1809,19 +2031,48 @@ async function renderDocumentSchemaToDocxBufferInternal(
   const headerOverride = formatting.headers.content?.trim();
   const headerText = headerOverride && headerOverride.length > 0 ? headerOverride : schema.title;
   const headerChildren = headerEnabled
-    ? [
-        new Paragraph({
-          alignment: AlignmentType.LEFT,
-          children: [
-            new TextRun({
-              text: headerText,
-              size: 18,
-              color: DOCX_PALETTE.muted,
-              font: ctx.bodyFont,
-            }),
-          ],
-        }),
-      ]
+    ? clientFinalProfile
+      ? [
+          new Paragraph({
+            tabStops: [{ type: 'right', position: 9300 }],
+            border: {
+              bottom: {
+                color: CLIENT_FINAL_REPORT_PALETTE.line,
+                space: 5,
+                style: 'single',
+                size: 4,
+              },
+            },
+            children: [
+              new TextRun({
+                text: schema.title,
+                size: 16,
+                color: CLIENT_FINAL_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+              new TextRun({
+                text: clientFinalOrganizationName(schema),
+                size: 16,
+                color: CLIENT_FINAL_REPORT_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+            ],
+          }),
+        ]
+      : [
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            children: [
+              new TextRun({
+                text: headerText,
+                size: 18,
+                color: DOCX_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+            ],
+          }),
+        ]
     : [];
   const footerRuns: TextRun[] = [];
   const footerOverride = formatting.footers.content?.trim();
@@ -1929,73 +2180,110 @@ async function renderDocumentSchemaToDocxBufferInternal(
     }
   }
   const footerChildren =
-    footerEnabled && drdProfile
+    footerEnabled && clientFinalProfile
       ? [
           new Paragraph({
-            alignment: AlignmentType.LEFT,
-            tabStops: [
-              { type: 'center', position: Math.round(DRD_REPORT_GEOMETRY.contentWidthTwips / 2) },
-              { type: 'right', position: DRD_REPORT_GEOMETRY.contentWidthTwips },
-            ],
+            tabStops: [{ type: 'right', position: 9300 }],
             border: {
-              top: { color: DRD_REPORT_PALETTE.hair, space: 6, style: 'single', size: 2 },
+              top: {
+                color: CLIENT_FINAL_REPORT_PALETTE.line,
+                space: 6,
+                style: 'single',
+                size: 4,
+              },
             },
             children: [
               new TextRun({
-                text: formatting.footers.content?.trim() || `Poufne — ${schema.audience[0] ?? ''}`,
+                text: `Consultify · ${clientFinalOrganizationName(schema)} · Confidential`,
                 size: 16,
-                color: DRD_REPORT_PALETTE.muted,
+                color: CLIENT_FINAL_REPORT_PALETTE.muted,
                 font: ctx.bodyFont,
               }),
-              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
-              new TextRun({
-                text: 'Strona ',
-                size: 16,
-                color: DRD_REPORT_PALETTE.muted,
-                font: ctx.bodyFont,
-              }),
+              new TextRun({ text: '\tPage ', size: 16, font: ctx.bodyFont }),
               new TextRun({
                 children: [PageNumber.CURRENT],
                 size: 16,
-                color: DRD_REPORT_PALETTE.muted,
+                color: CLIENT_FINAL_REPORT_PALETTE.muted,
                 font: ctx.bodyFont,
               }),
-              new TextRun({
-                text: ' z ',
-                size: 16,
-                color: DRD_REPORT_PALETTE.muted,
-                font: ctx.bodyFont,
-              }),
+              new TextRun({ text: ' of ', size: 16, font: ctx.bodyFont }),
               new TextRun({
                 children: [PageNumber.TOTAL_PAGES],
                 size: 16,
-                color: DRD_REPORT_PALETTE.muted,
-                font: ctx.bodyFont,
-              }),
-              new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
-              new TextRun({
-                text: '● ',
-                size: 16,
-                color: DRD_REPORT_PALETTE.crimson,
-                font: ctx.bodyFont,
-              }),
-              new TextRun({
-                text: 'Consultify',
-                size: 16,
-                color: DRD_REPORT_PALETTE.muted,
+                color: CLIENT_FINAL_REPORT_PALETTE.muted,
                 font: ctx.bodyFont,
               }),
             ],
           }),
         ]
-      : footerEnabled && footerRuns.length > 0
+      : footerEnabled && drdProfile
         ? [
             new Paragraph({
-              alignment: AlignmentType.RIGHT,
-              children: footerRuns,
+              alignment: AlignmentType.LEFT,
+              tabStops: [
+                { type: 'center', position: Math.round(DRD_REPORT_GEOMETRY.contentWidthTwips / 2) },
+                { type: 'right', position: DRD_REPORT_GEOMETRY.contentWidthTwips },
+              ],
+              border: {
+                top: { color: DRD_REPORT_PALETTE.hair, space: 6, style: 'single', size: 2 },
+              },
+              children: [
+                new TextRun({
+                  text:
+                    formatting.footers.content?.trim() || `Poufne — ${schema.audience[0] ?? ''}`,
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.muted,
+                  font: ctx.bodyFont,
+                }),
+                new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+                new TextRun({
+                  text: 'Strona ',
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.muted,
+                  font: ctx.bodyFont,
+                }),
+                new TextRun({
+                  children: [PageNumber.CURRENT],
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.muted,
+                  font: ctx.bodyFont,
+                }),
+                new TextRun({
+                  text: ' z ',
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.muted,
+                  font: ctx.bodyFont,
+                }),
+                new TextRun({
+                  children: [PageNumber.TOTAL_PAGES],
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.muted,
+                  font: ctx.bodyFont,
+                }),
+                new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
+                new TextRun({
+                  text: '● ',
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.crimson,
+                  font: ctx.bodyFont,
+                }),
+                new TextRun({
+                  text: 'Consultify',
+                  size: 16,
+                  color: DRD_REPORT_PALETTE.muted,
+                  font: ctx.bodyFont,
+                }),
+              ],
             }),
           ]
-        : [];
+        : footerEnabled && footerRuns.length > 0
+          ? [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                children: footerRuns,
+              }),
+            ]
+          : [];
 
   // Materialise the accumulated footnote registry into the
   // string-keyed shape `Document({ footnotes })` expects. Empty when
@@ -2011,6 +2299,28 @@ async function renderDocumentSchemaToDocxBufferInternal(
           ])
         )
       : undefined;
+  const clientFinalFirstFooter = new Footer({
+    children: [
+      new Paragraph({
+        border: {
+          top: {
+            color: CLIENT_FINAL_REPORT_PALETTE.line,
+            space: 6,
+            style: 'single',
+            size: 4,
+          },
+        },
+        children: [
+          new TextRun({
+            text: `Consultify · ${clientFinalOrganizationName(schema)} · Confidential`,
+            size: 16,
+            color: CLIENT_FINAL_REPORT_PALETTE.muted,
+            font: ctx.bodyFont,
+          }),
+        ],
+      }),
+    ],
+  });
 
   const doc = new Document({
     creator: 'Consultify Document Studio',
@@ -2046,16 +2356,27 @@ async function renderDocumentSchemaToDocxBufferInternal(
               ...(drdProfile ? { footer: DRD_REPORT_GEOMETRY.footerTwips } : {}),
             },
           },
-          ...(drdProfile ? { titlePage: DRD_REPORT_GEOMETRY.titlePage } : {}),
+          ...(drdProfile || clientFinalProfile
+            ? { titlePage: drdProfile ? DRD_REPORT_GEOMETRY.titlePage : true }
+            : {}),
         },
-        headers: headerEnabled ? { default: new Header({ children: headerChildren }) } : undefined,
+        headers: headerEnabled
+          ? {
+              default: new Header({ children: headerChildren }),
+              ...(clientFinalProfile
+                ? { first: new Header({ children: [new Paragraph({ children: [] })] }) }
+                : {}),
+            }
+          : undefined,
         footers:
           footerEnabled && footerChildren.length > 0
             ? {
                 default: new Footer({ children: footerChildren }),
                 ...(drdProfile
                   ? { first: new Footer({ children: [new Paragraph({ children: [] })] }) }
-                  : {}),
+                  : clientFinalProfile
+                    ? { first: clientFinalFirstFooter }
+                    : {}),
               }
             : undefined,
         children: sectionChildren,

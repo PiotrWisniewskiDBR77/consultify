@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "generated": "docs/program/EXPORT_1_DOCX_20260916/dowody/northwind-client-final-report.docx",
+  "reference": "/Users/piotrwisniewski/Developer/cto-codex/template-1-makiety-20260916/pliki/client-final-report.docx",
+  "sectionCount": 8,
+  "page": "A4 20mm/23mm",
+  "palette": [
+    "1B2A41",
+    "2563EB",
+    "F1F4F8",
+    "D8DEE8"
+  ],
+  "fontContract": "theme Aptos + minorHAnsi + Arial altName",
+  "tableContract": "repeating header + cantSplit",
+  "zeroCrimson": true
+}
