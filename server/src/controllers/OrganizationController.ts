@@ -63,19 +63,25 @@ export class OrganizationController {
         return;
       }
 
+      const currentOrgId = (req as any).organizationId;
       const { getUserOrganizations } = await import('../services/organizationService.js');
-      const orgs = await getUserOrganizations(userId);
+      const orgs = await getUserOrganizations(userId, currentOrgId);
 
       console.log(
         `[OrgSwitcher] userId=${userId} orgs=${orgs.length}: ${orgs.map((o: any) => `${o.name}(${o.id})`).join(', ')}`
       );
 
-      const currentOrgId = (req as any).organizationId;
-      const enriched = orgs.map((org) => ({
-        ...org,
-        is_current: org.id === currentOrgId,
-        access_type: org.role === 'CONSULTANT' ? 'CONSULTANT' : 'MEMBER',
-      }));
+      const enriched = orgs
+        .map((org) => ({
+          ...org,
+          is_current: currentOrgId ? org.id === currentOrgId : Boolean(org.is_current),
+          access_type: org.role === 'CONSULTANT' ? 'CONSULTANT' : 'MEMBER',
+        }))
+        .sort(
+          (left, right) =>
+            Number(right.is_current) - Number(left.is_current) ||
+            left.name.localeCompare(right.name)
+        );
 
       // Tenant membership/context must never be reused as a conditional browser
       // cache entry. The client intentionally requests `no-store`; make the
