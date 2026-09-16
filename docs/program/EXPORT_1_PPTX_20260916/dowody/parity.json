@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-09-16T13:22:13.431Z",
+  "expectedRoles": [
+    "cover",
+    "agenda",
+    "section",
+    "content-one",
+    "content-two",
+    "table",
+    "chart",
+    "decision"
+  ],
+  "reference": {
+    "bytes": 250779,
+    "slides": 8,
+    "layouts": 1,
+    "masters": 1,
+    "charts": 1,
+    "tables": 1,
+    "themeAptos": false,
+    "literalRunFonts": [
+      "Arial"
+    ],
+    "coBranding": {
+      "consultify": true,
+      "dbr77": true,
+      "client": true
+    },
+    "brandCrimsonHits": 0,
+    "dominantColors": {
+      "101828": 31,
+      "667085": 26,
+      "D8DEE8": 155,
+      "2563EB": 33,
+      "1B2A41": 30,
+      "FFFFFF": 24,
+      "46556B": 20,
+      "F1F4F8": 15,
+      "DBE7FF": 6,
+      "8FA3C0": 2,
+      "7FA8F5": 2,
+      "22334D": 1
+    }
+  },
+  "actual": {
+    "bytes": 190641,
+    "slides": 8,
+    "layouts": 1,
+    "masters": 1,
+    "charts": 1,
+    "tables": 1,
+    "themeAptos": true,
+    "literalRunFonts": [],
+    "coBranding": {
+      "consultify": true,
+      "dbr77": true,
+      "client": true
+    },
+    "brandCrimsonHits": 0,
+    "dominantColors": {
+      "101828": 36,
+      "667085": 18,
+      "D8DEE8": 117,
+      "FFFFFF": 36,
+      "2563EB": 26,
+      "1B2A41": 20,
+      "F1F4F8": 10,
+      "8FA3C0": 3,
+      "7FA8F5": 2,
+      "C8D4E6": 2,
+      "21344F": 1
+    }
+  },
+  "checks": {
+    "slideCount": true,
+    "packageLayouts": true,
+    "packageMasters": true,
+    "nativeChartCount": true,
+    "nativeTableCount": true,
+    "approvedPalette": true,
+    "aptosTheme": true,
+    "themeDrivenRuns": true,
+    "coBranding": true,
+    "zeroBrandCrimson": true
+  },
+  "status": "PASS",
+  "note": "The reference uses literal Arial runs. W118 supersedes that font mechanism: the implementation uses Aptos in the PPTX theme and no literal run font names; renderer substitution is evidenced separately on a machine without Aptos."
+}
