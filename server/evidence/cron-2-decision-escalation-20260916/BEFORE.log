@@ -1,0 +1,8 @@
+source=staging startup log referenced by KANAL.md Wpis 107
+base=9981c41c2d5a14d87418066d340d77b39e2c5df4
+[Scheduler] Decision Auto-Escalation job failed: column "escalated_at" does not exist
+
+local_reproduction=PostgreSQL 16, isolated cluster, 127.0.0.1:5291/consultify_cron2_before
+command=DecisionEscalationChainService.checkAndEscalateOverdue({ limit: 100 })
+sqlstate=42703
+error=[Scheduler] Decision Auto-Escalation job failed: column "escalated_at" does not exist

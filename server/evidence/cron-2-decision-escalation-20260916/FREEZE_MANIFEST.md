@@ -15,7 +15,7 @@
 - Formatting: `git diff --check` passed.
 - Deployment / Railway / integration / staging / demo / Londyn: untouched.
 - `OD_CODEXA.md`: untouched.
-- Backup ref: filled after evidence commit and backup-only push.
+- Backup ref: `origin/backup/cron-2-decision-escalation-20260916` (the only push target).
 
 Files:
 

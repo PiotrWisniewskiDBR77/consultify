@@ -1,0 +1,16 @@
+candidate_implementation=7d05cb4a4a1fcf74ff1dee3023d48265ee4b20a5
+runtime=PostgreSQL 16, isolated cluster, 127.0.0.1:5291/consultify_cron2
+
+[decisionEscalationJob] Przebieg zakończony {"escalated":2,"errors":0,"skippedAtMax":0,"skippedAlreadyToday":0}
+Test Files  1 passed (1)
+Tests  4 passed | 3 skipped (7)
+
+covered=DRY RUN returns candidates and writes 0 rows
+covered=first live run escalates 2 overdue open decisions from 0 to 1
+covered=resolved and future decisions remain unchanged
+covered=second live run on the same day escalates 0 and writes 0 additional rows
+
+cleanup_readback:
+decisions|0
+escalation_log|0
+decision_history|0
