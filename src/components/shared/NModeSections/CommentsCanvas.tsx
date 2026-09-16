@@ -16,8 +16,9 @@ import { Loader2, MessageSquare, Plus, Sparkles, X } from 'lucide-react';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { DateFilterSortControl } from '@/components/shared/DateFilterSortControl';
-import { formatListDate } from '@/utils/listDateFormat';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,28 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
     setTimeout(() => commentInputRef.current?.focus(), 400);
   };
 
+  // K-30 (zgloszenie #82, Kasia): „Nie bylo komunikatu: Czy na pewno chcesz
+  // usunac ten komentarz?". Usuwanie szlo prosto z ikony X do wolacza — jeden
+  // omylkowy klik i wpis znikal bez pytania i bez cofniecia.
+  // Bramka siedzi TUTAJ, w komponencie wspolnym, a nie w jednym ekranie: ten
+  // sam kanwas rysuje komentarze Zadania, Decyzji, Powiadomienia i Inicjatywy
+  // (pamiec „zlecenie obejmuje rodzine" — naprawa per-wolacz odrasta).
+  const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
+
+  const handleDeleteComment = async (commentId: string): Promise<void> => {
+    const confirmed = await showConfirm({
+      title: t('sharedComponents.commentsCanvas.deleteConfirmTitle', 'Delete this comment?'),
+      description: t(
+        'sharedComponents.commentsCanvas.deleteConfirmDescription',
+        'The comment will be permanently removed from the thread. This cannot be undone.'
+      ),
+      confirmLabel: t('common.delete', 'Delete'),
+      cancelLabel: t('common.cancel', 'Cancel'),
+      variant: 'danger',
+    });
+    if (confirmed) onDeleteComment(commentId);
+  };
+
   const isExpandedComments = showMoreComments && comments.length > 4;
   const visibleComments = comments.slice(0, isExpandedComments ? 8 : 4);
   const canToggleCommentVisibility = comments.length > 4;
@@ -181,8 +204,12 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                           priority: getCommentPriority(c),
                         })}
                       />
+                      {/* K-30 (zgloszenie #82, Kasia): „komentarz pojawia sie z
+                          nazwiskiem, ale z data, a nie godzina". `formatListDate`
+                          oddaje sam DZIEN — w watku, gdzie w jednym dniu spada
+                          kilka wpisow, kolejnosc bez godziny jest nieczytelna. */}
                       <span className="text-[10px] text-c-text-secondary">
-                        {formatListDate(c.createdAt)}
+                        {formatListDateTime(c.createdAt)}
                       </span>
                       {c.isAIGenerated && (
                         <span className="text-[9px] text-c-info font-medium">AI</span>
@@ -195,7 +222,9 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   {/* axe `button-name`: przycisk tylko-ikona (X) bez tekstu
                       dostepnego dla czytnika ekranu — dodano aria-label. */}
                   <button
-                    onClick={() => onDeleteComment(c.id)}
+                    onClick={() => {
+                      void handleDeleteComment(c.id);
+                    }}
                     disabled={locked}
                     aria-label={t('sharedComponents.commentsCanvas.deleteComment', 'Delete comment')}
                     className="p-0.5 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
@@ -301,6 +330,8 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
           )}
         </div>
       </div>
+
+      {confirmDialog}
     </div>
   );
 };
