@@ -41,6 +41,10 @@ import {
 } from '../shared/NModeBlocks/ArtifactAttachPopover';
 import { CATEGORY_CONFIG, CATEGORY_ORDER, type InterviewCategory } from './CategorySidebar';
 import type { InterviewEvidence } from './EvidencePanel';
+import {
+  getInterviewAnswerApprovalPresentation,
+  interviewAnswerApprovalToneClass,
+} from './interviewAnswerApprovalState';
 import type { InterviewQuestion } from './QuestionsList';
 
 interface InterviewSingleQuestionRuntimeProps {
@@ -81,6 +85,16 @@ interface InterviewSingleQuestionRuntimeProps {
   sessionName?: string;
   readOnly?: boolean;
   answerApprovals?: V8InterviewAnswerApproval[];
+  isReviewerMode?: boolean;
+  answerDecisionPending?: string | null;
+  answerApprovalLoading?: boolean;
+  answerApprovalError?: boolean;
+  onRetryAiAnswerApproval?: () => Promise<void>;
+  onAnswerDecision?: (
+    approval: V8InterviewAnswerApproval,
+    decision: 'approved' | 'sent_back',
+    reason?: string
+  ) => Promise<void>;
   isQuestionReadOnly?: (questionId: string) => boolean;
   isSubmitting?: boolean;
   immersive?: boolean;
@@ -209,6 +223,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   onSaveAndExit,
   sessionName,
   readOnly: workspaceReadOnly = false,
+  answerApprovals = [],
+  isReviewerMode = false,
+  answerDecisionPending = null,
+  answerApprovalLoading = false,
+  answerApprovalError = false,
+  onRetryAiAnswerApproval,
+  onAnswerDecision,
   isQuestionReadOnly,
   isSubmitting = false,
   immersive = false,
@@ -220,6 +241,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   // #48B — "poprzednia wersja" disclosure toggle, keyed by question id so only
   // one history panel is open at a time (mirrors the guidance disclosure).
   const [historyOpenId, setHistoryOpenId] = useState<string | null>(null);
+  const [sendBackApproval, setSendBackApproval] = useState<V8InterviewAnswerApproval | null>(null);
+  const [sendBackReason, setSendBackReason] = useState('');
 
   const orderedQuestions = useMemo(() => {
     return [...questions].sort((a, b) => {
@@ -1287,11 +1310,25 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const requiredMissing = orderedQuestions.filter((q) => q.isRequired && q.status !== 'answered');
   const navRef = useRef<HTMLDivElement | null>(null);
 
+  const approvalByQuestionId = useMemo(
+    () => new Map(answerApprovals.map((approval) => [approval.questionId, approval])),
+    [answerApprovals]
+  );
+  const currentApproval = currentQuestion
+    ? approvalByQuestionId.get(currentQuestion.id)
+    : undefined;
+  const currentApprovalPresentation = getInterviewAnswerApprovalPresentation(
+    currentApproval,
+    isReviewerMode
+  );
+
   // Auto-scroll active question into view in nav.
   useEffect(() => {
     if (!immersive || !navRef.current || !currentQuestionId) return;
-    const el = navRef.current.querySelector(`[data-qid="${currentQuestionId}"]`);
-    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const nav = navRef.current;
+    const el = nav.querySelector<HTMLElement>(`[data-qid="${currentQuestionId}"]`);
+    if (!el) return;
+    nav.scrollTop = Math.max(0, el.offsetTop - nav.clientHeight / 2 + el.clientHeight / 2);
   }, [currentQuestionId, immersive]);
 
   // Close AI dropdown on click outside
@@ -1564,6 +1601,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             {orderedQuestions.map((q, idx) => {
               const isCurrent = q.id === currentQuestionId;
               const isAnswered = q.status === 'answered';
+              const approvalPresentation = getInterviewAnswerApprovalPresentation(
+                approvalByQuestionId.get(q.id),
+                isReviewerMode
+              );
               return (
                 <button
                   key={q.id}
@@ -1604,6 +1645,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     {isAnswered && q.answerText && (
                       <span className="text-[10px] text-c-text-muted truncate block mt-0.5">
                         {q.answerText.length > 50 ? q.answerText.slice(0, 50) + '…' : q.answerText}
+                      </span>
+                    )}
+                    {approvalByQuestionId.has(q.id) && (
+                      <span
+                        className={`mt-1 inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${interviewAnswerApprovalToneClass(approvalPresentation.tone)}`}
+                      >
+                        {t(approvalPresentation.labelKey)}
                       </span>
                     )}
                   </div>
@@ -1799,6 +1847,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               <div className={immersive ? 'max-w-2xl mx-auto space-y-5' : 'space-y-5'}>
                 {/* Question header */}
                 <div className="space-y-4">
+                  {answerApprovalError && (
+                    <p role="alert" className="text-sm text-c-warning">
+                      {t('interview.workspace.answerApprovalsUnavailable')}
+                    </p>
+                  )}
+                  {answerApprovalLoading && (
+                    <p className="text-sm text-c-text-muted">
+                      {t('interview.workspace.loadingAnswerApprovals')}
+                    </p>
+                  )}
                   {/* Top meta row */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -1894,6 +1952,65 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       />
                     </button>
                   </div>
+
+                  {currentApproval && (
+                    <div
+                      className="flex flex-wrap items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised/50 px-3 py-2.5"
+                      data-testid="interview-question-approval-state"
+                    >
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${interviewAnswerApprovalToneClass(currentApprovalPresentation.tone)}`}
+                      >
+                        {t(currentApprovalPresentation.labelKey)}
+                      </span>
+                      {currentApproval.decidedAt && (
+                        <span className="text-xs text-c-text-muted">
+                          {new Date(currentApproval.decidedAt).toLocaleString(
+                            t('interview.singleQuestionRuntime.enUs')
+                          )}
+                        </span>
+                      )}
+                      {currentApprovalPresentation.reason && (
+                        <span className="min-w-0 flex-1 text-xs text-c-text-secondary">
+                          {currentApprovalPresentation.reason}
+                        </span>
+                      )}
+                      {(currentApprovalPresentation.canApprove ||
+                        currentApprovalPresentation.canSendBack) && (
+                        <div className="ml-auto flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void onAnswerDecision?.(currentApproval, 'approved')}
+                            disabled={answerDecisionPending === currentApproval.questionId}
+                            className="inline-flex h-8 items-center rounded-lg border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:opacity-50"
+                          >
+                            {t('interview.workspace.approveAnswer')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSendBackApproval(currentApproval);
+                              setSendBackReason('');
+                            }}
+                            disabled={answerDecisionPending === currentApproval.questionId}
+                            className="inline-flex h-8 items-center rounded-lg border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-50"
+                          >
+                            {t('interview.workspace.sendBackAnswer')}
+                          </button>
+                        </div>
+                      )}
+                      {currentApproval.nextStage === 'ai' && onRetryAiAnswerApproval && (
+                        <button
+                          type="button"
+                          onClick={() => void onRetryAiAnswerApproval()}
+                          disabled={answerDecisionPending === 'ai'}
+                          className="ml-auto inline-flex h-8 items-center rounded-lg border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
+                        >
+                          {t('interview.workspace.retryAiAnswerReview')}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* #48B — "poprzednia wersja": previous answer snapshot(s) from
                       before a send-back, so a reviewer can see what changed on
@@ -2888,8 +3005,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   aria-label={t('interview.singleQuestionRuntime.nextQuestion')}
                   className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold disabled:opacity-50 ${
                     immersive
-                      ? 'bg-c-surface text-white shadow-lg shadow-c-info/20 hover:bg-c-info'
-                      : 'bg-c-surface-raised dark:bg-white text-white dark:text-c-text'
+                      ? 'bg-c-text text-c-surface shadow-lg shadow-c-border hover:opacity-90'
+                      : 'bg-c-text text-c-surface hover:opacity-90'
                   }`}
                 >
                   {t('interview.singleQuestionRuntime.next2')}
@@ -2909,6 +3026,58 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         onSearch={handleArtifactSearch}
         isPl={isPolish}
       />
+      {sendBackApproval && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="interview-answer-send-back-title"
+            className="w-full max-w-lg rounded-2xl border border-c-border bg-c-surface p-5 shadow-2xl"
+          >
+            <h3
+              id="interview-answer-send-back-title"
+              className="text-base font-semibold text-c-text"
+            >
+              {t('interview.workspace.sendBackAnswer')}
+            </h3>
+            <label className="mt-4 block text-sm text-c-text-secondary">
+              <span className="mb-1.5 block">{t('interview.workspace.answerDecisionReason')}</span>
+              <textarea
+                autoFocus
+                rows={4}
+                value={sendBackReason}
+                onChange={(event) => setSendBackReason(event.target.value)}
+                className="w-full resize-none rounded-xl border border-c-border bg-c-bg px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              />
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSendBackApproval(null)}
+                className="inline-flex h-9 items-center rounded-lg px-3 text-sm text-c-text-secondary hover:bg-c-surface-raised"
+              >
+                {t('interview.workspace.cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={
+                  !sendBackReason.trim() || answerDecisionPending === sendBackApproval.questionId
+                }
+                onClick={() => {
+                  const approval = sendBackApproval;
+                  void onAnswerDecision?.(approval, 'sent_back', sendBackReason.trim()).then(() => {
+                    setSendBackApproval(null);
+                    setSendBackReason('');
+                  });
+                }}
+                className="inline-flex h-9 items-center rounded-lg border border-c-border bg-c-surface-raised px-3 text-sm font-medium text-c-text disabled:opacity-50"
+              >
+                {t('interview.workspace.sendBackAnswer')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

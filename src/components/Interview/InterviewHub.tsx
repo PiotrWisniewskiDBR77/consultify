@@ -9635,7 +9635,7 @@ Return ONLY the answer text (no markdown fences).`;
         viewModes={['table']}
         showTabCounts={false}
       >
-        <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
+        <div className="h-full min-h-0 overflow-auto">{renderContent()}</div>
       </StandardModuleBar>
 
       {/* JEDEN generator inicjatyw (DEC-413) — ten sam modal, co w Ocenie,

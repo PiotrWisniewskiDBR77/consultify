@@ -465,6 +465,9 @@ const InterviewCreatorShellScreen = React.lazy(() => import('./screens/interview
 const InterviewSessionsStatusScreen = React.lazy(
   () => import('./screens/interview-sessions-status')
 );
+const U05SesjaWywiaduPowlokaScreen = React.lazy(
+  () => import('./screens/u05-sesja-wywiadu-powloka')
+);
 const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
@@ -727,9 +730,7 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
 const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
-const Z27InicjatywySkrzynkaScreen = React.lazy(
-  () => import('./screens/z27-inicjatywy-skrzynka')
-);
+const Z27InicjatywySkrzynkaScreen = React.lazy(() => import('./screens/z27-inicjatywy-skrzynka'));
 const Z30InicjatywyObciazenieScreen = React.lazy(
   () => import('./screens/z30-inicjatywy-obciazenie')
 );
@@ -1410,6 +1411,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'UI-latki-20260828 — REALNY <InterviewHub /> zakładka Sesje, kolumna status: 5 wierszy (assigned/in_progress/submitted/approved/completed) — weryfikacja etykiety "Przydzielony" i neutralnego tonu dla assigned.',
     render: () => <InterviewSessionsStatusScreen />,
+  },
+  'u05-sesja-wywiadu-powloka': {
+    label:
+      'U-05 / DEC-535 — REALNY <InterviewWorkspace /> na danych Northwind; &wariant=zywy-submitted|zywy-approved',
+    render: () => <U05SesjaWywiaduPowlokaScreen />,
   },
   'karta-decision': {
     label: 'KARTY N — Decision (harness odbioru 2026-07-21)',
