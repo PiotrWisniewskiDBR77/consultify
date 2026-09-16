@@ -1,0 +1,20 @@
+{
+  "status": "READY FOR CTO REVIEW",
+  "base": "85541745e8226562b75ab318e1efe1f8178b5097",
+  "implementation": "84023de1b20cb8fbce3c1ab4d9b781738f1db9c2",
+  "tree": "f882da2eb168c5ef17266d5f4e6ac936c5dc5842",
+  "diffSha256": "ab033a2307e87a95b7e042d483cc1dd3a169e8b81033896af074a2837affeb30",
+  "tests": {
+    "m6DeltaAndImporters": { "files": 9, "passed": 53, "failed": 0 },
+    "errorCopy": { "files": 1, "passed": 16, "failed": 0 }
+  },
+  "typescript": {
+    "frontend": { "base": 169, "candidate": 169, "delta": 0 },
+    "server": { "base": 0, "candidate": 0, "delta": 0 }
+  },
+  "build": { "modules": 10956, "seconds": 36.97, "nodeHeapMb": 8192, "result": "PASS" },
+  "drdTitleEnCoverage": { "translated": 60, "total": 233 },
+  "migration": false,
+  "stagingWrite": false,
+  "deploy": false
+}
