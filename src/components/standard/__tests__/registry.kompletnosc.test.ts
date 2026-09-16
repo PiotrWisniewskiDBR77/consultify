@@ -59,11 +59,19 @@ const OCZEKIWANE_W_REJESTRZE = [
   // mogła wołać silnika „Analizuj z AI" — ten sam powód, dla którego
   // `metric`/`objective` przeszły wcześniej (DEC-422).
   'meeting',
+  // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-433] `idea` i `interview_template`
+  // weszły do rejestru 06.09.2026 (commit 22de4c7e17, „register action idea
+  // and interview template AI rubrics") jako pełnoprawne karty N — obie mają
+  // komponent (IdeaMapWorkspace.tsx / TemplateBuilder.tsx), klasę L i
+  // paragraf KARTA_N_KONTRAKT K1-K30, potrzebne do wołania silnika „Analizuj
+  // z AI". Ten test nie został wtedy zaktualizowany. `idea` przestaje więc
+  // być wyjątkiem niżej (JAWNE_WYJATKI) — awansowała do rejestru.
+  'idea',
+  'interview_template',
 ] as const;
 
 const JAWNE_WYJATKI = {
   note: 'NotebookContent ma własny dokumentowy model poza rejestrem',
-  idea: 'IdeaMapWorkspace jest warsztatem płótnowym poza rejestrem',
   'audit-criterion': 'CriterionWorkspaceV2 jest rekordem audytu poza rejestrem',
   'audit-report': 'AuditReportDocumentView jest dokumentem raportu poza rejestrem',
   'assessment-report': 'AssessmentReportContractView ma osobny kontrakt raportu',
@@ -80,12 +88,12 @@ describe('P10 — kompletność rejestru kart N', () => {
     expect(EXECUTION_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['metrics', 'content']);
     expect(MANAGEMENT_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['report']);
   });
-  it('zawiera wszystkie 36 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434 + meeting DEC-573)', () => {
+  it('zawiera wszystkie 38 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434 + meeting DEC-573 + idea/interview_template DEC-433)', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
-  it('ma jawny, niepusty powód dla każdej z 5 kart poza rejestrem', () => {
-    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(5);
+  it('ma jawny, niepusty powód dla każdej z 4 kart poza rejestrem', () => {
+    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(4);
     for (const powod of Object.values(JAWNE_WYJATKI)) expect(powod.trim()).not.toBe('');
   });
 
@@ -104,6 +112,10 @@ describe('P10 — kompletność rejestru kart N', () => {
     // z B + 21 nowych z C = 35) i usuwa z wyjątków WSZYSTKO, co po sumowaniu trafiło
     // do rejestru po którejkolwiek stronie (`tool-document`, `presentation`,
     // `vault-document`) — zostaje 6 prawdziwych wyjątków, więc 35 + 6 = 41.
-    expect(pokryte.size).toBe(41);
+    // 41 → 42 (DEC-433, ten dyżur REG-TEST): `idea` i `interview_template` weszły
+    // do rejestru 06.09.2026 (commit 22de4c7e17), ale test nie był zaktualizowany
+    // wtedy. `idea` przestaje być wyjątkiem (JAWNE_WYJATKI 5→4), a rejestr rośnie
+    // 36→38 (dopisane `idea` i `interview_template`), więc bilans netto +1: 41+1=42.
+    expect(pokryte.size).toBe(42);
   });
 });
