@@ -19,6 +19,7 @@ export type PartnerBoardDeckInput = {
 };
 
 export type PresentationBoardDeckInput = {
+  organizationName?: string;
   deck: {
     title?: string;
     organization_id?: string;
@@ -34,12 +35,63 @@ export type PresentationBoardDeckInput = {
   };
 };
 
-function stringsFrom(value: unknown): string[] {
+const NON_CONTENT_KEYS = new Set([
+  'id',
+  'block_id',
+  'card_id',
+  'deck_id',
+  'type',
+  'enabled',
+  'visible',
+  'count',
+  'order',
+  'order_index',
+  'index',
+  'layout',
+  'layout_id',
+  'layout_type',
+  'style',
+  'style_overrides',
+  'color',
+  'background',
+  'source_ref',
+  'source_refs',
+  'is_refreshable',
+  'ai_editable',
+]);
+
+const NUMERIC_CONTENT_KEYS = new Set([
+  'value',
+  'actual',
+  'target',
+  'amount',
+  'percentage',
+  'score',
+]);
+
+function normalizeContentKey(key: string): string {
+  return key.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+}
+
+/** Extract user-authored content while excluding block/runtime metadata. */
+export function contentStringsFrom(value: unknown, parentKey = ''): string[] {
   if (typeof value === 'string' && value.trim()) return [value.trim()];
-  if (typeof value === 'number' || typeof value === 'boolean') return [String(value)];
-  if (Array.isArray(value)) return value.flatMap(stringsFrom);
+  if (typeof value === 'number' && NUMERIC_CONTENT_KEYS.has(normalizeContentKey(parentKey))) {
+    return [String(value)];
+  }
+  if (Array.isArray(value)) return value.flatMap((item) => contentStringsFrom(item, parentKey));
   if (!value || typeof value !== 'object') return [];
-  return Object.values(value as Record<string, unknown>).flatMap(stringsFrom);
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, nested]) => {
+    const normalizedKey = normalizeContentKey(key);
+    if (
+      NON_CONTENT_KEYS.has(normalizedKey) ||
+      normalizedKey.endsWith('_id') ||
+      normalizedKey.startsWith('is_')
+    ) {
+      return [];
+    }
+    return contentStringsFrom(nested, key);
+  });
 }
 
 class BoardDeckExportService {
@@ -48,7 +100,7 @@ class BoardDeckExportService {
     const cards = Array.isArray(deck.cards) ? deck.cards : [];
     return unifiedExportService.exportBoardDeckPptx({
       title: deck.title || 'Presentation',
-      organizationName: deck.organization_id || 'Consultify',
+      organizationName: input.organizationName?.trim() || 'Consultify',
       date: (deck.lifecycle?.updatedAt || new Date().toISOString()).slice(0, 10),
       confidentiality: deck.meta?.confidentiality || 'Internal',
       language: deck.meta?.language?.toLowerCase().startsWith('pl') ? 'pl' : 'en',
@@ -65,7 +117,7 @@ class BoardDeckExportService {
                 : intent.includes('decision') || intent.includes('recommend')
                   ? ('decision' as const)
                   : ('content-one' as const);
-        const blockText = (card.blocks || []).flatMap((block) => stringsFrom(block.content));
+        const blockText = (card.blocks || []).flatMap((block) => contentStringsFrom(block.content));
         const body = blockText.join('\n');
         const source = (card.source_refs || [])
           .map((ref) => ref.artifact_name)

@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { useTranslation } from 'react-i18next';
+
 import { formatListDateTime } from '../../../utils/listDateFormat';
 
 type ShareTab = 'collaborate' | 'share' | 'export' | 'embed';
@@ -450,7 +451,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 },
                 {
                   format: 'pptx' as const,
-                  label: t('presentations.builder.export.pptx', 'PowerPoint (PPTX)'),
+                  label: t('presentations.builder.export.pptx', 'Export PPTX'),
                   icon: FileText,
                   desc: 'Native formatting, editable charts',
                 },
@@ -509,7 +510,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               ) : (
                 <>
                   <p className="text-sm text-c-text-secondary">
-                    {t('presentations.builder.shareModal.embedThisDeckOnExternal', 'Embed this deck on external websites:')}
+                    {t(
+                      'presentations.builder.shareModal.embedThisDeckOnExternal',
+                      'Embed this deck on external websites:'
+                    )}
                   </p>
                   <div className="relative">
                     <textarea

@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 async function downloadHandlerSource(): Promise<string> {
@@ -30,6 +31,8 @@ describe('GET /decks/:id/download — current PPTX contract', () => {
   it('attempts current-version rendering even when export_path is absent', async () => {
     const handler = await downloadHandlerSource();
     expect(handler).toContain('freshDeck = await ensureCurrentPptxExport(deck)');
+    expect(handler).toContain('o.name AS organization_name');
+    expect(handler).toContain('JOIN organizations o ON o.id = pd.organization_id');
     expect(handler).not.toMatch(/!deck\s*\|\|\s*!deck\.export_path/);
     expect(handler).not.toMatch(/fs\.existsSync\(deck\.export_path\)/);
   });

@@ -30421,7 +30421,7 @@
       },
       "export": {
         "pdf": "PDF",
-        "pptx": "PowerPoint (PPTX)",
+        "pptx": "Export PPTX",
         "png": "PNG (per slide)",
         "html": "Interactive HTML5",
         "allCards": "All cards",

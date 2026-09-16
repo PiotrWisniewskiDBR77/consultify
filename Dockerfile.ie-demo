@@ -47,6 +47,8 @@ ENV GEMINI_API_KEY=${GEMINI_API_KEY}
 # the backend ENABLE_DELIVERABLES_LIGHT=true (runtime) in sync.
 ARG VITE_ENABLE_DELIVERABLES_LIGHT
 ENV VITE_ENABLE_DELIVERABLES_LIGHT=${VITE_ENABLE_DELIVERABLES_LIGHT}
+ARG VITE_EXPORT_PPTX_V2
+ENV VITE_EXPORT_PPTX_V2=${VITE_EXPORT_PPTX_V2}
 
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./

@@ -2918,7 +2918,7 @@
       },
       "export": {
         "pdf": "PDF",
-        "pptx": "PowerPoint (PPTX)",
+        "pptx": "Export PPTX",
         "png": "PNG (per slajd)",
         "html": "Interaktywny HTML5",
         "allCards": "Wszystkie karty",

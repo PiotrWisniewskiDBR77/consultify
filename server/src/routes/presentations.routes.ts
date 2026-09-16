@@ -15,8 +15,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
 import { isDeckOverflowWarningEnabled } from '../config/FeatureFlags.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -34,6 +35,7 @@ import {
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
 import { resolvePublicDemoPrincipal } from '../services/demo/demoPrincipalGuard.js';
+import { boardDeckExportService } from '../services/export/BoardDeckExportService.js';
 import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import {
   isTemplateResolveError,
@@ -101,7 +103,6 @@ import {
   completePresentationExport,
   failPresentationExport,
 } from '../services/presentationExport/presentationExportReceiptService.js';
-import { boardDeckExportService } from '../services/export/BoardDeckExportService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -193,6 +194,7 @@ import {
   buildPdfLayoutTruncationMarker,
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { wykryjPrzepelnienie } from '../services/report/pptx/deckOverflowDetector.js';
+import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
@@ -206,7 +208,6 @@ import {
   enforceQualityGateForExport,
   setQualityWarningHeaders,
 } from './presentationExportGate.js';
-import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -606,6 +607,12 @@ interface CurrentPptxExportDependencies {
   }) => Promise<void>;
 }
 
+export function isExportPptxV2Enabled(
+  env: { VITE_EXPORT_PPTX_V2?: string } = process.env
+): boolean {
+  return env.VITE_EXPORT_PPTX_V2 === 'true';
+}
+
 /** Ensure the downloadable bytes represent the current persisted deck version. */
 export async function ensureCurrentPptxExport(
   deck: any,
@@ -616,11 +623,24 @@ export async function ensureCurrentPptxExport(
     : path.join(exportsDir('presentations'), `${String(deck?.id || 'presentation')}.pptx`);
   const generate =
     dependencies?.generate ??
-    (async (_unifiedJson: any, _options: any) => {
+    (async (unifiedJson: any, options: any) => {
+      const legacyResult = await new PptxPipelineService().generateFromUnifiedJson(
+        unifiedJson,
+        options
+      );
+      if (!isExportPptxV2Enabled()) return legacyResult;
+
       const deckDocument = normalizeDeckDocument(deck);
       if (!deckDocument) throw new Error('The current deck has no renderable document.');
-      const buffer = await boardDeckExportService.exportPresentationDeck({ deck: deckDocument });
-      return { buffer, slideCount: deckDocument.cards.length, warnings: [] };
+      const buffer = await boardDeckExportService.exportPresentationDeck({
+        deck: deckDocument,
+        organizationName: typeof deck.organization_name === 'string' ? deck.organization_name : '',
+      });
+      return {
+        buffer,
+        slideCount: deckDocument.cards.length,
+        warnings: legacyResult.warnings,
+      };
     });
   const persist =
     dependencies?.persist ??
@@ -997,7 +1017,11 @@ async function enforceNoLegalHold(res: Response, organizationId: string, operati
     return true;
   } catch (error: any) {
     if (error instanceof OrgPoliciesError || error?.code === 'LEGAL_HOLD') {
-      res.status(403).json({ success: false, ...mapAppErrorResponse(error, undefined, 'error'), code: 'LEGAL_HOLD' });
+      res.status(403).json({
+        success: false,
+        ...mapAppErrorResponse(error, undefined, 'error'),
+        code: 'LEGAL_HOLD',
+      });
       return false;
     }
     throw error;
@@ -1846,7 +1870,10 @@ router.post(
     // ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE flag as the PUT save path —
     // this endpoint never wrote imageStylePrompt/colorTemplateId, so it has
     // no interaction with FIX-228's flag.
-    if (targetState === 'approved' && process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true') {
+    if (
+      targetState === 'approved' &&
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true'
+    ) {
       const existingForApproval = await getTemplateForOrgOrSystem(templateId, orgId);
       let customTemplate: unknown;
       if (existingForApproval?.layout_policy_json) {
@@ -2806,7 +2833,10 @@ router.get(
     }
 
     const deck = (await dbGet(
-      `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      `SELECT pd.*, o.name AS organization_name
+         FROM presentation_decks pd
+         JOIN organizations o ON o.id = pd.organization_id
+        WHERE pd.id = ? AND pd.organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
     if (!deck) return res.status(404).json({ success: false, error: 'Export not available' });
@@ -3619,7 +3649,9 @@ function mapDeckCommentError(res: Response, err: unknown): boolean {
           : err.code === 'forbidden'
             ? 403
             : 409;
-    res.status(status).json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+    res
+      .status(status)
+      .json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return true;
   }
   return false;
