@@ -470,7 +470,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             <button
               onClick={() => setSettings({ ...settings, streamResponse: !settings.streamResponse })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.streamResponse ? 'bg-navy-900' : 'bg-c-surface-raised'
+                settings.streamResponse ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

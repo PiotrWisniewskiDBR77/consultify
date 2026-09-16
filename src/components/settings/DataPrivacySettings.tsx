@@ -185,7 +185,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
     'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-c-focus' : 'bg-c-surface-raised'
+      enabled ? 'bg-c-focus-solid' : 'bg-c-border'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
     `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;

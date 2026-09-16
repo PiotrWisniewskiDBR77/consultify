@@ -475,7 +475,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('includeAttachments', !preferences.includeAttachments)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.includeAttachments ? 'bg-blue-600' : 'bg-c-surface-raised'
+                preferences.includeAttachments ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -537,7 +537,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               updatePreference('keyboardShortcutsEnabled', !preferences.keyboardShortcutsEnabled)
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.keyboardShortcutsEnabled ? 'bg-c-focus' : 'bg-c-surface-raised'
+              preferences.keyboardShortcutsEnabled ? 'bg-c-focus-solid' : 'bg-c-border'
             }`}
           >
             <span
@@ -622,7 +622,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('enableDeveloperMode', !preferences.enableDeveloperMode)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableDeveloperMode ? 'bg-green-600' : 'bg-c-surface-raised'
+                preferences.enableDeveloperMode ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span
@@ -649,7 +649,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 <button
                   onClick={() => updatePreference('showDebugInfo', !preferences.showDebugInfo)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.showDebugInfo ? 'bg-green-600' : 'bg-c-surface-raised'
+                    preferences.showDebugInfo ? 'bg-c-focus-solid' : 'bg-c-border'
                   }`}
                 >
                   <span
@@ -674,7 +674,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 <button
                   onClick={() => updatePreference('logAPIRequests', !preferences.logAPIRequests)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.logAPIRequests ? 'bg-green-600' : 'bg-c-surface-raised'
+                    preferences.logAPIRequests ? 'bg-c-focus-solid' : 'bg-c-border'
                   }`}
                 >
                   <span
@@ -701,7 +701,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('enableBetaFeatures', !preferences.enableBetaFeatures)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableBetaFeatures ? 'bg-amber-500' : 'bg-c-surface-raised'
+                preferences.enableBetaFeatures ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

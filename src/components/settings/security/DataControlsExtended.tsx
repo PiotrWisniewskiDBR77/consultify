@@ -372,7 +372,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             <button
               onClick={() => setAnonymizationEnabled(!anonymizationEnabled)}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                anonymizationEnabled ? 'bg-emerald-600' : 'bg-c-surface-raised'
+                anonymizationEnabled ? 'bg-c-focus-solid' : 'bg-c-border'
               }`}
             >
               <span

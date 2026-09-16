@@ -300,7 +300,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  config.enabled ? 'bg-blue-600' : 'bg-c-surface-raised'
+                  config.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span
@@ -482,7 +482,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  channels.sms.enabled ? 'bg-green-600' : 'bg-c-surface-raised'
+                  channels.sms.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span
@@ -669,7 +669,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               })
             }
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              channels.email.enabled ? 'bg-danger-600' : 'bg-c-surface-raised'
+              channels.email.enabled ? 'bg-c-focus-solid' : 'bg-c-border'
             }`}
           >
             <span

@@ -218,7 +218,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
               setSettings({ ...settings, showWelcomeOnStartup: !settings.showWelcomeOnStartup })
             }
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.showWelcomeOnStartup ? 'bg-blue-600' : 'bg-c-surface-raised'
+              settings.showWelcomeOnStartup ? 'bg-c-focus-solid' : 'bg-c-border'
             }`}
           >
             <span
@@ -245,7 +245,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
           <button
             onClick={() => setSettings({ ...settings, autoSaveEnabled: !settings.autoSaveEnabled })}
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.autoSaveEnabled ? 'bg-green-600' : 'bg-c-surface-raised'
+              settings.autoSaveEnabled ? 'bg-c-focus-solid' : 'bg-c-border'
             }`}
           >
             <span
@@ -320,7 +320,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                   setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings as any)[item.key] ? 'bg-amber-600' : 'bg-c-surface-raised'
+                  (settings as any)[item.key] ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span
@@ -377,7 +377,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                   setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings as any)[item.key] ? 'bg-navy-900' : 'bg-c-surface-raised'
+                  (settings as any)[item.key] ? 'bg-c-focus-solid' : 'bg-c-border'
                 }`}
               >
                 <span

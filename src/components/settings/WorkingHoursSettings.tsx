@@ -21,6 +21,7 @@ import { DaySchedule, User, WorkingHours } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
+import { SettingsToggleControl } from './shared';
 
 interface WorkingHoursSettingsProps {
   currentUser: User;
@@ -385,19 +386,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                       daySchedule.enabled ? 'bg-c-surface-raised' : 'bg-c-surface-raised opacity-60'
                     }`}
                   >
-                    {/* Day Toggle */}
-                    <button
-                      onClick={() => handleDayToggle(day.key)}
-                      className={`w-12 h-6 rounded-full transition-colors relative ${
-                        daySchedule.enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
-                          daySchedule.enabled ? 'left-7' : 'left-1'
-                        }`}
-                      />
-                    </button>
+                    {/* Day Toggle — K-20: wspolny SettingsToggleControl zamiast
+                        wlasnego pstryczka. Wlasny tor mial w stanie OFF
+                        `bg-c-surface-raised`, czyli DOKLADNIE kolor kafelka, w
+                        ktorym siedzial (kontrast 1,00:1 w motywie jasnym). */}
+                    <SettingsToggleControl
+                      checked={daySchedule.enabled}
+                      onChange={() => handleDayToggle(day.key)}
+                      ariaLabel={t(`settings.workingHours.days.${day.key}.full`, day.label)}
+                    />
 
                     {/* Day Label */}
                     <div className="w-28">
