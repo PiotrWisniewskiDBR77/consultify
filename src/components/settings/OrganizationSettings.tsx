@@ -21,6 +21,7 @@ import { Api } from '../../services/api';
 import { V8FinanceApi } from '../../services/api/v8/finance';
 import { User } from '../../types';
 import { formatListDate, formatListDateTime, formatListNumber } from '@/utils/listDateFormat';
+import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
 interface OrganizationSettingsProps {
   currentUser: User;
@@ -215,6 +216,65 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     }
   };
 
+  // K-21 (tester Tomek, zgł. 61): modal i przycisk „Create Organization" istniały
+  // WYŁĄCZNIE w gałęzi pustego stanu (`organizations.length === 0`), więc każdy,
+  // kto miał już jedną organizację, nie miał JAK utworzyć drugiej. Modal jest
+  // teraz wspólny dla obu gałęzi, a przycisk dostaje też widok główny.
+  // Rola: serwer wymaga ADMIN/OWNER/SUPERADMIN na POST /api/organizations, więc
+  // ekran nie pokazuje wejścia, którego backend i tak by nie przepuścił.
+  const canCreateOrganization = isAdminOwnerOrSuperAdminRole(currentUser?.role);
+
+  const createOrgModal = isCreateOrgModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in">
+          <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
+                <Building2 size={20} className="text-c-text-secondary" />
+                {t('settings.organization.createOrgModalTitle', 'Create Organization')}
+              </h3>
+              <button
+                onClick={() => setIsCreateOrgModalOpen(false)}
+                className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
+                  {t('settings.organization.orgNameLabel', 'Organization Name')}
+                </label>
+                <input
+                  type="text"
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                  placeholder={t('settings.organization.orgNamePlaceholder', 'e.g., Acme Corporation')}
+                  className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] text-navy-900"
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  onClick={() => setIsCreateOrgModalOpen(false)}
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
+                >
+                  {t('settings.organization.cancel', 'Cancel')}
+                </button>
+                <button
+                  onClick={handleCreateOrganization}
+                  disabled={creatingOrg || !newOrgName.trim()}
+                  className="px-6 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {creatingOrg && <Loader2 size={16} className="animate-spin" />}
+                  {creatingOrg ? t('settings.organization.creating', 'Creating...') : t('settings.organization.createOrgModalTitle', 'Create Organization')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+  ) : null;
+
   if (organizations.length === 0) {
     return (
       <>
@@ -229,65 +289,25 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               'You are not currently a member of any organization. Create one to get started with team collaboration and token sharing.'
             )}
           </p>
-          <button
-            onClick={() => setIsCreateOrgModalOpen(true)}
-            className="bg-c-text hover:bg-c-text text-c-surface px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            {t('settings.organization.createOrg', 'Create Organization')}
-          </button>
+          {canCreateOrganization ? (
+            <button
+              onClick={() => setIsCreateOrgModalOpen(true)}
+              className="bg-c-text hover:bg-c-text text-c-surface px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              {t('settings.organization.createOrg', 'Create Organization')}
+            </button>
+          ) : (
+            <p className="text-sm text-c-text-muted">
+              {t(
+                'settings.organization.createOrgNoPermission',
+                'Only an organization owner or administrator can create a new organization. Ask your administrator for an invitation.'
+              )}
+            </p>
+          )}
         </div>
 
-        {/* Create Organization Modal */}
-        {isCreateOrgModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in">
-            <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
-                  <Building2 size={20} className="text-c-accent" />
-                  {t('settings.organization.createOrgModalTitle', 'Create Organization')}
-                </h3>
-                <button
-                  onClick={() => setIsCreateOrgModalOpen(false)}
-                  className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                    {t('settings.organization.orgNameLabel', 'Organization Name')}
-                  </label>
-                  <input
-                    type="text"
-                    value={newOrgName}
-                    onChange={(e) => setNewOrgName(e.target.value)}
-                    placeholder={t('settings.organization.orgNamePlaceholder', 'e.g., Acme Corporation')}
-                    className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] text-navy-900"
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
-                    autoFocus
-                  />
-                </div>
-                <div className="flex gap-3 justify-end pt-4">
-                  <button
-                    onClick={() => setIsCreateOrgModalOpen(false)}
-                    className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
-                  >
-                    {t('settings.organization.cancel', 'Cancel')}
-                  </button>
-                  <button
-                    onClick={handleCreateOrganization}
-                    disabled={creatingOrg || !newOrgName.trim()}
-                    className="px-6 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {creatingOrg && <Loader2 size={16} className="animate-spin" />}
-                    {creatingOrg ? t('settings.organization.creating', 'Creating...') : t('settings.organization.createOrgModalTitle', 'Create Organization')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Create Organization Modal (wspólny dla obu gałęzi — K-21) */}
+        {createOrgModal}
       </>
     );
   }
@@ -298,26 +318,38 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
-            <Building2 className="text-c-accent" />
+            <Building2 className="text-c-text-secondary" />
             {t('settings.organization.title', 'Organization Settings')}
           </h2>
           <p className="text-c-text-muted text-sm mt-1">
             {t('settings.organization.subtitle', 'Manage members, billing, and tokens.')}
           </p>
         </div>
-        {organizations.length > 1 && (
-          <select
-            className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg px-3 py-2 text-sm"
-            value={selectedOrg?.id}
-            onChange={(e) => handleOrgChange(e.target.value)}
-          >
-            {organizations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
-        )}
+        <div className="flex items-center gap-3">
+          {organizations.length > 1 && (
+            <select
+              className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg px-3 py-2 text-sm"
+              value={selectedOrg?.id}
+              onChange={(e) => handleOrgChange(e.target.value)}
+            >
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {canCreateOrganization && (
+            <button
+              type="button"
+              onClick={() => setIsCreateOrgModalOpen(true)}
+              className="inline-flex items-center gap-2 bg-c-text hover:bg-c-text text-c-surface px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            >
+              <Plus size={16} />
+              {t('settings.organization.createOrg', 'Create Organization')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Billing & Tokens Card */}
@@ -652,7 +684,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${
                     member.role === 'OWNER'
-                      ? 'bg-c-accent-soft text-c-accent border-c-accent dark:border-c-accent'
+                      ? 'bg-c-surface-raised text-c-text border-c-border dark:border-c-border'
                       : member.role === 'ADMIN'
                         ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500/30'
                         : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle'
@@ -672,6 +704,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           )}
         </div>
       </div>
+
+      {/* Create Organization Modal (wspólny dla obu gałęzi — K-21) */}
+      {createOrgModal}
     </div>
   );
 };

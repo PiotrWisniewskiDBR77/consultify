@@ -23919,7 +23919,8 @@
       "sendInvite": "Send Invite",
       "youSuffix": "(You)",
       "joined": "Joined",
-      "noMembers": "No members found."
+      "noMembers": "No members found.",
+      "createOrgNoPermission": "Only an organization owner or administrator can create a new organization. Ask your administrator for an invitation."
     },
     "professionalProfile": {
       "companyName": "Company Name",
