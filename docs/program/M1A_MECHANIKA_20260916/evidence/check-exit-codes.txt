@@ -1,0 +1,7 @@
+focused_tests_exit=0
+eslint_exit=0
+server_tsc_exit=0
+root_tsc_baseline_exit=2
+root_tsc_candidate_exit=2
+root_tsc_baseline_diagnostics=169
+root_tsc_candidate_diagnostics=169

@@ -1,0 +1,69 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-20260916
+
+ × server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks 130ms
+   → expected [ 40, 40 ] to deeply equal [ 37, 37 ]
+ ✓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps an unquantified task UNKNOWN instead of reporting known zero 5ms
+ × server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance 5ms
+   → expected { weekStart: '2026-09-14', …(6) } to match object { capacityHours: 16, …(2) }
+(4 matching properties omitted from actual)
+ ✓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > fails closed when the user is outside the organization scope 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks
+AssertionError: expected [ 40, 40 ] to deeply equal [ 37, 37 ]
+
+- Expected
++ Received
+
+  [
+-   37,
+-   37,
++   40,
++   40,
+  ]
+
+ ❯ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts:40:54
+     38|
+     39|     expect(result.map((week) => week.weekStart)).toEqual(['2026-09-14'…
+     40|     expect(result.map((week) => week.capacityHours)).toEqual([37, 37]);
+       |                                                      ^
+     41|     expect(result.map((week) => week.allocatedHours)).toEqual([40, 40]…
+     42|     expect(result.map((week) => week.taskIds)).toEqual([['task-80h'], …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance
+AssertionError: expected { weekStart: '2026-09-14', …(6) } to match object { capacityHours: 16, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "allocatedHours": 12,
+-   "capacityHours": 16,
++   "capacityHours": 20,
+    "taskIds": [
+      "allocated-task",
+    ],
+  }
+
+ ❯ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts:104:23
+    102|     });
+    103|
+    104|     expect(result[0]).toMatchObject({
+       |                       ^
+    105|       capacityHours: 16,
+    106|       allocatedHours: 12,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  11:12:07
+   Duration  3.73s (transform 837ms, setup 718ms, import 1.01s, tests 148ms, environment 1.32s)
+
+exit=1
