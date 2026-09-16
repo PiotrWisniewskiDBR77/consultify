@@ -260,6 +260,11 @@ const PrawyPasDeckBuilderSystemScreen = React.lazy(
 // `?screen=calendar-sync-settings` / `?screen=notebook-quick-capture` renderowały
 // awaryjną listę harnessu zamiast realnego ekranu. Dopisuję tylko rejestrację.
 const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-sync-settings'));
+// K-20b (KANAL Wpis 133, DEC-575) — odbiór wizualny toru OFF naprawionego w
+// KeyboardShortcutsSettings.tsx:565 (jeden z 9 ekranów paczki).
+const K20bShortcutsSettingsScreen = React.lazy(
+  () => import('./screens/k20b-shortcuts-settings')
+);
 const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
 // ZLECENIE 1.1-J (06.09) — lewa lista "Moje notatki" w jednej linii (kebab pionowy).
 const NotatnikListaScreen = React.lazy(() => import('./screens/notatnik-lista-11j'));
@@ -838,6 +843,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '#24b — UI „Połącz kalendarz" (Ustawienia → Calendar Sync). Mock providerów (Google połączony, Outlook/Apple do połączenia), zero Api/fetch.',
     render: () => <CalendarSyncSettingsScreen />,
+  },
+  'k20b-shortcuts-settings': {
+    label:
+      'K-20b (DEC-575) — REALNY <KeyboardShortcutsSettings> zamontowany bezpośrednio (sekcja `shortcuts` jest ukryta w SettingsView, odbija do Profile), tor OFF pstryczka po naprawie kontrastu (bg-c-control-track) na linii 565.',
+    render: () => <K20bShortcutsSettingsScreen />,
   },
   'notebook-quick-capture': {
     label:

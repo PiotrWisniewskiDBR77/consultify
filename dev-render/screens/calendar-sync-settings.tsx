@@ -74,7 +74,9 @@ const CALENDARS = [
   },
 ];
 
-const CALENDAR_SETTINGS = { syncTasks: true, syncMeetings: true };
+// K-20b (DEC-575): syncMeetings=false na starcie, żeby zrzut pokazał OBA
+// stany toru (ON=Sync Tasks, OFF=Sync Meetings) obok siebie na jednym ekranie.
+const CALENDAR_SETTINGS = { syncTasks: true, syncMeetings: false };
 
 Object.assign(Api, {
   getCalendars: async () => CALENDARS,
