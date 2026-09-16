@@ -11,6 +11,8 @@ export interface PreviewPaneShellProps {
    */
   kicker?: string;
   title: string;
+  /** Marks an entity title as persisted/user content rather than localized UI chrome. */
+  titleContentOrigin?: 'user-content';
   onClose?: () => void;
   closeLabel?: string;
   actions?: React.ReactNode;
@@ -26,6 +28,7 @@ export interface PreviewPaneShellProps {
 
 export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
   title,
+  titleContentOrigin,
   onClose,
   closeLabel,
   actions,
@@ -102,7 +105,13 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
                 className="text-base font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 break-words"
                 title={title}
               >
-                {title}
+                {titleContentOrigin ? (
+                  <span data-language-source={titleContentOrigin} translate="no">
+                    {title}
+                  </span>
+                ) : (
+                  title
+                )}
               </div>
               {unreadCount && unreadCount > 0 ? (
                 <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold leading-none bg-danger-500 text-white shrink-0">

@@ -37,6 +37,13 @@ import { TableSettingsPopover } from './TableSettingsPopover';
 import { localeListy } from '../../../utils/listDateFormat';
 
 // Column definition
+export interface TableCellMetadata extends React.AriaAttributes {
+  [attribute: `data-${string}`]: string | number | boolean | undefined;
+  translate?: 'yes' | 'no';
+  lang?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
+}
+
 export interface TableColumn {
   id: string;
   label: string;
@@ -127,6 +134,12 @@ export interface TableColumn {
    */
   pinned?: 'left' | 'right';
   render?: (row: any) => React.ReactNode;
+  /**
+   * Metadata-only attributes for the canonical `<td>`. Layout, styling and
+   * event ownership stay inside FilterableTable, so callers cannot override
+   * row geometry, pinned offsets or canonical interaction behavior.
+   */
+  cellAttributes?: (row: any) => TableCellMetadata;
 }
 
 // Canon §3.3 — map column.align to a Tailwind text-align utility (left = default).
@@ -2444,8 +2457,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       const rendered = column.render ? column.render(row) : undefined;
                       const renderedIsPlainText =
                         typeof rendered === 'string' || typeof rendered === 'number';
+                      const cellAttributeProps = column.cellAttributes?.(row) ?? {};
                       return (
                       <td
+                        {...cellAttributeProps}
                         key={column.id}
                         // `break-words` — treść komórki musi łamać się DO
                         // szerokości kolumny. Bez tego długie słowo wylewa się

@@ -105,6 +105,60 @@ describe('FilterableTable — przypięte kolumny i wiersz grupujący', () => {
     expect(ytd.style.width).toBe(ytd.style.maxWidth);
   });
 
+  it('dokłada metadata do przypiętej komórki bez oddawania klas i offsetu modułowi', () => {
+    const columns = kolumny(1);
+    columns[0] = {
+      ...columns[0]!,
+      cellAttributes: () => ({
+        'data-language-source': 'user-content',
+        'aria-label': 'Persisted metric name',
+        translate: 'no',
+      }),
+    };
+
+    render(
+      <FilterableTable
+        columns={columns}
+        data={[WIERSZE[1]!]}
+        activeFilters={[]}
+        onFilterChange={() => {}}
+        minTableWidth={734}
+      />
+    );
+
+    const cell = document.querySelector(
+      'tbody td[data-language-source="user-content"]'
+    ) as HTMLTableCellElement;
+    expect(cell).not.toBeNull();
+    expect(cell).toHaveAttribute('aria-label', 'Persisted metric name');
+    expect(cell).toHaveAttribute('translate', 'no');
+    expect(cell).toHaveClass('h-14', 'px-4', 'py-3', 'break-words', 'sticky');
+    expect(cell.style.left).toBe('0px');
+    expect(cell.style.width).not.toBe('');
+    expect(cell.style.width).toBe(cell.style.minWidth);
+    expect(cell.style.width).toBe(cell.style.maxWidth);
+  });
+
+  it('typ metadata-only odrzuca className, style i eventy komórki', () => {
+    type CellMetadata = ReturnType<NonNullable<TableColumn['cellAttributes']>>;
+    const compileTimeContract = (): void => {
+      const invalidClass: CellMetadata = {
+        // @ts-expect-error FilterableTable owns canonical cell classes.
+        className: 'h-auto',
+      };
+      const invalidStyle: CellMetadata = {
+        // @ts-expect-error FilterableTable owns pinned offsets and widths.
+        style: { left: 999 },
+      };
+      const invalidEvent: CellMetadata = {
+        // @ts-expect-error FilterableTable owns row/cell interactions.
+        onClick: () => undefined,
+      };
+      void [invalidClass, invalidStyle, invalidEvent];
+    };
+    expect(compileTimeContract).toBeTypeOf('function');
+  });
+
   it('wiersz grupy to JEDNA komórka na całą szerokość — zero „—" w kolumnach grupy', () => {
     render(
       <FilterableTable

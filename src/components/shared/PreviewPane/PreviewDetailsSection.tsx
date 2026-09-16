@@ -40,6 +40,8 @@ export interface ExtraCopyFormat {
 
 export interface PreviewDetailsSectionProps {
   text?: string;
+  /** Persisted/user prose is not translated with the surrounding interface. */
+  textContentOrigin?: 'user-content';
   detailsText?: string[];
   title?: string;
   loading?: boolean;
@@ -73,6 +75,7 @@ export interface PreviewDetailsSectionProps {
 
 export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   text,
+  textContentOrigin,
   detailsText,
   title,
   loading,
@@ -276,6 +279,8 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
         <>
           {resolvedText ? (
             <div
+              data-language-source={textContentOrigin}
+              translate={textContentOrigin ? 'no' : undefined}
               className={[
                 compact
                   ? 'text-xs text-slate-700 dark:text-slate-200 leading-relaxed'
