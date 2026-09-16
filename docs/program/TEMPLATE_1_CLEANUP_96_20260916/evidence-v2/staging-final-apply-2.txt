@@ -1,0 +1,6 @@
+BEGIN
+NOTICE:  relation "template_1_20262272_backup" already exists, skipping
+NOTICE:  relation "idx_report_builder_templates_one_active_results_kpi_default" already exists, skipping
+NOTICE:  TEMPLATE-1b readback: deprecated 60, active proven 22, rebuilt draft 13
+DO
+COMMIT

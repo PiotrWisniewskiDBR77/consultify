@@ -1,0 +1,7 @@
+BEGIN
+NOTICE:  relation "template_1_20262271_backup" already exists, skipping
+NOTICE:  column "language" of relation "tp_base_templates" already exists, skipping
+NOTICE:  TEMPLATE-1 language baseline: 50 rows, 3 already measured as en; legacy rows remain unchanged
+NOTICE:  TEMPLATE-1 manual drafts preserved: before 1, after 1
+DO
+COMMIT

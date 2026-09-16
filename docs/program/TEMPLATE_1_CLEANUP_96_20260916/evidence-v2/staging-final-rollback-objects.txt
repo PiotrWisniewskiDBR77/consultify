@@ -1,0 +1,3 @@
+backup_absent|t
+index_absent|t
+new_deck_absent|t

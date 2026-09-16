@@ -1,2 +1,0 @@
-root_exit=2
-server_exit=0
