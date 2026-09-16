@@ -59,6 +59,15 @@
     --c-border-rgb: 203 210 218;
     --c-border-strong: #9aa6b5; /* hover/active borders */
     --c-border-strong-rgb: 154 166 181;
+    /* K-20b (DEC-575): dedicated OFF-track color for toggle switches. `--c-border`
+     * (#cbd2da) measures only 1,25:1 against `--c-surface` white — a border hairline
+     * contrast, not a control contrast (WCAG 2.1 SC 1.4.11 wants ≥3:1 for a UI
+     * control's boundary/state). Reuses the `--c-text-muted` hex (already ≥4.5:1
+     * proven text contrast) as a SEPARATE token — do not alias `--c-text-muted`
+     * itself, and do not change `--c-border` (dozens of unrelated call sites).
+     * Measured: 4,76:1 vs `--c-surface` #ffffff, 4,55:1 vs `--c-surface-raised`. */
+    --c-control-track: #64748b;
+    --c-control-track-rgb: 100 116 139;
     --c-text: #0f172a; /* primary text */
     --c-text-rgb: 15 23 42;
     --c-text-secondary: #475569; /* secondary text */
@@ -307,6 +316,11 @@
     --c-border-rgb: 148 163 184;
     --c-border-strong: rgba(148, 163, 184, 0.36); /* hover/active borders */
     --c-border-strong-rgb: 148 163 184;
+    /* K-20b (DEC-575): dedicated OFF-track color for toggle switches — see :root
+     * comment above. Reuses `--c-text-muted` dark hex as a separate token.
+     * Measured: 6,18:1 vs `--c-surface` #0f172a, 5,53:1 vs `--c-surface-raised`. */
+    --c-control-track: #8a99b0;
+    --c-control-track-rgb: 138 153 176;
     /* Text scale — HARD CONTRAST FLOOR (VISUAL_STANDARD.md §1.3):
      * nothing informational below --c-text-muted (≈5.5:1 on --c-bg).
      * Previous secondary #94a3b8 / muted #64748b were too dark on navy. */
@@ -1055,6 +1069,8 @@ html.high-contrast {
   --c-border-rgb: 0 0 0;
   --c-border-subtle: #444444;
   --c-border-subtle-rgb: 68 68 68;
+  --c-control-track: #333333;
+  --c-control-track-rgb: 51 51 51;
 }
 html.high-contrast.dark,
 html.dark.high-contrast {
@@ -1068,6 +1084,8 @@ html.dark.high-contrast {
   --c-border-rgb: 255 255 255;
   --c-border-subtle: #cbd5e1;
   --c-border-subtle-rgb: 203 213 225;
+  --c-control-track: #cbd5e1;
+  --c-control-track-rgb: 203 213 225;
 }
 html.high-contrast a {
   text-decoration: underline;

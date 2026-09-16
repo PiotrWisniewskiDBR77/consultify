@@ -369,6 +369,12 @@ interface SettingsToggleProps {
  * (Dostępność, Dostępność czasowa, Powiadomienia) — czyli te, na które tester
  * NIE narzekał.
  *
+ * ★ K-20b (DEC-575, FEEDBACK-1-CTO): `--c-border` sam też nie wystarczał —
+ * 1,25:1 vs `--c-surface` biały, poniżej WCAG 1.4.11 (≥3:1 dla granicy
+ * kontrolki). Tor OFF przeszedł na dedykowany token `--c-control-track`
+ * (4,76:1 jasny / 6,18:1 ciemny vs `--c-surface`). Token tylko dla toru —
+ * `--c-border` zostaje niezmieniony wszędzie indziej.
+ *
  * Pamięć „naprawa per-wywołanie odrasta": kształt mieszka tutaj, w jednym
  * miejscu; ekran deklaruje stan i wołacz.
  */
@@ -398,7 +404,7 @@ export const SettingsToggleControl: React.FC<SettingsToggleControlProps> = ({
     className={cn(
       'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200',
       'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-c-surface',
-      checked ? 'bg-c-focus-solid' : 'bg-c-border',
+      checked ? 'bg-c-focus-solid' : 'bg-c-control-track',
       disabled && 'opacity-50 cursor-not-allowed',
       className
     )}

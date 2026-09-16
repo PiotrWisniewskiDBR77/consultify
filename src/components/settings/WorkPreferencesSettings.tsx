@@ -555,7 +555,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     preferences.focusModeBlocksNotifications
                       ? 'bg-yellow-500'
-                      : 'bg-c-surface-raised'
+                      : 'bg-c-control-track'
                   }`}
                 >
                   <span

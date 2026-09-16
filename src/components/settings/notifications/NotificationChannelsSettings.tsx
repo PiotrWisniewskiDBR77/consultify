@@ -596,7 +596,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   channels.inApp[item.key as keyof typeof channels.inApp]
                     ? 'bg-blue-600'
-                    : 'bg-c-surface-raised'
+                    : 'bg-c-control-track'
                 }`}
               >
                 <span
