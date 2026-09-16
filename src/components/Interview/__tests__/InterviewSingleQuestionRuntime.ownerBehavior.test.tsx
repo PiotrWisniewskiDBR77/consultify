@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -140,5 +140,60 @@ describe('Interview single-question owner behavior', () => {
     expect(
       screen.getByPlaceholderText('interview.singleQuestionRuntime.writeTheAnswerOrRecord')
     ).toBeDisabled();
+  });
+
+  it('renders approval as question state and records neutral reviewer decisions', async () => {
+    const onAnswerDecision = vi.fn().mockResolvedValue(undefined);
+    const approval = {
+      questionId: 'q-1',
+      submissionId: 'submission-1',
+      answerUpdatedAt: '2026-09-15T10:00:00.000Z',
+      answerDigest: 'digest',
+      policyMode: 'manager' as const,
+      policyVersion: 1,
+      status: 'pending' as const,
+      nextStage: 'manager' as const,
+      latestDecision: null,
+      reason: null,
+      decidedAt: null,
+      actor: null,
+    };
+
+    render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        immersive
+        readOnly
+        isReviewerMode
+        answerApprovals={[approval]}
+        onAnswerDecision={onAnswerDecision}
+        onUpdateQuestion={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText('interview.workspace.answerApprovalStatus.pending')).toHaveLength(2);
+    const approve = screen.getByRole('button', { name: 'interview.workspace.approveAnswer' });
+    const sendBack = screen.getByRole('button', { name: 'interview.workspace.sendBackAnswer' });
+    expect(approve.className).not.toMatch(/bg-c-success|bg-c-danger/);
+    expect(sendBack.className).not.toMatch(/bg-c-success|bg-c-danger/);
+
+    fireEvent.click(approve);
+    await waitFor(() => expect(onAnswerDecision).toHaveBeenCalledWith(approval, 'approved'));
+
+    fireEvent.click(sendBack);
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByRole('textbox'), {
+      target: { value: 'Add the measured baseline.' },
+    });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'interview.workspace.sendBackAnswer' })
+    );
+    await waitFor(() =>
+      expect(onAnswerDecision).toHaveBeenCalledWith(
+        approval,
+        'sent_back',
+        'Add the measured baseline.'
+      )
+    );
   });
 });

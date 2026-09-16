@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const fixture = vi.hoisted(() => ({
@@ -15,6 +15,7 @@ const fixture = vi.hoisted(() => ({
   sessionStatus: 'submitted',
   managedEmpty: false,
   hasAssignment: true,
+  approvals: [] as any[],
   questions: [
     {
       id: 'question',
@@ -74,40 +75,85 @@ vi.mock('react-i18next', async (importOriginal) => ({
   }),
 }));
 vi.mock('../InterviewSingleQuestionRuntime', () => ({
-  InterviewSingleQuestionRuntime: (p: any) => (
-    <section>
-      {p.questions.map((question: any) => {
-        const approval = p.answerApprovals?.find(
-          (candidate: any) => candidate.questionId === question.id
-        );
-        const questionReadOnly = p.isQuestionReadOnly
-          ? p.isQuestionReadOnly(question.id)
-          : p.readOnly;
-        return (
-          <div key={question.id}>
-            <textarea
-              aria-label={`answer-${question.id}`}
-              readOnly={questionReadOnly}
-              defaultValue={question.answerText}
-            />
-            <span>{approval?.status}</span>
-            <span>{approval?.reason}</span>
+  InterviewSingleQuestionRuntime: (p: any) => {
+    const [sendBackId, setSendBackId] = React.useState<string | null>(null);
+    const [reason, setReason] = React.useState('');
+    return (
+      <section data-testid="question-runtime">
+        {p.answerApprovalError && (
+          <p role="alert">interview.workspace.answerApprovalsUnavailable</p>
+        )}
+        {p.questions.map((question: any) => {
+          const approval = p.answerApprovals?.find(
+            (candidate: any) => candidate.questionId === question.id
+          );
+          const questionReadOnly = p.isQuestionReadOnly
+            ? p.isQuestionReadOnly(question.id)
+            : p.readOnly;
+          return (
+            <div key={question.id}>
+              <textarea
+                aria-label={`answer-${question.id}`}
+                readOnly={questionReadOnly}
+                defaultValue={question.answerText}
+              />
+              <span>{approval?.status}</span>
+              <span>{approval?.reason}</span>
+              {approval?.nextStage === 'manager' && p.isReviewerMode && (
+                <>
+                  <button onClick={() => p.onAnswerDecision(approval, 'approved')}>
+                    interview.workspace.approveAnswer
+                  </button>
+                  <button onClick={() => setSendBackId(question.id)}>
+                    interview.workspace.sendBackAnswer
+                  </button>
+                </>
+              )}
+              {approval?.nextStage === 'ai' && (
+                <button onClick={() => p.onRetryAiAnswerApproval()}>
+                  interview.workspace.retryAiAnswerReview
+                </button>
+              )}
+              <button
+                onClick={() =>
+                  p.onUpdateQuestion(question.id, { answerText: `changed-${question.id}` })
+                }
+              >
+                exercise answer callback {question.id}
+              </button>
+            </div>
+          );
+        })}
+        {sendBackId && (
+          <div role="dialog">
+            <label>
+              interview.workspace.answerDecisionReason
+              <textarea
+                aria-label="interview.workspace.answerDecisionReason"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </label>
             <button
-              onClick={() =>
-                p.onUpdateQuestion(question.id, { answerText: `changed-${question.id}` })
-              }
+              disabled={!reason.trim()}
+              onClick={() => {
+                const approval = p.answerApprovals.find(
+                  (candidate: any) => candidate.questionId === sendBackId
+                );
+                p.onAnswerDecision(approval, 'sent_back', reason.trim());
+              }}
             >
-              exercise answer callback {question.id}
+              interview.workspace.sendBackAnswer
             </button>
           </div>
-        );
-      })}
-      <button onClick={() => p.onSubmitSession()}>exercise submit</button>
-      <button onClick={() => p.onSubmitSession({ bypassGate: true })}>
-        exercise direct submit
-      </button>
-    </section>
-  ),
+        )}
+        <button onClick={() => p.onSubmitSession()}>exercise submit</button>
+        <button onClick={() => p.onSubmitSession({ bypassGate: true })}>
+          exercise direct submit
+        </button>
+      </section>
+    );
+  },
 }));
 import { InterviewWorkspace } from '../InterviewWorkspace';
 const session = () => ({
@@ -142,6 +188,7 @@ beforeEach(() => {
   };
   fixture.managedEmpty = false;
   fixture.hasAssignment = true;
+  fixture.approvals = [];
   fixture.questions = [
     {
       id: 'question',
@@ -161,7 +208,9 @@ beforeEach(() => {
   v8.evaluateSessionAnswers.mockRejectedValue(new Error('AI unavailable'));
   v8.getAnswerApprovals.mockResolvedValue({
     assignmentId: 'assignment',
-    approvals: [],
+    get approvals() {
+      return fixture.approvals;
+    },
   });
   api.get.mockImplementation(async (url: string) =>
     url.endsWith('/questions')
@@ -184,6 +233,50 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 describe('manager review uses the real Workspace lifecycle controls', () => {
+  it('keeps one session shell across lifecycle, approval counts and roles', async () => {
+    const statuses = ['in_progress', 'submitted', 'approved', 'completed'];
+    const approvalCounts = [0, 1, 6, 11];
+    const roles = [
+      { role: 'MEMBER', canManage: false },
+      { role: 'ADMIN', canManage: true },
+    ];
+
+    for (const status of statuses) {
+      for (const count of approvalCounts) {
+        for (const role of roles) {
+          cleanup();
+          fixture.sessionStatus = status;
+          fixture.assignment = { ...fixture.assignment, status };
+          fixture.user = { id: role.canManage ? 'manager' : 'respondent', role: role.role };
+          fixture.canManage = role.canManage;
+          fixture.ownerId = 'respondent';
+          fixture.approvals = Array.from({ length: count }, (_, index) => ({
+            questionId: index === 0 ? 'question' : `question-${index}`,
+            submissionId: `submission-${index}`,
+            answerUpdatedAt: '2026-09-15T10:00:00.000Z',
+            answerDigest: `digest-${index}`,
+            policyMode: 'manager',
+            policyVersion: 1,
+            status: 'pending',
+            nextStage: 'manager',
+            latestDecision: null,
+            reason: null,
+            decidedAt: null,
+            actor: null,
+          }));
+
+          render(<InterviewWorkspace sessionId="session" />);
+          const shell = await screen.findByTestId('interview-dedicated-question-workspace');
+          expect(within(shell).getByTestId('interview-session-menu1')).toBeInTheDocument();
+          expect(within(shell).getByTestId('question-runtime')).toBeInTheDocument();
+          expect(
+            within(shell).queryByRole('region', { name: 'interview.workspace.answerApprovalPanel' })
+          ).toBeNull();
+        }
+      }
+    }
+  });
+
   it('submitted respondent cannot edit or invoke the answer writer', async () => {
     render(<InterviewWorkspace sessionId="session" />);
     const answer = await screen.findByRole('textbox', { name: 'answer-question' });
@@ -246,6 +339,7 @@ describe('manager review uses the real Workspace lifecycle controls', () => {
       session: { ...session(), status: 'active' },
     });
     render(<InterviewWorkspace sessionId="session" onAssignmentChange={changed} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'interview.workspace.moreActions' }));
     fireEvent.click(await screen.findByRole('button', { name: 'interview.workspace.sendBack' }));
     fireEvent.change(
       screen.getByPlaceholderText('interview.workspace.describeWhatNeedsImprovement'),
@@ -490,11 +584,16 @@ describe('manager review uses the real Workspace lifecycle controls', () => {
     });
 
     render(<InterviewWorkspace sessionId="session" />);
-    const sendBack = await screen.findByRole('button', {
+    const openSendBack = await screen.findByRole('button', {
+      name: 'interview.workspace.sendBackAnswer',
+    });
+    fireEvent.click(openSendBack);
+    const dialog = await screen.findByRole('dialog');
+    const sendBack = within(dialog).getByRole('button', {
       name: 'interview.workspace.sendBackAnswer',
     });
     expect(sendBack).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('interview.workspace.answerDecisionReason'), {
+    fireEvent.change(within(dialog).getByLabelText('interview.workspace.answerDecisionReason'), {
       target: { value: 'Add the source and measured date.' },
     });
     expect(sendBack).not.toBeDisabled();

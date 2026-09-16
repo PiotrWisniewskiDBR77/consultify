@@ -34,8 +34,8 @@ import {
   Loader2,
   MessageSquare,
   Mic,
+  MoreHorizontal,
   Paperclip,
-  RefreshCw,
   Save,
   Send,
   Shield,
@@ -345,6 +345,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [isSendingBack, setIsSendingBack] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [showSendBackForm, setShowSendBackForm] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
   // #48B — "poprzednia wersja": load answer-history snapshots (taken on a
   // prior send-back) for the reviewer view. Fail-open: on any error the map
@@ -362,7 +363,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     loading: boolean;
     error: boolean;
   }>({ scopeKey: '', approvals: [], loading: false, error: false });
-  const [answerDecisionReasons, setAnswerDecisionReasons] = useState<Record<string, string>>({});
   const [answerDecisionPending, setAnswerDecisionPending] = useState<string | null>(null);
 
   const refreshAnswerApprovals = useCallback(async () => {
@@ -1256,11 +1256,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   );
 
   const handleAnswerDecision = useCallback(
-    async (approval: V8InterviewAnswerApproval, decision: 'approved' | 'sent_back') => {
+    async (
+      approval: V8InterviewAnswerApproval,
+      decision: 'approved' | 'sent_back',
+      reasonOverride?: string
+    ) => {
       const assignmentId = session?.assignmentId;
       if (!assignmentId || !isReviewerMode || approval.nextStage !== 'manager') return;
       const scopeKey = approvalScopeKey;
-      const reason = answerDecisionReasons[approval.questionId]?.trim() || '';
+      const reason = reasonOverride?.trim() || '';
       if (decision === 'sent_back' && !reason) return;
       setAnswerDecisionPending(approval.questionId);
       try {
@@ -1301,15 +1305,50 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setAnswerDecisionPending(null);
       }
     },
-    [
-      answerDecisionReasons,
-      approvalScopeKey,
-      isReviewerMode,
-      refreshAnswerApprovals,
-      session?.assignmentId,
-      t,
-    ]
+    [approvalScopeKey, isReviewerMode, refreshAnswerApprovals, session?.assignmentId, t]
   );
+
+  const handleApproveAllPendingAnswers = useCallback(async () => {
+    const assignmentId = session?.assignmentId;
+    const pending = visibleAnswerApprovals.filter((approval) => approval.nextStage === 'manager');
+    if (!assignmentId || !isReviewerMode || pending.length === 0) return;
+    const scopeKey = approvalScopeKey;
+    setAnswerDecisionPending('all');
+    try {
+      await V8InterviewApi.decideAnswerApprovals(assignmentId, {
+        submissionId: pending[0].submissionId,
+        clientRequestId: createClientRequestId(),
+        answers: pending.map((approval) => ({
+          questionId: approval.questionId,
+          expectedAnswerUpdatedAt: approval.answerUpdatedAt,
+        })),
+        decision: 'approved',
+      });
+      await refreshAnswerApprovals();
+      if (approvalScopeRef.current === scopeKey) {
+        toast.success(t('interview.workspace.allPendingAnswersApproved'));
+      }
+    } catch (error) {
+      if (approvalScopeRef.current !== scopeKey) return;
+      toast.error(
+        t(
+          getApiMessageKey(error) ||
+            ((error as { status?: number })?.status === 409
+              ? 'interview.workspace.answerDecisionConflict'
+              : 'interview.workspace.answerDecisionFailed')
+        )
+      );
+    } finally {
+      setAnswerDecisionPending(null);
+    }
+  }, [
+    approvalScopeKey,
+    isReviewerMode,
+    refreshAnswerApprovals,
+    session?.assignmentId,
+    t,
+    visibleAnswerApprovals,
+  ]);
 
   const handleRetryAiAnswerApprovals = useCallback(async () => {
     const assignmentId = session?.assignmentId;
@@ -2771,106 +2810,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     </Callout>
   );
 
-  const answerApprovalPanel = session?.assignmentId ? (
-    <section
-      aria-label={t('interview.workspace.answerApprovalPanel')}
-      className="mb-4 space-y-3 rounded-xl border border-c-border/60 bg-c-surface/40 p-4"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-c-text">
-          {t('interview.workspace.answerApprovalPanel')}
-        </h3>
-        {visibleAnswerApprovals.some((approval) => approval.nextStage === 'ai') ? (
-          <button
-            type="button"
-            onClick={() => void handleRetryAiAnswerApprovals()}
-            disabled={answerDecisionPending === 'ai'}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-border/60 px-3 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:opacity-50"
-          >
-            {answerDecisionPending === 'ai' ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <RefreshCw size={14} />
-            )}
-            {t('interview.workspace.retryAiAnswerReview')}
-          </button>
-        ) : null}
-      </div>
-      {answerApprovalState.loading && answerApprovalState.scopeKey === approvalScopeKey ? (
-        <p className="text-sm text-c-text-muted">
-          {t('interview.workspace.loadingAnswerApprovals')}
-        </p>
-      ) : answerApprovalState.error && answerApprovalState.scopeKey === approvalScopeKey ? (
-        <p role="alert" className="text-sm text-c-warning">
-          {t('interview.workspace.answerApprovalsUnavailable')}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {visibleAnswerApprovals.map((approval) => {
-            const question = questions.find((item) => item.id === approval.questionId);
-            const reason = answerDecisionReasons[approval.questionId] || '';
-            const pending = answerDecisionPending === approval.questionId;
-            return (
-              <article
-                key={approval.questionId}
-                className="rounded-lg border border-c-border/50 bg-white/60 p-3 dark:bg-c-surface/60"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium text-c-text">
-                      {question?.questionText || t('interview.workspace.answerApprovalQuestion')}
-                    </p>
-                    <p className="mt-1 text-xs text-c-text-muted">
-                      {t(`interview.workspace.answerApprovalStatus.${approval.status}`)}
-                    </p>
-                  </div>
-                  {approval.reason ? (
-                    <p className="max-w-xl text-sm text-c-warning">{approval.reason}</p>
-                  ) : null}
-                </div>
-                {isReviewerMode && approval.nextStage === 'manager' ? (
-                  <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-                    <label className="text-xs text-c-text-muted">
-                      <span className="mb-1 block">
-                        {t('interview.workspace.answerDecisionReason')}
-                      </span>
-                      <input
-                        value={reason}
-                        onChange={(event) =>
-                          setAnswerDecisionReasons((current) => ({
-                            ...current,
-                            [approval.questionId]: event.target.value,
-                          }))
-                        }
-                        className="h-9 w-full rounded-lg border border-c-border/60 bg-c-surface px-3 text-sm text-c-text"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => void handleAnswerDecision(approval, 'approved')}
-                      disabled={pending}
-                      className="self-end inline-flex h-9 items-center rounded-lg bg-c-success px-3 text-sm font-medium text-white disabled:opacity-50"
-                    >
-                      {t('interview.workspace.approveAnswer')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleAnswerDecision(approval, 'sent_back')}
-                      disabled={pending || !reason.trim()}
-                      className="self-end inline-flex h-9 items-center rounded-lg border border-c-warning/50 px-3 text-sm font-medium text-c-warning disabled:opacity-50"
-                    >
-                      {t('interview.workspace.sendBackAnswer')}
-                    </button>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  ) : null;
-
   const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
@@ -3046,8 +2985,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       <NModeSectionWrapper heading={{ en: 'Questions', pl: 'Pytania' }}>
         <div ref={questionsTopRef} />
 
-        {answerApprovalPanel}
-
         <div className="mb-4">
           <RuntimeModeSelector
             currentMode={runtimeMode}
@@ -3119,6 +3056,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 sessionName={sessionName}
                 readOnly={isWorkspaceReadOnly}
                 answerApprovals={visibleAnswerApprovals}
+                isReviewerMode={isReviewerMode}
+                answerDecisionPending={answerDecisionPending}
+                answerApprovalLoading={answerApprovalState.loading}
+                answerApprovalError={answerApprovalState.error}
+                onRetryAiAnswerApproval={handleRetryAiAnswerApprovals}
+                onAnswerDecision={handleAnswerDecision}
                 isQuestionReadOnly={isQuestionReadOnly}
                 isSubmitting={isSubmittingSession}
                 immersive
@@ -3724,6 +3667,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const answeredCount = questions.filter((question) => question.status === 'answered').length;
     const totalCount = questions.length;
     const progressPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
+    const headerTemplateName =
+      (assignmentInfo as any)?.template?.name || (session as any)?.templateName || '-';
+    const headerAssigneeName =
+      (assignmentInfo as any)?.assignee?.name ||
+      (assignmentInfo as any)?.assigneeName ||
+      currentUser?.displayName ||
+      '-';
+    const headerDueAt = (assignmentInfo as any)?.dueAt
+      ? new Date(String((assignmentInfo as any).dueAt)).toLocaleDateString(
+          t('interview.workspace.enUs', 'en-US')
+        )
+      : '-';
+    const pendingManagerApprovals = visibleAnswerApprovals.filter(
+      (approval) => approval.nextStage === 'manager'
+    );
 
     return (
       <>
@@ -3732,7 +3690,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           className="flex h-full min-h-0 flex-col bg-c-background"
           data-testid="interview-dedicated-question-workspace"
         >
-          <header className="shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5">
+          <header
+            className="shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5"
+            data-testid="interview-session-menu1"
+          >
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
@@ -3758,6 +3719,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   lifecycleConfig.label.en
                 )}
               />
+              <span
+                className="hidden max-w-[28rem] truncate rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs text-c-text-secondary xl:inline-flex"
+                title={`${headerTemplateName} · ${headerAssigneeName} · ${headerDueAt}`}
+              >
+                {headerTemplateName} · {headerAssigneeName} · {headerDueAt}
+              </span>
               <div className="ml-auto hidden min-w-44 items-center gap-2 sm:flex">
                 <span className="text-xs tabular-nums text-c-text-muted">
                   {answeredCount}/{totalCount}
@@ -3777,54 +3744,93 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     <Shield size={12} />
                     {t('interview.workspace.review')}
                   </span>
-                  {isAnswerApprovalProjectionResolved && !hasPerAnswerApproval ? (
-                    <>
+                  {hasPerAnswerApproval && pendingManagerApprovals.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleApproveAllPendingAnswers()}
+                      disabled={answerDecisionPending === 'all'}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-c-text px-3 text-sm font-medium text-c-surface transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                    >
+                      {answerDecisionPending === 'all' ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <ThumbsUp size={14} />
+                      )}
+                      {t('interview.workspace.approveAllPending', {
+                        count: pendingManagerApprovals.length,
+                      })}
+                    </button>
+                  ) : isAnswerApprovalProjectionResolved && !hasPerAnswerApproval ? (
+                    <button
+                      type="button"
+                      onClick={handleApprove}
+                      disabled={isApproving || !canApprove}
+                      title={!canApprove ? approveBlockedHint : undefined}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-c-text px-3 text-sm font-medium text-c-surface transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isApproving ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <ThumbsUp size={14} />
+                      )}
+                      {t('interview.workspace.approve')}
+                    </button>
+                  ) : null}
+                </>
+              ) : !isLocked ? (
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitSession()}
+                  disabled={isSaving || isWorkspaceReadOnly || isSubmittingSession}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-c-text px-3 text-sm font-medium text-c-surface transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                >
+                  {isSubmittingSession ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Send size={14} />
+                  )}
+                  {t('interview.workspace.submitForReview')}
+                </button>
+              ) : null}
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label={t('interview.workspace.moreActions')}
+                  aria-expanded={headerMenuOpen}
+                  onClick={() => setHeaderMenuOpen((open) => !open)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-c-border text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+                {headerMenuOpen && (
+                  <div className="absolute right-0 top-11 z-30 min-w-48 rounded-xl border border-c-border bg-c-surface p-1.5 shadow-xl">
+                    {isReviewerMode && !hasPerAnswerApproval && (
                       <button
                         type="button"
-                        onClick={handleApprove}
-                        disabled={isApproving || !canApprove}
-                        title={!canApprove ? approveBlockedHint : undefined}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-success/30 bg-c-success/10 px-3 text-sm font-medium text-c-success transition-colors hover:bg-c-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isApproving ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <ThumbsUp size={14} />
-                        )}
-                        {t('interview.workspace.approve')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowSendBackForm(true)}
-                        disabled={isSendingBack}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                        onClick={() => {
+                          setHeaderMenuOpen(false);
+                          setShowSendBackForm(true);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-c-surface-raised"
                       >
                         <AlertTriangle size={14} />
                         {t('interview.workspace.sendBack')}
                       </button>
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isSaving || isWorkspaceReadOnly}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
-                >
-                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  {t('interview.workspace.save')}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => handleRuntimeModeSelect('task_list')}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-                title={t('interview.workspace.switchToListView')}
-              >
-                <ArrowRight size={14} />
-                <span className="hidden lg:inline">{t('interview.workspace.list')}</span>
-              </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHeaderMenuOpen(false);
+                        void navigator.clipboard?.writeText(window.location.href);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-c-surface-raised"
+                    >
+                      <Copy size={14} />
+                      {t('interview.workspace.copyLink')}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </header>
 
@@ -3908,7 +3914,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
           {managerFeedback}
           {aiReviewPanel}
-          {answerApprovalPanel}
           <main className="min-h-0 flex-1">
             {totalCount > 0 ? (
               <InterviewSingleQuestionRuntime
@@ -3926,6 +3931,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 sessionName={sessionName}
                 readOnly={isWorkspaceReadOnly}
                 answerApprovals={visibleAnswerApprovals}
+                isReviewerMode={isReviewerMode}
+                answerDecisionPending={answerDecisionPending}
+                answerApprovalLoading={answerApprovalState.loading}
+                answerApprovalError={answerApprovalState.error}
+                onRetryAiAnswerApproval={handleRetryAiAnswerApprovals}
+                onAnswerDecision={handleAnswerDecision}
                 isQuestionReadOnly={isQuestionReadOnly}
                 isSubmitting={isSubmittingSession}
                 immersive
