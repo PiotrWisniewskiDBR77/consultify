@@ -36,7 +36,7 @@ Maszyna dowodowa nie ma Aptos: `fc-list | rg -i Aptos` zwraca pusty wynik, a `fc
 - `inspect_presentation_layout_geometry.py --fail-on-findings`: PASS, 8 slajdów, 16:9, natywna tabela na slajdzie 6, 0 ustaleń;
 - końcowe rozmiary i SHA-256 pliku oraz PNG są zapisane w `dowody/final-sha256.txt`.
 
-Receipt poprawki 1b na bazie `facf323157a822453f472bee8cdfedd68938e526`:
+Receipt poprawki 1b po wymaganym rebase na bazie `9ec5a9f32b3a2c31776b2566952fdfb6d45a9ddf`:
 
 - backend `tsc --noEmit`: **0** błędów;
 - pełny root/frontend TSC na tej samej instalacji: baza **169 / RC=2** → kandydat **169 / RC=2**; logi są bajtowo identyczne, delta 0;
