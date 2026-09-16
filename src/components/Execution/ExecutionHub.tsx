@@ -2279,7 +2279,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             id: String(initiative.id),
             name: initiative.name,
             description: initiative.description,
-            lifecycleStatus: String(initiative.status),
+            lifecycleStatus: String(
+              (initiative as any).lifecycleStage ||
+                (initiative as any).lifecycle_stage ||
+                initiative.status
+            ),
             projectId: initiative.projectId ?? null,
             priority: initiative.priority ?? null,
             ownerId:

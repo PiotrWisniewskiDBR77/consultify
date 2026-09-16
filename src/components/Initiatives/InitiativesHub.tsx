@@ -34,6 +34,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { INITIATIVE_LIFECYCLE } from '@/contracts/initiatives-execution/foundation';
 
 import {
   initiativeReadinessCheckLabel,
@@ -79,6 +80,7 @@ import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/in
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { isInitiativesFourButtonsEnabled } from '@/utils/initiativesFourButtonsFlag';
 import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
+import { enumLabel } from '@/utils/enumLabel';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import {
@@ -121,6 +123,7 @@ import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
+import { resolveInitiativeRegisterLifecycle } from './initiativeRegisterColumns.shared';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
 import { InitiativeConsultingAnalysisView } from './InitiativeConsultingAnalysisView';
 import { InitiativeParkingView } from './InitiativeParkingView';
@@ -725,7 +728,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               );
               if (fourButtonsArchiveScope === 'current' ? archived : !archived) return false;
             }
-            if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
+            if (
+              activeStatusFilter &&
+              resolveInitiativeRegisterLifecycle(initiative as any) !== activeStatusFilter
+            )
+              return false;
             if (activeLifecyclePreset) {
               if (
                 !lifecycleMatchesPreset(
@@ -941,7 +948,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const statusCounts: Record<string, number> = useMemo(() => {
     const counts: Record<string, number> = { all: registerCountBase.length };
     registerCountBase.forEach((i) => {
-      counts[i.status] = (counts[i.status] || 0) + 1;
+      const stage = resolveInitiativeRegisterLifecycle(i as any);
+      if (stage) counts[stage] = (counts[stage] || 0) + 1;
     });
     return counts;
   }, [registerCountBase]);
@@ -1694,8 +1702,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       Object.keys(quickUpdatePayload).length > 0
         ? ids.map((id) => {
             const row = initiatives.find((item) => item.id === id) as
-              | (PortfolioInitiative & { canonicalVersion?: number })
-              | undefined;
+              (PortfolioInitiative & { canonicalVersion?: number }) | undefined;
             return quickUpdateInitiativeWriteTruth(id, quickUpdatePayload, row?.canonicalVersion);
           })
         : [];
@@ -2158,7 +2165,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     // Filter by status if active
     const filteredInitiatives = activeStatusFilter
-      ? initiatives.filter((i) => i.status === activeStatusFilter)
+      ? initiatives.filter(
+          (i) => resolveInitiativeRegisterLifecycle(i as any) === activeStatusFilter
+        )
       : initiatives;
 
     // Filter by search
@@ -2760,7 +2769,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // (`rightControls`). Wybór: „Do decyzji" (kolejka wymagająca akcji
   // właściciela) i „W realizacji" (aktywna praca) — to dwa stany o
   // największej wartości decyzyjnej po samym „Wszystkie".
-  const menu3Statuses = [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.IN_EXECUTION];
+  const menu3Statuses = ['READY_FOR_DECISION', 'IN_EXECUTION'] as const;
 
   /**
    * Menu 3 · lewa strona (chipy filtrów z licznikami).
@@ -2807,7 +2816,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               data-testid={`initiatives-menu3-chip-${status}`}
             >
               <span className="h-2 w-2 rounded-full bg-c-text-muted" />
-              <span>{getLocalizedStatusLabel(status, t)}</span>
+              <span>{enumLabel('initiativeLifecycle', status, t)}</span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
               </span>
@@ -2953,9 +2962,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Aktywne/Wszystkie oraz filtry projektu i priorytetu, stąd "72" obok "63" i "60").
   const lifecycleDropdownOptions = [
     { id: 'all', label: t('common.all', 'All'), count: statusCounts.all ?? 0 },
-    ...Object.values(InitiativeStatus).map((status) => ({
+    ...INITIATIVE_LIFECYCLE.map((status) => ({
       id: status,
-      label: getLocalizedStatusLabel(status, t),
+      label: enumLabel('initiativeLifecycle', status, t),
       count: statusCounts[status] ?? 0,
     })),
     /* F9: powierzchnie za flagami. Nie sa statusami rejestru, wiec nie maja

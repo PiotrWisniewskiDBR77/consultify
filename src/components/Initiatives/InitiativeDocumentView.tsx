@@ -1509,9 +1509,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   ) as InitiativeStatus;
   initiativeStatusRef.current = status;
   const statusMeta = getStatusMeta(status);
-  const statusPillLabel = definitionApprovalV2 && initiative?.documentOrigin === 'initiatives-runtime-v1'
-    ? enumLabel('initiativeLifecycle', String(initiative.lifecycle || 'UNKNOWN'), t)
-    : getLocalizedStatusLabel(status, t);
+  const persistedLifecycleStage = String(
+    (initiative as any)?.lifecycleStage ||
+      (initiative as any)?.lifecycle_stage ||
+      (initiative as any)?.lifecycle ||
+      ''
+  ).toUpperCase();
+  const statusPillLabel = persistedLifecycleStage
+    ? enumLabel('initiativeLifecycle', persistedLifecycleStage, t)
+    : definitionApprovalV2 && initiative?.documentOrigin === 'initiatives-runtime-v1'
+      ? enumLabel('initiativeLifecycle', String(initiative.lifecycle || 'UNKNOWN'), t)
+      : getLocalizedStatusLabel(status, t);
   const statusPillTone = INITIATIVE_STATUS_TONE[status];
   // Status actions are driven by backend `gate-readiness-check` (source of truth).
   //
@@ -9730,7 +9738,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const buildExportMarkdown = useCallback(
     (sectionIds: Set<string>): string => {
       const title = String(initiative?.title || initiative?.name || 'Initiative').trim();
-      const parts: string[] = [`# ${title}`, ''];
+      const parts: string[] = [
+        `# ${title}`,
+        '',
+        `**${t('common.status', 'Status')}:** ${statusPillLabel}`,
+        '',
+      ];
       for (const section of exportableSections) {
         if (!sectionIds.has(section.id)) continue;
         const body = buildSectionBody(section.id);
@@ -9740,7 +9753,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
       return parts.join('\n');
     },
-    [exportableSections, buildSectionBody, sectionLabel, initiative, isPolish]
+    [exportableSections, buildSectionBody, sectionLabel, initiative, isPolish, statusPillLabel, t]
   );
 
   // Map chosen sections → PresentMode DeckCards (canonical order). Title card +
@@ -12469,6 +12482,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '16px' }}>
               {String(initiative?.title || initiative?.name || 'Initiative')}
             </h1>
+            <p style={{ fontSize: '12px', marginBottom: '16px' }}>
+              {t('common.status', 'Status')}: {statusPillLabel}
+            </p>
             {exportableSections
               .filter((s) => effectiveExportSelection.has(s.id))
               .map((section) => {

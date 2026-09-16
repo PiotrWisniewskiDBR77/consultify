@@ -31,7 +31,7 @@ const CONTEXT_QUERIES: Record<string, { sql: string; type: string }> = {
     type: 'task',
   },
   initiatives: {
-    sql: `SELECT id, title, status, priority, owner_id
+    sql: `SELECT id, title, status, lifecycle_stage, lifecycle_stage_source, priority, owner_id
           FROM initiatives WHERE organization_id = ?
           ORDER BY updated_at DESC LIMIT 30`,
     type: 'initiative',
