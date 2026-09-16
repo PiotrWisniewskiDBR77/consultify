@@ -239,6 +239,27 @@ describe('UnifiedNodeDetailDrawer — mindmap variant capabilities', () => {
 // ── idea-only capabilities ──────────────────────────────────────────────────
 
 describe('UnifiedNodeDetailDrawer — idea variant capabilities', () => {
+  it('sanitizes markdown link attributes after quote-preserving input handling', () => {
+    render(
+      <UnifiedNodeDetailDrawer
+        {...ideaProps({
+          nodeData: {
+            ...baseNode,
+            priority: 60,
+            owner: 'Ada',
+            comments: [],
+            attachments: [],
+            description: '[x](https://safe.test/" onmouseover="alert(1))',
+          },
+        })}
+      />
+    );
+
+    const link = screen.getByRole('link', { name: 'x' });
+    expect(link.getAttribute('href')).toBe('https://safe.test/');
+    expect(link.hasAttribute('onmouseover')).toBe(false);
+  });
+
   it('renders priority, owner, comments, attachments (idea-only sections)', () => {
     render(<UnifiedNodeDetailDrawer {...ideaProps()} />);
     expect(screen.getByText(/ideas\.mindmap\.priority/)).toBeTruthy();

@@ -17,9 +17,9 @@ import { sanitizeString, sanitizeObject } from '../../server/src/utils/security.
 describe('Z139 — sanitizeString/sanitizeObject idempotency (full scope, not just rich-text)', () => {
   const title = 'R&D Report <Draft> "Q3" \'26';
 
-  it('single save: escapes exactly once (unchanged behavior for fresh input)', () => {
+  it('single save neutralizes markup while preserving quotes and apostrophes', () => {
     const saved = sanitizeString(title);
-    expect(saved).toBe('R&amp;D Report &lt;Draft&gt; &quot;Q3&quot; &#x27;26');
+    expect(saved).toBe('R&amp;D Report &lt;Draft&gt; "Q3" \'26');
   });
 
   it('re-save of an already-escaped value (simulating an edit form round-trip) does NOT compound', () => {
@@ -75,5 +75,11 @@ describe('Z139 — sanitizeString/sanitizeObject idempotency (full scope, not ju
   it('plain text without entities is unaffected (no false-positive decoding)', () => {
     expect(sanitizeString('Quarterly Results 2026')).toBe('Quarterly Results 2026');
     expect(sanitizeString('100% growth')).toBe('100% growth');
+  });
+
+  it('round-trips quotes, apostrophes and backticks without entity compensation', () => {
+    const punctuation = 'Customer said "yes", owner\'s note is `ready`.';
+    expect(sanitizeString(punctuation)).toBe(punctuation);
+    expect(sanitizeString(sanitizeString(punctuation))).toBe(punctuation);
   });
 });

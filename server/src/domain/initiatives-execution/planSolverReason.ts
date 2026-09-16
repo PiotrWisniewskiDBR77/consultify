@@ -12,13 +12,14 @@
  * trzymaj oba w zgodzie; test `planSolverReason.test.ts` porównuje je wprost).
  * Matematyka solvera się NIE zmienia — zmienia się wyłącznie nośnik powodu.
  *
- * ZAPIS BEZ CUDZYSŁOWÓW — ZMIERZONE 07.09 w przepływie klikanym: pierwsza
- * wersja kodowała parametry jako JSON i wracała z przeglądarki przez sanitizer
- * żądań, który zamienia `"` na `&quot;`. W bazie lądowało
+ * FORMAT ODPORNY NA STARE DANE — ZMIERZONE 07.09 w przepływie klikanym: pierwsza
+ * wersja kodowała parametry jako JSON i wracała z przeglądarki przez dawny sanitizer
+ * żądań, który zamieniał `"` na `&quot;`. W bazie lądowało
  * `SOLVER-1:{&quot;code&quot;:…}`, `JSON.parse` padał, a ekran pokazywał surowy
  * kod (zrzut `evidence/p15-k3/przeplyw/07-…` z pierwszego przebiegu). Format
- * `KOD;klucz=wartość` z wartościami w kodowaniu procentowym nie zawiera ANI
- * JEDNEGO znaku, który sanitizer zmienia.
+ * `KOD;klucz=wartość` pozostaje kanonicznym formatem. Dekoder nadal przyjmuje
+ * historyczne surowe i encjowane JSON-y, choć aktualny sanitizer zachowuje
+ * cudzysłowy.
  *
  * Napis bez prefiksu `SOLVER-1:` to uzasadnienie napisane przez CZŁOWIEKA
  * (albo plan sprzed tej paczki) — wołający renderuje go dosłownie.
@@ -77,9 +78,10 @@ export type PlanSolverReason =
   | PlanSolverAssumptionReason;
 
 /**
- * Kodowanie procentowe „na maksa": `encodeURIComponent` zostawia `!'()*~`,
- * a sanitizer bywa czuły na apostrof. Domykamy je ręcznie, żeby w napisie
- * zostały wyłącznie litery, cyfry, `%`, `-`, `_`, `.`, `;`, `=`, `,` i `:`.
+ * Kodowanie procentowe „na maksa": `encodeURIComponent` zostawia `!'()*~`.
+ * Domykamy je ręcznie, żeby kanoniczny format pozostał stabilny także dla
+ * zapisów wykonanych przed zmianą sanitizera i zawierał wyłącznie litery,
+ * cyfry, `%`, `-`, `_`, `.`, `;`, `=`, `,` i `:`.
  */
 const encodeValue = (value: string | number): string =>
   encodeURIComponent(String(value)).replace(
@@ -142,7 +144,7 @@ export function encodePlanSolverReason(reason: PlanSolverReason): string {
 /**
  * Odczyt kodu z napisu. Zwraca `null` dla tekstu człowieka i dla planów sprzed
  * tej paczki. Rozumie też PIERWSZĄ postać kodu (JSON) — także po tym, jak
- * sanitizer zamienił w niej `"` na `&quot;` — żeby plany zapisane w trakcie
+ * dawny sanitizer zamienił w niej `"` na `&quot;` — żeby plany zapisane w trakcie
  * wdrożenia nie zostały na ekranie jako surowy kod.
  */
 export function decodePlanSolverReason(value: string): PlanSolverReason | null {

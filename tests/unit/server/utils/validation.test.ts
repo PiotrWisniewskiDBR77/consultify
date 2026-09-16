@@ -56,9 +56,10 @@ describe('server utils/validation', () => {
     expect(validateUUID(undefined)).toBe(false);
   });
 
-  it('sanitizeString escapes basic HTML-sensitive characters and stringifies non-strings', () => {
-    expect(sanitizeString('<a>"x"</a>')).toBe('&lt;a&gt;&quot;x&quot;&lt;&#x2F;a&gt;');
+  it('sanitizeString uses the canonical sanitizer and preserves punctuation', () => {
+    expect(sanitizeString('<a>"x"</a>')).toBe('&lt;a&gt;"x"&lt;/a&gt;');
     expect(sanitizeString(123)).toBe('123');
+    expect(sanitizeString(null)).toBe('');
   });
 
   it('validateOrganization returns error when orgId missing', async () => {

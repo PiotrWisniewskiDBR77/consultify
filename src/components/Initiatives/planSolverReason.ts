@@ -90,7 +90,7 @@ function extractPlanSolverCode(value: string): string | null {
 /**
  * Odczyt kodu z napisu. Zwraca `null` dla tekstu człowieka i dla planów sprzed
  * tej paczki. Rozumie też PIERWSZĄ postać kodu (JSON) — także po tym, jak
- * sanitizer zamienił w niej `"` na `&quot;` — żeby plany zapisane w trakcie
+ * dawny sanitizer zamienił w niej `"` na `&quot;` — żeby plany zapisane w trakcie
  * wdrożenia nie zostały na ekranie jako surowy kod.
  */
 export function decodePlanSolverReason(value: string): PlanSolverReason | null {

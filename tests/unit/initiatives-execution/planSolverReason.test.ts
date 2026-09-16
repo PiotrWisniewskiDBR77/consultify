@@ -23,6 +23,7 @@ import {
 } from '../../../server/src/domain/initiatives-execution/planSolverReason';
 import { solvePlanScenario } from '../../../server/src/domain/initiatives-execution/planSolver';
 import type { PlanScenario } from '../../../server/src/domain/initiatives-execution/planScenario';
+import { sanitizeString } from '../../../server/src/utils/security.utils';
 import {
   decodePlanSolverReason,
   formatPlanSolverReason,
@@ -150,7 +151,7 @@ describe('P15-K3 — uzasadnienie solvera jako kod', () => {
     }
   });
 
-  it('kod NIE zawiera znaku, ktory sanitizer zamienia — inaczej ekran pokazuje surowy napis', () => {
+  it('kanoniczny kod pozostaje bez znaczników HTML i dekoduje się bez kompensacji', () => {
     // ZMIERZONE 07.09 (evidence/p15-k3/przeplyw, pierwszy przebieg): sanitizer
     // żądań zamieniał `"` na `&quot;` i w bazie lądowało
     // `SOLVER-1:{&quot;code&quot;:…}`, czego `JSON.parse` nie odczytał.
@@ -166,7 +167,7 @@ describe('P15-K3 — uzasadnienie solvera jako kod', () => {
       encodePlanSolverReason({ code: 'MISSING_DEPENDENCY', initiativeId: 'a', dependencyId: 'b' }),
     ];
     for (const kod of kody) {
-      expect(kod).not.toMatch(/["'<>&]/);
+      expect(kod).not.toMatch(/[<>&]/);
       expect(decodePlanSolverReason(kod)).not.toBeNull();
     }
     expect(decodePlanSolverReason(kody[0])).toEqual({
@@ -178,7 +179,20 @@ describe('P15-K3 — uzasadnienie solvera jako kod', () => {
     });
   });
 
-  it('rozumie PIERWSZĄ postać kodu (JSON) także po ucieczce sanitizera', () => {
+  it('aktualny sanitizer zachowuje JSON i front dekoduje go bez kompensacji', () => {
+    const json = 'SOLVER-1:{"code":"NO_FEASIBLE_PERIOD","initiativeId":"a"}';
+    const poSanitizerze = sanitizeString(json);
+    expect(poSanitizerze).toBe(json);
+    expect(decodePlanSolverReason(poSanitizerze)).toEqual({
+      code: 'NO_FEASIBLE_PERIOD',
+      initiativeId: 'a',
+    });
+    expect(formatPlanSolverReason(poSanitizerze, tlumacz(katalogPl))).toContain(
+      'Brak możliwego okresu'
+    );
+  });
+
+  it('rozumie historyczną postać kodu (JSON) po ucieczce dawnego sanitizera', () => {
     const zSanitizera =
       'SOLVER-1:{&quot;code&quot;:&quot;NO_FEASIBLE_PERIOD&quot;,&quot;initiativeId&quot;:&quot;a&quot;}';
     expect(decodePlanSolverReason(zSanitizera)).toEqual({

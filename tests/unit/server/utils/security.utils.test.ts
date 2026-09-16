@@ -21,7 +21,7 @@ describe('server utils/security.utils', () => {
   it('sanitizeString escapes HTML-sensitive characters and stripHtml removes tags', () => {
     expect(sanitizeString(null)).toBe('');
     expect(sanitizeString('<script>alert(1)</script>')).toContain('&lt;script&gt;');
-    expect(sanitizeString(`"'&`)).toBe('&quot;&#x27;&amp;');
+    expect(sanitizeString(`"'&`)).toBe(`"'&amp;`);
     expect(stripHtml('<b>Hello</b> world')).toBe('Hello world');
   });
 
@@ -29,7 +29,7 @@ describe('server utils/security.utils', () => {
     const input = { a: '<b>1</b>', nested: [{ v: '"x"' }, 'y&z'] };
     const out = sanitizeObject(input);
     expect(out.a).toBe('&lt;b&gt;1&lt;/b&gt;');
-    expect((out as any).nested[0].v).toBe('&quot;x&quot;');
+    expect((out as any).nested[0].v).toBe('"x"');
     expect((out as any).nested[1]).toBe('y&amp;z');
   });
 

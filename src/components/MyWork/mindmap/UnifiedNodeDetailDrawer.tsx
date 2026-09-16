@@ -60,6 +60,7 @@ import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 import { getArtifactLabel } from '@/utils/artifactLinks';
+import { safeSimpleMarkdown } from '@/utils/safeSimpleMarkdown';
 import {
   IDEA_ELEMENT_DETAILS_SLOT_ID,
   isIdeaDetailsInPanelEnabled,
@@ -297,31 +298,6 @@ const TAG_COLORS: { chip: string; icon: string }[] = [
   { chip: 'bg-c-surface-raised border border-c-tag-5 text-c-text', icon: 'text-c-tag-5' },
   { chip: 'bg-c-surface-raised border border-c-tag-6 text-c-text', icon: 'text-c-tag-6' },
 ];
-
-// ── Simple markdown renderer (idea variant description) ─────────────────────────
-
-function simpleMarkdown(text: string): string {
-  let html = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/\n/g, '<br/>');
-  html = html.replace(
-    /(<li>.*?<\/li>(?:<br\/>)?)+/g,
-    (m) => `<ul>${m.replace(/<br\/>/g, '')}</ul>`
-  );
-  return html;
-}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -1104,7 +1080,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   {descValue ? (
                     <div
                       className="max-w-none [&_strong]:font-bold [&_em]:italic [&_code]:bg-c-surface [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:pl-4 [&_a]:text-c-info"
-                      dangerouslySetInnerHTML={{ __html: simpleMarkdown(descValue) }}
+                      dangerouslySetInnerHTML={{ __html: safeSimpleMarkdown(descValue) }}
                     />
                   ) : (
                     <span className="text-c-text-muted italic">

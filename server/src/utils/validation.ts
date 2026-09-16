@@ -202,15 +202,6 @@ export function validateUUID(uuid: string | null | undefined): boolean {
   return uuidRegex.test(uuid);
 }
 
-/**
- * Sanitize string input (basic XSS prevention)
- */
-export function sanitizeString(input: unknown): string {
-  if (typeof input !== 'string') return String(input);
-  return input
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
-}
+// One canonical sanitizer. Keeping a second entity map here previously made
+// identical input behave differently depending on which utility a route used.
+export { sanitizeString } from './security.utils.js';
