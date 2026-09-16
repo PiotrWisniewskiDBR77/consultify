@@ -682,40 +682,6 @@ export const PrezentacjeView: React.FC = () => {
     pipeline.currentRun?.materializationOrigin?.originRecordId || reopenDeckId;
   const effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun);
 
-  const ensureExportAllowed = useCallback(
-    async (deckId: string): Promise<boolean> => {
-      try {
-        const qualityRes = await Api.post(`/presentations/decks/${deckId}/quality-gates`, {});
-        const quality = unwrapApiData<{
-          canExport?: boolean;
-          gates?: Array<{ gateType?: string }>;
-        }>(qualityRes);
-        if (quality?.canExport === false) {
-          const gateTypes = Array.from(
-            new Set(
-              (quality.gates || [])
-                .map((gate) => String(gate?.gateType || '').trim())
-                .filter(Boolean)
-            )
-          );
-          toast.error(
-            gateTypes.length > 0
-              ? t(
-                  'prezentacje.qualityGateBlockedDetailed',
-                  `Export blocked by Quality Gate: ${gateTypes.join(', ')}`
-                )
-              : t('prezentacje.qualityGateBlocked', 'Export blocked by Quality Gate')
-          );
-          return false;
-        }
-      } catch {
-        // Non-blocking: if quality check endpoint is unavailable, keep legacy export path.
-      }
-      return true;
-    },
-    [t]
-  );
-
   const handlePreviewFile = useCallback(() => {
     openInDeckBuilder(effectiveDeckId);
   }, [effectiveDeckId, openInDeckBuilder]);
@@ -724,23 +690,21 @@ export const PrezentacjeView: React.FC = () => {
     navigate('/prezentacje');
   }, [navigate]);
 
+  // U-43 / DEC-543: a review is a WARNING, never a blocker. The pre-flight
+  // quality-gate call that used to veto these two buttons is gone — export and
+  // download start straight away.
   const handleDownload = useCallback(async () => {
     if (effectiveDeckId) {
-      const allowed = await ensureExportAllowed(effectiveDeckId);
-      if (!allowed) return;
       window.open(`/api/presentations/decks/${effectiveDeckId}/download`, '_blank');
       return;
     }
     await pipeline.handleDownload();
-  }, [effectiveDeckId, ensureExportAllowed, pipeline]);
+  }, [effectiveDeckId, pipeline]);
 
   const handleDownloadPdf = useCallback(() => {
     if (!effectiveDeckId) return;
-    void ensureExportAllowed(effectiveDeckId).then((allowed) => {
-      if (!allowed) return;
-      window.open(`/api/presentations/decks/${effectiveDeckId}/export/pdf`, '_blank');
-    });
-  }, [effectiveDeckId, ensureExportAllowed]);
+    window.open(`/api/presentations/decks/${effectiveDeckId}/export/pdf`, '_blank');
+  }, [effectiveDeckId]);
 
   if (showHome) {
     return <ArtifactModuleHome lane="prezentacje" />;

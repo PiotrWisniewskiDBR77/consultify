@@ -81,7 +81,7 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
     // prawego panelu (SPEC-A §11.2). Lewa szyna to struktura + przegląd QA.
     expect(screen.queryByRole('tab', { name: 'Komentarze' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Źródła' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'QA and review' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }));
     expect(screen.getByText('Presentation QA and approval workflow')).toBeInTheDocument();
   });
 
@@ -163,7 +163,7 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
 
-    expect(screen.getAllByText('QA and review').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Review').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByRole('menuitem', { name: 'Zasady przeglądu' })).not.toBeInTheDocument();
     // J10: po ujednoliceniu języka „Historia" → „History" ten sam napis niesie
     // nagłówek sekcji, chip i etykieta w prawym panelu — liczy się obecność,
@@ -175,7 +175,7 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
     expect(screen.queryByRole('menuitem', { name: 'Governance' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Audit' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('menuitem', { name: 'QA and review' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Review' }));
     expect(screen.getByText('Presentation QA and approval workflow')).toBeInTheDocument();
   });
 });

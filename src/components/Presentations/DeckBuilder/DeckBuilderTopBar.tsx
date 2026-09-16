@@ -164,7 +164,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
     onQualityGates && {
       key: 'qa',
       icon: <Shield size={14} />,
-      label: t('presentations.builder.topBar.qualityGates', 'Quality Gates'),
+      label: t('presentations.builder.topBar.review', 'Review'),
       onClick: onQualityGates,
     },
     onGovernance && {
