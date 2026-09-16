@@ -34,6 +34,7 @@
  */
 import React from 'react';
 
+import { AuditReportDocumentView } from '../../src/components/Audit/method/AuditReportDocumentView';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
 import { DRDAuditReportView } from '../../src/views/DRDAuditReportView';
@@ -214,6 +215,71 @@ const FULL_REPORT = {
   updatedAt: '2026-07-21T15:40:00Z',
 };
 
+/** U-30 proof fixture: a legacy payload whose persisted headings are Polish,
+ * opened in an EN organization. The production viewer must project the known
+ * section ids through EN i18n while leaving the English report body intact. */
+const U30_REPORT = {
+  id: 'rep-u30-northwind-published',
+  programId: 'prog-u30-northwind',
+  programName: 'Northwind — Line 3 quality and safety audit',
+  reportKind: 'audit_report',
+  version: 3,
+  title: 'Line 3 Quality and Safety Audit — audit report',
+  status: 'published',
+  language: 'en',
+  audience: 'Executive team',
+  confidentiality: 'Internal',
+  approvedAt: '2026-09-14T16:30:00Z',
+  publishedAt: '2026-09-15T08:10:00Z',
+  updatedAt: '2026-09-15T08:10:00Z',
+  payload: {
+    reportKind: 'audit_report',
+    generatedAt: '2026-09-14T16:00:00Z',
+    sections: [
+      {
+        id: 'executive_summary',
+        title: 'Streszczenie zarządcze',
+        kind: 'text',
+        content:
+          'The audit identified seven findings across safety controls, changeover discipline, and quality traceability. Two findings require sponsor decisions this week.',
+      },
+      { id: 'scope', title: 'Zakres i cele', kind: 'keyValue', content: { scopeText: 'Line 3 from goods receipt through final quality release.', objectives: ['Confirm control effectiveness', 'Set a 30-day remediation plan'] } },
+      { id: 'methodology', title: 'Metodyka', kind: 'text', content: 'Document review, shift interviews, floor observation, and evidence sampling.' },
+      { id: 'limitations', title: 'Ograniczenia', kind: 'list', content: ['Night-shift sampling was limited to one production window.'] },
+      { id: 'overall_conclusion', title: 'Wniosek ogólny', kind: 'text', content: 'Controls exist, but ownership and verification evidence are inconsistent.' },
+      { id: 'findings_by_severity', title: 'Ustalenia wg istotności', kind: 'group', content: [] },
+      { id: 'findings_by_area', title: 'Ustalenia wg obszaru/procesu', kind: 'group', content: [] },
+      { id: 'objective_evidence_references', title: 'Odniesienia do obiektywnych dowodów', kind: 'table', content: [] },
+      { id: 'systemic_conclusions', title: 'Wnioski systemowe', kind: 'list', content: [{ theme: 'Shift handover accountability', description: 'Shift handovers need one accountable owner and a visible completeness check.', findingIds: [] }] },
+      { id: 'corrective_action_plan', title: 'Plan działań korygujących', kind: 'table', content: [] },
+      { id: 'verification_plan', title: 'Plan weryfikacji', kind: 'table', content: [] },
+      { id: 'appendices', title: 'Załączniki', kind: 'group', content: { team: [], evidenceRegister: [] } },
+      { id: 'traceability_matrix', title: 'Śledzenie powiązań', kind: 'table', content: [] },
+    ],
+  },
+};
+
+const U30_PROGRAM = {
+  id: 'prog-u30-northwind',
+  name: 'Northwind — Line 3 quality and safety audit',
+  packId: 'pack-u30',
+  packTitle: 'Quality and safety control pack',
+  packVersion: 3,
+  lifecycleState: 'closed',
+  applicableCriteria: 24,
+  concludedCriteria: 24,
+  openFindings: 7,
+  leadAuditorId: 'user-u30',
+  leadAuditorName: 'Alex Morgan',
+  plannedStart: '2026-09-07',
+  plannedEnd: '2026-09-14',
+  updatedAt: '2026-09-15T08:10:00Z',
+  objective: 'Verify Line 3 quality and safety controls.',
+  scopeText: 'Line 3 end-to-end.',
+  projectId: null,
+  members: [],
+};
+
 function jsonEnvelope<T>(data: T): { data: T } {
   return { data };
 }
@@ -228,6 +294,15 @@ if (tenEkran && !g.__AUDYTY_DRD_FETCH__) {
 
   const realGet = Api.get.bind(Api);
   Api.get = (async (url: string) => {
+    if (variant === 'u30' && String(url) === `/audits/reports/${U30_REPORT.id}`) {
+      return { data: { success: true, data: U30_REPORT } };
+    }
+    if (variant === 'u30' && String(url) === `/audits/programs/${U30_PROGRAM.id}`) {
+      return { data: { success: true, data: U30_PROGRAM } };
+    }
+    if (variant === 'u30' && (String(url).startsWith('/audits/criteria?') || String(url).startsWith('/audits/evidence?'))) {
+      return { data: { success: true, data: { items: [], criteria: [], evidence: [], total: 0 } } };
+    }
     if (String(url).startsWith('/audit/programs')) {
       return jsonEnvelope({
         programs: AUDIT_PROGRAMS,
@@ -238,6 +313,9 @@ if (tenEkran && !g.__AUDYTY_DRD_FETCH__) {
     }
     return realGet(url);
   }) as typeof Api.get;
+  if (variant === 'u30') {
+    Api.getUsers = (async () => [{ id: 'user-u30', firstName: 'Alex', lastName: 'Morgan' }]) as typeof Api.getUsers;
+  }
 
   // Safety net for anything else the hub / heavy providers fire on mount.
   const realFetch = window.fetch.bind(window);
@@ -260,6 +338,16 @@ if (tenEkran && !g.__AUDYTY_DRD_FETCH__) {
 }
 
 export default function AudytyDrdReportScreen(): React.ReactElement {
+  if (variant === 'u30') {
+    return (
+      <AppProviders>
+        <div style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}>
+          <AuditReportDocumentView reportId={U30_REPORT.id} />
+        </div>
+      </AppProviders>
+    );
+  }
+
   if (variant === 'report') {
     return (
       <AppProviders>

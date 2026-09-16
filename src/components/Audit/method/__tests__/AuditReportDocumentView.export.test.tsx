@@ -5,8 +5,12 @@
  * teraz widoczne zawsze, bez warunku.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import i18n from 'i18next';
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import enTranslation from '../../../../../public/locales/en/translation.json';
+import plTranslation from '../../../../../public/locales/pl/translation.json';
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
@@ -22,6 +26,8 @@ vi.mock('@/services/api', () => ({ Api: { getUsers: vi.fn().mockResolvedValue([]
 
 import { AuditReportDocumentView } from '../AuditReportDocumentView';
 import { getProgram, getReport, listEvidence, listProgramCriteria } from '../auditsMethodApi';
+
+const INITIAL_LANGUAGE = i18n.language;
 
 const report = {
   id: 'rep/41',
@@ -50,7 +56,10 @@ async function renderView() {
 }
 
 describe('AuditReportDocumentView DOCX/PDF export', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    i18n.addResourceBundle('en', 'translation', enTranslation, true, true);
+    i18n.addResourceBundle('pl', 'translation', plTranslation, true, true);
+    await i18n.changeLanguage('pl');
     vi.mocked(getReport).mockResolvedValue(report);
     vi.mocked(getProgram).mockResolvedValue(null);
     vi.mocked(listProgramCriteria).mockResolvedValue([]);
@@ -69,16 +78,20 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
     vi.restoreAllMocks();
   });
 
+  afterAll(async () => {
+    await i18n.changeLanguage(INITIAL_LANGUAGE);
+  });
+
   it('shows both DOCX and PDF export buttons', async () => {
     await renderView();
-    expect(screen.getByRole('button', { name: 'Pobierz DOCX' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pobierz PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download DOCX' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument();
   });
 
   it('requests the encoded report export endpoint (DOCX)', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['PKdocx']), { status: 200 }));
     await renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Pobierz DOCX' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download DOCX' }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith('/api/audits/reports/rep%2F41/export.docx', {
         headers: {},
@@ -89,7 +102,7 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   it('requests the encoded report export endpoint (PDF, FIX-187)', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['%PDF']), { status: 200 }));
     await renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Pobierz PDF' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith('/api/audits/reports/rep%2F41/export.pdf', {
         headers: {},
@@ -100,7 +113,7 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   it('disables the DOCX control while the response is pending', async () => {
     vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
     await renderView();
-    const button = screen.getByRole('button', { name: 'Pobierz DOCX' });
+    const button = screen.getByRole('button', { name: 'Download DOCX' });
     fireEvent.click(button);
     expect(button).toBeDisabled();
   });
@@ -108,7 +121,7 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   it('disables the PDF control while the response is pending (FIX-187)', async () => {
     vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
     await renderView();
-    const button = screen.getByRole('button', { name: 'Pobierz PDF' });
+    const button = screen.getByRole('button', { name: 'Download PDF' });
     fireEvent.click(button);
     expect(button).toBeDisabled();
   });
@@ -122,7 +135,7 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
       })
     );
     await renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Pobierz DOCX' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download DOCX' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('AUDIT_NOT_FOUND');
     expect(alertSpy).not.toHaveBeenCalled();
   });
@@ -136,7 +149,7 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
       })
     );
     await renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Pobierz PDF' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('AUDIT_NOT_FOUND');
     expect(alertSpy).not.toHaveBeenCalled();
   });

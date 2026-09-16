@@ -17,8 +17,12 @@
  *      bramkowany endpoint co poprzednio.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import i18n from 'i18next';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import enTranslation from '../../../../../public/locales/en/translation.json';
+import plTranslation from '../../../../../public/locales/pl/translation.json';
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
@@ -58,6 +62,7 @@ const mockedGetProgram = vi.mocked(getProgram);
 const mockedListProgramCriteria = vi.mocked(listProgramCriteria);
 const mockedListEvidence = vi.mocked(listEvidence);
 const mockedApproveReport = vi.mocked(approveReport);
+const INITIAL_LANGUAGE = i18n.language;
 
 const criterion: AuditCriterionSummary = {
   id: 'crit-1',
@@ -197,6 +202,16 @@ function stubReads() {
 }
 
 describe('AuditReportDocumentView — R1: full report is the default document', () => {
+  beforeEach(async () => {
+    i18n.addResourceBundle('en', 'translation', enTranslation, true, true);
+    i18n.addResourceBundle('pl', 'translation', plTranslation, true, true);
+    await i18n.changeLanguage('pl');
+  });
+
+  afterAll(async () => {
+    await i18n.changeLanguage(INITIAL_LANGUAGE);
+  });
+
   it('renders report.payload by default — title, executive summary text — and does NOT call /presentation', async () => {
     stubReads();
     mockedGetReport.mockResolvedValue(report);
@@ -214,7 +229,7 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     render(<AuditReportDocumentView reportId="rep-1" />);
     await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
 
-    fireEvent.click(await screen.findByText('Ustalenia wg istotności'));
+    fireEvent.click(await screen.findByText(/Ustalenia wg istotności|Findings by severity/));
     await waitFor(() => expect(screen.getByText(/ZAK-8.4.1/)).toBeInTheDocument());
     expect(screen.queryByText('crit-1')).not.toBeInTheDocument();
   });
@@ -225,7 +240,7 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     render(<AuditReportDocumentView reportId="rep-1" />);
     await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
 
-    fireEvent.click(await screen.findByText('Zakres i cele'));
+    fireEvent.click(await screen.findByText(/Zakres i cele|Scope and objectives/));
     await waitFor(() => expect(screen.getByText('Purchasing process Q3 2026')).toBeInTheDocument());
     expect(screen.getByText('Verify supplier qualification controls')).toBeInTheDocument();
   });
@@ -237,8 +252,8 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     render(<AuditReportDocumentView reportId="rep-1" />);
     await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
 
-    expect(screen.getByText('Raport audytu')).toBeInTheDocument();
-    expect(screen.queryByText('Widok prezentacyjny')).not.toBeInTheDocument();
+    expect(screen.getByText('Audit report')).toBeInTheDocument();
+    expect(screen.queryByText('Presentation view')).not.toBeInTheDocument();
 
     // Mode switch lives in Menu 1's kebab (`extraOverflowItems` — the only
     // WORKING mechanism; `NModeHeaderConfig.secondaryActions` is a dead prop
@@ -251,8 +266,8 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
 
     await waitFor(() => expect(mockedGetReportPresentation).toHaveBeenCalledWith('rep-1'));
     await waitFor(() => expect(screen.getByText('Audit found 1 nonconformity.')).toBeInTheDocument());
-    expect(screen.getByText('Widok prezentacyjny')).toBeInTheDocument();
-    expect(screen.queryByText('Raport audytu')).not.toBeInTheDocument();
+    expect(screen.getByText('Presentation view')).toBeInTheDocument();
+    expect(screen.queryByText('Audit report')).not.toBeInTheDocument();
 
     // Switching back returns to the full document without a second fetch of
     // /presentation. Re-query the trigger — `NModeShell` briefly unmounts the
@@ -262,7 +277,7 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     expect(kebabTrigger2).toBeTruthy();
     fireEvent.click(kebabTrigger2!);
     fireEvent.click(await screen.findByRole('menuitem', { name: /pełny raport|full report/i }));
-    await waitFor(() => expect(screen.getByText('Raport audytu')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Audit report')).toBeInTheDocument());
     expect(mockedGetReportPresentation).toHaveBeenCalledTimes(1);
   });
 
@@ -277,6 +292,34 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     fireEvent.click(approveButtons[0]);
 
     await waitFor(() => expect(mockedApproveReport).toHaveBeenCalledWith('rep-1'));
+  });
+
+  it('U-30: EN locale renders EN chrome and translates legacy PL section titles', async () => {
+    await i18n.changeLanguage('en');
+    stubReads();
+    mockedGetReport.mockResolvedValue({
+      ...report,
+      status: 'published',
+      language: 'en',
+      audience: 'Executive team',
+      confidentiality: 'Internal',
+    });
+
+    render(<AuditReportDocumentView reportId="rep-1" />);
+    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
+
+    expect(screen.getByText('Executive summary')).toBeInTheDocument();
+    expect(screen.getByText('Findings by area or process')).toBeInTheDocument();
+    expect(screen.getByText('Systemic conclusions')).toBeInTheDocument();
+    expect(screen.getByText('Verification plan')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download DOCX' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument();
+    expect(screen.getAllByText('Published').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Audyty')).not.toBeInTheDocument();
+    expect(screen.queryByText('Raporty')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pobierz DOCX')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Wymagany status/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Approve|Publish)$/ })).not.toBeInTheDocument();
   });
 
   it('shows an error state with retry when the report or its payload cannot be loaded (e.g. 404 / missing payload)', async () => {

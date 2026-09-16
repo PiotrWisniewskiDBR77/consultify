@@ -169,6 +169,51 @@ const REPORT_KIND_LABEL: Record<string, { pl: string; en: string }> = {
   presentation: { pl: 'Widok prezentacyjny', en: 'Presentation view' },
 };
 
+/**
+ * U-30: section titles are persisted inside the report payload. Older reports
+ * were generated with Polish titles even for an English organization, so the
+ * viewer must project known section ids through the active UI locale instead
+ * of trusting that legacy display string.
+ */
+function reportSectionTitle(
+  id: string,
+  persistedTitle: string,
+  translate: (key: string, fallback: string) => string
+): string {
+  const englishFallback = REPORT_SECTION_EN[id];
+  return translate(`audit.report.viewer.sections.${id}`, englishFallback ?? persistedTitle);
+}
+
+const REPORT_SECTION_EN: Record<string, string> = {
+  executive_summary: 'Executive summary',
+  scope: 'Scope and objectives',
+  methodology: 'Methodology',
+  limitations: 'Limitations',
+  overall_conclusion: 'Overall conclusion',
+  findings_by_severity: 'Findings by severity',
+  findings_by_area: 'Findings by area or process',
+  objective_evidence_references: 'Objective evidence references',
+  systemic_conclusions: 'Systemic conclusions',
+  corrective_action_plan: 'Corrective action plan',
+  verification_plan: 'Verification plan',
+  appendices: 'Appendices',
+  traceability_matrix: 'Traceability matrix',
+  progress_summary: 'Progress and timeliness',
+  items_missing_owner_or_evidence: 'Items without an owner or evidence',
+  delayed_rejected_reopened: 'Delayed, rejected, or reopened actions',
+  verification_effectiveness_results: 'Effectiveness verification results',
+  residual_risk_change: 'Residual risk change',
+  closure_forecast: 'Closure forecast',
+  conclusion: 'Conclusion',
+  systemic_themes: 'Systemic themes',
+  findings_distribution: 'Findings distribution',
+  critical_findings: 'Critical findings',
+  critical_evidence: 'Critical evidence',
+  remediation_priorities: 'Remediation priorities',
+  timeline: 'Timeline',
+  accountabilities: 'Accountabilities',
+};
+
 const TEST_RESULT_LABEL: Record<string, { pl: string; en: string }> = {
   pass: { pl: 'Pozytywny', en: 'Pass' },
   fail: { pl: 'Negatywny', en: 'Fail' },
@@ -532,8 +577,12 @@ function collectFindingLabels(sections: AuditReportDocumentSection[] | undefined
 
 export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = ({ reportId }) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const isPolish = true; // treść dokumentu (reportRenderer.ts) jest ZAWSZE PL — chrom ekranu podąża za tym
+  const { t, i18n: translation } = useTranslation();
+  // U-30: the application chrome follows the user's UI locale. A report's
+  // content language is metadata and must never force Polish controls in EN.
+  const isPolish = (translation.resolvedLanguage || translation.language || 'en')
+    .toLowerCase()
+    .startsWith('pl');
 
   const [report, setReport] = useState<AuditReportSummary | null>(null);
   const [fullDocument, setFullDocument] = useState<AuditReportDocument | null>(null);
@@ -1209,7 +1258,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       (activeDocument?.sections ?? []).map((s) => ({
         id: s.id,
         icon: SECTION_ICON[s.id] ?? (KNOWN_SECTION_IDS.has(s.id) ? FileText : FileSearch),
-        label: { pl: s.title, en: s.title },
+        label: {
+          pl: reportSectionTitle(s.id, s.title, t),
+          en: reportSectionTitle(s.id, s.title, t),
+        },
         alwaysShow: true,
         component: renderSectionContent(s.id),
       })),
@@ -1303,29 +1355,29 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     {
       id: 'reportKind',
       // R1: mówi prawdę PER TRYB — treść aktywnie wyświetlanego dokumentu, nie report.reportKind.
-      label: isPolish ? 'Rodzaj' : 'Kind',
+      label: t('audit.report.viewer.kind', 'Kind'),
       value:
         (REPORT_KIND_LABEL[activeReportKind] && (isPolish ? REPORT_KIND_LABEL[activeReportKind].pl : REPORT_KIND_LABEL[activeReportKind].en)) ||
         activeReportKind,
     },
-    { id: 'version', label: isPolish ? 'Wersja' : 'Version', value: String(report.version), mono: true },
+    { id: 'version', label: t('audit.report.viewer.version', 'Version'), value: String(report.version), mono: true },
     {
       id: 'status',
       label: 'Status',
       value: <StatusChip label={reportStatusLabel(report.status, isPolish)} tone={headerStatusTone(report.status) === 'approved' ? 'success' : headerStatusTone(report.status) === 'review' ? 'warning' : headerStatusTone(report.status) === 'rejected' ? 'danger' : 'neutral'} />,
     },
-    { id: 'language', label: isPolish ? 'Język' : 'Language', value: report.language?.toUpperCase() || '—' },
-    { id: 'audience', label: isPolish ? 'Odbiorca' : 'Audience', value: report.audience || '—' },
-    { id: 'confidentiality', label: isPolish ? 'Poufność' : 'Confidentiality', value: report.confidentiality || '—' },
-    { id: 'approvedAt', label: isPolish ? 'Data zatwierdzenia' : 'Approved at', value: formatListDate(report.approvedAt), mono: true },
-    { id: 'publishedAt', label: isPolish ? 'Data publikacji' : 'Published at', value: formatListDate(report.publishedAt), mono: true },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', value: formatListDate(report.updatedAt), mono: true },
+    { id: 'language', label: t('audit.report.viewer.language', 'Language'), value: report.language?.toUpperCase() || '—' },
+    { id: 'audience', label: t('audit.report.viewer.audience', 'Audience'), value: report.audience || '—' },
+    { id: 'confidentiality', label: t('audit.report.viewer.confidentiality', 'Confidentiality'), value: report.confidentiality || '—' },
+    { id: 'approvedAt', label: t('audit.report.viewer.approvedAt', 'Approved at'), value: formatListDate(report.approvedAt), mono: true },
+    { id: 'publishedAt', label: t('audit.report.viewer.publishedAt', 'Published at'), value: formatListDate(report.publishedAt), mono: true },
+    { id: 'updatedAt', label: t('audit.report.viewer.updated', 'Updated'), value: formatListDate(report.updatedAt), mono: true },
   ];
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       id: 'actions',
-      label: isPolish ? 'Akcje' : 'Actions',
+      label: t('audit.report.viewer.actions', 'Actions'),
       defaultOpen: true,
       children: (
         <div className="flex flex-col gap-2">
@@ -1339,37 +1391,27 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
               {exportError}
             </div>
           ) : null}
-          <button
-            type="button"
-            disabled={!canApprove || transitioning !== null}
-            onClick={() => void runTransition('approve')}
-            className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            <CheckCircle2 size={14} />
-            {isPolish ? 'Zatwierdź' : 'Approve'}
-          </button>
-          {!canApprove ? (
-            <p className="text-[11px] text-c-text-muted">
-              {isPolish
-                ? `Wymagany status „szkic” lub „w przeglądzie” (obecny: ${reportStatusLabel(report.status, true)}).`
-                : `Requires draft or in-review status (current: ${reportStatusLabel(report.status, false)}).`}
-            </p>
+          {canApprove ? (
+            <button
+              type="button"
+              disabled={transitioning !== null}
+              onClick={() => void runTransition('approve')}
+              className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              <CheckCircle2 size={14} />
+              {t('audit.report.viewer.approve', 'Approve')}
+            </button>
           ) : null}
-          <button
-            type="button"
-            disabled={!canPublish || transitioning !== null}
-            onClick={() => void runTransition('publish')}
-            className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            <Send size={14} />
-            {isPolish ? 'Opublikuj' : 'Publish'}
-          </button>
-          {!canPublish ? (
-            <p className="text-[11px] text-c-text-muted">
-              {isPolish
-                ? `Wymagany status „zatwierdzony” (obecny: ${reportStatusLabel(report.status, true)}).`
-                : `Requires approved status (current: ${reportStatusLabel(report.status, false)}).`}
-            </p>
+          {canPublish ? (
+            <button
+              type="button"
+              disabled={transitioning !== null}
+              onClick={() => void runTransition('publish')}
+              className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              <Send size={14} />
+              {t('audit.report.viewer.publish', 'Publish')}
+            </button>
           ) : null}
           <button
             type="button"
@@ -1378,7 +1420,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {exportingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-            {isPolish ? 'Pobierz DOCX' : 'Download DOCX'}
+            {t('audit.report.viewer.downloadDocx', 'Download DOCX')}
           </button>
           <button
             type="button"
@@ -1387,49 +1429,49 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-            {isPolish ? 'Pobierz PDF' : 'Download PDF'}
+            {t('audit.report.viewer.downloadPdf', 'Download PDF')}
           </button>
         </div>
       ),
     },
     {
       id: 'properties',
-      label: isPolish ? 'Właściwości' : 'Properties',
+      label: t('audit.report.viewer.properties', 'Properties'),
       defaultOpen: true,
       children: (
         <ArtifactPropertiesTable
           rows={propertyRows}
-          propertyLabel={isPolish ? 'Właściwość' : 'Property'}
-          valueLabel={isPolish ? 'Wartość' : 'Value'}
+          propertyLabel={t('audit.report.viewer.property', 'Property')}
+          valueLabel={t('audit.report.viewer.value', 'Value')}
         />
       ),
     },
     {
       id: 'relations',
-      label: isPolish ? 'Powiązania' : 'Relations',
+      label: t('audit.report.viewer.relations', 'Relations'),
       isEmpty: true,
-      emptyLabel: isPolish ? 'Brak powiązanych obiektów.' : 'No related objects.',
+      emptyLabel: t('audit.report.viewer.noRelations', 'No related objects.'),
       children: null,
     },
     {
       id: 'sources',
-      label: isPolish ? 'Źródła i założenia' : 'Sources and assumptions',
+      label: t('audit.report.viewer.sources', 'Sources and assumptions'),
       isEmpty: true,
-      emptyLabel: isPolish ? 'Brak zapisanych źródeł i założeń.' : 'No recorded sources or assumptions.',
+      emptyLabel: t('audit.report.viewer.noSources', 'No recorded sources or assumptions.'),
       children: null,
     },
     {
       id: 'comments',
-      label: isPolish ? 'Komentarze' : 'Comments',
+      label: t('audit.report.viewer.comments', 'Comments'),
       isEmpty: true,
-      emptyLabel: isPolish ? 'Brak komentarzy.' : 'No comments.',
+      emptyLabel: t('audit.report.viewer.noComments', 'No comments.'),
       children: null,
     },
     {
       id: 'history',
-      label: isPolish ? 'Historia' : 'History',
+      label: t('audit.report.viewer.history', 'History'),
       isEmpty: true,
-      emptyLabel: isPolish ? 'Brak zdarzeń historii.' : 'No history events.',
+      emptyLabel: t('audit.report.viewer.noHistory', 'No history events.'),
       children: null,
     },
   ];
@@ -1438,8 +1480,8 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     <div className="flex h-full min-h-0 flex-col" data-testid="audit-report-document-view">
       <ArtifactBreadcrumb
         items={[
-          { label: isPolish ? 'Audyty' : 'Audits', onClick: goBack },
-          { label: isPolish ? 'Raporty' : 'Reports', onClick: goBack },
+          { label: t('audit.report.viewer.audits', 'Audits'), onClick: goBack },
+          { label: t('audit.report.viewer.reports', 'Reports'), onClick: goBack },
           { label: report.title },
         ]}
       />
