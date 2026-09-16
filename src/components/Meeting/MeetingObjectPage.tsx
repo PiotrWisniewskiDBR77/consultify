@@ -108,6 +108,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -236,7 +237,9 @@ function ParticipantsField({
   loading: boolean;
   error: string | null;
   onRetry: () => void;
-  t: (key: string, fallback?: string) => string;
+  /** `TFunction` z `useTranslation()`, nie własny, węższy podpis — inaczej
+   *  przekazanie realnego `t` nie kompiluje się (TS2322). */
+  t: TFunction;
 }) {
   const roleLabel = (role: MeetingParticipantDto['role']) =>
     role === 'organizer'
