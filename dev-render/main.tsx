@@ -34,6 +34,7 @@ const PrototypeHarness = ({
   return <>{legacy}</>;
 };
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
+const U19DrdTrzyKolumnyScreen = React.lazy(() => import('./screens/u19-drd-trzy-kolumny'));
 const P12TabelaI18nMenu3EmptyScreen = React.lazy(
   () => import('./screens/p12-tabela-i18n-menu3-empty')
 );
@@ -735,6 +736,10 @@ const Z30InicjatywyObciazenieScreen = React.lazy(
 const Z42RealizacjaRaportyScreen = React.lazy(() => import('./screens/z42-realizacja-raporty'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'u19-drd-trzy-kolumny': {
+    label: 'DRD U-19 · Northwind · DEC-552',
+    render: () => <U19DrdTrzyKolumnyScreen />,
+  },
   'z42-realizacja-raporty': {
     label:
       'Z-42 (14.09) — REALNY <ExecutionHub> w pełnej powłoce z zakładką Raporty E4, StandardTable i otwartym StandardPreview. Wymaga VITE_EXECUTION_REPORT_E4=true. &tab=reports &lang=en|pl &theme=light|dark',

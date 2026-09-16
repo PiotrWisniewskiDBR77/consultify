@@ -1,0 +1,34 @@
+[
+  {
+    "theme": "light",
+    "url": "http://127.0.0.1:4214/?screen=u19-drd-trzy-kolumny&lang=en&theme=light&uwagi=0",
+    "status": 200,
+    "size": {
+      "w": 1440,
+      "cw": 1440,
+      "old": 0,
+      "levels": 1,
+      "workspaces": 1,
+      "textareas": 1
+    },
+    "errors": [],
+    "path": "evidence/drd-2-dec552/northwind-en-light-1440x900.png",
+    "bytes": 148775
+  },
+  {
+    "theme": "dark",
+    "url": "http://127.0.0.1:4214/?screen=u19-drd-trzy-kolumny&lang=en&theme=dark&uwagi=0",
+    "status": 200,
+    "size": {
+      "w": 1440,
+      "cw": 1440,
+      "old": 0,
+      "levels": 1,
+      "workspaces": 1,
+      "textareas": 1
+    },
+    "errors": [],
+    "path": "evidence/drd-2-dec552/northwind-en-dark-1440x900.png",
+    "bytes": 152123
+  }
+]

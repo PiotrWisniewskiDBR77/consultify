@@ -11809,6 +11809,27 @@
         "server": "SERVER DATA",
         "recoveryDraft": "RECOVERY DRAFT",
         "demoLocal": "LOCAL DATA"
+      },
+      "levelInterview": {
+        "summary": "Levels 1–{{count}} · current {{current}} · target {{target}}",
+        "yes": "Yes",
+        "no": "No",
+        "help": "I need help",
+        "current": "Current",
+        "target": "Target",
+        "levelTitle": "Level {{level}} — {{name}}",
+        "why": "Why do we ask",
+        "helperQuestions": "Helper questions ({{count}})",
+        "answer": "Your answer for this level",
+        "evidence": "Evidence: {{count}} files",
+        "attach": "Attach",
+        "askTeresa": "Ask Teresa",
+        "decision": "Level {{level}} decision",
+        "saving": "Saving…",
+        "saveNext": "Save & next level",
+        "helpTaskTitle": "Evidence needed: {{area}}, level {{level}}",
+        "helpTaskDescription": "Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.",
+        "helpBlocker": "{{count}} open evidence help request(s)"
       }
     },
     "glossary": {
