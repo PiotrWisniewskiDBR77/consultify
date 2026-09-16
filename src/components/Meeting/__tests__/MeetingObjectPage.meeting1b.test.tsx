@@ -225,7 +225,7 @@ describe('MeetingObjectPage — MEETING-1b (P1 follow-ups symmetry + regressions
     // Edit mode (default): both write forms are present.
     expect(screen.getByPlaceholderText('New decision…')).toBeTruthy();
     expect(screen.getByPlaceholderText('Follow-up…')).toBeTruthy();
-    expect(screen.getByText('Ship the MEETING-1b receipt')).toBeTruthy();
+    expect(await screen.findByText('Ship the MEETING-1b receipt')).toBeTruthy();
 
     screen.getByRole('radio', { name: 'Preview' }).click();
 
