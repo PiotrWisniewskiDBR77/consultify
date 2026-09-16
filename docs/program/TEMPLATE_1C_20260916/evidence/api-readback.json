@@ -1,0 +1,47 @@
+{
+  "verdict": "PASS",
+  "method": "GET",
+  "path": "/api/artifacts?artifactFamily=template&include=drafts&dedupe=false&limit=500",
+  "status": 200,
+  "total": 106,
+  "database": "127.0.0.1:55433/consultify_template1c",
+  "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+  "selected": {
+    "sheetBase": {
+      "artifactId": "template-1-sheetbase-673f789401f30e212db5c1c0cf163350",
+      "title": "Supplier scorecard workbook",
+      "outputType": "sheet",
+      "originRuntime": "sheet_template",
+      "originRecordId": "2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1",
+      "source": "canonical",
+      "legacy": false,
+      "scope": "system",
+      "status": "approved",
+      "orphaned": false
+    },
+    "inventory95": {
+      "artifactId": "0a757a44-2ef4-466a-9231-dff14b89e515",
+      "title": "Supplier quality scorecard",
+      "outputType": "sheet",
+      "originRuntime": "sheet_template",
+      "originRecordId": "e6d27a1e-5fdc-4d66-8a53-95c3c4a79ea2",
+      "source": "canonical",
+      "legacy": false,
+      "scope": "organization",
+      "status": "draft",
+      "orphaned": false
+    },
+    "realLegacyTemplate": {
+      "artifactId": "0b7bf097-b1ce-43eb-a539-828b5e73078c",
+      "title": "Interview Summary Report",
+      "outputType": "report",
+      "originRuntime": "report_template",
+      "originRecordId": "tpl-interview-summary",
+      "source": "legacy",
+      "legacy": true,
+      "scope": "system",
+      "status": "published",
+      "orphaned": false
+    }
+  }
+}

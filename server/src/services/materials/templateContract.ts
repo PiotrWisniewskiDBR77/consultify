@@ -21,10 +21,7 @@ export type TemplateStatus = 'approved' | 'published' | 'draft' | 'deprecated' |
 
 /** Canonical registry a template origin link points at. */
 export type TemplateOriginRuntime =
-  | 'document_template'
-  | 'report_template'
-  | 'presentation_template'
-  | 'sheet_template';
+  'document_template' | 'report_template' | 'presentation_template' | 'sheet_template';
 
 /** `'canonical'` = current registry; `'legacy'` = pre-canonical registry kept for compat. */
 export type TemplateSource = 'canonical' | 'legacy';
@@ -78,12 +75,12 @@ export function isTemplateOriginRuntime(value: unknown): value is TemplateOrigin
 }
 
 /**
- * `report_template` and `sheet_template` are pre-canonical registries kept for
- * backwards compatibility. `document_template` (Document Studio) and
- * `presentation_template` are the canonical ones.
+ * `report_template` is the pre-canonical registry kept for backwards
+ * compatibility. Document Studio, presentation templates and workbook base
+ * templates all have canonical registries.
  */
 export function templateSourceForRuntime(runtime: TemplateOriginRuntime): TemplateSource {
-  return runtime === 'report_template' || runtime === 'sheet_template' ? 'legacy' : 'canonical';
+  return runtime === 'report_template' ? 'legacy' : 'canonical';
 }
 
 /**
