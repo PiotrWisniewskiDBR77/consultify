@@ -875,7 +875,7 @@ for (const withSnapshot of [false, true]) {
   });
 }
 
-it('explicit Refresh still calls the existing evaluation action after readonly open', async () => {
+it('explicit Run calls the existing evaluation action after readonly open', async () => {
   v8.evaluateSessionAnswers.mockResolvedValue({
     overallScore: 4,
     overallVerdict: 'ready_for_approval',
@@ -885,7 +885,7 @@ it('explicit Refresh still calls the existing evaluation action after readonly o
   render(<InterviewWorkspace sessionId="session" />);
   await screen.findByRole('textbox', { name: 'answer-question' });
   expect(v8.evaluateSessionAnswers).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button', { name: 'interview.workspace.refresh' }));
+  fireEvent.click(screen.getByRole('button', { name: 'interview.workspace.run' }));
   await waitFor(() => expect(v8.evaluateSessionAnswers).toHaveBeenCalledTimes(1));
   expect(v8.evaluateSessionAnswers).toHaveBeenCalledWith('session', { language: 'en' });
 });

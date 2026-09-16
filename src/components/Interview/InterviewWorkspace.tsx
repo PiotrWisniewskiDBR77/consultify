@@ -2828,7 +2828,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         onClick={() => void runAiQualityReview()}
         className="font-medium text-c-text-secondary underline underline-offset-2 hover:text-c-text"
       >
-        {isAiEvaluating ? t('interview.workspace.running') : t('interview.workspace.refresh')}
+        {isAiEvaluating
+          ? t('interview.workspace.running')
+          : aiEvaluation
+            ? t('interview.workspace.refresh')
+            : t('interview.workspace.run')}
       </button>
     </div>
   );

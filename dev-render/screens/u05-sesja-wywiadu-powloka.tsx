@@ -8,6 +8,7 @@
  * 7 pytań, 7 zatwierdzeń stages_complete]).
  *
  * Warianty (?wariant=):
+ *   respondent-draft    — edytowalny stan respondenta przed wysłaniem
  *   zywy-submitted      — stan ZASTANY, zrzut nr 2 właściciela
  *   zywy-approved       — stan ZASTANY, zrzut nr 3 właściciela
  *   propozycja-submitted — JEDNA POWŁOKA: zatwierdzanie jako STAN pytania
@@ -32,6 +33,7 @@ import { useAppStore } from '../../src/store/useAppStore';
 import dane from '../mocks/u05-wywiad.json';
 
 const wariant = new URLSearchParams(location.search).get('wariant') || 'zywy-submitted';
+const jestRespondent = wariant === 'respondent-draft';
 const czyZatwierdzona = wariant.endsWith('approved');
 const czyPropozycja = wariant.startsWith('propozycja');
 
@@ -41,7 +43,12 @@ const przypisanie = czyZatwierdzona
   ? 'Operational Excellence Discovery · Irina Lebedjuk · 2 Oct 2026'
   : 'Automation Readiness · Irina Lebedjuk · 13 Oct 2026';
 
-const sesja: any = czyZatwierdzona ? (dane as any).sessionApproved : (dane as any).sessionSubmitted;
+const sesjaBazowa: any = czyZatwierdzona
+  ? (dane as any).sessionApproved
+  : (dane as any).sessionSubmitted;
+const sesja: any = jestRespondent
+  ? { ...sesjaBazowa, status: 'in_progress' }
+  : sesjaBazowa;
 const pytania: any[] = czyZatwierdzona
   ? (dane as any).questionsApproved
   : (dane as any).questionsSubmitted;
@@ -51,11 +58,15 @@ const zatwierdzenia: any = czyZatwierdzona
 
 useAppStore.setState({
   currentUser: {
-    id: '08c54d75-5260-57b1-9db6-a30aed89a587',
-    firstName: 'Piotr',
-    lastName: 'Wiśniewski',
-    email: 'piotr.wisniewski@dbr77.com',
-    role: 'OWNER',
+    id: jestRespondent
+      ? '75f25357-2f33-48b8-9638-ad67ff65bcef'
+      : '08c54d75-5260-57b1-9db6-a30aed89a587',
+    firstName: jestRespondent ? 'Irina' : 'Piotr',
+    lastName: jestRespondent ? 'Lebedjuk' : 'Wiśniewski',
+    email: jestRespondent
+      ? 'irina.lebedjuk@northwind.example'
+      : 'piotr.wisniewski@dbr77.com',
+    role: jestRespondent ? 'MEMBER' : 'OWNER',
     status: 'active',
     isAuthenticated: true,
     accessLevel: 'full',
@@ -67,7 +78,7 @@ useAppStore.setState({
 const przydzial = {
   id: sesja.assignmentId,
   sessionId: sesja.id,
-  status: czyZatwierdzona ? 'approved' : 'submitted',
+  status: jestRespondent ? 'in_progress' : czyZatwierdzona ? 'approved' : 'submitted',
   templateId: sesja.templateId,
   dueAt: czyZatwierdzona ? '2026-10-02T16:00:00.000Z' : '2026-10-13T16:00:00.000Z',
   assigneeUserId: '75f25357-2f33-48b8-9638-ad67ff65bcef',
@@ -107,13 +118,13 @@ Object.assign(V8InterviewApi, {
   getSession: async () => ({ session: sesja }),
   getSessions: async () => ({ sessions: [sesja] }),
   getMyAssignments: async () => ({ assignments: [przydzial] }),
-  getAssignmentReviewAccess: async () => ({ canReview: true }),
+  getAssignmentReviewAccess: async () => ({ canReview: !jestRespondent }),
   // ★ To jest cała różnica między wariantami: propozycja dostaje PUSTĄ
   //   projekcję (kontrakt „legacy"), więc doklejana lista „Answer approval"
   //   nie renderuje się wcale — zostaje kanoniczna powłoka.
   getAnswerApprovals: async () => ({
     assignmentId: sesja.assignmentId,
-    approvals: czyPropozycja ? [] : zatwierdzenia.approvals,
+    approvals: czyPropozycja || jestRespondent ? [] : zatwierdzenia.approvals,
   }),
   getSessionEvaluation: async () => {
     throw new Error('brak oceny');
