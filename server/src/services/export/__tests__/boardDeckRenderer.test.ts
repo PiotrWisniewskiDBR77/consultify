@@ -51,8 +51,12 @@ const deck = {
         headers: ['Role', 'Team', 'FTE', 'Weeks'],
         rows: [
           ['Engagement lead', 'Consultify', 0.4, 26],
-          ['Operations analyst', 'Northwind', 1, 26],
+          ['Operations analyst', 'Northwind Manufacturing — Leeds & Rotherham', 1, 26],
+          ['Quality engineer', 'Engineering & Quality', 0.6, 20],
+          ['Data engineer', 'Digital and Data', 1, 24],
+          ['OT security lead', 'Digital and Data', 0.3, 12],
         ],
+        totalRow: ['Total', '5 roles', 3.3, 108],
       },
       source: 'Consultify initiatives and teams',
     },
@@ -77,16 +81,23 @@ const deck = {
         {
           label: 'Option A',
           title: 'Data foundation first',
+          meta: '£410k · MES Line 3',
           body: 'Sequence MES rollout and the shared data layer.',
           recommended: true,
         },
         {
           label: 'Option B',
           title: 'Run both in parallel',
+          meta: '£930k · MES + Warehouse',
           body: 'Keep the pilot on current data.',
         },
       ],
       recommendation: 'Approve Option A and hold the automation envelope unchanged.',
+      decisionMeta: {
+        owner: 'Board — Operations & Capital Committee',
+        dueBy: '30 October 2026',
+        linkedRaid: 'Line 3 cutover slips past the summer shutdown window',
+      },
     },
   ],
 };
@@ -155,5 +166,37 @@ describe('EXPORT-1 board deck renderer', () => {
     expect(slideEight).toContain('Consultify');
     expect(slideEight).toContain('Northwind Manufacturing Ltd.');
     expect(slideEight).toContain('Confidential');
+  });
+
+  it('matches the accepted composition contract for slides 4 and 6–8', async () => {
+    const { zip, xml } = await packageXml(await unifiedExportService.exportBoardDeckPptx(deck));
+    const slideFour = await zip.file('ppt/slides/slide4.xml')!.async('string');
+    const slideSix = await zip.file('ppt/slides/slide6.xml')!.async('string');
+    const slideEight = await zip.file('ppt/slides/slide8.xml')!.async('string');
+    const chartName = Object.keys(zip.files).find((name) =>
+      /^ppt\/charts\/chart\d+\.xml$/.test(name)
+    );
+    expect(chartName).toBeDefined();
+    const chart = await zip.file(chartName!)!.async('string');
+
+    const rowHeights = [...slideSix.matchAll(/<a:tr h="(\d+)"/g)].map((match) => Number(match[1]));
+    expect(rowHeights).toHaveLength(7);
+    expect(new Set(rowHeights).size).toBeGreaterThan(1);
+    expect(Math.max(...rowHeights)).toBeLessThan(914400);
+    expect(slideSix).toContain('DCE6FA');
+    expect(slideSix).toContain('F1F4F8');
+
+    expect(chart.match(/<c:ser>/g) || []).toHaveLength(2);
+    expect(chart).toContain('2563EB');
+    expect(chart).toContain('667085');
+    expect(chart).toMatch(/<c:showVal val="1"\/>/);
+
+    expect(slideFour).toContain('SO WHAT');
+    expect(slideEight).toContain('£410k · MES Line 3');
+    expect(slideEight).toContain('DECISION OWNER');
+    expect(slideEight).toContain('DUE BY');
+    expect(slideEight).toContain('LINKED RAID');
+    expect(slideEight).toContain('DCE6FA');
+    expect(xml).not.toMatch(/typeface="Arial"/i);
   });
 });

@@ -1,0 +1,48 @@
+{
+  "source": "staging-thomas-przed-wdrozeniem-linii-20260911-2036.dump",
+  "sourceSha256": "85f0d5aafcd479b1b89b25b7fad3e46e3a147937f4f68ea47bbdd1a5c2f61531",
+  "organization": {
+    "id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "name": "Northwind Manufacturing Ltd."
+  },
+  "teams": [
+    "Engineering & Quality",
+    "Plant Operations — Leeds & Rotherham"
+  ],
+  "people": [
+    { "jobTitle": "Plant Manager", "department": "Manufacturing", "weeklyCapacityHours": 40 },
+    { "jobTitle": "Data Analyst", "department": "Operations", "weeklyCapacityHours": 35 },
+    { "jobTitle": "Head of Quality", "department": "Quality", "weeklyCapacityHours": 38 },
+    { "jobTitle": "Automation Engineer", "department": "Engineering", "weeklyCapacityHours": 40 },
+    { "jobTitle": "Controls Engineer", "department": "Engineering", "weeklyCapacityHours": 36 }
+  ],
+  "initiatives": {
+    "mesLine3": {
+      "id": "d06a7a14-afe8-559e-a8ef-1ab7606e1c7c",
+      "name": "MES Rollout Line 3",
+      "budget": 410000,
+      "currency": "GBP",
+      "risk": "Cutover window is constrained by the summer shutdown date"
+    },
+    "warehouseAutomation": {
+      "id": "b650401b-b520-5532-9ce9-f21307bd3fe8",
+      "name": "Warehouse Automation Pilot",
+      "budget": 520000,
+      "currency": "GBP"
+    }
+  },
+  "oeeLine3": {
+    "kpiId": "e4b2514a-84a1-4102-8ee8-614e87b58760",
+    "code": "NW-OEE-L3",
+    "target": 78,
+    "unit": "%",
+    "measurements": [
+      { "period": "Jan", "value": 70.8 },
+      { "period": "Feb", "value": 71.6 },
+      { "period": "Mar", "value": 72.9 },
+      { "period": "Apr", "value": 74.1 },
+      { "period": "May", "value": 75.4 },
+      { "period": "Jun", "value": 76.2 }
+    ]
+  }
+}

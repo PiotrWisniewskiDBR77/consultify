@@ -16,6 +16,7 @@ export type BoardDeckLayoutRole = (typeof BOARD_DECK_LAYOUT_ROLES)[number];
 export type BoardDeckTable = {
   headers: string[];
   rows: Array<Array<string | number>>;
+  totalRow?: Array<string | number>;
   columnWidths?: number[];
 };
 
@@ -29,8 +30,15 @@ export type BoardDeckChart = {
 export type BoardDeckDecisionOption = {
   label: string;
   title: string;
+  meta?: string;
   body: string;
   recommended?: boolean;
+};
+
+export type BoardDeckDecisionMeta = {
+  owner: string;
+  dueBy: string;
+  linkedRaid: string;
 };
 
 export type BoardDeckSlide = {
@@ -47,6 +55,7 @@ export type BoardDeckSlide = {
   chart?: BoardDeckChart;
   options?: BoardDeckDecisionOption[];
   recommendation?: string;
+  decisionMeta?: BoardDeckDecisionMeta;
   source?: string;
 };
 
@@ -68,9 +77,9 @@ const C = {
   text: '101828',
   muted: '667085',
   surface: 'F1F4F8',
+  accentSoft: 'DCE6FA',
   line: 'D8DEE8',
   white: 'FFFFFF',
-  risk: 'B42318',
 };
 
 const G = { width: 13.333, height: 7.5, left: 0.82, right: 0.75, footerY: 7.1 };
@@ -336,11 +345,21 @@ function renderContentOne(slide: any, item: BoardDeckSlide): void {
       fill: { color: C.blue },
       line: { color: C.blue },
     });
+    addText(slide, 'SO WHAT', {
+      x: 1.2,
+      y: 5.96,
+      w: 2,
+      h: 0.16,
+      fontSize: 6.5,
+      bold: true,
+      charSpacing: 1.2,
+      color: C.blue,
+    });
     addText(slide, item.keyMessage, {
       x: 1.2,
-      y: 6.02,
+      y: 6.15,
       w: 10.75,
-      h: 0.32,
+      h: 0.26,
       fontSize: 10,
       bold: true,
       color: C.text,
@@ -394,18 +413,43 @@ function renderContentTwo(slide: any, item: BoardDeckSlide): void {
 function renderTable(slide: any, item: BoardDeckSlide): void {
   addHeader(slide, item);
   const table = item.table || { headers: [], rows: [] };
-  const rows = [table.headers, ...table.rows].map((row, rowIndex) =>
-    row.map((value) => ({
+  const dataRows = table.totalRow ? [...table.rows, table.totalRow] : table.rows;
+  const lastRowIndex = dataRows.length;
+  const rows = [table.headers, ...dataRows].map((row, rowIndex) =>
+    row.map((value, columnIndex) => ({
       text: String(value),
-      options: rowIndex === 0 ? { bold: true, color: C.white, fill: C.navy } : { color: C.text },
+      options:
+        rowIndex === 0
+          ? { bold: true, color: C.white, fill: C.navy }
+          : rowIndex === lastRowIndex && table.totalRow
+            ? {
+                bold: true,
+                color: C.navy,
+                fill: C.accentSoft,
+                border: [
+                  { type: 'solid', color: C.navy, pt: 1.1 },
+                  { type: 'solid', color: C.line, pt: 0.5 },
+                  { type: 'solid', color: C.line, pt: 0.5 },
+                  { type: 'solid', color: C.line, pt: 0.5 },
+                ],
+              }
+            : {
+                bold: columnIndex === 0,
+                color: columnIndex === 0 ? C.navy : C.text,
+                fill: rowIndex % 2 === 0 ? C.surface : C.white,
+              },
     }))
   );
+  const rowHeights = [
+    0.42,
+    ...dataRows.map((row) => (row.some((value) => String(value).length > 34) ? 0.62 : 0.42)),
+  ];
   slide.addTable(rows, {
     x: 0.95,
     y: 1.55,
     w: 11.35,
-    h: 4.85,
     colW: table.columnWidths,
+    rowH: rowHeights,
     fontSize: 9,
     color: C.text,
     border: { type: 'solid', color: C.line, pt: 0.5 },
@@ -418,32 +462,59 @@ function renderTable(slide: any, item: BoardDeckSlide): void {
 function renderChart(slide: any, item: BoardDeckSlide, pptx: any): void {
   addHeader(slide, item);
   const chart = item.chart || { categories: [], series: [] };
-  slide.addChart(
-    pptx.ChartType.bar,
-    chart.series.map((series) => ({
-      name: series.name,
-      labels: chart.categories,
-      values: series.values,
-    })),
+  const seriesColors = [C.blue, C.navy, '7DA7FF'];
+  const chartGroups: any[] = [
     {
-      x: 0.95,
-      y: 1.6,
-      w: 7.6,
-      h: 4.75,
-      catAxisLabelFontSize: 8,
-      valAxisLabelFontSize: 8,
-      showLegend: true,
-      legendPos: 'b',
-      showValue: true,
-      chartColors: [C.blue, C.navy, '7DA7FF'],
-      showTitle: false,
-      showCatName: false,
-      showValAxisTitle: false,
-      showCatAxisTitle: false,
-      showBorder: false,
-      showGridLines: false,
-    }
-  );
+      type: pptx.ChartType.bar,
+      data: chart.series.map((series) => ({
+        name: series.name,
+        labels: chart.categories,
+        values: series.values,
+      })),
+      options: {
+        barDir: 'col',
+        barGapWidthPct: 55,
+        chartColors: chart.series.map((_, index) => seriesColors[index % seriesColors.length]),
+        showValue: true,
+        dataLabelPosition: 'outEnd',
+      },
+    },
+  ];
+  if (chart.target !== undefined) {
+    chartGroups.push({
+      type: pptx.ChartType.line,
+      data: [
+        {
+          name: `Target ${chart.target}${chart.unit || ''}`,
+          labels: chart.categories,
+          values: chart.categories.map(() => chart.target!),
+        },
+      ],
+      options: {
+        chartColors: [C.muted],
+        lineSize: 1.5,
+        lineDash: 'dash',
+        lineDataSymbol: 'none',
+        showValue: false,
+      },
+    });
+  }
+  slide.addChart(chartGroups, {
+    x: 0.95,
+    y: 1.6,
+    w: 7.6,
+    h: 4.75,
+    catAxisLabelFontSize: 8,
+    valAxisLabelFontSize: 8,
+    showLegend: true,
+    legendPos: 'b',
+    showTitle: false,
+    showCatName: false,
+    showValAxisTitle: false,
+    showCatAxisTitle: false,
+    showBorder: false,
+    showGridLines: false,
+  });
   slide.addShape('rect', {
     x: 8.85,
     y: 1.6,
@@ -484,7 +555,7 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
       y: 1.55,
       w: 5.5,
       h: 2.55,
-      fill: { color: C.white },
+      fill: { color: option.recommended ? C.accentSoft : C.white },
       line: { color: option.recommended ? C.blue : C.line, width: option.recommended ? 1.5 : 0.8 },
     });
     addText(slide, option.label.toUpperCase(), {
@@ -509,13 +580,22 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
     });
     addText(slide, option.body, {
       x: x + 0.28,
-      y: 2.78,
+      y: option.meta ? 2.96 : 2.78,
       w: 4.9,
-      h: 0.82,
+      h: option.meta ? 0.62 : 0.82,
       fontSize: 9,
       color: C.text,
       fit: 'shrink',
     });
+    if (option.meta)
+      addText(slide, option.meta, {
+        x: x + 0.28,
+        y: 2.66,
+        w: 4.9,
+        h: 0.2,
+        fontSize: 9,
+        color: C.muted,
+      });
     if (option.recommended)
       addText(slide, 'RECOMMENDED', {
         x: x + 3.85,
@@ -568,6 +648,36 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
       fit: 'shrink',
     });
   }
+  if (item.decisionMeta) {
+    const metadata = [
+      ['DECISION OWNER', item.decisionMeta.owner],
+      ['DUE BY', item.decisionMeta.dueBy],
+      ['LINKED RAID', item.decisionMeta.linkedRaid],
+    ];
+    metadata.forEach(([label, value], index) => {
+      const x = 0.95 + index * (11.35 / 3);
+      addText(slide, label, {
+        x,
+        y: 5.86,
+        w: 3.55,
+        h: 0.16,
+        fontSize: 6.5,
+        bold: true,
+        charSpacing: 0.8,
+        color: C.muted,
+      });
+      addText(slide, value, {
+        x,
+        y: 6.08,
+        w: 3.55,
+        h: 0.48,
+        fontSize: 9,
+        color: C.text,
+        valign: 'top',
+        fit: 'shrink',
+      });
+    });
+  }
 }
 
 async function removePptxGenJsPhantomMasterOverrides(buffer: Buffer): Promise<Buffer> {
@@ -580,8 +690,18 @@ async function removePptxGenJsPhantomMasterOverrides(buffer: Buffer): Promise<Bu
     /<Override PartName="\/(ppt\/slideMasters\/slideMaster\d+\.xml)" ContentType="application\/vnd\.openxmlformats-officedocument\.presentationml\.slideMaster\+xml"\/>/g,
     (entry, part: string) => (existing.has(part) ? entry : '')
   );
-  if (cleaned === xml) return buffer;
   zip.file('[Content_Types].xml', cleaned);
+  await Promise.all(
+    Object.keys(zip.files)
+      .filter((name) => name.endsWith('.xml'))
+      .map(async (name) => {
+        const file = zip.file(name);
+        if (!file) return;
+        const contents = await file.async('string');
+        const themeDriven = contents.replace(/typeface="Arial"/g, 'typeface="+mn-lt"');
+        if (themeDriven !== contents) zip.file(name, themeDriven);
+      })
+  );
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
