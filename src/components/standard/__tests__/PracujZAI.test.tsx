@@ -88,6 +88,22 @@ describe('PracujZAI — jedna struktura sterowania AI (DEC-407)', () => {
     );
   });
 
+  it('keeps Fill actions visible but disabled only for an opted-in Preview surface', () => {
+    zamontuj({
+      moznaEdytowac: false,
+      previewFillDisabledReason: 'Switch to Edit to fill',
+    });
+    otworzListe();
+
+    const section = screen.getByRole('menuitem', { name: 'Uzupełnij tę sekcję' });
+    const document = screen.getByRole('menuitem', { name: 'Uzupełnij cały dokument' });
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+    expect(section).toBeDisabled();
+    expect(document).toBeDisabled();
+    expect(section).toHaveAttribute('title', 'Switch to Edit to fill');
+    expect(document).toHaveAttribute('title', 'Switch to Edit to fill');
+  });
+
   it('bez generatora pozycja jest wyszarzona z tytułem „Brak generatora dla tej karty"', () => {
     zamontuj({ uzupelnijSekcje: undefined, uzupelnijDokument: undefined });
     otworzListe();

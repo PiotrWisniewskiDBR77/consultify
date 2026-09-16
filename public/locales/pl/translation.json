@@ -8222,6 +8222,9 @@
       "generateInitiatives": "Generuj inicjatywy"
     },
     "insightViewer": {
+      "switchToEditToFill": "Przełącz na Edycję, aby uzupełnić",
+      "publishedReadOnlyReason": "wniosek opublikowany",
+      "previewReadOnlyReason": "karta otwarta w trybie Podgląd",
       "panelResults": "Rezultaty",
       "panelResultsEmpty": "Z tego wniosku nic jeszcze nie powstało.",
       "manualFieldHint": "Tekst redagowany ręcznie. Zapisuje się osobno od treści z AI — regeneracja go nie kasuje.",

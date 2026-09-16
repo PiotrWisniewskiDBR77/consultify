@@ -8501,11 +8501,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   });
 
   // ── [ODMROZENIE 02_INTERVIEW DEC-407] „Pracuj z AI" ───────────────────────
-  // TYLKO „Uzupełnij tę sekcję". „Uzupełnij cały dokument" NIE jest podpięte
-  // świadomie i renderuje się wyszarzone: `applyInsightAnalysisChange` zapisuje
-  // ZAWSZE do sekcji AKTYWNEJ (`const sectionId = activeNSection`), więc
-  // przebieg po wszystkich sekcjach wsypałby całą treść do jednej. Karta nie ma
-  // dziś generatora „cały dokument" i nie buduję go tutaj — zgłoszone w meldunku.
+  // Oba źródła „Uzupełnij” buduje kanoniczny adapter; zapis następuje dopiero
+  // po zaakceptowaniu propozycji w `PracujZAI`.
   const zrodlaPracujZAI = useMemo(
     () =>
       zbudujZrodlaPracujZAI({
@@ -8518,6 +8515,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   );
   const wniosekZatwierdzony =
     insight?.reviewStatus === 'published' || insight?.status === 'published';
+  const completedInsightInPreview =
+    readMode && insight?.status === 'completed' && !wniosekZatwierdzony;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   // VF1-2 (SPEC-A): swap ad-hoc spinner/error markup for the shared
@@ -9104,14 +9103,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     type: 'insight',
                   }}
                   moznaEdytowac={!readMode && !wniosekZatwierdzony}
+                  previewFillDisabledReason={
+                    completedInsightInPreview
+                      ? t(
+                          'interview.insightViewer.switchToEditToFill',
+                          'Switch to Edit to fill'
+                        )
+                      : undefined
+                  }
                   powodTylkoOdczyt={
                     wniosekZatwierdzony
-                      ? isPolish
-                        ? 'wniosek opublikowany'
-                        : 'insight is published'
-                      : isPolish
-                        ? 'karta otwarta w trybie Podgląd'
-                        : 'card opened in Preview mode'
+                      ? t(
+                          'interview.insightViewer.publishedReadOnlyReason',
+                          'insight is published'
+                        )
+                      : t(
+                          'interview.insightViewer.previewReadOnlyReason',
+                          'card opened in Preview mode'
+                        )
                   }
                   uzupelnijSekcje={zrodlaPracujZAI.sekcja}
                   /* ★ F10 / P-J01 (bloker testerki 15.09, `/interview` PL):

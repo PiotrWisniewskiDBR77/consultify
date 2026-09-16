@@ -282,4 +282,36 @@ describe('InsightViewer V6 empty-state regenerate CTA (#57)', () => {
 
     expect(screen.queryAllByText(/Generate V6 analysis/i).length).toBe(0);
   });
+
+  it('shows disabled Fill actions with an Edit hint for a completed insight opened in Preview', async () => {
+    setupMocks();
+    renderViewer();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nmode-header')).toHaveTextContent('Seeded Insight');
+    });
+    fireEvent.click(screen.getByTestId('pracuj-z-ai'));
+
+    const section = screen.getByRole('menuitem', { name: 'Fill in this section' });
+    const document = screen.getByRole('menuitem', { name: 'Fill in the whole document' });
+    expect(section).toBeDisabled();
+    expect(document).toBeDisabled();
+    expect(section).toHaveAttribute('title', 'Switch to Edit to fill');
+    expect(document).toHaveAttribute('title', 'Switch to Edit to fill');
+  });
+
+  it('does not suggest Edit-only Fill actions for a published insight', async () => {
+    setupMocks({ reviewStatus: 'published' });
+    renderViewer();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nmode-header')).toHaveTextContent('Seeded Insight');
+    });
+    fireEvent.click(screen.getByTestId('pracuj-z-ai'));
+
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1);
+    expect(screen.getByRole('menuitem', { name: 'Analyze' })).toBeEnabled();
+    expect(screen.queryByRole('menuitem', { name: 'Fill in this section' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Fill in the whole document' })).toBeNull();
+  });
 });
