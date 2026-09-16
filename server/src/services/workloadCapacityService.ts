@@ -144,7 +144,12 @@ function formatDate(d: Date): string {
 /** Parse a database date as a calendar day without UTC-to-local day rollback. */
 function parseCalendarDate(value: string | Date | null): Date | null {
   if (!value) return null;
-  const text = value instanceof Date ? value.toISOString() : String(value);
+  const text =
+    value instanceof Date
+      ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(
+          value.getDate()
+        ).padStart(2, '0')}`
+      : String(value);
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
   if (!match) return null;
   const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
@@ -323,6 +328,11 @@ export async function getUserForecast(
     initiativeIds?: string[];
   } = {}
 ): Promise<WeekForecast[]> {
+  const scope = [
+    ...new Set((options.initiativeIds ?? []).map((value) => String(value).trim()).filter(Boolean)),
+  ];
+  if (scope.length > 100) throw new Error('M1_INITIATIVE_SCOPE_INVALID');
+
   const profile = await DbPromise.get<{
     weekly_capacity_hours: number | string | null;
     availability_percent: number | null;
@@ -333,11 +343,14 @@ export async function getUserForecast(
   );
   if (!profile) throw new Error('M1_USER_NOT_FOUND');
 
+  const hasDeclaredCapacity =
+    profile.weekly_capacity_hours !== null && profile.weekly_capacity_hours !== undefined;
   const rawCapacity = Number(profile.weekly_capacity_hours);
-  const weeklyCapacity =
-    Number.isFinite(rawCapacity) && rawCapacity > 0
+  const weeklyCapacity = hasDeclaredCapacity
+    ? Number.isFinite(rawCapacity) && rawCapacity >= 0
       ? rawCapacity
-      : CAPACITY_POLICY.weeklyHoursPerFte;
+      : CAPACITY_POLICY.weeklyHoursPerFte
+    : CAPACITY_POLICY.weeklyHoursPerFte;
   const availability = clampAllocationPercent(profile.availability_percent ?? 100);
   const anchor =
     options.asOf instanceof Date
@@ -349,9 +362,6 @@ export async function getUserForecast(
   const weekCount = Math.min(104, Math.max(1, Number(options.weekCount) || 4));
   const weekStarts = buildWeekStarts(anchor, weekCount);
   const weekSet = new Set(weekStarts);
-  const scope = [
-    ...new Set((options.initiativeIds ?? []).map((value) => String(value).trim()).filter(Boolean)),
-  ].slice(0, 100);
   const scopeSql = scope.length
     ? ` AND t.initiative_id IN (${scope.map(() => '?').join(',')})`
     : '';
@@ -360,36 +370,37 @@ export async function getUserForecast(
   try {
     const allocationRows = await DbPromise.all<{
       week_start: string | Date;
+      task_id: string;
       hours: number | string;
-      task_ids: string[] | string | null;
     }>(
-      `SELECT ta.week_start, COALESCE(SUM(ta.allocated_hours),0) AS hours,
-              ARRAY_AGG(DISTINCT ta.task_id) AS task_ids
+      `SELECT ta.week_start, ta.task_id, COALESCE(SUM(ta.allocated_hours),0) AS hours
          FROM task_allocations ta
          JOIN tasks t ON t.id=ta.task_id AND t.organization_id=ta.organization_id
         WHERE ta.user_id=? AND ta.organization_id=?
           AND ta.week_start IN (${weekStarts.map(() => '?').join(',')})${scopeSql}
-        GROUP BY ta.week_start`,
+        GROUP BY ta.week_start, ta.task_id`,
       [userId, orgId, ...weekStarts, ...scope]
     );
     for (const row of allocationRows) {
-      const weekStart =
-        row.week_start instanceof Date
-          ? row.week_start.toISOString().slice(0, 10)
-          : String(row.week_start).slice(0, 10);
-      const taskIds = Array.isArray(row.task_ids)
-        ? row.task_ids.map(String)
-        : String(row.task_ids || '')
-            .replace(/^\{|\}$/g, '')
-            .split(',')
-            .filter(Boolean);
-      explicit.set(weekStart, { hours: Number(row.hours) || 0, taskIds: taskIds.sort() });
+      const parsedWeekStart = parseCalendarDate(row.week_start);
+      if (!parsedWeekStart) throw new Error('M1_ALLOCATION_WEEK_INVALID');
+      const weekStart = formatDate(parsedWeekStart);
+      const current: { hours: number; taskIds: string[] } = explicit.get(weekStart) ?? {
+        hours: 0,
+        taskIds: [],
+      };
+      current.hours += Number(row.hours) || 0;
+      current.taskIds.push(String(row.task_id));
+      current.taskIds = [...new Set(current.taskIds)].sort();
+      explicit.set(weekStart, current);
     }
   } catch (err) {
     logIfNotSilenceableMissingRelation('getUserForecast.task_allocations', err, {
       orgId,
       userId,
     });
+    const message = err instanceof Error ? err.message : String(err);
+    if (!isSilenceableMissingRelationError(message)) throw err;
   }
 
   const taskRows = await DbPromise.all<{

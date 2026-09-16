@@ -1,0 +1,432 @@
+{
+  "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+  "asOf": "2026-09-16",
+  "initiativeCount": 4,
+  "userCount": 9,
+  "forecasts": [
+    {
+      "userId": "d62073a5-7095-5817-b383-4dc8942937d6",
+      "name": "Daniel Osei",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 40,
+          "allocatedHours": 76.6,
+          "availableHours": 0,
+          "taskIds": [
+            "0811cf08-be33-514b-a4e2-051401a23fc1",
+            "09ae6d5a-71ac-56ba-b484-f021d438e2af",
+            "2e70a548-2e0c-5cda-b299-a5bb2b328a15"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 40,
+          "allocatedHours": 76.6,
+          "availableHours": 0,
+          "taskIds": [
+            "0811cf08-be33-514b-a4e2-051401a23fc1",
+            "09ae6d5a-71ac-56ba-b484-f021d438e2af",
+            "2e70a548-2e0c-5cda-b299-a5bb2b328a15"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "550c4ac3-da1e-500a-9be2-f6e4ee18e93e",
+      "name": "Emily Carter",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 37,
+          "allocatedHours": 49.2,
+          "availableHours": 0,
+          "taskIds": [
+            "b8e44347-9e14-5637-a012-96b53910c181",
+            "d1daea6b-7582-55aa-a1c8-9d14c782ca13"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 37,
+          "allocatedHours": 0,
+          "availableHours": 37,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 37,
+          "allocatedHours": 0,
+          "availableHours": 37,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 37,
+          "allocatedHours": 0,
+          "availableHours": 37,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "08c54d75-5260-57b1-9db6-a30aed89a587",
+      "name": "James Whitfield",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "78b08b13-887e-5446-b80c-8647d3fc9e0f",
+      "name": "Laura Novak",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 36,
+          "allocatedHours": 42.9,
+          "availableHours": 0,
+          "taskIds": [
+            "692fd8a6-3e8a-543e-818c-345dacb9d4e6",
+            "a76022da-da41-5ed3-a4c7-3c1573753f09"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 36,
+          "allocatedHours": 24.8,
+          "availableHours": 11.2,
+          "taskIds": [
+            "692fd8a6-3e8a-543e-818c-345dacb9d4e6"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 36,
+          "allocatedHours": 27.8,
+          "availableHours": 8.2,
+          "taskIds": [
+            "692fd8a6-3e8a-543e-818c-345dacb9d4e6",
+            "ea0e2b16-4974-5d07-a596-1f93a6320121"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 36,
+          "allocatedHours": 39.8,
+          "availableHours": 0,
+          "taskIds": [
+            "692fd8a6-3e8a-543e-818c-345dacb9d4e6",
+            "ea0e2b16-4974-5d07-a596-1f93a6320121"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "3e49a320-ef11-5b8d-99d1-57af7be662fe",
+      "name": "Michael Grant",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 35,
+          "allocatedHours": 30,
+          "availableHours": 5,
+          "taskIds": [
+            "b666fe27-00b8-525f-a816-cca556608661",
+            "f213008c-95cc-5c2b-801b-0adaf6b2690b"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 35,
+          "allocatedHours": 30,
+          "availableHours": 5,
+          "taskIds": [
+            "b666fe27-00b8-525f-a816-cca556608661",
+            "f213008c-95cc-5c2b-801b-0adaf6b2690b"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 35,
+          "allocatedHours": 13.8,
+          "availableHours": 21.3,
+          "taskIds": [
+            "f213008c-95cc-5c2b-801b-0adaf6b2690b"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 35,
+          "allocatedHours": 0,
+          "availableHours": 35,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "a0e18893-9740-557d-92c5-66a50a43b3bb",
+      "name": "Priya Sharma",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 32,
+          "allocatedHours": 4.2,
+          "availableHours": 27.8,
+          "taskIds": [
+            "a1f35e13-4367-5165-adcd-24233e4874b7"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 32,
+          "allocatedHours": 21,
+          "availableHours": 11,
+          "taskIds": [
+            "a1f35e13-4367-5165-adcd-24233e4874b7"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 32,
+          "allocatedHours": 21,
+          "availableHours": 11,
+          "taskIds": [
+            "a1f35e13-4367-5165-adcd-24233e4874b7"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 32,
+          "allocatedHours": 21,
+          "availableHours": 11,
+          "taskIds": [
+            "a1f35e13-4367-5165-adcd-24233e4874b7"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "559eec35-24d9-55ce-be88-0063e45635de",
+      "name": "Robert Chen",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 38,
+          "allocatedHours": 16.4,
+          "availableHours": 21.6,
+          "taskIds": [
+            "4ff88b86-275d-53b6-a2fb-2d71d7855f1d"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 38,
+          "allocatedHours": 0,
+          "availableHours": 38,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 38,
+          "allocatedHours": 0,
+          "availableHours": 38,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 38,
+          "allocatedHours": 0,
+          "availableHours": 38,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "bf70ce19-b249-5c08-839f-449e1d5cddd8",
+      "name": "Sarah Mitchell",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    },
+    {
+      "userId": "6aef8e3b-e295-5aef-ba46-bbfaa730ca21",
+      "name": "Thomas Baker",
+      "weeks": [
+        {
+          "weekStart": "2026-09-14",
+          "capacityHours": 40,
+          "allocatedHours": 0,
+          "availableHours": 40,
+          "taskIds": [],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-21",
+          "capacityHours": 40,
+          "allocatedHours": 2,
+          "availableHours": 38,
+          "taskIds": [
+            "3331ff63-a2a6-512a-a4d1-9c2b375cc193"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-09-28",
+          "capacityHours": 40,
+          "allocatedHours": 10,
+          "availableHours": 30,
+          "taskIds": [
+            "3331ff63-a2a6-512a-a4d1-9c2b375cc193"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        },
+        {
+          "weekStart": "2026-10-05",
+          "capacityHours": 40,
+          "allocatedHours": 10,
+          "availableHours": 30,
+          "taskIds": [
+            "3331ff63-a2a6-512a-a4d1-9c2b375cc193"
+          ],
+          "unknownTaskIds": [],
+          "knowledgeState": "KNOWN"
+        }
+      ]
+    }
+  ]
+}

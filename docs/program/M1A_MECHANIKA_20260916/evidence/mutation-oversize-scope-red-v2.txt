@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-v2-20260916
+
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps an unquantified task UNKNOWN instead of reporting known zero
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps a Friday timestamp-without-time-zone Date in its local week
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > preserves an explicitly declared zero capacity instead of replacing it with 40h
+ × server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > rejects an oversized initiative scope instead of silently truncating it 60ms
+   → expected [Function] to throw error including 'M1_INITIATIVE_SCOPE_INVALID' but got 'M1_USER_NOT_FOUND'
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > does not turn a real task allocation query failure into fallback demand
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > fails closed when the user is outside the organization scope
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > rejects an oversized initiative scope instead of silently truncating it
+AssertionError: expected [Function] to throw error including 'M1_INITIATIVE_SCOPE_INVALID' but got 'M1_USER_NOT_FOUND'
+
+Expected: "M1_INITIATIVE_SCOPE_INVALID"
+Received: "M1_USER_NOT_FOUND"
+
+ ❯ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts:182:71
+    180|   it('rejects an oversized initiative scope instead of silently trunca…
+    181|     const initiativeIds = Array.from({ length: 101 }, (_, index) => `i…
+    182|     await expect(getUserForecast('org-1', 'user-1', { initiativeIds })…
+       |                                                                       ^
+    183|       'M1_INITIATIVE_SCOPE_INVALID'
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  13:11:19
+   Duration  1.59s (transform 295ms, setup 380ms, import 206ms, tests 63ms, environment 733ms)
+

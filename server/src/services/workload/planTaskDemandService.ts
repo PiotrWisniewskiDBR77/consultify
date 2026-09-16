@@ -61,7 +61,12 @@ interface NormalizedPeriod extends PlanDemandPeriod {
 
 function dateDay(value: string | Date | null): number | null {
   if (!value) return null;
-  const text = value instanceof Date ? value.toISOString() : String(value);
+  const text =
+    value instanceof Date
+      ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(
+          value.getDate()
+        ).padStart(2, '0')}`
+      : String(value);
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
   if (!match) return null;
   const normalized = `${match[1]}-${match[2]}-${match[3]}`;
@@ -75,10 +80,7 @@ function periodEndExclusiveDay(value: string | Date): number | null {
   const day = dateDay(value);
   if (day === null) return null;
   if (value instanceof Date) {
-    return value.getUTCHours() ||
-      value.getUTCMinutes() ||
-      value.getUTCSeconds() ||
-      value.getUTCMilliseconds()
+    return value.getHours() || value.getMinutes() || value.getSeconds() || value.getMilliseconds()
       ? day + 1
       : day;
   }

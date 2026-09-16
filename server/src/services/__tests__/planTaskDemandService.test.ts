@@ -72,6 +72,25 @@ describe('M1a plan task demand', () => {
     expect(result.cells[0].contributions[0].startSource).toBe('created_at');
   });
 
+  it('keeps the local calendar day of database Date values', () => {
+    const result = calculatePlanTaskDemand(
+      [
+        {
+          taskId: 'local-friday-start',
+          userId: 'user-1',
+          roleLabel: 'Planner',
+          estimatedHours: 88,
+          startedAt: null,
+          createdAt: new Date(2026, 8, 18, 17),
+          dueDate: new Date(2026, 9, 16, 17),
+        },
+      ],
+      periods
+    );
+
+    expect(result.cells.find((cell) => cell.periodId === 'W2')?.demandHours).toBeGreaterThan(0);
+  });
+
   it('returns UNKNOWN instead of zero when a contributing task has no estimate', () => {
     const result = calculatePlanTaskDemand(
       [

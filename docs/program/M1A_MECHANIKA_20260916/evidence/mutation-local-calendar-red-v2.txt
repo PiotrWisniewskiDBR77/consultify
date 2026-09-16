@@ -1,0 +1,64 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-v2-20260916
+
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > spreads hours over working days and keeps task provenance in each cell
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > uses created_at as the explicit temporary fallback when started_at is absent
+ × server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps the local calendar day of database Date values 52ms
+   → actual value must be number or bigint, received "undefined"
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > returns UNKNOWN instead of zero when a contributing task has no estimate
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > does not invent a period for a task without a due date
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps weekend-only work in the period containing the due date
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > treats a plan end-of-day timestamp as an inclusive calendar date
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > reads only the explicit organization and initiative scope
+ ↓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > rejects an invalid scope or period contract before reading data
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps an unquantified task UNKNOWN instead of reporting known zero
+ × server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps a Friday timestamp-without-time-zone Date in its local week 87ms
+   → expected [] to deeply equal [ 'friday-start' ]
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > preserves an explicitly declared zero capacity instead of replacing it with 40h
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > rejects an oversized initiative scope instead of silently truncating it
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > does not turn a real task allocation query failure into fallback demand
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > fails closed when the user is outside the organization scope
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps the local calendar day of database Date values
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ server/src/services/__tests__/planTaskDemandService.test.ts:91:78
+     89|     );
+     90|
+     91|     expect(result.cells.find((cell) => cell.periodId === 'W2')?.demand…
+       |                                                                              ^
+     92|   });
+     93|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps a Friday timestamp-without-time-zone Date in its local week
+AssertionError: expected [] to deeply equal [ 'friday-start' ]
+
+- Expected
++ Received
+
+- [
+-   "friday-start",
+- ]
++ []
+
+ ❯ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts:103:26
+    101|     });
+    102|
+    103|     expect(week.taskIds).toEqual(['friday-start']);
+       |                          ^
+    104|     expect(week.allocatedHours).toBeGreaterThan(0);
+    105|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 15 skipped (17)
+   Start at  13:11:26
+   Duration  1.79s (transform 644ms, setup 867ms, import 337ms, tests 146ms, environment 1.52s)
+

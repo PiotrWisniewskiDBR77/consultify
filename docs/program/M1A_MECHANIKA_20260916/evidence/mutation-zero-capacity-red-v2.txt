@@ -1,0 +1,40 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-v2-20260916
+
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > uses profile capacity once and spreads each task over its actual weeks
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps an unquantified task UNKNOWN instead of reporting known zero
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > keeps a Friday timestamp-without-time-zone Date in its local week
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > prefers explicit task allocations and preserves their task provenance
+ × server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > preserves an explicitly declared zero capacity instead of replacing it with 40h 87ms
+   → expected 40 to be +0 // Object.is equality
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > rejects an oversized initiative scope instead of silently truncating it
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > does not turn a real task allocation query failure into fallback demand
+ ↓ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > fails closed when the user is outside the organization scope
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts > M1a getUserForecast > preserves an explicitly declared zero capacity instead of replacing it with 40h
+AssertionError: expected 40 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 40
+
+ ❯ server/src/services/__tests__/workloadCapacityService.userForecast.m1.test.ts:175:32
+    173|     });
+    174|
+    175|     expect(week.capacityHours).toBe(0);
+       |                                ^
+    176|     expect(week.availableHours).toBe(0);
+    177|     expect(week.allocatedHours).toBe(8);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  13:11:16
+   Duration  1.65s (transform 333ms, setup 405ms, import 333ms, tests 92ms, environment 602ms)
+
