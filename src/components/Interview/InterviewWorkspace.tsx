@@ -2810,6 +2810,29 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     </Callout>
   );
 
+  const aiReviewSummaryLine = (aiEvaluation ||
+    isAiEvaluating ||
+    aiEvaluationError ||
+    assignmentStatus === 'submitted') && (
+    <div className="flex shrink-0 items-center gap-2 border-b border-c-border bg-c-surface-raised/40 px-4 py-2 text-xs">
+      <span className="font-semibold text-c-text">{t('interview.workspace.aiQualityReview')}</span>
+      <span className="min-w-0 flex-1 truncate text-c-text-muted">
+        {isAiEvaluating
+          ? t('interview.workspace.aiIsReviewingAnswerQuality')
+          : aiEvaluation
+            ? `${aiVerdictLabel} · ${aiEvaluation.overallScore.toFixed(1)}/5`
+            : aiEvaluationError || t('interview.workspace.aiReviewMissing')}
+      </span>
+      <button
+        type="button"
+        onClick={() => void runAiQualityReview()}
+        className="font-medium text-c-text-secondary underline underline-offset-2 hover:text-c-text"
+      >
+        {isAiEvaluating ? t('interview.workspace.running') : t('interview.workspace.refresh')}
+      </button>
+    </div>
+  );
+
   const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
@@ -3304,7 +3327,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <div className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center">
                 <Users size={14} className="text-blue-500" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 max-w-[22rem]">
                 <div className="text-sm font-medium text-c-text-secondary truncate">{s.name}</div>
                 <div className="text-xs text-c-text-muted truncate">{s.role}</div>
               </div>
@@ -3720,7 +3743,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 )}
               />
               <span
-                className="hidden max-w-[28rem] truncate rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs text-c-text-secondary xl:inline-flex"
+                className="hidden max-w-[22rem] truncate rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs text-c-text-secondary xl:inline-flex"
                 title={`${headerTemplateName} · ${headerAssigneeName} · ${headerDueAt}`}
               >
                 {headerTemplateName} · {headerAssigneeName} · {headerDueAt}
@@ -3913,7 +3936,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             )}
 
           {managerFeedback}
-          {aiReviewPanel}
+          {aiReviewSummaryLine}
           <main className="min-h-0 flex-1">
             {totalCount > 0 ? (
               <InterviewSingleQuestionRuntime
