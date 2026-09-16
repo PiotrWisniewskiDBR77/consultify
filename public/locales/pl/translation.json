@@ -10960,6 +10960,27 @@
         "server": "DANE Z SERWERA",
         "recoveryDraft": "SZKIC ODZYSKIWANIA",
         "demoLocal": "DANE LOKALNE"
+      },
+      "levelInterview": {
+        "summary": "Poziomy 1–{{count}} · bieżący {{current}} · cel {{target}}",
+        "yes": "Tak",
+        "no": "Nie",
+        "help": "Potrzebuję pomocy",
+        "current": "Bieżący",
+        "target": "Cel",
+        "levelTitle": "Poziom {{level}} — {{name}}",
+        "why": "Dlaczego pytamy",
+        "helperQuestions": "Pytania pomocnicze ({{count}})",
+        "answer": "Twoja odpowiedź dla tego poziomu",
+        "evidence": "Dowody: {{count}} plików",
+        "attach": "Załącz",
+        "askTeresa": "Zapytaj Teresę",
+        "decision": "Decyzja dla poziomu {{level}}",
+        "saving": "Zapisywanie…",
+        "saveNext": "Zapisz i przejdź dalej",
+        "helpTaskTitle": "Potrzebny dowód: {{area}}, poziom {{level}}",
+        "helpTaskDescription": "Rozwiąż otwarte pytanie o dowód dla sesji DRD {{sessionId}}, obszaru {{area}}, poziomu {{level}}.",
+        "helpBlocker": "Otwarte prośby o pomoc z dowodem: {{count}}"
       }
     },
     "glossary": {

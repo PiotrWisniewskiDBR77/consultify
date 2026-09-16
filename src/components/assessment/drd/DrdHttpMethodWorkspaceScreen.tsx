@@ -44,6 +44,13 @@ import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorksp
 import { EmptyState } from '@/components/shared/states';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
+import {
+  DRD_HELP_JUSTIFICATION_MARKER,
+  DrdLevelInterviewWorkspace,
+  drdLevelDecisions,
+  pickDrdEvidenceOwnerId,
+  type DrdLevelDecision,
+} from '@/components/assessment/drd/DrdLevelInterviewWorkspace';
 import { StandardTable } from '@/components/standard/StandardTable';
 import { PracujZAI } from '@/components/standard/PracujZAI';
 import type { PoleDoUzupelnienia, ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
@@ -73,9 +80,11 @@ import {
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
 import type { MethodEvent, MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
 import { normalizeAppRole } from '@/utils/roleGuards';
+import { isDrdInterviewV2Enabled } from '@/utils/drdInterviewV2Flag';
 
 import {
   buildMatrixRowsForAxis,
@@ -86,6 +95,7 @@ import {
   evidenceStrengthFor,
   getOutputUnitColumns,
   questionAnswerState,
+  targetLevelFor,
 } from './drdWorkspaceViewModel';
 import { useDrdPack } from './useDrdPack';
 import { AssessmentSaveStateIndicator } from './AssessmentSaveStateIndicator';
@@ -472,6 +482,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   // DEC-461: the questionnaire body (area names, question wording, "Why do we
   // ask") follows the viewer's language. Was a module-level Polish const.
   const pack = useDrdPack();
+  const drdInterviewV2 = isDrdInterviewV2Enabled();
   // MVP-OWNER-FREEZE (2026-09-05) — czytane NA GÓRZE komponentu, przed
   // jakimkolwiek wczesnym `return` (reguły hooków); używane dopiero przy
   // `canFreeze` niżej.
@@ -1040,6 +1051,72 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     handleUnitNav(1);
   }, [pinnedFocus, activeArea.id, derivedFocusLevel, handleUnitNav]);
 
+  const handleLevelDecision = useCallback(
+    async (decision: DrdLevelDecision, text: string) => {
+      const questionId = focusQuestions[0]?.questionId;
+      if (!questionId || !runtime || !canWrite || !state?.session) return;
+
+      if (decision === 'help') {
+        const roleRoster = await Api.get(`/method/sessions/${state.session.id}/roles`);
+        const evidenceOwnerId = pickDrdEvidenceOwnerId(roleRoster, state.session.ownerUserId);
+        await Api.post('/tasks', {
+          title: t('assessment.drd.levelInterview.helpTaskTitle', 'Evidence needed: {{area}}, level {{level}}', {
+            area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+            level: focusLevelFallback,
+          }),
+          description: t(
+            'assessment.drd.levelInterview.helpTaskDescription',
+            'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
+            { sessionId: state.session.id, area: activeArea.id, level: focusLevelFallback }
+          ),
+          status: 'todo',
+          priority: 'medium',
+          projectId: state.session.projectId ?? null,
+          assigneeId: evidenceOwnerId,
+          source: 'assessment',
+          sourceType: 'method_session',
+          sourceId: state.session.id,
+          idempotencyKey: `drd-help:${state.session.id}:${activeArea.id}:${focusLevelFallback}`,
+        });
+      }
+
+      const answerState = decision === 'yes' ? 'confirmed' : decision === 'no' ? 'no' : 'dont_know';
+      await runtime.recordAnswer({
+        unitId: activeArea.id,
+        level: focusLevelFallback,
+        questionId,
+        answerState,
+        text,
+        justification:
+          decision === 'help'
+            ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
+            : undefined,
+      });
+
+      if (decision === 'yes') {
+        const nextLevel = activeArea.levels.find((item) => item.level === focusLevelFallback + 1);
+        if (nextLevel) setPinnedFocus({ unitId: activeArea.id, level: nextLevel.level });
+        else handleUnitNav(1);
+      } else if (decision === 'no') {
+        setPinnedFocus(null);
+        handleUnitNav(1);
+      } else {
+        setPinnedFocus({ unitId: activeArea.id, level: focusLevelFallback });
+      }
+    },
+    [
+      activeArea,
+      canWrite,
+      focusLevelFallback,
+      focusQuestions,
+      handleUnitNav,
+      isPolish,
+      runtime,
+      state?.session,
+      t,
+    ]
+  );
+
   // DEC-2026-08-25-55: skip requires one of the 4 dictionary codes (enforced
   // by InterviewFocusPanel's select) — recorded as a real `recordAnswer` call
   // over the SAME HTTP endpoint as every other answer, then the workspace
@@ -1208,6 +1285,17 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           count: pendingPreviews.length,
         })
       );
+    const openHelpCount = pack.units.reduce(
+      (count, unit) =>
+        count + [...drdLevelDecisions(events, unit.unitId).values()].filter((decision) => decision === 'help').length,
+      0
+    );
+    if (openHelpCount > 0)
+      freezeBlockers.push(
+        t('assessment.drd.levelInterview.helpBlocker', '{{count}} open evidence help request(s)', {
+          count: openHelpCount,
+        })
+      );
     const frozenAlready = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
     return {
       answeredUnits,
@@ -1217,7 +1305,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       pendingProposals: pendingPreviews.length,
       freezeBlockers: frozenAlready ? [] : freezeBlockers,
     };
-  }, [events, pendingPreviews.length, state?.session?.state, t]);
+  }, [events, pack.units, pendingPreviews.length, state?.session?.state, t]);
 
   const activeAreaName = nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish);
   const activeAxisName = nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish);
@@ -1781,6 +1869,34 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             canGoBack: true,
             canGoNext: true,
           }}
+          interviewContent={
+            drdInterviewV2 ? (
+              <DrdLevelInterviewWorkspace
+                axis={activeAxis}
+                area={activeArea}
+                levels={pack.levels
+                  .filter((level) => level.unitId === activeArea.id)
+                  .sort((a, b) => a.level - b.level)}
+                questions={pack.questions.filter((question) => question.unitId === activeArea.id)}
+                events={events}
+                selectedLevel={focusLevelFallback}
+                currentLevel={activeProgression.currentLevel}
+                targetLevel={targetLevelFor(events, activeArea.id)}
+                answerText={
+                  focusQuestions[0]
+                    ? draftAnswerText[focusQuestions[0].questionId] ??
+                      questionAnswerState(events, focusQuestions[0].questionId).text
+                    : ''
+                }
+                canWrite={canWrite && !isFrozen}
+                onAnswerChange={handleAnswerChange}
+                onSelectLevel={(level) => setPinnedFocus({ unitId: activeArea.id, level })}
+                onSaveDecision={handleLevelDecision}
+                onEvidenceDrop={(questionId, files) => void handleEvidenceDrop(questionId, files)}
+                onAskTeresa={(questionId) => void handleAskTeresa(questionId)}
+              />
+            ) : undefined
+          }
           teresaProps={{
             sixQuestions: teresaSixQuestions,
             proposalQueue: pendingPreviews,
@@ -1799,8 +1915,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               selection={matrixSelection}
               onSelect={(sel) => {
                 setMatrixSelection(sel);
-                setPinnedFocus(null);
+                setPinnedFocus({ unitId: sel.unitId, level: sel.level });
                 setActiveUnitId(sel.unitId);
+                if (drdInterviewV2) setViewMode('interview');
               }}
               onCloseSideSheet={() => setMatrixSelection(null)}
               renderSideSheet={(selection, cell) => (
@@ -1834,8 +1951,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             selection: matrixSelection,
             onSelect: (sel) => {
               setMatrixSelection(sel);
-              setPinnedFocus(null);
+              setPinnedFocus({ unitId: sel.unitId, level: sel.level });
               setActiveUnitId(sel.unitId);
+              if (drdInterviewV2) setViewMode('interview');
             },
             onCloseSideSheet: () => setMatrixSelection(null),
             renderSideSheet: (selection, cell) => (

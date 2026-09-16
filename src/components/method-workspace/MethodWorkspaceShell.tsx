@@ -66,6 +66,8 @@ export interface MethodWorkspaceShellProps {
 
   navigatorProps: Omit<MethodNavigatorProps, 'className'>;
   interviewProps: Omit<InterviewFocusPanelProps, 'className'>;
+  /** Method-specific interview workspace; preserves the shared shell and navigator. */
+  interviewContent?: React.ReactNode;
   teresaProps: Omit<TeresaPreviewPanelProps, 'className'>;
   matrixProps: Omit<LiveMatrixProps, 'className' | 'methodName'>;
   /**
@@ -163,6 +165,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   onSaveStay,
   navigatorProps,
   interviewProps,
+  interviewContent,
   teresaProps,
   matrixProps,
   matrixContent,
@@ -589,7 +592,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             </div>
           ) : (
             <div className="min-w-0 flex-1 overflow-y-auto p-4">
-              <InterviewFocusPanel {...interviewProps} readOnly={readOnly} />
+              {interviewContent ?? <InterviewFocusPanel {...interviewProps} readOnly={readOnly} />}
             </div>
           )}
         </div>
