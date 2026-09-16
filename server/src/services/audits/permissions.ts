@@ -244,6 +244,13 @@ const PLATFORM_ADMIN_CAPABILITIES: AuditCapability[] = [
   'program.manage_members',
 ];
 
+/**
+ * A platform OWNER may prepare a draft report without joining the audit team.
+ * This is deliberately narrower than an audit role: approval, publication,
+ * evidence and finding capabilities remain program-role gated.
+ */
+const PLATFORM_OWNER_CAPABILITIES: AuditCapability[] = ['report.draft'];
+
 // ---------------------------------------------------------------------------
 // Odczyt ról
 // ---------------------------------------------------------------------------
@@ -301,6 +308,9 @@ export async function resolveProgramAccess(
   const platformAdmin = isPlatformAdmin(actor);
   if (platformAdmin) {
     for (const cap of PLATFORM_ADMIN_CAPABILITIES) capabilities.add(cap);
+  }
+  if (String(actor.platformRole || '').toLowerCase() === 'owner') {
+    for (const cap of PLATFORM_OWNER_CAPABILITIES) capabilities.add(cap);
   }
   return {
     roles,

@@ -60,7 +60,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { auditGet, auditRun } from '../auditsDb.js';
 import { assignCriterion, concludeCriterion, recordTest } from '../criterionService.js';
 import { finalizeOutput } from '../outputService.js';
-import { requireCapability } from '../permissions.js';
+import { requireCapability, resolveProgramAccess } from '../permissions.js';
 import { approveReport, generateReport, publishReport } from '../reportService.js';
 import type { AuditActor } from '../types.js';
 import { addMember, cleanupFixture, createFixture, requireRealPg, uid } from './testHelpers.js';
@@ -256,4 +256,79 @@ suite('program_owner — pełny łańcuch sesja → wynik → raport → wniosek
       await cleanupFixture(fixture.organizationId);
     }
   }, 30_000);
+
+  it('platform OWNER bez audit_program_members tworzy wyłącznie draft raportu', async () => {
+    requireRealPg();
+
+    const fixture = await createFixture();
+    try {
+      // Przygotowanie zatwierdzonego Outputu należy do zespołu audytowego.
+      // Po tym kroku usuwamy członkostwo, aby właściwa asercja mierzyła OWNER
+      // platformy bez żadnej roli w programie.
+      const auditorId = uid('user-auditor');
+      await addMember(fixture.organizationId, fixture.programId, auditorId, 'program_owner');
+      const auditor: AuditActor = {
+        organizationId: fixture.organizationId,
+        userId: auditorId,
+        platformRole: 'user',
+      };
+      await assignCriterion(fixture.organizationId, auditor, fixture.criterionId, {
+        auditorId,
+        auditeeId: null,
+      });
+      await recordTest(fixture.organizationId, auditor, fixture.criterionId, {
+        procedurePerformed: 'OWNER draft capability fixture',
+        sampleDescription: '1 z 1',
+        testPerformed: 'Contract setup',
+        testResult: 'fail',
+      });
+      await concludeCriterion(fixture.organizationId, auditor, fixture.criterionId, {
+        auditorConclusion: 'Nonconforming fixture',
+        conformityStatus: 'nonconforming',
+      });
+      const output = await finalizeOutput(fixture.organizationId, auditor, fixture.programId, {
+        title: 'OWNER draft source',
+      });
+      await auditRun(`DELETE FROM audit_program_members WHERE organization_id = $1`, [
+        fixture.organizationId,
+      ]);
+
+      const owner: AuditActor = {
+        organizationId: fixture.organizationId,
+        userId: uid('platform-owner'),
+        platformRole: 'owner',
+      };
+      const access = await resolveProgramAccess(owner, fixture.programId);
+      expect(access.roles).toEqual([]);
+      expect(access.capabilities.has('report.draft')).toBe(true);
+      for (const forbidden of [
+        'report.approve',
+        'report.publish',
+        'evidence.review',
+        'finding.draft',
+      ] as const) {
+        expect(access.capabilities.has(forbidden), forbidden).toBe(false);
+      }
+
+      const report = await generateReport(fixture.organizationId, owner, {
+        programId: fixture.programId,
+        outputId: output.id,
+        reportKind: 'audit_report',
+        title: 'OWNER-created audit draft',
+      });
+      expect(report.status).toBe('draft');
+      expect(report.createdBy).toBe(owner.userId);
+
+      const memberCount = await auditGet<{ count: string }>(
+        `SELECT count(*)::text AS count FROM audit_program_members
+          WHERE organization_id = $1 AND user_id = $2`,
+        [fixture.organizationId, owner.userId],
+      );
+      expect(memberCount?.count).toBe('0');
+    } finally {
+      await auditRun(`DELETE FROM audit_reports WHERE organization_id = $1`, [fixture.organizationId]);
+      await auditRun(`DELETE FROM audit_outputs WHERE organization_id = $1`, [fixture.organizationId]);
+      await cleanupFixture(fixture.organizationId);
+    }
+  }, 60_000);
 });
