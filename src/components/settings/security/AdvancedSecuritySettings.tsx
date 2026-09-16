@@ -1049,7 +1049,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   securitySettings.enable_geolocation_alerts
                     ? 'bg-danger-500'
-                    : 'bg-c-surface-raised'
+                    : 'bg-c-control-track'
                 }`}
               >
                 <span

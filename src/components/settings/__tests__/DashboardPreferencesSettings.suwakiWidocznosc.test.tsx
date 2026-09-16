@@ -28,18 +28,22 @@ vi.mock('react-i18next', () => ({
 import { SettingsToggleControl } from '../shared';
 
 /** Tokeny z `src/index.css` — tor MUSI się różnić od gałki i od tła kafelka. */
-const TOR_OFF = 'bg-c-border';
+// K-20b (DEC-575): `bg-c-border` (1,25:1 vs `--c-surface`) też był za słabym
+// torem — patrz `SettingsSection.tsx` komentarz nad `SettingsToggleControl`.
+// Zastąpiony dedykowanym `bg-c-control-track` (≥3:1 w obu motywach).
+const TOR_OFF = 'bg-c-control-track';
 const TOR_ON = 'bg-c-focus-solid';
 const TLO_KAFELKA = 'bg-c-surface-raised';
 
 describe('P-T06 — pstryczek ustawień widoczny w obu stanach', () => {
-  it('OFF: tor to `c-border`, nigdy `c-surface-raised` (tło kafelka)', () => {
+  it('OFF: tor to `c-control-track`, nigdy `c-surface-raised` (tło kafelka) ani `c-border` (K-20b)', () => {
     render(<SettingsToggleControl checked={false} onChange={vi.fn()} ariaLabel="Tasks" />);
     const klasy = screen.getByRole('switch', { name: 'Tasks' }).className;
 
     expect(klasy).toContain(TOR_OFF);
     expect(klasy).not.toContain(TLO_KAFELKA);
     expect(klasy).not.toContain('bg-c-surface ');
+    expect(klasy).not.toMatch(/(^|\s)bg-c-border(\s|$)/);
   });
 
   it('ON: tor to neutralne `c-focus-solid`, nigdy crimson (CLAUDE.md §3)', () => {

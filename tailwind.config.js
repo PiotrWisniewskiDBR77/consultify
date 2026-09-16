@@ -86,6 +86,12 @@ export default {
           'border-subtle': cTok('border-subtle'),
           border: cTok('border'),
           'border-strong': cTok('border-strong'),
+          // K-20b (DEC-575): OFF-track for toggle switches — `border` (1,25:1 vs
+          // `c-surface` white) is a hairline value, not a ≥3:1 control-contrast
+          // value. See src/index.css `--c-control-track` for measured contrast.
+          // Use ONLY for the toggle track (SettingsToggleControl + the 9 bespoke
+          // tracks it replaces) — never as a generic border/divider substitute.
+          'control-track': cTok('control-track'),
           text: cTok('text'),
           'text-secondary': cTok('text-secondary'),
           'text-muted': cTok('text-muted'),

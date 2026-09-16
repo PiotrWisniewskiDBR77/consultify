@@ -562,7 +562,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                               onClick={() => toggleShortcut(shortcut.id)}
                               className={cn(
                                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
-                                isDisabled ? 'bg-c-surface-raised' : 'bg-navy-900'
+                                isDisabled ? 'bg-c-control-track' : 'bg-navy-900'
                               )}
                             >
                               <span
