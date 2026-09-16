@@ -49,7 +49,7 @@ describe('OrganizationController', () => {
 
       await OrganizationController.getCurrentOrganizations(mockReq, mockRes, vi.fn());
 
-      expect(organizationService.getUserOrganizations).toHaveBeenCalledWith('user-1');
+      expect(organizationService.getUserOrganizations).toHaveBeenCalledWith('user-1', undefined);
       expect(jsonFn).toHaveBeenCalledWith({
         organizations: [
           expect.objectContaining({
@@ -59,6 +59,43 @@ describe('OrganizationController', () => {
         ],
       });
       expect(mockRes.set).toHaveBeenCalledWith('Cache-Control', 'no-store, private');
+    });
+
+    it('puts the token organization first when the persisted organization order is stale', async () => {
+      mockReq.organizationId = 'org-token';
+      (organizationService.getUserOrganizations as any).mockResolvedValue([
+        { id: 'org-persisted', name: 'Alpha Persisted', role: 'OWNER', is_current: true },
+        { id: 'org-token', name: 'Zulu Token', role: 'MEMBER', is_current: false },
+      ]);
+
+      await OrganizationController.getCurrentOrganizations(mockReq, mockRes, vi.fn());
+
+      expect(organizationService.getUserOrganizations).toHaveBeenCalledWith(
+        'user-1',
+        'org-token'
+      );
+      expect(jsonFn).toHaveBeenCalledWith({
+        organizations: [
+          expect.objectContaining({ id: 'org-token', is_current: true }),
+          expect.objectContaining({ id: 'org-persisted', is_current: false }),
+        ],
+      });
+    });
+
+    it('preserves the service current organization when request context is absent', async () => {
+      (organizationService.getUserOrganizations as any).mockResolvedValue([
+        { id: 'org-current', name: 'Zulu Current', role: 'OWNER', is_current: true },
+        { id: 'org-alpha', name: 'Alpha', role: 'MEMBER', is_current: false },
+      ]);
+
+      await OrganizationController.getCurrentOrganizations(mockReq, mockRes, vi.fn());
+
+      expect(jsonFn).toHaveBeenCalledWith({
+        organizations: [
+          expect.objectContaining({ id: 'org-current', is_current: true }),
+          expect.objectContaining({ id: 'org-alpha', is_current: false }),
+        ],
+      });
     });
 
     it('should return 401 if user is not authenticated', async () => {

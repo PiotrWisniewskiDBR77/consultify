@@ -144,6 +144,7 @@ interface UserOrganization {
   name: string;
   billing_status: string;
   role: OrganizationRole;
+  is_current: boolean;
   // F3b (DEC-463): org's own industry, used by the Megatrends panel to default
   // to a real baseline instead of a hardcoded 'automotive' for every org.
   industry: string | null;
@@ -414,14 +415,21 @@ export async function getActiveMembers(orgId: string): Promise<Member[]> {
 /**
  * Get organizations for a user
  */
-export async function getUserOrganizations(userId: string): Promise<UserOrganization[]> {
+export async function getUserOrganizations(
+  userId: string,
+  currentOrganizationId?: string
+): Promise<UserOrganization[]> {
   const rows = await DbPromise.all<UserOrganization>(
     db,
-    `SELECT o.id, o.name, o.billing_status, o.industry, m.role
+    `SELECT o.id, o.name, o.billing_status, o.industry, m.role,
+            (o.id = COALESCE(?, u.organization_id)) AS is_current
          FROM organizations o
          JOIN organization_members m ON o.id = m.organization_id
-         WHERE m.user_id = ?`,
-    [userId]
+         JOIN users u ON u.id = m.user_id
+         WHERE m.user_id = ?
+           AND m.status = 'ACTIVE'
+         ORDER BY is_current DESC, o.name ASC`,
+    [currentOrganizationId ?? null, userId]
   );
 
   return rows || [];

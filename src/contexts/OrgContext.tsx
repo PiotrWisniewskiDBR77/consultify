@@ -129,7 +129,10 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
       const currentFromToken = orgs.find((o) => o.is_current);
       const savedOrg = orgs.find((o) => o.id === savedOrgId);
 
-      const resolved = savedOrg || currentFromToken || orgs[0] || null;
+      // The authenticated token is the server-authoritative tenant context.
+      // A browser may still carry a selection from an older session, so use
+      // localStorage only when the token response does not identify an org.
+      const resolved = currentFromToken || savedOrg || orgs[0] || null;
       if (resolved) {
         setCurrentOrg(resolved);
         localStorage.setItem(STORAGE_KEY, resolved.id);
