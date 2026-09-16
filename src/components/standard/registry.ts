@@ -73,7 +73,13 @@ export type KartaNKey =
   | 'finance-statement-pack'
   | 'finance-analysis'
   | 'execution-report'
-  | 'execution-work-doc';
+  | 'execution-work-doc'
+  // [ODMROZENIE WSPOLNE DEC-573] MeetingObjectPage.tsx woła
+  // `<StandardArtifactShell karta={'meeting' as KartaNKey}>` (SPEC-A §11.2)
+  // od dnia 10 (MEETING-1) — nie miał wpisu w rejestrze, bez którego karta
+  // nie może wołać silnika „Analizuj z AI" (`CardAnalysisArtifactType =
+  // KartaNKey`), tak samo jak `metric`/`objective`/`roi_case` wcześniej.
+  | 'meeting';
 
 /**
  * Klasa wielkości wg SPEC-A §12.2 (drabina otwierania) i SPEC-N §2.1:
@@ -300,6 +306,8 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
   'finance-analysis': { nazwa: 'Analiza finansowa', komponent: 'src/components/Finance/Analysis/AnalysisWorkspace.tsx', klasa: 'L', paragraf: 'DEC-440', statusMigracji: 'przed' },
   'execution-report': { nazwa: 'Raport realizacji', komponent: 'src/components/Execution/ExecutionReportDocument.tsx', klasa: 'L', paragraf: 'P14-A · DEC-433 · DEC-441', statusMigracji: 'zmigrowana' },
   'execution-work-doc': { nazwa: 'Element pracy realizacji', komponent: 'src/components/Execution/ExecutionWorkSurface.tsx', klasa: 'L', paragraf: 'DEC-441', statusMigracji: 'przed' },
+  // [ODMROZENIE WSPOLNE DEC-573] Patrz komentarz przy kluczu 'meeting' wyżej.
+  meeting: { nazwa: 'Spotkanie', komponent: 'src/components/Meeting/MeetingObjectPage.tsx', klasa: 'L', paragraf: 'SPEC-A §11.2 · MEETING-1 · DEC-573', statusMigracji: 'zmigrowana' },
 };
 
 /** Wszystkie klucze rejestru — do iteracji w testach i skryptach. */

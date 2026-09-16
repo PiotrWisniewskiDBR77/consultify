@@ -75,18 +75,36 @@ analyze_payload() {
   local payload="$1"
   printf '%s' "$payload" | awk '
     function lower(s) { return tolower(s) }
-    BEGIN { zone = ""; tzone = ""; tabzone = ""; tn = 0; tabn = 0 }
+    BEGIN { zone = ""; tzone = ""; tabzone = ""; tn = 0; tabn = 0; tdepth = 0 }
     {
       line = lower($0)
-      if (line ~ /toolbaraction|primaryaction|modulebaraction|baraction|toolbaritem/) { zone = "toolbar"; tzone = "toolbar" }
-      else if (line ~ /kebabaction|kebabitem|overflowaction|secondaryaction|dropdownaction|kebabmenu|rowaction/) { zone = "kebab"; tzone = "" }
-      # `\s` is a GNU-awk extension. On macOS this runs under BSD awk, where
-      # `\s` matches a literal `s`, so these zone-closing rules never fired:
-      # the toolbar and tabs zones stayed open to end-of-file and swept up every
-      # later `id:` in the module. That is how ResultsRoiHub and ResultsOkrHub
-      # were both reported as "7/8 tabs" while really declaring 2 Menu-2 pills
-      # and 5 Menu-3 chips. Use the same POSIX class line 85 already uses.
-      else if (tzone == "toolbar" && line ~ /^[ \t]*\]/) { tzone = "" }
+      if (line ~ /kebabaction|kebabitem|overflowaction|secondaryaction|dropdownaction|kebabmenu|rowaction/) {
+        zone = "kebab"; tzone = ""; tdepth = 0
+      } else if (line ~ /toolbaraction|primaryaction|modulebaraction|baraction|toolbaritem/) {
+        zone = "toolbar"
+        if (tzone != "toolbar") { tzone = "toolbar"; tdepth = 0 }
+      }
+
+      # [MEETING-1b P4] Poprzednia wersja zamykała strefę TYLKO na "]" stojącym
+      # samotnie na linii — poprawne dla tablic (`toolbarActions: [...]`), ale
+      # `primaryAction={{ ... }}` to OBIEKT (MeetingObjectPage.tsx:995/1779), a
+      # obiekt nigdy nie kończy się "]". Strefa zostawała więc otwarta aż do
+      # końca pliku i zamiatała `id:` z NIEZWIĄZANEJ tabeli właściwości
+      # (`wierszeWlasciwosci`, 8 wierszy) zamiast realnych 2 akcji primaryAction
+      # (`zatwierdz-protokol` / `powiaz-z-zadaniami`). Naprawa: liczymy
+      # głębokość `{}`/`[]` OD linii, która otworzyła strefę, i zamykamy
+      # strefę dokładnie wtedy, gdy głębokość wraca do zera — działa
+      # symetrycznie dla tablic i dla pojedynczych obiektów/ternarów.
+      tzoneAktywnaWTejLinii = (tzone == "toolbar")
+      if (tzone == "toolbar") {
+        n = length(line)
+        for (i = 1; i <= n; i++) {
+          c = substr(line, i, 1)
+          if (c == "{" || c == "[") tdepth++
+          else if (c == "}" || c == "]") tdepth--
+        }
+        if (tdepth <= 0) { tzone = ""; tdepth = 0 }
+      }
 
       if (line ~ /[ \t.]tabs[ \t]*[:=]|hubtabs|moduletabs|tabdefinitions|tabconfig/) { tabzone = "tabs" }
       else if (tabzone == "tabs" && line ~ /^[ \t]*\]/) { tabzone = "" }
@@ -102,7 +120,7 @@ analyze_payload() {
         id = substr(rest, 1, q2 - 1)
         if (zone == "toolbar") { toolbar[id] = 1 }
         else if (zone == "kebab") { kebab[id] = 1 }
-        if (tzone == "toolbar") { tn++ }
+        if (tzoneAktywnaWTejLinii) { tn++ }
         if (tabzone == "tabs") { tabn++ }
         s = substr(s, RSTART + RLENGTH)
       }

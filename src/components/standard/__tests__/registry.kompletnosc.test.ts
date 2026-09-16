@@ -53,6 +53,12 @@ const OCZEKIWANE_W_REJESTRZE = [
   'finance-analysis',
   'execution-report',
   'execution-work-doc',
+  // [ODMROZENIE WSPOLNE DEC-573] `meeting` PRZESZŁA z wyjątków do rejestru:
+  // MeetingObjectPage.tsx woła `<StandardArtifactShell karta={'meeting' as
+  // KartaNKey}>` (SPEC-A §11.2, MEETING-1), a bez wpisu w rejestrze karta nie
+  // mogła wołać silnika „Analizuj z AI" — ten sam powód, dla którego
+  // `metric`/`objective` przeszły wcześniej (DEC-422).
+  'meeting',
 ] as const;
 
 const JAWNE_WYJATKI = {
@@ -61,7 +67,6 @@ const JAWNE_WYJATKI = {
   'audit-criterion': 'CriterionWorkspaceV2 jest rekordem audytu poza rejestrem',
   'audit-report': 'AuditReportDocumentView jest dokumentem raportu poza rejestrem',
   'assessment-report': 'AssessmentReportContractView ma osobny kontrakt raportu',
-  meeting: 'MeetingObjectPage jest rekordem spotkania poza rejestrem',
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
@@ -75,12 +80,12 @@ describe('P10 — kompletność rejestru kart N', () => {
     expect(EXECUTION_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['metrics', 'content']);
     expect(MANAGEMENT_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['report']);
   });
-  it('zawiera wszystkie 35 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434)', () => {
+  it('zawiera wszystkie 36 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434 + meeting DEC-573)', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
-  it('ma jawny, niepusty powód dla każdej z 6 kart poza rejestrem', () => {
-    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(6);
+  it('ma jawny, niepusty powód dla każdej z 5 kart poza rejestrem', () => {
+    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(5);
     for (const powod of Object.values(JAWNE_WYJATKI)) expect(powod.trim()).not.toBe('');
   });
 

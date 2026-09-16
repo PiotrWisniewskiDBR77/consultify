@@ -191,7 +191,7 @@ function ListField({
   items: string[];
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
         {icon}
         <span>{label}</span>
@@ -328,6 +328,14 @@ function noteStatusTone(
   return 'warning';
 }
 
+/** [MEETING-1b P2] `note.status` is a raw enum ('proposed'|'approved'|
+ * 'rejected') — render it through i18n instead of the English literal. */
+function noteStatusLabel(status: GovernedMeetingNoteDto['status'], t: TFunction): string {
+  if (status === 'approved') return t('meeting.object.noteStatusApproved', 'Approved');
+  if (status === 'rejected') return t('meeting.object.noteStatusRejected', 'Rejected');
+  return t('meeting.object.noteStatusProposed', 'Awaiting approval');
+}
+
 /** `decisions`/`actionItems` on a governed note are `Array<{decision?}|string>`
  * / `Array<{task?, owner?}|string>` (see `GovernedMeetingNoteDto`). Render
  * both shapes honestly instead of assuming the object form. */
@@ -354,7 +362,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
         {icon}
         <span>{title}</span>
@@ -1082,7 +1090,10 @@ export const MeetingObjectPage: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <StatusChip tone={noteStatusTone(note.status)} label={note.status} />
+                    <StatusChip
+                      tone={noteStatusTone(note.status)}
+                      label={noteStatusLabel(note.status, t)}
+                    />
                     {note.createdAt ? (
                       <span className="text-xs text-c-text-muted">
                         {formatDateTime(note.createdAt, isPolish)}
@@ -1388,8 +1399,29 @@ export const MeetingObjectPage: React.FC = () => {
               message={followUpRecordsError}
               retry={() => void loadFollowUpRecords(meeting.id)}
             />
-          ) : followUpRecords.length ? (
+          ) : followUpRecords.length || approvedNoteActionItems.length ? (
             <div className="space-y-2">
+              {/* [MEETING-1b P1] Symetrycznie do decyzji (:1220): pozycje z
+                  zatwierdzonej notatki, które NIE mają jeszcze wiersza w
+                  rejestrze `meeting_follow_ups` — dokładnie ta różnica, którą
+                  licznik w prawym panelu nazywa „N in minutes, not yet
+                  recorded". Bez tej etykiety lista i licznik znów mówiłyby
+                  dwie różne rzeczy o tym samym wierszu. */}
+              {approvedNoteActionItems.map((item) => (
+                <div
+                  key={`${item.noteId}-${item.index}`}
+                  className="rounded-xl border border-c-border-subtle px-3 py-2"
+                  data-testid="meeting-followup-from-minutes"
+                >
+                  <div className="text-sm text-c-text-secondary">{item.task}</div>
+                  {item.owner ? (
+                    <div className="mt-1 text-xs text-c-text-muted">{item.owner}</div>
+                  ) : null}
+                  <div className="mt-1 text-xs text-c-text-muted">
+                    {t('meeting.followUpRecords.fromMinutes', 'From the minutes — not yet recorded')}
+                  </div>
+                </div>
+              ))}
               {followUpRecords.map((item) => {
                 const busy = followUpActionId === item.id;
                 return (
