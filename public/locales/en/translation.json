@@ -49707,6 +49707,7 @@
       "noApprovedAssessments": "No approved assessments available",
       "selectAssessmentPlaceholder": "Select assessment…",
       "onlyApprovedWarning": "Only approved assessments can be used to create reports. Approve an assessment first.",
+      "missingReportSource": "This session has no report source yet — freeze it first.",
       "template": "Template",
       "notSelected": "Not selected",
       "fromLibrary": "From Library",

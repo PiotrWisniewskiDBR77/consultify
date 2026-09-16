@@ -226,6 +226,12 @@ interface AssessmentFromAPI {
   /** Identifies the canonical Method Core DRD rows from legacy assessments. */
   source?: 'method-core' | 'legacy';
   /**
+   * Report Builder still reads the legacy `assessments` table.  A canonical
+   * Method Core session therefore keeps its own id for navigation and carries
+   * the id of its legacy twin separately for report generation.
+   */
+  reportSourceId?: string | null;
+  /**
    * D-01: SCORE/CONFIDENCE/completion for the canonical Method Core DRD row,
    * carried over from its legacy twin (see `methodSessionToAssessment`). The
    * Processes projection already reads these keys off legacy rows; declaring
@@ -331,6 +337,7 @@ function methodSessionToAssessment(
   const twinCompletion = twin?.completionPercent ?? twin?.completion_percent ?? null;
   return {
     id: session.id,
+    reportSourceId: twin?.id ?? null,
     name: sessionName || twinName || `DRD · ${session.id.slice(0, 8)}`,
     description: session.domainStage || undefined,
     status: statusByState[session.state],
@@ -765,7 +772,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     const legacyNonDrd: AssessmentFromAPI[] = Array.isArray(legacyData)
       ? legacyData
           .filter((item) => String(item?.type || '').toUpperCase() !== 'DRD')
-          .map((item) => ({ ...item, source: 'legacy' as const }))
+          .map((item) => ({ ...item, source: 'legacy' as const, reportSourceId: item.id }))
       : [];
     if (legacyOutcome.status === 'fulfilled') writeCachedAssessmentHubList(legacyNonDrd);
     setAssessments([...canonicalDrd, ...legacyNonDrd]);
@@ -3083,6 +3090,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         onClose={() => setShowNewReportModal(false)}
         assessments={assessments.map((a) => ({
           id: a.id,
+          reportSourceId: a.reportSourceId ?? (a.source === 'legacy' ? a.id : null),
           name: a.name,
           type: a.type,
           status: a.status,

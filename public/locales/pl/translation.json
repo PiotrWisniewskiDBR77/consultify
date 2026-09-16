@@ -50070,6 +50070,7 @@
       "noApprovedAssessments": "Brak zatwierdzonych assessmentów",
       "selectAssessmentPlaceholder": "Wybierz assessment…",
       "onlyApprovedWarning": "Tylko zatwierdzone assessmenty mogą być użyte do utworzenia raportu. Najpierw zatwierdź assessment.",
+      "missingReportSource": "Ta sesja nie ma jeszcze źródła raportu — najpierw ją zamroź.",
       "template": "Szablon",
       "notSelected": "Nie wybrano",
       "fromLibrary": "Z Biblioteki",

@@ -9,6 +9,8 @@ import { ReportTemplatePickerModal } from './ReportTemplatePickerModal';
 
 type AssessmentOption = {
   id: string;
+  /** Legacy `assessments.id` consumed by Report Builder. */
+  reportSourceId?: string | null;
   name: string;
   type?: string;
   status?: string;
@@ -70,13 +72,15 @@ export function NewAssessmentReportModal(props: {
     [assessments, assessmentId]
   );
 
+  const selectedReportSourceId = selectedAssessment?.reportSourceId ?? null;
+
   // Only approved assessments can have reports created from them (backend requirement)
   const approvedAssessments = useMemo(
     () => assessments.filter((a) => a.status?.toUpperCase() === 'APPROVED'),
     [assessments]
   );
 
-  const canCreate = Boolean(assessmentId && template?.id && !busy);
+  const canCreate = Boolean(assessmentId && selectedReportSourceId && template?.id && !busy);
 
   if (!isOpen) return null;
 
@@ -145,6 +149,14 @@ export function NewAssessmentReportModal(props: {
                 )}
               </p>
             )}
+            {selectedAssessment && !selectedReportSourceId && (
+              <p className="mt-2 text-xs text-amber-700 dark:text-amber-300" role="alert">
+                {t(
+                  `${NS}.missingReportSource`,
+                  'This session has no report source yet — freeze it first.'
+                )}
+              </p>
+            )}
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-950/40 p-4">
@@ -195,7 +207,7 @@ export function NewAssessmentReportModal(props: {
               type="button"
               disabled={!canCreate}
               onClick={async () => {
-                if (!assessmentId || !template?.id) return;
+                if (!selectedReportSourceId || !template?.id) return;
                 setBusy(true);
                 const toastId = toast.loading(t(`${NS}.toast.creatingReport`, 'Creating report…'));
                 try {
@@ -206,7 +218,7 @@ export function NewAssessmentReportModal(props: {
                     : t(`${NS}.reportTitleFallback`, 'Report');
                   const created: any = await Api.post('/report-builder', {
                     sourceType: 'ASSESSMENT',
-                    sourceId: assessmentId,
+                    sourceId: selectedReportSourceId,
                     title,
                     description: '',
                     templateId: template.id,
