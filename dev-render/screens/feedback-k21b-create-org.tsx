@@ -69,17 +69,33 @@ useAppStore.setState({
 });
 
 // Atrapa transportu — tylko odczyt listy organizacji; zero zapisów.
+let przelaczono = false;
 const oryginalnyFetch = window.fetch.bind(window);
 window.fetch = (async (input: any, init?: any) => {
   const url = String(typeof input === 'string' ? input : input?.url || '');
   if (url.includes('/api/organizations/current')) {
-    return new Response(
-      JSON.stringify({ organizations: [{ ...ORG, role: rola, is_current: true }] }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    // ★ K-21d: atrapa STANOWA — przed przełączeniem serwer zna jedną
+    // organizację, po przełączeniu dwie (nowa jest bieżąca). Wcześniej lista
+    // była przybita na sztywno, więc zrzut „po utworzeniu" pokazywał ptaszek
+    // przy STAREJ organizacji niezależnie od kodu produktu (przyrząd, nie
+    // produkt — ale ten sam obraz maskował realny wyścig, patrz K-21d).
+    const lista = przelaczono
+      ? [
+          { ...ORG, role: rola, is_current: false },
+          { ...NOWA_ORG, role: 'OWNER', is_current: true },
+        ]
+      : [{ ...ORG, role: rola, is_current: true }];
+    return new Response(JSON.stringify({ organizations: lista }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
   // K-21c: atrapa DWÓCH żądań ścieżki „utwórz → przełącz". Zero backendu.
   if (url.includes('/api/auth/switch-organization')) {
+    // Opóźnienie jak w sieci — bez niego przyrząd nie odtwarza kolejności,
+    // w której przeglądarka pobiera listę.
+    await new Promise((gotowe) => setTimeout(gotowe, 20));
+    przelaczono = true;
     return new Response(
       JSON.stringify({
         token: 'k21c-token',

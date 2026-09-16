@@ -142,8 +142,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     };
   }, []);
 
-  const fetchOrgs = useCallback(async () => {
-    if (orgsLoading || orgs.length > 0) return;
+  /**
+   * K-21d (odbiór CTO, P2 ze zrzutu `k21c-toast-en-light.png`): pobranie listy
+   * BEZ bramki jednorazowości. Bramka (`orgs.length > 0`) siedzi wyżej, w
+   * `fetchOrgs` — tu jej nie ma, bo po przełączeniu organizacji lista MUSI
+   * zostać przeczytana ponownie, świeżym tokenem.
+   */
+  const pobierzListeOrganizacji = useCallback(async () => {
     setOrgsLoading(true);
     try {
       const token = tokenService.getToken();
@@ -163,7 +168,12 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     } finally {
       setOrgsLoading(false);
     }
-  }, [orgsLoading, orgs.length]);
+  }, []);
+
+  const fetchOrgs = useCallback(async () => {
+    if (orgsLoading || orgs.length > 0) return;
+    await pobierzListeOrganizacji();
+  }, [orgsLoading, orgs.length, pobierzListeOrganizacji]);
 
   const handleSwitchOrg = useCallback(
     async (orgId: string, orgName: string, opcje?: { komunikat?: string }) => {
@@ -205,14 +215,21 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
    * użytkownik dostawał TYLKO toast — zostawał w starej organizacji, a nowa
    * nie pojawiała się nigdzie do ponownego otwarcia menu (`fetchOrgs` jest
    * jednorazowe: `orgs.length > 0` → return). Twórca jest OWNER-em nowej
-   * organizacji, więc ma w niej wylądować: czyścimy listę (żeby efekt pobrał
-   * ją ponownie) i wołamy TĘ SAMĄ ścieżkę przełączania, której używa lista
-   * organizacji — `POST /api/auth/switch-organization` + wymiana tokenu +
-   * przeładowanie kontekstu. Zero drugiej ścieżki.
+   * organizacji, więc ma w niej wylądować: wołamy TĘ SAMĄ ścieżkę przełączania,
+   * której używa lista organizacji — `POST /api/auth/switch-organization` +
+   * wymiana tokenu + przeładowanie kontekstu. Zero drugiej ścieżki.
+   *
+   * ★ K-21d (odbiór CTO, P2 na `k21c-toast-en-light.png`): nagłówek pokazywał
+   * nową organizację, ale lista „Switch organization" nadal miała ptaszek przy
+   * STAREJ i nie zawierała nowej. Powód: czyszczenie listy PRZED przełączeniem
+   * (`setOrgs([])`) budziło efekt `fetchOrgs` jeszcze na STARYM tokenie —
+   * wracała stara lista, a po niej bramka `orgs.length > 0` blokowała już
+   * każde kolejne pobranie. Kolejność odwrócona: najpierw przełączenie
+   * (nowy token), potem JEDNO wymuszone pobranie listy `pobierzListeOrganizacji`
+   * (bez bramki), więc lista wraca z nową organizacją i jej `is_current`.
    */
   const handleOrganizationCreated = useCallback(
     async (organizacja: { id: string; name: string }) => {
-      setOrgs([]);
       setIsCreateOrgOpen(false);
       await handleSwitchOrg(organizacja.id, organizacja.name, {
         komunikat: t('settings.organization.createdAndSwitched', {
@@ -220,8 +237,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
           name: organizacja.name,
         }),
       });
+      await pobierzListeOrganizacji();
+      // Przełączanie jest SKOŃCZONE (token wymieniony, lista odświeżona), więc
+      // wiersz ma pokazać swój prawdziwy stan — ptaszek przy nowej organizacji,
+      // nie wiecznie kręcące się kółko. Przeładowanie kontekstu i tak nastąpi.
+      setSwitchingOrgId(null);
     },
-    [handleSwitchOrg, t]
+    [handleSwitchOrg, pobierzListeOrganizacji, t]
   );
 
   const handleNavigate = (view: AppView) => {
@@ -410,6 +432,11 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                           return (
                             <button
                               key={org.id}
+                              data-testid={`user-menu-org-${org.id}`}
+                              // Ptaszek jest wyłącznie wizualny — bieżąca
+                              // organizacja musi być czytelna także dla
+                              // czytnika ekranu (i dla testu odbioru).
+                              aria-current={isCurrent ? 'true' : undefined}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!isCurrent && !switchingOrgId) {

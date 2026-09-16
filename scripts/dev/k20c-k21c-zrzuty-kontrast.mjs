@@ -83,6 +83,14 @@ const EKRANY = [
     czekaj: 1800,
   },
   {
+    // ★ K-21d (odbiór CTO): dowód na P2 — po utworzeniu ROZWINIĘTA lista
+    // „Switch organization" zawiera NOWĄ organizację i to ona ma ptaszek.
+    id: 'k21c-lista-po',
+    tytul: 'K-21d — lista organizacji PO utworzeniu (nowa org z ptaszkiem)',
+    url: 'screen=feedback-k21b-create-org&role=ADMIN&krok=utworzona',
+    czekaj: 4000,
+  },
+  {
     id: 'k21c-toast',
     tytul: 'K-21c — po utworzeniu: przełączenie + komunikat „you are now in …"',
     url: 'screen=feedback-k21b-create-org&role=ADMIN&krok=utworzona',

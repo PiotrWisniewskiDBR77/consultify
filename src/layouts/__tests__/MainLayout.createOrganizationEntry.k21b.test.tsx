@@ -123,8 +123,17 @@ vi.mock('../../hooks/useDemo', () => ({
   }),
 }));
 
+// K-21d: token jest STANOWY, bo serwer odpowiada na `/api/organizations/current`
+// wg TOKENU, a nie wg intencji klienta. Bez tego atrapa oddaje świeżą listę
+// nawet na starym tokenie i test przepuszcza wyścig, który widać na zrzucie.
+const stanTokenu = vi.hoisted(() => ({ wartosc: 'token-org-1' }));
 vi.mock('../../services/tokenService', () => ({
-  tokenService: { getToken: () => 'test-token', saveTokens: vi.fn() },
+  tokenService: {
+    getToken: () => stanTokenu.wartosc,
+    saveTokens: (token: string) => {
+      stanTokenu.wartosc = token;
+    },
+  },
 }));
 
 // Atrapa całego klienta API — test NIE tworzy organizacji.
@@ -379,5 +388,103 @@ describe('MainLayout — po utworzeniu organizacji użytkownik w niej ląduje [K
     );
 
     await waitFor(() => expect(screen.queryByTestId('create-organization-modal')).toBeNull());
+  });
+});
+
+
+/**
+ * ★ K-21d (odbiór CTO paczki K-21c, P2 ze zrzutu `k21c-toast-en-light.png`).
+ *
+ * PREMISA ZMIERZONA na `977df5da6d`: nagłówek po utworzeniu pokazywał
+ * „Baltic Robotics", ale rozwinięta lista „Switch Organization" NADAL miała
+ * ptaszek przy starej organizacji i nowej w ogóle nie zawierała. Powód nie
+ * leżał w atrapie harnessu: `handleOrganizationCreated` czyścił listę PRZED
+ * przełączeniem, więc efekt pobierał ją jeszcze STARYM tokenem, a bramka
+ * jednorazowości (`orgs.length > 0`) blokowała pobranie po przełączeniu.
+ *
+ * Test idzie tą samą realną powłoką co K-21c; atrapa transportu jest STANOWA —
+ * `/api/organizations/current` oddaje to, co widziałby serwer dla aktualnego
+ * tokenu (przed przełączeniem jedną organizację, po przełączeniu dwie).
+ */
+describe('MainLayout — lista organizacji po utworzeniu [K-21d]', () => {
+  const NOWA = { id: 'org-2', name: 'Baltic Robotics' };
+
+  function mockTransportStanowy() {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: any, init?: any) => {
+        const url = String(input);
+        if (url.includes('/api/organizations/current')) {
+          // Odpowiedź zależy od TOKENU w nagłówku — dokładnie jak na serwerze.
+          const token = String(init?.headers?.Authorization || '');
+          const lista = token.includes('token-org-2')
+            ? [
+                { id: 'org-1', name: 'Acme', role: 'ADMIN', is_current: false },
+                { id: NOWA.id, name: NOWA.name, role: 'OWNER', is_current: true },
+              ]
+            : [{ id: 'org-1', name: 'Acme', role: 'ADMIN', is_current: true }];
+          return { ok: true, json: async () => ({ organizations: lista }) } as any;
+        }
+        if (url.includes('/api/auth/switch-organization')) {
+          const cel = JSON.parse(init?.body || '{}').organizationId;
+          // Realne opóźnienie sieci — bez niego atrapa odpowiada w tym samym
+          // mikro-tasku, efekt Reacta zdąża pobrać listę już NOWYM tokenem i
+          // wyścig widoczny w przeglądarce znika z testu.
+          await new Promise((gotowe) => setTimeout(gotowe, 20));
+          return {
+            ok: true,
+            json: async () => ({
+              token: `token-${cel}`,
+              refreshToken: 'r',
+              organization: NOWA,
+            }),
+          } as any;
+        }
+        return { ok: false, json: async () => ({}) } as any;
+      })
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    appState.currentUser.role = 'ADMIN';
+    appState.currentOrganization = { id: 'org-1', name: 'Acme' };
+    stanTokenu.wartosc = 'token-org-1';
+    createOrganization.mockResolvedValue(NOWA);
+    // Kontekst aplikacji ma realnie iść za tokenem — inaczej test mierzyłby
+    // tylko atrapę, a nie to, co zobaczy użytkownik.
+    appState.setCurrentOrganization.mockImplementation((org: any) => {
+      appState.currentOrganization = org;
+    });
+  });
+
+  it('po utworzeniu lista zawiera NOWĄ organizację i to ona jest bieżąca', async () => {
+    mockTransportStanowy();
+    renderLayout();
+    await openOrganizationSwitcher();
+
+    // PRZED: tylko stara organizacja, ona jest bieżąca.
+    expect(screen.queryAllByTestId(`user-menu-org-${NOWA.id}`)).toHaveLength(0);
+
+    fireEvent.click(await screen.findByTestId('user-menu-create-organization'));
+    const modal = await screen.findByTestId('create-organization-modal');
+    fireEvent.change(screen.getByLabelText('Organization Name'), {
+      target: { value: NOWA.name },
+    });
+    fireEvent.click(
+      Array.from(modal.querySelectorAll('button')).find(
+        (b) => b.textContent?.trim() === 'Create Organization'
+      ) as HTMLElement
+    );
+
+    // PO: nowa organizacja JEST na liście...
+    const nowyWiersz = await screen.findByTestId(`user-menu-org-${NOWA.id}`);
+    expect(nowyWiersz.textContent).toContain(NOWA.name);
+    // ...i to ona jest oznaczona jako bieżąca (ptaszek = `aria-current`).
+    expect(nowyWiersz.getAttribute('aria-current')).toBe('true');
+    // Stara przestaje być bieżąca — nie dwa ptaszki.
+    await waitFor(() =>
+      expect(screen.getByTestId('user-menu-org-org-1').getAttribute('aria-current')).toBeNull()
+    );
   });
 });
