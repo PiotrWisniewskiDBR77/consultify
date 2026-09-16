@@ -622,13 +622,18 @@ describe('review snapshots', () => {
     });
   });
 
-  it('GET .../review-snapshots/published 404s when there is none', async () => {
+  it('GET .../review-snapshots/published returns 200 with null when there is none', async () => {
     mockGetPublishedSnapshot.mockResolvedValue(null);
     const response = await request(createApp()).get(
       `/api/vnext/results/kpi/scorecards/${SCORECARD_ID}/review-snapshots/published`
     );
-    expect(response.status).toBe(404);
-    expect(response.body.code).toBe('NOT_FOUND');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ snapshot: null });
+    expect(mockGetPublishedSnapshot).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      scorecardId: SCORECARD_ID,
+    });
   });
 
   it('POST .../review-snapshots/:snapshotId/publish publishes the snapshot', async () => {
