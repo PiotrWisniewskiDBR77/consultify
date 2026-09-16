@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isDeckReviewSimpleEnabled } from '@/utils/deckReviewFlag';
 import { useNavigate } from 'react-router-dom';
 
 interface DeckBuilderTopBarProps {
@@ -122,6 +123,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   statusBar,
 }) => {
   const { t } = useTranslation();
+  const simpleReview = isDeckReviewSimpleEnabled();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -164,7 +166,9 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
     onQualityGates && {
       key: 'qa',
       icon: <Shield size={14} />,
-      label: t('presentations.builder.topBar.qualityGates', 'Quality Gates'),
+      label: simpleReview
+        ? t('presentations.builder.topBar.review', 'Review')
+        : t('presentations.builder.topBar.qualityGates', 'Quality Gates'),
       onClick: onQualityGates,
     },
     onGovernance && {

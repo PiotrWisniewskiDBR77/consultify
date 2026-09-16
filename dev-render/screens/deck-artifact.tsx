@@ -145,15 +145,15 @@ const CARD_COVER = makeCard({
   id: 'slide-cover',
   order: 0,
   intent: 'cover',
-  title: 'Skrócenie czasu wdrożenia klienta o 30%',
+  title: 'Reduce client onboarding time by 30%',
   cover: true,
   blocks: [
     block('slide-cover', 0, 'heading', {
-      text: 'Skrócenie czasu wdrożenia klienta o 30%',
+      text: 'Reduce client onboarding time by 30%',
       level: 1,
     }),
     block('slide-cover', 1, 'paragraph', {
-      text: 'DBR77 Sp. z o.o. · Prezentacja zarządu · Lipiec 2026 · Poufne',
+      text: 'DBR77 Sp. z o.o. · Board presentation · July 2026 · Confidential',
     }),
   ],
 });
@@ -162,14 +162,14 @@ const CARD_PROBLEM = makeCard({
   id: 'slide-problem',
   order: 1,
   intent: 'section_intro',
-  title: 'Problem',
+  title: 'The problem',
   blocks: [
-    block('slide-problem', 0, 'heading', { text: 'Problem', level: 2 }),
+    block('slide-problem', 0, 'heading', { text: 'The problem', level: 2 }),
     block('slide-problem', 1, 'bullet_list', {
       items: [
-        'Onboarding nowego klienta trwa dziś średnio 6 tygodni — konkurencja domyka w 3.',
-        '68% kroków wdrożenia to ręczne przepisywanie danych między systemami.',
-        'Brak jednego właściciela procesu — klient odbija się między 4 zespołami.',
+        'Client onboarding takes six weeks on average; competitors complete it in three.',
+        '68% of onboarding steps require manual data transfers between systems.',
+        'No single process owner exists, so clients move between four teams.',
       ],
     }),
   ],
@@ -179,15 +179,15 @@ const CARD_APPROACH = makeCard({
   id: 'slide-approach',
   order: 2,
   intent: 'key_messages',
-  title: 'Podejście',
+  title: 'Approach',
   blocks: [
-    block('slide-approach', 0, 'heading', { text: 'Podejście', level: 2 }),
+    block('slide-approach', 0, 'heading', { text: 'Approach', level: 2 }),
     block('slide-approach', 1, 'numbered_list', {
       items: [
-        'Zmapować i skrócić checklistę wdrożeniową (44 → 18 kroków).',
-        'Uruchomić self-service portal klienta na dokumenty startowe.',
-        'Wyznaczyć jednego Implementation Ownera na klienta.',
-        'Zautomatyzować przekazanie danych CRM → system rozliczeniowy.',
+        'Map and shorten the onboarding checklist from 44 to 18 steps.',
+        'Launch a self-service client portal for onboarding documents.',
+        'Assign one Implementation Owner to each client.',
+        'Automate the handoff from CRM to the billing system.',
       ],
     }),
   ],
@@ -197,19 +197,19 @@ const CARD_RESULTS = makeCard({
   id: 'slide-results',
   order: 3,
   intent: 'performance_overview',
-  title: 'Wyniki pilotażu',
+  title: 'Pilot results',
   blocks: [
-    block('slide-results', 0, 'heading', { text: 'Wyniki pilotażu (12 klientów)', level: 2 }),
+    block('slide-results', 0, 'heading', { text: 'Pilot results (12 clients)', level: 2 }),
     block(
       'slide-results',
       1,
       'metric_strip',
       {
         metrics: [
-          { label: 'Czas wdrożenia', value: '4.1', unit: 'tyg.', trend: 'down' },
-          { label: 'Kroki ręczne', value: '-59%', trend: 'down' },
-          { label: 'NPS onboardingu', value: '+22', unit: 'pkt', trend: 'up' },
-          { label: 'Koszt na klienta', value: '-18%', trend: 'down' },
+          { label: 'Onboarding time', value: '4.1', unit: 'weeks', trend: 'down' },
+          { label: 'Manual steps', value: '-59%', trend: 'down' },
+          { label: 'Onboarding NPS', value: '+22', unit: 'pts', trend: 'up' },
+          { label: 'Cost per client', value: '-18%', trend: 'down' },
         ],
       },
       true
@@ -221,19 +221,19 @@ const CARD_RECOMMENDATIONS = makeCard({
   id: 'slide-recommendations',
   order: 4,
   intent: 'recommendation_portfolio',
-  title: 'Rekomendacje',
+  title: 'Recommendations',
   blocks: [
-    block('slide-recommendations', 0, 'heading', { text: 'Rekomendacje', level: 2 }),
+    block('slide-recommendations', 0, 'heading', { text: 'Recommendations', level: 2 }),
     block('slide-recommendations', 1, 'table', {
-      headers: ['Rekomendacja', 'Właściciel', 'Horyzont'],
+      headers: ['Recommendation', 'Owner', 'Horizon'],
       rows: [
-        ['Skrócona checklista wdrożeniowa jako standard', 'Operacje', 'Q3 2026'],
-        ['Self-service portal — pełny rollout', 'Produkt', 'Q4 2026'],
-        ['Implementation Owner w każdym zespole', 'PMO', 'Q3 2026'],
+        ['Make the shorter onboarding checklist the standard', 'Operations', 'Q3 2026'],
+        ['Roll out the self-service portal', 'Product', 'Q4 2026'],
+        ['Assign an Implementation Owner in every team', 'PMO', 'Q3 2026'],
       ],
     }),
     block('slide-recommendations', 2, 'callout', {
-      text: 'Rekomendujemy zatwierdzenie budżetu fazy 2 na sesji zarządu 08.2026.',
+      text: 'We recommend approving the phase-two budget at the August 2026 board meeting.',
       variant: 'info',
     }),
   ],
@@ -243,14 +243,14 @@ const CARD_CLOSING = makeCard({
   id: 'slide-closing',
   order: 5,
   intent: 'next_steps',
-  title: 'Kolejne kroki',
+  title: 'Next steps',
   blocks: [
-    block('slide-closing', 0, 'heading', { text: 'Dziękujemy — kolejne kroki', level: 2 }),
+    block('slide-closing', 0, 'heading', { text: 'Thank you — next steps', level: 2 }),
     block('slide-closing', 1, 'bullet_list', {
       items: [
-        'Decyzja zarządu o budżecie fazy 2 — sierpień 2026.',
-        'Kick-off self-service portalu — wrzesień 2026.',
-        'Pytania: piotr.wisniewski@dbr77.com',
+        'Board decision on the phase-two budget — August 2026.',
+        'Self-service portal kickoff — September 2026.',
+        'Questions: piotr.wisniewski@dbr77.com',
       ],
     }),
   ],
@@ -259,7 +259,7 @@ const CARD_CLOSING = makeCard({
 const MOCK_DECK: Deck = {
   deck_id: DECK_ID,
   organization_id: 'org-dbr77-demo',
-  title: 'Skrócenie czasu wdrożenia klienta o 30%',
+  title: 'Reduce client onboarding time by 30%',
   theme_id: 'default',
   presentation_mode: 'show',
   communication_register: 'professional',
@@ -312,6 +312,46 @@ const GENERIC_EMPTY = { data: [], items: [], events: [] };
 /** Shared URL-keyed mock body, used by both the `Api.get` and `fetch` layers. */
 function mockBodyFor(path: string): unknown {
   if (path === DECK_API_PATH) return { data: MOCK_DECK_ROW };
+  if (path === `${DECK_API_PATH}/quality-gates`) {
+    return {
+      data: {
+        deckId: DECK_ID,
+        canExport: false,
+        canShare: true,
+        score: 58,
+        result: 'BLOCKED_P1',
+        checkedAt: '2026-09-16T10:00:00.000Z',
+        gates: [
+          {
+            id: 'source-note',
+            gateType: 'traceability',
+            severity: 'error',
+            priority: 'P1',
+            message: 'BLOCKED_P1: Add a source to the recommendation on slide 5',
+            cardIndex: 4,
+            category: 'traceability',
+          },
+          {
+            id: 'export-detail',
+            gateType: 'quality',
+            severity: 'warning',
+            priority: 'P2',
+            message: 'P2 — Add exporter-safe metadata for the closing slide',
+            cardIndex: 5,
+            category: 'quality',
+          },
+          {
+            id: 'headline-note',
+            gateType: 'content',
+            severity: 'info',
+            message: 'Shorten the headline on slide 3 for easier scanning',
+            cardIndex: 2,
+            category: 'content',
+          },
+        ],
+      },
+    };
+  }
   if (path.startsWith(`${DECK_API_PATH}/`)) return GENERIC_EMPTY; // comments/runtime-events/governance-card/versions/autosave
   if (path === '/presentations/brand-kit') return {};
   return GENERIC_EMPTY;

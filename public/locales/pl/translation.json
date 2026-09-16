@@ -3152,6 +3152,7 @@
           }
         },
         "qaAndReview": "QA i przegląd",
+        "review": "Przegląd",
         "sharingAnalytics": "Analityka udostępniania",
         "sectionQa": "QA i przegląd",
         "history": "Historia",
@@ -3189,7 +3190,12 @@
         "sendForApproval": "Wyślij do zatwierdzenia",
         "presentationApproval": "Zatwierdzenie prezentacji",
         "requiredChangesReason": "Uzasadnienie wymaganych zmian",
-        "reviewerLabel": "Recenzent"
+        "reviewerLabel": "Recenzent",
+        "checks": "Uwagi",
+        "approvalTab": "Zatwierdzenie",
+        "versionNotice": "Wersja {{version}}. Autor nie może zatwierdzić własnej wersji.",
+        "loadFailed": "Nie udało się wczytać przeglądu.",
+        "actionFailed": "Nie udało się wykonać działania."
       },
       "shareModal": {
         "embedThisDeckOnExternal": "Osadź tę prezentację na zewnętrznych stronach:"
@@ -3297,6 +3303,19 @@
       "readyToExport": "Twoja prezentacja jest gotowa do eksportu i udostępnienia.",
       "checking": "Sprawdzanie...",
       "recheck": "Sprawdź ponownie bramki jakości"
+    },
+    "review": {
+      "title": "Przegląd",
+      "failed": "Nie udało się przeprowadzić przeglądu.",
+      "exportDetails": "szczegóły potrzebne do poprawnego eksportu",
+      "summaryWithCritical": "Krytyczne: {{critical}} · Sugestie: {{suggestions}}",
+      "summaryReady": "Sugestie: {{count}}",
+      "nonBlocking": "Możesz eksportować lub prezentować w dowolnym momencie. Te uwagi są wskazówkami.",
+      "noNotes": "Brak uwag do przeglądu.",
+      "checking": "Przegląd prezentacji",
+      "checkingShort": "Sprawdzanie…",
+      "runAgain": "Uruchom przegląd ponownie",
+      "goToSlide": "Przejdź do slajdu"
     },
     "analytics": {
       "refresh": "Odśwież",

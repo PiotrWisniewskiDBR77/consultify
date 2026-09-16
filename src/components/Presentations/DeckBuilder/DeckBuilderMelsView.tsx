@@ -66,6 +66,7 @@ import {
   type DeckBuilderRightRailToolId,
 } from './DeckBuilderMelsRightRail';
 import { useTranslation } from 'react-i18next';
+import { isDeckReviewSimpleEnabled } from '@/utils/deckReviewFlag';
 
 /**
  * Metadane artefaktu-prezentacji pokazywane w sekcji „Właściwości" prawego
@@ -284,6 +285,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const simpleReview = isDeckReviewSimpleEnabled();
   const [artifactLeftMode, setArtifactLeftMode] = useState<
     'structure' | 'comments' | 'sources' | 'review'
   >('structure');
@@ -308,8 +310,12 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
           case 'qa':
             return {
               ...descriptor,
-              label: t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review'),
-              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionQa', 'QA and review'),
+              label: simpleReview
+                ? t('presentations.builder.deckBuilderMelsView.review', 'Review')
+                : t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review'),
+              overflowSection: simpleReview
+                ? t('presentations.builder.deckBuilderMelsView.review', 'Review')
+                : t('presentations.builder.deckBuilderMelsView.sectionQa', 'QA and review'),
               onClick: () => setArtifactLeftMode('review'),
             };
           case 'history':
@@ -334,7 +340,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
             return descriptor;
         }
       });
-  }, [artifactStudioMode, topBarHandlers, onRunPrimary, topBarState, topBarLabels]);
+  }, [artifactStudioMode, topBarHandlers, onRunPrimary, topBarState, topBarLabels, simpleReview, t]);
 
   // HP-17: narzędzie „Źródła i założenia" pojawia się na pasku TYLKO gdy
   // wołający dostarczył jego panel (DeckBuilder robi to za flagą ff_evidencePanel,
@@ -374,7 +380,12 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
           [
             ['structure', t('presentations.builder.deckBuilderMelsView.slides', 'Slides')],
             ...(reviewPanel
-              ? [['review', t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review')]]
+              ? [[
+                  'review',
+                  simpleReview
+                    ? t('presentations.builder.deckBuilderMelsView.review', 'Review')
+                    : t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review'),
+                ]]
               : []),
           ] as Array<
             [typeof artifactLeftMode, string]

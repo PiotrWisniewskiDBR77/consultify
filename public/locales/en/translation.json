@@ -30568,6 +30568,7 @@
           }
         },
         "qaAndReview": "QA and review",
+        "review": "Review",
         "sharingAnalytics": "Sharing analytics",
         "sectionQa": "QA and review",
         "history": "History",
@@ -30605,7 +30606,12 @@
         "sendForApproval": "Send for approval",
         "presentationApproval": "Presentation approval",
         "requiredChangesReason": "Reason for requested changes",
-        "reviewerLabel": "Reviewer"
+        "reviewerLabel": "Reviewer",
+        "checks": "Checks",
+        "approvalTab": "Approval",
+        "versionNotice": "Version {{version}}. The author cannot approve their own version.",
+        "loadFailed": "The review could not be loaded.",
+        "actionFailed": "The action could not be completed."
       },
       "shareModal": {
         "embedThisDeckOnExternal": "Embed this deck on external websites:"
@@ -30669,6 +30675,19 @@
       "readyToExport": "Your deck is ready to export and share.",
       "checking": "Checking...",
       "recheck": "Re-check Quality Gates"
+    },
+    "review": {
+      "title": "Review",
+      "failed": "The review could not be completed.",
+      "exportDetails": "details needed for a reliable export",
+      "summaryWithCritical": "{{critical}} critical · {{suggestions}} suggestions",
+      "summaryReady": "{{count}} suggestions",
+      "nonBlocking": "You can export or present at any time. These notes are guidance.",
+      "noNotes": "No review notes right now.",
+      "checking": "Reviewing presentation",
+      "checkingShort": "Reviewing…",
+      "runAgain": "Run review again",
+      "goToSlide": "Go to slide"
     },
     "analytics": {
       "refresh": "Refresh",

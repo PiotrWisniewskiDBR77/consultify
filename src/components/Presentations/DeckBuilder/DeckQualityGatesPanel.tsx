@@ -16,6 +16,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isDeckReviewSimpleEnabled } from '@/utils/deckReviewFlag';
+
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface DeckQualityGateResult {
@@ -123,7 +125,7 @@ function getHeaders() {
   };
 }
 
-export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
+const LegacyDeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
   deckId,
   isOpen,
   onClose,
@@ -525,3 +527,221 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
     </div>
   );
 };
+
+function humanizeReviewMessage(message: string, metadataReplacement: string): string {
+  const cleaned = message
+    .replace(/\b(?:BLOCKED_P[012]|P[012])\b\s*[:\-—]?\s*/gi, '')
+    .replace(/exporter[- ]safe metadata/gi, metadataReplacement)
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  if (!cleaned) return metadataReplacement;
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+const SimpleDeckReviewPanel: React.FC<DeckQualityGatesPanelProps> = ({
+  deckId,
+  isOpen,
+  onClose,
+  onJumpToCard,
+  displayMode = 'overlay',
+}) => {
+  const { t } = useTranslation();
+  const [report, setReport] = useState<DeckQualityReport | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const runCheck = useCallback(async () => {
+    if (!deckId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/presentations/decks/${deckId}/quality-gates`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || t('presentations.review.failed', 'The review could not be completed.')
+        );
+      }
+      setReport(payload?.data || null);
+    } catch (nextError) {
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : t('presentations.review.failed', 'The review could not be completed.')
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [deckId, t]);
+
+  useEffect(() => {
+    if (isOpen && deckId) void runCheck();
+  }, [isOpen, deckId, runCheck]);
+
+  if (!isOpen) return null;
+
+  const criticalCount = report?.gates.filter((gate) => gate.severity === 'error').length ?? 0;
+  const suggestionCount = (report?.gates.length ?? 0) - criticalCount;
+  const metadataReplacement = t(
+    'presentations.review.exportDetails',
+    'details needed for a reliable export'
+  );
+
+  return (
+    <div
+      className={
+        displayMode === 'embedded'
+          ? 'flex h-full min-h-0 w-full flex-col bg-c-surface'
+          : 'absolute top-0 right-0 z-30 flex h-full w-80 flex-col border-l border-c-border-subtle bg-c-surface shadow-xl'
+      }
+      data-testid="presentation-review-checks"
+    >
+      <div className="flex items-center justify-between border-b border-c-border-subtle px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-c-text-secondary" aria-hidden />
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('presentations.review.title', 'Review')}
+          </h3>
+        </div>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('common.close', 'Close')}
+            className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <X size={16} aria-hidden />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+        {error ? (
+          <div className="rounded-lg border border-danger-500/30 bg-danger-500/10 p-3 text-xs text-danger-700 dark:text-danger-300">
+            {error}
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div
+            className="flex items-center justify-center py-8"
+            aria-label={t('presentations.review.checking', 'Reviewing presentation')}
+          >
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-c-text-secondary border-t-transparent" />
+          </div>
+        ) : null}
+
+        {!loading && report ? (
+          <>
+            <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
+              <p className="text-xs font-medium text-c-text">
+                {criticalCount > 0
+                  ? t(
+                      'presentations.review.summaryWithCritical',
+                      '{{critical}} critical · {{suggestions}} suggestions',
+                      {
+                        critical: criticalCount,
+                        suggestions: suggestionCount,
+                      }
+                    )
+                  : t('presentations.review.summaryReady', '{{count}} suggestions', {
+                      count: suggestionCount,
+                    })}
+              </p>
+              <p className="mt-1 text-xs text-c-text-secondary">
+                {t(
+                  'presentations.review.nonBlocking',
+                  'You can export or present at any time. These notes are guidance.'
+                )}
+              </p>
+            </div>
+
+            {report.gates.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <CheckCircle2 size={30} className="mb-2 text-c-text-secondary" aria-hidden />
+                <p className="text-sm font-medium text-c-text">
+                  {t('presentations.review.noNotes', 'No review notes right now.')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {report.gates.map((gate) => {
+                  const critical = gate.severity === 'error';
+                  const GateIcon = critical
+                    ? XCircle
+                    : gate.severity === 'warning'
+                      ? AlertTriangle
+                      : Info;
+                  return (
+                    <div
+                      key={gate.id}
+                      className={`rounded-lg border p-3 ${
+                        critical
+                          ? 'border-danger-500/30 bg-danger-500/10'
+                          : 'border-c-border-subtle bg-c-surface-raised'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <GateIcon
+                          size={15}
+                          className={
+                            critical
+                              ? 'mt-0.5 shrink-0 text-danger-600'
+                              : 'mt-0.5 shrink-0 text-c-text-secondary'
+                          }
+                          aria-hidden
+                        />
+                        <p
+                          className={
+                            critical
+                              ? 'text-xs text-danger-700 dark:text-danger-300'
+                              : 'text-xs text-c-text'
+                          }
+                        >
+                          {humanizeReviewMessage(gate.message, metadataReplacement)}
+                        </p>
+                      </div>
+                      {gate.cardIndex != null ? (
+                        <button
+                          type="button"
+                          onClick={() => onJumpToCard?.(gate.cardIndex!)}
+                          className="mt-2 text-xs font-medium text-c-text underline decoration-c-border-strong underline-offset-2 hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          {t('presentations.review.goToSlide', 'Go to slide')}
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : null}
+      </div>
+
+      <div className="border-t border-c-border-subtle px-4 py-2">
+        <button
+          type="button"
+          onClick={() => void runCheck()}
+          disabled={loading}
+          className="w-full rounded-lg bg-c-surface-raised py-2 text-xs font-medium text-c-text hover:bg-c-surface-hover disabled:opacity-50"
+        >
+          {loading
+            ? t('presentations.review.checkingShort', 'Reviewing…')
+            : t('presentations.review.runAgain', 'Run review again')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = (props) =>
+  isDeckReviewSimpleEnabled() ? (
+    <SimpleDeckReviewPanel {...props} />
+  ) : (
+    <LegacyDeckQualityGatesPanel {...props} />
+  );

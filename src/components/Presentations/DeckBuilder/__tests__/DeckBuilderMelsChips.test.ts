@@ -46,7 +46,6 @@ describe('buildDeckBuilderTopBarChips', () => {
       'presenter',
       'share',
       'comments',
-      'agent',
       'run',
     ]);
   });
@@ -125,19 +124,24 @@ describe('buildDeckBuilderTopBarChips', () => {
     expect(run?.disabled).toBe(true);
   });
 
-  it('Teresa (agent) chip is a toggle reflecting agentOpen', () => {
-    const closed = buildDeckBuilderTopBarChips({
-      handlers: { onToggleAgent: vi.fn() },
-      state: { agentOpen: false },
+  it('DEC-543 keeps Present available when review reports a critical verdict', () => {
+    const chips = buildDeckBuilderTopBarChips({
+      handlers: { onRun: vi.fn(), onPresenter: vi.fn(), onRunFromStart: vi.fn() },
+      state: { runEnabled: true, governanceVerdict: 'BLOCKED_P0' },
     });
-    expect(closed.find((c) => c.id === 'agent')?.kind).toBe('toggle');
-    expect(closed.find((c) => c.id === 'agent')?.active).toBe(false);
 
-    const open = buildDeckBuilderTopBarChips({
-      handlers: { onToggleAgent: vi.fn() },
+    expect(chips.find((chip) => chip.id === 'run')?.disabled).toBe(false);
+    expect(chips.find((chip) => chip.id === 'presenter')?.disabled).toBe(false);
+    expect(chips.find((chip) => chip.id === 'run-from-start')?.disabled).toBe(false);
+  });
+
+  it('keeps Teresa out of the deck-local chips because the global entry owns it', () => {
+    const chips = buildDeckBuilderTopBarChips({
+      handlers: { onToggleAgent: vi.fn(), onRun: vi.fn() },
       state: { agentOpen: true },
     });
-    expect(open.find((c) => c.id === 'agent')?.active).toBe(true);
+    expect(chips.find((chip) => chip.id === 'agent')).toBeUndefined();
+    expect(chips.find((chip) => chip.id === 'run')?.disabled).toBe(false);
   });
 
   it('honours custom labels (PL)', () => {

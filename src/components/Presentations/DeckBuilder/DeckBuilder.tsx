@@ -55,6 +55,7 @@ import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
 import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
+import { isDeckReviewSimpleEnabled } from '@/utils/deckReviewFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
@@ -1024,7 +1025,13 @@ const DeckBuilderForDeck: React.FC = () => {
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
-        await exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format });
+        await exportPresentationDeck({
+          deckId: deck.deck_id,
+          title: deck.title,
+          format,
+          // DEC-543: findings advise; they never block an enabled Review rollout.
+          overrideQualityGate: isDeckReviewSimpleEnabled(),
+        });
         toast.success(t('presentations.exportedAs', { format: format.toUpperCase() }));
       } catch (err: any) {
         if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
@@ -1055,6 +1062,7 @@ const DeckBuilderForDeck: React.FC = () => {
         deckId: deck.deck_id,
         title: deck.title,
         format,
+        overrideQualityGate: isDeckReviewSimpleEnabled(),
       }).catch(() => []);
       if (warnings.length > 0) {
         setPendingOverflowExport({ format, warnings });

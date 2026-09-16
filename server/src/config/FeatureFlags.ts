@@ -53,6 +53,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_PRESENTATION_IMAGE_STYLE: z.boolean().default(false),
   ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
   ENABLE_DECK_OVERFLOW_WARNING: z.boolean().default(false),
+  ENABLE_DECK_REVIEW_WARNING_ONLY: z.boolean().default(false),
   // FIX-230 F6: split from ENABLE_DECK_OVERFLOW_WARNING. That flag used to
   // control BOTH the preflight/UI warning AND whether the PPTX renderer's
   // `fit:'shrink'` auto-shrink ran in 5 atomics — so turning the warning ON
@@ -240,6 +241,7 @@ export function loadFeatureFlags(): FeatureFlags {
     // DeckOverflowWarning banner. It no longer touches renderer shrink
     // behavior — see ENABLE_DECK_OVERFLOW_DISABLE_SHRINK below.
     ENABLE_DECK_OVERFLOW_WARNING: process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true',
+    ENABLE_DECK_REVIEW_WARNING_ONLY: process.env.ENABLE_DECK_REVIEW_WARNING_ONLY === 'true',
 
     // FIX-230 F6: independent flag for disabling the PPTX renderer's
     // `fit:'shrink'` auto-shrink (SlideTitle/KpiValue/Highlight/Badge +

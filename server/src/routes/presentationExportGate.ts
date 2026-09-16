@@ -29,7 +29,8 @@ export async function enforceQualityGateForExport(params: {
 }) {
   const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
   const report = await checkDeckQualityGates(params.organizationId, params.deckId);
-  if (!report.canExport && !params.allowOverride) {
+  const warningOnly = process.env.ENABLE_DECK_REVIEW_WARNING_ONLY === 'true';
+  if (!report.canExport && !params.allowOverride && !warningOnly) {
     return {
       ok: false as const,
       status: 422,
@@ -45,5 +46,5 @@ export async function enforceQualityGateForExport(params: {
       },
     };
   }
-  return { ok: true as const, report };
+  return { ok: true as const, report, warningOnly: warningOnly && !report.canExport };
 }

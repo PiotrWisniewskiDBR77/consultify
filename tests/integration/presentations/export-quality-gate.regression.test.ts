@@ -8,7 +8,7 @@
  * L-07/S5: deck z `canExport=false` → 422 QUALITY_GATE_BLOCKED, chyba że override
  *           (role-gated) jest aktywny.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockCheckGates } = vi.hoisted(() => ({ mockCheckGates: vi.fn() }));
 
@@ -33,9 +33,9 @@ describe('M19 · L-02 — quality-gate override is role-gated', () => {
   });
 
   it.each(['ADMIN', 'OWNER', 'SUPERADMIN'])('%s + param=true → allowed', (role) => {
-    expect(
-      canOverrideQualityGate({ user: { role }, query: { overrideQualityGate: 'true' } })
-    ).toBe(true);
+    expect(canOverrideQualityGate({ user: { role }, query: { overrideQualityGate: 'true' } })).toBe(
+      true
+    );
   });
 
   it('ADMIN WITHOUT param → NOT allowed (must explicitly opt in)', () => {
@@ -50,7 +50,11 @@ describe('M19 · L-02 — quality-gate override is role-gated', () => {
 });
 
 describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
-  beforeEach(() => mockCheckGates.mockReset());
+  beforeEach(() => {
+    mockCheckGates.mockReset();
+    delete process.env.ENABLE_DECK_REVIEW_WARNING_ONLY;
+  });
+  afterEach(() => delete process.env.ENABLE_DECK_REVIEW_WARNING_ONLY);
 
   it('blocked deck (canExport=false) without override → 422 QUALITY_GATE_BLOCKED', async () => {
     mockCheckGates.mockResolvedValue({
@@ -71,7 +75,12 @@ describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
   });
 
   it('blocked deck WITH role-gated override → passes through', async () => {
-    mockCheckGates.mockResolvedValue({ canExport: false, result: 'fail', scorecard: {}, gates: [] });
+    mockCheckGates.mockResolvedValue({
+      canExport: false,
+      result: 'fail',
+      scorecard: {},
+      gates: [],
+    });
     const res = await enforceQualityGateForExport({
       organizationId: 'org-1',
       deckId: 'deck-1',
@@ -90,5 +99,26 @@ describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
       allowOverride: false,
     });
     expect(res.ok).toBe(true);
+  });
+
+  it('DEC-543 warning-only mode keeps findings but never blocks export', async () => {
+    process.env.ENABLE_DECK_REVIEW_WARNING_ONLY = 'true';
+    mockCheckGates.mockResolvedValue({
+      canExport: false,
+      result: 'BLOCKED_P1',
+      scorecard: { p0: 0, p1: 1, p2: 0 },
+      gates: [{ id: 'finding-1', severity: 'warning' }],
+    });
+
+    const res = await enforceQualityGateForExport({
+      organizationId: 'org-1',
+      deckId: 'deck-1',
+      format: 'pptx',
+      allowOverride: false,
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.warningOnly).toBe(true);
+    expect(res.report.gates).toHaveLength(1);
   });
 });
