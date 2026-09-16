@@ -20,7 +20,10 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (k: string, fallback?: string) => fallback ?? k }),
+  useTranslation: () => ({
+    t: (k: string, fallback?: string) => fallback ?? k,
+    i18n: { language: 'en', resolvedLanguage: 'en' },
+  }),
 }));
 
 import { PortfolioKanbanView } from '@/components/Portfolio/PortfolioKanbanView';
@@ -31,7 +34,7 @@ function fixture(overrides: Partial<PortfolioInitiative> = {}): PortfolioInitiat
     id: 'init-1',
     name: 'Reduce cycle time',
     axis: 'operational',
-    status: InitiativeStatus.PLANNING,
+    status: InitiativeStatus.DRAFT,
     priority: 'HIGH',
     progress: 40,
     budget: 100000,
@@ -42,7 +45,7 @@ function fixture(overrides: Partial<PortfolioInitiative> = {}): PortfolioInitiat
 describe('PortfolioKanbanView — INI-05 capability-aware drag', () => {
   it('renders an initiative card in its status column and opens it on click regardless of canDrag', () => {
     const onInitiativeClick = vi.fn();
-    const initiative = fixture({ id: 'init-open', name: 'Open me', status: InitiativeStatus.PLANNING });
+    const initiative = fixture({ id: 'init-open', name: 'Open me', status: InitiativeStatus.DRAFT });
 
     render(
       <PortfolioKanbanView
@@ -95,7 +98,7 @@ describe('PortfolioKanbanView — INI-05 capability-aware drag', () => {
   });
 
   it('groups initiatives into the correct status columns (no cross-column leakage)', () => {
-    const planning = fixture({ id: 'i-planning', name: 'Planning item', status: InitiativeStatus.PLANNING });
+    const planning = fixture({ id: 'i-draft', name: 'Draft item', status: InitiativeStatus.DRAFT });
     const approved = fixture({ id: 'i-approved', name: 'Approved item', status: InitiativeStatus.APPROVED });
 
     render(
@@ -107,7 +110,7 @@ describe('PortfolioKanbanView — INI-05 capability-aware drag', () => {
       />
     );
 
-    expect(screen.getByText('Planning item')).toBeInTheDocument();
+    expect(screen.getByText('Draft item')).toBeInTheDocument();
     expect(screen.getByText('Approved item')).toBeInTheDocument();
   });
 });

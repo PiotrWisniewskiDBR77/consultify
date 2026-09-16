@@ -11,12 +11,12 @@ const source = fs.readFileSync(
 describe('Day 49 C.1 portfolio health wiring', () => {
   it('keeps the portfolio health surface behind a strict default-off flag', () => {
     expect(source).toContain("import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true'");
-    expect(source).toContain("...(PORTFOLIO_HEALTH_ENABLED ? (['portfolioHealth']");
+    expect(source).toContain("requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED");
   });
 
   it('adds one Menu 1 entry and mounts the preserved real view', () => {
-    expect(source).toContain("id: 'portfolioHealth' as ModuleTab");
-    expect(source).toContain("if (activeTab === 'portfolioHealth')");
+    expect(source).toContain('<option value="portfolioHealth">');
+    expect(source).toContain("preparationLens === 'portfolioHealth'");
     expect(source).toContain('<PortfolioHealthView');
   });
 });

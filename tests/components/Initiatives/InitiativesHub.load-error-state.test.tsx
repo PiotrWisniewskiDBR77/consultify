@@ -9,12 +9,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockGetPortfolio = vi.fn();
 const mockGetInitiatives = vi.fn();
 const mockListRegisteredInitiatives = vi.fn();
+const stableTranslation = vi.hoisted(
+  () => (key: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : key)
+);
+const stableUser = vi.hoisted(() => ({ id: 'u-1', role: 'ADMIN', firstName: 'A', lastName: 'B' }));
 
+vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => {} },
+  useTranslation: () => ({
+    t: stableTranslation,
+    i18n: { language: 'en', resolvedLanguage: 'en' },
+  }),
+}));
 
 vi.mock('../../../src/store/useAppStore', () => ({
   useAppStore: () => ({
     currentProjectId: null,
-    currentUser: { id: 'u-1', role: 'ADMIN', firstName: 'A', lastName: 'B' },
+    currentUser: stableUser,
   }),
 }));
 
@@ -28,6 +39,7 @@ vi.mock('../../../src/store/useConversationStore', () => ({
 
 vi.mock('../../../src/services/api', () => ({
   Api: {
+    get: vi.fn().mockResolvedValue({ enabled: false, items: [] }),
     getInitiatives: (...args: unknown[]) => mockGetInitiatives(...args),
     getUsers: vi.fn().mockResolvedValue([]),
   },
@@ -44,11 +56,17 @@ vi.mock('../../../src/services/api/v8/planning', () => ({
 
 vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   listRegisteredInitiatives: (...args: unknown[]) => mockListRegisteredInitiatives(...args),
+  listLegacyInitiatives: (...args: unknown[]) => mockGetInitiatives(...args),
 }));
 
 vi.mock('../../../src/services/initiativeLifecycle', () => ({
   getStatusesForModule: () => [],
-  STATUS_METADATA: {},
+  getLocalizedStatusLabel: (id: string) => id,
+  getStatusMeta: (id: string) => ({
+    labelKey: `initiatives.status.${id}`,
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-400',
+  }),
 }));
 
 vi.mock('../../../src/services/initiativeWriteTruth', () => ({

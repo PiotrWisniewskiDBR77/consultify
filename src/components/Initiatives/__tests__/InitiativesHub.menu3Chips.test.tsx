@@ -161,7 +161,7 @@ describe('InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 
     expect(screen.getByTestId('standard-chip-published')).toBeInTheDocument();
 
     expect(screen.getByTestId('initiatives-plan-state-dropdown')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Nowy plan' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New plan' })).toBeInTheDocument();
   });
 
   it('zakładka Obciążenie: trzy chipy agregatów, filtr statusu i CTA w Menu 2', async () => {
@@ -175,6 +175,6 @@ describe('InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 
     expect(screen.getByTestId('standard-chip-gaps')).toBeInTheDocument();
 
     expect(screen.getByTestId('initiatives-capacity-constraint-dropdown')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Nowa analiza' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New analysis' })).toBeInTheDocument();
   });
 });

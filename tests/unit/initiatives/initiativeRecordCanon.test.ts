@@ -143,7 +143,7 @@ describe('INI-404: karta inicjatywy nie sonduje rejestru runtime-v1 po id', () =
 
   it('lista dalej czyta OBA rejestry (nic nie zlikwidowano)', () => {
     expect(src()).toMatch(/listRegisteredInitiatives\(\)/);
-    expect(src()).toMatch(/listLegacyInitiatives\(\)/);
+    expect(src()).toMatch(/listLegacyInitiatives\(/);
     expect(src()).toMatch(/mergeLegacyInitiativesIntoRegister/);
   });
 
