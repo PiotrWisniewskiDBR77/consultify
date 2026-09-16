@@ -1590,9 +1590,10 @@ router.get(
       return;
     }
 
-    const { buildWorkbookBuffer, classifyBuildError } =
-      await import('../services/workbook/WorkbookBuilder.js');
-    const schema = JSON.parse(row.schema_json);
+    const { classifyBuildError } = await import('../services/workbook/WorkbookBuilder.js');
+    const { buildCanonicalXlsxBuffer, workbookSchemaToCanonicalSheets } =
+      await import('../services/export/CanonicalXlsxExportService.js');
+    const schema = JSON.parse(row.schema_json) as WorkbookSchema;
     const governedExport = await beginMaterialExport({
       organizationId: user.organizationId,
       artifactKind: 'workbook',
@@ -1607,7 +1608,16 @@ router.get(
 
     let buffer: Buffer;
     try {
-      buffer = await buildWorkbookBuffer(schema);
+      const organization = await queryHelpers.queryOne<{ name: string }>(
+        'SELECT name FROM organizations WHERE id = ?',
+        [user.organizationId]
+      );
+      buffer = await buildCanonicalXlsxBuffer({
+        title: schema.title || row.file_name.replace(/\.xlsx$/i, ''),
+        organizationName: organization?.name || 'Organization',
+        source: 'Consultify → Materials → Sheets',
+        sheets: workbookSchemaToCanonicalSheets(schema),
+      });
       const completedReceipt = await completeMaterialExport({
         begun: governedExport,
         organizationId: user.organizationId,

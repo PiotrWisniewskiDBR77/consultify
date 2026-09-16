@@ -1,3 +1,4 @@
+import ExcelJS from 'exceljs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
@@ -270,32 +271,32 @@ describe('ExportService', () => {
   // -----------------------------------------------------------------------
 
   describe('buildXlsxBuffer', () => {
-    it('returns a buffer (mocked xlsx)', async () => {
-      const fields = [{ id: 'f1', name: 'Name', type: 'single_line_text', options: null }];
+    it('uses the canonical engine with Data and formula-driven Summary sheets', async () => {
+      const fields = [
+        { id: 'f1', name: 'Name', type: 'single_line_text', options: null },
+        { id: 'f2', name: 'Score', type: 'number', options: null },
+      ];
       mockQuery.mockResolvedValueOnce({ rows: fields });
 
       mockExecuteQuery.mockResolvedValueOnce({
-        records: [{ data: { f1: 'Alice' } }],
+        records: [{ data: { f1: 'Alice', f2: 42 } }],
         cursor: undefined,
         hasMore: false,
       });
+      mockQuery.mockResolvedValueOnce({ rows: [{ name: 'Quality table' }] });
 
-      vi.doMock('xlsx', () => ({
-        utils: {
-          aoa_to_sheet: vi.fn(() => ({})),
-          book_new: vi.fn(() => ({ SheetNames: [], Sheets: {} })),
-          book_append_sheet: vi.fn(),
-        },
-        write: vi.fn(() => Buffer.from('mock-xlsx')),
-      }));
-
-      try {
-        const buf = await exportService.buildXlsxBuffer({ tableId: 't-1' });
-        expect(buf).toBeInstanceOf(Buffer);
-      } catch {
-        // xlsx may not be installed — that's expected in test env
-        expect(true).toBe(true);
-      }
+      const buf = await exportService.buildXlsxBuffer({
+        tableId: 't-1',
+        organizationName: 'Northwind',
+      });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buf);
+      expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Data', 'Summary']);
+      expect(workbook.getWorksheet('Data')!.getCell('B2').value).toBe(42);
+      expect(workbook.getWorksheet('Data')!.getCell('B2').numFmt).toBe('#,##0.##');
+      expect(workbook.getWorksheet('Summary')!.getCell('B4').type).toBe(ExcelJS.ValueType.Formula);
+      expect(workbook.getWorksheet('Summary')!.getCell('B5').type).toBe(ExcelJS.ValueType.Formula);
+      expect(workbook.getWorksheet('Data')!.headerFooter.oddHeader).toContain('Northwind');
     });
   });
 });
