@@ -17,6 +17,42 @@ async function inspectPptx(buffer: Buffer): Promise<{ names: string[]; xml: stri
 }
 
 describe('BoardDeckExportService production callers', () => {
+  it('projects Deck Builder cards onto the approved board-deck family', async () => {
+    const result = await inspectPptx(
+      await boardDeckExportService.exportPresentationDeck({
+        deck: {
+          title: 'Q3 Steering Deck',
+          organization_id: 'Northwind Manufacturing Ltd.',
+          meta: { language: 'en', confidentiality: 'Internal' },
+          lifecycle: { updatedAt: '2026-09-16T13:00:00.000Z' },
+          cards: [
+            {
+              intent: 'cover',
+              title: 'Q3 Steering Deck',
+              key_message: 'A board-ready decision brief',
+              blocks: [],
+            },
+            {
+              intent: 'key_messages',
+              title: 'What changed',
+              key_message: 'Lead time improved while quality held.',
+              blocks: [{ type: 'text', content: { body: 'Cycle time fell by 18%.' } }],
+              source_refs: [{ artifact_name: 'Operations review' }],
+            },
+          ],
+        },
+      })
+    );
+
+    expect(result.names.filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))).toHaveLength(
+      2
+    );
+    expect(result.xml).toContain('Q3 Steering Deck');
+    expect(result.xml).toContain('Cycle time fell by 18%.');
+    expect(result.xml).toContain('Operations review');
+    expect(result.xml).not.toMatch(/typeface="Arial"/i);
+  });
+
   it('projects Work Canvas sections onto the approved board-deck family', async () => {
     const result = await inspectPptx(
       await boardDeckExportService.exportCanvasDeck({

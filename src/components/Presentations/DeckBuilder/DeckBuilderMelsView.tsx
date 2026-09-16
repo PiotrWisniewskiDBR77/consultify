@@ -27,6 +27,7 @@
 import {
   Activity,
   ChevronDown,
+  Download,
   FileSearch,
   History,
   Link2,
@@ -101,6 +102,8 @@ export interface DeckBuilderMelsViewProps {
   topBarHandlers: DeckBuilderTopBarChipsHandlers;
   topBarState?: DeckBuilderTopBarChipsState;
   topBarLabels?: DeckBuilderTopBarChipsLabels;
+  /** Primary file handoff beside Present (U-49). */
+  onExportPptx?: () => void;
 
   /** Right-rail tool state + per-tool panel content. */
   rightRailState?: DeckBuilderRightRailState;
@@ -259,6 +262,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   topBarHandlers,
   topBarState,
   topBarLabels,
+  onExportPptx,
   rightRailState,
   rightRailLabels,
   rightRailPanels = {},
@@ -630,13 +634,24 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       topBarChips={chips}
       topBarPrimaryActionSlot={
         artifactStudioMode ? (
-          <PresentMenu
-            enabled={topBarState?.runEnabled !== false}
-            onCurrent={topBarHandlers.onRun ?? onRunPrimary}
-            onStart={topBarHandlers.onRunFromStart}
-            onPresenter={topBarHandlers.onPresenter}
-            labels={topBarLabels}
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onExportPptx}
+              disabled={!onExportPptx}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-3 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download size={14} aria-hidden="true" />
+              {topBarLabels?.exportPptx ?? 'Export PPTX'}
+            </button>
+            <PresentMenu
+              enabled={topBarState?.runEnabled !== false}
+              onCurrent={topBarHandlers.onRun ?? onRunPrimary}
+              onStart={topBarHandlers.onRunFromStart}
+              onPresenter={topBarHandlers.onPresenter}
+              labels={topBarLabels}
+            />
+          </div>
         ) : undefined
       }
       artifactStudioMode={artifactStudioMode}

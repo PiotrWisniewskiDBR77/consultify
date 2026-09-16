@@ -1,12 +1,11 @@
 /**
- * M19 · L-02 (override role-gate regression) + L-07 (S5 — deterministic 422 gate).
+ * M19 · DEC-543 — review findings are warnings and never block export.
  *
  * Zastępuje fałszywą zieleń network-testów p20 (które no-op bez live serwera)
  * deterministycznym kontraktem bramki jakości eksportu — bez localhost:3001.
  *
- * L-02: nie-admin z ?overrideQualityGate=true NIE omija bramki.
- * L-07/S5: deck z `canExport=false` → 422 QUALITY_GATE_BLOCKED, chyba że override
- *           (role-gated) jest aktywny.
+ * The legacy override parser remains compatible, while the export decision is
+ * always HTTP 200 with structured `warnings[]` for every role.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -49,15 +48,15 @@ describe('M19 · L-02 — quality-gate override is role-gated', () => {
   });
 });
 
-describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
+describe('M19 · DEC-543 — enforceQualityGateForExport warning contract', () => {
   beforeEach(() => mockCheckGates.mockReset());
 
-  it('blocked deck (canExport=false) without override → 422 QUALITY_GATE_BLOCKED', async () => {
+  it('review finding without override → 200 with warnings[]', async () => {
     mockCheckGates.mockResolvedValue({
       canExport: false,
-      result: 'fail',
+      result: 'BLOCKED_P1',
       scorecard: {},
-      gates: [],
+      gates: [{ id: 'finding-1', message: 'Add evidence.' }],
     });
     const res = await enforceQualityGateForExport({
       organizationId: 'org-1',
@@ -65,12 +64,17 @@ describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
       format: 'pdf',
       allowOverride: false,
     });
-    expect(res.ok).toBe(false);
-    expect((res as { status: number }).status).toBe(422);
-    expect((res as { payload: { code: string } }).payload.code).toBe('QUALITY_GATE_BLOCKED');
+    expect(res.ok).toBe(true);
+    expect(res.status).toBe(200);
+    expect(res.payload).toMatchObject({
+      success: true,
+      format: 'pdf',
+      result: 'BLOCKED_P1',
+      warnings: [{ id: 'finding-1', message: 'Add evidence.' }],
+    });
   });
 
-  it('blocked deck WITH role-gated override → passes through', async () => {
+  it('review finding with legacy override has the same advisory result', async () => {
     mockCheckGates.mockResolvedValue({ canExport: false, result: 'fail', scorecard: {}, gates: [] });
     const res = await enforceQualityGateForExport({
       organizationId: 'org-1',
@@ -79,6 +83,7 @@ describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
       allowOverride: true,
     });
     expect(res.ok).toBe(true);
+    expect(res.status).toBe(200);
   });
 
   it('passing deck (canExport=true) → ok regardless of override', async () => {
@@ -90,5 +95,6 @@ describe('M19 · L-07/S5 — enforceQualityGateForExport 422 contract', () => {
       allowOverride: false,
     });
     expect(res.ok).toBe(true);
+    expect(res.warnings).toEqual([]);
   });
 });

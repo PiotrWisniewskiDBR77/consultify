@@ -99,6 +99,16 @@ export async function exportPresentationDeck(options: PresentationExportOptions)
   }
 
   const blob = await response.blob();
+  let warnings: unknown[] = [];
+  const warningHeader = response.headers.get('X-Presentation-Quality-Warnings');
+  if (warningHeader) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(warningHeader));
+      if (Array.isArray(parsed)) warnings = parsed;
+    } catch {
+      // A malformed advisory header must never turn a successful export into a failure.
+    }
+  }
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -106,5 +116,5 @@ export async function exportPresentationDeck(options: PresentationExportOptions)
   link.click();
   window.URL.revokeObjectURL(url);
 
-  return { format, extension: endpoint.extension };
+  return { format, extension: endpoint.extension, warnings };
 }
