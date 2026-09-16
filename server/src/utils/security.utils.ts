@@ -24,14 +24,11 @@ const HTML_ENTITIES: Record<string, string> = {
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#x27;',
-  '`': '&#96;',
 };
 
 /**
  * Sanitize string input to prevent XSS attacks
- * Escapes HTML special characters
+ * Neutralizes HTML markup delimiters while preserving ordinary punctuation.
  *
  * Z139 (data-integrity) idempotency guard:
  * This runs on EVERY request-body/query/param string via the global
@@ -44,9 +41,10 @@ const HTML_ENTITIES: Record<string, string> = {
  * exactly once. This makes sanitization idempotent (repeated saves converge
  * to a single escape level, never grow) for ALL text fields across ALL
  * modules, while preserving the exact same escaped-storage/security
- * guarantee this function always had for values that were never escaped —
- * dangerous characters are still neutralized on every call. This does NOT
- * disable sanitization, it only removes the double/triple-escape defect.
+ * guarantee for HTML markup delimiters. Quotes, apostrophes and backticks are
+ * data in a JSON request, not markup delimiters, and must survive a save/read
+ * round-trip byte-for-byte. Output encoding remains the responsibility of the
+ * renderer for its concrete HTML/attribute/JavaScript context.
  */
 export function sanitizeString(input: unknown): string {
   if (input === null || input === undefined) return '';
@@ -57,7 +55,7 @@ export function sanitizeString(input: unknown): string {
   // - Escaping `/` or `=` breaks legitimate data (URLs, tokens, base64).
   // - Keep escaping to the minimal set needed to neutralize HTML contexts.
   const decoded = decodeHtmlEntities(input);
-  return decoded.replace(/[&<>"'`]/g, (char) => HTML_ENTITIES[char] || char);
+  return decoded.replace(/[&<>]/g, (char) => HTML_ENTITIES[char] || char);
 }
 
 /**

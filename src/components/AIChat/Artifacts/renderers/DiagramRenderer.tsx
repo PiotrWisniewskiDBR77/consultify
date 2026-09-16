@@ -7,6 +7,8 @@ import mermaid from 'mermaid';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { sanitizeMermaidSvg } from '@/utils/safeMermaidSvg';
+
 interface DiagramRendererProps {
   content: string;
   className?: string;
@@ -16,11 +18,12 @@ interface DiagramRendererProps {
 mermaid.initialize({
   startOnLoad: false,
   theme: 'default',
-  securityLevel: 'loose',
+  securityLevel: 'strict',
+  htmlLabels: false,
   fontFamily: 'system-ui, -apple-system, sans-serif',
   flowchart: {
     useMaxWidth: true,
-    htmlLabels: true,
+    htmlLabels: false,
   },
   sequence: {
     useMaxWidth: true,
@@ -47,11 +50,17 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({ content, class
         const isDark = document.documentElement.classList.contains('dark');
         mermaid.initialize({
           theme: isDark ? 'dark' : 'default',
+          securityLevel: 'strict',
+          htmlLabels: false,
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: false,
+          },
         });
 
         const id = `mermaid-${Date.now()}`;
         const { svg: renderedSvg } = await mermaid.render(id, content);
-        setSvg(renderedSvg);
+        setSvg(sanitizeMermaidSvg(renderedSvg));
         setError(null);
       } catch (err: any) {
         console.error('Mermaid rendering error:', err);

@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { getArtifactLabel } from '@/utils/artifactLinks';
+import { safeSimpleMarkdown } from '@/utils/safeSimpleMarkdown';
 
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 import {
@@ -140,31 +141,6 @@ export interface IdeaNodeDetailDrawerProps {
   onDrillDown?: (nodeId: string) => void;
   mapVersion?: number;
   onMapConflictRefresh?: () => Promise<void> | void;
-}
-
-// ── Simple markdown renderer (no external deps) ─────────────────────────────
-
-function simpleMarkdown(text: string): string {
-  let html = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/\n/g, '<br/>');
-  html = html.replace(
-    /(<li>.*?<\/li>(?:<br\/>)?)+/g,
-    (m) => `<ul>${m.replace(/<br\/>/g, '')}</ul>`
-  );
-  return html;
 }
 
 // ── Status config ────────────────────────────────────────────────────────────
@@ -769,7 +745,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 {descValue ? (
                   <div
                     className="prose prose-xs dark:prose-invert max-w-none [&_strong]:font-bold [&_em]:italic [&_code]:bg-slate-200 [&_code]:dark:bg-navy-700 [&_code]:px-1 [&_code]:rounded [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-c-info [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:italic"
-                    dangerouslySetInnerHTML={{ __html: simpleMarkdown(descValue) }}
+                    dangerouslySetInnerHTML={{ __html: safeSimpleMarkdown(descValue) }}
                   />
                 ) : (
                   <span>{t('myWorkIdeas.nodeDetailDrawer.clickAddDescription')}</span>

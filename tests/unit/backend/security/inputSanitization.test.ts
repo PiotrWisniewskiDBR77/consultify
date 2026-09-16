@@ -56,14 +56,14 @@ describe('sanitizeString (L1)', () => {
   it('escapes & ampersand', () => {
     expect(sanitizeString('a & b')).toBe('a &amp; b');
   });
-  it('escapes double quotes', () => {
-    expect(sanitizeString('"hello"')).toBe('&quot;hello&quot;');
+  it('preserves double quotes in JSON text', () => {
+    expect(sanitizeString('"hello"')).toBe('"hello"');
   });
-  it('escapes single quotes', () => {
-    expect(sanitizeString("it's")).toContain('&#x27;');
+  it('preserves apostrophes in JSON text', () => {
+    expect(sanitizeString("it's")).toBe("it's");
   });
-  it('escapes backticks', () => {
-    expect(sanitizeString('`code`')).toContain('&#96;');
+  it('preserves backticks in JSON text', () => {
+    expect(sanitizeString('`code`')).toBe('`code`');
   });
   it('does not escape forward slashes (URLs/tokens must remain intact)', () => {
     expect(sanitizeString('a/b')).toBe('a/b');
@@ -93,13 +93,14 @@ describe('sanitizeString (L1)', () => {
     const xss = '<img src=x onerror="alert(document.cookie)">';
     const result = sanitizeString(xss);
     expect(result).not.toContain('<');
-    expect(result).not.toContain('"');
+    expect(result).not.toContain('>');
+    expect(result).toContain('"alert(document.cookie)"');
     // Keep '=' and '/' intact; security relies on escaping HTML special chars.
     expect(result).toContain('onerror=');
   });
 
-  it('escapes all special characters in one pass', () => {
-    expect(sanitizeString(`&<>"'\``)).toBe('&amp;&lt;&gt;&quot;&#x27;&#96;');
+  it('neutralizes markup delimiters and preserves quotes in one pass', () => {
+    expect(sanitizeString(`&<>"'\``)).toBe(`&amp;&lt;&gt;"'\``);
   });
 });
 

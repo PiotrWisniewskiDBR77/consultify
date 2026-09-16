@@ -124,6 +124,24 @@ describe('IdeaNodeDetailDrawer — @mention autocomplete + highlight (B2b)', () 
     vi.clearAllMocks();
   });
 
+  it('sanitizes markdown link attributes after quote-preserving input handling', () => {
+    render(
+      <IdeaNodeDetailDrawer
+        {...makeProps({
+          nodeData: {
+            label: 'Test node',
+            comments: [],
+            description: '[x](https://safe.test/" onmouseover="alert(1))',
+          },
+        })}
+      />
+    );
+
+    const link = screen.getByRole('link', { name: 'x' });
+    expect(link.getAttribute('href')).toBe('https://safe.test/');
+    expect(link.hasAttribute('onmouseover')).toBe(false);
+  });
+
   it('fetches org members and surfaces a dropdown when typing "@"', async () => {
     render(<IdeaNodeDetailDrawer {...makeProps()} />);
 

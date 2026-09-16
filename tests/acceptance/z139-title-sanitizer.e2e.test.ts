@@ -167,7 +167,7 @@ describe('Z139 T5 — notebook title decode-before-store (real HTTP+DB)', () => 
     // agnostic fields and what stops the double-escape defect at the source.
     const { sanitizeString } = await import('../../server/src/utils/security.utils.js');
     const once = sanitizeString("<script>alert('x')</script>");
-    expect(once).toBe('&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;');
+    expect(once).toBe("&lt;script&gt;alert('x')&lt;/script&gt;");
     expect(sanitizeString(once)).toBe(once); // idempotent: no &amp;amp; growth
   });
 });
