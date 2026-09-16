@@ -1,0 +1,33 @@
+{
+  "package": "M4-bis allocation-row double-click test correction",
+  "status": "READY FOR CTO REVIEW",
+  "frozenAt": "2026-09-15T12:50:57-05:00",
+  "branch": "codex/a-m4-bis-20260915",
+  "base": "c458374bfad320e0c987c4f13fa299a0d261143d",
+  "implementationHead": "cac81d5731164376d8dc1ea6e573f32d5c749813",
+  "verification": {
+    "targetedFullFile": {
+      "path": "tests/unit/initiatives-execution/executionWorkResources.test.tsx",
+      "passed": 6,
+      "failed": 0,
+      "retry": 0
+    },
+    "changedFileImporters": 0,
+    "esbuild": "PASS",
+    "typescript": {
+      "environment": "actual symlink to owner node_modules; TypeScript 5.8.3",
+      "cleanBase": {
+        "frontend": "TIMEOUT_120",
+        "server": 22
+      },
+      "candidate": {
+        "frontend": "TIMEOUT_120",
+        "server": 22
+      },
+      "serverDelta": 0,
+      "frontendDelta": "NOT_PROVEN"
+    },
+    "stagingWrites": 0
+  },
+  "review": "CTO owned under KANAL.md W78/W79"
+}

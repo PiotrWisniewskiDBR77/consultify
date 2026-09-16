@@ -301,13 +301,20 @@ describe('Execution canonical work/resources', () => {
     expect(await screen.findByText('EVIDENCE_MISSING')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('EVIDENCE_MISSING');
   });
-  it('opens a person preview and its canonical Allocation workspace', async () => {
+  it('opens a person preview on single click, preserves it on double click, and opens its canonical Allocation workspace', async () => {
     render(<ResourcesHarness />);
     await selectCase('Execution Case for resources');
     const row = (await screen.findByText(/U1/)).closest('tr');
     expect(row).toBeTruthy();
     fireEvent.click(row!);
-    fireEvent.click(await screen.findByRole('button', { name: 'Allocation alloc1' }));
+    const allocationRelation = await screen.findByRole('button', { name: 'Allocation alloc1' });
+
+    // A person row has no single canonical allocation to open. Double click must
+    // therefore keep the selected person's preview; the relation chooses alloc1.
+    fireEvent.doubleClick(row!);
+    expect(screen.getByRole('button', { name: 'Allocation alloc1' })).toBe(allocationRelation);
+
+    fireEvent.click(allocationRelation);
     expect(
       screen.getByRole('region', { name: 'Operational Allocation workspace' })
     ).toBeInTheDocument();
