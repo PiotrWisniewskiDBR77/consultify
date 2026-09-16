@@ -27284,6 +27284,7 @@
       "extractionFailedShort": "Nie udało się odczytać tekstu z tego pliku.",
       "filesPartial": "⚠️ Przetworzono {{processed}}/{{total}} załączników: {{names}}. Niektórych źródeł nie udało się odczytać i nie będą uwzględnione. Możesz spróbować ponownie lub kontynuować.",
       "filesReady": "📎 {{count}} załącznika/-ów gotowych do analizy: {{names}}. AI będzie odwoływać się do tych źródeł w odpowiedzi.",
+      "imageUnsupported": "Obrazy nie są jeszcze obsługiwane. Możesz załączyć plik PDF, DOCX, TXT, MD, CSV lub JSON.",
       "sizeExceeded": "Plik \"{{name}}\" przekracza limit {{maxMb}} MB.",
       "unsupportedType": "Plik \"{{name}}\" nie jest obsługiwany. Dozwolone formaty: {{types}}.",
       "uploadError": "Błąd przesyłania pliku \"{{name}}\": {{error}}",

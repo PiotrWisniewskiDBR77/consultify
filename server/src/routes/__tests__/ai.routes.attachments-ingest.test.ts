@@ -22,6 +22,10 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { errorHandlerMiddleware } from '../../utils/ErrorHandler.js';
+
+vi.unmock('multer');
+
 const dbRun = vi.fn().mockResolvedValue({ success: true });
 const dbAll = vi.fn().mockResolvedValue([]);
 const dbGet = vi.fn().mockResolvedValue(undefined);
@@ -96,6 +100,7 @@ async function createApp(): Promise<Express> {
   const mod = await import('../ai.routes.js');
   const router = (mod as any).default || mod;
   app.use('/api/ai', router);
+  app.use(errorHandlerMiddleware);
   return app;
 }
 
@@ -108,6 +113,33 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
     requireActiveTenantMembership.mockClear();
     membershipSawFile = false;
   });
+
+  it.each([
+    ['en', 'pl', 'Images are not supported in chat yet.'],
+    ['pl', 'en', 'Obrazy nie są jeszcze obsługiwane w czacie.'],
+  ])(
+    'returns 415 with a clear %s message for PNG before any durable write',
+    async (language, browserLanguage, message) => {
+      const app = await createApp();
+      const res = await request(app)
+        .post('/api/ai/attachments/ingest')
+        .set('x-app-language', language)
+        .set('accept-language', browserLanguage)
+        .attach('file', Buffer.from('not-a-real-png'), {
+          filename: 'screen.png',
+          contentType: 'image/png',
+        });
+
+      expect(res.status).toBe(415);
+      expect(res.body.error).toMatchObject({
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        message: expect.stringContaining(message),
+      });
+      expect(dbRun).not.toHaveBeenCalled();
+      expect(pgQuery).not.toHaveBeenCalled();
+      expect(recordAttachmentExtraction).not.toHaveBeenCalled();
+    }
+  );
 
   it('runs the active-membership wall after identity and before multipart parsing or durable writes', async () => {
     const app = await createApp();

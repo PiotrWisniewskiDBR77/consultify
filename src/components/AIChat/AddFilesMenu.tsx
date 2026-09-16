@@ -121,7 +121,7 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AddFilesMenuProps {
-  onFileSelect: (files: File[]) => void;
+  onFileSelect: (files: File[]) => File[] | void;
   onUrlAdd?: (url: string) => void;
   onRecentSelect?: (recent: { name: string; docId?: string }) => void;
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
@@ -229,13 +229,18 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const files = Array.from(e.target.files);
-    onFileSelect(files);
+    const acceptedFiles = onFileSelect(files) ?? files;
     setIsOpen(false);
 
+    if (acceptedFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
     toast.success(
-      files.length === 1
-        ? t('aiChat.menu.toast.filesAddedOne', { name: files[0].name })
-        : t('aiChat.menu.toast.filesAddedMany', { count: files.length }),
+      acceptedFiles.length === 1
+        ? t('aiChat.menu.toast.filesAddedOne', { name: acceptedFiles[0].name })
+        : t('aiChat.menu.toast.filesAddedMany', { count: acceptedFiles.length }),
       { duration: 2000 }
     );
 
@@ -243,7 +248,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
     // docId isn't known until the upload completes in UnifiedChatPanel, which
     // upgrades this same entry in place via pushRecentAttachment({name, docId}).
     let merged: RecentAttachment[] = readRecentAttachments();
-    for (const f of files) merged = pushRecentAttachment({ name: f.name.trim() });
+    for (const f of acceptedFiles) merged = pushRecentAttachment({ name: f.name.trim() });
     setRecentItems(merged);
   };
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getChatAttachmentRejectionReason,
   isChatAttachmentSizeOk,
+  isImageChatAttachment,
   isSupportedChatAttachment,
   MAX_CHAT_ATTACHMENT_BYTES,
   SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
@@ -87,6 +88,10 @@ describe('isSupportedChatAttachment — rejected types', () => {
   it('rejects images', () => {
     expect(isSupportedChatAttachment({ name: 'pic.png', type: 'image/png' })).toBe(false);
     expect(isSupportedChatAttachment({ name: 'pic.jpg', type: 'image/jpeg' })).toBe(false);
+    expect(isImageChatAttachment({ name: 'pic.png', type: 'image/png' })).toBe(true);
+    expect(isImageChatAttachment({ name: 'PIC.WEBP', type: '' })).toBe(true);
+    expect(isImageChatAttachment({ name: 'misleading.txt', type: 'image/png' })).toBe(true);
+    expect(isImageChatAttachment({ name: 'misleading.png', type: 'text/plain' })).toBe(true);
   });
 
   it('rejects arbitrary binary / unknown extensions', () => {

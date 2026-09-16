@@ -9260,16 +9260,15 @@ export const Api = {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Intentionally skip default JSON headers so the browser sets multipart/form-data
-    // boundary. We still want auth header + 401→refresh retry via fetchWithRetry.
-    const authHeader: Record<string, string> = {};
-    const token = tokenService.getToken();
-    if (token) authHeader['Authorization'] = `Bearer ${token}`;
-    if (idempotencyKey) authHeader['Idempotency-Key'] = idempotencyKey;
+    // Keep auth, tenant and language context, but let the browser set the
+    // multipart boundary instead of sending the JSON content type.
+    const multipartHeaders = getHeaders();
+    delete multipartHeaders['Content-Type'];
+    if (idempotencyKey) multipartHeaders['Idempotency-Key'] = idempotencyKey;
 
     const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest`, {
       method: 'POST',
-      headers: authHeader,
+      headers: multipartHeaders,
       body: formData,
       skipDefaultHeaders: true,
       // Heavy: server parses/extracts (PDF/large docs) + embeds; exceeds 20s.

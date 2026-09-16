@@ -25,6 +25,11 @@ import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
+import {
+  isImageChatAttachment,
+  isSupportedChatAttachment,
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+} from './chatAttachmentSupport';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CommandPalette, type CommandPaletteItem } from './composer/CommandPalette';
 import {
@@ -916,9 +921,33 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     }
   }, [startDictation, stopDictation]);
 
-  const handleFileSelect = useCallback((files: File[]) => {
-    setAttachments((prev) => [...prev, ...files]);
-  }, []);
+  const handleFileSelect = useCallback(
+    (files: File[]) => {
+      const accepted = files.filter((file) => {
+        if (isImageChatAttachment(file)) {
+          toast.error(
+            t(
+              'aiChat.attachments.imageUnsupported',
+              'Images are not supported yet. You can attach PDF, DOCX, TXT, MD, CSV, or JSON files.'
+            )
+          );
+          return false;
+        }
+        if (isSupportedChatAttachment(file)) return true;
+        toast.error(
+          t(
+            'aiChat.attachments.unsupportedType',
+            'File "{{name}}" is not supported. Allowed formats: {{types}}.',
+            { name: file.name, types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
+          )
+        );
+        return false;
+      });
+      if (accepted.length > 0) setAttachments((prev) => [...prev, ...accepted]);
+      return accepted;
+    },
+    [t]
+  );
 
   // Re-attach an already-uploaded doc from the Recent flyout (A5). No re-upload:
   // the docId rides through onSend and the parent adds it to the RAG scope.

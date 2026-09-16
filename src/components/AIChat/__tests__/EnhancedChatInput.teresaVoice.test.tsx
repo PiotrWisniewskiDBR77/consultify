@@ -12,9 +12,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EnhancedChatInput } from '../../../components/AIChat/EnhancedChatInput';
+
+const toastError = vi.hoisted(() => vi.fn());
 
 const renderInput = (ui: React.ReactElement) => {
   const queryClient = new QueryClient({
@@ -24,7 +26,7 @@ const renderInput = (ui: React.ReactElement) => {
 };
 
 vi.mock('react-hot-toast', () => ({
-  default: { error: vi.fn(), custom: vi.fn(), success: vi.fn() },
+  default: { error: toastError, custom: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -100,6 +102,43 @@ vi.mock('../../../components/AIChat/NextModelChip', () => ({ NextModelChip: () =
 vi.mock('../../../components/AIChat/VoiceModeLegend', () => ({ VoiceModeLegend: () => null }));
 
 describe('EnhancedChatInput — Teresa voice CTA', () => {
+  beforeEach(() => toastError.mockReset());
+
+  it('rejects a pasted image before rendering an attachment chip', () => {
+    renderInput(<EnhancedChatInput onSend={vi.fn()} teresaVoiceAvailable={false} />);
+    const input = screen.getByRole('textbox');
+    const image = new File(['png'], 'screen.png', { type: 'image/png' });
+
+    fireEvent.paste(input, {
+      clipboardData: {
+        files: { length: 1, item: (index: number) => (index === 0 ? image : null) },
+        getData: () => '',
+      },
+    });
+
+    expect(toastError).toHaveBeenCalledWith(
+      'Images are not supported yet. You can attach PDF, DOCX, TXT, MD, CSV, or JSON files.'
+    );
+    expect(screen.queryByText('screen.png')).not.toBeInTheDocument();
+  });
+
+  it('rejects a dropped image even when its filename has a supported extension', () => {
+    renderInput(<EnhancedChatInput onSend={vi.fn()} teresaVoiceAvailable={false} />);
+    const input = screen.getByRole('textbox');
+    const image = new File(['png'], 'screen.txt', { type: 'image/png' });
+
+    fireEvent.drop(input, {
+      dataTransfer: {
+        files: { length: 1, item: (index: number) => (index === 0 ? image : null) },
+      },
+    });
+
+    expect(toastError).toHaveBeenCalledWith(
+      'Images are not supported yet. You can attach PDF, DOCX, TXT, MD, CSV, or JSON files.'
+    );
+    expect(screen.queryByText('screen.txt')).not.toBeInTheDocument();
+  });
+
   it('shows the restrained pulse only while the composer is empty, enabled and idle', async () => {
     const { container } = renderInput(
       <EnhancedChatInput onSend={vi.fn()} teresaVoiceAvailable={false} />

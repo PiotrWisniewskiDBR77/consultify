@@ -4,6 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AddFilesMenu } from '../../../src/components/AIChat/AddFilesMenu';
 
+const toastSuccess = vi.hoisted(() => vi.fn());
+
+vi.mock('react-hot-toast', () => ({
+  default: { error: vi.fn(), success: toastSuccess },
+}));
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
@@ -22,6 +28,7 @@ vi.mock('react-i18next', () => ({
 describe('AddFilesMenu', () => {
   beforeEach(() => {
     localStorage.clear();
+    toastSuccess.mockReset();
   });
 
   it('opens attachment menu from plus trigger', () => {
@@ -48,6 +55,20 @@ describe('AddFilesMenu', () => {
     fireEvent.click(trigger);
 
     expect(screen.queryByText(/upload file/i)).not.toBeInTheDocument();
+  });
+
+  it('does not announce or remember a file rejected by the composer', () => {
+    const onFileSelect = vi.fn(() => []);
+    render(<AddFilesMenu onFileSelect={onFileSelect} />);
+    const image = new File(['png'], 'screen.png', { type: 'image/png' });
+
+    fireEvent.change(screen.getByTestId('add-files-hidden-input'), {
+      target: { files: [image] },
+    });
+
+    expect(onFileSelect).toHaveBeenCalledWith([image]);
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(localStorage.getItem('consultify-recent-attachments')).toBeNull();
   });
 
   it('reattaches a recent item with a docId via onRecentSelect', () => {

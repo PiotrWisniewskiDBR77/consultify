@@ -401,7 +401,7 @@ function isGovernedMutationApprovalBypassRequest(message: unknown): boolean {
 const attachmentsUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (req, file, cb) => {
     const allowed = [
       'application/pdf',
       'text/plain',
@@ -411,7 +411,19 @@ const attachmentsUpload = multer({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
     if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) return cb(null, true);
-    return cb(new Error(`Unsupported file type: ${file.mimetype}`));
+    const isPolish = String(req.headers['x-app-language'] || req.headers['accept-language'] || '')
+      .toLowerCase()
+      .split(',')
+      .some((locale) => locale.trim().startsWith('pl'));
+    const isImage = file.mimetype.startsWith('image/');
+    const message = isImage
+      ? isPolish
+        ? 'Obrazy nie są jeszcze obsługiwane w czacie. Użyj pliku PDF, DOCX, TXT, MD, CSV lub JSON.'
+        : 'Images are not supported in chat yet. Use PDF, DOCX, TXT, MD, CSV, or JSON.'
+      : isPolish
+        ? 'Ten typ pliku nie jest obsługiwany. Użyj pliku PDF, DOCX, TXT, MD, CSV lub JSON.'
+        : 'This file type is not supported. Use PDF, DOCX, TXT, MD, CSV, or JSON.';
+    return cb(new AppError(message, 415, 'UNSUPPORTED_MEDIA_TYPE'));
   },
 });
 
