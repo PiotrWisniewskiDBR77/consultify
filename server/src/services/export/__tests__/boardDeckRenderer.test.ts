@@ -172,6 +172,7 @@ describe('EXPORT-1 board deck renderer', () => {
     const { zip, xml } = await packageXml(await unifiedExportService.exportBoardDeckPptx(deck));
     const slideFour = await zip.file('ppt/slides/slide4.xml')!.async('string');
     const slideSix = await zip.file('ppt/slides/slide6.xml')!.async('string');
+    const slideSeven = await zip.file('ppt/slides/slide7.xml')!.async('string');
     const slideEight = await zip.file('ppt/slides/slide8.xml')!.async('string');
     const chartName = Object.keys(zip.files).find((name) =>
       /^ppt\/charts\/chart\d+\.xml$/.test(name)
@@ -185,13 +186,21 @@ describe('EXPORT-1 board deck renderer', () => {
     expect(Math.max(...rowHeights)).toBeLessThan(914400);
     expect(slideSix).toContain('DCE6FA');
     expect(slideSix).toContain('F1F4F8');
+    expect(slideSix).toContain('1.0');
+    expect(slideSix).toMatch(/<a:pPr[^>]*algn="r"/);
 
     expect(chart.match(/<c:ser>/g) || []).toHaveLength(2);
     expect(chart).toContain('2563EB');
     expect(chart).toContain('667085');
     expect(chart).toMatch(/<c:showVal val="1"\/>/);
+    expect(chart).toContain('formatCode="0.0"');
+    expect(slideSeven).toContain('TARGET');
+    expect(slideSeven).toContain('LATEST');
+    expect(slideSeven).toContain('78.0 %');
+    expect(slideSeven).toContain('72.9 %');
 
     expect(slideFour).toContain('SO WHAT');
+    expect((slideFour.match(/2563EB/g) || []).length).toBeGreaterThanOrEqual(4);
     expect(slideEight).toContain('£410k · MES Line 3');
     expect(slideEight).toContain('DECISION OWNER');
     expect(slideEight).toContain('DUE BY');

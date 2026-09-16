@@ -316,18 +316,33 @@ function renderContentOne(slide: any, item: BoardDeckSlide): void {
       breakLine: true,
       fit: 'shrink',
     });
-  if (item.bullets?.length)
-    addText(slide, bulletRuns(item.bullets), {
-      x: 1.05,
-      y: item.body ? 2.35 : 1.58,
-      w: 11.05,
-      h: 3.75,
-      fontSize: 12,
-      color: C.text,
-      breakLine: true,
-      valign: 'top',
-      fit: 'shrink',
+  if (item.bullets?.length) {
+    const startY = item.body ? 2.35 : 1.58;
+    const availableHeight = item.keyMessage ? 3.12 : 4.65;
+    const rowHeight = availableHeight / item.bullets.length;
+    item.bullets.forEach((bullet, index) => {
+      const y = startY + index * rowHeight;
+      slide.addShape('rect', {
+        x: 0.97,
+        y: y + 0.08,
+        w: 0.1,
+        h: 0.1,
+        fill: { color: C.blue },
+        line: { color: C.blue },
+      });
+      addText(slide, bullet, {
+        x: 1.38,
+        y,
+        w: 10.72,
+        h: Math.max(0.38, rowHeight - 0.08),
+        fontSize: 12,
+        color: C.text,
+        breakLine: true,
+        valign: 'top',
+        fit: 'shrink',
+      });
     });
+  }
   if (item.keyMessage) {
     slide.addShape('rect', {
       x: 0.95,
@@ -416,29 +431,38 @@ function renderTable(slide: any, item: BoardDeckSlide): void {
   const dataRows = table.totalRow ? [...table.rows, table.totalRow] : table.rows;
   const lastRowIndex = dataRows.length;
   const rows = [table.headers, ...dataRows].map((row, rowIndex) =>
-    row.map((value, columnIndex) => ({
-      text: String(value),
-      options:
-        rowIndex === 0
-          ? { bold: true, color: C.white, fill: C.navy }
-          : rowIndex === lastRowIndex && table.totalRow
-            ? {
-                bold: true,
-                color: C.navy,
-                fill: C.accentSoft,
-                border: [
-                  { type: 'solid', color: C.navy, pt: 1.1 },
-                  { type: 'solid', color: C.line, pt: 0.5 },
-                  { type: 'solid', color: C.line, pt: 0.5 },
-                  { type: 'solid', color: C.line, pt: 0.5 },
-                ],
-              }
-            : {
-                bold: columnIndex === 0,
-                color: columnIndex === 0 ? C.navy : C.text,
-                fill: rowIndex % 2 === 0 ? C.surface : C.white,
-              },
-    }))
+    row.map((value, columnIndex) => {
+      const numericColumn = rowIndex > 0 && typeof value === 'number';
+      const fteColumn =
+        String(table.headers[columnIndex] || '')
+          .trim()
+          .toUpperCase() === 'FTE';
+      return {
+        text: numericColumn && fteColumn ? value.toFixed(1) : String(value),
+        options:
+          rowIndex === 0
+            ? { bold: true, color: C.white, fill: C.navy }
+            : rowIndex === lastRowIndex && table.totalRow
+              ? {
+                  bold: true,
+                  color: C.navy,
+                  fill: C.accentSoft,
+                  align: numericColumn ? 'right' : 'left',
+                  border: [
+                    { type: 'solid', color: C.navy, pt: 1.1 },
+                    { type: 'solid', color: C.line, pt: 0.5 },
+                    { type: 'solid', color: C.line, pt: 0.5 },
+                    { type: 'solid', color: C.line, pt: 0.5 },
+                  ],
+                }
+              : {
+                  bold: columnIndex === 0,
+                  color: columnIndex === 0 ? C.navy : C.text,
+                  fill: rowIndex % 2 === 0 ? C.surface : C.white,
+                  align: numericColumn ? 'right' : 'left',
+                },
+      };
+    })
   );
   const rowHeights = [
     0.42,
@@ -477,6 +501,7 @@ function renderChart(slide: any, item: BoardDeckSlide, pptx: any): void {
         chartColors: chart.series.map((_, index) => seriesColors[index % seriesColors.length]),
         showValue: true,
         dataLabelPosition: 'outEnd',
+        dataLabelFormatCode: '0.0',
       },
     },
   ];
@@ -506,6 +531,7 @@ function renderChart(slide: any, item: BoardDeckSlide, pptx: any): void {
     h: 4.75,
     catAxisLabelFontSize: 8,
     valAxisLabelFontSize: 8,
+    valAxisLabelFormatCode: '0.0',
     showLegend: true,
     legendPos: 'b',
     showTitle: false,
@@ -523,25 +549,57 @@ function renderChart(slide: any, item: BoardDeckSlide, pptx: any): void {
     fill: { color: C.surface },
     line: { color: C.surface },
   });
-  addText(slide, item.keyMessage || item.body || '', {
+  addText(slide, 'TARGET', {
     x: 9.15,
-    y: 2.05,
+    y: 1.94,
     w: 2.85,
-    h: 1.35,
-    fontSize: 15,
+    h: 0.2,
+    fontSize: 7,
     bold: true,
-    color: C.navy,
-    fit: 'shrink',
+    charSpacing: 1.2,
+    color: C.muted,
   });
-  if (chart.target !== undefined)
-    addText(slide, `Target ${chart.target}${chart.unit || ''}`, {
+  if (chart.target !== undefined) {
+    addText(slide, `${Number(chart.target).toFixed(1)}${chart.unit ? ` ${chart.unit}` : ''}`, {
       x: 9.15,
-      y: 3.78,
+      y: 2.28,
       w: 2.85,
-      h: 0.35,
-      fontSize: 10,
+      h: 0.48,
+      fontSize: 21,
       bold: true,
-      color: C.blue,
+      color: C.navy,
+    });
+  }
+  const latest = chart.series[0]?.values.at(-1);
+  addText(slide, 'LATEST', {
+    x: 9.15,
+    y: 3.14,
+    w: 2.85,
+    h: 0.2,
+    fontSize: 7,
+    bold: true,
+    charSpacing: 1.2,
+    color: C.muted,
+  });
+  if (latest !== undefined)
+    addText(slide, `${Number(latest).toFixed(1)}${chart.unit ? ` ${chart.unit}` : ''}`, {
+      x: 9.15,
+      y: 3.48,
+      w: 2.85,
+      h: 0.48,
+      fontSize: 21,
+      bold: true,
+      color: 'B45309',
+    });
+  if (item.body || item.keyMessage)
+    addText(slide, item.body || item.keyMessage || '', {
+      x: 9.15,
+      y: 4.35,
+      w: 2.85,
+      h: 1.12,
+      fontSize: 9.5,
+      color: C.text,
+      fit: 'shrink',
     });
 }
 

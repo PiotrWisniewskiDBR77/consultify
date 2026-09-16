@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T17:51:27.006Z",
+  "generatedAt": "2026-09-16T18:29:32.109Z",
   "expectedRoles": [
     "cover",
     "agenda",
@@ -84,6 +84,11 @@
       "tableMaxRowHeight": 0,
       "chartSeries": 2,
       "chartShowsValues": true,
+      "chartDecimalLabels": true,
+      "contentBlueSquares": true,
+      "tableRightAlignedNumbers": true,
+      "tableKeepsOneDecimal": true,
+      "chartTargetLatest": true,
       "decisionFields": [
         "DECISION OWNER",
         "DUE BY",
@@ -130,7 +135,7 @@
     }
   },
   "actual": {
-    "bytes": 212013,
+    "bytes": 216181,
     "slides": 8,
     "layouts": 1,
     "masters": 1,
@@ -202,6 +207,11 @@
       "tableMaxRowHeight": 566928,
       "chartSeries": 2,
       "chartShowsValues": true,
+      "chartDecimalLabels": true,
+      "contentBlueSquares": true,
+      "tableRightAlignedNumbers": true,
+      "tableKeepsOneDecimal": true,
+      "chartTargetLatest": true,
       "decisionFields": [
         "DECISION OWNER",
         "DUE BY",
@@ -233,12 +243,12 @@
       }
     },
     "dominantColors": {
-      "101828": 39,
-      "667085": 23,
+      "101828": 40,
+      "667085": 25,
       "D8DEE8": 152,
       "1B2A41": 35,
+      "2563EB": 32,
       "FFFFFF": 30,
-      "2563EB": 27,
       "F1F4F8": 20,
       "DCE6FA": 6,
       "8FA3C0": 3,
@@ -260,6 +270,8 @@
     "zeroBrandCrimson": true,
     "tableComposition": true,
     "chartComposition": true,
+    "contentComposition": true,
+    "tableNumberFormatting": true,
     "decisionComposition": true,
     "normalizedKeyPositionsWithinTolerance": true
   },
