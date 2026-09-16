@@ -2841,3 +2841,48 @@ duplikuję tu treści zgodnie z regułą jeden SSOT na wpis. Skrót:
 
 Dowody źródłowe tego wpisu: `~/Developer/cto-codex/{akcept-1-2-20260915,fala-f12-20260915,
 odbior-fala2-1-20260915,audyt-47-20260915}/`.
+
+### Rejestr 16.09 — DEC-533..573 i wiążący PLAN 85 etapów
+
+- **DEC-520 — UCHYLONA PRZEZ DEC-572:** 17.09 nie jest datą promocji produktu; pozostaje wyłącznie technicznym odświeżeniem demo przez CTO.
+- **DEC-533** — U-07 generator pytań wywiadu wraca na pełną stronę (koniec N-karty).
+- **DEC-534** — Panele boczne domyślnie zwinięte w każdej powłoce; stan per użytkownik.
+- **DEC-535** — Makieta v2 powłoki sesji wywiadu zaakceptowana → INTERVIEW-SHELL.
+- **DEC-536** — Globalny przełącznik „Project" w nagłówku (fala F-2, po F-1).
+- **DEC-537** — Priorytet = `priority_score` + `priority_source` z etapu Analyzing; nadpisanie wymaga uzasadnienia.
+- **DEC-538** — Sesje narzędzi są org-wide (sprostowanie: system już tak działa).
+- **DEC-539** — Status inicjatywy = 12 etapów w kolumnie bazy (uchyla DEC-506); migracja addytywna.
+- **DEC-540** — Kandydat = etap 1 „Registered draft" w module źródłowym, nie w rejestrze.
+- **DEC-541** — Wszystkie 12 etapów rozróżnialne w UI (pigułki i bramki między parami).
+- **DEC-542** — Report Builder realizowany w kolejności RB-1 → RB-2 → RB-3.
+- **DEC-543** — Bramka jakości eksportu jest ostrzeżeniem i nigdy nie blokuje.
+- **DEC-544** — DRD: jedna decyzja per poziom; trzy sondy są listą pomocniczą.
+- **DEC-545** — DRD: target (TO-BE) proponuje AI, zatwierdza konsultant.
+- **DEC-546** — DRD: dowód nie warunkuje stanu poziomu; pewność `declared`/`evidenced` osobno.
+- **DEC-547** — DRD: trzy stany poziomu: Yes / No / I need help.
+- **DEC-548** — DRD: ekran trzech kolumn po akcepcie makiety.
+- **DEC-549** — Dokumenty: viewer gotowego dokumentu (archetyp B) z edycją sekcji ręczną i AI.
+- **DEC-550** — Report Builder znika z listy Documents i zostaje w Template Library.
+- **DEC-551** — New document = jeden tryb (szablon + źródła + brief) → gotowy dokument w viewerze.
+- **DEC-552** — Makieta DRD trzech kolumn zaakceptowana; reguły Yes / No / I need help zdefiniowane.
+- **DEC-553** — Programs usunięte z MVP; projekt jest jedynym pojemnikiem (ukrycie bez kasowania danych).
+- **DEC-554** — Results → Management reports usunięte; raporty działają w jednej formule.
+- **DEC-555** — PLAN-1 wg syntezy: godziny/tydzień, FTE jako pochodna, ręczny popyt jako oznaczone nadpisanie.
+- **DEC-556** — Sprzątanie stagingu po przejściu wykonane 16.09 z kopią.
+- **DEC-557** — Powłoka sesji wywiadu przyjęta „Tak, ale zmiany"; zatwierdzone pytania bez przekreślenia.
+- **DEC-558** — Trzy szablony bazowe (deck/dokument/arkusz) zaakceptowane → TEMPLATE-1.
+- **DEC-559** — Font = Aptos z fallbackiem Arial zapisanym w pliku.
+- **DEC-560** — Logo = co-branding: Consultify/DBR77 na okładce, klient w stopce.
+- **DEC-561** — Jedna rodzina szablonów w całej aplikacji; moduł podmienia treść, nie layout.
+- **DEC-562** — PMO-1a GO: pięć kolejek i kolumny Etap/Odpowiedzialny/Termin/Następny krok, bez migracji.
+- **DEC-563** — Bramkę etap 4 → 5 zatwierdza sponsor albo komitet sterujący; log zapisuje osobę.
+- **DEC-564** — Domyślne SLA per etap i eskalacja Overdue → sponsor → PMO w PMO-1b.
+- **DEC-565** — Role per inicjatywa: owner, sponsor, PMO, komitet; migracja w PMO-1b.
+- **DEC-566** — AI-REVIEW-1: automatyczna ocena jakości 0–100 i werdykt przy wysłaniu do przeglądu.
+- **DEC-567** — PROJECT-1: projekt obowiązkowy dla inicjatywy; role dziedziczone; członkostwo daje dostęp.
+- **DEC-568** — EXPORT-1: silnik DOCX/PPTX/XLSX do jakości makiet, realizowany równolegle od teraz.
+- **DEC-569** — AI-REVIEW: progi 80/50; AI rekomenduje, manager zatwierdza; respondent widzi wynik przed wysłaniem.
+- **DEC-570** — Projekt = ENGAGEMENT (jeden na umowę); sponsor klienta jest członkiem; Viewer widzi dokumenty.
+- **DEC-571** — Wszystkie makiety z 16.09 zaakceptowane; budowa 1:1 z obrazów.
+- **DEC-572** — PLAN 85 etapów obowiązuje; promocja produktu nie ma daty, a 17.09 jest technicznym odświeżeniem demo przez CTO z `85541745e8`, flagami OFF, tagiem cofnięcia i żywym `_RUNBOOK_COFANIA`.
+- **DEC-573** — Fala 2 biegnie równolegle w torze B: EXPORT-1, TEMPLATE-1 i mechanika bez ekranów; ekrany dopiero po akceptach właściciela.

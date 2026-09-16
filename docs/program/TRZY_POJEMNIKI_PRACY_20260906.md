@@ -1259,7 +1259,7 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 
 ---
 
-## §5 Tabela zbiorcza — **✅ 11 · 🧪 11 · 🔧 19 · ⬜ 6 (47 etapów)**
+## §5 Tabela zbiorcza — **✅ 11 · 🧪 12 · 🔧 23 · ⬜ 39 (85 etapów)**
 ### pomiar kodu 15.09.2026 (DEC-529) + akcepty właściciela z 15.09 02:00 UTC (DEC-516/DEC-530) + akcept nr 2 15.09 ~23:45 UTC (DEC-532) — przeliczone `policz.sh`, patrz EWIDENCJA DEC-532 niżej
 
 | Moduł | Przycisk | Etap | Wykonawca | Zależność | Fala | Akcept właściciela (jeden obraz) | STAN | SHA/DEC | DATA |
@@ -1311,6 +1311,119 @@ P5" nieaktualna). Spotkania pozostają OFF (DEC-483).
 | Wspólne | — | Gantt kanoniczny (pomiar + adopcja) | Codex P2 | DEC-493 | D | (w obrazie PL3) | 🔧 pomiar zrobiony, **adopcja 2/5**, 1 martwy — **było ⬜** | `InitiativeGantt.tsx:87` (2 wołacze); `GanttView.tsx`, `RoadmapGantt.tsx`, `TimelinePlanner.tsx:3843` żywe; `Reports/GanttChart.tsx` MARTWY | 15.09 |
 | Wspólne | — | P5 kontrakty KP (19 paczek) | Codex P5 | — | po F | per paczka | ⬜ 0 kodu; gałęzi `codex/kontrakty-pracy-konsultanta-etap2-20260914` nie ma | grep `consultantWorkContract`/`workContract` = 0 | 15.09 |
 | Wspólne | — | P6 Agent-edytor klocków | Codex P6 | PMO, Gantt | po F | paleta + Gantt z przepływu | 🔧 **jedyny 🔧 z ARG** — wystarczy zmienna `VITE_AGENT_PLAN` + zrzut | `AgentPlanPanel.tsx:69,507` ← `AgentPlanView.tsx:33` ← `MyWorkHub.tsx:1971`; ARG :93/:277 | 15.09 |
+
+### §5b Kanoniczna macierz po połączeniu PLAN §4 (Wpis 115, DEC-572/573)
+
+Poniższe 85 wierszy jest kanonicznym indeksem zakresu. Zachowuje 47 etapów pomiaru z 15.09 i
+dodaje 38 etapów przejścia. Trzy nazwy z roboczej tabeli PLAN są scalone z istniejącymi wierszami,
+aby nie liczyć tej samej pracy dwa razy: `PL-1` → `PL1`/`PL2`, `M1` → `OB1`–`OB4`, a `RD-1` →
+`Silnik raportów (jeden)`. Aby zachować wiążące liczniki pojemników z PLAN (39/46), A1 i A2 są
+ujęte w pojemniku 1 jako już zaakceptowane elementy ścieżki właściciela inicjatywy (DEC-516).
+
+| # | Moduł | Etap | STAN | Kryterium S1/P | U/DEC | Pojemnik 1 / Fala 2 |
+|---:|---|---|:---:|---|---|---|
+| 1 | Inicjatywy | L1 rdzeń listy | ✅ | S1.16 | DEC-481 | Pojemnik 1 |
+| 2 | Inicjatywy | L2 Archiwum/Aktualne | ✅ | S1.16 | DEC-516 | Pojemnik 1 |
+| 3 | Inicjatywy | L3 filtr projektami | 🧪 | P | DEC-536 | Fala 2 |
+| 4 | Inicjatywy | A1 analiza portfela | ✅ | S1.16 | DEC-516 | Pojemnik 1 |
+| 5 | Inicjatywy | A2 parking z powodem | ✅ | S1.16 | DEC-516 | Pojemnik 1 |
+| 6 | Inicjatywy | A3 karty N i wycena | 🧪 | P | DEC-516 | Fala 2 |
+| 7 | Inicjatywy | A4 KPI w inicjatywie | 🧪 | P | DEC-516 | Fala 2 |
+| 8 | Inicjatywy | PL1 ścieżki krytyczne (obejmuje PL-1) | 🔧 | S1.16 | U-33 · DEC-555 | Pojemnik 1 |
+| 9 | Inicjatywy | PL2 akcept obserwacji AI (obejmuje PL-1) | 🔧 | S1.16 | U-33 · DEC-555 | Pojemnik 1 |
+| 10 | Inicjatywy | PL3 oś czasu 1/3/6/12 | 🧪 | P | U-34 · DEC-555 | Fala 2 |
+| 11 | Inicjatywy | OB1 heat mapa (obejmuje M1) | 🔧 | P | U-34 · DEC-573 | Fala 2 |
+| 12 | Inicjatywy | OB2 dostępność (obejmuje M1) | 🔧 | P | U-34 · DEC-573 | Fala 2 |
+| 13 | Inicjatywy | OB3 raport obciążenia (obejmuje M1) | 🔧 | P | U-34 · DEC-573 | Fala 2 |
+| 14 | Inicjatywy | OB4 propozycje AI (obejmuje M1) | 🔧 | P | U-34 · DEC-573 | Fala 2 |
+| 15 | Inicjatywy | RP1 raport z pracy | ✅ | P | DEC-516 | Fala 2 |
+| 16 | Inicjatywy | RP2 zaległości i decyzje | 🧪 | P | DEC-516 | Fala 2 |
+| 17 | Inicjatywy | RP3 usunięcie atrapy | ⬜ | S1.4 | U-40 · DEC-543 | Pojemnik 1 |
+| 18 | Realizacja | B-E0 sygnalizacja ryzyka | 🔧 | P | DEC-487 | Fala 2 |
+| 19 | Realizacja | B-E1 oś czasu i cztery widoki | ✅ | P | DEC-532 | Fala 2 |
+| 20 | Realizacja | P-E2a trzy okna czasu | 🔧 | P | DEC-573 | Fala 2 |
+| 21 | Realizacja | P-E2b kadencja | 🔧 | P | DEC-573 | Fala 2 |
+| 22 | Realizacja | P-E2c akcje przełożonego | 🔧 | P | DEC-485/486 | Fala 2 |
+| 23 | Realizacja | R-E3a granica praca/ryzyko | ⬜ | P | DEC-485 | Fala 2 |
+| 24 | Realizacja | R-E3b generator obserwacji | ⬜ | P | DEC-573 | Fala 2 |
+| 25 | Realizacja | R-E3c artefakt N | ⬜ | P | DEC-573 | Fala 2 |
+| 26 | Realizacja | R-E3d wdrożenie zmiany | ⬜ | P | DEC-573 | Fala 2 |
+| 27 | Realizacja | RA-E4a kadencja raportu | 🔧 | P | DEC-573 | Fala 2 |
+| 28 | Realizacja | RA-E4b poziomy szczegółowości | 🔧 | P | DEC-573 | Fala 2 |
+| 29 | Realizacja | RA-E4c rezultaty KPI | 🔧 | P | DEC-573 | Fala 2 |
+| 30 | Realizacja | RA-E4d PDF i wysyłka | 🔧 | P | DEC-573 | Fala 2 |
+| 31 | Realizacja | H1 bramka lifecycle | 🧪 | P | DEC-507 | Fala 2 |
+| 32 | Realizacja | H2 handoff zapis/odczyt | 🧪 | P | DEC-507 | Fala 2 |
+| 33 | Realizacja | H1b skrzynka recenzenta | ✅ | P | DEC-516 | Fala 2 |
+| 34 | Realizacja | H1c parytet kod/etap | 🧪 | P | DEC-506 | Fala 2 |
+| 35 | Realizacja | H1d bramka GO/NO-GO | 🧪 | P | DEC-507 | Fala 2 |
+| 36 | Realizacja | H1e warunek CURRENT_GO_DECISION | ✅ | P | DEC-507/516 | Fala 2 |
+| 37 | Realizacja | H1f skrzynka v2 | 🧪 | P | DEC-531 | Fala 2 |
+| 38 | Realizacja | D-j porównania legacy | 🔧 | P | DEC-506 | Fala 2 |
+| 39 | Realizacja | W1 wygaszenie martwych zakładek | 🔧 | P | U-38/U-39 · DEC-573 | Pojemnik 1 |
+| 40 | Realizacja | U1 relations.emptyLabel | ✅ | P | DEC-532 | Pojemnik 1 |
+| 41 | Realizacja | U2 What's next w Decisions | ✅ | P | DEC-532 | Pojemnik 1 |
+| 42 | Wspólne | Silnik raportów (obejmuje RD-1) | 🔧 | S1.4 | U-24/U-29/U-40/U-42 · DEC-543 | Pojemnik 1 |
+| 43 | Wspólne | PMO E3 projekty w UI | ✅ | P | DEC-516 | Fala 2 |
+| 44 | Wspólne | S5 E3b czworo oczu | 🧪 | P | DEC-489 | Fala 2 |
+| 45 | Wspólne | Gantt kanoniczny | 🔧 | S1.16 | U-33/U-34 · DEC-493 | Pojemnik 1 |
+| 46 | Wspólne | P5 kontrakty KP | ⬜ | P | DEC-573 | Fala 2 |
+| 47 | Wspólne | P6 Agent-edytor klocków | 🔧 | P | DEC-573 | Fala 2 |
+| 48 | Wywiad | IS-1 powłoka sesji U05-1 | 🧪 | S1.1 | U-05 · DEC-535 | Pojemnik 1 |
+| 49 | Wywiad | IS-2 lista sesji i poprawki | ⬜ | S1.1 | U-05 · DEC-557 | Pojemnik 1 |
+| 50 | Wywiad | IS-3 panel, generator i proza | ⬜ | S1.1 | U-07/U-08 · DEC-533 | Pojemnik 1 |
+| 51 | Inicjatywy | ST-1 12 etapów w bazie | 🔧 | S1.16 | U-09/U-10/U-11 · DEC-539 | Pojemnik 1 |
+| 52 | Inicjatywy | ST-2 kandydat jako etap 1 | ⬜ | S1.16 | U-09 · DEC-540 | Pojemnik 1 |
+| 53 | Inicjatywy | ST-3 bramki dla 12 etapów | ⬜ | S1.16 | U-10/U-11 · DEC-541 | Pojemnik 1 |
+| 54 | Inicjatywy | ST-4 priority_score | ⬜ | P | U-12 · DEC-537 | Fala 2 |
+| 55 | Inicjatywy | PMO-1a pięć kolejek i log | ⬜ | P | U-35 · DEC-562/563 | Pojemnik 1 |
+| 56 | Inicjatywy | PMO-1b role, SLA i eskalacje | ⬜ | P | U-35 · DEC-564/565 | Fala 2 |
+| 57 | Projekty | PJ-1 ekran i projekt obowiązkowy | ⬜ | S1.16 | U-12/U-36/U-37 · DEC-567/570 | Pojemnik 1 |
+| 58 | Projekty | PJ-2 fundament, przełącznik i RBAC | ⬜ | P | U-12 · DEC-536/570 | Fala 2 |
+| 59 | DRD | DRD-2 ekran trzech kolumn | 🔧 | S1.1 | U-19 · DEC-552 | Pojemnik 1 |
+| 60 | DRD | DRD-2b poprawki P1 | ⬜ | S1.1 | U-19 · DEC-552 | Pojemnik 1 |
+| 61 | DRD | DRD-1 jedna rampa i trzy stany | ⬜ | S1.4 | U-19/U-20/U-21 · DEC-544–548 | Pojemnik 1 |
+| 62 | DRD | DRD-S Settings | ⬜ | P | U-20 · DEC-571 | Fala 2 |
+| 63 | Ocena/Audyty | RG-1 generatory raportu | ⬜ | S1.4 | U-25/U-31 · DEC-571 | Pojemnik 1 |
+| 64 | Wiele list | OP-1 pięć podłączeń lista→obiekt | ⬜ | P | U-22/U-23/U-28/U-32/U-38/U-39 · DEC-571 | Pojemnik 1 |
+| 65 | Audyty | OP-2 viewer pakietu | ⬜ | P | U-27 · DEC-571 | Fala 2 |
+| 66 | Wyniki | KPI-1 higiena ekranu KPI | ⬜ | S1.1 | U-41 · DEC-571 | Pojemnik 1 |
+| 67 | Materiały | DK-1 Review i eksport PPTX | ⬜ | S1.4 | U-43/U-49 · DEC-543/571 | Pojemnik 1 |
+| 68 | Materiały | DOC-0 viewer dokumentu | ⬜ | S1.4 | U-44–U-48 · DEC-549/551 | Pojemnik 1 |
+| 69 | Wiele | RD-2 archetyp Deck, wersje, publikacja | ⬜ | P | U-24/U-29/U-30/U-40/U-42 · DEC-543 | Fala 2 |
+| 70 | Materiały | RB-1 podłączenie pokręteł | ⬜ | S1.4 | U-17 · DEC-542 | Pojemnik 1 |
+| 71 | Materiały | RB-2 recenzja i eksport | ⬜ | S1.4 | U-18 · DEC-542/543 | Pojemnik 1 |
+| 72 | Materiały | RB-3 nawigacja v2 | ⬜ | P | U-16 · DEC-542 | Fala 2 |
+| 73 | Materiały | TPL-1a trzy szablony | ⬜ | S1.4 | U-47/U-50 · DEC-558–561 | Pojemnik 1 |
+| 74 | Materiały | TPL-1b czystka 96 i New template | ⬜ | P | U-47/U-50 · DEC-558 | Fala 2 |
+| 75 | Wspólne | EXP-1 eksport DOCX/PPTX/XLSX | ⬜ | S1.4 | DEC-568 | Pojemnik 1 |
+| 76 | Spotkania | MTG-1 powłoka i Menu 1/2/3 | ⬜ | S1.5 | U-51 · DEC-571 | Pojemnik 1 |
+| 77 | Spotkania | MTG-2 prawdziwa notatka | ⬜ | P | U-52 · DEC-571 | Fala 2 |
+| 78 | Wywiad | AIR-1a ocena AI sesji | ⬜ | P | DEC-566/569 | Pojemnik 1 |
+| 79 | Wiele | AIR-1b ocena AI w trzech modułach | ⬜ | P | DEC-566/569 | Fala 2 |
+| 80 | Proces | E2E-1a smoke 16 modułów | ⬜ | S1.8 | U-03 · DEC-573 | Pojemnik 1 |
+| 81 | Proces | E2E-1b nocna macierz wariantów | ⬜ | P | U-03 · DEC-573 | Fala 2 |
+| 82 | Wiele | M6 higiena | 🔧 | S1.7 | U-01/U-02/U-04 · DEC-571 | Pojemnik 1 |
+| 83 | Dane | SR-1 SHOWCASE-ROLL | ⬜ | S1.7 | U-01/U-02/U-04 · DEC-573 | Pojemnik 1 |
+| 84 | Wspólne | CRON-2 eskalacja decyzji | 🔧 | S1.8 | DEC-573 | Pojemnik 1 |
+| 85 | Wspólne | I18N-1 renderery bez PL | ⬜ | S1.4 | U-30 · DEC-461 | Pojemnik 1 |
+
+| Zakres | ✅ | 🧪 | 🔧 | ⬜ | Razem |
+|---|---:|---:|---:|---:|---:|
+| §5 pomiar bazowy | 11 | 11 | 19 | 6 | 47 |
+| PLAN §4 po deduplikacji | 0 | 1 | 4 | 33 | 38 |
+| **Połączona macierz** | **11** | **12** | **23** | **39** | **85** |
+| **Pojemnik 1 (MVP)** | **4** | **1** | **9** | **25** | **39** |
+| **Fala 2** | **7** | **11** | **14** | **14** | **46** |
+
+### PROMOCJA_DEMO (DEC-572)
+
+- **17.09 jest odświeżeniem technicznym**, które wykonuje wyłącznie CTO z linii `85541745e8`,
+  ze wszystkimi nowymi flagami OFF, tagiem cofnięcia i sprawdzonym na żywo `_RUNBOOK_COFANIA`.
+- **Promocja pojemnika 1 nie ma daty.** Obowiązuje kierunek „biegnij" bez obietnicy kalendarzowej.
+- Warunek promocji produktu: wszystkie **39 wierszy Pojemnika 1 mają stan ✅** i są zaakceptowane
+  na zrzutach z kolejki odbiorowej właściciela.
+- Codex nie wykonuje wdrożenia ani promocji środowiska w ramach DOCS-PLAN.
 
 **Liczniki §5 (47 etapów) — PRZELICZONE POMIAREM KODU 15.09.2026, nie meldunkiem.**
 Liczone skryptem po symbolach (`~/Developer/cto-codex/audyt-47-20260915/policz.sh`), pełny dowód
