@@ -36,10 +36,10 @@
       "theme_minor_aptos": true,
       "no_literal_cell_fonts": true,
       "two_sheets": true,
-      "formulas_present": true,
+      "exact_formula_count": true,
       "freeze_2_by_6": true,
-      "autofilter_present": true,
-      "three_conditional_format_ranges": true
+      "accepted_autofilter": true,
+      "accepted_conditional_format_ranges": true
     },
     "status": "PASS"
   },

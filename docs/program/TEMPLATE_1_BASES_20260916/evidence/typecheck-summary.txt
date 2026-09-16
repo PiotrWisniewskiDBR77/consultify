@@ -1,6 +1,0 @@
-server_exit=0
-server_ts_errors=0
-root_exit=2
-root_ts_errors=170
-typescript_changed_files=0
-error_delta_vs_base=0

@@ -1,0 +1,5 @@
+BEGIN
+psql:/tmp/20262271.sql:512: NOTICE:  TEMPLATE-1 language baseline: 47 rows, 0 already measured as en; legacy rows remain unchanged
+psql:/tmp/20262271.sql:512: NOTICE:  TEMPLATE-1 manual drafts preserved: before 1, after 1
+DO
+COMMIT

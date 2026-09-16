@@ -94,10 +94,10 @@ def xlsx_checks(path: Path) -> dict:
             "theme_minor_aptos": minor == "Aptos",
             "no_literal_cell_fonts": not literal_font_names,
             "two_sheets": sheet_names == ["Supplier scorecard", "Template fields"],
-            "formulas_present": len(formulas) >= 20,
+            "exact_formula_count": len(formulas) == 28,
             "freeze_2_by_6": pane is not None and pane.get("xSplit") == "2" and pane.get("ySplit") == "6",
-            "autofilter_present": auto_filter is not None,
-            "three_conditional_format_ranges": len(conditional_ranges) == 3,
+            "accepted_autofilter": auto_filter is not None and auto_filter.get("ref") == "A6:K12",
+            "accepted_conditional_format_ranges": conditional_ranges == ["H7:H11", "I7:I11", "J7:J12"],
         }
         return {
             "majorLatin": major,
