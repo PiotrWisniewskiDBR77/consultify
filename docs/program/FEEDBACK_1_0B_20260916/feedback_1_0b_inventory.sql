@@ -6,8 +6,8 @@
 -- pg_temp state, which disappears when psql disconnects. Run it against the
 -- explicitly selected database before authoring or approving a migration.
 --
--- Scope is intentionally narrow: &quot;, &#39;, &#x27;, and &#x60;.
--- It does not search for or decode &amp;, &lt;, or &gt;.
+-- Scope approved by W137: &amp;, &quot;, &#39;, &#x27;, &#x60;, and &#96;.
+-- It never searches for or decodes &lt; or &gt;.
 
 -- Session-local DDL is prepared before the read-only inventory transaction.
 -- No persistent schema object or application row is created here.
@@ -18,10 +18,12 @@ CREATE TEMP TABLE feedback_1_0b_inventory (
   data_type text NOT NULL,
   pk_columns text[] NOT NULL DEFAULT '{}',
   affected_rows bigint NOT NULL,
+  amp_occurrences bigint NOT NULL,
   quot_occurrences bigint NOT NULL,
   apos39_occurrences bigint NOT NULL,
   aposx27_occurrences bigint NOT NULL,
-  backtick_occurrences bigint NOT NULL,
+  backtick60_occurrences bigint NOT NULL,
+  backtick96_occurrences bigint NOT NULL,
   json_parseable_rows bigint NOT NULL,
   json_unparseable_rows bigint NOT NULL,
   json_key_rows bigint NOT NULL,
@@ -55,7 +57,7 @@ DECLARE
 BEGIN
   IF jsonb_typeof(value) = 'object' THEN
     FOR item IN SELECT key, val FROM jsonb_each(value) AS e(key, val) LOOP
-      IF item.key LIKE ANY (ARRAY['%&quot;%', '%&#39;%', '%&#x27;%', '%&#x60;%'])
+      IF item.key LIKE ANY (ARRAY['%&amp;%', '%&quot;%', '%&#39;%', '%&#x27;%', '%&#x60;%', '%&#96;%'])
          OR pg_temp.feedback_1_0b_json_keys_have_target(item.val) THEN
         RETURN true;
       END IF;
@@ -80,7 +82,8 @@ DECLARE
   statement text;
 BEGIN
   FOR column_record IN
-    SELECT c.table_schema, c.table_name, c.column_name, c.data_type
+    SELECT c.table_schema, c.table_name, c.column_name, c.data_type,
+           c.is_generated, c.is_identity
       FROM information_schema.columns c
       JOIN information_schema.tables t
         ON t.table_schema = c.table_schema
@@ -106,18 +109,20 @@ BEGIN
     statement := format($sql$
       INSERT INTO feedback_1_0b_inventory (
         table_schema, table_name, column_name, data_type, pk_columns,
-        affected_rows, quot_occurrences, apos39_occurrences,
-        aposx27_occurrences, backtick_occurrences,
+        affected_rows, amp_occurrences, quot_occurrences, apos39_occurrences,
+        aposx27_occurrences, backtick60_occurrences, backtick96_occurrences,
         json_parseable_rows, json_unparseable_rows, json_key_rows,
         proposed_storage_mode, blocker
       )
       SELECT
         %L, %L, %L, %L, %L::text[],
         count(*)::bigint,
+        coalesce(sum((length(value) - length(replace(value, '&amp;', ''))) / length('&amp;')), 0)::bigint,
         coalesce(sum((length(value) - length(replace(value, '&quot;', ''))) / length('&quot;')), 0)::bigint,
         coalesce(sum((length(value) - length(replace(value, '&#39;', ''))) / length('&#39;')), 0)::bigint,
         coalesce(sum((length(value) - length(replace(value, '&#x27;', ''))) / length('&#x27;')), 0)::bigint,
         coalesce(sum((length(value) - length(replace(value, '&#x60;', ''))) / length('&#x60;')), 0)::bigint,
+        coalesce(sum((length(value) - length(replace(value, '&#96;', ''))) / length('&#96;')), 0)::bigint,
         count(*) FILTER (WHERE %L IN ('json', 'jsonb') OR pg_temp.feedback_1_0b_is_jsonb(value))::bigint,
         count(*) FILTER (WHERE %L NOT IN ('json', 'jsonb') AND NOT pg_temp.feedback_1_0b_is_jsonb(value))::bigint,
         count(*) FILTER (
@@ -126,25 +131,30 @@ BEGIN
         )::bigint,
         CASE
           WHEN %L IN ('json', 'jsonb') THEN 'native_json'
-          WHEN %L ~* '(^|_)(json|snapshot|payload|overrides)($|_)'
-               AND bool_and(pg_temp.feedback_1_0b_is_jsonb(value)) THEN 'json_text'
-          ELSE 'plain_text'
+          WHEN count(*) FILTER (WHERE pg_temp.feedback_1_0b_is_jsonb(value)) = count(*)
+            THEN 'json_text'
+          WHEN count(*) FILTER (WHERE pg_temp.feedback_1_0b_is_jsonb(value)) = 0
+            THEN 'plain_text'
+          ELSE 'mixed_json_text'
         END,
         CASE
           WHEN cardinality(%L::text[]) = 0 THEN 'STOP: table has no primary key'
+          WHEN %L = ANY(%L::text[]) THEN 'STOP: affected column participates in the primary key'
+          WHEN %L <> 'NEVER' OR %L = 'YES' THEN 'STOP: affected column is generated or identity'
           WHEN count(*) FILTER (
                  WHERE (%L IN ('json', 'jsonb') OR pg_temp.feedback_1_0b_is_jsonb(value))
                    AND pg_temp.feedback_1_0b_json_keys_have_target(value::jsonb)
                ) > 0 THEN 'STOP: target entity occurs in a JSON object key'
-          WHEN %L ~* '(^|_)(json|snapshot|payload|overrides)($|_)'
+          WHEN %L NOT IN ('json', 'jsonb')
+               AND count(*) FILTER (WHERE pg_temp.feedback_1_0b_is_jsonb(value)) > 0
                AND count(*) FILTER (WHERE NOT pg_temp.feedback_1_0b_is_jsonb(value)) > 0
-            THEN 'STOP: JSON-shaped text column contains an unparseable affected value'
+            THEN 'STOP: affected text column mixes parseable JSON and plain text values'
           ELSE NULL
         END
       FROM (
         SELECT %I::text AS value
           FROM %I.%I
-         WHERE %I::text LIKE ANY (ARRAY['%%&quot;%%', '%%&#39;%%', '%%&#x27;%%', '%%&#x60;%%'])
+         WHERE %I::text LIKE ANY (ARRAY['%%&amp;%%', '%%&quot;%%', '%%&#39;%%', '%%&#x27;%%', '%%&#x60;%%', '%%&#96;%%'])
       ) affected
       HAVING count(*) > 0
     $sql$,
@@ -157,10 +167,13 @@ BEGIN
       column_record.data_type,
       column_record.data_type,
       column_record.data_type,
+      pk_columns,
       column_record.column_name,
       pk_columns,
+      column_record.is_generated,
+      column_record.is_identity,
       column_record.data_type,
-      column_record.column_name,
+      column_record.data_type,
       column_record.column_name,
       column_record.table_schema,
       column_record.table_name,
@@ -181,8 +194,8 @@ SELECT *
 SELECT
   count(*)::int AS observed_columns,
   87 AS expected_columns,
-  sum(affected_rows)::bigint AS affected_row_column_pairs,
-  sum(quot_occurrences + apos39_occurrences + aposx27_occurrences + backtick_occurrences)::bigint AS target_occurrences,
+  coalesce(sum(affected_rows), 0)::bigint AS affected_row_column_pairs,
+  coalesce(sum(amp_occurrences + quot_occurrences + apos39_occurrences + aposx27_occurrences + backtick60_occurrences + backtick96_occurrences), 0)::bigint AS target_occurrences,
   count(*) FILTER (WHERE blocker IS NOT NULL)::int AS blocked_columns,
   count(*) FILTER (WHERE proposed_storage_mode = 'plain_text')::int AS plain_text_columns,
   count(*) FILTER (WHERE proposed_storage_mode = 'json_text')::int AS json_text_columns,
