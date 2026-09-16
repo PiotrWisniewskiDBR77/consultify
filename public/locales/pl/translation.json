@@ -8980,6 +8980,8 @@
       "answerApprovalPanel": "Zatwierdzanie odpowiedzi",
       "answerApprovalQuestion": "Odpowiedź w wywiadzie",
       "answerApprovalStatus": {
+        "not_requested": "Nie wysłano do przeglądu",
+        "ai_review": "Trwa ocena AI",
         "pending": "Oczekuje na zatwierdzenie",
         "stages_complete": "Zatwierdzona",
         "sent_back": "Odesłana do poprawy"
@@ -8991,9 +8993,13 @@
       "answerDecisionReason": "Powód odesłania tej odpowiedzi",
       "answerSentBack": "Odpowiedź odesłana do poprawy.",
       "approveAnswer": "Zatwierdź odpowiedź",
+      "approveAllPending": "Zatwierdź oczekujące ({{count}})",
+      "allPendingAnswersApproved": "Wszystkie oczekujące odpowiedzi zostały zatwierdzone.",
       "loadingAnswerApprovals": "Wczytywanie statusu zatwierdzenia odpowiedzi…",
       "retryAiAnswerReview": "Ponów ocenę AI",
       "sendBackAnswer": "Odeślij odpowiedź",
+      "moreActions": "Więcej akcji",
+      "copyLink": "Kopiuj link",
       "clarifyKeyAnswers": "Doprecyzuj kluczowe odpowiedzi",
       "readyForApproval": "Gotowe do zatwierdzenia",
       "needsImprovement": "Wymaga poprawy",

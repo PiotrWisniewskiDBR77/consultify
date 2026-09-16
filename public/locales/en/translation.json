@@ -9837,6 +9837,8 @@
       "answerApprovalPanel": "Answer approval",
       "answerApprovalQuestion": "Interview answer",
       "answerApprovalStatus": {
+        "not_requested": "Not submitted for review",
+        "ai_review": "AI review in progress",
         "pending": "Pending approval",
         "stages_complete": "Approved",
         "sent_back": "Sent back for correction"
@@ -9848,9 +9850,13 @@
       "answerDecisionReason": "Reason for sending this answer back",
       "answerSentBack": "Answer sent back for correction.",
       "approveAnswer": "Approve answer",
+      "approveAllPending": "Approve all pending ({{count}})",
+      "allPendingAnswersApproved": "All pending answers were approved.",
       "loadingAnswerApprovals": "Loading answer approval status…",
       "retryAiAnswerReview": "Retry AI review",
       "sendBackAnswer": "Send answer back",
+      "moreActions": "More actions",
+      "copyLink": "Copy link",
       "clarifyKeyAnswers": "Clarify key answers",
       "readyForApproval": "Ready for approval",
       "needsImprovement": "Needs improvement",
