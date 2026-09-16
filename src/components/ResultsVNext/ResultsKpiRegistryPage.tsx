@@ -1444,7 +1444,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       const periods: Record<string, string> = {};
       for (const { row, distribution, snapshot } of results) {
         if (distribution) distributions[row.scorecardId] = distribution;
-        const label = resolveKpiReportPeriodLabel(row, snapshot);
+        const label = resolveKpiReportPeriodLabel(row, snapshot, isPolish);
         if (label) periods[row.scorecardId] = label;
       }
       setScorecardDistributions(distributions);
@@ -1453,7 +1453,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [enabled, scorecardRows, tab]);
+  }, [enabled, isPolish, scorecardRows, tab]);
 
   const runScorecardLifecycleAction = useCallback(
     async (row: KpiScorecardDto, action: 'activate' | 'suspend' | 'archive') => {

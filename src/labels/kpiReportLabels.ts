@@ -140,7 +140,7 @@ const MONTH_SHORT_EN = [
   'DEC',
 ] as const;
 
-/** Miesiąc rzymski — zapis, którym właściciel opisuje okres raportu („VIII 2026"). */
+/** Miesiąc rzymski — polska konwencja okresu raportu („VIII 2026"). */
 const MONTH_ROMAN = [
   'I',
   'II',
@@ -173,12 +173,16 @@ export function kpiPeriodColumnLabel(periodKey: string, isPolish: boolean): stri
   return periodKey;
 }
 
-/** Okres raportu w nagłówku i na liście: „VIII 2026", „Q3 2026", „2026". */
-export function kpiReportPeriodLabel(periodKey: string): string {
+/**
+ * Okres raportu w nagłówku i na liście: „VIII 2026" w PL, „AUG 2026" w EN.
+ * Kwartał i rok nie wymagają lokalizacji.
+ */
+export function kpiReportPeriodLabel(periodKey: string, isPolish: boolean): string {
   const monthMatch = /^(\d{4})-(\d{2})$/.exec(periodKey);
   if (monthMatch) {
     const monthIndex = Number(monthMatch[2]) - 1;
-    return `${MONTH_ROMAN[monthIndex] ?? monthMatch[2]} ${monthMatch[1]}`;
+    const months = isPolish ? MONTH_ROMAN : MONTH_SHORT_EN;
+    return `${months[monthIndex] ?? monthMatch[2]} ${monthMatch[1]}`;
   }
   const quarterMatch = /^(\d{4})-Q([1-4])$/.exec(periodKey);
   if (quarterMatch) return `Q${quarterMatch[2]} ${quarterMatch[1]}`;
