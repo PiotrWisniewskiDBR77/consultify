@@ -14,14 +14,16 @@ import inputSanitizationMiddleware from '../inputSanitization.middleware.js';
 const pgUrl = process.env.FEEDBACK_SANITIZER_PG_URL;
 const describePg = pgUrl ? describe : describe.skip;
 
-describePg('FEEDBACK-1/0b quote round-trip through middleware and PostgreSQL', () => {
+describePg('FEEDBACK-1/0c punctuation round-trip through middleware and PostgreSQL', () => {
   let client: Client;
 
   beforeAll(async () => {
     client = new Client({ connectionString: pgUrl, ssl: false });
     await client.connect();
     await client.query('DROP TABLE IF EXISTS feedback_sanitizer_receipt');
-    await client.query('CREATE TABLE feedback_sanitizer_receipt (id text PRIMARY KEY, body text NOT NULL)');
+    await client.query(
+      'CREATE TABLE feedback_sanitizer_receipt (id text PRIMARY KEY, body text NOT NULL)'
+    );
   });
 
   afterAll(async () => {
@@ -59,5 +61,10 @@ describePg('FEEDBACK-1/0b quote round-trip through middleware and PostgreSQL', (
     const hostile = await sanitizeAndRoundTrip('xss', '<script>alert("x")</script>');
     expect(hostile).toBe('&lt;script&gt;alert("x")&lt;/script&gt;');
     expect(hostile).not.toContain('<script>');
+  });
+
+  it('preserves ampersands and quotes byte-for-byte through PostgreSQL', async () => {
+    const businessText = 'R&D "yes" / Q&A / M&A';
+    await expect(sanitizeAndRoundTrip('ampersands', businessText)).resolves.toBe(businessText);
   });
 });

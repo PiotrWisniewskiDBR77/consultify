@@ -16,6 +16,7 @@ import {
   Phone,
   Star,
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -409,7 +410,9 @@ const RENDERERS: Partial<Record<FieldType, React.FC<PlatformCellRendererProps>>>
       return (
         <div
           className="text-xs text-c-text truncate px-1"
-          dangerouslySetInnerHTML={{ __html: htmlContent }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(htmlContent, { USE_PROFILES: { html: true } }),
+          }}
         />
       );
     }

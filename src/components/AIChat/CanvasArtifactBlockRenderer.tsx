@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CanvasArtifactBlock } from '@/types/canvasWorkspace';
+import { sanitizeMermaidSvg } from '@/utils/safeMermaidSvg';
 
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 
@@ -677,9 +678,14 @@ function DiagramBlockView({
     void import('mermaid')
       .then(async (module) => {
         const mermaid = module.default;
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: 'strict',
+          htmlLabels: false,
+          flowchart: { htmlLabels: false },
+        });
         const result = await mermaid.render(`canvas-diagram-${block.id}`, source);
-        if (!cancelled) setRenderedSvg(result.svg);
+        if (!cancelled) setRenderedSvg(sanitizeMermaidSvg(result.svg));
       })
       .catch((error) => {
         if (!cancelled) {

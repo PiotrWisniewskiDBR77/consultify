@@ -19,7 +19,7 @@ describe('Z139 — sanitizeString/sanitizeObject idempotency (full scope, not ju
 
   it('single save neutralizes markup while preserving quotes and apostrophes', () => {
     const saved = sanitizeString(title);
-    expect(saved).toBe('R&amp;D Report &lt;Draft&gt; "Q3" \'26');
+    expect(saved).toBe('R&D Report &lt;Draft&gt; "Q3" \'26');
   });
 
   it('re-save of an already-escaped value (simulating an edit form round-trip) does NOT compound', () => {
@@ -37,8 +37,8 @@ describe('Z139 — sanitizeString/sanitizeObject idempotency (full scope, not ju
     const doubleEscaped = 'R&amp;amp;D Report &amp;lt;Draft&amp;gt;';
     const tripleEscaped = 'R&amp;amp;amp;D Report &amp;amp;lt;Draft&amp;amp;gt;';
 
-    expect(sanitizeString(doubleEscaped)).toBe('R&amp;D Report &lt;Draft&gt;');
-    expect(sanitizeString(tripleEscaped)).toBe('R&amp;D Report &lt;Draft&gt;');
+    expect(sanitizeString(doubleEscaped)).toBe('R&D Report &lt;Draft&gt;');
+    expect(sanitizeString(tripleEscaped)).toBe('R&D Report &lt;Draft&gt;');
   });
 
   it('still neutralizes a genuine XSS payload on first save (security unchanged)', () => {

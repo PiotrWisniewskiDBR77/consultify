@@ -5,6 +5,7 @@
  * Enter saves, Escape cancels. Auto-focuses on mount.
  */
 import { Check, ChevronDown, Link2, Star } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -83,7 +84,7 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
 
   useEffect(() => {
     if (editorRef.current && typeof value === 'string') {
-      editorRef.current.innerHTML = value;
+      editorRef.current.innerHTML = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } });
     }
     editorRef.current?.focus();
   }, []);
@@ -109,7 +110,8 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
   );
 
   const commit = useCallback(() => {
-    onSave(editorRef.current?.innerHTML || '');
+    const currentHtml = editorRef.current?.innerHTML || '';
+    onSave(DOMPurify.sanitize(currentHtml, { USE_PROFILES: { html: true } }));
   }, [onSave]);
 
   return (

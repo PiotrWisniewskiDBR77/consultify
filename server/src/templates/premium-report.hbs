@@ -235,9 +235,13 @@
 <div class="section user-section" data-type="{{sectionType}}">
     <h2>{{title}}</h2>
 
-    {{#if content}}
+    {{#if safeContent}}
     <div class="section-content">
-        {{{content}}}
+        {{{safeContent}}}
+    </div>
+    {{else if content}}
+    <div class="section-content">
+        {{content}}
     </div>
     {{/if}}
 </div>

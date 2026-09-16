@@ -53,8 +53,8 @@ describe('sanitizeString (L1)', () => {
     expect(sanitizeString('<script>alert(1)</script>')).not.toContain('<');
     expect(sanitizeString('<script>alert(1)</script>')).not.toContain('>');
   });
-  it('escapes & ampersand', () => {
-    expect(sanitizeString('a & b')).toBe('a &amp; b');
+  it('preserves & ampersand', () => {
+    expect(sanitizeString('a & b')).toBe('a & b');
   });
   it('preserves double quotes in JSON text', () => {
     expect(sanitizeString('"hello"')).toBe('"hello"');
@@ -100,7 +100,7 @@ describe('sanitizeString (L1)', () => {
   });
 
   it('neutralizes markup delimiters and preserves quotes in one pass', () => {
-    expect(sanitizeString(`&<>"'\``)).toBe(`&amp;&lt;&gt;"'\``);
+    expect(sanitizeString(`&<>"'\``)).toBe(`&&lt;&gt;"'\``);
   });
 });
 

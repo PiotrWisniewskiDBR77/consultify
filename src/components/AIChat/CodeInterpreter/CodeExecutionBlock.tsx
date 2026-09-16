@@ -23,6 +23,7 @@ import {
   Terminal,
   XCircle,
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SyntaxHighlighter from 'react-syntax-highlighter';
@@ -145,7 +146,11 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
       return (
         <div
           className="prose prose-sm dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: output.data }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(String(output.data ?? ''), {
+              USE_PROFILES: { html: true },
+            }),
+          }}
         />
       );
 
