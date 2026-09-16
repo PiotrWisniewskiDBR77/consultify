@@ -35,6 +35,8 @@ const PrototypeHarness = ({
 };
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
 const U19DrdTrzyKolumnyScreen = React.lazy(() => import('./screens/u19-drd-trzy-kolumny'));
+// U-43 (DECK-1A) — Deck Builder left rail, neutral "Review" panel.
+const U43DeckReviewScreen = React.lazy(() => import('./screens/u43-deck-review'));
 const P12TabelaI18nMenu3EmptyScreen = React.lazy(
   () => import('./screens/p12-tabela-i18n-menu3-empty')
 );
@@ -737,6 +739,10 @@ const Z30InicjatywyObciazenieScreen = React.lazy(
 const Z42RealizacjaRaportyScreen = React.lazy(() => import('./screens/z42-realizacja-raporty'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'u43-deck-review': {
+    label: 'Deck Builder · Review (U-43 / DEC-543)',
+    render: () => <U43DeckReviewScreen />,
+  },
   'u19-drd-trzy-kolumny': {
     label: 'DRD U-19 · Northwind · DEC-552',
     render: () => <U19DrdTrzyKolumnyScreen />,
