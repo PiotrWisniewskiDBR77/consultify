@@ -36,5 +36,7 @@ PPTX EVIDENCE
 - LibreOffice render: 3 PNG, 1921x1080
 - montage sha256: 77cc38ec84f17b0d0a7fa7b304070863a054f9da495da47cc658f42ca0c41123
 
-FINAL REBASE / SHA
-PENDING
+FINAL REBASE
+- base: 51e406fc1923f6a3e1d7c758fc21af3789b81442
+- frozen functional commit: 6a8d1e47996473452b532b9ff1f31ca4187501de
+- final package SHA is reported in OD_CODEXA.md after receipt-only commit

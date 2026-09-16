@@ -4,7 +4,7 @@
 
 Poprawka zamyka cztery P1 z Wpisu 151 i zachowuje kontrakt DEC-543: ustalenia jakościowe są zwracane jako ostrzeżenia, ale błąd renderowania nadal blokuje zapis uszkodzonego PPTX. Nowy renderer ma jawny cutover `VITE_EXPORT_PPTX_V2`; kod jest domyślnie OFF, staging ma zmienną `true` ustawioną bez wywołania deploymentu.
 
-Paczka rozpoczęła się z bazy `a1932f5caa` wskazanej we Wpisie 159. Przed freeze została przeniesiona na najnowszą linię wskazaną przez CTO. Nie zmienia migracji ani plików toru A.
+Paczka rozpoczęła się z bazy `a1932f5caa` wskazanej we Wpisie 159. Przed freeze została przeniesiona na linię `51e406fc19` wskazaną we Wpisie 162. Nie zmienia migracji ani plików toru A.
 
 ## Cztery P1
 
@@ -34,4 +34,4 @@ Paczka rozpoczęła się z bazy `a1932f5caa` wskazanej we Wpisie 159. Przed free
 - artefakt PPTX: 72 946 B, SHA-256 `e45ff0128dd2a8d10cbea8ef669c82e865337acf66a5e466d24d9a664e16796e`;
 - montaż: SHA-256 `77cc38ec84f17b0d0a7fa7b304070863a054f9da495da47cc658f42ca0c41123`.
 
-Końcowy SHA, wyniki po rebase i dokładny receipt są w `dowody/verification.txt`.
+Zamrożony commit funkcjonalny i wyniki po rebase są w `dowody/verification.txt`; końcowy SHA paczki trafia do meldunku `OD_CODEXA.md`.
