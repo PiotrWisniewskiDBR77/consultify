@@ -5540,7 +5540,8 @@
         "updatePriorityFailed": "Nie udało się zaktualizować priorytetu",
         "updateTaskFailed": "Nie udało się zaktualizować zadania"
       },
-      "untitled": "Zadanie bez tytułu"
+      "untitled": "Zadanie bez tytułu",
+      "unassigned": "Nieprzypisany"
     },
     "notificationsContent": {
       "recently": "Niedawno",
