@@ -89,9 +89,8 @@ Deploy"). Ręczny `railway up` = tylko incydentalnie; po nim obowiązkowo napraw
    dlatego reguła brzmi „zmierz", a nie „pamiętaj, która flaga była pusta"),
    a stan danych
    czytaj z ŻYWEJ bazy, nie z kodu. „Testy przeszły" ≠ „działa".
-2. **Baza gałęzi ZAWSZE `origin/develop`** (od 2026-08-31: rozdzielenie środowisk — praca płynie
-   `develop` → auto-deploy staging → odbiór/akcept Piotra → ręczna promocja na demo z taga
-   `staging-deployed`; `origin/demo` już NIE jest bazą gałęzi, tylko celem promocji).
+2. **Baza gałęzi ZAWSZE `origin/integracja/20260911`** (linia integracyjna; od 11.09.2026
+   target wdrożeń stagingu; demo zamrożone DEC-503/572/582; Londyn dostaje forward-port).
    NIGDY `feat/tp-forms-polish`, NIGDY `tp-*`/`deliverables-w1`/`harvard-noc` (skażony re-skin nocy 3/4).
 
 ## FINISZ 8 NARZĘDZI (aktywny program)
