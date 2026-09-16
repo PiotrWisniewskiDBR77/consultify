@@ -43,6 +43,7 @@ export { BOARD_DECK_LAYOUT_ROLES };
 
 export type {
   BoardDeckChart,
+  BoardDeckDecisionMeta,
   BoardDeckDecisionOption,
   BoardDeckLayoutRole,
   BoardDeckSlide,

@@ -24,6 +24,7 @@ import {
   hasEffectiveCapability,
   resolveEffectiveAccess,
 } from '../services/effectiveAccessService.js';
+import { boardDeckExportService } from '../services/export/BoardDeckExportService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import * as workCanvasService from '../services/workCanvasService.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
@@ -1032,22 +1033,24 @@ async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
 }
 
 async function exportPptxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  // The Canvas-specific sectionizer (markdownSections/markdownSummary) stays in
-  // the route; pre-built slides are handed to the generic service so the cap and
-  // footer rendering live in one place.
   const sections = markdownSections(draft.contentMd);
-  const slides = sections.length
+  const projectedSections = sections.length
     ? sections.map((section, index) => ({
         title: section.heading || `Slide ${index + 1}`,
         body: markdownSummary(section.body, 700),
       }))
     : [{ title: draft.title, body: markdownSummary(draft.contentMd, 700) }];
-  return unifiedExportService.exportPptx({
+  const provenanceOrganizationName = draft.provenance?.organizationName;
+  return boardDeckExportService.exportCanvasDeck({
     title: draft.title,
-    markdown: markdownSummary(draft.contentMd, 700),
-    sourceLabel: `Source Canvas: ${draft.id}`,
-    author: 'Business Work Canvas',
-    slides,
+    organizationName:
+      typeof provenanceOrganizationName === 'string' && provenanceOrganizationName.trim()
+        ? provenanceOrganizationName.trim()
+        : 'Organization',
+    sourceId: draft.id,
+    lifecycle: draft.lifecycleState,
+    updatedAt: draft.updatedAt,
+    sections: projectedSections,
   });
 }
 
