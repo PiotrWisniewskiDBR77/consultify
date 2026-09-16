@@ -308,8 +308,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
           case 'qa':
             return {
               ...descriptor,
-              label: t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review'),
-              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionQa', 'QA and review'),
+              label: t('presentations.review.title', 'Review'),
+              overflowSection: t('presentations.review.title', 'Review'),
               onClick: () => setArtifactLeftMode('review'),
             };
           case 'history':
@@ -374,7 +374,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
           [
             ['structure', t('presentations.builder.deckBuilderMelsView.slides', 'Slides')],
             ...(reviewPanel
-              ? [['review', t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review')]]
+              ? [['review', t('presentations.review.title', 'Review')]]
               : []),
           ] as Array<
             [typeof artifactLeftMode, string]

@@ -30130,7 +30130,8 @@
         "agent": "Agent",
         "present": "Present",
         "undo": "Undo",
-        "redo": "Redo"
+        "redo": "Redo",
+        "review": "Review"
       },
       "share": {
         "enablePublicFirst": "Enable public link sharing first to get an embed code.",
@@ -30567,9 +30568,7 @@
             "savedDraft": "Saved Draft"
           }
         },
-        "qaAndReview": "QA and review",
         "sharingAnalytics": "Sharing analytics",
-        "sectionQa": "QA and review",
         "history": "History",
         "sectionHistory": "History",
         "auditLog": "Audit log",
@@ -30660,15 +30659,6 @@
       "rejected": "Rejected",
       "exportsBlocked": "Exports blocked",
       "lastActivity": "Last activity:"
-    },
-    "qualityGates": {
-      "failed": "Failed",
-      "title": "Quality Gates",
-      "score": "Deck Score",
-      "allPassed": "All quality gates passed!",
-      "readyToExport": "Your deck is ready to export and share.",
-      "checking": "Checking...",
-      "recheck": "Re-check Quality Gates"
     },
     "analytics": {
       "refresh": "Refresh",
@@ -31174,6 +31164,53 @@
       "typedFieldsArePersistedIn": "Typed fields are persisted in the template schema and become the\n                      deck-generation data requirements.",
       "theCheckPassedTheDraft": "The check passed. The draft is ready to publish.",
       "templateVersionHistory": "Template version history"
+    },
+    "review": {
+      "title": "Review",
+      "approval": "Approval",
+      "run": "Run review",
+      "running": "Running the review…",
+      "failed": "The review could not be run.",
+      "loadFailed": "The review could not be loaded.",
+      "actionFailed": "The action did not go through.",
+      "approvalHint": "Version {{version}}. The author cannot approve their own version.",
+      "needsAttention": "Needs attention",
+      "suggestions": "Suggestions",
+      "noFindings": "Nothing to fix right now.",
+      "slidesReady": "{{ready}} of {{total}} slides ready",
+      "slideNumber": "Slide {{number}}",
+      "goToSlide": "Go to slide",
+      "fixWithAi": "Fix with AI",
+      "neverBlocks": "A review never blocks exporting or presenting.",
+      "exportRefusedByServer": "The server refused this export while the review has open findings. Open Review to see what to fix.",
+      "finding": {
+        "DECK_NOT_FOUND": "This presentation could not be loaded.",
+        "EMPTY_DECK": "The presentation has no slides yet — add the first slide.",
+        "MISSING_COVER": "There is no cover slide — add a title slide with the client and the date.",
+        "TOO_FEW_CARDS": "The presentation is very short — add a cover and at least one content slide.",
+        "TOO_MANY_CARDS": "The presentation is very long — consider splitting it into two.",
+        "MANY_CARDS": "The presentation is long — audiences lose attention past about 20 slides.",
+        "EMPTY_CARD": "This slide has no content yet.",
+        "LOW_INFORMATION_SLIDES": "This slide has only a heading — add evidence or a visual.",
+        "LAYOUT_EVIDENCE_MISSING": "This slide promises evidence (a number, chart or list) that is not there yet.",
+        "NO_BRAND_KIT": "No brand kit is set — the deck uses default colours and fonts.",
+        "MISSING_HEADER_FOOTER": "Most slides have no header or footer, so exports look unbranded.",
+        "LOW_TRACEABILITY": "Few slides say where the data came from — add sources so the client can check.",
+        "RAW_INTERNALS": "This slide shows raw technical data — remove it before sharing.",
+        "PLACEHOLDER_CONTENT": "This slide still contains placeholder text.",
+        "ENCODING_ARTEFACTS": "This slide contains broken characters.",
+        "MISSING_SLIDE_THESIS": "This slide has no clear key message.",
+        "TEMPLATE_INVENTORY_LEAK": "Template names ended up in the slide content — replace them with real findings.",
+        "EMPTY_DECISION_SECTIONS": "A recommendations, risks or roadmap slide has no content.",
+        "NO_DECISION_SECTIONS": "The presentation has no recommendations or next steps — end with a call to action.",
+        "STALE_DATA": "Some data on the slides has not been refreshed for over a day.",
+        "DECISION_MISSING_TRACEABILITY": "Decision slides do not say where their evidence came from.",
+        "DECISION_LOW_CONFIDENCE": "Some decision slides rely on weak sources.",
+        "DECISION_STALE_EVIDENCE": "Some decision slides rely on evidence older than 30 days.",
+        "LOW_LAYOUT_VARIETY": "Several slides in a row use the same layout — vary them.",
+        "MISSING_SPEAKER_NOTES": "Most slides have no speaker notes.",
+        "CARD_TOO_DENSE": "This slide carries a lot of text — cut it down for the audience."
+      }
     }
   },
   "finance": {

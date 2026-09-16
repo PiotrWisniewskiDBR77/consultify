@@ -2753,7 +2753,8 @@
         "governance": "Nadzór",
         "analytics": "Analityka udostępniania",
         "auditLog": "Dziennik audytu",
-        "teresa": "Teresa"
+        "teresa": "Teresa",
+        "review": "Przegląd"
       },
       "confidentiality": {
         "label": "Poufność",
@@ -3151,9 +3152,7 @@
             "savedDraft": "Zapisana wersja robocza"
           }
         },
-        "qaAndReview": "QA i przegląd",
         "sharingAnalytics": "Analityka udostępniania",
-        "sectionQa": "QA i przegląd",
         "history": "Historia",
         "sectionHistory": "Historia",
         "auditLog": "Dziennik audytu",
@@ -3289,15 +3288,6 @@
       "exportsBlocked": "Eksporty zablokowane",
       "lastActivity": "Ostatnia aktywność:"
     },
-    "qualityGates": {
-      "failed": "Błąd",
-      "title": "Bramki jakości",
-      "score": "Ocena prezentacji",
-      "allPassed": "Wszystkie bramki jakości zaliczone!",
-      "readyToExport": "Twoja prezentacja jest gotowa do eksportu i udostępnienia.",
-      "checking": "Sprawdzanie...",
-      "recheck": "Sprawdź ponownie bramki jakości"
-    },
     "analytics": {
       "refresh": "Odśwież",
       "title": "Analityka udostępniania",
@@ -3412,7 +3402,54 @@
     },
     "minimalPreview": "Podgląd uproszczony — pełny edytor wkrótce",
     "previewPlaceholder": "Podgląd prezentacji pojawi się tutaj.",
-    "comingSoon": "Wkrótce"
+    "comingSoon": "Wkrótce",
+    "review": {
+      "title": "Przegląd",
+      "approval": "Zatwierdzenie",
+      "run": "Uruchom przegląd",
+      "running": "Trwa przegląd…",
+      "failed": "Nie udało się uruchomić przeglądu.",
+      "loadFailed": "Nie udało się wczytać przeglądu.",
+      "actionFailed": "Operacja nie doszła do skutku.",
+      "approvalHint": "Wersja {{version}}. Autor nie może zatwierdzić własnej wersji.",
+      "needsAttention": "Wymaga uwagi",
+      "suggestions": "Sugestie",
+      "noFindings": "Nie ma teraz nic do poprawy.",
+      "slidesReady": "{{ready}} z {{total}} slajdów gotowych",
+      "slideNumber": "Slajd {{number}}",
+      "goToSlide": "Przejdź do slajdu",
+      "fixWithAi": "Popraw z AI",
+      "neverBlocks": "Przegląd nigdy nie blokuje eksportu ani prezentowania.",
+      "exportRefusedByServer": "Serwer odmówił eksportu, bo przegląd ma otwarte uwagi. Otwórz Przegląd, aby zobaczyć, co poprawić.",
+      "finding": {
+        "DECK_NOT_FOUND": "Nie udało się wczytać tej prezentacji.",
+        "EMPTY_DECK": "Prezentacja nie ma jeszcze slajdów — dodaj pierwszy.",
+        "MISSING_COVER": "Brakuje slajdu tytułowego — dodaj okładkę z klientem i datą.",
+        "TOO_FEW_CARDS": "Prezentacja jest bardzo krótka — dodaj okładkę i co najmniej jeden slajd treści.",
+        "TOO_MANY_CARDS": "Prezentacja jest bardzo długa — rozważ podzielenie jej na dwie.",
+        "MANY_CARDS": "Prezentacja jest długa — po około 20 slajdach odbiorcy tracą uwagę.",
+        "EMPTY_CARD": "Ten slajd nie ma jeszcze treści.",
+        "LOW_INFORMATION_SLIDES": "Ten slajd ma tylko nagłówek — dodaj dowód albo grafikę.",
+        "LAYOUT_EVIDENCE_MISSING": "Ten slajd zapowiada dowód (liczbę, wykres lub listę), którego jeszcze nie ma.",
+        "NO_BRAND_KIT": "Nie ustawiono zestawu marki — prezentacja używa domyślnych kolorów i czcionek.",
+        "MISSING_HEADER_FOOTER": "Większość slajdów nie ma nagłówka ani stopki, więc eksport wygląda bez marki.",
+        "LOW_TRACEABILITY": "Mało slajdów podaje źródło danych — dodaj źródła, żeby klient mógł sprawdzić.",
+        "RAW_INTERNALS": "Ten slajd pokazuje surowe dane techniczne — usuń je przed udostępnieniem.",
+        "PLACEHOLDER_CONTENT": "Ten slajd wciąż zawiera tekst zastępczy.",
+        "ENCODING_ARTEFACTS": "Ten slajd zawiera uszkodzone znaki.",
+        "MISSING_SLIDE_THESIS": "Ten slajd nie ma jasnej myśli przewodniej.",
+        "TEMPLATE_INVENTORY_LEAK": "Nazwy szablonów trafiły do treści slajdu — zastąp je prawdziwymi wnioskami.",
+        "EMPTY_DECISION_SECTIONS": "Slajd z rekomendacjami, ryzykami albo planem nie ma treści.",
+        "NO_DECISION_SECTIONS": "Prezentacja nie ma rekomendacji ani następnych kroków — zakończ wezwaniem do działania.",
+        "STALE_DATA": "Część danych na slajdach nie była odświeżana od ponad doby.",
+        "DECISION_MISSING_TRACEABILITY": "Slajdy decyzyjne nie podają, skąd pochodzą dowody.",
+        "DECISION_LOW_CONFIDENCE": "Część slajdów decyzyjnych opiera się na słabych źródłach.",
+        "DECISION_STALE_EVIDENCE": "Część slajdów decyzyjnych opiera się na dowodach starszych niż 30 dni.",
+        "LOW_LAYOUT_VARIETY": "Kilka slajdów z rzędu ma ten sam układ — zróżnicuj je.",
+        "MISSING_SPEAKER_NOTES": "Większość slajdów nie ma notatek prelegenta.",
+        "CARD_TOO_DENSE": "Ten slajd ma dużo tekstu — skróć go dla odbiorców."
+      }
+    }
   },
   "sidebar": {
     "comingSoon": "Wkrótce",

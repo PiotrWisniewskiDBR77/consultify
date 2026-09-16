@@ -75,7 +75,7 @@ import { normalizeSlideComposition } from './deckData';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckOverflowWarning } from './DeckOverflowWarning';
 import { DeckPresenceStack } from './DeckPresenceStack';
-import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
+import { DeckReviewPanel } from './DeckReviewPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
@@ -444,7 +444,7 @@ const DeckBuilderForDeck: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   // P2.2 — "AI Generate" button in BlockToolbar's Images panel is in flight.
   const [generatingAiImage, setGeneratingAiImage] = useState(false);
-  const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
   const [pendingOverflowExport, setPendingOverflowExport] = useState<{
     format: 'pdf' | 'pptx' | 'png';
     warnings: PresentationOverflowWarning[];
@@ -1027,8 +1027,18 @@ const DeckBuilderForDeck: React.FC = () => {
         await exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format });
         toast.success(t('presentations.exportedAs', { format: format.toUpperCase() }));
       } catch (err: any) {
+        // U-43/DEC-543: the front no longer decides whether an export may run.
+        // The server route gate can still answer 422 (see the receipt handover
+        // to EXPORT-1) — until it is lifted we translate that answer into human
+        // copy and open Review, instead of echoing "Deck is blocked by quality
+        // gates." at the consultant.
+        let humanMessage: string | null = null;
         if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
-          setQualityGatesOpen(true);
+          humanMessage = t(
+            'presentations.review.exportRefusedByServer',
+            'The server refused this export while the review has open findings. Open Review to see what to fix.'
+          );
+          setReviewPanelOpen(true);
           const firstBlocker = (
             Array.isArray(err.gates)
               ? err.gates.find(
@@ -1041,7 +1051,7 @@ const DeckBuilderForDeck: React.FC = () => {
             setActiveCardIndex(firstBlocker.cardIndex);
           }
         }
-        const message = err?.message || t('presentations.exportFailed');
+        const message = humanMessage || err?.message || t('presentations.exportFailed');
         toast.error(message);
       }
     },
@@ -1347,8 +1357,8 @@ const DeckBuilderForDeck: React.FC = () => {
         setVersionHistoryOpen(false);
         return;
       }
-      if (qualityGatesOpen) {
-        setQualityGatesOpen(false);
+      if (reviewPanelOpen) {
+        setReviewPanelOpen(false);
         return;
       }
       if (analyticsOpen) {
@@ -1376,7 +1386,7 @@ const DeckBuilderForDeck: React.FC = () => {
     auditLogOpen,
     themeSwitcherOpen,
     versionHistoryOpen,
-    qualityGatesOpen,
+    reviewPanelOpen,
     analyticsOpen,
     shareModalOpen,
     mediaLibraryOpen,
@@ -1557,7 +1567,7 @@ const DeckBuilderForDeck: React.FC = () => {
             },
             theme: t('presentations.builder.topBar.theme', 'Theme'),
             history: t('presentations.builder.topBar.history', 'History'),
-            qa: t('presentations.builder.topBar.quality', 'Quality'),
+            qa: t('presentations.builder.topBar.review', 'Review'),
             governance: t('presentations.builder.topBar.governance', 'Governance'),
             analytics: t('presentations.builder.topBar.analytics', 'Analytics'),
             audit: t('presentations.builder.topBar.auditLog', 'Audit'),
@@ -1576,7 +1586,7 @@ const DeckBuilderForDeck: React.FC = () => {
           topBarHandlers={{
             onTheme: () => setThemeSwitcherOpen(true),
             onHistory: () => setVersionHistoryOpen((v) => !v),
-            onQa: () => setQualityGatesOpen((v) => !v),
+            onQa: () => setReviewPanelOpen((v) => !v),
             onGovernance: () => setGovernanceModalOpen(true),
             onAnalytics: () => setAnalyticsOpen((v) => !v),
             onAudit: () => setAuditLogOpen(true),
@@ -1761,7 +1771,7 @@ const DeckBuilderForDeck: React.FC = () => {
               aiButton={
                 <PracujZAI
                   isPolish={i18n.language?.startsWith('pl')}
-                  onAnalizuj={() => setQualityGatesOpen(true)}
+                  onAnalizuj={() => setReviewPanelOpen(true)}
                   aktywnaSekcja={activeCard?.card_id ?? null}
                   kontekstArtefaktu={{ title: deck.title, type: 'presentation' }}
                   moznaEdytowac
@@ -1803,11 +1813,13 @@ const DeckBuilderForDeck: React.FC = () => {
                 organizationId={approvalOrganization?.id}
                 currentUserId={approvalUser?.id}
                 qualityPanel={
-                  <DeckQualityGatesPanel
+                  <DeckReviewPanel
                     deckId={deckId || deck?.deck_id || ''}
                     isOpen
                     displayMode="embedded"
+                    totalSlides={deck?.cards.length}
                     onJumpToCard={setActiveCardIndex}
+                    onFixWithAi={(cardIndex) => void handleRewriteCard(cardIndex)}
                   />
                 }
               />
@@ -2013,11 +2025,13 @@ const DeckBuilderForDeck: React.FC = () => {
                 onSelect={handleInsertMediaImage}
               />
               {!artifactStudioPresentationEnabled ? (
-                <DeckQualityGatesPanel
+                <DeckReviewPanel
                   deckId={deckId || deck?.deck_id || ''}
-                  isOpen={qualityGatesOpen}
-                  onClose={() => setQualityGatesOpen(false)}
+                  isOpen={reviewPanelOpen}
+                  totalSlides={deck?.cards.length}
+                  onClose={() => setReviewPanelOpen(false)}
                   onJumpToCard={setActiveCardIndex}
+                  onFixWithAi={(cardIndex) => void handleRewriteCard(cardIndex)}
                 />
               ) : null}
               <ShareAnalyticsPanel
@@ -2088,7 +2102,7 @@ const DeckBuilderForDeck: React.FC = () => {
             onTheme={() => setThemeSwitcherOpen(true)}
             onShare={() => setShareModalOpen(true)}
             onVersionHistory={() => setVersionHistoryOpen((v) => !v)}
-            onQualityGates={() => setQualityGatesOpen((v) => !v)}
+            onQualityGates={() => setReviewPanelOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
             onAuditLog={() => setAuditLogOpen(true)}
             onGovernance={() => setGovernanceModalOpen(true)}
@@ -2318,12 +2332,14 @@ const DeckBuilderForDeck: React.FC = () => {
             onSelect={handleInsertMediaImage}
           />
 
-          {/* G1: Quality Gates Panel */}
-          <DeckQualityGatesPanel
+          {/* U-43: neutral Review panel (replaces the Quality Gates "choinka") */}
+          <DeckReviewPanel
             deckId={deckId || deck?.deck_id || ''}
-            isOpen={qualityGatesOpen}
-            onClose={() => setQualityGatesOpen(false)}
+            isOpen={reviewPanelOpen}
+            totalSlides={deck?.cards.length}
+            onClose={() => setReviewPanelOpen(false)}
             onJumpToCard={setActiveCardIndex}
+            onFixWithAi={(cardIndex) => void handleRewriteCard(cardIndex)}
           />
 
           {/* G3: Share Analytics Panel */}
